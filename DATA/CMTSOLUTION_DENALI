@@ -1,0 +1,6175 @@
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_1
+time shift:         0.0000
+half duration:      0.8000
+latitude:          63.5303
+longitude:       -147.4524
+depth:          10.0000
+Mrr:         6.050000e+23
+Mtt:        -8.910000e+23
+Mpp:         2.860000e+23
+Mrt:        -1.633000e+24
+Mrp:         4.811000e+23
+Mtp:        -2.014000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_10
+time shift:         4.2000
+half duration:      2.6000
+latitude:          63.5178
+longitude:       -147.4544
+depth:           2.1220
+Mrr:        -1.459000e+22
+Mtt:        -1.204000e+22
+Mpp:         2.663000e+22
+Mrt:         4.234000e+22
+Mrp:         3.078000e+22
+Mtp:        -1.900000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_100
+time shift:        13.8000
+half duration:      1.6000
+latitude:          63.5239
+longitude:       -146.6438
+depth:          21.8200
+Mrr:        -6.011000e+23
+Mtt:        -8.177000e+23
+Mpp:         1.419000e+24
+Mrt:         1.773000e+24
+Mrp:         1.674000e+24
+Mtp:        -1.012000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_101
+time shift:        14.0000
+half duration:      1.4000
+latitude:          63.5176
+longitude:       -146.6448
+depth:          17.8800
+Mrr:        -7.676000e+23
+Mtt:        -5.061000e+22
+Mpp:         8.182000e+23
+Mrt:         2.176000e+24
+Mrp:         8.823000e+23
+Mtp:        -5.849000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_102
+time shift:        14.0000
+half duration:      2.8000
+latitude:          63.4700
+longitude:       -147.0863
+depth:           1.0600
+Mrr:         8.733000e+24
+Mtt:        -6.702000e+24
+Mpp:        -2.030000e+24
+Mrt:         6.385000e+24
+Mrp:         9.349000e+22
+Mtp:        -4.738000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_103
+time shift:        14.2000
+half duration:      1.4000
+latitude:          63.5207
+longitude:       -146.5431
+depth:          21.8200
+Mrr:         2.367000e+24
+Mtt:        -3.737000e+24
+Mpp:         1.370000e+24
+Mrt:        -6.366000e+24
+Mrp:         2.199000e+24
+Mtp:        -9.663000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_104
+time shift:        14.4000
+half duration:      2.0000
+latitude:          63.5240
+longitude:       -147.0719
+depth:           3.1800
+Mrr:         1.544000e+25
+Mtt:        -1.143000e+25
+Mpp:        -4.016000e+24
+Mrt:         1.077000e+25
+Mrp:         6.164000e+23
+Mtp:        -8.319000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_105
+time shift:        14.4000
+half duration:      2.4000
+latitude:          63.4927
+longitude:       -146.6487
+depth:           2.1220
+Mrr:         1.905000e+24
+Mtt:        -2.806000e+24
+Mpp:         9.006000e+23
+Mrt:        -5.141000e+24
+Mrp:         1.515000e+24
+Mtp:        -6.341000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_106
+time shift:        14.4000
+half duration:      2.4000
+latitude:          63.5040
+longitude:       -147.0203
+depth:           1.0600
+Mrr:         9.258000e+24
+Mtt:        -7.105000e+24
+Mpp:        -2.152000e+24
+Mrt:         6.769000e+24
+Mrp:         9.912000e+22
+Mtp:        -5.022000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_107
+time shift:        14.4000
+half duration:      2.4000
+latitude:          63.5780
+longitude:       -147.0573
+depth:           5.2990
+Mrr:         8.623000e+24
+Mtt:        -5.509000e+24
+Mpp:        -3.113000e+24
+Mrt:         4.952000e+24
+Mrp:         1.268000e+24
+Mtp:        -4.522000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_108
+time shift:        14.6000
+half duration:      1.4000
+latitude:          63.4958
+longitude:       -146.5470
+depth:           6.0610
+Mrr:         8.726000e+23
+Mtt:        -1.285000e+24
+Mpp:         4.125000e+23
+Mrt:        -2.355000e+24
+Mrp:         6.939000e+23
+Mtp:        -2.904000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_109
+time shift:        15.0000
+half duration:      1.4000
+latitude:          63.5380
+longitude:       -146.9544
+depth:           1.0600
+Mrr:         5.674000e+24
+Mtt:        -4.355000e+24
+Mpp:        -1.319000e+24
+Mrt:         4.148000e+24
+Mrp:         6.075000e+22
+Mtp:        -3.078000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_11
+time shift:         4.6000
+half duration:      3.8000
+latitude:          63.5334
+longitude:       -147.3507
+depth:          13.9400
+Mrr:         3.491000e+23
+Mtt:        -5.142000e+23
+Mpp:         1.650000e+23
+Mrt:        -9.421000e+23
+Mrp:         2.776000e+23
+Mtp:        -1.162000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_110
+time shift:        15.0000
+half duration:      1.8000
+latitude:          63.5580
+longitude:       -147.0059
+depth:           3.1800
+Mrr:         1.081000e+25
+Mtt:        -8.299000e+24
+Mpp:        -2.514000e+24
+Mrt:         7.905000e+24
+Mrp:         1.158000e+23
+Mtp:        -5.866000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_111
+time shift:        15.0000
+half duration:      3.0000
+latitude:          63.5114
+longitude:       -146.6458
+depth:          13.9400
+Mrr:        -9.109000e+22
+Mtt:        -1.239000e+23
+Mpp:         2.150000e+23
+Mrt:         2.686000e+23
+Mrp:         2.537000e+23
+Mtp:        -1.533000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_112
+time shift:        15.0000
+half duration:      3.4000
+latitude:          63.5426
+longitude:       -146.8432
+depth:          29.7000
+Mrr:         1.745000e+24
+Mtt:        -2.569000e+24
+Mpp:         8.247000e+23
+Mrt:        -4.708000e+24
+Mrp:         1.387000e+24
+Mtp:        -5.807000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_113
+time shift:        15.2000
+half duration:      1.2000
+latitude:          63.4864
+longitude:       -146.4473
+depth:           2.1220
+Mrr:         1.691000e+24
+Mtt:        -2.490000e+24
+Mpp:         7.994000e+23
+Mrt:        -4.563000e+24
+Mrp:         1.345000e+24
+Mtp:        -5.629000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_114
+time shift:        15.2000
+half duration:      1.2000
+latitude:          63.4895
+longitude:       -146.5480
+depth:           2.1220
+Mrr:         1.738000e+24
+Mtt:        -2.559000e+24
+Mpp:         8.214000e+23
+Mrt:        -4.689000e+24
+Mrp:         1.382000e+24
+Mtp:        -5.784000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_115
+time shift:        15.8000
+half duration:      1.2000
+latitude:          63.5332
+longitude:       -146.5412
+depth:          29.7000
+Mrr:         5.234000e+24
+Mtt:        -7.708000e+24
+Mpp:         2.474000e+24
+Mrt:        -1.412000e+25
+Mrp:         4.162000e+24
+Mtp:        -1.742000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_116
+time shift:        15.8000
+half duration:      2.2000
+latitude:          63.5363
+longitude:       -146.6419
+depth:          29.7000
+Mrr:         4.362000e+24
+Mtt:        -6.424000e+24
+Mpp:         2.062000e+24
+Mrt:        -1.177000e+25
+Mrp:         3.469000e+24
+Mtp:        -1.452000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_117
+time shift:        15.8000
+half duration:      4.2000
+latitude:          63.5395
+longitude:       -146.7426
+depth:          29.7000
+Mrr:         3.053000e+24
+Mtt:        -4.497000e+24
+Mpp:         1.443000e+24
+Mrt:        -8.239000e+24
+Mrp:         2.428000e+24
+Mtp:        -1.016000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_118
+time shift:        16.6000
+half duration:      4.2000
+latitude:          63.5332
+longitude:       -146.7436
+depth:          25.7600
+Mrr:         3.053000e+24
+Mtt:        -4.497000e+24
+Mpp:         1.443000e+24
+Mrt:        -8.239000e+24
+Mrp:         2.428000e+24
+Mtp:        -1.016000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_119
+time shift:        17.2000
+half duration:      3.6000
+latitude:          63.5301
+longitude:       -146.6428
+depth:          25.7600
+Mrr:         4.362000e+24
+Mtt:        -6.424000e+24
+Mpp:         2.062000e+24
+Mrt:        -1.177000e+25
+Mrp:         3.469000e+24
+Mtp:        -1.452000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_12
+time shift:         5.0000
+half duration:      2.6000
+latitude:          63.5232
+longitude:       -147.5523
+depth:           9.6000
+Mrr:         1.544000e+25
+Mtt:        -1.648000e+25
+Mpp:         1.031000e+24
+Mrt:         8.534000e+24
+Mrp:        -6.602000e+24
+Mtp:         2.512000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_120
+time shift:        17.4000
+half duration:      1.4000
+latitude:          63.5301
+longitude:       -146.4404
+depth:          29.7000
+Mrr:         5.234000e+24
+Mtt:        -7.708000e+24
+Mpp:         2.474000e+24
+Mrt:        -1.412000e+25
+Mrp:         4.162000e+24
+Mtp:        -1.742000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_121
+time shift:        17.6000
+half duration:      1.6000
+latitude:          63.4895
+longitude:       -146.3456
+depth:           6.0610
+Mrr:        -2.618000e+24
+Mtt:         1.355000e+24
+Mpp:         1.263000e+24
+Mrt:         7.285000e+24
+Mrp:         1.078000e+24
+Mtp:        -9.077000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_122
+time shift:        17.6000
+half duration:      2.6000
+latitude:          63.5269
+longitude:       -146.5421
+depth:          25.7600
+Mrr:         6.106000e+24
+Mtt:        -8.993000e+24
+Mpp:         2.887000e+24
+Mrt:        -1.648000e+25
+Mrp:         4.856000e+24
+Mtp:        -2.033000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_123
+time shift:        17.8000
+half duration:      1.8000
+latitude:          63.4926
+longitude:       -146.4463
+depth:           6.0610
+Mrr:        -8.215000e+23
+Mtt:         3.844000e+23
+Mpp:         4.371000e+23
+Mrt:         2.290000e+24
+Mrp:         3.899000e+23
+Mtp:        -3.139000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_124
+time shift:        18.2000
+half duration:      1.4000
+latitude:          63.4833
+longitude:       -146.3466
+depth:           2.1220
+Mrr:        -1.728000e+24
+Mtt:         8.945000e+23
+Mpp:         8.338000e+23
+Mrt:         4.810000e+24
+Mrp:         7.119000e+23
+Mtp:        -5.993000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_125
+time shift:        18.4000
+half duration:      2.2000
+latitude:          63.4957
+longitude:       -146.3446
+depth:          10.0000
+Mrr:        -2.118000e+24
+Mtt:         1.096000e+24
+Mpp:         1.022000e+24
+Mrt:         5.893000e+24
+Mrp:         8.723000e+23
+Mtp:        -7.343000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_126
+time shift:        19.0000
+half duration:      1.4000
+latitude:          63.4926
+longitude:       -146.2440
+depth:          10.0000
+Mrr:        -2.420000e+24
+Mtt:         1.253000e+24
+Mpp:         1.168000e+24
+Mrt:         6.735000e+24
+Mrp:         9.969000e+23
+Mtp:        -8.392000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_127
+time shift:        19.0000
+half duration:      1.4000
+latitude:          63.5269
+longitude:       -146.3398
+depth:          29.7000
+Mrr:         4.362000e+24
+Mtt:        -6.424000e+24
+Mpp:         2.062000e+24
+Mrt:        -1.177000e+25
+Mrp:         3.469000e+24
+Mtp:        -1.452000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_128
+time shift:        19.2000
+half duration:      1.6000
+latitude:          63.4864
+longitude:       -146.2449
+depth:           6.0610
+Mrr:        -2.036000e+24
+Mtt:         1.054000e+24
+Mpp:         9.822000e+23
+Mrt:         5.666000e+24
+Mrp:         8.387000e+23
+Mtp:        -7.060000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_129
+time shift:        19.8000
+half duration:      1.2000
+latitude:          63.4853
+longitude:       -146.1292
+depth:          13.7900
+Mrr:        -2.841000e+24
+Mtt:        -9.350000e+24
+Mpp:         1.219000e+25
+Mrt:         8.157000e+24
+Mrp:        -1.080000e+24
+Mtp:        -1.022000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_13
+time shift:         5.0000
+half duration:      3.0000
+latitude:          63.5147
+longitude:       -147.3536
+depth:           2.1220
+Mrr:        -1.459000e+22
+Mtt:        -1.204000e+22
+Mpp:         2.663000e+22
+Mrt:         4.234000e+22
+Mrp:         3.078000e+22
+Mtp:        -1.900000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_130
+time shift:        19.8000
+half duration:      1.2000
+latitude:          63.4796
+longitude:       -146.1354
+depth:           9.8480
+Mrr:        -4.376000e+24
+Mtt:        -1.440000e+25
+Mpp:         1.878000e+25
+Mrt:         1.257000e+25
+Mrp:        -1.663000e+24
+Mtp:        -1.574000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_131
+time shift:        19.8000
+half duration:      1.2000
+latitude:          63.4740
+longitude:       -146.1416
+depth:           5.9090
+Mrr:        -6.148000e+24
+Mtt:        -1.534000e+25
+Mpp:         2.149000e+25
+Mrt:         1.718000e+25
+Mrp:        -3.320000e+24
+Mtp:        -1.829000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_132
+time shift:        20.8000
+half duration:      3.8000
+latitude:          63.5176
+longitude:       -146.4424
+depth:          21.8200
+Mrr:         3.072000e+24
+Mtt:        -4.524000e+24
+Mpp:         1.452000e+24
+Mrt:        -8.289000e+24
+Mrp:         2.443000e+24
+Mtp:        -1.022000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_133
+time shift:        21.0000
+half duration:      1.6000
+latitude:          63.4684
+longitude:       -146.1477
+depth:           1.9700
+Mrr:        -5.090000e+24
+Mtt:        -9.652000e+24
+Mpp:         1.474000e+25
+Mrt:         1.392000e+25
+Mrp:        -3.362000e+24
+Mtp:        -1.276000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_134
+time shift:        21.4000
+half duration:      1.2000
+latitude:          63.4655
+longitude:       -146.0388
+depth:          13.7900
+Mrr:        -5.446000e+24
+Mtt:        -1.033000e+25
+Mpp:         1.577000e+25
+Mrt:         1.489000e+25
+Mrp:        -3.598000e+24
+Mtp:        -1.365000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_135
+time shift:        21.4000
+half duration:      1.2000
+latitude:          63.4599
+longitude:       -146.0449
+depth:           9.8480
+Mrr:        -7.260000e+24
+Mtt:        -1.377000e+25
+Mpp:         2.103000e+25
+Mrt:         1.985000e+25
+Mrp:        -4.796000e+24
+Mtp:        -1.820000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_136
+time shift:        21.4000
+half duration:      2.0000
+latitude:          63.5113
+longitude:       -146.2410
+depth:          21.8200
+Mrr:         1.920000e+24
+Mtt:        -2.827000e+24
+Mpp:         9.075000e+23
+Mrt:        -5.181000e+24
+Mrp:         1.527000e+24
+Mtp:        -6.390000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_137
+time shift:        21.4000
+half duration:      2.2000
+latitude:          63.5175
+longitude:       -146.2400
+depth:          25.7600
+Mrr:         4.106000e+24
+Mtt:        -6.251000e+24
+Mpp:         2.145000e+24
+Mrt:        -1.106000e+25
+Mrp:         3.523000e+24
+Mtp:        -1.512000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_138
+time shift:        21.6000
+half duration:      2.6000
+latitude:          63.4909
+longitude:       -146.1231
+depth:          17.7300
+Mrr:        -7.843000e+22
+Mtt:        -7.329000e+24
+Mpp:         7.407000e+24
+Mrt:         9.188000e+23
+Mrp:         1.392000e+24
+Mtp:        -5.806000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_139
+time shift:        21.6000
+half duration:      4.2000
+latitude:          63.5238
+longitude:       -146.4414
+depth:          25.7600
+Mrr:         6.543000e+24
+Mtt:        -9.635000e+24
+Mpp:         3.093000e+24
+Mrt:        -1.766000e+25
+Mrp:         5.203000e+24
+Mtp:        -2.178000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_14
+time shift:         5.2000
+half duration:      1.4000
+latitude:          63.4867
+longitude:       -147.6427
+depth:           7.4800
+Mrr:         2.085000e+25
+Mtt:        -2.139000e+25
+Mpp:         5.370000e+23
+Mrt:         1.083000e+25
+Mrp:        -3.994000e+24
+Mtp:         4.074000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_140
+time shift:        21.8000
+half duration:      1.4000
+latitude:          63.4767
+longitude:       -146.0264
+depth:          21.6700
+Mrr:         1.233000e+24
+Mtt:        -1.370000e+25
+Mpp:         1.247000e+25
+Mrt:        -1.798000e+24
+Mrp:         4.040000e+24
+Mtp:        -9.442000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_141
+time shift:        21.8000
+half duration:      1.6000
+latitude:          63.4543
+longitude:       -146.0510
+depth:           5.9090
+Mrr:        -8.377000e+24
+Mtt:        -1.588000e+25
+Mpp:         2.426000e+25
+Mrt:         2.291000e+25
+Mrp:        -5.533000e+24
+Mtp:        -2.100000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_142
+time shift:        21.8000
+half duration:      1.6000
+latitude:          63.4487
+longitude:       -146.0571
+depth:           1.9700
+Mrr:        -5.587000e+24
+Mtt:        -1.059000e+25
+Mpp:         1.618000e+25
+Mrt:         1.528000e+25
+Mrp:        -3.691000e+24
+Mtp:        -1.401000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_143
+time shift:        21.8000
+half duration:      2.8000
+latitude:          63.5207
+longitude:       -146.3408
+depth:          25.7600
+Mrr:         5.338000e+24
+Mtt:        -8.127000e+24
+Mpp:         2.788000e+24
+Mrt:        -1.438000e+25
+Mrp:         4.580000e+24
+Mtp:        -1.965000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_144
+time shift:        22.0000
+half duration:      4.0000
+latitude:          63.5144
+longitude:       -146.3417
+depth:          21.8200
+Mrr:         2.688000e+24
+Mtt:        -3.958000e+24
+Mpp:         1.270000e+24
+Mrt:        -7.253000e+24
+Mrp:         2.137000e+24
+Mtp:        -8.946000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_145
+time shift:        22.2000
+half duration:      1.8000
+latitude:          63.4711
+longitude:       -146.0326
+depth:          17.7300
+Mrr:        -1.612000e+24
+Mtt:        -8.382000e+24
+Mpp:         9.994000e+24
+Mrt:         4.931000e+24
+Mrp:         6.230000e+21
+Mtp:        -8.201000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_146
+time shift:        23.0000
+half duration:      1.2000
+latitude:          63.4458
+longitude:       -145.9481
+depth:          13.7900
+Mrr:        -5.027000e+24
+Mtt:        -9.533000e+24
+Mpp:         1.456000e+25
+Mrt:         1.375000e+25
+Mrp:        -3.321000e+24
+Mtp:        -1.260000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_147
+time shift:        23.0000
+half duration:      3.0000
+latitude:          63.4965
+longitude:       -146.1170
+depth:          21.6700
+Mrr:         1.711000e+24
+Mtt:        -1.033000e+25
+Mpp:         8.623000e+24
+Mrt:        -3.348000e+24
+Mrp:         3.862000e+24
+Mtp:        -6.320000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_148
+time shift:        23.2000
+half duration:      1.2000
+latitude:          63.4570
+longitude:       -145.9359
+depth:          21.6700
+Mrr:         8.415000e+23
+Mtt:        -1.190000e+25
+Mpp:         1.106000e+25
+Mrt:        -9.771000e+23
+Mrp:         3.271000e+24
+Mtp:        -8.437000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_149
+time shift:        23.2000
+half duration:      1.4000
+latitude:          63.4514
+longitude:       -145.9420
+depth:          17.7300
+Mrr:        -2.761000e+24
+Mtt:        -6.011000e+24
+Mpp:         8.772000e+24
+Mrt:         7.626000e+24
+Mrp:        -1.668000e+24
+Mtp:        -7.527000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_15
+time shift:         5.4000
+half duration:      1.8000
+latitude:          63.5271
+longitude:       -147.1493
+depth:          13.9400
+Mrr:         2.095000e+24
+Mtt:        -3.085000e+24
+Mpp:         9.902000e+23
+Mrt:        -5.653000e+24
+Mrp:         1.666000e+24
+Mtp:        -6.972000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_150
+time shift:        23.2000
+half duration:      1.8000
+latitude:          63.4824
+longitude:       -146.0203
+depth:          25.6100
+Mrr:         3.888000e+24
+Mtt:        -2.348000e+25
+Mpp:         1.959000e+25
+Mrt:        -7.606000e+24
+Mrp:         8.774000e+24
+Mtp:        -1.436000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_151
+time shift:        23.4000
+half duration:      1.6000
+latitude:          63.4345
+longitude:       -145.9604
+depth:           5.9090
+Mrr:        -9.075000e+24
+Mtt:        -1.721000e+25
+Mpp:         2.628000e+25
+Mrt:         2.482000e+25
+Mrp:        -5.995000e+24
+Mtp:        -2.275000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_152
+time shift:        23.6000
+half duration:      1.6000
+latitude:          63.5021
+longitude:       -146.1109
+depth:          25.6100
+Mrr:         3.596000e+24
+Mtt:        -1.948000e+25
+Mpp:         1.589000e+25
+Mrt:        -7.254000e+24
+Mrp:         7.665000e+24
+Mtp:        -1.153000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_153
+time shift:        24.0000
+half duration:      1.4000
+latitude:          63.4290
+longitude:       -145.9666
+depth:           1.9700
+Mrr:        -6.424000e+24
+Mtt:        -1.218000e+25
+Mpp:         1.860000e+25
+Mrt:         1.757000e+25
+Mrp:        -4.243000e+24
+Mtp:        -1.610000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_154
+time shift:        24.0000
+half duration:      1.6000
+latitude:          63.4402
+longitude:       -145.9543
+depth:           9.8480
+Mrr:        -7.623000e+24
+Mtt:        -1.446000e+25
+Mpp:         2.208000e+25
+Mrt:         2.085000e+25
+Mrp:        -5.036000e+24
+Mtp:        -1.911000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_155
+time shift:        24.2000
+half duration:      4.0000
+latitude:          63.4801
+longitude:       -146.2459
+depth:           2.1220
+Mrr:        -1.666000e+24
+Mtt:         7.798000e+23
+Mpp:         8.865000e+23
+Mrt:         4.645000e+24
+Mrp:         7.908000e+23
+Mtp:        -6.366000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_156
+time shift:        24.6000
+half duration:      1.2000
+latitude:          63.4261
+longitude:       -145.8576
+depth:          13.7900
+Mrr:        -2.583000e+24
+Mtt:        -6.446000e+24
+Mpp:         9.029000e+24
+Mrt:         7.216000e+24
+Mrp:        -1.395000e+24
+Mtp:        -7.685000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_157
+time shift:        24.6000
+half duration:      1.4000
+latitude:          63.4682
+longitude:       -145.9237
+depth:          29.5400
+Mrr:         6.804000e+24
+Mtt:        -2.390000e+25
+Mpp:         1.709000e+25
+Mrt:        -1.500000e+25
+Mrp:         1.190000e+25
+Mtp:        -1.169000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_158
+time shift:        24.8000
+half duration:      1.4000
+latitude:          63.4092
+longitude:       -145.8760
+depth:           1.9700
+Mrr:        -6.639000e+24
+Mtt:        -1.259000e+25
+Mpp:         1.923000e+25
+Mrt:         1.815000e+25
+Mrp:        -4.385000e+24
+Mtp:        -1.664000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_159
+time shift:        24.8000
+half duration:      1.6000
+latitude:          63.4880
+longitude:       -146.0141
+depth:          29.5400
+Mrr:         6.804000e+24
+Mtt:        -2.390000e+25
+Mpp:         1.709000e+25
+Mrt:        -1.500000e+25
+Mrp:         1.190000e+25
+Mtp:        -1.169000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_16
+time shift:         5.4000
+half duration:      2.6000
+latitude:          63.5660
+longitude:       -147.3619
+depth:          11.7200
+Mrr:         5.974000e+23
+Mtt:        -6.419000e+23
+Mpp:         4.448000e+22
+Mrt:         3.338000e+23
+Mrp:        -2.817000e+23
+Mtp:         1.131000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_160
+time shift:        25.4000
+half duration:      4.2000
+latitude:          63.5238
+longitude:       -146.2390
+depth:          29.7000
+Mrr:         5.670000e+24
+Mtt:        -8.351000e+24
+Mpp:         2.680000e+24
+Mrt:        -1.530000e+25
+Mrp:         4.509000e+24
+Mtp:        -1.887000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_161
+time shift:        25.8000
+half duration:      1.2000
+latitude:          63.4627
+longitude:       -145.9298
+depth:          25.6100
+Mrr:         5.758000e+24
+Mtt:        -2.022000e+25
+Mpp:         1.446000e+25
+Mrt:        -1.269000e+25
+Mrp:         1.007000e+25
+Mtp:        -9.895000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_162
+time shift:        26.0000
+half duration:      1.2000
+latitude:          63.4485
+longitude:       -145.8331
+depth:          29.5400
+Mrr:         3.664000e+24
+Mtt:        -1.287000e+25
+Mpp:         9.203000e+24
+Mrt:        -8.076000e+24
+Mrp:         6.405000e+24
+Mtp:        -6.297000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_163
+time shift:        26.2000
+half duration:      1.2000
+latitude:          63.3895
+longitude:       -145.7854
+depth:           1.9700
+Mrr:        -6.038000e+24
+Mtt:        -1.145000e+25
+Mpp:         1.749000e+25
+Mrt:         1.651000e+25
+Mrp:        -3.989000e+24
+Mtp:        -1.514000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_164
+time shift:        26.8000
+half duration:      1.8000
+latitude:          63.3951
+longitude:       -145.7793
+depth:           5.9090
+Mrr:        -6.148000e+24
+Mtt:        -1.534000e+25
+Mpp:         2.149000e+25
+Mrt:         1.718000e+25
+Mrp:        -3.320000e+24
+Mtp:        -1.829000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_165
+time shift:        26.8000
+half duration:      4.0000
+latitude:          63.5077
+longitude:       -146.1048
+depth:          29.5400
+Mrr:         5.234000e+24
+Mtt:        -1.838000e+25
+Mpp:         1.315000e+25
+Mrt:        -1.154000e+25
+Mrp:         9.151000e+24
+Mtp:        -8.996000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_166
+time shift:        27.6000
+half duration:      3.8000
+latitude:          63.4148
+longitude:       -145.8699
+depth:           5.9090
+Mrr:        -8.377000e+24
+Mtt:        -1.588000e+25
+Mpp:         2.426000e+25
+Mrt:         2.291000e+25
+Mrp:        -5.533000e+24
+Mtp:        -2.100000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_167
+time shift:        27.8000
+half duration:      1.2000
+latitude:          63.3698
+longitude:       -145.6949
+depth:           1.9700
+Mrr:        -5.093000e+24
+Mtt:        -1.109000e+25
+Mpp:         1.618000e+25
+Mrt:         1.407000e+25
+Mrp:        -3.077000e+24
+Mtp:        -1.388000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_168
+time shift:        28.0000
+half duration:      1.4000
+latitude:          63.4007
+longitude:       -145.7731
+depth:           9.8480
+Mrr:        -2.697000e+24
+Mtt:        -1.193000e+25
+Mpp:         1.463000e+25
+Mrt:         8.043000e+24
+Mrp:        -4.107000e+23
+Mtp:        -1.208000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_169
+time shift:        28.2000
+half duration:      2.2000
+latitude:          63.4205
+longitude:       -145.8637
+depth:           9.8480
+Mrr:        -5.468000e+24
+Mtt:        -1.190000e+25
+Mpp:         1.737000e+25
+Mrt:         1.510000e+25
+Mrp:        -3.303000e+24
+Mtp:        -1.491000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_17
+time shift:         5.6000
+half duration:      2.4000
+latitude:          63.4930
+longitude:       -147.5428
+depth:           7.4800
+Mrr:         1.946000e+25
+Mtt:        -2.091000e+25
+Mpp:         1.449000e+24
+Mrt:         1.088000e+25
+Mrp:        -9.178000e+24
+Mtp:         3.686000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_170
+time shift:        29.2000
+half duration:      1.2000
+latitude:          63.3500
+longitude:       -145.6043
+depth:           1.9700
+Mrr:        -2.566000e+24
+Mtt:        -1.334000e+25
+Mpp:         1.591000e+25
+Mrt:         7.848000e+24
+Mrp:         9.918000e+21
+Mtp:        -1.306000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_171
+time shift:        29.8000
+half duration:      1.6000
+latitude:          63.3754
+longitude:       -145.6888
+depth:           5.9090
+Mrr:        -4.105000e+24
+Mtt:        -1.816000e+25
+Mpp:         2.226000e+25
+Mrt:         1.224000e+25
+Mrp:        -6.253000e+23
+Mtp:        -1.840000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_172
+time shift:        30.0000
+half duration:      3.2000
+latitude:          63.4429
+longitude:       -145.8392
+depth:          25.6100
+Mrr:         2.464000e+24
+Mtt:        -9.345000e+24
+Mpp:         6.881000e+24
+Mrt:        -5.363000e+24
+Mrp:         4.447000e+24
+Mtp:        -4.775000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_173
+time shift:        30.4000
+half duration:      2.0000
+latitude:          63.3556
+longitude:       -145.5981
+depth:           5.9090
+Mrr:        -1.912000e+24
+Mtt:        -2.396000e+25
+Mpp:         2.587000e+25
+Mrt:         7.225000e+24
+Mrp:         2.826000e+24
+Mtp:        -2.068000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_174
+time shift:        30.6000
+half duration:      3.4000
+latitude:          63.4119
+longitude:       -145.7609
+depth:          17.7300
+Mrr:         2.095000e+24
+Mtt:        -7.357000e+24
+Mpp:         5.262000e+24
+Mrt:        -4.617000e+24
+Mrp:         3.662000e+24
+Mtp:        -3.600000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_175
+time shift:        31.8000
+half duration:      1.4000
+latitude:          63.3866
+longitude:       -145.6765
+depth:          13.7900
+Mrr:         6.284000e+24
+Mtt:        -2.207000e+25
+Mpp:         1.579000e+25
+Mrt:        -1.385000e+25
+Mrp:         1.099000e+25
+Mtp:        -1.080000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_176
+time shift:        31.8000
+half duration:      2.2000
+latitude:          63.3922
+longitude:       -145.6703
+depth:          17.7300
+Mrr:         5.027000e+24
+Mtt:        -1.766000e+25
+Mpp:         1.263000e+25
+Mrt:        -1.108000e+25
+Mrp:         8.789000e+24
+Mtp:        -8.640000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_177
+time shift:        31.8000
+half duration:      2.8000
+latitude:          63.4063
+longitude:       -145.7671
+depth:          13.7900
+Mrr:         2.525000e+24
+Mtt:        -1.239000e+25
+Mpp:         9.866000e+24
+Mrt:        -5.220000e+24
+Mrp:         5.123000e+24
+Mtp:        -7.092000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_178
+time shift:        32.2000
+half duration:      2.6000
+latitude:          63.4288
+longitude:       -145.7424
+depth:          29.5400
+Mrr:        -3.664000e+24
+Mtt:        -6.948000e+24
+Mpp:         1.061000e+25
+Mrt:         1.002000e+25
+Mrp:        -2.420000e+24
+Mtp:        -9.184000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_179
+time shift:        32.4000
+half duration:      1.2000
+latitude:          63.3162
+longitude:       -145.4171
+depth:           5.9090
+Mrr:        -3.920000e+23
+Mtt:        -3.663000e+25
+Mpp:         3.703000e+25
+Mrt:         4.593000e+24
+Mrp:         6.959000e+24
+Mtp:        -2.902000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_18
+time shift:         5.8000
+half duration:      2.0000
+latitude:          63.5209
+longitude:       -147.1502
+depth:          10.0000
+Mrr:         9.075000e+23
+Mtt:        -1.337000e+24
+Mpp:         4.290000e+23
+Mrt:        -2.449000e+24
+Mrp:         7.217000e+23
+Mtp:        -3.021000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_180
+time shift:        32.6000
+half duration:      2.0000
+latitude:          63.3416
+longitude:       -145.5015
+depth:           9.8480
+Mrr:         1.182000e+24
+Mtt:        -3.802000e+25
+Mpp:         3.684000e+25
+Mrt:         7.173000e+23
+Mrp:         8.878000e+24
+Mtp:        -2.849000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_181
+time shift:        32.8000
+half duration:      1.6000
+latitude:          63.3106
+longitude:       -145.4232
+depth:           1.9700
+Mrr:        -1.943000e+24
+Mtt:        -2.434000e+25
+Mpp:         2.628000e+25
+Mrt:         7.339000e+24
+Mrp:         2.871000e+24
+Mtp:        -2.101000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_182
+time shift:        32.8000
+half duration:      3.4000
+latitude:          63.4176
+longitude:       -145.7548
+depth:          21.6700
+Mrr:         2.404000e+23
+Mtt:        -3.401000e+24
+Mpp:         3.160000e+24
+Mrt:        -2.792000e+23
+Mrp:         9.345000e+23
+Mtp:        -2.411000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_183
+time shift:        33.2000
+half duration:      2.4000
+latitude:          63.3303
+longitude:       -145.5138
+depth:           1.9700
+Mrr:        -1.530000e+24
+Mtt:        -1.917000e+25
+Mpp:         2.070000e+25
+Mrt:         5.779000e+24
+Mrp:         2.261000e+24
+Mtp:        -1.654000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_184
+time shift:        33.2000
+half duration:      3.0000
+latitude:          63.4035
+longitude:       -145.6581
+depth:          25.6100
+Mrr:        -3.596000e+24
+Mtt:        -1.367000e+25
+Mpp:         1.727000e+25
+Mrt:         1.051000e+25
+Mrp:        -9.972000e+23
+Mtp:        -1.437000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_185
+time shift:        33.2000
+half duration:      3.2000
+latitude:          63.3979
+longitude:       -145.6642
+depth:          21.6700
+Mrr:         6.025000e+23
+Mtt:        -1.179000e+25
+Mpp:         1.119000e+25
+Mrt:        -3.792000e+23
+Mrp:         2.999000e+24
+Mtp:        -8.593000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_186
+time shift:        33.4000
+half duration:      1.2000
+latitude:          63.3218
+longitude:       -145.4109
+depth:           9.8480
+Mrr:        -3.941000e+23
+Mtt:        -3.683000e+25
+Mpp:         3.723000e+25
+Mrt:         4.617000e+24
+Mrp:         6.997000e+24
+Mtp:        -2.918000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_187
+time shift:        33.8000
+half duration:      2.2000
+latitude:          63.3387
+longitude:       -145.3925
+depth:          21.6700
+Mrr:         4.558000e+24
+Mtt:        -3.107000e+25
+Mpp:         2.651000e+25
+Mrt:        -8.570000e+24
+Mrp:         1.100000e+25
+Mtp:        -1.960000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_188
+time shift:        33.8000
+half duration:      2.2000
+latitude:          63.3837
+longitude:       -145.5675
+depth:          25.6100
+Mrr:        -3.740000e+24
+Mtt:        -1.945000e+25
+Mpp:         2.319000e+25
+Mrt:         1.144000e+25
+Mrp:         1.446000e+22
+Mtp:        -1.903000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_189
+time shift:        33.8000
+half duration:      2.6000
+latitude:          63.3669
+longitude:       -145.5859
+depth:          13.7900
+Mrr:         5.187000e+24
+Mtt:        -3.132000e+25
+Mpp:         2.614000e+25
+Mrt:        -1.015000e+25
+Mrp:         1.170000e+25
+Mtp:        -1.916000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_19
+time shift:         5.8000
+half duration:      2.8000
+latitude:          63.5055
+longitude:       -147.3428
+depth:           7.4800
+Mrr:         5.149000e+23
+Mtt:        -5.532000e+23
+Mpp:         3.834000e+22
+Mrt:         2.877000e+23
+Mrp:        -2.428000e+23
+Mtp:         9.752000e+22
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_190
+time shift:        33.8000
+half duration:      4.2000
+latitude:          63.4232
+longitude:       -145.7486
+depth:          25.6100
+Mrr:        -2.760000e+24
+Mtt:        -9.085000e+24
+Mpp:         1.185000e+25
+Mrt:         7.927000e+24
+Mrp:        -1.049000e+24
+Mtp:        -9.928000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_191
+time shift:        34.0000
+half duration:      1.2000
+latitude:          63.3133
+longitude:       -145.3081
+depth:          17.7300
+Mrr:         5.181000e+24
+Mtt:        -2.807000e+25
+Mpp:         2.289000e+25
+Mrt:        -1.045000e+25
+Mrp:         1.104000e+25
+Mtp:        -1.662000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_192
+time shift:        34.2000
+half duration:      2.4000
+latitude:          63.3359
+longitude:       -145.5076
+depth:           5.9090
+Mrr:        -3.528000e+23
+Mtt:        -3.297000e+25
+Mpp:         3.332000e+25
+Mrt:         4.133000e+24
+Mrp:         6.263000e+24
+Mtp:        -2.612000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_193
+time shift:        34.6000
+half duration:      2.2000
+latitude:          63.3697
+longitude:       -145.4708
+depth:          29.5400
+Mrr:        -5.071000e+24
+Mtt:        -1.266000e+25
+Mpp:         1.773000e+25
+Mrt:         1.417000e+25
+Mrp:        -2.739000e+24
+Mtp:        -1.509000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_194
+time shift:        35.0000
+half duration:      1.2000
+latitude:          63.2908
+longitude:       -145.3327
+depth:           1.9700
+Mrr:        -4.520000e+24
+Mtt:        -2.000000e+25
+Mpp:         2.452000e+25
+Mrt:         1.348000e+25
+Mrp:        -6.885000e+23
+Mtp:        -2.026000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_195
+time shift:        35.0000
+half duration:      4.2000
+latitude:          63.3810
+longitude:       -145.6826
+depth:           9.8480
+Mrr:         6.113000e+23
+Mtt:        -1.966000e+25
+Mpp:         1.905000e+25
+Mrt:         3.710000e+23
+Mrp:         4.592000e+24
+Mtp:        -1.474000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_196
+time shift:        35.2000
+half duration:      1.4000
+latitude:          63.2965
+longitude:       -145.3265
+depth:           5.9090
+Mrr:        -3.837000e+24
+Mtt:        -2.901000e+25
+Mpp:         3.284000e+25
+Mrt:         1.262000e+25
+Mrp:         1.836000e+24
+Mtp:        -2.660000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_197
+time shift:        35.2000
+half duration:      3.8000
+latitude:          63.4091
+longitude:       -145.6519
+depth:          29.5400
+Mrr:        -4.435000e+24
+Mtt:        -9.655000e+24
+Mpp:         1.409000e+25
+Mrt:         1.225000e+25
+Mrp:        -2.679000e+24
+Mtp:        -1.209000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_198
+time shift:        35.4000
+half duration:      4.0000
+latitude:          63.3725
+longitude:       -145.5798
+depth:          17.7300
+Mrr:         3.224000e+24
+Mtt:        -2.197000e+25
+Mpp:         1.875000e+25
+Mrt:        -6.061000e+24
+Mrp:         7.778000e+24
+Mtp:        -1.386000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_199
+time shift:        35.6000
+half duration:      1.4000
+latitude:          63.2824
+longitude:       -145.2298
+depth:           9.8480
+Mrr:        -1.017000e+24
+Mtt:        -1.826000e+25
+Mpp:         1.928000e+25
+Mrt:         4.384000e+24
+Mrp:         2.612000e+24
+Mtp:        -1.531000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_2
+time shift:         2.0000
+half duration:      0.8000
+latitude:          63.5295
+longitude:       -147.4523
+depth:           9.6000
+Mrr:         1.371000e+25
+Mtt:        -1.443000e+25
+Mpp:         7.168000e+23
+Mrt:         7.415000e+24
+Mrp:        -4.717000e+24
+Mtp:         1.536000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_20
+time shift:         6.0000
+half duration:      1.8000
+latitude:          63.5169
+longitude:       -147.6523
+depth:           9.6000
+Mrr:         2.312000e+25
+Mtt:        -2.220000e+25
+Mpp:        -9.253000e+23
+Mrt:         1.078000e+25
+Mrp:         4.314000e+24
+Mtp:        -4.851000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_200
+time shift:        35.6000
+half duration:      3.4000
+latitude:          63.3894
+longitude:       -145.5614
+depth:          29.5400
+Mrr:        -3.942000e+24
+Mtt:        -8.582000e+24
+Mpp:         1.252000e+25
+Mrt:         1.089000e+25
+Mrp:        -2.382000e+24
+Mtp:        -1.075000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_201
+time shift:        35.6000
+half duration:      4.2000
+latitude:          63.3613
+longitude:       -145.5921
+depth:           9.8480
+Mrr:         2.084000e+24
+Mtt:        -2.947000e+25
+Mpp:         2.739000e+25
+Mrt:        -2.420000e+24
+Mrp:         8.099000e+24
+Mtp:        -2.089000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_202
+time shift:        36.2000
+half duration:      1.8000
+latitude:          63.3640
+longitude:       -145.4770
+depth:          25.6100
+Mrr:        -2.984000e+24
+Mtt:        -2.255000e+25
+Mpp:         2.554000e+25
+Mrt:         9.816000e+24
+Mrp:         1.427000e+24
+Mtp:        -2.068000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_203
+time shift:        36.4000
+half duration:      1.2000
+latitude:          63.3189
+longitude:       -145.3020
+depth:          21.6700
+Mrr:         7.710000e+24
+Mtt:        -3.170000e+25
+Mpp:         2.399000e+25
+Mrt:        -1.654000e+25
+Mrp:         1.441000e+25
+Mtp:        -1.686000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_204
+time shift:        36.8000
+half duration:      3.0000
+latitude:          63.3331
+longitude:       -145.3987
+depth:          17.7300
+Mrr:         4.214000e+24
+Mtt:        -3.295000e+25
+Mpp:         2.874000e+25
+Mrt:        -7.508000e+24
+Mrp:         1.102000e+25
+Mtp:        -2.142000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_205
+time shift:        36.8000
+half duration:      3.6000
+latitude:          63.3077
+longitude:       -145.3142
+depth:          13.7900
+Mrr:         1.487000e+24
+Mtt:        -2.910000e+25
+Mpp:         2.761000e+25
+Mrt:        -9.360000e+23
+Mrp:         7.401000e+24
+Mtp:        -2.121000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_206
+time shift:        37.0000
+half duration:      4.2000
+latitude:          63.3781
+longitude:       -145.5737
+depth:          21.6700
+Mrr:        -1.119000e+24
+Mtt:        -2.009000e+25
+Mpp:         2.120000e+25
+Mrt:         4.822000e+24
+Mrp:         2.874000e+24
+Mtp:        -1.684000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_207
+time shift:        37.4000
+half duration:      1.8000
+latitude:          63.2711
+longitude:       -145.2421
+depth:           1.9700
+Mrr:        -3.200000e+24
+Mtt:        -1.416000e+25
+Mpp:         1.736000e+25
+Mrt:         9.546000e+24
+Mrp:        -4.875000e+23
+Mtp:        -1.434000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_208
+time shift:        37.4000
+half duration:      4.2000
+latitude:          63.3471
+longitude:       -145.4954
+depth:          13.7900
+Mrr:         2.733000e+24
+Mtt:        -3.866000e+25
+Mpp:         3.592000e+25
+Mrt:        -3.173000e+24
+Mrp:         1.062000e+25
+Mtp:        -2.740000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_209
+time shift:        37.6000
+half duration:      1.8000
+latitude:          63.2570
+longitude:       -145.1454
+depth:           5.9090
+Mrr:        -4.272000e+24
+Mtt:        -9.300000e+24
+Mpp:         1.357000e+25
+Mrt:         1.180000e+25
+Mrp:        -2.581000e+24
+Mtp:        -1.165000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_21
+time shift:         6.2000
+half duration:      1.4000
+latitude:          63.5239
+longitude:       -147.0486
+depth:          13.9400
+Mrr:         6.982000e+23
+Mtt:        -1.028000e+24
+Mpp:         3.301000e+23
+Mrt:        -1.884000e+24
+Mrp:         5.553000e+23
+Mtp:        -2.324000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_210
+time shift:        37.6000
+half duration:      2.2000
+latitude:          63.3246
+longitude:       -145.2959
+depth:          25.6100
+Mrr:         9.421000e+24
+Mtt:        -3.309000e+25
+Mpp:         2.367000e+25
+Mrt:        -2.077000e+25
+Mrp:         1.647000e+25
+Mtp:        -1.619000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_211
+time shift:        37.8000
+half duration:      1.2000
+latitude:          63.2768
+longitude:       -145.2359
+depth:           5.9090
+Mrr:        -3.176000e+24
+Mtt:        -1.971000e+25
+Mpp:         2.288000e+25
+Mrt:         1.003000e+25
+Mrp:         6.537000e+23
+Mtp:        -1.865000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_212
+time shift:        38.0000
+half duration:      3.4000
+latitude:          63.3584
+longitude:       -145.4831
+depth:          21.6700
+Mrr:        -2.760000e+23
+Mtt:        -2.579000e+25
+Mpp:         2.607000e+25
+Mrt:         3.233000e+24
+Mrp:         4.899000e+24
+Mtp:        -2.043000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_213
+time shift:        38.2000
+half duration:      2.0000
+latitude:          63.3443
+longitude:       -145.3864
+depth:          25.6100
+Mrr:         4.028000e+24
+Mtt:        -2.745000e+25
+Mpp:         2.342000e+25
+Mrt:        -7.573000e+24
+Mrp:         9.718000e+24
+Mtp:        -1.732000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_214
+time shift:        38.6000
+half duration:      2.8000
+latitude:          63.2936
+longitude:       -145.2176
+depth:          17.7300
+Mrr:         3.372000e+24
+Mtt:        -2.036000e+25
+Mpp:         1.699000e+25
+Mrt:        -6.596000e+24
+Mrp:         7.608000e+24
+Mtp:        -1.245000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_215
+time shift:        38.6000
+half duration:      4.0000
+latitude:          63.3302
+longitude:       -145.2897
+depth:          29.5400
+Mrr:         5.758000e+24
+Mtt:        -2.022000e+25
+Mpp:         1.446000e+25
+Mrt:        -1.269000e+25
+Mrp:         1.007000e+25
+Mtp:        -9.895000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_216
+time shift:        38.6000
+half duration:      4.2000
+latitude:          63.3528
+longitude:       -145.4892
+depth:          17.7300
+Mrr:         9.406000e+23
+Mtt:        -3.026000e+25
+Mpp:         2.932000e+25
+Mrt:         5.709000e+23
+Mrp:         7.066000e+24
+Mtp:        -2.268000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_217
+time shift:        39.0000
+half duration:      1.6000
+latitude:          63.2851
+longitude:       -145.1147
+depth:          25.6100
+Mrr:         5.265000e+24
+Mtt:        -4.117000e+25
+Mpp:         3.590000e+25
+Mrt:        -9.379000e+24
+Mrp:         1.376000e+25
+Mtp:        -2.677000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_218
+time shift:        39.6000
+half duration:      2.0000
+latitude:          63.3021
+longitude:       -145.3203
+depth:           9.8480
+Mrr:        -2.914000e+24
+Mtt:        -2.768000e+25
+Mpp:         3.059000e+25
+Mrt:         1.014000e+25
+Mrp:         2.531000e+24
+Mtp:        -2.461000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_219
+time shift:        39.6000
+half duration:      3.4000
+latitude:          63.3274
+longitude:       -145.4048
+depth:          13.7900
+Mrr:         1.129000e+24
+Mtt:        -3.631000e+25
+Mpp:         3.518000e+25
+Mrt:         6.851000e+23
+Mrp:         8.479000e+24
+Mtp:        -2.721000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_22
+time shift:         6.2000
+half duration:      3.8000
+latitude:          63.4992
+longitude:       -147.4428
+depth:           7.4800
+Mrr:         1.586000e+25
+Mtt:        -1.704000e+25
+Mpp:         1.181000e+24
+Mrt:         8.862000e+24
+Mrp:        -7.479000e+24
+Mtp:         3.004000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_220
+time shift:        40.2000
+half duration:      1.2000
+latitude:          63.2710
+longitude:       -145.0180
+depth:          29.5400
+Mrr:        -1.116000e+24
+Mtt:        -3.411000e+25
+Mpp:         3.523000e+25
+Mrt:         6.191000e+24
+Mrp:         5.697000e+24
+Mtp:        -2.779000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_221
+time shift:        40.2000
+half duration:      4.0000
+latitude:          63.2626
+longitude:       -145.1392
+depth:           9.8480
+Mrr:        -2.462000e+24
+Mtt:        -8.101000e+24
+Mpp:         1.056000e+25
+Mrt:         7.068000e+24
+Mrp:        -9.354000e+23
+Mtp:        -8.853000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_222
+time shift:        40.6000
+half duration:      1.6000
+latitude:          63.2400
+longitude:       -144.9397
+depth:          21.6700
+Mrr:        -1.655000e+24
+Mtt:        -5.057000e+25
+Mpp:         5.223000e+25
+Mrt:         9.179000e+24
+Mrp:         8.446000e+24
+Mtp:        -4.121000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_223
+time shift:        41.0000
+half duration:      4.2000
+latitude:          63.3499
+longitude:       -145.3802
+depth:          29.5400
+Mrr:         2.589000e+24
+Mtt:        -1.765000e+25
+Mpp:         1.506000e+25
+Mrt:        -4.868000e+24
+Mrp:         6.247000e+24
+Mtp:        -1.113000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_224
+time shift:        41.2000
+half duration:      2.4000
+latitude:          63.2542
+longitude:       -145.0364
+depth:          17.7300
+Mrr:        -1.749000e+24
+Mtt:        -2.191000e+25
+Mpp:         2.366000e+25
+Mrt:         6.607000e+24
+Mrp:         2.585000e+24
+Mtp:        -1.891000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_225
+time shift:        41.4000
+half duration:      2.0000
+latitude:          63.2880
+longitude:       -145.2236
+depth:          13.7900
+Mrr:         6.114000e+23
+Mtt:        -1.967000e+25
+Mpp:         1.906000e+25
+Mrt:         3.711000e+23
+Mrp:         4.593000e+24
+Mtp:        -1.474000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_226
+time shift:        41.6000
+half duration:      1.4000
+latitude:          63.2907
+longitude:       -145.1086
+depth:          29.5400
+Mrr:         5.034000e+24
+Mtt:        -2.727000e+25
+Mpp:         2.224000e+25
+Mrt:        -1.016000e+25
+Mrp:         1.073000e+25
+Mtp:        -1.615000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_227
+time shift:        41.6000
+half duration:      1.8000
+latitude:          63.3105
+longitude:       -145.1991
+depth:          29.5400
+Mrr:         6.804000e+24
+Mtt:        -2.390000e+25
+Mpp:         1.709000e+25
+Mrt:        -1.500000e+25
+Mrp:         1.190000e+25
+Mtp:        -1.169000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_228
+time shift:        41.8000
+half duration:      2.8000
+latitude:          63.2373
+longitude:       -145.0549
+depth:           5.9090
+Mrr:        -3.839000e+24
+Mtt:        -7.280000e+24
+Mpp:         1.112000e+25
+Mrt:         1.050000e+25
+Mrp:        -2.536000e+24
+Mtp:        -9.624000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_229
+time shift:        42.0000
+half duration:      2.2000
+latitude:          63.2683
+longitude:       -145.1331
+depth:          13.7900
+Mrr:        -1.255000e+23
+Mtt:        -1.173000e+25
+Mpp:         1.185000e+25
+Mrt:         1.470000e+24
+Mrp:         2.228000e+24
+Mtp:        -9.290000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_23
+time shift:         6.2000
+half duration:      4.0000
+latitude:          63.5302
+longitude:       -147.2500
+depth:          13.9400
+Mrr:         2.095000e+24
+Mtt:        -3.085000e+24
+Mpp:         9.902000e+23
+Mrt:        -5.653000e+24
+Mrp:         1.666000e+24
+Mtp:        -6.972000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_230
+time shift:        42.4000
+half duration:      1.2000
+latitude:          63.2514
+longitude:       -145.1515
+depth:           1.9700
+Mrr:        -3.786000e+24
+Mtt:        -8.242000e+24
+Mpp:         1.203000e+25
+Mrt:         1.046000e+25
+Mrp:        -2.287000e+24
+Mtp:        -1.032000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_231
+time shift:        42.8000
+half duration:      4.2000
+latitude:          63.3049
+longitude:       -145.2052
+depth:          25.6100
+Mrr:         8.563000e+24
+Mtt:        -3.835000e+25
+Mpp:         2.979000e+25
+Mrt:        -1.806000e+25
+Mrp:         1.664000e+25
+Mtp:        -2.118000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_232
+time shift:        42.8000
+half duration:      4.2000
+latitude:          63.2992
+longitude:       -145.2114
+depth:          21.6700
+Mrr:         5.419000e+24
+Mtt:        -3.273000e+25
+Mpp:         2.731000e+25
+Mrt:        -1.060000e+25
+Mrp:         1.223000e+25
+Mtp:        -2.001000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_233
+time shift:        43.4000
+half duration:      3.0000
+latitude:          63.2486
+longitude:       -145.0426
+depth:          13.7900
+Mrr:         1.255000e+23
+Mtt:        -1.193000e+25
+Mpp:         1.180000e+25
+Mrt:         8.503000e+23
+Mrp:         2.530000e+24
+Mtp:        -9.191000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_234
+time shift:        43.4000
+half duration:      3.2000
+latitude:          63.2739
+longitude:       -145.1270
+depth:          17.7300
+Mrr:         4.703000e+23
+Mtt:        -1.513000e+25
+Mpp:         1.466000e+25
+Mrt:         2.855000e+23
+Mrp:         3.533000e+24
+Mtp:        -1.134000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_235
+time shift:        43.4000
+half duration:      4.2000
+latitude:          63.2232
+longitude:       -144.9581
+depth:           9.8480
+Mrr:         9.514000e+22
+Mtt:        -9.044000e+24
+Mpp:         8.949000e+24
+Mrt:         6.447000e+23
+Mrp:         1.918000e+24
+Mtp:        -6.968000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_236
+time shift:        43.6000
+half duration:      3.2000
+latitude:          63.2429
+longitude:       -145.0487
+depth:           9.8480
+Mrr:        -9.977000e+23
+Mtt:        -5.188000e+24
+Mpp:         6.186000e+24
+Mrt:         3.052000e+24
+Mrp:         3.856000e+21
+Mtp:        -5.076000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_237
+time shift:        43.8000
+half duration:      2.8000
+latitude:          63.2259
+longitude:       -144.8430
+depth:          25.6100
+Mrr:        -2.057000e+24
+Mtt:        -6.284000e+25
+Mpp:         6.489000e+25
+Mrt:         1.140000e+25
+Mrp:         1.049000e+25
+Mtp:        -5.120000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_238
+time shift:        44.0000
+half duration:      2.4000
+latitude:          63.2795
+longitude:       -145.1209
+depth:          21.6700
+Mrr:         2.284000e+24
+Mtt:        -3.231000e+25
+Mpp:         3.002000e+25
+Mrt:        -2.652000e+24
+Mrp:         8.878000e+24
+Mtp:        -2.290000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_239
+time shift:        44.6000
+half duration:      1.2000
+latitude:          63.1894
+longitude:       -144.7709
+depth:          13.7900
+Mrr:         7.525000e+23
+Mtt:        -2.421000e+25
+Mpp:         2.346000e+25
+Mrt:         4.567000e+23
+Mrp:         5.653000e+24
+Mtp:        -1.814000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_24
+time shift:         6.2000
+half duration:      4.0000
+latitude:          63.5177
+longitude:       -147.2520
+depth:           6.0610
+Mrr:         2.909000e+23
+Mtt:        -4.283000e+23
+Mpp:         1.375000e+23
+Mrt:        -7.849000e+23
+Mrp:         2.313000e+23
+Mtp:        -9.681000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_240
+time shift:        45.2000
+half duration:      4.2000
+latitude:          63.2513
+longitude:       -144.9274
+depth:          29.5400
+Mrr:        -5.328000e+24
+Mtt:        -4.028000e+25
+Mpp:         4.560000e+25
+Mrt:         1.753000e+25
+Mrp:         2.549000e+24
+Mtp:        -3.693000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_241
+time shift:        45.4000
+half duration:      1.8000
+latitude:          63.1696
+longitude:       -144.6803
+depth:          13.7900
+Mrr:        -1.968000e+24
+Mtt:        -2.465000e+25
+Mpp:         2.662000e+25
+Mrt:         7.433000e+24
+Mrp:         2.908000e+24
+Mtp:        -2.128000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_242
+time shift:        46.0000
+half duration:      2.6000
+latitude:          63.2176
+longitude:       -144.9642
+depth:           5.9090
+Mrr:        -2.957000e+24
+Mtt:        -6.438000e+24
+Mpp:         9.396000e+24
+Mrt:         8.169000e+24
+Mrp:        -1.787000e+24
+Mtp:        -8.062000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_243
+time shift:        46.0000
+half duration:      3.6000
+latitude:          63.2091
+longitude:       -144.8614
+depth:          13.7900
+Mrr:         3.211000e+24
+Mtt:        -2.511000e+25
+Mpp:         2.190000e+25
+Mrt:        -5.720000e+24
+Mrp:         8.394000e+24
+Mtp:        -1.632000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_244
+time shift:        46.0000
+half duration:      3.6000
+latitude:          63.2034
+longitude:       -144.8675
+depth:           9.8480
+Mrr:         1.093000e+24
+Mtt:        -1.215000e+25
+Mpp:         1.105000e+25
+Mrt:        -1.593000e+24
+Mrp:         3.581000e+24
+Mtp:        -8.369000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_245
+time shift:        46.2000
+half duration:      4.0000
+latitude:          63.2147
+longitude:       -144.8553
+depth:          17.7300
+Mrr:         2.842000e+24
+Mtt:        -4.020000e+25
+Mpp:         3.736000e+25
+Mrt:        -3.300000e+24
+Mrp:         1.105000e+25
+Mtp:        -2.850000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_246
+time shift:        46.4000
+half duration:      4.2000
+latitude:          63.2654
+longitude:       -145.0241
+depth:          25.6100
+Mrr:        -2.640000e+24
+Mtt:        -4.739000e+25
+Mpp:         5.003000e+25
+Mrt:         1.138000e+25
+Mrp:         6.780000e+24
+Mtp:        -3.973000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_247
+time shift:        46.6000
+half duration:      1.6000
+latitude:          63.2457
+longitude:       -144.9336
+depth:          25.6100
+Mrr:        -4.643000e+24
+Mtt:        -5.818000e+25
+Mpp:         6.282000e+25
+Mrt:         1.754000e+25
+Mrp:         6.862000e+24
+Mtp:        -5.021000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_248
+time shift:        47.0000
+half duration:      1.6000
+latitude:          63.1865
+longitude:       -144.6619
+depth:          25.6100
+Mrr:         1.410000e+24
+Mtt:        -4.537000e+25
+Mpp:         4.396000e+25
+Mrt:         8.559000e+23
+Mrp:         1.059000e+25
+Mtp:        -3.400000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_249
+time shift:        47.0000
+half duration:      2.0000
+latitude:          63.1922
+longitude:       -144.8799
+depth:           1.9700
+Mrr:        -1.881000e+24
+Mtt:        -1.167000e+25
+Mpp:         1.355000e+25
+Mrt:         5.938000e+24
+Mrp:         3.870000e+23
+Mtp:        -1.104000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_25
+time shift:         6.6000
+half duration:      1.6000
+latitude:          63.5302
+longitude:       -147.0476
+depth:          17.8800
+Mrr:         1.047000e+24
+Mtt:        -1.542000e+24
+Mpp:         4.951000e+23
+Mrt:        -2.826000e+24
+Mrp:         8.329000e+23
+Mtp:        -3.486000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_250
+time shift:        47.0000
+half duration:      3.4000
+latitude:          63.2598
+longitude:       -145.0302
+depth:          21.6700
+Mrr:        -2.066000e+24
+Mtt:        -3.708000e+25
+Mpp:         3.915000e+25
+Mrt:         8.902000e+24
+Mrp:         5.305000e+24
+Mtp:        -3.109000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_251
+time shift:        47.2000
+half duration:      2.2000
+latitude:          63.2120
+longitude:       -144.9704
+depth:           1.9700
+Mrr:        -3.697000e+24
+Mtt:        -8.048000e+24
+Mpp:         1.174000e+25
+Mrt:         1.021000e+25
+Mrp:        -2.233000e+24
+Mtp:        -1.008000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_252
+time shift:        47.4000
+half duration:      4.0000
+latitude:          63.2317
+longitude:       -145.0610
+depth:           1.9700
+Mrr:        -5.381000e+24
+Mtt:        -1.020000e+25
+Mpp:         1.558000e+25
+Mrt:         1.471000e+25
+Mrp:        -3.554000e+24
+Mtp:        -1.349000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_253
+time shift:        47.6000
+half duration:      2.4000
+latitude:          63.1640
+longitude:       -144.6865
+depth:           9.8480
+Mrr:         6.782000e+23
+Mtt:        -1.327000e+25
+Mpp:         1.259000e+25
+Mrt:        -4.269000e+23
+Mrp:         3.375000e+24
+Mtp:        -9.672000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_254
+time shift:        47.8000
+half duration:      1.2000
+latitude:          63.1781
+longitude:       -144.7831
+depth:           5.9090
+Mrr:         1.999000e+24
+Mtt:        -8.950000e+24
+Mpp:         6.952000e+24
+Mrt:        -4.216000e+24
+Mrp:         3.883000e+24
+Mtp:        -4.944000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_255
+time shift:        47.8000
+half duration:      2.2000
+latitude:          63.1443
+longitude:       -144.5959
+depth:           9.8480
+Mrr:         1.042000e+24
+Mtt:        -1.474000e+25
+Mpp:         1.370000e+25
+Mrt:        -1.210000e+24
+Mrp:         4.050000e+24
+Mtp:        -1.045000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_256
+time shift:        48.0000
+half duration:      1.4000
+latitude:          63.2203
+longitude:       -144.8491
+depth:          21.6700
+Mrr:         6.037000e+23
+Mtt:        -5.739000e+25
+Mpp:         5.679000e+25
+Mrt:         4.091000e+24
+Mrp:         1.217000e+25
+Mtp:        -4.422000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_257
+time shift:        48.2000
+half duration:      1.4000
+latitude:          63.1246
+longitude:       -144.5053
+depth:           9.8480
+Mrr:         2.993000e+24
+Mtt:        -2.040000e+25
+Mpp:         1.741000e+25
+Mrt:        -5.627000e+24
+Mrp:         7.221000e+24
+Mtp:        -1.287000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_258
+time shift:        48.2000
+half duration:      3.0000
+latitude:          63.2344
+longitude:       -144.9459
+depth:          17.7300
+Mrr:         3.294000e+23
+Mtt:        -3.131000e+25
+Mpp:         3.098000e+25
+Mrt:         2.232000e+24
+Mrp:         6.641000e+24
+Mtp:        -2.413000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_259
+time shift:        48.6000
+half duration:      1.6000
+latitude:          63.2118
+longitude:       -144.7464
+depth:          29.5400
+Mrr:        -3.919000e+23
+Mtt:        -3.662000e+25
+Mpp:         3.702000e+25
+Mrt:         4.591000e+24
+Mrp:         6.957000e+24
+Mtp:        -2.902000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_26
+time shift:         6.8000
+half duration:      2.2000
+latitude:          63.5472
+longitude:       -147.6618
+depth:          11.7200
+Mrr:         1.879000e+25
+Mtt:        -1.769000e+25
+Mpp:        -1.094000e+24
+Mrt:         8.483000e+24
+Mrp:         5.472000e+24
+Mtp:        -5.135000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_260
+time shift:        48.6000
+half duration:      3.4000
+latitude:          63.2288
+longitude:       -144.9520
+depth:          13.7900
+Mrr:         2.218000e+24
+Mtt:        -2.035000e+25
+Mpp:         1.813000e+25
+Mrt:        -3.656000e+24
+Mrp:         6.403000e+24
+Mtp:        -1.362000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_261
+time shift:        48.8000
+half duration:      1.8000
+latitude:          63.1668
+longitude:       -144.5713
+depth:          25.6100
+Mrr:         4.049000e+24
+Mtt:        -3.715000e+25
+Mpp:         3.310000e+25
+Mrt:        -6.676000e+24
+Mrp:         1.169000e+25
+Mtp:        -2.488000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_262
+time shift:        48.8000
+half duration:      1.8000
+latitude:          63.2315
+longitude:       -144.8369
+depth:          29.5400
+Mrr:        -5.328000e+24
+Mtt:        -4.028000e+25
+Mpp:         4.560000e+25
+Mrt:         1.753000e+25
+Mrp:         2.549000e+24
+Mtp:        -3.693000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_263
+time shift:        49.4000
+half duration:      4.2000
+latitude:          63.1979
+longitude:       -144.8737
+depth:           5.9090
+Mrr:        -7.285000e+23
+Mtt:        -9.128000e+24
+Mpp:         9.857000e+24
+Mrt:         2.752000e+24
+Mrp:         1.077000e+24
+Mtp:        -7.879000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_264
+time shift:        49.8000
+half duration:      1.4000
+latitude:          63.2062
+longitude:       -144.7525
+depth:          25.6100
+Mrr:        -1.763000e+24
+Mtt:        -5.386000e+25
+Mpp:         5.562000e+25
+Mrt:         9.776000e+24
+Mrp:         8.995000e+24
+Mtp:        -4.389000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_265
+time shift:        50.4000
+half duration:      2.0000
+latitude:          63.1387
+longitude:       -144.6020
+depth:           5.9090
+Mrr:         3.839000e+24
+Mtt:        -1.348000e+25
+Mpp:         9.644000e+24
+Mrt:        -8.462000e+24
+Mrp:         6.712000e+24
+Mtp:        -6.598000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_266
+time shift:        50.4000
+half duration:      2.0000
+latitude:          63.1752
+longitude:       -144.6741
+depth:          17.7300
+Mrr:        -2.514000e+24
+Mtt:        -3.150000e+25
+Mpp:         3.402000e+25
+Mrt:         9.498000e+24
+Mrp:         3.716000e+24
+Mtp:        -2.719000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_267
+time shift:        50.6000
+half duration:      1.8000
+latitude:          63.1330
+longitude:       -144.3841
+depth:          29.5400
+Mrr:         2.006000e+24
+Mtt:        -1.568000e+25
+Mpp:         1.368000e+25
+Mrt:        -3.573000e+24
+Mrp:         5.244000e+24
+Mtp:        -1.020000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_268
+time shift:        50.8000
+half duration:      3.6000
+latitude:          63.1950
+longitude:       -144.7647
+depth:          17.7300
+Mrr:         1.129000e+24
+Mtt:        -3.631000e+25
+Mpp:         3.518000e+25
+Mrt:         6.851000e+23
+Mrp:         8.479000e+24
+Mtp:        -2.721000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_269
+time shift:        51.0000
+half duration:      2.4000
+latitude:          63.2006
+longitude:       -144.7586
+depth:          21.6700
+Mrr:        -5.520000e+23
+Mtt:        -5.158000e+25
+Mpp:         5.213000e+25
+Mrt:         6.467000e+24
+Mrp:         9.799000e+24
+Mtp:        -4.087000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_27
+time shift:         6.8000
+half duration:      3.8000
+latitude:          63.5115
+longitude:       -147.2530
+depth:           2.1220
+Mrr:        -1.039000e+23
+Mtt:        -6.852000e+21
+Mpp:         1.108000e+23
+Mrt:         2.946000e+23
+Mrp:         1.194000e+23
+Mtp:        -7.918000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_270
+time shift:        51.2000
+half duration:      2.4000
+latitude:          63.1470
+longitude:       -144.4809
+depth:          25.6100
+Mrr:         4.891000e+24
+Mtt:        -3.333000e+25
+Mpp:         2.844000e+25
+Mrt:        -9.195000e+24
+Mrp:         1.180000e+25
+Mtp:        -2.103000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_271
+time shift:        51.2000
+half duration:      2.6000
+latitude:          63.1189
+longitude:       -144.5115
+depth:           5.9090
+Mrr:         5.235000e+24
+Mtt:        -1.839000e+25
+Mpp:         1.315000e+25
+Mrt:        -1.154000e+25
+Mrp:         9.153000e+24
+Mtp:        -8.998000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_272
+time shift:        51.2000
+half duration:      2.6000
+latitude:          63.1584
+longitude:       -144.6926
+depth:           5.9090
+Mrr:         2.957000e+24
+Mtt:        -1.122000e+25
+Mpp:         8.259000e+24
+Mrt:        -6.437000e+24
+Mrp:         5.337000e+24
+Mtp:        -5.731000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_273
+time shift:        51.2000
+half duration:      2.6000
+latitude:          63.1838
+longitude:       -144.7770
+depth:           9.8480
+Mrr:         2.245000e+24
+Mtt:        -1.216000e+25
+Mpp:         9.916000e+24
+Mrt:        -4.528000e+24
+Mrp:         4.784000e+24
+Mtp:        -7.200000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_274
+time shift:        51.4000
+half duration:      2.8000
+latitude:          63.1725
+longitude:       -144.7893
+depth:           1.9700
+Mrr:         2.158000e+24
+Mtt:        -1.471000e+25
+Mpp:         1.255000e+25
+Mrt:        -4.058000e+24
+Mrp:         5.207000e+24
+Mtp:        -9.280000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_275
+time shift:        51.6000
+half duration:      2.8000
+latitude:          63.1273
+longitude:       -144.3902
+depth:          25.6100
+Mrr:         1.467000e+24
+Mtt:        -2.870000e+25
+Mpp:         2.723000e+25
+Mrt:        -9.232000e+23
+Mrp:         7.300000e+24
+Mtp:        -2.092000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_276
+time shift:        51.6000
+half duration:      2.8000
+latitude:          63.1612
+longitude:       -144.5774
+depth:          21.6700
+Mrr:        -1.138000e+24
+Mtt:        -3.477000e+25
+Mpp:         3.591000e+25
+Mrt:         6.310000e+24
+Mrp:         5.807000e+24
+Mtp:        -2.833000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_277
+time shift:        52.0000
+half duration:      1.8000
+latitude:          63.1809
+longitude:       -144.6681
+depth:          21.6700
+Mrr:        -2.324000e+24
+Mtt:        -4.172000e+25
+Mpp:         4.404000e+25
+Mrt:         1.002000e+25
+Mrp:         5.968000e+24
+Mtp:        -3.497000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_278
+time shift:        52.4000
+half duration:      2.2000
+latitude:          63.1555
+longitude:       -144.5837
+depth:          17.7300
+Mrr:        -4.013000e+24
+Mtt:        -2.490000e+25
+Mpp:         2.891000e+25
+Mrt:         1.267000e+25
+Mrp:         8.259000e+23
+Mtp:        -2.357000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_279
+time shift:        52.6000
+half duration:      2.0000
+latitude:          63.1724
+longitude:       -144.5652
+depth:          29.5400
+Mrr:         6.804000e+24
+Mtt:        -2.390000e+25
+Mpp:         1.709000e+25
+Mrt:        -1.500000e+25
+Mrp:         1.190000e+25
+Mtp:        -1.169000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_28
+time shift:         7.0000
+half duration:      3.8000
+latitude:          63.5490
+longitude:       -147.4495
+depth:          21.8200
+Mrr:         7.229000e+23
+Mtt:        -1.101000e+24
+Mpp:         3.776000e+23
+Mrt:        -1.948000e+24
+Mrp:         6.202000e+23
+Mtp:        -2.661000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_280
+time shift:        52.6000
+half duration:      3.8000
+latitude:          63.0992
+longitude:       -144.4209
+depth:           5.9090
+Mrr:         8.028000e+24
+Mtt:        -2.819000e+25
+Mpp:         2.016000e+25
+Mrt:        -1.769000e+25
+Mrp:         1.403000e+25
+Mtp:        -1.380000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_281
+time shift:        52.6000
+half duration:      4.0000
+latitude:          63.1528
+longitude:       -144.6987
+depth:           1.9700
+Mrr:         3.927000e+24
+Mtt:        -1.379000e+25
+Mpp:         9.863000e+24
+Mrt:        -8.655000e+24
+Mrp:         6.865000e+24
+Mtp:        -6.748000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_282
+time shift:        53.0000
+half duration:      1.2000
+latitude:          63.1217
+longitude:       -144.3963
+depth:          21.6700
+Mrr:        -3.001000e+24
+Mtt:        -2.269000e+25
+Mpp:         2.569000e+25
+Mrt:         9.875000e+24
+Mrp:         1.436000e+24
+Mtp:        -2.080000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_283
+time shift:        53.0000
+half duration:      1.2000
+latitude:          63.1414
+longitude:       -144.4869
+depth:          21.6700
+Mrr:        -1.549000e+24
+Mtt:        -2.781000e+25
+Mpp:         2.936000e+25
+Mrt:         6.677000e+24
+Mrp:         3.979000e+24
+Mtp:        -2.332000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_284
+time shift:        53.2000
+half duration:      1.8000
+latitude:          63.0710
+longitude:       -144.2275
+depth:          13.7900
+Mrr:         7.525000e+23
+Mtt:        -2.421000e+25
+Mpp:         2.346000e+25
+Mrt:         4.567000e+23
+Mrp:         5.653000e+24
+Mtp:        -1.814000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_285
+time shift:        53.2000
+half duration:      2.8000
+latitude:          63.1331
+longitude:       -144.6081
+depth:           1.9700
+Mrr:         3.927000e+24
+Mtt:        -1.379000e+25
+Mpp:         9.863000e+24
+Mrt:        -8.655000e+24
+Mrp:         6.865000e+24
+Mtp:        -6.748000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_286
+time shift:        53.4000
+half duration:      2.8000
+latitude:          63.1527
+longitude:       -144.4747
+depth:          29.5400
+Mrr:         6.281000e+24
+Mtt:        -2.206000e+25
+Mpp:         1.578000e+25
+Mrt:        -1.384000e+25
+Mrp:         1.098000e+25
+Mtp:        -1.079000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_287
+time shift:        53.6000
+half duration:      1.8000
+latitude:          63.0935
+longitude:       -144.2029
+depth:          29.5400
+Mrr:         3.664000e+24
+Mtt:        -1.287000e+25
+Mpp:         9.203000e+24
+Mrt:        -8.076000e+24
+Mrp:         6.405000e+24
+Mtp:        -6.297000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_288
+time shift:        53.6000
+half duration:      2.8000
+latitude:          63.1921
+longitude:       -144.6558
+depth:          29.5400
+Mrr:         7.392000e+24
+Mtt:        -2.803000e+25
+Mpp:         2.064000e+25
+Mrt:        -1.609000e+25
+Mrp:         1.334000e+25
+Mtp:        -1.433000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_289
+time shift:        53.6000
+half duration:      3.2000
+latitude:          63.1133
+longitude:       -144.5176
+depth:           1.9700
+Mrr:         4.328000e+24
+Mtt:        -1.520000e+25
+Mpp:         1.087000e+25
+Mrt:        -9.540000e+24
+Mrp:         7.566000e+24
+Mtp:        -7.438000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_29
+time shift:         7.4000
+half duration:      3.6000
+latitude:          63.5146
+longitude:       -147.1512
+depth:           6.0610
+Mrr:         1.454000e+24
+Mtt:        -2.142000e+24
+Mpp:         6.875000e+23
+Mrt:        -3.924000e+24
+Mrp:         1.157000e+24
+Mtp:        -4.841000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_290
+time shift:        53.8000
+half duration:      2.0000
+latitude:          63.1358
+longitude:       -144.4931
+depth:          17.7300
+Mrr:        -3.915000e+24
+Mtt:        -2.036000e+25
+Mpp:         2.427000e+25
+Mrt:         1.197000e+25
+Mrp:         1.513000e+22
+Mtp:        -1.992000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_291
+time shift:        53.8000
+half duration:      3.4000
+latitude:          63.0936
+longitude:       -144.4270
+depth:           1.9700
+Mrr:         5.800000e+24
+Mtt:        -2.037000e+25
+Mpp:         1.457000e+25
+Mrt:        -1.278000e+25
+Mrp:         1.014000e+25
+Mtp:        -9.968000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_292
+time shift:        54.0000
+half duration:      3.4000
+latitude:          63.1132
+longitude:       -144.2936
+depth:          29.5400
+Mrr:         3.140000e+24
+Mtt:        -1.103000e+25
+Mpp:         7.889000e+24
+Mrt:        -6.922000e+24
+Mrp:         5.490000e+24
+Mtp:        -5.397000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_293
+time shift:        54.2000
+half duration:      2.2000
+latitude:          63.1499
+longitude:       -144.5898
+depth:          13.7900
+Mrr:        -3.684000e+24
+Mtt:        -1.916000e+25
+Mpp:         2.284000e+25
+Mrt:         1.127000e+25
+Mrp:         1.424000e+22
+Mtp:        -1.875000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_294
+time shift:        54.2000
+half duration:      4.0000
+latitude:          63.1161
+longitude:       -144.4024
+depth:          17.7300
+Mrr:        -3.211000e+24
+Mtt:        -1.992000e+25
+Mpp:         2.313000e+25
+Mrt:         1.014000e+25
+Mrp:         6.607000e+23
+Mtp:        -1.885000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_295
+time shift:        54.4000
+half duration:      1.2000
+latitude:          63.0625
+longitude:       -144.1247
+depth:          21.6700
+Mrr:        -2.279000e+24
+Mtt:        -1.185000e+25
+Mpp:         1.413000e+25
+Mrt:         6.971000e+24
+Mrp:         8.809000e+21
+Mtp:        -1.160000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_296
+time shift:        54.4000
+half duration:      1.2000
+latitude:          63.0822
+longitude:       -144.2152
+depth:          21.6700
+Mrr:        -2.251000e+24
+Mtt:        -1.702000e+25
+Mpp:         1.927000e+25
+Mrt:         7.407000e+24
+Mrp:         1.077000e+24
+Mtp:        -1.560000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_297
+time shift:        54.4000
+half duration:      1.2000
+latitude:          63.0654
+longitude:       -144.2337
+depth:           9.8480
+Mrr:         6.291000e+24
+Mtt:        -3.087000e+25
+Mpp:         2.458000e+25
+Mrt:        -1.300000e+25
+Mrp:         1.276000e+25
+Mtp:        -1.767000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_298
+time shift:        54.4000
+half duration:      4.2000
+latitude:          63.0907
+longitude:       -144.3181
+depth:          13.7900
+Mrr:         1.252000e+24
+Mtt:        -2.450000e+25
+Mpp:         2.325000e+25
+Mrt:        -7.882000e+23
+Mrp:         6.233000e+24
+Mtp:        -1.786000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_299
+time shift:        54.6000
+half duration:      1.2000
+latitude:          63.0738
+longitude:       -144.1123
+depth:          29.5400
+Mrr:         3.140000e+24
+Mtt:        -1.103000e+25
+Mpp:         7.889000e+24
+Mrt:        -6.922000e+24
+Mrp:         5.490000e+24
+Mtp:        -5.397000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_3
+time shift:         2.6000
+half duration:      1.2000
+latitude:          63.5209
+longitude:       -147.5550
+depth:           2.1220
+Mrr:         3.807000e+23
+Mtt:        -6.256000e+23
+Mpp:         2.449000e+23
+Mrt:        -1.022000e+24
+Mrp:         3.849000e+23
+Mtp:        -1.729000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_30
+time shift:         7.6000
+half duration:      2.6000
+latitude:          63.4388
+longitude:       -147.4237
+depth:           3.2410
+Mrr:         2.451000e+25
+Mtt:        -2.633000e+25
+Mpp:         1.825000e+24
+Mrt:         1.370000e+25
+Mrp:        -1.156000e+25
+Mtp:         4.642000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_300
+time shift:        54.6000
+half duration:      1.2000
+latitude:          63.1076
+longitude:       -144.2997
+depth:          25.6100
+Mrr:         2.557000e+24
+Mtt:        -2.346000e+25
+Mpp:         2.091000e+25
+Mrt:        -4.216000e+24
+Mrp:         7.384000e+24
+Mtp:        -1.571000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_301
+time shift:        54.6000
+half duration:      1.6000
+latitude:          63.0401
+longitude:       -144.1492
+depth:           5.9090
+Mrr:         1.187000e+25
+Mtt:        -4.168000e+25
+Mpp:         2.981000e+25
+Mrt:        -2.616000e+25
+Mrp:         2.075000e+25
+Mtp:        -2.040000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_302
+time shift:        54.8000
+half duration:      1.2000
+latitude:          63.1302
+longitude:       -144.4992
+depth:          13.7900
+Mrr:        -1.749000e+24
+Mtt:        -2.191000e+25
+Mpp:         2.366000e+25
+Mrt:         6.607000e+24
+Mrp:         2.585000e+24
+Mtp:        -1.891000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_303
+time shift:        54.8000
+half duration:      1.4000
+latitude:          63.0879
+longitude:       -144.2091
+depth:          25.6100
+Mrr:         2.916000e+24
+Mtt:        -1.761000e+25
+Mpp:         1.469000e+25
+Mrt:        -5.705000e+24
+Mrp:         6.580000e+24
+Mtp:        -1.077000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_304
+time shift:        54.8000
+half duration:      1.4000
+latitude:          63.0964
+longitude:       -144.3119
+depth:          17.7300
+Mrr:        -3.684000e+24
+Mtt:        -1.916000e+25
+Mpp:         2.284000e+25
+Mrt:         1.127000e+25
+Mrp:         1.424000e+22
+Mtp:        -1.875000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_305
+time shift:        55.2000
+half duration:      1.8000
+latitude:          63.1105
+longitude:       -144.4086
+depth:          13.7900
+Mrr:         7.055000e+23
+Mtt:        -2.269000e+25
+Mpp:         2.199000e+25
+Mrt:         4.282000e+23
+Mrp:         5.299000e+24
+Mtp:        -1.701000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_306
+time shift:        55.2000
+half duration:      2.0000
+latitude:          63.0766
+longitude:       -144.2213
+depth:          17.7300
+Mrr:        -3.454000e+24
+Mtt:        -1.796000e+25
+Mpp:         2.142000e+25
+Mrt:         1.057000e+25
+Mrp:         1.335000e+22
+Mtp:        -1.757000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_307
+time shift:        55.4000
+half duration:      2.0000
+latitude:          63.0569
+longitude:       -144.1308
+depth:          17.7300
+Mrr:        -5.050000e+24
+Mtt:        -1.662000e+25
+Mpp:         2.167000e+25
+Mrt:         1.450000e+25
+Mrp:        -1.919000e+24
+Mtp:        -1.816000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_308
+time shift:        55.4000
+half duration:      2.0000
+latitude:          63.0851
+longitude:       -144.3242
+depth:           9.8480
+Mrr:         7.861000e+24
+Mtt:        -2.981000e+25
+Mpp:         2.195000e+25
+Mrt:        -1.711000e+25
+Mrp:         1.419000e+25
+Mtp:        -1.523000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_309
+time shift:        56.0000
+half duration:      2.8000
+latitude:          63.0513
+longitude:       -144.1370
+depth:          13.7900
+Mrr:        -2.662000e+24
+Mtt:        -2.529000e+25
+Mpp:         2.795000e+25
+Mrt:         9.266000e+24
+Mrp:         2.313000e+24
+Mtp:        -2.249000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_31
+time shift:         7.6000
+half duration:      3.0000
+latitude:          63.5333
+longitude:       -147.1483
+depth:          17.8800
+Mrr:         3.142000e+24
+Mtt:        -4.627000e+24
+Mpp:         1.485000e+24
+Mrt:        -8.479000e+24
+Mrp:         2.499000e+24
+Mtp:        -1.046000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_310
+time shift:        56.2000
+half duration:      2.8000
+latitude:          63.0598
+longitude:       -144.2398
+depth:           5.9090
+Mrr:         1.152000e+25
+Mtt:        -4.045000e+25
+Mpp:         2.893000e+25
+Mrt:        -2.539000e+25
+Mrp:         2.014000e+25
+Mtp:        -1.980000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_311
+time shift:        56.2000
+half duration:      4.2000
+latitude:          63.0739
+longitude:       -144.3365
+depth:           1.9700
+Mrr:         7.620000e+24
+Mtt:        -2.676000e+25
+Mpp:         1.914000e+25
+Mrt:        -1.680000e+25
+Mrp:         1.332000e+25
+Mtp:        -1.310000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_312
+time shift:        56.6000
+half duration:      1.4000
+latitude:          63.1020
+longitude:       -144.3058
+depth:          21.6700
+Mrr:        -2.251000e+24
+Mtt:        -1.702000e+25
+Mpp:         1.927000e+25
+Mrt:         7.407000e+24
+Mrp:         1.077000e+24
+Mtp:        -1.560000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_313
+time shift:        56.8000
+half duration:      1.8000
+latitude:          63.0428
+longitude:       -144.0341
+depth:          21.6700
+Mrr:        -3.246000e+24
+Mtt:        -8.102000e+24
+Mpp:         1.135000e+25
+Mrt:         9.069000e+24
+Mrp:        -1.753000e+24
+Mtp:        -9.658000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_314
+time shift:        57.0000
+half duration:      2.0000
+latitude:          63.0372
+longitude:       -144.0403
+depth:          17.7300
+Mrr:        -5.904000e+24
+Mtt:        -1.473000e+25
+Mpp:         2.064000e+25
+Mrt:         1.649000e+25
+Mrp:        -3.188000e+24
+Mtp:        -1.756000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_315
+time shift:        57.6000
+half duration:      1.2000
+latitude:          63.0147
+longitude:       -144.0649
+depth:           1.9700
+Mrr:         1.150000e+25
+Mtt:        -4.040000e+25
+Mpp:         2.890000e+25
+Mrt:        -2.536000e+25
+Mrp:         2.011000e+25
+Mtp:        -1.977000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_316
+time shift:        57.6000
+half duration:      1.4000
+latitude:          63.0175
+longitude:       -143.9497
+depth:          17.7300
+Mrr:        -4.145000e+24
+Mtt:        -2.155000e+25
+Mpp:         2.570000e+25
+Mrt:         1.268000e+25
+Mrp:         1.602000e+22
+Mtp:        -2.109000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_317
+time shift:        57.6000
+half duration:      2.8000
+latitude:          63.0316
+longitude:       -144.0464
+depth:          13.7900
+Mrr:        -2.186000e+24
+Mtt:        -2.739000e+25
+Mpp:         2.958000e+25
+Mrt:         8.259000e+24
+Mrp:         3.231000e+24
+Mtp:        -2.364000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_318
+time shift:        57.8000
+half duration:      1.2000
+latitude:          63.0457
+longitude:       -144.1431
+depth:           9.8480
+Mrr:         5.618000e+24
+Mtt:        -3.393000e+25
+Mpp:         2.831000e+25
+Mrt:        -1.099000e+25
+Mrp:         1.268000e+25
+Mtp:        -2.075000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_319
+time shift:        57.8000
+half duration:      3.0000
+latitude:          63.0259
+longitude:       -144.0525
+depth:           9.8480
+Mrr:         5.042000e+24
+Mtt:        -3.943000e+25
+Mpp:         3.439000e+25
+Mrt:        -8.983000e+24
+Mrp:         1.318000e+25
+Mtp:        -2.564000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_32
+time shift:         7.8000
+half duration:      1.2000
+latitude:          63.4200
+longitude:       -147.7236
+depth:           3.2410
+Mrr:         1.225000e+25
+Mtt:        -1.087000e+25
+Mpp:        -1.387000e+24
+Mrt:         4.990000e+24
+Mrp:         7.443000e+24
+Mtp:        -5.699000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_320
+time shift:        58.4000
+half duration:      1.8000
+latitude:          63.0287
+longitude:       -143.9375
+depth:          25.6100
+Mrr:        -9.220000e+23
+Mtt:        -2.301000e+24
+Mpp:         3.223000e+24
+Mrt:         2.576000e+24
+Mrp:        -4.979000e+23
+Mtp:        -2.743000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_321
+time shift:        59.2000
+half duration:      1.2000
+latitude:          63.0062
+longitude:       -143.9620
+depth:           9.8480
+Mrr:         3.694000e+24
+Mtt:        -5.225000e+25
+Mpp:         4.856000e+25
+Mrt:        -4.289000e+24
+Mrp:         1.436000e+25
+Mtp:        -3.704000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_322
+time shift:        59.6000
+half duration:      1.6000
+latitude:          63.0231
+longitude:       -143.9436
+depth:          21.6700
+Mrr:        -4.147000e+24
+Mtt:        -7.863000e+24
+Mpp:         1.201000e+25
+Mrt:         1.134000e+25
+Mrp:        -2.739000e+24
+Mtp:        -1.039000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_323
+time shift:        59.6000
+half duration:      1.6000
+latitude:          63.0006
+longitude:       -143.9681
+depth:           5.9090
+Mrr:         5.827000e+24
+Mtt:        -5.346000e+25
+Mpp:         4.763000e+25
+Mrt:        -9.606000e+24
+Mrp:         1.682000e+25
+Mtp:        -3.579000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_324
+time shift:        59.8000
+half duration:      1.8000
+latitude:          62.9921
+longitude:       -143.8652
+depth:          13.7900
+Mrr:         5.184000e+24
+Mtt:        -5.763000e+25
+Mpp:         5.244000e+25
+Mrt:        -7.560000e+24
+Mrp:         1.699000e+25
+Mtp:        -3.971000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_325
+time shift:        60.0000
+half duration:      2.0000
+latitude:          62.9977
+longitude:       -143.8591
+depth:          17.7300
+Mrr:         1.722000e+24
+Mtt:        -3.369000e+25
+Mpp:         3.197000e+25
+Mrt:        -1.084000e+24
+Mrp:         8.570000e+24
+Mtp:        -2.456000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_326
+time shift:        60.0000
+half duration:      4.2000
+latitude:          63.1048
+longitude:       -144.4148
+depth:           9.8480
+Mrr:         6.897000e+24
+Mtt:        -2.422000e+25
+Mpp:         1.733000e+25
+Mrt:        -1.520000e+25
+Mrp:         1.206000e+25
+Mtp:        -1.185000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_327
+time shift:        60.2000
+half duration:      2.0000
+latitude:          63.0033
+longitude:       -143.8530
+depth:          21.6700
+Mrr:         5.172000e+23
+Mtt:        -1.664000e+25
+Mpp:         1.612000e+25
+Mrt:         3.139000e+23
+Mrp:         3.885000e+24
+Mtp:        -1.247000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_328
+time shift:        60.8000
+half duration:      1.6000
+latitude:          62.9667
+longitude:       -143.7808
+depth:           9.8480
+Mrr:         4.546000e+24
+Mtt:        -6.431000e+25
+Mpp:         5.976000e+25
+Mrt:        -5.279000e+24
+Mrp:         1.767000e+25
+Mtp:        -4.558000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_329
+time shift:        61.0000
+half duration:      1.8000
+latitude:          62.9611
+longitude:       -143.7870
+depth:           5.9090
+Mrr:         6.011000e+23
+Mtt:        -5.714000e+25
+Mpp:         5.654000e+25
+Mrt:         4.073000e+24
+Mrp:         1.212000e+25
+Mtp:        -4.403000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_33
+time shift:         7.8000
+half duration:      2.4000
+latitude:          63.4450
+longitude:       -147.3238
+depth:           3.2410
+Mrr:         1.730000e+25
+Mtt:        -1.859000e+25
+Mpp:         1.288000e+24
+Mrt:         9.668000e+24
+Mrp:        -8.158000e+24
+Mtp:         3.277000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_330
+time shift:        61.6000
+half duration:      4.0000
+latitude:          63.0795
+longitude:       -144.3303
+depth:           5.9090
+Mrr:         1.047000e+25
+Mtt:        -3.677000e+25
+Mpp:         2.630000e+25
+Mrt:        -2.308000e+25
+Mrp:         1.831000e+25
+Mtp:        -1.800000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_331
+time shift:        62.0000
+half duration:      1.2000
+latitude:          62.9527
+longitude:       -143.6841
+depth:          13.7900
+Mrr:         6.653000e+24
+Mtt:        -6.104000e+25
+Mpp:         5.439000e+25
+Mrt:        -1.097000e+25
+Mrp:         1.921000e+25
+Mtp:        -4.087000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_332
+time shift:        62.0000
+half duration:      1.2000
+latitude:          62.9414
+longitude:       -143.6964
+depth:           5.9090
+Mrr:        -1.959000e+24
+Mtt:        -5.986000e+25
+Mpp:         6.182000e+25
+Mrt:         1.086000e+25
+Mrp:         9.997000e+24
+Mtp:        -4.878000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_333
+time shift:        62.6000
+half duration:      3.2000
+latitude:          63.0541
+longitude:       -144.2459
+depth:           1.9700
+Mrr:         9.668000e+24
+Mtt:        -3.395000e+25
+Mpp:         2.429000e+25
+Mrt:        -2.131000e+25
+Mrp:         1.690000e+25
+Mtp:        -1.662000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_334
+time shift:        63.2000
+half duration:      1.8000
+latitude:          62.9836
+longitude:       -143.7624
+depth:          21.6700
+Mrr:         5.529000e+24
+Mtt:        -1.942000e+25
+Mpp:         1.389000e+25
+Mrt:        -1.219000e+25
+Mrp:         9.666000e+24
+Mtp:        -9.502000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_335
+time shift:        63.6000
+half duration:      1.2000
+latitude:          62.9329
+longitude:       -143.5936
+depth:          13.7900
+Mrr:         3.498000e+24
+Mtt:        -4.948000e+25
+Mpp:         4.598000e+25
+Mrt:        -4.062000e+24
+Mrp:         1.360000e+25
+Mtp:        -3.507000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_336
+time shift:        63.6000
+half duration:      1.2000
+latitude:          62.9217
+longitude:       -143.6059
+depth:           5.9090
+Mrr:        -3.260000e+24
+Mtt:        -5.852000e+25
+Mpp:         6.178000e+25
+Mrt:         1.405000e+25
+Mrp:         8.373000e+24
+Mtp:        -4.907000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_337
+time shift:        64.0000
+half duration:      1.2000
+latitude:          62.9470
+longitude:       -143.6903
+depth:           9.8480
+Mrr:         1.956000e+24
+Mtt:        -6.293000e+25
+Mpp:         6.097000e+25
+Mrt:         1.187000e+24
+Mrp:         1.469000e+25
+Mtp:        -4.716000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_338
+time shift:        64.6000
+half duration:      1.8000
+latitude:          63.0540
+longitude:       -144.0219
+depth:          29.5400
+Mrr:         1.570000e+24
+Mtt:        -5.514000e+24
+Mpp:         3.944000e+24
+Mrt:        -3.461000e+24
+Mrp:         2.745000e+24
+Mtp:        -2.699000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_339
+time shift:        64.6000
+half duration:      1.8000
+latitude:          63.0484
+longitude:       -144.0280
+depth:          25.6100
+Mrr:         1.047000e+24
+Mtt:        -3.676000e+24
+Mpp:         2.630000e+24
+Mrt:        -2.307000e+24
+Mrp:         1.830000e+24
+Mtp:        -1.799000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_34
+time shift:         7.8000
+half duration:      2.6000
+latitude:          63.5177
+longitude:       -147.0496
+depth:          10.0000
+Mrr:         9.075000e+23
+Mtt:        -1.337000e+24
+Mpp:         4.290000e+23
+Mrt:        -2.449000e+24
+Mrp:         7.217000e+23
+Mtp:        -3.021000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_340
+time shift:        64.6000
+half duration:      3.2000
+latitude:          63.0682
+longitude:       -144.1185
+depth:          25.6100
+Mrr:         2.617000e+24
+Mtt:        -9.191000e+24
+Mpp:         6.574000e+24
+Mrt:        -5.768000e+24
+Mrp:         4.575000e+24
+Mtp:        -4.498000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_341
+time shift:        64.8000
+half duration:      1.4000
+latitude:          62.9892
+longitude:       -143.7563
+depth:          25.6100
+Mrr:         2.094000e+24
+Mtt:        -7.353000e+24
+Mpp:         5.259000e+24
+Mrt:        -4.615000e+24
+Mrp:         3.660000e+24
+Mtp:        -3.598000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_342
+time shift:        65.0000
+half duration:      4.2000
+latitude:          63.0203
+longitude:       -144.0587
+depth:           5.9090
+Mrr:         1.085000e+25
+Mtt:        -4.859000e+25
+Mpp:         3.774000e+25
+Mrt:        -2.289000e+25
+Mrp:         2.108000e+25
+Mtp:        -2.684000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_343
+time shift:        65.2000
+half duration:      1.2000
+latitude:          62.9020
+longitude:       -143.5152
+depth:           5.9090
+Mrr:        -5.019000e+24
+Mtt:        -4.768000e+25
+Mpp:         5.270000e+25
+Mrt:         1.747000e+25
+Mrp:         4.360000e+24
+Mtp:        -4.240000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_344
+time shift:        65.2000
+half duration:      4.0000
+latitude:          63.0344
+longitude:       -144.1553
+depth:           1.9700
+Mrr:         1.035000e+25
+Mtt:        -3.636000e+25
+Mpp:         2.601000e+25
+Mrt:        -2.282000e+25
+Mrp:         1.810000e+25
+Mtp:        -1.780000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_345
+time shift:        65.8000
+half duration:      1.4000
+latitude:          62.9385
+longitude:       -143.5874
+depth:          17.7300
+Mrr:         7.960000e+24
+Mtt:        -2.795000e+25
+Mpp:         1.999000e+25
+Mrt:        -1.755000e+25
+Mrp:         1.392000e+25
+Mtp:        -1.368000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_346
+time shift:        65.8000
+half duration:      3.0000
+latitude:          63.0343
+longitude:       -143.9312
+depth:          29.5400
+Mrr:         5.234000e+23
+Mtt:        -1.838000e+24
+Mpp:         1.315000e+24
+Mrt:        -1.154000e+24
+Mrp:         9.151000e+23
+Mtp:        -8.996000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_347
+time shift:        66.0000
+half duration:      1.8000
+latitude:          62.9076
+longitude:       -143.5091
+depth:           9.8480
+Mrr:        -2.713000e+24
+Mtt:        -4.869000e+25
+Mpp:         5.141000e+25
+Mrt:         1.169000e+25
+Mrp:         6.967000e+24
+Mtp:        -4.082000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_348
+time shift:        66.2000
+half duration:      3.6000
+latitude:          62.9950
+longitude:       -143.9742
+depth:           1.9700
+Mrr:         4.876000e+24
+Mtt:        -3.813000e+25
+Mpp:         3.325000e+25
+Mrt:        -8.687000e+24
+Mrp:         1.275000e+25
+Mtp:        -2.479000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_349
+time shift:        66.4000
+half duration:      1.2000
+latitude:          62.9751
+longitude:       -143.6596
+depth:          29.5400
+Mrr:         2.617000e+24
+Mtt:        -9.191000e+24
+Mpp:         6.574000e+24
+Mrt:        -5.768000e+24
+Mrp:         4.575000e+24
+Mtp:        -4.498000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_35
+time shift:         7.8000
+half duration:      3.6000
+latitude:          63.5427
+longitude:       -147.2480
+depth:          21.8200
+Mrr:         3.456000e+24
+Mtt:        -5.089000e+24
+Mpp:         1.633000e+24
+Mrt:        -9.325000e+24
+Mrp:         2.748000e+24
+Mtp:        -1.150000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_350
+time shift:        66.4000
+half duration:      3.0000
+latitude:          62.9695
+longitude:       -143.6658
+depth:          25.6100
+Mrr:         4.187000e+24
+Mtt:        -1.471000e+25
+Mpp:         1.052000e+25
+Mrt:        -9.229000e+24
+Mrp:         7.320000e+24
+Mtp:        -7.196000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_351
+time shift:        66.6000
+half duration:      2.2000
+latitude:          63.0119
+longitude:       -143.9559
+depth:          13.7900
+Mrr:         4.392000e+23
+Mtt:        -4.175000e+25
+Mpp:         4.131000e+25
+Mrt:         2.976000e+24
+Mrp:         8.854000e+24
+Mtp:        -3.217000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_352
+time shift:        67.0000
+half duration:      4.2000
+latitude:          62.9161
+longitude:       -143.6120
+depth:           1.9700
+Mrr:        -3.490000e+24
+Mtt:        -3.316000e+25
+Mpp:         3.665000e+25
+Mrt:         1.215000e+25
+Mrp:         3.032000e+24
+Mtp:        -2.948000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_353
+time shift:        67.6000
+half duration:      4.0000
+latitude:          62.9555
+longitude:       -143.7931
+depth:           1.9700
+Mrr:        -2.391000e+24
+Mtt:        -2.995000e+25
+Mpp:         3.234000e+25
+Mrt:         9.031000e+24
+Mrp:         3.533000e+24
+Mtp:        -2.585000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_354
+time shift:        68.0000
+half duration:      1.2000
+latitude:          62.9554
+longitude:       -143.5691
+depth:          29.5400
+Mrr:         4.187000e+24
+Mtt:        -1.471000e+25
+Mpp:         1.052000e+25
+Mrt:        -9.229000e+24
+Mrp:         7.320000e+24
+Mtp:        -7.196000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_355
+time shift:        68.0000
+half duration:      1.4000
+latitude:          62.9442
+longitude:       -143.5813
+depth:          21.6700
+Mrr:         5.990000e+24
+Mtt:        -2.103000e+25
+Mpp:         1.505000e+25
+Mrt:        -1.320000e+25
+Mrp:         1.047000e+25
+Mtp:        -1.029000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_356
+time shift:        68.2000
+half duration:      1.2000
+latitude:          62.8477
+longitude:       -143.3674
+depth:          10.0000
+Mrr:         0.000000e+00
+Mtt:        -2.278000e+25
+Mpp:         2.278000e+25
+Mrt:         6.030000e+24
+Mrp:        -8.611000e+24
+Mtp:         8.290000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_357
+time shift:        68.2000
+half duration:      1.2000
+latitude:          62.8477
+longitude:       -143.3674
+depth:          14.0000
+Mrr:         0.000000e+00
+Mtt:        -2.008000e+25
+Mpp:         2.008000e+25
+Mrt:         6.034000e+24
+Mrp:        -8.617000e+24
+Mtp:         7.310000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_358
+time shift:        68.2000
+half duration:      1.2000
+latitude:          62.8477
+longitude:       -143.3674
+depth:           2.0000
+Mrr:         0.000000e+00
+Mtt:        -1.387000e+25
+Mpp:         1.387000e+25
+Mrt:         1.024000e+24
+Mrp:        -1.463000e+24
+Mtp:         5.049000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_359
+time shift:        68.2000
+half duration:      1.2000
+latitude:          62.8477
+longitude:       -143.3674
+depth:           6.0000
+Mrr:         0.000000e+00
+Mtt:        -2.500000e+25
+Mpp:         2.500000e+25
+Mrt:         2.596000e+24
+Mrp:        -3.708000e+24
+Mtp:         9.100000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_36
+time shift:         7.8000
+half duration:      3.6000
+latitude:          63.4753
+longitude:       -147.3333
+depth:           5.3610
+Mrr:         1.009000e+25
+Mtt:        -1.084000e+25
+Mpp:         7.514000e+23
+Mrt:         5.639000e+24
+Mrp:        -4.759000e+24
+Mtp:         1.911000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_360
+time shift:        68.2000
+half duration:      2.0000
+latitude:          62.8963
+longitude:       -143.5214
+depth:           1.9700
+Mrr:        -5.638000e+24
+Mtt:        -2.932000e+25
+Mpp:         3.495000e+25
+Mrt:         1.724000e+25
+Mrp:         2.179000e+22
+Mtp:        -2.868000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_361
+time shift:        68.4000
+half duration:      2.2000
+latitude:          62.9809
+longitude:       -143.8776
+depth:           5.9090
+Mrr:         2.869000e+24
+Mtt:        -5.614000e+25
+Mpp:         5.327000e+25
+Mrt:        -1.806000e+24
+Mrp:         1.428000e+25
+Mtp:        -4.092000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_362
+time shift:        68.8000
+half duration:      1.6000
+latitude:          62.8477
+longitude:       -143.3674
+depth:          22.0000
+Mrr:         9.993000e+17
+Mtt:        -1.299000e+25
+Mpp:         1.299000e+25
+Mrt:         5.444000e+24
+Mrp:        -7.775000e+24
+Mtp:         4.727000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_363
+time shift:        69.0000
+half duration:      1.8000
+latitude:          62.8477
+longitude:       -143.3674
+depth:          18.0000
+Mrr:         0.000000e+00
+Mtt:        -1.728000e+25
+Mpp:         1.728000e+25
+Mrt:         2.861000e+24
+Mrp:        -4.085000e+24
+Mtp:         6.291000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_364
+time shift:        69.2000
+half duration:      1.8000
+latitude:          62.8569
+longitude:       -143.3404
+depth:           1.9700
+Mrr:        -1.190000e+24
+Mtt:        -3.405000e+24
+Mpp:         4.595000e+24
+Mrt:         3.366000e+24
+Mrp:        -5.547000e+23
+Mtp:        -3.880000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_365
+time shift:        69.4000
+half duration:      1.2000
+latitude:          62.9188
+longitude:       -143.4969
+depth:          17.7300
+Mrr:         3.454000e+24
+Mtt:        -1.871000e+25
+Mpp:         1.526000e+25
+Mrt:        -6.968000e+24
+Mrp:         7.362000e+24
+Mtp:        -1.108000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_366
+time shift:        69.6000
+half duration:      2.0000
+latitude:          62.8477
+longitude:       -143.3674
+depth:          30.0000
+Mrr:         2.129000e+17
+Mtt:        -2.672000e+24
+Mpp:         2.672000e+24
+Mrt:         1.240000e+24
+Mrp:        -1.770000e+24
+Mtp:         9.724000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_367
+time shift:        69.6000
+half duration:      3.0000
+latitude:          62.9753
+longitude:       -143.8837
+depth:           1.9700
+Mrr:        -3.043000e+23
+Mtt:        -2.843000e+25
+Mpp:         2.874000e+25
+Mrt:         3.564000e+24
+Mrp:         5.401000e+24
+Mtp:        -2.253000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_368
+time shift:        69.6000
+half duration:      3.6000
+latitude:          62.9724
+longitude:       -143.7747
+depth:          13.7900
+Mrr:         6.994000e+24
+Mtt:        -6.417000e+25
+Mpp:         5.718000e+25
+Mrt:        -1.153000e+25
+Mrp:         2.019000e+25
+Mtp:        -4.297000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_369
+time shift:        69.8000
+half duration:      1.2000
+latitude:          62.8109
+longitude:       -143.3106
+depth:          14.0000
+Mrr:         1.136000e+18
+Mtt:        -1.476000e+25
+Mpp:         1.476000e+25
+Mrt:         6.188000e+24
+Mrp:        -8.838000e+24
+Mtp:         5.372000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_37
+time shift:         7.8000
+half duration:      4.2000
+latitude:          63.4690
+longitude:       -147.4333
+depth:           5.3610
+Mrr:         2.235000e+25
+Mtt:        -2.401000e+25
+Mpp:         1.664000e+24
+Mrt:         1.249000e+25
+Mrp:        -1.054000e+25
+Mtp:         4.232000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_370
+time shift:        69.8000
+half duration:      1.2000
+latitude:          62.8109
+longitude:       -143.3106
+depth:          18.0000
+Mrr:         0.000000e+00
+Mtt:        -1.561000e+25
+Mpp:         1.561000e+25
+Mrt:         4.132000e+24
+Mrp:        -5.901000e+24
+Mtp:         5.681000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_371
+time shift:        69.8000
+half duration:      1.2000
+latitude:          62.8109
+longitude:       -143.3106
+depth:           2.0000
+Mrr:         0.000000e+00
+Mtt:        -1.315000e+25
+Mpp:         1.315000e+25
+Mrt:        -1.366000e+24
+Mrp:         1.950000e+24
+Mtp:         4.786000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_372
+time shift:        69.8000
+half duration:      1.2000
+latitude:          62.8109
+longitude:       -143.3106
+depth:           6.0000
+Mrr:         0.000000e+00
+Mtt:        -1.555000e+25
+Mpp:         1.555000e+25
+Mrt:         1.148000e+24
+Mrp:        -1.640000e+24
+Mtp:         5.660000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_373
+time shift:        70.0000
+half duration:      1.2000
+latitude:          62.8109
+longitude:       -143.3106
+depth:          22.0000
+Mrr:         0.000000e+00
+Mtt:        -1.378000e+25
+Mpp:         1.378000e+25
+Mrt:         4.657000e+24
+Mrp:        -6.651000e+24
+Mtp:         5.017000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_374
+time shift:        70.0000
+half duration:      1.2000
+latitude:          62.8109
+longitude:       -143.3106
+depth:          26.0000
+Mrr:         4.257000e+17
+Mtt:        -5.343000e+24
+Mpp:         5.343000e+24
+Mrt:         2.479000e+24
+Mrp:        -3.541000e+24
+Mtp:         1.945000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_375
+time shift:        70.0000
+half duration:      1.4000
+latitude:          62.8109
+longitude:       -143.3106
+depth:          10.0000
+Mrr:         7.874000e+17
+Mtt:        -1.023000e+25
+Mpp:         1.023000e+25
+Mrt:         4.290000e+24
+Mrp:        -6.126000e+24
+Mtp:         3.724000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_376
+time shift:        70.0000
+half duration:      2.0000
+latitude:          62.9780
+longitude:       -143.7686
+depth:          17.7300
+Mrr:         6.224000e+24
+Mtt:        -3.759000e+25
+Mpp:         3.137000e+25
+Mrt:        -1.218000e+25
+Mrp:         1.405000e+25
+Mtp:        -2.299000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_377
+time shift:        70.0000
+half duration:      4.2000
+latitude:          62.8822
+longitude:       -143.4248
+depth:           5.9090
+Mrr:        -8.678000e+24
+Mtt:        -2.856000e+25
+Mpp:         3.724000e+25
+Mrt:         2.492000e+25
+Mrp:        -3.298000e+24
+Mtp:        -3.121000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_378
+time shift:        70.8000
+half duration:      1.4000
+latitude:          62.8477
+longitude:       -143.3674
+depth:          26.0000
+Mrr:         3.548000e+17
+Mtt:        -4.285000e+24
+Mpp:         4.285000e+24
+Mrt:         2.194000e+24
+Mrp:        -3.134000e+24
+Mtp:         1.559000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_379
+time shift:        70.8000
+half duration:      4.2000
+latitude:          62.9865
+longitude:       -143.8714
+depth:           9.8480
+Mrr:         4.452000e+24
+Mtt:        -6.297000e+25
+Mpp:         5.852000e+25
+Mrt:        -5.169000e+24
+Mrp:         1.730000e+25
+Mtp:        -4.463000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_38
+time shift:         8.0000
+half duration:      1.6000
+latitude:          63.5364
+longitude:       -147.0466
+depth:          21.8200
+Mrr:         1.536000e+24
+Mtt:        -2.262000e+24
+Mpp:         7.260000e+23
+Mrt:        -4.144000e+24
+Mrp:         1.221000e+24
+Mtp:        -5.112000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_380
+time shift:        71.0000
+half duration:      4.2000
+latitude:          63.0090
+longitude:       -143.8469
+depth:          25.6100
+Mrr:        -1.383000e+24
+Mtt:        -3.452000e+24
+Mpp:         4.835000e+24
+Mrt:         3.863000e+24
+Mrp:        -7.469000e+23
+Mtp:        -4.115000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_381
+time shift:        71.2000
+half duration:      3.4000
+latitude:          62.9639
+longitude:       -143.6719
+depth:          21.6700
+Mrr:         5.990000e+24
+Mtt:        -2.103000e+25
+Mpp:         1.505000e+25
+Mrt:        -1.320000e+25
+Mrp:         1.047000e+25
+Mtp:        -1.029000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_382
+time shift:        71.4000
+half duration:      1.2000
+latitude:          62.7740
+longitude:       -143.2542
+depth:           2.0000
+Mrr:        -6.048000e+17
+Mtt:        -7.305000e+24
+Mpp:         7.305000e+24
+Mrt:        -3.741000e+24
+Mrp:         5.343000e+24
+Mtp:         2.659000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_383
+time shift:        71.4000
+half duration:      1.4000
+latitude:          62.8879
+longitude:       -143.4186
+depth:           9.8480
+Mrr:        -7.482000e+24
+Mtt:        -2.845000e+25
+Mpp:         3.593000e+25
+Mrt:         2.186000e+25
+Mrp:        -2.075000e+24
+Mtp:        -2.989000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_384
+time shift:        71.6000
+half duration:      1.6000
+latitude:          62.8766
+longitude:       -143.4309
+depth:           1.9700
+Mrr:        -7.530000e+24
+Mtt:        -1.639000e+25
+Mpp:         2.392000e+25
+Mrt:         2.080000e+25
+Mrp:        -4.549000e+24
+Mtp:        -2.053000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_385
+time shift:        71.8000
+half duration:      2.0000
+latitude:          62.9358
+longitude:       -143.7026
+depth:           1.9700
+Mrr:        -5.015000e+24
+Mtt:        -3.111000e+25
+Mpp:         3.613000e+25
+Mrt:         1.583000e+25
+Mrp:         1.032000e+24
+Mtp:        -2.945000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_386
+time shift:        71.8000
+half duration:      2.4000
+latitude:          62.8625
+longitude:       -143.3341
+depth:           5.9090
+Mrr:        -5.586000e+24
+Mtt:        -1.216000e+25
+Mpp:         1.775000e+25
+Mrt:         1.543000e+25
+Mrp:        -3.375000e+24
+Mtp:        -1.523000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_387
+time shift:        72.8000
+half duration:      2.8000
+latitude:          62.9583
+longitude:       -143.6780
+depth:          17.7300
+Mrr:         7.891000e+24
+Mtt:        -3.872000e+25
+Mpp:         3.083000e+25
+Mrt:        -1.631000e+25
+Mrp:         1.601000e+25
+Mtp:        -2.216000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_388
+time shift:        72.8000
+half duration:      4.2000
+latitude:          62.9948
+longitude:       -143.7501
+depth:          29.5400
+Mrr:        -2.131000e+23
+Mtt:        -1.611000e+24
+Mpp:         1.824000e+24
+Mrt:         7.012000e+23
+Mrp:         1.020000e+23
+Mtp:        -1.477000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_389
+time shift:        73.4000
+half duration:      2.4000
+latitude:          62.9245
+longitude:       -143.4908
+depth:          21.6700
+Mrr:         4.338000e+24
+Mtt:        -1.645000e+25
+Mpp:         1.211000e+25
+Mrt:        -9.442000e+24
+Mrp:         7.828000e+24
+Mtp:        -8.406000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_39
+time shift:         8.0000
+half duration:      2.0000
+latitude:          63.4513
+longitude:       -147.2238
+depth:           3.2410
+Mrr:         5.149000e+23
+Mtt:        -5.532000e+23
+Mpp:         3.834000e+22
+Mrt:         2.877000e+23
+Mrp:        -2.428000e+23
+Mtp:         9.752000e+22
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_390
+time shift:        73.4000
+half duration:      3.6000
+latitude:          62.8738
+longitude:       -143.3219
+depth:          13.7900
+Mrr:        -5.027000e+24
+Mtt:        -9.533000e+24
+Mpp:         1.456000e+25
+Mrt:         1.375000e+25
+Mrp:        -3.321000e+24
+Mtp:        -1.260000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_391
+time shift:        73.6000
+half duration:      1.8000
+latitude:          62.9498
+longitude:       -143.5751
+depth:          25.6100
+Mrr:         5.913000e+24
+Mtt:        -2.243000e+25
+Mpp:         1.651000e+25
+Mrt:        -1.287000e+25
+Mrp:         1.067000e+25
+Mtp:        -1.146000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_392
+time shift:        73.6000
+half duration:      3.2000
+latitude:          62.9047
+longitude:       -143.4002
+depth:          21.6700
+Mrr:         2.216000e+24
+Mtt:        -1.200000e+25
+Mpp:         9.788000e+24
+Mrt:        -4.470000e+24
+Mrp:         4.723000e+24
+Mtp:        -7.107000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_393
+time shift:        73.8000
+half duration:      2.2000
+latitude:          62.9273
+longitude:       -143.5998
+depth:           9.8480
+Mrr:        -1.915000e+24
+Mtt:        -5.852000e+25
+Mpp:         6.044000e+25
+Mrt:         1.062000e+25
+Mrp:         9.774000e+24
+Mtp:        -4.769000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_394
+time shift:        75.4000
+half duration:      3.4000
+latitude:          62.8681
+longitude:       -143.3280
+depth:           9.8480
+Mrr:        -6.171000e+24
+Mtt:        -1.170000e+25
+Mpp:         1.787000e+25
+Mrt:         1.688000e+25
+Mrp:        -4.077000e+24
+Mtp:        -1.547000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_395
+time shift:        75.6000
+half duration:      4.2000
+latitude:          62.9357
+longitude:       -143.4785
+depth:          29.5400
+Mrr:         7.851000e+24
+Mtt:        -2.757000e+25
+Mpp:         1.972000e+25
+Mrt:        -1.731000e+25
+Mrp:         1.373000e+25
+Mtp:        -1.349000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_396
+time shift:        76.8000
+half duration:      4.0000
+latitude:          62.8935
+longitude:       -143.4125
+depth:          13.7900
+Mrr:        -7.541000e+24
+Mtt:        -1.430000e+25
+Mpp:         2.184000e+25
+Mrt:         2.062000e+25
+Mrp:        -4.982000e+24
+Mtp:        -1.890000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_397
+time shift:        77.0000
+half duration:      3.2000
+latitude:          62.9301
+longitude:       -143.4846
+depth:          25.6100
+Mrr:         7.376000e+24
+Mtt:        -3.033000e+25
+Mpp:         2.295000e+25
+Mrt:        -1.582000e+25
+Mrp:         1.378000e+25
+Mtp:        -1.613000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_398
+time shift:        77.8000
+half duration:      4.2000
+latitude:          62.9132
+longitude:       -143.5030
+depth:          13.7900
+Mrr:        -2.514000e+24
+Mtt:        -3.150000e+25
+Mpp:         3.402000e+25
+Mrt:         9.498000e+24
+Mrp:         3.716000e+24
+Mtp:        -2.719000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_399
+time shift:        78.2000
+half duration:      2.8000
+latitude:          62.8991
+longitude:       -143.4063
+depth:          17.7300
+Mrr:        -2.761000e+24
+Mtt:        -6.011000e+24
+Mpp:         8.772000e+24
+Mrt:         7.626000e+24
+Mrp:        -1.668000e+24
+Mtp:        -7.527000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_4
+time shift:         2.8000
+half duration:      1.0000
+latitude:          63.5597
+longitude:       -147.4618
+depth:          11.7200
+Mrr:         1.250000e+25
+Mtt:        -1.245000e+25
+Mpp:        -5.825000e+22
+Mrt:         6.188000e+24
+Mrp:        -2.088000e+23
+Mtp:        -1.082000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_40
+time shift:         8.0000
+half duration:      2.6000
+latitude:          63.5396
+longitude:       -147.1474
+depth:          21.8200
+Mrr:         3.456000e+24
+Mtt:        -5.089000e+24
+Mpp:         1.633000e+24
+Mrt:        -9.325000e+24
+Mrp:         2.748000e+24
+Mtp:        -1.150000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_400
+time shift:        78.4000
+half duration:      1.6000
+latitude:          62.8794
+longitude:       -143.3158
+depth:          17.7300
+Mrr:        -2.095000e+24
+Mtt:        -3.972000e+24
+Mpp:         6.067000e+24
+Mrt:         5.728000e+24
+Mrp:        -1.384000e+24
+Mtp:        -5.251000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_401
+time shift:        79.4000
+half duration:      1.4000
+latitude:          62.5897
+longitude:       -142.9712
+depth:          18.0000
+Mrr:         8.519000e+17
+Mtt:        -1.029000e+25
+Mpp:         1.029000e+25
+Mrt:         5.269000e+24
+Mrp:        -7.526000e+24
+Mtp:         3.745000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_402
+time shift:        79.8000
+half duration:      4.2000
+latitude:          62.9103
+longitude:       -143.3941
+depth:          25.6100
+Mrr:         5.394000e+24
+Mtt:        -2.922000e+25
+Mpp:         2.383000e+25
+Mrt:        -1.088000e+25
+Mrp:         1.150000e+25
+Mtp:        -1.730000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_403
+time shift:        80.0000
+half duration:      4.2000
+latitude:          62.9160
+longitude:       -143.3879
+depth:          29.5400
+Mrr:         4.860000e+24
+Mtt:        -2.935000e+25
+Mpp:         2.449000e+25
+Mrt:        -9.508000e+24
+Mrp:         1.097000e+25
+Mtp:        -1.795000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_404
+time shift:        80.8000
+half duration:      3.4000
+latitude:          62.8906
+longitude:       -143.3035
+depth:          25.6100
+Mrr:         1.502000e+24
+Mtt:        -2.125000e+25
+Mpp:         1.975000e+25
+Mrt:        -1.744000e+24
+Mrp:         5.839000e+24
+Mtp:        -1.506000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_405
+time shift:        80.8000
+half duration:      3.4000
+latitude:          62.8850
+longitude:       -143.3096
+depth:          21.6700
+Mrr:         1.426000e+24
+Mtt:        -8.612000e+24
+Mpp:         7.186000e+24
+Mrt:        -2.790000e+24
+Mrp:         3.218000e+24
+Mtp:        -5.267000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_406
+time shift:        81.4000
+half duration:      4.0000
+latitude:          62.8963
+longitude:       -143.2973
+depth:          29.5400
+Mrr:         2.352000e+23
+Mtt:        -2.235000e+25
+Mpp:         2.212000e+25
+Mrt:         1.593000e+24
+Mrp:         4.741000e+24
+Mtp:        -1.722000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_407
+time shift:        85.4000
+half duration:      2.8000
+latitude:          62.7371
+longitude:       -143.1975
+depth:           2.0000
+Mrr:        -5.977000e+17
+Mtt:        -7.219000e+24
+Mpp:         7.219000e+24
+Mrt:        -3.697000e+24
+Mrp:         5.280000e+24
+Mtp:         2.627000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_408
+time shift:        85.6000
+half duration:      1.6000
+latitude:          62.7003
+longitude:       -143.1410
+depth:           2.0000
+Mrr:        -6.104000e+17
+Mtt:        -7.371000e+24
+Mpp:         7.371000e+24
+Mrt:        -3.775000e+24
+Mrp:         5.392000e+24
+Mtp:         2.683000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_409
+time shift:        88.8000
+half duration:      1.2000
+latitude:          62.6266
+longitude:       -143.0276
+depth:           2.0000
+Mrr:         7.610000e+17
+Mtt:        -9.190000e+24
+Mpp:         9.190000e+24
+Mrt:         4.707000e+24
+Mrp:        -6.722000e+24
+Mtp:         3.345000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_41
+time shift:         8.0000
+half duration:      3.2000
+latitude:          63.5084
+longitude:       -147.1522
+depth:           2.1220
+Mrr:         1.600000e+24
+Mtt:        -2.356000e+24
+Mpp:         7.562000e+23
+Mrt:        -4.317000e+24
+Mrp:         1.272000e+24
+Mtp:        -5.325000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_410
+time shift:        89.2000
+half duration:      1.8000
+latitude:          62.3686
+longitude:       -142.6315
+depth:           6.0000
+Mrr:        -4.731000e+16
+Mtt:        -5.714000e+23
+Mpp:         5.714000e+23
+Mrt:        -2.927000e+23
+Mrp:         4.180000e+23
+Mtp:         2.080000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_411
+time shift:        89.6000
+half duration:      3.4000
+latitude:          62.6635
+longitude:       -143.0845
+depth:           2.0000
+Mrr:         5.914000e+17
+Mtt:        -7.423000e+24
+Mpp:         7.423000e+24
+Mrt:         3.444000e+24
+Mrp:        -4.919000e+24
+Mtp:         2.702000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_412
+time shift:        90.2000
+half duration:      1.2000
+latitude:          62.3317
+longitude:       -142.5751
+depth:          10.0000
+Mrr:        -3.937000e+17
+Mtt:        -4.754000e+24
+Mpp:         4.754000e+24
+Mrt:        -2.435000e+24
+Mrp:         3.478000e+24
+Mtp:         1.730000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_413
+time shift:        90.2000
+half duration:      1.2000
+latitude:          62.3317
+longitude:       -142.5751
+depth:           6.0000
+Mrr:        -2.839000e+17
+Mtt:        -3.428000e+24
+Mpp:         3.428000e+24
+Mrt:        -1.756000e+24
+Mrp:         2.508000e+24
+Mtp:         1.248000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_414
+time shift:        90.2000
+half duration:      2.4000
+latitude:          62.6266
+longitude:       -143.0276
+depth:          22.0000
+Mrr:         1.249000e+17
+Mtt:        -1.568000e+24
+Mpp:         1.568000e+24
+Mrt:         7.274000e+23
+Mrp:        -1.039000e+24
+Mtp:         5.706000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_415
+time shift:        90.6000
+half duration:      2.8000
+latitude:          62.6266
+longitude:       -143.0276
+depth:          18.0000
+Mrr:         3.408000e+17
+Mtt:        -4.115000e+24
+Mpp:         4.115000e+24
+Mrt:         2.108000e+24
+Mrp:        -3.010000e+24
+Mtp:         1.498000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_416
+time shift:        90.8000
+half duration:      2.0000
+latitude:          62.4054
+longitude:       -142.6883
+depth:           2.0000
+Mrr:         0.000000e+00
+Mtt:        -2.400000e+24
+Mpp:         2.400000e+24
+Mrt:         3.972000e+23
+Mrp:        -5.673000e+23
+Mtp:         8.734000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_417
+time shift:        91.0000
+half duration:      1.6000
+latitude:          62.5897
+longitude:       -142.9712
+depth:          22.0000
+Mrr:         4.372000e+17
+Mtt:        -5.280000e+24
+Mpp:         5.280000e+24
+Mrt:         2.704000e+24
+Mrp:        -3.862000e+24
+Mtp:         1.922000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_418
+time shift:        91.0000
+half duration:      1.8000
+latitude:          62.3317
+longitude:       -142.5751
+depth:           2.0000
+Mrr:         0.000000e+00
+Mtt:        -3.125000e+24
+Mpp:         3.125000e+24
+Mrt:         3.245000e+23
+Mrp:        -4.635000e+23
+Mtp:         1.138000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_419
+time shift:        91.8000
+half duration:      1.2000
+latitude:          62.2948
+longitude:       -142.5185
+depth:          10.0000
+Mrr:        -3.445000e+17
+Mtt:        -4.323000e+24
+Mpp:         4.323000e+24
+Mrt:        -2.006000e+24
+Mrp:         2.865000e+24
+Mtp:         1.574000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_42
+time shift:         8.2000
+half duration:      1.8000
+latitude:          63.5146
+longitude:       -146.9489
+depth:          10.0000
+Mrr:         2.118000e+24
+Mtt:        -3.119000e+24
+Mpp:         1.001000e+24
+Mrt:        -5.714000e+24
+Mrp:         1.684000e+24
+Mtp:        -7.048000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_420
+time shift:        91.8000
+half duration:      1.2000
+latitude:          62.2948
+longitude:       -142.5185
+depth:           6.0000
+Mrr:         0.000000e+00
+Mtt:        -5.475000e+24
+Mpp:         5.475000e+24
+Mrt:        -1.449000e+24
+Mrp:         2.070000e+24
+Mtp:         1.993000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_421
+time shift:        92.0000
+half duration:      2.2000
+latitude:          62.5160
+longitude:       -142.8580
+depth:           6.0000
+Mrr:         0.000000e+00
+Mtt:        -7.097000e+23
+Mpp:         7.097000e+23
+Mrt:         1.402000e+23
+Mrp:        -2.002000e+23
+Mtp:         2.583000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_422
+time shift:        92.2000
+half duration:      3.2000
+latitude:          62.4054
+longitude:       -142.6883
+depth:          14.0000
+Mrr:         0.000000e+00
+Mtt:        -8.642000e+23
+Mpp:         8.642000e+23
+Mrt:         1.430000e+23
+Mrp:        -2.043000e+23
+Mtp:         3.145000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_423
+time shift:        92.4000
+half duration:      2.2000
+latitude:          62.4423
+longitude:       -142.7448
+depth:           2.0000
+Mrr:         2.035000e+17
+Mtt:        -2.553000e+24
+Mpp:         2.553000e+24
+Mrt:         1.185000e+24
+Mrp:        -1.692000e+24
+Mtp:         9.294000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_424
+time shift:        92.4000
+half duration:      4.0000
+latitude:          62.5529
+longitude:       -142.9145
+depth:          18.0000
+Mrr:         8.519000e+17
+Mtt:        -1.029000e+25
+Mpp:         1.029000e+25
+Mrt:         5.269000e+24
+Mrp:        -7.526000e+24
+Mtp:         3.745000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_425
+time shift:        92.6000
+half duration:      1.2000
+latitude:          62.4791
+longitude:       -142.8015
+depth:           2.0000
+Mrr:         2.847000e+17
+Mtt:        -3.573000e+24
+Mpp:         3.573000e+24
+Mrt:         1.658000e+24
+Mrp:        -2.368000e+24
+Mtp:         1.300000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_426
+time shift:        92.6000
+half duration:      1.6000
+latitude:          62.5529
+longitude:       -142.9145
+depth:          14.0000
+Mrr:         0.000000e+00
+Mtt:        -8.744000e+23
+Mpp:         8.744000e+23
+Mrt:        -1.175000e+23
+Mrp:         1.678000e+23
+Mtp:         3.183000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_427
+time shift:        92.6000
+half duration:      1.8000
+latitude:          62.2948
+longitude:       -142.5185
+depth:           2.0000
+Mrr:         0.000000e+00
+Mtt:        -4.568000e+24
+Mpp:         4.568000e+24
+Mrt:        -1.544000e+24
+Mrp:         2.204000e+24
+Mtp:         1.663000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_428
+time shift:        92.6000
+half duration:      4.2000
+latitude:          62.5529
+longitude:       -142.9145
+depth:          26.0000
+Mrr:         6.386000e+17
+Mtt:        -7.712000e+24
+Mpp:         7.712000e+24
+Mrt:         3.950000e+24
+Mrp:        -5.641000e+24
+Mtp:         2.807000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_429
+time shift:        93.0000
+half duration:      3.0000
+latitude:          62.5160
+longitude:       -142.8580
+depth:           2.0000
+Mrr:         3.280000e+17
+Mtt:        -3.962000e+24
+Mpp:         3.962000e+24
+Mrt:         2.029000e+24
+Mrp:        -2.898000e+24
+Mtp:         1.442000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_43
+time shift:         8.2000
+half duration:      2.4000
+latitude:          63.5115
+longitude:       -147.0506
+depth:           6.0610
+Mrr:         2.909000e+24
+Mtt:        -4.283000e+24
+Mpp:         1.375000e+24
+Mrt:        -7.849000e+24
+Mrp:         2.313000e+24
+Mtp:        -9.681000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_430
+time shift:        93.4000
+half duration:      1.4000
+latitude:          62.2580
+longitude:       -142.4619
+depth:          14.0000
+Mrr:         3.975000e+17
+Mtt:        -5.331000e+24
+Mpp:         5.331000e+24
+Mrt:         2.012000e+24
+Mrp:        -2.873000e+24
+Mtp:         1.940000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_431
+time shift:        93.4000
+half duration:      1.4000
+latitude:          62.2580
+longitude:       -142.4619
+depth:           6.0000
+Mrr:        -2.839000e+17
+Mtt:        -3.428000e+24
+Mpp:         3.428000e+24
+Mrt:        -1.756000e+24
+Mrp:         2.508000e+24
+Mtp:         1.248000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_432
+time shift:        93.6000
+half duration:      1.6000
+latitude:          62.2580
+longitude:       -142.4619
+depth:           2.0000
+Mrr:        -3.549000e+17
+Mtt:        -4.286000e+24
+Mpp:         4.286000e+24
+Mrt:        -2.195000e+24
+Mrp:         3.135000e+24
+Mtp:         1.560000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_433
+time shift:        93.8000
+half duration:      3.2000
+latitude:          62.3686
+longitude:       -142.6315
+depth:           2.0000
+Mrr:         0.000000e+00
+Mtt:        -2.629000e+24
+Mpp:         2.629000e+24
+Mrt:         2.730000e+23
+Mrp:        -3.899000e+23
+Mtp:         9.568000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_434
+time shift:        94.0000
+half duration:      4.2000
+latitude:          62.5897
+longitude:       -142.9712
+depth:           2.0000
+Mrr:         7.294000e+17
+Mtt:        -8.809000e+24
+Mpp:         8.809000e+24
+Mrt:         4.512000e+24
+Mrp:        -6.444000e+24
+Mtp:         3.206000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_435
+time shift:        94.0000
+half duration:      4.2000
+latitude:          62.5897
+longitude:       -142.9712
+depth:           6.0000
+Mrr:         9.463000e+16
+Mtt:        -1.269000e+24
+Mpp:         1.269000e+24
+Mrt:         4.788000e+23
+Mrp:        -6.838000e+23
+Mtp:         4.619000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_436
+time shift:        94.2000
+half duration:      1.4000
+latitude:          62.5160
+longitude:       -142.8580
+depth:          18.0000
+Mrr:         5.679000e+17
+Mtt:        -6.859000e+24
+Mpp:         6.859000e+24
+Mrt:         3.513000e+24
+Mrp:        -5.017000e+24
+Mtp:         2.496000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_437
+time shift:        94.6000
+half duration:      1.6000
+latitude:          62.5160
+longitude:       -142.8580
+depth:          22.0000
+Mrr:         1.187000e+18
+Mtt:        -1.433000e+25
+Mpp:         1.433000e+25
+Mrt:         7.340000e+24
+Mrp:        -1.048000e+25
+Mtp:         5.216000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_438
+time shift:        94.8000
+half duration:      3.0000
+latitude:          62.5529
+longitude:       -142.9145
+depth:          30.0000
+Mrr:         7.095000e+17
+Mtt:        -8.569000e+24
+Mpp:         8.569000e+24
+Mrt:         4.389000e+24
+Mrp:        -6.268000e+24
+Mtp:         3.119000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_439
+time shift:        94.8000
+half duration:      3.2000
+latitude:          62.5529
+longitude:       -142.9145
+depth:          22.0000
+Mrr:         8.744000e+17
+Mtt:        -1.056000e+25
+Mpp:         1.056000e+25
+Mrt:         5.409000e+24
+Mrp:        -7.724000e+24
+Mtp:         3.844000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_44
+time shift:         8.2000
+half duration:      3.4000
+latitude:          63.5489
+longitude:       -147.2470
+depth:          25.7600
+Mrr:         1.309000e+24
+Mtt:        -1.927000e+24
+Mpp:         6.186000e+23
+Mrt:        -3.531000e+24
+Mrp:         1.041000e+24
+Mtp:        -4.355000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_440
+time shift:        95.0000
+half duration:      3.4000
+latitude:          62.5529
+longitude:       -142.9145
+depth:           2.0000
+Mrr:         7.227000e+17
+Mtt:        -8.728000e+24
+Mpp:         8.728000e+24
+Mrt:         4.470000e+24
+Mrp:        -6.384000e+24
+Mtp:         3.177000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_441
+time shift:        95.0000
+half duration:      3.4000
+latitude:          62.5529
+longitude:       -142.9145
+depth:           6.0000
+Mrr:         0.000000e+00
+Mtt:        -1.958000e+24
+Mpp:         1.958000e+24
+Mrt:         6.615000e+23
+Mrp:        -9.447000e+23
+Mtp:         7.126000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_442
+time shift:        95.2000
+half duration:      2.0000
+latitude:          62.5160
+longitude:       -142.8580
+depth:          26.0000
+Mrr:         1.419000e+18
+Mtt:        -1.714000e+25
+Mpp:         1.714000e+25
+Mrt:         8.778000e+24
+Mrp:        -1.254000e+25
+Mtp:         6.238000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_443
+time shift:        95.6000
+half duration:      2.2000
+latitude:          62.5160
+longitude:       -142.8580
+depth:          30.0000
+Mrr:         1.277000e+18
+Mtt:        -1.542000e+25
+Mpp:         1.542000e+25
+Mrt:         7.900000e+24
+Mrp:        -1.128000e+25
+Mtp:         5.614000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_444
+time shift:        95.6000
+half duration:      3.8000
+latitude:          62.4791
+longitude:       -142.8015
+depth:          18.0000
+Mrr:         2.840000e+17
+Mtt:        -3.690000e+24
+Mpp:         3.690000e+24
+Mrt:         1.547000e+24
+Mrp:        -2.209000e+24
+Mtp:         1.343000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_445
+time shift:        95.8000
+half duration:      2.2000
+latitude:          62.2948
+longitude:       -142.5185
+depth:          14.0000
+Mrr:        -5.679000e+16
+Mtt:        -7.128000e+23
+Mpp:         7.128000e+23
+Mrt:        -3.307000e+23
+Mrp:         4.723000e+23
+Mtp:         2.594000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_446
+time shift:        96.2000
+half duration:      2.6000
+latitude:          62.4423
+longitude:       -142.7448
+depth:          30.0000
+Mrr:         1.135000e+18
+Mtt:        -1.371000e+25
+Mpp:         1.371000e+25
+Mrt:         7.022000e+24
+Mrp:        -1.003000e+25
+Mtp:         4.990000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_447
+time shift:        96.6000
+half duration:      1.8000
+latitude:          62.4054
+longitude:       -142.6883
+depth:           6.0000
+Mrr:         0.000000e+00
+Mtt:        -7.457000e+23
+Mpp:         7.457000e+23
+Mrt:         1.096000e+22
+Mrp:        -1.565000e+22
+Mtp:         2.714000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_448
+time shift:        96.6000
+half duration:      4.2000
+latitude:          62.2580
+longitude:       -142.4619
+depth:          10.0000
+Mrr:        -2.460000e+17
+Mtt:        -2.972000e+24
+Mpp:         2.972000e+24
+Mrt:        -1.522000e+24
+Mrp:         2.174000e+24
+Mtp:         1.082000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_449
+time shift:        97.4000
+half duration:      3.4000
+latitude:          62.2211
+longitude:       -142.4053
+depth:           2.0000
+Mrr:         0.000000e+00
+Mtt:        -1.243000e+23
+Mpp:         1.243000e+23
+Mrt:        -1.826000e+21
+Mrp:         2.608000e+21
+Mtp:         4.524000e+22
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_45
+time shift:         8.4000
+half duration:      3.2000
+latitude:          63.4815
+longitude:       -147.2333
+depth:           5.3610
+Mrr:         5.253000e+23
+Mtt:        -5.604000e+23
+Mpp:         3.508000e+22
+Mrt:         2.903000e+23
+Mrp:        -2.246000e+23
+Mtp:         8.544000e+22
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_450
+time shift:        98.2000
+half duration:      3.0000
+latitude:          62.4791
+longitude:       -142.8015
+depth:          30.0000
+Mrr:         1.561000e+18
+Mtt:        -1.885000e+25
+Mpp:         1.885000e+25
+Mrt:         9.655000e+24
+Mrp:        -1.379000e+25
+Mtp:         6.862000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_451
+time shift:        99.0000
+half duration:      3.8000
+latitude:          62.4791
+longitude:       -142.8015
+depth:          26.0000
+Mrr:         1.632000e+18
+Mtt:        -1.971000e+25
+Mpp:         1.971000e+25
+Mrt:         1.009000e+25
+Mrp:        -1.442000e+25
+Mtp:         7.173000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_452
+time shift:        99.2000
+half duration:      4.0000
+latitude:          62.4791
+longitude:       -142.8015
+depth:          22.0000
+Mrr:         9.993000e+17
+Mtt:        -1.207000e+25
+Mpp:         1.207000e+25
+Mrt:         6.181000e+24
+Mrp:        -8.828000e+24
+Mtp:         4.393000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_453
+time shift:        99.4000
+half duration:      2.6000
+latitude:          62.4423
+longitude:       -142.7448
+depth:          26.0000
+Mrr:         1.135000e+18
+Mtt:        -1.371000e+25
+Mpp:         1.371000e+25
+Mrt:         7.022000e+24
+Mrp:        -1.003000e+25
+Mtp:         4.990000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_454
+time shift:        99.6000
+half duration:      4.2000
+latitude:          62.4054
+longitude:       -142.6883
+depth:          26.0000
+Mrr:         2.129000e+17
+Mtt:        -2.571000e+24
+Mpp:         2.571000e+24
+Mrt:         1.317000e+24
+Mrp:        -1.880000e+24
+Mtp:         9.357000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_455
+time shift:        99.8000
+half duration:      1.4000
+latitude:          62.4054
+longitude:       -142.6883
+depth:          30.0000
+Mrr:         7.805000e+17
+Mtt:        -9.426000e+24
+Mpp:         9.426000e+24
+Mrt:         4.828000e+24
+Mrp:        -6.895000e+24
+Mtp:         3.431000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_456
+time shift:       100.2000
+half duration:      3.2000
+latitude:          62.4423
+longitude:       -142.7448
+depth:          22.0000
+Mrr:         7.495000e+17
+Mtt:        -9.052000e+24
+Mpp:         9.052000e+24
+Mrt:         4.636000e+24
+Mrp:        -6.621000e+24
+Mtp:         3.294000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_457
+time shift:       100.6000
+half duration:      3.8000
+latitude:          62.4423
+longitude:       -142.7448
+depth:          18.0000
+Mrr:         1.704000e+17
+Mtt:        -2.214000e+24
+Mpp:         2.214000e+24
+Mrt:         9.283000e+23
+Mrp:        -1.326000e+24
+Mtp:         8.059000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_458
+time shift:       101.2000
+half duration:      2.6000
+latitude:          62.3317
+longitude:       -142.5751
+depth:          22.0000
+Mrr:         1.874000e+17
+Mtt:        -2.263000e+24
+Mpp:         2.263000e+24
+Mrt:         1.159000e+24
+Mrp:        -1.655000e+24
+Mtp:         8.236000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_459
+time shift:       101.8000
+half duration:      1.8000
+latitude:          62.2948
+longitude:       -142.5185
+depth:          18.0000
+Mrr:         5.679000e+17
+Mtt:        -6.859000e+24
+Mpp:         6.859000e+24
+Mrt:         3.513000e+24
+Mrp:        -5.017000e+24
+Mtp:         2.496000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_46
+time shift:         8.4000
+half duration:      4.2000
+latitude:          63.4627
+longitude:       -147.5332
+depth:           5.3610
+Mrr:         2.247000e+25
+Mtt:        -2.381000e+25
+Mpp:         1.335000e+24
+Mrt:         1.228000e+25
+Mrp:        -8.652000e+24
+Mtp:         3.077000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_460
+time shift:       102.0000
+half duration:      1.8000
+latitude:          62.2948
+longitude:       -142.5185
+depth:          30.0000
+Mrr:         9.224000e+17
+Mtt:        -1.114000e+25
+Mpp:         1.114000e+25
+Mrt:         5.706000e+24
+Mrp:        -8.148000e+24
+Mtp:         4.055000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_461
+time shift:       102.4000
+half duration:      2.2000
+latitude:          62.2948
+longitude:       -142.5185
+depth:          22.0000
+Mrr:         1.062000e+18
+Mtt:        -1.282000e+25
+Mpp:         1.282000e+25
+Mrt:         6.568000e+24
+Mrp:        -9.380000e+24
+Mtp:         4.667000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_462
+time shift:       102.6000
+half duration:      4.0000
+latitude:          62.2580
+longitude:       -142.4619
+depth:          22.0000
+Mrr:         2.186000e+18
+Mtt:        -2.640000e+25
+Mpp:         2.640000e+25
+Mrt:         1.352000e+25
+Mrp:        -1.931000e+25
+Mtp:         9.609000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_463
+time shift:       102.8000
+half duration:      4.0000
+latitude:          62.3317
+longitude:       -142.5751
+depth:          30.0000
+Mrr:         7.095000e+17
+Mtt:        -8.569000e+24
+Mpp:         8.569000e+24
+Mrt:         4.389000e+24
+Mrp:        -6.268000e+24
+Mtp:         3.119000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_464
+time shift:       102.8000
+half duration:      4.2000
+latitude:          62.2580
+longitude:       -142.4619
+depth:          18.0000
+Mrr:         1.249000e+18
+Mtt:        -1.509000e+25
+Mpp:         1.509000e+25
+Mrt:         7.728000e+24
+Mrp:        -1.104000e+25
+Mtp:         5.492000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_465
+time shift:       103.4000
+half duration:      1.4000
+latitude:          62.3317
+longitude:       -142.5751
+depth:          26.0000
+Mrr:         4.257000e+17
+Mtt:        -5.141000e+24
+Mpp:         5.141000e+24
+Mrt:         2.633000e+24
+Mrp:        -3.761000e+24
+Mtp:         1.871000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_466
+time shift:       103.6000
+half duration:      3.0000
+latitude:          62.3686
+longitude:       -142.6315
+depth:          30.0000
+Mrr:         4.257000e+17
+Mtt:        -5.343000e+24
+Mpp:         5.343000e+24
+Mrt:         2.479000e+24
+Mrp:        -3.541000e+24
+Mtp:         1.945000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_467
+time shift:       105.0000
+half duration:      1.4000
+latitude:          62.2948
+longitude:       -142.5185
+depth:          26.0000
+Mrr:         1.064000e+18
+Mtt:        -1.285000e+25
+Mpp:         1.285000e+25
+Mrt:         6.583000e+24
+Mrp:        -9.402000e+24
+Mtp:         4.678000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_468
+time shift:       106.6000
+half duration:      2.8000
+latitude:          62.2211
+longitude:       -142.4053
+depth:          14.0000
+Mrr:         7.951000e+17
+Mtt:        -9.602000e+24
+Mpp:         9.602000e+24
+Mrt:         4.918000e+24
+Mrp:        -7.024000e+24
+Mtp:         3.495000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_469
+time shift:       107.4000
+half duration:      3.4000
+latitude:          62.2211
+longitude:       -142.4053
+depth:          22.0000
+Mrr:         2.186000e+18
+Mtt:        -2.640000e+25
+Mpp:         2.640000e+25
+Mrt:         1.352000e+25
+Mrp:        -1.931000e+25
+Mtp:         9.609000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_47
+time shift:         8.6000
+half duration:      1.4000
+latitude:          63.5083
+longitude:       -146.9499
+depth:           6.0610
+Mrr:         3.781000e+24
+Mtt:        -5.569000e+24
+Mpp:         1.787000e+24
+Mrt:        -1.020000e+25
+Mrp:         3.007000e+24
+Mtp:        -1.259000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_470
+time shift:       107.6000
+half duration:      3.6000
+latitude:          62.2211
+longitude:       -142.4053
+depth:          18.0000
+Mrr:         1.533000e+18
+Mtt:        -1.852000e+25
+Mpp:         1.852000e+25
+Mrt:         9.485000e+24
+Mrp:        -1.355000e+25
+Mtp:         6.740000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_471
+time shift:       108.0000
+half duration:      4.0000
+latitude:          62.2211
+longitude:       -142.4053
+depth:          30.0000
+Mrr:         0.000000e+00
+Mtt:        -2.426000e+25
+Mpp:         2.426000e+25
+Mrt:         2.519000e+24
+Mrp:        -3.598000e+24
+Mtp:         8.830000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_472
+time shift:       108.4000
+half duration:      2.6000
+latitude:          62.2580
+longitude:       -142.4619
+depth:          30.0000
+Mrr:         0.000000e+00
+Mtt:        -2.426000e+25
+Mpp:         2.426000e+25
+Mrt:        -2.519000e+24
+Mrp:         3.598000e+24
+Mtp:         8.830000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_473
+time shift:       109.2000
+half duration:      3.2000
+latitude:          62.2580
+longitude:       -142.4619
+depth:          26.0000
+Mrr:         0.000000e+00
+Mtt:        -3.086000e+25
+Mpp:         3.086000e+25
+Mrt:         6.096000e+24
+Mrp:        -8.706000e+24
+Mtp:         1.123000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_474
+time shift:       109.6000
+half duration:      2.2000
+latitude:          62.2211
+longitude:       -142.4053
+depth:          26.0000
+Mrr:         0.000000e+00
+Mtt:        -3.244000e+25
+Mpp:         3.244000e+25
+Mrt:         7.478000e+24
+Mrp:        -1.068000e+25
+Mtp:         1.181000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_475
+time shift:       111.2000
+half duration:      3.8000
+latitude:          62.2211
+longitude:       -142.4053
+depth:          10.0000
+Mrr:         1.968000e+17
+Mtt:        -2.377000e+24
+Mpp:         2.377000e+24
+Mrt:         1.218000e+24
+Mrp:        -1.739000e+24
+Mtp:         8.652000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_48
+time shift:         9.0000
+half duration:      1.2000
+latitude:          63.5052
+longitude:       -146.8492
+depth:           6.0610
+Mrr:         4.363000e+24
+Mtt:        -6.425000e+24
+Mpp:         2.062000e+24
+Mrt:        -1.177000e+25
+Mrp:         3.470000e+24
+Mtp:        -1.452000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_49
+time shift:         9.0000
+half duration:      2.2000
+latitude:          63.5021
+longitude:       -146.9508
+depth:           2.1220
+Mrr:         1.405000e+24
+Mtt:        -2.069000e+24
+Mpp:         6.641000e+23
+Mrt:        -3.791000e+24
+Mrp:         1.117000e+24
+Mtp:        -4.676000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_5
+time shift:         3.4000
+half duration:      1.6000
+latitude:          63.5396
+longitude:       -147.3498
+depth:          17.8800
+Mrr:         1.746000e+24
+Mtt:        -2.571000e+24
+Mpp:         8.252000e+23
+Mrt:        -4.711000e+24
+Mrp:         1.388000e+24
+Mtp:        -5.810000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_50
+time shift:         9.0000
+half duration:      2.2000
+latitude:          63.4502
+longitude:       -147.7332
+depth:           5.3610
+Mrr:         1.781000e+25
+Mtt:        -1.677000e+25
+Mpp:        -1.037000e+24
+Mrt:         8.043000e+24
+Mrp:         5.188000e+24
+Mtp:        -4.868000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_51
+time shift:         9.2000
+half duration:      1.4000
+latitude:          63.5502
+longitude:       -147.2921
+depth:           9.5390
+Mrr:         5.149000e+23
+Mtt:        -3.952000e+23
+Mpp:        -1.197000e+23
+Mrt:         3.764000e+23
+Mrp:         5.513000e+21
+Mtp:        -2.793000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_52
+time shift:         9.4000
+half duration:      3.2000
+latitude:          63.4804
+longitude:       -147.7427
+depth:           7.4800
+Mrr:         1.925000e+25
+Mtt:        -1.801000e+25
+Mpp:        -1.241000e+24
+Mrt:         8.595000e+24
+Mrp:         6.300000e+24
+Mtp:        -5.682000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_53
+time shift:         9.4000
+half duration:      4.2000
+latitude:          63.4565
+longitude:       -147.6332
+depth:           5.3610
+Mrr:         1.971000e+25
+Mtt:        -1.986000e+25
+Mpp:         1.434000e+23
+Mrt:         9.946000e+24
+Mrp:        -1.682000e+24
+Mtp:        -8.853000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_54
+time shift:         9.6000
+half duration:      1.2000
+latitude:          63.5101
+longitude:       -147.1891
+depth:           5.2990
+Mrr:         5.767000e+24
+Mtt:        -4.426000e+24
+Mpp:        -1.341000e+24
+Mrt:         4.216000e+24
+Mrp:         6.174000e+22
+Mtp:        -3.129000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_55
+time shift:         9.8000
+half duration:      1.2000
+latitude:          63.4990
+longitude:       -146.8501
+depth:           2.1220
+Mrr:         1.387000e+24
+Mtt:        -2.043000e+24
+Mpp:         6.558000e+23
+Mrt:        -3.744000e+24
+Mrp:         1.103000e+24
+Mtp:        -4.618000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_56
+time shift:         9.8000
+half duration:      3.2000
+latitude:          63.5409
+longitude:       -147.7618
+depth:          11.7200
+Mrr:         2.175000e+25
+Mtt:        -1.928000e+25
+Mpp:        -2.462000e+24
+Mrt:         8.854000e+24
+Mrp:         1.321000e+25
+Mtp:        -1.011000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_57
+time shift:         9.8000
+half duration:      3.4000
+latitude:          63.5107
+longitude:       -147.7522
+depth:           9.6000
+Mrr:         2.427000e+25
+Mtt:        -2.171000e+25
+Mpp:        -2.561000e+24
+Mrt:         1.003000e+25
+Mrp:         1.367000e+25
+Mtp:        -1.064000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_58
+time shift:         9.8000
+half duration:      4.2000
+latitude:          63.4325
+longitude:       -147.5237
+depth:           3.2410
+Mrr:         2.352000e+25
+Mtt:        -2.443000e+25
+Mpp:         9.095000e+23
+Mrt:         1.246000e+25
+Mrp:        -6.252000e+24
+Mtp:         1.519000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_59
+time shift:        10.0000
+half duration:      1.8000
+latitude:          63.6041
+longitude:       -147.2779
+depth:          11.6600
+Mrr:         1.159000e+25
+Mtt:        -4.865000e+24
+Mpp:        -6.722000e+24
+Mrt:         3.559000e+24
+Mrp:         4.395000e+24
+Mtp:        -5.720000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_6
+time shift:         3.6000
+half duration:      1.2000
+latitude:          63.5534
+longitude:       -147.5618
+depth:          11.7200
+Mrr:         1.171000e+25
+Mtt:        -1.258000e+25
+Mpp:         8.719000e+23
+Mrt:         6.543000e+24
+Mrp:        -5.522000e+24
+Mtp:         2.218000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_60
+time shift:        10.0000
+half duration:      3.6000
+latitude:          63.5052
+longitude:       -147.0515
+depth:           2.1220
+Mrr:         1.705000e+24
+Mtt:        -2.511000e+24
+Mpp:         8.060000e+23
+Mrt:        -4.601000e+24
+Mrp:         1.356000e+24
+Mtp:        -5.675000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_61
+time shift:        10.2000
+half duration:      1.2000
+latitude:          63.6381
+longitude:       -147.2119
+depth:          11.6600
+Mrr:         1.159000e+25
+Mtt:        -4.865000e+24
+Mpp:        -6.722000e+24
+Mrt:         3.559000e+24
+Mrp:         4.395000e+24
+Mtp:        -5.720000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_62
+time shift:        10.2000
+half duration:      2.8000
+latitude:          63.3961
+longitude:       -147.6142
+depth:           1.1210
+Mrr:         5.588000e+24
+Mtt:        -5.463000e+24
+Mpp:        -1.246000e+23
+Mrt:         2.686000e+24
+Mrp:         4.736000e+23
+Mtp:        -8.273000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_63
+time shift:        10.2000
+half duration:      4.2000
+latitude:          63.5614
+longitude:       -147.4475
+depth:          29.7000
+Mrr:         2.181000e+24
+Mtt:        -3.212000e+24
+Mpp:         1.031000e+24
+Mrt:        -5.885000e+24
+Mrp:         1.734000e+24
+Mtp:        -7.259000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_64
+time shift:        10.4000
+half duration:      1.2000
+latitude:          63.5020
+longitude:       -146.7484
+depth:           6.0610
+Mrr:         3.199000e+24
+Mtt:        -4.712000e+24
+Mpp:         1.512000e+24
+Mrt:        -8.634000e+24
+Mrp:         2.544000e+24
+Mtp:        -1.065000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_65
+time shift:        10.4000
+half duration:      1.2000
+latitude:          63.5364
+longitude:       -146.8442
+depth:          25.7600
+Mrr:        -8.724000e+23
+Mtt:         4.515000e+23
+Mpp:         4.209000e+23
+Mrt:         2.428000e+24
+Mrp:         3.594000e+23
+Mtp:        -3.025000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_66
+time shift:        10.4000
+half duration:      3.8000
+latitude:          63.4085
+longitude:       -147.4142
+depth:           1.1210
+Mrr:         1.818000e+25
+Mtt:        -1.854000e+25
+Mpp:         3.544000e+23
+Mrt:         9.353000e+24
+Mrp:        -2.828000e+24
+Mtp:        -4.173000e+22
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_67
+time shift:        10.4000
+half duration:      4.0000
+latitude:          63.4263
+longitude:       -147.6237
+depth:           3.2410
+Mrr:         1.662000e+25
+Mtt:        -1.615000e+25
+Mpp:        -4.684000e+23
+Mrt:         7.910000e+24
+Mrp:         1.970000e+24
+Mtp:        -2.802000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_68
+time shift:        10.4000
+half duration:      4.2000
+latitude:          63.5646
+longitude:       -147.5482
+depth:          29.7000
+Mrr:         1.798000e+24
+Mtt:        -3.253000e+24
+Mpp:         1.455000e+24
+Mrt:        -4.799000e+24
+Mrp:         2.195000e+24
+Mtp:        -1.029000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_69
+time shift:        10.6000
+half duration:      1.2000
+latitude:          63.4958
+longitude:       -146.7494
+depth:           2.1220
+Mrr:         1.672000e+24
+Mtt:        -2.463000e+24
+Mpp:         7.906000e+23
+Mrt:        -4.513000e+24
+Mrp:         1.330000e+24
+Mtp:        -5.567000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_7
+time shift:         4.0000
+half duration:      1.2000
+latitude:          63.5458
+longitude:       -147.3488
+depth:          21.8200
+Mrr:         1.920000e+24
+Mtt:        -2.827000e+24
+Mpp:         9.075000e+23
+Mrt:        -5.181000e+24
+Mrp:         1.527000e+24
+Mtp:        -6.390000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_70
+time shift:        11.0000
+half duration:      1.4000
+latitude:          63.5083
+longitude:       -146.7475
+depth:          10.0000
+Mrr:         2.278000e+24
+Mtt:        -3.468000e+24
+Mpp:         1.190000e+24
+Mrt:        -6.139000e+24
+Mrp:         1.955000e+24
+Mtp:        -8.388000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_71
+time shift:        11.0000
+half duration:      3.2000
+latitude:          63.5489
+longitude:       -147.0447
+depth:          29.7000
+Mrr:         3.568000e+23
+Mtt:        -5.864000e+23
+Mpp:         2.296000e+23
+Mrt:        -9.575000e+23
+Mrp:         3.607000e+23
+Mtp:        -1.621000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_72
+time shift:        11.0000
+half duration:      4.2000
+latitude:          63.4148
+longitude:       -147.3142
+depth:           1.1210
+Mrr:         1.658000e+25
+Mtt:        -1.691000e+25
+Mpp:         3.233000e+23
+Mrt:         8.531000e+24
+Mrp:        -2.580000e+24
+Mtp:        -3.806000e+22
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_73
+time shift:        11.0000
+half duration:      4.2000
+latitude:          63.4023
+longitude:       -147.5142
+depth:           1.1210
+Mrr:         1.642000e+25
+Mtt:        -1.674000e+25
+Mpp:         3.201000e+23
+Mrt:         8.447000e+24
+Mrp:        -2.554000e+24
+Mtp:        -3.769000e+22
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_74
+time shift:        11.4000
+half duration:      1.4000
+latitude:          63.6181
+longitude:       -147.1603
+depth:           9.5390
+Mrr:         1.097000e+25
+Mtt:        -7.012000e+24
+Mpp:        -3.962000e+24
+Mrt:         6.303000e+24
+Mrp:         1.613000e+24
+Mtp:        -5.755000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_75
+time shift:        11.4000
+half duration:      2.2000
+latitude:          63.5114
+longitude:       -146.8482
+depth:          10.0000
+Mrr:         2.723000e+24
+Mtt:        -4.010000e+24
+Mpp:         1.287000e+24
+Mrt:        -7.347000e+24
+Mrp:         2.165000e+24
+Mtp:        -9.062000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_76
+time shift:        11.4000
+half duration:      2.8000
+latitude:          63.5162
+longitude:       -147.3581
+depth:           9.5390
+Mrr:         5.149000e+23
+Mtt:        -3.952000e+23
+Mpp:        -1.197000e+23
+Mrt:         3.764000e+23
+Mrp:         5.513000e+21
+Mtp:        -2.793000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_77
+time shift:        11.4000
+half duration:      3.0000
+latitude:          63.3898
+longitude:       -147.7141
+depth:           1.1210
+Mrr:         4.279000e+24
+Mtt:        -4.030000e+24
+Mpp:        -2.492000e+23
+Mrt:         1.932000e+24
+Mrp:         1.247000e+24
+Mtp:        -1.170000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_78
+time shift:        11.4000
+half duration:      4.2000
+latitude:          63.4211
+longitude:       -147.2142
+depth:           1.1210
+Mrr:         9.340000e+24
+Mtt:        -9.241000e+24
+Mpp:        -9.861000e+22
+Mrt:         4.577000e+24
+Mrp:         1.608000e+23
+Mtp:        -1.000000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_79
+time shift:        11.6000
+half duration:      2.4000
+latitude:          63.5641
+longitude:       -147.1749
+depth:           7.4190
+Mrr:         1.081000e+25
+Mtt:        -8.299000e+24
+Mpp:        -2.514000e+24
+Mrt:         7.905000e+24
+Mrp:         1.158000e+23
+Mtp:        -5.866000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_8
+time shift:         4.0000
+half duration:      1.4000
+latitude:          63.5365
+longitude:       -147.2490
+depth:          17.8800
+Mrr:         3.142000e+24
+Mtt:        -4.627000e+24
+Mpp:         1.485000e+24
+Mrt:        -8.479000e+24
+Mrp:         2.499000e+24
+Mtp:        -1.046000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_80
+time shift:        11.6000
+half duration:      2.4000
+latitude:          63.5841
+longitude:       -147.2261
+depth:           9.5390
+Mrr:         1.081000e+25
+Mtt:        -8.299000e+24
+Mpp:        -2.514000e+24
+Mrt:         7.905000e+24
+Mrp:         1.158000e+23
+Mtp:        -5.866000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_81
+time shift:        11.6000
+half duration:      3.8000
+latitude:          63.5702
+longitude:       -147.3437
+depth:          11.6600
+Mrr:         6.095000e+23
+Mtt:        -4.510000e+23
+Mpp:        -1.585000e+23
+Mrt:         4.251000e+23
+Mrp:         2.433000e+22
+Mtp:        -3.283000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_82
+time shift:        12.0000
+half duration:      1.2000
+latitude:          63.5052
+longitude:       -146.6468
+depth:          10.0000
+Mrr:         1.815000e+24
+Mtt:        -2.673000e+24
+Mpp:         8.580000e+23
+Mrt:        -4.898000e+24
+Mrp:         1.443000e+24
+Mtp:        -6.041000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_83
+time shift:        12.2000
+half duration:      3.4000
+latitude:          63.5301
+longitude:       -147.2409
+depth:           7.4190
+Mrr:         5.149000e+23
+Mtt:        -3.952000e+23
+Mpp:        -1.197000e+23
+Mrt:         3.764000e+23
+Mrp:         5.513000e+21
+Mtp:        -2.793000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_84
+time shift:        12.2000
+half duration:      3.6000
+latitude:          63.5333
+longitude:       -146.9460
+depth:          21.8200
+Mrr:        -1.691000e+24
+Mtt:         6.961000e+23
+Mpp:         9.948000e+23
+Mrt:         4.722000e+24
+Mrp:         9.228000e+23
+Mtp:        -7.137000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_85
+time shift:        12.2000
+half duration:      4.2000
+latitude:          63.5270
+longitude:       -146.9469
+depth:          17.8800
+Mrr:        -1.396000e+24
+Mtt:         7.228000e+23
+Mpp:         6.737000e+23
+Mrt:         3.886000e+24
+Mrp:         5.753000e+23
+Mtp:        -4.843000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_86
+time shift:        12.6000
+half duration:      1.4000
+latitude:          63.5981
+longitude:       -147.1089
+depth:           7.4190
+Mrr:         1.009000e+25
+Mtt:        -7.746000e+24
+Mpp:        -2.346000e+24
+Mrt:         7.378000e+24
+Mrp:         1.080000e+23
+Mtp:        -5.475000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_87
+time shift:        12.6000
+half duration:      2.8000
+latitude:          63.4761
+longitude:       -147.2551
+depth:           5.2990
+Mrr:         5.149000e+23
+Mtt:        -3.952000e+23
+Mpp:        -1.197000e+23
+Mrt:         3.764000e+23
+Mrp:         5.513000e+21
+Mtp:        -2.793000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_88
+time shift:        12.8000
+half duration:      2.2000
+latitude:          63.4561
+longitude:       -147.2039
+depth:           3.1800
+Mrr:         5.149000e+23
+Mtt:        -3.952000e+23
+Mpp:        -1.197000e+23
+Mrt:         3.764000e+23
+Mrp:         5.513000e+21
+Mtp:        -2.793000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_89
+time shift:        13.0000
+half duration:      1.8000
+latitude:          63.5208
+longitude:       -146.7455
+depth:          17.8800
+Mrr:        -2.630000e+24
+Mtt:         1.231000e+24
+Mpp:         1.399000e+24
+Mrt:         7.330000e+24
+Mrp:         1.248000e+24
+Mtp:        -1.005000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_9
+time shift:         4.0000
+half duration:      2.6000
+latitude:          63.5427
+longitude:       -147.4504
+depth:          17.8800
+Mrr:         6.982000e+23
+Mtt:        -1.028000e+24
+Mpp:         3.301000e+23
+Mrt:        -1.884000e+24
+Mrp:         5.553000e+23
+Mtp:        -2.324000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_90
+time shift:        13.0000
+half duration:      2.0000
+latitude:          63.5145
+longitude:       -146.7464
+depth:          13.9400
+Mrr:        -3.344000e+23
+Mtt:        -8.136000e+22
+Mpp:         4.158000e+23
+Mrt:         9.532000e+23
+Mrp:         4.594000e+23
+Mtp:        -2.970000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_91
+time shift:        13.0000
+half duration:      2.8000
+latitude:          63.5301
+longitude:       -146.8452
+depth:          21.8200
+Mrr:        -3.456000e+24
+Mtt:         1.788000e+24
+Mpp:         1.667000e+24
+Mrt:         9.617000e+24
+Mrp:         1.423000e+24
+Mtp:        -1.198000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_92
+time shift:        13.0000
+half duration:      3.2000
+latitude:          63.5239
+longitude:       -146.8462
+depth:          17.8800
+Mrr:        -2.444000e+24
+Mtt:         1.265000e+24
+Mpp:         1.179000e+24
+Mrt:         6.801000e+24
+Mrp:         1.007000e+24
+Mtp:        -8.475000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_93
+time shift:        13.2000
+half duration:      1.6000
+latitude:          63.4989
+longitude:       -146.6478
+depth:           6.0610
+Mrr:         2.618000e+24
+Mtt:        -3.855000e+24
+Mpp:         1.237000e+24
+Mrt:        -7.064000e+24
+Mrp:         2.082000e+24
+Mtp:        -8.713000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_94
+time shift:        13.2000
+half duration:      2.0000
+latitude:          63.4901
+longitude:       -147.1379
+depth:           3.1800
+Mrr:         1.009000e+25
+Mtt:        -7.746000e+24
+Mpp:        -2.346000e+24
+Mrt:         7.378000e+24
+Mrp:         1.080000e+23
+Mtp:        -5.475000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_95
+time shift:        13.2000
+half duration:      2.2000
+latitude:          63.4361
+longitude:       -147.1521
+depth:           1.0600
+Mrr:         8.399000e+24
+Mtt:        -5.366000e+24
+Mpp:        -3.032000e+24
+Mrt:         4.824000e+24
+Mrp:         1.235000e+24
+Mtp:        -4.405000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_96
+time shift:        13.2000
+half duration:      3.8000
+latitude:          63.5177
+longitude:       -146.8472
+depth:          13.9400
+Mrr:        -6.982000e+23
+Mtt:         3.614000e+23
+Mpp:         3.369000e+23
+Mrt:         1.943000e+24
+Mrp:         2.876000e+23
+Mtp:        -2.421000e+24
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_97
+time shift:        13.2000
+half duration:      4.2000
+latitude:          63.4962
+longitude:       -147.3067
+depth:           7.4190
+Mrr:         5.253000e+23
+Mtt:        -3.887000e+23
+Mpp:        -1.366000e+23
+Mrt:         3.664000e+23
+Mrp:         2.097000e+22
+Mtp:        -2.829000e+23
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_98
+time shift:        13.4000
+half duration:      1.8000
+latitude:          63.5270
+longitude:       -146.7446
+depth:          21.8200
+Mrr:        -2.513000e+24
+Mtt:         8.716000e+23
+Mpp:         1.641000e+24
+Mrt:         7.031000e+24
+Mrp:         1.577000e+24
+Mtp:        -1.176000e+25
+PDE 2002 11  3 22 12 41.00  63.52  -147.44   5.0 7.9 8.0 Denali, US
+event name:      174715B_99
+time shift:        13.6000
+half duration:      2.8000
+latitude:          63.5441
+longitude:       -147.1233
+depth:           5.2990
+Mrr:         1.225000e+25
+Mtt:        -9.405000e+24
+Mpp:        -2.849000e+24
+Mrt:         8.959000e+24
+Mrp:         1.312000e+23
+Mtp:        -6.648000e+24
