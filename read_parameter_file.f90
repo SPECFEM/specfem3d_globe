@@ -243,7 +243,7 @@
 ! Par_file_ES_1944procs_243nodes_5sec
   else if(NEX_MAX <= 864) then
 
-    DT                       = 0.05d0
+    DT                       = 0.072d0
 
     MIN_ATTENUATION_PERIOD   = 5
     MAX_ATTENUATION_PERIOD   = 400
