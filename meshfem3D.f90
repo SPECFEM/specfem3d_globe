@@ -309,7 +309,7 @@
       NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB)
 
 ! basic checks for regional code
-  if(REGIONAL_CODE .and. NCHUNKS /= 1) call exit_MPI(myrank,'regional code only works for one chunk')
+  if(REGIONAL_CODE .and. NCHUNKS /= 1 .and. NCHUNKS /= 2) call exit_MPI(myrank,'regional code only works for one or two chunks')
   if(REGIONAL_CODE .and. INCLUDE_CENTRAL_CUBE) call exit_MPI(myrank,'regional code cannot include the central cube')
 
 ! check that the code is running with the requested nb of processes
@@ -400,16 +400,18 @@
   if(NPROC_ETA < 1) call exit_MPI(myrank,'NPROC_ETA must be at least 1')
 
 ! correct topology if more than one chunk
+!! DK DK UGLY modify this in the future to have more flexibility when NCHUNKS = 2
   if(NCHUNKS /= 1 .and. NPROC_XI /= NPROC_ETA) &
     call exit_MPI(myrank,'must have NPROC_XI=NPROC_ETA for more than one chunk')
 
 ! check number of elements per processor is the same in both directions
+!! DK DK UGLY modify this in the future to have more flexibility when NCHUNKS = 2
   if(NCHUNKS /= 1 .and. NEX_PER_PROC_XI /= NEX_PER_PROC_ETA) &
     call exit_MPI(myrank,'not the same number of elements per processor in both directions')
 
 ! check number of chunks
-  if(NCHUNKS /= 1 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) &
-    call exit_MPI(myrank,'only one, three or six chunks can be meshed')
+  if(NCHUNKS /= 1 .and. NCHUNKS /= 2 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) &
+    call exit_MPI(myrank,'only one, two, three or six chunks can be meshed')
 
   if(INCLUDE_CENTRAL_CUBE .and. NCHUNKS /= 6) &
     call exit_MPI(myrank,'need six chunks to include central cube')
@@ -921,10 +923,12 @@
 !   sum volume over all the regions
     volume_total = volume_total + volume_total_region
 
-! if only one chunk, create dummy values for array sizes
+! if only one or two chunks, create dummy values for array sizes
     if(NCHUNKS == 1) then
       nglob_AC(iregion_code) = nglob_AB(iregion_code)
       nglob_BC(iregion_code) = nglob_AB(iregion_code)
+    else if(NCHUNKS == 2) then
+      nglob_BC(iregion_code) = nglob_AC(iregion_code)
     endif
 
 !   check volume of chunk, and bottom and top area
@@ -975,7 +979,6 @@
   endif
 
 ! create chunk buffers if more than one chunk
-
   if(NCHUNKS > 1) then
     call create_chunk_buffers(iregion_code,nspec,ibool,idoubling,xstore,ystore,zstore, &
       nglob_AB(iregion_code),nglob_AC(iregion_code),nglob_BC(iregion_code), &

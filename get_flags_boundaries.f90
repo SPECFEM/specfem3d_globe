@@ -102,10 +102,6 @@
   do ia=1,8
 
 ! map back to cubed sphere, making sure we never divide by zero
-!! DK DK inflated    if(idoubling /= IFLAG_IN_CENTRAL_CUBE .and. &
-!! DK DK inflated       idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-!! DK DK inflated       idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
-!! DK DK inflated       idoubling /= IFLAG_IN_FICTITIOUS_CUBE) then
   if((idoubling /= IFLAG_IN_CENTRAL_CUBE .and. &
      idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
      idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
@@ -231,7 +227,6 @@
 
 ! on boundary 5: bottom
 
-!! DK DK UGLY   inflated    if(iregion_code /= IREGION_INNER_CORE) then
   if(iregion_code /= IREGION_INNER_CORE .or. (iregion_code == IREGION_INNER_CORE .and. INFLATE_CENTRAL_CUBE)) then
 
     select case(iregion_code)
@@ -239,7 +234,6 @@
         target = (RCMB/R_EARTH)*(ONE + SMALLVAL)
       case(IREGION_OUTER_CORE)
         target = (RICB/R_EARTH)*(ONE + SMALLVAL)
-!! DK DK UGLY inflated
       case(IREGION_INNER_CORE)
         target = R_CENTRAL_CUBE*(ONE + SMALLVAL)
     end select

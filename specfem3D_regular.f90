@@ -449,6 +449,9 @@
 ! number of corners between chunks
   integer NCORNERSCHUNKS
 
+! number of message types
+  integer NUM_MSG_TYPES
+
 ! indirect addressing for each corner of the chunks
   integer, dimension(:,:), allocatable :: iboolcorner_crust_mantle,iboolcorner_outer_core,iboolcorner_inner_core
 
@@ -764,29 +767,28 @@
   allocate(buffer_send_faces(NDIM,NPOIN2DMAX_XY))
   allocate(buffer_received_faces(NDIM,NPOIN2DMAX_XY))
 
-! number of corners shared between chunks
-  if(NCHUNKS == 1 .or. NCHUNKS == 3) then
+! number of corners and faces shared between chunks and number of message types
+  if(NCHUNKS == 1 .or. NCHUNKS == 2) then
     NCORNERSCHUNKS = 1
+    NUM_FACES = 1
+    NUM_MSG_TYPES = 1
+  else if(NCHUNKS == 3) then
+    NCORNERSCHUNKS = 1
+    NUM_FACES = 1
+    NUM_MSG_TYPES = 3
   else if(NCHUNKS == 6) then
     NCORNERSCHUNKS = 8
-  else
-    call exit_MPI(myrank,'number of chunks must be either 1, 3 or 6')
-  endif
-
-! number of faces shared between chunks
-  if(NCHUNKS == 1 .or. NCHUNKS == 3) then
-    NUM_FACES = 1
-  else if(NCHUNKS == 6) then
     NUM_FACES = 4
+    NUM_MSG_TYPES = 3
   else
-    call exit_MPI(myrank,'can only use 1, 3 or 6 chunks')
+    call exit_MPI(myrank,'number of chunks must be either 1, 2, 3 or 6')
   endif
 
 ! if more than one chunk then same number of processors in each direction
   NPROC_ONE_DIRECTION = NPROC_XI
 
 ! total number of messages corresponding to these common faces
-  NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*3
+  NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
 
 ! allocate array for messages for faces
   allocate(iprocfrom_faces(NUMMSGS_FACES))
@@ -1495,7 +1497,7 @@
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
             buffer_send_faces,buffer_received_faces, &
             buffer_send_chunk_corners,buffer_received_chunk_corners, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY)
 
@@ -1509,7 +1511,7 @@
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
             buffer_send_faces,buffer_received_faces, &
             buffer_send_chunk_corners,buffer_received_chunk_corners, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY)
 
@@ -1523,7 +1525,7 @@
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
             buffer_send_faces,buffer_received_faces, &
             buffer_send_chunk_corners,buffer_received_chunk_corners, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY)
 
@@ -1537,7 +1539,7 @@
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
             buffer_send_faces,buffer_received_faces, &
             buffer_send_chunk_corners,buffer_received_chunk_corners, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY)
 
@@ -2561,6 +2563,9 @@
   if(REGIONAL_CODE .and. STACEY_ABS_CONDITIONS) then
 
 !   xmin
+! if two chunks exclude this face for one of them
+  if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
+
     do ispec2D=1,nspec2D_xmin_outer_core
 
       ispec=ibelm_xmin_outer_core(ispec2D)
@@ -2581,8 +2586,11 @@
         enddo
       enddo
     enddo
+  endif
 
 !   xmax
+! if two chunks exclude this face for one of them
+  if(NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
     do ispec2D=1,nspec2D_xmax_outer_core
 
       ispec=ibelm_xmax_outer_core(ispec2D)
@@ -2603,6 +2611,7 @@
         enddo
       enddo
     enddo
+  endif
 
 !   ymin
     do ispec2D=1,nspec2D_ymin_outer_core
@@ -2785,7 +2794,7 @@
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
             buffer_send_faces,buffer_received_faces, &
             buffer_send_chunk_corners,buffer_received_chunk_corners, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY)
 
@@ -2831,6 +2840,8 @@
 ! crust & mantle
 
 !   xmin
+! if two chunks exclude this face for one of them
+  if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
     do ispec2D=1,nspec2D_xmin_crust_mantle
 
       ispec=ibelm_xmin_crust_mantle(ispec2D)
@@ -2866,8 +2877,11 @@
         enddo
       enddo
     enddo
+  endif
 
 !   xmax
+! if two chunks exclude this face for one of them
+  if(NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
     do ispec2D=1,nspec2D_xmax_crust_mantle
 
       ispec=ibelm_xmax_crust_mantle(ispec2D)
@@ -2903,6 +2917,7 @@
         enddo
       enddo
     enddo
+  endif
 
 !   ymin
     do ispec2D=1,nspec2D_ymin_crust_mantle
@@ -3144,7 +3159,7 @@
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
             buffer_send_faces,buffer_received_faces, &
             buffer_send_chunk_corners,buffer_received_chunk_corners, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY)
 
@@ -3158,7 +3173,7 @@
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
             buffer_send_faces,buffer_received_faces, &
             buffer_send_chunk_corners,buffer_received_chunk_corners, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY)
 

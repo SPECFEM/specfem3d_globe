@@ -131,6 +131,9 @@
 ! number of corners between chunks
   integer NCORNERSCHUNKS
 
+! number of message types
+  integer NUM_MSG_TYPES
+
 ! maximum number of points in a slice
   integer NGLOBMAX
 
@@ -156,29 +159,28 @@
     write(IMAIN,*)
   endif
 
-! number of corners shared between chunks
-  if(NCHUNKS == 1 .or. NCHUNKS == 3) then
+! number of corners and faces shared between chunks and number of message types
+  if(NCHUNKS == 1 .or. NCHUNKS == 2) then
     NCORNERSCHUNKS = 1
+    NUM_FACES = 1
+    NUM_MSG_TYPES = 1
+  else if(NCHUNKS == 3) then
+    NCORNERSCHUNKS = 1
+    NUM_FACES = 1
+    NUM_MSG_TYPES = 3
   else if(NCHUNKS == 6) then
     NCORNERSCHUNKS = 8
-  else
-    call exit_MPI(myrank,'number of chunks must be either 1, 3 or 6')
-  endif
-
-! number of faces shared between chunks
-  if(NCHUNKS == 1 .or. NCHUNKS == 3) then
-    NUM_FACES = 1
-  else if(NCHUNKS == 6) then
     NUM_FACES = 4
+    NUM_MSG_TYPES = 3
   else
-    call exit_MPI(myrank,'can only use 1, 3 or 6 chunks')
+    call exit_MPI(myrank,'number of chunks must be either 1, 2, 3 or 6')
   endif
 
 ! if more than one chunk then same number of processors in each direction
   NPROC_ONE_DIRECTION = NPROC_XI
 
 ! total number of messages corresponding to these common faces
-  NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*3
+  NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
 
 ! check that there is more than one chunk, otherwise nothing to do
   if(NCHUNKS == 1) return
@@ -237,7 +239,7 @@
   if(myrank == 0) open(unit=IOUT,file='OUTPUT_FILES/list_messages_faces.txt',status='unknown')
 
 ! create theoretical communication pattern
-  do imsg_type = 1,3
+  do imsg_type = 1,NUM_MSG_TYPES
     do iside = 1,NUM_FACES
       do iproc_loop = 0,NPROC_ONE_DIRECTION-1
 
@@ -263,55 +265,6 @@
 
 ! message type M1
   if(imsg_type == 1) then
-
-    if(iside == 1) then
-      ichunk_send = CHUNK_AB
-      iproc_xi_send = iproc_xi_loop
-      iproc_eta_send = NPROC_ETA-1
-      iproc_edge_send = ETA_MAX
-      ichunk_receive = CHUNK_BC
-      iproc_xi_receive = NPROC_XI-1
-      iproc_eta_receive = iproc_eta_loop
-      iproc_edge_receive = XI_MAX
-    endif
-
-    if(iside == 2) then
-      ichunk_send = CHUNK_AB
-      iproc_xi_send = iproc_xi_loop
-      iproc_eta_send = 0
-      iproc_edge_send = ETA_MIN
-      ichunk_receive = CHUNK_BC_ANTIPODE
-      iproc_xi_receive = NPROC_XI-1
-      iproc_eta_receive = iproc_eta_loop_inv
-      iproc_edge_receive = XI_MAX
-    endif
-
-    if(iside == 3) then
-      ichunk_send = CHUNK_BC
-      iproc_xi_send = 0
-      iproc_eta_send = iproc_eta_loop
-      iproc_edge_send = XI_MIN
-      ichunk_receive = CHUNK_AB_ANTIPODE
-      iproc_xi_receive = iproc_xi_loop_inv
-      iproc_eta_receive = NPROC_ETA-1
-      iproc_edge_receive = ETA_MAX
-    endif
-
-    if(iside == 4) then
-      ichunk_send = CHUNK_BC_ANTIPODE
-      iproc_xi_send = 0
-      iproc_eta_send = iproc_eta_loop
-      iproc_edge_send = XI_MIN
-      ichunk_receive = CHUNK_AB_ANTIPODE
-      iproc_xi_receive = iproc_xi_loop
-      iproc_eta_receive = 0
-      iproc_edge_receive = ETA_MIN
-    endif
-
-  endif
-
-! message type M2
-  if(imsg_type == 2) then
 
     if(iside == 1) then
       ichunk_send = CHUNK_AB
@@ -355,6 +308,55 @@
       iproc_xi_receive = NPROC_XI-1
       iproc_eta_receive = iproc_eta_loop
       iproc_edge_receive = XI_MAX
+    endif
+
+  endif
+
+! message type M2
+  if(imsg_type == 2) then
+
+    if(iside == 1) then
+      ichunk_send = CHUNK_AB
+      iproc_xi_send = iproc_xi_loop
+      iproc_eta_send = NPROC_ETA-1
+      iproc_edge_send = ETA_MAX
+      ichunk_receive = CHUNK_BC
+      iproc_xi_receive = NPROC_XI-1
+      iproc_eta_receive = iproc_eta_loop
+      iproc_edge_receive = XI_MAX
+    endif
+
+    if(iside == 2) then
+      ichunk_send = CHUNK_AB
+      iproc_xi_send = iproc_xi_loop
+      iproc_eta_send = 0
+      iproc_edge_send = ETA_MIN
+      ichunk_receive = CHUNK_BC_ANTIPODE
+      iproc_xi_receive = NPROC_XI-1
+      iproc_eta_receive = iproc_eta_loop_inv
+      iproc_edge_receive = XI_MAX
+    endif
+
+    if(iside == 3) then
+      ichunk_send = CHUNK_BC
+      iproc_xi_send = 0
+      iproc_eta_send = iproc_eta_loop
+      iproc_edge_send = XI_MIN
+      ichunk_receive = CHUNK_AB_ANTIPODE
+      iproc_xi_receive = iproc_xi_loop_inv
+      iproc_eta_receive = NPROC_ETA-1
+      iproc_edge_receive = ETA_MAX
+    endif
+
+    if(iside == 4) then
+      ichunk_send = CHUNK_BC_ANTIPODE
+      iproc_xi_send = 0
+      iproc_eta_send = iproc_eta_loop
+      iproc_edge_send = XI_MIN
+      ichunk_receive = CHUNK_AB_ANTIPODE
+      iproc_xi_receive = iproc_xi_loop
+      iproc_eta_receive = 0
+      iproc_edge_receive = ETA_MIN
     endif
 
   endif
@@ -788,11 +790,17 @@
   ichunk = 1
   iprocscorners(1,ichunk) = addressing_big(CHUNK_AB,0,NPROC_ETA-1)
   iprocscorners(2,ichunk) = addressing_big(CHUNK_AC,NPROC_XI-1,NPROC_ETA-1)
+! this line is ok even for NCHUNKS = 2
   iprocscorners(3,ichunk) = addressing_big(CHUNK_BC,NPROC_XI-1,0)
 
   itypecorner(1,ichunk) = ILOWERUPPER
   itypecorner(2,ichunk) = IUPPERUPPER
   itypecorner(3,ichunk) = IUPPERLOWER
+
+!! DK DK UGLY in the future, should also assemble second corner when NCHUNKS = 2
+!! DK DK UGLY for now we only assemble one corner for simplicity
+!! DK DK UGLY formally this is incorrect and should be changed in the future
+!! DK DK UGLY in practice this trick works fine of course
 
 ! this only if more than 3 chunks
   if(NCHUNKS > 3) then
@@ -885,6 +893,7 @@
     endif
 
 ! only do this if current processor is the right one for MPI version
+! this line is ok even for NCHUNKS = 2
   if(iprocscorners(imember_corner,imsg) == myrank) then
 
 ! pick the correct 1D buffer

@@ -32,6 +32,9 @@
 ! number of faces between chunks
   integer NUM_FACES,NUMMSGS_FACES
 
+! number of message types
+  integer NUM_MSG_TYPES
+
   double precision xsend,ysend,zsend
   double precision xreceive,yreceive,zreceive
   double precision diff
@@ -114,20 +117,25 @@
   print *,'There are ',NPROC_ETA,' slices along eta in each chunk'
   print *
 
-! number of faces shared between chunks
-  if(NCHUNKS == 1 .or. NCHUNKS == 3) then
+! number of corners and faces shared between chunks and number of message types
+  if(NCHUNKS == 1 .or. NCHUNKS == 2) then
     NUM_FACES = 1
+    NUM_MSG_TYPES = 1
+  else if(NCHUNKS == 3) then
+    NUM_FACES = 1
+    NUM_MSG_TYPES = 3
   else if(NCHUNKS == 6) then
     NUM_FACES = 4
+    NUM_MSG_TYPES = 3
   else
-    stop 'can only use 1, 3 or 6 chunks'
+    stop 'number of chunks must be either 1, 2, 3 or 6'
   endif
 
 ! if more than one chunk then same number of processors in each direction
   NPROC_ONE_DIRECTION = NPROC_XI
 
 ! total number of messages corresponding to these common faces
-  NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*3
+  NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
 
   if(NCHUNKS == 1) stop 'only one chunk, nothing to check'
 

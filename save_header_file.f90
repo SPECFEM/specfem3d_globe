@@ -212,6 +212,8 @@
   write(IOUT,*)
 
   if(NCHUNKS == 1) write(IOUT,*) '! values for AC and BC below undefined for one chunk'
+  if(NCHUNKS == 2) write(IOUT,*) '! values for BC below undefined for two chunks'
+
   write(IOUT,*) 'integer, parameter :: NEX_XI_VAL = ',NEX_XI
   write(IOUT,*) 'integer, parameter :: NEX_ETA_VAL = ',NEX_ETA
   write(IOUT,*)
