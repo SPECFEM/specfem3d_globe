@@ -186,6 +186,9 @@
 ! flag to display detailed information about location of stations
   logical, parameter :: DISPLAY_DETAILS_STATIONS = .false.
 
+! flag to print the source time function and spectrum
+  logical, parameter :: PRINT_SOURCE_TIME_FUNCTION = .false.
+
 !
 !--- debugging flags
 !

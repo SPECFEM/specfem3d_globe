@@ -465,6 +465,9 @@
       write(IMAIN,*) '*****************************************************'
     endif
 
+! print source time function and spectrum
+  if(PRINT_SOURCE_TIME_FUNCTION) then
+
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'
 
@@ -510,6 +513,8 @@
     write(27,*) sngl(om/TWO_PI),sngl(scalar_moment*om*comp_source_spectrum(om,hdur))
   enddo
   close(27)
+
+  endif
 
 ! elapsed time since beginning of mesh generation
   tCPU = MPI_WTIME() - time_start
