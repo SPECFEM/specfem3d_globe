@@ -16,7 +16,7 @@
 !=====================================================================
 
   subroutine compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          nspec,displ,veloc,accel,xstore,ystore,zstore, &
+          nspec,displ,accel,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
@@ -44,8 +44,8 @@
 ! array with the local to global mapping per slice
   integer, dimension(NSPECMAX_CRUST_MANTLE) :: idoubling
 
-! displacement, velocity and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOBMAX_CRUST_MANTLE) :: displ,veloc,accel
+! displacement and acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOBMAX_CRUST_MANTLE) :: displ,accel
 
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
