@@ -201,8 +201,17 @@
     normal_bottom_crust_mantle,normal_top_crust_mantle
 
 ! Stacey
-  integer ispec3D,jk,jk1,jk2,ik,ik1,ik2
-  integer, dimension(NGLLSQUARE) :: index_stacey_i,index_stacey_k
+  integer jk,ik
+  integer, dimension(:,:), allocatable :: stacey_outer_core_xmin_j,stacey_outer_core_xmin_k, &
+    stacey_outer_core_xmax_j,stacey_outer_core_xmax_k,stacey_outer_core_ymin_i, &
+    stacey_outer_core_ymin_k,stacey_outer_core_ymax_i,stacey_outer_core_ymax_k, &
+    stacey_bottom_outer_core_i,stacey_bottom_outer_core_j, &
+    stacey_crust_mantle_xmin_j,stacey_crust_mantle_xmin_k,stacey_crust_mantle_xmax_j, &
+    stacey_crust_mantle_xmax_k,stacey_crust_mantle_ymin_i,stacey_crust_mantle_ymin_k, &
+    stacey_crust_mantle_ymax_i,stacey_crust_mantle_ymax_k
+  integer, dimension(:), allocatable :: stacey_outer_core_xmin_jk,stacey_outer_core_xmax_jk, &
+    stacey_outer_core_ymin_ik,stacey_outer_core_ymax_ik,stacey_crust_mantle_xmin_jk, &
+    stacey_crust_mantle_xmax_jk,stacey_crust_mantle_ymin_ik,stacey_crust_mantle_ymax_ik
   real(kind=CUSTOM_REAL) sn,tx,ty,tz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: rho_vp_crust_mantle,rho_vs_crust_mantle
   integer nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
@@ -2358,8 +2367,6 @@
       ij = (k-1)*NGLLX + i
       index_fluid_i(ij) = i
       index_fluid_k(ij) = k
-      index_stacey_i(ij) = i
-      index_stacey_k(ij) = k
     enddo
   enddo
 
@@ -2384,6 +2391,177 @@
       enddo
     enddo
   enddo
+
+! JT JT Stacey, indexing for inlined code
+
+  if(REGIONAL_CODE .and. STACEY_ABS_CONDITIONS) then
+
+    allocate(stacey_outer_core_xmin_j(NGLLSQUARE,nspec2D_xmin_outer_core))
+    allocate(stacey_outer_core_xmin_k(NGLLSQUARE,nspec2D_xmin_outer_core))
+    allocate(stacey_outer_core_xmax_j(NGLLSQUARE,nspec2D_xmax_outer_core))
+    allocate(stacey_outer_core_xmax_k(NGLLSQUARE,nspec2D_xmax_outer_core))
+    allocate(stacey_outer_core_ymin_i(NGLLSQUARE,nspec2D_ymin_outer_core))
+    allocate(stacey_outer_core_ymin_k(NGLLSQUARE,nspec2D_ymin_outer_core))
+    allocate(stacey_outer_core_ymax_i(NGLLSQUARE,nspec2D_ymax_outer_core))
+    allocate(stacey_outer_core_ymax_k(NGLLSQUARE,nspec2D_ymax_outer_core))
+    allocate(stacey_bottom_outer_core_i(NGLLSQUARE,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
+    allocate(stacey_bottom_outer_core_j(NGLLSQUARE,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
+    allocate(stacey_outer_core_xmin_jk(nspec2D_xmin_outer_core))
+    allocate(stacey_outer_core_xmax_jk(nspec2D_xmax_outer_core))
+    allocate(stacey_outer_core_ymin_ik(nspec2D_ymin_outer_core))
+    allocate(stacey_outer_core_ymax_ik(nspec2D_ymax_outer_core))
+
+! outer core
+
+!   xmin
+    do ispec2D=1,nspec2D_xmin_outer_core
+! exclude elements that are not on absorbing edges
+      if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
+      jk = 0
+      do k=nkmin_xi_outer_core(1,ispec2D),NGLLZ
+        do j=njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
+          jk = jk + 1
+          stacey_outer_core_xmin_j(jk,ispec2D) = j
+          stacey_outer_core_xmin_k(jk,ispec2D) = k
+        enddo
+      enddo
+      stacey_outer_core_xmin_jk(ispec2D) = jk
+    enddo
+
+!   xmax
+    do ispec2D=1,nspec2D_xmax_outer_core
+! exclude elements that are not on absorbing edges
+      if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
+      jk = 0
+      do k=nkmin_xi_outer_core(2,ispec2D),NGLLZ
+        do j=njmin_outer_core(2,ispec2D),njmax_outer_core(2,ispec2D)
+          jk = jk + 1
+          stacey_outer_core_xmax_j(jk,ispec2D) = j
+          stacey_outer_core_xmax_k(jk,ispec2D) = k
+        enddo
+      enddo
+      stacey_outer_core_xmax_jk(ispec2D) = jk
+    enddo
+
+!   ymin
+    do ispec2D=1,nspec2D_ymin_outer_core
+! exclude elements that are not on absorbing edges
+      if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
+      ik = 0
+      do k=nkmin_eta_outer_core(1,ispec2D),NGLLZ
+        do i=nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
+          ik = ik + 1
+          stacey_outer_core_ymin_i(ik,ispec2D) = i
+          stacey_outer_core_ymin_k(ik,ispec2D) = k
+        enddo
+      enddo
+      stacey_outer_core_ymin_ik(ispec2D) = ik
+    enddo
+
+!   ymax
+    do ispec2D=1,nspec2D_ymax_outer_core
+! exclude elements that are not on absorbing edges
+      if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
+      ik = 0
+      do k=nkmin_eta_outer_core(2,ispec2D),NGLLZ
+        do i=nimin_outer_core(2,ispec2D),nimax_outer_core(2,ispec2D)
+          ik = ik + 1
+          stacey_outer_core_ymax_i(ik,ispec2D) = i
+          stacey_outer_core_ymax_k(ik,ispec2D) = k
+        enddo
+      enddo
+      stacey_outer_core_ymax_ik(ispec2D) = ik
+    enddo
+
+! for surface elements exactly on the ICB
+    do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+      ij = 0
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ij = ij + 1
+          stacey_bottom_outer_core_i(ij,ispec2D) = i
+          stacey_bottom_outer_core_j(ij,ispec2D) = j
+        enddo
+      enddo
+    enddo
+
+! crust & mantle
+
+    allocate(stacey_crust_mantle_xmin_j(NGLLSQUARE,nspec2D_xmin_crust_mantle))
+    allocate(stacey_crust_mantle_xmin_k(NGLLSQUARE,nspec2D_xmin_crust_mantle))
+    allocate(stacey_crust_mantle_xmax_j(NGLLSQUARE,nspec2D_xmax_crust_mantle))
+    allocate(stacey_crust_mantle_xmax_k(NGLLSQUARE,nspec2D_xmax_crust_mantle))
+    allocate(stacey_crust_mantle_ymin_i(NGLLSQUARE,nspec2D_ymin_crust_mantle))
+    allocate(stacey_crust_mantle_ymin_k(NGLLSQUARE,nspec2D_ymin_crust_mantle))
+    allocate(stacey_crust_mantle_ymax_i(NGLLSQUARE,nspec2D_ymax_crust_mantle))
+    allocate(stacey_crust_mantle_ymax_k(NGLLSQUARE,nspec2D_ymax_crust_mantle))
+    allocate(stacey_crust_mantle_xmin_jk(nspec2D_xmin_crust_mantle))
+    allocate(stacey_crust_mantle_xmax_jk(nspec2D_xmax_crust_mantle))
+    allocate(stacey_crust_mantle_ymin_ik(nspec2D_ymin_crust_mantle))
+    allocate(stacey_crust_mantle_ymax_ik(nspec2D_ymax_crust_mantle))
+
+!   xmin
+    do ispec2D=1,nspec2D_xmin_crust_mantle
+! exclude elements that are not on absorbing edges
+      if(nkmin_xi_crust_mantle(1,ispec2D) == 0 .or. njmin_crust_mantle(1,ispec2D) == 0) cycle
+      jk = 0
+      do k=nkmin_xi_crust_mantle(1,ispec2D),NGLLZ
+        do j=njmin_crust_mantle(1,ispec2D),njmax_crust_mantle(1,ispec2D)
+          jk = jk + 1
+          stacey_crust_mantle_xmin_j(jk,ispec2D) = j
+          stacey_crust_mantle_xmin_k(jk,ispec2D) = k
+        enddo
+      enddo
+      stacey_crust_mantle_xmin_jk(ispec2D) = jk
+    enddo
+
+!   xmax
+    do ispec2D=1,nspec2D_xmax_crust_mantle
+! exclude elements that are not on absorbing edges
+      if(nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
+      jk = 0
+      do k=nkmin_xi_crust_mantle(2,ispec2D),NGLLZ
+        do j=njmin_crust_mantle(2,ispec2D),njmax_crust_mantle(2,ispec2D)
+          jk = jk + 1
+          stacey_crust_mantle_xmax_j(jk,ispec2D) = j
+          stacey_crust_mantle_xmax_k(jk,ispec2D) = k
+        enddo
+      enddo
+      stacey_crust_mantle_xmax_jk(ispec2D) = jk
+    enddo
+
+!   ymin
+    do ispec2D=1,nspec2D_ymin_crust_mantle
+! exclude elements that are not on absorbing edges
+      if(nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
+      ik = 0
+      do k=nkmin_eta_crust_mantle(1,ispec2D),NGLLZ
+        do i=nimin_crust_mantle(1,ispec2D),nimax_crust_mantle(1,ispec2D)
+          ik = ik + 1
+          stacey_crust_mantle_ymin_i(ik,ispec2D) = i
+          stacey_crust_mantle_ymin_k(ik,ispec2D) = k
+        enddo
+      enddo
+      stacey_crust_mantle_ymin_ik(ispec2D) = ik
+    enddo
+
+!   ymax
+    do ispec2D=1,nspec2D_ymax_crust_mantle
+! exclude elements that are not on absorbing edges
+      if(nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
+      ik = 0
+      do k=nkmin_eta_crust_mantle(2,ispec2D),NGLLZ
+        do i=nimin_crust_mantle(2,ispec2D),nimax_crust_mantle(2,ispec2D)
+          ik = ik + 1
+          stacey_crust_mantle_ymax_i(ik,ispec2D) = i
+          stacey_crust_mantle_ymax_k(ik,ispec2D) = k
+        enddo
+      enddo
+      stacey_crust_mantle_ymax_ik(ispec2D) = ik
+    enddo
+
+  endif ! Stacey conditions
+
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -2586,7 +2764,6 @@
          ibool_outer_core,nspec_outer_core, &
          nglob_outer_core,index_fluid_i,index_fluid_k)
 
-
 ! JT JT Stacey conditions
 
   if(REGIONAL_CODE .and. STACEY_ABS_CONDITIONS) then
@@ -2595,26 +2772,24 @@
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_xmin_outer_core
  
-      ispec3D=ibelm_xmin_outer_core(ispec2D)
+      ispec=ibelm_xmin_outer_core(ispec2D)
  
 ! exclude elements that are not on absorbing edges
       if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
  
       i=1
-      jk1 = njmin_outer_core(1,ispec2D) + (nkmin_xi_outer_core(1,ispec2D)-1)*NGLLY
-      jk2 = njmax_outer_core(1,ispec2D) + (NGLLZ-1)*NGLLY
 !CDIR NODEP(accel)
-      do jk=jk1,jk2
+      do jk=1,stacey_outer_core_xmin_jk(ispec2D)
  
-        j = index_stacey_i(jk)
-        k = index_stacey_k(jk)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+        j = stacey_outer_core_xmin_j(jk,ispec2D)
+        k = stacey_outer_core_xmin_k(jk,ispec2D)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
  
-        iglob=ibool_outer_core(ijk,1,1,ispec3D)
+        iglob=ibool_outer_core(ijk,1,1,ispec)
 
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
+        sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
 
-        weight=jacobian2D_xmin_outer_core(j,k,ispec2D)*wgllwgll_yz_no_i(1,1,j,k)
+        weight=jacobian2D_xmin_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
  
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
  
@@ -2625,26 +2800,24 @@
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_xmax_outer_core
  
-      ispec3D=ibelm_xmax_outer_core(ispec2D)
+      ispec=ibelm_xmax_outer_core(ispec2D)
  
 ! exclude elements that are not on absorbing edges
       if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
  
       i=NGLLX
-      jk1 = njmin_outer_core(2,ispec2D) + (nkmin_xi_outer_core(2,ispec2D)-1)*NGLLY
-      jk2 = njmax_outer_core(2,ispec2D) + (NGLLZ-1)*NGLLY
 !CDIR NODEP(accel)
-      do jk=jk1,jk2
+      do jk=1,stacey_outer_core_xmax_jk(ispec2D)
  
-        j = index_stacey_i(jk)
-        k = index_stacey_k(jk)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+        j = stacey_outer_core_xmax_j(jk,ispec2D)
+        k = stacey_outer_core_xmax_k(jk,ispec2D)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
  
-        iglob=ibool_outer_core(ijk,1,1,ispec3D)
+        iglob=ibool_outer_core(ijk,1,1,ispec)
 
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
+        sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
 
-        weight=jacobian2D_xmax_outer_core(j,k,ispec2D)*wgllwgll_yz_no_i(1,1,j,k)
+        weight=jacobian2D_xmax_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
  
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
  
@@ -2655,26 +2828,24 @@
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_ymin_outer_core
  
-      ispec3D=ibelm_ymin_outer_core(ispec2D)
+      ispec=ibelm_ymin_outer_core(ispec2D)
  
 ! exclude elements that are not on absorbing edges
       if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
  
       j=1
-      ik1 = nimin_outer_core(1,ispec2D) + (nkmin_eta_outer_core(1,ispec2D)-1)*NGLLX
-      ik2 = nimax_outer_core(1,ispec2D) + (NGLLZ-1)*NGLLX
 !CDIR NODEP(accel)
-      do ik=ik1,ik2
+      do ik=1,stacey_outer_core_ymin_ik(ispec2D)
  
-        i = index_stacey_i(ik)
-        k = index_stacey_k(ik)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+        i = stacey_outer_core_ymin_i(ik,ispec2D)
+        k = stacey_outer_core_ymin_k(ik,ispec2D)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
  
-        iglob=ibool_outer_core(ijk,1,1,ispec3D)
+        iglob=ibool_outer_core(ijk,1,1,ispec)
 
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
+        sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
 
-        weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz_no_j(1,i,1,k) 
+        weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
  
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
  
@@ -2685,26 +2856,24 @@
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_ymax_outer_core
  
-      ispec3D=ibelm_ymax_outer_core(ispec2D)
+      ispec=ibelm_ymax_outer_core(ispec2D)
  
 ! exclude elements that are not on absorbing edges
       if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
  
       j=NGLLY
-      ik1 = nimin_outer_core(2,ispec2D) + (nkmin_eta_outer_core(2,ispec2D)-1)*NGLLX
-      ik2 = nimax_outer_core(2,ispec2D) + (NGLLZ-1)*NGLLX
 !CDIR NODEP(accel)
-      do ik=ik1,ik2
+      do ik=1,stacey_outer_core_ymax_ik(ispec2D)
  
-        i = index_stacey_i(ik)
-        k = index_stacey_k(ik)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+        i = stacey_outer_core_ymax_i(ik,ispec2D)
+        k = stacey_outer_core_ymax_k(ik,ispec2D)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
  
-        iglob=ibool_outer_core(ijk,1,1,ispec3D)
+        iglob=ibool_outer_core(ijk,1,1,ispec)
 
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
+        sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
 
-        weight=jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz_no_j(1,i,1,k) 
+        weight=jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
  
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
  
@@ -2720,11 +2889,16 @@
       k = 1
 !CDIR NODEP(accel_outer_core)
       do ij = 1,NGLLSQUARE
-        iglob = ibool_outer_core(ij,1,k,ispec)
  
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec)
+        i = stacey_bottom_outer_core_i(ij,ispec2D)
+        j = stacey_bottom_outer_core_j(ij,ispec2D)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
  
-        weight = jacobian2D_bottom_outer_core(ij,1,ispec2D)*wgllwgll_xy(ij,1)
+        iglob = ibool_outer_core(ijk,1,1,ispec)
+ 
+        sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
+ 
+        weight = jacobian2D_bottom_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
  
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
  
@@ -2893,32 +3067,29 @@
           R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta, &
           alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
 
-! JT JT Stacey conditions
+! JT JT Stacey
 
   if(REGIONAL_CODE .and. STACEY_ABS_CONDITIONS) then
 
-! mantle & crust
+! crust & mantle
 
 !   xmin
-!CDIR NOVECTOR
     do ispec2D=1,nspec2D_xmin_crust_mantle
 
-      ispec3D=ibelm_xmin_crust_mantle(ispec2D)
+      ispec=ibelm_xmin_crust_mantle(ispec2D)
 
 ! exclude elements that are not on absorbing edges
       if(nkmin_xi_crust_mantle(1,ispec2D) == 0 .or. njmin_crust_mantle(1,ispec2D) == 0) cycle
 
       i=1
-      jk1 = njmin_crust_mantle(1,ispec2D) + (nkmin_xi_crust_mantle(1,ispec2D)-1)*NGLLY
-      jk2 = njmax_crust_mantle(1,ispec2D) + (NGLLZ-1)*NGLLY
 !CDIR NODEP(accel)
-      do jk=jk1,jk2
+      do jk=1,stacey_crust_mantle_xmin_jk(ispec2D)
 
-        j = index_stacey_i(jk)
-        k = index_stacey_k(jk)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+        j = stacey_crust_mantle_xmin_j(jk,ispec2D)
+        k = stacey_crust_mantle_xmin_k(jk,ispec2D)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
 
-        iglob=ibool_crust_mantle(ijk,1,1,ispec3D)
+        iglob=ibool_crust_mantle(ijk,1,1,ispec)
 
         vx=veloc_crust_mantle(1,iglob)
         vy=veloc_crust_mantle(2,iglob)
@@ -2930,11 +3101,11 @@
 
         vn=vx*nx+vy*ny+vz*nz
 
-        tx=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*nx+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vx-vn*nx)
-        ty=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*ny+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vy-vn*ny)
-        tz=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*nz+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vz-vn*nz)
+        tx=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*nx+rho_vs_crust_mantle(ijk,1,1,ispec)*(vx-vn*nx)
+        ty=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*ny+rho_vs_crust_mantle(ijk,1,1,ispec)*(vy-vn*ny)
+        tz=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*nz+rho_vs_crust_mantle(ijk,1,1,ispec)*(vz-vn*nz)
 
-        weight=jacobian2D_xmin_crust_mantle(j,k,ispec2D)*wgllwgll_yz_no_i(1,1,j,k)
+        weight=jacobian2D_xmin_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
 
         accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
         accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
@@ -2947,22 +3118,20 @@
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_xmax_crust_mantle
 
-      ispec3D=ibelm_xmax_crust_mantle(ispec2D)
+      ispec=ibelm_xmax_crust_mantle(ispec2D)
 
 ! exclude elements that are not on absorbing edges
       if(nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
 
       i=NGLLX
-      jk1 = njmin_crust_mantle(2,ispec2D) + (nkmin_xi_crust_mantle(2,ispec2D)-1)*NGLLY
-      jk2 = njmax_crust_mantle(2,ispec2D) + (NGLLZ-1)*NGLLY
 !CDIR NODEP(accel) 
-      do jk=jk1,jk2
+      do jk=1,stacey_crust_mantle_xmax_jk(ispec2D)
 
-        j = index_stacey_i(jk)
-        k = index_stacey_k(jk)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+        j = stacey_crust_mantle_xmax_j(jk,ispec2D)
+        k = stacey_crust_mantle_xmax_k(jk,ispec2D)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
 
-        iglob=ibool_crust_mantle(ijk,1,1,ispec3D)
+        iglob=ibool_crust_mantle(ijk,1,1,ispec)
 
         vx=veloc_crust_mantle(1,iglob)
         vy=veloc_crust_mantle(2,iglob)
@@ -2974,11 +3143,11 @@
 
         vn=vx*nx+vy*ny+vz*nz
 
-        tx=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*nx+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vx-vn*nx)
-        ty=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*ny+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vy-vn*ny)
-        tz=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*nz+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vz-vn*nz)
+        tx=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*nx+rho_vs_crust_mantle(ijk,1,1,ispec)*(vx-vn*nx)
+        ty=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*ny+rho_vs_crust_mantle(ijk,1,1,ispec)*(vy-vn*ny)
+        tz=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*nz+rho_vs_crust_mantle(ijk,1,1,ispec)*(vz-vn*nz)
 
-        weight=jacobian2D_xmax_crust_mantle(j,k,ispec2D)*wgllwgll_yz_no_i(1,1,j,k)
+        weight=jacobian2D_xmax_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
 
         accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
         accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
@@ -2991,22 +3160,20 @@
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_ymin_crust_mantle
 
-      ispec3D=ibelm_ymin_crust_mantle(ispec2D)
+      ispec=ibelm_ymin_crust_mantle(ispec2D)
 
 ! exclude elements that are not on absorbing edges
       if(nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
 
       j=1
-      ik1 = nimin_crust_mantle(1,ispec2D) + (nkmin_eta_crust_mantle(1,ispec2D)-1)*NGLLX
-      ik2 = nimax_crust_mantle(1,ispec2D) + (NGLLZ-1)*NGLLX
 !CDIR NODEP(accel) 
-      do ik=ik1,ik2
+      do ik=1,stacey_crust_mantle_ymin_ik(ispec2D)
 
-        i = index_stacey_i(ik)
-        k = index_stacey_k(ik)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+        i = stacey_crust_mantle_ymin_i(ik,ispec2D)
+        k = stacey_crust_mantle_ymin_k(ik,ispec2D)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
 
-        iglob=ibool_crust_mantle(ijk,1,1,ispec3D)
+        iglob=ibool_crust_mantle(ijk,1,1,ispec)
 
         vx=veloc_crust_mantle(1,iglob)
         vy=veloc_crust_mantle(2,iglob)
@@ -3018,11 +3185,11 @@
 
         vn=vx*nx+vy*ny+vz*nz
 
-        tx=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*nx+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vx-vn*nx)
-        ty=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*ny+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vy-vn*ny)
-        tz=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*nz+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vz-vn*nz)
+        tx=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*nx+rho_vs_crust_mantle(ijk,1,1,ispec)*(vx-vn*nx)
+        ty=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*ny+rho_vs_crust_mantle(ijk,1,1,ispec)*(vy-vn*ny)
+        tz=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*nz+rho_vs_crust_mantle(ijk,1,1,ispec)*(vz-vn*nz)
 
-        weight=jacobian2D_ymin_crust_mantle(i,k,ispec2D)*wgllwgll_xz_no_j(1,i,1,k)
+        weight=jacobian2D_ymin_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
 
         accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
         accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
@@ -3035,22 +3202,20 @@
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_ymax_crust_mantle
 
-      ispec3D=ibelm_ymax_crust_mantle(ispec2D)
+      ispec=ibelm_ymax_crust_mantle(ispec2D)
 
 ! exclude elements that are not on absorbing edges
       if(nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
 
       j=NGLLY
-      ik1 = nimin_crust_mantle(2,ispec2D) + (nkmin_eta_crust_mantle(2,ispec2D)-1)*NGLLX
-      ik2 = nimax_crust_mantle(2,ispec2D) + (NGLLZ-1)*NGLLX
 !CDIR NODEP(accel) 
-      do ik=ik1,ik2
+      do ik=1,stacey_crust_mantle_ymax_ik(ispec2D)
 
-        i = index_stacey_i(ik)
-        k = index_stacey_k(ik)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+        i = stacey_crust_mantle_ymax_i(ik,ispec2D)
+        k = stacey_crust_mantle_ymax_k(ik,ispec2D)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
 
-        iglob=ibool_crust_mantle(ijk,1,1,ispec3D)
+        iglob=ibool_crust_mantle(ijk,1,1,ispec)
 
         vx=veloc_crust_mantle(1,iglob)
         vy=veloc_crust_mantle(2,iglob)
@@ -3062,11 +3227,11 @@
 
         vn=vx*nx+vy*ny+vz*nz
 
-        tx=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*nx+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vx-vn*nx)
-        ty=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*ny+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vy-vn*ny)
-        tz=rho_vp_crust_mantle(ijk,1,1,ispec3D)*vn*nz+rho_vs_crust_mantle(ijk,1,1,ispec3D)*(vz-vn*nz)
+        tx=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*nx+rho_vs_crust_mantle(ijk,1,1,ispec)*(vx-vn*nx)
+        ty=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*ny+rho_vs_crust_mantle(ijk,1,1,ispec)*(vy-vn*ny)
+        tz=rho_vp_crust_mantle(ijk,1,1,ispec)*vn*nz+rho_vs_crust_mantle(ijk,1,1,ispec)*(vz-vn*nz)
 
-        weight=jacobian2D_ymax_crust_mantle(i,k,ispec2D)*wgllwgll_xz_no_j(1,i,1,k)
+        weight=jacobian2D_ymax_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
 
         accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
         accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
