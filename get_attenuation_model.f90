@@ -16,7 +16,7 @@
 !=====================================================================
 
   subroutine get_attenuation_model(myrank,iregion_attenuation,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-         tau_mu,tau_sigma,beta,one_minus_sum_beta,factor_scale,NCHUNKS)
+         tau_mu,tau_sigma,beta,one_minus_sum_beta,factor_scale)
 
 ! return attenuation mechanisms Q_mu in PREM using standard linear solids
 ! the Tau values computed by Jeroen's code are used
@@ -28,7 +28,7 @@
 
   include "constants.h"
 
-  integer iregion_attenuation,myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NCHUNKS
+  integer iregion_attenuation,myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
   double precision, dimension(N_SLS) :: tau_mu,tau_sigma,beta
   double precision one_minus_sum_beta
@@ -47,9 +47,6 @@
   tau_mu(:) = 0.d0
   tau_sigma(:) = 0.d0
 
-!! DK DK temporary for regional code
-  if(NCHUNKS /= 6) then
-
   if(MAX_ATTENUATION_PERIOD == 200 .and. MIN_ATTENUATION_PERIOD == 1) then
 
 ! period range: 1.000000 -- 200.000000 s
@@ -66,10 +63,10 @@
 
   select case(iregion_attenuation)
 
-!! DK DK for merged regional / global code
-!--- inner core, not used, but needs to be there even for regional code
-!--- because fictitious mesh is created in inner core
-!--- therefore we just use fictitious values
+!! DK DK UGLY this for regional simulations at high frequency
+!! DK DK UGLY !--- inner core, not used, but needs to be there even for regional code
+!! DK DK UGLY !--- because fictitious mesh is created in inner core
+!! DK DK UGLY !--- therefore we just use fictitious values
 
 !--- CMB -> d670, target Q_mu = 312.
 
@@ -113,19 +110,11 @@
 
   end select
 
-  else
-    call exit_MPI(myrank,'incorrect minimum or maximum attenuation period')
-  endif
+!! DK DK UGLY this for global simulations at longer periods
+!! DK DK UGLY should be merged with regional attenuation parameters at higher frequency above
+!! DK DK UGLY in one cleaner general statement
 
-
-
-
-
-
-!! DK DK this for global code
-  else
-
-  if(MAX_ATTENUATION_PERIOD == 1000 .and. MIN_ATTENUATION_PERIOD == 20) then
+  else if(MAX_ATTENUATION_PERIOD == 1000 .and. MIN_ATTENUATION_PERIOD == 20) then
 
 ! period range: 20.000000 -- 1000.000000 s
 
@@ -680,8 +669,6 @@
   else
     call exit_MPI(myrank,'incorrect minimum or maximum attenuation period')
   endif
-
-  endif !! DK DK end test whether regional or global code
 
 !--- non-dimensionalize the tau values and the period of the source
 
