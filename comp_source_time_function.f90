@@ -30,3 +30,4 @@
   comp_source_time_function = 0.5d0*(1.0d0+erf(decay_rate*t/hdur))
 
   end function comp_source_time_function
+
