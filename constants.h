@@ -32,7 +32,7 @@
 ! integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
 
 !! DK DK UGLY  to suppress stop statements for ES in Japan
-  logical, parameter :: SUPPRESS_STOPS_INLINE = .false.
+  logical, parameter :: SUPPRESS_STOPS_INLINE = .true.
 
 ! to use restart files
 ! (number of runs can be 1, 2 or 3, choose 1 for no restart files)
