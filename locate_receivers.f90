@@ -120,7 +120,8 @@
   integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
   double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
   double precision, dimension(3,3,nrec) :: nu
-  character(len=8), dimension(nrec) :: station_name,network_name
+  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
+  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
   integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
@@ -206,8 +207,9 @@
 
 ! print some information about stations
       if(myrank == 0) &
-        write(IMAIN,"('Station #',i5,':  ',a5,'.',a2,'      epicentral distance:  ',f10.3,' degrees')") &
-          irec,station_name(irec),network_name(irec),epidist(irec)
+        write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
+                       '.',network_name(irec)(1:len_trim(network_name(irec))), &
+                       '    epicentral distance:  ',epidist(irec),' degrees'
 
 ! record three components for each station
     do iorientation = 1,3
