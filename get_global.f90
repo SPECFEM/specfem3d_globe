@@ -20,6 +20,8 @@
 ! this routine MUST be in double precision to avoid sensitivity
 ! to roundoff errors in the coordinates of the points
 
+! non-structured global numbering software provided by Paul F. Fischer
+
 ! leave sorting subroutines in same source file to allow for inlining
 
   implicit none
