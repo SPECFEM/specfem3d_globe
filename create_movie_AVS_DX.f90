@@ -61,6 +61,9 @@
   logical, dimension(:), allocatable :: ifseg,mask_point
   double precision, dimension(:), allocatable :: xp,yp,zp,xp_save,yp_save,zp_save,field_display
 
+! for dynamic memory allocation
+  integer ierror
+
 ! movie files stored by solver
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
          store_val_x,store_val_y,store_val_z, &
@@ -141,17 +144,40 @@
   print *
 
   ilocnum = NGLLSQUARE*NEX_PER_PROC_XI*NEX_PER_PROC_ETA
-  allocate(store_val_x(ilocnum,0:NPROCTOT-1))
-  allocate(store_val_y(ilocnum,0:NPROCTOT-1))
-  allocate(store_val_z(ilocnum,0:NPROCTOT-1))
-  allocate(store_val_ux(ilocnum,0:NPROCTOT-1))
-  allocate(store_val_uy(ilocnum,0:NPROCTOT-1))
-  allocate(store_val_uz(ilocnum,0:NPROCTOT-1))
 
-  allocate(x(NGLLX,NGLLY))
-  allocate(y(NGLLX,NGLLY))
-  allocate(z(NGLLX,NGLLY))
-  allocate(displn(NGLLX,NGLLY))
+  print *
+  print *,'Allocating arrays of size ',ilocnum*NPROCTOT
+  print *
+
+  allocate(store_val_x(ilocnum,0:NPROCTOT-1),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating store_val_x'
+
+  allocate(store_val_y(ilocnum,0:NPROCTOT-1),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating store_val_y'
+
+  allocate(store_val_z(ilocnum,0:NPROCTOT-1),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating store_val_z'
+
+  allocate(store_val_ux(ilocnum,0:NPROCTOT-1),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating store_val_ux'
+
+  allocate(store_val_uy(ilocnum,0:NPROCTOT-1),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating store_val_uy'
+
+  allocate(store_val_uz(ilocnum,0:NPROCTOT-1),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating store_val_uz'
+
+  allocate(x(NGLLX,NGLLY),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating x'
+
+  allocate(y(NGLLX,NGLLY),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating y'
+
+  allocate(z(NGLLX,NGLLY),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating z'
+
+  allocate(displn(NGLLX,NGLLY),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating displn'
 
   print *,'1 = create files in OpenDX format'
   print *,'2 = create files in AVS UCD format with individual files'
@@ -219,14 +245,46 @@
 ! maximum theoretical number of points at the surface
   npointot = NGNOD2D_AVS_DX * nspectot_AVS_max
 
+  print *
+  print *,'Allocating arrays of size ',npointot
+  print *
+
 ! allocate arrays for sorting routine
-  allocate(iglob(npointot),loc(npointot))
-  allocate(ifseg(npointot))
-  allocate(xp(npointot),yp(npointot),zp(npointot))
-  allocate(xp_save(npointot),yp_save(npointot),zp_save(npointot))
-  allocate(field_display(npointot))
-  allocate(mask_point(npointot))
-  allocate(ireorder(npointot))
+  allocate(iglob(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating iglob'
+
+  allocate(loc(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating loc'
+
+  allocate(ifseg(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating ifseg'
+
+  allocate(xp(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating xp'
+
+  allocate(yp(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating yp'
+
+  allocate(zp(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating zp'
+
+  allocate(xp_save(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating xp_save'
+
+  allocate(yp_save(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating yp_save'
+
+  allocate(zp_save(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating zp_save'
+
+  allocate(field_display(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating field_display'
+
+  allocate(mask_point(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating mask_point'
+
+  allocate(ireorder(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating ireorder'
 
 !--- ****** read data saved by solver ******
 
@@ -608,14 +666,28 @@
   integer ispec,i,j
   integer ieoff,ilocnum,nseg,ioff,iseg,ig
 
+! for dynamic memory allocation
+  integer ierror
+
   integer, dimension(:), allocatable :: ind,ninseg,iwork
   double precision, dimension(:), allocatable :: work
 
+  print *
+  print *,'Allocating arrays of size ',npointot
+  print *
+
 ! dynamically allocate arrays
-  allocate(ind(npointot))
-  allocate(ninseg(npointot))
-  allocate(iwork(npointot))
-  allocate(work(npointot))
+  allocate(ind(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating ind'
+
+  allocate(ninseg(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating ninseg'
+
+  allocate(iwork(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating iwork'
+
+  allocate(work(npointot),stat=ierror)
+  if(ierror /= 0) stop 'error while allocating work'
 
 ! establish initial pointers
   do ispec=1,nspec
