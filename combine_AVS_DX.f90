@@ -61,7 +61,7 @@
   double precision x_source_trgl3,y_source_trgl3,z_source_trgl3
   double precision theta,phi,delta_trgl
   double precision sec,t_cmt,hdur
-  double precision elat,elon,depth
+  double precision lat,long,depth
   double precision moment_tensor(6)
 
 ! for receiver location
@@ -484,7 +484,7 @@
 
 ! get source information for frequency for number of points per lambda
   print *,'reading source duration from the CMTSOLUTION file'
-  call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,1)
+  call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor,DT,1)
 
 ! set global element and point offsets to zero
   iglobpointoffset = 0
@@ -972,12 +972,12 @@
 
 !   get source information
     print *,'reading position of the source from the CMTSOLUTION file'
-    call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,1)
+    call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor,DT,1)
 
-!   convert geographic latitude elat (degrees)
+!   convert geographic latitude lat (degrees)
 !   to geocentric colatitude theta (radians)
-    theta=PI/2.0d0-atan(0.99329534d0*dtan(dble(elat)*PI/180.0d0))
-    phi=dble(elon)*PI/180.0d0
+    theta=PI/2.0d0-atan(0.99329534d0*dtan(dble(lat)*PI/180.0d0))
+    phi=dble(long)*PI/180.0d0
     call reduce(theta,phi)
 
 !   compute Cartesian position of the source (ignore ellipticity for AVS_DX)
