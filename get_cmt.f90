@@ -15,18 +15,19 @@
 !
 !=====================================================================
 
-  subroutine get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,isource)
+  subroutine get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,NSOURCES)
 
   implicit none
 
   include "constants.h"
 
-  integer yr,jda,ho,mi,isource
-  double precision sec,t_cmt,hdur,elat,elon,depth
-  double precision moment_tensor(6)
+  integer yr,jda,ho,mi,NSOURCES
+  double precision sec
+  double precision, dimension(NSOURCES) :: t_cmt,hdur,elat,elon,depth
+  double precision moment_tensor(6,NSOURCES)
   double precision DT
 
-  integer mo,da,julian_day,iread
+  integer mo,da,julian_day,isource
   double precision scaleM
   character(len=5) datasource
   character(len=150) string
@@ -37,7 +38,7 @@
   open(unit=1,file='DATA/CMTSOLUTION',status='old')
 
 ! read source number isource
-  do iread=1,isource
+  do isource=1,NSOURCES
 
 ! read header with event information
   read(1,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource,yr,mo,da,ho,mi,sec
@@ -48,61 +49,61 @@
 
 ! read time shift
   read(1,"(a)") string
-  read(string(12:len_trim(string)),*) t_cmt
+  read(string(12:len_trim(string)),*) t_cmt(isource)
 
 ! read half duration
   read(1,"(a)") string
-  read(string(15:len_trim(string)),*) hdur
+  read(string(15:len_trim(string)),*) hdur(isource)
 
 ! read latitude
   read(1,"(a)") string
-  read(string(10:len_trim(string)),*) elat
+  read(string(10:len_trim(string)),*) elat(isource)
 
 ! read longitude
   read(1,"(a)") string
-  read(string(11:len_trim(string)),*) elon
+  read(string(11:len_trim(string)),*) elon(isource)
 
 ! read depth
   read(1,"(a)") string
-  read(string(7:len_trim(string)),*) depth
+  read(string(7:len_trim(string)),*) depth(isource)
 
 ! read Mrr
   read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(1)
+  read(string(5:len_trim(string)),*) moment_tensor(1,isource)
 
 ! read Mtt
   read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(2)
+  read(string(5:len_trim(string)),*) moment_tensor(2,isource)
 
 ! read Mpp
   read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(3)
+  read(string(5:len_trim(string)),*) moment_tensor(3,isource)
 
 ! read Mrt
   read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(4)
+  read(string(5:len_trim(string)),*) moment_tensor(4,isource)
 
 ! read Mrp
   read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(5)
+  read(string(5:len_trim(string)),*) moment_tensor(5,isource)
 
 ! read Mtp
   read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(6)
+  read(string(5:len_trim(string)),*) moment_tensor(6,isource)
+
+! null half-duration indicates a Heaviside
+! replace with very short error function
+  if(hdur(isource) < 5. * DT) hdur(isource) = 5. * DT
 
   enddo
 
   close(1)
 
-! null half-duration indicates a Heaviside
-! replace with very short error function
-  if(hdur < 5. * DT) hdur = 5. * DT
-
 !
 ! scale the moment-tensor (dimensions dyn-cm)
 !
   scaleM = 1.d7 * RHOAV * (R_EARTH**5) * PI*GRAV*RHOAV
-  moment_tensor(:) = moment_tensor(:) / scaleM
+  moment_tensor(:,:) = moment_tensor(:,:) / scaleM
 
   end subroutine get_cmt
 

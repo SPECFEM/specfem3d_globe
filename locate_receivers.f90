@@ -448,9 +448,6 @@
 
     enddo
 
-! synchronize all the processes to make sure all the estimates are available
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
 ! for MPI version, gather information from all the nodes
   ispec_selected_rec_all(:,:) = -1
   call MPI_GATHER(ispec_selected_rec,nrec,MPI_INTEGER,ispec_selected_rec_all,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -556,9 +553,6 @@
   call MPI_BCAST(ispec_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(xi_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(eta_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
-! synchronize all the processes to make sure everybody has finished
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 ! deallocate arrays
   deallocate(stlat)

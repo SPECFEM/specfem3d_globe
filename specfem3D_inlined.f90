@@ -946,23 +946,22 @@
   allocate(theta_source(NSOURCES))
   allocate(phi_source(NSOURCES))
 
-! locate sources in the mesh
-  do isource = 1,NSOURCES
-    call locate_source(isource,NSOURCES,myrank,nspec_crust_mantle, &
+! locate sources in the mesh 
+  call locate_source(NSOURCES,myrank,nspec_crust_mantle, & 
             nglob_crust_mantle,idoubling_crust_mantle,ibool_crust_mantle, &
-            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, & 
             xigll,yigll,zigll,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
-            sec,t_cmt(isource),yr,jda,ho,mi,theta_source(isource),phi_source(isource), &
-            NSTEP,DT,hdur(isource),Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource), &
-            islice_selected_source(isource),ispec_selected_source(isource), &
-            xi_source(isource),eta_source(isource),gamma_source(isource), &
-            rspl,espl,espl2,nspl,ibathy_topo)
+            sec,t_cmt,yr,jda,ho,mi,theta_source,phi_source, &
+            NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+            islice_selected_source,ispec_selected_source, &
+            xi_source,eta_source,gamma_source, &
+            rspl,espl,espl2,nspl,ibathy_topo,NEX_XI)
 
-  enddo
-
-  if(t_cmt(1) /= 0.) call exit_MPI(myrank,'t_cmt for the first source should be zero')
+  if(t_cmt(1) /= 0.) call exit_MPI(myrank,'t_cmt for the first source should be 
+zero')
   do isource = 2,NSOURCES
-    if(t_cmt(isource) < 0.) call exit_MPI(myrank,'t_cmt should not be less than zero')
+    if(t_cmt(isource) < 0.) call exit_MPI(myrank,'t_cmt should not be less than 
+zero')
   enddo
 
   open(unit=IIN,file='DATA/STATIONS',status='old')
