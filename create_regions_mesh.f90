@@ -917,8 +917,8 @@
             tau_s, tau_e_store, Qmu_store, T_c_source, &
             ATTENUATION, ATTENUATION_3D, &
             size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5))
-! BS END    
-    
+! BS END
+
 
   do ispec=1,nspec
     do k=1,NGLLZ

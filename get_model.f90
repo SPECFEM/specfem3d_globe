@@ -231,7 +231,7 @@
          endif
        endif
 ! BS
-       if(ATTENUATION .AND. ATTENUATION_3D) then
+       if(ATTENUATION .and. ATTENUATION_3D) then
            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
            call reduce(theta,phi)
            lat=(PI/2.0d0-theta)*180.0d0/PI
@@ -398,7 +398,7 @@
           Qmu_store(i,j,k,ispec)     = Qmu
        endif
 ! BS END
-         
+
 
      enddo
    enddo

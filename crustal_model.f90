@@ -61,7 +61,7 @@ end module crustal_model_variables
   double precision x3,x4,x5,x6,x7,scaleval
   double precision vps(NLAYERS_CRUST),vss(NLAYERS_CRUST),rhos(NLAYERS_CRUST),thicks(NLAYERS_CRUST)
 
-  call crust(xlat,xlon,x,vps,vss,rhos,thicks,abbreviation,code,thlr,velocp,velocs,dens)
+  call crust(xlat,xlon,vps,vss,rhos,thicks,abbreviation,code,thlr,velocp,velocs,dens)
 
  x3 = (R_EARTH-thicks(3)*1000.0d0)/R_EARTH
  h_sed = thicks(3) + thicks(4)
@@ -148,7 +148,7 @@ end module crustal_model_variables
 
 !---------------------------
 
-  subroutine crust(lat,lon,r,velp,vels,rho,thick,abbreviation,code,thlr,velocp,velocs,dens)
+  subroutine crust(lat,lon,velp,vels,rho,thick,abbreviation,code,thlr,velocp,velocs,dens)
 
 ! crustal vp and vs in km/s, layer thickness in km
 ! crust2.0 is smoothed with a cap of size CAP using NTHETA points
@@ -158,13 +158,12 @@ end module crustal_model_variables
   use crustal_model_constants
   implicit none
 
-
   integer, parameter :: NTHETA = 2
   integer, parameter :: NPHI = 10
   double precision, parameter :: CAP = 2.0d0*PI/180.0d0
 
 ! argument variables
-  double precision lat,lon,r
+  double precision lat,lon
   double precision rho(NLAYERS_CRUST),thick(NLAYERS_CRUST),velp(NLAYERS_CRUST),vels(NLAYERS_CRUST)
   double precision thlr(NKEYS_CRUST,NLAYERS_CRUST),velocp(NKEYS_CRUST,NLAYERS_CRUST)
   double precision velocs(NKEYS_CRUST,NLAYERS_CRUST),dens(NKEYS_CRUST,NLAYERS_CRUST)
@@ -174,7 +173,7 @@ end module crustal_model_variables
   integer i,j,k,icolat,ilon,ierr
   integer itheta,iphi,npoints
   double precision theta,phi,sint,cost,sinp,cosp,dtheta,dphi,cap_area,wght,total
-  double precision r_rot,theta_rot,phi_rot,moho
+  double precision r_rot,theta_rot,phi_rot
   double precision rotation_matrix(3,3),x(3),xc(3)
   double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
   double precision rhol(NLAYERS_CRUST),thickl(NLAYERS_CRUST),velpl(NLAYERS_CRUST),velsl(NLAYERS_CRUST)

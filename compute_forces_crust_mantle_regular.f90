@@ -26,7 +26,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
-! BS 
+! BS
 ! BS Added sizes to pass either N_SLS or N_SLS*NUM_NODES to factor_common or one_minus_sum_beta
 !          alphaval,betaval,gammaval,factor_common)
           alphaval,betaval,gammaval,factor_common, &
@@ -300,7 +300,7 @@
     endif
 
    endif
-   
+
 ! BS
 !     one_minus_sum_beta_use = one_minus_sum_beta(iregion_selected)
     one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
@@ -846,10 +846,10 @@
 !       (betaval(iregion_selected,i_sls) * epsilondev(i_memory,:,:,:,ispec) + &
 !        gammaval(iregion_selected,i_sls) * epsilondev_loc(i_memory,:,:,:))
 !   endif
-! 
+!
 !     enddo
 !     enddo
-     
+
      if(ATTENUATION_VAL_3D) then
         factor_common_c44_muv = factor_common(i_sls,:,:,:,ispec)
      else
