@@ -236,7 +236,8 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/write_seismograms.o \
        $O/read_parameter_file.o \
        $O/compute_parameters.o \
-       $O/locate_sources_receivers.o \
+       $O/locate_sources.o \
+       $O/locate_receivers.o \
        $O/make_gravity.o \
        $O/prem_model.o \
        $O/comp_source_spectrum.o \
@@ -254,12 +255,12 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/compute_forces_crust_mantle.o \
        $O/compute_forces_outer_core.o \
        $O/compute_forces_inner_core.o \
+       $O/numerical_recipes.o \
+       $O/comp_source_time_function.o \
+       $O/reduce.o \
+       $O/rthetaphi_xyz.o \
+       $O/recompute_jacobian.o \
        $O/gll_library.o
-## DK DK UGLY       $O/numerical_recipes.o \
-## DK DK UGLY       $O/comp_source_time_function.o \
-## DK DK UGLY       $O/reduce.o \
-## DK DK UGLY       $O/rthetaphi_xyz.o \
-## DK DK UGLY       $O/recompute_jacobian.o \
 ## use MPI here
 	${MPIF90} $(FLAGS_NO_CHECK) -o xspecfem3D \
        $O/specfem3D.o \
@@ -273,7 +274,8 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/write_seismograms.o \
        $O/read_parameter_file.o \
        $O/compute_parameters.o \
-       $O/locate_sources_receivers.o \
+       $O/locate_sources.o \
+       $O/locate_receivers.o \
        $O/make_gravity.o \
        $O/prem_model.o \
        $O/comp_source_spectrum.o \
@@ -291,12 +293,12 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/compute_forces_crust_mantle.o \
        $O/compute_forces_outer_core.o \
        $O/compute_forces_inner_core.o \
+       $O/numerical_recipes.o \
+       $O/comp_source_time_function.o \
+       $O/reduce.o \
+       $O/rthetaphi_xyz.o \
+       $O/recompute_jacobian.o \
        $O/gll_library.o $(MPI_FLAGS)
-## DK DK UGLY       $O/numerical_recipes.o \
-## DK DK UGLY       $O/comp_source_time_function.o \
-## DK DK UGLY       $O/reduce.o \
-## DK DK UGLY       $O/rthetaphi_xyz.o \
-## DK DK UGLY       $O/recompute_jacobian.o \
 
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
@@ -388,6 +390,9 @@ $O/convolve_source_timefunction.o: convolve_source_timefunction.f90
 $O/create_header_file.o: create_header_file.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/create_header_file.o create_header_file.f90
 
+$O/comp_source_time_function.o: comp_source_time_function.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/comp_source_time_function.o comp_source_time_function.f90
+
 $O/combine_AVS_DX.o: constants.h combine_AVS_DX.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/combine_AVS_DX.o combine_AVS_DX.f90
 
@@ -414,8 +419,12 @@ $O/check_buffers_faces_chunks.o: constants.h check_buffers_faces_chunks.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/check_buffers_faces_chunks.o check_buffers_faces_chunks.f90
 
 ### use MPI here
-$O/locate_sources_receivers.o: constants.h locate_sources_receivers.f90
-	${MPIF90} $(FLAGS_CHECK) -c -o $O/locate_sources_receivers.o locate_sources_receivers.f90
+$O/locate_sources.o: constants.h locate_sources.f90
+	${MPIF90} $(FLAGS_CHECK) -c -o $O/locate_sources.o locate_sources.f90
+
+### use MPI here
+$O/locate_receivers.o: constants.h locate_receivers.f90
+	${MPIF90} $(FLAGS_CHECK) -c -o $O/locate_receivers.o locate_receivers.f90
 
 ## use MPI here
 $O/exit_mpi.o: constants.h exit_mpi.f90

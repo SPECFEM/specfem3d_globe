@@ -8,9 +8,6 @@
 ! double precision routines
 
   double precision function erf(x)
-
-  implicit none
-
   double precision x
 
 ! this routine uses routine gammp
@@ -27,17 +24,12 @@
 ! ---------------------------------
 
   double precision function gammp(a,x)
-
-  implicit none
-
-  include "constants.h"
-
   double precision a,x
 
 ! this routine uses routines gcf and gser
   double precision gammcf,gamser,gln
 
-  if((x<0.d0 .or. a <= 0.d0) .and. .not. SUPPRESS_STOPS_INLINE) stop 'bad arguments in gammp'
+  if(x<0.d0 .or. a <= 0.d0) stop 'bad arguments in gammp'
 
   if(x<a+1.d0)then
     call gser(gamser,a,x,gln)
@@ -52,10 +44,6 @@
 ! ---------------------------------
 
   subroutine gcf(gammcf,a,x,gln)
-
-  implicit none
-
-  include "constants.h"
 
   double precision a,gammcf,gln,x
 
@@ -90,17 +78,13 @@
     endif
   enddo
 
-  if(.not. SUPPRESS_STOPS_INLINE) stop 'a too large, ITMAX too small in gcf'
+  stop 'a too large, ITMAX too small in gcf'
 
   end subroutine gcf
 
 ! ---------------------------------
 
   subroutine gser(gamser,a,x,gln)
-
-  implicit none
-
-  include "constants.h"
 
   double precision a,gamser,gln,x
 
@@ -117,7 +101,7 @@
   gln=gammln(a)
 
   if(x <= 0.d0)then
-    if(x<0.d0 .and. .not. SUPPRESS_STOPS_INLINE) stop 'x < 0 in gser'
+    if(x<0.d0) stop 'x < 0 in gser'
     gamser=0.d0
     return
   endif
@@ -136,15 +120,13 @@
     endif
   enddo
 
-  if(.not. SUPPRESS_STOPS_INLINE) stop 'a too large, ITMAX too small in gser'
+  stop 'a too large, ITMAX too small in gser'
 
   end subroutine gser
 
 ! ---------------------------------
 
   double precision function gammln(xx)
-
-  implicit none
 
   double precision xx
 

@@ -66,9 +66,9 @@
     phi=ph
   endif
 
-  if((theta<ZERO .or. theta>PI) .and. .not. SUPPRESS_STOPS_INLINE) stop 'theta out of range in reduce'
+  if(theta<ZERO .or. theta>PI) stop 'theta out of range in reduce'
 
-  if((phi<ZERO .or. phi>TWO_PI) .and. .not. SUPPRESS_STOPS_INLINE) stop 'phi out of range in reduce'
+  if(phi<ZERO .or. phi>TWO_PI) stop 'phi out of range in reduce'
 
   end subroutine reduce
 

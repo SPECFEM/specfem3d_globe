@@ -2765,7 +2765,7 @@
 ! formulation with generalized potential
           weight = jacobian2D_bottom_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
 
-          accel_outer_core(iglob) = accel_outer_core(iglob) + weight*vn
+          accel_outer_core(iglob) = accel_outer_core(iglob) - weight*vn
 
         enddo
       enddo
@@ -4025,14 +4025,4 @@
   call MPI_FINALIZE(ier)
 
   end program specfem3D
-
-!=====================================================================
-!
-!=====================================================================
-
-!! DK DK UGLY inlined in order to vectorize source loop
-
-  include "comp_source_time_function.f90"
-
-  include "numerical_recipes.f90"
 
