@@ -183,13 +183,16 @@ MESHER (meshfem3D):
     you can start multiple MPI processes on each node to emulate
     a larger machine.
 - NEX_XI and NEX_ETA need to be 16 * multiple of NPROC_XI and NPROC_ETA,
-    respectively. So for NPROC_XI = NPROC_ETA = 1 NEX_XI = NEX_ETA = 16, 32, 48, ...,
+    respectively. So in theory for NPROC_XI = NPROC_ETA = 1 NEX_XI = NEX_ETA = 16, 32, 48, ...,
     384 and 400 work, for  NPROC_XI = NPROC_ETA = 2 NEX_XI = NEX_ETA = 32, 64, 96, ...,
     352 and 384 work, for NPROC_XI = NPROC_ETA = 3 NEX_XI = NEX_ETA = 48, 96, 144,
     192, 240, 288, 336 and 384 work, for NPROC_XI = NPROC_ETA = 4 NEX_XI = NEX_ETA = 64,
     128, 192, 256, 320 and 384, for NPROC_XI = NPROC_ETA = 5 NEX_XI = NEX_ETA = 80, 160,
     240, 320 and 400, and for NPROC_XI = NPROC_ETA = 6 NEX_XI = NEX_ETA = 96, 192, 288
-    and 384.
+    and 384. In practice though, the curvature of the Earth cannot be honored if one
+    uses too few elements. By trial and error, we found that NEX_XI and NEX_ETA
+    should not be smaller than 64 typically. Smaller values are likely to give spectral
+    elements with a negative Jacobian, in which case the mesher will exit with an error message.
 - In the DATA/Par_file set the following flags:
 
   OCEANS              ! to incorporate the effects of the oceans (cheap)
