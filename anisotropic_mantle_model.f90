@@ -552,7 +552,7 @@ end module aniso_mantle_model_variables
  1000 format(20a4)
  1203 format(4x,f11.1,8d12.5)
  1205 format(15X,6e12.5,f11.1)
- 1208 format(21f5.3)
+ 1208 format(21f7.3)
 
   end subroutine lecmod
 
