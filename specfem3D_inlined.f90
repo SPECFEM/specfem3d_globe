@@ -310,7 +310,8 @@
   integer, dimension(:,:), allocatable :: iboolfaces_inner_core
 
 ! buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_faces,buffer_received_faces
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_faces_vector,buffer_received_faces_vector
 
 ! -------- arrays specific to each region here -----------
 
@@ -476,7 +477,8 @@
   integer, dimension(:,:), allocatable :: iboolcorner_crust_mantle,iboolcorner_outer_core,iboolcorner_inner_core
 
 ! buffers for send and receive between corners of the chunks
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_chunk_corners,buffer_received_chunk_corners
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
 
 ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll,wxgll
@@ -706,8 +708,11 @@
   allocate(iboolcorner_inner_core(NPOIN1D_RADIAL(IREGION_INNER_CORE),NUMCORNERS_SHARED))
 
 ! buffers for send and receive between corners of the chunks
-  allocate(buffer_send_chunk_corners(NDIM,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
-  allocate(buffer_received_chunk_corners(NDIM,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
+  allocate(buffer_send_chunkcorners_scalar(NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
+  allocate(buffer_recv_chunkcorners_scalar(NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
+
+  allocate(buffer_send_chunkcorners_vector(NDIM,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
+  allocate(buffer_recv_chunkcorners_vector(NDIM,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
 
 ! 2-D addressing and buffers for summation between slices, and point codes
 ! use number of elements found in the mantle since it is the largest region
@@ -800,8 +805,11 @@
   allocate(iboolfaces_outer_core(NPOIN2DMAX_XY,NUMFACES_SHARED))
   allocate(iboolfaces_inner_core(NPOIN2DMAX_XY,NUMFACES_SHARED))
 
-  allocate(buffer_send_faces(NDIM,NPOIN2DMAX_XY))
-  allocate(buffer_received_faces(NDIM,NPOIN2DMAX_XY))
+  allocate(buffer_send_faces_scalar(NPOIN2DMAX_XY))
+  allocate(buffer_received_faces_scalar(NPOIN2DMAX_XY))
+
+  allocate(buffer_send_faces_vector(NDIM,NPOIN2DMAX_XY))
+  allocate(buffer_received_faces_vector(NDIM,NPOIN2DMAX_XY))
 
 ! number of corners and faces shared between chunks and number of message types
   if(NCHUNKS == 1 .or. NCHUNKS == 2) then
@@ -1592,8 +1600,8 @@
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
-            buffer_send_faces,buffer_received_faces, &
-            buffer_send_chunk_corners,buffer_received_chunk_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY)
@@ -1606,8 +1614,8 @@
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
-            buffer_send_faces,buffer_received_faces, &
-            buffer_send_chunk_corners,buffer_received_chunk_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY)
@@ -1620,8 +1628,8 @@
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
-            buffer_send_faces,buffer_received_faces, &
-            buffer_send_chunk_corners,buffer_received_chunk_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY)
@@ -1634,8 +1642,8 @@
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
-            buffer_send_faces,buffer_received_faces, &
-            buffer_send_chunk_corners,buffer_received_chunk_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY)
@@ -2238,7 +2246,7 @@
       endif
       factor_scale_crust_mantle_dble(1,1,1,iregion_attenuation) = factor_scale_dble
       omsb_crust_mantle_dble(1,1,1,iregion_attenuation) = one_minus_sum_beta_dble
-      
+
 ! BS END
 
    enddo ! iregion_attenuation = 1, NUM_REGIONS_ATTENUATION
@@ -2322,7 +2330,7 @@
    deallocate(factor_scale_crust_mantle_dble)
    deallocate(omsb_crust_mantle_dble)
    deallocate(factor_common_crust_mantle_dble)
-   
+
    deallocate(factor_scale_inner_core_dble)
    deallocate(omsb_inner_core_dble)
    deallocate(factor_common_inner_core_dble)
@@ -2340,7 +2348,7 @@
              if(ATTENUATION_3D) then
                 ! BS tau_mu and tau_sigma need to reference a point in the mesh
                 scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
-             else 
+             else
 ! BS END
   if(idoubling_crust_mantle(ispec) == IFLAG_DOUBLING_670 .or. &
      idoubling_crust_mantle(ispec) == IFLAG_MANTLE_NORMAL .or. &
@@ -2447,7 +2455,7 @@
             if(ATTENUATION_3D) then
                scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
             endif
-! BS END                   
+! BS END
         if(ANISOTROPIC_INNER_CORE) then
           mul = muvstore_inner_core(i,j,k,ispec)
           c11store_inner_core(i,j,k,ispec) = c11store_inner_core(i,j,k,ispec) &
@@ -2475,7 +2483,7 @@
         enddo
       enddo
     enddo ! END DO INNER CORE
-    
+
 ! BS
 ! BS Deallocate these arrays because they are not needed anymore
     deallocate(factor_scale_crust_mantle)
@@ -3304,8 +3312,8 @@
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
-            buffer_send_faces,buffer_received_faces, &
-            buffer_send_chunk_corners,buffer_received_chunk_corners, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY)
@@ -3348,7 +3356,7 @@
 !          alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
           R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,1), size(factor_common_crust_mantle,2), & 
+          size(factor_common_crust_mantle,1), size(factor_common_crust_mantle,2), &
           size(factor_common_crust_mantle,3), size(factor_common_crust_mantle,4), &
           index_i, index_k, index_dim)
 ! BS END
@@ -3712,8 +3720,8 @@
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
-            buffer_send_faces,buffer_received_faces, &
-            buffer_send_chunk_corners,buffer_received_chunk_corners, &
+            buffer_send_faces_vector,buffer_received_faces_vector, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY)
@@ -3726,8 +3734,8 @@
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
-            buffer_send_faces,buffer_received_faces, &
-            buffer_send_chunk_corners,buffer_received_chunk_corners, &
+            buffer_send_faces_vector,buffer_received_faces_vector, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY)

@@ -7,71 +7,72 @@
  !
  ! these statistics include the central cube
  !
- ! number of processors =           384
+ ! number of processors =           150
  !
- ! number of ES nodes =     48.00000    
- ! percentage of total 640 ES nodes =     7.500000      %
- ! total memory available on these ES nodes (Gb) =     768.0000    
+ ! number of ES nodes =     18.75000    
+ ! percentage of total 640 ES nodes =     2.929688      %
+ ! total memory available on these ES nodes (Gb) =     300.0000    
  !
- ! max points in largest region = max vector length =       3061529
+ ! max points in largest region =        496525
+ ! max vector length =       1489575
  ! min vector length =            25
  ! min critical vector length =            75
  !
  ! on ES and SX-5, make sure "loopcnt=" parameter
- ! in Makefile is greater than       3061529
+ ! in Makefile is greater than       1489575
  !
- ! total elements per AB slice =         54208
- ! total points per AB slice =       3584995
+ ! total elements per AB slice =          7856
+ ! total points per AB slice =        532047
  !
- ! total elements per AC slice =         55552
- ! total points per AC slice =       3671907
+ ! total elements per AC slice =          8192
+ ! total points per AC slice =        553999
  !
- ! total elements per BC slice =         58240
- ! total points per BC slice =       3844835
+ ! total elements per BC slice =          8864
+ ! total points per BC slice =        597455
  !
- ! load balancing AB/BC for points =     93.24184      %
- ! load balancing AB/BC for elements =     93.07692      %
+ ! load balancing AB/BC for points =     89.05223      %
+ ! load balancing AB/BC for elements =     88.62816      %
  !
- ! load balancing AC/BC for points =     95.50233      %
- ! load balancing AC/BC for elements =     95.38461      %
+ ! load balancing AC/BC for points =     92.72648      %
+ ! load balancing AC/BC for elements =     92.41877      %
  !
  ! total for full 6-chunk mesh:
  ! ---------------------------
  !
  ! exact total number of spectral elements in entire mesh = 
- !      20193280
+ !       1205600
  ! approximate total number of points in entire mesh = 
- !     1336149371.000000     
+ !     81517845.00000000     
  ! approximate total number of degrees of freedom in entire mesh = 
- !     3643879793.000000     
+ !     222868835.0000000     
  !
  ! resolution of the mesh at the surface:
  ! -------------------------------------
  !
- ! spectral elements along a great circle =          2048
- ! GLL points along a great circle =          8192
- ! average distance between points in degrees =    4.3945313E-02
- ! average distance between points in km =     4.886496    
+ ! spectral elements along a great circle =           640
+ ! GLL points along a great circle =          2560
+ ! average distance between points in degrees =    0.1406250    
+ ! average distance between points in km =     15.63679    
  !
 
- integer, parameter :: NEX_XI_VAL =           512
- integer, parameter :: NEX_ETA_VAL =           512
+ integer, parameter :: NEX_XI_VAL =           160
+ integer, parameter :: NEX_ETA_VAL =           160
 
- integer, parameter :: NSPEC_CRUST_MANTLE_AB =         42752
- integer, parameter :: NSPEC_CRUST_MANTLE_AC =         44032
- integer, parameter :: NSPEC_CRUST_MANTLE_BC =         46592
- integer, parameter :: NSPEC_OUTER_CORE_AB =          7040
- integer, parameter :: NSPEC_OUTER_CORE_AC =          7104
- integer, parameter :: NSPEC_OUTER_CORE_BC =          7232
- integer, parameter :: NSPEC_INNER_CORE =          4416
+ integer, parameter :: NSPEC_CRUST_MANTLE_AB =          6464
+ integer, parameter :: NSPEC_CRUST_MANTLE_AC =          6784
+ integer, parameter :: NSPEC_CRUST_MANTLE_BC =          7424
+ integer, parameter :: NSPEC_OUTER_CORE_AB =          1024
+ integer, parameter :: NSPEC_OUTER_CORE_AC =          1040
+ integer, parameter :: NSPEC_OUTER_CORE_BC =          1072
+ integer, parameter :: NSPEC_INNER_CORE =           368
 
- integer, parameter :: NGLOB_CRUST_MANTLE_AB =       2814233
- integer, parameter :: NGLOB_CRUST_MANTLE_AC =       2896921
- integer, parameter :: NGLOB_CRUST_MANTLE_BC =       3061529
- integer, parameter :: NGLOB_OUTER_CORE_AB =        469109
- integer, parameter :: NGLOB_OUTER_CORE_AC =        473333
- integer, parameter :: NGLOB_OUTER_CORE_BC =        481653
- integer, parameter :: NGLOB_INNER_CORE =        301653
+ integer, parameter :: NGLOB_CRUST_MANTLE_AB =        434317
+ integer, parameter :: NGLOB_CRUST_MANTLE_AC =        455181
+ integer, parameter :: NGLOB_CRUST_MANTLE_BC =        496525
+ integer, parameter :: NGLOB_OUTER_CORE_AB =         70853
+ integer, parameter :: NGLOB_OUTER_CORE_AC =         71941
+ integer, parameter :: NGLOB_OUTER_CORE_BC =         74053
+ integer, parameter :: NGLOB_INNER_CORE =         26877
 
  integer, parameter :: NSPECMAX_CRUST_MANTLE = NSPEC_CRUST_MANTLE_BC
  integer, parameter :: NGLOBMAX_CRUST_MANTLE = NGLOB_CRUST_MANTLE_BC
@@ -81,7 +82,7 @@
 
  integer, parameter :: NSPECMAX_ANISO_IC = 1
  integer, parameter :: NSPECMAX_ISO_MANTLE = NSPECMAX_CRUST_MANTLE
- integer, parameter :: NSPECMAX_TISO_MANTLE =         16384
+ integer, parameter :: NSPECMAX_TISO_MANTLE =          3328
  integer, parameter :: NSPECMAX_ANISO_MANTLE = 1
 
  integer, parameter :: NSPECMAX_CRUST_MANTLE_ATTENUAT = NSPECMAX_CRUST_MANTLE
@@ -94,6 +95,8 @@
  logical, parameter :: ANISOTROPIC_INNER_CORE_VAL = .false.
 
  logical, parameter :: ATTENUATION_VAL = .true.
+
+ logical, parameter :: ATTENUATION_VAL_3D = .false.
 
  logical, parameter :: ELLIPTICITY_VAL = .true.
 
