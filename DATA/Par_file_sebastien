@@ -9,26 +9,26 @@
 #
 
 ! number of elements along chunk edge at surface (16 * multiple of NPROC below)
-NEX_XI                   = 80
-NEX_ETA                  = 80
+NEX_XI                   = 160
+NEX_ETA                  = 160
 
 ! number of MPI processors along xi and eta in each of the six chunks
-NPROC_XI                 = 1
-NPROC_ETA                = 1
+NPROC_XI                 = 5
+NPROC_ETA                = 5
 
 ! time step in seconds
-DT                       = 0.30
+DT                       = 0.28
 
 ! total number of time steps
-NSTEP                    = 7000
+NSTEP                    = 15000
 
 ! parameters describing the Earth model
 OCEANS                   = .true.
 ELLIPTICITY              = .true.
 TOPOGRAPHY               = .true.
 THREE_D                  = .true.
-GRAVITY                  = .false.
-ROTATION                 = .false.
+GRAVITY                  = .true.
+ROTATION                 = .true.
 TRANSVERSE_ISOTROPY      = .true.
 ANISOTROPIC_MANTLE       = .false.
 ANISOTROPIC_INNER_CORE   = .false.
@@ -54,7 +54,7 @@ NER_ICB_BOTTOMDBL        = 6
 NER_TOP_CENTRAL_CUBE_ICB = 3
 
 ! path to store the local database files on each node
-LOCAL_PATH               = /ptmp/chevrot/DATABASES_MPI
+LOCAL_PATH               = /scratch/DATABASES_MPI_DIMITRI
 
 ! machine file for MPI
 MACHINE_FILE             = mymachines
@@ -64,58 +64,4 @@ NSEIS                    = 50000
 
 ! number of point sources
 NSOURCES                 = 1
-
- !
- ! mesh statistics:
- ! ---------------
- !
- ! these statistics include the central cube
- !
- ! number of processors =           150
- !
- ! number of ES nodes =     18.75000    
- ! percentage of total 640 ES nodes =     2.929688      %
- ! total memory available on these ES nodes (Gb) =     300.0000    
- !
- ! max points in largest region =       1107613
- ! max vector length =       3322839
- ! min vector length =            25
- ! min critical vector length =            75
- !
- ! on ES and SX-5, make sure loopcnt= parameter
- ! in Makefile is greater than       3322839
- !
- ! total elements per AB slice =         18036
- ! total points per AB slice =       1207215
- !
- ! total elements per AC slice =         18792
- ! total points per AC slice =       1256271
- !
- ! total elements per BC slice =         20304
- ! total points per BC slice =       1353711
- !
- ! load balancing AB/BC for points =     89.17819      %
- ! load balancing AB/BC for elements =     88.82979      %
- !
- ! load balancing AC/BC for points =     92.80201      %
- ! load balancing AC/BC for elements =     92.55319      %
- !
- ! total for full 6-chunk mesh:
- ! ---------------------------
- !
- ! exact total number of spectral elements in entire mesh = 
- !       2721600
- ! approximate total number of points in entire mesh = 
- !     182002045.0000000     
- ! approximate total number of degrees of freedom in entire mesh = 
- !     498295035.0000000     
- !
- ! resolution of the mesh at the surface:
- ! -------------------------------------
- !
- ! spectral elements along a great circle =           960
- ! GLL points along a great circle =          3840
- ! average distance between points in degrees =    9.3750000E-02
- ! average distance between points in km =     10.42452    
- !
 
