@@ -776,21 +776,21 @@
   allocate(buffer_received_faces(NDIM,NPOIN2DMAX_XY))
 
 ! number of corners shared between chunks
-  if(NCHUNKS == 1 .or. NCHUNKS == 3) then
+  if(NCHUNKS == 1 .or. NCHUNKS == 2 .or. NCHUNKS == 3) then
     NCORNERSCHUNKS = 1
   else if(NCHUNKS == 6) then
     NCORNERSCHUNKS = 8
   else
-    call exit_MPI(myrank,'number of chunks must be either 1, 3 or 6')
+    call exit_MPI(myrank,'number of chunks must be either 1, 2, 3 or 6')
   endif
 
 ! number of faces shared between chunks
-  if(NCHUNKS == 1 .or. NCHUNKS == 3) then
+  if(NCHUNKS == 1 .or. NCHUNKS == 2 .or. NCHUNKS == 3) then
     NUM_FACES = 1
   else if(NCHUNKS == 6) then
     NUM_FACES = 4
   else
-    call exit_MPI(myrank,'can only use 1, 3 or 6 chunks')
+    call exit_MPI(myrank,'can only use 1, 2, 3 or 6 chunks')
   endif
 
 ! if more than one chunk then same number of processors in each direction
@@ -973,6 +973,10 @@
             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI)
 
   if(minval(t_cmt) /= 0.) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
+
+! for the movies, we do not use a Heaviside source
+  if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval(hdur) < HDUR_MIN_MOVIES) &
+    call exit_MPI(myrank,'hdur too small for movie creation')
 
   open(unit=IIN,file='DATA/STATIONS',status='old')
   read(IIN,*) nrec
