@@ -51,16 +51,14 @@
 F90 = pgf90
 MPIF90 = mpif90
 FLAGS_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
-#FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard
 FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
-#FLAGS_NO_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
 MPI_FLAGS = 
 
-# Intel Fortran90 for Linux
+# Intel ifc Fortran90 for Linux
 #F90 = ifc
-#MPIF90 = mpif90
+#MPIF90 = /home/local/mpich_ifc_v7.1/bin/mpif90
 #FLAGS_NO_CHECK = -O3 -tpp6 -xK -ip -e95 -implicitnone -unroll6
-###FLAGS_NO_CHECK = -O0 -e95 -implicitnone
+###FLAGS_NO_CHECK = -O0 -CB -e95 -implicitnone
 #FLAGS_CHECK = $(FLAGS_NO_CHECK)
 #MPI_FLAGS = -Vaxlib
 
