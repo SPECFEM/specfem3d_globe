@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -87,14 +87,6 @@
   read(IIN,1) junk,MAX_ATTENUATION_PERIOD
   read(IIN,*)
   read(IIN,*)
-
-  if(MIN_ATTENUATION_PERIOD /= 20 .and. MIN_ATTENUATION_PERIOD /= 8 .and. &
-     MIN_ATTENUATION_PERIOD /= 5 .and. MIN_ATTENUATION_PERIOD /= 4)  &
-       stop 'valid minimum attenuation periods are 20, 8, 5 and 4'
-
-  if(MAX_ATTENUATION_PERIOD /= 1000 .and. MAX_ATTENUATION_PERIOD /= 400) &
-       stop 'valid maximum attenuation periods are 1000 and 400'
-
   read(IIN,1) junk,NER_CRUST
   read(IIN,1) junk,NER_220_MOHO
   read(IIN,1) junk,NER_400_220

@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -17,7 +17,7 @@
 
   subroutine get_flags_boundaries(myrank,iregion_code,nspec,iproc_xi,iproc_eta,ispec, &
              xstore,ystore,zstore,iboun,iMPIcut_xi,iMPIcut_eta,ichunk, &
-             idoubling,NPROC_XI,NPROC_ETA)
+             idoubling,NPROC_XI,NPROC_ETA,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
 
   implicit none
 
@@ -34,6 +34,8 @@
   double precision ystore(NGLLX,NGLLY,NGLLZ)
   double precision zstore(NGLLX,NGLLY,NGLLZ)
 
+  double precision ANGULAR_SIZE_CHUNK_RAD
+
   integer ia
 
 ! use iproc_xi and iproc_eta to determine MPI cut planes along xi and eta
@@ -44,6 +46,11 @@
   double precision xi(8),eta(8)
   double precision r1,r2,r3,r4,r5,r6,r7,r8
   double precision val_divide,radius_cube
+
+! rotation matrix from Euler angles
+  integer i,j
+  double precision rotation_matrix(3,3)
+  double precision vector_ori(3),vector_rotated(3)
 
 ! find the coordinates of the eight corner nodes of the element
   xelm(1)=xstore(1,1,1)
@@ -70,6 +77,24 @@
   xelm(8)=xstore(1,NGLLY,NGLLZ)
   yelm(8)=ystore(1,NGLLY,NGLLZ)
   zelm(8)=zstore(1,NGLLY,NGLLZ)
+
+! rotate origin of chunk back to North pole using transpose of rotation matrix
+  if(REGIONAL_CODE) then
+  do ia=1,8
+    vector_ori(1) = xelm(ia)
+    vector_ori(2) = yelm(ia)
+    vector_ori(3) = zelm(ia)
+    do i=1,3
+      vector_rotated(i) = ZERO
+      do j=1,3
+        vector_rotated(i)=vector_rotated(i)+rotation_matrix(j,i)*vector_ori(j)
+      enddo
+    enddo
+    xelm(ia) = vector_rotated(1)
+    yelm(ia) = vector_rotated(2)
+    zelm(ia) = vector_rotated(3)
+  enddo
+  endif
 
 ! convert the 6 chunks to the cubed sphere coordinates xi and eta
 
@@ -180,7 +205,7 @@
 
   iboun(:,ispec)=.false.
 
-  target= PI_OVER_FOUR*(ONE-SMALLVAL)
+  target= (ANGULAR_SIZE_CHUNK_RAD/2.)*(ONE-SMALLVAL)
 
 ! on boundary 1: x=xmin
   if(xi(1)<-target .and. xi(4)<-target .and. xi(5)<-target .and. xi(8)<-target) &
@@ -277,11 +302,11 @@
   iMPIcut_xi(:,ispec)=.false.
 
 ! angular size of a slice along xi
-  sizeslice = PI_OVER_TWO / NPROC_XI
+  sizeslice = ANGULAR_SIZE_CHUNK_RAD / NPROC_XI
 
 ! left cut-plane in the current slice along X = constant (Xmin of this slice)
 
-  target = - PI_OVER_FOUR + iproc_xi*sizeslice
+  target = - (ANGULAR_SIZE_CHUNK_RAD/2.) + iproc_xi*sizeslice
 
 ! add geometrical tolerance
   target = target + SMALLVAL
@@ -291,7 +316,7 @@
 
 !  right cut-plane in the current slice along X = constant (Xmax of this slice)
 
-  target = - PI_OVER_FOUR + (iproc_xi+1)*sizeslice
+  target = - (ANGULAR_SIZE_CHUNK_RAD/2.) + (iproc_xi+1)*sizeslice
 
 ! add geometrical tolerance
   target = target - SMALLVAL
@@ -306,11 +331,11 @@
   iMPIcut_eta(:,ispec)=.false.
 
 ! angular size of a slice along eta
-  sizeslice = PI_OVER_TWO / NPROC_ETA
+  sizeslice = ANGULAR_SIZE_CHUNK_RAD / NPROC_ETA
 
 ! left cut-plane in the current slice along Y = constant (Ymin of this slice)
 
-  target = - PI_OVER_FOUR + iproc_eta*sizeslice
+  target = - (ANGULAR_SIZE_CHUNK_RAD/2.) + iproc_eta*sizeslice
 
 ! add geometrical tolerance
   target = target + SMALLVAL
@@ -320,7 +345,7 @@
 
 ! right cut-plane in the current slice along Y = constant (Ymax of this slice)
 
-  target = - PI_OVER_FOUR + (iproc_eta+1)*sizeslice
+  target = - (ANGULAR_SIZE_CHUNK_RAD/2.) + (iproc_eta+1)*sizeslice
 
 ! add geometrical tolerance
   target = target - SMALLVAL

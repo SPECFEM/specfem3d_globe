@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -16,7 +16,7 @@
 !=====================================================================
 
   subroutine compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          nspec,displ,accel,xstore,ystore,zstore, &
+          nspec,displ,veloc,accel,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
@@ -26,7 +26,13 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev, &
-          one_minus_sum_beta,alphaval,betaval,gammaval,factor_common)
+          one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
+          rho_vp,rho_vs,nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+          nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
+          ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax, &
+          NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+          jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
+          normal_xmin,normal_xmax,normal_ymin,normal_ymax)
 
   implicit none
 
@@ -38,14 +44,36 @@
 
   integer nspec
 
+! Stacey
+  integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: rho_vp,rho_vs
+  integer, dimension(2,NSPEC2DMAX_YMIN_YMAX) :: nimin,nimax
+  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX) :: njmin,njmax
+  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX) :: nkmin_xi,nkmin_eta
+  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
+  real(kind=CUSTOM_REAL) jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+  real(kind=CUSTOM_REAL) jacobian2D_ymax(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+  integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX)
+  integer ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
+  integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX)
+  integer ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
+  real(kind=CUSTOM_REAL) normal_xmin(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) normal_xmax(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) normal_ymin(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+  real(kind=CUSTOM_REAL) normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+  integer ispec2D,ispec3D
+  real(kind=CUSTOM_REAL) vx,vy,vz,nx,ny,nz,tx,ty,tz,vn,weight
+
 ! for ellipticity for d80 attenuation
   real(kind=CUSTOM_REAL) ell_d80,p20,cost
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPECMAX_CRUST_MANTLE) :: idoubling
 
-! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOBMAX_CRUST_MANTLE) :: displ,accel
+! displacement, velocity and acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOBMAX_CRUST_MANTLE) :: displ,veloc,accel
 
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -777,6 +805,198 @@
         enddo
       enddo
     enddo
+
+
+! DK DK add Stacey conditions
+
+  if(STACEY_ABS_CONDITIONS) then
+
+!   xmin
+    do ispec2D=1,nspec2D_xmin
+
+      ispec3D=ibelm_xmin(ispec2D)
+
+! exclude elements that are not on absorbing edges
+    if(nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
+
+      i=1
+      do k=nkmin_xi(1,ispec2D),NGLLZ
+        do j=njmin(1,ispec2D),njmax(1,ispec2D)
+          iglob=ibool(i,j,k,ispec3D)
+
+          vx=veloc(1,iglob)
+          vy=veloc(2,iglob)
+          vz=veloc(3,iglob)
+
+          nx=normal_xmin(1,j,k,ispec2D)
+          ny=normal_xmin(2,j,k,ispec2D)
+          nz=normal_xmin(3,j,k,ispec2D)
+
+          vn=vx*nx+vy*ny+vz*nz
+
+          tx=rho_vp(i,j,k,ispec3D)*vn*nx+rho_vs(i,j,k,ispec3D)*(vx-vn*nx)
+          ty=rho_vp(i,j,k,ispec3D)*vn*ny+rho_vs(i,j,k,ispec3D)*(vy-vn*ny)
+          tz=rho_vp(i,j,k,ispec3D)*vn*nz+rho_vs(i,j,k,ispec3D)*(vz-vn*nz)
+
+          weight=jacobian2D_xmin(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+          accel(1,iglob)=accel(1,iglob) - tx*weight
+          accel(2,iglob)=accel(2,iglob) - ty*weight
+          accel(3,iglob)=accel(3,iglob) - tz*weight
+
+        enddo
+      enddo
+    enddo
+
+!   xmax
+    do ispec2D=1,nspec2D_xmax
+      ispec3D=ibelm_xmax(ispec2D)
+
+! exclude elements that are not on absorbing edges
+    if(nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
+
+      i=NGLLX
+      do k=nkmin_xi(2,ispec2D),NGLLZ
+        do j=njmin(2,ispec2D),njmax(2,ispec2D)
+          iglob=ibool(i,j,k,ispec3D)
+
+          vx=veloc(1,iglob)
+          vy=veloc(2,iglob)
+          vz=veloc(3,iglob)
+
+          nx=normal_xmax(1,j,k,ispec2D)
+          ny=normal_xmax(2,j,k,ispec2D)
+          nz=normal_xmax(3,j,k,ispec2D)
+
+          vn=vx*nx+vy*ny+vz*nz
+
+          tx=rho_vp(i,j,k,ispec3D)*vn*nx+rho_vs(i,j,k,ispec3D)*(vx-vn*nx)
+          ty=rho_vp(i,j,k,ispec3D)*vn*ny+rho_vs(i,j,k,ispec3D)*(vy-vn*ny)
+          tz=rho_vp(i,j,k,ispec3D)*vn*nz+rho_vs(i,j,k,ispec3D)*(vz-vn*nz)
+
+          weight=jacobian2D_xmax(j,k,ispec2D)*wgllwgll_yz(j,k)
+
+          accel(1,iglob)=accel(1,iglob) - tx*weight
+          accel(2,iglob)=accel(2,iglob) - ty*weight
+          accel(3,iglob)=accel(3,iglob) - tz*weight
+
+        enddo
+      enddo
+    enddo
+
+!   ymin
+    do ispec2D=1,nspec2D_ymin
+
+      ispec3D=ibelm_ymin(ispec2D)
+
+! exclude elements that are not on absorbing edges
+    if(nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
+
+      j=1
+      do k=nkmin_eta(1,ispec2D),NGLLZ
+        do i=nimin(1,ispec2D),nimax(1,ispec2D)
+          iglob=ibool(i,j,k,ispec3D)
+
+          vx=veloc(1,iglob)
+          vy=veloc(2,iglob)
+          vz=veloc(3,iglob)
+
+          nx=normal_ymin(1,i,k,ispec2D)
+          ny=normal_ymin(2,i,k,ispec2D)
+          nz=normal_ymin(3,i,k,ispec2D)
+
+          vn=vx*nx+vy*ny+vz*nz
+
+          tx=rho_vp(i,j,k,ispec3D)*vn*nx+rho_vs(i,j,k,ispec3D)*(vx-vn*nx)
+          ty=rho_vp(i,j,k,ispec3D)*vn*ny+rho_vs(i,j,k,ispec3D)*(vy-vn*ny)
+          tz=rho_vp(i,j,k,ispec3D)*vn*nz+rho_vs(i,j,k,ispec3D)*(vz-vn*nz)
+
+          weight=jacobian2D_ymin(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+          accel(1,iglob)=accel(1,iglob) - tx*weight
+          accel(2,iglob)=accel(2,iglob) - ty*weight
+          accel(3,iglob)=accel(3,iglob) - tz*weight
+
+        enddo
+      enddo
+    enddo
+
+!   ymax
+    do ispec2D=1,nspec2D_ymax
+
+      ispec3D=ibelm_ymax(ispec2D)
+
+! exclude elements that are not on absorbing edges
+    if(nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
+
+      j=NGLLY
+      do k=nkmin_eta(2,ispec2D),NGLLZ
+        do i=nimin(2,ispec2D),nimax(2,ispec2D)
+          iglob=ibool(i,j,k,ispec3D)
+
+          vx=veloc(1,iglob)
+          vy=veloc(2,iglob)
+          vz=veloc(3,iglob)
+
+          nx=normal_ymax(1,i,k,ispec2D)
+          ny=normal_ymax(2,i,k,ispec2D)
+          nz=normal_ymax(3,i,k,ispec2D)
+
+          vn=vx*nx+vy*ny+vz*nz
+
+          tx=rho_vp(i,j,k,ispec3D)*vn*nx+rho_vs(i,j,k,ispec3D)*(vx-vn*nx)
+          ty=rho_vp(i,j,k,ispec3D)*vn*ny+rho_vs(i,j,k,ispec3D)*(vy-vn*ny)
+          tz=rho_vp(i,j,k,ispec3D)*vn*nz+rho_vs(i,j,k,ispec3D)*(vz-vn*nz)
+
+          weight=jacobian2D_ymax(i,k,ispec2D)*wgllwgll_xz(i,k)
+
+          accel(1,iglob)=accel(1,iglob) - tx*weight
+          accel(2,iglob)=accel(2,iglob) - ty*weight
+          accel(3,iglob)=accel(3,iglob) - tz*weight
+
+        enddo
+      enddo
+    enddo
+
+
+!! DK DK CMB is now included, therefore no more bottom absorbing condition
+!!   bottom (zmin)
+!    do ispec2D=1,NSPEC2D_BOTTOM
+!
+!      ispec3D=ibelm_bottom(ispec2D)
+!
+!      k=1
+!      do j=1,NGLLY
+!        do i=1,NGLLX
+!
+!          iglob=ibool(i,j,k,ispec3D)
+!
+!          vx=veloc(1,iglob)
+!          vy=veloc(2,iglob)
+!          vz=veloc(3,iglob)
+!
+!          nx=normal_bottom(1,i,j,ispec2D)
+!          ny=normal_bottom(2,i,j,ispec2D)
+!          nz=normal_bottom(3,i,j,ispec2D)
+!
+!          vn=vx*nx+vy*ny+vz*nz
+!
+!          tx=rho_vp(i,j,k,ispec3D)*vn*nx+rho_vs(i,j,k,ispec3D)*(vx-vn*nx)
+!          ty=rho_vp(i,j,k,ispec3D)*vn*ny+rho_vs(i,j,k,ispec3D)*(vy-vn*ny)
+!          tz=rho_vp(i,j,k,ispec3D)*vn*nz+rho_vs(i,j,k,ispec3D)*(vz-vn*nz)
+!
+!          weight=jacobian2D_bottom(i,j,ispec2D)*wgllwgll_xy(i,j)
+!
+!          accel(1,iglob)=accel(1,iglob) - tx*weight
+!          accel(2,iglob)=accel(2,iglob) - ty*weight
+!          accel(3,iglob)=accel(3,iglob) - tz*weight
+!
+!        enddo
+!      enddo
+!    enddo
+
+  endif  ! end of Stacey conditions
+
 
 ! update memory variables based upon the Runge-Kutta scheme
 ! convention for attenuation

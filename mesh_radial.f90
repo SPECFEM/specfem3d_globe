@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -74,8 +74,6 @@
   if(CRUSTAL .or. TOPOGRAPHY) then
     if(NER_CRUST == 1) then
       r_moho = RMOHO / R_EARTH
-    else if(NER_CRUST == 2 .and. NGLLX == 9) then
-      r_moho = 6310000.d0 / R_EARTH
     else if(NER_CRUST == 2) then
       r_moho = RMOHO_FICTITIOUS_2ELEMS / R_EARTH
     else if(NER_CRUST == 3 .or. NER_CRUST == 4) then
@@ -196,7 +194,8 @@
 
 !! DK DK avoid problem with bathymetry trenches on the ES
 !! DK DK do not honor the fictitious Moho if high-res mesh with topography
-  if(NER_CRUST > 1 .and. (CRUSTAL .or. TOPOGRAPHY)) then
+!! DK DK also use regular mesh if regional code
+  if(REGIONAL_CODE .or. (NER_CRUST > 1 .and. (CRUSTAL .or. TOPOGRAPHY))) then
 
 !! DK DK uniform radial mesh from d220 to surface if high-res 3D model
 
@@ -211,6 +210,7 @@
   enddo
 
   else
+
 !
 !--- d220 to Moho
 !

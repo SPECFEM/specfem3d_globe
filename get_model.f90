@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -27,7 +27,7 @@
     TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D, &
     CRUSTAL,ONE_CRUST, &
     crustal_model,mantle_model,aniso_mantle_model, &
-    aniso_inner_core_model)
+    aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
 
   implicit none
 
@@ -85,6 +85,11 @@
   double precision vpc,vsc,rhoc,moho
 
   logical found_crust
+
+  double precision ANGULAR_SIZE_CHUNK_RAD
+
+! rotation matrix from Euler angles
+  double precision rotation_matrix(3,3)
 
   do k=1,NGLLZ
     do j=1,NGLLY
@@ -333,7 +338,8 @@
  enddo
 
  call get_flags_boundaries(myrank,iregion_code,nspec,iproc_xi,iproc_eta,ispec,xstore,ystore,zstore, &
-        iboun,iMPIcut_xi,iMPIcut_eta,ichunk,idoubling,NPROC_XI,NPROC_ETA)
+        iboun,iMPIcut_xi,iMPIcut_eta,ichunk,idoubling,NPROC_XI,NPROC_ETA, &
+        rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
 
  end subroutine get_model
 

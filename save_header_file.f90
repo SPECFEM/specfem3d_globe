@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -38,6 +38,17 @@
 
   integer subtract_central_cube_elems
   double precision subtract_central_cube_points
+
+!! DK DK for regional code
+  double precision x,y,gamma,rgt,xi,eta
+  double precision x_top,y_top,z_top
+  double precision ANGULAR_SIZE_CHUNK_RAD
+
+! rotation matrix from Euler angles
+  integer i,j,ix,iy,icorner
+  double precision rotation_matrix(3,3)
+  double precision vector_ori(3),vector_rotated(3)
+  double precision r_corner,theta_corner,phi_corner,relat,relon,colat_corner
 
 ! copy number of elements and points in an include file for the solver
   open(unit=IOUT,file='OUTPUT_FILES/values_from_mesher.h',status='unknown')
@@ -112,6 +123,81 @@
     - 2.d0*dble(nglob_AB(IREGION_OUTER_CORE) + nglob_AC(IREGION_OUTER_CORE) + nglob_BC(IREGION_OUTER_CORE))) &
     - 3.d0*subtract_central_cube_points
   write(IOUT,*) '!'
+
+!! DK DK add location of chunk if regional run
+  if(REGIONAL_CODE) then
+
+  write(IOUT,*) '! position of the mesh chunk at the surface:'
+  write(IOUT,*) '! -----------------------------------------'
+  write(IOUT,*) '!'
+  write(IOUT,*) '! angular size in each direction in degrees = ',sngl(ANGULAR_SIZE_CHUNK_DEG)
+  write(IOUT,*) '!'
+  write(IOUT,*) '! longitude of center in degrees = ',sngl(CENTER_LONGITUDE_DEG)
+  write(IOUT,*) '! latitude of center in degrees = ',sngl(CENTER_LATITUDE_DEG)
+
+! compute rotation matrix from Euler angles
+  ANGULAR_SIZE_CHUNK_RAD = ANGULAR_SIZE_CHUNK_DEG * PI / 180.
+  call euler_angles(rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
+
+! loop on the four corners of the chunk to display their coordinates
+  icorner = 0
+  do iy = 0,1
+    do ix = 0,1
+
+    icorner = icorner + 1
+
+    xi= - ANGULAR_SIZE_CHUNK_RAD/2. + dble(ix)*ANGULAR_SIZE_CHUNK_RAD
+    eta= - ANGULAR_SIZE_CHUNK_RAD/2. + dble(iy)*ANGULAR_SIZE_CHUNK_RAD
+
+    x=dtan(xi)
+    y=dtan(eta)
+
+    gamma=ONE/dsqrt(ONE+x*x+y*y)
+    rgt=R_UNIT_SPHERE*gamma
+
+! define the mesh points at the top surface
+    x_top=-y*rgt
+    y_top=x*rgt
+    z_top=rgt
+
+! rotate top
+    vector_ori(1) = x_top
+    vector_ori(2) = y_top
+    vector_ori(3) = z_top
+    do i=1,3
+      vector_rotated(i)=0.0d0
+      do j=1,3
+        vector_rotated(i)=vector_rotated(i)+rotation_matrix(i,j)*vector_ori(j)
+      enddo
+    enddo
+    x_top = vector_rotated(1)
+    y_top = vector_rotated(2)
+    z_top = vector_rotated(3)
+
+! convert to latitude and longitude
+    call xyz_2_rthetaphi_dble(x_top,y_top,z_top,r_corner,theta_corner,phi_corner)
+    call reduce(theta_corner,phi_corner)
+
+! convert geocentric to geographic colatitude
+    colat_corner=PI/2.0d0-datan(1.006760466d0*dcos(theta_corner)/dmax1(TINYVAL,dsin(theta_corner)))
+    if(phi_corner>PI) phi_corner=phi_corner-TWO_PI
+
+! compute real position of the source
+    relat = (PI/2.0d0-colat_corner)*180.0d0/PI
+    relon = phi_corner*180.0d0/PI
+
+    write(IOUT,*) '!'
+    write(IOUT,*) '! corner ',icorner
+    write(IOUT,*) '! longitude in degrees = ',relon
+    write(IOUT,*) '! latitude in degrees = ',relat
+
+    enddo
+  enddo
+
+  write(IOUT,*) '!'
+
+  endif  !! DK DK end regional chunk
+
 
   write(IOUT,*) '! resolution of the mesh at the surface:'
   write(IOUT,*) '! -------------------------------------'

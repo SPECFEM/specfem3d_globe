@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -271,7 +271,7 @@
 
 ! reset point number
     ipoin = 0
-  
+
     do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
 
       do j = 1,NGLLY
@@ -282,7 +282,7 @@
           xcoord = store_val_x(ipoin,iproc)
           ycoord = store_val_y(ipoin,iproc)
           zcoord = store_val_z(ipoin,iproc)
-    
+
           displx = store_val_ux(ipoin,iproc)
           disply = store_val_uy(ipoin,iproc)
           displz = store_val_uz(ipoin,iproc)
@@ -370,7 +370,7 @@
 ! apply threshold to normalized field
   if(APPLY_THRESHOLD) &
     where(abs(field_display(:)) <= THRESHOLD) field_display = 0.
-    
+
 ! apply non linear scaling to normalized field if needed
   if(NONLINEAR_SCALING) then
     where(field_display(:) >= 0.)
@@ -427,7 +427,7 @@
   endif
 
   if(USE_GMT) then
- 
+
 ! output list of points
     mask_point = .false.
     do ispec=1,nspectot_AVS_max
@@ -448,7 +448,7 @@
         mask_point(ibool_number) = .true.
       enddo
     enddo
- 
+
   else
 ! if unique file, output geometry only once
   if(.not. UNIQUE_FILE .or. iframe == 1) then
@@ -467,7 +467,7 @@
         if(USE_OPENDX) then
           write(11,"(f8.5,1x,f8.5,1x,f8.5)") &
             xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
-        else if(USE_AVS) then 
+        else if(USE_AVS) then
           write(11,"(i6,1x,f8.5,1x,f8.5,1x,f8.5)") ireorder(ibool_number), &
             xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
         endif

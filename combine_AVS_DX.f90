@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -119,7 +119,7 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY, &
              GRAVITY,ONE_CRUST,ROTATION, &
-             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS,
+             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS, &
              MOVIE_SURFACE,MOVIE_VOLUME
   integer NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
   double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES
@@ -389,7 +389,6 @@
 ! write AVS or DX header with element data
   if(USE_OPENDX) then
     open(unit=11,file='OUTPUT_FILES/DX_fullmesh.dx',status='unknown')
-    write(11,*) '# object 1 is the irregular positions'
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ntotpoinAVS_DX,' data follows'
   else
     open(unit=11,file='OUTPUT_FILES/AVS_fullmesh.inp',status='unknown')
@@ -478,10 +477,7 @@
   above_zero = 0
   below_zero = 0
 
-  if(USE_OPENDX) then
-    write(11,*) '# object 2 is the irregular connections, quads, connecting the positions'
-    write(11,*) 'object 2 class array type int rank 1 shape 4 items ',ntotspecAVS_DX,' data follows'
-  endif
+  if(USE_OPENDX) write(11,*) 'object 2 class array type int rank 1 shape 4 items ',ntotspecAVS_DX,' data follows'
 
   do iregion_code = region_min,region_max
 
@@ -796,8 +792,6 @@
   if(USE_OPENDX) then
     write(11,*) 'attribute "element type" string "quads"'
     write(11,*) 'attribute "ref" string "positions"'
-    write(11,*) '# object 3 is the element data, which are in a one-to-one'
-    write(11,*) '# correspondence with the connections ("dep" on connections)'
     write(11,*) 'object 3 class array type float rank 0 items ',ntotspecAVS_DX,' data follows'
   else
     write(11,*) '1 1'
@@ -887,8 +881,6 @@
 ! define OpenDX field
   if(USE_OPENDX) then
     write(11,*) 'attribute "dep" string "connections"'
-    write(11,*) '# a field is created with three components:'
-    write(11,*) '# "positions", "connections" and "data"'
     write(11,*) 'object "irregular positions irregular connections" class field'
     write(11,*) 'component "positions" value 1'
     write(11,*) 'component "connections" value 2'
@@ -1052,7 +1044,6 @@
 ! duplicate source to have right color normalization in AVS_DX
   if(USE_OPENDX) then
     open(unit=11,file='OUTPUT_FILES/DX_source_receivers.dx',status='unknown')
-    write(11,*) '# object 1 is the irregular positions'
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ntotpoinAVS_DX,' data follows'
     write(11,*) sngl(x_target_source),' ',sngl(y_target_source),' ',sngl(z_target_source)
     write(11,*) sngl(x_target_source+0.1*small_offset_source),' ', &
@@ -1118,7 +1109,6 @@
 ! write AVS or DX header with element data
   if(USE_OPENDX) then
     open(unit=11,file='OUTPUT_FILES/DX_epicenter.dx',status='unknown')
-    write(11,*) '# object 1 is the irregular positions'
     write(11,*) 'object 1 class array type float rank 1 shape 3 items 3 data follows'
     write(11,*) sngl(x_source_trgl1),' ',sngl(y_source_trgl1),' ',sngl(z_source_trgl1)
     write(11,*) sngl(x_source_trgl2),' ',sngl(y_source_trgl2),' ',sngl(z_source_trgl2)
