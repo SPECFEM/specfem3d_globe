@@ -24,7 +24,7 @@
   subroutine locate_receivers(myrank,DT,NSTEP,nspec,nglob,idoubling,ibool, &
                  xstore,ystore,zstore,xigll,yigll, &
                  nrec,islice_selected_rec,ispec_selected_rec, &
-                 xi_receiver,eta_receiver,station_name,network_name,nu, &
+                 xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,nu, &
                  yr,jda,ho,mi,sec,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
                  theta_source,phi_source, &
                  rspl,espl,espl2,nspl,ibathy_topo)
@@ -88,7 +88,7 @@
   double precision theta,phi
   double precision theta_source,phi_source
   double precision dist
-  double precision xi,eta,gamma,dx,dy,dz,dxi,deta
+  double precision xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
 
 ! topology of the control points of the surface element
   integer iax,iay,iaz
@@ -118,13 +118,13 @@
 ! station information for writing the seismograms
   integer nsamp
   integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
-  double precision, dimension(nrec) :: xi_receiver,eta_receiver
+  double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
   double precision, dimension(3,3,nrec) :: nu
   character(len=8), dimension(nrec) :: station_name,network_name
 
   integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
-  double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all
+  double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
 
 ! **************
 
@@ -176,6 +176,7 @@
   allocate(ispec_selected_rec_all(nrec,0:NPROCTOT-1))
   allocate(xi_receiver_all(nrec,0:NPROCTOT-1))
   allocate(eta_receiver_all(nrec,0:NPROCTOT-1))
+  allocate(gamma_receiver_all(nrec,0:NPROCTOT-1))
   allocate(x_found_all(nrec,0:NPROCTOT-1))
   allocate(y_found_all(nrec,0:NPROCTOT-1))
   allocate(z_found_all(nrec,0:NPROCTOT-1))
@@ -188,9 +189,6 @@
   distmin=HUGEVAL
 
     read(1,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
-
-! check that station is not buried, burial is not implemented in current code
-    if(dabs(stbur(irec)) > 0.1d0) call exit_MPI(myrank,'stations with non-zero burial not implemented yet')
 
 !
 ! full Earth, use latitude and longitude
@@ -266,6 +264,9 @@
         call splint(rspl,espl,espl2,nspl,r0,ell)
         r0=r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
       endif
+
+! subtract station burial depth (in meters)
+      r0 = r0 - stbur(irec)/R_EARTH
 
 ! compute the Cartesian position of the receiver
       x_target(irec) = r0*dsin(theta)*dcos(phi)
@@ -395,7 +396,7 @@
   do iter_loop = 1,NUM_ITER
 
 ! impose receiver exactly at the surface
-    gamma = 1.d0
+    if(.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
 ! recompute jacobian for the new point
     call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
@@ -410,10 +411,12 @@
 ! gamma does not change since we know the receiver is exactly on the surface
   dxi  = xix*dx + xiy*dy + xiz*dz
   deta = etax*dx + etay*dy + etaz*dz
+  if(RECEIVERS_CAN_BE_BURIED) dgamma = gammax*dx + gammay*dy + gammaz*dz
 
 ! update values
   xi = xi + dxi
   eta = eta + deta
+  if(RECEIVERS_CAN_BE_BURIED) gamma = gamma + dgamma
 
 ! impose that we stay in that element
 ! (useful if user gives a receiver outside the mesh for instance)
@@ -424,12 +427,14 @@
   if (xi < -1.10d0) xi = -1.10d0
   if (eta > 1.10d0) eta = 1.10d0
   if (eta < -1.10d0) eta = -1.10d0
+  if (gamma > 1.10d0) gamma = 1.10d0
+  if (gamma < -1.10d0) gamma = -1.10d0
 
 ! end of non linear iterations
   enddo
 
 ! impose receiver exactly at the surface after final iteration
-  gamma = 1.d0
+  if(.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
 ! compute final coordinates of point found
   call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
@@ -438,6 +443,7 @@
 ! store xi,eta and x,y,z of point found
   xi_receiver(irec) = xi
   eta_receiver(irec) = eta
+  gamma_receiver(irec) = gamma
   x_found(irec) = x
   y_found(irec) = y
   z_found(irec) = z
@@ -454,6 +460,7 @@
 
   call MPI_GATHER(xi_receiver,nrec,MPI_DOUBLE_PRECISION,xi_receiver_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(eta_receiver,nrec,MPI_DOUBLE_PRECISION,eta_receiver_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,gamma_receiver_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(final_distance,nrec,MPI_DOUBLE_PRECISION,final_distance_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(x_found,nrec,MPI_DOUBLE_PRECISION,x_found_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(y_found,nrec,MPI_DOUBLE_PRECISION,y_found_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -476,6 +483,7 @@
       ispec_selected_rec(irec) = ispec_selected_rec_all(irec,iprocloop)
       xi_receiver(irec) = xi_receiver_all(irec,iprocloop)
       eta_receiver(irec) = eta_receiver_all(irec,iprocloop)
+      gamma_receiver(irec) = gamma_receiver_all(irec,iprocloop)
       x_found(irec) = x_found_all(irec,iprocloop)
       y_found(irec) = y_found_all(irec,iprocloop)
       z_found(irec) = z_found_all(irec,iprocloop)
@@ -496,7 +504,7 @@
       write(IMAIN,*) '   epicentral distance: ',sngl(epidist(irec))
       write(IMAIN,*) 'closest estimate found: ',sngl(final_distance(irec)),' km away'
       write(IMAIN,*) ' in slice ',islice_selected_rec(irec),' in element ',ispec_selected_rec(irec)
-      write(IMAIN,*) ' at xi,eta coordinates = ',xi_receiver(irec),eta_receiver(irec)
+      write(IMAIN,*) ' at xi,eta,gamma coordinates = ',xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec)
     endif
 
 ! add warning if estimate is poor
@@ -553,6 +561,7 @@
   call MPI_BCAST(ispec_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(xi_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(eta_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
 ! deallocate arrays
   deallocate(stlat)
@@ -572,6 +581,7 @@
   deallocate(ispec_selected_rec_all)
   deallocate(xi_receiver_all)
   deallocate(eta_receiver_all)
+  deallocate(gamma_receiver_all)
   deallocate(x_found_all)
   deallocate(y_found_all)
   deallocate(z_found_all)

@@ -36,6 +36,9 @@
   integer, parameter :: NUMBER_OF_RUNS = 1
   integer, parameter :: NUMBER_OF_THIS_RUN = 1
 
+! flag to impose receivers at the surface or allow them to be buried
+  logical, parameter :: RECEIVERS_CAN_BE_BURIED = .false.
+
 ! on some processors (e.g. Pentiums) it is necessary to suppress underflows
 ! by using a small initial field instead of zero
   logical, parameter :: FIX_UNDERFLOW_PROBLEM = .true.
