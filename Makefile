@@ -45,45 +45,38 @@
 # Dimitri Komatitsch, MPI version
 #
 
-################ Pentium PC Beowulf #################
+################ PC Linux #################
 #
 # Beowulf Portland pgf90
+#
 F90 = pgf90
 MPIF90 = mpif90
-#FLAGS_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
 FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard -Knoieee
 FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
-MPI_FLAGS = 
+MPI_FLAGS =
 
-## Intel ifc Fortran90 for Linux
+#
+# Intel ifort Fortran90 for Linux
+#
 #F90 = ifort
 #MPIF90 = mpif90
-##FLAGS_NO_CHECK = -O3 -tpp6 -xK -ip -e95 -implicitnone -unroll6
-##FLAGS_NO_CHECK = -O0 -CB -e95 -implicitnone
-#FLAGS_NO_CHECK = -O0 -e95 -implicitnone
+#
+# Caltech cluster
+#
+FLAGS_NO_CHECK = -fast -tpp6 -xK -e95 -implicitnone -warn truncated_source -warn argument_c
+hecking -warn unused -warn declarations -std95 -check nobounds
+#
+# more recent machines
+#
+#FLAGS_NO_CHECK = -fast -tpp7 -xN -e95 -implicitnone -warn truncated_source -warn argument_
+checking -warn unused -warn declarations -std95 -check nobounds
+#
+# debug with range checking
+#
+#FLAGS_NO_CHECK = -O1 -static -e95 -implicitnone -warn truncated_source -warn argument_chec
+king -warn unused -warn declarations -std95 -check bounds
 #FLAGS_CHECK = $(FLAGS_NO_CHECK)
 #MPI_FLAGS = -Vaxlib
-
-# AbSoft
-#F90 = f90
-#MPIF90 = mpif90
-#FLAGS_CHECK = -s -O2 -cpu:p7 -Rb -Rc -Rp -v -YDEALLOC=ALL
-#FLAGS_NO_CHECK = $(FLAGS_CHECK)
-#MPI_FLAGS =
-
-# NAG compiler for Linux
-#F90 = f95
-#MPIF90 = mpif90
-#FLAGS_CHECK = -O -u -strict95 -C=all
-#FLAGS_NO_CHECK = -O -u -strict95
-#MPI_FLAGS = 
-
-# Lahey f90
-#F90 = lf95
-#MPIF90 = mpif90
-#FLAGS_CHECK = --warn --wo --tpp --f95 --dal -O --chk
-#FLAGS_NO_CHECK = --warn --wo --tpp --f95 --dal -O
-#MPI_FLAGS = 
 
 ################ SGI Irix #################
 ##
