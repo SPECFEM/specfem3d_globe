@@ -57,9 +57,8 @@ Jeroen Tromp & Dimitri Komatitsch, September 2002
   year=2002,
   title={The Spectral-Element Method, {B}eowulf Computing, and Global Seismology},
   journal={Science},
-  volume=99999,
-  number=99999,
-  pages={99998-99999}}
+  volume=298,
+  pages={1737-1742}}
 
   @ARTICLE{KoTr02a,
   author={D. Komatitsch and J. Tromp},
@@ -270,6 +269,17 @@ SOLVER (specfem3D):
      in constants.h:
        ! uncomment this to write messages to the screen
        ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT )
+- NOTE There are two different versions of the main solver routines.
+  NOTE Type "copy_files_regular.csh" to use the regular version,
+  NOTE and "copy_files_inlined_5.csh" to use the inlined version, which may be
+  NOTE faster on some machines (you can try both once to determine which
+  NOTE code gives the fastest result on your machine). Note that the inlined
+  NOTE version is written specifically for polynomial degree NGLL = 5
+  NOTE in constants.h, and cannot run with any other value, while the regular
+  NOTE version can. Note also that the two versions implement
+  NOTE the exact same calculations, and therefore give the same results
+  NOTE down to the roundoff error, which can be different. It is only
+  NOTE the implementation that differs between the two versions.
 - If you have a fast machine,
   set ITAFF_TIME_STEPS to a relatively high value (e.g. 100 or even 1000)
   to avoid writing to the output text files too often

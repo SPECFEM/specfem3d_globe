@@ -31,6 +31,10 @@
 ! uncomment this to run in double precision (increases memory size by 2)
 ! integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
 
+! to use restart files
+  logical, parameter :: USE_RESTART_FILES = .true.
+  logical, parameter :: FIRST_PART_OF_RUN = .true.
+
 ! on some processors (e.g. Pentiums) it is necessary to suppress underflows
 ! by using a small initial field instead of zero
   logical, parameter :: FIX_UNDERFLOW_PROBLEM = .true.

@@ -154,6 +154,8 @@ meshfem3D: constants.h \
        $O/mesh_radial.o \
        $O/numerical_recipes.o \
        $O/prem_model.o \
+       $O/montagner_model.o \
+       $O/anisotropic_inner_core_model.o \
        $O/reduce.o \
        $O/save_arrays.o \
        $O/add_topography.o \
@@ -201,6 +203,8 @@ meshfem3D: constants.h \
        $O/read_3D_mantle_model.o \
        $O/numerical_recipes.o \
        $O/prem_model.o \
+       $O/montagner_model.o \
+       $O/anisotropic_inner_core_model.o \
        $O/reduce.o \
        $O/save_arrays.o \
        $O/add_topography.o \
@@ -513,6 +517,12 @@ $O/lgndr.o: constants.h lgndr.f90
 
 $O/prem_model.o: constants.h prem_model.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/prem_model.o prem_model.f90
+
+$O/montagner_model.o: constants.h montagner_model.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/montagner_model.o montagner_model.f90
+
+$O/anisotropic_inner_core_model.o: constants.h anisotropic_inner_core_model.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/anisotropic_inner_core_model.o anisotropic_inner_core_model.f90
 
 $O/reduce.o: constants.h reduce.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/reduce.o reduce.f90

@@ -69,9 +69,8 @@
 ! year=2002,
 ! title={The Spectral-Element Method, {B}eowulf Computing, and Global Seismology},
 ! journal={Science},
-! volume=99999,
-! number=99999,
-! pages={99998-99999}}
+! volume=298,
+! pages={1737-1742}}
 !
 ! @ARTICLE{KoTr02a,
 ! author={D. Komatitsch and J. Tromp},
@@ -389,6 +388,7 @@
   character(len=8), allocatable, dimension(:) :: station_name,network_name
 
 ! seismograms
+  integer it_begin,it_end
   double precision uxd,uyd,uzd
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
 
@@ -2310,7 +2310,12 @@
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-  do it=1,NSTEP
+! full simulation with no restart files
+  if(USE_RESTART_FILES) stop 'restart files only implemented in inlined code'
+  it_begin = 1
+  it_end = NSTEP
+
+  do it=it_begin,it_end
 
 ! compute predictors
 
@@ -3047,7 +3052,7 @@
 ! write the current seismograms
   if(mod(it,NSEIS) == 0) &
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-              network_name,nrec,nrec_local,it,DT,NSTEP,hdur(1),LOCAL_PATH)
+              network_name,nrec,nrec_local,it,DT,NSTEP,hdur(1),LOCAL_PATH,it_begin,it_end)
 
 ! save movie frame
   if(SAVE_AVS_DX_MOVIE .and. mod(it,NMOVIE) == 0) then
@@ -3108,8 +3113,6 @@
 
     enddo
 
-    call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
 ! gather info on master proc
     ispec = NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     call MPI_GATHER(store_val_x,ispec,CUSTOM_MPI_TYPE,store_val_x_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
@@ -3141,7 +3144,7 @@
 
 ! write the final seismograms
   call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-          network_name,nrec,nrec_local,it,DT,NSTEP,hdur(1),LOCAL_PATH)
+          network_name,nrec,nrec_local,it,DT,NSTEP,hdur(1),LOCAL_PATH,it_begin,it_end)
 
 ! close the main output file
   if(myrank == 0) then

@@ -1,0 +1,11 @@
+##ES file=SPECFEM3D_V32/xmeshfem3D,normal(all),src=S:SPECFEM3D_V32
+##ES file=SPECFEM3D_V32/xspecfem3D,normal(all),src=S:SPECFEM3D_V32
+##ES file=SPECFEM3D_V32/DATA/Par_file,normal(all),src=S:SPECFEM3D_V32/DATA
+##ES file=SPECFEM3D_V32/mymachines,normal(all),src=S:SPECFEM3D_V32
+##ES file=SPECFEM3D_V32/DATA/s20rts/S20RTS.dat,normal(all),src=S:SPECFEM3D_V32/DATA/s20rts
+##ES file=SPECFEM3D_V32/DATA/s20rts/P12.dat,normal(all),src=S:SPECFEM3D_V32/DATA/s20rts
+##ES file=SPECFEM3D_V32/DATA/crust2.0/CNtype2.txt,normal(all),src=S:SPECFEM3D_V32/DATA/crust2.0
+##ES file=SPECFEM3D_V32/DATA/crust2.0/CNtype2_key_modif.txt,normal(all),src=S:SPECFEM3D_V32/DATA/crust2.0
+##ES file=SPECFEM3D_V32/DATA/topo_bathy/topo_bathy_harvard_ascii.dat,normal(all),src=S:SPECFEM3D_V3.1/DATA/topo_bathy
+##ES file=SPECFEM3D_V32/DATA/STATIONS,normal(all),src=S:SPECFEM3D_V32/DATA
+##ES file=SPECFEM3D_V32/DATA/CMTSOLUTION,normal(all),src=S:SPECFEM3D_V32/DATA

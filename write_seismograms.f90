@@ -19,13 +19,13 @@
 
   subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
                station_name,network_name,nrec,nrec_local, &
-               it,DT,NSTEP,hdur,LOCAL_PATH)
+               it,DT,NSTEP,hdur,LOCAL_PATH,it_begin,it_end)
 
   implicit none
 
   include "constants.h"
 
-  integer nrec,nrec_local,NSTEP,it,myrank
+  integer nrec,nrec_local,NSTEP,it,myrank,it_begin,it_end
   integer, dimension(nrec_local) :: number_receiver_global
   real(kind=CUSTOM_REAL), dimension(3,nrec_local,NSTEP) :: seismograms
   character(len=8), dimension(nrec) :: station_name,network_name
@@ -109,9 +109,8 @@
 ! the results with the source time function
       open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname,status='unknown')
 
-! make sure we never write more than the maximum number of time steps
 ! subtract half duration of the source to make sure travel time is correct
-      do isample = 1,min(it,NSTEP)
+      do isample = it_begin,it_end
         value = dble(seismograms(iorientation,irec_local,isample))
         write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',sngl(value)
       enddo

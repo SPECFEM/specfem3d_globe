@@ -69,9 +69,8 @@
 ! year=2002,
 ! title={The Spectral-Element Method, {B}eowulf Computing, and Global Seismology},
 ! journal={Science},
-! volume=99999,
-! number=99999,
-! pages={99998-99999}}
+! volume=298,
+! pages={1737-1742}}
 !
 ! @ARTICLE{KoTr02a,
 ! author={D. Komatitsch and J. Tromp},
