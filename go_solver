@@ -40,7 +40,6 @@ echo " "
 
 #### use this on Beowulf
 mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
-#/home/local/mpich_new_intel_fortran/bin/mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
 
 #### use this on SGI
 #  mpirun -np $numnodes xspecfem3D

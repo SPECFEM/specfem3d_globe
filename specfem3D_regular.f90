@@ -182,7 +182,7 @@
       store_val_ux_all,store_val_uy_all,store_val_uz_all
 
 ! to save full 3D snapshot of velocity
-  integer itotal_poin
+  integer itotal_spec,itotal_poin
   real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord
   integer, dimension(:), allocatable :: indirect_poin
   logical, dimension(:), allocatable :: mask_poin
@@ -3199,8 +3199,6 @@
 
   endif
 
-! XXXXXXXXXXXXXXXXXXXX
-
 ! save snapshot of full 3D mesh
   if(SAVE_FULL_3D_SNAPSHOT .and. it == IT_FULL_3D_SNAPSHOT) then
 
@@ -3255,7 +3253,7 @@
               thetaval = ystore_crust_mantle(ipoin)
               phival = zstore_crust_mantle(ipoin)
               call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
-              write(IOUT,200) xcoord,ycoord,zcoord, &
+              write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
                             veloc_crust_mantle(1,ipoin)*scale_veloc, &
                             veloc_crust_mantle(2,ipoin)*scale_veloc, &
                             veloc_crust_mantle(3,ipoin)*scale_veloc
@@ -3329,7 +3327,7 @@
               thetaval = ystore_outer_core(ipoin)
               phival = zstore_outer_core(ipoin)
               call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
-              write(IOUT,205) xcoord,ycoord,zcoord,veloc_outer_core(ipoin)
+              write(IOUT,205) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH,veloc_outer_core(ipoin)
               mask_poin(ipoin) = .true.
             endif
           enddo
@@ -3364,9 +3362,12 @@
 
 ! count total number of points and define indirect addressing
     itotal_poin = 0
+    itotal_spec = 0
     mask_poin(:) = .false.
     indirect_poin(:) = 0
     do ispec=1,NSPEC_INNER_CORE
+      if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+      itotal_spec = itotal_spec + 1
       do k = 1,NGLLZ,NGLLZ-1
         do j = 1,NGLLY,NGLLY-1
           do i = 1,NGLLX,NGLLX-1
@@ -3379,15 +3380,17 @@
           enddo
         enddo
       enddo
+      endif
     enddo
 
 ! write number of elements and points
-    write(IOUT,*) NSPEC_INNER_CORE
+    write(IOUT,*) itotal_spec
     write(IOUT,*) itotal_poin
 
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
     do ispec=1,NSPEC_INNER_CORE
+      if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
       do k = 1,NGLLZ,NGLLZ-1
         do j = 1,NGLLY,NGLLY-1
           do i = 1,NGLLX,NGLLX-1
@@ -3398,7 +3401,7 @@
               thetaval = ystore_inner_core(ipoin)
               phival = zstore_inner_core(ipoin)
               call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
-              write(IOUT,200) xcoord,ycoord,zcoord, &
+              write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
                             veloc_inner_core(1,ipoin)*scale_veloc, &
                             veloc_inner_core(2,ipoin)*scale_veloc, &
                             veloc_inner_core(3,ipoin)*scale_veloc
@@ -3407,11 +3410,13 @@
           enddo
         enddo
       enddo
+      endif
     enddo
 
 ! write topology of elements (8 corners of each spectral element)
     do ispec=1,NSPEC_INNER_CORE
-      write(IOUT,210) indirect_poin(ibool_inner_core(1,1,1,ispec)), &
+      if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) &
+        write(IOUT,210) indirect_poin(ibool_inner_core(1,1,1,ispec)), &
                   indirect_poin(ibool_inner_core(NGLLX,1,1,ispec)), &
                   indirect_poin(ibool_inner_core(NGLLX,NGLLY,1,ispec)), &
                   indirect_poin(ibool_inner_core(1,NGLLY,1,ispec)), &
