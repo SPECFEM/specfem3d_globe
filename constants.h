@@ -191,22 +191,37 @@
 !  double precision, parameter :: RMIDDLE_CRUST = 1.d0
 !  double precision, parameter :: R80 = 1.d0
 
-! minimum thickness in meters to include the effect of the oceans and topo
-! and maximum depth of the oceans in trenches and height of topo in mountains
-! to avoid taking into account spurious oscillations in global model ETOPO
-  double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 100.d0
-  logical, parameter :: USE_MAXIMUM_HEIGHT_TOPO = .true.
-  integer, parameter :: MAXIMUM_HEIGHT_TOPO = +5000
-  logical, parameter :: USE_MAXIMUM_DEPTH_OCEANS = .true.
-  integer, parameter :: MAXIMUM_DEPTH_OCEANS = -6000
-
 ! for topography/bathymetry model
 
-!--- ETOPO5 5-minute model, smoothed Harvard version
+!!--- ETOPO5 5-minute model, smoothed Harvard version
+!! size of topography and bathymetry file
+!  integer, parameter :: NX_BATHY = 4320,NY_BATHY = 2160
+!! resolution of topography file in minutes
+!  integer, parameter :: RESOLUTION_TOPO_FILE = 5
+
+!---  DK DK DK ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
-  integer, parameter :: NX_BATHY = 4320,NY_BATHY = 2160
+  integer, parameter :: NX_BATHY = 10800/2,NY_BATHY = 5400/2
+
 ! resolution of topography file in minutes
-  integer, parameter :: RESOLUTION_TOPO_FILE = 5
+  integer, parameter :: RESOLUTION_TOPO_FILE = 2*2
+
+!!--- ETOPO2 2-minute model
+!! size of topography and bathymetry file
+!  integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
+!
+!! resolution of topography file in minutes
+!  integer, parameter :: RESOLUTION_TOPO_FILE = 2
+
+! maximum depth of the oceans in trenches and height of topo in mountains
+! to avoid taking into account spurious oscillations in global model ETOPO
+  logical, parameter :: USE_MAXIMUM_HEIGHT_TOPO = .false.
+  integer, parameter :: MAXIMUM_HEIGHT_TOPO = +20000
+  logical, parameter :: USE_MAXIMUM_DEPTH_OCEANS = .false.
+  integer, parameter :: MAXIMUM_DEPTH_OCEANS = -20000
+
+! minimum thickness in meters to include the effect of the oceans and topo
+  double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 100.d0
 
 ! interval at which we output time step info and max of norm of displacement
   integer, parameter :: ITAFF_TIME_STEPS = 200
