@@ -101,12 +101,14 @@
         ix_value = ix
         iy_value = iy
 
-! avoid edge effects, use periodic boundary
+! avoid edge effects, use periodic boundary in Xmin and Xmax
       if(ix_value < 1) ix_value = ix_value + NX_BATHY
       if(ix_value > NX_BATHY) ix_value = ix_value - NX_BATHY
 
-      if(iy_value < 1) iy_value = iy_value + NY_BATHY
-      if(iy_value > NY_BATHY) iy_value = iy_value - NY_BATHY
+! avoid edge effects, use rigid boundary in Ymin and Ymax
+! *not* periodic, because South and North poles must not be merged
+      if(iy_value < 1) iy_value = 1
+      if(iy_value > NY_BATHY) iy_value = NY_BATHY
 
 ! compute sum
       value_sum = value_sum + dble(ibathy_topo_ori(ix_value,iy_value))
