@@ -71,7 +71,7 @@
 ! use either Etopo-5 or Etopo-2
 ! Harvard Etopo-5 is a smoothed model
   if(RESOLUTION_TOPO_FILE == 5) then
-    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo5.dat',status='old')
+    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo5_harvard.dat',status='old')
 ! ETOPO-2 not implemented yet
 !  else if(RESOLUTION_TOPO_FILE == 2) then
 !    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo2.dat',status='old')

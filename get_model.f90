@@ -168,6 +168,52 @@
          endif
        endif
 
+       if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) &
+           call anisotropic_inner_core_model(r_prem,c11,c33,c12,c13,c44)
+
+       if(ANISOTROPIC_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+
+! Montagner's model between the Moho and 670 km
+         if(r_prem < RMOHO/R_EARTH .and. r_prem > R670/R_EARTH) then
+           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
+           call reduce(theta,phi)
+           call read_montagner_model(r_prem,theta,phi,beta_montagner,pro_montagner,npar1_montagner, &
+              rho,c11,c12,c13,c14,c15,c16, &
+              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,myrank)
+! extend 3-D mantle model above the Moho to the surface before adding the crust
+         elseif(r_prem >= RMOHO/R_EARTH) then
+           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
+           call reduce(theta,phi)
+           r_moho = RMOHO/R_EARTH
+           call read_montagner_model(r_moho,theta,phi,beta_montagner,pro_montagner,npar1_montagner, &
+              rho,c11,c12,c13,c14,c15,c16, &
+              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,myrank)
+! fill the rest of the mantle with the isotropic model
+         else
+           c11 = rho*vpv*vpv
+           c12 = rho*(vpv*vpv-2.*vsv*vsv)
+           c13 = c12
+           c14 = 0.
+           c15 = 0.
+           c16 = 0.
+           c22 = c11
+           c23 = c12
+           c24 = 0.
+           c25 = 0.
+           c26 = 0.
+           c33 = c11
+           c34 = 0.
+           c35 = 0.
+           c36 = 0.
+           c44 = rho*vsv*vsv
+           c45 = 0.
+           c46 = 0.
+           c55 = c44
+           c56 = 0.
+           c66 = c44
+         endif
+       endif
+
 !      get the 3-D crustal model
        if(CRUSTAL) then
          if(r > R_DEEPEST_CRUST) then
