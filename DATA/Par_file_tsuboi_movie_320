@@ -1,0 +1,127 @@
+# ----------------------------------------------------------------
+#
+#    This is the parameter file
+#    Put variable names first and actual value after 27th column
+#
+# ----------------------------------------------------------------
+#
+<-                       ->
+#
+
+! number of elements along chunk edge at surface (16 * multiple of NPROC below)
+NEX_XI                   = 320
+NEX_ETA                  = 320
+
+! number of MPI processors along xi and eta in each of the six chunks
+NPROC_XI                 = 10
+NPROC_ETA                = 10
+
+! time step in seconds
+DT                       = 0.10
+
+! total number of time steps
+NSTEP                    = 30000
+
+! parameters describing the Earth model
+OCEANS                   = .true.
+ELLIPTICITY              = .true.
+TOPOGRAPHY               = .true.
+THREE_D                  = .true.
+GRAVITY                  = .false.
+ROTATION                 = .false.
+TRANSVERSE_ISOTROPY      = .true.
+ANISOTROPIC_MANTLE       = .false.
+ANISOTROPIC_INNER_CORE   = .false.
+CRUSTAL                  = .true.
+ONE_CRUST                = .true.
+ATTENUATION              = .true.
+MIN_ATTENUATION_PERIOD   = 20
+MAX_ATTENUATION_PERIOD   = 1000
+
+! number of radial elements in mesh for full Earth
+NER_CRUST                = 2
+NER_220_MOHO             = 6
+NER_400_220              = 4
+NER_600_400              = 4
+NER_670_600              = 2
+NER_771_670              = 2
+NER_TOPDDOUBLEPRIME_771  = 32
+NER_CMB_TOPDDOUBLEPRIME  = 2
+RATIO_TOP_DBL_OC         = 0.40
+RATIO_BOTTOM_DBL_OC      = 0.27
+NER_TOPDBL_CMB           = 24
+NER_ICB_BOTTOMDBL        = 12
+NER_TOP_CENTRAL_CUBE_ICB = 6
+
+! path to store the local database files on each node
+LOCAL_PATH               = /scratch/DATABASES_MPI_DIMITRI
+
+! machine file for MPI
+MACHINE_FILE             = mymachines
+
+! interval in time steps for temporary writing of seismograms
+NSEIS                    = 50000
+
+! number of point sources
+NSOURCES                 = 1
+
+! movies
+MOVIE_SURFACE            = .true.
+MOVIE_VOLUME             = .false.
+NMOVIE                   = 100
+HDUR_MIN_MOVIES          = 10.0d0
+
+ !
+ ! mesh statistics:
+ ! ---------------
+ !
+ ! these statistics include the central cube
+ !
+ ! number of processors =           150
+ !
+ ! number of ES nodes =     18.75000
+ ! percentage of total 640 ES nodes =     2.929688      %
+ ! total memory available on these ES nodes (Gb) =     300.0000
+ !
+ ! max points in largest region =       1107613
+ ! max vector length =       3322839
+ ! min vector length =            25
+ ! min critical vector length =            75
+ !
+ ! on ES and SX-5, make sure loopcnt= parameter
+ ! in Makefile is greater than       3322839
+ !
+ ! total elements per AB slice =         18036
+ ! total points per AB slice =       1207215
+ !
+ ! total elements per AC slice =         18792
+ ! total points per AC slice =       1256271
+ !
+ ! total elements per BC slice =         20304
+ ! total points per BC slice =       1353711
+ !
+ ! load balancing AB/BC for points =     89.17819      %
+ ! load balancing AB/BC for elements =     88.82979      %
+ !
+ ! load balancing AC/BC for points =     92.80201      %
+ ! load balancing AC/BC for elements =     92.55319      %
+ !
+ ! total for full 6-chunk mesh:
+ ! ---------------------------
+ !
+ ! exact total number of spectral elements in entire mesh =
+ !       2721600
+ ! approximate total number of points in entire mesh =
+ !     182002045.0000000
+ ! approximate total number of degrees of freedom in entire mesh =
+ !     498295035.0000000
+ !
+ ! resolution of the mesh at the surface:
+ ! -------------------------------------
+ !
+ ! spectral elements along a great circle =           960
+ ! GLL points along a great circle =          3840
+ ! average distance between points in degrees =    9.3750000E-02
+ ! average distance between points in km =     10.42452
+ !
+
