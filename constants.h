@@ -32,7 +32,7 @@
 ! integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
 
 ! to use restart files
-  logical, parameter :: USE_RESTART_FILES = .true.
+  logical, parameter :: USE_RESTART_FILES = .false.
   logical, parameter :: FIRST_PART_OF_RUN = .true.
 
 ! on some processors (e.g. Pentiums) it is necessary to suppress underflows
@@ -55,7 +55,7 @@
 
 ! save a movie or not, and interval in time steps at which we save movie frames
   logical, parameter :: SAVE_AVS_DX_MOVIE = .false.
-  integer, parameter :: NMOVIE = 100
+  integer, parameter :: NMOVIE = 200
 
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
