@@ -61,7 +61,7 @@
 
 ! BS
 ! real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common 
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec, N_SLS) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
 ! BS END
