@@ -42,6 +42,10 @@
 
 ! deduce middle_face_longitude from the three other parameters
 ! also check particular case of North or South pole
+!! DK DK UGLY I think there is a bug below: "PI/4.0D0" assumes that
+!! DK DK UGLY the size of the chunk is 90 degrees, but it can now be different
+!! DK DK UGLY since the size is defined in constants.h
+!! DK DK UGLY therefore we should write something more general here one day
   if(center_colatitude > 0.01d0 .and. center_colatitude < 179.9d0 .and. &
     middle_face_colatitude > 0.01d0 .and. middle_face_colatitude < 179.9d0) then
       middle_face_longitude = center_longitude_loc_rad + dacos((dcos(PI/4.0D0) - &
