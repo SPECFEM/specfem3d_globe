@@ -165,20 +165,13 @@
 ! memory variables and standard linear solids for attenuation
   double precision, dimension(N_SLS) :: tau_mu_dble,tau_sigma_dble,beta_dble
   double precision factor_scale_dble,one_minus_sum_beta_dble
-! BS
-!   real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: tau_mu,tau_sigma,beta
-!   real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: factor_scale,one_minus_sum_beta
-  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: tau_mu,beta
   double precision, dimension(:,:,:,:), allocatable   :: omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
   double precision, dimension(:,:,:,:), allocatable   :: omsb_inner_core_dble, factor_scale_inner_core_dble
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable   :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable   :: one_minus_sum_beta_inner_core, factor_scale_inner_core
-! BS END
 
   real(kind=CUSTOM_REAL) mul
 
-! BS
-!   real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: tauinv,alphaval,betaval,gammaval,factor_common
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
   double precision, dimension(N_SLS) :: tauinv
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval, betaval, gammaval
@@ -186,7 +179,6 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: factor_common_inner_core
   double precision, dimension(:,:,:,:,:), allocatable :: factor_common_crust_mantle_dble
   double precision, dimension(:,:,:,:,:), allocatable :: factor_common_inner_core_dble
-! BS END
 
   integer iregion_attenuation
   double precision dist,scale_factor,scale_factor_minus_one

@@ -30,7 +30,7 @@
 ! BS Added sizes to pass either N_SLS or N_SLS*NUM_NODES to factor_common or one_minus_sum_beta
 !          alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
           alphaval,betaval,gammaval,factor_common, &
-          vx, vy, vz, vnspec, index_i, index_k, index_dim)          
+          vx, vy, vz, vnspec, index_i, index_k, index_dim)
 ! BS END
   implicit none
 
@@ -77,7 +77,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec, N_SLS) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: factor_common_c44_muv
-! BS END 
+! BS END
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL) epsilon_trace_over_3
 
@@ -1202,22 +1202,22 @@
             R_memory(1,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
             (betaval(1) * epsilondev(1,ijk,1,1,ispec) + &
             gammaval(1) * epsilondev_loc(1,ijk,1,1))
-       
+
        R_memory(2,ijk,1,1,ispec,1) = alphaval(1) * &
             R_memory(2,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
             (betaval(1) * epsilondev(2,ijk,1,1,ispec) + &
             gammaval(1) * epsilondev_loc(2,ijk,1,1))
-       
+
        R_memory(3,ijk,1,1,ispec,1) = alphaval(1) * &
             R_memory(3,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
             (betaval(1) * epsilondev(3,ijk,1,1,ispec) + &
             gammaval(1) * epsilondev_loc(3,ijk,1,1))
-       
+
        R_memory(4,ijk,1,1,ispec,1) = alphaval(1) * &
             R_memory(4,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
             (betaval(1) * epsilondev(4,ijk,1,1,ispec) + &
             gammaval(1) * epsilondev_loc(4,ijk,1,1))
-       
+
        R_memory(5,ijk,1,1,ispec,1) = alphaval(1) * &
             R_memory(5,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
             (betaval(1) * epsilondev(5,ijk,1,1,ispec) + &

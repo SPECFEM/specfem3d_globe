@@ -60,7 +60,7 @@
 ! BS END
 
 ! BS
-! real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common 
+! real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
@@ -536,7 +536,7 @@
 !BS
 !BS
 !   if(ATTENUATION_VAL) then
-! 
+!
 !     do i_sls = 1,N_SLS
 !     do i_memory = 1,5
 !       R_memory(i_memory,i_sls,:,:,:,ispec) = &
@@ -549,7 +549,7 @@
 !     enddo
 
     if(ATTENUATION_VAL) then
-       
+
        do i_sls = 1,N_SLS
           if(ATTENUATION_VAL_3D) then
              factor_common_use = factor_common(i_sls,:,:,:,ispec)

@@ -1,4 +1,7 @@
 
+!! DK DK July 2004: Dimitri slightly modified this source file
+!! DK DK to get rid of warnings given by Intel's ifort compiler
+
 module attenuation_model_constants
   implicit none
   include 'constants.h'
@@ -9,30 +12,22 @@ module attenuation_model_variables
   use attenuation_model_constants
   implicit none
   double precision min_period, max_period
-  
+
 end module attenuation_model_variables
 
 subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source)
 
+!! DK DK xlat, xlon currently not used in this routine ??? !!!
+
   use attenuation_model_variables
   implicit none
-  
+
   integer myrank
   double precision xlat, xlon, r, x, Qmu
   double precision Qkappa, T_c_source
   double precision, dimension(N_SLS) :: tau_s, tau_e
-  
-  r = x * R_EARTH
 
-!  write(*,*)
-!  write(*,*)R_EARTH
-!  write(*,*)xlat,xlon
-!  write(*,*)x,Qmu
-!  write(*,*)tau_s
-!  write(*,*)tau_e
-!  write(*,*)T_c_source
-!  write(*,*)min_period, max_period
-!  write(*,*)
+  r = x * R_EARTH
 
 ! PREM
 !
@@ -49,7 +44,7 @@ subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_sourc
      Qkappa=57827.0d0
      if(RCMB - r .LT. r - RICB) then
         Qmu = 312.0d0  ! CMB
-     else 
+     else
         Qmu = 84.6d0   ! ICB
      endif
 !
@@ -88,10 +83,6 @@ subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_sourc
   endif
 
   call attenuation_liu(myrank, min_period, max_period, N_SLS, Qmu, T_c_source, tau_s, tau_e)
-!  write(*,*) T_c_source
-!  write(*,*) tau_s
-!  write(*,*) Qmu
-!  write(*,*) tau_e
 
 end subroutine attenuation_model
 
@@ -102,7 +93,7 @@ subroutine attenuation_conversion(myrank, Qmu, T_c_source, tau_s, tau_e)
   integer myrank
   double precision Qmu, T_c_source
   double precision, dimension(N_SLS) :: tau_s, tau_e
-  
+
   call attenuation_liu(myrank, min_period, max_period, N_SLS, Qmu, T_c_source, tau_s, tau_e)
 
 end subroutine attenuation_conversion
@@ -113,7 +104,7 @@ subroutine read_attenuation_model(min, max)
   implicit none
 
   integer min, max
-  
+
   min_period = min * 1.0d0
   max_period = max * 1.0d0
 
@@ -123,19 +114,18 @@ subroutine attenuation_memory_values(tau_s, deltat, alphaval,betaval,gammaval)
   use attenuation_model_variables
   implicit none
 
-!  integer, parameter :: N_SLS = 3
   double precision, dimension(N_SLS) :: tau_s, alphaval, betaval,gammaval
   real(kind=CUSTOM_REAL) deltat
 
   double precision, dimension(N_SLS) :: tauinv
 
   tauinv(:) = - 1.0 / tau_s(:)
-  
+
   alphaval(:)  = 1 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2. + &
        deltat**3*tauinv(:)**3 / 6. + deltat**4*tauinv(:)**4 / 24.
   betaval(:)   = deltat / 2. + deltat**2*tauinv(:) / 3. + deltat**3*tauinv(:)**2 / 8. + deltat**4*tauinv(:)**3 / 24.
   gammaval(:)  = deltat / 2. + deltat**2*tauinv(:) / 6. + deltat**3*tauinv(:)**2 / 24.0
-  
+
 end subroutine attenuation_memory_values
 
 subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
@@ -168,14 +158,14 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
 !--- compute a, b and Omega parameters, also compute one minus sum of betas
   a_val = ONE
   b_val = ZERO
-  
+
   do i = 1,N_SLS
     a_val = a_val - w_c_source * w_c_source * tau_mu(i) * &
       (tau_mu(i) - tau_sigma(i)) / (1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i))
     b_val = b_val + w_c_source * (tau_mu(i) - tau_sigma(i)) / &
       (1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i))
   enddo
-  
+
   big_omega = a_val*(sqrt(1.d0 + b_val*b_val/(a_val*a_val))-1.d0);
 
 !--- quantity by which to scale mu to get mu_relaxed
@@ -185,25 +175,17 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
   scale_factor = factor_scale_mu * factor_scale_mu0
 
 !--- check that the correction factor is close to one
-  if(scale_factor < 0.9 .or. scale_factor > 1.1) then
-     write(*,*)'attenuation correction scale factor: '
-     write(*,*)'scale_factor, factor_scale_mu, factor_scale_mu0: ', scale_factor, factor_scale_mu, factor_scale_mu0
-     write(*,*)'b_val, a_val: ', b_val, a_val
-     write(*,*)'big_omega, f_c_source, w_c_source: ', big_omega, f_c_source, w_c_source
-     write(*,*)'f_0_prem: ', f_0_prem
-     write(*,*)'Q_mu, T_c_source: ', Q_mu, T_c_source
-     write(*,*)'tau_sigma: ', tau_sigma
-     write(*,*)'tau_mu: ', tau_mu
-     call exit_MPI(myrank,'incorrect correction factor in attenuation model')
- endif
+  if(scale_factor < 0.9 .or. scale_factor > 1.1) call exit_MPI(myrank,'incorrect correction factor in attenuation model')
 
 end subroutine attenuation_scale_factor
 
-subroutine attenuation_property_values(myrank, tau_s, tau_e, factor_common, one_minus_sum_beta)
+!----
+
+subroutine attenuation_property_values(tau_s, tau_e, factor_common, one_minus_sum_beta)
+
   use attenuation_model_variables
   implicit none
 
-  integer myrank
   double precision, dimension(N_SLS) :: tau_s, tau_e, beta, factor_common
   double precision  one_minus_sum_beta
 
@@ -234,7 +216,7 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
   double precision, dimension(N_SLS)                          :: tau_s
 
   integer i,j,k,ispec
-  
+
   double precision, dimension(N_SLS) :: tau_e, fc
   double precision  omsb, Q_mu, sf, T_c_source, scale_t
 
@@ -248,10 +230,6 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
   open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin',status='old',form='unformatted')
   read(27) T_c_source
   close(27);
-
-!  write(*,*)vnspec, N_SLS, NGLLX*NGLLY*NGLLZ*N_SLS*vnspec, NGLLX*NGLLY*NGLLZ*vnspec
-!  write(*,*)size(factor_common), size(scale_factor)
-!  call exit_MPI(myrank, 'the kaiser stole our word for twenty')
 
   open(unit=27, file=prname(1:len_trim(prname))//'Q.bin',status='old',form='unformatted')
   read(27) scale_factor
@@ -277,7 +255,8 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
               Q_mu     = scale_factor(i,j,k,ispec)
 
               ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
-              call attenuation_property_values(myrank, tau_s, tau_e, fc, omsb)
+              call attenuation_property_values(tau_s, tau_e, fc, omsb)
+
               factor_common(:,i,j,k,ispec)    = fc(:)
               one_minus_sum_beta(i,j,k,ispec) = omsb
 
@@ -318,26 +297,13 @@ subroutine attenuation_liu(myrank, t2, t1, n,Q_real,omega_not,tau_s,tau_e)
 
   f1 = 1.0d0/t1
   f2 = 1.0d0/t2
-  
-!  write(*,*)myrank
-!  write(*,*)t2,t1,f2,f1
-!  write(*,*)n
-!  write(*,*)Q_real
-!  write(*,*)omega_not
-!  write(*,*)tau_s
-!  write(*,*)tau_e
 
-  if(f2 < f1) then 
-     write(*,*)'f1: ', f1, 'f2: ', f2
-     call exit_MPI(myrank, 'max frequency is less than min frequency')
-  endif
-  if(Q_real < 0.0) then
-     call exit_MPI(myrank, 'Attenuation is less than zero')
-  endif
-  if(n < 1) then
-     call exit_MPI(myrank, 'Number of standard linear solids is less than one')
-  endif
-  
+  if(f2 < f1) call exit_MPI(myrank, 'max frequency is less than min frequency')
+
+  if(Q_real < 0.0) call exit_MPI(myrank, 'Attenuation is less than zero')
+
+  if(n < 1) call exit_MPI(myrank, 'Number of standard linear solids is less than one')
+
   omega_not = 1.0e+3 * 10.0**(0.5 * (log10(f1) + log10(f2)))
 
   exp1 = log10(f1)
@@ -360,11 +326,11 @@ subroutine attenuation_liu(myrank, t2, t1, n,Q_real,omega_not,tau_s,tau_e)
   exp1 = log10(f1);
   exp2 = log10(f2);
   dexp = (exp2 - exp1) / 100.0
-  
+
   expo = exp1 - dexp
   do i = 1,100
      expo = expo + dexp
-     df       = 10.0**(expo+dexp) - 10.0**(expo) 
+     df       = 10.0**(expo+dexp) - 10.0**(expo)
      omega    = PI2 * 10.0**(expo)
      a = real(1.0 - n)
      b = 0.0
@@ -391,26 +357,29 @@ subroutine attenuation_liu(myrank, t2, t1, n,Q_real,omega_not,tau_s,tau_e)
         enddo
      enddo
   enddo
-  
+
   call invert(x1, gradient, hessian, n)
   tau_e(:) = x1(:) + x2(:)
   tau_s(:) = x2(:)
+
 end subroutine attenuation_liu
 
+!----
 
 subroutine invert(x,b,A,n)
+
   use attenuation_model_variables
-  implicit none 
+  implicit none
+
+  integer n
 
   double precision, dimension(n)   :: x, b
   double precision, dimension(n,n) :: A
-  integer n
 
   integer i, j, k
   double precision, dimension(n)   :: W, xp
   double precision, dimension(n,n) :: V
   double precision, dimension(n,n) :: A_inverse
-
 
   call svdcmp_dp(A,W,V,n)
 
@@ -438,12 +407,12 @@ subroutine invert(x,b,A,n)
   enddo
 
 end subroutine invert
-    
+
 
 FUNCTION pythag_dp(a,b)
   use attenuation_model_variables
   IMPLICIT NONE
-  
+
   double precision, INTENT(IN) :: a,b
   double precision :: pythag_dp
   double precision :: absa,absb
@@ -474,13 +443,11 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
   double precision :: anorm,c,f,g,h,s,scale,x,y,z
   double precision, DIMENSION(size(a,1)) :: tempm
   double precision, DIMENSION(size(a,2)) :: rv1,tempn
-  double precision, PYTHAG_DP
-  double precision, OUTERPROD_D
+  double precision PYTHAG_DP
 
   m=size(a,1)
-!  n=assert_eq(size(a,2),size(v,1),size(v,2),size(w),'svdcmp_dp')
   n = size(a,2)
-!  write(*,*)'Inside svdcmp_dp'
+
   g=0.0d0
   scale=0.0d0
   do i=1,n
@@ -488,7 +455,7 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
      rv1(i)=scale*g
      g=0.0d0
      scale=0.0d0
-!     write(*,*)i,n,m,l
+
      if (i <= m) then
         scale=sum(abs(a(i:m,i)))
         if (scale /= 0.0d0) then
@@ -499,7 +466,7 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
            h=f*g-s
            a(i,i)=f-g
            tempn(l:n)=matmul(a(i:m,i),a(i:m,l:n))/h
-!           a(i:m,l:n)=a(i:m,l:n)+outerprod_d(a(i:m,i),m-1+1,tempn(l:n),n-l+1)
+
            a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
                 spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
            a(i:m,i)=scale*a(i:m,i)
@@ -519,7 +486,7 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
            a(i,l)=f-g
            rv1(l:n)=a(i,l:n)/h
            tempm(l:m)=matmul(a(l:m,l:n),a(i,l:n))
-!           a(l:m,l:n)=a(l:m,l:n)+outerprod_d(tempm(l:m),m-l+1,rv1(l:n),n-l+1)
+
            a(l:m,l:n)=a(l:m,l:n)+spread(tempm(l:m),dim=2,ncopies=size(rv1(l:n))) * &
                 spread(rv1(l:n),dim=1,ncopies=size(tempm(l:m)))
            a(i,l:n)=scale*a(i,l:n)
@@ -527,13 +494,12 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
      end if
   end do
   anorm=maxval(abs(w)+abs(rv1))
-!  write(*,*)W
+
   do i=n,1,-1
      if (i < n) then
         if (g /= 0.0d0) then
            v(l:n,i)=(a(i,l:n)/a(i,l))/g
            tempn(l:n)=matmul(a(i,l:n),v(l:n,l:n))
-!           v(l:n,l:n)=v(l:n,l:n)+outerprod_d(v(l:n,i),n-1+1,tempn(l:n),n-l+1)
            v(l:n,l:n)=v(l:n,l:n)+spread(v(l:n,i),dim=2,ncopies=size(tempn(l:n))) * &
                 spread(tempn(l:n), dim=1, ncopies=size(v(l:n,i)))
         end if
@@ -551,7 +517,6 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
      if (g /= 0.0d0) then
         g=1.0d0/g
         tempn(l:n)=(matmul(a(l:m,i),a(l:m,l:n))/a(i,i))*g
-!        a(i:m,l:n)=a(i:m,l:n)+outerprod_d(a(i:m,i),m-i+1,tempn(l:n),n-l)
         a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
              spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
         a(i:m,i)=a(i:m,i)*g
@@ -593,10 +558,9 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
            end if
            exit
         end if
-        if (its == 30) then 
-           write(*,*) 'svdcmp_dp: no convergence in svdcmp'
-           call exit(-1)
-        endif
+
+        if (its == 30) stop 'svdcmp_dp: no convergence in svdcmp'
+
         x=w(l)
         nm=k-1
         y=w(nm)
@@ -644,7 +608,4 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
   end do
 
 END SUBROUTINE svdcmp_dp
-                
-    
-
 

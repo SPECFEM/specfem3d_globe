@@ -701,7 +701,7 @@
     do ijk = 1,NGLLCUBE
 
 !---
-! BS 
+! BS
 !    R_memory(1,ijk,1,1,ispec,1) = &
 !      alphaval(IREGION_ATTENUATION_INNER_CORE,1) * &
 !      R_memory(1,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
