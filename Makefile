@@ -233,14 +233,12 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/calc_jacobian.o \
        $O/get_cmt.o \
        $O/intgrl.o \
-       $O/numerical_recipes.o \
        $O/write_seismograms.o \
        $O/read_parameter_file.o \
        $O/compute_parameters.o \
        $O/locate_sources_receivers.o \
        $O/make_gravity.o \
        $O/prem_model.o \
-       $O/comp_source_time_function.o \
        $O/comp_source_spectrum.o \
        $O/hex_nodes.o \
        $O/lagrange_poly.o \
@@ -257,6 +255,8 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/compute_forces_outer_core.o \
        $O/compute_forces_inner_core.o \
        $O/gll_library.o
+## DK DK UGLY       $O/numerical_recipes.o \
+## DK DK UGLY       $O/comp_source_time_function.o \
 ## DK DK UGLY       $O/reduce.o \
 ## DK DK UGLY       $O/rthetaphi_xyz.o \
 ## DK DK UGLY       $O/recompute_jacobian.o \
@@ -270,14 +270,12 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/calc_jacobian.o \
        $O/get_cmt.o \
        $O/intgrl.o \
-       $O/numerical_recipes.o \
        $O/write_seismograms.o \
        $O/read_parameter_file.o \
        $O/compute_parameters.o \
        $O/locate_sources_receivers.o \
        $O/make_gravity.o \
        $O/prem_model.o \
-       $O/comp_source_time_function.o \
        $O/comp_source_spectrum.o \
        $O/hex_nodes.o \
        $O/lagrange_poly.o \
@@ -294,6 +292,8 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/compute_forces_outer_core.o \
        $O/compute_forces_inner_core.o \
        $O/gll_library.o $(MPI_FLAGS)
+## DK DK UGLY       $O/numerical_recipes.o \
+## DK DK UGLY       $O/comp_source_time_function.o \
 ## DK DK UGLY       $O/reduce.o \
 ## DK DK UGLY       $O/rthetaphi_xyz.o \
 ## DK DK UGLY       $O/recompute_jacobian.o \
@@ -541,9 +541,6 @@ $O/save_arrays.o: constants.h save_arrays.f90
 
 $O/save_header_file.o: constants.h save_header_file.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/save_header_file.o save_header_file.f90
-
-$O/comp_source_time_function.o: constants.h comp_source_time_function.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/comp_source_time_function.o comp_source_time_function.f90
 
 $O/comp_source_spectrum.o: constants.h comp_source_spectrum.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/comp_source_spectrum.o comp_source_spectrum.f90

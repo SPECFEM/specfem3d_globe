@@ -327,7 +327,7 @@
     else if(iaddx(ia) == 2) then
       iax = NGLLX
     else
-      stop 'incorrect value of iaddx'
+      if(.not. SUPPRESS_STOPS_INLINE) call exit_MPI(myrank,'incorrect value of iaddx')
     endif
 
     if(iaddy(ia) == 0) then
@@ -337,7 +337,7 @@
     else if(iaddy(ia) == 2) then
       iay = NGLLY
     else
-      stop 'incorrect value of iaddy'
+      if(.not. SUPPRESS_STOPS_INLINE) call exit_MPI(myrank,'incorrect value of iaddy')
     endif
 
     if(iaddz(ia) == 0) then
@@ -347,7 +347,7 @@
     else if(iaddz(ia) == 2) then
       iaz = NGLLZ
     else
-      stop 'incorrect value of iaddz'
+      if(.not. SUPPRESS_STOPS_INLINE) call exit_MPI(myrank,'incorrect value of iaddz')
     endif
 
     iglob = ibool(iax,iay,iaz,ispec_selected_source(isource))
@@ -879,7 +879,7 @@
         stazi = 0.d0
         stdip = - 90.d0
       else
-        stop 'incorrect orientation'
+        if(.not. SUPPRESS_STOPS_INLINE) call exit_MPI(myrank,'incorrect orientation')
       endif
 
 !     get the orientation of the seismometer
@@ -974,7 +974,7 @@
     else if(iaddx(ia) == 2) then
       iax = NGLLX
     else
-      stop 'incorrect value of iaddx'
+      if(.not. SUPPRESS_STOPS_INLINE) call exit_MPI(myrank,'incorrect value of iaddx')
     endif
 
     if(iaddy(ia) == 0) then
@@ -984,7 +984,7 @@
     else if(iaddy(ia) == 2) then
       iay = NGLLY
     else
-      stop 'incorrect value of iaddy'
+      if(.not. SUPPRESS_STOPS_INLINE) call exit_MPI(myrank,'incorrect value of iaddy')
     endif
 
     if(iaddz(ia) == 0) then
@@ -994,7 +994,7 @@
     else if(iaddz(ia) == 2) then
       iaz = NGLLZ
     else
-      stop 'incorrect value of iaddz'
+      if(.not. SUPPRESS_STOPS_INLINE) call exit_MPI(myrank,'incorrect value of iaddz')
     endif
 
     iglob = ibool(iax,iay,iaz,ispec_iterate)
@@ -1114,7 +1114,7 @@
   enddo
   final_distance(irec) = distmin
 
-    if(final_distance(irec) == HUGEVAL) stop 'error locating receiver'
+    if(final_distance(irec) == HUGEVAL .and. .not. SUPPRESS_STOPS_INLINE) call exit_MPI(myrank,'error locating receiver')
 
     if(DISPLAY_DETAILS_STATIONS .and. .not. SUPPRESS_OUTPUT_ES_JAPAN) then
       write(IMAIN,*)

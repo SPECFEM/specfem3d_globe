@@ -31,6 +31,9 @@
 ! uncomment this to run in double precision (increases memory size by 2)
 ! integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
 
+!! DK DK UGLY  to suppress stop statements for ES in Japan
+  logical, parameter :: SUPPRESS_STOPS_INLINE = .false.
+
 ! to use restart files
 ! (number of runs can be 1, 2 or 3, choose 1 for no restart files)
   integer, parameter :: NUMBER_OF_RUNS = 1

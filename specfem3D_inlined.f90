@@ -380,7 +380,8 @@
   integer, dimension(:), allocatable :: islice_selected_source,ispec_selected_source
   integer yr,jda,ho,mi
 !! DK DK UGLY
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: stf_used
+!! DK DK UGLY  real(kind=CUSTOM_REAL), dimension(:), allocatable :: stf_used
+  real(kind=CUSTOM_REAL) stf_used
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearrays
   double precision sec,stf
@@ -2591,7 +2592,7 @@
 
 !! DK DK UGLY
 ! allocate array for sources
-  allocate(stf_used(NSOURCES))
+!! DK DK UGLY  allocate(stf_used(NSOURCES))
 
 ! get MPI starting time
   time_start = MPI_WTIME()
@@ -3262,12 +3263,14 @@
           alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
 
 !! DK DK UGLY
-! compute source time functions once and for all
+! compute source time functions
   do isource = 1,NSOURCES
 
 ! add the source only if this proc carries the source
 ! otherwise set time function to zero
     if(myrank == islice_selected_source(isource)) then
+!! DK DK UGLY
+!CDIR NEXPAND
       stf = comp_source_time_function(dble(it-1)*DT-hdur(isource)-t_cmt(isource),hdur(isource))
     else
       stf = 0.d0
@@ -3275,23 +3278,33 @@
 
 !   distinguish whether single or double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
-      stf_used(isource) = sngl(stf)
+!! DK DK UGLY      stf_used(isource) = sngl(stf)
+      stf_used = sngl(stf)
     else
-      stf_used(isource) = stf
+!! DK DK UGLY      stf_used(isource) = stf
+      stf_used = stf
     endif
 
-  enddo
+!! DK DK UGLY
+!! DK DK tried to merge loops     enddo
 
 ! this loop on sources has dependencies because of global assembly
-  do isource = 1,NSOURCES
+!! DK DK UGLY
+!! DK DK tried to merge loops     do isource = 1,NSOURCES
+
+
+!! DK DK UGLY tried to convert stf_used(isource) back to scalar
 
 ! add source array (it is multiplied by zero if source is not in this slice)
 !CDIR NODEP(accel_crust_mantle)
     do ijk=1,NGLLCUBE
       iglob = ibool_crust_mantle(ijk,1,1,ispec_selected_source(isource))
-      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sourcearrays(isource,1,ijk,1,1)*stf_used(isource)
-      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sourcearrays(isource,2,ijk,1,1)*stf_used(isource)
-      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sourcearrays(isource,3,ijk,1,1)*stf_used(isource)
+!! DK DK UGLY      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sourcearrays(isource,1,ijk,1,1)*stf_used(isource)
+!! DK DK UGLY      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sourcearrays(isource,2,ijk,1,1)*stf_used(isource)
+!! DK DK UGLY      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sourcearrays(isource,3,ijk,1,1)*stf_used(isource)
+      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sourcearrays(isource,1,ijk,1,1)*stf_used
+      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sourcearrays(isource,2,ijk,1,1)*stf_used
+      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sourcearrays(isource,3,ijk,1,1)*stf_used
     enddo
 
   enddo
@@ -3849,4 +3862,14 @@
   call MPI_FINALIZE(ier)
 
   end program specfem3D
+
+!=====================================================================
+!
+!=====================================================================
+
+!! DK DK UGLY inlined in order to vectorize source loop
+
+  include "comp_source_time_function.f90"
+
+  include "numerical_recipes.f90"
 
