@@ -58,6 +58,10 @@
   logical, parameter :: SAVE_AVS_DX_MOVIE = .false.
   integer, parameter :: NMOVIE = 200
 
+! save a snapshot of velocity in full 3D mesh
+  logical, parameter :: SAVE_FULL_3D_SNAPSHOT = .false.
+  integer, parameter :: IT_FULL_3D_SNAPSHOT = 4000
+
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
   integer, parameter :: IIN = 40,IOUT = 41
