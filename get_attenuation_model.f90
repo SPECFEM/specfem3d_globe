@@ -66,9 +66,14 @@
 
   select case(iregion_attenuation)
 
+!! DK DK for merged regional / global code
+!--- inner core, not used, but needs to be there even for regional code
+!--- because fictitious mesh is created in inner core
+!--- therefore we just use fictitious values
+
 !--- CMB -> d670, target Q_mu = 312.
 
-  case(IREGION_ATTENUATION_CMB_670)
+  case(IREGION_ATTENUATION_CMB_670,IREGION_ATTENUATION_INNER_CORE)
 
     tau_mu(1) =        31.98831234987152072335d0
     tau_mu(2) =         2.26372027015198540312d0
