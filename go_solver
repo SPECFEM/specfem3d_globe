@@ -8,13 +8,14 @@ set my_local_path = `grep LOCAL_PATH DATA/Par_file | cut -c 27- `
 
 # read DATA/Par_file to get total number of nodes needed
 
-set NCHUNKS = `grep NCHUNKS constants.h | cut -c 34- `
+set NCHUNKS = `grep NCHUNKS constants.h | grep -v '\!' | tr -d ' ' | cut -s -f 2 -d '=' `
 set NPROC_XI = `grep NPROC_XI DATA/Par_file | cut -c 27- `
 set NPROC_ETA = `grep NPROC_ETA DATA/Par_file | cut -c 27- `
 
 # total number of nodes is product of values read
 @ numnodes = $NCHUNKS * $NPROC_XI * $NPROC_ETA
 
+# suppress old processor list files
 rm -f PI*
 
 if ( -f $list_of_machines ) then
@@ -39,8 +40,7 @@ echo mesh files will be read from directory $my_local_path
 echo " "
 
 #### use this on Beowulf
-/home/local/mpich/bin/mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
-###/home/local/mpich_ifc_v7.1/bin/mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
+mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
 
 #### use this on SGI
 #  mpirun -np $numnodes xspecfem3D
