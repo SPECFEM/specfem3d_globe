@@ -180,9 +180,6 @@ MESHER (meshfem3D):
   ATTENUATION         ! to include PREM attenuation (fairly expensive)
 
 - In constants.h choose the appropriate radii (PREM or IASPEI)
-- In constants.h choose the resolution of the topography/bathymetry file
-  (ETOPO-2, resolution 2 minutes, or ETOPO-5, resolution 5 minutes);
-  ETOPO-2 is more precise but uses a lot more memory in the mesher.
 - Compile the mesher ("make meshfem3D") and run it with the go_mesher script
 - Mesher output is provided in the OUTPUT_FILES directory in output_mesher.txt
     (output can be directed to the screen instead by uncommenting a line
@@ -303,6 +300,9 @@ MOVIE OF THE RESULTS:
 
 Note: The Gauss-Lobatto subroutines in gll_library.f90 are based in part on
       software libraries from M.I.T., Department of Mechanical Engineering.
+
+Note: The non-structured global numbering software was provided
+      by Paul F. Fischer.
 
 Note: Subroutines from "Numerical Recipes: The Art of Scientific Computing"
       by W. H. Press et al., Cambridge University Press, are used in
