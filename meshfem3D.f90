@@ -918,7 +918,7 @@
       write(IMAIN,*) '   calculated top area: ',area_total_top
 
 ! compare to exact theoretical value
-    if(.not. TOPOGRAPHY) then
+    if(NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
       select case(iregion_code)
 
         case(IREGION_CRUST_MANTLE)
@@ -939,7 +939,7 @@
       write(IMAIN,*) 'calculated bottom area: ',area_total_bottom
 
 ! compare to exact theoretical value
-  if(.not. TOPOGRAPHY) then
+  if(NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
 
       select case(iregion_code)
 
