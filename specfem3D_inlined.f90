@@ -374,7 +374,7 @@
 
 ! Newmark time scheme parameters and non-dimensionalization
   real(kind=CUSTOM_REAL) time,deltat,deltatover2,deltatsqover2
-  double precision scale_t,scale_displ
+  double precision scale_t,scale_displ,scale_veloc
 
 ! receiver information
   integer nrec,nrec_local,nrec_tot_found
@@ -3219,6 +3219,12 @@
 ! save movie frame
   if(SAVE_AVS_DX_MOVIE .and. mod(it,NMOVIE) == 0) then
 
+! save velocity here to avoid static offset on displacement for movies
+
+! rescale non-dimensional velocity to right units
+! check if this formula is correct
+      scale_veloc = scale_displ / scale_t
+
 ! get coordinates of surface mesh and surface displacement
     ipoin = 0
     do ispec2D = 1,NSPEC2D_TOP(IREGION_CRUST_MANTLE)
@@ -3233,9 +3239,9 @@
       store_val_x(ipoin) = xstore_crust_mantle(iglob)
       store_val_y(ipoin) = ystore_crust_mantle(iglob)
       store_val_z(ipoin) = zstore_crust_mantle(iglob)
-      store_val_ux(ipoin) = displ_crust_mantle(1,iglob)
-      store_val_uy(ipoin) = displ_crust_mantle(2,iglob)
-      store_val_uz(ipoin) = displ_crust_mantle(3,iglob)
+      store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
+      store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
+      store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
 
 ! second corner
       ipoin = ipoin + 1
@@ -3245,9 +3251,9 @@
       store_val_x(ipoin) = xstore_crust_mantle(iglob)
       store_val_y(ipoin) = ystore_crust_mantle(iglob)
       store_val_z(ipoin) = zstore_crust_mantle(iglob)
-      store_val_ux(ipoin) = displ_crust_mantle(1,iglob)
-      store_val_uy(ipoin) = displ_crust_mantle(2,iglob)
-      store_val_uz(ipoin) = displ_crust_mantle(3,iglob)
+      store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
+      store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
+      store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
 
 ! third corner
       ipoin = ipoin + 1
@@ -3257,9 +3263,9 @@
       store_val_x(ipoin) = xstore_crust_mantle(iglob)
       store_val_y(ipoin) = ystore_crust_mantle(iglob)
       store_val_z(ipoin) = zstore_crust_mantle(iglob)
-      store_val_ux(ipoin) = displ_crust_mantle(1,iglob)
-      store_val_uy(ipoin) = displ_crust_mantle(2,iglob)
-      store_val_uz(ipoin) = displ_crust_mantle(3,iglob)
+      store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
+      store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
+      store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
 
 ! fourth corner
       ipoin = ipoin + 1
@@ -3269,9 +3275,9 @@
       store_val_x(ipoin) = xstore_crust_mantle(iglob)
       store_val_y(ipoin) = ystore_crust_mantle(iglob)
       store_val_z(ipoin) = zstore_crust_mantle(iglob)
-      store_val_ux(ipoin) = displ_crust_mantle(1,iglob)
-      store_val_uy(ipoin) = displ_crust_mantle(2,iglob)
-      store_val_uz(ipoin) = displ_crust_mantle(3,iglob)
+      store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
+      store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
+      store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
 
     enddo
 
