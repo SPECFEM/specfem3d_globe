@@ -167,13 +167,6 @@
 ! loop on all the sources
   do isource = 1,NSOURCES
 
-! check all the t_cmt values
-    if(isource == 1) then
-      if(t_cmt(isource) /= 0.) call exit_MPI(myrank,'t_cmt for the first source should be zero')
-    else
-      if(t_cmt(isource) < 0.) call exit_MPI(myrank,'t_cmt should not be less than zero')
-    endif
-
 ! compute normalized source radius
   r0(isource) = R_UNIT_SPHERE
 
