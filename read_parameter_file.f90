@@ -448,6 +448,12 @@
 ! RCMB: radius of CMB (m)
 ! RICB: radius of ICB (m)
 
+! values common to PREM and IASPEI
+  R80 = 6291000.d0
+  RMIDDLE_CRUST = 6356000.d0
+
+  RHO_OCEANS = 1020.0 / RHOAV
+
   if(IASPEI) then
 
 ! IASPEI
@@ -460,22 +466,18 @@
     RTOPDDOUBLEPRIME = 3631000.d0
     RCMB = 3482000.d0
     RICB = 1217000.d0
+
     RHO_TOP_OC = 9900.2379 / RHOAV
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
-    RHO_OCEANS = 1020.0 / RHOAV
 
-! fictitious values for IASPEI
+! fictitious value for IASPEI oceans
     ROCEAN = 1.d0
-    RMIDDLE_CRUST = 1.d0
-    R80 = 1.d0
 
   else
 
 ! PREM
     ROCEAN = 6368000.d0
-    RMIDDLE_CRUST = 6356000.d0
     RMOHO = 6346600.d0
-    R80 = 6291000.d0
     R220 = 6151000.d0
     R400 = 5971000.d0
     R600 = 5771000.d0
@@ -484,9 +486,9 @@
     RTOPDDOUBLEPRIME = 3630000.d0
     RCMB = 3480000.d0
     RICB = 1221000.d0
+
     RHO_TOP_OC = 9903.4384 / RHOAV
     RHO_BOTTOM_OC = 12166.5885 / RHOAV
-    RHO_OCEANS = 1020.0 / RHOAV
 
   endif
 
