@@ -62,7 +62,8 @@
 !! DK DK
   logical, parameter :: REGIONAL_CODE = .false.
   integer, parameter :: NCHUNKS = 6
-  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG   = 90.d0
+  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_1   = 90.d0
+  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_2   = 90.d0
   logical, parameter :: STACEY_ABS_CONDITIONS = .false.
 ! include central cube in the case of 6 chunks or not
 ! should always be set to true except when debugging code
@@ -70,29 +71,34 @@
 !! DK DK use regular cubed sphere instead of cube for large distances
   logical, parameter :: INFLATE_CENTRAL_CUBE = .false.
 
-!! DK DK
-!! DK DK for regional code with 1 chunk
-!! DK DK
+!!! DK DK
+!!! DK DK for regional code with 1 chunk
+!!! DK DK
 !  logical, parameter :: REGIONAL_CODE = .true.
-!! DK DK spaces added to prevent go_mesher script from crashing
-!! DK DK if keyword N   CHUNKS appears twice in constants.h
-!  integer, parameter :: N    CHUNKS = 1
-!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG   = 35.d0
+!!! DK DK spaces added to prevent go_mesher script from crashing
+!!! DK DK if keyword N   CHUNKS appears twice in constants.h
+!  integer, parameter :: N     CHUNKS = 1
+!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_1   = 140.d0
+!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_2   = 60.d0
 !  logical, parameter :: STACEY_ABS_CONDITIONS = .true.
-!! include central cube in the case of 6 chunks or not
-!! should always be set to true except when debugging code
+!!! include central cube in the case of 6 chunks or not
+!!! should always be set to true except when debugging code
 !  logical, parameter :: INCLUDE_CENTRAL_CUBE = .false.
-!! DK DK use regular cubed sphere instead of cube for large distances
+!!! DK DK use regular cubed sphere instead of cube for large distances
 !  logical, parameter :: INFLATE_CENTRAL_CUBE = .true.
 
-  double precision, parameter :: CENTER_LATITUDE_DEG      = 38.d0
-  double precision, parameter :: CENTER_LONGITUDE_DEG     = 137.d0
-  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 21.d0
+!  double precision, parameter :: CENTER_LATITUDE_DEG      = 38.d0
+!  double precision, parameter :: CENTER_LONGITUDE_DEG     = 137.d0
+!  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 21.d0
+
+  double precision, parameter :: CENTER_LATITUDE_DEG      = 0.d0
+  double precision, parameter :: CENTER_LONGITUDE_DEG     = 0.d0
+  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 0.d0
 
 ! save AVS or OpenDX files in mesher or not
 ! do not use if you do not plan to use AVS or OpenDX to visualize the mesh
 ! because this option can create very large files
-  logical, parameter :: SAVE_AVS_DX_MESH_FILES = .false.
+  logical, parameter :: SAVE_AVS_DX_MESH_FILES = .true.
 
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
@@ -166,7 +172,7 @@
 !  real(kind=CUSTOM_REAL), parameter :: RHO_BOTTOM_OC = 12168.6383 / RHOAV
 !  real(kind=CUSTOM_REAL), parameter :: RHO_OCEANS = 1020.0 / RHOAV
 !
-!  fictitious values for IASPEI in order to be able to compile
+!!! DK DK fictitious values for IASPEI in order to be able to compile
 !  double precision, parameter :: ROCEAN = 1.d0
 !  double precision, parameter :: RMIDDLE_CRUST = 1.d0
 !  double precision, parameter :: R80 = 1.d0
@@ -220,8 +226,8 @@
 ! should always be set to true except when debugging code
   logical, parameter :: ACTUALLY_ASSEMBLE_MPI_SLICES = .true.
   logical, parameter :: ACTUALLY_ASSEMBLE_MPI_CHUNKS = .true.
-  logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
-  logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
+  logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .false.
+  logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .false.
 
 !
 !--- do NOT modify parameters below
