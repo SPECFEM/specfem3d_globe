@@ -66,8 +66,8 @@ NSEIS                    = 50000
 NSOURCES                 = 1
 
 ! movies
-MOVIE_SURFACE            = .true.
-MOVIE_VOLUME             = .true.
+MOVIE_SURFACE            = .false.
+MOVIE_VOLUME             = .false.
 NMOVIE                   = 100
 HDUR_MIN_MOVIES          = 20.0d0
 
