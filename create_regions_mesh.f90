@@ -585,7 +585,7 @@
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model)
+          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
 
 ! make the Earth elliptical
         if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
