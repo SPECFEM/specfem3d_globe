@@ -924,10 +924,7 @@
             xi_source,eta_source,gamma_source, &
             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI)
 
-  if(t_cmt(1) /= 0.) call exit_MPI(myrank,'t_cmt for the first source should be zero')
-  do isource = 2,NSOURCES
-    if(t_cmt(isource) < 0.) call exit_MPI(myrank,'t_cmt should not be less than zero')
-  enddo
+  if(minval(t_cmt) /= 0.) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
 
 ! for the movies, we do not use a Heaviside source
   if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval(hdur) < HDUR_MIN_MOVIES) &
