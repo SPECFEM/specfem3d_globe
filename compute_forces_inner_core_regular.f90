@@ -366,7 +366,7 @@
 
   iglob = ibool(i,j,k,ispec)
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
 
 ! get displacement and multiply by density to compute G tensor

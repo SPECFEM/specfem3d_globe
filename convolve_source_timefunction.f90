@@ -23,9 +23,7 @@
 
   implicit none
 
-  double precision, parameter :: DECAY_RATE=2.628d0
-
-  double precision, parameter :: PI=3.141592653589793d0
+  include "constants.h"
 
   integer i,j,N_j
   integer number_remove
@@ -54,7 +52,7 @@
     read(5,*) time(i),sem(i)
   enddo
 
-  alpha=DECAY_RATE/hdur
+  alpha=SOURCE_DECAY_RATE/hdur
   dt=time(2)-time(1)
   N_j=int(hdur/dt)
   do i=1,nlines

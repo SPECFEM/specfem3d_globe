@@ -19,7 +19,8 @@
        NER_CMB_TOPDDOUBLEPRIME,NER_TOPDDOUBLEPRIME_771, &
        NER_771_670,NER_670_600,NER_600_400,NER_400_220,NER_220_MOHO,NER_CRUST, &
        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
-       CRUSTAL,TOPOGRAPHY,ONE_CRUST)
+       CRUSTAL,TOPOGRAPHY,ONE_CRUST,RMIDDLE_CRUST,R220,R400,R600,R670,R771, &
+       RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO,R_CENTRAL_CUBE,NCHUNKS)
 
 ! create the radial mesh, honoring the major discontinuities in PREM
 ! we also honor the top of D" and the other second-order discontinuities
@@ -28,21 +29,17 @@
 
   include "constants.h"
 
-! in the case of a very fine mesh, move the bottom of crustal elements
-! below the PREM Moho, otherwise the elements become too distorted
-  double precision, parameter :: RMOHO_FICTITIOUS_2ELEMS = 6330000.d0
-  double precision, parameter :: RMOHO_FICTITIOUS_4ELEMS = 6330000.d0
-
   integer myrank
 
-  integer NER
+  integer NER,NCHUNKS
   integer NER_TOP_CENTRAL_CUBE_ICB,NER_CMB_TOPDDOUBLEPRIME, &
        NER_TOPDDOUBLEPRIME_771,NER_771_670,NER_670_600,NER_600_400, &
        NER_400_220,NER_220_MOHO,NER_CRUST,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
 
   logical CRUSTAL,TOPOGRAPHY,ONE_CRUST
 
-  double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC
+  double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,RMIDDLE_CRUST, &
+       R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO,R_CENTRAL_CUBE
   double precision rn(0:2*NER),rmin(0:2*NER),rmax(0:2*NER)
 
   integer npr,ir
@@ -66,10 +63,11 @@
   r_bottomdblfluid = (RICB + RATIO_BOTTOM_DBL_OC*(RCMB-RICB)) / R_EARTH
   r_icb = RICB / R_EARTH
 
-! in the case of a very fine mesh, move the bottom of crustal elements
-! below the PREM Moho, otherwise the elements become too distorted
-!! DK DK UGLY not very clean, should write something more general one day
-!! DK DK UGLY do not change anything if model is spherically symmetric (PREM)
+!! DK DK UGLY in the case of a very fine mesh, move the bottom of crustal
+!! DK DK UGLY elements below the PREM Moho, otherwise the elements become
+!! DK DK UGLY too distorted in the radial distribution of elements.
+!! DK DK UGLY Not very clean, should write something more general one day.
+!! DK DK UGLY Do not change anything if model is spherically symmetric (PREM).
   r_moho = RMOHO / R_EARTH
   if(CRUSTAL .or. TOPOGRAPHY) then
     if(NER_CRUST == 1) then
@@ -192,12 +190,14 @@
     rmax(npr)=r_220
   enddo
 
-!! DK DK UGLY avoid problem with bathymetry trenches on the ES
-!! DK DK UGLY do not honor the fictitious Moho if high-res mesh with topography
-!! DK DK UGLY also use regular mesh if regional code
+!! DK DK UGLY avoid problem with bathymetry trenches on the Earth Simulator.
+!! DK DK UGLY Do not honor the fictitious Moho if high-res mesh with topography
+!! DK DK UGLY Also use regular mesh if regional code.
+!! DK DK UGLY Should write something more general one day.
   if(NCHUNKS /= 6 .or. (NER_CRUST > 1 .and. (CRUSTAL .or. TOPOGRAPHY))) then
 
-!! DK DK UGLY uniform radial mesh from d220 to surface if high-res 3D model
+!! DK DK UGLY Uniform radial mesh from d220 to surface if high-res 3D model.
+!! DK DK UGLY Should write something more general one day.
 
 ! also create last point exactly at the surface
 ! other regions above stop one point below

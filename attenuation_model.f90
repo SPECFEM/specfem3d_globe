@@ -12,7 +12,8 @@ module attenuation_model_variables
 
 end module attenuation_model_variables
 
-subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source)
+subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source,RICB,RCMB, &
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80)
 
 !
 ! xlat, xlon currently not used in this routine (which uses PREM).
@@ -21,10 +22,13 @@ subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_sourc
 !
 
   use attenuation_model_variables
+
   implicit none
 
   integer myrank
-  double precision xlat, xlon, r, x, Qmu
+
+  double precision xlat, xlon, r, x, Qmu,RICB,RCMB, &
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80
   double precision Qkappa, T_c_source
   double precision, dimension(N_SLS) :: tau_s, tau_e
 

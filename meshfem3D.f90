@@ -134,7 +134,8 @@
 ! ---------------------
 !
 ! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
-!      any size of chunk, 3D attenuation, case of two chunks, better topo/bathy
+!      any size of chunk, 3D attenuation, case of two chunks,
+!      more precise topography/bathymetry model, new Par_file structure
 ! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
 !      merged global and regional codes, no iterations in fluid, better movies
 ! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
@@ -231,18 +232,24 @@
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_ETA,NEX_XI,NER_DOUBLING_OUTER_CORE, &
-          NPROC_ETA,NPROC_XI,NSEIS,NSTEP,NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL, &
-          NER_TOPDBL_CMB,ITAFF_TIME_STEPS,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
+          NPROC_ETA,NPROC_XI,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
+          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
+          NUMBER_OF_THIS_RUN,NCHUNKS
 
-  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES, &
-          ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG
+  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
+          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,THREE_D,TOPOGRAPHY, &
-          ATTENUATION,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME, ATTENUATION_3D, &
-          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCT,SAVE_AVS_DX_MESH_FILES
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
+          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
+          SAVE_AVS_DX_MESH_FILES,ATTENUATION,IASPEI, &
+          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH
+  character(len=150) LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -286,18 +293,24 @@
   endif
 
 ! read the parameter file
-  call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST,NER_220_MOHO,NER_400_220, &
-        NER_600_400,NER_670_600,NER_771_670,NER_TOPDDOUBLEPRIME_771, &
-        NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB,NER_TOP_CENTRAL_CUBE_ICB,NER_DOUBLING_OUTER_CORE, &
-        NEX_ETA,NEX_XI,NPROC_ETA,NPROC_XI,NSEIS,NSTEP, &
-        DT,TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,OCEANS,ELLIPTICITY, &
-        GRAVITY,ONE_CRUST,ATTENUATION, &
-        ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
-        MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
-        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, ATTENUATION_3D, &
-        RECEIVERS_CAN_BE_BURIED,ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG, &
-        SAVE_AVS_DX_MESH_FILES,ITAFF_TIME_STEPS,PRINT_SOURCE_TIME_FUNCT, &
-        NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN)
+  call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
+          NER_TOP_CENTRAL_CUBE_ICB,NEX_ETA,NEX_XI,NER_DOUBLING_OUTER_CORE, &
+          NPROC_ETA,NPROC_XI,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
+          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
+          NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
+          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
+          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
+          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
+          MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+          PRINT_SOURCE_TIME_FUNCTION,SAVE_AVS_DX_MESH_FILES, &
+          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL)
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -312,11 +325,7 @@
       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
       NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
       NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
-      NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB)
-
-! basic checks for regional code
-  if(NCHUNKS /= 6 .and. NCHUNKS /= 1 .and. NCHUNKS /= 2) call exit_MPI(myrank,'regional code only works for one or two chunks')
-  if(NCHUNKS /= 6 .and. INCLUDE_CENTRAL_CUBE) call exit_MPI(myrank,'regional code cannot include the central cube')
+      NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
 
 ! check that the code is running with the requested nb of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
@@ -390,65 +399,18 @@
     write(IMAIN,*)
   endif
 
-! check that reals are either 4 or 8 bytes
-  if(CUSTOM_REAL /= SIZE_REAL .and. CUSTOM_REAL /= SIZE_DOUBLE) call exit_MPI(myrank,'wrong size of CUSTOM_REAL for reals')
-
-! check that the parameter file is correct
-  if(NGNOD /= 27) call exit_MPI(myrank,'number of control nodes must be 27')
-  if(NGNOD == 27 .and. NGNOD2D /= 9) call exit_MPI(myrank,'elements with 27 points should have NGNOD2D = 9')
-
-! for the number of standard linear solids for attenuation
-  if(N_SLS /= 3) call exit_MPI(myrank,'number of SLS must be 3')
-
-! check number of slices in each direction
-  if(NCHUNKS < 1) call exit_MPI(myrank,'must have at least one chunk')
-  if(NPROC_XI < 1) call exit_MPI(myrank,'NPROC_XI must be at least 1')
-  if(NPROC_ETA < 1) call exit_MPI(myrank,'NPROC_ETA must be at least 1')
-
-! correct topology if more than one chunk
-!! DK DK UGLY modify this in the future to have more flexibility when NCHUNKS = 2
-  if(NCHUNKS /= 1 .and. NPROC_XI /= NPROC_ETA) &
-    call exit_MPI(myrank,'must have NPROC_XI=NPROC_ETA for more than one chunk')
-
-! check number of elements per processor is the same in both directions
-!! DK DK UGLY modify this in the future to have more flexibility when NCHUNKS = 2
-  if(NCHUNKS /= 1 .and. NEX_PER_PROC_XI /= NEX_PER_PROC_ETA) &
-    call exit_MPI(myrank,'not the same number of elements per processor in both directions')
-
-! check number of chunks
-  if(NCHUNKS /= 1 .and. NCHUNKS /= 2 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) &
-    call exit_MPI(myrank,'only one, two, three or six chunks can be meshed')
-
-  if(INCLUDE_CENTRAL_CUBE .and. NCHUNKS /= 6) &
-    call exit_MPI(myrank,'need six chunks to include central cube')
-
-! check that size can be coarsened in depth twice (block size multiple of 8)
-  if(mod(NEX_XI/8,NPROC_XI) /= 0) &
-    call exit_MPI(myrank,'NEX_XI must be a multiple of 8*NPROC_XI')
-
-  if(mod(NEX_ETA/8,NPROC_ETA) /= 0) &
-    call exit_MPI(myrank,'NEX_ETA must be a multiple of 8*NPROC_ETA')
-
-  if(mod(NEX_XI,8) /= 0) call exit_MPI(myrank,'NEX_XI must be a multiple of 8')
-
-  if(mod(NEX_ETA,8) /= 0) call exit_MPI(myrank,'NEX_ETA must be a multiple of 8')
-
 ! one doubling layer in outer core (block size multiple of 16)
     if(mod(NEX_PER_PROC_XI,16) /= 0) call exit_MPI(myrank,'NEX_PER_PROC_XI must be a multiple of 16 for outer core doubling')
     if(mod(NEX_PER_PROC_ETA,16) /= 0) call exit_MPI(myrank,'NEX_PER_PROC_ETA must be a multiple of 16 for outer core doubling')
 
+! check that number of elements per processor is the same in both directions
+  if(NCHUNKS > 2 .and. NEX_PER_PROC_XI /= NEX_PER_PROC_ETA) &
+    call exit_MPI(myrank,'must have the same number of elements per processor in both directions for more than two chunks')
+
 ! check that mesh doubling can be implemented
-  if(NER_220_MOHO/2<3) call exit_MPI(myrank,'NER_220_MOHO should be at least 3')
-  if(NER_400_220/2<2) call exit_MPI(myrank,'NER_400_220 should be at least 2')
   if(NER_670_400/2<2) call exit_MPI(myrank,'NER_670_400 should be at least 2')
   if(NER_CMB_670<16) call exit_MPI(myrank,'NER_CMB_670 should be at least 16')
   if(NER_CENTRAL_CUBE_CMB<4) call exit_MPI(myrank,'NER_CENTRAL_CUBE_CMB should be at least 4')
-
-! check that sphere can be cut into slices without getting negative Jacobian
-  if(NEX_XI < 48) call exit_MPI(myrank,'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian')
-  if(NEX_ETA < 48) call exit_MPI(myrank,'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian')
-
-  if(IASPEI .and. TRANSVERSE_ISOTROPY) call exit_MPI(myrank,'IASPEI is currently isotropic')
 
   if(myrank == 0) then
 
@@ -467,7 +429,7 @@
   endif
 
   write(IMAIN,*)
-  if(THREE_D) then
+  if(ISOTROPIC_3D_MANTLE) then
     write(IMAIN,*) 'incorporating 3-D lateral variations'
   else
     write(IMAIN,*) 'no 3-D lateral variations'
@@ -527,12 +489,13 @@
 
   endif
 
-  if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+  if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB)
 
-  if(THREE_D) call read_mantle_model
+  if(ISOTROPIC_3D_MANTLE) call read_mantle_model
 
 ! read Montagner's model
-  if(ANISOTROPIC_MANTLE) call read_aniso_mantle_model
+  if(ANISOTROPIC_3D_MANTLE) call read_aniso_mantle_model
 
   if(CRUSTAL) call read_crustal_model
 
@@ -560,7 +523,8 @@
       NER_CMB_TOPDDOUBLEPRIME,NER_TOPDDOUBLEPRIME_771, &
       NER_771_670,NER_670_600,NER_600_400,NER_400_220,NER_220_MOHO,NER_CRUST, &
       NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
-      CRUSTAL,TOPOGRAPHY,ONE_CRUST)
+      CRUSTAL,TOPOGRAPHY,ONE_CRUST,RMIDDLE_CRUST,R220,R400,R600,R670,R771, &
+      RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO,R_CENTRAL_CUBE,NCHUNKS)
 
 ! number of elements in each slice in a given chunk
   npx = 2*NEX_PER_PROC_XI
@@ -568,9 +532,9 @@
 
 !! DK DK for regional code
 ! compute rotation matrix from Euler angles
-  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_DEG * PI / 180.
-  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_DEG * PI / 180.
-  if(NCHUNKS /= 6) call euler_angles(rotation_matrix)
+  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * PI / 180.
+  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * PI / 180.
+  if(NCHUNKS /= 6) call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
 ! fill the region between the central cube and the free surface
   do iy=0,npy
@@ -904,15 +868,17 @@
          NER_220_MOHO,NER_CRUST,NER_DOUBLING_OUTER_CORE, &
          NSPEC2DMAX_XMIN_XMAX(iregion_code), &
          NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
-         ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE, &
-         ANISOTROPIC_INNER_CORE,THREE_D,CRUSTAL,ONE_CRUST, &
+         ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+         ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_A_XI(iregion_code),NSPEC2D_B_XI(iregion_code),NSPEC2D_C_XI(iregion_code), &
          NSPEC2D_A_ETA(iregion_code),NSPEC2D_B_ETA(iregion_code), &
          NSPEC2D_C_ETA(iregion_code),NSPEC1D_RADIAL(iregion_code),NPOIN1D_RADIAL(iregion_code), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
          crustal_model,mantle_model,aniso_mantle_model, &
          aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-         attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES)
+         attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES, &
+         NCHUNKS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASPEI, &
+         R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
 ! store number of anisotropic elements found in the mantle
   if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
@@ -1001,7 +967,7 @@
       NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NPOIN1D_RADIAL(iregion_code), &
       NPOIN2DMAX_XMIN_XMAX(iregion_code),NPOIN2DMAX_YMIN_YMAX(iregion_code), &
       NSPEC_AB(iregion_code),NSPEC_AC(iregion_code),NSPEC_BC(iregion_code), &
-      myrank,LOCAL_PATH,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice)
+      myrank,LOCAL_PATH,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
   else
     if(myrank == 0) then
       write(IMAIN,*)
@@ -1092,8 +1058,10 @@
 ! create include file for the solver
   call save_header_file(NSPEC_AB,NSPEC_AC,NSPEC_BC,nglob_AB,nglob_AC,nglob_BC, &
         NEX_XI,NEX_ETA,nspec_aniso_mantle_all,NPROC,NPROCTOT, &
-        TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D,ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG)
+        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
+        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
+        INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP)
 
   endif   ! end of section executed by main process only
 

@@ -30,7 +30,7 @@
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL, &
-            NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY)
+            NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY,NCHUNKS)
 
   implicit none
 
@@ -40,8 +40,7 @@
   include "constants.h"
   include "precision.h"
 
-  integer myrank
-  integer nglob
+  integer myrank,nglob,NCHUNKS
 
 ! array to assemble
   real(kind=CUSTOM_REAL), dimension(nglob) :: array_val

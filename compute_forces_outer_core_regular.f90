@@ -181,7 +181,7 @@
             gyl = sin_theta*sin_phi
             gzl = cos_theta
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
             if(CUSTOM_REAL == SIZE_REAL) then
               gravity_term(i,j,k) = &
                 sngl(minus_rho_g_over_kappa_fluid(int_radius) * &

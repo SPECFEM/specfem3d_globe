@@ -26,13 +26,15 @@
            NER_220_MOHO,NER_CRUST,NER_DOUBLING_OUTER_CORE, &
            NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
            ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
-           ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D,CRUSTAL,ONE_CRUST, &
+           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            NPROC_XI,NPROC_ETA,NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
            NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA,NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
            crustal_model,mantle_model,aniso_mantle_model, &
            aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
-           attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES)
+           attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES, &
+           NCHUNKS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASPEI, &
+           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
 ! create the different regions of the mesh
 
@@ -43,12 +45,10 @@
   external mantle_model,crustal_model,aniso_mantle_model, &
        aniso_inner_core_model,attenuation_model
 
-  logical ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES
-
 ! correct number of spectral elements in each block depending on chunk type
   integer nspec,nspec_tiso,nspec_stacey
 
-  integer NER,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer NER,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS
   integer NER_TOP_CENTRAL_CUBE_ICB,NER_CENTRAL_CUBE_CMB,NER_670_400,NER_400_220,NER_220_MOHO
   integer NER_CRUST,NER_CMB_670,NER_DOUBLING_OUTER_CORE,NER_ICB_BOTTOMDBL
 
@@ -60,8 +60,14 @@
   integer npx,npy
   integer npointot
 
-  logical ELLIPTICITY,TOPOGRAPHY
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D,CRUSTAL,ONE_CRUST,OCEANS
+  logical ELLIPTICITY,TOPOGRAPHY,IASPEI
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,OCEANS
+
+  logical ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES, &
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS
+
+  double precision R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
+          RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN
 
   character(len=150) LOCAL_PATH
 
@@ -277,7 +283,7 @@
 
   nspec_ani = 1
   if((ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) .or. &
-     (ANISOTROPIC_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) nspec_ani = nspec
+     (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) nspec_ani = nspec
 
   allocate(c11store(NGLLX,NGLLY,NGLLZ,nspec_ani))
   allocate(c12store(NGLLX,NGLLY,NGLLZ,nspec_ani))
@@ -450,17 +456,19 @@
           rmin,rmax,ichunk,doubling_index, &
           rho_vp,rho_vs,nspec_stacey, &
           NPROC_XI,NPROC_ETA, &
-          TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-          THREE_D,CRUSTAL,ONE_CRUST, &
+          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+          ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
           aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
           attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
-          size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5))
+          size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
+          NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASPEI, &
+          R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
 ! add topography without the crustal model
         if(TOPOGRAPHY .and. (idoubling(ispec) == IFLAG_CRUST &
                         .or. idoubling(ispec) == IFLAG_220_MOHO)) &
-          call add_topography(myrank,xelm,yelm,zelm,ibathy_topo)
+          call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
 
 ! make the Earth elliptical
         if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
@@ -608,13 +616,14 @@
           rmin,rmax,ichunk,doubling_index, &
           rho_vp,rho_vs,nspec_stacey, &
           NPROC_XI,NPROC_ETA, &
-          TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-          THREE_D,CRUSTAL,ONE_CRUST, &
+          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+          ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
           aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
           attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
-          size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5))
-
+          size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
+          NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASPEI, &
+          R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
 ! make the Earth elliptical
         if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
@@ -715,7 +724,7 @@
 ! definition depends if region is fluid or solid
   if(iregion_code == IREGION_CRUST_MANTLE .or. iregion_code == IREGION_INNER_CORE) then
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
       rmass(iglobnum) = rmass(iglobnum) + &
              sngl(dble(rhostore(i,j,k,ispec)) * dble(jacobianl) * weight)
@@ -728,7 +737,7 @@
 
 ! no anisotropy in the fluid, use kappav
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
       rmass(iglobnum) = rmass(iglobnum) + &
              sngl(dble(jacobianl) * weight * dble(rhostore(i,j,k,ispec)) / dble(kappavstore(i,j,k,ispec)))
@@ -784,9 +793,10 @@
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
     call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,kappavstore,muvstore, &
-              nspl,rspl,espl,espl2, &
-              ELLIPTICITY,THREE_D,CRUSTAL,ONE_CRUST)
+              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,IASPEI, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO, &
+              RMIDDLE_CRUST,ROCEAN)
     call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
   endif
@@ -816,7 +826,7 @@
         iglobnum=ibool(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
 
 ! compute local height of oceans
-        if(THREE_D) then
+        if(ISOTROPIC_3D_MANTLE) then
 
 ! get coordinates of current point
           xval = xstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
@@ -854,7 +864,7 @@
         weight = wxgll(ix_oceans)*wygll(iy_oceans)*dble(jacobian2D_top(ix_oceans,iy_oceans,ispec2D_top_crust)) &
                    * dble(RHO_OCEANS) * height_oceans
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then
           rmass_ocean_load(iglobnum) = rmass_ocean_load(iglobnum) + sngl(weight)
         else
@@ -897,10 +907,10 @@
             jacobian2D_bottom,jacobian2D_top, &
             iMPIcut_xi,iMPIcut_eta,nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
-            tau_s, tau_e_store, Qmu_store, T_c_source, &
-            ATTENUATION, ATTENUATION_3D, &
-            size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5))
+            TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
+            tau_s,tau_e_store,Qmu_store,T_c_source, &
+            ATTENUATION,ATTENUATION_3D, &
+            size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),NCHUNKS)
 
   do ispec=1,nspec
     do k=1,NGLLZ

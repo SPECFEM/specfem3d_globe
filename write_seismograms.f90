@@ -88,7 +88,7 @@
 ! subtract half duration of the source to make sure travel time is correct
       do isample = it_begin,it_end
         value = dble(seismograms(iorientation,irec_local,isample))
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then
           write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',sngl(value)
         else

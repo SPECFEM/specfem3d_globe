@@ -134,7 +134,8 @@
 ! ---------------------
 !
 ! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
-!      any size of chunk, 3D attenuation, case of two chunks, better topo/bathy
+!      any size of chunk, 3D attenuation, case of two chunks,
+!      more precise topography/bathymetry model, new Par_file structure
 ! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
 !      merged global and regional codes, no iterations in fluid, better movies
 ! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
@@ -538,18 +539,24 @@
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_ETA,NEX_XI,NER_DOUBLING_OUTER_CORE, &
-          NPROC_ETA,NPROC_XI,NSEIS,NSTEP,NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL, &
-          NER_TOPDBL_CMB,ITAFF_TIME_STEPS,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
+          NPROC_ETA,NPROC_XI,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
+          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
+          NUMBER_OF_THIS_RUN,NCHUNKS
 
-  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES, &
-          ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG
+  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
+          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,THREE_D,TOPOGRAPHY, &
-          ATTENUATION,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME, ATTENUATION_3D, &
-          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCT,SAVE_AVS_DX_MESH_FILES
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
+          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
+          SAVE_AVS_DX_MESH_FILES,ATTENUATION,IASPEI, &
+          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,clean_LOCAL_PATH,final_LOCAL_PATH,prname
+  character(len=150) LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -564,6 +571,8 @@
                NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
                NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
                NGLOB_AB,NGLOB_AC,NGLOB_BC
+
+  character(len=150) clean_LOCAL_PATH,final_LOCAL_PATH,prname
 
 ! lookup table every km for gravity
   integer int_radius,nspl_gravity,idoubling
@@ -596,18 +605,24 @@
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
 ! read the parameter file
-  call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST,NER_220_MOHO,NER_400_220, &
-        NER_600_400,NER_670_600,NER_771_670,NER_TOPDDOUBLEPRIME_771, &
-        NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB,NER_TOP_CENTRAL_CUBE_ICB,NER_DOUBLING_OUTER_CORE, &
-        NEX_ETA,NEX_XI,NPROC_ETA,NPROC_XI,NSEIS,NSTEP, &
-        DT,TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,OCEANS,ELLIPTICITY, &
-        GRAVITY,ONE_CRUST,ATTENUATION, &
-        ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
-        MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
-        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, ATTENUATION_3D, &
-        RECEIVERS_CAN_BE_BURIED,ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG, &
-        SAVE_AVS_DX_MESH_FILES,ITAFF_TIME_STEPS,PRINT_SOURCE_TIME_FUNCT, &
-        NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN)
+  call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
+          NER_TOP_CENTRAL_CUBE_ICB,NEX_ETA,NEX_XI,NER_DOUBLING_OUTER_CORE, &
+          NPROC_ETA,NPROC_XI,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
+          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
+          NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
+          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
+          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
+          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
+          MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+          PRINT_SOURCE_TIME_FUNCTION,SAVE_AVS_DX_MESH_FILES, &
+          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL)
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -622,7 +637,7 @@
       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
       NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
       NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
-      NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB)
+      NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
 
 ! open main output file, only written to by process 0
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) &
@@ -770,13 +785,14 @@
 
 ! make ellipticity
   if(ELLIPTICITY) then
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB)
 
 ! compute ellipticity at d80 once and for all for attenuation
     radius = R80/R_EARTH
     call splint(rspl,espl,espl2,nspl,radius,ell_d80_dble)
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
       ell_d80 = sngl(ell_d80_dble)
     else
@@ -880,7 +896,7 @@
 
 ! crust and mantle
 
-  if(ANISOTROPIC_MANTLE) then
+  if(ANISOTROPIC_3D_MANTLE) then
     READ_KAPPA_MU = .false.
     READ_TISO = .false.
     nspec_iso = 1
@@ -915,8 +931,8 @@
             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
             ibool_crust_mantle,idoubling_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
             nspec_crust_mantle,nglob_crust_mantle, &
-            READ_KAPPA_MU,READ_TISO, &
-            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH)
+            READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
 
 ! outer core (no anisotropy nor S velocity)
 ! rmass_ocean_load is not modified in routine
@@ -939,8 +955,8 @@
             dummyval,dummyval,dummyval,dummyval,dummyval,dummyval,dummyval, &
             ibool_outer_core,idoubling_outer_core,rmass_outer_core,rmass_ocean_load, &
             nspec_outer_core,nglob_outer_core, &
-            READ_KAPPA_MU,READ_TISO, &
-            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH)
+            READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
 
 ! inner core (no anisotropy)
 ! rmass_ocean_load is not modified in routine
@@ -967,8 +983,8 @@
             dummyval,c44store_inner_core,dummyval,dummyval,dummyval,dummyval,dummyval, &
             ibool_inner_core,idoubling_inner_core,rmass_inner_core,rmass_ocean_load, &
             NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-            READ_KAPPA_MU,READ_TISO, &
-            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH)
+            READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
 
 ! check that the number of points in this slice is correct
 
@@ -1035,13 +1051,9 @@
             NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
             islice_selected_source,ispec_selected_source, &
             xi_source,eta_source,gamma_source, &
-            rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCT)
+            rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION)
 
   if(minval(t_cmt) /= 0.) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
-
-! for the movies, we do not use a Heaviside source
-  if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval(hdur) < HDUR_MIN_MOVIES) &
-    call exit_MPI(myrank,'hdur too small for movie creation')
 
   open(unit=IIN,file='DATA/STATIONS',status='old')
   read(IIN,*) nrec
@@ -1088,7 +1100,7 @@
      iboolcorner_crust_mantle, &
      NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE), &
      NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
-     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH)
+     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
 
 ! outer core
   call read_arrays_buffers_solver(IREGION_OUTER_CORE,myrank, &
@@ -1100,7 +1112,7 @@
      iboolcorner_outer_core, &
      NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE), &
      NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
-     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH)
+     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
 
 ! inner core
   call read_arrays_buffers_solver(IREGION_INNER_CORE,myrank, &
@@ -1112,7 +1124,7 @@
      iboolcorner_inner_core, &
      NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
      NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
-     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH)
+     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
@@ -1212,7 +1224,7 @@
 
 ! read arrays for Stacey conditions
 
-  if(STACEY_ABS_CONDITIONS) then
+  if(ABSORBING_CONDITIONS) then
       open(unit=27,file=prname(1:len_trim(prname))//'nimin.bin',status='unknown',form='unformatted')
       read(27) nimin_crust_mantle
       close(27)
@@ -1319,7 +1331,7 @@
 
 ! read arrays for Stacey conditions
 
-  if(STACEY_ABS_CONDITIONS) then
+  if(ABSORBING_CONDITIONS) then
       open(unit=27,file=prname(1:len_trim(prname))//'nimin.bin',status='unknown',form='unformatted')
       read(27) nimin_outer_core
       close(27)
@@ -1495,7 +1507,7 @@
   endif
 
   write(IMAIN,*)
-  if(THREE_D) then
+  if(ISOTROPIC_3D_MANTLE) then
     write(IMAIN,*) 'incorporating 3-D lateral variations'
   else
     write(IMAIN,*) 'no 3-D lateral variations'
@@ -1559,7 +1571,7 @@
   endif
 
   write(IMAIN,*)
-  if(ANISOTROPIC_MANTLE) then
+  if(ANISOTROPIC_3D_MANTLE) then
     write(IMAIN,*) 'incorporating anisotropic mantle'
   else
     write(IMAIN,*) 'no general mantle anisotropy'
@@ -1587,7 +1599,7 @@
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY)
+            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NCHUNKS)
 
 ! crust and mantle
   call assemble_MPI_scalar(myrank,rmass_crust_mantle,nglob_crust_mantle, &
@@ -1601,7 +1613,7 @@
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY)
+            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NCHUNKS)
 
 ! outer core
   call assemble_MPI_scalar(myrank,rmass_outer_core,nglob_outer_core, &
@@ -1615,7 +1627,7 @@
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY)
+            NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NCHUNKS)
 
 ! inner core
   call assemble_MPI_scalar(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
@@ -1629,7 +1641,7 @@
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY)
+            NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY,NCHUNKS)
 
   if(myrank == 0) write(IMAIN,*) 'end assembling MPI mass matrix'
 
@@ -2037,7 +2049,7 @@
    array_central_cube(:) = 0._CUSTOM_REAL
 
 ! use indirect addressing to store contributions only once
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
    do imsg = 1,nb_msgs_theor_in_cube
    do ipoin = 1,npoin2D_cube_from_slices
      if(CUSTOM_REAL == SIZE_REAL) then
@@ -2096,7 +2108,7 @@
         do i = 1,NGLLX
           ipoin = ipoin + 1
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
             rmass_inner_core(ibool_inner_core(i,j,k,ispec)) = sngl(buffer_slices(ipoin,1))
           else
@@ -2197,7 +2209,7 @@
      else
     do iregion_attenuation = 1,NUM_REGIONS_ATTENUATION
       call get_attenuation_model(myrank,iregion_attenuation,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,tau_mu_dble, &
-        tau_sigma_dble,beta_dble,one_minus_sum_beta_dble,factor_scale_dble)
+        tau_sigma_dble,beta_dble,one_minus_sum_beta_dble,factor_scale_dble,NCHUNKS)
 
       tauinv(:) = -1.0 / tau_sigma_dble(:)
       if(iregion_attenuation == IREGION_ATTENUATION_INNER_CORE) then
@@ -2351,7 +2363,7 @@
 
   endif ! ATTENUATION_3D
 
-    if(ANISOTROPIC_MANTLE) then
+    if(ANISOTROPIC_3D_MANTLE) then
       scale_factor_minus_one = scale_factor - 1.
       mul = c44store_crust_mantle(i,j,k,ispec)
       c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) &
@@ -2451,12 +2463,15 @@
 ! and that we can neglect the 3D model and use PREM every 100 m in all cases
 ! this is probably a rather reasonable assumption
   if(GRAVITY) then
-    call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST)
+    call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST,RICB,RCMB, &
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
     do int_radius = 1,NRAD_GRAVITY
       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
       call splint(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g)
       idoubling = 0
-      call prem_iso(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling,.false.,ONE_CRUST,.false.)
+      call prem_iso(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling,.false., &
+        ONE_CRUST,.false.,IASPEI,RICB,RCMB,RTOPDDOUBLEPRIME, &
+        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
       dg = 4.0d0*rho - 2.0d0*g/radius
       minus_gravity_table(int_radius) = - g
       minus_deriv_gravity_table(int_radius) = - dg
@@ -2481,7 +2496,7 @@
     radius = RICB / R_EARTH
     call splint(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_icb_dble)
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
       minus_g_cmb = sngl(- g_cmb_dble)
       minus_g_icb = sngl(- g_icb_dble)
@@ -2530,7 +2545,7 @@
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
   scale_displ = R_EARTH
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
     deltat = sngl(DT/scale_t)
     deltatover2 = sngl(0.5d0*DT/scale_t)
@@ -2543,7 +2558,7 @@
 
 ! non-dimensionalized rotation rate of the Earth times two
   if(ROTATION) then
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
       two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t))
     else
@@ -2599,7 +2614,7 @@
   enddo
 
 ! Stacey, indexing for inlined code
-  if(NCHUNKS /= 6 .and. STACEY_ABS_CONDITIONS) then
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
 
     allocate(stacey_outer_core_xmin_j(NGLLSQUARE,nspec2D_xmin_outer_core))
     allocate(stacey_outer_core_xmin_k(NGLLSQUARE,nspec2D_xmin_outer_core))
@@ -2889,7 +2904,7 @@
 ! compute the maximum of the norm of the displacement
 ! in all the slices using an MPI reduction
 ! and output timestamp file to check that simulation is running fine
-  if(mod(it,ITAFF_TIME_STEPS) == 0 .or. it == it_begin + 4) then
+  if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4) then
 
 ! compute maximum of norm of displacement in each slice
     Usolidnorm = max( &
@@ -2970,7 +2985,7 @@
          nglob_outer_core,index_fluid_i,index_fluid_k)
 
 ! Stacey conditions
-  if(NCHUNKS /= 6 .and. STACEY_ABS_CONDITIONS) then
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
 
 !   xmin
 ! if two chunks exclude this face for one of them
@@ -3238,7 +3253,7 @@
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY)
+            NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NCHUNKS)
 
 ! multiply by the inverse of the mass matrix and update velocity
 
@@ -3277,10 +3292,10 @@
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,1), size(factor_common_crust_mantle,2), &
           size(factor_common_crust_mantle,3), size(factor_common_crust_mantle,4), &
-          index_i, index_k, index_dim)
+          index_i,index_k,index_dim,R80)
 
 ! Stacey
-  if(NCHUNKS /= 6 .and. STACEY_ABS_CONDITIONS) then
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
 
 ! crust & mantle
 
@@ -3491,7 +3506,7 @@
       stf = 0.d0
     endif
 
-!   distinguish whether single or double precision for reals
+!   distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
       stf_used = sngl(stf)
     else
@@ -3635,7 +3650,7 @@
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY)
+            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NCHUNKS)
 
 ! inner core
   call assemble_MPI_vector(myrank,accel_inner_core,NGLOB_INNER_CORE, &
@@ -3649,7 +3664,7 @@
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY)
+            NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY,NCHUNKS)
 
 !---
 !---  use buffers to assemble forces with the central cube
@@ -3717,7 +3732,7 @@
   array_central_cube(:) = 0._CUSTOM_REAL
 
 ! use indirect addressing to store contributions only once
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
    do imsg = 1,nb_msgs_theor_in_cube
    do ipoin = 1,npoin2D_cube_from_slices
      if(CUSTOM_REAL == SIZE_REAL) then
@@ -3776,7 +3791,7 @@
       do ij = 1,NGLLSQUARE
         ipoin = ipoin + 1
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then
           accel_inner_core(1,ibool_inner_core(ij,1,k,ispec)) = sngl(buffer_slices(ipoin,1))
           accel_inner_core(2,ibool_inner_core(ij,1,k,ispec)) = sngl(buffer_slices(ipoin,2))
@@ -3937,7 +3952,7 @@
 
 ! store North, East and Vertical components
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
         seismograms(1,irec_local,it) = sngl(scale_displ*(nu(1,1,irec)*uxd + &
                           nu(1,2,irec)*uyd + nu(1,3,irec)*uzd))
@@ -3957,12 +3972,12 @@
   enddo
 
 ! write the current seismograms
-  if(mod(it,NSEIS) == 0) &
+  if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) &
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
           network_name,nrec,nrec_local,DT,NSTEP,minval(hdur),LOCAL_PATH,it_begin,it_end)
 
 ! save movie frame
-  if(MOVIE_SURFACE .and. mod(it,NMOVIE) == 0) then
+  if(MOVIE_SURFACE .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
 ! save velocity here to avoid static offset on displacement for movies
 

@@ -19,11 +19,11 @@
 
   implicit none
 
+  include "constants.h"
+
   double precision om,hdur
 
-! source decay rate (also change in source time function if needed)
-  double precision, parameter :: decay_rate = 2.628d0
-
-  comp_source_spectrum = dexp(-0.25d0*(om*hdur/decay_rate)**2)
+  comp_source_spectrum = dexp(-0.25d0*(om*hdur/SOURCE_DECAY_RATE)**2)
 
   end function comp_source_spectrum
+

@@ -26,7 +26,7 @@
   real(kind=CUSTOM_REAL) x,y,z,r,theta,phi
   double precision xmesh,ymesh,zmesh
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
 
     xmesh = dble(x)

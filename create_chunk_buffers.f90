@@ -23,7 +23,7 @@
                 NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NPOIN1D_RADIAL, &
                 NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
                 NSPEC_AB,NSPEC_AC,NSPEC_BC,myrank,LOCAL_PATH, &
-                addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice)
+                addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
 
   implicit none
 
@@ -38,7 +38,7 @@
   integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT,NPOIN1D_RADIAL
   integer NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX
   integer NSPEC_AB,NSPEC_AC,NSPEC_BC
-  integer myrank,nspec
+  integer myrank,nspec,NCHUNKS
 
 ! arrays with the mesh
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -122,7 +122,6 @@
   integer iproc_eta_slice(0:NPROCTOT-1)
 
 ! this to avoid problem at compile time if less than six chunks
-  integer, parameter :: NCHUNKS_MAX = 6
   integer addressing_big(NCHUNKS_MAX,0:NPROC_XI-1,0:NPROC_ETA-1)
 
 ! number of faces between chunks
@@ -137,15 +136,9 @@
 ! maximum number of points in a slice
   integer NGLOBMAX
 
-! local file unit for output of buffers
-  integer, parameter :: IOUT_BUFFERS = 35
-
   integer NPROC_ONE_DIRECTION
 
-! flags to select the right corner in each slice
-  integer, parameter :: ILOWERLOWER = 1, ILOWERUPPER = 2, IUPPERLOWER = 3,IUPPERUPPER = 4
-
-! ************** subroutine STARTS HERE **************
+! ************** subroutine starts here **************
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -800,7 +793,7 @@
 !! DK DK UGLY in the future, should also assemble second corner when NCHUNKS = 2
 !! DK DK UGLY for now we only assemble one corner for simplicity
 !! DK DK UGLY formally this is incorrect and should be changed in the future
-!! DK DK UGLY in practice this trick works fine of course
+!! DK DK UGLY in practice this trick works fine
 
 ! this only if more than 3 chunks
   if(NCHUNKS > 3) then

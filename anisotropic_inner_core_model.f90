@@ -23,13 +23,15 @@
 
 !-----------------------------------
 
-  subroutine aniso_inner_core_model(x,c11,c33,c12,c13,c44)
+  subroutine aniso_inner_core_model(x,c11,c33,c12,c13,c44,IASPEI)
 
   implicit none
 
   include "constants.h"
 
 ! given a normalized radius x, gives non-dimensionalized c11,c33,c12,c13,c44
+
+  logical IASPEI
 
   double precision x,c11,c33,c12,c13,c44
 

@@ -15,7 +15,8 @@
 !
 !=====================================================================
 
-  subroutine make_gravity(nspl,rspl,gspl,gspl2,ONE_CRUST)
+  subroutine make_gravity(nspl,rspl,gspl,gspl2,ONE_CRUST,RICB,RCMB, &
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
 ! creates a spline for the gravity profile in PREM
 ! radius and density are non-dimensional
@@ -25,10 +26,14 @@
   include "constants.h"
 
   integer nspl
+
   logical ONE_CRUST
-  double precision rspl(NR),gspl(NR),gspl2(NR)
+
+  double precision rspl(NR),gspl(NR),gspl2(NR),RICB,RCMB,RTOPDDOUBLEPRIME, &
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   integer i
+
   double precision r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
   double precision r_400,r_220,r_80,r_moho,r_middle_crust,r_ocean,r_0
   double precision r(NR),rho(NR),g(NR),i_rho
@@ -90,7 +95,8 @@
   enddo
 
   do i=1,NR
-    call prem_density(r(i),rho(i),ONE_CRUST)
+    call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
   enddo
 
   g(1)=0.0d0

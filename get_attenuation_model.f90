@@ -16,7 +16,7 @@
 !=====================================================================
 
   subroutine get_attenuation_model(myrank,iregion_attenuation,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-         tau_mu,tau_sigma,beta,one_minus_sum_beta,factor_scale)
+         tau_mu,tau_sigma,beta,one_minus_sum_beta,factor_scale,NCHUNKS)
 
 ! return attenuation mechanisms Q_mu in PREM using standard linear solids
 ! the Tau values computed by Jeroen's code are used
@@ -28,7 +28,7 @@
 
   include "constants.h"
 
-  integer iregion_attenuation,myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+  integer iregion_attenuation,myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NCHUNKS
 
   double precision, dimension(N_SLS) :: tau_mu,tau_sigma,beta
   double precision one_minus_sum_beta

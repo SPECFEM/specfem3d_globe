@@ -26,8 +26,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common, &
-          vx, vy, vz, vnspec)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80)
 
   implicit none
 
@@ -54,6 +53,8 @@
   integer i_sls,i_memory
 ! variable sized array variables for one_minus_sum_beta and factor_common
   integer vx, vy, vz, vnspec
+
+  double precision R80
 
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
@@ -298,7 +299,7 @@
 ! compute either isotropic or anisotropic elements
 !
 
-  if(ANISOTROPIC_MANTLE_VAL) then
+  if(ANISOTROPIC_3D_MANTLE_VAL) then
 
     c11 = c11store(i,j,k,ispec)
     c12 = c12store(i,j,k,ispec)
@@ -655,7 +656,7 @@
 
   iglob = ibool(i,j,k,ispec)
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
 
 ! get displacement and multiply by density to compute G tensor
@@ -819,7 +820,7 @@
      else
         factor_common_c44_muv(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
      endif
-     if(ANISOTROPIC_MANTLE_VAL) then
+     if(ANISOTROPIC_3D_MANTLE_VAL) then
         factor_common_c44_muv = factor_common_c44_muv * c44store(:,:,:,ispec)
      else
         factor_common_c44_muv = factor_common_c44_muv * muvstore(:,:,:,ispec)

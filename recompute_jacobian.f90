@@ -47,8 +47,8 @@
 
   integer ia
 
-!! recompute jacobian for any given (xi,eta,gamma) point
-!! not necessarily a GLL point
+! recompute jacobian for any given (xi,eta,gamma) point
+! not necessarily a GLL point
 
 ! check that the parameter file is correct
   if(NGNOD /= 27) stop 'elements should have 27 control nodes'
@@ -220,6 +220,7 @@
   zxi=ZERO
   zeta=ZERO
   zgamma=ZERO
+
   do ia=1,NGNOD
     x=x+shape3D(ia)*xelm(ia)
     y=y+shape3D(ia)*yelm(ia)
@@ -234,12 +235,11 @@
     zxi=zxi+dershape3D(1,ia)*zelm(ia)
     zeta=zeta+dershape3D(2,ia)*zelm(ia)
     zgamma=zgamma+dershape3D(3,ia)*zelm(ia)
-
   enddo
 
-  jacobian=xxi*(yeta*zgamma-ygamma*zeta)- &
-             xeta*(yxi*zgamma-ygamma*zxi)+ &
+  jacobian = xxi*(yeta*zgamma-ygamma*zeta) - xeta*(yxi*zgamma-ygamma*zxi) + &
              xgamma*(yxi*zeta-yeta*zxi)
+
   if(jacobian <= ZERO) stop '3D Jacobian undefined'
 
 ! invert the relation (Fletcher p. 50 vol. 2)

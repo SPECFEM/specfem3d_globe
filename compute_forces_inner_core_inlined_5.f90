@@ -464,7 +464,7 @@
   Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
   Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
 
 ! get displacement and multiply by density to compute G tensor
