@@ -1,28 +1,116 @@
 program attenuation
+!    Complile:
+!      f90 -o attenuation_test atteuation.f90 attenuation_simplex.f90
+!
+!    Compiling this code with pgf90 truncates the relaxation times on output
+!        to single precision (real(4)), whereas using ifort (ifc)  does not
+!        For sanity, use ifort to compile and use the run_attenuation2.sh
+!        script  to obtain the values for prem
+!
+! Brian Savage 19/01/05
+!  This code should not produce the exact values that attenuation_prem.c
+!    It has been updated to use a more robust inversion for the 
+!    the stress and strain relaxation times
+!    A simplex inversion is used
+!
 ! Brian Savage 22/03/04
 !  This code should produce the exact values that attenuation_prem.c output
 !  It is similar and the basis of the subroutines in attenuation_model.f90
+
   real(8) t1,t2,Q
-  integer n
+  integer i, n
+
+  integer write_central_period
 
   real(8) omega_not
   real(8), dimension(3) :: tau_e,tau_s
 
-  t1 = 1000.0d0
-  t2 = 20.0d0
-  n = 3
-  Q = 80.0d0
+  write_central_period = 0
 
-  tau_e(:) = 0.0d0
-  tau_s(:) = 0.0d0
+!  write(*,*)'longest period (seconds): '
+  read(5,*, end=13)t1
+!  write(*,*)'shortest period (seconds): '
+  read(5,*, end=13)t2
+  write(*,*)
+  write(*,'(A16F11.6A4F11.6A2)')'! period range: ', t2, ' -- ', t1, ' s'
+  write(*,*)
+!  write(*,*)'number of mechanisms: '
+  read(5,*, end=13)n
+42 continue 
+!  write(*,*)'Q: '
+  read(5,*, end=13)Q
+  
+  tau_e(:)  = 0.0d0
+  tau_s(:)  = 0.0d0
   omega_not = 0.0d0
+  
+  !  call attenuation_liu(t1, t2, n, Q, omega_not, tau_s, tau_e)
+  call attenuation_simplex(t1, t2, n, Q, omega_not, tau_s, tau_e)
+  if(write_central_period == 0) then
+     write(*,*)"! define central period of source in seconds using values from Jeroen's code"
+     write(*,'(A27,F20.15,A2)')'  T_c_source = 1000.d0 / ', omega_not ,'d0'
+     write(*,*)
+     write(*,*)'! tau sigma evenly spaced in log frequency, does not depend on value of Q'
+     do i = 1,n
+        write(*,'(A13,I1,A4,F30.20,A2)')'  tau_sigma(',i,') = ', tau_s(i), 'd0'
+     end do
+     write(*,*)
+     write(*,*)"! check in which region we are based upon doubling flag"
+     write(*,*)
+     write(*,*)'  select case(iregion_attenuation)'
+     write(*,*)
+     write_central_period = 1
 
-  call attenuation_liu(t1, t2, n, Q, omega_not, tau_s, tau_e)
+  endif
+  if(Q == 84.6d0) then
+     write(*,*)'!--- inner core, target Q_mu: 84.60'
+     write(*,*)
+     write(*,*)'  case(IREGION_ATTENUATION_INNER_CORE)'
+     write(*,*)
+  end if
+  if(Q == 312.0d0) then
+     write(*,*)'!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.'
+     write(*,*)
+     write(*,*)'  case(IREGION_ATTENUATION_CMB_670)'
+     write(*,*)
+  end if
+  if(Q == 143.0d0) then
+     write(*,*)'!--- d670 -> d220, target Q_mu: 143.'
+     write(*,*)
+     write(*,*)'  case(IREGION_ATTENUATION_670_220)'
+     write(*,*)
+  end if
+  if(Q == 80.0d0) then
+     write(*,*)'!--- d220 -> depth of 80 km, target Q_mu:  80.'
+     write(*,*)
+     write(*,*)'  case(IREGION_ATTENUATION_220_80)'
+     write(*,*)
+  end if
+  if(Q == 600.0d0) then
+     write(*,*)'!--- depth of 80 km -> surface, target Q_mu: 600.'
+     write(*,*)
+     write(*,*)'  case(IREGION_ATTENUATION_80_SURFACE)'
+     write(*,*)
+  end if
+  
+  do i = 1,n
+     write(*,'(A12,I1,A4,F30.20,A2)')'     tau_mu(',i,') = ', tau_e(i), 'd0'
+  end do
+  write(*,'(A17,F20.10,A2)')'       Q_mu = ', Q, 'd0'
+  write(*,*)
 
-  write(*,*)'Output'
-  write(*,*)omega_not
-  write(*,*)tau_s(:)
-  write(*,*)tau_e(:)
+  goto 42
+  
+  
+13 continue
+  write(*,*)'!--- do nothing for fluid outer core (no attenuation there)'
+  write(*,*)
+  write(*,*)'  case default'
+  write(*,*)
+  write(*,*)"    call exit_MPI(myrank,'wrong attenuation flag in mesh')"
+  write(*,*)
+  write(*,*)'  end select'
+  write(*,*)
 
 end program attenuation
 
@@ -31,7 +119,7 @@ subroutine attenuation_memory_values(tau_s, deltat, alphaval,betaval,gammaval)
   implicit none
   integer, parameter :: N_SLS = 3
   real(8), dimension(N_SLS) :: tau_s, alphaval, betaval,gammaval
-  real(8), deltat
+  real(8)  deltat
 
   real(8), dimension(N_SLS) :: tauinv
 
@@ -131,7 +219,12 @@ subroutine attenuation_property_values(myrank, tau_s, tau_e, factor_common, one_
 
 end subroutine attenuation_property_values
 
-subroutine attenuation_liu(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
+
+
+!!!!!!
+! Inversion by SVD
+
+subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
   implicit none
   real(8)  t1, t2
   integer  n
@@ -233,15 +326,16 @@ subroutine attenuation_liu(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
   tau_e(:) = x1(:) + x2(:)
   tau_s(:) = x2(:)
 
-end subroutine attenuation_liu
+end subroutine attenuation_invert_SVD
 
 
 subroutine invert(x,b,A,n)
 
-  implicit none 
+  implicit none
+  
+  integer n
   real(8), dimension(n)   :: x, b
   real(8), dimension(n,n) :: A
-  integer n
 
   integer i, j, k
   real(8), dimension(n)   :: W, xp
@@ -310,8 +404,8 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
   REAL(DP) :: anorm,c,f,g,h,s,scale,x,y,z
   REAL(DP), DIMENSION(size(a,1)) :: tempm
   REAL(DP), DIMENSION(size(a,2)) :: rv1,tempn
-  REAL(DP), PYTHAG_DP
-  REAL(DP), OUTERPROD_D
+  REAL(DP)  PYTHAG_DP
+  REAL(DP) OUTERPROD_D
   m=size(a,1)
 !  n=assert_eq(size(a,2),size(v,1),size(v,2),size(w),'svdcmp_dp')
   n = size(a,2)
