@@ -165,12 +165,29 @@
 ! memory variables and standard linear solids for attenuation
   double precision, dimension(N_SLS) :: tau_mu_dble,tau_sigma_dble,beta_dble
   double precision factor_scale_dble,one_minus_sum_beta_dble
-  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: tau_mu,tau_sigma,beta
-  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: factor_scale,one_minus_sum_beta
+! BS
+!   real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: tau_mu,tau_sigma,beta
+!   real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: factor_scale,one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: tau_mu,beta
+  double precision, dimension(:,:,:,:), allocatable   :: omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
+  double precision, dimension(:,:,:,:), allocatable   :: omsb_inner_core_dble, factor_scale_inner_core_dble
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable   :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable   :: one_minus_sum_beta_inner_core, factor_scale_inner_core
+! BS END
 
   real(kind=CUSTOM_REAL) mul
 
-  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: tauinv,alphaval,betaval,gammaval,factor_common
+! BS
+!   real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: tauinv,alphaval,betaval,gammaval,factor_common
+  double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
+  double precision, dimension(N_SLS) :: tauinv
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval, betaval, gammaval
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: factor_common_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: factor_common_inner_core
+  double precision, dimension(:,:,:,:,:), allocatable :: factor_common_crust_mantle_dble
+  double precision, dimension(:,:,:,:,:), allocatable :: factor_common_inner_core_dble
+! BS END
+
   integer iregion_attenuation
   double precision dist,scale_factor,scale_factor_minus_one
 
@@ -524,7 +541,11 @@
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY, &
              GRAVITY,ONE_CRUST,ROTATION, &
              THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS, &
-             MOVIE_SURFACE,MOVIE_VOLUME
+! BS
+!             MOVIE_SURFACE,MOVIE_VOLUME
+             MOVIE_SURFACE,MOVIE_VOLUME, ATTENUATION_3D
+! BS END
+
   integer NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
   double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES
 
@@ -583,7 +604,10 @@
         GRAVITY,ONE_CRUST,ATTENUATION, &
         ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
         MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
-        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+! BS
+!        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, ATTENUATION_3D)
+! BS END
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -800,6 +824,48 @@
   allocate(iproc_master_corners(NCORNERSCHUNKS))
   allocate(iproc_slave1_corners(NCORNERSCHUNKS))
   allocate(iproc_slave2_corners(NCORNERSCHUNKS))
+
+! BS
+! attenuation
+  if(ATTENUATION) then
+     if(ATTENUATION_3D) then
+        ! for all points in the mesh
+        ! Allocate CRUST MANTLE
+        allocate(      factor_scale_crust_mantle(       NGLLX, NGLLY, NGLLZ, nspec_crust_mantle))
+        allocate(one_minus_sum_beta_crust_mantle(       NGLLX, NGLLY, NGLLZ, nspec_crust_mantle))
+        allocate(     factor_common_crust_mantle(N_SLS, NGLLX, NGLLY, NGLLZ, nspec_crust_mantle))
+
+        allocate( factor_scale_crust_mantle_dble(       NGLLX, NGLLY, NGLLZ, nspec_crust_mantle))
+        allocate(         omsb_crust_mantle_dble(       NGLLX, NGLLY, NGLLZ, nspec_crust_mantle))
+        allocate(factor_common_crust_mantle_dble(N_SLS, NGLLX, NGLLY, NGLLZ, nspec_crust_mantle))
+        ! Allocate INNER CORE
+        allocate(      factor_scale_inner_core(       NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
+        allocate(one_minus_sum_beta_inner_core(       NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
+        allocate(     factor_common_inner_core(N_SLS, NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
+
+        allocate( factor_scale_inner_core_dble(       NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
+        allocate(         omsb_inner_core_dble(       NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
+        allocate(factor_common_inner_core_dble(N_SLS, NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
+     else
+        ! Allocate CRUST MANTLE
+        allocate(      factor_scale_crust_mantle(       1, 1, 1, NUM_REGIONS_ATTENUATION))
+        allocate(one_minus_sum_beta_crust_mantle(       1, 1, 1, NUM_REGIONS_ATTENUATION))
+        allocate(     factor_common_crust_mantle(N_SLS, 1, 1, 1, NUM_REGIONS_ATTENUATION))
+
+        allocate(factor_scale_crust_mantle_dble(       1, 1, 1, NUM_REGIONS_ATTENUATION))
+        allocate(        omsb_crust_mantle_dble(       1, 1, 1, NUM_REGIONS_ATTENUATION))
+        allocate(factor_common_crust_mantle_dble(N_SLS, 1, 1, 1, NUM_REGIONS_ATTENUATION))
+        ! Allocate INNER CORE
+        allocate(      factor_scale_inner_core(       1, 1, 1, 1))
+        allocate(one_minus_sum_beta_inner_core(       1, 1, 1, 1))
+        allocate(     factor_common_inner_core(N_SLS, 1, 1, 1, 1))
+
+        allocate( factor_scale_inner_core_dble(       1, 1, 1, 1))
+        allocate(         omsb_inner_core_dble(       1, 1, 1, 1))
+        allocate(factor_common_inner_core_dble(N_SLS, 1, 1, 1, 1))
+     endif
+  endif
+! BS END
 
 ! start reading the databases
 
@@ -1453,6 +1519,12 @@
   write(IMAIN,*)
   if(ATTENUATION) then
     write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
+! BS
+    if(ATTENUATION_3D) then
+       write(IMAIN,*)
+       write(IMAIN,*)'      using 3D attenuation'
+    endif
+! BS END
   else
     write(IMAIN,*) 'no attenuation'
   endif
@@ -1551,7 +1623,7 @@
 !
 
   if(INCLUDE_CENTRAL_CUBE) then
-
+  if(myrank == 0) write(IMAIN,*) 'including central cube'
 !--- number of messages to expect in cube
 !--- take into account vertical sides and bottom side
 
@@ -2040,7 +2112,7 @@
    enddo
    endif
 
-
+  if(myrank == 0) write(IMAIN,*) 'done including central cube'
   endif   ! end of assembling mass matrix for matching with central cube
 
 
@@ -2097,25 +2169,81 @@
 
 ! get and store PREM attenuation model
 
+! BS
+! BS ATTENUATION_3D get values from mesher
+     if(ATTENUATION_3D) then
+        ! BS CRUST_MANTLE ATTENUATION
+        call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
+        call get_attenuation_model_3D(myrank, prname, omsb_crust_mantle_dble, &
+             factor_common_crust_mantle_dble, factor_scale_crust_mantle_dble, tau_sigma_dble, nspec_crust_mantle)
+        ! BS INNER_CORE ATTENUATION
+        call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
+        call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
+             factor_common_inner_core_dble, factor_scale_inner_core_dble, tau_sigma_dble, NSPEC_INNER_CORE)
+     else
+! BS END
     do iregion_attenuation = 1,NUM_REGIONS_ATTENUATION
       call get_attenuation_model(myrank,iregion_attenuation,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,tau_mu_dble, &
         tau_sigma_dble,beta_dble,one_minus_sum_beta_dble,factor_scale_dble)
 
+! BS
 ! distinguish whether single or double precision for reals
-      if(CUSTOM_REAL == SIZE_REAL) then
-        tau_mu(iregion_attenuation,:) = sngl(tau_mu_dble(:))
-        tau_sigma(iregion_attenuation,:) = sngl(tau_sigma_dble(:))
-        beta(iregion_attenuation,:) = sngl(beta_dble(:))
-        factor_scale(iregion_attenuation) = sngl(factor_scale_dble)
-        one_minus_sum_beta(iregion_attenuation) = sngl(one_minus_sum_beta_dble)
-      else
-        tau_mu(iregion_attenuation,:) = tau_mu_dble(:)
-        tau_sigma(iregion_attenuation,:) = tau_sigma_dble(:)
-        beta(iregion_attenuation,:) = beta_dble(:)
-        factor_scale(iregion_attenuation) = factor_scale_dble
-        one_minus_sum_beta(iregion_attenuation) = one_minus_sum_beta_dble
+!      if(CUSTOM_REAL == SIZE_REAL) then
+!        tau_mu(iregion_attenuation,:) = sngl(tau_mu_dble(:))
+!         tau_sigma(iregion_attenuation,:) = sngl(tau_sigma_dble(:))
+!        beta(iregion_attenuation,:) = sngl(beta_dble(:))
+!      else
+!        tau_mu(iregion_attenuation,:) = tau_mu_dble(:)
+!         tau_sigma(iregion_attenuation,:) = tau_sigma_dble(:)
+!        beta(iregion_attenuation,:) = beta_dble(:)
+!     endif ! if(CUSTOM_REAL == SIZE_REAL)
+!
+      tauinv(:) = -1.0 / tau_sigma_dble(:)
+      if(iregion_attenuation .EQ. IREGION_ATTENUATION_INNER_CORE) then
+         factor_common_inner_core_dble(:,1,1,1,1) = 2.0 * beta_dble(:) * tauinv(:)
       endif
-    enddo
+      factor_common_crust_mantle_dble(:,1,1,1,iregion_attenuation) = 2.0 * beta_dble(:) * tauinv(:)
+
+      if(iregion_attenuation .EQ. IREGION_ATTENUATION_INNER_CORE) then
+         factor_scale_inner_core_dble(1,1,1,1) = factor_scale_dble
+         omsb_inner_core_dble(1,1,1,1) = one_minus_sum_beta_dble
+      endif
+      factor_scale_crust_mantle_dble(1,1,1,iregion_attenuation) = factor_scale_dble
+      omsb_crust_mantle_dble(1,1,1,iregion_attenuation) = one_minus_sum_beta_dble
+      
+! BS END
+
+   enddo ! iregion_attenuation = 1, NUM_REGIONS_ATTENUATION
+
+! BS
+   endif ! ATTENUATION_3D
+
+   if(CUSTOM_REAL == SIZE_REAL) then
+      factor_scale_crust_mantle       = sngl(factor_scale_crust_mantle_dble)
+      one_minus_sum_beta_crust_mantle = sngl(omsb_crust_mantle_dble)
+      factor_common_crust_mantle      = sngl(factor_common_crust_mantle_dble)
+
+      factor_scale_inner_core         = sngl(factor_scale_inner_core_dble)
+      one_minus_sum_beta_inner_core   = sngl(omsb_inner_core_dble)
+      factor_common_inner_core        = sngl(factor_common_inner_core_dble)
+   else
+      factor_scale_crust_mantle       = factor_scale_crust_mantle_dble
+      one_minus_sum_beta_crust_mantle = omsb_crust_mantle_dble
+      factor_common_crust_mantle      = factor_common_crust_mantle_dble
+
+      factor_scale_inner_core         = factor_scale_inner_core_dble
+      one_minus_sum_beta_inner_core   = omsb_inner_core_dble
+      factor_common_inner_core        = factor_common_inner_core_dble
+   endif
+
+   deallocate(factor_scale_crust_mantle_dble)
+   deallocate(omsb_crust_mantle_dble)
+   deallocate(factor_common_crust_mantle_dble)
+   
+   deallocate(factor_scale_inner_core_dble)
+   deallocate(omsb_inner_core_dble)
+   deallocate(factor_common_inner_core_dble)
+! BS END
 
 ! rescale in crust and mantle
 
@@ -2124,15 +2252,28 @@
         do j=1,NGLLY
           do i=1,NGLLX
 
+! BS
+! BS ATTENUATION_3D get scale_factor
+             if(ATTENUATION_3D) then
+                ! BS tau_mu and tau_sigma need to reference a point in the mesh
+                scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
+             else 
+! BS END
   if(idoubling_crust_mantle(ispec) == IFLAG_DOUBLING_670 .or. &
      idoubling_crust_mantle(ispec) == IFLAG_MANTLE_NORMAL .or. &
      idoubling_crust_mantle(ispec) == IFLAG_BOTTOM_MANTLE) then
 
-     scale_factor = factor_scale(IREGION_ATTENUATION_CMB_670)
+! BS
+!      scale_factor = factor_scale(IREGION_ATTENUATION_CMB_670)
+     scale_factor = factor_scale_crust_mantle(1,1,1,IREGION_ATTENUATION_CMB_670)
+! BS END
 
   else if(idoubling_crust_mantle(ispec) == IFLAG_670_220) then
 
-     scale_factor = factor_scale(IREGION_ATTENUATION_670_220)
+! BS
+!      scale_factor = factor_scale(IREGION_ATTENUATION_670_220)
+     scale_factor = factor_scale_crust_mantle(1,1,1,IREGION_ATTENUATION_670_220)
+! BS END
 
   else if(idoubling_crust_mantle(ispec) == IFLAG_220_MOHO .or. idoubling_crust_mantle(ispec) == IFLAG_CRUST) then
 
@@ -2151,9 +2292,17 @@
     endif
 
     if(dist > R80/R_EARTH) then
-      scale_factor = factor_scale(IREGION_ATTENUATION_80_SURFACE)
+! BS
+!       scale_factor = factor_scale(IREGION_ATTENUATION_80_SURFACE)
+      scale_factor = factor_scale_crust_mantle(1,1,1,IREGION_ATTENUATION_80_SURFACE)
+! BS END
+
     else
-      scale_factor = factor_scale(IREGION_ATTENUATION_220_80)
+! BS
+!       scale_factor = factor_scale(IREGION_ATTENUATION_220_80)
+      scale_factor = factor_scale_crust_mantle(1,1,1,IREGION_ATTENUATION_220_80)
+! BS END
+
     endif
 
   else
@@ -2161,6 +2310,9 @@
     call exit_MPI(myrank,'wrong attenuation doubling flag')
 
   endif
+! BS
+  endif ! ATTENUATION_3D
+! BS END
 
     if(ANISOTROPIC_MANTLE) then
       scale_factor_minus_one = scale_factor - 1.
@@ -2192,17 +2344,27 @@
           enddo
         enddo
       enddo
-    enddo
+    enddo ! END DO CRUST MANTLE
 
 ! rescale in inner core
 
-    scale_factor_minus_one = factor_scale(IREGION_ATTENUATION_INNER_CORE) - 1.
+! BS
+!     scale_factor_minus_one = factor_scale(IREGION_ATTENUATION_INNER_CORE) - 1.
+    if(.NOT. ATTENUATION_3D) then
+       scale_factor_minus_one = factor_scale_inner_core(1,1,1,1) - 1.
+    endif
+! BS END
 
     do ispec = 1,NSPEC_INNER_CORE
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
 
+! BS
+            if(ATTENUATION_3D) then
+               scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
+            endif
+! BS END                   
         if(ANISOTROPIC_INNER_CORE) then
           mul = muvstore_inner_core(i,j,k,ispec)
           c11store_inner_core(i,j,k,ispec) = c11store_inner_core(i,j,k,ispec) &
@@ -2217,16 +2379,30 @@
                   + scale_factor_minus_one * mul
         endif
 
-        muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale(IREGION_ATTENUATION_INNER_CORE)
+! BS
+!         muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale(IREGION_ATTENUATION_INNER_CORE)
+            if(ATTENUATION_3D) then
+               muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
+            else
+               muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,1)
+            endif
+! BS END
 
           enddo
         enddo
       enddo
-    enddo
+    enddo ! END DO INNER CORE 
 
-  endif
+! BS
+! BS Deallocate these arrays because they are not needed anymore
+    deallocate(factor_scale_crust_mantle)
+    deallocate(factor_scale_inner_core)
+! BS END
+
+  endif ! END IF(ATTENUATION)
 
 ! initialize arrays to zero
+
   displ_crust_mantle(:,:) = 0._CUSTOM_REAL
   veloc_crust_mantle(:,:) = 0._CUSTOM_REAL
   accel_crust_mantle(:,:) = 0._CUSTOM_REAL
@@ -2355,14 +2531,26 @@
   endif
 
 ! precompute Runge-Kutta coefficients if attenuation
+! BS
+!     tauinv(:,:) = - 1. / tau_sigma(:,:)
+!     factor_common(:,:) = 2. * beta(:,:) * tauinv(:,:)
+!     alphaval(:,:) = 1 + deltat*tauinv(:,:) + deltat**2*tauinv(:,:)**2 / 2. + &
+!       deltat**3*tauinv(:,:)**3 / 6. + deltat**4*tauinv(:,:)**4 / 24.
+!     betaval(:,:) = deltat / 2. + deltat**2*tauinv(:,:) / 3. + deltat**3*tauinv(:,:)**2 / 8. + deltat**4*tauinv(:,:)**3 / 24.
+!     gammaval(:,:) = deltat / 2. + deltat**2*tauinv(:,:) / 6. + deltat**3*tauinv(:,:)**2 / 24.
   if(ATTENUATION) then
-    tauinv(:,:) = - 1. / tau_sigma(:,:)
-    factor_common(:,:) = 2. * beta(:,:) * tauinv(:,:)
-    alphaval(:,:) = 1 + deltat*tauinv(:,:) + deltat**2*tauinv(:,:)**2 / 2. + &
-      deltat**3*tauinv(:,:)**3 / 6. + deltat**4*tauinv(:,:)**4 / 24.
-    betaval(:,:) = deltat / 2. + deltat**2*tauinv(:,:) / 3. + deltat**3*tauinv(:,:)**2 / 8. + deltat**4*tauinv(:,:)**3 / 24.
-    gammaval(:,:) = deltat / 2. + deltat**2*tauinv(:,:) / 6. + deltat**3*tauinv(:,:)**2 / 24.
+     call attenuation_memory_values(tau_sigma_dble, deltat, alphaval_dble, betaval_dble, gammaval_dble)
+     if(CUSTOM_REAL == SIZE_REAL) then
+        alphaval = sngl(alphaval_dble)
+        betaval  = sngl(betaval_dble)
+        gammaval = sngl(gammaval_dble)
+     else
+        alphaval = alphaval_dble
+        betaval  = betaval_dble
+        gammaval = gammaval_dble
+     endif
   endif
+! BS END
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -2532,7 +2720,6 @@
 ! check stability of the code, exit if unstable
       if(Usolidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in solid')
       if(Ufluidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in fluid')
-
     endif
   endif
 
@@ -2831,8 +3018,14 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,idoubling_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common)
+! BS
+!           R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta, &
+!           alphaval,betaval,gammaval,factor_common)
+          R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          alphaval,betaval,gammaval,factor_common_crust_mantle, &
+          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), & 
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
+! BS END
 
 ! JT JT Stacey
 
@@ -3007,8 +3200,17 @@
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common)
+! BS
+!           R_memory_inner_core,epsilondev_inner_core,one_minus_sum_beta, &
+!           alphaval,betaval,gammaval,factor_common)
+          R_memory_inner_core,epsilondev_inner_core, &
+          one_minus_sum_beta_inner_core, &
+          alphaval,betaval,gammaval, &
+          factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+! BS END
+
 
   do isource = 1,NSOURCES
 

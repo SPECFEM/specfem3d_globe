@@ -156,9 +156,13 @@
   external read_crustal_model, read_mantle_model,  &
        read_aniso_mantle_model, read_aniso_inner_core_model, &
        crustal_model, mantle_model, aniso_mantle_model, &
-       aniso_inner_core_model
+! BS
+!       aniso_inner_core_model
+       aniso_inner_core_model, attenuation_model
+! BS END
 
 ! correct number of spectral elements in each block depending on chunk type
+
   integer nspec,nspec_aniso,nspec_aniso_mantle,nspec_aniso_mantle_all,npointot
 
 ! meshing parameters
@@ -235,7 +239,11 @@
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY, &
              GRAVITY,ONE_CRUST,ROTATION, &
              THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS, &
-             MOVIE_SURFACE,MOVIE_VOLUME
+! BS
+!             MOVIE_SURFACE,MOVIE_VOLUME
+             MOVIE_SURFACE,MOVIE_VOLUME, ATTENUATION_3D
+! BS END
+
   integer NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
   double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES
 
@@ -291,7 +299,10 @@
         GRAVITY,ONE_CRUST,ATTENUATION, &
         ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
         MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
-        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+! BS
+!        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, ATTENUATION_3D)
+! BS END
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -501,6 +512,12 @@
   write(IMAIN,*)
   if(ATTENUATION) then
     write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
+! BS
+    if(ATTENUATION_3D) then
+       write(IMAIN,*)'     using 3D attenuation'
+    endif
+! BS END
+
   else
     write(IMAIN,*) 'no attenuation'
   endif
@@ -526,6 +543,12 @@
   if(CRUSTAL) call read_crustal_model
 
   if (ANISOTROPIC_INNER_CORE) call read_aniso_inner_core_model
+
+! BS
+  if(ATTENUATION .AND. ATTENUATION_3D) then
+     call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+  endif
+! BS END
 
 ! read topography and bathymetry file
   if(TOPOGRAPHY .or. OCEANS) call read_topo_bathy_file(ibathy_topo)
@@ -897,7 +920,11 @@
          NSPEC2D_C_ETA(iregion_code),NSPEC1D_RADIAL(iregion_code),NPOIN1D_RADIAL(iregion_code), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
          crustal_model,mantle_model,aniso_mantle_model, &
-         aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+! BS
+!         aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+         aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA, &
+         attenuation_model, ATTENUATION, ATTENUATION_3D)
+! BS END
 
 ! store number of anisotropic elements found in the mantle
   if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
@@ -1078,7 +1105,10 @@
   call save_header_file(NSPEC_AB,NSPEC_AC,NSPEC_BC,nglob_AB,nglob_AC,nglob_BC, &
         NEX_XI,NEX_ETA,nspec_aniso_mantle_all,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION)
+! BS
+!        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION)
+        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION, ATTENUATION_3D)
+! BS END
 
   endif   ! end of section executed by main process only
 

@@ -31,7 +31,11 @@
            NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA,NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
            crustal_model,mantle_model,aniso_mantle_model, &
-           aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+! BS
+!           aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+           aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA,&
+           attenuation_model, ATTENUATION, ATTENUATION_3D)
+! BS END
 
 ! create the different regions of the mesh
 
@@ -40,8 +44,16 @@
   include "constants.h"
 
   external mantle_model,crustal_model,aniso_mantle_model, &
-       aniso_inner_core_model
+! BS
+!       aniso_inner_core_model
+       aniso_inner_core_model, attenuation_model
+! BS END
+
 ! correct number of spectral elements in each block depending on chunk type
+! BS
+  logical ATTENUATION, ATTENUATION_3D
+! BS END
+
   integer nspec,nspec_tiso,nspec_stacey
 
   integer NER,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -202,10 +214,33 @@
 ! rotation matrix from Euler angles
   double precision rotation_matrix(3,3)
 
+! BS
+! attenuation
+  double precision, dimension(:,:,:,:),   allocatable :: Qmu_store
+  double precision, dimension(:,:,:,:,:), allocatable :: tau_e_store
+  double precision, dimension(N_SLS)                  :: tau_s
+  double precision  T_c_source
+! BS END
+
 ! **************
 
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
+
+! BS
+! Attenuation
+  if(ATTENUATION .AND. ATTENUATION_3D) then
+     allocate(Qmu_store(NGLLX, NGLLY, NGLLZ, nspec))
+     allocate(tau_e_store(N_SLS, NGLLX, NGLLY, NGLLZ, nspec))
+  else
+     allocate(Qmu_store(1, 1, 1, 1))
+     allocate(tau_e_store(N_SLS, 1, 1, 1, 1))
+     Qmu_store(1,1,1,1)     = 0.0d0
+     tau_e_store(:,1,1,1,1) = 0.0d0
+  endif
+  T_c_source = 0.0
+  tau_s(:) = 0.0
+! BS END
 
 ! Gauss-Lobatto-Legendre points of integration
   allocate(xigll(NGLLX))
@@ -429,7 +464,12 @@
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+! BS
+!          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA, &
+          attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
+          size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5))
+! BS END
 
 ! add topography without the crustal model
         if(TOPOGRAPHY .and. (idoubling(ispec) == IFLAG_CRUST &
@@ -585,7 +625,10 @@
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA, &
+          attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
+          size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5))
+
 
 ! make the Earth elliptical
         if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
@@ -868,7 +911,14 @@
             jacobian2D_bottom,jacobian2D_top, &
             iMPIcut_xi,iMPIcut_eta,nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS)
+! BS
+!            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS)
+            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
+            tau_s, tau_e_store, Qmu_store, T_c_source, &
+            ATTENUATION, ATTENUATION_3D, &
+            size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5))
+! BS END    
+    
 
   do ispec=1,nspec
     do k=1,NGLLZ

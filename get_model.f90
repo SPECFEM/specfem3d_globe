@@ -28,14 +28,26 @@
     TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D, &
     CRUSTAL,ONE_CRUST, &
     crustal_model,mantle_model,aniso_mantle_model, &
-    aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+! BS
+!    aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+    aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA,&
+    attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, vx, vy, vz, vnspec)
+! BS END
 
   implicit none
 
   include "constants.h"
 
   external mantle_model,crustal_model,aniso_mantle_model, &
-       aniso_inner_core_model
+! BS
+!       aniso_inner_core_model
+       aniso_inner_core_model, attenuation_model
+! BS END
+
+! BS
+  logical ATTENUATION, ATTENUATION_3D
+! BS END
+
   integer ispec,nspec,ichunk,idoubling,iregion_code,myrank,nspec_stacey
   integer NPROC_XI,NPROC_ETA
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D,CRUSTAL,ONE_CRUST
@@ -87,12 +99,23 @@
   double precision lat,lon
   double precision vpc,vsc,rhoc,moho
 
+  ! Attenuation values
+  integer vx, vy, vz, vnspec
+  double precision, dimension(N_SLS)                     :: tau_s, tau_e
+  double precision, dimension(vx, vy, vz, vnspec)        :: Qmu_store
+  double precision, dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
+  double precision  T_c_source
+
   logical found_crust
 
   double precision ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA
 
 ! rotation matrix from Euler angles
   double precision rotation_matrix(3,3)
+
+  tau_s(:)   = 0.0d0
+  tau_e(:)   = 0.0d0
+  T_c_source = 0.0d0
 
   do k=1,NGLLZ
     do j=1,NGLLY
@@ -207,6 +230,18 @@
            c66 = c44
          endif
        endif
+! BS
+       if(ATTENUATION .AND. ATTENUATION_3D) then
+           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
+           call reduce(theta,phi)
+           lat=(PI/2.0d0-theta)*180.0d0/PI
+           lon=phi*180.0d0/PI
+           if(lon > 180.0d0) then
+              lon = lon - 360.0d0
+           endif
+           call attenuation_model(myrank, lat, lon, r, Qmu, tau_s, tau_e, T_c_source)
+       endif
+! BS END
 
 !      get the 3-D crustal model
        if(CRUSTAL) then
@@ -357,6 +392,13 @@
          endif
 
        endif
+! BS
+       if(ATTENUATION .AND. ATTENUATION_3D) then
+          tau_e_store(:,i,j,k,ispec) = tau_e(:)
+          Qmu_store(i,j,k,ispec)     = Qmu
+       endif
+! BS END
+         
 
      enddo
    enddo

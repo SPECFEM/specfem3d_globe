@@ -26,7 +26,12 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common)
+! BS 
+! BS Added sizes to pass either N_SLS or N_SLS*NUM_NODES to factor_common or one_minus_sum_beta
+!          alphaval,betaval,gammaval,factor_common)
+          alphaval,betaval,gammaval,factor_common, &
+          vx, vy, vz, vnspec)
+! BS END
 
   implicit none
 
@@ -51,8 +56,17 @@
 ! memory variables R_ij are stored at the local rather than global level
 ! to allow for optimization of cache access by compiler
   integer i_sls,i_memory
+! BS
+! BS variable sized array variables for one_minus_sum_beta and factor_common
+  integer vx, vy, vz, vnspec
+! BS END
+
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
-  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: one_minus_sum_beta
+! BS
+!  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+! BS END
+
   double precision dist
   integer iregion_selected
 
@@ -60,7 +74,14 @@
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT) :: R_memory
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common
+! BS
+! BS [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
+!   real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
+  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
+! BS END
+
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL) epsilon_trace_over_3
 
@@ -239,6 +260,13 @@
 
 ! distinguish regions in the mantle, including case of the d80
 
+! BS
+! BS attenuation 3d flag if else loop
+    if(ATTENUATION_VAL_3D) then
+       one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+    else
+! BS END
+
   if(idoubling(ispec) == IFLAG_DOUBLING_670 .or. &
      idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. &
      idoubling(ispec) == IFLAG_BOTTOM_MANTLE) then
@@ -272,8 +300,13 @@
     endif
 
    endif
+   
+! BS
+!     one_minus_sum_beta_use = one_minus_sum_beta(iregion_selected)
+    one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
+  endif ! ATTENUATION_3D
+! BS END
 
-    one_minus_sum_beta_use = one_minus_sum_beta(iregion_selected)
     minus_sum_beta =  one_minus_sum_beta_use - 1.
 
   endif
@@ -796,22 +829,46 @@
 ! get coefficients for that standard linear solid
 ! IMPROVE we use mu_v here even if there is some anisotropy
 ! IMPROVE we should probably use an average value instead
-  if(ANISOTROPIC_MANTLE_VAL) then
-    R_memory(i_memory,i_sls,:,:,:,ispec) = alphaval(iregion_selected,i_sls) * &
-      R_memory(i_memory,i_sls,:,:,:,ispec) + c44store(:,:,:,ispec) * &
-      factor_common(iregion_selected,i_sls) * &
-      (betaval(iregion_selected,i_sls) * epsilondev(i_memory,:,:,:,ispec) + &
-       gammaval(iregion_selected,i_sls) * epsilondev_loc(i_memory,:,:,:))
-  else
-    R_memory(i_memory,i_sls,:,:,:,ispec) = alphaval(iregion_selected,i_sls) * &
-      R_memory(i_memory,i_sls,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
-      factor_common(iregion_selected,i_sls) * &
-      (betaval(iregion_selected,i_sls) * epsilondev(i_memory,:,:,:,ispec) + &
-       gammaval(iregion_selected,i_sls) * epsilondev_loc(i_memory,:,:,:))
-  endif
 
-    enddo
-    enddo
+! BS
+! BS reformated R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
+!
+!   if(ANISOTROPIC_MANTLE_VAL) then
+!     R_memory(i_memory,i_sls,:,:,:,ispec) = alphaval(iregion_selected,i_sls) * &
+!       R_memory(i_memory,i_sls,:,:,:,ispec) + c44store(:,:,:,ispec) * &
+!       factor_common(iregion_selected,i_sls) * &
+!       (betaval(iregion_selected,i_sls) * epsilondev(i_memory,:,:,:,ispec) + &
+!        gammaval(iregion_selected,i_sls) * epsilondev_loc(i_memory,:,:,:))
+!   else
+!     R_memory(i_memory,i_sls,:,:,:,ispec) = alphaval(iregion_selected,i_sls) * &
+!       R_memory(i_memory,i_sls,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
+!       factor_common(iregion_selected,i_sls) * &
+!       (betaval(iregion_selected,i_sls) * epsilondev(i_memory,:,:,:,ispec) + &
+!        gammaval(iregion_selected,i_sls) * epsilondev_loc(i_memory,:,:,:))
+!   endif
+! 
+!     enddo
+!     enddo
+     
+     if(ATTENUATION_VAL_3D) then
+        factor_common_c44_muv = factor_common(i_sls,:,:,:,ispec)
+     else
+        factor_common_c44_muv(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
+     endif
+     if(ANISOTROPIC_MANTLE_VAL) then
+        factor_common_c44_muv = factor_common_c44_muv * c44store(:,:,:,ispec)
+     else
+        factor_common_c44_muv = factor_common_c44_muv * muvstore(:,:,:,ispec)
+     endif
+
+     R_memory(i_memory,i_sls,:,:,:,ispec) = alphaval(i_sls) * &
+                R_memory(i_memory,i_sls,:,:,:,ispec) + &
+                factor_common_c44_muv * &
+                (betaval(i_sls) * epsilondev(i_memory,:,:,:,ispec) + &
+                gammaval(i_sls) * epsilondev_loc(i_memory,:,:,:))
+     enddo
+  enddo
+! BS END
 
 ! save deviatoric strain for Runge-Kutta scheme
     epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
