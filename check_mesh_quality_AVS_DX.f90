@@ -103,8 +103,6 @@
   print *,'Recombining all mesh quality files for slices'
   print *
 
-  if(.not. SAVE_AVS_DX_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
-
   print *,'1 = create files in OpenDX format'
   print *,'2 = create files in AVS UCD format'
   print *,'any other value = exit'
@@ -154,6 +152,8 @@
           PRINT_SOURCE_TIME_FUNCTION,SAVE_AVS_DX_MESH_FILES, &
           ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL)
+
+  if(.not. SAVE_AVS_DX_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
