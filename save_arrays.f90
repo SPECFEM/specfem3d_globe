@@ -15,7 +15,8 @@
 !
 !=====================================================================
 
-  subroutine save_arrays(rho_vp,rho_vs,prname,iregion_code,xixstore,xiystore,xizstore, &
+  subroutine save_arrays(rho_vp,rho_vs,nspec_stacey, &
+            prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore,jacobianstore, &
             xstore,ystore,zstore, &
@@ -39,7 +40,7 @@
 
   include "constants.h"
 
-  integer nspec,nglob
+  integer nspec,nglob,nspec_stacey
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
   integer npointot_oceans
 
@@ -66,8 +67,8 @@
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
 ! Stacey
-  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey)
+  real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
 
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
@@ -343,18 +344,28 @@
 ! Stacey
   if(REGIONAL_CODE) then
 
+    if(iregion_code == IREGION_CRUST_MANTLE) then
+
 ! rho_vp
-  open(unit=27,file=prname(1:len_trim(prname))//'rho_vp.bin',status='unknown',form='unformatted')
-  write(27) rho_vp
-  close(27)
+      open(unit=27,file=prname(1:len_trim(prname))//'rho_vp_mantle.bin',status='unknown',form='unformatted')
+      write(27) rho_vp
+      close(27)
 
 ! rho_vs
-  open(unit=27,file=prname(1:len_trim(prname))//'rho_vs.bin',status='unknown',form='unformatted')
-  write(27) rho_vs
-  close(27)
+      open(unit=27,file=prname(1:len_trim(prname))//'rho_vs_mantle.bin',status='unknown',form='unformatted')
+      write(27) rho_vs
+      close(27)
+
+    elseif(iregion_code == IREGION_OUTER_CORE) then
+
+! we need just vp in the outer core for Stacey conditions
+      open(unit=27,file=prname(1:len_trim(prname))//'vp_outer_core.bin',status='unknown',form='unformatted')
+      write(27) rho_vp
+      close(27)
+
+    endif
 
   endif
-
 
 ! ibool
   open(unit=27,file=prname(1:len_trim(prname))//'ibool.bin',status='unknown',form='unformatted')

@@ -352,15 +352,26 @@
 
   if(REGIONAL_CODE) then
 
+    if(iregion_code == IREGION_CRUST_MANTLE) then
+
 ! rho_vp
-  open(unit=IIN,file=prname(1:len_trim(prname))//'rho_vp.bin',status='old',form='unformatted')
-  read(IIN) rho_vp
-  close(IIN)
+      open(unit=IIN,file=prname(1:len_trim(prname))//'rho_vp_mantle.bin',status='old',form='unformatted')
+      read(IIN) rho_vp
+      close(IIN)
 
 ! rho_vs
-  open(unit=IIN,file=prname(1:len_trim(prname))//'rho_vs.bin',status='old',form='unformatted')
-  read(IIN) rho_vs
-  close(IIN)
+      open(unit=IIN,file=prname(1:len_trim(prname))//'rho_vs_mantle.bin',status='old',form='unformatted')
+      read(IIN) rho_vs
+      close(IIN)
+
+    elseif(iregion_code == IREGION_OUTER_CORE) then
+
+! vp
+      open(unit=IIN,file=prname(1:len_trim(prname))//'vp_outer_core.bin',status='old',form='unformatted')
+      read(IIN) rho_vp
+      close(IIN)
+
+    endif
 
   endif
 

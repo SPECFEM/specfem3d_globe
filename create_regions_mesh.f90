@@ -42,7 +42,7 @@
   external mantle_model,crustal_model,aniso_mantle_model, &
        aniso_inner_core_model
 ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,nspec_tiso
+  integer nspec,nspec_tiso,nspec_stacey
 
   integer NER,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
   integer NER_TOP_CENTRAL_CUBE_ICB,NER_CENTRAL_CUBE_CMB,NER_670_400,NER_400_220,NER_220_MOHO
@@ -243,14 +243,13 @@
   allocate(eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec))
 
 ! Stacey
-!! DK DK is this risky, because used in save_arrays ? probably ok
   if(REGIONAL_CODE) then
-    allocate(rho_vp(NGLLX,NGLLY,NGLLZ,nspec))
-    allocate(rho_vs(NGLLX,NGLLY,NGLLZ,nspec))
+    nspec_stacey = nspec
   else
-    allocate(rho_vp(NGLLX,NGLLY,NGLLZ,1))
-    allocate(rho_vs(NGLLX,NGLLY,NGLLZ,1))
+    nspec_stacey = 1
   endif
+  allocate(rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey))
+  allocate(rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey))
 
   nspec_ani = 1
   if((ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) .or. &
@@ -425,6 +424,7 @@
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           xelm,yelm,zelm,shape3D,ispec,iboun,iMPIcut_xi,iMPIcut_eta, &
           rmin,rmax,ichunk,doubling_index, &
+          rho_vp,rho_vs,nspec_stacey, &
           NPROC_XI,NPROC_ETA, &
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
@@ -580,6 +580,7 @@
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           xelm,yelm,zelm,shape3D,ispec,iboun,iMPIcut_xi,iMPIcut_eta, &
           rmin,rmax,ichunk,doubling_index, &
+          rho_vp,rho_vs,nspec_stacey, &
           NPROC_XI,NPROC_ETA, &
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
@@ -742,9 +743,9 @@
                   NSPEC1D_RADIAL,NPOIN1D_RADIAL)
 
 ! Stacey
-  if(REGIONAL_CODE) call get_absorb(prname,iboun,nspec, &
-       nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
-       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
+  if(REGIONAL_CODE) &
+       call get_absorb(prname,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
+                       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 
 ! create AVS or DX mesh data for the slices
   if(SAVE_AVS_DX_MESH_FILES) then
@@ -848,7 +849,8 @@
   endif
 
 ! save the binary files
-    call save_arrays(rho_vp,rho_vs,prname,iregion_code,xixstore,xiystore,xizstore, &
+    call save_arrays(rho_vp,rho_vs,nspec_stacey, &
+            prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore,jacobianstore, &
             xstore,ystore,zstore, &
