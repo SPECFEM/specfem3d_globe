@@ -42,7 +42,7 @@
 !! DK DK for regional code
   double precision x,y,gamma,rgt,xi,eta
   double precision x_top,y_top,z_top
-  double precision ANGULAR_SIZE_CHUNK_RAD
+  double precision ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA
 
 ! rotation matrix from Euler angles
   integer i,j,ix,iy,icorner
@@ -130,14 +130,16 @@
   write(IOUT,*) '! position of the mesh chunk at the surface:'
   write(IOUT,*) '! -----------------------------------------'
   write(IOUT,*) '!'
-  write(IOUT,*) '! angular size in each direction in degrees = ',sngl(ANGULAR_SIZE_CHUNK_DEG)
+  write(IOUT,*) '! angular size in first direction in degrees = ',sngl(ANGULAR_SIZE_CHUNK_DEG_1)
+  write(IOUT,*) '! angular size in second direction in degrees = ',sngl(ANGULAR_SIZE_CHUNK_DEG_2)
   write(IOUT,*) '!'
   write(IOUT,*) '! longitude of center in degrees = ',sngl(CENTER_LONGITUDE_DEG)
   write(IOUT,*) '! latitude of center in degrees = ',sngl(CENTER_LATITUDE_DEG)
 
 ! compute rotation matrix from Euler angles
-  ANGULAR_SIZE_CHUNK_RAD = ANGULAR_SIZE_CHUNK_DEG * PI / 180.
-  call euler_angles(rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
+  ANGULAR_SIZE_CHUNK_RAD_XI = ANGULAR_SIZE_CHUNK_DEG_1 * PI / 180.
+  ANGULAR_SIZE_CHUNK_RAD_ETA = ANGULAR_SIZE_CHUNK_DEG_2 * PI / 180.
+  call euler_angles(rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_ETA)
 
 ! loop on the four corners of the chunk to display their coordinates
   icorner = 0
@@ -146,8 +148,8 @@
 
     icorner = icorner + 1
 
-    xi= - ANGULAR_SIZE_CHUNK_RAD/2. + dble(ix)*ANGULAR_SIZE_CHUNK_RAD
-    eta= - ANGULAR_SIZE_CHUNK_RAD/2. + dble(iy)*ANGULAR_SIZE_CHUNK_RAD
+    xi= - ANGULAR_SIZE_CHUNK_RAD_XI/2. + dble(ix)*ANGULAR_SIZE_CHUNK_RAD_XI
+    eta= - ANGULAR_SIZE_CHUNK_RAD_ETA/2. + dble(iy)*ANGULAR_SIZE_CHUNK_RAD_ETA
 
     x=dtan(xi)
     y=dtan(eta)
