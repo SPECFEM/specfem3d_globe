@@ -1465,13 +1465,6 @@
 ! initialize seismograms
   seismograms(:,:,:) = 0._CUSTOM_REAL
 
-! initialize memory variables for attenuation
-  epsilondev_xx(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_yy(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_xy(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_xz(:,:,:,:) = 0._CUSTOM_REAL
-  epsilondev_yz(:,:,:,:) = 0._CUSTOM_REAL
-
   if(myrank == 0) then
 
   write(IMAIN,*)
@@ -2533,9 +2526,15 @@
     R_memory_crust_mantle(:,:,:,:,:,:) = 0._CUSTOM_REAL
     R_memory_inner_core(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
+    epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+    epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
+
     if(FIX_UNDERFLOW_PROBLEM) then
       R_memory_crust_mantle(:,:,:,:,:,:) = VERYSMALLVAL
       R_memory_inner_core(:,:,:,:,:,:) = VERYSMALLVAL
+
+      epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
+      epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
     endif
 
   endif

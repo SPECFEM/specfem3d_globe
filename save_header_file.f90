@@ -54,7 +54,7 @@
   integer i,j,ix,iy,icorner
   double precision rotation_matrix(3,3)
   double precision vector_ori(3),vector_rotated(3)
-  double precision r_corner,theta_corner,phi_corner,relat,relon,colat_corner
+  double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
 
 ! copy number of elements and points in an include file for the solver
   open(unit=IOUT,file='OUTPUT_FILES/values_from_mesher.h',status='unknown')
@@ -198,13 +198,13 @@
     if(phi_corner>PI) phi_corner=phi_corner-TWO_PI
 
 ! compute real position of the source
-    relat = (PI/2.0d0-colat_corner)*180.0d0/PI
-    relon = phi_corner*180.0d0/PI
+    lat = (PI/2.0d0-colat_corner)*180.0d0/PI
+    long = phi_corner*180.0d0/PI
 
     write(IOUT,*) '!'
     write(IOUT,*) '! corner ',icorner
-    write(IOUT,*) '! longitude in degrees = ',relon
-    write(IOUT,*) '! latitude in degrees = ',relat
+    write(IOUT,*) '! longitude in degrees = ',long
+    write(IOUT,*) '! latitude in degrees = ',lat
 
     enddo
   enddo

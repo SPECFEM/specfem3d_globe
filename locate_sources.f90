@@ -118,8 +118,7 @@
   double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
 
-  double precision, dimension(NSOURCES) :: elat,elon,depth
-  double precision relat,relon,rdepth
+  double precision, dimension(NSOURCES) :: lat,long,depth
   double precision scalar_moment
   double precision moment_tensor(6,NSOURCES)
   double precision radius
@@ -148,7 +147,7 @@
 ! **************
 
 ! read all the sources
-  call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,NSOURCES)
+  call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor,DT,NSOURCES)
 
 ! define topology of the control element
   call usual_hex_nodes(iaddx,iaddy,iaddz)
@@ -159,10 +158,10 @@
 ! loop on all the sources
   do isource = 1,NSOURCES
 
-! convert geographic latitude elat (degrees)
+! convert geographic latitude lat (degrees)
 ! to geocentric colatitude theta (radians)
-  theta=PI/2.0d0-atan(0.99329534d0*dtan(elat(isource)*PI/180.0d0))
-  phi=elon(isource)*PI/180.0d0
+  theta=PI/2.0d0-atan(0.99329534d0*dtan(lat(isource)*PI/180.0d0))
+  phi=long(isource)*PI/180.0d0
   call reduce(theta,phi)
 
 ! get the moment tensor
@@ -196,7 +195,7 @@
 
   if(ELLIPTICITY) then
     if(TOPOGRAPHY) then
-      call get_topo_bathy(elat(isource),elon(isource),elevation,ibathy_topo)
+      call get_topo_bathy(lat(isource),long(isource),elevation,ibathy_topo)
       r0 = r0 + elevation/R_EARTH
     endif
     dcost = dcos(theta)
@@ -450,23 +449,20 @@
     colat_source=PI/2.0d0-datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
     if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
-! compute real position of the source
-    relat = (PI/2.0d0-colat_source)*180.0d0/PI
-    relon = phi_source(isource)*180.0d0/PI
-    rdepth = (r0-r_found_source)*R_EARTH/1000.0d0
-
     write(IMAIN,*)
     write(IMAIN,*) 'original (requested) position of the source:'
     write(IMAIN,*)
-    write(IMAIN,*) '      latitude: ',elat(isource)
-    write(IMAIN,*) '     longitude: ',elon(isource)
+    write(IMAIN,*) '      latitude: ',lat(isource)
+    write(IMAIN,*) '     longitude: ',long(isource)
     write(IMAIN,*) '         depth: ',depth(isource),' km'
     write(IMAIN,*)
+
+! compute real position of the source
     write(IMAIN,*) 'position of the source that will be used:'
     write(IMAIN,*)
-    write(IMAIN,*) '      latitude: ',relat
-    write(IMAIN,*) '     longitude: ',relon
-    write(IMAIN,*) '         depth: ',rdepth,' km'
+    write(IMAIN,*) '      latitude: ',(PI/2.0d0-colat_source)*180.0d0/PI
+    write(IMAIN,*) '     longitude: ',phi_source(isource)*180.0d0/PI
+    write(IMAIN,*) '         depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
     write(IMAIN,*)
 
 ! display error in location estimate
