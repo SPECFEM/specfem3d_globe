@@ -79,12 +79,15 @@ end module aniso_mantle_model_variables
   double precision d11,d12,d13,d16,d22,d23,d26,d33,d36,d44,d45,d55,d66
   double precision colat,lon
 
-! uncomment this line to suppress anisotropic mantle models
-!  call exit_MPI(myrank,'anisotropic mantle models not implemented yet')
-
   lon = phi / DEGREES_TO_RADIANS
   colat = theta / DEGREES_TO_RADIANS
 
+! uncomment this line to suppress the anisotropic mantle model
+! call exit_MPI(myrank,'please provide an anisotropic mantle model for subroutine aniso_mantle_model')
+
+! assign the local (d_ij) or global (c_ij) anisotropic parameters.
+! The c_ij are the coefficients in the global
+! reference frame used in SPECFEM3D.
   call build_cij(pro,npar1,rho,beta,r,colat,lon,d11,d12,d13,d16,&
         d22,d23,d26,d33,d36,d44,d45,d55,d66,myrank)
 
