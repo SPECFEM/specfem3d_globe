@@ -449,6 +449,10 @@
   if(NER_CMB_670<16) call exit_MPI(myrank,'NER_CMB_670 should be at least 16')
   if(NER_CENTRAL_CUBE_CMB<4) call exit_MPI(myrank,'NER_CENTRAL_CUBE_CMB should be at least 4')
 
+!! DK DK check that sphere can be cut into slices without getting negative Jacobian
+  if(NEX_XI < 48) call exit_MPI(myrank,'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian')
+  if(NEX_ETA < 48) call exit_MPI(myrank,'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian')
+
   if(IASPEI .and. TRANSVERSE_ISOTROPY) call exit_MPI(myrank,'IASPEI is currently isotropic')
 
   if(myrank == 0) then
