@@ -1045,6 +1045,10 @@
   endif
   write(IMAIN,*)
 
+  write(IMAIN,*)
+  write(IMAIN,*) 'total number of time steps in the solver will be: ',NSTEP
+  write(IMAIN,*)
+
 ! write information about precision used for floating-point operations
   if(CUSTOM_REAL == SIZE_REAL) then
     write(IMAIN,*) 'using single precision for the calculations'
