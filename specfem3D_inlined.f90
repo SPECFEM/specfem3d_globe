@@ -3256,6 +3256,8 @@
           R_memory_inner_core,epsilondev_inner_core,one_minus_sum_beta, &
           alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
 
+! this loop on sources is not vectorized
+! because of dependencies in global assembly
 !CDIR NOVECTOR
   do isource = 1,NSOURCES
 
