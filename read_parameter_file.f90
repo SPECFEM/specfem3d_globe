@@ -449,8 +449,9 @@
 ! RICB: radius of ICB (m)
 
 ! values common to PREM and IASPEI
-  R80 = 6291000.d0
+  ROCEAN = 6368000.d0
   RMIDDLE_CRUST = 6356000.d0
+  R80 = 6291000.d0
 
   RHO_OCEANS = 1020.0 / RHOAV
 
@@ -470,13 +471,9 @@
     RHO_TOP_OC = 9900.2379 / RHOAV
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
-! fictitious value for IASPEI oceans
-    ROCEAN = 1.d0
-
   else
 
 ! PREM
-    ROCEAN = 6368000.d0
     RMOHO = 6346600.d0
     R220 = 6151000.d0
     R400 = 5971000.d0
