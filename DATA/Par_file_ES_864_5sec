@@ -1,0 +1,136 @@
+# ----------------------------------------------------------------
+#
+#    This is the parameter file
+#    Put variable names first and actual value after 27th column
+#
+# ----------------------------------------------------------------
+#
+<-                       ->
+#
+
+! number of elements along chunk edge at surface (16 * multiple of NPROC below)
+NEX_XI                   = 864
+NEX_ETA                  = 864
+
+! number of MPI processors along xi and eta in each of the six chunks
+NPROC_XI                 = 18
+NPROC_ETA                = 18
+
+! time step in seconds
+DT                       = 0.075
+
+! total number of time steps
+NSTEP                    = 36000
+
+! parameters describing the Earth model
+OCEANS                   = .true.
+ELLIPTICITY              = .true.
+TOPOGRAPHY               = .true.
+THREE_D                  = .true.
+GRAVITY                  = .false.
+ROTATION                 = .false.
+TRANSVERSE_ISOTROPY      = .true.
+ANISOTROPIC_MANTLE       = .false.
+ANISOTROPIC_INNER_CORE   = .false.
+CRUSTAL                  = .true.
+ONE_CRUST                = .false.
+ATTENUATION              = .true.
+MIN_ATTENUATION_PERIOD   = 5
+MAX_ATTENUATION_PERIOD   = 400
+
+! number of radial elements in mesh for full Earth
+NER_CRUST                = 3
+NER_220_MOHO             = 7
+NER_400_220              = 7
+NER_600_400              = 7
+NER_670_600              = 3
+NER_771_670              = 3
+NER_TOPDDOUBLEPRIME_771  = 46
+NER_CMB_TOPDDOUBLEPRIME  = 4
+RATIO_TOP_DBL_OC         = 0.48
+RATIO_BOTTOM_DBL_OC      = 0.43
+NER_TOPDBL_CMB           = 38
+NER_ICB_BOTTOMDBL        = 30
+NER_TOP_CENTRAL_CUBE_ICB = 6
+
+! path to store the local database files on each node
+LOCAL_PATH               = /scratch/DATABASES_MPI_DIMITRI
+
+! machine file for MPI
+MACHINE_FILE             = mymachines
+
+! interval in time steps for temporary writing of seismograms
+NSEIS                    = 500000
+
+! number of point sources
+NSOURCES                 = 1
+
+
+! comments only below here
+ -----------------------------------------------------------
+
+ mesh statistics:
+ ---------------
+
+ NPROC_XI =            18
+ processors =          1944
+ ES nodes =     243.0000
+ rounded ES nodes =           243
+ percentage of the ES =     37.96875      %
+ memory available (Gb) =          3888
+ ratio ES_nodes / rounded_ES_nodes =     100.0000      %
+possible NER_03 =    864    
+ period (s) =     5.000000       memory (Gb) =     2449.440
+  usage (%) =     63.00001      **** fair **** period     5.000000
+
+ !
+ ! these statistics include the central cube
+ !
+ ! number of processors =          1944
+ !
+ ! number of ES nodes =     243.0000    
+ ! percentage of total 640 ES nodes =     37.96875      %
+ ! total memory available on these ES nodes (Gb) =     3888.000    
+ !
+ ! max points in largest region =       2343921
+ ! max vector length =       7031763
+ ! min vector length =            25
+ ! min critical vector length =            75
+ !
+ ! on ES and SX-5, make sure loopcnt= parameter
+ ! in Makefile is greater than       7031763
+ !
+ ! total elements per AB slice =         44424
+ ! total points per AB slice =       2955727
+ !
+ ! total elements per AC slice =         45180
+ ! total points per AC slice =       3004783
+ !
+ ! total elements per BC slice =         46692
+ ! total points per BC slice =       3102223
+ !
+ ! load balancing AB/BC for points =     95.27771      %
+ ! load balancing AB/BC for elements =     95.14264      %
+ !
+ ! load balancing AC/BC for points =     96.85902      %
+ ! load balancing AC/BC for elements =     96.76176      %
+ !
+ ! total for full 6-chunk mesh:
+ ! ---------------------------
+ !
+ ! exact total number of spectral elements in entire mesh = 
+ !      82021248
+ ! approximate total number of points in entire mesh = 
+ !     5466737299.000000     
+ ! approximate total number of degrees of freedom in entire mesh = 
+ !     14577746889.00000     
+ !
+ ! resolution of the mesh at the surface:
+ ! -------------------------------------
+ !
+ ! spectral elements along a great circle =          3456
+ ! GLL points along a great circle =         13824
+ ! average distance between points in degrees =    2.6041666E-02
+ ! average distance between points in km =     2.895701    
+ !
+
