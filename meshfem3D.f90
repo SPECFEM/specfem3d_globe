@@ -106,6 +106,30 @@
 ! volume=83,
 ! pages={243-259}}
 !
+! Reference frame - convention:
+! ----------------------------
+!
+! The code uses the following convention for the reference frame:
+!
+!  - X axis is East
+!  - Y axis is North
+!  - Z axis is up
+!
+! Note that this convention is different from both the Aki-Richards convention
+! and the Harvard CMT convention.
+!
+! Let us recall that the Aki-Richards convention is:
+!
+!  - X axis is North
+!  - Y axis is East
+!  - Z axis is down
+!
+! and that the Harvard CMT convention is:
+!
+!  - X axis is South
+!  - Y axis is East
+!  - Z axis is up
+!
 ! Evolution of the code:
 ! ---------------------
 !
