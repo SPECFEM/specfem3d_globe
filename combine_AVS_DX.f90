@@ -45,7 +45,7 @@
   integer nrec,ir,iregion_code
   integer ntotpoinAVS_DX,ntotspecAVS_DX
 
-  double precision vmin,vmax,deltavp,deltavs
+  real(kind=CUSTOM_REAL) vmin,vmax,deltavp,deltavs
   double precision xval,yval,zval
   double precision val_color,rnorm_factor
 
