@@ -2778,7 +2778,7 @@
       if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
  
       i=1
-!CDIR NODEP(accel)
+!CDIR NODEP(accel_outer_core)
       do jk=1,stacey_outer_core_xmin_jk(ispec2D)
  
         j = stacey_outer_core_xmin_j(jk,ispec2D)
@@ -2806,7 +2806,7 @@
       if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
  
       i=NGLLX
-!CDIR NODEP(accel)
+!CDIR NODEP(accel_outer_core)
       do jk=1,stacey_outer_core_xmax_jk(ispec2D)
  
         j = stacey_outer_core_xmax_j(jk,ispec2D)
@@ -2834,7 +2834,7 @@
       if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
  
       j=1
-!CDIR NODEP(accel)
+!CDIR NODEP(accel_outer_core)
       do ik=1,stacey_outer_core_ymin_ik(ispec2D)
  
         i = stacey_outer_core_ymin_i(ik,ispec2D)
@@ -2862,7 +2862,7 @@
       if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
  
       j=NGLLY
-!CDIR NODEP(accel)
+!CDIR NODEP(accel_outer_core)
       do ik=1,stacey_outer_core_ymax_ik(ispec2D)
  
         i = stacey_outer_core_ymax_i(ik,ispec2D)
@@ -3081,7 +3081,7 @@
       if(nkmin_xi_crust_mantle(1,ispec2D) == 0 .or. njmin_crust_mantle(1,ispec2D) == 0) cycle
 
       i=1
-!CDIR NODEP(accel)
+!CDIR NODEP(accel_crust_mantle)
       do jk=1,stacey_crust_mantle_xmin_jk(ispec2D)
 
         j = stacey_crust_mantle_xmin_j(jk,ispec2D)
@@ -3123,7 +3123,7 @@
       if(nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
 
       i=NGLLX
-!CDIR NODEP(accel) 
+!CDIR NODEP(accel_crust_mantle) 
       do jk=1,stacey_crust_mantle_xmax_jk(ispec2D)
 
         j = stacey_crust_mantle_xmax_j(jk,ispec2D)
@@ -3165,7 +3165,7 @@
       if(nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
 
       j=1
-!CDIR NODEP(accel) 
+!CDIR NODEP(accel_crust_mantle) 
       do ik=1,stacey_crust_mantle_ymin_ik(ispec2D)
 
         i = stacey_crust_mantle_ymin_i(ik,ispec2D)
@@ -3207,7 +3207,7 @@
       if(nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
 
       j=NGLLY
-!CDIR NODEP(accel) 
+!CDIR NODEP(accel_crust_mantle) 
       do ik=1,stacey_crust_mantle_ymax_ik(ispec2D)
 
         i = stacey_crust_mantle_ymax_i(ik,ispec2D)
