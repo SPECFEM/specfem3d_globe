@@ -3884,13 +3884,3 @@
 
   end program specfem3D
 
-!=====================================================================
-!
-!=====================================================================
-
-!! DK DK UGLY inlined in order to vectorize source loop
-
-  include "comp_source_time_function.f90"
-
-  include "numerical_recipes.f90"
-
