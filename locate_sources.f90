@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -28,7 +28,7 @@
                  NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                  islice_selected_source,ispec_selected_source, &
                  xi_source,eta_source,gamma_source, &
-                 rspl,espl,espl2,nspl,ibathy_topo,NEX_XI)
+                 rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCT)
 
   implicit none
 
@@ -41,7 +41,7 @@
   integer NPROCTOT
   integer NSTEP,NSOURCES,NEX_XI
 
-  logical ELLIPTICITY,TOPOGRAPHY
+  logical ELLIPTICITY,TOPOGRAPHY,PRINT_SOURCE_TIME_FUNCT
 
   double precision DT
 
@@ -484,7 +484,7 @@
     endif
 
 ! print source time function and spectrum
-  if(PRINT_SOURCE_TIME_FUNCTION) then
+  if(PRINT_SOURCE_TIME_FUNCT) then
 
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'

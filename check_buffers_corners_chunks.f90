@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -41,20 +41,20 @@
   integer, dimension(:), allocatable :: iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners
 
 ! parameters read from parameter file
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST,NER_220_MOHO,NER_400_220, &
-             NER_600_400,NER_670_600,NER_771_670,NER_TOPDDOUBLEPRIME_771, &
-             NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB,NER_TOP_CENTRAL_CUBE_ICB, &
-             NEX_ETA,NEX_XI,NER_DOUBLING_OUTER_CORE, &
-             NPROC_ETA,NPROC_XI,NSEIS,NSTEP
+  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
+          NER_TOP_CENTRAL_CUBE_ICB,NEX_ETA,NEX_XI,NER_DOUBLING_OUTER_CORE, &
+          NPROC_ETA,NPROC_XI,NSEIS,NSTEP,NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL, &
+          NER_TOPDBL_CMB,ITAFF_TIME_STEPS,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
 
-  double precision DT
+  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES, &
+          ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY, &
-             GRAVITY,ONE_CRUST,ROTATION, &
-             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS, &
-             MOVIE_SURFACE,MOVIE_VOLUME
-  integer NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
-  double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
+          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,THREE_D,TOPOGRAPHY, &
+          ATTENUATION,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME, ATTENUATION_3D, &
+          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCT,SAVE_AVS_DX_MESH_FILES
 
   character(len=150) LOCAL_PATH
 
@@ -89,7 +89,10 @@
         GRAVITY,ONE_CRUST,ATTENUATION, &
         ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
         MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
-        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, ATTENUATION_3D, &
+        RECEIVERS_CAN_BE_BURIED,ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2, &
+        SAVE_AVS_DX_MESH_FILES,ITAFF_TIME_STEPS,PRINT_SOURCE_TIME_FUNCT, &
+        NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN)
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &

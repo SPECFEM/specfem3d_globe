@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -28,25 +28,17 @@
     TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D, &
     CRUSTAL,ONE_CRUST, &
     crustal_model,mantle_model,aniso_mantle_model, &
-! BS
-!    aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
     aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA,&
     attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, vx, vy, vz, vnspec)
-! BS END
 
   implicit none
 
   include "constants.h"
 
   external mantle_model,crustal_model,aniso_mantle_model, &
-! BS
-!       aniso_inner_core_model
-       aniso_inner_core_model, attenuation_model
-! BS END
+       aniso_inner_core_model,attenuation_model
 
-! BS
   logical ATTENUATION, ATTENUATION_3D
-! BS END
 
   integer ispec,nspec,ichunk,idoubling,iregion_code,myrank,nspec_stacey
   integer NPROC_XI,NPROC_ETA
@@ -230,18 +222,15 @@
            c66 = c44
          endif
        endif
-! BS
+
        if(ATTENUATION .and. ATTENUATION_3D) then
-           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
-           call reduce(theta,phi)
-           lat=(PI/2.0d0-theta)*180.0d0/PI
-           lon=phi*180.0d0/PI
-           if(lon > 180.0d0) then
-              lon = lon - 360.0d0
-           endif
-           call attenuation_model(myrank, lat, lon, r, Qmu, tau_s, tau_e, T_c_source)
+         call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
+         call reduce(theta,phi)
+         lat=(PI/2.0d0-theta)*180.0d0/PI
+         lon=phi*180.0d0/PI
+         if(lon > 180.0d0) lon = lon - 360.0d0
+         call attenuation_model(myrank, lat, lon, r, Qmu, tau_s, tau_e, T_c_source)
        endif
-! BS END
 
 !      get the 3-D crustal model
        if(CRUSTAL) then
@@ -392,13 +381,11 @@
          endif
 
        endif
-! BS
-       if(ATTENUATION .AND. ATTENUATION_3D) then
+
+       if(ATTENUATION .and. ATTENUATION_3D) then
           tau_e_store(:,i,j,k,ispec) = tau_e(:)
           Qmu_store(i,j,k,ispec)     = Qmu
        endif
-! BS END
-
 
      enddo
    enddo

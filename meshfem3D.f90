@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,7 +15,7 @@
 !
 !=====================================================================
 !
-! Copyright August 2003, by the California Institute of Technology.
+! Copyright July 2004, by the California Institute of Technology.
 ! ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
 !
 ! Any commercial use must be negotiated with the Office of Technology
@@ -62,7 +62,7 @@
 !=====================================================================!
 !
 ! If you use this code for your own research, please send an email
-! to Jeroen Tromp <jtromp@gps.caltech.edu> for information, and cite:
+! to Jeroen Tromp <jtromp@caltech.edu> for information, and cite:
 !
 ! @ARTICLE{KoRiTr02,
 ! author={D. Komatitsch and J. Ritsema and J. Tromp},
@@ -133,6 +133,8 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
+!      any size of chunk, 3D attenuation, case of two chunks, better topo/bathy
 ! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
 !      merged global and regional codes, no iterations in fluid, better movies
 ! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
@@ -153,13 +155,10 @@
 ! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
 !
 
-  external read_crustal_model, read_mantle_model,  &
-       read_aniso_mantle_model, read_aniso_inner_core_model, &
-       crustal_model, mantle_model, aniso_mantle_model, &
-! BS
-!       aniso_inner_core_model
-       aniso_inner_core_model, attenuation_model
-! BS END
+  external read_crustal_model,read_mantle_model,  &
+       read_aniso_mantle_model,read_aniso_inner_core_model, &
+       crustal_model, mantle_model,aniso_mantle_model, &
+       aniso_inner_core_model,attenuation_model
 
 ! correct number of spectral elements in each block depending on chunk type
 
@@ -228,24 +227,20 @@
   integer, dimension(:,:,:), allocatable :: addressing
 
 ! parameters read from parameter file
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST,NER_220_MOHO,NER_400_220, &
-             NER_600_400,NER_670_600,NER_771_670,NER_TOPDDOUBLEPRIME_771, &
-             NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB,NER_TOP_CENTRAL_CUBE_ICB, &
-             NEX_ETA,NEX_XI,NER_DOUBLING_OUTER_CORE, &
-             NPROC_ETA,NPROC_XI,NSEIS,NSTEP
+  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
+          NER_TOP_CENTRAL_CUBE_ICB,NEX_ETA,NEX_XI,NER_DOUBLING_OUTER_CORE, &
+          NPROC_ETA,NPROC_XI,NSEIS,NSTEP,NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL, &
+          NER_TOPDBL_CMB,ITAFF_TIME_STEPS,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
 
-  double precision DT
+  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES, &
+          ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY, &
-             GRAVITY,ONE_CRUST,ROTATION, &
-             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS, &
-! BS
-!             MOVIE_SURFACE,MOVIE_VOLUME
-             MOVIE_SURFACE,MOVIE_VOLUME, ATTENUATION_3D
-! BS END
-
-  integer NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
-  double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
+          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,THREE_D,TOPOGRAPHY, &
+          ATTENUATION,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME, ATTENUATION_3D, &
+          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCT,SAVE_AVS_DX_MESH_FILES
 
   character(len=150) LOCAL_PATH
 
@@ -299,10 +294,10 @@
         GRAVITY,ONE_CRUST,ATTENUATION, &
         ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
         MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
-! BS
-!        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
-        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, ATTENUATION_3D)
-! BS END
+        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, ATTENUATION_3D, &
+        RECEIVERS_CAN_BE_BURIED,ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2, &
+        SAVE_AVS_DX_MESH_FILES,ITAFF_TIME_STEPS,PRINT_SOURCE_TIME_FUNCT, &
+        NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN)
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -449,7 +444,7 @@
   if(NER_CMB_670<16) call exit_MPI(myrank,'NER_CMB_670 should be at least 16')
   if(NER_CENTRAL_CUBE_CMB<4) call exit_MPI(myrank,'NER_CENTRAL_CUBE_CMB should be at least 4')
 
-!! DK DK check that sphere can be cut into slices without getting negative Jacobian
+! check that sphere can be cut into slices without getting negative Jacobian
   if(NEX_XI < 48) call exit_MPI(myrank,'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian')
   if(NEX_ETA < 48) call exit_MPI(myrank,'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian')
 
@@ -516,12 +511,7 @@
   write(IMAIN,*)
   if(ATTENUATION) then
     write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
-! BS
-    if(ATTENUATION_3D) then
-       write(IMAIN,*)'     using 3D attenuation'
-    endif
-! BS END
-
+    if(ATTENUATION_3D) write(IMAIN,*)'using 3D attenuation'
   else
     write(IMAIN,*) 'no attenuation'
   endif
@@ -548,11 +538,8 @@
 
   if (ANISOTROPIC_INNER_CORE) call read_aniso_inner_core_model
 
-! BS
-  if(ATTENUATION .AND. ATTENUATION_3D) then
+  if(ATTENUATION .and. ATTENUATION_3D) &
      call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
-  endif
-! BS END
 
 ! read topography and bathymetry file
   if(TOPOGRAPHY .or. OCEANS) call read_topo_bathy_file(ibathy_topo)
@@ -924,11 +911,8 @@
          NSPEC2D_C_ETA(iregion_code),NSPEC1D_RADIAL(iregion_code),NPOIN1D_RADIAL(iregion_code), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
          crustal_model,mantle_model,aniso_mantle_model, &
-! BS
-!         aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA, &
-         attenuation_model, ATTENUATION, ATTENUATION_3D)
-! BS END
+         attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES)
 
 ! store number of anisotropic elements found in the mantle
   if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
@@ -1109,10 +1093,7 @@
   call save_header_file(NSPEC_AB,NSPEC_AC,NSPEC_BC,nglob_AB,nglob_AC,nglob_BC, &
         NEX_XI,NEX_ETA,nspec_aniso_mantle_all,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-! BS
-!        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION)
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION, ATTENUATION_3D)
-! BS END
+        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D,ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2)
 
   endif   ! end of section executed by main process only
 

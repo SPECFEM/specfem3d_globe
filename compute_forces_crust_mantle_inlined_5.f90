@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -26,12 +26,9 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
-! BS
-! BS Added sizes to pass either N_SLS or N_SLS*NUM_NODES to factor_common or one_minus_sum_beta
-!          alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
           alphaval,betaval,gammaval,factor_common, &
           vx, vy, vz, vnspec, index_i, index_k, index_dim)
-! BS END
+
   implicit none
 
   include "constants.h"
@@ -54,16 +51,11 @@
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
 ! to allow for optimization of cache access by compiler
-! BS
-! BS variable sized array variables for one_minus_sum_beta and factor_common
+! variable sized array variables for one_minus_sum_beta and factor_common
   integer vx, vy, vz, vnspec
-! BS END
 
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
-! BS
-!  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: one_minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
-! BS END
   double precision dist
   integer iregion_selected
 
@@ -71,13 +63,10 @@
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT,N_SLS) :: R_memory
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT) :: epsilondev
-! BS
-! BS [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
-!  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common
+! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec, N_SLS) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: factor_common_c44_muv
-! BS END
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL) epsilon_trace_over_3
 
@@ -338,12 +327,9 @@
 
 ! distinguish regions in the mantle, including case of the d80
 
-! BS
-! BS attenuation 3d flag if else loop
     if(ATTENUATION_VAL_3D) then
        one_minus_sum_beta_use = one_minus_sum_beta(ijk,1,1,ispec)
     else
-! BS END
 
   if(idoubling(ispec) == IFLAG_DOUBLING_670 .or. &
      idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. &
@@ -379,11 +365,9 @@
 
    endif
 
-! BS
-!    one_minus_sum_beta_use = one_minus_sum_beta(iregion_selected)
    one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
+
   endif
-! BS END
 
     minus_sum_beta =  one_minus_sum_beta_use - 1.
 
@@ -1276,7 +1260,6 @@
             gammaval(3) * epsilondev_loc(5,ijk,1,1))
 
     enddo
-! BS END
 
 ! save deviatoric strain for Runge-Kutta scheme
     do ijk = 1,5*NGLLCUBE

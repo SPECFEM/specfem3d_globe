@@ -1,11 +1,11 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 #          --------------------------------------------------
 #
 #                 Dimitri Komatitsch and Jeroen Tromp
 #    Seismological Laboratory - California Institute of Technology
-#        (c) California Institute of Technology August 2003
+#        (c) California Institute of Technology July 2004
 #
 #    A signed non-commercial agreement is required to use this program.
 #   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,7 +15,7 @@
 #
 #=====================================================================
 #
-# Copyright August 2003, by the California Institute of Technology.
+# Copyright July 2004, by the California Institute of Technology.
 # ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
 #
 # Any commercial use must be negotiated with the Office of Technology
@@ -39,10 +39,6 @@
 # is on an "as is" basis, and the California Institute of Technology has no
 # obligations to provide maintenance, support, updates, enhancements or
 # modifications.
-#
-#
-# Makefile for SPECFEM3D GLOBE version 3.4 - August 2003
-# Dimitri Komatitsch, MPI version
 #
 
 ################ PC Linux #################
@@ -137,10 +133,7 @@ MPI_FLAGS =
 O = obj
 
 baksave:
-	cp *f90 *h README_SPECFEM3D_V3.4 DATA/Par_file* Makefile go_mesher go_solver runall mymachines path_change_files.pl bak
-
-backup:
-	tar cvf SPECFEM3D_V3.4.tar *f90 *h README_SPECFEM3D_V3.4 DATA/Par_file Makefile go_mesher go_solver runall mymachines path_change_files.pl
+	cp *f90 *h README_SPECFEM3D_GLOBE DATA/Par_file* Makefile go_mesher go_solver runall mymachines path_change_files.pl bak
 
 meshfem3D: constants.h \
        $O/meshfem3D.o \

@@ -14,11 +14,11 @@ end module attenuation_model_variables
 
 subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source)
 
-!! DK DK
-!! DK DK xlat, xlon currently not used in this routine (which uses PREM).
-!! DK DK The user needs to modify this routine if he wants to use
-!! DK DK a particular 3D attenuation model. The current version is 1D.
-!! DK DK
+!
+! xlat, xlon currently not used in this routine (which uses PREM).
+! The user needs to modify this routine if he wants to use
+! a particular 3D attenuation model. The current version is 1D.
+!
 
   use attenuation_model_variables
   implicit none
@@ -27,6 +27,11 @@ subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_sourc
   double precision xlat, xlon, r, x, Qmu
   double precision Qkappa, T_c_source
   double precision, dimension(N_SLS) :: tau_s, tau_e
+
+! dummy lines to suppress warning about variables not used
+  double precision xdummy
+  xdummy = xlat + xlon
+! end of dummy lines to suppress warning about variables not used
 
   r = x * R_EARTH
 

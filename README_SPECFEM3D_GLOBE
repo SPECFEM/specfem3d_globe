@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 3
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,7 +15,7 @@
 !
 !=====================================================================
 !
-! Copyright September 2002, by the California Institute of Technology.
+! Copyright July 2004, by the California Institute of Technology.
 ! ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
 !
 ! Any commercial use must be negotiated with the Office of Technology
@@ -41,16 +41,12 @@
 ! modifications.
 !
 
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+++++++++++++ NOTES ON USING THE SPECFEM3D version 3.3 PACKAGE +++++++++++++
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-Jeroen Tromp & Dimitri Komatitsch, September 2002
-
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++ NOTES ON USING THE SPECFEM3D PACKAGE +++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   If you use this code for your own research, please send an email
-  to Jeroen Tromp <jtromp@gps.caltech.edu> for information, and cite:
+  to Jeroen Tromp <jtromp@caltech.edu> for information, and cite:
 
   @ARTICLE{KoRiTr02,
   author={D. Komatitsch and J. Ritsema and J. Tromp},

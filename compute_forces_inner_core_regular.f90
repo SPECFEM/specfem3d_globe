@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -23,14 +23,10 @@
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev, &
-! BS
-! BS added more variables, with variable lengths
-!          one_minus_sum_beta,alphaval,betaval,gammaval,factor_common)
           one_minus_sum_beta,&
           alphaval,betaval,gammaval, &
           factor_common, &
           vx, vy, vz, vnspec)
-! BS END
 
   implicit none
 
@@ -49,22 +45,14 @@
   integer i_sls,i_memory
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
 
-! BS
-! BS variable lengths for factor_common and one_minus_sum_beta
+! variable lengths for factor_common and one_minus_sum_beta
   integer vx, vy, vz, vnspec
-! BS END
 
-! BS
-!   real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: one_minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
-! BS END
 
-! BS
-! real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
-! BS END
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev
@@ -136,11 +124,6 @@
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
-
-! BS
-! BS removed line, handled later
-!    minus_sum_beta =  one_minus_sum_beta(IREGION_ATTENUATION_INNER_CORE) - 1.
-! BS END
 
 ! set acceleration to zero
   accel(:,:) = 0._CUSTOM_REAL
@@ -225,13 +208,11 @@
 
 ! compute deviatoric strain
   if(ATTENUATION_VAL) then
-! BS
-     if(ATTENUATION_VAL_3D) then
-        minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
-     else
-        minus_sum_beta =  one_minus_sum_beta(1,1,1,IREGION_ATTENUATION_INNER_CORE) - 1.
-     endif
-! BS END
+    if(ATTENUATION_VAL_3D) then
+      minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
+    else
+      minus_sum_beta =  one_minus_sum_beta(1,1,1,IREGION_ATTENUATION_INNER_CORE) - 1.
+    endif
     epsilon_trace_over_3 = ONE_THIRD * (duxdxl + duydyl + duzdzl)
     epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3
     epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3
@@ -289,16 +270,14 @@
           mul = muvstore(i,j,k,ispec)
 
 ! use unrelaxed parameters if attenuation
-! BS
-!  if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta(IREGION_ATTENUATION_INNER_CORE)
   if(ATTENUATION_VAL) then
-     if(ATTENUATION_VAL_3D) then
-        mul = mul * one_minus_sum_beta(i,j,k,ispec)
-     else
-        mul = mul * one_minus_sum_beta(1,1,1,1)
-     endif
+    if(ATTENUATION_VAL_3D) then
+      mul = mul * one_minus_sum_beta(i,j,k,ispec)
+    else
+      mul = mul * one_minus_sum_beta(1,1,1,1)
+    endif
   endif
-! BS END
+
           lambdalplus2mul = kappal + FOUR_THIRDS * mul
           lambdal = lambdalplus2mul - 2.*mul
 
@@ -533,20 +512,6 @@
 ! term in xz = 4
 ! term in yz = 5
 ! term in zz not computed since zero trace
-!BS
-!BS
-!   if(ATTENUATION_VAL) then
-!
-!     do i_sls = 1,N_SLS
-!     do i_memory = 1,5
-!       R_memory(i_memory,i_sls,:,:,:,ispec) = &
-!         alphaval(IREGION_ATTENUATION_INNER_CORE,i_sls) * &
-!         R_memory(i_memory,i_sls,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
-!         factor_common(IREGION_ATTENUATION_INNER_CORE,i_sls) * &
-!         (betaval(IREGION_ATTENUATION_INNER_CORE,i_sls) * &
-!         epsilondev(i_memory,:,:,:,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,i_sls) * epsilondev_loc(i_memory,:,:,:))
-!     enddo
-!     enddo
 
     if(ATTENUATION_VAL) then
 
@@ -565,7 +530,7 @@
                   epsilondev(i_memory,:,:,:,ispec) + gammaval(i_sls) * epsilondev_loc(i_memory,:,:,:))
           enddo
        enddo
-! BS END
+
 ! save deviatoric strain for Runge-Kutta scheme
     epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
 
