@@ -2586,6 +2586,154 @@
          ibool_outer_core,nspec_outer_core, &
          nglob_outer_core,index_fluid_i,index_fluid_k)
 
+
+! JT JT Stacey conditions
+
+  if(REGIONAL_CODE .and. STACEY_ABS_CONDITIONS) then
+
+!   xmin
+!CDIR NOVECTOR
+    do ispec2D=1,nspec2D_xmin_outer_core
+ 
+      ispec3D=ibelm_xmin_outer_core(ispec2D)
+ 
+! exclude elements that are not on absorbing edges
+      if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
+ 
+      i=1
+      jk1 = njmin_outer_core(1,ispec2D) + (nkmin_xi_outer_core(1,ispec2D)-1)*NGLLY
+      jk2 = njmax_outer_core(1,ispec2D) + (NGLLZ-1)*NGLLY
+!CDIR NODEP(accel)
+      do jk=jk1,jk2
+ 
+        j = index_stacey_i(jk)
+        k = index_stacey_k(jk)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+ 
+        iglob=ibool_outer_core(ijk,1,1,ispec3D)
+
+        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
+
+        weight=jacobian2D_xmin_outer_core(j,k,ispec2D)*wgllwgll_yz_no_i(1,1,j,k)
+ 
+        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
+ 
+      enddo
+    enddo
+
+!   xmax
+!CDIR NOVECTOR
+    do ispec2D=1,nspec2D_xmax_outer_core
+ 
+      ispec3D=ibelm_xmax_outer_core(ispec2D)
+ 
+! exclude elements that are not on absorbing edges
+      if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
+ 
+      i=NGLLX
+      jk1 = njmin_outer_core(2,ispec2D) + (nkmin_xi_outer_core(2,ispec2D)-1)*NGLLY
+      jk2 = njmax_outer_core(2,ispec2D) + (NGLLZ-1)*NGLLY
+!CDIR NODEP(accel)
+      do jk=jk1,jk2
+ 
+        j = index_stacey_i(jk)
+        k = index_stacey_k(jk)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+ 
+        iglob=ibool_outer_core(ijk,1,1,ispec3D)
+
+        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
+
+        weight=jacobian2D_xmax_outer_core(j,k,ispec2D)*wgllwgll_yz_no_i(1,1,j,k)
+ 
+        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
+ 
+      enddo
+    enddo
+
+!   ymin
+!CDIR NOVECTOR
+    do ispec2D=1,nspec2D_ymin_outer_core
+ 
+      ispec3D=ibelm_ymin_outer_core(ispec2D)
+ 
+! exclude elements that are not on absorbing edges
+      if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
+ 
+      j=1
+      ik1 = nimin_outer_core(1,ispec2D) + (nkmin_eta_outer_core(1,ispec2D)-1)*NGLLX
+      ik2 = nimax_outer_core(1,ispec2D) + (NGLLZ-1)*NGLLX
+!CDIR NODEP(accel)
+      do ik=ik1,ik2
+ 
+        i = index_stacey_i(ik)
+        k = index_stacey_k(ik)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+ 
+        iglob=ibool_outer_core(ijk,1,1,ispec3D)
+
+        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
+
+        weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz_no_j(1,i,1,k) 
+ 
+        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
+ 
+      enddo
+    enddo
+
+!   ymax
+!CDIR NOVECTOR
+    do ispec2D=1,nspec2D_ymax_outer_core
+ 
+      ispec3D=ibelm_ymax_outer_core(ispec2D)
+ 
+! exclude elements that are not on absorbing edges
+      if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
+ 
+      j=NGLLY
+      ik1 = nimin_outer_core(2,ispec2D) + (nkmin_eta_outer_core(2,ispec2D)-1)*NGLLX
+      ik2 = nimax_outer_core(2,ispec2D) + (NGLLZ-1)*NGLLX
+!CDIR NODEP(accel)
+      do ik=ik1,ik2
+ 
+        i = index_stacey_i(ik)
+        k = index_stacey_k(ik)
+        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
+ 
+        iglob=ibool_outer_core(ijk,1,1,ispec3D)
+
+        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
+
+        weight=jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz_no_j(1,i,1,k) 
+ 
+        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
+ 
+      enddo
+    enddo
+
+! for surface elements exactly on the ICB
+!CDIR NOVECTOR
+    do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+ 
+      ispec = ibelm_bottom_outer_core(ispec2D)
+ 
+      k = 1
+!CDIR NODEP(accel_outer_core)
+      do ij = 1,NGLLSQUARE
+        iglob = ibool_outer_core(ij,1,k,ispec)
+ 
+        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec)
+ 
+        weight = jacobian2D_bottom_outer_core(ij,1,ispec2D)*wgllwgll_xy(ij,1)
+ 
+        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
+ 
+      enddo
+    enddo
+ 
+  endif ! Stacey conditions
+
+
 ! ****************************************************
 ! **********  add matching with solid part  **********
 ! ****************************************************
@@ -2691,6 +2839,59 @@
     enddo
 
   endif
+
+! assemble all the contributions between slices using MPI
+
+! outer core
+  call assemble_MPI_scalar(myrank,accel_outer_core,nglob_outer_core, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+            iboolfaces_outer_core,iboolcorner_outer_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            buffer_send_faces,buffer_received_faces, &
+            buffer_send_chunk_corners,buffer_received_chunk_corners, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
+            NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY)
+
+! multiply by the inverse of the mass matrix and update velocity
+
+  do i=1,nglob_outer_core
+    accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
+    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
+  enddo
+
+! ****************************************************
+!   big loop over all spectral elements in the solid
+! ****************************************************
+
+! compute internal forces in the solid regions
+
+! for anisotropy and gravity, x y and z contain r theta and phi
+  call compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          nspec_crust_mantle, &
+          displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+          etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,jacobian_crust_mantle, &
+          hprime_xx,hprime_yy,hprime_zz, &
+          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          wgll_cube,wgllwgll_yz_no_i,wgllwgll_xz_no_j,wgllwgll_xy_no_k, &
+          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
+          muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+          c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+          c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+          c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+          c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+          c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+          c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+          c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+          ibool_crust_mantle,idoubling_crust_mantle, &
+          R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta, &
+          alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
 
 ! JT JT Stacey conditions
 
@@ -2874,202 +3075,8 @@
       enddo
     enddo
 
-! outer core
-
-!   xmin
-!CDIR NOVECTOR
-    do ispec2D=1,nspec2D_xmin_outer_core
- 
-      ispec3D=ibelm_xmin_outer_core(ispec2D)
- 
-! exclude elements that are not on absorbing edges
-      if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
- 
-      i=1
-      jk1 = njmin_outer_core(1,ispec2D) + (nkmin_xi_outer_core(1,ispec2D)-1)*NGLLY
-      jk2 = njmax_outer_core(1,ispec2D) + (NGLLZ-1)*NGLLY
-!CDIR NODEP(accel)
-      do jk=jk1,jk2
- 
-        j = index_stacey_i(jk)
-        k = index_stacey_k(jk)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
- 
-        iglob=ibool_outer_core(ijk,1,1,ispec3D)
-
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
-
-        weight=jacobian2D_xmin_outer_core(j,k,ispec2D)*wgllwgll_yz_no_i(1,1,j,k)
- 
-        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
-      enddo
-    enddo
-
-!   xmax
-!CDIR NOVECTOR
-    do ispec2D=1,nspec2D_xmax_outer_core
- 
-      ispec3D=ibelm_xmax_outer_core(ispec2D)
- 
-! exclude elements that are not on absorbing edges
-      if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
- 
-      i=NGLLX
-      jk1 = njmin_outer_core(2,ispec2D) + (nkmin_xi_outer_core(2,ispec2D)-1)*NGLLY
-      jk2 = njmax_outer_core(2,ispec2D) + (NGLLZ-1)*NGLLY
-!CDIR NODEP(accel)
-      do jk=jk1,jk2
- 
-        j = index_stacey_i(jk)
-        k = index_stacey_k(jk)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
- 
-        iglob=ibool_outer_core(ijk,1,1,ispec3D)
-
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
-
-        weight=jacobian2D_xmax_outer_core(j,k,ispec2D)*wgllwgll_yz_no_i(1,1,j,k)
- 
-        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
-      enddo
-    enddo
-
-!   ymin
-!CDIR NOVECTOR
-    do ispec2D=1,nspec2D_ymin_outer_core
- 
-      ispec3D=ibelm_ymin_outer_core(ispec2D)
- 
-! exclude elements that are not on absorbing edges
-      if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
- 
-      j=1
-      ik1 = nimin_outer_core(1,ispec2D) + (nkmin_eta_outer_core(1,ispec2D)-1)*NGLLX
-      ik2 = nimax_outer_core(1,ispec2D) + (NGLLZ-1)*NGLLX
-!CDIR NODEP(accel)
-      do ik=ik1,ik2
- 
-        i = index_stacey_i(ik)
-        k = index_stacey_k(ik)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
- 
-        iglob=ibool_outer_core(ijk,1,1,ispec3D)
-
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
-
-        weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz_no_j(1,i,1,k) 
- 
-        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
-      enddo
-    enddo
-
-!   ymax
-!CDIR NOVECTOR
-    do ispec2D=1,nspec2D_ymax_outer_core
- 
-      ispec3D=ibelm_ymax_outer_core(ispec2D)
- 
-! exclude elements that are not on absorbing edges
-      if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
- 
-      j=NGLLY
-      ik1 = nimin_outer_core(2,ispec2D) + (nkmin_eta_outer_core(2,ispec2D)-1)*NGLLX
-      ik2 = nimax_outer_core(2,ispec2D) + (NGLLZ-1)*NGLLX
-!CDIR NODEP(accel)
-      do ik=ik1,ik2
- 
-        i = index_stacey_i(ik)
-        k = index_stacey_k(ik)
-        ijk = i + (j-1)*NGLLX + (k-1)*NGLLX*NGLLY
- 
-        iglob=ibool_outer_core(ijk,1,1,ispec3D)
-
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec) 
-
-        weight=jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz_no_j(1,i,1,k) 
- 
-        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
-      enddo
-    enddo
-
-! for surface elements exactly on the ICB
-!CDIR NOVECTOR
-    do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
- 
-      ispec = ibelm_bottom_outer_core(ispec2D)
- 
-      k = 1
-!CDIR NODEP(accel_outer_core)
-      do ij = 1,NGLLSQUARE
-        iglob = ibool_outer_core(ij,1,k,ispec)
- 
-        sn = veloc_outer_core(iglob)/vp_outer_core(ij,1,k,ispec)
- 
-        weight = jacobian2D_bottom_outer_core(ij,1,ispec2D)*wgllwgll_xy(ij,1)
- 
-        accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
-      enddo
-    enddo
- 
   endif ! Stacey conditions
 
-! assemble all the contributions between slices using MPI
-
-! outer core
-  call assemble_MPI_scalar(myrank,accel_outer_core,nglob_outer_core, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-            iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
-            buffer_send_faces,buffer_received_faces, &
-            buffer_send_chunk_corners,buffer_received_chunk_corners, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY)
-
-! multiply by the inverse of the mass matrix and update velocity
-
-  do i=1,nglob_outer_core
-    accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-  enddo
-
-! ****************************************************
-!   big loop over all spectral elements in the solid
-! ****************************************************
-
-! compute internal forces in the solid regions
-
-! for anisotropy and gravity, x y and z contain r theta and phi
-  call compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          nspec_crust_mantle, &
-          displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-          etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,jacobian_crust_mantle, &
-          hprime_xx,hprime_yy,hprime_zz, &
-          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgll_cube,wgllwgll_yz_no_i,wgllwgll_xz_no_j,wgllwgll_xy_no_k, &
-          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
-          muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-          c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-          c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-          c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-          c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-          c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-          c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-          c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
 
   call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
