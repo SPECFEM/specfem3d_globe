@@ -27,15 +27,13 @@
   include "constants.h"
 
 ! threshold in percent of the maximum below which we cut the amplitude
-!!! DK DK  real(kind=CUSTOM_REAL), parameter :: THRESHOLD = 0.8_CUSTOM_REAL / 100._CUSTOM_REAL
   real(kind=CUSTOM_REAL), parameter :: THRESHOLD = 1._CUSTOM_REAL / 100._CUSTOM_REAL
 
 ! flag to apply non linear scaling to normalized norm of displacement
   logical, parameter :: NONLINEAR_SCALING = .true.
 
 ! coefficient of power law used for non linear scaling
-!! DK DK  real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.40_CUSTOM_REAL
-  real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.25_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.30_CUSTOM_REAL
 
 ! flag to cut amplitude below a certain threshold
   logical, parameter :: APPLY_THRESHOLD = .true.
