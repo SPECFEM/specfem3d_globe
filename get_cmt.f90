@@ -15,13 +15,13 @@
 !
 !=====================================================================
 
-  subroutine get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,NSOURCES,isource)
+  subroutine get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,isource)
 
   implicit none
 
   include "constants.h"
 
-  integer yr,jda,ho,mi,NSOURCES,isource
+  integer yr,jda,ho,mi,isource
   double precision sec,t_cmt,hdur,elat,elon,depth
   double precision moment_tensor(6)
   double precision DT

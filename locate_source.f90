@@ -156,7 +156,7 @@
 ! define topology of the control element
   call usual_hex_nodes(iaddx,iaddy,iaddz)
 
-  call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,NSOURCES,isource)
+  call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,isource)
 
   if(isource == 1) then
     if(t_cmt /= 0.) call exit_MPI(myrank,'t_cmt for the first source should be zero')
