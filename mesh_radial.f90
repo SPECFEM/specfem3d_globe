@@ -18,7 +18,8 @@
   subroutine mesh_radial(myrank,rn,rmin,rmax,NER,NER_TOP_CENTRAL_CUBE_ICB, &
        NER_CMB_TOPDDOUBLEPRIME,NER_TOPDDOUBLEPRIME_771, &
        NER_771_670,NER_670_600,NER_600_400,NER_400_220,NER_220_MOHO,NER_CRUST, &
-       NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+       NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
+       CRUSTAL,TOPOGRAPHY,ONE_CRUST)
 
 ! create the radial mesh, honoring the major discontinuities in PREM
 ! we also honor the top of D" and the other second-order discontinuities
@@ -39,16 +40,21 @@
        NER_TOPDDOUBLEPRIME_771,NER_771_670,NER_670_600,NER_600_400, &
        NER_400_220,NER_220_MOHO,NER_CRUST,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
 
+  logical CRUSTAL,TOPOGRAPHY,ONE_CRUST
+
   double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC
   double precision rn(0:2*NER),rmin(0:2*NER),rmax(0:2*NER)
 
-  integer npr,ir,nmax_crust
+  integer npr,ir
+  integer NER_CRUST_LOWER,NER_CRUST_UPPER
 
   double precision R_0,r_moho,r_220,r_400,r_600,r_670,r_771
-  double precision r_cmb,r_bottomdblfluid,r_topdblfluid,r_icb,r_top_ddoubleprime,r_surface
+  double precision r_cmb,r_bottomdblfluid,r_topdblfluid,r_icb
+  double precision r_top_ddoubleprime,r_surface,r_middle_crust
 
 ! normalized radii
   R_0 = R_UNIT_SPHERE
+  r_middle_crust = RMIDDLE_CRUST / R_EARTH
   r_220 = R220 / R_EARTH
   r_400 = R400 / R_EARTH
   r_600 = R600 / R_EARTH
@@ -62,16 +68,21 @@
 
 ! in the case of a very fine mesh, move the bottom of crustal elements
 ! below the PREM Moho, otherwise the elements become too distorted
-  if(NER_CRUST == 1) then
-    r_moho = RMOHO / R_EARTH
-  else if(NER_CRUST == 2 .and. NGLLX == 9) then
-    r_moho = 6310000.d0 / R_EARTH
-  else if(NER_CRUST == 2) then
-    r_moho = RMOHO_FICTITIOUS_2ELEMS / R_EARTH
-  else if(NER_CRUST == 3 .or. NER_CRUST == 4) then
-    r_moho = RMOHO_FICTITIOUS_4ELEMS / R_EARTH
-  else
-    stop 'incorrect definition of r_moho in mesh_radial'
+!! DK DK this is not very clean, should write something more general one day
+!! DK DK do not change anything if model is spherically symmetric (PREM)
+  r_moho = RMOHO / R_EARTH
+  if(CRUSTAL .or. TOPOGRAPHY) then
+    if(NER_CRUST == 1) then
+      r_moho = RMOHO / R_EARTH
+    else if(NER_CRUST == 2 .and. NGLLX == 9) then
+      r_moho = 6310000.d0 / R_EARTH
+    else if(NER_CRUST == 2) then
+      r_moho = RMOHO_FICTITIOUS_2ELEMS / R_EARTH
+    else if(NER_CRUST == 3 .or. NER_CRUST == 4) then
+      r_moho = RMOHO_FICTITIOUS_4ELEMS / R_EARTH
+    else
+      stop 'incorrect definition of r_moho in mesh_radial'
+    endif
   endif
 
 ! define surface for mapping to [0,1]
@@ -197,14 +208,44 @@
 !
 ! also create last point exactly at the surface
 ! other regions above stop one point below
-  nmax_crust = 2*NER_CRUST - 0
-  do ir=0,nmax_crust
-    npr=npr+1
-    rn(npr)=(r_moho-R_CENTRAL_CUBE)/(r_surface-R_CENTRAL_CUBE) &
-            +((R_0-r_moho)/(r_surface-R_CENTRAL_CUBE))*dble(ir)/dble(2*NER_CRUST)
-    rmin(npr)=r_moho
-    rmax(npr)=R_0
-  enddo
+
+!! DK DK this to compute PREM at high-resolution
+!! DK DK this is not very clean, should write something more general one day
+  if(.not. ONE_CRUST .and. .not. CRUSTAL .and. .not. TOPOGRAPHY .and. NER_CRUST > 1) then
+
+!! DK DK this is not flexible, should write something more general one day
+!! DK DK NER_CRUST = 3 on the ES in Japan, impose 2 in upper and 1 in lower
+    NER_CRUST_UPPER = 2
+    NER_CRUST_LOWER = NER_CRUST - NER_CRUST_UPPER
+
+! lower crust
+    do ir=0,2*NER_CRUST_LOWER - 1
+      npr=npr+1
+      rn(npr)=(r_moho-R_CENTRAL_CUBE)/(r_surface-R_CENTRAL_CUBE) &
+              +((r_middle_crust-r_moho)/(r_surface-R_CENTRAL_CUBE))*dble(ir)/dble(2*NER_CRUST_LOWER)
+      rmin(npr)=r_moho
+      rmax(npr)=R_0
+    enddo
+
+! upper crust
+    do ir=0,2*NER_CRUST_UPPER - 0
+      npr=npr+1
+      rn(npr)=(r_middle_crust-R_CENTRAL_CUBE)/(r_surface-R_CENTRAL_CUBE) &
+              +((R_0-r_middle_crust)/(r_surface-R_CENTRAL_CUBE))*dble(ir)/dble(2*NER_CRUST_UPPER)
+      rmin(npr)=r_moho
+      rmax(npr)=R_0
+    enddo
+
+  else
+! regular mesh here
+    do ir=0,2*NER_CRUST - 0
+      npr=npr+1
+      rn(npr)=(r_moho-R_CENTRAL_CUBE)/(r_surface-R_CENTRAL_CUBE) &
+              +((R_0-r_moho)/(r_surface-R_CENTRAL_CUBE))*dble(ir)/dble(2*NER_CRUST)
+      rmin(npr)=r_moho
+      rmax(npr)=R_0
+    enddo
+  endif
 
 ! check that the mesh that has been generated is correct
 ! radial distribution is mapped to [0,1]
