@@ -33,7 +33,7 @@
   logical, parameter :: NONLINEAR_SCALING = .true.
 
 ! coefficient of power law used for non linear scaling
-  real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.30_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.25_CUSTOM_REAL
 
 ! flag to cut amplitude below a certain threshold
   logical, parameter :: APPLY_THRESHOLD = .true.
@@ -255,7 +255,7 @@
   ispec = ispec + 1
   ieoff = NGLLSQUARE*(ispec-1)
 
-! four points for each element
+! NGLLSQUARE points for each element
   do ilocnum = 1,NGLLSQUARE
 
     ipoin = ipoin + 1
@@ -334,7 +334,7 @@
   ipoin = 0
   do ispec=1,nspectot_AVS_max
   ieoff = NGLLSQUARE*(ispec-1)
-! four points for each element
+! NGLLSQUARE points for each element
   do ilocnum = 1,NGLLSQUARE
     ibool_number = iglob(ilocnum+ieoff)
     if(.not. mask_point(ibool_number)) then
@@ -358,11 +358,12 @@
 ! output list of elements
   do ispec=1,nspectot_AVS_max
     ieoff = NGLLSQUARE*(ispec-1)
-! four points for each element
+! NGLLSQUARE points for each element
+! get the four corners
     ibool_number1 = iglob(ieoff + 1)
-    ibool_number2 = iglob(ieoff + 2)
-    ibool_number3 = iglob(ieoff + 3)
-    ibool_number4 = iglob(ieoff + 4)
+    ibool_number2 = iglob(ieoff + NGLLX)
+    ibool_number3 = iglob(ieoff + NGLLSQUARE - NGLLX + 1)
+    ibool_number4 = iglob(ieoff + NGLLSQUARE)
     if(USE_OPENDX) then
 ! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
       write(11,210) ireorder(ibool_number1)-1,ireorder(ibool_number4)-1,ireorder(ibool_number2)-1,ireorder(ibool_number3)-1
@@ -446,15 +447,6 @@
     endwhere
   endif
 
-! apply non linear scaling to normalized field if needed
-  if(NONLINEAR_SCALING) then
-    where(field_display(:) >= 0.)
-      field_display = field_display ** POWER_SCALING
-    elsewhere
-      field_display = - abs(field_display) ** POWER_SCALING
-    endwhere
-  endif
-
 ! map back to [0,1]
   field_display(:) = (field_display(:) + 1.) / 2.
 
@@ -464,7 +456,7 @@
 ! output point data
   do ispec=1,nspectot_AVS_max
   ieoff = NGLLSQUARE*(ispec-1)
-! four points for each element
+! NGLLSQUARE points for each element
   do ilocnum = 1,NGLLSQUARE
     ibool_number = iglob(ilocnum+ieoff)
     if(.not. mask_point(ibool_number)) then
