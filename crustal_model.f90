@@ -179,7 +179,7 @@ end module crustal_model_variables
   double precision rhol(NLAYERS_CRUST),thickl(NLAYERS_CRUST),velpl(NLAYERS_CRUST),velsl(NLAYERS_CRUST)
   character(len=2) crustaltype
 
-! get integer colatitude and longitide of crustal cap
+! get integer colatitude and longitude of crustal cap
 ! -90<lat<90 -180<lon<180
   if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
     stop 'error in latitude/longitude range in crust'
