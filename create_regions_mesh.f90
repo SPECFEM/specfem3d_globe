@@ -880,6 +880,7 @@
 ! deallocate arrays
 
   deallocate(rmass)
+  deallocate(rmass_ocean_load)
   deallocate(rhostore,kappavstore,kappahstore)
   deallocate(muvstore,muhstore)
   deallocate(eta_anisostore)
