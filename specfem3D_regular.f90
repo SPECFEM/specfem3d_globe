@@ -914,7 +914,7 @@
   allocate(phi_source(NSOURCES))
 
 ! locate sources in the mesh
-  call locate_source(NSOURCES,myrank,nspec_crust_mantle, &
+  call locate_sources(NSOURCES,myrank,nspec_crust_mantle, &
             nglob_crust_mantle,idoubling_crust_mantle,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xigll,yigll,zigll,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
@@ -2541,12 +2541,12 @@
 
 !   xmin
     do ispec2D=1,nspec2D_xmin_outer_core
- 
+
       ispec=ibelm_xmin_outer_core(ispec2D)
- 
+
 ! exclude elements that are not on absorbing edges
       if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
- 
+
       i=1
       do k=nkmin_xi_outer_core(1,ispec2D),NGLLZ
         do j=njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
@@ -2563,21 +2563,21 @@
 
 !   xmax
     do ispec2D=1,nspec2D_xmax_outer_core
- 
+
       ispec=ibelm_xmax_outer_core(ispec2D)
- 
+
 ! exclude elements that are not on absorbing edges
       if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
- 
+
       i=NGLLX
       do k=nkmin_xi_outer_core(2,ispec2D),NGLLZ
         do j=njmin_outer_core(2,ispec2D),njmax_outer_core(2,ispec2D)
           iglob=ibool_outer_core(i,j,k,ispec)
- 
+
           sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
- 
+
           weight = jacobian2D_xmax_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
- 
+
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
         enddo
       enddo
@@ -2585,21 +2585,21 @@
 
 !   ymin
     do ispec2D=1,nspec2D_ymin_outer_core
- 
+
       ispec=ibelm_ymin_outer_core(ispec2D)
- 
+
 ! exclude elements that are not on absorbing edges
       if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
- 
+
       j=1
       do k=nkmin_eta_outer_core(1,ispec2D),NGLLZ
         do i=nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
           iglob=ibool_outer_core(i,j,k,ispec)
- 
+
           sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
 
           weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
- 
+
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
         enddo
       enddo
@@ -2607,21 +2607,21 @@
 
 !   ymax
     do ispec2D=1,nspec2D_ymax_outer_core
- 
+
       ispec=ibelm_ymax_outer_core(ispec2D)
- 
+
 ! exclude elements that are not on absorbing edges
       if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
- 
+
       j=NGLLY
       do k=nkmin_eta_outer_core(2,ispec2D),NGLLZ
         do i=nimin_outer_core(2,ispec2D),nimax_outer_core(2,ispec2D)
           iglob=ibool_outer_core(i,j,k,ispec)
- 
+
           sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
- 
+
           weight=jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
- 
+
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
         enddo
       enddo
@@ -2629,24 +2629,24 @@
 
 ! for surface elements exactly on the ICB
     do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
- 
+
       ispec = ibelm_bottom_outer_core(ispec2D)
- 
+
       k = 1
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = ibool_outer_core(i,j,k,ispec)
- 
+
           sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
- 
+
           weight = jacobian2D_bottom_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
- 
+
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
         enddo
       enddo
     enddo
- 
+
   endif ! Stacey conditions
 
 
