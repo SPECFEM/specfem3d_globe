@@ -8,13 +8,13 @@
 set list_of_machines = `grep MACHINE_FILE DATA/Par_file | cut -c 34- `
 set my_local_path = `grep LOCAL_PATH DATA/Par_file | cut -c 34- `
 
-# compute total number of nodes needed
+# compute total number of processors needed
 set NCHUNKS = `grep NCHUNKS DATA/Par_file | cut -c 34- `
 set NPROC_XI = `grep NPROC_XI DATA/Par_file | cut -c 34- `
 set NPROC_ETA = `grep NPROC_ETA DATA/Par_file | cut -c 34- `
 
-# total number of nodes is the product of the values read
-@ numnodes = $NCHUNKS * $NPROC_XI * $NPROC_ETA
+# total number of processors is the product of the values read
+@ numprocessors = $NCHUNKS * $NPROC_XI * $NPROC_ETA
 
 # suppress old processor list files
 rm -f PI*
@@ -33,7 +33,7 @@ echo NCHUNKS = $NCHUNKS
 echo NPROC_XI = $NPROC_XI
 echo NPROC_ETA = $NPROC_ETA
 echo " "
-echo starting MPI solver on $numnodes nodes
+echo starting MPI solver on $numprocessors processors
 echo " "
 echo starting run in current directory $PWD
 echo " "
@@ -41,11 +41,11 @@ echo mesh files will be read from directory $my_local_path
 echo " "
 
 #### use this on Beowulf
-mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
+mpirun -nolocal -machinefile $list_of_machines -np $numprocessors $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
 
 #### use this on SGI
-#  mpirun -np $numnodes xspecfem3D
+#  mpirun -np $numprocessors xspecfem3D
 
 #### use this on Compaq Dec Alpha
-# dmpirun -np $numnodes xspecfem3D
+# dmpirun -np $numprocessors xspecfem3D
 
