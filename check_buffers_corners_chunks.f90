@@ -113,12 +113,13 @@
   print *,'There are ',NPROC_ETA,' slices along eta in each chunk'
   print *
 
-  if(NCHUNKS == 1 .or. NCHUNKS == 3) then
+! number of corners shared between chunks
+  if(NCHUNKS == 1 .or. NCHUNKS == 2 .or. NCHUNKS == 3) then
     NCORNERSCHUNKS = 1
   else if(NCHUNKS == 6) then
     NCORNERSCHUNKS = 8
   else
-    stop 'number of chunks must be either 1, 3 or 6'
+    stop 'number of chunks must be either 1, 2, 3 or 6'
   endif
 
   if(NCHUNKS == 1) stop 'only one chunk, nothing to check'
@@ -160,20 +161,27 @@
   print *,'Checking message ',imsg,' out of ',NCORNERSCHUNKS
 
 ! read 1-D buffers for the corners
+
+! master
   write(filename,200) imsg
   iproc = iproc_master_corners(imsg)
   call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
   open(unit=34,file=prname(1:len_trim(prname))//filename,status='old')
 
+! first slave
   write(filename,210) imsg
   iproc = iproc_slave1_corners(imsg)
   call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
   open(unit=35,file=prname(1:len_trim(prname))//filename,status='old')
 
-  write(filename,220) imsg
-  iproc = iproc_slave2_corners(imsg)
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
-  open(unit=36,file=prname(1:len_trim(prname))//filename,status='old')
+! second slave
+! if only two chunks then there is no second slave
+  if(NCHUNKS /= 2) then
+    write(filename,220) imsg
+    iproc = iproc_slave2_corners(imsg)
+    call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+    open(unit=36,file=prname(1:len_trim(prname))//filename,status='old')
+  endif
 
   200 format('buffer_corners_chunks_master_msg',i4.4,'.txt')
   210 format('buffer_corners_chunks_slave1_msg',i4.4,'.txt')
@@ -183,11 +191,16 @@
 
   read(34,*) npoin1D_master
   read(35,*) npoin1D_slave1
-  read(36,*) npoin1D_slave2
+! if only two chunks then there is no second slave
+  if(NCHUNKS /= 2) then
+    read(36,*) npoin1D_slave2
+  else
+    npoin1D_slave2 = npoin1D_slave1
+  endif
 
   if(npoin1D_master /= NPOIN1D_RADIAL(iregion_code) .or. &
-     npoin1D_master /= NPOIN1D_RADIAL(iregion_code) .or. &
-     npoin1D_master /= NPOIN1D_RADIAL(iregion_code)) then
+     npoin1D_slave1 /= NPOIN1D_RADIAL(iregion_code) .or. &
+     npoin1D_slave2 /= NPOIN1D_RADIAL(iregion_code)) then
               stop 'incorrect total number of points'
   else
     print *,'number of points is correct: ',NPOIN1D_RADIAL(iregion_code)
@@ -198,26 +211,36 @@
 
   read(34,*) iboolmaster,xmaster,ymaster,zmaster
   read(35,*) iboolslave1,xslave1,yslave1,zslave1
-  read(36,*) iboolslave2,xslave2,yslave2,zslave2
+! if only two chunks then there is no second slave
+  if(NCHUNKS /= 2) read(36,*) iboolslave2,xslave2,yslave2,zslave2
 
   diff1 = dmax1(dabs(xmaster-xslave1),dabs(ymaster-yslave1),dabs(zmaster-zslave1))
-  diff2 = dmax1(dabs(xmaster-xslave2),dabs(ymaster-yslave2),dabs(zmaster-zslave2))
-  if(diff1 > 0.0000001d0 .or. diff2 > 0.0000001d0) then
-    print *,'different : ',ipoin1D,iboolmaster,iboolslave1,iboolslave2,diff1,diff2
+  if(diff1 > 0.0000001d0) then
+    print *,'different : ',ipoin1D,iboolmaster,iboolslave1,diff1
     print *,'xmaster,xslave1 = ',xmaster,xslave1
     print *,'ymaster,yslave1 = ',ymaster,yslave1
     print *,'zmaster,zslave1 = ',zmaster,zslave1
-    print *,'xmaster,xslave2 = ',xmaster,xslave2
-    print *,'ymaster,yslave2 = ',ymaster,yslave2
-    print *,'zmaster,zslave2 = ',zmaster,zslave2
     stop 'error: different'
+  endif
+
+! if only two chunks then there is no second slave
+  if(NCHUNKS /= 2) then
+    diff2 = dmax1(dabs(xmaster-xslave2),dabs(ymaster-yslave2),dabs(zmaster-zslave2))
+    if(diff2 > 0.0000001d0) then
+      print *,'different : ',ipoin1D,iboolmaster,iboolslave2,diff2
+      print *,'xmaster,xslave2 = ',xmaster,xslave2
+      print *,'ymaster,yslave2 = ',ymaster,yslave2
+      print *,'zmaster,zslave2 = ',zmaster,zslave2
+      stop 'error: different'
+    endif
   endif
 
   enddo
 
   close(34)
   close(35)
-  close(36)
+! if only two chunks then there is no second slave
+  if(NCHUNKS /= 2) close(36)
 
   enddo
 

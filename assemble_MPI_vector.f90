@@ -28,7 +28,7 @@
             iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
             buffer_send_faces,buffer_received_faces, &
             buffer_send_chunk_corners,buffer_received_chunk_corners, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL, &
             NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY)
 
@@ -52,7 +52,7 @@
 
   integer NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY
   integer NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL
-  integer NUMMSGS_FACES,NCORNERSCHUNKS
+  integer NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS
 
 ! for addressing of the slices
   integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
@@ -269,7 +269,7 @@
 
 ! use three step scheme that can never deadlock
 ! scheme for faces cannot deadlock even if NPROC_XI = NPROC_ETA = 1
-  do imsg_loop = 1,3
+  do imsg_loop = 1,NUM_MSG_TYPES
 
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
@@ -375,7 +375,7 @@
 
   if(myrank == iproc_master_corners(imsg) .or. &
      myrank == iproc_slave1_corners(imsg) .or. &
-     myrank == iproc_slave2_corners(imsg)) icount_corners = icount_corners + 1
+     (NCHUNKS /= 2 .and. myrank == iproc_slave2_corners(imsg))) icount_corners = icount_corners + 1
 
 !---- receive messages from the two slaves on the master
   if(myrank==iproc_master_corners(imsg)) then
@@ -395,6 +395,7 @@
     enddo
 
 ! receive from slave #2 and add to local array
+  if(NCHUNKS /= 2) then
     isender = iproc_slave2_corners(imsg)
     call MPI_RECV(buffer_received_chunk_corners,NDIM*NPOIN1D_RADIAL, &
           CUSTOM_MPI_TYPE,isender,itag,MPI_COMM_WORLD,msg_status,ier)
@@ -410,9 +411,11 @@
 
   endif
 
+  endif
+
 !---- send messages from the two slaves to the master
   if(myrank==iproc_slave1_corners(imsg) .or. &
-              myrank==iproc_slave2_corners(imsg)) then
+              (NCHUNKS /= 2 .and. myrank==iproc_slave2_corners(imsg))) then
 
     ireceiver = iproc_master_corners(imsg)
     do ipoin1D=1,NPOIN1D_RADIAL
@@ -431,7 +434,7 @@
 
 !---- receive messages from the master on the two slaves
   if(myrank==iproc_slave1_corners(imsg) .or. &
-              myrank==iproc_slave2_corners(imsg)) then
+              (NCHUNKS /= 2 .and. myrank==iproc_slave2_corners(imsg))) then
 
 ! receive from master and copy to local array
     isender = iproc_master_corners(imsg)
@@ -460,9 +463,12 @@
               ireceiver,itag,MPI_COMM_WORLD,ier)
 
 ! send to slave #2
+  if(NCHUNKS /= 2) then
     ireceiver = iproc_slave2_corners(imsg)
     call MPI_SEND(buffer_send_chunk_corners,NDIM*NPOIN1D_RADIAL,CUSTOM_MPI_TYPE, &
               ireceiver,itag,MPI_COMM_WORLD,ier)
+
+  endif
 
   endif
 
