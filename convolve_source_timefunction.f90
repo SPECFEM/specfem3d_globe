@@ -13,9 +13,8 @@
 
   integer i,j,N_j
   integer number_remove
-  real, dimension(:), allocatable :: time,sem
-  double precision, dimension(:), allocatable :: sem_fil
-  double precision alpha,dt,tau_j,source
+  double precision, dimension(:), allocatable :: time,sem,sem_fil
+  double precision alpha,dt,tau_j,source,exponent
   double precision t1,t2,displ1,displ2,gamma,height
 
   integer nlines
@@ -40,10 +39,10 @@
   enddo
 
   alpha=DECAY_RATE/hdur
-  dt=dble(time(2))-dble(time(1))
+  dt=time(2)-time(1)
   N_j=int(hdur/dt)
   do i=1,nlines
-    sem_fil(i)=0.0d0
+    sem_fil(i)=0.
     do j=-N_j,N_j
       tau_j=dble(j)*dt
 
@@ -71,18 +70,24 @@
       else
 
 ! convolve with a Gaussian
-        source=alpha*dexp(-alpha*alpha*tau_j*tau_j)/dsqrt(PI)
+        exponent = alpha*alpha*tau_j*tau_j
+        if(exponent < 100.) then
+          source = alpha*exp(-exponent)/sqrt(PI)
+        else
+          source = 0.
+        endif
 
       endif
 
-      if(i > j .and. i-j <= nlines) sem_fil(i)=sem_fil(i)+dble(sem(i-j))*source*dt
+      if(i > j .and. i-j <= nlines) sem_fil(i) = sem_fil(i)+sem(i-j)*source*dt
+
     enddo
   enddo
 
 ! compute number of samples to remove from end of seismograms
   number_remove = int(hdur / dt) + 1
   do i=1,nlines - number_remove
-    write(*,*) time(i),sngl(sem_fil(i))
+    write(*,*) sngl(time(i)),' ',sngl(sem_fil(i))
   enddo
 
   end program convolve_source_time_function
