@@ -614,9 +614,6 @@
 ! check that the code is running with the requested nb of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
 
-! check that the number of sources is fine
-  if(NSOURCES < 0 .or. NSOURCES > 9999) call exit_MPI(myrank,'invalid number of sources')
-
 ! check that the code has been compiled with the right values
   if(NSPEC_AB(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE_AB .or. &
      NSPEC_AC(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE_AC .or. &
