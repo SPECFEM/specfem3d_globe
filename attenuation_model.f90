@@ -176,7 +176,7 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
       (1.d0 + w_c_source * w_c_source * tau_mu(i) * tau_mu(i))
   enddo
 
-  big_omega = a_val*(sqrt(1.d0 + b_val*b_val/(a_val*a_val))-1.d0);
+  big_omega = a_val*(sqrt(1.d0 + b_val*b_val/(a_val*a_val))-1.d0)
 
 !--- quantity by which to scale mu to get mu_relaxed
   factor_scale_mu = b_val * b_val / (TWO * big_omega)
@@ -239,7 +239,7 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
 
   open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin',status='old',form='unformatted')
   read(27) T_c_source
-  close(27);
+  close(27)
 
   open(unit=27, file=prname(1:len_trim(prname))//'Q.bin',status='old',form='unformatted')
   read(27) scale_factor
@@ -333,8 +333,8 @@ subroutine attenuation_liu(myrank, t2, t1, n,Q_real,omega_not,tau_s,tau_e)
   x1(:) = tau_e(:) - tau_s(:)
   x2(:) = tau_s(:)
 
-  exp1 = log10(f1);
-  exp2 = log10(f2);
+  exp1 = log10(f1)
+  exp2 = log10(f2)
   dexp = (exp2 - exp1) / 100.0
 
   expo = exp1 - dexp
@@ -440,10 +440,11 @@ FUNCTION pythag_dp(a,b)
 END FUNCTION pythag_dp
 
 SUBROUTINE svdcmp_dp(a,w,v,p)
-!  USE nrtype; USE nrutil, ONLY : assert_eq,nrerror,outerprod
-!  USE nr, ONLY : pythag
+
   use attenuation_model_variables
+
   IMPLICIT NONE
+
   integer p
   INTEGER, PARAMETER :: DP = KIND(1.0D0)
   double precision, DIMENSION(p,p), INTENT(INOUT) :: a

@@ -188,7 +188,7 @@
 
        if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
 
-! Montagner's model between the Moho and 670 km
+! anisotropic model between the Moho and 670 km (change to CMB if desired)
          if(r_prem < RMOHO/R_EARTH .and. r_prem > R670/R_EARTH) then
            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
            call reduce(theta,phi)
