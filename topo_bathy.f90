@@ -81,7 +81,13 @@
 
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
+
       read(13,*) ibathy_topo(itopo_x,itopo_y)
+
+! impose maximum depth of oceans, to suppress oscillations near deep trenches
+  if (USE_MAXIMUM_DEPTH_OCEANS .and. ibathy_topo(itopo_x,itopo_y) < MAXIMUM_DEPTH_OCEANS) &
+    ibathy_topo(itopo_x,itopo_y) = MAXIMUM_DEPTH_OCEANS
+
     enddo
   enddo
 

@@ -143,8 +143,11 @@
   logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
 
 ! minimum thickness in meters to include the effect of the oceans
+! and maximum depth of the oceans in trenches
 ! to avoid taking into account spurious oscillations in global model ETOPO
   double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 100.d0
+  logical, parameter :: USE_MAXIMUM_DEPTH_OCEANS = .true.
+  integer, parameter :: MAXIMUM_DEPTH_OCEANS = -6000
 
 ! NK+1: number of radial eigenfunctions for mantle model
 ! NS+1: number of angular degrees for mantle model
