@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -27,7 +27,7 @@
                  xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,nu, &
                  yr,jda,ho,mi,sec,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
                  theta_source,phi_source, &
-                 rspl,espl,espl2,nspl,ibathy_topo)
+                 rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED)
 
   implicit none
 
@@ -39,7 +39,7 @@
 
   integer NPROCTOT
 
-  logical ELLIPTICITY,TOPOGRAPHY
+  logical ELLIPTICITY,TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)

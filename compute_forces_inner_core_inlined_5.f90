@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -23,15 +23,11 @@
           wgll_cube,wgllwgll_yz_no_i,wgllwgll_xz_no_j,wgllwgll_xy_no_k, &
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev, &
-! BS
-! BS added more variables, with variable lengths
-!          one_minus_sum_beta,alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
           one_minus_sum_beta,&
           alphaval,betaval,gammaval, &
           factor_common, &
           vx, vy, vz, vnspec, &
           index_i, index_k, index_dim)
-! BS END
 
   implicit none
 
@@ -49,22 +45,14 @@
 ! to allow for optimization of cache access by compiler
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
 
-! BS
-! BS variable lengths for factor_common and one_minus_sum_beta
+! variable lengths for factor_common and one_minus_sum_beta
   integer vx, vy, vz, vnspec
-! BS END
 
-! BS
-!   real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: one_minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
-! BS END
 
-! BS
-! real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec, N_SLS) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: factor_common_use
-! BS END
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION,N_SLS) :: R_memory
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev
@@ -132,11 +120,6 @@
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
-
-! BS
-! BS removed line, handled later
-!  minus_sum_beta =  one_minus_sum_beta(IREGION_ATTENUATION_INNER_CORE) - 1.
-! BS END
 
 ! set acceleration to zero
   accel(:,:) = 0._CUSTOM_REAL
@@ -307,13 +290,11 @@
 
 ! compute deviatoric strain
   if(ATTENUATION_VAL) then
-! BS
-     if(ATTENUATION_VAL_3D) then
-        minus_sum_beta =  one_minus_sum_beta(ijk,1,1,ispec) - 1.0
-     else
-        minus_sum_beta =  one_minus_sum_beta(1,1,1,IREGION_ATTENUATION_INNER_CORE) - 1.
-     endif
-! BS END
+    if(ATTENUATION_VAL_3D) then
+      minus_sum_beta =  one_minus_sum_beta(ijk,1,1,ispec) - 1.0
+    else
+      minus_sum_beta =  one_minus_sum_beta(1,1,1,IREGION_ATTENUATION_INNER_CORE) - 1.
+    endif
     epsilon_trace_over_3 = ONE_THIRD * (duxdxl + duydyl + duzdzl)
     epsilondev_loc(1,ijk,1,1) = duxdxl - epsilon_trace_over_3
     epsilondev_loc(2,ijk,1,1) = duydyl - epsilon_trace_over_3
@@ -371,16 +352,14 @@
           mul = muvstore(ijk,1,1,ispec)
 
 ! use unrelaxed parameters if attenuation
-! BS
-!  if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta(IREGION_ATTENUATION_INNER_CORE)
   if(ATTENUATION_VAL) then
-     if(ATTENUATION_VAL_3D) then
-        mul = mul * one_minus_sum_beta(ijk,1,1,ispec)
-     else
-        mul = mul * one_minus_sum_beta(1,1,1,1)
-     endif
+    if(ATTENUATION_VAL_3D) then
+      mul = mul * one_minus_sum_beta(ijk,1,1,ispec)
+    else
+      mul = mul * one_minus_sum_beta(1,1,1,1)
+    endif
   endif
-! BS END
+
           lambdalplus2mul = kappal + FOUR_THIRDS * mul
           lambdal = lambdalplus2mul - 2.*mul
 
@@ -700,115 +679,6 @@
 
     do ijk = 1,NGLLCUBE
 
-!---
-! BS
-!    R_memory(1,ijk,1,1,ispec,1) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      R_memory(1,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      epsilondev(1,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,1) * epsilondev_loc(1,ijk,1,1))
-!
-!    R_memory(2,ijk,1,1,ispec,1) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      R_memory(2,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      epsilondev(2,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,1) * epsilondev_loc(2,ijk,1,1))
-!
-!    R_memory(3,ijk,1,1,ispec,1) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      R_memory(3,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      epsilondev(3,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,1) * epsilondev_loc(3,ijk,1,1))
-!
-!    R_memory(4,ijk,1,1,ispec,1) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      R_memory(4,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      epsilondev(4,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,1) * epsilondev_loc(4,ijk,1,1))
-!
-!    R_memory(5,ijk,1,1,ispec,1) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      R_memory(5,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,1) * &
-!      epsilondev(5,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,1) * epsilondev_loc(5,ijk,1,1))
-!
-!!---
-!    R_memory(1,ijk,1,1,ispec,2) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      R_memory(1,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      epsilondev(1,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,2) * epsilondev_loc(1,ijk,1,1))
-!
-!    R_memory(2,ijk,1,1,ispec,2) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      R_memory(2,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      epsilondev(2,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,2) * epsilondev_loc(2,ijk,1,1))
-!
-!    R_memory(3,ijk,1,1,ispec,2) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      R_memory(3,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      epsilondev(3,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,2) * epsilondev_loc(3,ijk,1,1))
-!
-!    R_memory(4,ijk,1,1,ispec,2) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      R_memory(4,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      epsilondev(4,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,2) * epsilondev_loc(4,ijk,1,1))
-!
-!    R_memory(5,ijk,1,1,ispec,2) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      R_memory(5,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,2) * &
-!      epsilondev(5,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,2) * epsilondev_loc(5,ijk,1,1))
-!
-!!---
-!    R_memory(1,ijk,1,1,ispec,3) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      R_memory(1,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      epsilondev(1,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,3) * epsilondev_loc(1,ijk,1,1))
-!
-!    R_memory(2,ijk,1,1,ispec,3) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      R_memory(2,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      epsilondev(2,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,3) * epsilondev_loc(2,ijk,1,1))
-!
-!    R_memory(3,ijk,1,1,ispec,3) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      R_memory(3,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      epsilondev(3,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,3) * epsilondev_loc(3,ijk,1,1))
-!
-!    R_memory(4,ijk,1,1,ispec,3) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      R_memory(4,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      epsilondev(4,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,3) * epsilondev_loc(4,ijk,1,1))
-!
-!    R_memory(5,ijk,1,1,ispec,3) = &
-!      alphaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      R_memory(5,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-!      factor_common(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      (betaval(IREGION_ATTENUATION_INNER_CORE,3) * &
-!      epsilondev(5,ijk,1,1,ispec) + gammaval(IREGION_ATTENUATION_INNER_CORE,3) * epsilondev_loc(5,ijk,1,1))
-
        if(ATTENUATION_VAL_3D) then
           factor_common_use(1) = factor_common(ijk,1,1,ispec,1)
           factor_common_use(2) = factor_common(ijk,1,1,ispec,2)
@@ -925,7 +795,6 @@
       (betaval(3) * &
       epsilondev(5,ijk,1,1,ispec) + gammaval(3) * epsilondev_loc(5,ijk,1,1))
 
-! BS END
     enddo
 
 ! save deviatoric strain for Runge-Kutta scheme

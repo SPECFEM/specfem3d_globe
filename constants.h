@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -31,14 +31,6 @@
 ! uncomment this to run in double precision (increases memory size by 2)
 ! integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
 
-! to use restart files
-! (number of runs can be 1, 2 or 3, choose 1 for no restart files)
-  integer, parameter :: NUMBER_OF_RUNS = 1
-  integer, parameter :: NUMBER_OF_THIS_RUN = 1
-
-! flag to impose receivers at the surface or allow them to be buried
-  logical, parameter :: RECEIVERS_CAN_BE_BURIED = .false.
-
 ! on some processors (e.g. Pentiums) it is necessary to suppress underflows
 ! by using a small initial field instead of zero
   logical, parameter :: FIX_UNDERFLOW_PROBLEM = .true.
@@ -52,18 +44,18 @@
 ! ("xcheck_buffers_1D" etc.), ignore it if you do not plan to use them
   logical, parameter :: LOCAL_PATH_IS_ALSO_GLOBAL = .false.
 
-!! DK DK temporary for regional code, should be in Par_file ultimately
-
 ! number of chunks (1, 3 or 6, full Earth -> six chunks)
 ! parameters describing the chunk in degrees
+
+!! DK DK temporary for regional code, should be in Par_file ultimately
 
 !! DK DK
 !! DK DK for global code with 6 chunks
 !! DK DK
   logical, parameter :: REGIONAL_CODE = .false.
   integer, parameter :: NCHUNKS = 6
-  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_1 = 90.d0
-  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_2 = ANGULAR_SIZE_CHUNK_DEG_1
+!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_1 = 90.d0
+!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_2 = ANGULAR_SIZE_CHUNK_DEG_1
   logical, parameter :: STACEY_ABS_CONDITIONS = .false.
 ! include central cube in the case of 6 chunks or not
 ! should always be set to true except when debugging code
@@ -108,11 +100,6 @@
 !  double precision, parameter :: CENTER_LATITUDE_DEG      = 38.d0
 !  double precision, parameter :: CENTER_LONGITUDE_DEG     = 137.d0
 !  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 21.d0
-
-! save AVS or OpenDX files in mesher or not
-! do not use if you do not plan to use AVS or OpenDX to visualize the mesh
-! because this option can create very large files
-  logical, parameter :: SAVE_AVS_DX_MESH_FILES = .false.
 
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
@@ -186,7 +173,7 @@
 !  real(kind=CUSTOM_REAL), parameter :: RHO_BOTTOM_OC = 12168.6383 / RHOAV
 !  real(kind=CUSTOM_REAL), parameter :: RHO_OCEANS = 1020.0 / RHOAV
 !
-!!! DK DK fictitious values for IASPEI in order to be able to compile
+!  fictitious values for IASPEI in order to be able to compile
 !  double precision, parameter :: ROCEAN = 1.d0
 !  double precision, parameter :: RMIDDLE_CRUST = 1.d0
 !  double precision, parameter :: R80 = 1.d0
@@ -199,12 +186,12 @@
 !! resolution of topography file in minutes
 !  integer, parameter :: RESOLUTION_TOPO_FILE = 5
 
-!---  DK DK DK ETOPO4 4-minute model created by subsampling and smoothing etopo-2
+!---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
-  integer, parameter :: NX_BATHY = 10800/2,NY_BATHY = 5400/2
+  integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
 
 ! resolution of topography file in minutes
-  integer, parameter :: RESOLUTION_TOPO_FILE = 2*2
+  integer, parameter :: RESOLUTION_TOPO_FILE = 4
 
 !!--- ETOPO2 2-minute model
 !! size of topography and bathymetry file
@@ -223,9 +210,6 @@
 ! minimum thickness in meters to include the effect of the oceans and topo
   double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 100.d0
 
-! interval at which we output time step info and max of norm of displacement
-  integer, parameter :: ITAFF_TIME_STEPS = 200
-
 ! number of GLL points in each direction of an element (degree plus one)
   integer, parameter :: NGLLX = 5
   integer, parameter :: NGLLY = NGLLX
@@ -242,9 +226,6 @@
 
 ! flag to display detailed information about location of stations
   logical, parameter :: DISPLAY_DETAILS_STATIONS = .false.
-
-! flag to print the source time function and spectrum
-  logical, parameter :: PRINT_SOURCE_TIME_FUNCTION = .false.
 
 ! maximum length of station and network name for receivers
   integer, parameter :: MAX_LENGTH_STATION_NAME = 32

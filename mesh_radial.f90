@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -68,8 +68,8 @@
 
 ! in the case of a very fine mesh, move the bottom of crustal elements
 ! below the PREM Moho, otherwise the elements become too distorted
-!! DK DK this is not very clean, should write something more general one day
-!! DK DK do not change anything if model is spherically symmetric (PREM)
+!! DK DK UGLY not very clean, should write something more general one day
+!! DK DK UGLY do not change anything if model is spherically symmetric (PREM)
   r_moho = RMOHO / R_EARTH
   if(CRUSTAL .or. TOPOGRAPHY) then
     if(NER_CRUST == 1) then
@@ -192,12 +192,12 @@
     rmax(npr)=r_220
   enddo
 
-!! DK DK avoid problem with bathymetry trenches on the ES
-!! DK DK do not honor the fictitious Moho if high-res mesh with topography
-!! DK DK also use regular mesh if regional code
+!! DK DK UGLY avoid problem with bathymetry trenches on the ES
+!! DK DK UGLY do not honor the fictitious Moho if high-res mesh with topography
+!! DK DK UGLY also use regular mesh if regional code
   if(REGIONAL_CODE .or. (NER_CRUST > 1 .and. (CRUSTAL .or. TOPOGRAPHY))) then
 
-!! DK DK uniform radial mesh from d220 to surface if high-res 3D model
+!! DK DK UGLY uniform radial mesh from d220 to surface if high-res 3D model
 
 ! also create last point exactly at the surface
 ! other regions above stop one point below
@@ -227,12 +227,12 @@
 ! also create last point exactly at the surface
 ! other regions above stop one point below
 
-!! DK DK this to compute PREM at high-resolution
-!! DK DK this is not very clean, should write something more general one day
+!! DK DK UGLY this to compute PREM at high-resolution
+!! DK DK UGLY not very clean, should write something more general one day
   if(.not. ONE_CRUST .and. .not. CRUSTAL .and. .not. TOPOGRAPHY .and. NER_CRUST > 1) then
 
-!! DK DK this is not flexible, should write something more general one day
-!! DK DK NER_CRUST = 3 on the ES in Japan, impose 2 in upper and 1 in lower
+!! DK DK UGLY this is not flexible, should write something more general one day
+!! DK DK UGLY NER_CRUST = 3 on the ES in Japan, impose 2 in upper and 1 in lower
     NER_CRUST_UPPER = 2
     NER_CRUST_LOWER = NER_CRUST - NER_CRUST_UPPER
 

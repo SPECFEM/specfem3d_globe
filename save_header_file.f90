@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology August 2003
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -21,10 +21,7 @@
         nglob_AB,nglob_AC,nglob_BC,NEX_XI,NEX_ETA, &
         nspec_aniso_mantle,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-! BS
-!        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION)
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION, ATTENUATION_3D)
-! BS END
+        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D,ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2)
 
   implicit none
 
@@ -37,15 +34,14 @@
   integer nspec_aniso_mantle
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-! BS
-!          ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION
           ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D
-! BS END
+
+  double precision ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2
 
   integer subtract_central_cube_elems
   double precision subtract_central_cube_points
 
-!! DK DK for regional code
+! for regional code
   double precision x,y,gamma,rgt,xi,eta
   double precision x_top,y_top,z_top
   double precision ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA
@@ -310,14 +306,12 @@
   endif
   write(IOUT,*)
 
-! BS
   if(ATTENUATION_3D) then
     write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL_3D = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL_3D = .false.'
   endif
   write(IOUT,*)
-! BS END
 
   if(ELLIPTICITY) then
     write(IOUT,*) 'logical, parameter :: ELLIPTICITY_VAL = .true.'
