@@ -95,7 +95,19 @@ subroutine attenuation_simplex(t1, t2, n, Q_real, omega_not, tau_s, tau_e)
      call exit(-1)
   end if
   
+  deallocate(f)
+  call attenuation_simplex_finish()
+  
 end subroutine attenuation_simplex
+
+subroutine attenuation_simplex_finish()
+  use attenuation_simplex_variables
+  implicit none
+
+  deallocate(f)
+  deallocate(tau_s)
+
+end subroutine attenuation_simplex_finish
 
 !!!!!!!
 ! subroutine simplex_setup

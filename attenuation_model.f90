@@ -688,7 +688,7 @@ module attenuation_simplex_variables
 
 end module attenuation_simplex_variables
 
-subroutine attenuation_simplex(myrank, t1, t2, n, Q_real, omega_not, tau_s, tau_e)
+subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, tau_s, tau_e)
   implicit none
   ! Input / Output
   integer myrank
@@ -762,8 +762,21 @@ subroutine attenuation_simplex(myrank, t1, t2, n, Q_real, omega_not, tau_s, tau_
      write(*,*)'    Aborting program'
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
   end if
+ 
+  deallocate(f)
+  call attenuation_simplex_finish()
 
-end subroutine attenuation_simplex
+end subroutine attenuation_invert_by_simplex
+
+
+subroutine attenuation_simplex_finish()
+  use attenuation_simplex_variables
+  implicit none
+
+  deallocate(f)
+  deallocate(tau_s)
+
+end subroutine attenuation_simplex_finish
 
 !!!!!!!
 ! subroutine simplex_setup
