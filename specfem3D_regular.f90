@@ -3094,9 +3094,9 @@
     mask_poin(:) = .false.
     indirect_poin(:) = 0
     do ispec=1,nspec_crust_mantle
-      do k = 1,NGLLZ,NGLLZ-1
-        do j = 1,NGLLY,NGLLY-1
-          do i = 1,NGLLX,NGLLX-1
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             ipoin = ibool_crust_mantle(i,j,k,ispec)
             if(.not. mask_poin(ipoin)) then
               itotal_poin = itotal_poin + 1
@@ -3184,9 +3184,9 @@
       enddo
     enddo
 
-      do k = 1,NGLLZ,NGLLZ-1
-        do j = 1,NGLLY,NGLLY-1
-          do i = 1,NGLLX,NGLLX-1
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             ipoin = ibool_crust_mantle(i,j,k,ispec)
             if(.not. mask_poin(ipoin)) then
 ! coordinates actually contain r theta phi, therefore convert back to x y z
@@ -3211,16 +3211,15 @@
       enddo
     enddo
 
-! write topology of elements (8 corners of each spectral element)
+! write topology of elements
     do ispec=1,nspec_crust_mantle
-      write(IOUT,210) indirect_poin(ibool_crust_mantle(1,1,1,ispec)), &
-                  indirect_poin(ibool_crust_mantle(NGLLX,1,1,ispec)), &
-                  indirect_poin(ibool_crust_mantle(NGLLX,NGLLY,1,ispec)), &
-                  indirect_poin(ibool_crust_mantle(1,NGLLY,1,ispec)), &
-                  indirect_poin(ibool_crust_mantle(1,1,NGLLZ,ispec)), &
-                  indirect_poin(ibool_crust_mantle(NGLLX,1,NGLLZ,ispec)), &
-                  indirect_poin(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec)), &
-                  indirect_poin(ibool_crust_mantle(1,NGLLY,NGLLZ,ispec))
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            write(IOUT,210) indirect_poin(ibool_crust_mantle(i,j,k,ispec))
+          enddo
+        enddo
+      enddo
     enddo
 
     close(IOUT)
@@ -3241,9 +3240,9 @@
     mask_poin(:) = .false.
     indirect_poin(:) = 0
     do ispec=1,nspec_outer_core
-      do k = 1,NGLLZ,NGLLZ-1
-        do j = 1,NGLLY,NGLLY-1
-          do i = 1,NGLLX,NGLLX-1
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             ipoin = ibool_outer_core(i,j,k,ispec)
             if(.not. mask_poin(ipoin)) then
               itotal_poin = itotal_poin + 1
@@ -3273,15 +3272,15 @@
           tempx3l = 0._CUSTOM_REAL
 
           do l=1,NGLLX
-            tempx1l = tempx1l + displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(l,i)
+            tempx1l = tempx1l + veloc_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(l,i)
           enddo
 
           do l=1,NGLLY
-            tempx2l = tempx2l + displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(l,j)
+            tempx2l = tempx2l + veloc_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(l,j)
           enddo
 
           do l=1,NGLLZ
-            tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(l,k)
+            tempx3l = tempx3l + veloc_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(l,k)
           enddo
 
 !         get derivatives of velocity potential with respect to x, y and z
@@ -3361,9 +3360,9 @@
       enddo
     enddo
 
-      do k = 1,NGLLZ,NGLLZ-1
-        do j = 1,NGLLY,NGLLY-1
-          do i = 1,NGLLX,NGLLX-1
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             ipoin = ibool_outer_core(i,j,k,ispec)
             if(.not. mask_poin(ipoin)) then
 ! coordinates actually contain r theta phi, therefore convert back to x y z
@@ -3388,16 +3387,15 @@
       enddo
     enddo
 
-! write topology of elements (8 corners of each spectral element)
+! write topology of elements
     do ispec=1,nspec_outer_core
-      write(IOUT,210) indirect_poin(ibool_outer_core(1,1,1,ispec)), &
-                  indirect_poin(ibool_outer_core(NGLLX,1,1,ispec)), &
-                  indirect_poin(ibool_outer_core(NGLLX,NGLLY,1,ispec)), &
-                  indirect_poin(ibool_outer_core(1,NGLLY,1,ispec)), &
-                  indirect_poin(ibool_outer_core(1,1,NGLLZ,ispec)), &
-                  indirect_poin(ibool_outer_core(NGLLX,1,NGLLZ,ispec)), &
-                  indirect_poin(ibool_outer_core(NGLLX,NGLLY,NGLLZ,ispec)), &
-                  indirect_poin(ibool_outer_core(1,NGLLY,NGLLZ,ispec))
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            write(IOUT,210) indirect_poin(ibool_outer_core(i,j,k,ispec))
+          enddo
+        enddo
+      enddo
     enddo
 
     close(IOUT)
@@ -3421,9 +3419,9 @@
     do ispec=1,NSPEC_INNER_CORE
       if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
       itotal_spec = itotal_spec + 1
-      do k = 1,NGLLZ,NGLLZ-1
-        do j = 1,NGLLY,NGLLY-1
-          do i = 1,NGLLX,NGLLX-1
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             ipoin = ibool_inner_core(i,j,k,ispec)
             if(.not. mask_poin(ipoin)) then
               itotal_poin = itotal_poin + 1
@@ -3513,9 +3511,9 @@
       enddo
     enddo
 
-      do k = 1,NGLLZ,NGLLZ-1
-        do j = 1,NGLLY,NGLLY-1
-          do i = 1,NGLLX,NGLLX-1
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             ipoin = ibool_inner_core(i,j,k,ispec)
             if(.not. mask_poin(ipoin)) then
 ! coordinates actually contain r theta phi, therefore convert back to x y z
@@ -3541,17 +3539,17 @@
       endif
     enddo
 
-! write topology of elements (8 corners of each spectral element)
+! write topology of elements
     do ispec=1,NSPEC_INNER_CORE
-      if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) &
-        write(IOUT,210) indirect_poin(ibool_inner_core(1,1,1,ispec)), &
-                  indirect_poin(ibool_inner_core(NGLLX,1,1,ispec)), &
-                  indirect_poin(ibool_inner_core(NGLLX,NGLLY,1,ispec)), &
-                  indirect_poin(ibool_inner_core(1,NGLLY,1,ispec)), &
-                  indirect_poin(ibool_inner_core(1,1,NGLLZ,ispec)), &
-                  indirect_poin(ibool_inner_core(NGLLX,1,NGLLZ,ispec)), &
-                  indirect_poin(ibool_inner_core(NGLLX,NGLLY,NGLLZ,ispec)), &
-                  indirect_poin(ibool_inner_core(1,NGLLY,NGLLZ,ispec))
+      if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
+              write(IOUT,210) indirect_poin(ibool_inner_core(i,j,k,ispec))
+            enddo
+          enddo
+        enddo
+      endif
     enddo
 
     close(IOUT)
@@ -3560,11 +3558,10 @@
     deallocate(indirect_poin)
 
  200 format(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6)
- 210 format(i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)
+ 210 format(i10)
 
   endif
 
-!
 !---- end of time iteration loop
 !
   enddo   ! end of main time loop

@@ -33,16 +33,17 @@
   logical, parameter :: NONLINEAR_SCALING = .true.
 
 ! coefficient of power law used for non linear scaling
-  real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.25_CUSTOM_REAL
+  real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.30_CUSTOM_REAL
 
 ! flag to cut amplitude below a certain threshold
-  logical, parameter :: APPLY_THRESHOLD = .true.
+  logical, parameter :: APPLY_THRESHOLD = .false.
 
-  integer it
+  integer i,j,it
   integer it1,it2
   integer nspectot_AVS_max
   integer ispec
   integer ibool_number,ibool_number1,ibool_number2,ibool_number3,ibool_number4
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: x,y,z,displn
   real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord,rval,thetaval,phival
   real(kind=CUSTOM_REAL) displx,disply,displz
   real(kind=CUSTOM_REAL) normal_x,normal_y,normal_z
@@ -55,7 +56,7 @@
   integer iproc,ipoin
 
 ! for sorting routine
-  integer npointot,ilocnum,nglob,ieoff,ispecloc
+  integer npointot,ilocnum,nglob,ielm,ieoff,ispecloc
   integer, dimension(:), allocatable :: iglob,loc,ireorder
   logical, dimension(:), allocatable :: ifseg,mask_point
   double precision, dimension(:), allocatable :: xp,yp,zp,xp_save,yp_save,zp_save,field_display
@@ -147,6 +148,11 @@
   allocate(store_val_uy(ilocnum,0:NPROCTOT-1))
   allocate(store_val_uz(ilocnum,0:NPROCTOT-1))
 
+  allocate(x(NGLLX,NGLLY))
+  allocate(y(NGLLX,NGLLY))
+  allocate(z(NGLLX,NGLLY))
+  allocate(displn(NGLLX,NGLLY))
+
   print *,'1 = create files in OpenDX format'
   print *,'2 = create files in AVS UCD format with individual files'
   print *,'3 = create files in AVS UCD format with one time-dependent file'
@@ -187,15 +193,19 @@
   print *,'total number of frames will be ',nframes
   if(nframes == 0) stop 'null number of frames'
 
-! define the total number of elements at the surface
-  nspectot_AVS_max = 6 * NEX_XI * NEX_ETA
+! Make OpenDX think that each "grid cell" between GLL points is actually
+! a finite element with four corners. This means that inside each real
+! spectral element one should have (NGLL-1)^2 OpenDX "elements"
+
+! define the total number of OpenDX "elements" at the surface
+  nspectot_AVS_max = 6 * NEX_XI * NEX_ETA * (NGLLX-1) * (NGLLY-1)
 
   print *
-  print *,'there is a total of ',nspectot_AVS_max,' elements at the surface'
+  print *,'there are a total of ',nspectot_AVS_max,' OpenDX "elements" at the surface'
   print *
 
 ! maximum theoretical number of points at the surface
-  npointot = NGLLSQUARE * nspectot_AVS_max
+  npointot = NGNOD2D_AVS_DX * nspectot_AVS_max
 
 ! allocate arrays for sorting routine
   allocate(iglob(npointot),loc(npointot))
@@ -248,47 +258,77 @@
   do iproc = 0,NPROCTOT-1
 
 ! reset point number
-  ipoin = 0
+    ipoin = 0
+  
+    do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
 
-  do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
-  ispec = ispec + 1
-  ieoff = NGLLSQUARE*(ispec-1)
+          ipoin = ipoin + 1
 
-! NGLLSQUARE points for each element
-  do ilocnum = 1,NGLLSQUARE
-
-    ipoin = ipoin + 1
-
-    xcoord = store_val_x(ipoin,iproc)
-    ycoord = store_val_y(ipoin,iproc)
-    zcoord = store_val_z(ipoin,iproc)
-
-    displx = store_val_ux(ipoin,iproc)
-    disply = store_val_uy(ipoin,iproc)
-    displz = store_val_uz(ipoin,iproc)
+          xcoord = store_val_x(ipoin,iproc)
+          ycoord = store_val_y(ipoin,iproc)
+          zcoord = store_val_z(ipoin,iproc)
+    
+          displx = store_val_ux(ipoin,iproc)
+          disply = store_val_uy(ipoin,iproc)
+          displz = store_val_uz(ipoin,iproc)
 
 ! coordinates actually contain r theta phi, therefore convert back to x y z
-    rval = xcoord
-    thetaval = ycoord
-    phival = zcoord
-    call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
+          rval = xcoord
+          thetaval = ycoord
+          phival = zcoord
+          call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
 
 ! compute unit normal vector to the surface
-    normal_x = xcoord / sqrt(xcoord**2 + ycoord**2 + zcoord**2)
-    normal_y = ycoord / sqrt(xcoord**2 + ycoord**2 + zcoord**2)
-    normal_z = zcoord / sqrt(xcoord**2 + ycoord**2 + zcoord**2)
+          normal_x = xcoord / sqrt(xcoord**2 + ycoord**2 + zcoord**2)
+          normal_y = ycoord / sqrt(xcoord**2 + ycoord**2 + zcoord**2)
+          normal_z = zcoord / sqrt(xcoord**2 + ycoord**2 + zcoord**2)
 
-    xp(ilocnum+ieoff) = dble(xcoord)
-    yp(ilocnum+ieoff) = dble(ycoord)
-    zp(ilocnum+ieoff) = dble(zcoord)
+! save the results for this element
+          x(i,j) = xcoord
+          y(i,j) = ycoord
+          z(i,j) = zcoord
+          displn(i,j) = displx*normal_x + disply*normal_y + displz*normal_z
 
-! show radial component of displacement in the movie
-    field_display(ilocnum+ieoff) = dble(displx*normal_x + disply*normal_y + displz*normal_z)
+        enddo
+      enddo
 
-  enddo
+! assign the values of the corners of the OpenDX "elements"
+      ispec = ispec + 1
+      ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
+      do j = 1,NGLLY-1
+        do i = 1,NGLLX-1
+          ieoff = NGNOD2D_AVS_DX*(ielm+(i-1)+(j-1)*(NGLLX-1))
+          do ilocnum = 1,NGNOD2D_AVS_DX
+            if(ilocnum == 1) then
+              xp(ieoff+ilocnum) = dble(x(i,j))
+              yp(ieoff+ilocnum) = dble(y(i,j))
+              zp(ieoff+ilocnum) = dble(z(i,j))
+              field_display(ieoff+ilocnum) = dble(displn(i,j))
+            elseif(ilocnum == 2) then
+              xp(ieoff+ilocnum) = dble(x(i+1,j))
+              yp(ieoff+ilocnum) = dble(y(i+1,j))
+              zp(ieoff+ilocnum) = dble(z(i+1,j))
+              field_display(ieoff+ilocnum) = dble(displn(i+1,j))
+            elseif(ilocnum == 3) then
+              xp(ieoff+ilocnum) = dble(x(i+1,j+1))
+              yp(ieoff+ilocnum) = dble(y(i+1,j+1))
+              zp(ieoff+ilocnum) = dble(z(i+1,j+1))
+              field_display(ieoff+ilocnum) = dble(displn(i+1,j+1))
+            else
+              xp(ieoff+ilocnum) = dble(x(i,j+1))
+              yp(ieoff+ilocnum) = dble(y(i,j+1))
+              zp(ieoff+ilocnum) = dble(z(i,j+1))
+              field_display(ieoff+ilocnum) = dble(displn(i,j+1))
+            endif
+          enddo
+        enddo
+      enddo
 
-  enddo
+    enddo
+
   enddo
 
 ! copy coordinate arrays since the sorting routine does not preserve them
@@ -333,23 +373,23 @@
   mask_point = .false.
   ipoin = 0
   do ispec=1,nspectot_AVS_max
-  ieoff = NGLLSQUARE*(ispec-1)
-! NGLLSQUARE points for each element
-  do ilocnum = 1,NGLLSQUARE
-    ibool_number = iglob(ilocnum+ieoff)
-    if(.not. mask_point(ibool_number)) then
-      ipoin = ipoin + 1
-      ireorder(ibool_number) = ipoin
-      if(USE_OPENDX) then
-        write(11,"(f8.5,1x,f8.5,1x,f8.5)") &
-          xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
-      else
-        write(11,"(i10,1x,f8.5,1x,f8.5,1x,f8.5)") ireorder(ibool_number), &
-          xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
+    ieoff = NGNOD2D_AVS_DX*(ispec-1)
+! four points for each element
+    do ilocnum = 1,NGNOD2D_AVS_DX
+      ibool_number = iglob(ilocnum+ieoff)
+      if(.not. mask_point(ibool_number)) then
+        ipoin = ipoin + 1
+        ireorder(ibool_number) = ipoin
+        if(USE_OPENDX) then
+          write(11,"(f8.5,1x,f8.5,1x,f8.5)") &
+            xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
+        else
+          write(11,"(i6,1x,f8.5,1x,f8.5,1x,f8.5)") ireorder(ibool_number), &
+            xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
+        endif
       endif
-    endif
-    mask_point(ibool_number) = .true.
-  enddo
+      mask_point(ibool_number) = .true.
+    enddo
   enddo
 
   if(USE_OPENDX) &
@@ -357,13 +397,12 @@
 
 ! output list of elements
   do ispec=1,nspectot_AVS_max
-    ieoff = NGLLSQUARE*(ispec-1)
-! NGLLSQUARE points for each element
-! get the four corners
+    ieoff = NGNOD2D_AVS_DX*(ispec-1)
+! four points for each element
     ibool_number1 = iglob(ieoff + 1)
-    ibool_number2 = iglob(ieoff + NGLLX)
-    ibool_number3 = iglob(ieoff + NGLLSQUARE - NGLLX + 1)
-    ibool_number4 = iglob(ieoff + NGLLSQUARE)
+    ibool_number2 = iglob(ieoff + 2)
+    ibool_number3 = iglob(ieoff + 3)
+    ibool_number4 = iglob(ieoff + 4)
     if(USE_OPENDX) then
 ! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
       write(11,210) ireorder(ibool_number1)-1,ireorder(ibool_number4)-1,ireorder(ibool_number2)-1,ireorder(ibool_number3)-1
@@ -455,9 +494,9 @@
 
 ! output point data
   do ispec=1,nspectot_AVS_max
-  ieoff = NGLLSQUARE*(ispec-1)
-! NGLLSQUARE points for each element
-  do ilocnum = 1,NGLLSQUARE
+  ieoff = NGNOD2D_AVS_DX*(ispec-1)
+! four points for each element
+  do ilocnum = 1,NGNOD2D_AVS_DX
     ibool_number = iglob(ilocnum+ieoff)
     if(.not. mask_point(ibool_number)) then
       if(USE_OPENDX) then
@@ -535,9 +574,9 @@
 
 ! establish initial pointers
   do ispec=1,nspec
-    ieoff=NGLLSQUARE*(ispec-1)
-    do ilocnum=1,NGLLSQUARE
-      loc(ilocnum+ieoff)=ilocnum+ieoff
+    ieoff=NGNOD2D_AVS_DX*(ispec-1)
+    do ilocnum=1,NGNOD2D_AVS_DX
+      loc(ieoff+ilocnum)=ieoff+ilocnum
     enddo
   enddo
 
