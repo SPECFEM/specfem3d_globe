@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -46,6 +46,79 @@
 ! clear arrays
   tau_mu(:) = 0.d0
   tau_sigma(:) = 0.d0
+
+!! DK DK temporary for regional code
+  if(REGIONAL_CODE) then
+
+  if(MAX_ATTENUATION_PERIOD == 200 .and. MIN_ATTENUATION_PERIOD == 1) then
+
+! period range: 1.000000 -- 200.000000 s
+
+! define central period of source in seconds using values from Jeroen's code
+  T_c_source = 1000.d0 /   70.710678118654755d0
+
+! tau sigma evenly spaced in log frequency, does not depend on value of Q
+  tau_sigma(1) =        31.83098861837910931172d0
+  tau_sigma(2) =         2.25079079039276752638d0
+  tau_sigma(3) =         0.15915494309189551214d0
+
+! check in which region we are based upon doubling flag
+
+  select case(iregion_attenuation)
+
+!--- CMB -> d670, target Q_mu = 312.
+
+  case(IREGION_ATTENUATION_CMB_670)
+
+    tau_mu(1) =        31.98831234987152072335d0
+    tau_mu(2) =         2.26372027015198540312d0
+    tau_mu(3) =         0.16007126864753609685d0
+    Q_mu =       312.0000000000d0
+
+!--- d670 -> d220, target Q_mu: 143.
+
+  case(IREGION_ATTENUATION_670_220)
+
+    tau_mu(1) =        32.10936720723712056724d0
+    tau_mu(2) =         2.27962803170602423819d0
+    tau_mu(3) =         0.16117116738629347350d0
+    Q_mu =       143.0000000000d0
+
+!--- d220 -> depth of 80 km, target Q_mu:  80.
+
+  case(IREGION_ATTENUATION_220_80)
+
+    tau_mu(1) =        32.15354690558234551645d0
+    tau_mu(2) =         2.30398847208382084872d0
+    tau_mu(3) =         0.16280124738435630682d0
+    Q_mu =        80.0000000000d0
+
+!--- depth of 80 km -> surface, target Q_mu: 600.
+
+  case(IREGION_ATTENUATION_80_SURFACE)
+
+    tau_mu(1) =        31.91896317140586347705d0
+    tau_mu(2) =         2.25745362644383806838d0
+    tau_mu(3) =         0.15962974749732541935d0
+    Q_mu =       600.0000000000d0
+
+  case default
+
+    call exit_MPI(myrank,'wrong attenuation flag in mesh')
+
+  end select
+
+  else
+    call exit_MPI(myrank,'incorrect minimum or maximum attenuation period')
+  endif
+
+
+
+
+
+
+!! DK DK this for global code
+  else
 
   if(MAX_ATTENUATION_PERIOD == 1000 .and. MIN_ATTENUATION_PERIOD == 20) then
 
@@ -602,6 +675,8 @@
   else
     call exit_MPI(myrank,'incorrect minimum or maximum attenuation period')
   endif
+
+  endif !! DK DK end test whether regional or global code
 
 !--- non-dimensionalize the tau values and the period of the source
 

@@ -1,4 +1,21 @@
-subroutine derive_parameters(myrank,TMIN,RECORD_LENGTH,NPROC_INPUT, &
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
+!          --------------------------------------------------
+!
+!                 Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory - California Institute of Technology
+!        (c) California Institute of Technology August 2003
+!
+!    A signed non-commercial agreement is required to use this program.
+!   Please check http://www.gps.caltech.edu/research/jtromp for details.
+!           Free for non-commercial academic research ONLY.
+!      This program is distributed WITHOUT ANY WARRANTY whatsoever.
+!      Do not redistribute this program without written permission.
+!
+!=====================================================================
+
+  subroutine derive_parameters(myrank,TMIN,RECORD_LENGTH,NPROC_INPUT, &
      NEX_ETA,NEX_XI,NPROC_ETA,NPROC_XI,NSTEP,DT, ONE_CRUST, &
      MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
      NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -7,7 +24,6 @@ subroutine derive_parameters(myrank,TMIN,RECORD_LENGTH,NPROC_INPUT, &
      NER_DOUBLING_OUTER_CORE, &
      NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB, &
      RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
-
 
   implicit none
 
@@ -259,4 +275,5 @@ subroutine derive_parameters(myrank,TMIN,RECORD_LENGTH,NPROC_INPUT, &
   NER_ICB_CMB = NER_ICB_BOTTOMDBL + NER_BOTTOMDBL_TOPDBL + NER_TOPDBL_CMB
   NER_DOUBLING_OUTER_CORE = NER_TOP_CENTRAL_CUBE_ICB + NER_ICB_BOTTOMDBL + NER_BOTTOMDBL_TOPDBL
 
-end subroutine derive_parameters
+  end subroutine derive_parameters
+

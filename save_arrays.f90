@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,7 +15,7 @@
 !
 !=====================================================================
 
-  subroutine save_arrays(prname,iregion_code,xixstore,xiystore,xizstore, &
+  subroutine save_arrays(rho_vp,rho_vs,prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore,jacobianstore, &
             xstore,ystore,zstore, &
@@ -28,6 +28,8 @@
             ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
             nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
             normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
+            jacobian2D_xmin,jacobian2D_xmax, &
+            jacobian2D_ymin,jacobian2D_ymax, &
             jacobian2D_bottom,jacobian2D_top, &
             iMPIcut_xi,iMPIcut_eta,nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
@@ -63,6 +65,10 @@
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
+! Stacey
+  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec)
+
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
 ! doubling mesh flag
@@ -88,6 +94,10 @@
   real(kind=CUSTOM_REAL) normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP)
 
 ! jacobian on 2D edges
+  real(kind=CUSTOM_REAL) jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+  real(kind=CUSTOM_REAL) jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+  real(kind=CUSTOM_REAL) jacobian2D_ymax(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
   real(kind=CUSTOM_REAL) jacobian2D_bottom(NGLLX,NGLLY,NSPEC2D_BOTTOM)
   real(kind=CUSTOM_REAL) jacobian2D_top(NGLLX,NGLLY,NSPEC2D_TOP)
 
@@ -330,6 +340,22 @@
 
   endif
 
+! Stacey
+  if(REGIONAL_CODE) then
+
+! rho_vp
+  open(unit=27,file=prname(1:len_trim(prname))//'rho_vp.bin',status='unknown',form='unformatted')
+  write(27) rho_vp
+  close(27)
+
+! rho_vs
+  open(unit=27,file=prname(1:len_trim(prname))//'rho_vs.bin',status='unknown',form='unformatted')
+  write(27) rho_vs
+  close(27)
+
+  endif
+
+
 ! ibool
   open(unit=27,file=prname(1:len_trim(prname))//'ibool.bin',status='unknown',form='unformatted')
   write(27) ibool
@@ -372,6 +398,10 @@
   close(27)
 
   open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='unknown',form='unformatted')
+  write(27) jacobian2D_xmin
+  write(27) jacobian2D_xmax
+  write(27) jacobian2D_ymin
+  write(27) jacobian2D_ymax
   write(27) jacobian2D_bottom
   write(27) jacobian2D_top
   close(27)

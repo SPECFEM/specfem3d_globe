@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,7 +15,7 @@
 !
 !=====================================================================
 !
-! Copyright September 2002, by the California Institute of Technology.
+! Copyright August 2003, by the California Institute of Technology.
 ! ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
 !
 ! Any commercial use must be negotiated with the Office of Technology
@@ -109,20 +109,22 @@
 ! Evolution of the code:
 ! ---------------------
 !
-! MPI v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
+! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
+!      merged global and regional codes, no iterations in fluid, better movies
+! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
 !      flexible mesh doubling in outer core, inlined code, OpenDX support
-! MPI v. 3.2 Jeroen Tromp, Caltech, July 2002:
+! v. 3.2 Jeroen Tromp, Caltech, July 2002:
 !      multiple sources and flexible PREM reading
-! MPI v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
+! v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
 !      vectorized loops in solver and merged central cube
-! MPI v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
+! v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
 !   ported to SGI and Compaq, double precision solver, more general anisotropy
-! MPI v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
+! v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
 !                       gravity, rotation, oceans and 3-D models
-! MPI v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, March 2001:
+! v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, March 2001:
 !                       final MPI package
-! MPI v. 2.0 Dimitri Komatitsch, Harvard, January 2000: MPI code for the globe
-! MPI v. 1.0 Dimitri Komatitsch, Mexico, June 1999: first MPI code for a chunk
+! v. 2.0 Dimitri Komatitsch, Harvard, January 2000: MPI code for the globe
+! v. 1.0 Dimitri Komatitsch, Mexico, June 1999: first MPI code for a chunk
 ! Jeroen Tromp, Harvard, July 1998: first chunk solver using OpenMP on Sun
 ! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
 !
@@ -203,10 +205,27 @@
   integer, dimension(:), allocatable :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
     ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle,ibelm_bottom_crust_mantle,ibelm_top_crust_mantle
   logical, dimension(NGLOBMAX_CRUST_MANTLE) :: updated_dof_ocean_load
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_bottom_crust_mantle,jacobian2D_top_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_bottom_crust_mantle,jacobian2D_top_crust_mantle, &
+    jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
+    jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_xmin_crust_mantle, &
     normal_xmax_crust_mantle,normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
     normal_bottom_crust_mantle,normal_top_crust_mantle
+
+! Stacey
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: rho_vp_crust_mantle,rho_vs_crust_mantle
+  integer nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
+  integer, dimension(:,:), allocatable :: nimin_crust_mantle, &
+    nimax_crust_mantle,njmin_crust_mantle,njmax_crust_mantle, &
+    nkmin_xi_crust_mantle,nkmin_eta_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE) :: rho_vp_outer_core,rho_vs_outer_core
+  integer nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
+  integer, dimension(:,:), allocatable :: nimin_outer_core, &
+    nimax_outer_core,njmin_outer_core,njmax_outer_core, &
+    nkmin_xi_outer_core,nkmin_eta_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: rho_vp_inner_core,rho_vs_inner_core
 
 ! arrays to couple with the fluid regions by pointwise matching
   integer, dimension(:), allocatable :: ibelm_xmin_outer_core, &
@@ -215,7 +234,9 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_xmin_outer_core, &
     normal_xmax_outer_core,normal_ymin_outer_core,normal_ymax_outer_core, &
     normal_bottom_outer_core,normal_top_outer_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_bottom_outer_core,jacobian2D_top_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
+    jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
+    jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
 
   integer, dimension(:), allocatable :: ibelm_xmin_inner_core, &
     ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core, &
@@ -778,6 +799,7 @@
     READ_TISO = .true.
   endif
   call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
+            rho_vp_crust_mantle,rho_vs_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
@@ -805,6 +827,7 @@
   nspec_tiso = 1
   nspec_ani = 1
   call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
+            rho_vp_outer_core,rho_vs_outer_core, &
             xstore_outer_core,ystore_outer_core,zstore_outer_core, &
             xix_outer_core,xiy_outer_core,xiz_outer_core, &
             etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -832,6 +855,7 @@
     nspec_ani = 1
   endif
   call read_arrays_solver(IREGION_INNER_CORE,myrank, &
+            rho_vp_inner_core,rho_vs_inner_core, &
             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
             xix_inner_core,xiy_inner_core,xiz_inner_core, &
             etax_inner_core,etay_inner_core,etaz_inner_core, &
@@ -1019,6 +1043,10 @@
   allocate(ibelm_bottom_crust_mantle(NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)))
   allocate(ibelm_top_crust_mantle(NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
 
+  allocate(jacobian2D_xmin_crust_mantle(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
+  allocate(jacobian2D_xmax_crust_mantle(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
+  allocate(jacobian2D_ymin_crust_mantle(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
+  allocate(jacobian2D_ymax_crust_mantle(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
   allocate(jacobian2D_bottom_crust_mantle(NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)))
   allocate(jacobian2D_top_crust_mantle(NGLLX,NGLLY,NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
 
@@ -1029,6 +1057,14 @@
   allocate(normal_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
   allocate(normal_bottom_crust_mantle(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)))
   allocate(normal_top_crust_mantle(NDIM,NGLLX,NGLLY,NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
+
+! Stacey
+  allocate(nimin_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
+  allocate(nimax_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
+  allocate(njmin_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
+  allocate(njmax_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
+  allocate(nkmin_xi_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
+  allocate(nkmin_eta_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
 
 ! boundary parameters
   open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',form='unformatted')
@@ -1050,9 +1086,49 @@
   close(27)
 
   open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',form='unformatted')
+  read(27) jacobian2D_xmin_crust_mantle
+  read(27) jacobian2D_xmax_crust_mantle
+  read(27) jacobian2D_ymin_crust_mantle
+  read(27) jacobian2D_ymax_crust_mantle
   read(27) jacobian2D_bottom_crust_mantle
   read(27) jacobian2D_top_crust_mantle
   close(27)
+
+! Stacey put back
+  open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='unknown',form='unformatted')
+  read(27) nspec2D_xmin_crust_mantle
+  read(27) nspec2D_xmax_crust_mantle
+  read(27) nspec2D_ymin_crust_mantle
+  read(27) nspec2D_ymax_crust_mantle
+  close(27)
+
+! read arrays for Stacey conditions
+
+  if(STACEY_ABS_CONDITIONS) then
+      open(unit=27,file=prname(1:len_trim(prname))//'nimin.bin',status='unknown',form='unformatted')
+      read(27) nimin_crust_mantle
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'nimax.bin',status='unknown',form='unformatted')
+      read(27) nimax_crust_mantle
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'njmin.bin',status='unknown',form='unformatted')
+      read(27) njmin_crust_mantle
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'njmax.bin',status='unknown',form='unformatted')
+      read(27) njmax_crust_mantle
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_xi.bin',status='unknown',form='unformatted')
+      read(27) nkmin_xi_crust_mantle
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_eta.bin',status='unknown',form='unformatted')
+      read(27) nkmin_eta_crust_mantle
+      close(27)
+  endif
 
 ! read parameters to couple fluid and solid regions
 
@@ -1082,8 +1158,20 @@
   allocate(normal_top_outer_core(NDIM,NGLLX,NGLLY,NSPEC2D_TOP(IREGION_OUTER_CORE)))
 
 ! jacobian on 2D edges
+  allocate(jacobian2D_xmin_outer_core(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
+  allocate(jacobian2D_xmax_outer_core(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
+  allocate(jacobian2D_ymin_outer_core(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
+  allocate(jacobian2D_ymax_outer_core(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
   allocate(jacobian2D_bottom_outer_core(NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
   allocate(jacobian2D_top_outer_core(NGLLX,NGLLY,NSPEC2D_TOP(IREGION_OUTER_CORE)))
+
+! Stacey
+  allocate(nimin_outer_core(2,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
+  allocate(nimax_outer_core(2,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
+  allocate(njmin_outer_core(2,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
+  allocate(njmax_outer_core(2,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
+  allocate(nkmin_xi_outer_core(2,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
+  allocate(nkmin_eta_outer_core(2,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
 
 ! boundary parameters
   open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',form='unformatted')
@@ -1104,10 +1192,50 @@
   read(27) normal_top_outer_core
   close(27)
 
+! Stacey put back
+  open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='unknown',form='unformatted')
+  read(27) nspec2D_xmin_outer_core
+  read(27) nspec2D_xmax_outer_core
+  read(27) nspec2D_ymin_outer_core
+  read(27) nspec2D_ymax_outer_core
+  close(27)
+
   open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',form='unformatted')
+  read(27) jacobian2D_xmin_outer_core
+  read(27) jacobian2D_xmax_outer_core
+  read(27) jacobian2D_ymin_outer_core
+  read(27) jacobian2D_ymax_outer_core
   read(27) jacobian2D_bottom_outer_core
   read(27) jacobian2D_top_outer_core
   close(27)
+
+! read arrays for Stacey conditions
+
+  if(STACEY_ABS_CONDITIONS) then
+      open(unit=27,file=prname(1:len_trim(prname))//'nimin.bin',status='unknown',form='unformatted')
+      read(27) nimin_outer_core
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'nimax.bin',status='unknown',form='unformatted')
+      read(27) nimax_outer_core
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'njmin.bin',status='unknown',form='unformatted')
+      read(27) njmin_outer_core
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'njmax.bin',status='unknown',form='unformatted')
+      read(27) njmax_outer_core
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_xi.bin',status='unknown',form='unformatted')
+      read(27) nkmin_xi_outer_core
+      close(27)
+
+      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_eta.bin',status='unknown',form='unformatted')
+      read(27) nkmin_eta_outer_core
+      close(27)
+  endif
 
 !
 !---- inner core
@@ -2466,7 +2594,7 @@
 !--- couple with inner core at the bottom of the outer core
 !---
 
-  if(ACTUALLY_COUPLE_FLUID_ICB) then
+  if(ACTUALLY_COUPLE_FLUID_ICB .and. .not. REGIONAL_CODE) then
 
 ! for surface elements exactly on the ICB
     do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
@@ -2541,7 +2669,7 @@
 ! for anisotropy and gravity, x y and z contain r theta and phi
   call compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
           nspec_crust_mantle, &
-          displ_crust_mantle,accel_crust_mantle, &
+          displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
@@ -2560,7 +2688,17 @@
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,idoubling_crust_mantle, &
           R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common)
+          alphaval,betaval,gammaval,factor_common, &
+          rho_vp_crust_mantle,rho_vs_crust_mantle,nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+          nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+          nimin_crust_mantle,nimax_crust_mantle, &
+          njmin_crust_mantle,njmax_crust_mantle, &
+          nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
+          ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
+          ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+          NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+          jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle,jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
+          normal_xmin_crust_mantle,normal_xmax_crust_mantle,normal_ymin_crust_mantle,normal_ymax_crust_mantle)
 
   call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -2666,7 +2804,7 @@
 !--- couple with outer core at the top of the inner core
 !---
 
-  if(ACTUALLY_COUPLE_FLUID_ICB) then
+  if(ACTUALLY_COUPLE_FLUID_ICB .and. .not. REGIONAL_CODE) then
 
 ! for surface elements exactly on the ICB
     do ispec2D = 1,NSPEC2D_TOP(IREGION_INNER_CORE)

@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -474,7 +474,6 @@
 ! write AVS or DX header with element data
   if(USE_OPENDX) then
     open(unit=11,file='OUTPUT_FILES/DX_meshquality.dx',status='unknown')
-    write(11,*) '# object 1 is the irregular positions'
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ntotpoinAVS_DX,' data follows'
   else
     open(unit=11,file='OUTPUT_FILES/AVS_meshquality.inp',status='unknown')
@@ -525,10 +524,7 @@
   iglobpointoffset = 0
   iglobelemoffset = 0
 
-  if(USE_OPENDX) then
-    write(11,*) '# object 2 is the irregular connections, hexahedra, connecting the positions'
-    write(11,*) 'object 2 class array type int rank 1 shape 8 items ',ntotspecAVS_DX,' data follows'
-  endif
+  if(USE_OPENDX) write(11,*) 'object 2 class array type int rank 1 shape 8 items ',ntotspecAVS_DX,' data follows'
 
   do iregion_code = 1,MAX_NUM_REGIONS
 
@@ -597,8 +593,6 @@
 ! label for hexahedra in OpenDX is "cubes"
     write(11,*) 'attribute "element type" string "cubes"'
     write(11,*) 'attribute "ref" string "positions"'
-    write(11,*) '# object 3 is the element data, which are in a one-to-one'
-    write(11,*) '# correspondence with the connections ("dep" on connections)'
     write(11,*) 'object 3 class array type float rank 0 items ',ntotspecAVS_DX,' data follows'
   else
     write(11,*) '1 1'
@@ -648,8 +642,6 @@
 ! define OpenDX field
   if(USE_OPENDX) then
     write(11,*) 'attribute "dep" string "connections"'
-    write(11,*) '# a field is created with three components:'
-    write(11,*) '# "positions", "connections" and "data"'
     write(11,*) 'object "irregular positions irregular connections" class field'
     write(11,*) 'component "positions" value 1'
     write(11,*) 'component "connections" value 2'

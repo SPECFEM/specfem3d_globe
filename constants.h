@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -51,6 +51,39 @@
 ! Flag is used only when one checks the mesh with the serial codes
 ! ("xcheck_buffers_1D" etc.), ignore it if you do not plan to use them
   logical, parameter :: LOCAL_PATH_IS_ALSO_GLOBAL = .false.
+
+!! DK DK temporary for regional code, should be in Par_file ultimately
+
+! number of chunks (1, 3 or 6, full Earth -> six chunks)
+! parameters describing the chunk in degrees
+
+!! DK DK
+!! DK DK for global code with 6 chunks
+!! DK DK
+  logical, parameter :: REGIONAL_CODE = .false.
+  integer, parameter :: NCHUNKS = 6
+  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG   = 90.d0
+  logical, parameter :: STACEY_ABS_CONDITIONS = .false.
+! include central cube in the case of 6 chunks or not
+! should always be set to true except when debugging code
+  logical, parameter :: INCLUDE_CENTRAL_CUBE = .true.
+
+!! DK DK
+!! DK DK for regional code with 1 chunk
+!! DK DK
+!  logical, parameter :: REGIONAL_CODE = .true.
+!! DK DK spaces added to prevent go_mesher script from crashing
+!! DK DK if keyword N   CHUNKS appears twice in constants.h
+!  integer, parameter :: N    CHUNKS = 1
+!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG   = 35.d0
+!  logical, parameter :: STACEY_ABS_CONDITIONS = .true.
+!! include central cube in the case of 6 chunks or not
+!! should always be set to true except when debugging code
+!  logical, parameter :: INCLUDE_CENTRAL_CUBE = .false.
+
+  double precision, parameter :: CENTER_LATITUDE_DEG      = 38.d0
+  double precision, parameter :: CENTER_LONGITUDE_DEG     = 137.d0
+  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 21.d0
 
 ! save AVS or OpenDX files in mesher or not
 ! do not use if you do not plan to use AVS or OpenDX to visualize the mesh
@@ -160,9 +193,6 @@
 ! number of points per spectral element
   integer, parameter :: NGLLCUBE = NGLLX * NGLLY * NGLLZ
 
-! number of chunks (1, 3 or 6, full Earth -> six chunks)
-  integer, parameter :: NCHUNKS = 6
-
 ! flag to exclude elements that are too far from target in source detection
   logical, parameter :: USE_DISTANCE_CRITERION = .true.
 
@@ -175,10 +205,6 @@
 !
 !--- debugging flags
 !
-
-! include central cube in the case of 6 chunks or not
-! should always be set to true except when debugging code
-  logical, parameter :: INCLUDE_CENTRAL_CUBE = .true.
 
 ! flags to actually assemble with MPI or not
 ! and to actually match fluid and solid regions of the Earth or not
@@ -195,7 +221,7 @@
 ! some useful constants
   double precision, parameter :: PI = 3.141592653589793d0
   double precision, parameter :: TWO_PI = 2.d0 * PI
-  double precision, parameter :: PI_OVER_TWO = PI / 2.d0,PI_OVER_FOUR = PI / 4.d0
+  double precision, parameter :: PI_OVER_FOUR = PI / 4.d0
 
   double precision, parameter :: DEGREES_TO_RADIANS = PI / 180.d0
 

@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -18,7 +18,7 @@
 ! read arrays created by the mesher
 
   subroutine read_arrays_solver(iregion_code,myrank, &
-              xstore,ystore,zstore, &
+              rho_vp,rho_vs,xstore,ystore,zstore, &
               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
               kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
               nspec_iso,nspec_tiso,nspec_ani, &
@@ -65,6 +65,10 @@
     c11store,c12store,c13store,c14store,c15store,c16store, &
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
+
+! Stacey
+  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec)
 
 ! mass matrix and additional ocean load mass matrix
   real(kind=CUSTOM_REAL), dimension(nglob) :: rmass,rmass_ocean_load
@@ -341,6 +345,22 @@
     open(unit=IIN,file=prname(1:len_trim(prname))//'c66_mantle.bin',status='old',form='unformatted')
     read(IIN) c66store
     close(IIN)
+
+  endif
+
+! Stacey
+
+  if(REGIONAL_CODE) then
+
+! rho_vp
+  open(unit=IIN,file=prname(1:len_trim(prname))//'rho_vp.bin',status='old',form='unformatted')
+  read(IIN) rho_vp
+  close(IIN)
+
+! rho_vs
+  open(unit=IIN,file=prname(1:len_trim(prname))//'rho_vs.bin',status='old',form='unformatted')
+  read(IIN) rho_vs
+  close(IIN)
 
   endif
 

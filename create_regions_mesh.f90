@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -31,7 +31,7 @@
            NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA,NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
            crustal_model,mantle_model,aniso_mantle_model, &
-           aniso_inner_core_model)
+           aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
 
 ! create the different regions of the mesh
 
@@ -184,6 +184,10 @@
 ! MPI cut-planes parameters along xi and along eta
   logical, dimension(:,:), allocatable :: iMPIcut_xi,iMPIcut_eta
 
+! Stacey, indices for Clayton-Engquist absorbing conditions
+  integer, dimension(:,:), allocatable :: nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
+
 ! name of the database file
   character(len=150) prname
 
@@ -192,6 +196,11 @@
 
   integer i,j,k,ia,ispec,iglobnum
   integer iproc_xi,iproc_eta,ichunk
+
+  double precision ANGULAR_SIZE_CHUNK_RAD
+
+! rotation matrix from Euler angles
+  double precision rotation_matrix(3,3)
 
 ! **************
 
@@ -232,6 +241,16 @@
   allocate(kappahstore(NGLLX,NGLLY,NGLLZ,nspec))
   allocate(muhstore(NGLLX,NGLLY,NGLLZ,nspec))
   allocate(eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec))
+
+! Stacey
+!! DK DK is this risky, because used in save_arrays ? probably ok
+  if(REGIONAL_CODE) then
+    allocate(rho_vp(NGLLX,NGLLY,NGLLZ,nspec))
+    allocate(rho_vs(NGLLX,NGLLY,NGLLZ,nspec))
+  else
+    allocate(rho_vp(NGLLX,NGLLY,NGLLZ,1))
+    allocate(rho_vs(NGLLX,NGLLY,NGLLZ,1))
+  endif
 
   nspec_ani = 1
   if((ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) .or. &
@@ -296,6 +315,14 @@
   allocate(normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX))
   allocate(normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM))
   allocate(normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP))
+
+! Stacey
+  allocate(nimin(2,NSPEC2DMAX_YMIN_YMAX))
+  allocate(nimax(2,NSPEC2DMAX_YMIN_YMAX))
+  allocate(njmin(2,NSPEC2DMAX_XMIN_XMAX))
+  allocate(njmax(2,NSPEC2DMAX_XMIN_XMAX))
+  allocate(nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX))
+  allocate(nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX))
 
 ! MPI cut-planes parameters along xi and along eta
   allocate(iMPIcut_xi(2,nspec))
@@ -402,7 +429,7 @@
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model)
+          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
 
 ! add topography without the crustal model
         if(TOPOGRAPHY .and. (idoubling(ispec) == IFLAG_CRUST &
@@ -714,6 +741,11 @@
                   xstore,ystore,zstore,ifseg,npointot, &
                   NSPEC1D_RADIAL,NPOIN1D_RADIAL)
 
+! Stacey
+  if(REGIONAL_CODE) call get_absorb(prname,iboun,nspec, &
+       nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
+       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
+
 ! create AVS or DX mesh data for the slices
   if(SAVE_AVS_DX_MESH_FILES) then
     call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
@@ -816,7 +848,7 @@
   endif
 
 ! save the binary files
-    call save_arrays(prname,iregion_code,xixstore,xiystore,xizstore, &
+    call save_arrays(rho_vp,rho_vs,prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore,jacobianstore, &
             xstore,ystore,zstore, &
@@ -829,6 +861,8 @@
             ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
             nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
             normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
+            jacobian2D_xmin,jacobian2D_xmax, &
+            jacobian2D_ymin,jacobian2D_ymax, &
             jacobian2D_bottom,jacobian2D_top, &
             iMPIcut_xi,iMPIcut_eta,nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
@@ -917,6 +951,10 @@
   deallocate(normal_xmin,normal_xmax,normal_ymin,normal_ymax)
   deallocate(normal_bottom,normal_top)
   deallocate(iMPIcut_xi,iMPIcut_eta)
+
+! Stacey
+  deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
+  deallocate(rho_vp,rho_vs)
 
   end subroutine create_regions_mesh
 

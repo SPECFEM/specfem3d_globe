@@ -5,7 +5,7 @@
 #
 #                 Dimitri Komatitsch and Jeroen Tromp
 #    Seismological Laboratory - California Institute of Technology
-#        (c) California Institute of Technology September 2002
+#        (c) California Institute of Technology August 2003
 #
 #    A signed non-commercial agreement is required to use this program.
 #   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,7 +15,7 @@
 #
 #=====================================================================
 #
-# Copyright September 2002, by the California Institute of Technology.
+# Copyright August 2003, by the California Institute of Technology.
 # ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
 #
 # Any commercial use must be negotiated with the Office of Technology
@@ -41,7 +41,7 @@
 # modifications.
 #
 #
-# Makefile for SPECFEM3D GLOBE version 3.4 - September 2002
+# Makefile for SPECFEM3D GLOBE version 3.4 - August 2003
 # Dimitri Komatitsch, MPI version
 #
 
@@ -50,15 +50,17 @@
 # Beowulf Portland pgf90
 F90 = pgf90
 MPIF90 = mpif90
-#FLAGS_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
-FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard
+FLAGS_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
+#FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard
 FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
+#FLAGS_NO_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
 MPI_FLAGS = 
 
 # Intel Fortran90 for Linux
 #F90 = ifc
 #MPIF90 = mpif90
 #FLAGS_NO_CHECK = -O3 -tpp6 -xK -ip -e95 -implicitnone -unroll6
+###FLAGS_NO_CHECK = -O0 -e95 -implicitnone
 #FLAGS_CHECK = $(FLAGS_NO_CHECK)
 #MPI_FLAGS = -Vaxlib
 
@@ -157,6 +159,8 @@ meshfem3D: constants.h \
        $O/lgndr.o \
        $O/mantle_model.o \
        $O/mesh_radial.o \
+       $O/get_absorb.o \
+       $O/euler_angles.o \
        $O/numerical_recipes.o \
        $O/prem_model.o \
        $O/anisotropic_mantle_model.o \
@@ -204,6 +208,8 @@ meshfem3D: constants.h \
        $O/intgrl.o \
        $O/lgndr.o \
        $O/mesh_radial.o \
+       $O/get_absorb.o \
+       $O/euler_angles.o \
        $O/mantle_model.o \
        $O/numerical_recipes.o \
        $O/prem_model.o \
@@ -300,9 +306,12 @@ convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
 create_header_file: $O/create_header_file.o $O/read_parameter_file.o \
-     $O/compute_parameters.o $O/define_subregions_crust_mantle.o $O/hex_nodes.o $O/save_header_file.o
+     $O/compute_parameters.o $O/define_subregions_crust_mantle.o \
+     $O/hex_nodes.o $O/save_header_file.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o
 	${F90} $(FLAGS_CHECK) -o xcreate_header_file $O/create_header_file.o \
-     $O/read_parameter_file.o $O/compute_parameters.o $O/define_subregions_crust_mantle.o $O/hex_nodes.o $O/save_header_file.o
+     $O/read_parameter_file.o $O/compute_parameters.o \
+     $O/define_subregions_crust_mantle.o $O/hex_nodes.o $O/save_header_file.o \
+     $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o
 
 create_movie_AVS_DX: $O/create_movie_AVS_DX.o $O/read_parameter_file.o \
      $O/compute_parameters.o $O/rthetaphi_xyz.o
@@ -506,6 +515,12 @@ $O/mantle_model.o: constants.h mantle_model.f90
 
 $O/mesh_radial.o: constants.h mesh_radial.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/mesh_radial.o mesh_radial.f90
+
+$O/get_absorb.o: constants.h get_absorb.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/get_absorb.o get_absorb.f90
+
+$O/euler_angles.o: constants.h euler_angles.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/euler_angles.o euler_angles.f90
 
 ## use MPI here
 $O/meshfem3D.o: constants.h meshfem3D.f90

@@ -5,7 +5,7 @@
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology September 2002
+!        (c) California Institute of Technology August 2003
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,7 +15,7 @@
 !
 !=====================================================================
 !
-! Copyright September 2002, by the California Institute of Technology.
+! Copyright August 2003, by the California Institute of Technology.
 ! ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
 !
 ! Any commercial use must be negotiated with the Office of Technology
@@ -109,20 +109,22 @@
 ! Evolution of the code:
 ! ---------------------
 !
-! MPI v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
+! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
+!      merged global and regional codes, no iterations in fluid, better movies
+! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
 !      flexible mesh doubling in outer core, inlined code, OpenDX support
-! MPI v. 3.2 Jeroen Tromp, Caltech, July 2002:
+! v. 3.2 Jeroen Tromp, Caltech, July 2002:
 !      multiple sources and flexible PREM reading
-! MPI v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
+! v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
 !      vectorized loops in solver and merged central cube
-! MPI v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
+! v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
 !   ported to SGI and Compaq, double precision solver, more general anisotropy
-! MPI v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
+! v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
 !                       gravity, rotation, oceans and 3-D models
-! MPI v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, March 2001:
+! v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, March 2001:
 !                       final MPI package
-! MPI v. 2.0 Dimitri Komatitsch, Harvard, January 2000: MPI code for the globe
-! MPI v. 1.0 Dimitri Komatitsch, Mexico, June 1999: first MPI code for a chunk
+! v. 2.0 Dimitri Komatitsch, Harvard, January 2000: MPI code for the globe
+! v. 1.0 Dimitri Komatitsch, Mexico, June 1999: first MPI code for a chunk
 ! Jeroen Tromp, Harvard, July 1998: first chunk solver using OpenMP on Sun
 ! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
 !
@@ -171,6 +173,13 @@
 ! for loop on all the slices
   integer iregion_code
   integer iproc_xi,iproc_eta,ichunk
+
+! rotation matrix from Euler angles
+  integer i,j
+  double precision rotation_matrix(3,3)
+  double precision vector_ori(3),vector_rotated(3)
+
+  double precision ANGULAR_SIZE_CHUNK_RAD
 
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
@@ -274,6 +283,10 @@
       NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
       NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
       NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB)
+
+!! DK DK check for regional code
+  if(REGIONAL_CODE .and. NCHUNKS /= 1) call exit_MPI(myrank,'regional code only works for one chunk')
+  if(REGIONAL_CODE .and. INCLUDE_CENTRAL_CUBE) call exit_MPI(myrank,'regional code cannot include the central cube')
 
 ! check that the code is running with the requested nb of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
@@ -513,6 +526,11 @@
   npx = 2*NEX_PER_PROC_XI
   npy = 2*NEX_PER_PROC_ETA
 
+!! DK DK for regional code
+! compute rotation matrix from Euler angles
+  ANGULAR_SIZE_CHUNK_RAD = ANGULAR_SIZE_CHUNK_DEG * PI / 180.
+  if(REGIONAL_CODE) call euler_angles(rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
+
 ! fill the region between the central cube and the free surface
   do iy=0,npy
   do ix=0,npx
@@ -520,14 +538,13 @@
 ! full Earth (cubed sphere)
 
     xin=dble(ix)/dble(npx)
-    xi= - PI_OVER_FOUR + (dble(iproc_xi)+xin)*PI_OVER_TWO/dble(NPROC_XI)
-
+    xi= - (ANGULAR_SIZE_CHUNK_RAD/2.) + (dble(iproc_xi)+xin)*ANGULAR_SIZE_CHUNK_RAD/dble(NPROC_XI)
     x=dtan(xi)
 
     etan=dble(iy)/dble(npy)
-    eta= - PI_OVER_FOUR + (dble(iproc_eta)+etan)*PI_OVER_TWO/dble(NPROC_ETA)
-
+    eta= - (ANGULAR_SIZE_CHUNK_RAD/2.) + (dble(iproc_eta)+etan)*ANGULAR_SIZE_CHUNK_RAD/dble(NPROC_ETA)
     y=dtan(eta)
+
     gamma=ONE/dsqrt(ONE+x*x+y*y)
 
     rgt=R_UNIT_SPHERE*gamma
@@ -636,6 +653,67 @@
     else
       call exit_MPI(myrank,'incorrect chunk numbering in meshfem3D')
     endif
+
+!! DK DK for regional code
+  if(REGIONAL_CODE) then
+
+! rotate bottom
+    vector_ori(1) = x_bot
+    vector_ori(2) = y_bot
+    vector_ori(3) = z_bot
+    do i=1,3
+      vector_rotated(i)=0.0d0
+      do j=1,3
+        vector_rotated(i)=vector_rotated(i)+rotation_matrix(i,j)*vector_ori(j)
+      enddo
+    enddo
+    x_bot = vector_rotated(1)
+    y_bot = vector_rotated(2)
+    z_bot = vector_rotated(3)
+
+! rotate top
+    vector_ori(1) = x_top
+    vector_ori(2) = y_top
+    vector_ori(3) = z_top
+    do i=1,3
+      vector_rotated(i)=0.0d0
+      do j=1,3
+        vector_rotated(i)=vector_rotated(i)+rotation_matrix(i,j)*vector_ori(j)
+      enddo
+    enddo
+    x_top = vector_rotated(1)
+    y_top = vector_rotated(2)
+    z_top = vector_rotated(3)
+
+! rotate icb
+    vector_ori(1) = x_icb
+    vector_ori(2) = y_icb
+    vector_ori(3) = z_icb
+    do i=1,3
+      vector_rotated(i)=0.0d0
+      do j=1,3
+        vector_rotated(i)=vector_rotated(i)+rotation_matrix(i,j)*vector_ori(j)
+      enddo
+    enddo
+    x_icb = vector_rotated(1)
+    y_icb = vector_rotated(2)
+    z_icb = vector_rotated(3)
+
+! rotate central cube
+    vector_ori(1) = x_central_cube
+    vector_ori(2) = y_central_cube
+    vector_ori(3) = z_central_cube
+    do i=1,3
+      vector_rotated(i)=0.0d0
+      do j=1,3
+        vector_rotated(i)=vector_rotated(i)+rotation_matrix(i,j)*vector_ori(j)
+      enddo
+    enddo
+    x_central_cube = vector_rotated(1)
+    y_central_cube = vector_rotated(2)
+    z_central_cube = vector_rotated(3)
+
+  endif
 
 ! rescale central cube to match cubed sphere
     x_central_cube = x_central_cube * R_CENTRAL_CUBE / dsqrt(3.d0)
@@ -748,7 +826,7 @@
          NSPEC2D_C_ETA(iregion_code),NSPEC1D_RADIAL(iregion_code),NPOIN1D_RADIAL(iregion_code), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
          crustal_model,mantle_model,aniso_mantle_model, &
-         aniso_inner_core_model)
+         aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
 
 ! store number of anisotropic elements found in the mantle
   if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
