@@ -84,6 +84,10 @@
 
       read(13,*) ibathy_topo(itopo_x,itopo_y)
 
+! impose maximum height of mountains, to suppress oscillations in Himalaya etc.
+  if (USE_MAXIMUM_HEIGHT_TOPO .and. ibathy_topo(itopo_x,itopo_y) > MAXIMUM_HEIGHT_TOPO) &
+    ibathy_topo(itopo_x,itopo_y) = MAXIMUM_HEIGHT_TOPO
+
 ! impose maximum depth of oceans, to suppress oscillations near deep trenches
   if (USE_MAXIMUM_DEPTH_OCEANS .and. ibathy_topo(itopo_x,itopo_y) < MAXIMUM_DEPTH_OCEANS) &
     ibathy_topo(itopo_x,itopo_y) = MAXIMUM_DEPTH_OCEANS
