@@ -76,7 +76,7 @@ MPI_FLAGS =
 #
 #F90 = f90
 #MPIF90 = mpif90
-#FLAGS_CHECK = -s -O2 -cpu:p7 -Rb -Rc -Rp -v -YDEALLOC=ALL
+#FLAGS_CHECK = -s -O2 -cpu:p7 -v -YDEALLOC=ALL
 #FLAGS_NO_CHECK = $(FLAGS_CHECK)
 #MPI_FLAGS =
 
