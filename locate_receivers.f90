@@ -209,7 +209,7 @@
       if(myrank == 0) &
         write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
                        '.',network_name(irec)(1:len_trim(network_name(irec))), &
-                       '    epicentral distance:  ',epidist(irec),' degrees'
+                       '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
 
 ! record three components for each station
     do iorientation = 1,3
