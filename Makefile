@@ -189,6 +189,7 @@ meshfem3D: constants.h \
        $O/add_topography.o \
        $O/exit_mpi.o \
        $O/read_parameter_file.o \
+       $O/read_value_parameters.o \
        $O/compute_parameters.o \
        $O/sort_array_coordinates.o \
        $O/save_header_file.o \
@@ -240,6 +241,7 @@ meshfem3D: constants.h \
        $O/add_topography.o \
        $O/exit_mpi.o \
        $O/read_parameter_file.o \
+       $O/read_value_parameters.o \
        $O/compute_parameters.o \
        $O/sort_array_coordinates.o \
        $O/save_header_file.o \
@@ -258,6 +260,7 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/intgrl.o \
        $O/write_seismograms.o \
        $O/read_parameter_file.o \
+       $O/read_value_parameters.o \
        $O/compute_parameters.o \
        $O/locate_sources.o \
        $O/locate_receivers.o \
@@ -297,6 +300,7 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/intgrl.o \
        $O/write_seismograms.o \
        $O/read_parameter_file.o \
+       $O/read_value_parameters.o \
        $O/compute_parameters.o \
        $O/locate_sources.o \
        $O/locate_receivers.o \
@@ -330,46 +334,46 @@ convolve_source_timefunction: $O/convolve_source_timefunction.o
 
 create_header_file: $O/create_header_file.o $O/read_parameter_file.o \
      $O/compute_parameters.o $O/define_subregions_crust_mantle.o \
-     $O/hex_nodes.o $O/save_header_file.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o
+     $O/hex_nodes.o $O/save_header_file.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o $O/read_value_parameters.o
 	${F90} $(FLAGS_CHECK) -o xcreate_header_file $O/create_header_file.o \
      $O/read_parameter_file.o $O/compute_parameters.o \
      $O/define_subregions_crust_mantle.o $O/hex_nodes.o $O/save_header_file.o \
-     $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o
+     $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o $O/read_value_parameters.o
 
 create_movie_AVS_DX: $O/create_movie_AVS_DX.o $O/read_parameter_file.o \
-     $O/compute_parameters.o $O/rthetaphi_xyz.o
+     $O/compute_parameters.o $O/rthetaphi_xyz.o $O/read_value_parameters.o
 	${F90} $(FLAGS_CHECK) -o xcreate_movie_AVS_DX $O/create_movie_AVS_DX.o \
-     $O/read_parameter_file.o $O/compute_parameters.o $O/rthetaphi_xyz.o
+     $O/read_parameter_file.o $O/compute_parameters.o $O/rthetaphi_xyz.o $O/read_value_parameters.o
 
 combine_AVS_DX: constants.h $O/combine_AVS_DX.o $O/get_cmt.o $O/reduce.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/rthetaphi_xyz.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/rthetaphi_xyz.o $O/read_value_parameters.o
 	${F90} $(FLAGS_CHECK) -o xcombine_AVS_DX $O/combine_AVS_DX.o $O/get_cmt.o \
-       $O/reduce.o $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/rthetaphi_xyz.o
+       $O/reduce.o $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/rthetaphi_xyz.o $O/read_value_parameters.o
 
 check_mesh_quality_AVS_DX: constants.h $O/check_mesh_quality_AVS_DX.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 	${F90} $(FLAGS_CHECK) -o xcheck_mesh_quality_AVS_DX $O/check_mesh_quality_AVS_DX.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 
 check_buffers_1D: constants.h $O/check_buffers_1D.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 	${F90} $(FLAGS_CHECK) -o xcheck_buffers_1D $O/check_buffers_1D.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 
 check_buffers_2D: constants.h $O/check_buffers_2D.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 	${F90} $(FLAGS_CHECK) -o xcheck_buffers_2D $O/check_buffers_2D.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 
 check_buffers_corners_chunks: constants.h $O/check_buffers_corners_chunks.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 	${F90} $(FLAGS_CHECK) -o xcheck_buffers_corners_chunks $O/check_buffers_corners_chunks.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 
 check_buffers_faces_chunks: constants.h $O/check_buffers_faces_chunks.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 	${F90} $(FLAGS_CHECK) -o xcheck_buffers_faces_chunks $O/check_buffers_faces_chunks.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
+       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 
 clean:
 	rm -f $O/*.o *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt
@@ -457,6 +461,9 @@ $O/exit_mpi.o: constants.h exit_mpi.f90
 
 $O/read_parameter_file.o: constants.h read_parameter_file.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/read_parameter_file.o read_parameter_file.f90
+
+$O/read_value_parameters.o: constants.h read_value_parameters.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o read_value_parameters.f90
 
 $O/compute_parameters.o: constants.h compute_parameters.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_parameters.o compute_parameters.f90
