@@ -17,7 +17,11 @@ end module attenuation_model_variables
 
 subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source)
 
-!! DK DK xlat, xlon currently not used in this routine ??? !!!
+!! DK DK
+!! DK DK xlat, xlon currently not used in this routine (which uses PREM).
+!! DK DK The user needs to modify this routine if he wants to use
+!! DK DK a particular 3D attenuation model.
+!! DK DK
 
   use attenuation_model_variables
   implicit none
