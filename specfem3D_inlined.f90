@@ -623,9 +623,6 @@
 ! check that the code is running with the requested nb of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
 
-! check that the number of sources is fine
-  if(NSOURCES < 0 .or. NSOURCES > 9999) call exit_MPI(myrank,'invalid number of sources')
-
 ! check that the inlined code can run
   if(NGLLX /= 5) call exit_MPI(myrank,'inlined code can only run with NGLL = 5')
 
