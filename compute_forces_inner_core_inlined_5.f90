@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 3
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 3
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
@@ -475,9 +475,10 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY, &
              GRAVITY,ONE_CRUST,ROTATION, &
-             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS
-  integer NSOURCES,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
-  double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC
+             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS, &
+             MOVIE_SURFACE,MOVIE_VOLUME
+  integer NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
+  double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES
 
   character(len=150) LOCAL_PATH,clean_LOCAL_PATH,final_LOCAL_PATH,prname
 
@@ -532,7 +533,9 @@
         NEX_ETA,NEX_XI,NPROC_ETA,NPROC_XI,NSEIS,NSTEP, &
         DT,TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,OCEANS,ELLIPTICITY, &
         GRAVITY,ONE_CRUST,ATTENUATION, &
-        ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+        ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
+        MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
+        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -902,6 +905,10 @@
   do isource = 2,NSOURCES
     if(t_cmt(isource) < 0.) call exit_MPI(myrank,'t_cmt should not be less than zero')
   enddo
+
+! for the movies, we do not use a Heaviside source
+  if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval(hdur) < HDUR_MIN_MOVIES) &
+    call exit_MPI(myrank,'hdur too small for movie creation')
 
   open(unit=IIN,file='DATA/STATIONS',status='old')
   read(IIN,*) nrec
@@ -2140,20 +2147,20 @@
   if(myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
 
 ! allocate files to save movies
-  if(SAVE_AVS_DX_MOVIE) then
-    allocate(store_val_x(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
-    allocate(store_val_y(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
-    allocate(store_val_z(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
-    allocate(store_val_ux(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
-    allocate(store_val_uy(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
-    allocate(store_val_uz(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
+  if(MOVIE_SURFACE) then
+    allocate(store_val_x(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
+    allocate(store_val_y(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
+    allocate(store_val_z(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
+    allocate(store_val_ux(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
+    allocate(store_val_uy(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
+    allocate(store_val_uz(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
 
-    allocate(store_val_x_all(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
-    allocate(store_val_y_all(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
-    allocate(store_val_z_all(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
-    allocate(store_val_ux_all(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
-    allocate(store_val_uy_all(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
-    allocate(store_val_uz_all(NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
+    allocate(store_val_x_all(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
+    allocate(store_val_y_all(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
+    allocate(store_val_z_all(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
+    allocate(store_val_ux_all(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
+    allocate(store_val_uy_all(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
+    allocate(store_val_uz_all(NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE),0:NPROCTOT-1))
   endif
 
 !
@@ -3010,8 +3017,8 @@
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
               network_name,nrec,nrec_local,DT,NSTEP,hdur(1),LOCAL_PATH,it_begin,it_end)
 
-! save movie frame
-  if(SAVE_AVS_DX_MOVIE .and. mod(it,NMOVIE) == 0) then
+! save movie on surface
+  if(MOVIE_SURFACE .and. mod(it,NMOVIE) == 0) then
 
 ! save velocity here to avoid static offset on displacement for movies
 
@@ -3024,58 +3031,24 @@
       ispec = ibelm_top_crust_mantle(ispec2D)
       k = NGLLZ
 
-! first corner
-      ipoin = ipoin + 1
-      i = 1
-      j = 1
-      iglob = ibool_crust_mantle(i,j,k,ispec)
-      store_val_x(ipoin) = xstore_crust_mantle(iglob)
-      store_val_y(ipoin) = ystore_crust_mantle(iglob)
-      store_val_z(ipoin) = zstore_crust_mantle(iglob)
-      store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
-      store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
-      store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
-
-! second corner
-      ipoin = ipoin + 1
-      i = NGLLX
-      j = 1
-      iglob = ibool_crust_mantle(i,j,k,ispec)
-      store_val_x(ipoin) = xstore_crust_mantle(iglob)
-      store_val_y(ipoin) = ystore_crust_mantle(iglob)
-      store_val_z(ipoin) = zstore_crust_mantle(iglob)
-      store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
-      store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
-      store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
-
-! third corner
-      ipoin = ipoin + 1
-      i = NGLLX
-      j = NGLLY
-      iglob = ibool_crust_mantle(i,j,k,ispec)
-      store_val_x(ipoin) = xstore_crust_mantle(iglob)
-      store_val_y(ipoin) = ystore_crust_mantle(iglob)
-      store_val_z(ipoin) = zstore_crust_mantle(iglob)
-      store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
-      store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
-      store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
-
-! fourth corner
-      ipoin = ipoin + 1
-      i = 1
-      j = NGLLY
-      iglob = ibool_crust_mantle(i,j,k,ispec)
-      store_val_x(ipoin) = xstore_crust_mantle(iglob)
-      store_val_y(ipoin) = ystore_crust_mantle(iglob)
-      store_val_z(ipoin) = zstore_crust_mantle(iglob)
-      store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
-      store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
-      store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
+! loop on all the points inside the element
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ipoin = ipoin + 1
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          store_val_x(ipoin) = xstore_crust_mantle(iglob)
+          store_val_y(ipoin) = ystore_crust_mantle(iglob)
+          store_val_z(ipoin) = zstore_crust_mantle(iglob)
+          store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)
+          store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)
+          store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)
+        enddo
+      enddo
 
     enddo
 
 ! gather info on master proc
-    ispec = NGNOD2D_AVS_DX*NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    ispec = NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     call MPI_GATHER(store_val_x,ispec,CUSTOM_MPI_TYPE,store_val_x_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
     call MPI_GATHER(store_val_y,ispec,CUSTOM_MPI_TYPE,store_val_y_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
     call MPI_GATHER(store_val_z,ispec,CUSTOM_MPI_TYPE,store_val_z_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
@@ -3099,7 +3072,7 @@
   endif
 
 ! save snapshot of full 3D mesh
-  if(SAVE_FULL_3D_SNAPSHOT .and. it == IT_FULL_3D_SNAPSHOT) then
+  if(MOVIE_VOLUME .and. mod(it,NMOVIE) == 0) then
 
 ! save velocity here to avoid static offset on displacement for movies
 

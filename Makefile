@@ -1,6 +1,6 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 3
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
 #          --------------------------------------------------
 #
 #                 Dimitri Komatitsch and Jeroen Tromp
@@ -41,7 +41,7 @@
 # modifications.
 #
 #
-# Makefile for SPECFEM3D GLOBE version 3.3 - September 2002
+# Makefile for SPECFEM3D GLOBE version 3.4 - September 2002
 # Dimitri Komatitsch, MPI version
 #
 
@@ -50,7 +50,8 @@
 # Beowulf Portland pgf90
 F90 = pgf90
 MPIF90 = mpif90
-FLAGS_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
+#FLAGS_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
+FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard
 FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
 MPI_FLAGS = 
 
@@ -117,10 +118,10 @@ MPI_FLAGS =
 O = obj
 
 baksave:
-	cp *f90 *h README_SPECFEM3D_V3.3 DATA/Par_file* Makefile go_mesher go_solver runall mymachines path_change_files.pl bak
+	cp *f90 *h README_SPECFEM3D_V3.4 DATA/Par_file* Makefile go_mesher go_solver runall mymachines path_change_files.pl bak
 
 backup:
-	tar cvf SPECFEM3D_V3.3.tar *f90 *h README_SPECFEM3D_V3.3 DATA/Par_file Makefile go_mesher go_solver runall mymachines path_change_files.pl
+	tar cvf SPECFEM3D_V3.4.tar *f90 *h README_SPECFEM3D_V3.4 DATA/Par_file Makefile go_mesher go_solver runall mymachines path_change_files.pl
 
 meshfem3D: constants.h \
        $O/meshfem3D.o \

@@ -22,8 +22,8 @@ rm -f copy_files_inlined_5.csh copy_files_regular.csh remove_classic.csh script_
 rm -f -r DATA/util/inline_code DATA/util/scaling_nodes_ES DATA/util/events_ES_8.5sec
 
 # suppress comment about inlined version in README file
-cat README_SPECFEM3D_V3.3 | grep -v " NOTE " > _____tutu_____
-mv -f _____tutu_____ README_SPECFEM3D_V3.3
+cat README_SPECFEM3D_V3.4 | grep -v " NOTE " > _____tutu_____
+mv -f _____tutu_____ README_SPECFEM3D_V3.4
 
   echo done permanently removing the inlined version
 
