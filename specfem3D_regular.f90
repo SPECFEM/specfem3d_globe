@@ -534,7 +534,7 @@
           NER_TOPDBL_CMB,ITAFF_TIME_STEPS,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
 
   double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES, &
-          ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2
+          ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,THREE_D,TOPOGRAPHY, &
@@ -597,7 +597,7 @@
         ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
         MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
         NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, ATTENUATION_3D, &
-        RECEIVERS_CAN_BE_BURIED,ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2, &
+        RECEIVERS_CAN_BE_BURIED,ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG, &
         SAVE_AVS_DX_MESH_FILES,ITAFF_TIME_STEPS,PRINT_SOURCE_TIME_FUNCT, &
         NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN)
 
@@ -2683,7 +2683,7 @@
          ibool_outer_core,nspec_outer_core,nglob_outer_core)
 
 ! Stacey
-  if(REGIONAL_CODE .and. STACEY_ABS_CONDITIONS) then
+  if(NCHUNKS /= 6 .and. STACEY_ABS_CONDITIONS) then
 
 !   xmin
 ! if two chunks exclude this face for one of them
@@ -2861,7 +2861,7 @@
 !--- couple with inner core at the bottom of the outer core
 !---
 
-  if(ACTUALLY_COUPLE_FLUID_ICB .and. .not. REGIONAL_CODE) then
+  if(ACTUALLY_COUPLE_FLUID_ICB .and. NCHUNKS == 6) then
 
 ! for surface elements exactly on the ICB
     do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
@@ -2959,7 +2959,7 @@
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
 
 ! Stacey
-  if(REGIONAL_CODE .and. STACEY_ABS_CONDITIONS) then
+  if(NCHUNKS /= 6 .and. STACEY_ABS_CONDITIONS) then
 
 ! crust & mantle
 
@@ -3227,7 +3227,7 @@
 !--- couple with outer core at the top of the inner core
 !---
 
-  if(ACTUALLY_COUPLE_FLUID_ICB .and. .not. REGIONAL_CODE) then
+  if(ACTUALLY_COUPLE_FLUID_ICB .and. NCHUNKS == 6) then
 
 ! for surface elements exactly on the ICB
     do ispec2D = 1,NSPEC2D_TOP(IREGION_INNER_CORE)

@@ -48,7 +48,7 @@
   tau_sigma(:) = 0.d0
 
 !! DK DK temporary for regional code
-  if(REGIONAL_CODE) then
+  if(NCHUNKS /= 6) then
 
   if(MAX_ATTENUATION_PERIOD == 200 .and. MIN_ATTENUATION_PERIOD == 1) then
 

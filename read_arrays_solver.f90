@@ -349,8 +349,7 @@
   endif
 
 ! Stacey
-
-  if(REGIONAL_CODE) then
+  if(NCHUNKS /= 6) then
 
     if(iregion_code == IREGION_CRUST_MANTLE) then
 
