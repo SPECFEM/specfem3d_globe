@@ -1,0 +1,50 @@
+#!/bin/csh
+
+# script to run the solver
+
+# name of the file that contains the list of machines
+set list_of_machines = `grep MACHINE_FILE DATA/Par_file | cut -c 27- `
+set my_local_path = `grep LOCAL_PATH DATA/Par_file | cut -c 27- `
+
+# read DATA/Par_file to get total number of nodes needed
+
+set NCHUNKS = `grep NCHUNKS constants.h | cut -c 34- `
+set NPROC_XI = `grep NPROC_XI DATA/Par_file | cut -c 27- `
+set NPROC_ETA = `grep NPROC_ETA DATA/Par_file | cut -c 27- `
+
+# total number of nodes is product of values read
+@ numnodes = $NCHUNKS * $NPROC_XI * $NPROC_ETA
+
+rm -f PI*
+
+if ( -f $list_of_machines ) then
+  echo " "
+  echo using machine file \"$list_of_machines\"
+  echo " "
+  echo list of active machines:
+  echo " "
+  cat $list_of_machines
+  echo " "
+endif
+
+echo NCHUNKS = $NCHUNKS
+echo NPROC_XI = $NPROC_XI
+echo NPROC_ETA = $NPROC_ETA
+echo " "
+echo starting MPI solver on $numnodes nodes
+echo " "
+echo starting run in current directory $PWD
+echo " "
+echo mesh files will be read from directory $my_local_path
+echo " "
+
+#### use this on Beowulf
+mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
+#/home/local/mpich_new_intel_fortran/bin/mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
+
+#### use this on SGI
+#  mpirun -np $numnodes xspecfem3D
+
+#### use this on Compaq Dec Alpha
+# dmpirun -np $numnodes xspecfem3D
+
