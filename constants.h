@@ -132,8 +132,8 @@
 ! should always be set to true except when debugging code
   logical, parameter :: ACTUALLY_ASSEMBLE_MPI_SLICES = .true.
   logical, parameter :: ACTUALLY_ASSEMBLE_MPI_CHUNKS = .true.
-  logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .false.
-  logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .false.
+  logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
+  logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
 
 !
 !--- do NOT modify parameters below
