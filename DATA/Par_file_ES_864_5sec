@@ -17,10 +17,10 @@ NPROC_XI                 = 18
 NPROC_ETA                = 18
 
 ! time step in seconds
-DT                       = 0.075
+DT                       = 0.072
 
 ! total number of time steps
-NSTEP                    = 36000
+NSTEP                    = 40000
 
 ! parameters describing the Earth model
 OCEANS                   = .true.
