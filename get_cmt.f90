@@ -104,7 +104,7 @@
 ! CMTSOLUTION file values are in dyne.cm
 ! 1 dyne is 1 gram * 1 cm / (1 second)^2
 ! 1 Newton is 1 kg * 1 m / (1 second)^2
-! thus 1 Newton = 100,000 dynes 
+! thus 1 Newton = 100,000 dynes
 ! therefore 1 dyne.cm = 1e-7 Newton.m
 !
   scaleM = 1.d7 * RHOAV * (R_EARTH**5) * PI*GRAV*RHOAV

@@ -379,7 +379,8 @@
   integer it,isource
   integer, dimension(:), allocatable :: islice_selected_source,ispec_selected_source
   integer yr,jda,ho,mi
-  real(kind=CUSTOM_REAL) stf_used
+!! DK DK UGLY
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: stf_used
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearrays
   double precision sec,stf
@@ -938,7 +939,7 @@
   allocate(phi_source(NSOURCES))
 
 ! locate sources in the mesh
-  call locate_source(NSOURCES,myrank,nspec_crust_mantle, &
+  call locate_sources(NSOURCES,myrank,nspec_crust_mantle, &
             nglob_crust_mantle,idoubling_crust_mantle,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xigll,yigll,zigll,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
@@ -2588,6 +2589,10 @@
 
   endif
 
+!! DK DK UGLY
+! allocate array for sources
+  allocate(stf_used(NSOURCES))
+
 ! get MPI starting time
   time_start = MPI_WTIME()
 
@@ -2771,140 +2776,140 @@
 !   xmin
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_xmin_outer_core
- 
+
       ispec=ibelm_xmin_outer_core(ispec2D)
- 
+
 ! exclude elements that are not on absorbing edges
       if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
- 
+
       i=1
 !CDIR NODEP(accel_outer_core)
       do jk=1,stacey_outer_core_xmin_jk(ispec2D)
- 
+
         j = stacey_outer_core_xmin_j(jk,ispec2D)
         k = stacey_outer_core_xmin_k(jk,ispec2D)
         ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
- 
+
         iglob=ibool_outer_core(ijk,1,1,ispec)
 
         sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
 
         weight=jacobian2D_xmin_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
- 
+
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
+
       enddo
     enddo
 
 !   xmax
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_xmax_outer_core
- 
+
       ispec=ibelm_xmax_outer_core(ispec2D)
- 
+
 ! exclude elements that are not on absorbing edges
       if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
- 
+
       i=NGLLX
 !CDIR NODEP(accel_outer_core)
       do jk=1,stacey_outer_core_xmax_jk(ispec2D)
- 
+
         j = stacey_outer_core_xmax_j(jk,ispec2D)
         k = stacey_outer_core_xmax_k(jk,ispec2D)
         ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
- 
+
         iglob=ibool_outer_core(ijk,1,1,ispec)
 
         sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
 
         weight=jacobian2D_xmax_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
- 
+
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
+
       enddo
     enddo
 
 !   ymin
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_ymin_outer_core
- 
+
       ispec=ibelm_ymin_outer_core(ispec2D)
- 
+
 ! exclude elements that are not on absorbing edges
       if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
- 
+
       j=1
 !CDIR NODEP(accel_outer_core)
       do ik=1,stacey_outer_core_ymin_ik(ispec2D)
- 
+
         i = stacey_outer_core_ymin_i(ik,ispec2D)
         k = stacey_outer_core_ymin_k(ik,ispec2D)
         ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
- 
+
         iglob=ibool_outer_core(ijk,1,1,ispec)
 
         sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
 
         weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
- 
+
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
+
       enddo
     enddo
 
 !   ymax
 !CDIR NOVECTOR
     do ispec2D=1,nspec2D_ymax_outer_core
- 
+
       ispec=ibelm_ymax_outer_core(ispec2D)
- 
+
 ! exclude elements that are not on absorbing edges
       if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
- 
+
       j=NGLLY
 !CDIR NODEP(accel_outer_core)
       do ik=1,stacey_outer_core_ymax_ik(ispec2D)
- 
+
         i = stacey_outer_core_ymax_i(ik,ispec2D)
         k = stacey_outer_core_ymax_k(ik,ispec2D)
         ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
- 
+
         iglob=ibool_outer_core(ijk,1,1,ispec)
 
         sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
 
         weight=jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
- 
+
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
+
       enddo
     enddo
 
 ! for surface elements exactly on the ICB
 !CDIR NOVECTOR
     do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
- 
+
       ispec = ibelm_bottom_outer_core(ispec2D)
- 
+
       k = 1
 !CDIR NODEP(accel_outer_core)
       do ij = 1,NGLLSQUARE
- 
+
         i = stacey_bottom_outer_core_i(ij,ispec2D)
         j = stacey_bottom_outer_core_j(ij,ispec2D)
         ijk = i + (j-1)*NGLLX + (k-1)*NGLLSQUARE
- 
+
         iglob = ibool_outer_core(ijk,1,1,ispec)
- 
+
         sn = veloc_outer_core(iglob)/vp_outer_core(ijk,1,1,ispec)
- 
+
         weight = jacobian2D_bottom_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
- 
+
         accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
- 
+
       enddo
     enddo
- 
+
   endif ! Stacey conditions
 
 
@@ -3123,7 +3128,7 @@
       if(nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
 
       i=NGLLX
-!CDIR NODEP(accel_crust_mantle) 
+!CDIR NODEP(accel_crust_mantle)
       do jk=1,stacey_crust_mantle_xmax_jk(ispec2D)
 
         j = stacey_crust_mantle_xmax_j(jk,ispec2D)
@@ -3165,7 +3170,7 @@
       if(nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
 
       j=1
-!CDIR NODEP(accel_crust_mantle) 
+!CDIR NODEP(accel_crust_mantle)
       do ik=1,stacey_crust_mantle_ymin_ik(ispec2D)
 
         i = stacey_crust_mantle_ymin_i(ik,ispec2D)
@@ -3207,7 +3212,7 @@
       if(nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
 
       j=NGLLY
-!CDIR NODEP(accel_crust_mantle) 
+!CDIR NODEP(accel_crust_mantle)
       do ik=1,stacey_crust_mantle_ymax_ik(ispec2D)
 
         i = stacey_crust_mantle_ymax_i(ik,ispec2D)
@@ -3256,33 +3261,38 @@
           R_memory_inner_core,epsilondev_inner_core,one_minus_sum_beta, &
           alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
 
-! this loop on sources is not vectorized
-! because of dependencies in global assembly
-!CDIR NOVECTOR
+!! DK DK UGLY
+! compute source time functions once and for all
   do isource = 1,NSOURCES
 
-!   add the source (only if this proc carries the source)
+! add the source only if this proc carries the source
+! otherwise set time function to zero
     if(myrank == islice_selected_source(isource)) then
-
       stf = comp_source_time_function(dble(it-1)*DT-hdur(isource)-t_cmt(isource),hdur(isource))
-
-!     distinguish whether single or double precision for reals
-      if(CUSTOM_REAL == SIZE_REAL) then
-        stf_used = sngl(stf)
-      else
-        stf_used = stf
-      endif
-
-!     add source array
-!CDIR NODEP(accel_crust_mantle)
-      do ijk=1,NGLLCUBE
-        iglob = ibool_crust_mantle(ijk,1,1,ispec_selected_source(isource))
-        accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sourcearrays(isource,1,ijk,1,1)*stf_used
-        accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sourcearrays(isource,2,ijk,1,1)*stf_used
-        accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sourcearrays(isource,3,ijk,1,1)*stf_used
-      enddo
-
+    else
+      stf = 0.d0
     endif
+
+!   distinguish whether single or double precision for reals
+    if(CUSTOM_REAL == SIZE_REAL) then
+      stf_used(isource) = sngl(stf)
+    else
+      stf_used(isource) = stf
+    endif
+
+  enddo
+
+! this loop on sources has dependencies because of global assembly
+  do isource = 1,NSOURCES
+
+! add source array (it is multiplied by zero if source is not in this slice)
+!CDIR NODEP(accel_crust_mantle)
+    do ijk=1,NGLLCUBE
+      iglob = ibool_crust_mantle(ijk,1,1,ispec_selected_source(isource))
+      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sourcearrays(isource,1,ijk,1,1)*stf_used(isource)
+      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sourcearrays(isource,2,ijk,1,1)*stf_used(isource)
+      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sourcearrays(isource,3,ijk,1,1)*stf_used(isource)
+    enddo
 
   enddo
 
