@@ -183,9 +183,12 @@
 
 ! to save full 3D snapshot of velocity
   integer itotal_spec,itotal_poin,l
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
-  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
+  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l,tempy1l,tempy2l,tempy3l,tempz1l,tempz2l,tempz3l
   real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord
+  real(kind=CUSTOM_REAL) hp1,hp2,hp3
+  real(kind=CUSTOM_REAL) div,curl_x,curl_y,curl_z
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dvxdxl,dvxdyl,dvxdzl,dvydxl,dvydyl,dvydzl,dvzdxl,dvzdyl,dvzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
   integer, dimension(:), allocatable :: indirect_poin
   logical, dimension(:), allocatable :: mask_poin
@@ -3246,6 +3249,75 @@
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
     do ispec=1,nspec_crust_mantle
+
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+
+          tempy1l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+
+          tempz1l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
+
+          do l=1,NGLLX
+            hp1 = hprime_xx(l,i)
+            iglob = ibool_crust_mantle(l,j,k,ispec)
+            tempx1l = tempx1l + veloc_crust_mantle(1,iglob)*hp1
+            tempy1l = tempy1l + veloc_crust_mantle(2,iglob)*hp1
+            tempz1l = tempz1l + veloc_crust_mantle(3,iglob)*hp1
+          enddo
+
+          do l=1,NGLLY
+            hp2 = hprime_yy(l,j)
+            iglob = ibool_crust_mantle(i,l,k,ispec)
+            tempx2l = tempx2l + veloc_crust_mantle(1,iglob)*hp2
+            tempy2l = tempy2l + veloc_crust_mantle(2,iglob)*hp2
+            tempz2l = tempz2l + veloc_crust_mantle(3,iglob)*hp2
+          enddo
+
+          do l=1,NGLLZ
+            hp3 = hprime_zz(l,k)
+            iglob = ibool_crust_mantle(i,j,l,ispec)
+            tempx3l = tempx3l + veloc_crust_mantle(1,iglob)*hp3
+            tempy3l = tempy3l + veloc_crust_mantle(2,iglob)*hp3
+            tempz3l = tempz3l + veloc_crust_mantle(3,iglob)*hp3
+          enddo
+
+!         get derivatives of ux, uy and uz with respect to x, y and z
+
+          xixl = xix_crust_mantle(i,j,k,ispec)
+          xiyl = xiy_crust_mantle(i,j,k,ispec)
+          xizl = xiz_crust_mantle(i,j,k,ispec)
+          etaxl = etax_crust_mantle(i,j,k,ispec)
+          etayl = etay_crust_mantle(i,j,k,ispec)
+          etazl = etaz_crust_mantle(i,j,k,ispec)
+          gammaxl = gammax_crust_mantle(i,j,k,ispec)
+          gammayl = gammay_crust_mantle(i,j,k,ispec)
+          gammazl = gammaz_crust_mantle(i,j,k,ispec)
+
+          dvxdxl(i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          dvxdyl(i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          dvxdzl(i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+          dvydxl(i,j,k) = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l
+          dvydyl(i,j,k) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
+          dvydzl(i,j,k) = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l
+
+          dvzdxl(i,j,k) = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l
+          dvzdyl(i,j,k) = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l
+          dvzdzl(i,j,k) = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
+
+        enddo
+      enddo
+    enddo
+
       do k = 1,NGLLZ,NGLLZ-1
         do j = 1,NGLLY,NGLLY-1
           do i = 1,NGLLX,NGLLX-1
@@ -3256,10 +3328,16 @@
               thetaval = ystore_crust_mantle(ipoin)
               phival = zstore_crust_mantle(ipoin)
               call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
+! compute div and curl of velocity
+              div = (dvxdxl(i,j,k) + dvydyl(i,j,k) + dvzdzl(i,j,k)) * scale_veloc / R_EARTH
+              curl_x = (dvzdyl(i,j,k) - dvydzl(i,j,k)) * scale_veloc / R_EARTH
+              curl_y = (dvxdzl(i,j,k) - dvzdxl(i,j,k)) * scale_veloc / R_EARTH
+              curl_z = (dvydxl(i,j,k) - dvxdyl(i,j,k)) * scale_veloc / R_EARTH
               write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
                             veloc_crust_mantle(1,ipoin)*scale_veloc, &
                             veloc_crust_mantle(2,ipoin)*scale_veloc, &
-                            veloc_crust_mantle(3,ipoin)*scale_veloc
+                            veloc_crust_mantle(3,ipoin)*scale_veloc, &
+                            div,curl_x,curl_y,curl_z
               mask_poin(ipoin) = .true.
             endif
           enddo
@@ -3351,11 +3429,67 @@
           gammaxl = gammax_outer_core(i,j,k,ispec)
           gammayl = gammay_outer_core(i,j,k,ispec)
           gammazl = gammaz_outer_core(i,j,k,ispec)
-          jacobianl = jacobian_outer_core(i,j,k,ispec)
 
           dpotentialdxl(i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
           dpotentialdyl(i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
           dpotentialdzl(i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+        enddo
+      enddo
+    enddo
+
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+
+          tempy1l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+
+          tempz1l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
+
+          do l=1,NGLLX
+            hp1 = hprime_xx(l,i)
+            tempx1l = tempx1l + dpotentialdxl(l,j,k)*hp1
+            tempy1l = tempy1l + dpotentialdyl(l,j,k)*hp1
+            tempz1l = tempz1l + dpotentialdzl(l,j,k)*hp1
+          enddo
+
+          do l=1,NGLLY
+            hp2 = hprime_yy(l,j)
+            tempx2l = tempx2l + dpotentialdxl(i,l,k)*hp2
+            tempy2l = tempy2l + dpotentialdyl(i,l,k)*hp2
+            tempz2l = tempz2l + dpotentialdzl(i,l,k)*hp2
+          enddo
+
+          do l=1,NGLLZ
+            hp3 = hprime_zz(l,k)
+            tempx3l = tempx3l + dpotentialdxl(i,j,l)*hp3
+            tempy3l = tempy3l + dpotentialdyl(i,j,l)*hp3
+            tempz3l = tempz3l + dpotentialdzl(i,j,l)*hp3
+          enddo
+
+!         get derivatives of ux, uy and uz with respect to x, y and z
+
+          xixl = xix_outer_core(i,j,k,ispec)
+          xiyl = xiy_outer_core(i,j,k,ispec)
+          xizl = xiz_outer_core(i,j,k,ispec)
+          etaxl = etax_outer_core(i,j,k,ispec)
+          etayl = etay_outer_core(i,j,k,ispec)
+          etazl = etaz_outer_core(i,j,k,ispec)
+          gammaxl = gammax_outer_core(i,j,k,ispec)
+          gammayl = gammay_outer_core(i,j,k,ispec)
+          gammazl = gammaz_outer_core(i,j,k,ispec)
+
+          dvxdxl(i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          dvydyl(i,j,k) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
+          dvzdzl(i,j,k) = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
 
         enddo
       enddo
@@ -3371,10 +3505,16 @@
               thetaval = ystore_outer_core(ipoin)
               phival = zstore_outer_core(ipoin)
               call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
+! compute div and curl of velocity
+              div = (dvxdxl(i,j,k) + dvydyl(i,j,k) + dvzdzl(i,j,k)) * scale_veloc / R_EARTH
+              curl_x = 0.
+              curl_y = 0.
+              curl_z = 0.
               write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
                     dpotentialdxl(i,j,k)*scale_veloc, &
                     dpotentialdyl(i,j,k)*scale_veloc, &
-                    dpotentialdzl(i,j,k)*scale_veloc
+                    dpotentialdzl(i,j,k)*scale_veloc, &
+                    div,curl_x,curl_y,curl_z
               mask_poin(ipoin) = .true.
             endif
           enddo
@@ -3438,6 +3578,75 @@
     mask_poin(:) = .false.
     do ispec=1,NSPEC_INNER_CORE
       if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+
+          tempy1l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+
+          tempz1l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
+
+          do l=1,NGLLX
+            hp1 = hprime_xx(l,i)
+            iglob = ibool_inner_core(l,j,k,ispec)
+            tempx1l = tempx1l + veloc_inner_core(1,iglob)*hp1
+            tempy1l = tempy1l + veloc_inner_core(2,iglob)*hp1
+            tempz1l = tempz1l + veloc_inner_core(3,iglob)*hp1
+          enddo
+
+          do l=1,NGLLY
+            hp2 = hprime_yy(l,j)
+            iglob = ibool_inner_core(i,l,k,ispec)
+            tempx2l = tempx2l + veloc_inner_core(1,iglob)*hp2
+            tempy2l = tempy2l + veloc_inner_core(2,iglob)*hp2
+            tempz2l = tempz2l + veloc_inner_core(3,iglob)*hp2
+          enddo
+
+          do l=1,NGLLZ
+            hp3 = hprime_zz(l,k)
+            iglob = ibool_inner_core(i,j,l,ispec)
+            tempx3l = tempx3l + veloc_inner_core(1,iglob)*hp3
+            tempy3l = tempy3l + veloc_inner_core(2,iglob)*hp3
+            tempz3l = tempz3l + veloc_inner_core(3,iglob)*hp3
+          enddo
+
+!         get derivatives of ux, uy and uz with respect to x, y and z
+
+          xixl = xix_inner_core(i,j,k,ispec)
+          xiyl = xiy_inner_core(i,j,k,ispec)
+          xizl = xiz_inner_core(i,j,k,ispec)
+          etaxl = etax_inner_core(i,j,k,ispec)
+          etayl = etay_inner_core(i,j,k,ispec)
+          etazl = etaz_inner_core(i,j,k,ispec)
+          gammaxl = gammax_inner_core(i,j,k,ispec)
+          gammayl = gammay_inner_core(i,j,k,ispec)
+          gammazl = gammaz_inner_core(i,j,k,ispec)
+
+          dvxdxl(i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          dvxdyl(i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          dvxdzl(i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+          dvydxl(i,j,k) = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l
+          dvydyl(i,j,k) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
+          dvydzl(i,j,k) = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l
+
+          dvzdxl(i,j,k) = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l
+          dvzdyl(i,j,k) = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l
+          dvzdzl(i,j,k) = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
+
+        enddo
+      enddo
+    enddo
+
       do k = 1,NGLLZ,NGLLZ-1
         do j = 1,NGLLY,NGLLY-1
           do i = 1,NGLLX,NGLLX-1
@@ -3448,10 +3657,16 @@
               thetaval = ystore_inner_core(ipoin)
               phival = zstore_inner_core(ipoin)
               call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
+! compute div and curl of velocity
+              div = (dvxdxl(i,j,k) + dvydyl(i,j,k) + dvzdzl(i,j,k)) * scale_veloc / R_EARTH
+              curl_x = (dvzdyl(i,j,k) - dvydzl(i,j,k)) * scale_veloc / R_EARTH
+              curl_y = (dvxdzl(i,j,k) - dvzdxl(i,j,k)) * scale_veloc / R_EARTH
+              curl_z = (dvydxl(i,j,k) - dvxdyl(i,j,k)) * scale_veloc / R_EARTH
               write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
                             veloc_inner_core(1,ipoin)*scale_veloc, &
                             veloc_inner_core(2,ipoin)*scale_veloc, &
-                            veloc_inner_core(3,ipoin)*scale_veloc
+                            veloc_inner_core(3,ipoin)*scale_veloc, &
+                            div,curl_x,curl_y,curl_z
               mask_poin(ipoin) = .true.
             endif
           enddo
@@ -3478,7 +3693,7 @@
     deallocate(mask_poin)
     deallocate(indirect_poin)
 
- 200 format(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6)
+ 200 format(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6)
  210 format(i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)
 
   endif
