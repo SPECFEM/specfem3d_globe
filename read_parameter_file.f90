@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 3
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
@@ -21,7 +21,9 @@
         NEX_ETA,NEX_XI,NPROC_ETA,NPROC_XI,NSEIS,NSTEP, &
         DT,TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,OCEANS,ELLIPTICITY, &
         GRAVITY,ONE_CRUST,ATTENUATION, &
-        ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+        ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES,&
+        MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
+        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
 
   implicit none
 
@@ -33,12 +35,13 @@
              NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB,NER_TOP_CENTRAL_CUBE_ICB, &
              NEX_ETA,NEX_XI,NPROC_ETA,NPROC_XI,NSEIS,NSTEP
 
-  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC
+  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY, &
              GRAVITY,ONE_CRUST,ROTATION, &
-             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS
-  integer NSOURCES,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
+             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS, &
+             MOVIE_SURFACE,MOVIE_VOLUME
+  integer NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
 
   character(len=150) LOCAL_PATH
 
@@ -139,6 +142,13 @@
   read(IIN,*)
   read(IIN,*)
   read(IIN,1) junk,NSOURCES
+
+  read(IIN,*)
+  read(IIN,*)
+  read(IIN,3) junk,MOVIE_SURFACE
+  read(IIN,3) junk,MOVIE_VOLUME
+  read(IIN,1) junk,NMOVIE
+  read(IIN,2) junk,HDUR_MIN_MOVIES
 
 ! close parameter file
   close(IIN)

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 3
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
@@ -56,14 +56,6 @@
 ! do not use if you do not plan to use AVS or OpenDX to visualize the mesh
 ! because this option can create very large files
   logical, parameter :: SAVE_AVS_DX_MESH_FILES = .false.
-
-! save a movie or not, and interval in time steps at which we save movie frames
-  logical, parameter :: SAVE_AVS_DX_MOVIE = .false.
-  integer, parameter :: NMOVIE = 200
-
-! save a snapshot of velocity in full 3D mesh
-  logical, parameter :: SAVE_FULL_3D_SNAPSHOT = .false.
-  integer, parameter :: IT_FULL_3D_SNAPSHOT = 4000
 
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 3
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 4
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
@@ -76,9 +76,10 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY, &
              GRAVITY,ONE_CRUST,ROTATION, &
-             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS
-  integer NSOURCES,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
-  double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC
+             THREE_D,TOPOGRAPHY,ATTENUATION,OCEANS, &
+             MOVIE_SURFACE,MOVIE_VOLUME
+  integer NSOURCES,NMOVIE,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
+  double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES
 
   character(len=150) LOCAL_PATH
 
@@ -102,8 +103,6 @@
   print *,'Recombining all movie frames to create a movie'
   print *
 
-  if(.not. SAVE_AVS_DX_MOVIE) stop 'movie frames were not saved by the solver'
-
   print *
   print *,'reading parameter file'
   print *
@@ -115,7 +114,11 @@
         NEX_ETA,NEX_XI,NPROC_ETA,NPROC_XI,NSEIS,NSTEP, &
         DT,TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,CRUSTAL,OCEANS,ELLIPTICITY, &
         GRAVITY,ONE_CRUST,ATTENUATION, &
-        ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+        ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
+        MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
+        NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC)
+
+  if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -136,7 +139,7 @@
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *
 
-  ilocnum = NGNOD2D_AVS_DX*NEX_PER_PROC_XI*NEX_PER_PROC_ETA
+  ilocnum = NGLLSQUARE*NEX_PER_PROC_XI*NEX_PER_PROC_ETA
   allocate(store_val_x(ilocnum,0:NPROCTOT-1))
   allocate(store_val_y(ilocnum,0:NPROCTOT-1))
   allocate(store_val_z(ilocnum,0:NPROCTOT-1))
@@ -192,7 +195,7 @@
   print *
 
 ! maximum theoretical number of points at the surface
-  npointot = NGNOD2D_AVS_DX * nspectot_AVS_max
+  npointot = NGLLSQUARE * nspectot_AVS_max
 
 ! allocate arrays for sorting routine
   allocate(iglob(npointot),loc(npointot))
@@ -250,10 +253,10 @@
   do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
 
   ispec = ispec + 1
-  ieoff = NGNOD2D_AVS_DX*(ispec-1)
+  ieoff = NGLLSQUARE*(ispec-1)
 
 ! four points for each element
-  do ilocnum = 1,NGNOD2D_AVS_DX
+  do ilocnum = 1,NGLLSQUARE
 
     ipoin = ipoin + 1
 
@@ -330,9 +333,9 @@
   mask_point = .false.
   ipoin = 0
   do ispec=1,nspectot_AVS_max
-  ieoff = NGNOD2D_AVS_DX*(ispec-1)
+  ieoff = NGLLSQUARE*(ispec-1)
 ! four points for each element
-  do ilocnum = 1,NGNOD2D_AVS_DX
+  do ilocnum = 1,NGLLSQUARE
     ibool_number = iglob(ilocnum+ieoff)
     if(.not. mask_point(ibool_number)) then
       ipoin = ipoin + 1
@@ -341,7 +344,7 @@
         write(11,"(f8.5,1x,f8.5,1x,f8.5)") &
           xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
       else
-        write(11,"(i6,1x,f8.5,1x,f8.5,1x,f8.5)") ireorder(ibool_number), &
+        write(11,"(i10,1x,f8.5,1x,f8.5,1x,f8.5)") ireorder(ibool_number), &
           xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
       endif
     endif
@@ -354,7 +357,7 @@
 
 ! output list of elements
   do ispec=1,nspectot_AVS_max
-    ieoff = NGNOD2D_AVS_DX*(ispec-1)
+    ieoff = NGLLSQUARE*(ispec-1)
 ! four points for each element
     ibool_number1 = iglob(ieoff + 1)
     ibool_number2 = iglob(ieoff + 2)
@@ -368,8 +371,8 @@
     endif
   enddo
 
- 210 format(i6,1x,i6,1x,i6,1x,i6)
- 211 format(i6,' 1 quad ',i6,1x,i6,1x,i6,1x,i6)
+ 210 format(i10,1x,i10,1x,i10,1x,i10)
+ 211 format(i10,' 1 quad ',i10,1x,i10,1x,i10,1x,i10)
 
   endif
 
@@ -460,9 +463,9 @@
 
 ! output point data
   do ispec=1,nspectot_AVS_max
-  ieoff = NGNOD2D_AVS_DX*(ispec-1)
+  ieoff = NGLLSQUARE*(ispec-1)
 ! four points for each element
-  do ilocnum = 1,NGNOD2D_AVS_DX
+  do ilocnum = 1,NGLLSQUARE
     ibool_number = iglob(ilocnum+ieoff)
     if(.not. mask_point(ibool_number)) then
       if(USE_OPENDX) then
@@ -476,7 +479,7 @@
   enddo
 
  501 format(f7.2)
- 502 format(i6,1x,f7.2)
+ 502 format(i10,1x,f7.2)
 
 ! define OpenDX field
   if(USE_OPENDX) then
@@ -540,8 +543,8 @@
 
 ! establish initial pointers
   do ispec=1,nspec
-    ieoff=NGNOD2D_AVS_DX*(ispec-1)
-    do ilocnum=1,NGNOD2D_AVS_DX
+    ieoff=NGLLSQUARE*(ispec-1)
+    do ilocnum=1,NGLLSQUARE
       loc(ilocnum+ieoff)=ilocnum+ieoff
     enddo
   enddo
