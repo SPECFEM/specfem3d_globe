@@ -68,13 +68,18 @@
 
   integer itopo_x,itopo_y
 
-! use either Etopo-5 or Etopo-2
 ! Harvard Etopo-5 is a smoothed model
   if(RESOLUTION_TOPO_FILE == 5) then
-    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo5.dat',status='old')
+    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat',status='old')
+
+! fictitious etopo-4 created by subsampling and smoothing etopo-2
+  else if(RESOLUTION_TOPO_FILE == 4) then
+    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo4_smoothed_window7.dat',status='old')
+
 ! ETOPO-2 not implemented yet
 !  else if(RESOLUTION_TOPO_FILE == 2) then
-!    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo2.dat',status='old')
+!    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat',status='old')
+
   else
     stop 'incorrect resolution selected for topography/bathymetry file'
   endif
@@ -85,11 +90,11 @@
       read(13,*) ibathy_topo(itopo_x,itopo_y)
 
 ! impose maximum height of mountains, to suppress oscillations in Himalaya etc.
-  if (USE_MAXIMUM_HEIGHT_TOPO .and. ibathy_topo(itopo_x,itopo_y) > MAXIMUM_HEIGHT_TOPO) &
+  if(USE_MAXIMUM_HEIGHT_TOPO .and. ibathy_topo(itopo_x,itopo_y) > MAXIMUM_HEIGHT_TOPO) &
     ibathy_topo(itopo_x,itopo_y) = MAXIMUM_HEIGHT_TOPO
 
 ! impose maximum depth of oceans, to suppress oscillations near deep trenches
-  if (USE_MAXIMUM_DEPTH_OCEANS .and. ibathy_topo(itopo_x,itopo_y) < MAXIMUM_DEPTH_OCEANS) &
+  if(USE_MAXIMUM_DEPTH_OCEANS .and. ibathy_topo(itopo_x,itopo_y) < MAXIMUM_DEPTH_OCEANS) &
     ibathy_topo(itopo_x,itopo_y) = MAXIMUM_DEPTH_OCEANS
 
     enddo
