@@ -44,11 +44,11 @@
   integer ispec
   integer ibool_number,ibool_number1,ibool_number2,ibool_number3,ibool_number4
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: x,y,z,displn
-  real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord,rval,thetaval,phival
+  real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord,rval,thetaval,phival,lat,long
   real(kind=CUSTOM_REAL) displx,disply,displz
   real(kind=CUSTOM_REAL) normal_x,normal_y,normal_z
   double precision min_field_current,max_field_current,max_absol
-  logical USE_OPENDX,UNIQUE_FILE
+  logical USE_OPENDX,UNIQUE_FILE,USE_GMT,USE_AVS
   integer iformat,nframes,iframe
 
   character(len=150) outputname
@@ -156,20 +156,32 @@
   print *,'1 = create files in OpenDX format'
   print *,'2 = create files in AVS UCD format with individual files'
   print *,'3 = create files in AVS UCD format with one time-dependent file'
+  print *,'4 = create files in GMT xyz Ascii long/lat/Uz format'
   print *,'any other value = exit'
   print *
   print *,'enter value:'
   read(5,*) iformat
-  if(iformat<1 .or. iformat>3) stop 'exiting...'
+  if(iformat<1 .or. iformat>4) stop 'exiting...'
   if(iformat == 1) then
     USE_OPENDX = .true.
+    USE_AVS = .false.
+    USE_GMT = .false.
     UNIQUE_FILE = .false.
   else if(iformat == 2) then
     USE_OPENDX = .false.
+    USE_AVS = .true.
+    USE_GMT = .false.
     UNIQUE_FILE = .false.
+  else if(iformat == 3) then
+    USE_OPENDX = .false.
+    USE_AVS = .true.
+    USE_GMT = .false.
+    UNIQUE_FILE = .true.
   else
     USE_OPENDX = .false.
-    UNIQUE_FILE = .true.
+    USE_AVS = .false.
+    USE_GMT = .true.
+    UNIQUE_FILE = .false.
   endif
 
   print *,'movie frames have been saved every ',NMOVIE,' time steps'
@@ -331,6 +343,49 @@
 
   enddo
 
+! compute min and max of data value to normalize
+  min_field_current = minval(field_display(:))
+  max_field_current = maxval(field_display(:))
+
+! make sure range is always symmetric and center is in zero
+! this assumption works only for fields that can be negative
+! would not work for norm of vector for instance
+! (we would lose half of the color palette if no negative values)
+  max_absol = max(abs(min_field_current),abs(max_field_current))
+  min_field_current = - max_absol
+  max_field_current = + max_absol
+
+! print minimum and maximum amplitude in current snapshot
+  print *
+  print *,'minimum amplitude in current snapshot = ',min_field_current
+  print *,'maximum amplitude in current snapshot = ',max_field_current
+  print *
+
+! normalize field to [0:1]
+  field_display(:) = (field_display(:) - min_field_current) / (max_field_current - min_field_current)
+
+! rescale to [-1,1]
+  field_display(:) = 2.*field_display(:) - 1.
+
+! apply threshold to normalized field
+  if(APPLY_THRESHOLD) &
+    where(abs(field_display(:)) <= THRESHOLD) field_display = 0.
+    
+! apply non linear scaling to normalized field if needed
+  if(NONLINEAR_SCALING) then
+    where(field_display(:) >= 0.)
+      field_display = field_display ** POWER_SCALING
+    elsewhere
+      field_display = - abs(field_display) ** POWER_SCALING
+    endwhere
+  endif
+
+! map back to [0,1]
+  field_display(:) = (field_display(:) + 1.) / 2.
+
+! map field to [0:255] for AVS color scale
+  field_display(:) = 255. * field_display(:)
+
 ! copy coordinate arrays since the sorting routine does not preserve them
   xp_save(:) = xp(:)
   yp_save(:) = yp(:)
@@ -352,7 +407,7 @@
     write(outputname,"('OUTPUT_FILES/DX_movie_',i6.6,'.dx')") it
     open(unit=11,file=outputname,status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',nglob,' data follows'
-  else
+  else if(USE_AVS) then
     if(UNIQUE_FILE .and. iframe == 1) then
       open(unit=11,file='OUTPUT_FILES/AVS_movie_all.inp',status='unknown')
       write(11,*) nframes
@@ -364,8 +419,37 @@
       open(unit=11,file=outputname,status='unknown')
       write(11,*) nglob,' ',nspectot_AVS_max,' 1 0 0'
     endif
+  else if(USE_GMT) then
+    write(outputname,"('OUTPUT_FILES/gmt_movie_',i6.6,'.xyz')") it
+    open(unit=11,file=outputname,status='unknown')
+  else
+    stop 'wrong output format selected'
   endif
 
+  if(USE_GMT) then
+ 
+! output list of points
+    mask_point = .false.
+    do ispec=1,nspectot_AVS_max
+      ieoff = NGNOD2D_AVS_DX*(ispec-1)
+! four points for each element
+      do ilocnum = 1,NGNOD2D_AVS_DX
+        ibool_number = iglob(ilocnum+ieoff)
+        if(.not. mask_point(ibool_number)) then
+          xcoord = sngl(xp_save(ilocnum+ieoff))
+          ycoord = sngl(yp_save(ilocnum+ieoff))
+          zcoord = sngl(zp_save(ilocnum+ieoff))
+          call xyz_2_rthetaphi(xcoord,ycoord,zcoord,rval,thetaval,phival)
+          lat = (PI/2.0-thetaval)*180.0/PI
+          long = phival*180.0/PI
+          if(long > 180.0) long = long-360.0
+          write(11,*) long,lat,sngl(field_display(ilocnum+ieoff))
+        endif
+        mask_point(ibool_number) = .true.
+      enddo
+    enddo
+ 
+  else
 ! if unique file, output geometry only once
   if(.not. UNIQUE_FILE .or. iframe == 1) then
 
@@ -383,7 +467,7 @@
         if(USE_OPENDX) then
           write(11,"(f8.5,1x,f8.5,1x,f8.5)") &
             xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
-        else
+        else if(USE_AVS) then 
           write(11,"(i6,1x,f8.5,1x,f8.5,1x,f8.5)") ireorder(ibool_number), &
             xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
         endif
@@ -449,49 +533,6 @@
 ! output data values
   mask_point = .false.
 
-! compute min and max of data value to normalize
-  min_field_current = minval(field_display(:))
-  max_field_current = maxval(field_display(:))
-
-! make sure range is always symmetric and center is in zero
-! this assumption works only for fields that can be negative
-! would not work for norm of vector for instance
-! (we would lose half of the color palette if no negative values)
-  max_absol = max(abs(min_field_current),abs(max_field_current))
-  min_field_current = - max_absol
-  max_field_current = + max_absol
-
-! print minimum and maximum amplitude in current snapshot
-  print *
-  print *,'minimum amplitude in current snapshot = ',min_field_current
-  print *,'maximum amplitude in current snapshot = ',max_field_current
-  print *
-
-! normalize field to [0:1]
-  field_display(:) = (field_display(:) - min_field_current) / (max_field_current - min_field_current)
-
-! rescale to [-1,1]
-  field_display(:) = 2.*field_display(:) - 1.
-
-! apply threshold to normalized field
-  if(APPLY_THRESHOLD) &
-    where(abs(field_display(:)) <= THRESHOLD) field_display = 0.
-
-! apply non linear scaling to normalized field if needed
-  if(NONLINEAR_SCALING) then
-    where(field_display(:) >= 0.)
-      field_display = field_display ** POWER_SCALING
-    elsewhere
-      field_display = - abs(field_display) ** POWER_SCALING
-    endwhere
-  endif
-
-! map back to [0,1]
-  field_display(:) = (field_display(:) + 1.) / 2.
-
-! map field to [0:255] for AVS color scale
-  field_display(:) = 255. * field_display(:)
-
 ! output point data
   do ispec=1,nspectot_AVS_max
   ieoff = NGNOD2D_AVS_DX*(ispec-1)
@@ -522,6 +563,9 @@
     write(11,*) 'end'
   endif
 
+! end of test for GMT format
+  endif
+
   if(.not. UNIQUE_FILE) close(11)
 
 ! end of loop and test on all the time steps for all the movie images
@@ -533,8 +577,9 @@
   print *
   print *,'done creating movie'
   print *
-  print *,'AVS files are stored in OUTPUT_FILES/AVS_movie_*.inp'
-  print *,'DX files are stored in OUTPUT_FILES/DX_movie_*.dx'
+  if(USE_OPENDX) print *,'DX files are stored in OUTPUT_FILES/DX_*.dx'
+  if(USE_AVS) print *,'AVS files are stored in OUTPUT_FILES/AVS_*.inp'
+  if(USE_GMT) print *,'GMT files are stored in OUTPUT_FILES/gmt_*.xyz'
   print *
 
   end program create_movie_AVS_DX
