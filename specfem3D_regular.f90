@@ -492,7 +492,7 @@
   integer NSOURCES,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB
   double precision RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC
 
-  character(len=150) LOCAL_PATH,prname
+  character(len=150) LOCAL_PATH,clean_LOCAL_PATH,final_LOCAL_PATH,prname
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -2310,10 +2310,64 @@
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-! full simulation with no restart files
-  if(USE_RESTART_FILES) stop 'restart files only implemented in inlined code'
-  it_begin = 1
-  it_end = NSTEP
+! define correct time steps if restart files
+  if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > 3) stop 'number of restart runs can be 1, 2 or 3'
+  if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
+
+  if(NUMBER_OF_RUNS == 3) then
+    if(NUMBER_OF_THIS_RUN == 1) then
+      it_begin = 1
+      it_end = NSTEP/3
+    else if(NUMBER_OF_THIS_RUN == 2) then
+      it_begin = NSTEP/3 + 1
+      it_end = 2*(NSTEP/3)
+    else
+      it_begin = 2*(NSTEP/3) + 1
+      it_end = NSTEP
+    endif
+
+  else if(NUMBER_OF_RUNS == 2) then
+    if(NUMBER_OF_THIS_RUN == 1) then
+      it_begin = 1
+      it_end = NSTEP/2
+    else
+      it_begin = NSTEP/2 + 1
+      it_end = NSTEP
+    endif
+
+  else
+    it_begin = 1
+    it_end = NSTEP
+  endif
+
+! suppress white spaces if any
+  clean_LOCAL_PATH = adjustl(LOCAL_PATH)
+
+! create full final local path
+  final_LOCAL_PATH = clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // '/'
+
+! read files back from local disk or MT tape system if restart file
+  if(NUMBER_OF_THIS_RUN > 1) then
+    write(outputname,"('dump_all_arrays',i4.4)") myrank
+    open(unit=55,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='old',form='unformatted')
+    read(55) displ_crust_mantle
+    read(55) veloc_crust_mantle
+    read(55) accel_crust_mantle
+    read(55) displ_inner_core
+    read(55) veloc_inner_core
+    read(55) accel_inner_core
+    read(55) displ_outer_core
+    read(55) veloc_outer_core
+    read(55) accel_outer_core
+    read(55) R_memory_crust_mantle
+    read(55) R_memory_inner_core
+    read(55) epsilondev_crust_mantle
+    read(55) epsilondev_inner_core
+    read(55) A_array_rotation
+    read(55) B_array_rotation
+    close(55)
+  endif
+
 
   do it=it_begin,it_end
 
@@ -3145,6 +3199,28 @@
 ! write the final seismograms
   call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
           network_name,nrec,nrec_local,it,DT,NSTEP,hdur(1),LOCAL_PATH,it_begin,it_end)
+
+! save files to local disk or MT tape system if restart file
+  if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
+    write(outputname,"('dump_all_arrays',i4.4)") myrank
+    open(unit=55,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+    write(55) displ_crust_mantle
+    write(55) veloc_crust_mantle
+    write(55) accel_crust_mantle
+    write(55) displ_inner_core
+    write(55) veloc_inner_core
+    write(55) accel_inner_core
+    write(55) displ_outer_core
+    write(55) veloc_outer_core
+    write(55) accel_outer_core
+    write(55) R_memory_crust_mantle
+    write(55) R_memory_inner_core
+    write(55) epsilondev_crust_mantle
+    write(55) epsilondev_inner_core
+    write(55) A_array_rotation
+    write(55) B_array_rotation
+    close(55)
+  endif
 
 ! close the main output file
   if(myrank == 0) then

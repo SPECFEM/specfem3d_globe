@@ -32,8 +32,9 @@
 ! integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
 
 ! to use restart files
-  logical, parameter :: USE_RESTART_FILES = .false.
-  logical, parameter :: FIRST_PART_OF_RUN = .true.
+! (number of runs can be 1, 2 or 3, choose 1 for no restart files)
+  integer, parameter :: NUMBER_OF_RUNS = 3
+  integer, parameter :: NUMBER_OF_THIS_RUN = 1
 
 ! on some processors (e.g. Pentiums) it is necessary to suppress underflows
 ! by using a small initial field instead of zero
