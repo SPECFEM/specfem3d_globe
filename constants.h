@@ -98,7 +98,7 @@
 ! save AVS or OpenDX files in mesher or not
 ! do not use if you do not plan to use AVS or OpenDX to visualize the mesh
 ! because this option can create very large files
-  logical, parameter :: SAVE_AVS_DX_MESH_FILES = .true.
+  logical, parameter :: SAVE_AVS_DX_MESH_FILES = .false.
 
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
