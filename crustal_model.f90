@@ -193,9 +193,6 @@ end module crustal_model_variables
   crustaltype=abbreviation(icolat,ilon)
   call get_crust_structure(crustaltype,velp,vels,rho,thick, &
                     code,thlr,velocp,velocs,dens,ierr)
-! moho in km
-  moho = thick(3)+thick(4)+thick(5)+thick(6)+thick(7)
-  if(r < (R_EARTH-moho*1000.0d0)/R_EARTH) return
 
 !  uncomment the following line to use crust2.0 as is, without smoothing
 !
