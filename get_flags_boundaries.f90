@@ -17,7 +17,7 @@
 
   subroutine get_flags_boundaries(myrank,iregion_code,nspec,iproc_xi,iproc_eta,ispec, &
              xstore,ystore,zstore,iboun,iMPIcut_xi,iMPIcut_eta,ichunk, &
-             idoubling,NPROC_XI,NPROC_ETA,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
+             idoubling,NPROC_XI,NPROC_ETA,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
 
   implicit none
 
@@ -34,7 +34,7 @@
   double precision ystore(NGLLX,NGLLY,NGLLZ)
   double precision zstore(NGLLX,NGLLY,NGLLZ)
 
-  double precision ANGULAR_SIZE_CHUNK_RAD
+  double precision ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA
 
   integer ia
 
@@ -102,10 +102,14 @@
   do ia=1,8
 
 ! map back to cubed sphere, making sure we never divide by zero
-  if(idoubling /= IFLAG_IN_CENTRAL_CUBE .and. &
+!! DK DK inflated    if(idoubling /= IFLAG_IN_CENTRAL_CUBE .and. &
+!! DK DK inflated       idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+!! DK DK inflated       idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
+!! DK DK inflated       idoubling /= IFLAG_IN_FICTITIOUS_CUBE) then
+  if((idoubling /= IFLAG_IN_CENTRAL_CUBE .and. &
      idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
      idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
-     idoubling /= IFLAG_IN_FICTITIOUS_CUBE) then
+     idoubling /= IFLAG_IN_FICTITIOUS_CUBE) .or. (iregion_code == IREGION_INNER_CORE .and. INFLATE_CENTRAL_CUBE)) then
 
     if(ichunk == CHUNK_AB) then
       val_divide = zelm(ia)
@@ -205,7 +209,7 @@
 
   iboun(:,ispec)=.false.
 
-  target= (ANGULAR_SIZE_CHUNK_RAD/2.)*(ONE-SMALLVAL)
+  target= (ANGULAR_SIZE_CHUNK_RAD_XI/2.)*(ONE-SMALLVAL)
 
 ! on boundary 1: x=xmin
   if(xi(1)<-target .and. xi(4)<-target .and. xi(5)<-target .and. xi(8)<-target) &
@@ -214,6 +218,8 @@
 ! on boundary 2: xmax
   if(xi(2)>target .and. xi(3)>target .and. xi(6)>target .and. xi(7)>target) &
     iboun(2,ispec)=.true.
+
+  target= (ANGULAR_SIZE_CHUNK_RAD_ETA/2.)*(ONE-SMALLVAL)
 
 ! on boundary 3: ymin
   if(eta(1)<-target .and. eta(2)<-target .and. eta(5)<-target .and. eta(6)<-target) &
@@ -224,14 +230,19 @@
     iboun(4,ispec)=.true.
 
 ! on boundary 5: bottom
-  select case(iregion_code)
-    case(IREGION_CRUST_MANTLE)
-      target = (RCMB/R_EARTH)*(ONE + SMALLVAL)
-    case(IREGION_OUTER_CORE)
-      target = (RICB/R_EARTH)*(ONE + SMALLVAL)
-  end select
 
-  if(iregion_code /= IREGION_INNER_CORE) then
+!! DK DK UGLY   inflated    if(iregion_code /= IREGION_INNER_CORE) then
+  if(iregion_code /= IREGION_INNER_CORE .or. (iregion_code == IREGION_INNER_CORE .and. INFLATE_CENTRAL_CUBE)) then
+
+    select case(iregion_code)
+      case(IREGION_CRUST_MANTLE)
+        target = (RCMB/R_EARTH)*(ONE + SMALLVAL)
+      case(IREGION_OUTER_CORE)
+        target = (RICB/R_EARTH)*(ONE + SMALLVAL)
+!! DK DK UGLY inflated
+      case(IREGION_INNER_CORE)
+        target = R_CENTRAL_CUBE*(ONE + SMALLVAL)
+    end select
 
     if(r1<target .and. r2<target .and. r3<target .and. r4<target) &
       iboun(5,ispec)=.true.
@@ -302,11 +313,11 @@
   iMPIcut_xi(:,ispec)=.false.
 
 ! angular size of a slice along xi
-  sizeslice = ANGULAR_SIZE_CHUNK_RAD / NPROC_XI
+  sizeslice = ANGULAR_SIZE_CHUNK_RAD_XI / NPROC_XI
 
 ! left cut-plane in the current slice along X = constant (Xmin of this slice)
 
-  target = - (ANGULAR_SIZE_CHUNK_RAD/2.) + iproc_xi*sizeslice
+  target = - (ANGULAR_SIZE_CHUNK_RAD_XI/2.) + iproc_xi*sizeslice
 
 ! add geometrical tolerance
   target = target + SMALLVAL
@@ -316,7 +327,7 @@
 
 !  right cut-plane in the current slice along X = constant (Xmax of this slice)
 
-  target = - (ANGULAR_SIZE_CHUNK_RAD/2.) + (iproc_xi+1)*sizeslice
+  target = - (ANGULAR_SIZE_CHUNK_RAD_XI/2.) + (iproc_xi+1)*sizeslice
 
 ! add geometrical tolerance
   target = target - SMALLVAL
@@ -331,11 +342,11 @@
   iMPIcut_eta(:,ispec)=.false.
 
 ! angular size of a slice along eta
-  sizeslice = ANGULAR_SIZE_CHUNK_RAD / NPROC_ETA
+  sizeslice = ANGULAR_SIZE_CHUNK_RAD_ETA / NPROC_ETA
 
 ! left cut-plane in the current slice along Y = constant (Ymin of this slice)
 
-  target = - (ANGULAR_SIZE_CHUNK_RAD/2.) + iproc_eta*sizeslice
+  target = - (ANGULAR_SIZE_CHUNK_RAD_ETA/2.) + iproc_eta*sizeslice
 
 ! add geometrical tolerance
   target = target + SMALLVAL
@@ -345,7 +356,7 @@
 
 ! right cut-plane in the current slice along Y = constant (Ymax of this slice)
 
-  target = - (ANGULAR_SIZE_CHUNK_RAD/2.) + (iproc_eta+1)*sizeslice
+  target = - (ANGULAR_SIZE_CHUNK_RAD_ETA/2.) + (iproc_eta+1)*sizeslice
 
 ! add geometrical tolerance
   target = target - SMALLVAL

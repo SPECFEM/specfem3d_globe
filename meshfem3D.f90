@@ -203,7 +203,7 @@
   double precision rotation_matrix(3,3)
   double precision vector_ori(3),vector_rotated(3)
 
-  double precision ANGULAR_SIZE_CHUNK_RAD
+  double precision ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA
 
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
@@ -308,7 +308,7 @@
       NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
       NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB)
 
-!! DK DK check for regional code
+! basic checks for regional code
   if(REGIONAL_CODE .and. NCHUNKS /= 1) call exit_MPI(myrank,'regional code only works for one chunk')
   if(REGIONAL_CODE .and. INCLUDE_CENTRAL_CUBE) call exit_MPI(myrank,'regional code cannot include the central cube')
 
@@ -552,8 +552,9 @@
 
 !! DK DK for regional code
 ! compute rotation matrix from Euler angles
-  ANGULAR_SIZE_CHUNK_RAD = ANGULAR_SIZE_CHUNK_DEG * PI / 180.
-  if(REGIONAL_CODE) call euler_angles(rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
+  ANGULAR_SIZE_CHUNK_RAD_XI = ANGULAR_SIZE_CHUNK_DEG_1 * PI / 180.
+  ANGULAR_SIZE_CHUNK_RAD_ETA = ANGULAR_SIZE_CHUNK_DEG_2 * PI / 180.
+  if(REGIONAL_CODE) call euler_angles(rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_ETA)
 
 ! fill the region between the central cube and the free surface
   do iy=0,npy
@@ -562,11 +563,11 @@
 ! full Earth (cubed sphere)
 
     xin=dble(ix)/dble(npx)
-    xi= - (ANGULAR_SIZE_CHUNK_RAD/2.) + (dble(iproc_xi)+xin)*ANGULAR_SIZE_CHUNK_RAD/dble(NPROC_XI)
+    xi= - (ANGULAR_SIZE_CHUNK_RAD_XI/2.) + (dble(iproc_xi)+xin)*ANGULAR_SIZE_CHUNK_RAD_XI/dble(NPROC_XI)
     x=dtan(xi)
 
     etan=dble(iy)/dble(npy)
-    eta= - (ANGULAR_SIZE_CHUNK_RAD/2.) + (dble(iproc_eta)+etan)*ANGULAR_SIZE_CHUNK_RAD/dble(NPROC_ETA)
+    eta= - (ANGULAR_SIZE_CHUNK_RAD_ETA/2.) + (dble(iproc_eta)+etan)*ANGULAR_SIZE_CHUNK_RAD_ETA/dble(NPROC_ETA)
     y=dtan(eta)
 
     gamma=ONE/dsqrt(ONE+x*x+y*y)
@@ -590,9 +591,16 @@
       x_icb = -y*rg_icb
       y_icb = x*rg_icb
       z_icb = rg_icb
-      x_central_cube = -y
-      y_central_cube = x
-      z_central_cube = 1.
+
+      if(INFLATE_CENTRAL_CUBE) then
+        x_central_cube = x_bot
+        y_central_cube = y_bot
+        z_central_cube = z_bot
+      else
+        x_central_cube = -y
+        y_central_cube = x
+        z_central_cube = 1.
+      endif
 
     else if(ichunk == CHUNK_AB_ANTIPODE) then
       x_top=-y*rgt
@@ -606,9 +614,16 @@
       x_icb = -y*rg_icb
       y_icb = -x*rg_icb
       z_icb = -rg_icb
-      x_central_cube = -y
-      y_central_cube = -x
-      z_central_cube = -1.
+
+      if(INFLATE_CENTRAL_CUBE) then
+        x_central_cube = x_bot
+        y_central_cube = y_bot
+        z_central_cube = z_bot
+      else
+        x_central_cube = -y
+        y_central_cube = -x
+        z_central_cube = -1.
+      endif
 
     else if(ichunk == CHUNK_AC) then
       x_top=-y*rgt
@@ -622,9 +637,16 @@
       x_icb = -y*rg_icb
       y_icb = -rg_icb
       z_icb = x*rg_icb
-      x_central_cube = -y
-      y_central_cube = -1.
-      z_central_cube = x
+
+      if(INFLATE_CENTRAL_CUBE) then
+        x_central_cube = x_bot
+        y_central_cube = y_bot
+        z_central_cube = z_bot
+      else
+        x_central_cube = -y
+        y_central_cube = -1.
+        z_central_cube = x
+      endif
 
     else if(ichunk == CHUNK_AC_ANTIPODE) then
       x_top=-y*rgt
@@ -638,9 +660,16 @@
       x_icb = -y*rg_icb
       y_icb = rg_icb
       z_icb = -x*rg_icb
-      x_central_cube = -y
-      y_central_cube = 1.
-      z_central_cube = -x
+
+      if(INFLATE_CENTRAL_CUBE) then
+        x_central_cube = x_bot
+        y_central_cube = y_bot
+        z_central_cube = z_bot
+      else
+        x_central_cube = -y
+        y_central_cube = 1.
+        z_central_cube = -x
+      endif
 
     else if(ichunk == CHUNK_BC) then
       x_top=-rgt
@@ -654,9 +683,16 @@
       x_icb = -rg_icb
       y_icb = y*rg_icb
       z_icb = x*rg_icb
-      x_central_cube = -1.
-      y_central_cube = y
-      z_central_cube = x
+
+      if(INFLATE_CENTRAL_CUBE) then
+        x_central_cube = x_bot
+        y_central_cube = y_bot
+        z_central_cube = z_bot
+      else
+        x_central_cube = -1.
+        y_central_cube = y
+        z_central_cube = x
+      endif
 
     else if(ichunk == CHUNK_BC_ANTIPODE) then
       x_top=rgt
@@ -670,9 +706,16 @@
       x_icb = rg_icb
       y_icb = -y*rg_icb
       z_icb = x*rg_icb
-      x_central_cube = 1.
-      y_central_cube = -y
-      z_central_cube = x
+
+      if(INFLATE_CENTRAL_CUBE) then
+        x_central_cube = x_bot
+        y_central_cube = y_bot
+        z_central_cube = z_bot
+      else
+        x_central_cube = 1.
+        y_central_cube = -y
+        z_central_cube = x
+      endif
 
     else
       call exit_MPI(myrank,'incorrect chunk numbering in meshfem3D')
@@ -740,17 +783,19 @@
   endif
 
 ! rescale central cube to match cubed sphere
+  if(.not. INFLATE_CENTRAL_CUBE) then
     x_central_cube = x_central_cube * R_CENTRAL_CUBE / dsqrt(3.d0)
     y_central_cube = y_central_cube * R_CENTRAL_CUBE / dsqrt(3.d0)
     z_central_cube = z_central_cube * R_CENTRAL_CUBE / dsqrt(3.d0)
+  endif
 
-!   fill the volume
-    do ir=0,2*NER
-      rn=rns(ir)
-      xgrid(ix,iy,ir)=x_top*rn+x_bot*(ONE-rn)
-      ygrid(ix,iy,ir)=y_top*rn+y_bot*(ONE-rn)
-      zgrid(ix,iy,ir)=z_top*rn+z_bot*(ONE-rn)
-    enddo
+! fill the volume
+  do ir=0,2*NER
+    rn=rns(ir)
+    xgrid(ix,iy,ir)=x_top*rn+x_bot*(ONE-rn)
+    ygrid(ix,iy,ir)=y_top*rn+y_bot*(ONE-rn)
+    zgrid(ix,iy,ir)=z_top*rn+z_bot*(ONE-rn)
+  enddo
 
 ! modify in the inner core to match the central cube instead of a sphere
 ! this mesh works because even if ellipticity and/or topography are turned on
@@ -850,7 +895,7 @@
          NSPEC2D_C_ETA(iregion_code),NSPEC1D_RADIAL(iregion_code),NPOIN1D_RADIAL(iregion_code), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
          crustal_model,mantle_model,aniso_mantle_model, &
-         aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
+         aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
 
 ! store number of anisotropic elements found in the mantle
   if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &

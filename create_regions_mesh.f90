@@ -31,7 +31,7 @@
            NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA,NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
            crustal_model,mantle_model,aniso_mantle_model, &
-           aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
+           aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
 
 ! create the different regions of the mesh
 
@@ -197,7 +197,7 @@
   integer i,j,k,ia,ispec,iglobnum
   integer iproc_xi,iproc_eta,ichunk
 
-  double precision ANGULAR_SIZE_CHUNK_RAD
+  double precision ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA
 
 ! rotation matrix from Euler angles
   double precision rotation_matrix(3,3)
@@ -429,7 +429,7 @@
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
+          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
 
 ! add topography without the crustal model
         if(TOPOGRAPHY .and. (idoubling(ispec) == IFLAG_CRUST &
@@ -585,7 +585,7 @@
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD)
+          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
 
 ! make the Earth elliptical
         if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)

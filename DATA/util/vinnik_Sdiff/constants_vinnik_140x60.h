@@ -60,39 +60,45 @@
 !! DK DK
 !! DK DK for global code with 6 chunks
 !! DK DK
-  logical, parameter :: REGIONAL_CODE = .false.
-  integer, parameter :: NCHUNKS = 6
-  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG   = 90.d0
-  logical, parameter :: STACEY_ABS_CONDITIONS = .false.
+!  logical, parameter :: REGIONAL_CODE = .false.
+!  integer, parameter :: N    CHUNKS = 6
+!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_1   = 90.d0
+!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_2   = 90.d0
+!  logical, parameter :: STACEY_ABS_CONDITIONS = .false.
 ! include central cube in the case of 6 chunks or not
 ! should always be set to true except when debugging code
-  logical, parameter :: INCLUDE_CENTRAL_CUBE = .true.
+!  logical, parameter :: INCLUDE_CENTRAL_CUBE = .true.
 !! DK DK use regular cubed sphere instead of cube for large distances
-  logical, parameter :: INFLATE_CENTRAL_CUBE = .false.
+!  logical, parameter :: INFLATE_CENTRAL_CUBE = .false.
 
 !! DK DK
 !! DK DK for regional code with 1 chunk
 !! DK DK
-!  logical, parameter :: REGIONAL_CODE = .true.
+  logical, parameter :: REGIONAL_CODE = .true.
 !! DK DK spaces added to prevent go_mesher script from crashing
 !! DK DK if keyword N   CHUNKS appears twice in constants.h
-!  integer, parameter :: N    CHUNKS = 1
-!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG   = 35.d0
-!  logical, parameter :: STACEY_ABS_CONDITIONS = .true.
+  integer, parameter :: NCHUNKS = 1
+  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_1   = 140.d0
+  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_2   = 60.d0
+  logical, parameter :: STACEY_ABS_CONDITIONS = .true.
 !! include central cube in the case of 6 chunks or not
 !! should always be set to true except when debugging code
-!  logical, parameter :: INCLUDE_CENTRAL_CUBE = .false.
+  logical, parameter :: INCLUDE_CENTRAL_CUBE = .false.
 !! DK DK use regular cubed sphere instead of cube for large distances
-!  logical, parameter :: INFLATE_CENTRAL_CUBE = .true.
+  logical, parameter :: INFLATE_CENTRAL_CUBE = .true.
 
-  double precision, parameter :: CENTER_LATITUDE_DEG      = 38.d0
-  double precision, parameter :: CENTER_LONGITUDE_DEG     = 137.d0
-  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 21.d0
+!  double precision, parameter :: CENTER_LATITUDE_DEG      = 38.d0
+!  double precision, parameter :: CENTER_LONGITUDE_DEG     = 137.d0
+!  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 21.d0
+
+  double precision, parameter :: CENTER_LATITUDE_DEG      = 0.d0
+  double precision, parameter :: CENTER_LONGITUDE_DEG     = 0.d0
+  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 0.d0
 
 ! save AVS or OpenDX files in mesher or not
 ! do not use if you do not plan to use AVS or OpenDX to visualize the mesh
 ! because this option can create very large files
-  logical, parameter :: SAVE_AVS_DX_MESH_FILES = .false.
+  logical, parameter :: SAVE_AVS_DX_MESH_FILES = .true.
 
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
@@ -131,45 +137,45 @@
 ! ************** PREM ****************
 ! ************************************
 
-  logical, parameter :: IASPEI = .false.
-  double precision, parameter :: ROCEAN = 6368000.d0
-  double precision, parameter :: RMIDDLE_CRUST = 6356000.d0
-  double precision, parameter :: RMOHO = 6346600.d0
-  double precision, parameter :: R80 = 6291000.d0
-  double precision, parameter :: R220 = 6151000.d0
-  double precision, parameter :: R400 = 5971000.d0
-  double precision, parameter :: R600 = 5771000.d0
-  double precision, parameter :: R670 = 5701000.d0
-  double precision, parameter :: R771 = 5600000.d0
-  double precision, parameter :: RTOPDDOUBLEPRIME = 3630000.d0
-  double precision, parameter :: RCMB = 3480000.d0
-  double precision, parameter :: RICB = 1221000.d0
-  real(kind=CUSTOM_REAL), parameter :: RHO_TOP_OC = 9903.4384 / RHOAV
-  real(kind=CUSTOM_REAL), parameter :: RHO_BOTTOM_OC = 12166.5885 / RHOAV
-  real(kind=CUSTOM_REAL), parameter :: RHO_OCEANS = 1020.0 / RHOAV
+!  logical, parameter :: IASPEI = .false.
+!  double precision, parameter :: ROCEAN = 6368000.d0
+!  double precision, parameter :: RMIDDLE_CRUST = 6356000.d0
+!  double precision, parameter :: RMOHO = 6346600.d0
+!  double precision, parameter :: R80 = 6291000.d0
+!  double precision, parameter :: R220 = 6151000.d0
+!  double precision, parameter :: R400 = 5971000.d0
+!  double precision, parameter :: R600 = 5771000.d0
+!  double precision, parameter :: R670 = 5701000.d0
+!  double precision, parameter :: R771 = 5600000.d0
+!  double precision, parameter :: RTOPDDOUBLEPRIME = 3630000.d0
+!  double precision, parameter :: RCMB = 3480000.d0
+!  double precision, parameter :: RICB = 1221000.d0
+!  real(kind=CUSTOM_REAL), parameter :: RHO_TOP_OC = 9903.4384 / RHOAV
+!  real(kind=CUSTOM_REAL), parameter :: RHO_BOTTOM_OC = 12166.5885 / RHOAV
+!  real(kind=CUSTOM_REAL), parameter :: RHO_OCEANS = 1020.0 / RHOAV
 
 ! ************************************
 ! ************* IASPEI ***************
 ! ************************************
 
-!  logical, parameter :: IASPEI = .true.
-!  double precision, parameter :: RMOHO = 6341000.d0
-!  double precision, parameter :: R220 = 6161000.d0
-!  double precision, parameter :: R400 = 5961000.d0
-!  double precision, parameter :: R600 = 5781000.d0
-!  double precision, parameter :: R670 = 5711000.d0
-!  double precision, parameter :: R771 = 5611000.d0
-!  double precision, parameter :: RTOPDDOUBLEPRIME = 3631000.d0
-!  double precision, parameter :: RCMB = 3482000.d0
-!  double precision, parameter :: RICB = 1217000.d0
-!  real(kind=CUSTOM_REAL), parameter :: RHO_TOP_OC = 9900.2379 / RHOAV
-!  real(kind=CUSTOM_REAL), parameter :: RHO_BOTTOM_OC = 12168.6383 / RHOAV
-!  real(kind=CUSTOM_REAL), parameter :: RHO_OCEANS = 1020.0 / RHOAV
-!
-!  fictitious values for IASPEI in order to be able to compile
-!  double precision, parameter :: ROCEAN = 1.d0
-!  double precision, parameter :: RMIDDLE_CRUST = 1.d0
-!  double precision, parameter :: R80 = 1.d0
+  logical, parameter :: IASPEI = .true.
+  double precision, parameter :: RMOHO = 6341000.d0
+  double precision, parameter :: R220 = 6161000.d0
+  double precision, parameter :: R400 = 5961000.d0
+  double precision, parameter :: R600 = 5781000.d0
+  double precision, parameter :: R670 = 5711000.d0
+  double precision, parameter :: R771 = 5611000.d0
+  double precision, parameter :: RTOPDDOUBLEPRIME = 3631000.d0
+  double precision, parameter :: RCMB = 3482000.d0
+  double precision, parameter :: RICB = 1217000.d0
+  real(kind=CUSTOM_REAL), parameter :: RHO_TOP_OC = 9900.2379 / RHOAV
+  real(kind=CUSTOM_REAL), parameter :: RHO_BOTTOM_OC = 12168.6383 / RHOAV
+  real(kind=CUSTOM_REAL), parameter :: RHO_OCEANS = 1020.0 / RHOAV
+
+!! DK DK fictitious values for IASPEI in order to be able to compile
+  double precision, parameter :: ROCEAN = 1.d0
+  double precision, parameter :: RMIDDLE_CRUST = 1.d0
+  double precision, parameter :: R80 = 1.d0
 
 ! minimum thickness in meters to include the effect of the oceans and topo
 ! and maximum depth of the oceans in trenches and height of topo in mountains
