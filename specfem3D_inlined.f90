@@ -403,8 +403,6 @@
   integer it,isource
   integer, dimension(:), allocatable :: islice_selected_source,ispec_selected_source
   integer yr,jda,ho,mi
-!! DK DK UGLY
-!! DK DK UGLY  real(kind=CUSTOM_REAL), dimension(:), allocatable :: stf_used
   real(kind=CUSTOM_REAL) stf_used
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearrays
@@ -2611,10 +2609,6 @@
 
   endif
 
-!! DK DK UGLY
-! allocate array for sources
-!! DK DK UGLY  allocate(stf_used(NSOURCES))
-
 ! get MPI starting time
   time_start = MPI_WTIME()
 
@@ -3283,15 +3277,12 @@
           R_memory_inner_core,epsilondev_inner_core,one_minus_sum_beta, &
           alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
 
-!! DK DK UGLY
 ! compute source time functions
   do isource = 1,NSOURCES
 
 ! add the source only if this proc carries the source
 ! otherwise set time function to zero
     if(myrank == islice_selected_source(isource)) then
-!! DK DK UGLY
-!CDIR NEXPAND
       stf = comp_source_time_function(dble(it-1)*DT-hdur(isource)-t_cmt(isource),hdur(isource))
     else
       stf = 0.d0
@@ -3299,30 +3290,15 @@
 
 !   distinguish whether single or double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
-!! DK DK UGLY      stf_used(isource) = sngl(stf)
       stf_used = sngl(stf)
     else
-!! DK DK UGLY      stf_used(isource) = stf
       stf_used = stf
     endif
-
-!! DK DK UGLY
-!! DK DK tried to merge loops     enddo
-
-! this loop on sources has dependencies because of global assembly
-!! DK DK UGLY
-!! DK DK tried to merge loops     do isource = 1,NSOURCES
-
-
-!! DK DK UGLY tried to convert stf_used(isource) back to scalar
 
 ! add source array (it is multiplied by zero if source is not in this slice)
 !CDIR NODEP(accel_crust_mantle)
     do ijk=1,NGLLCUBE
       iglob = ibool_crust_mantle(ijk,1,1,ispec_selected_source(isource))
-!! DK DK UGLY      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sourcearrays(isource,1,ijk,1,1)*stf_used(isource)
-!! DK DK UGLY      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sourcearrays(isource,2,ijk,1,1)*stf_used(isource)
-!! DK DK UGLY      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sourcearrays(isource,3,ijk,1,1)*stf_used(isource)
       accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sourcearrays(isource,1,ijk,1,1)*stf_used
       accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sourcearrays(isource,2,ijk,1,1)*stf_used
       accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sourcearrays(isource,3,ijk,1,1)*stf_used
