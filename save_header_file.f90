@@ -21,7 +21,10 @@
         nglob_AB,nglob_AC,nglob_BC,NEX_XI,NEX_ETA, &
         nspec_aniso_mantle,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION)
+! BS
+!        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION)
+        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION, ATTENUATION_3D)
+! BS END
 
   implicit none
 
@@ -34,7 +37,10 @@
   integer nspec_aniso_mantle
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION
+! BS
+!          ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION
+          ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D
+! BS END
 
   integer subtract_central_cube_elems
   double precision subtract_central_cube_points
@@ -303,6 +309,15 @@
     write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL = .false.'
   endif
   write(IOUT,*)
+
+! BS
+  if(ATTENUATION_3D) then
+    write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL_3D = .true.'
+  else
+    write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL_3D = .false.'
+  endif
+  write(IOUT,*)
+! BS END
 
   if(ELLIPTICITY) then
     write(IOUT,*) 'logical, parameter :: ELLIPTICITY_VAL = .true.'

@@ -34,11 +34,21 @@
             jacobian2D_bottom,jacobian2D_top, &
             iMPIcut_xi,iMPIcut_eta,nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS)
+! BS
+!            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS)
+            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
+            tau_s, tau_e_store, Qmu_store, T_c_source, &
+            ATTENUATION, ATTENUATION_3D, &
+            vx, vy, vz, vnspec)
+! BS END
 
   implicit none
 
   include "constants.h"
+
+! BS
+  logical ATTENUATION, ATTENUATION_3D
+! BS END
 
   integer nspec,nglob,nspec_stacey
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
@@ -109,6 +119,15 @@
   logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
 
   integer i,j,k,ispec,iglob
+
+! BS
+! attenuation
+  integer vx, vy, vz, vnspec
+  double precision  T_c_source
+  double precision, dimension(N_SLS)                     :: tau_s
+  double precision, dimension(vx, vy, vz, vnspec)        :: Qmu_store
+  double precision, dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
+! BS END
 
 ! processor identification
   character(len=150) prname
@@ -499,6 +518,26 @@
   open(unit=27,file=prname(1:len_trim(prname))//'z.bin',status='unknown',form='unformatted')
   write(27) rmass
   close(27)
+
+! BS
+  if(ATTENUATION .AND. ATTENUATION_3D) then
+     open(unit=27, file=prname(1:len_trim(prname))//'tau_s.bin', status='unknown', form='unformatted')
+     write(27) tau_s
+     close(27)
+
+     open(unit=27, file=prname(1:len_trim(prname))//'tau_e.bin', status='unknown', form='unformatted')
+     write(27) tau_e_store
+     close(27)
+
+     open(unit=27, file=prname(1:len_trim(prname))//'Q.bin', status='unknown', form='unformatted')
+     write(27) Qmu_store
+     close(27)
+
+     open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin', status='unknown', form='unformatted')
+     write(27) T_c_source
+     close(27)
+  endif
+! BS END
 
   end subroutine save_arrays
 

@@ -26,8 +26,12 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
-
+! BS
+! BS Added sizes to pass either N_SLS or N_SLS*NUM_NODES to factor_common or one_minus_sum_beta
+!          alphaval,betaval,gammaval,factor_common,index_i,index_k,index_dim)
+          alphaval,betaval,gammaval,factor_common, &
+          vx, vy, vz, vnspec, index_i, index_k, index_dim)          
+! BS END
   implicit none
 
   include "constants.h"
@@ -50,8 +54,16 @@
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
 ! to allow for optimization of cache access by compiler
+! BS
+! BS variable sized array variables for one_minus_sum_beta and factor_common
+  integer vx, vy, vz, vnspec
+! BS END
+
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
-  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: one_minus_sum_beta
+! BS
+!  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+! BS END
   double precision dist
   integer iregion_selected
 
@@ -59,7 +71,13 @@
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT,N_SLS) :: R_memory
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common
+! BS
+! BS [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
+!  real(kind=CUSTOM_REAL), dimension(NUM_REGIONS_ATTENUATION,N_SLS) :: alphaval,betaval,gammaval,factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
+  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec, N_SLS) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: factor_common_c44_muv
+! BS END 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL) epsilon_trace_over_3
 
@@ -320,6 +338,13 @@
 
 ! distinguish regions in the mantle, including case of the d80
 
+! BS
+! BS attenuation 3d flag if else loop
+    if(ATTENUATION_VAL_3D) then
+       one_minus_sum_beta_use = one_minus_sum_beta(ijk,1,1,ispec)
+    else
+! BS END
+
   if(idoubling(ispec) == IFLAG_DOUBLING_670 .or. &
      idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. &
      idoubling(ispec) == IFLAG_BOTTOM_MANTLE) then
@@ -354,7 +379,12 @@
 
    endif
 
-    one_minus_sum_beta_use = one_minus_sum_beta(iregion_selected)
+! BS
+!    one_minus_sum_beta_use = one_minus_sum_beta(iregion_selected)
+   one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
+  endif
+! BS END
+
     minus_sum_beta =  one_minus_sum_beta_use - 1.
 
   endif
@@ -954,202 +984,299 @@
 ! get coefficients for that standard linear solid
 ! IMPROVE we use mu_v here even if there is some anisotropy
 ! IMPROVE we should probably use an average value instead
-  if(ANISOTROPIC_MANTLE_VAL) then
+!  if(ANISOTROPIC_MANTLE_VAL) then
+!    do ijk = 1,NGLLCUBE
+!---
+!    R_memory(1,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(1,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(1,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(1,ijk,1,1))
+!
+!    R_memory(2,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(2,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(2,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(2,ijk,1,1))
+!
+!    R_memory(3,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(3,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(3,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(3,ijk,1,1))
+!
+!    R_memory(4,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(4,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(4,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(4,ijk,1,1))
+!
+!    R_memory(5,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(5,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(5,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(5,ijk,1,1))
+!
+!---
+!    R_memory(1,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(1,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(1,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(1,ijk,1,1))
+!
+!    R_memory(2,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(2,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(2,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(2,ijk,1,1))
+!
+!    R_memory(3,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(3,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(3,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(3,ijk,1,1))
+!
+!    R_memory(4,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(4,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(4,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(4,ijk,1,1))
+!
+!    R_memory(5,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(5,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(5,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(5,ijk,1,1))
+!
+!---
+!    R_memory(1,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(1,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(1,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(1,ijk,1,1))
+!
+!    R_memory(2,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(2,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(2,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(2,ijk,1,1))
+!
+!    R_memory(3,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(3,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(3,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(3,ijk,1,1))
+!
+!    R_memory(4,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(4,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(4,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(4,ijk,1,1))
+!
+!    R_memory(5,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(5,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(5,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(5,ijk,1,1))
+!
+!    enddo
+!  else
+!
+!    do ijk = 1,NGLLCUBE
+!
+!---
+!    R_memory(1,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(1,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(1,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(1,ijk,1,1))
+!
+!    R_memory(2,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(2,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(2,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(2,ijk,1,1))
+!
+!    R_memory(3,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(3,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(3,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(3,ijk,1,1))
+!
+!    R_memory(4,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(4,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(4,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(4,ijk,1,1))
+!
+!    R_memory(5,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
+!      R_memory(5,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,1) * &
+!      (betaval(iregion_selected,1) * epsilondev(5,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,1) * epsilondev_loc(5,ijk,1,1))
+!
+!---
+!    R_memory(1,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(1,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(1,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(1,ijk,1,1))
+!
+!    R_memory(2,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(2,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(2,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(2,ijk,1,1))
+!
+!    R_memory(3,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(3,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(3,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(3,ijk,1,1))
+!
+!    R_memory(4,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(4,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(4,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(4,ijk,1,1))
+!
+!    R_memory(5,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
+!      R_memory(5,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,2) * &
+!      (betaval(iregion_selected,2) * epsilondev(5,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,2) * epsilondev_loc(5,ijk,1,1))
+!
+!---
+!    R_memory(1,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(1,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(1,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(1,ijk,1,1))
+!
+!    R_memory(2,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(2,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(2,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(2,ijk,1,1))
+!
+!    R_memory(3,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(3,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(3,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(3,ijk,1,1))
+!
+!    R_memory(4,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(4,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(4,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(4,ijk,1,1))
+!
+!    R_memory(5,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
+!      R_memory(5,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
+!      factor_common(iregion_selected,3) * &
+!      (betaval(iregion_selected,3) * epsilondev(5,ijk,1,1,ispec) + &
+!       gammaval(iregion_selected,3) * epsilondev_loc(5,ijk,1,1))
+!
+!    enddo
+!  endif
     do ijk = 1,NGLLCUBE
+       if(ATTENUATION_VAL_3D) then
+          factor_common_c44_muv(1) = factor_common(ijk,1,1,ispec,1)
+          factor_common_c44_muv(2) = factor_common(ijk,1,1,ispec,2)
+          factor_common_c44_muv(3) = factor_common(ijk,1,1,ispec,3)
+       else
+          factor_common_c44_muv(1) = factor_common(1,1,1,iregion_selected,1)
+          factor_common_c44_muv(2) = factor_common(1,1,1,iregion_selected,2)
+          factor_common_c44_muv(3) = factor_common(1,1,1,iregion_selected,3)
+       endif
+       if(ANISOTROPIC_MANTLE_VAL) then
+          factor_common_c44_muv(1) = factor_common_c44_muv(1) * c44store(ijk,1,1,ispec)
+          factor_common_c44_muv(2) = factor_common_c44_muv(2) * c44store(ijk,1,1,ispec)
+          factor_common_c44_muv(3) = factor_common_c44_muv(3) * c44store(ijk,1,1,ispec)
+       else
+          factor_common_c44_muv(1) = factor_common_c44_muv(1) * muvstore(ijk,1,1,ispec)
+          factor_common_c44_muv(2) = factor_common_c44_muv(2) * muvstore(ijk,1,1,ispec)
+          factor_common_c44_muv(3) = factor_common_c44_muv(3) * muvstore(ijk,1,1,ispec)
+       endif
+       R_memory(1,ijk,1,1,ispec,1) = alphaval(1) * &
+            R_memory(1,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
+            (betaval(1) * epsilondev(1,ijk,1,1,ispec) + &
+            gammaval(1) * epsilondev_loc(1,ijk,1,1))
+       
+       R_memory(2,ijk,1,1,ispec,1) = alphaval(1) * &
+            R_memory(2,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
+            (betaval(1) * epsilondev(2,ijk,1,1,ispec) + &
+            gammaval(1) * epsilondev_loc(2,ijk,1,1))
+       
+       R_memory(3,ijk,1,1,ispec,1) = alphaval(1) * &
+            R_memory(3,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
+            (betaval(1) * epsilondev(3,ijk,1,1,ispec) + &
+            gammaval(1) * epsilondev_loc(3,ijk,1,1))
+       
+       R_memory(4,ijk,1,1,ispec,1) = alphaval(1) * &
+            R_memory(4,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
+            (betaval(1) * epsilondev(4,ijk,1,1,ispec) + &
+            gammaval(1) * epsilondev_loc(4,ijk,1,1))
+       
+       R_memory(5,ijk,1,1,ispec,1) = alphaval(1) * &
+            R_memory(5,ijk,1,1,ispec,1) + factor_common_c44_muv(1) * &
+            (betaval(1) * epsilondev(5,ijk,1,1,ispec) + &
+            gammaval(1) * epsilondev_loc(5,ijk,1,1))
 
-!---
-    R_memory(1,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(1,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(1,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(1,ijk,1,1))
+       !---
+       R_memory(1,ijk,1,1,ispec,2) = alphaval(2) * &
+            R_memory(1,ijk,1,1,ispec,2) + factor_common_c44_muv(2) * &
+            (betaval(2) * epsilondev(1,ijk,1,1,ispec) + &
+            gammaval(2) * epsilondev_loc(1,ijk,1,1))
 
-    R_memory(2,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(2,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(2,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(2,ijk,1,1))
+       R_memory(2,ijk,1,1,ispec,2) = alphaval(2) * &
+            R_memory(2,ijk,1,1,ispec,2) + factor_common_c44_muv(2) * &
+            (betaval(2) * epsilondev(2,ijk,1,1,ispec) + &
+            gammaval(2) * epsilondev_loc(2,ijk,1,1))
 
-    R_memory(3,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(3,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(3,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(3,ijk,1,1))
+       R_memory(3,ijk,1,1,ispec,2) = alphaval(2) * &
+            R_memory(3,ijk,1,1,ispec,2) + factor_common_c44_muv(2) * &
+            (betaval(2) * epsilondev(3,ijk,1,1,ispec) + &
+            gammaval(2) * epsilondev_loc(3,ijk,1,1))
 
-    R_memory(4,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(4,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(4,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(4,ijk,1,1))
+       R_memory(4,ijk,1,1,ispec,2) = alphaval(2) * &
+            R_memory(4,ijk,1,1,ispec,2) + factor_common_c44_muv(2) * &
+            (betaval(2) * epsilondev(4,ijk,1,1,ispec) + &
+            gammaval(2) * epsilondev_loc(4,ijk,1,1))
 
-    R_memory(5,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(5,ijk,1,1,ispec,1) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(5,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(5,ijk,1,1))
+       R_memory(5,ijk,1,1,ispec,2) = alphaval(2) * &
+            R_memory(5,ijk,1,1,ispec,2) + factor_common_c44_muv(2) * &
+            (betaval(2) * epsilondev(5,ijk,1,1,ispec) + &
+            gammaval(2) * epsilondev_loc(5,ijk,1,1))
 
-!---
-    R_memory(1,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(1,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(1,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(1,ijk,1,1))
+       !---
+       R_memory(1,ijk,1,1,ispec,3) = alphaval(3) * &
+            R_memory(1,ijk,1,1,ispec,3) + factor_common_c44_muv(3) * &
+            (betaval(3) * epsilondev(1,ijk,1,1,ispec) + &
+            gammaval(3) * epsilondev_loc(1,ijk,1,1))
 
-    R_memory(2,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(2,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(2,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(2,ijk,1,1))
+       R_memory(2,ijk,1,1,ispec,3) = alphaval(3) * &
+            R_memory(2,ijk,1,1,ispec,3) + factor_common_c44_muv(3) * &
+            (betaval(3) * epsilondev(2,ijk,1,1,ispec) + &
+            gammaval(3) * epsilondev_loc(2,ijk,1,1))
 
-    R_memory(3,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(3,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(3,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(3,ijk,1,1))
+       R_memory(3,ijk,1,1,ispec,3) = alphaval(3) * &
+            R_memory(3,ijk,1,1,ispec,3) + factor_common_c44_muv(3) * &
+            (betaval(3) * epsilondev(3,ijk,1,1,ispec) + &
+            gammaval(3) * epsilondev_loc(3,ijk,1,1))
 
-    R_memory(4,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(4,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(4,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(4,ijk,1,1))
+       R_memory(4,ijk,1,1,ispec,3) = alphaval(3) * &
+            R_memory(4,ijk,1,1,ispec,3) + factor_common_c44_muv(3) * &
+            (betaval(3) * epsilondev(4,ijk,1,1,ispec) + &
+            gammaval(3) * epsilondev_loc(4,ijk,1,1))
 
-    R_memory(5,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(5,ijk,1,1,ispec,2) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(5,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(5,ijk,1,1))
-
-!---
-    R_memory(1,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(1,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(1,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(1,ijk,1,1))
-
-    R_memory(2,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(2,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(2,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(2,ijk,1,1))
-
-    R_memory(3,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(3,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(3,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(3,ijk,1,1))
-
-    R_memory(4,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(4,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(4,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(4,ijk,1,1))
-
-    R_memory(5,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(5,ijk,1,1,ispec,3) + c44store(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(5,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(5,ijk,1,1))
+       R_memory(5,ijk,1,1,ispec,3) = alphaval(3) * &
+            R_memory(5,ijk,1,1,ispec,3) + factor_common_c44_muv(3) * &
+            (betaval(3) * epsilondev(5,ijk,1,1,ispec) + &
+            gammaval(3) * epsilondev_loc(5,ijk,1,1))
 
     enddo
-  else
-
-    do ijk = 1,NGLLCUBE
-
-!---
-    R_memory(1,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(1,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(1,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(1,ijk,1,1))
-
-    R_memory(2,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(2,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(2,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(2,ijk,1,1))
-
-    R_memory(3,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(3,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(3,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(3,ijk,1,1))
-
-    R_memory(4,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(4,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(4,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(4,ijk,1,1))
-
-    R_memory(5,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
-      R_memory(5,ijk,1,1,ispec,1) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,1) * &
-      (betaval(iregion_selected,1) * epsilondev(5,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,1) * epsilondev_loc(5,ijk,1,1))
-
-!---
-    R_memory(1,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(1,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(1,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(1,ijk,1,1))
-
-    R_memory(2,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(2,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(2,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(2,ijk,1,1))
-
-    R_memory(3,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(3,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(3,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(3,ijk,1,1))
-
-    R_memory(4,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(4,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(4,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(4,ijk,1,1))
-
-    R_memory(5,ijk,1,1,ispec,2) = alphaval(iregion_selected,2) * &
-      R_memory(5,ijk,1,1,ispec,2) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,2) * &
-      (betaval(iregion_selected,2) * epsilondev(5,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,2) * epsilondev_loc(5,ijk,1,1))
-
-!---
-    R_memory(1,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(1,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(1,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(1,ijk,1,1))
-
-    R_memory(2,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(2,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(2,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(2,ijk,1,1))
-
-    R_memory(3,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(3,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(3,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(3,ijk,1,1))
-
-    R_memory(4,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(4,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(4,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(4,ijk,1,1))
-
-    R_memory(5,ijk,1,1,ispec,3) = alphaval(iregion_selected,3) * &
-      R_memory(5,ijk,1,1,ispec,3) + muvstore(ijk,1,1,ispec) * &
-      factor_common(iregion_selected,3) * &
-      (betaval(iregion_selected,3) * epsilondev(5,ijk,1,1,ispec) + &
-       gammaval(iregion_selected,3) * epsilondev_loc(5,ijk,1,1))
-
-    enddo
-  endif
+! BS END
 
 ! save deviatoric strain for Runge-Kutta scheme
     do ijk = 1,5*NGLLCUBE

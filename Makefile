@@ -63,18 +63,15 @@ MPI_FLAGS =
 #
 # Caltech cluster
 #
-FLAGS_NO_CHECK = -fast -tpp6 -xK -e95 -implicitnone -warn truncated_source -warn argument_c
-hecking -warn unused -warn declarations -std95 -check nobounds
+#FLAGS_NO_CHECK = -fast -tpp6 -xK -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
 #
 # more recent machines
 #
-#FLAGS_NO_CHECK = -fast -tpp7 -xN -e95 -implicitnone -warn truncated_source -warn argument_
-checking -warn unused -warn declarations -std95 -check nobounds
+#FLAGS_NO_CHECK = -fast -tpp7 -xN -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
 #
 # debug with range checking
 #
-#FLAGS_NO_CHECK = -O1 -static -e95 -implicitnone -warn truncated_source -warn argument_chec
-king -warn unused -warn declarations -std95 -check bounds
+#FLAGS_NO_CHECK = -O1 -static -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
 #FLAGS_CHECK = $(FLAGS_NO_CHECK)
 #MPI_FLAGS = -Vaxlib
 
@@ -193,6 +190,7 @@ meshfem3D: constants.h \
        $O/compute_parameters.o \
        $O/sort_array_coordinates.o \
        $O/save_header_file.o \
+       $O/attenuation_model.o \
        $O/gll_library.o
 ## use MPI here
 	${MPIF90} $(FLAGS_CHECK) -o xmeshfem3D \
@@ -243,6 +241,7 @@ meshfem3D: constants.h \
        $O/compute_parameters.o \
        $O/sort_array_coordinates.o \
        $O/save_header_file.o \
+       $O/attenuation_model.o \
        $O/gll_library.o $(MPI_FLAGS)
 
 # solver also depends on values from mesher
@@ -282,6 +281,7 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/reduce.o \
        $O/rthetaphi_xyz.o \
        $O/recompute_jacobian.o \
+       $O/attenuation_model.o \
        $O/gll_library.o
 ## use MPI here
 	${MPIF90} $(FLAGS_NO_CHECK) -o xspecfem3D \
@@ -320,6 +320,7 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/reduce.o \
        $O/rthetaphi_xyz.o \
        $O/recompute_jacobian.o \
+       $O/attenuation_model.o \
        $O/gll_library.o $(MPI_FLAGS)
 
 convolve_source_timefunction: $O/convolve_source_timefunction.o
@@ -617,6 +618,9 @@ $O/compute_arrays_source.o: constants.h compute_arrays_source.f90
 
 $O/get_attenuation_model.o: constants.h get_attenuation_model.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/get_attenuation_model.o get_attenuation_model.f90
+
+$O/attenuation_model.o: constants.h attenuation_model.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/attenuation_model.o attenuation_model.f90
 
 $O/gll_library.o: constants.h gll_library.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/gll_library.o gll_library.f90
