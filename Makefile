@@ -53,23 +53,28 @@ MPIF90 = mpif90
 FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard
 FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
 MPI_FLAGS = 
-#
-#
+
 # Intel Fortran90 for Linux
 #F90 = ifc
 #MPIF90 = mpif90
 #FLAGS_NO_CHECK = -O3 -tpp6 -xK -ip -e95 -implicitnone -unroll6
 #FLAGS_CHECK = $(FLAGS_NO_CHECK)
 #MPI_FLAGS = -Vaxlib
-#
-#
+
+# AbsSoft
+#F90 = f90
+#MPIF90 = mpif90
+#FLAGS_CHECK = -s -O2 -cpu:p7 -Rb -Rc -Rp -v -YDEALLOC=ALL
+#FLAGS_NO_CHECK = $(FLAGS_CHECK)
+#MPI_FLAGS =
+
 # NAG compiler for Linux
 #F90 = f95
 #MPIF90 = mpif90
 #FLAGS_CHECK = -O -u -strict95 -C=all
 #FLAGS_NO_CHECK = -O -u -strict95
 #MPI_FLAGS = 
-#
+
 # Lahey f90
 #F90 = lf95
 #MPIF90 = mpif90
