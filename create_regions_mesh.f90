@@ -225,12 +225,12 @@
 
 ! Attenuation
   if(ATTENUATION .and. ATTENUATION_3D) then
-    allocate(Qmu_store(NGLLX, NGLLY, NGLLZ, nspec))
-    allocate(tau_e_store(N_SLS, NGLLX, NGLLY, NGLLZ, nspec))
+    allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec))
+    allocate(tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
   else
-    allocate(Qmu_store(1, 1, 1, 1))
-    allocate(tau_e_store(N_SLS, 1, 1, 1, 1))
-    Qmu_store(1,1,1,1)     = 0.0d0
+    allocate(Qmu_store(1,1,1,1))
+    allocate(tau_e_store(N_SLS,1,1,1,1))
+    Qmu_store(1,1,1,1) = 0.0d0
     tau_e_store(:,1,1,1,1) = 0.0d0
   endif
 
@@ -999,6 +999,10 @@
 ! Stacey
   deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
   deallocate(rho_vp,rho_vs)
+
+! attenuation
+      deallocate(Qmu_store)
+  deallocate(tau_e_store)
 
   end subroutine create_regions_mesh
 
