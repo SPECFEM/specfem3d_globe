@@ -50,7 +50,7 @@
 # Beowulf Portland pgf90
 F90 = pgf90
 MPIF90 = mpif90
-FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard
+FLAGS_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
 FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
 MPI_FLAGS = 
 
@@ -148,18 +148,17 @@ meshfem3D: constants.h \
        $O/define_subregions_crust_mantle.o \
        $O/define_subregions_outer_core.o \
        $O/define_subregions_inner_core.o \
-       $O/get_codes_buffers.o \
        $O/get_shape3D.o \
        $O/get_shape2D.o \
        $O/hex_nodes.o \
        $O/lagrange_poly.o \
        $O/intgrl.o \
        $O/lgndr.o \
-       $O/read_3D_mantle_model.o \
+       $O/mantle_model.o \
        $O/mesh_radial.o \
        $O/numerical_recipes.o \
        $O/prem_model.o \
-       $O/montagner_model.o \
+       $O/anisotropic_mantle_model.o \
        $O/anisotropic_inner_core_model.o \
        $O/reduce.o \
        $O/save_arrays.o \
@@ -197,7 +196,6 @@ meshfem3D: constants.h \
        $O/define_subregions_crust_mantle.o \
        $O/define_subregions_outer_core.o \
        $O/define_subregions_inner_core.o \
-       $O/get_codes_buffers.o \
        $O/get_shape3D.o \
        $O/get_shape2D.o \
        $O/hex_nodes.o \
@@ -205,10 +203,10 @@ meshfem3D: constants.h \
        $O/intgrl.o \
        $O/lgndr.o \
        $O/mesh_radial.o \
-       $O/read_3D_mantle_model.o \
+       $O/mantle_model.o \
        $O/numerical_recipes.o \
        $O/prem_model.o \
-       $O/montagner_model.o \
+       $O/anisotropic_mantle_model.o \
        $O/anisotropic_inner_core_model.o \
        $O/reduce.o \
        $O/save_arrays.o \
@@ -248,7 +246,6 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/exit_mpi.o \
        $O/get_shape3D.o \
        $O/create_name_database.o \
-       $O/define_update_dof.o \
        $O/read_arrays_buffers_solver.o \
        $O/define_derivation_matrices.o \
        $O/compute_arrays_source.o \
@@ -287,7 +284,6 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/exit_mpi.o \
        $O/get_shape3D.o \
        $O/create_name_database.o \
-       $O/define_update_dof.o \
        $O/read_arrays_buffers_solver.o \
        $O/define_derivation_matrices.o \
        $O/compute_arrays_source.o \
@@ -343,7 +339,7 @@ check_buffers_faces_chunks: constants.h $O/check_buffers_faces_chunks.o \
        $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o
 
 clean:
-	rm -f $O/*.o *.o work.pc* xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX
+	rm -f $O/*.o *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX
 
 ####
 #### rule for each .o file below
@@ -504,8 +500,8 @@ $O/hex_nodes.o: constants.h hex_nodes.f90
 $O/intgrl.o: constants.h intgrl.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/intgrl.o intgrl.f90
 
-$O/read_3D_mantle_model.o: constants.h read_3D_mantle_model.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/read_3D_mantle_model.o read_3D_mantle_model.f90
+$O/mantle_model.o: constants.h mantle_model.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/mantle_model.o mantle_model.f90
 
 $O/mesh_radial.o: constants.h mesh_radial.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/mesh_radial.o mesh_radial.f90
@@ -523,8 +519,8 @@ $O/lgndr.o: constants.h lgndr.f90
 $O/prem_model.o: constants.h prem_model.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/prem_model.o prem_model.f90
 
-$O/montagner_model.o: constants.h montagner_model.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/montagner_model.o montagner_model.f90
+$O/anisotropic_mantle_model.o: constants.h anisotropic_mantle_model.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/anisotropic_mantle_model.o anisotropic_mantle_model.f90
 
 $O/anisotropic_inner_core_model.o: constants.h anisotropic_inner_core_model.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/anisotropic_inner_core_model.o anisotropic_inner_core_model.f90
@@ -573,12 +569,6 @@ $O/define_subregions_outer_core.o: constants.h define_subregions_outer_core.f90
 
 $O/define_subregions_inner_core.o: constants.h define_subregions_inner_core.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/define_subregions_inner_core.o define_subregions_inner_core.f90
-
-$O/get_codes_buffers.o: constants.h get_codes_buffers.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/get_codes_buffers.o get_codes_buffers.f90
-
-$O/define_update_dof.o: constants.h define_update_dof.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/define_update_dof.o define_update_dof.f90
 
 $O/read_arrays_buffers_solver.o: constants.h read_arrays_buffers_solver.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/read_arrays_buffers_solver.o read_arrays_buffers_solver.f90
