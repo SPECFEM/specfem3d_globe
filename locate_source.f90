@@ -489,7 +489,7 @@
   else
    if(isource < 10) then
       write(plot_file,"('OUTPUT_FILES/plot_source_time_function',i1,'.txt')") isource
-    elseif(isource<100) then
+    elseif(isource < 100) then
       write(plot_file,"('OUTPUT_FILES/plot_source_time_function',i2,'.txt')") isource
     else
       write(plot_file,"('OUTPUT_FILES/plot_source_time_function',i3,'.txt')") isource
@@ -512,8 +512,10 @@
   else
    if(isource < 10) then
       write(plot_file,"('OUTPUT_FILES/plot_source_spectrum',i1,'.txt')") isource
-    else
+    elseif(isource < 100) then
       write(plot_file,"('OUTPUT_FILES/plot_source_spectrum',i2,'.txt')") isource
+    else
+      write(plot_file,"('OUTPUT_FILES/plot_source_spectrum',i3,'.txt')") isource
     endif
   endif
   open(unit=27,file=plot_file(1:len_trim(plot_file)),status='unknown')
