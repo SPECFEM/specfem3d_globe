@@ -3045,8 +3045,7 @@
 
 ! for anisotropy and gravity, x y and z contain r theta and phi
   call compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          nspec_crust_mantle, &
-          displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+          nspec_crust_mantle,displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
