@@ -309,6 +309,11 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_faces_vector,buffer_received_faces_vector
 
+! PvK: Flag indicating whether topology and coordinates need to be output 
+! for first movie file only
+  logical ifirst_movie
+  integer IOUT_COORD,IOUT_TOPOLOGY
+
 ! -------- arrays specific to each region here -----------
 
 ! ----------------- crust, mantle and oceans ---------------------
@@ -2593,6 +2598,10 @@
     close(55)
   endif
 
+! PvK Initialize movie parameter (needs to be moved to constants.h)
+  ifirst_movie=.true.
+  IOUT_COORD=21
+  IOUT_TOPOLOGY=22
 
   do it=it_begin,it_end
 
@@ -3659,8 +3668,20 @@
 
 !--- first region is the mantle/crust
 
-    write(outputname,"('snapshot_full_mantle_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
-    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+! PvK Change output format to more compact and binary form
+!    write(outputname,"('snapshot_full_mantle_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
+!    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+    write(outputname,"('mantle_veloc_proc',i4.4,'_it',i6.6)") myrank,it
+    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+
+    if (ifirst_movie) then
+       write(outputname,"('mantle_topology_proc',i4.4)") myrank
+       open(unit=IOUT_TOPOLOGY,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+       write(outputname,"('mantle_coord_proc',i4.4)") myrank
+       open(unit=IOUT_COORD,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+    endif
+
+! PvK 071803
 
     allocate(mask_poin(nglob_crust_mantle))
     allocate(indirect_poin(nglob_crust_mantle))
@@ -3685,8 +3706,11 @@
     enddo
 
 ! write number of elements and points
-    write(IOUT,*) itotal_poin
-    write(IOUT,*) nspec_crust_mantle
+! PvK 
+    if (ifirst_movie) then
+      write(IOUT_COORD) itotal_poin
+      write(IOUT_TOPOLOGY) nspec_crust_mantle
+    endif   
 
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
@@ -3780,6 +3804,18 @@
                             veloc_crust_mantle(2,ipoin)*scale_veloc, &
                             veloc_crust_mantle(3,ipoin)*scale_veloc, &
                             div,curl_x,curl_y,curl_z
+! PvK Change output to more compact and binary format
+!             write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
+!                           veloc_crust_mantle(1,ipoin)*scale_veloc, &
+!                           veloc_crust_mantle(2,ipoin)*scale_veloc, &
+!                           veloc_crust_mantle(3,ipoin)*scale_veloc, &
+!                           div,curl_x,curl_y,curl_z
+              write(IOUT) real(veloc_crust_mantle(1,ipoin)*scale_veloc), &
+                            real(veloc_crust_mantle(2,ipoin)*scale_veloc), &
+                            real(veloc_crust_mantle(3,ipoin)*scale_veloc), &
+                            real(div),real(curl_x),real(curl_y),real(curl_z)
+              if (ifirst_movie) write(IOUT_COORD) real(xcoord*R_EARTH),real(ycoord*R_EARTH),real(zcoord*R_EARTH)
+! PvK 
               mask_poin(ipoin) = .true.
             endif
           enddo
@@ -3788,25 +3824,37 @@
     enddo
 
 ! write topology of elements
-    do ispec=1,nspec_crust_mantle
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-            write(IOUT,210) indirect_poin(ibool_crust_mantle(i,j,k,ispec))
-          enddo
-        enddo
+! PvK  Modified to more compact and binary format
+    if (ifirst_movie) then
+      do ispec=1,nspec_crust_mantle
+         write(IOUT_TOPOLOGY) (((indirect_poin(ibool_crust_mantle(i,j,k,ispec)),i=1,NGLLX),j=1,NGLLY),k=1,NGLLZ)
       enddo
-    enddo
-
+    endif 
+   
+! PvK 071803 Close binary files
     close(IOUT)
+    if (ifirst_movie) then
+       close(IOUT_TOPOLOGY)
+       close(IOUT_COORD)
+    endif
 
     deallocate(mask_poin)
     deallocate(indirect_poin)
 
 !--- second region is the outer core
 
-    write(outputname,"('snapshot_full_outer_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
-    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+! PvK Change output to more compact and binary format
+!   write(outputname,"('snapshot_full_outer_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
+!   open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+if (ifirst_movie) then
+       write(outputname,"('outer_core_topology_proc',i4.4)") myrank
+       open(unit=IOUT_TOPOLOGY,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+       write(outputname,"('outer_core_coord_proc',i4.4)") myrank
+       open(unit=IOUT_COORD,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+    endif
+
+! PvK
+
 
     allocate(mask_poin(nglob_outer_core))
     allocate(indirect_poin(nglob_outer_core))
@@ -3831,8 +3879,13 @@
     enddo
 
 ! write number of elements and points
-    write(IOUT,*) itotal_poin
-    write(IOUT,*) nspec_outer_core
+! PvK  
+!   write(IOUT,*) itotal_poin
+!   write(IOUT,*) nspec_outer_core
+    if (ifirst_movie) then
+      write(IOUT_COORD) itotal_poin
+      write(IOUT_TOPOLOGY) nspec_outer_core
+    endif
 
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
@@ -3951,11 +4004,18 @@
               curl_x = 0.
               curl_y = 0.
               curl_z = 0.
-              write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
-                    dpotentialdxl(i,j,k)*scale_veloc, &
-                    dpotentialdyl(i,j,k)*scale_veloc, &
-                    dpotentialdzl(i,j,k)*scale_veloc, &
-                    div,curl_x,curl_y,curl_z
+
+! PvK 071803 Change output to more compact and binary format
+!             write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
+!                   dpotentialdxl(i,j,k)*scale_veloc, &
+!                   dpotentialdyl(i,j,k)*scale_veloc, &
+!                   dpotentialdzl(i,j,k)*scale_veloc, &
+!                   div,curl_x,curl_y,curl_z
+              write(IOUT) real(dpotentialdxl(i,j,k)*scale_veloc), &
+                    real(dpotentialdyl(i,j,k)*scale_veloc), &
+                    real(dpotentialdzl(i,j,k)*scale_veloc), &
+                    real(div),real(curl_x),real(curl_y),real(curl_z)
+              if (ifirst_movie) write(IOUT_COORD) real(xcoord*R_EARTH),real(ycoord*R_EARTH),real(zcoord*R_EARTH)
               mask_poin(ipoin) = .true.
             endif
           enddo
@@ -3964,25 +4024,38 @@
     enddo
 
 ! write topology of elements
-    do ispec=1,nspec_outer_core
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-            write(IOUT,210) indirect_poin(ibool_outer_core(i,j,k,ispec))
-          enddo
-        enddo
-      enddo
-    enddo
+! PvK Modified to more compact and binary format
+    if (ifirst_movie) then
+     do ispec=1,nspec_outer_core
+        write(IOUT_TOPOLOGY) (((indirect_poin(ibool_outer_core(i,j,k,ispec)),i=1,NGLLX),j=1,NGLLY),k=1,NGLLZ)
+     enddo
+    endif
 
     close(IOUT)
+    if (ifirst_movie) then
+       close(IOUT_TOPOLOGY)
+       close(IOUT_COORD)
+    endif
 
     deallocate(mask_poin)
     deallocate(indirect_poin)
 
 !--- third region is the inner core
 
-    write(outputname,"('snapshot_full_inner_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
-    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+! PvK Change output to more compact and binary format
+!   write(outputname,"('snapshot_full_inner_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
+!   open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+    write(outputname,"('inner_core_veloc_proc',i4.4,'_it',i6.6)") myrank,it
+    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+
+    if (ifirst_movie) then
+       write(outputname,"('inner_core_topology_proc',i4.4)") myrank
+       open(unit=IOUT_TOPOLOGY,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+       write(outputname,"('inner_core_coord_proc',i4.4)") myrank
+       open(unit=IOUT_COORD,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+    endif
+
+! PvK 
 
     allocate(mask_poin(NGLOB_INNER_CORE))
     allocate(indirect_poin(NGLOB_INNER_CORE))
@@ -4011,8 +4084,13 @@
     enddo
 
 ! write number of elements and points
-    write(IOUT,*) itotal_poin
-    write(IOUT,*) itotal_spec
+! PvK 
+!   write(IOUT,*) itotal_poin
+!   write(IOUT,*) itotal_spec
+    if (ifirst_movie) then
+      write(IOUT_COORD) itotal_poin
+      write(IOUT_TOPOLOGY) itotal_spec
+    endif
 
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
@@ -4102,11 +4180,17 @@
               curl_x = (dvzdyl(i,j,k) - dvydzl(i,j,k)) * scale_veloc / R_EARTH
               curl_y = (dvxdzl(i,j,k) - dvzdxl(i,j,k)) * scale_veloc / R_EARTH
               curl_z = (dvydxl(i,j,k) - dvxdyl(i,j,k)) * scale_veloc / R_EARTH
-              write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
-                            veloc_inner_core(1,ipoin)*scale_veloc, &
-                            veloc_inner_core(2,ipoin)*scale_veloc, &
-                            veloc_inner_core(3,ipoin)*scale_veloc, &
-                            div,curl_x,curl_y,curl_z
+! PvK Change output to more compact and binary format
+!             write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
+!                           veloc_inner_core(1,ipoin)*scale_veloc, &
+!                           veloc_inner_core(2,ipoin)*scale_veloc, &
+!                           veloc_inner_core(3,ipoin)*scale_veloc, &
+!                           div,curl_x,curl_y,curl_z
+              write(IOUT)   real(veloc_inner_core(1,ipoin)*scale_veloc), &
+                            real(veloc_inner_core(2,ipoin)*scale_veloc), &
+                            real(veloc_inner_core(3,ipoin)*scale_veloc), &
+                            real(div),real(curl_x),real(curl_y),real(curl_z)
+              if (ifirst_movie) write(IOUT_COORD) real(xcoord*R_EARTH),real(ycoord*R_EARTH),real(zcoord*R_EARTH)
               mask_poin(ipoin) = .true.
             endif
           enddo
@@ -4116,22 +4200,26 @@
     enddo
 
 ! write topology of elements
-    do ispec=1,NSPEC_INNER_CORE
-      if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
-        do k = 1,NGLLZ
-          do j = 1,NGLLY
-            do i = 1,NGLLX
-              write(IOUT,210) indirect_poin(ibool_inner_core(i,j,k,ispec))
-            enddo
-          enddo
-        enddo
-      endif
-    enddo
+! PvK Modified to more compact and binary format
+    if (ifirst_movie) then
+     do ispec=1,NSPEC_INNER_CORE
+       if (idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+         write(IOUT_TOPOLOGY) (((indirect_poin(ibool_inner_core(i,j,k,ispec)),i=1,NGLLX),j=1,NGLLY),k=1,NGLLZ)
+       endif
+     enddo
+    endif
 
     close(IOUT)
+    if (ifirst_movie) then
+       close(IOUT_TOPOLOGY)
+       close(IOUT_COORD)
+    endif
 
     deallocate(mask_poin)
     deallocate(indirect_poin)
+
+! PvK After first movie snapshot has been written there is no more need to output topology and coordinates
+    ifirst_movie=.false.
 
  200 format(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6)
  210 format(i10)
