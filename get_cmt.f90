@@ -15,20 +15,18 @@
 !
 !=====================================================================
 
-  subroutine get_cmt(cmt_file,yr,jda,ho,mi,sec, &
-                      t_cmt,hdur,elat,elon,depth,moment_tensor,DT)
+  subroutine get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,NSOURCES,isource)
 
   implicit none
 
   include "constants.h"
 
-  integer yr,jda,ho,mi
+  integer yr,jda,ho,mi,NSOURCES,isource
   double precision sec,t_cmt,hdur,elat,elon,depth
   double precision moment_tensor(6)
   double precision DT
-  character(len=150) cmt_file
 
-  integer ios,lstr,mo,da,julian_day
+  integer mo,da,julian_day,iread
   double precision scaleM
   character(len=5) datasource
   character(len=150) string
@@ -36,43 +34,62 @@
 !
 !---- read hypocenter info
 !
-  open(unit=1,file=cmt_file,iostat=ios,status='old')
-  if(ios /= 0) stop 'error opening CMT file '
+  open(unit=1,file='DATA/CMTSOLUTION',status='old')
 
+! read source number isource
+  do iread=1,isource
+
+! read header with event information
   read(1,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource,yr,mo,da,ho,mi,sec
-
   jda=julian_day(yr,mo,da)
 
-  ios=0
-  do while(ios == 0)
-    read(1,"(a)",iostat=ios) string
+! ignore line with event name
+  read(1,"(a)") string
 
-    if(ios == 0) then
-      lstr=len_trim(string)
-      if(string(1:10) == 'time shift') then
-        read(string(12:lstr),*) t_cmt
-      else if(string(1:13) == 'half duration') then
-        read(string(15:lstr),*) hdur
-      else if(string(1:8) == 'latitude') then
-        read(string(10:lstr),*) elat
-      else if(string(1:9) == 'longitude') then
-        read(string(11:lstr),*) elon
-      else if(string(1:5) == 'depth') then
-        read(string(7:lstr),*) depth
-      else if(string(1:3) == 'Mrr') then
-        read(string(5:lstr),*) moment_tensor(1)
-      else if(string(1:3) == 'Mtt') then
-        read(string(5:lstr),*) moment_tensor(2)
-      else if(string(1:3) == 'Mpp') then
-        read(string(5:lstr),*) moment_tensor(3)
-      else if(string(1:3) == 'Mrt') then
-        read(string(5:lstr),*) moment_tensor(4)
-      else if(string(1:3) == 'Mrp') then
-        read(string(5:lstr),*) moment_tensor(5)
-      else if(string(1:3) == 'Mtp') then
-        read(string(5:lstr),*) moment_tensor(6)
-      endif
-    endif
+! read time shift
+  read(1,"(a)") string
+  read(string(12:len_trim(string)),*) t_cmt
+
+! read half duration
+  read(1,"(a)") string
+  read(string(15:len_trim(string)),*) hdur
+
+! read latitude
+  read(1,"(a)") string
+  read(string(10:len_trim(string)),*) elat
+
+! read longitude
+  read(1,"(a)") string
+  read(string(11:len_trim(string)),*) elon
+
+! read depth
+  read(1,"(a)") string
+  read(string(7:len_trim(string)),*) depth
+
+! read Mrr
+  read(1,"(a)") string
+  read(string(5:len_trim(string)),*) moment_tensor(1)
+
+! read Mtt
+  read(1,"(a)") string
+  read(string(5:len_trim(string)),*) moment_tensor(2)
+
+! read Mpp
+  read(1,"(a)") string
+  read(string(5:len_trim(string)),*) moment_tensor(3)
+
+! read Mrt
+  read(1,"(a)") string
+  read(string(5:len_trim(string)),*) moment_tensor(4)
+
+! read Mrp
+  read(1,"(a)") string
+  read(string(5:len_trim(string)),*) moment_tensor(5)
+
+! read Mtp
+  read(1,"(a)") string
+  read(string(5:len_trim(string)),*) moment_tensor(6)
+
   enddo
 
   close(1)

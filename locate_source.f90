@@ -156,22 +156,7 @@
 ! define topology of the control element
   call usual_hex_nodes(iaddx,iaddy,iaddz)
 
-! get source information
-  if(NSOURCES == 1) then
-    cmt_file='DATA/CMTSOLUTION'
-  else
-    if(isource < 10) then
-      write(cmt_file,"('DATA/CMTSOLUTION',i1)") isource
-    elseif(isource < 100) then
-      write(cmt_file,"('DATA/CMTSOLUTION',i2)") isource
-    elseif(isource < 1000) then
-      write(cmt_file,"('DATA/CMTSOLUTION',i3)") isource
-    else
-      call exit_MPI(myrank,'too many sources')
-    endif
-  endif
-
-  call get_cmt(cmt_file,yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT)
+  call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,elat,elon,depth,moment_tensor,DT,NSOURCES,isource)
 
   if(isource == 1) then
     if(t_cmt /= 0.) call exit_MPI(myrank,'t_cmt for the first source should be zero')
