@@ -494,7 +494,7 @@
 
   if(ISOTROPIC_3D_MANTLE) call read_mantle_model
 
-! read Montagner's model
+! read anisotropic model
   if(ANISOTROPIC_3D_MANTLE) call read_aniso_mantle_model
 
   if(CRUSTAL) call read_crustal_model
@@ -530,7 +530,6 @@
   npx = 2*NEX_PER_PROC_XI
   npy = 2*NEX_PER_PROC_ETA
 
-!! DK DK for regional code
 ! compute rotation matrix from Euler angles
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * PI / 180.
   ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * PI / 180.
@@ -701,7 +700,6 @@
       call exit_MPI(myrank,'incorrect chunk numbering in meshfem3D')
     endif
 
-!! DK DK for regional code
   if(NCHUNKS /= 6) then
 
 ! rotate bottom
