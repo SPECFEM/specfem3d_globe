@@ -193,6 +193,24 @@
     rmin(npr)=r_400
     rmax(npr)=r_220
   enddo
+
+!! DK DK avoid problem with bathymetry trenches on the ES
+!! DK DK do not honor the fictitious Moho if high-res mesh with topography
+  if(NER_CRUST > 1 .and. (CRUSTAL .or. TOPOGRAPHY)) then
+
+!! DK DK uniform radial mesh from d220 to surface if high-res 3D model
+
+! also create last point exactly at the surface
+! other regions above stop one point below
+  do ir=0,2*(NER_220_MOHO+NER_CRUST) - 0
+    npr=npr+1
+    rn(npr)=(r_220-R_CENTRAL_CUBE)/(r_surface-R_CENTRAL_CUBE) &
+              +((R_0-r_220)/(r_surface-R_CENTRAL_CUBE))*dble(ir)/dble(2*(NER_220_MOHO+NER_CRUST))
+    rmin(npr)=r_220
+    rmax(npr)=R_0
+  enddo
+
+  else
 !
 !--- d220 to Moho
 !
@@ -245,6 +263,8 @@
       rmin(npr)=r_moho
       rmax(npr)=R_0
     enddo
+  endif
+
   endif
 
 ! check that the mesh that has been generated is correct
