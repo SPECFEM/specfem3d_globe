@@ -605,6 +605,10 @@
 
   end subroutine prem_display_outer_core
 
+!
+!=====================================================================
+!
+
   subroutine prem_density(x,rho,ONE_CRUST)
 
   implicit none
@@ -618,7 +622,7 @@
 
   r = x * R_EARTH
 
-  if(r >= 0.d0 .and. r <= RICB) then
+  if(r <= RICB) then
     rho=13.0885d0-8.8381d0*x*x
   else if(r > RICB .and. r <= RCMB) then
     rho=12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
@@ -655,3 +659,4 @@
   rho=rho*1000.0d0/RHOAV
 
   end subroutine prem_density
+
