@@ -2209,7 +2209,7 @@
      else
     do iregion_attenuation = 1,NUM_REGIONS_ATTENUATION
       call get_attenuation_model(myrank,iregion_attenuation,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,tau_mu_dble, &
-        tau_sigma_dble,beta_dble,one_minus_sum_beta_dble,factor_scale_dble,NCHUNKS)
+        tau_sigma_dble,beta_dble,one_minus_sum_beta_dble,factor_scale_dble)
 
       tauinv(:) = -1.0 / tau_sigma_dble(:)
       if(iregion_attenuation == IREGION_ATTENUATION_INNER_CORE) then
