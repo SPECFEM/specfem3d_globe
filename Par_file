@@ -16,11 +16,19 @@ NEX_ETA                  = 160
 NPROC_XI                 = 5
 NPROC_ETA                = 5
 
+! angular size of the first chunk (not used if full sphere with six chunks)
+ANGULAR_SIZE_CHUNK_DEG_1 = 90.d0
+ANGULAR_SIZE_CHUNK_DEG_2 = 90.d0
+
 ! time step in seconds
 DT                       = 0.26
 
 ! total number of time steps
 NSTEP                    = 14000
+
+! restart files (number of runs can be 1, 2 or 3, choose 1 for no restart files)
+NUMBER_OF_RUNS           = 1
+NUMBER_OF_THIS_RUN       = 1
 
 ! parameters describing the Earth model
 OCEANS                   = .true.
@@ -72,6 +80,19 @@ MOVIE_VOLUME             = .false.
 NMOVIE                   = 100
 HDUR_MIN_MOVIES          = 20.0d0
 
+! flag to impose receivers at the surface or allow them to be buried
+RECEIVERS_CAN_BE_BURIED  = .false.
+
+! interval at which we output time step info and max of norm of displacement
+ITAFF_TIME_STEPS         = 200
+
+! save AVS or OpenDX mesh files
+SAVE_AVS_DX_MESH_FILES   = .false.
+
+! print source time function
+PRINT_SOURCE_TIME_FUNCT  = .false.
+
+
  !
  ! mesh statistics:
  ! ---------------
@@ -80,9 +101,9 @@ HDUR_MIN_MOVIES          = 20.0d0
  !
  ! number of processors =           150
  !
- ! number of ES nodes =     18.75000    
+ ! number of ES nodes =     18.75000
  ! percentage of total 640 ES nodes =     2.929688      %
- ! total memory available on these ES nodes (Gb) =     300.0000    
+ ! total memory available on these ES nodes (Gb) =     300.0000
  !
  ! max points in largest region =       1107613
  ! max vector length =       3322839
@@ -110,12 +131,12 @@ HDUR_MIN_MOVIES          = 20.0d0
  ! total for full 6-chunk mesh:
  ! ---------------------------
  !
- ! exact total number of spectral elements in entire mesh = 
+ ! exact total number of spectral elements in entire mesh =
  !       2721600
- ! approximate total number of points in entire mesh = 
- !     182002045.0000000     
- ! approximate total number of degrees of freedom in entire mesh = 
- !     498295035.0000000     
+ ! approximate total number of points in entire mesh =
+ !     182002045.0000000
+ ! approximate total number of degrees of freedom in entire mesh =
+ !     498295035.0000000
  !
  ! resolution of the mesh at the surface:
  ! -------------------------------------
@@ -123,6 +144,6 @@ HDUR_MIN_MOVIES          = 20.0d0
  ! spectral elements along a great circle =           960
  ! GLL points along a great circle =          3840
  ! average distance between points in degrees =    9.3750000E-02
- ! average distance between points in km =     10.42452    
+ ! average distance between points in km =     10.42452
  !
 
