@@ -49,7 +49,7 @@
 #
 # Beowulf Portland pgf90
 F90 = pgf90
-MPIF90 = mpif90
+MPIF90 = /home/local/mpich/bin/mpif90
 FLAGS_CHECK = -fast -Mbounds -Mneginfo -Mdclchk -Mstandard
 FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
 MPI_FLAGS = 
@@ -58,7 +58,7 @@ MPI_FLAGS =
 #F90 = ifc
 #MPIF90 = /home/local/mpich_ifc_v7.1/bin/mpif90
 #FLAGS_NO_CHECK = -O3 -tpp6 -xK -ip -e95 -implicitnone -unroll6
-###FLAGS_NO_CHECK = -O0 -CB -e95 -implicitnone
+####FLAGS_NO_CHECK = -O0 -CB -e95 -implicitnone
 #FLAGS_CHECK = $(FLAGS_NO_CHECK)
 #MPI_FLAGS = -Vaxlib
 
@@ -234,18 +234,14 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/get_cmt.o \
        $O/intgrl.o \
        $O/numerical_recipes.o \
-       $O/reduce.o \
        $O/write_seismograms.o \
        $O/read_parameter_file.o \
        $O/compute_parameters.o \
-       $O/locate_source.o \
-       $O/locate_receivers.o \
+       $O/locate_sources_receivers.o \
        $O/make_gravity.o \
        $O/prem_model.o \
-       $O/rthetaphi_xyz.o \
        $O/comp_source_time_function.o \
        $O/comp_source_spectrum.o \
-       $O/recompute_jacobian.o \
        $O/hex_nodes.o \
        $O/lagrange_poly.o \
        $O/exit_mpi.o \
@@ -261,6 +257,9 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/compute_forces_outer_core.o \
        $O/compute_forces_inner_core.o \
        $O/gll_library.o
+## DK DK UGLY       $O/reduce.o \
+## DK DK UGLY       $O/rthetaphi_xyz.o \
+## DK DK UGLY       $O/recompute_jacobian.o \
 ## use MPI here
 	${MPIF90} $(FLAGS_NO_CHECK) -o xspecfem3D \
        $O/specfem3D.o \
@@ -272,18 +271,14 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/get_cmt.o \
        $O/intgrl.o \
        $O/numerical_recipes.o \
-       $O/reduce.o \
        $O/write_seismograms.o \
        $O/read_parameter_file.o \
        $O/compute_parameters.o \
-       $O/locate_source.o \
-       $O/locate_receivers.o \
+       $O/locate_sources_receivers.o \
        $O/make_gravity.o \
        $O/prem_model.o \
-       $O/rthetaphi_xyz.o \
        $O/comp_source_time_function.o \
        $O/comp_source_spectrum.o \
-       $O/recompute_jacobian.o \
        $O/hex_nodes.o \
        $O/lagrange_poly.o \
        $O/exit_mpi.o \
@@ -299,6 +294,9 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/compute_forces_outer_core.o \
        $O/compute_forces_inner_core.o \
        $O/gll_library.o $(MPI_FLAGS)
+## DK DK UGLY       $O/reduce.o \
+## DK DK UGLY       $O/rthetaphi_xyz.o \
+## DK DK UGLY       $O/recompute_jacobian.o \
 
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
@@ -416,12 +414,8 @@ $O/check_buffers_faces_chunks.o: constants.h check_buffers_faces_chunks.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/check_buffers_faces_chunks.o check_buffers_faces_chunks.f90
 
 ### use MPI here
-$O/locate_source.o: constants.h locate_source.f90
-	${MPIF90} $(FLAGS_CHECK) -c -o $O/locate_source.o locate_source.f90
-
-### use MPI here
-$O/locate_receivers.o: constants.h locate_receivers.f90
-	${MPIF90} $(FLAGS_CHECK) -c -o $O/locate_receivers.o locate_receivers.f90
+$O/locate_sources_receivers.o: constants.h locate_sources_receivers.f90
+	${MPIF90} $(FLAGS_CHECK) -c -o $O/locate_sources_receivers.o locate_sources_receivers.f90
 
 ## use MPI here
 $O/exit_mpi.o: constants.h exit_mpi.f90

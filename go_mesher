@@ -49,8 +49,8 @@ echo mesh files will be saved in directory $my_local_path
 echo " "
 
 #### use this on Beowulf
-mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xmeshfem3D
-#/home/local/mpich_new_intel_fortran/bin/mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xmeshfem3D
+/home/local/mpich/bin/mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xmeshfem3D
+###/home/local/mpich_ifc_v7.1/bin/mpirun -nolocal -machinefile $list_of_machines -np $numnodes $PWD/xmeshfem3D
 
 #### use this on SGI
 #  mpirun -np $numnodes xmeshfem3D
