@@ -255,9 +255,10 @@ SOLVER (specfem3D):
     (type "make convolve_source_timefunction" to compile the code).
 - To simulate multiple events, set the parameter NSOURCES in the DATA/Par_file
     to the desired number (greater than 0 and less than 1000). Provide a
-    corresponding number of CMTSOLUTION files DATA/CMTSOLUTION1, DATA/CMTSOLUTION2, ...
-    The first file, DATA/CMTSOLUTION1, should have a zero "time shift", and subsequent
-    files, DATA/CMTSOLUTION2, ..., should have non-negative "time shift". Each event
+    a CMTSOLUTION file that has NSOURCES entries, one for each CMT solution (i.e.,
+    concatenate NSOURCES CMTSOLUTION files to a single CMTSOLUTION file.)
+    The first entry, CMTSOLUTION1, should have a zero "time shift", and subsequent
+    entries, CMTSOLUTION2, ..., should have non-negative "time shift". Each event
     can have it's own half duration, latitude, longitude, depth and moment tensor.
     This feature can also be used to mimick the directivity associated with a
     finite source.
@@ -278,8 +279,8 @@ SOLVER (specfem3D):
   NOTE down to the roundoff error, which can be different. It is only
   NOTE the implementation that differs between the two versions.
 - If you have a fast machine,
-  set ITAFF_TIME_STEPS to a relatively high value (e.g. 100 or even 1000)
-  to avoid writing to the output text files too often
+    set ITAFF_TIME_STEPS to a relatively high value (e.g. 100 or even 1000)
+    to avoid writing to the output text files too often
 - On clusters (e.g., Beowulfs) the seismogram files are distributed on the
     local disks (path LOCAL_PATH in the DATA/Par_file) and need to be gathered
     at the end of the simulation
@@ -291,12 +292,12 @@ SOLVER (specfem3D):
 MOVIE OF THE RESULTS:
 
 - Use create_movie_AVS_DX.f90 ("make create_movie_AVS_DX") to create
-    a movie of surface displacement (radial component). The movie can
-    be saved in OpenDX or AVS format. Set parameters SAVE_AVS_DX_MOVIE and
-    NMOVIE in constants.h . Remember to use a DATA/CMTSOLUTION source file
-    with a half-duration hdur > 0, otherwise you will get a movie
-    corresponding to a Heaviside source, with a lot of high-frequency noise.
-
+    a movie of surface displacement (radial component) or of the entire 3D wave
+    field. The movie can be saved in OpenDX or AVS format. Set parameters
+    MOVIE_SURFACE, MOVIE_VOLUME, and NMOVIE in the Par_file. Remember to use a
+    DATA/CMTSOLUTION source file with a half-duration hdur > HDUR_MIN_MOVIES.
+    (Otherwise you will get a movie corresponding to a Heaviside source, with a
+    lot of high-frequency noise.) This creates pretty large files!
 
 Note: The Gauss-Lobatto subroutines in gll_library.f90 are based in part on
       software libraries from M.I.T., Department of Mechanical Engineering.
