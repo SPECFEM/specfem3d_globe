@@ -181,6 +181,12 @@
       store_val_x_all,store_val_y_all,store_val_z_all, &
       store_val_ux_all,store_val_uy_all,store_val_uz_all
 
+! to save full 3D snapshot of velocity
+  integer itotal_poin
+  real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord
+  integer, dimension(:), allocatable :: indirect_poin
+  logical, dimension(:), allocatable :: mask_poin
+
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
 
@@ -1988,7 +1994,7 @@
     enddo
 
 ! convert in the inner core
-    do iglob = 1,nglob_inner_core
+    do iglob = 1,NGLOB_INNER_CORE
       call xyz_2_rthetaphi(xstore_inner_core(iglob), &
     ystore_inner_core(iglob),zstore_inner_core(iglob),rval,thetaval,phival)
       xstore_inner_core(iglob) = rval
@@ -2105,7 +2111,7 @@
 
     scale_factor_minus_one = factor_scale(IREGION_ATTENUATION_INNER_CORE) - 1.
 
-    do ispec = 1,nspec_inner_core
+    do ispec = 1,NSPEC_INNER_CORE
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
@@ -3111,8 +3117,7 @@
 ! save velocity here to avoid static offset on displacement for movies
 
 ! rescale non-dimensional velocity to right units
-! check if this formula is correct
-      scale_veloc = scale_displ / scale_t
+    scale_veloc = scale_displ / scale_t
 
 ! get coordinates of surface mesh and surface displacement
     ipoin = 0
@@ -3191,6 +3196,239 @@
       write(IOUT) store_val_uz_all
       close(IOUT)
     endif
+
+  endif
+
+! XXXXXXXXXXXXXXXXXXXX
+
+! save snapshot of full 3D mesh
+  if(SAVE_FULL_3D_SNAPSHOT .and. it == IT_FULL_3D_SNAPSHOT) then
+
+! save velocity here to avoid static offset on displacement for movies
+
+! rescale non-dimensional velocity to right units
+    scale_veloc = scale_displ / scale_t
+
+! save full snapshot data to local disk
+
+!--- first region is the mantle/crust
+
+    write(outputname,"('snapshot_full_mantle_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
+    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+
+    allocate(mask_poin(nglob_crust_mantle))
+    allocate(indirect_poin(nglob_crust_mantle))
+
+! count total number of points and define indirect addressing
+    itotal_poin = 0
+    mask_poin(:) = .false.
+    indirect_poin(:) = 0
+    do ispec=1,nspec_crust_mantle
+      do k = 1,NGLLZ,NGLLZ-1
+        do j = 1,NGLLY,NGLLY-1
+          do i = 1,NGLLX,NGLLX-1
+            ipoin = ibool_crust_mantle(i,j,k,ispec)
+            if(.not. mask_poin(ipoin)) then
+              itotal_poin = itotal_poin + 1
+              indirect_poin(ipoin) = itotal_poin
+              mask_poin(ipoin) = .true.
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+! write number of elements and points
+    write(IOUT,*) nspec_crust_mantle
+    write(IOUT,*) itotal_poin
+
+! write coordinates of points, and velocity at these points
+    mask_poin(:) = .false.
+    do ispec=1,nspec_crust_mantle
+      do k = 1,NGLLZ,NGLLZ-1
+        do j = 1,NGLLY,NGLLY-1
+          do i = 1,NGLLX,NGLLX-1
+            ipoin = ibool_crust_mantle(i,j,k,ispec)
+            if(.not. mask_poin(ipoin)) then
+! coordinates actually contain r theta phi, therefore convert back to x y z
+              rval = xstore_crust_mantle(ipoin)
+              thetaval = ystore_crust_mantle(ipoin)
+              phival = zstore_crust_mantle(ipoin)
+              call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
+              write(IOUT,200) xcoord,ycoord,zcoord, &
+                            veloc_crust_mantle(1,ipoin)*scale_veloc, &
+                            veloc_crust_mantle(2,ipoin)*scale_veloc, &
+                            veloc_crust_mantle(3,ipoin)*scale_veloc
+              mask_poin(ipoin) = .true.
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+! write topology of elements (8 corners of each spectral element)
+    do ispec=1,nspec_crust_mantle
+      write(IOUT,210) indirect_poin(ibool_crust_mantle(1,1,1,ispec)), &
+                  indirect_poin(ibool_crust_mantle(NGLLX,1,1,ispec)), &
+                  indirect_poin(ibool_crust_mantle(NGLLX,NGLLY,1,ispec)), &
+                  indirect_poin(ibool_crust_mantle(1,NGLLY,1,ispec)), &
+                  indirect_poin(ibool_crust_mantle(1,1,NGLLZ,ispec)), &
+                  indirect_poin(ibool_crust_mantle(NGLLX,1,NGLLZ,ispec)), &
+                  indirect_poin(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,ispec)), &
+                  indirect_poin(ibool_crust_mantle(1,NGLLY,NGLLZ,ispec))
+    enddo
+
+    close(IOUT)
+
+    deallocate(mask_poin)
+    deallocate(indirect_poin)
+
+!--- second region is the outer core
+!--- the scalar fluid potential is used here
+!--- should ultimately use velocity by computing gradient of potential
+
+    write(outputname,"('snapshot_full_outer_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
+    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+
+    allocate(mask_poin(nglob_outer_core))
+    allocate(indirect_poin(nglob_outer_core))
+
+! count total number of points and define indirect addressing
+    itotal_poin = 0
+    mask_poin(:) = .false.
+    indirect_poin(:) = 0
+    do ispec=1,nspec_outer_core
+      do k = 1,NGLLZ,NGLLZ-1
+        do j = 1,NGLLY,NGLLY-1
+          do i = 1,NGLLX,NGLLX-1
+            ipoin = ibool_outer_core(i,j,k,ispec)
+            if(.not. mask_poin(ipoin)) then
+              itotal_poin = itotal_poin + 1
+              indirect_poin(ipoin) = itotal_poin
+              mask_poin(ipoin) = .true.
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+! write number of elements and points
+    write(IOUT,*) nspec_outer_core
+    write(IOUT,*) itotal_poin
+
+! write coordinates of points, and velocity at these points
+    mask_poin(:) = .false.
+    do ispec=1,nspec_outer_core
+      do k = 1,NGLLZ,NGLLZ-1
+        do j = 1,NGLLY,NGLLY-1
+          do i = 1,NGLLX,NGLLX-1
+            ipoin = ibool_outer_core(i,j,k,ispec)
+            if(.not. mask_poin(ipoin)) then
+! coordinates actually contain r theta phi, therefore convert back to x y z
+              rval = xstore_outer_core(ipoin)
+              thetaval = ystore_outer_core(ipoin)
+              phival = zstore_outer_core(ipoin)
+              call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
+              write(IOUT,205) xcoord,ycoord,zcoord,veloc_outer_core(ipoin)
+              mask_poin(ipoin) = .true.
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+! write topology of elements (8 corners of each spectral element)
+    do ispec=1,nspec_outer_core
+      write(IOUT,210) indirect_poin(ibool_outer_core(1,1,1,ispec)), &
+                  indirect_poin(ibool_outer_core(NGLLX,1,1,ispec)), &
+                  indirect_poin(ibool_outer_core(NGLLX,NGLLY,1,ispec)), &
+                  indirect_poin(ibool_outer_core(1,NGLLY,1,ispec)), &
+                  indirect_poin(ibool_outer_core(1,1,NGLLZ,ispec)), &
+                  indirect_poin(ibool_outer_core(NGLLX,1,NGLLZ,ispec)), &
+                  indirect_poin(ibool_outer_core(NGLLX,NGLLY,NGLLZ,ispec)), &
+                  indirect_poin(ibool_outer_core(1,NGLLY,NGLLZ,ispec))
+    enddo
+
+    close(IOUT)
+
+    deallocate(mask_poin)
+    deallocate(indirect_poin)
+
+!--- third region is the inner core
+
+    write(outputname,"('snapshot_full_inner_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
+    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+
+    allocate(mask_poin(NGLOB_INNER_CORE))
+    allocate(indirect_poin(NGLOB_INNER_CORE))
+
+! count total number of points and define indirect addressing
+    itotal_poin = 0
+    mask_poin(:) = .false.
+    indirect_poin(:) = 0
+    do ispec=1,NSPEC_INNER_CORE
+      do k = 1,NGLLZ,NGLLZ-1
+        do j = 1,NGLLY,NGLLY-1
+          do i = 1,NGLLX,NGLLX-1
+            ipoin = ibool_inner_core(i,j,k,ispec)
+            if(.not. mask_poin(ipoin)) then
+              itotal_poin = itotal_poin + 1
+              indirect_poin(ipoin) = itotal_poin
+              mask_poin(ipoin) = .true.
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+! write number of elements and points
+    write(IOUT,*) NSPEC_INNER_CORE
+    write(IOUT,*) itotal_poin
+
+! write coordinates of points, and velocity at these points
+    mask_poin(:) = .false.
+    do ispec=1,NSPEC_INNER_CORE
+      do k = 1,NGLLZ,NGLLZ-1
+        do j = 1,NGLLY,NGLLY-1
+          do i = 1,NGLLX,NGLLX-1
+            ipoin = ibool_inner_core(i,j,k,ispec)
+            if(.not. mask_poin(ipoin)) then
+! coordinates actually contain r theta phi, therefore convert back to x y z
+              rval = xstore_inner_core(ipoin)
+              thetaval = ystore_inner_core(ipoin)
+              phival = zstore_inner_core(ipoin)
+              call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
+              write(IOUT,200) xcoord,ycoord,zcoord, &
+                            veloc_inner_core(1,ipoin)*scale_veloc, &
+                            veloc_inner_core(2,ipoin)*scale_veloc, &
+                            veloc_inner_core(3,ipoin)*scale_veloc
+              mask_poin(ipoin) = .true.
+            endif
+          enddo
+        enddo
+      enddo
+    enddo
+
+! write topology of elements (8 corners of each spectral element)
+    do ispec=1,NSPEC_INNER_CORE
+      write(IOUT,210) indirect_poin(ibool_inner_core(1,1,1,ispec)), &
+                  indirect_poin(ibool_inner_core(NGLLX,1,1,ispec)), &
+                  indirect_poin(ibool_inner_core(NGLLX,NGLLY,1,ispec)), &
+                  indirect_poin(ibool_inner_core(1,NGLLY,1,ispec)), &
+                  indirect_poin(ibool_inner_core(1,1,NGLLZ,ispec)), &
+                  indirect_poin(ibool_inner_core(NGLLX,1,NGLLZ,ispec)), &
+                  indirect_poin(ibool_inner_core(NGLLX,NGLLY,NGLLZ,ispec)), &
+                  indirect_poin(ibool_inner_core(1,NGLLY,NGLLZ,ispec))
+    enddo
+
+    close(IOUT)
+
+    deallocate(mask_poin)
+    deallocate(indirect_poin)
+
+ 200 format(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6)
+ 205 format(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,' 0 0')
+ 210 format(i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)
 
   endif
 
