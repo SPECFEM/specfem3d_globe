@@ -35,6 +35,7 @@ ANISOTROPIC_INNER_CORE   = .false.
 CRUSTAL                  = .true.
 ONE_CRUST                = .true.
 ATTENUATION              = .true.
+ATTENUATION_3D           = .false.
 MIN_ATTENUATION_PERIOD   = 20
 MAX_ATTENUATION_PERIOD   = 1000
 
@@ -60,7 +61,7 @@ LOCAL_PATH               = /scratch/DATABASES_MPI_JEROEN
 MACHINE_FILE             = mymachines
 
 ! interval in time steps for temporary writing of seismograms
-NSEIS                    = 50000
+NSEIS                    = 5000
 
 ! number of point sources
 NSOURCES                 = 1
