@@ -9,16 +9,16 @@
 #
 
 ! number of elements along chunk edge at surface (16 * multiple of NPROC below)
-NEX_XI                   = 160
-NEX_ETA                  = 160
+NEX_XI                   = 80
+NEX_ETA                  = 80
 
 ! number of MPI processors along xi and eta in each of the six chunks
 NPROC_XI                 = 5
 NPROC_ETA                = 5
 
-! angular size of the first chunk (not used if full sphere with six chunks)
-ANGULAR_SIZE_CHUNK_DEG_1 = 90.d0
-ANGULAR_SIZE_CHUNK_DEG_2 = 90.d0
+! angular width of the first chunk (not used if full sphere with six chunks)
+ANGULAR_WIDTH_XI_DEG     = 70.d0
+ANGULAR_WIDTH_ETA_DEG    = 30.d0
 
 ! time step in seconds
 DT                       = 0.26
@@ -31,18 +31,18 @@ NUMBER_OF_RUNS           = 1
 NUMBER_OF_THIS_RUN       = 1
 
 ! parameters describing the Earth model
-OCEANS                   = .true.
-ELLIPTICITY              = .true.
-TOPOGRAPHY               = .true.
-THREE_D                  = .true.
-GRAVITY                  = .true.
-ROTATION                 = .true.
-TRANSVERSE_ISOTROPY      = .true.
+OCEANS                   = .false.
+ELLIPTICITY              = .false.
+TOPOGRAPHY               = .false.
+THREE_D                  = .false.
+GRAVITY                  = .false.
+ROTATION                 = .false.
+TRANSVERSE_ISOTROPY      = .false.
 ANISOTROPIC_MANTLE       = .false.
 ANISOTROPIC_INNER_CORE   = .false.
-CRUSTAL                  = .true.
+CRUSTAL                  = .false.
 ONE_CRUST                = .true.
-ATTENUATION              = .true.
+ATTENUATION              = .false.
 ATTENUATION_3D           = .false.
 MIN_ATTENUATION_PERIOD   = 20
 MAX_ATTENUATION_PERIOD   = 1000
@@ -63,7 +63,7 @@ NER_ICB_BOTTOMDBL        = 6
 NER_TOP_CENTRAL_CUBE_ICB = 3
 
 ! path to store the local database files on each node
-LOCAL_PATH               = /scratch/DATABASES_MPI_JEROEN
+LOCAL_PATH               = /scratch/DATABASES_MPI_DIMITRI
 
 ! machine file for MPI
 MACHINE_FILE             = mymachines
@@ -87,7 +87,7 @@ RECEIVERS_CAN_BE_BURIED  = .false.
 ITAFF_TIME_STEPS         = 200
 
 ! save AVS or OpenDX mesh files
-SAVE_AVS_DX_MESH_FILES   = .false.
+SAVE_AVS_DX_MESH_FILES   = .true.
 
 ! print source time function
 PRINT_SOURCE_TIME_FUNCT  = .false.
