@@ -392,7 +392,7 @@
   integer nrec,nrec_local,nrec_tot_found
   integer irec_local
   integer, allocatable, dimension(:) :: islice_selected_rec,ispec_selected_rec,number_receiver_global
-  double precision, allocatable, dimension(:) :: xi_receiver,eta_receiver
+  double precision, allocatable, dimension(:) :: xi_receiver,eta_receiver,gamma_receiver
   double precision hlagrange
 
 ! timing information for the stations
@@ -448,8 +448,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
 
 ! Lagrange interpolators at receivers
-  double precision, dimension(:), allocatable :: hxir,hetar,hpxir,hpetar
-  double precision, dimension(:,:), allocatable :: hxir_store,hetar_store
+  double precision, dimension(:), allocatable :: hxir,hetar,hgammar,hpxir,hpetar,hpgammar
+  double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
 
 ! 2-D addressing and buffers for summation between slices
   integer, dimension(:), allocatable :: iboolleft_xi_crust_mantle, &
@@ -966,6 +966,7 @@
   allocate(ispec_selected_rec(nrec))
   allocate(xi_receiver(nrec))
   allocate(eta_receiver(nrec))
+  allocate(gamma_receiver(nrec))
   allocate(station_name(nrec))
   allocate(network_name(nrec))
   allocate(nu(NDIM,NDIM,nrec))
@@ -975,7 +976,7 @@
             nglob_crust_mantle,idoubling_crust_mantle,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xigll,yigll,nrec,islice_selected_rec,ispec_selected_rec, &
-            xi_receiver,eta_receiver,station_name,network_name,nu, &
+            xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,nu, &
             yr,jda,ho,mi,sec, &
             NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
             theta_source(1),phi_source(1),rspl,espl,espl2,nspl,ibathy_topo)
@@ -1065,6 +1066,8 @@
   allocate(hpxir(NGLLX))
   allocate(hetar(NGLLY))
   allocate(hpetar(NGLLY))
+  allocate(hgammar(NGLLZ))
+  allocate(hpgammar(NGLLZ))
 
 ! to couple mantle with outer core
 
@@ -1258,6 +1261,7 @@
 ! allocate Lagrange interpolators for receivers
   allocate(hxir_store(nrec_local,NGLLX))
   allocate(hetar_store(nrec_local,NGLLY))
+  allocate(hgammar_store(nrec_local,NGLLZ))
 
 ! define local to global receiver numbering mapping
   allocate(number_receiver_global(nrec_local))
@@ -1274,8 +1278,10 @@
     irec = number_receiver_global(irec_local)
     call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
     call lagrange_any(eta_receiver(irec),NGLLY,yigll,hetar,hpetar)
+    call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
     hxir_store(irec_local,:) = hxir(:)
     hetar_store(irec_local,:) = hetar(:)
+    hgammar_store(irec_local,:) = hgammar(:)
   enddo
 
 ! check that the sum of the number of receivers in each slice is nrec
@@ -3081,18 +3087,19 @@
         uyd = ZERO
         uzd = ZERO
 
-        do j = 1,NGLLY
-          do i = 1,NGLLX
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
 
-! receivers are always located at the surface of the mesh
-            iglob = ibool_crust_mantle(i,j,NGLLZ,ispec_selected_rec(irec))
+              iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
 
-            hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)
+              hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
 
-            uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
-            uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
-            uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
+              uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
+              uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
+              uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
 
+            enddo
           enddo
         enddo
 
