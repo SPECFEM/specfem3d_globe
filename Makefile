@@ -57,7 +57,7 @@ MPI_FLAGS =
 #
 # Intel Fortran90 for Linux
 #F90 = ifc
-#MPIF90 = /home/local/mpich_new_intel_fortran/bin/mpif90
+#MPIF90 = /usr/local/mpich/bin/mpif90
 #FLAGS_NO_CHECK = -O3 -tpp6 -xK -ip -e95 -implicitnone -unroll6
 #FLAGS_CHECK = $(FLAGS_NO_CHECK)
 #MPI_FLAGS = -Vaxlib
