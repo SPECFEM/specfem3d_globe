@@ -31,7 +31,7 @@
            NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA,NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
            crustal_model,mantle_model,aniso_mantle_model, &
-           aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA,&
+           aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
            attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES)
 
 ! create the different regions of the mesh
@@ -201,7 +201,7 @@
   integer i,j,k,ia,ispec,iglobnum
   integer iproc_xi,iproc_eta,ichunk
 
-  double precision ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA
+  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
 ! rotation matrix from Euler angles
   double precision rotation_matrix(3,3)
@@ -267,7 +267,7 @@
   allocate(eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec))
 
 ! Stacey
-  if(REGIONAL_CODE) then
+  if(NCHUNKS /= 6) then
     nspec_stacey = nspec
   else
     nspec_stacey = 1
@@ -453,7 +453,7 @@
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA, &
+          aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
           attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
           size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5))
 
@@ -611,7 +611,7 @@
           TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           THREE_D,CRUSTAL,ONE_CRUST, &
           crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA, &
+          aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
           attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
           size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5))
 
@@ -772,7 +772,7 @@
                   NSPEC1D_RADIAL,NPOIN1D_RADIAL)
 
 ! Stacey
-  if(REGIONAL_CODE) &
+  if(NCHUNKS /= 6) &
        call get_absorb(myrank,prname,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
                        NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 

@@ -195,7 +195,7 @@
 !! DK DK UGLY avoid problem with bathymetry trenches on the ES
 !! DK DK UGLY do not honor the fictitious Moho if high-res mesh with topography
 !! DK DK UGLY also use regular mesh if regional code
-  if(REGIONAL_CODE .or. (NER_CRUST > 1 .and. (CRUSTAL .or. TOPOGRAPHY))) then
+  if(NCHUNKS /= 6 .or. (NER_CRUST > 1 .and. (CRUSTAL .or. TOPOGRAPHY))) then
 
 !! DK DK UGLY uniform radial mesh from d220 to surface if high-res 3D model
 

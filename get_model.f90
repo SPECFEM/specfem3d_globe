@@ -28,7 +28,7 @@
     TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D, &
     CRUSTAL,ONE_CRUST, &
     crustal_model,mantle_model,aniso_mantle_model, &
-    aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA,&
+    aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
     attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, vx, vy, vz, vnspec)
 
   implicit none
@@ -100,7 +100,7 @@
 
   logical found_crust
 
-  double precision ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA
+  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
 ! rotation matrix from Euler angles
   double precision rotation_matrix(3,3)
@@ -393,7 +393,7 @@
 
  call get_flags_boundaries(myrank,iregion_code,nspec,iproc_xi,iproc_eta,ispec,xstore,ystore,zstore, &
         iboun,iMPIcut_xi,iMPIcut_eta,ichunk,idoubling,NPROC_XI,NPROC_ETA, &
-        rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA)
+        rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD)
 
  end subroutine get_model
 

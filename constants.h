@@ -48,34 +48,45 @@
 ! parameters describing the chunk in degrees
 
 !! DK DK temporary for regional code, should be in Par_file ultimately
+  double precision, parameter :: CENTER_LATITUDE_DEG    = 40.d0
+  double precision, parameter :: CENTER_LONGITUDE_DEG   = 10.d0
+
+  double precision, parameter :: GAMMA_ROTATION_AZIMUTH = 20.d0
 
 !! DK DK
-!! DK DK for global code with 6 chunks
-!! DK DK
-  logical, parameter :: REGIONAL_CODE = .false.
-  integer, parameter :: NCHUNKS = 6
-!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_1 = 90.d0
-!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_2 = ANGULAR_SIZE_CHUNK_DEG_1
-  logical, parameter :: STACEY_ABS_CONDITIONS = .false.
-! include central cube in the case of 6 chunks or not
-! should always be set to true except when debugging code
-  logical, parameter :: INCLUDE_CENTRAL_CUBE = .true.
-!! DK DK use regular cubed sphere instead of cube for large distances
-  logical, parameter :: INFLATE_CENTRAL_CUBE = .false.
+!!! DK DK for global code with 6 chunks
+!!! DK DK
+!!!!!!!!!!!!!  logical, parameter :: REGIONAL_CODE = .false.
+!  integer, parameter :: NCHUNKS = 6
+!!!!!!!!!!  double precision, parameter :: ANGULAR_WIDTH_XI_DEG = 90.d0
+!!!!!!!!!!  double precision, parameter :: ANGULAR_WIDTH_ETA_DEG = ANGULAR_WIDTH_XI_DEG
+!  logical, parameter :: STACEY_ABS_CONDITIONS = .false.
+!! include central cube in the case of 6 chunks or not
+!! should always be set to true except when debugging code
+!  logical, parameter :: INCLUDE_CENTRAL_CUBE = .true.
+!!! DK DK use regular cubed sphere instead of cube for large distances
+!  logical, parameter :: INFLATE_CENTRAL_CUBE = .false.
+!
+!  double precision, parameter :: CENTER_LATITUDE_DEG      = 0.d0
+!  double precision, parameter :: CENTER_LONGITUDE_DEG     = 0.d0
+!!!!!!!!!  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 0.d0
 
 !!! DK DK
 !!! DK DK for regional code with 1 chunk
 !!! DK DK
 !  logical, parameter :: REGIONAL_CODE = .true.
-!  integer, parameter :: NCHUNKS = 1
-!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_1 = 70.d0
-!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_2 = 60.d0
-!  logical, parameter :: STACEY_ABS_CONDITIONS = .true.
-!!! include central cube in the case of 6 chunks or not
-!!! should always be set to true except when debugging code
-!  logical, parameter :: INCLUDE_CENTRAL_CUBE = .false.
-!!! DK DK use regular cubed sphere instead of cube for large distances
-!  logical, parameter :: INFLATE_CENTRAL_CUBE = .true.
+  integer, parameter :: NCHUNKS = 1
+!!!!!!!!  double precision, parameter :: ANGULAR_WIDTH_XI_DEG = 70.d0
+!!!!!!!!  double precision, parameter :: ANGULAR_WIDTH_ETA_DEG = 60.d0
+  logical, parameter :: STACEY_ABS_CONDITIONS = .true.
+!! include central cube in the case of 6 chunks or not
+!! should always be set to true except when debugging code
+  logical, parameter :: INCLUDE_CENTRAL_CUBE = .false.
+!! DK DK use regular cubed sphere instead of cube for large distances
+  logical, parameter :: INFLATE_CENTRAL_CUBE = .true.
+!
+!!!!!!!!!!  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 21.d0
+
 
 !!! DK DK
 !!! DK DK for regional code with 2 chunks
@@ -83,23 +94,15 @@
 !  logical, parameter :: REGIONAL_CODE = .true.
 !  integer, parameter :: NCHUNKS = 2
 !! this MUST be 90 degrees for the two chunks to match geometrically
-!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_1 = 90.d0
+!  double precision, parameter :: ANGULAR_WIDTH_XI_DEG = 90.d0
 !! this can be any value
-!  double precision, parameter :: ANGULAR_SIZE_CHUNK_DEG_2 = 90.d0
+!  double precision, parameter :: ANGULAR_WIDTH_ETA_DEG = 90.d0
 !  logical, parameter :: STACEY_ABS_CONDITIONS = .true.
 !!! include central cube in the case of 6 chunks or not
 !!! should always be set to true except when debugging code
 !  logical, parameter :: INCLUDE_CENTRAL_CUBE = .false.
 !!! DK DK use regular cubed sphere instead of cube for large distances
 !  logical, parameter :: INFLATE_CENTRAL_CUBE = .true.
-
-  double precision, parameter :: CENTER_LATITUDE_DEG      = 0.d0
-  double precision, parameter :: CENTER_LONGITUDE_DEG     = 0.d0
-  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 0.d0
-
-!  double precision, parameter :: CENTER_LATITUDE_DEG      = 38.d0
-!  double precision, parameter :: CENTER_LONGITUDE_DEG     = 137.d0
-!  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 21.d0
 
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6

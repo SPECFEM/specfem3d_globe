@@ -206,7 +206,7 @@
   double precision rotation_matrix(3,3)
   double precision vector_ori(3),vector_rotated(3)
 
-  double precision ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA
+  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
@@ -235,7 +235,7 @@
           NER_TOPDBL_CMB,ITAFF_TIME_STEPS,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
 
   double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC,HDUR_MIN_MOVIES, &
-          ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2
+          ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,THREE_D,TOPOGRAPHY, &
@@ -295,7 +295,7 @@
         ROTATION,THREE_D,TOPOGRAPHY,LOCAL_PATH,NSOURCES, &
         MOVIE_SURFACE,MOVIE_VOLUME,NMOVIE,HDUR_MIN_MOVIES, &
         NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, ATTENUATION_3D, &
-        RECEIVERS_CAN_BE_BURIED,ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2, &
+        RECEIVERS_CAN_BE_BURIED,ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG, &
         SAVE_AVS_DX_MESH_FILES,ITAFF_TIME_STEPS,PRINT_SOURCE_TIME_FUNCT, &
         NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN)
 
@@ -315,8 +315,8 @@
       NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB)
 
 ! basic checks for regional code
-  if(REGIONAL_CODE .and. NCHUNKS /= 1 .and. NCHUNKS /= 2) call exit_MPI(myrank,'regional code only works for one or two chunks')
-  if(REGIONAL_CODE .and. INCLUDE_CENTRAL_CUBE) call exit_MPI(myrank,'regional code cannot include the central cube')
+  if(NCHUNKS /= 6 .and. NCHUNKS /= 1 .and. NCHUNKS /= 2) call exit_MPI(myrank,'regional code only works for one or two chunks')
+  if(NCHUNKS /= 6 .and. INCLUDE_CENTRAL_CUBE) call exit_MPI(myrank,'regional code cannot include the central cube')
 
 ! check that the code is running with the requested nb of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
@@ -568,9 +568,9 @@
 
 !! DK DK for regional code
 ! compute rotation matrix from Euler angles
-  ANGULAR_SIZE_CHUNK_RAD_XI = ANGULAR_SIZE_CHUNK_DEG_1 * PI / 180.
-  ANGULAR_SIZE_CHUNK_RAD_ETA = ANGULAR_SIZE_CHUNK_DEG_2 * PI / 180.
-  if(REGIONAL_CODE) call euler_angles(rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_ETA)
+  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_DEG * PI / 180.
+  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_DEG * PI / 180.
+  if(NCHUNKS /= 6) call euler_angles(rotation_matrix)
 
 ! fill the region between the central cube and the free surface
   do iy=0,npy
@@ -579,11 +579,11 @@
 ! full Earth (cubed sphere)
 
     xin=dble(ix)/dble(npx)
-    xi= - (ANGULAR_SIZE_CHUNK_RAD_XI/2.) + (dble(iproc_xi)+xin)*ANGULAR_SIZE_CHUNK_RAD_XI/dble(NPROC_XI)
+    xi= - (ANGULAR_WIDTH_XI_RAD/2.) + (dble(iproc_xi)+xin)*ANGULAR_WIDTH_XI_RAD/dble(NPROC_XI)
     x=dtan(xi)
 
     etan=dble(iy)/dble(npy)
-    eta= - (ANGULAR_SIZE_CHUNK_RAD_ETA/2.) + (dble(iproc_eta)+etan)*ANGULAR_SIZE_CHUNK_RAD_ETA/dble(NPROC_ETA)
+    eta= - (ANGULAR_WIDTH_ETA_RAD/2.) + (dble(iproc_eta)+etan)*ANGULAR_WIDTH_ETA_RAD/dble(NPROC_ETA)
     y=dtan(eta)
 
     gamma=ONE/dsqrt(ONE+x*x+y*y)
@@ -738,7 +738,7 @@
     endif
 
 !! DK DK for regional code
-  if(REGIONAL_CODE) then
+  if(NCHUNKS /= 6) then
 
 ! rotate bottom
     vector_ori(1) = x_bot
@@ -911,7 +911,7 @@
          NSPEC2D_C_ETA(iregion_code),NSPEC1D_RADIAL(iregion_code),NPOIN1D_RADIAL(iregion_code), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
          crustal_model,mantle_model,aniso_mantle_model, &
-         aniso_inner_core_model,rotation_matrix,ANGULAR_SIZE_CHUNK_RAD_XI,ANGULAR_SIZE_CHUNK_RAD_ETA, &
+         aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES)
 
 ! store number of anisotropic elements found in the mantle
@@ -1093,7 +1093,7 @@
   call save_header_file(NSPEC_AB,NSPEC_AC,NSPEC_BC,nglob_AB,nglob_AC,nglob_BC, &
         NEX_XI,NEX_ETA,nspec_aniso_mantle_all,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D,ANGULAR_SIZE_CHUNK_DEG_1,ANGULAR_SIZE_CHUNK_DEG_2)
+        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D,ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG)
 
   endif   ! end of section executed by main process only
 
