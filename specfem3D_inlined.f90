@@ -3756,7 +3756,7 @@
 ! write the current seismograms
   if(mod(it,NSEIS) == 0) &
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-              network_name,nrec,nrec_local,DT,NSTEP,hdur(1),LOCAL_PATH,it_begin,it_end)
+          network_name,nrec,nrec_local,DT,NSTEP,minval(hdur),LOCAL_PATH,it_begin,it_end)
 
 ! save movie frame
   if(MOVIE_SURFACE .and. mod(it,NMOVIE) == 0) then
@@ -3820,7 +3820,7 @@
 
 ! write the final seismograms
   call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-          network_name,nrec,nrec_local,DT,NSTEP,hdur(1),LOCAL_PATH,it_begin,it_end)
+          network_name,nrec,nrec_local,DT,NSTEP,minval(hdur),LOCAL_PATH,it_begin,it_end)
 
 ! save files to local disk or MT tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
