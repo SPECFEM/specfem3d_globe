@@ -222,10 +222,10 @@
   distmin = HUGEVAL
 
 ! compute typical size of elements at the surface
-  typical_size = R_UNIT_SPHERE / (4.*NEX_XI)
+  typical_size = TWO_PI * R_UNIT_SPHERE / (4.*NEX_XI)
 
-! use 15 times the distance as a criterion for source detection
-  typical_size = 15. * typical_size
+! use 10 times the distance as a criterion for source detection
+  typical_size = 10. * typical_size
 
 ! flag to check that we located at least one target element
   located_target = .false.
