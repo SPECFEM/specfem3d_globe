@@ -1,7 +1,4 @@
 
-!! DK DK July 2004: Dimitri slightly modified this source file
-!! DK DK to get rid of warnings given by Intel's ifort compiler
-
 module attenuation_model_constants
   implicit none
   include 'constants.h'
@@ -20,7 +17,7 @@ subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_sourc
 !! DK DK
 !! DK DK xlat, xlon currently not used in this routine (which uses PREM).
 !! DK DK The user needs to modify this routine if he wants to use
-!! DK DK a particular 3D attenuation model.
+!! DK DK a particular 3D attenuation model. The current version is 1D.
 !! DK DK
 
   use attenuation_model_variables
