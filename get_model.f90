@@ -23,6 +23,7 @@
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
     xelm,yelm,zelm,shape3D,ispec, &
     iboun,iMPIcut_xi,iMPIcut_eta,rmin,rmax,ichunk,idoubling, &
+    rho_vp,rho_vs,nspec_stacey, &
     NPROC_XI,NPROC_ETA, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D, &
     CRUSTAL,ONE_CRUST, &
@@ -35,7 +36,7 @@
 
   external mantle_model,crustal_model,aniso_mantle_model, &
        aniso_inner_core_model
-  integer ispec,nspec,ichunk,idoubling,iregion_code,myrank
+  integer ispec,nspec,ichunk,idoubling,iregion_code,myrank,nspec_stacey
   integer NPROC_XI,NPROC_ETA
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D,CRUSTAL,ONE_CRUST
 
@@ -55,6 +56,8 @@
   real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec)
   real(kind=CUSTOM_REAL) muhstore(NGLLX,NGLLY,NGLLZ,nspec)
   real(kind=CUSTOM_REAL) eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec)
+
+  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey),rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
 
   real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
 
@@ -259,6 +262,17 @@
          muhstore(i,j,k,ispec) = sngl(rho*vsh*vsh)
          eta_anisostore(i,j,k,ispec) = sngl(eta_aniso)
 
+         if(STACEY_ABS_CONDITIONS) then
+           if(iregion_code == IREGION_OUTER_CORE) then
+! we need just vp in the outer core for STacey conditions
+             rho_vp(i,j,k,ispec) = sngl(vph)
+             rho_vs(i,j,k,ispec) = sngl(0.d0)
+           else
+             rho_vp(i,j,k,ispec) = sngl(rho*vph)
+             rho_vs(i,j,k,ispec) = sngl(rho*vsh)
+           endif
+         endif
+
          if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
            c11store(i,j,k,ispec) = sngl(c11)
            c33store(i,j,k,ispec) = sngl(c33)
@@ -298,6 +312,17 @@
          muvstore(i,j,k,ispec) = rho*vsv*vsv
          muhstore(i,j,k,ispec) = rho*vsh*vsh
          eta_anisostore(i,j,k,ispec) = eta_aniso
+
+         if(STACEY_ABS_CONDITIONS) then
+           if(iregion_code == IREGION_OUTER_CORE) then
+! we need just vp in the outer core for STacey conditions
+             rho_vp(i,j,k,ispec) = vph
+             rho_vs(i,j,k,ispec) = 0.d0
+           else
+             rho_vp(i,j,k,ispec) = rho*vph
+             rho_vs(i,j,k,ispec) = rho*vsh
+           endif
+         endif
 
          if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
            c11store(i,j,k,ispec) = c11
