@@ -182,8 +182,11 @@
       store_val_ux_all,store_val_uy_all,store_val_uz_all
 
 ! to save full 3D snapshot of velocity
-  integer itotal_spec,itotal_poin
+  integer itotal_spec,itotal_poin,l
+  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
   real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
   integer, dimension(:), allocatable :: indirect_poin
   logical, dimension(:), allocatable :: mask_poin
 
@@ -3237,8 +3240,8 @@
     enddo
 
 ! write number of elements and points
-    write(IOUT,*) nspec_crust_mantle
     write(IOUT,*) itotal_poin
+    write(IOUT,*) nspec_crust_mantle
 
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
@@ -3282,8 +3285,6 @@
     deallocate(indirect_poin)
 
 !--- second region is the outer core
-!--- the scalar fluid potential is used here
-!--- should ultimately use velocity by computing gradient of potential
 
     write(outputname,"('snapshot_full_outer_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
     open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
@@ -3311,12 +3312,55 @@
     enddo
 
 ! write number of elements and points
-    write(IOUT,*) nspec_outer_core
     write(IOUT,*) itotal_poin
+    write(IOUT,*) nspec_outer_core
 
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
     do ispec=1,nspec_outer_core
+
+! compute gradient of velocity potential to get velocity
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+
+          do l=1,NGLLX
+            tempx1l = tempx1l + displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(l,i)
+          enddo
+
+          do l=1,NGLLY
+            tempx2l = tempx2l + displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(l,j)
+          enddo
+
+          do l=1,NGLLZ
+            tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(l,k)
+          enddo
+
+!         get derivatives of velocity potential with respect to x, y and z
+
+          xixl = xix_outer_core(i,j,k,ispec)
+          xiyl = xiy_outer_core(i,j,k,ispec)
+          xizl = xiz_outer_core(i,j,k,ispec)
+          etaxl = etax_outer_core(i,j,k,ispec)
+          etayl = etay_outer_core(i,j,k,ispec)
+          etazl = etaz_outer_core(i,j,k,ispec)
+          gammaxl = gammax_outer_core(i,j,k,ispec)
+          gammayl = gammay_outer_core(i,j,k,ispec)
+          gammazl = gammaz_outer_core(i,j,k,ispec)
+          jacobianl = jacobian_outer_core(i,j,k,ispec)
+
+          dpotentialdxl(i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          dpotentialdyl(i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          dpotentialdzl(i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+        enddo
+      enddo
+    enddo
+
       do k = 1,NGLLZ,NGLLZ-1
         do j = 1,NGLLY,NGLLY-1
           do i = 1,NGLLX,NGLLX-1
@@ -3327,7 +3371,10 @@
               thetaval = ystore_outer_core(ipoin)
               phival = zstore_outer_core(ipoin)
               call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
-              write(IOUT,205) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH,veloc_outer_core(ipoin)
+              write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
+                    dpotentialdxl(i,j,k)*scale_veloc, &
+                    dpotentialdyl(i,j,k)*scale_veloc, &
+                    dpotentialdzl(i,j,k)*scale_veloc
               mask_poin(ipoin) = .true.
             endif
           enddo
@@ -3384,8 +3431,8 @@
     enddo
 
 ! write number of elements and points
-    write(IOUT,*) itotal_spec
     write(IOUT,*) itotal_poin
+    write(IOUT,*) itotal_spec
 
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
@@ -3432,7 +3479,6 @@
     deallocate(indirect_poin)
 
  200 format(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6)
- 205 format(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,' 0 0')
  210 format(i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)
 
   endif
