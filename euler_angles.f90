@@ -17,59 +17,22 @@
 
 ! compute the Euler angles and the associated rotation matrix
 
-  subroutine euler_angles(rotation_matrix)
+  subroutine euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
   implicit none
 
   include "constants.h"
 
   double precision rotation_matrix(3,3)
-!!!!!!!!!!!!!!!!!  double precision ANGULAR_WIDTH_RAD
+  double precision CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
   double precision alpha,beta,gamma
   double precision sina,cosa,sinb,cosb,sing,cosg
-!!!!!!!!  double precision center_colatitude !!!!!! DK DK ,middle_face_colatitude,middle_face_longitude
-!!!!!!!!!!!  double precision center_longitude_loc_rad
 
-!!!!!!!!  center_colatitude = 90.0d0 - CENTER_LATITUDE_DEG
-!!!!!!!!!!!!! DK DK  middle_face_colatitude = 90.0d0 - MIDDLE_FACE_LATITUDE_DEG
-
-!!!!!!!!!  center_colatitude = center_colatitude * PI/180.0d0
-!!!!!!!!!!!  center_longitude_loc_rad  = CENTER_LONGITUDE_DEG  * PI/180.0d0
-!!!!!!!! DK DK   middle_face_colatitude = middle_face_colatitude * PI/180.0d0
-
-!! deduce middle_face_longitude from the three other parameters
-!! also check particular case of North or South pole
-!!! DK DK UGLY I think there is a bug below: "PI/4.0D0" assumes that
-!!! DK DK UGLY the size of the chunk is 90 degrees, but it can now be different
-!!! DK DK UGLY since the size is defined in constants.h
-!!! DK DK UGLY therefore we should write something more general here one day
-!  if(center_colatitude > 0.01d0 .and. center_colatitude < 179.9d0 .and. &
-!    middle_face_colatitude > 0.01d0 .and. middle_face_colatitude < 179.9d0) then
-!      middle_face_longitude = center_longitude_loc_rad + dacos((dcos(PI/4.0D0) - &
-!         dcos(center_colatitude)*dcos(middle_face_colatitude)) / &
-!         (dsin(center_colatitude)*dsin(middle_face_colatitude)))
-!  else
-!    middle_face_longitude = 90.0d0*PI/180.0d0
-!  endif
-
-! compute colatitute of the center and the corner of the first chunk
-! convert colatitudes and longitude to radians
-  alpha = CENTER_LONGITUDE_DEG * DEGREES_TO_RADIANS
-  beta = (90.0d0 - CENTER_LATITUDE_DEG) * DEGREES_TO_RADIANS
+! compute colatitude and longitude and convert to radians
+  alpha = CENTER_LONGITUDE_IN_DEGREES * DEGREES_TO_RADIANS
+  beta = (90.0d0 - CENTER_LATITUDE_IN_DEGREES) * DEGREES_TO_RADIANS
   gamma = GAMMA_ROTATION_AZIMUTH * DEGREES_TO_RADIANS
-
-!  sing = ((dsin(center_colatitude)*dcos(middle_face_colatitude) - &
-!           dcos(center_colatitude)*dsin(middle_face_colatitude) * &
-!           dcos(middle_face_longitude-center_longitude_loc_rad)) &
-!           / dsin(ANGULAR_WIDTH_RAD))
-!
-!  cosg = dsin(middle_face_colatitude)*dsin(middle_face_longitude-center_longitude_loc_rad)/dsin(ANGULAR_WIDTH_RAD)
-!
-!  if(cosg > -SMALL_VAL_ANGLE .and. cosg <= ZERO) cosg=-SMALL_VAL_ANGLE
-!  if(cosg < SMALL_VAL_ANGLE .and. cosg >= ZERO) cosg=SMALL_VAL_ANGLE
-!  gamma=datan2(sing,cosg)
-!  if(gamma < ZERO) gamma=2.0d0*PI+gamma
 
   sina = dsin(alpha)
   cosa = dcos(alpha)

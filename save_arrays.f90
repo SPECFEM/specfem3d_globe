@@ -34,10 +34,9 @@
             jacobian2D_bottom,jacobian2D_top, &
             iMPIcut_xi,iMPIcut_eta,nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-            TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
-            tau_s, tau_e_store, Qmu_store, T_c_source, &
-            ATTENUATION, ATTENUATION_3D, &
-            vx, vy, vz, vnspec)
+            TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
+            tau_s,tau_e_store,Qmu_store,T_c_source, &
+            ATTENUATION,ATTENUATION_3D,vx,vy,vz,vnspec,NCHUNKS)
 
   implicit none
 
@@ -45,11 +44,11 @@
 
   logical ATTENUATION,ATTENUATION_3D
 
-  integer nspec,nglob,nspec_stacey
+  integer nspec,nglob,nspec_stacey,NCHUNKS
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
   integer npointot_oceans
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
 
 ! arrays with jacobian matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
@@ -242,7 +241,7 @@
 
     endif
 
-    if(ANISOTROPIC_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+    if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
 
 !       c11
         open(unit=27,file=prname(1:len_trim(prname))//'c11_mantle.bin',status='unknown',form='unformatted')
@@ -456,7 +455,7 @@
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
             rmass(iglob) = sngl(xstore(i,j,k,ispec))
           else
@@ -477,7 +476,7 @@
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
             rmass(iglob) = sngl(ystore(i,j,k,ispec))
           else
@@ -498,7 +497,7 @@
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
             rmass(iglob) = sngl(zstore(i,j,k,ispec))
           else

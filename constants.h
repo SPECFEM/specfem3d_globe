@@ -44,142 +44,23 @@
 ! ("xcheck_buffers_1D" etc.), ignore it if you do not plan to use them
   logical, parameter :: LOCAL_PATH_IS_ALSO_GLOBAL = .false.
 
-! number of chunks (1, 3 or 6, full Earth -> six chunks)
-! parameters describing the chunk in degrees
-
-!! DK DK temporary for regional code, should be in Par_file ultimately
-  double precision, parameter :: CENTER_LATITUDE_DEG    = 40.d0
-  double precision, parameter :: CENTER_LONGITUDE_DEG   = 10.d0
-
-  double precision, parameter :: GAMMA_ROTATION_AZIMUTH = 20.d0
-
-!! DK DK
-!!! DK DK for global code with 6 chunks
-!!! DK DK
-!!!!!!!!!!!!!  logical, parameter :: REGIONAL_CODE = .false.
-!  integer, parameter :: NCHUNKS = 6
-!!!!!!!!!!  double precision, parameter :: ANGULAR_WIDTH_XI_DEG = 90.d0
-!!!!!!!!!!  double precision, parameter :: ANGULAR_WIDTH_ETA_DEG = ANGULAR_WIDTH_XI_DEG
-!  logical, parameter :: STACEY_ABS_CONDITIONS = .false.
-!! include central cube in the case of 6 chunks or not
-!! should always be set to true except when debugging code
-!  logical, parameter :: INCLUDE_CENTRAL_CUBE = .true.
-!!! DK DK use regular cubed sphere instead of cube for large distances
-!  logical, parameter :: INFLATE_CENTRAL_CUBE = .false.
-!
-!  double precision, parameter :: CENTER_LATITUDE_DEG      = 0.d0
-!  double precision, parameter :: CENTER_LONGITUDE_DEG     = 0.d0
-!!!!!!!!!  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 0.d0
-
-!!! DK DK
-!!! DK DK for regional code with 1 chunk
-!!! DK DK
-!  logical, parameter :: REGIONAL_CODE = .true.
-  integer, parameter :: NCHUNKS = 1
-!!!!!!!!  double precision, parameter :: ANGULAR_WIDTH_XI_DEG = 70.d0
-!!!!!!!!  double precision, parameter :: ANGULAR_WIDTH_ETA_DEG = 60.d0
-  logical, parameter :: STACEY_ABS_CONDITIONS = .true.
-!! include central cube in the case of 6 chunks or not
-!! should always be set to true except when debugging code
-  logical, parameter :: INCLUDE_CENTRAL_CUBE = .false.
-!! DK DK use regular cubed sphere instead of cube for large distances
-  logical, parameter :: INFLATE_CENTRAL_CUBE = .true.
-!
-!!!!!!!!!!  double precision, parameter :: MIDDLE_FACE_LATITUDE_DEG = 21.d0
-
-
-!!! DK DK
-!!! DK DK for regional code with 2 chunks
-!!! DK DK
-!  logical, parameter :: REGIONAL_CODE = .true.
-!  integer, parameter :: NCHUNKS = 2
-!! this MUST be 90 degrees for the two chunks to match geometrically
-!  double precision, parameter :: ANGULAR_WIDTH_XI_DEG = 90.d0
-!! this can be any value
-!  double precision, parameter :: ANGULAR_WIDTH_ETA_DEG = 90.d0
-!  logical, parameter :: STACEY_ABS_CONDITIONS = .true.
-!!! include central cube in the case of 6 chunks or not
-!!! should always be set to true except when debugging code
-!  logical, parameter :: INCLUDE_CENTRAL_CUBE = .false.
-!!! DK DK use regular cubed sphere instead of cube for large distances
-!  logical, parameter :: INFLATE_CENTRAL_CUBE = .true.
-
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
   integer, parameter :: IIN = 40,IOUT = 41
+! local file unit for output of buffers
+  integer, parameter :: IOUT_BUFFERS = 35
 ! uncomment this to write messages to a text file
   integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
 ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
 
-! R_EARTH: radius of Earth (m)
-! ROCEAN: radius of the ocean (m)
-! RMIDDLE_CRUST: radius of the middle crust (m)
-! RMOHO: radius of the Moho (m)
-! R80: radius of 80 km discontinuity (m)
-! R220: radius of 220 km discontinuity (m)
-! R400: radius of 400 km discontinuity (m)
-! R600: radius of 600 km 2nd order discontinuity (m)
-! R670: radius of 670 km discontinuity (m)
-! R771: radius of 771 km 2nd order discontinuity (m)
-! RTOPDDOUBLEPRIME: radius of top of D" 2nd order discontinuity (m)
-! RCMB: radius of CMB (m)
-! RICB: radius of ICB (m)
-
-! R_EARTH is the radius of the bottom of the oceans
+! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
 ! uncomment line below for PREM with oceans
 ! double precision, parameter :: R_EARTH = 6368000.d0
 
 ! average density in the full Earth to normalize equation
   double precision, parameter :: RHOAV = 5514.3d0
-
-! radii in PREM or IASPEI
-! and normalized density at fluid-solid interface on fluid size for coupling
-
-! ************************************
-! ************** PREM ****************
-! ************************************
-
-  logical, parameter :: IASPEI = .false.
-  double precision, parameter :: ROCEAN = 6368000.d0
-  double precision, parameter :: RMIDDLE_CRUST = 6356000.d0
-  double precision, parameter :: RMOHO = 6346600.d0
-  double precision, parameter :: R80 = 6291000.d0
-  double precision, parameter :: R220 = 6151000.d0
-  double precision, parameter :: R400 = 5971000.d0
-  double precision, parameter :: R600 = 5771000.d0
-  double precision, parameter :: R670 = 5701000.d0
-  double precision, parameter :: R771 = 5600000.d0
-  double precision, parameter :: RTOPDDOUBLEPRIME = 3630000.d0
-  double precision, parameter :: RCMB = 3480000.d0
-  double precision, parameter :: RICB = 1221000.d0
-  real(kind=CUSTOM_REAL), parameter :: RHO_TOP_OC = 9903.4384 / RHOAV
-  real(kind=CUSTOM_REAL), parameter :: RHO_BOTTOM_OC = 12166.5885 / RHOAV
-  real(kind=CUSTOM_REAL), parameter :: RHO_OCEANS = 1020.0 / RHOAV
-
-! ************************************
-! ************* IASPEI ***************
-! ************************************
-
-!  logical, parameter :: IASPEI = .true.
-!  double precision, parameter :: RMOHO = 6341000.d0
-!  double precision, parameter :: R220 = 6161000.d0
-!  double precision, parameter :: R400 = 5961000.d0
-!  double precision, parameter :: R600 = 5781000.d0
-!  double precision, parameter :: R670 = 5711000.d0
-!  double precision, parameter :: R771 = 5611000.d0
-!  double precision, parameter :: RTOPDDOUBLEPRIME = 3631000.d0
-!  double precision, parameter :: RCMB = 3482000.d0
-!  double precision, parameter :: RICB = 1217000.d0
-!  real(kind=CUSTOM_REAL), parameter :: RHO_TOP_OC = 9900.2379 / RHOAV
-!  real(kind=CUSTOM_REAL), parameter :: RHO_BOTTOM_OC = 12168.6383 / RHOAV
-!  real(kind=CUSTOM_REAL), parameter :: RHO_OCEANS = 1020.0 / RHOAV
-!
-!  fictitious values for IASPEI in order to be able to compile
-!  double precision, parameter :: ROCEAN = 1.d0
-!  double precision, parameter :: RMIDDLE_CRUST = 1.d0
-!  double precision, parameter :: R80 = 1.d0
 
 ! for topography/bathymetry model
 
@@ -192,14 +73,12 @@
 !---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
   integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
-
 ! resolution of topography file in minutes
   integer, parameter :: RESOLUTION_TOPO_FILE = 4
 
 !!--- ETOPO2 2-minute model
 !! size of topography and bathymetry file
 !  integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
-!
 !! resolution of topography file in minutes
 !  integer, parameter :: RESOLUTION_TOPO_FILE = 2
 
@@ -234,6 +113,16 @@
   integer, parameter :: MAX_LENGTH_STATION_NAME = 32
   integer, parameter :: MAX_LENGTH_NETWORK_NAME = 8
 
+! source decay rate
+  double precision, parameter :: SOURCE_DECAY_RATE = 2.628d0
+
+!! DK DK UGLY in the case of a very fine mesh, move the bottom of crustal
+!! DK DK UGLY elements below the PREM Moho, otherwise the elements become
+!! DK DK UGLY too distorted in the radial distribution of elements.
+!! DK DK UGLY Not very clean, should write something more general one day
+  double precision, parameter :: RMOHO_FICTITIOUS_2ELEMS = 6330000.d0
+  double precision, parameter :: RMOHO_FICTITIOUS_4ELEMS = 6330000.d0
+
 !
 !--- debugging flags
 !
@@ -255,6 +144,7 @@
   double precision, parameter :: TWO_PI = 2.d0 * PI
   double precision, parameter :: PI_OVER_FOUR = PI / 4.d0
 
+! to convert angles from degrees to radians
   double precision, parameter :: DEGREES_TO_RADIANS = PI / 180.d0
 
 ! 3-D simulation
@@ -269,6 +159,7 @@
 ! gravitational constant
   double precision, parameter :: GRAV = 6.6723d-11
 
+! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0,TWO = 2.d0,HALF = 0.5d0
 
   real(kind=CUSTOM_REAL), parameter :: &
@@ -276,11 +167,13 @@
     TWO_THIRDS  = 2._CUSTOM_REAL/3._CUSTOM_REAL, &
     FOUR_THIRDS = 4._CUSTOM_REAL/3._CUSTOM_REAL
 
+! very large and very small values
   double precision, parameter :: HUGEVAL = 1.d+30,TINYVAL = 1.d-9
 
-! declare real value independently of the machine
+! very large real value declared independently of the machine
   real(kind=CUSTOM_REAL), parameter :: HUGEVAL_SNGL = 1.e+30_CUSTOM_REAL
 
+! very large integer value
   integer, parameter :: HUGEINT = 100000000
 
 ! normalized radius of free surface
@@ -292,13 +185,11 @@
 ! fixed thickness of 3 km for PREM oceans
   double precision, parameter :: THICKNESS_OCEANS_PREM = 3000.d0 / R_EARTH
 
-! non-dimensionalized size of central cube in the inner core
-! This is where the central cube in the inner core and the rest of the mesh
-! are matched (150 km below the ICB is optimal)
-  double precision, parameter :: R_CENTRAL_CUBE = (RICB - 150000.d0) / R_EARTH
-
 ! shortest radius at which crust is implemented
   double precision, parameter :: R_DEEPEST_CRUST = (R_EARTH - 90000.d0) / R_EARTH
+
+! maximum number of chunks (full sphere)
+  integer, parameter :: NCHUNKS_MAX = 6
 
 ! define block type based upon chunk number (between 1 and 6)
 ! do not change this numbering, chunk AB must be number 1 for central cube
@@ -360,6 +251,12 @@
   integer, parameter :: ETA_MAX = 4
   integer, parameter :: BOTTOM = 5
 
+! flags to select the right corner in each slice
+  integer, parameter :: ILOWERLOWER = 1
+  integer, parameter :: ILOWERUPPER = 2
+  integer, parameter :: IUPPERLOWER = 3
+  integer, parameter :: IUPPERUPPER = 4
+
 ! number of points in each AVS or OpenDX quadrangular cell for movies
   integer, parameter :: NGNOD2D_AVS_DX = 4
 
@@ -411,6 +308,9 @@
 
 ! for the Gauss-Lobatto-Legendre points and weights
   double precision, parameter :: GAUSSALPHA = 0.d0,GAUSSBETA = 0.d0
+
+! number of lines per source in CMTSOLUTION file
+  integer, parameter :: NLINES_PER_CMTSOLUTION_SOURCE = 13
 
 ! number of iterations to solve the non linear system for xi and eta
   integer, parameter :: NUM_ITER = 4

@@ -125,9 +125,6 @@ PARAMETERS TO CHANGE ON DIFFERENT MACHINES:
     Set F90, MPIF90, FLAGS_NO_CHECK, FLAGS_CHECK and MPI_FLAGS.
 - In constants.h set FIX_UNDERFLOW_PROBLEM flag
     (need to fix underflow trapping on some machines, e.g., Pentium processors)
-- In constants.h set SAVE_AVS_DX_MESH_FILES flag (for AVS users, www.avs.com,
-    or OpenDX users, www.opendx.org). Do not use if you do not have AVS
-    or OpenDX, because this option creates large files.
 - In constants.h set LOCAL_PATH_IS_ALSO_GLOBAL flag.
     On clusters (e.g., Beowulfs), set to .false. in most cases.
     In such a case, also customize global path to local
@@ -139,7 +136,7 @@ PARAMETERS TO CHANGE ON DIFFERENT MACHINES:
     named *.semd (for Spectral Element Method - Displacement)
 - In precision.h choose single versus double precision (double precision
     doubles the memory requirements for the solver but may be slightly faster).
-    Always use single precision except if you have a very large machine
+    Use single precision except if you have a very large machine
     with a lot of memory.
 - Also, in constants.h choose the CUSTOM_REAL size depending on
     single or double precision
@@ -147,7 +144,8 @@ PARAMETERS TO CHANGE ON DIFFERENT MACHINES:
     *before* compiling, in order to turn underflow trapping off
 - When running on an IBM (e.g., an SP or a Power4), one needs to change
     all the filename extensions from *.f90 to *.f ; a script is provided
-    in DATA/util/change_names_IBM to do that.
+    in DATA/util/change_names_IBM to do that. One also needs to change
+    all the .f90 in the Makefile to .f
 
 DIRECTORIES:
 
@@ -166,18 +164,18 @@ SCRIPTS:
 
 MESHER (meshfem3D):
 
-- The mesher meshfem3D uses NPROC_XI * NPROC_ETA * 6 nodes
-    (corresponding to NCHUNKS = 6 in constants.h)
-    (The globe consists of 6 chunks, and each chunk is divided in
-     NPROC_XI * NPROC_ETA slices)
+- The mesher meshfem3D uses NPROC_XI * NPROC_ETA * NCHUNKS nodes
+    (The full globe consists of NCHUNKS = 6 chunks, and each chunk is divided
+     in NPROC_XI * NPROC_ETA slices)
 - For topological reasons related to the mesh, NPROC_XI and NPROC_ETA
-    must be equal. The option of having different values for NPROC_XI and
-    NPROC_ETA is available only when NCHUNKS = 1 is used (1/6th of the sphere).
+    must be equal when NCHUNKS = 6 or NCHUNKS = 3. The option of having
+    different values for NPROC_XI and NPROC_ETA is available only when
+    NCHUNKS = 1 (1/6th of the sphere) or NCHUNKS = 2.
 - Note that NPROC_XI = 1 and/or NPROC_ETA = 1 is valid. Therefore the
-    smallest number of nodes needed to run the code is 6
-    (6 chunks * 1 * 1). If you have less than 6 nodes on your machine,
-    you can start multiple MPI processes on each node to emulate
-    a larger machine.
+    smallest number of nodes needed to run the code is NCHUNKS
+    (NCHUNKS chunks * 1 * 1). If you have less than NCHUNKS nodes
+    on your machine, you can start multiple MPI processes on each node
+    to emulate a larger machine.
 - NEX_XI and NEX_ETA need to be 16 * multiple of NPROC_XI and NPROC_ETA,
     respectively. So in theory for NPROC_XI = NPROC_ETA = 1 NEX_XI = NEX_ETA = 16, 32, 48, ...,
     384 and 400 work, for  NPROC_XI = NPROC_ETA = 2 NEX_XI = NEX_ETA = 32, 64, 96, ...,
@@ -189,20 +187,31 @@ MESHER (meshfem3D):
     uses too few elements. By trial and error, we found that NEX_XI and NEX_ETA
     should not be smaller than 64 typically. Smaller values are likely to give spectral
     elements with a negative Jacobian, in which case the mesher will exit with an error message.
-- In the DATA/Par_file set the following flags:
 
-  OCEANS              ! to incorporate the effects of the oceans (cheap)
-  ELLIPTICITY         ! to incorporate ellipticity
-  TOPOGRAPHY          ! to add topography and bathymetry
-  THREE_D             ! to add 3-D model (currently RTS20, makes mesher slower)
-  GRAVITY             ! to incorporate gravity (Cowling, cheap)
-  ROTATION            ! to incorporate Coriolis effects (cheap)
-  TRANSVERSE_ISOTROPY ! to use transversely isotropic PREM (fairly cheap)
-  CRUSTAL             ! to incorporate crust2.0
-  ONE_CRUST           ! to use a one layer crust in PREM
-  ATTENUATION         ! to include PREM attenuation (fairly expensive)
+- set all the parameters in DATA/Par_file, in particular the following:
 
-- In constants.h choose the appropriate radii (PREM or IASPEI)
+! shape of the first chunk (not used if full sphere with six chunks)
+  ANGULAR_WIDTH_XI_IN_DEGREES   ! angular size of the first chunk
+  ANGULAR_WIDTH_ETA_IN_DEGREES
+  CENTER_LATITUDE_IN_DEGREES    ! location of its center
+  CENTER_LONGITUDE_IN_DEGREES
+  GAMMA_ROTATION_AZIMUTH        ! angle of rotation of the first chunk
+
+  MODEL                  ! Earth model to use
+
+  OCEANS                 ! to incorporate the effects of the oceans (cheap)
+  ELLIPTICITY            ! to incorporate ellipticity (no cost)
+  TOPOGRAPHY             ! to add topography and bathymetry (no cost)
+  GRAVITY                ! to incorporate gravity (Cowling approximation, cheap)
+  ROTATION               ! to incorporate Coriolis effects (cheap)
+  ATTENUATION            ! to include attenuation (fairly expensive)
+
+  ABSORBING_CONDITIONS   ! absorbing boundary conditions (cheap)
+
+  SAVE_AVS_DX_MESH_FILES ! save mesh files for AVS users, www.avs.com,
+    or OpenDX users, www.opendx.org). Do not use if you do not have AVS
+    or OpenDX, because this option creates large files.
+
 - Compile the mesher ("make meshfem3D") and run it with the go_mesher script
 - Mesher output is provided in the OUTPUT_FILES directory in output_mesher.txt
     (output can be directed to the screen instead by uncommenting a line
@@ -236,7 +245,7 @@ CHECKING THE MESH (optional, after running the mesher):
 - Use the serial code combine_AVS_DX
     ("make combine_AVS_DX" and then "xcombine_AVS_DX")
     to generate AVS output files (in AVS UCD format) or OpenDX output files
-    showing the mesh, the MPI partition (slices), the 6 chunks, the
+    showing the mesh, the MPI partition (slices), the NCHUNKS chunks, the
     source and receiver location etc. Use the AVS UCD files
     AVS_continent_boundaries.inp and AVS_plate_boundaries.inp,
     or the OpenDX files DX_continent_boundaries.dx and DX_plate_boundaries.dx
@@ -260,7 +269,7 @@ SOLVER (specfem3D):
     and "xcreate_header_file" to run it). This is useful for people who want
     to compile all the codes first and then submit the mesher and the solver
     to a batch management system.
-- The solver also needs NPROC_XI * NPROC_ETA * 6 nodes to run
+- The solver also needs NPROC_XI * NPROC_ETA * NCHUNKS nodes to run
 - The solver needs the DATA/CMTSOLUTION file for the source and the
     DATA/STATIONS file for the list of stations (CMTSOLUTION files may be
     obtained directly from the Harvard CMT web page, www.seismology.harvard.edu)
@@ -282,30 +291,31 @@ SOLVER (specfem3D):
     to a single CMTSOLUTION file). At least one entry should have a zero "time shift",
     and all the other entries should have non-negative "time shift". Each event
     can have its own half duration, latitude, longitude, depth and moment tensor.
-    This feature can also be used to mimick the directivity associated with a
+    This feature can also be used to mimic the directivity associated with a
     finite source.
 - Solver output is provided in the OUTPUT_FILES directory in output_solver.txt
     (output can be directed to the screen instead by uncommenting a line
      in constants.h:
        ! uncomment this to write messages to the screen
        ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT )
-- NOTE There are two different versions of the main solver routines.
-  NOTE Type "copy_files_regular.csh" to use the regular version,
-  NOTE and "copy_files_inlined_5.csh" to use the inlined version, which may be
-  NOTE faster on some machines (you can try both once to determine which
-  NOTE code gives the fastest result on your machine). Note that the inlined
-  NOTE version is written specifically for polynomial degree NGLL = 5
-  NOTE in constants.h, and cannot run with any other value, while the regular
-  NOTE version can. Note also that the two versions implement
-  NOTE the exact same calculations, and therefore give the same results
-  NOTE down to the roundoff error, which can be different. It is only
-  NOTE the implementation that differs between the two versions.
-- If you have a fast machine,
-    set ITAFF_TIME_STEPS to a relatively high value (e.g. 100 or even 1000)
-    to avoid writing to the output text files too often
+- There are two different versions of the main solver routines.
+    Type "copy_files_regular.csh" to use the regular version,
+    and "copy_files_inlined_5.csh" to use the inlined version, which may be
+    faster on some machines (you can try both once to determine which
+    code gives the fastest result on your machine). Note that the inlined
+    version is written specifically for polynomial degree NGLL = 5
+    in constants.h, and cannot run with any other value, while the regular
+    version can. Note also that the two versions implement
+    the exact same calculations, and therefore give the same results
+    down to the roundoff error, which can be different. It is only
+    the implementation that differs between the two versions.
+- If you have a fast machine, set NTSTEP_BETWEEN_OUTPUT_INFO
+    to a relatively high value (e.g. at least 100, or even 1000 or more)
+    to avoid writing to the output text files too often. Same thing
+    with NTSTEP_BETWEEN_OUTPUT_SEISMOS.
 - On clusters (e.g., Beowulfs) the seismogram files are distributed on the
     local disks (path LOCAL_PATH in the DATA/Par_file) and need to be gathered
-    at the end of the simulation
+    at the end of the simulation.
 - For the same model, rerun the solver for different events by changing the
     CMTSOLUTION file, or for different stations by changing the STATIONS file.
     There is no need to rerun the mesher. It is best to include as many stations
@@ -316,10 +326,11 @@ MOVIE OF THE RESULTS:
 - Use create_movie_AVS_DX.f90 ("make create_movie_AVS_DX") to create
     a movie of surface displacement (radial component) or of the entire 3D wave
     field. The movie can be saved in OpenDX or AVS format. Set parameters
-    MOVIE_SURFACE, MOVIE_VOLUME, and NMOVIE in the Par_file. Remember to use a
-    DATA/CMTSOLUTION source file with a half-duration hdur > HDUR_MIN_MOVIES.
-    (Otherwise you will get a movie corresponding to a Heaviside source, with a
-    lot of high-frequency noise.) This creates pretty large files!
+    MOVIE_SURFACE, MOVIE_VOLUME, and NTSTEP_BETWEEN_FRAMES in the Par_file.
+    Remember to use a DATA/CMTSOLUTION source file with a half-duration
+    hdur > 0, otherwise you will get a movie corresponding to a Heaviside
+    source, with a lot of high-frequency noise. Note that this option
+    creates large files!
 
 Note: The Gauss-Lobatto subroutines in gll_library.f90 are based in part on
       software libraries from M.I.T., Department of Mechanical Engineering.

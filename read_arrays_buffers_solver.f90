@@ -22,13 +22,13 @@
      iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
      iboolfaces,npoin2D_faces,iboolcorner, &
      NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY,NPOIN1D_RADIAL, &
-     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH)
+     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
 
   implicit none
 
   include "constants.h"
 
-  integer iregion_code,myrank
+  integer iregion_code,myrank,NCHUNKS
 
   integer npoin2D_xi,npoin2D_eta
   integer NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY,NPOIN1D_RADIAL

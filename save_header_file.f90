@@ -20,8 +20,10 @@
   subroutine save_header_file(NSPEC_AB,NSPEC_AC,NSPEC_BC, &
         nglob_AB,nglob_AC,nglob_BC,NEX_XI,NEX_ETA, &
         nspec_aniso_mantle,NPROC,NPROCTOT, &
-        TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D,ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG)
+        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
+        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
+        INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP)
 
   implicit none
 
@@ -30,13 +32,15 @@
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_AB,NSPEC_AC,NSPEC_BC, &
                nglob_AB,nglob_AC,nglob_BC
 
-  integer NEX_XI,NEX_ETA,NPROC,NPROCTOT
+  integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP
   integer nspec_aniso_mantle
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+          ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
+          INCLUDE_CENTRAL_CUBE
 
-  double precision ANGULAR_WIDTH_XI_DEG,ANGULAR_WIDTH_ETA_DEG
+  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
+          CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
   integer subtract_central_cube_elems
   double precision subtract_central_cube_points
@@ -61,6 +65,9 @@
   write(IOUT,*) '!'
   write(IOUT,*) '! mesh statistics:'
   write(IOUT,*) '! ---------------'
+  write(IOUT,*) '!'
+  write(IOUT,*) '!'
+  write(IOUT,*) '! number of chunks = ',NCHUNKS
   write(IOUT,*) '!'
 
 ! the central cube is counted 6 times, therefore remove 5 times
@@ -126,24 +133,26 @@
     - 3.d0*subtract_central_cube_points
   write(IOUT,*) '!'
 
-!! DK DK add location of chunk if regional run
+! display location of chunk if regional run
   if(NCHUNKS /= 6) then
 
   write(IOUT,*) '! position of the mesh chunk at the surface:'
   write(IOUT,*) '! -----------------------------------------'
   write(IOUT,*) '!'
-  write(IOUT,*) '! angular size in first direction in degrees = ',sngl(ANGULAR_WIDTH_XI_DEG)
-  write(IOUT,*) '! angular size in second direction in degrees = ',sngl(ANGULAR_WIDTH_ETA_DEG)
+  write(IOUT,*) '! angular size in first direction in degrees = ',sngl(ANGULAR_WIDTH_XI_IN_DEGREES)
+  write(IOUT,*) '! angular size in second direction in degrees = ',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES)
   write(IOUT,*) '!'
-  write(IOUT,*) '! longitude of center in degrees = ',sngl(CENTER_LONGITUDE_DEG)
-  write(IOUT,*) '! latitude of center in degrees = ',sngl(CENTER_LATITUDE_DEG)
+  write(IOUT,*) '! longitude of center in degrees = ',sngl(CENTER_LONGITUDE_IN_DEGREES)
+  write(IOUT,*) '! latitude of center in degrees = ',sngl(CENTER_LATITUDE_IN_DEGREES)
+  write(IOUT,*) '!'
+  write(IOUT,*) '! angle of rotation of the first chunk = ',sngl(GAMMA_ROTATION_AZIMUTH)
 
 ! convert width to radians
-  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_DEG * DEGREES_TO_RADIANS
-  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_DEG * DEGREES_TO_RADIANS
+  ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
+  ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
 
 ! compute rotation matrix from Euler angles
-  call euler_angles(rotation_matrix)
+  call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
 ! loop on the four corners of the chunk to display their coordinates
   icorner = 0
@@ -202,8 +211,7 @@
 
   write(IOUT,*) '!'
 
-  endif  !! DK DK end regional chunk
-
+  endif  ! regional chunk
 
   write(IOUT,*) '! resolution of the mesh at the surface:'
   write(IOUT,*) '! -------------------------------------'
@@ -212,6 +220,10 @@
   write(IOUT,*) '! GLL points along a great circle = ',4*NEX_XI*(NGLLX-1)
   write(IOUT,*) '! average distance between points in degrees = ',360./real(4*NEX_XI*(NGLLX-1))
   write(IOUT,*) '! average distance between points in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI*(NGLLX-1))
+  write(IOUT,*) '!'
+  write(IOUT,*) '! number of time steps = ',NSTEP
+  write(IOUT,*) '!'
+  write(IOUT,*) '! number of seismic sources = ',NSOURCES
   write(IOUT,*) '!'
   write(IOUT,*)
 
@@ -250,7 +262,7 @@
     write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_IC = 1'
   endif
 
-  if(ANISOTROPIC_MANTLE) then
+  if(ANISOTROPIC_3D_MANTLE) then
     write(IOUT,*) 'integer, parameter :: NSPECMAX_ISO_MANTLE = ',1
     write(IOUT,*) 'integer, parameter :: NSPECMAX_TISO_MANTLE = ',1
     write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_MANTLE = NSPECMAX_CRUST_MANTLE'
@@ -287,10 +299,10 @@
   endif
   write(IOUT,*)
 
-  if(ANISOTROPIC_MANTLE) then
-    write(IOUT,*) 'logical, parameter :: ANISOTROPIC_MANTLE_VAL = .true.'
+  if(ANISOTROPIC_3D_MANTLE) then
+    write(IOUT,*) 'logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .true.'
   else
-    write(IOUT,*) 'logical, parameter :: ANISOTROPIC_MANTLE_VAL = .false.'
+    write(IOUT,*) 'logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .false.'
   endif
   write(IOUT,*)
 

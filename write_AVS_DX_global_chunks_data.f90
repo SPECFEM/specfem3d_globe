@@ -19,9 +19,10 @@
 ! to be recombined in postprocessing
   subroutine write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun, &
         ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-        npointot,rhostore,kappavstore,muvstore, &
-        nspl,rspl,espl,espl2, &
-        ELLIPTICITY,THREE_D,CRUSTAL,ONE_CRUST)
+        npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+        ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,IASPEI, &
+        RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO, &
+        RMIDDLE_CRUST,ROCEAN)
 
   implicit none
 
@@ -32,7 +33,10 @@
 
   integer idoubling(nspec)
 
-  logical iboun(6,nspec),ELLIPTICITY,THREE_D,CRUSTAL,ONE_CRUST
+  logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,IASPEI
+
+  double precision RICB,RCMB,RTOPDDOUBLEPRIME, &
+        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -523,7 +527,7 @@
 
 ! writing elements
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='unknown')
-  if(THREE_D) &
+  if(ISOTROPIC_3D_MANTLE) &
     open(unit=11,file=prname(1:len_trim(prname))//'AVS_DXelementschunks_dvp_dvs.txt',status='unknown')
 
 ! number of elements in AVS or DX file
@@ -545,7 +549,7 @@
 
 ! include lateral variations if needed
 
-  if(THREE_D) then
+  if(ISOTROPIC_3D_MANTLE) then
 !   pick a point within the element and get its radius
     r=dsqrt(xstore(2,2,2,ispec)**2+ystore(2,2,2,ispec)**2+zstore(2,2,2,ispec)**2)
 
@@ -571,7 +575,9 @@
               factor=ONE-(TWO/3.0d0)*ell*p20
               r=r/factor
             endif
-            call prem_iso(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),CRUSTAL,ONE_CRUST,.true.)
+            call prem_iso(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &
+              CRUSTAL,ONE_CRUST,.true.,IASPEI,RICB,RCMB,RTOPDDOUBLEPRIME, &
+              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
             dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
             dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)
           enddo
@@ -591,7 +597,7 @@
     write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(1)), &
                   num_ibool_AVS_DX(iglobval(4)),num_ibool_AVS_DX(iglobval(8)), &
                   num_ibool_AVS_DX(iglobval(5))
-    if(THREE_D) write(11,*) ispecface,dvp,dvs
+    if(ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
   endif
 
 ! face xi = xi_max
@@ -600,7 +606,7 @@
     write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(2)), &
                   num_ibool_AVS_DX(iglobval(3)),num_ibool_AVS_DX(iglobval(7)), &
                   num_ibool_AVS_DX(iglobval(6))
-    if(THREE_D) write(11,*) ispecface,dvp,dvs
+    if(ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
   endif
 
 ! face eta = eta_min
@@ -609,7 +615,7 @@
     write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(1)), &
                   num_ibool_AVS_DX(iglobval(2)),num_ibool_AVS_DX(iglobval(6)), &
                   num_ibool_AVS_DX(iglobval(5))
-    if(THREE_D) write(11,*) ispecface,dvp,dvs
+    if(ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
   endif
 
 ! face eta = eta_max
@@ -618,7 +624,7 @@
     write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(4)), &
                   num_ibool_AVS_DX(iglobval(3)),num_ibool_AVS_DX(iglobval(7)), &
                   num_ibool_AVS_DX(iglobval(8))
-    if(THREE_D) write(11,*) ispecface,dvp,dvs
+    if(ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
   endif
 
   endif
@@ -629,7 +635,7 @@
     call exit_MPI(myrank,'incorrect number of surface elements in AVS or DX file creation')
 
   close(10)
-  if(THREE_D) close(11)
+  if(ISOTROPIC_3D_MANTLE) close(11)
 
   end subroutine write_AVS_DX_global_chunks_data
 

@@ -27,7 +27,7 @@
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
           alphaval,betaval,gammaval,factor_common, &
-          vx, vy, vz, vnspec, index_i, index_k, index_dim)
+          vx,vy,vz,vnspec,index_i,index_k,index_dim,R80)
 
   implicit none
 
@@ -52,7 +52,9 @@
 ! memory variables R_ij are stored at the local rather than global level
 ! to allow for optimization of cache access by compiler
 ! variable sized array variables for one_minus_sum_beta and factor_common
-  integer vx, vy, vz, vnspec
+  integer vx,vy,vz,vnspec
+
+  double precision R80
 
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
@@ -377,7 +379,7 @@
 ! compute either isotropic or anisotropic elements
 !
 
-  if(ANISOTROPIC_MANTLE_VAL) then
+  if(ANISOTROPIC_3D_MANTLE_VAL) then
 
     c11 = c11store(ijk,1,1,ispec)
     c12 = c12store(ijk,1,1,ispec)
@@ -750,7 +752,7 @@
   Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
   Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
 
 ! get displacement and multiply by density to compute G tensor
@@ -968,7 +970,7 @@
 ! get coefficients for that standard linear solid
 ! IMPROVE we use mu_v here even if there is some anisotropy
 ! IMPROVE we should probably use an average value instead
-!  if(ANISOTROPIC_MANTLE_VAL) then
+!  if(ANISOTROPIC_3D_MANTLE_VAL) then
 !    do ijk = 1,NGLLCUBE
 !---
 !    R_memory(1,ijk,1,1,ispec,1) = alphaval(iregion_selected,1) * &
@@ -1173,7 +1175,7 @@
           factor_common_c44_muv(2) = factor_common(1,1,1,iregion_selected,2)
           factor_common_c44_muv(3) = factor_common(1,1,1,iregion_selected,3)
        endif
-       if(ANISOTROPIC_MANTLE_VAL) then
+       if(ANISOTROPIC_3D_MANTLE_VAL) then
           factor_common_c44_muv(1) = factor_common_c44_muv(1) * c44store(ijk,1,1,ispec)
           factor_common_c44_muv(2) = factor_common_c44_muv(2) * c44store(ijk,1,1,ispec)
           factor_common_c44_muv(3) = factor_common_c44_muv(3) * c44store(ijk,1,1,ispec)

@@ -15,7 +15,7 @@
 !
 !=====================================================================
 
-  subroutine add_topography(myrank,xelm,yelm,zelm,ibathy_topo)
+  subroutine add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
 
   implicit none
 
@@ -32,7 +32,7 @@
 
   integer ia
 
-  double precision lat,lon,elevation
+  double precision lat,lon,elevation,R220
   double precision r,theta,phi,colat
   double precision gamma
 

@@ -396,7 +396,7 @@
 
 !   normalize normal vector and store surface jacobian
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
       jacobian2D(i,j,ispecb)=sngl(jacobian)
       normal(1,i,j,ispecb)=sngl(unx/jacobian)

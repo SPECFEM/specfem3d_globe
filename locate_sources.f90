@@ -28,7 +28,7 @@
                  NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                  islice_selected_source,ispec_selected_source, &
                  xi_source,eta_source,gamma_source, &
-                 rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCT)
+                 rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION)
 
   implicit none
 
@@ -41,7 +41,7 @@
   integer NPROCTOT
   integer NSTEP,NSOURCES,NEX_XI
 
-  logical ELLIPTICITY,TOPOGRAPHY,PRINT_SOURCE_TIME_FUNCT
+  logical ELLIPTICITY,TOPOGRAPHY,PRINT_SOURCE_TIME_FUNCTION
 
   double precision DT
 
@@ -484,7 +484,7 @@
     endif
 
 ! print source time function and spectrum
-  if(PRINT_SOURCE_TIME_FUNCT) then
+  if(PRINT_SOURCE_TIME_FUNCTION) then
 
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'

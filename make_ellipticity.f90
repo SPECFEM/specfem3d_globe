@@ -15,7 +15,8 @@
 !
 !=====================================================================
 
-  subroutine make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+  subroutine make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB)
 
   implicit none
 
@@ -23,7 +24,8 @@
 
   integer nspl
   logical ONE_CRUST
-  double precision rspl(NR),espl(NR),espl2(NR)
+  double precision rspl(NR),espl(NR),espl2(NR),ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB
 
   integer i
   double precision r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
@@ -88,7 +90,8 @@
   enddo
 
   do i=1,NR
-    call prem_density(r(i),rho(i),ONE_CRUST)
+    call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
     radau(i)=rho(i)*r(i)*r(i)
   enddo
 

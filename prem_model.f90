@@ -15,7 +15,9 @@
 !
 !=====================================================================
 
-  subroutine prem_iso(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,check_doubling_flag)
+  subroutine prem_iso(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+      ONE_CRUST,check_doubling_flag,IASPEI,RICB,RCMB,RTOPDDOUBLEPRIME, &
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   implicit none
 
@@ -24,10 +26,12 @@
 ! given a normalized radius x, gives the non-dimesionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical CRUSTAL,ONE_CRUST,check_doubling_flag
+  logical CRUSTAL,ONE_CRUST,check_doubling_flag,IASPEI
 
   integer idoubling,myrank
-  double precision x,rho,vp,vs,Qkappa,Qmu
+
+  double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   double precision r
   double precision scaleval,vpvs
@@ -313,7 +317,9 @@
 !=====================================================================
 !
 
-  subroutine prem_aniso(myrank,x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST)
+  subroutine prem_aniso(myrank,x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
+      idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   implicit none
 
@@ -325,7 +331,9 @@
   logical CRUSTAL,ONE_CRUST
 
   integer idoubling,myrank
-  double precision x,rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
+
+  double precision x,rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso,RICB,RCMB, &
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   double precision r
   double precision scaleval
@@ -607,13 +615,16 @@
 !=====================================================================
 !
 
-  subroutine prem_density(x,rho,ONE_CRUST)
+  subroutine prem_density(x,rho,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   implicit none
 
   include "constants.h"
 
-  double precision x,rho
+  double precision x,rho,RICB,RCMB,RTOPDDOUBLEPRIME, &
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+
   logical ONE_CRUST
 
   double precision r

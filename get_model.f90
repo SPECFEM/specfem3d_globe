@@ -25,11 +25,13 @@
     iboun,iMPIcut_xi,iMPIcut_eta,rmin,rmax,ichunk,idoubling, &
     rho_vp,rho_vs,nspec_stacey, &
     NPROC_XI,NPROC_ETA, &
-    TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D, &
+    TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE, &
     CRUSTAL,ONE_CRUST, &
     crustal_model,mantle_model,aniso_mantle_model, &
     aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
-    attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, vx, vy, vz, vnspec)
+    attenuation_model,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
+    NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASPEI, &
+    R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
   implicit none
 
@@ -38,11 +40,11 @@
   external mantle_model,crustal_model,aniso_mantle_model, &
        aniso_inner_core_model,attenuation_model
 
-  logical ATTENUATION, ATTENUATION_3D
-
   integer ispec,nspec,ichunk,idoubling,iregion_code,myrank,nspec_stacey
-  integer NPROC_XI,NPROC_ETA
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_MANTLE,ANISOTROPIC_INNER_CORE,THREE_D,CRUSTAL,ONE_CRUST
+  integer NPROC_XI,NPROC_ETA,NCHUNKS
+
+  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS,INFLATE_CENTRAL_CUBE,IASPEI
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
 
   logical iboun(6,nspec)
   logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
@@ -53,7 +55,8 @@
   double precision yelm(NGNOD)
   double precision zelm(NGNOD)
 
-  double precision rmin,rmax
+  double precision rmin,rmax,R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO, &
+    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN
 
   real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
   real(kind=CUSTOM_REAL) kappahstore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -134,9 +137,12 @@
 !      get the anisotropic PREM parameters
        if(TRANSVERSE_ISOTROPY) then
          call prem_aniso(myrank,r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                                 Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST)
+           Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
        else
-         call prem_iso(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,.true.)
+         call prem_iso(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+           ONE_CRUST,.true.,IASPEI,RICB,RCMB,RTOPDDOUBLEPRIME, &
+           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
          vpv = vp
          vph = vp
          vsv = vs
@@ -145,7 +151,7 @@
        endif
 
 !      get the 3-D model parameters
-       if(THREE_D) then
+       if(ISOTROPIC_3D_MANTLE) then
          if(r_prem > RCMB/R_EARTH .and. r_prem < RMOHO/R_EARTH) then
            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
            call reduce(theta,phi)
@@ -178,9 +184,9 @@
        endif
 
        if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) &
-           call aniso_inner_core_model(r_prem,c11,c33,c12,c13,c44)
+           call aniso_inner_core_model(r_prem,c11,c33,c12,c13,c44,IASPEI)
 
-       if(ANISOTROPIC_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+       if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
 
 ! Montagner's model between the Moho and 670 km
          if(r_prem < RMOHO/R_EARTH .and. r_prem > R670/R_EARTH) then
@@ -229,7 +235,8 @@
          lat=(PI/2.0d0-theta)*180.0d0/PI
          lon=phi*180.0d0/PI
          if(lon > 180.0d0) lon = lon - 360.0d0
-         call attenuation_model(myrank, lat, lon, r, Qmu, tau_s, tau_e, T_c_source)
+         call attenuation_model(myrank, lat, lon, r, Qmu, tau_s, tau_e, T_c_source,RICB,RCMB, &
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80)
        endif
 
 !      get the 3-D crustal model
@@ -248,7 +255,7 @@
              vsv=vsc
              vsh=vsc
              rho=rhoc
-             if(ANISOTROPIC_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+             if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
                c11 = rho*vpv*vpv
                c12 = rho*(vpv*vpv-2.*vsv*vsv)
                c13 = c12
@@ -277,7 +284,7 @@
 
 ! define elastic parameters in the model
 
-! distinguish whether single or double precision for reals
+! distinguish between single and double precision for reals
        if(CUSTOM_REAL == SIZE_REAL) then
          rhostore(i,j,k,ispec) = sngl(rho)
          kappavstore(i,j,k,ispec) = sngl(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0))
@@ -286,7 +293,7 @@
          muhstore(i,j,k,ispec) = sngl(rho*vsh*vsh)
          eta_anisostore(i,j,k,ispec) = sngl(eta_aniso)
 
-         if(STACEY_ABS_CONDITIONS) then
+         if(ABSORBING_CONDITIONS) then
            if(iregion_code == IREGION_OUTER_CORE) then
 ! we need just vp in the outer core for STacey conditions
              rho_vp(i,j,k,ispec) = sngl(vph)
@@ -305,7 +312,7 @@
            c44store(i,j,k,ispec) = sngl(c44)
          endif
 
-         if(ANISOTROPIC_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+         if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
            c11store(i,j,k,ispec) = sngl(c11)
            c12store(i,j,k,ispec) = sngl(c12)
            c13store(i,j,k,ispec) = sngl(c13)
@@ -337,7 +344,7 @@
          muhstore(i,j,k,ispec) = rho*vsh*vsh
          eta_anisostore(i,j,k,ispec) = eta_aniso
 
-         if(STACEY_ABS_CONDITIONS) then
+         if(ABSORBING_CONDITIONS) then
            if(iregion_code == IREGION_OUTER_CORE) then
 ! we need just vp in the outer core for STacey conditions
              rho_vp(i,j,k,ispec) = vph
@@ -356,7 +363,7 @@
            c44store(i,j,k,ispec) = c44
          endif
 
-         if(ANISOTROPIC_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+         if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
            c11store(i,j,k,ispec) = c11
            c12store(i,j,k,ispec) = c12
            c13store(i,j,k,ispec) = c13
@@ -393,7 +400,8 @@
 
  call get_flags_boundaries(myrank,iregion_code,nspec,iproc_xi,iproc_eta,ispec,xstore,ystore,zstore, &
         iboun,iMPIcut_xi,iMPIcut_eta,ichunk,idoubling,NPROC_XI,NPROC_ETA, &
-        rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD)
+        rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+             NCHUNKS,INFLATE_CENTRAL_CUBE,R_CENTRAL_CUBE,RCMB,RICB)
 
  end subroutine get_model
 

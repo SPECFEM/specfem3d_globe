@@ -17,7 +17,8 @@
 
   subroutine get_flags_boundaries(myrank,iregion_code,nspec,iproc_xi,iproc_eta,ispec, &
              xstore,ystore,zstore,iboun,iMPIcut_xi,iMPIcut_eta,ichunk, &
-             idoubling,NPROC_XI,NPROC_ETA,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD)
+             idoubling,NPROC_XI,NPROC_ETA,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+             NCHUNKS,INFLATE_CENTRAL_CUBE,R_CENTRAL_CUBE,RCMB,RICB)
 
   implicit none
 
@@ -25,16 +26,16 @@
 
   integer nspec
   integer ispec,ichunk,iregion_code,myrank,idoubling
-  integer NPROC_XI,NPROC_ETA
+  integer NPROC_XI,NPROC_ETA,NCHUNKS
 
   logical iboun(6,nspec)
-  logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
+  logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec),INFLATE_CENTRAL_CUBE
 
   double precision xstore(NGLLX,NGLLY,NGLLZ)
   double precision ystore(NGLLX,NGLLY,NGLLZ)
   double precision zstore(NGLLX,NGLLY,NGLLZ)
 
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,R_CENTRAL_CUBE,RCMB,RICB
 
   integer ia
 
