@@ -68,47 +68,49 @@
 !! DK DK UGLY !--- because fictitious mesh is created in inner core
 !! DK DK UGLY !--- therefore we just use fictitious values
 
-!--- CMB -> d670, target Q_mu = 312.
-
-  case(IREGION_ATTENUATION_CMB_670,IREGION_ATTENUATION_INNER_CORE)
-
-    tau_mu(1) =        31.98831234987152072335d0
-    tau_mu(2) =         2.26372027015198540312d0
-    tau_mu(3) =         0.16007126864753609685d0
-    Q_mu =       312.0000000000d0
-
-!--- d670 -> d220, target Q_mu: 143.
-
-  case(IREGION_ATTENUATION_670_220)
-
-    tau_mu(1) =        32.10936720723712056724d0
-    tau_mu(2) =         2.27962803170602423819d0
-    tau_mu(3) =         0.16117116738629347350d0
-    Q_mu =       143.0000000000d0
-
-!--- d220 -> depth of 80 km, target Q_mu:  80.
-
-  case(IREGION_ATTENUATION_220_80)
-
-    tau_mu(1) =        32.15354690558234551645d0
-    tau_mu(2) =         2.30398847208382084872d0
-    tau_mu(3) =         0.16280124738435630682d0
-    Q_mu =        80.0000000000d0
-
-!--- depth of 80 km -> surface, target Q_mu: 600.
-
-  case(IREGION_ATTENUATION_80_SURFACE)
-
-    tau_mu(1) =        31.91896317140586347705d0
-    tau_mu(2) =         2.25745362644383806838d0
-    tau_mu(3) =         0.15962974749732541935d0
-    Q_mu =       600.0000000000d0
-
-  case default
-
-    call exit_MPI(myrank,'wrong attenuation flag in mesh')
-
-  end select
+ !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+ 
+   case(IREGION_ATTENUATION_CMB_670)
+ 
+     tau_mu(1) =        32.01772419813112691145d0
+     tau_mu(2) =         2.26295014032926911085d0
+     tau_mu(3) =         0.16009837572177521015d0
+          Q_mu =       312.0000000000d0
+ 
+ !--- d670 -> d220, target Q_mu: 143.
+ 
+   case(IREGION_ATTENUATION_670_220)
+ 
+     tau_mu(1) =        32.24022626127403157170d0
+     tau_mu(2) =         2.27753979117215532568d0
+     tau_mu(3) =         0.16124848521135615176d0
+          Q_mu =       143.0000000000d0
+ 
+ !--- d220 -> depth of 80 km, target Q_mu:  80.
+ 
+   case(IREGION_ATTENUATION_220_80)
+ 
+     tau_mu(1) =        32.56637722770504694836d0
+     tau_mu(2) =         2.29935732671327297538d0
+     tau_mu(3) =         0.16298642034932270262d0
+          Q_mu =        80.0000000000d0
+ 
+ !--- depth of 80 km -> surface, target Q_mu: 600.
+ 
+   case(IREGION_ATTENUATION_80_SURFACE)
+ 
+     tau_mu(1) =        31.92809179152154541725d0
+     tau_mu(2) =         2.25705689329478609295d0
+     tau_mu(3) =         0.15964311991416568759d0
+          Q_mu =       600.0000000000d0
+ 
+ !--- do nothing for fluid outer core (no attenuation there)
+ 
+   case default
+ 
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+ 
+   end select
 
 !! DK DK UGLY this for global simulations at longer periods
 !! DK DK UGLY should be merged with regional attenuation parameters at higher frequency above
@@ -130,58 +132,59 @@
 
   select case(iregion_attenuation)
 
-!--- inner core, target Q_mu:  84.60
-
-  case(IREGION_ATTENUATION_INNER_CORE)
-
-    tau_mu(1) =       161.87151795592419034620d0
-    tau_mu(2) =        22.83321303277247693586d0
-    tau_mu(3) =         3.24415023587751250034d0
-    Q_mu =        84.60d0
-
-!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
-
-  case(IREGION_ATTENUATION_CMB_670)
-
-    tau_mu(1) =       159.94161523178539141554d0
-    tau_mu(2) =        22.59299057282909117816d0
-    tau_mu(3) =         3.19929580037721894570d0
-    Q_mu =       312.0000000000d0
-
-!--- d670 -> d220, target Q_mu: 143.
-
-  case(IREGION_ATTENUATION_670_220)
-
-    tau_mu(1) =       160.82504929484198896716d0
-    tau_mu(2) =        22.69650297758172996510d0
-    tau_mu(3) =         3.21878389936411624106d0
-    Q_mu =       143.0000000000d0
-
-!--- d220 -> depth of 80 km, target Q_mu:  80.
-
-  case(IREGION_ATTENUATION_220_80)
-
-    tau_mu(1) =       162.01122326212433222281d0
-    tau_mu(2) =        22.85290281779909804527d0
-    tau_mu(3) =         3.24776851553577827758d0
-    Q_mu =        80.0000000000d0
-
-!--- depth of 80 km -> surface, target Q_mu: 600.
-
-  case(IREGION_ATTENUATION_80_SURFACE)
-
-    tau_mu(1) =       159.56830719443664179380d0
-    tau_mu(2) =        22.55186839448693802979d0
-    tau_mu(3) =         3.19148738794593134216d0
-    Q_mu =       600.0000000000d0
-
-!--- do nothing for fluid outer core (no attenuation there)
-
-  case default
-
-    call exit_MPI(myrank,'wrong attenuation flag in mesh')
-
-  end select
+ !--- inner core, target Q_mu: 84.60
+ 
+   case(IREGION_ATTENUATION_INNER_CORE)
+ 
+     tau_mu(1) =       162.14490233390495177446d0
+     tau_mu(2) =        22.82419389065037051978d0
+     tau_mu(3) =         3.24514126878853792491d0
+          Q_mu =        84.6000000000d0
+ 
+ !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+ 
+   case(IREGION_ATTENUATION_CMB_670)
+ 
+     tau_mu(1) =       159.96238677589397525480d0
+     tau_mu(2) =        22.59200103328783626466d0
+     tau_mu(3) =         3.19941840854237469216d0
+          Q_mu =       312.0000000000d0
+ 
+ !--- d670 -> d220, target Q_mu: 143.
+ 
+   case(IREGION_ATTENUATION_670_220)
+ 
+     tau_mu(1) =       160.91977214000002049943d0
+     tau_mu(2) =        22.69300216006637782584d0
+     tau_mu(3) =         3.21918230720303011339d0
+          Q_mu =       143.0000000000d0
+ 
+ !--- d220 -> depth of 80 km, target Q_mu:  80.
+ 
+   case(IREGION_ATTENUATION_220_80)
+ 
+     tau_mu(1) =       162.31797761220104803215d0
+     tau_mu(2) =        22.84287987713201317774d0
+     tau_mu(3) =         3.24886786464258259244d0
+          Q_mu =        80.0000000000d0
+ 
+ !--- depth of 80 km -> surface, target Q_mu: 600.
+ 
+   case(IREGION_ATTENUATION_80_SURFACE)
+ 
+     tau_mu(1) =       159.57440558551263620757d0
+     tau_mu(2) =        22.55150522635637955204d0
+     tau_mu(3) =         3.19153381437414740418d0
+          Q_mu =       600.0000000000d0
+ 
+ !--- do nothing for fluid outer core (no attenuation there)
+ 
+   case default
+ 
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+ 
+   end select
+ 
 
   else if(MAX_ATTENUATION_PERIOD == 1000 .and. MIN_ATTENUATION_PERIOD == 8) then
 
@@ -199,58 +202,58 @@
 
   select case(iregion_attenuation)
 
-!--- inner core, target Q_mu:  84.60
-
-  case(IREGION_ATTENUATION_INNER_CORE)
-
-    tau_mu(1) =       161.46934711308600185475d0
-    tau_mu(2) =        14.51296625431915998661d0
-    tau_mu(3) =         1.29975705687209908135d0
-    Q_mu =        84.60d0
-
-!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
-
-  case(IREGION_ATTENUATION_CMB_670)
-
-    tau_mu(1) =       159.96474054645611317937d0
-    tau_mu(2) =        14.30733506027169532615d0
-    tau_mu(3) =         1.28028958294749606317d0
-    Q_mu =       312.0000000000d0
-
-!--- d670 -> d220, target Q_mu: 143.
-
-  case(IREGION_ATTENUATION_670_220)
-
-    tau_mu(1) =       160.75072907573880343080d0
-    tau_mu(2) =        14.39559888678218868563d0
-    tau_mu(3) =         1.28875837639885348906d0
-    Q_mu =       143.0000000000d0
-
-!--- d220 -> depth of 80 km, target Q_mu:  80.
-
-  case(IREGION_ATTENUATION_220_80)
-
-    tau_mu(1) =       161.54392370131370171293d0
-    tau_mu(2) =        14.52993576942056641599d0
-    tau_mu(3) =         1.30132356306765761822d0
-    Q_mu =        80.0000000000d0
-
-!--- depth of 80 km -> surface, target Q_mu: 600.
-
-  case(IREGION_ATTENUATION_80_SURFACE)
-
-    tau_mu(1) =       159.59222087574624993067d0
-    tau_mu(2) =        14.27243840130370422514d0
-    tau_mu(3) =         1.27689204530675759486d0
-    Q_mu =       600.0000000000d0
-
-!--- do nothing for fluid outer core (no attenuation there)
-
-  case default
-
-    call exit_MPI(myrank,'wrong attenuation flag in mesh')
-
-  end select
+ !--- inner core, target Q_mu: 84.60
+ 
+   case(IREGION_ATTENUATION_INNER_CORE)
+ 
+     tau_mu(1) =       162.42071935356284484442d0
+     tau_mu(2) =        14.49929877579018722145d0
+     tau_mu(3) =         1.30045337980719555304d0
+          Q_mu =        84.6000000000d0
+ 
+ !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+ 
+   case(IREGION_ATTENUATION_CMB_670)
+ 
+     tau_mu(1) =       160.03319855314362030185d0
+     tau_mu(2) =        14.30549165803078537351d0
+     tau_mu(3) =         1.28036835479182142805d0
+          Q_mu =       312.0000000000d0
+ 
+ !--- d670 -> d220, target Q_mu: 143.
+ 
+   case(IREGION_ATTENUATION_670_220)
+ 
+     tau_mu(1) =       161.07811629420274357471d0
+     tau_mu(2) =        14.38975485348623095661d0
+     tau_mu(3) =         1.28906206911127751980d0
+          Q_mu =       143.0000000000d0
+ 
+ !--- d220 -> depth of 80 km, target Q_mu:  80.
+ 
+   case(IREGION_ATTENUATION_220_80)
+ 
+     tau_mu(1) =       162.61641330522928683422d0
+     tau_mu(2) =        14.51449312134383973216d0
+     tau_mu(3) =         1.30227414871675950536d0
+          Q_mu =        80.0000000000d0
+ 
+ !--- depth of 80 km -> surface, target Q_mu: 600.
+ 
+   case(IREGION_ATTENUATION_80_SURFACE)
+ 
+     tau_mu(1) =       159.61095844748751915176d0
+     tau_mu(2) =        14.27166760653473431830d0
+     tau_mu(3) =         1.27691138668395165467d0
+          Q_mu =       600.0000000000d0
+ 
+ !--- do nothing for fluid outer core (no attenuation there)
+ 
+   case default
+ 
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+ 
+   end select
 
   else if(MAX_ATTENUATION_PERIOD == 1000 .and. MIN_ATTENUATION_PERIOD == 5) then
 
@@ -268,58 +271,59 @@
 
   select case(iregion_attenuation)
 
-!--- inner core, target Q_mu:  84.60
-
-  case(IREGION_ATTENUATION_INNER_CORE)
-
-    tau_mu(1) =       160.78443818062038417338d0
-    tau_mu(2) =        11.50450764923400370776d0
-    tau_mu(3) =         0.81299073871856486484d0
-    Q_mu =        84.60d0
-
-!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
-
-  case(IREGION_ATTENUATION_CMB_670)
-
-    tau_mu(1) =       159.94156174935702097173d0
-    tau_mu(2) =        11.31860135075993589737d0
-    tau_mu(3) =         0.80035634323768012344d0
-    Q_mu =       312.0000000000d0
-
-!--- d670 -> d220, target Q_mu: 143.
-
-  case(IREGION_ATTENUATION_670_220)
-
-    tau_mu(1) =       160.54683603618144616121d0
-    tau_mu(2) =        11.39814015853017181712d0
-    tau_mu(3) =         0.80585583693146656259d0
-    Q_mu =       143.0000000000d0
-
-!--- d220 -> depth of 80 km, target Q_mu:  80.
-
-  case(IREGION_ATTENUATION_220_80)
-
-    tau_mu(1) =       160.76773452790945384550d0
-    tau_mu(2) =        11.51994236041913133306d0
-    tau_mu(3) =         0.81400623692178109003d0
-    Q_mu =        80.0000000000d0
-
-!--- depth of 80 km -> surface, target Q_mu: 600.
-
-  case(IREGION_ATTENUATION_80_SURFACE)
-
-    tau_mu(1) =       159.59481585703019845823d0
-    tau_mu(2) =        11.28726813221918057195d0
-    tau_mu(3) =         0.79814873748662718000d0
-    Q_mu =       600.0000000000d0
-
-!--- do nothing for fluid outer core (no attenuation there)
-
-  case default
-
-    call exit_MPI(myrank,'wrong attenuation flag in mesh')
-
-  end select
+ !--- inner core, target Q_mu: 84.60
+ 
+   case(IREGION_ATTENUATION_INNER_CORE)
+ 
+     tau_mu(1) =       162.62983680848708445410d0
+     tau_mu(2) =        11.48310665737810865039d0
+     tau_mu(3) =         0.81383338355291257038d0
+          Q_mu =        84.6000000000d0
+ 
+ !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+ 
+   case(IREGION_ATTENUATION_CMB_670)
+ 
+     tau_mu(1) =       160.08859189474421214072d0
+     tau_mu(2) =        11.31475189095645461634d0
+     tau_mu(3) =         0.80049216168943215788d0
+          Q_mu =       312.0000000000d0
+ 
+ !--- d670 -> d220, target Q_mu: 143.
+ 
+   case(IREGION_ATTENUATION_670_220)
+ 
+     tau_mu(1) =       161.20153794984145179114d0
+     tau_mu(2) =        11.38755447047194735433d0
+     tau_mu(3) =         0.80624514209892939043d0
+          Q_mu =       143.0000000000d0
+ 
+ !--- d220 -> depth of 80 km, target Q_mu:  80.
+ 
+   case(IREGION_ATTENUATION_220_80)
+ 
+     tau_mu(1) =       162.83211429812064352518d0
+     tau_mu(2) =        11.49677225353980247746d0
+     tau_mu(3) =         0.81492710793937817026d0
+          Q_mu =        80.0000000000d0
+ 
+ !--- depth of 80 km -> surface, target Q_mu: 600.
+ 
+   case(IREGION_ATTENUATION_80_SURFACE)
+ 
+     tau_mu(1) =       159.64027081362178250856d0
+     tau_mu(2) =        11.28529825778758066690d0
+     tau_mu(3) =         0.79821444289159093621d0
+          Q_mu =       600.0000000000d0
+ 
+ !--- do nothing for fluid outer core (no attenuation there)
+ 
+   case default
+ 
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+ 
+   end select
+ 
 
   else if(MAX_ATTENUATION_PERIOD == 1000 .and. MIN_ATTENUATION_PERIOD == 4) then
 
@@ -337,58 +341,59 @@
 
   select case(iregion_attenuation)
 
-!--- inner core, target Q_mu:  84.60
-
-  case(IREGION_ATTENUATION_INNER_CORE)
-
-    tau_mu(1) =       160.43705131222463933227d0
-    tau_mu(2) =        10.30203571530812034496d0
-    tau_mu(3) =         0.65070081804940560488d0
-    Q_mu =        84.60d0
-
-!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
-
-  case(IREGION_ATTENUATION_CMB_670)
-
-    tau_mu(1) =       159.93113725698523808205d0
-    tau_mu(2) =        10.12670852224042405965d0
-    tau_mu(3) =         0.64036908310685669576d0
-    Q_mu =       312.0000000000d0
-
-!--- d670 -> d220, target Q_mu: 143.
-
-  case(IREGION_ATTENUATION_670_220)
-
-    tau_mu(1) =       160.44494348323934218570d0
-    tau_mu(2) =        10.20166569793829047796d0
-    tau_mu(3) =         0.64486747121131060556d0
-    Q_mu =       143.0000000000d0
-
-!--- d220 -> depth of 80 km, target Q_mu:  80.
-
-  case(IREGION_ATTENUATION_220_80)
-
-    tau_mu(1) =       160.37362697346378581642d0
-    tau_mu(2) =        10.31661392291149503819d0
-    tau_mu(3) =         0.65153086897277423528d0
-    Q_mu =        80.0000000000d0
-
-!--- depth of 80 km -> surface, target Q_mu: 600.
-
-  case(IREGION_ATTENUATION_80_SURFACE)
-
-    tau_mu(1) =       159.59699380876537588847d0
-    tau_mu(2) =        10.09720149757456475470d0
-    tau_mu(3) =         0.63856272483804032980d0
-    Q_mu =       600.0000000000d0
-
-!--- do nothing for fluid outer core (no attenuation there)
-
-  case default
-
-    call exit_MPI(myrank,'wrong attenuation flag in mesh')
-
-  end select
+ !--- inner core, target Q_mu: 84.60
+ 
+   case(IREGION_ATTENUATION_INNER_CORE)
+ 
+     tau_mu(1) =       162.72949947544336168903d0
+     tau_mu(2) =        10.28008029214220542258d0
+     tau_mu(3) =         0.65148722307895390315d0
+          Q_mu =        84.6000000000d0
+ 
+ !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+ 
+   case(IREGION_ATTENUATION_CMB_670)
+ 
+     tau_mu(1) =       160.11586020478787872889d0
+     tau_mu(2) =        10.12237643559230093615d0
+     tau_mu(3) =         0.64050486320597954659d0
+          Q_mu =       312.0000000000d0
+ 
+ !--- d670 -> d220, target Q_mu: 143.
+ 
+   case(IREGION_ATTENUATION_670_220)
+ 
+     tau_mu(1) =       161.25959323778928933280d0
+     tau_mu(2) =        10.19066637823843279875d0
+     tau_mu(3) =         0.64523504177037338536d0
+          Q_mu =       143.0000000000d0
+ 
+ !--- d220 -> depth of 80 km, target Q_mu:  80.
+ 
+   case(IREGION_ATTENUATION_220_80)
+ 
+     tau_mu(1) =       162.93762739129357441925d0
+     tau_mu(2) =        10.29287588454070245803d0
+     tau_mu(3) =         0.65238830508968748134d0
+          Q_mu =        80.0000000000d0
+ 
+ !--- depth of 80 km -> surface, target Q_mu: 600.
+ 
+   case(IREGION_ATTENUATION_80_SURFACE)
+ 
+     tau_mu(1) =       159.65390567402135957309d0
+     tau_mu(2) =        10.09509723750865362035d0
+     tau_mu(3) =         0.63862664710547289992d0
+          Q_mu =       600.0000000000d0
+ 
+ !--- do nothing for fluid outer core (no attenuation there)
+ 
+   case default
+ 
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+ 
+   end select
+ 
 
   else if(MAX_ATTENUATION_PERIOD == 400 .and. MIN_ATTENUATION_PERIOD == 20) then
 
@@ -406,59 +411,59 @@
 
   select case(iregion_attenuation)
 
-!--- inner core, target Q_mu:  84.60
-
-  case(IREGION_ATTENUATION_INNER_CORE)
-
-    tau_mu(1) =        64.76417144248684110153d0
-    tau_mu(2) =        14.36140908080261269220d0
-    tau_mu(3) =         3.24062372548047905596d0
-    Q_mu =        84.60d0
-
-!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
-
-  case(IREGION_ATTENUATION_CMB_670)
-
-    tau_mu(1) =        63.96357795120979972125d0
-    tau_mu(2) =        14.26855060142314002292d0
-    tau_mu(3) =         3.19833140646331726131d0
-    Q_mu =       312.0000000000d0
-
-!--- d670 -> d220, target Q_mu: 143.
-
-  case(IREGION_ATTENUATION_670_220)
-
-    tau_mu(1) =        64.31765922582317784872d0
-    tau_mu(2) =        14.30875228289421485783d0
-    tau_mu(3) =         3.21668529475045783528d0
-    Q_mu =       143.0000000000d0
-
-!--- d220 -> depth of 80 km, target Q_mu:  80.
-
-  case(IREGION_ATTENUATION_220_80)
-
-    tau_mu(1) =        64.82653618389130656396d0
-    tau_mu(2) =        14.36895778355524200265d0
-    tau_mu(3) =         3.24404313208959971249d0
-    Q_mu =        80.0000000000d0
-
-!--- depth of 80 km -> surface, target Q_mu: 600.
-
-  case(IREGION_ATTENUATION_80_SURFACE)
-
-    tau_mu(1) =        63.81900994371194002497d0
-    tau_mu(2) =        14.25248721242562410794d0
-    tau_mu(3) =         3.19098562562620902128d0
-    Q_mu =       600.0000000000d0
-
-!--- do nothing for fluid outer core (no attenuation there)
-
-  case default
-
-    call exit_MPI(myrank,'wrong attenuation flag in mesh')
-
-  end select
-
+ !--- inner core, target Q_mu: 84.60
+ 
+   case(IREGION_ATTENUATION_INNER_CORE)
+ 
+     tau_mu(1) =        64.74754934844317233456d0
+     tau_mu(2) =        14.36897611143563935343d0
+     tau_mu(3) =         3.23900252215628192687d0
+          Q_mu =        84.6000000000d0
+ 
+ !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+ 
+   case(IREGION_ATTENUATION_CMB_670)
+ 
+     tau_mu(1) =        63.95536976467237622046d0
+     tau_mu(2) =        14.27086029471458417106d0
+     tau_mu(3) =         3.19788010916230369673d0
+          Q_mu =       312.0000000000d0
+ 
+ !--- d670 -> d220, target Q_mu: 143.
+ 
+   case(IREGION_ATTENUATION_670_220)
+ 
+     tau_mu(1) =        64.30294233312994833796d0
+     tau_mu(2) =        14.31362245566047697309d0
+     tau_mu(3) =         3.21568666661526503248d0
+          Q_mu =       143.0000000000d0
+ 
+ !--- d220 -> depth of 80 km, target Q_mu:  80.
+ 
+   case(IREGION_ATTENUATION_220_80)
+ 
+     tau_mu(1) =        64.81024764817939853856d0
+     tau_mu(2) =        14.37685795447098513478d0
+     tau_mu(3) =         3.24234250339832286159d0
+          Q_mu =        80.0000000000d0
+ 
+ !--- depth of 80 km -> surface, target Q_mu: 600.
+ 
+   case(IREGION_ATTENUATION_80_SURFACE)
+ 
+     tau_mu(1) =        63.81446317410515689517d0
+     tau_mu(2) =        14.25369879719033505694d0
+     tau_mu(3) =         3.19075364624547574977d0
+          Q_mu =       600.0000000000d0
+ 
+ !--- do nothing for fluid outer core (no attenuation there)
+ 
+   case default
+ 
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+ 
+   end select
+ 
   else if(MAX_ATTENUATION_PERIOD == 400 .and. MIN_ATTENUATION_PERIOD == 8) then
 
 ! period range: 8.000000 -- 400.000000 s
@@ -475,59 +480,59 @@
 
   select case(iregion_attenuation)
 
-!--- inner core, target Q_mu:  84.60
-
-  case(IREGION_ATTENUATION_INNER_CORE)
-
-    tau_mu(1) =        64.74582414016121845179d0
-    tau_mu(2) =         9.13298209844589337081d0
-    tau_mu(3) =         1.29773265247803104572d0
-    Q_mu =        84.60d0
-
-!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
-
-  case(IREGION_ATTENUATION_CMB_670)
-
-    tau_mu(1) =        63.97698091926329055923d0
-    tau_mu(2) =         9.03708785215422238934d0
-    tau_mu(3) =         1.27973753823006330954d0
-    Q_mu =       312.0000000000d0
-
-!--- d670 -> d220, target Q_mu: 143.
-
-  case(IREGION_ATTENUATION_670_220)
-
-    tau_mu(1) =        64.32974236408334434145d0
-    tau_mu(2) =         9.07838927486644919895d0
-    tau_mu(3) =         1.28755597185630898949d0
-    Q_mu =       143.0000000000d0
-
-!--- d220 -> depth of 80 km, target Q_mu:  80.
-
-  case(IREGION_ATTENUATION_220_80)
-
-    tau_mu(1) =        64.80118772325930365241d0
-    tau_mu(2) =         9.14084899626674207695d0
-    tau_mu(3) =         1.29918425004121362853d0
-    Q_mu =        80.0000000000d0
-
-!--- depth of 80 km -> surface, target Q_mu: 600.
-
-  case(IREGION_ATTENUATION_80_SURFACE)
-
-    tau_mu(1) =        63.82759066501840550245d0
-    tau_mu(2) =         9.02068868832229142640d0
-    tau_mu(3) =         1.27660489713826086344d0
-    Q_mu =       600.0000000000d0
-
-!--- do nothing for fluid outer core (no attenuation there)
-
-  case default
-
-    call exit_MPI(myrank,'wrong attenuation flag in mesh')
-
-  end select
-
+ !--- inner core, target Q_mu: 84.60
+ 
+   case(IREGION_ATTENUATION_INNER_CORE)
+ 
+     tau_mu(1) =        64.85795595561907589399d0
+     tau_mu(2) =         9.12968077134321731592d0
+     tau_mu(3) =         1.29805586567704822620d0
+          Q_mu =        84.6000000000d0
+ 
+ !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+ 
+   case(IREGION_ATTENUATION_CMB_670)
+ 
+     tau_mu(1) =        63.98498337148299697219d0
+     tau_mu(2) =         9.03680316300993347056d0
+     tau_mu(3) =         1.27976700282590316604d0
+          Q_mu =       312.0000000000d0
+ 
+ !--- d670 -> d220, target Q_mu: 143.
+ 
+   case(IREGION_ATTENUATION_670_220)
+ 
+     tau_mu(1) =        64.36796404728389120464d0
+     tau_mu(2) =         9.07719787898379415481d0
+     tau_mu(3) =         1.28767253698791295236d0
+          Q_mu =       143.0000000000d0
+ 
+ !--- d220 -> depth of 80 km, target Q_mu:  80.
+ 
+   case(IREGION_ATTENUATION_220_80)
+ 
+     tau_mu(1) =        64.92718894441718191501d0
+     tau_mu(2) =         9.13714835179053253000d0
+     tau_mu(3) =         1.29954762980627780422d0
+          Q_mu =        80.0000000000d0
+ 
+ !--- depth of 80 km -> surface, target Q_mu: 600.
+ 
+   case(IREGION_ATTENUATION_80_SURFACE)
+ 
+     tau_mu(1) =        63.82978503832104166804d0
+     tau_mu(2) =         9.02060111267174136174d0
+     tau_mu(3) =         1.27661302844902913023d0
+          Q_mu =       600.0000000000d0
+ 
+ !--- do nothing for fluid outer core (no attenuation there)
+ 
+   case default
+ 
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+ 
+   end select
+ 
   else if(MAX_ATTENUATION_PERIOD == 400 .and. MIN_ATTENUATION_PERIOD == 5) then
 
 ! period range: 5.000000 -- 400.000000 s
@@ -544,59 +549,59 @@
 
   select case(iregion_attenuation)
 
-!--- inner core, target Q_mu:  84.60
-
-  case(IREGION_ATTENUATION_INNER_CORE)
-
-    tau_mu(1) =        64.68991972277899549226d0
-    tau_mu(2) =         7.23903487221359842607d0
-    tau_mu(3) =         0.81170480859443183697d0
-    Q_mu =        84.60d0
-
-!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
-
-  case(IREGION_ATTENUATION_CMB_670)
-
-    tau_mu(1) =        63.98298909503787257336d0
-    tau_mu(2) =         7.14922711793459608742d0
-    tau_mu(3) =         0.80000541215927811756d0
-    Q_mu =       312.0000000000d0
-
-!--- d670 -> d220, target Q_mu: 143.
-
-  case(IREGION_ATTENUATION_670_220)
-
-    tau_mu(1) =        64.32290790448600148466d0
-    tau_mu(2) =         7.18783008187737593175d0
-    tau_mu(3) =         0.80509173507097531175d0
-    Q_mu =       143.0000000000d0
-
-!--- d220 -> depth of 80 km, target Q_mu:  80.
-
-  case(IREGION_ATTENUATION_220_80)
-
-    tau_mu(1) =        64.73532400224027583135d0
-    tau_mu(2) =         7.24642788081793653987d0
-    tau_mu(3) =         0.81264737181571522484d0
-    Q_mu =        80.0000000000d0
-
-!--- depth of 80 km -> surface, target Q_mu: 600.
-
-  case(IREGION_ATTENUATION_80_SURFACE)
-
-    tau_mu(1) =        63.83260919765795904368d0
-    tau_mu(2) =         7.13393777784677229903d0
-    tau_mu(3) =         0.79796618094443061420d0
-    Q_mu =       600.0000000000d0
-
-!--- do nothing for fluid outer core (no attenuation there)
-
-  case default
-
-    call exit_MPI(myrank,'wrong attenuation flag in mesh')
-
-  end select
-
+ !--- inner core, target Q_mu: 84.60
+ 
+   case(IREGION_ATTENUATION_INNER_CORE)
+ 
+     tau_mu(1) =        64.91539550103743749787d0
+     tau_mu(2) =         7.23443108987387084596d0
+     tau_mu(3) =         0.81204067301336624318d0
+          Q_mu =        84.6000000000d0
+ 
+ !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+ 
+   case(IREGION_ATTENUATION_CMB_670)
+ 
+     tau_mu(1) =        63.99919838292981921768d0
+     tau_mu(2) =         7.14875688323272839853d0
+     tau_mu(3) =         0.80003162995834964377d0
+          Q_mu =       312.0000000000d0
+ 
+ !--- d670 -> d220, target Q_mu: 143.
+ 
+   case(IREGION_ATTENUATION_670_220)
+ 
+     tau_mu(1) =        64.40011413556405273084d0
+     tau_mu(2) =         7.18609902209461903766d0
+     tau_mu(3) =         0.80520508161117398949d0
+          Q_mu =       143.0000000000d0
+ 
+ !--- d220 -> depth of 80 km, target Q_mu:  80.
+ 
+   case(IREGION_ATTENUATION_220_80)
+ 
+     tau_mu(1) =        64.98786468038585439899d0
+     tau_mu(2) =         7.24140408806958291166d0
+     tau_mu(3) =         0.81302347647883421722d0
+          Q_mu =        80.0000000000d0
+ 
+ !--- depth of 80 km -> surface, target Q_mu: 600.
+ 
+   case(IREGION_ATTENUATION_80_SURFACE)
+ 
+     tau_mu(1) =        63.83708402275915716473d0
+     tau_mu(2) =         7.13376182745341047564d0
+     tau_mu(3) =         0.79797505252482325844d0
+          Q_mu =       600.0000000000d0
+ 
+ !--- do nothing for fluid outer core (no attenuation there)
+ 
+   case default
+ 
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+ 
+   end select
+ 
   else if(MAX_ATTENUATION_PERIOD == 400 .and. MIN_ATTENUATION_PERIOD == 4) then
 
 ! period range: 4.000000 -- 400.000000 s
@@ -613,59 +618,59 @@
 
   select case(iregion_attenuation)
 
-!--- inner core, target Q_mu:  84.60
-
-  case(IREGION_ATTENUATION_INNER_CORE)
-
-    tau_mu(1) =        64.65396574106728166953d0
-    tau_mu(2) =         6.48254642872048325586d0
-    tau_mu(3) =         0.64961295196815083131d0
-    Q_mu =        84.60d0
-
-!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
-
-  case(IREGION_ATTENUATION_CMB_670)
-
-    tau_mu(1) =        63.98539935552845037137d0
-    tau_mu(2) =         6.39645572624521818739d0
-    tau_mu(3) =         0.64007238467197202780d0
-    Q_mu =       312.0000000000d0
-
-!--- d670 -> d220, target Q_mu: 143.
-
-  case(IREGION_ATTENUATION_670_220)
-
-    tau_mu(1) =        64.31665187797257488000d0
-    tau_mu(2) =         6.43344580297075729902d0
-    tau_mu(3) =         0.64422147261685436259d0
-    Q_mu =       143.0000000000d0
-
-!--- d220 -> depth of 80 km, target Q_mu:  80.
-
-  case(IREGION_ATTENUATION_220_80)
-
-    tau_mu(1) =        64.69346058437983515432d0
-    tau_mu(2) =         6.48963824090475238648d0
-    tau_mu(3) =         0.65038111965209866039d0
-    Q_mu =        80.0000000000d0
-
-!--- depth of 80 km -> surface, target Q_mu: 600.
-
-  case(IREGION_ATTENUATION_80_SURFACE)
-
-    tau_mu(1) =        63.83496368779294982687d0
-    tau_mu(2) =         6.38181345959871659801d0
-    tau_mu(3) =         0.63840836059004624214d0
-    Q_mu =       600.0000000000d0
-
-!--- do nothing for fluid outer core (no attenuation there)
-
-  case default
-
-    call exit_MPI(myrank,'wrong attenuation flag in mesh')
-
-  end select
-
+ !--- inner core, target Q_mu: 84.60
+ 
+   case(IREGION_ATTENUATION_INNER_CORE)
+ 
+     tau_mu(1) =        64.93473007621230408404d0
+     tau_mu(2) =         6.47784347577742991575d0
+     tau_mu(3) =         0.64992285325701537602d0
+          Q_mu =        84.6000000000d0
+ 
+ !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+ 
+   case(IREGION_ATTENUATION_CMB_670)
+ 
+     tau_mu(1) =        64.00553853880884958016d0
+     tau_mu(2) =         6.39587371477192512259d0
+     tau_mu(3) =         0.64009931875558101488d0
+          Q_mu =       312.0000000000d0
+ 
+ !--- d670 -> d220, target Q_mu: 143.
+ 
+   case(IREGION_ATTENUATION_670_220)
+ 
+     tau_mu(1) =        64.41378421517728725121d0
+     tau_mu(2) =         6.43148896649217505228d0
+     tau_mu(3) =         0.64432961718299808229d0
+          Q_mu =       143.0000000000d0
+ 
+ !--- d220 -> depth of 80 km, target Q_mu:  80.
+ 
+   case(IREGION_ATTENUATION_220_80)
+ 
+     tau_mu(1) =        65.00839889844625929527d0
+     tau_mu(2) =         6.48444159417360488362d0
+     tau_mu(3) =         0.65073008539433319086d0
+          Q_mu =        80.0000000000d0
+ 
+ !--- depth of 80 km -> surface, target Q_mu: 600.
+ 
+   case(IREGION_ATTENUATION_80_SURFACE)
+ 
+     tau_mu(1) =        63.84050388187188929123d0
+     tau_mu(2) =         6.38157285455825551423d0
+     tau_mu(3) =         0.63841788042370528622d0
+          Q_mu =       600.0000000000d0
+ 
+ !--- do nothing for fluid outer core (no attenuation there)
+ 
+   case default
+ 
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+ 
+   end select
+ 
   else
     call exit_MPI(myrank,'incorrect minimum or maximum attenuation period')
   endif
