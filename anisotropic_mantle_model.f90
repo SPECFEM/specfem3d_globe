@@ -33,6 +33,7 @@
 module aniso_mantle_model_constants
 
   implicit none
+
   double precision, parameter :: PI = 3.141592653589793d0
   double precision, parameter :: DEGREES_TO_RADIANS = PI / 180.d0
   double precision, parameter :: R_EARTH = 6371000.d0
@@ -40,9 +41,9 @@ module aniso_mantle_model_constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0
   double precision, parameter :: R_UNIT_SPHERE = ONE
   double precision, parameter :: GRAV = 6.6723d-11
+
 ! average density in the full Earth to normalize equation
   double precision, parameter :: RHOAV = 5514.3d0
-
 
 end module aniso_mantle_model_constants
 
@@ -61,14 +62,12 @@ end module aniso_mantle_model_variables
 
 !-------------------
 
-
   subroutine aniso_mantle_model(myrank,r,theta,phi,rho, &
-    c11,c12,c13,c14,c15,c16, &
-    c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+    c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
   use aniso_mantle_model_variables
-  implicit none
 
+  implicit none
 
   integer myrank
 
@@ -80,6 +79,7 @@ end module aniso_mantle_model_variables
   double precision d11,d12,d13,d16,d22,d23,d26,d33,d36,d44,d45,d55,d66
   double precision colat,lon
 
+! uncomment this line to suppress anisotropic mantle models
 !  call exit_MPI(myrank,'anisotropic mantle models not implemented yet')
 
   lon = phi / DEGREES_TO_RADIANS
@@ -101,8 +101,8 @@ end module aniso_mantle_model_variables
         d22,d23,d26,d33,d36,d44,d45,d55,d66,myrank)
 
   use aniso_mantle_model_constants
-  implicit none
 
+  implicit none
 
   integer npar1,ndepth,idep,ipar,itheta,ilon,icz0,nx0,ny0,nz0,&
           ict0,ict1,icp0,icp1,icz1,myrank
@@ -164,14 +164,14 @@ end module aniso_mantle_model_variables
   if(icz1 < 1 .or. icz1 > nz0) call exit_MPI(myrank,'icz1 out of range')
 
   do ipar = 1,14
-      anispara(ipar,1,1) = beta(ipar,icz0,ict0,icp0)
-      anispara(ipar,2,1) = beta(ipar,icz1,ict0,icp0)
-      anispara(ipar,1,2) = beta(ipar,icz0,ict0,icp1)
-      anispara(ipar,2,2) = beta(ipar,icz1,ict0,icp1)
-      anispara(ipar,1,3) = beta(ipar,icz0,ict1,icp0)
-      anispara(ipar,2,3) = beta(ipar,icz1,ict1,icp0)
-      anispara(ipar,1,4) = beta(ipar,icz0,ict1,icp1)
-      anispara(ipar,2,4) = beta(ipar,icz1,ict1,icp1)
+    anispara(ipar,1,1) = beta(ipar,icz0,ict0,icp0)
+    anispara(ipar,2,1) = beta(ipar,icz1,ict0,icp0)
+    anispara(ipar,1,2) = beta(ipar,icz0,ict0,icp1)
+    anispara(ipar,2,2) = beta(ipar,icz1,ict0,icp1)
+    anispara(ipar,1,3) = beta(ipar,icz0,ict1,icp0)
+    anispara(ipar,2,3) = beta(ipar,icz1,ict1,icp0)
+    anispara(ipar,1,4) = beta(ipar,icz0,ict1,icp1)
+    anispara(ipar,2,4) = beta(ipar,icz1,ict1,icp1)
   enddo
 
 !
