@@ -1,0 +1,304 @@
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 3
+!          --------------------------------------------------
+!
+!                 Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory - California Institute of Technology
+!        (c) California Institute of Technology September 2002
+!
+!    A signed non-commercial agreement is required to use this program.
+!   Please check http://www.gps.caltech.edu/research/jtromp for details.
+!           Free for non-commercial academic research ONLY.
+!      This program is distributed WITHOUT ANY WARRANTY whatsoever.
+!      Do not redistribute this program without written permission.
+!
+!=====================================================================
+!
+! Copyright September 2002, by the California Institute of Technology.
+! ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
+!
+! Any commercial use must be negotiated with the Office of Technology
+! Transfer at the California Institute of Technology. This software may be
+! subject to U.S. export control laws and regulations. By accepting
+! this software, the user agrees to comply with all applicable U.S. export laws
+! and regulations, including the International Traffic and Arms Regulations,
+! 22 C.F.R. 120-130 and the Export Administration Regulations,
+! 15 C.F.R. 730-744. User has the responsibility to obtain export licenses,
+! or other export authority as may be required before exporting such
+! information to foreign countries or providing access to foreign nationals.
+! In no event shall the California Institute of Technology be liable to any
+! party for direct, indirect, special, incidental or consequential damages,
+! including lost profits, arising out of the use of this software and its
+! documentation, even if the California Institute of Technology has been
+! advised of the possibility of such damage.
+!
+! The California Institute of Technology specifically disclaims any
+! warranties, including the implied warranties or merchantability and fitness
+! for a particular purpose. The software and documentation provided hereunder
+! is on an "as is" basis, and the California Institute of Technology has no
+! obligations to provide maintenance, support, updates, enhancements or
+! modifications.
+!
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++ NOTES ON USING THE SPECFEM3D version 3.3 PACKAGE +++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Jeroen Tromp & Dimitri Komatitsch, September 2002
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  If you use this code for your own research, please send an email
+  to Jeroen Tromp <jtromp@gps.caltech.edu> for information, and cite:
+
+  @ARTICLE{KoRiTr02,
+  author={D. Komatitsch and J. Ritsema and J. Tromp},
+  year=2002,
+  title={The Spectral-Element Method, {B}eowulf Computing, and Global Seismology},
+  journal={Science},
+  volume=99999,
+  number=99999,
+  pages={99998-99999}}
+
+  @ARTICLE{KoTr02a,
+  author={D. Komatitsch and J. Tromp},
+  year=2002,
+  title={Spectral-Element Simulations of Global Seismic Wave Propagation{-I. V}alidation},
+  journal={Geophys. J. Int.},
+  volume=149,
+  pages={390-412}}
+
+  @ARTICLE{KoTr02b,
+  author={D. Komatitsch and J. Tromp},
+  year=2002,
+  title={Spectral-Element Simulations of Global Seismic Wave Propagation{-II. 3-D} Models, Oceans, Rotation, and Self-Gravitation},
+  journal={Geophys. J. Int.},
+  volume=150,
+  pages={303-318}}
+
+  @ARTICLE{KoTr99,
+  author={D. Komatitsch and J. Tromp},
+  year=1999,
+  title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
+  journal={Geophys. J. Int.},
+  volume=139,
+  pages={806-822}}
+
+  If you use 3-D model S20RTS, please cite
+
+  @ARTICLE{RiVa00,
+  author={J. Ritsema and H. J. {Van Heijst}},
+  year=2000,
+  title={Seismic imaging of structural heterogeneity in {E}arth's mantle: Evidence for large-scale mantle flow},
+  journal={Science Progress},
+  volume=83,
+  pages={243-259}}
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+PARAMETERS TO CHANGE ON DIFFERENT MACHINES:
+
+- All the codes in the package are written in Fortran90, and also
+    conform strictly to the Fortran95 standard. They do not use any
+    obsolescent or obsolete feature of f77.
+- Use the appropriate compiler flags in the Makefile.
+    Set F90, MPIF90, FLAGS_NO_CHECK, FLAGS_CHECK and MPI_FLAGS.
+- In constants.h set FIX_UNDERFLOW_PROBLEM flag
+    (need to fix underflow trapping on some machines, e.g., Pentium processors)
+- In constants.h set SAVE_AVS_DX_MESH_FILES flag (for AVS users, www.avs.com,
+    or OpenDX users, www.opendx.org). Do not use if you do not have AVS
+    or OpenDX, because this option creates large files.
+- In constants.h set LOCAL_PATH_IS_ALSO_GLOBAL flag.
+    On clusters (e.g., Beowulfs), set to .false. in most cases.
+    In such a case, also customize global path to local
+    files in create_serial_name_database.f90 ("20 format ...").
+    This flag is used only when one checks the mesh with the serial codes
+    ("xcheck_buffers_1D" etc.), ignore it if you do not plan to use them
+- In DATA/Par_file set LOCAL_PATH (this is where databases are written and read,
+    and also where seismograms will be stored). The seismogram files will be
+    named *.semd (for Spectral Element Method - Displacement)
+- In precision.h choose single versus double precision (double precision
+    doubles the memory requirements for the solver but may be slightly faster).
+    Always use single precision except if you have a very large machine
+    with a lot of memory.
+- Also, in constants.h choose the CUSTOM_REAL size depending on
+    single or double precision
+- When running on an SGI, add "setenv TRAP_FPE OFF" to your .cshrc file
+    *before* compiling, in order to turn underflow trapping off
+- When running on an IBM (e.g., an SP or a Power4), one needs to change
+    all the filename extensions from *.f90 to *.f ; a script is provided
+    in DATA/util/change_names_IBM to do that.
+
+DIRECTORIES:
+
+- make subdirectories obj and OUTPUT_FILES in the directory
+    with the source code (also done automatically by the go_mesher script below)
+
+SCRIPTS:
+
+- go_mesher runs the mesher
+    (need to set the correct mpirun command at the end of the script)
+    (if running on a Beowulf, the script assumes that the nodes are named n001,
+     n002 etc. If it is not the case, change the tr -d 'n' line in the script)
+- go_solver runs the solver
+    (need to set the correct mpirun command at the end of the script)
+- runall compiles and runs both mesher and solver
+
+MESHER (meshfem3D):
+
+- The mesher meshfem3D uses NPROC_XI * NPROC_ETA * 6 nodes
+    (corresponding to NCHUNKS = 6 in constants.h)
+    (The globe consists of 6 chunks, and each chunk is divided in
+     NPROC_XI * NPROC_ETA slices)
+- For topological reasons related to the mesh, NPROC_XI and NPROC_ETA
+    must be equal. The option of having different values for NPROC_XI and
+    NPROC_ETA is available only when NCHUNKS = 1 is used (1/6th of the sphere).
+- Note that NPROC_XI = 1 and/or NPROC_ETA = 1 is valid. Therefore the
+    smallest number of nodes needed to run the code is 6
+    (6 chunks * 1 * 1). If you have less than 6 nodes on your machine,
+    you can start multiple MPI processes on each node to emulate
+    a larger machine.
+- NEX_XI and NEX_ETA need to be 16 * multiple of NPROC_XI and NPROC_ETA,
+    respectively. So for NPROC_XI = NPROC_ETA = 1 NEX_XI = NEX_ETA = 16, 32, 48, ...,
+    384 and 400 work, for  NPROC_XI = NPROC_ETA = 2 NEX_XI = NEX_ETA = 32, 64, 96, ...,
+    352 and 384 work, for NPROC_XI = NPROC_ETA = 3 NEX_XI = NEX_ETA = 48, 96, 144,
+    192, 240, 288, 336 and 384 work, for NPROC_XI = NPROC_ETA = 4 NEX_XI = NEX_ETA = 64,
+    128, 192, 256, 320 and 384, for NPROC_XI = NPROC_ETA = 5 NEX_XI = NEX_ETA = 80, 160,
+    240, 320 and 400, and for NPROC_XI = NPROC_ETA = 6 NEX_XI = NEX_ETA = 96, 192, 288
+    and 384.
+- In the DATA/Par_file set the following flags:
+
+  OCEANS              ! to incorporate the effects of the oceans (cheap)
+  ELLIPTICITY         ! to incorporate ellipticity
+  TOPOGRAPHY          ! to add topography and bathymetry
+  THREE_D             ! to add 3-D model (currently RTS20, makes mesher slower)
+  GRAVITY             ! to incorporate gravity (Cowling, cheap)
+  ROTATION            ! to incorporate Coriolis effects (cheap)
+  TRANSVERSE_ISOTROPY ! to use transversely isotropic PREM (fairly cheap)
+  CRUSTAL             ! to incorporate crust2.0
+  ONE_CRUST           ! to use a one layer crust in PREM
+  ATTENUATION         ! to include PREM attenuation (fairly expensive)
+
+- In constants.h choose the appropriate radii (PREM or IASPEI)
+- In constants.h choose the resolution of the topography/bathymetry file
+  (ETOPO-2, resolution 2 minutes, or ETOPO-5, resolution 5 minutes);
+  ETOPO-2 is more precise but uses a lot more memory in the mesher.
+- Compile the mesher ("make meshfem3D") and run it with the go_mesher script
+- Mesher output is provided in the OUTPUT_FILES directory in output_mesher.txt
+    (output can be directed to the screen instead by uncommenting a line
+     in constants.h:
+       ! uncomment this to write messages to the screen
+       ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT )
+- For a given model, set of nodes and set of parameters in DATA/Par_file,
+    one only needs to run the mesher once and for all, even if one wants
+    to run several simulations with different sources and/or receivers
+    (the source and receiver information is used in the solver only)
+- Some useful statistics about the mesh created are saved in the parameter file
+    for the solver, type "more OUTPUT_FILES/values_from_mesher.h" to see them.
+
+CHECKING THE MPI BUFFERS (optional, after running the mesher):
+
+- Use the four serial codes check_buffers_1D, check_buffers_2D,
+    check_buffers_faces_chunks and check_buffers_corners_chunks
+    to check all the MPI buffers generated by the mesher
+    (e.g., "make check_buffers_1D" and then "xcheck_buffers_1D")
+
+CHECKING THE MESH (optional, after running the mesher):
+
+- Use the serial code check_mesh_quality_AVS_DX
+    ("make check_mesh_quality_AVS_DX" and then "xcheck_mesh_quality_AVS_DX")
+    to generate an AVS output file ("AVS_meshquality.inp" in AVS UCD format)
+    or an OpenDX output file ("DX_meshquality.dx")
+    that can be used to investigate mesh quality, e.g., skewness of elements,
+    and a Gnuplot histogram ("mesh_quality_histogram.txt") that can
+    be plotted with gnuplot ("gnuplot plot_mesh_quality_histogram.gnu")
+
+- Use the serial code combine_AVS_DX
+    ("make combine_AVS_DX" and then "xcombine_AVS_DX")
+    to generate AVS output files (in AVS UCD format) or OpenDX output files
+    showing the mesh, the MPI partition (slices), the 6 chunks, the
+    source and receiver location etc. Use the AVS UCD files
+    AVS_continent_boundaries.inp and AVS_plate_boundaries.inp,
+    or the OpenDX files DX_continent_boundaries.dx and DX_plate_boundaries.dx
+    for reference.
+
+SOLVER (specfem3D):
+
+- For reasons of speed, the solver uses static memory allocation. Therefore it
+    needs to be recompiled ("make clean" and "make specfem3D") every time
+    one reruns the mesher. The mesher uses dynamic allocation only,
+    and does not need to be recompiled.
+- To compile the solver, one needs a file called
+    "OUTPUT_FILES/values_from_mesher.h" which contains the right parameters
+    describing the static size of the arrays.
+    This file is created by the mesher (meshfem3D.f90).
+    This means that one needs to run the mesher before being able to compile
+    the solver. For people who want to compile the mesher and the solver at
+    the same time, a small program called create_header_file.f90
+    is provided, which can be used to create "OUTPUT_FILES/values_from_mesher.h"
+    before running the mesher (type "make create_header_file" to compile it
+    and "xcreate_header_file" to run it). This is useful for people who want
+    to compile all the codes first and then submit the mesher and the solver
+    to a batch management system.
+- The solver also needs NPROC_XI * NPROC_ETA * 6 nodes to run
+- The solver needs the DATA/CMTSOLUTION file for the source and the
+    DATA/STATIONS file for the list of stations (CMTSOLUTION files may be
+    obtained directly from the Harvard CMT web page, www.seismology.harvard.edu)
+- Set the "time shift" in the CMTSOLUTION file to 0.0
+    (the solver will not run otherwise)
+- To simulate a delta source-time function, set "half duration" in
+    the CMTSOLUTION file to 0.0. If "half duration" is not zero,
+    the code will use a Gaussian (not too different from triangular)
+    source-time function with half-width "half duration". We prefer to run
+    the solver with "half duration" set to zero and convolve after the fact,
+    because this way it's easy to use a variety of source-time functions.
+    Use the serial code convolve_source_timefunction.f90 and the script
+    convolve_source_timefunction.csh for this purpose. (Set the parameter "hdur"
+    in convolve_source_timefunction.csh to the desired half-duration.)
+    (type "make convolve_source_timefunction" to compile the code).
+- To simulate multiple events, set the parameter NSOURCES in the DATA/Par_file
+    to the desired number (greater than 0 and less than 1000). Provide a
+    corresponding number of CMTSOLUTION files DATA/CMTSOLUTION1, DATA/CMTSOLUTION2, ...
+    The first file, DATA/CMTSOLUTION1, should have a zero "time shift", and subsequent
+    files, DATA/CMTSOLUTION2, ..., should have non-negative "time shift". Each event
+    can have it's own half duration, latitude, longitude, depth and moment tensor.
+    This feature can also be used to mimick the directivity associated with a
+    finite source.
+- Solver output is provided in the OUTPUT_FILES directory in output_solver.txt
+    (output can be directed to the screen instead by uncommenting a line
+     in constants.h:
+       ! uncomment this to write messages to the screen
+       ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT )
+- If you have a fast machine,
+  set ITAFF_TIME_STEPS to a relatively high value (e.g. 100 or even 1000)
+  to avoid writing to the output text files too often
+- On clusters (e.g., Beowulfs) the seismogram files are distributed on the
+    local disks (path LOCAL_PATH in the DATA/Par_file) and need to be gathered
+    at the end of the simulation
+- For the same model, rerun the solver for different events by changing the
+    CMTSOLUTION file, or for different stations by changing the STATIONS file.
+    There is no need to rerun the mesher. It is best to include as many stations
+    as possible, since this does not add to the cost of the simulation.
+
+MOVIE OF THE RESULTS:
+
+- Use create_movie_AVS_DX.f90 ("make create_movie_AVS_DX") to create
+    a movie of surface displacement (radial component). The movie can
+    be saved in OpenDX or AVS format. Set parameters SAVE_AVS_DX_MOVIE and
+    NMOVIE in constants.h . Remember to use a DATA/CMTSOLUTION source file
+    with a half-duration hdur > 0, otherwise you will get a movie
+    corresponding to a Heaviside source, with a lot of high-frequency noise.
+
+
+Note: The Gauss-Lobatto subroutines in gll_library.f90 are based in part on
+      software libraries from M.I.T., Department of Mechanical Engineering.
+
+Note: Subroutines from "Numerical Recipes: The Art of Scientific Computing"
+      by W. H. Press et al., Cambridge University Press, are used in
+      numerical_recipes.f90. The user must acquire an official
+      Numerical Recipes license to run them.
+
+Note: OpenDX is open-source based on IBM Data Explorer, www.opendx.org
+      AVS is a trademark of Advanced Visualization Systems, www.avs.com
+
