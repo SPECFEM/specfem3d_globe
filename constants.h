@@ -183,6 +183,9 @@
 ! number of iterations in the time stepping scheme
   integer, parameter :: NITER = 2
 
+! flag to exclude elements that are too far from target in source detection
+  logical, parameter :: USE_DISTANCE_CRITERION = .true.
+
 ! flag to display detailed information about location of stations
   logical, parameter :: DISPLAY_DETAILS_STATIONS = .false.
 
@@ -380,7 +383,7 @@
   double precision, parameter :: GAUSSALPHA = 0.d0,GAUSSBETA = 0.d0
 
 ! number of iterations to solve the non linear system for xi and eta
-  integer, parameter :: NUM_ITER = 5
+  integer, parameter :: NUM_ITER = 4
 
 ! number of hours per day for rotation rate of the Earth
   double precision, parameter :: HOURS_PER_DAY = 24.d0
