@@ -309,7 +309,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_faces_vector,buffer_received_faces_vector
 
-! PvK: Flag indicating whether topology and coordinates need to be output 
+! PvK: Flag indicating whether topology and coordinates need to be output
 ! for first movie file only
   logical ifirst_movie
   integer IOUT_COORD,IOUT_TOPOLOGY
@@ -3712,11 +3712,11 @@
     enddo
 
 ! write number of elements and points
-! PvK 
+! PvK
     if (ifirst_movie) then
       write(IOUT_COORD) itotal_poin
       write(IOUT_TOPOLOGY) nspec_crust_mantle
-    endif   
+    endif
 
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
@@ -3821,7 +3821,7 @@
                             real(veloc_crust_mantle(3,ipoin)*scale_veloc), &
                             real(div),real(curl_x),real(curl_y),real(curl_z)
               if (ifirst_movie) write(IOUT_COORD) real(xcoord*R_EARTH),real(ycoord*R_EARTH),real(zcoord*R_EARTH)
-! PvK 
+! PvK
               mask_poin(ipoin) = .true.
             endif
           enddo
@@ -3835,8 +3835,8 @@
       do ispec=1,nspec_crust_mantle
          write(IOUT_TOPOLOGY) (((indirect_poin(ibool_crust_mantle(i,j,k,ispec)),i=1,NGLLX),j=1,NGLLY),k=1,NGLLZ)
       enddo
-    endif 
-   
+    endif
+
 ! PvK 071803 Close binary files
     close(IOUT)
     if (ifirst_movie) then
@@ -3885,7 +3885,7 @@ if (ifirst_movie) then
     enddo
 
 ! write number of elements and points
-! PvK  
+! PvK
 !   write(IOUT,*) itotal_poin
 !   write(IOUT,*) nspec_outer_core
     if (ifirst_movie) then
@@ -4061,7 +4061,7 @@ if (ifirst_movie) then
        open(unit=IOUT_COORD,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
     endif
 
-! PvK 
+! PvK
 
     allocate(mask_poin(NGLOB_INNER_CORE))
     allocate(indirect_poin(NGLOB_INNER_CORE))
@@ -4090,7 +4090,7 @@ if (ifirst_movie) then
     enddo
 
 ! write number of elements and points
-! PvK 
+! PvK
 !   write(IOUT,*) itotal_poin
 !   write(IOUT,*) itotal_spec
     if (ifirst_movie) then

@@ -16,7 +16,7 @@
 !=====================================================================
 
 !  This portion of the SPECFEM3D Code was written by:
-!  Brian Savage while at 
+!  Brian Savage while at
 !     California Institute of Technology
 !     Department of Terrestrial Magnetism / Carnegie Institute of Washington
 !
@@ -32,7 +32,7 @@
 !      Velocity dispersion due to anelasticity; implications for seismology and mantle composition
 !      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 !
-!   The methodology can be found in 
+!   The methodology can be found in
 !   Savage and Tromp, 2005, unpublished
 !
 
@@ -670,7 +670,7 @@ END SUBROUTINE svdcmp_dp
 
 module attenuation_simplex_variables
   implicit none
-  
+
   ! nf    = Number of Frequencies
   ! nsls  = Number of Standard Linear Solids
   integer  nf, nsls
@@ -682,7 +682,7 @@ module attenuation_simplex_variables
   ! iQ    = 1/Q
   real(8)  Q, iQ
 
-  ! tau_s = Tau_sigma defined by the frequency range and 
+  ! tau_s = Tau_sigma defined by the frequency range and
   !             number of standard linear solids
   real(8), allocatable, dimension(:) :: tau_s
 
@@ -718,19 +718,19 @@ subroutine attenuation_simplex(myrank, t1, t2, n, Q_real, omega_not, tau_s, tau_
   ! Determine the min and max frequencies
   f1 = 1.0d0 / t1
   f2 = 1.0d0 / t2
-  
+
   ! Determine the exponents of the frequencies
   exp1 = log10(f1);
   exp2 = log10(f2);
-  
+
   if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
      call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
 
   ! Determine the Source frequency
   omega_not =  1.0e+03 * 10.0d0**(0.5 * (log10(f1) + log10(f2)))
-  
-  ! Determine the Frequencies at which to compare solutions 
+
+  ! Determine the Frequencies at which to compare solutions
   !   The frequencies should be equally spaced in log10 frequency
   do i = 1,nf
      f(i) = exp1 + ((i-1)*1.0d0 * (exp2-exp1) / ((nf-1)*1.0d0))
@@ -742,9 +742,9 @@ subroutine attenuation_simplex(myrank, t1, t2, n, Q_real, omega_not, tau_s, tau_
      tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexp))
   end do
 
-  ! Shove the paramters into the module 
+  ! Shove the paramters into the module
   call attenuation_simplex_setup(nf,n,f,Q_real,tau_s)
-  
+
   ! Set the Tau_epsilon (tau_e) to an initial value
   ! at omega*tau = 1; tan_delta = 1/Q = (tau_e - tau_s)/(2 * sqrt(tau e*tau_s))
   !    if we assume tau_e =~ tau_s
@@ -752,7 +752,7 @@ subroutine attenuation_simplex(myrank, t1, t2, n, Q_real, omega_not, tau_s, tau_
   do i = 1,n
      tau_e(i) = tau_s(i) + (tau_s(i) * 2.0d0/Q_real)
   end do
-  
+
   ! Run a simplex search to determine the optimum values of tau_e
   call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err)
   if(err > 0) then
@@ -762,7 +762,7 @@ subroutine attenuation_simplex(myrank, t1, t2, n, Q_real, omega_not, tau_s, tau_
      write(*,*)'    Aborting program'
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
   end if
-  
+
 end subroutine attenuation_simplex
 
 !!!!!!!
@@ -772,7 +772,7 @@ end subroutine attenuation_simplex
 subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in)
   use attenuation_simplex_variables
   implicit none
-  
+
   integer nf_in, nsls_in
   real(8) Q_in
   real(8), dimension(nf_in)   :: f_in
@@ -792,14 +792,14 @@ end subroutine attenuation_simplex_setup
 
 !!!!!!!!
 ! subroutine attenuation_maxwell
-!   - Computes the Moduli (Maxwell Solid) for a series of 
+!   - Computes the Moduli (Maxwell Solid) for a series of
 !         Standard Linear Solids
 !   - Computes M1 and M2 parameters after Dahlen and Tromp pp.203
 !         here called B and A after Liu et al. 1976
 !   - Another formulation uses Kelvin-Voigt Solids and computes
 !         Compliences J1 and J2 after Dahlen and Tromp pp.203
 !
-!   Input 
+!   Input
 !     nf    = Number of Frequencies
 !     nsls  = Number of Standard Linear Solids
 !     f     = Frequencies (in log10 of frequencies)
@@ -852,42 +852,42 @@ end subroutine attenuation_maxwell
 
 !!!!!!!!
 ! subroutine attenuation_eval
-!    - Computes the misfit from a set of relaxation paramters 
+!    - Computes the misfit from a set of relaxation paramters
 !          given a set of frequencies and target attenuation
 !    - Evaluates only at the given frequencies
 !    - Evaluation is done with an L2 norm
 !
 !    Input
 !      Xin = Tau_epsilon, Strain Relaxation Time
-!                Note: Tau_sigma the Stress Relaxation Time is loaded 
+!                Note: Tau_sigma the Stress Relaxation Time is loaded
 !                      with attenuation_simplex_setup and stored in
 !                      attenuation_simplex_variables
-! 
+!
 !    Xi = Sum_i^N sqrt [ (1/Qc_i - 1/Qt_i)^2 / 1/Qt_i^2 ]
-!    
+!
 !     where Qc_i is the computed attenuation at a specific frequency
 !           Qt_i is the desired attenuaiton at that frequency
-!    
+!
 !    Uses attenuation_simplex_variables to store constant values
 !
 !    See atteunation_simplex_setup
-!      
+!
 real(8) function attenuation_eval(Xin)
   use attenuation_simplex_variables
   implicit none
    ! Input
   real(8), dimension(nsls) :: Xin
   real(8), dimension(nsls) :: tau_e
-  
+
   real(8), dimension(nf)   :: A, B, tan_delta
-  
+
   integer i
   real(8) xi, iQ2
 
   tau_e = Xin
-  
+
   call attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
-  
+
   tan_delta = B / A
 
   attenuation_eval = 0.0d0
@@ -915,20 +915,20 @@ end function attenuation_eval
 !            Output: Mimimized Value
 !     n    = number of variables
 !     itercount = Input/Output
-!                 Input:  maximum number of iterations 
+!                 Input:  maximum number of iterations
 !                         if < 0 default is used (200 * n)
 !                 Output: total number of iterations on output
 !     tolf      = Input/Output
 !                 Input:  minimium tolerance of the function funk(x)
 !                 Output: minimium value of funk(x)(i.e. "a" solution)
 !     prnt      = Input
-!                 3 => report every iteration 
+!                 3 => report every iteration
 !                 4 => report every iteration, total simplex
 !     err       = Output
 !                 0 => Normal exeecution, converged within desired range
 !                 1 => Function Evaluation exceeded limit
 !                 2 => Iterations exceeded limit
-!     
+!
 !     See Matlab fminsearch
 !
 subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
@@ -952,7 +952,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
   integer, parameter :: contract_outside = 4
   integer, parameter :: contract_inside  = 5
   integer, parameter :: shrink           = 6
-  
+
   integer maxiter, maxfun
   integer func_evals
   real(8) tolx
@@ -974,12 +974,12 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
 
   if(itercount > 0) then
      maxiter = itercount
-  else 
+  else
      maxiter = 200 * n
   end if
   itercount = 0
   maxfun  = 200 * n
-  
+
   if(tolf > 0.0d0) then
      tolx = 1.0e-4
   else
@@ -992,12 +992,12 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
   xin    = x
   v(:,:) = 0.0d0
   fv(:)  = 0.0d0
-  
+
   v(:,1) = xin
   x      = xin
-  
+
   fv(1) = funk(xin)
-  
+
   usual_delta = 0.05
   zero_term_delta = 0.00025
 
@@ -1012,14 +1012,14 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
      x(:) = y
      fv(j+1) = funk(x)
   end do
-  
+
   call qsort(fv,n+1,place)
 
   do i = 1,n+1
      vtmp(:,i) = v(:,place(i))
   end do
   v = vtmp
-  
+
   how = initial
   itercount = 1
   func_evals = n+1
@@ -1034,7 +1034,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
      write(*,*)'evals: ',func_evals
   end if
 
-  do while (func_evals < maxfun .AND. itercount < maxiter) 
+  do while (func_evals < maxfun .AND. itercount < maxiter)
 
 !     if(max(max(abs(v(:,2:n+1) - v(:,1)))) .LE. tolx .AND. &
 !          max(abs(fv(1) - fv(2:n+1))) .LE. tolf) then
@@ -1044,7 +1044,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
         goto 666
      end if
      how = none
-     
+
      ! xbar = average of the n (NOT n+1) best points
      !     xbar = sum(v(:,1:n), 2)/n
      xbar(:) = 0.0d0
@@ -1069,26 +1069,26 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
            fv(n+1) = fxe
            how = expand
         else
-           v(:,n+1) = xr 
+           v(:,n+1) = xr
            fv(n+1) = fxr
            how = reflect
         end if
      else ! fv(:,1) <= fxr
-        if (fxr < fv(n)) then 
-           v(:,n+1) = xr 
+        if (fxr < fv(n)) then
+           v(:,n+1) = xr
            fv(n+1) = fxr
            how = reflect
-        else ! fxr >= fv(:,n) 
+        else ! fxr >= fv(:,n)
            ! Perform contraction
            if (fxr < fv(n+1)) then
               ! Perform an outside contraction
               xc = (1 + psi*rho)*xbar - psi*rho*v(:,n+1)
-              x(:) = xc 
+              x(:) = xc
               fxc = funk(x)
               func_evals = func_evals+1
-              
+
               if (fxc <= fxr) then
-                 v(:,n+1) = xc 
+                 v(:,n+1) = xc
                  fv(n+1) = fxc
                  how = contract_outside
               else
@@ -1098,7 +1098,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
            else
               ! Perform an inside contraction
               xcc = (1-psi)*xbar + psi*v(:,n+1)
-              x(:) = xcc 
+              x(:) = xcc
               fxcc = funk(x)
               func_evals = func_evals+1
 
@@ -1114,7 +1114,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
            if (how .EQ. shrink) then
               do j=2,n+1
                  v(:,j)=v(:,1)+sigma*(v(:,j) - v(:,1))
-                 x(:) = v(:,j) 
+                 x(:) = v(:,j)
                  fv(j) = funk(x)
               end do
               func_evals = func_evals + n
@@ -1127,7 +1127,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
         vtmp(:,i) = v(:,place(i))
      end do
      v = vtmp
-     
+
      itercount = itercount + 1
      if (prnt == 3) then
         write(*,*)itercount, func_evals, fv(1), how
@@ -1166,7 +1166,7 @@ end subroutine fminsearch
 !             dimension(n)
 !      n  = Input
 !             Length of fv
-!      
+!
 !      Returns:
 !         Xi = max( || fv(1)- fv(i) || ); i=2:n
 !
@@ -1177,7 +1177,7 @@ real(8) function max_value(fv,n)
 
   integer i
   real(8) m, z
-  
+
   m = 0.0d0
   do i = 2,n
      z = abs(fv(1) - fv(i))
@@ -1198,7 +1198,7 @@ end function max_value
 !            Simplex Verticies
 !            dimension(n, n+1)
 !     n  = Pseudo Length of n
-!     
+!
 !     Returns:
 !       Xi = max( max( || v(:,1) - v(:,i) || ) ) ; i=2:n+1
 !
@@ -1209,7 +1209,7 @@ real(8) function max_size_simplex(v,n)
 
   integer i,j
   real(8) m, z
-  
+
   m = 0.0d0
   do i = 1,n
      do j = 2,n+1
@@ -1219,7 +1219,7 @@ real(8) function max_size_simplex(v,n)
         end if
      end do
   end do
-  
+
   max_size_simplex = m
 
 end function max_size_simplex
@@ -1249,7 +1249,7 @@ subroutine qsort(X,n,I)
   integer n
   real(8) X(n)
   integer I(n)
-  
+
   integer j,k
   real(8) rtmp
   integer itmp
@@ -1264,7 +1264,7 @@ subroutine qsort(X,n,I)
            rtmp   = X(k)
            X(k)   = X(k+1)
            X(k+1) = rtmp
-           
+
            itmp   = I(k)
            I(k)   = I(k+1)
            I(k+1) = itmp

@@ -62,9 +62,6 @@
 
   character(len=150) LOCAL_PATH,MODEL
 
-! first 34 characters of each line in the file are a comment
-  character(len=34) junk
-
 ! local variables
   integer ios,icounter,isource,idummy,NEX_MAX
 
@@ -74,21 +71,14 @@
 
   open(unit=IIN,file='DATA/Par_file',status='old')
 
-! ignore header
-  do idummy=1,11
-    read(IIN,*)
-  enddo
-
-  read(IIN,1) junk,NCHUNKS
+  call read_value_integer(NCHUNKS)
   if(NCHUNKS /= 1 .and. NCHUNKS /= 2 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) stop 'NCHUNKS must be either 1, 2, 3 or 6'
 
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,2) junk,ANGULAR_WIDTH_XI_IN_DEGREES
-  read(IIN,2) junk,ANGULAR_WIDTH_ETA_IN_DEGREES
-  read(IIN,2) junk,CENTER_LATITUDE_IN_DEGREES
-  read(IIN,2) junk,CENTER_LONGITUDE_IN_DEGREES
-  read(IIN,2) junk,GAMMA_ROTATION_AZIMUTH
+  call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES)
+  call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES)
+  call read_value_double_precision(CENTER_LATITUDE_IN_DEGREES)
+  call read_value_double_precision(CENTER_LONGITUDE_IN_DEGREES)
+  call read_value_double_precision(GAMMA_ROTATION_AZIMUTH)
 
 ! this MUST be 90 degrees for two chunks or more to match geometrically
   if(NCHUNKS > 1 .and. ANGULAR_WIDTH_XI_IN_DEGREES /= 90.d0) &
@@ -109,16 +99,10 @@
   endif
 
 ! number of elements at the surface along the two sides of the first chunk
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,1) junk,NEX_XI
-  read(IIN,1) junk,NEX_ETA
-
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,1) junk,NPROC_XI
-  read(IIN,1) junk,NPROC_ETA
+  call read_value_integer(NEX_XI)
+  call read_value_integer(NEX_ETA)
+  call read_value_integer(NPROC_XI)
+  call read_value_integer(NPROC_ETA)
 
 ! set time step, radial distribution of elements, and attenuation period range
 ! right distribution is determined based upon maximum value of NEX
@@ -351,10 +335,7 @@
   endif
 
 ! define the velocity model
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,4) junk,MODEL
+  call read_value_string(MODEL)
 
   if(MODEL == 'isotropic_prem') then
     IASPEI = .false.
@@ -414,18 +395,13 @@
     stop 'model not implemented, edit read_parameter_file.f90 and recompile'
   endif
 
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,3) junk,OCEANS
-  read(IIN,3) junk,ELLIPTICITY
-  read(IIN,3) junk,TOPOGRAPHY
-  read(IIN,3) junk,GRAVITY
-  read(IIN,3) junk,ROTATION
-  read(IIN,3) junk,ATTENUATION
-
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,3) junk,ABSORBING_CONDITIONS
+  call read_value_logical(OCEANS)
+  call read_value_logical(ELLIPTICITY)
+  call read_value_logical(TOPOGRAPHY)
+  call read_value_logical(GRAVITY)
+  call read_value_logical(ROTATION)
+  call read_value_logical(ATTENUATION)
+  call read_value_logical(ABSORBING_CONDITIONS)
 
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 6) stop 'cannot have absorbing conditions in the full Earth'
 
@@ -494,9 +470,7 @@
 ! are matched (150 km below the ICB is optimal)
   R_CENTRAL_CUBE = (RICB - 150000.d0) / R_EARTH
 
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,2) junk,RECORD_LENGTH_IN_MINUTES
+  call read_value_double_precision(RECORD_LENGTH_IN_MINUTES)
 
 ! compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
@@ -516,11 +490,9 @@
   NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
   if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
 
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,3) junk,MOVIE_SURFACE
-  read(IIN,3) junk,MOVIE_VOLUME
-  read(IIN,1) junk,NTSTEP_BETWEEN_FRAMES
+  call read_value_logical(MOVIE_SURFACE)
+  call read_value_logical(MOVIE_VOLUME)
+  call read_value_integer(NTSTEP_BETWEEN_FRAMES)
 
 ! compute the minimum value of hdur in CMTSOLUTION file
   open(unit=1,file='DATA/CMTSOLUTION',status='old')
@@ -549,39 +521,14 @@
   if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval_hdur < TINYVAL) &
     stop 'hdur too small for movie creation, movies do not make sense for Heaviside source'
 
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,3) junk,SAVE_AVS_DX_MESH_FILES
-
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,1) junk,NUMBER_OF_RUNS
-  read(IIN,1) junk,NUMBER_OF_THIS_RUN
-
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,4) junk,LOCAL_PATH
-
-! ignore name of machine file (used by scripts but not by mesher nor solver)
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,*)
-
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,1) junk,NTSTEP_BETWEEN_OUTPUT_INFO
-
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,1) junk,NTSTEP_BETWEEN_OUTPUT_SEISMOS
-
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,3) junk,RECEIVERS_CAN_BE_BURIED
-
-  read(IIN,*)
-  read(IIN,*)
-  read(IIN,3) junk,PRINT_SOURCE_TIME_FUNCTION
+  call read_value_logical(SAVE_AVS_DX_MESH_FILES)
+  call read_value_integer(NUMBER_OF_RUNS)
+  call read_value_integer(NUMBER_OF_THIS_RUN)
+  call read_value_string(LOCAL_PATH)
+  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO)
+  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+  call read_value_logical(RECEIVERS_CAN_BE_BURIED)
+  call read_value_logical(PRINT_SOURCE_TIME_FUNCTION)
 
 ! close parameter file
   close(IIN)
@@ -632,12 +579,6 @@
 
 ! check that IASPEI is isotropic
   if(IASPEI .and. TRANSVERSE_ISOTROPY) stop 'IASPEI is currently isotropic'
-
-! formats
- 1 format(a,i20)
- 2 format(a,f20.8)
- 3 format(a,l20)
- 4 format(a,a)
 
   end subroutine read_parameter_file
 
