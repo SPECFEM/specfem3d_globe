@@ -17,7 +17,7 @@ NPROC_XI                 = 15
 NPROC_ETA                = 15
 
 ! time step in seconds
-DT                       = 0.26
+DT                       = 0.20
 
 ! total number of time steps
 NSTEP                    = 10000
