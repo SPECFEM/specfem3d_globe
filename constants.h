@@ -217,6 +217,10 @@
 ! flag to print the source time function and spectrum
   logical, parameter :: PRINT_SOURCE_TIME_FUNCTION = .false.
 
+! maximum length of station and network name for receivers
+  integer, parameter :: MAX_LENGTH_STATION_NAME = 32
+  integer, parameter :: MAX_LENGTH_NETWORK_NAME = 8
+
 !
 !--- debugging flags
 !
