@@ -1,24 +1,18 @@
-#
-# This is the parameter file
-# Put variable names first and actual value after 34th column
-#
-#-------------------------------->
-#
 
 # number of chunks (1,2,3 or 6)
-NCHUNKS                         = 6
+NCHUNKS        = 6
 
 # angular width of the first chunk (not used if full sphere with six chunks)
-ANGULAR_WIDTH_XI_IN_DEGREES     = 90.d0
-ANGULAR_WIDTH_ETA_IN_DEGREES    = 90.d0
-CENTER_LATITUDE_IN_DEGREES      = 40.d0
-CENTER_LONGITUDE_IN_DEGREES     = 10.d0
-GAMMA_ROTATION_AZIMUTH          = 20.d0
+ANGULAR_WIDTH_XI_IN_DEGREES   = 90.d0      # angular size of a chunk
+ANGULAR_WIDTH_ETA_IN_DEGREES  = 90.d0
+CENTER_LATITUDE_IN_DEGREES    = 40.d0
+CENTER_LONGITUDE_IN_DEGREES   = 10.d0
+GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be 16 * multiple of NPROC below)
-NEX_XI                          = 160
-NEX_ETA                         = 160
+NEX_XI             = 160
+NEX_ETA            = 160
 
 # number of MPI processors along the two sides of the first chunk
 NPROC_XI                        = 5
