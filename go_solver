@@ -42,7 +42,7 @@ echo mesh files will be read from directory $my_local_path
 echo " "
 
 #### use this on Beowulf
-mpirun -nolocal -machinefile $machine_file -np $numprocessors $PWD/xspecfem3D > OUTPUT_FILES/output_xspecfem3D.txt &
+mpirun -nolocal -machinefile $machine_file -np $numprocessors $PWD/xspecfem3D 
 
 #### use this on SGI
 #  mpirun -np $numprocessors xspecfem3D
