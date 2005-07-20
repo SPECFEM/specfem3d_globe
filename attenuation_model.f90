@@ -15,7 +15,7 @@
 !
 !=====================================================================
 
-!  This portion of the SPECFEM3D Code was written by:
+!  This portion of the SPECFEM3D Code was written in 2004-2005 by:
 !  Brian Savage while at
 !     California Institute of Technology
 !     Department of Terrestrial Magnetism / Carnegie Institute of Washington
@@ -23,17 +23,16 @@
 !  <savage13@gps.caltech.edu>
 !  <savage13@dtm.ciw.edu>
 !
-!   It is based upon formulation in the following references:
+!   It is based upon formulations in the following references:
 !
 !   Dahlen and Tromp, 1998
-!      Theoritical Global Seismology
+!   Theoretical Global Seismology
 !
-!   Liu et al. 1976
-!      Velocity dispersion due to anelasticity; implications for seismology and mantle composition
-!      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
+!   Liu et al., 1976
+!   Velocity dispersion due to anelasticity: implications for seismology and mantle composition
+!   Geophys. J. R. Astr. Soc., vol. 47, pp. 41-58
 !
-!   The methodology can be found in
-!   Savage and Tromp, 2005, unpublished
+!   The methodology can be found in Savage and Tromp, 2005, unpublished
 !
 
 module attenuation_model_constants
@@ -231,7 +230,7 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
 !--- check that the correction factor is close to one
   if(scale_factor < 0.9 .or. scale_factor > 1.1) then
      call exit_MPI(myrank,'incorrect correction factor in attenuation model')
-  end if
+  endif
 
 end subroutine attenuation_scale_factor
 
@@ -316,7 +315,7 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
               factor_common(:,i,j,k,ispec)    = fc(:)
               one_minus_sum_beta(i,j,k,ispec) = omsb
 
-              ! Deteremine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
+              ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
               call attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)
               scale_factor(i,j,k,ispec) = sf
            enddo
@@ -481,8 +480,8 @@ FUNCTION pythag_dp(a,b)
         pythag_dp=0.0d0
      else
         pythag_dp=absb*sqrt(1.0+(absa/absb)**2)
-     end if
-  end if
+     endif
+  endif
 END FUNCTION pythag_dp
 
 SUBROUTINE svdcmp_dp(a,w,v,p)
@@ -496,7 +495,7 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
   double precision, DIMENSION(p,p), INTENT(INOUT) :: a
   double precision, DIMENSION(p), INTENT(OUT) :: w
   double precision, DIMENSION(p,p), INTENT(OUT) :: v
-  INTEGER(4) :: i,its,j,k,l,m,n,nm
+  INTEGER :: i,its,j,k,l,m,n,nm
   double precision :: anorm,c,f,g,h,s,scale,x,y,z
   double precision, DIMENSION(size(a,1)) :: tempm
   double precision, DIMENSION(size(a,2)) :: rv1,tempn
@@ -527,8 +526,8 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
            a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
                 spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
            a(i:m,i)=scale*a(i:m,i)
-        end if
-     end if
+        endif
+     endif
      w(i)=scale*g
      g=0.0d0
      scale=0.0d0
@@ -547,9 +546,9 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
            a(l:m,l:n)=a(l:m,l:n)+spread(tempm(l:m),dim=2,ncopies=size(rv1(l:n))) * &
                 spread(rv1(l:n),dim=1,ncopies=size(tempm(l:m)))
            a(i,l:n)=scale*a(i,l:n)
-        end if
-     end if
-  end do
+        endif
+     endif
+  enddo
   anorm=maxval(abs(w)+abs(rv1))
 
   do i=n,1,-1
@@ -559,14 +558,14 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
            tempn(l:n)=matmul(a(i,l:n),v(l:n,l:n))
            v(l:n,l:n)=v(l:n,l:n)+spread(v(l:n,i),dim=2,ncopies=size(tempn(l:n))) * &
                 spread(tempn(l:n), dim=1, ncopies=size(v(l:n,i)))
-        end if
+        endif
         v(i,l:n)=0.0d0
         v(l:n,i)=0.0d0
-     end if
+     endif
      v(i,i)=1.0d0
      g=rv1(i)
      l=i
-  end do
+  enddo
   do i=min(m,n),1,-1
      l=i+1
      g=w(i)
@@ -579,9 +578,9 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
         a(i:m,i)=a(i:m,i)*g
      else
         a(i:m,i)=0.0d0
-     end if
+     endif
      a(i,i)=a(i,i)+1.0d0
-  end do
+  enddo
   do k=n,1,-1
      do its=1,30
         do l=k,1,-1
@@ -603,18 +602,18 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
                  tempm(1:m)=a(1:m,nm)
                  a(1:m,nm)=a(1:m,nm)*c+a(1:m,i)*s
                  a(1:m,i)=-tempm(1:m)*s+a(1:m,i)*c
-              end do
+              enddo
               exit
-           end if
-        end do
+           endif
+        enddo
         z=w(k)
         if (l == k) then
            if (z < 0.0d0) then
               w(k)=-z
               v(1:n,k)=-v(1:n,k)
-           end if
+           endif
            exit
-        end if
+        endif
 
         if (its == 30) stop 'svdcmp_dp: no convergence in svdcmp'
 
@@ -651,18 +650,18 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
               z=1.0d0/z
               c=f*z
               s=h*z
-           end if
+           endif
            f= (c*g)+(s*y)
            x=-(s*g)+(c*y)
            tempm(1:m)=a(1:m,j)
            a(1:m,j)=a(1:m,j)*c+a(1:m,i)*s
            a(1:m,i)=-tempm(1:m)*s+a(1:m,i)*c
-        end do
+        enddo
         rv1(l)=0.0d0
         rv1(k)=f
         w(k)=x
-     end do
-  end do
+     enddo
+  enddo
 
 END SUBROUTINE svdcmp_dp
 
@@ -676,15 +675,15 @@ module attenuation_simplex_variables
   integer  nf, nsls
 
   ! f     = Frequencies at which to evaluate the solution
-  real(8), allocatable, dimension(:) ::  f
+  double precision, allocatable, dimension(:) ::  f
 
   ! Q     = Desired Value of Attenuation or Q
   ! iQ    = 1/Q
-  real(8)  Q, iQ
+  double precision  Q, iQ
 
   ! tau_s = Tau_sigma defined by the frequency range and
   !             number of standard linear solids
-  real(8), allocatable, dimension(:) :: tau_s
+  double precision, allocatable, dimension(:) :: tau_s
 
 end module attenuation_simplex_variables
 
@@ -692,19 +691,19 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
   implicit none
   ! Input / Output
   integer myrank
-  real(8)  t1, t2
-  real(8)  Q_real
-  real(8)  omega_not
+  double precision  t1, t2
+  double precision  Q_real
+  double precision  omega_not
   integer  n
-  real(8), dimension(n)   :: tau_s, tau_e
+  double precision, dimension(n)   :: tau_s, tau_e
 
   ! Internal
   integer i, iterations, err,prnt
-  real(8) f1, f2, exp1,exp2,dexp, min_value
-  real(8), allocatable, dimension(:) :: f
-  real(8), parameter :: PI = 3.14159265358979d0
+  double precision f1, f2, exp1,exp2,dexp, min_value
+  double precision, allocatable, dimension(:) :: f
+  double precision, parameter :: PI = 3.14159265358979d0
   integer, parameter :: nf = 100
-  real(8) attenuation_eval
+  double precision attenuation_eval
   EXTERNAL attenuation_eval
 
   ! Values to be passed into the simplex minimization routine
@@ -720,8 +719,8 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
   f2 = 1.0d0 / t2
 
   ! Determine the exponents of the frequencies
-  exp1 = log10(f1);
-  exp2 = log10(f2);
+  exp1 = log10(f1)
+  exp2 = log10(f2)
 
   if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
      call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
@@ -734,24 +733,25 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
   !   The frequencies should be equally spaced in log10 frequency
   do i = 1,nf
      f(i) = exp1 + ((i-1)*1.0d0 * (exp2-exp1) / ((nf-1)*1.0d0))
-  end do
+  enddo
 
   ! Set the Tau_sigma (tau_s) to be equally spaced in log10 frequency
   dexp = (exp2-exp1) / ((n*1.0d0) - 1)
   do i = 1,n
      tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexp))
-  end do
+  enddo
 
   ! Shove the paramters into the module
   call attenuation_simplex_setup(nf,n,f,Q_real,tau_s)
 
   ! Set the Tau_epsilon (tau_e) to an initial value
-  ! at omega*tau = 1; tan_delta = 1/Q = (tau_e - tau_s)/(2 * sqrt(tau e*tau_s))
+  ! at omega*tau = 1
+  ! tan_delta = 1/Q = (tau_e - tau_s)/(2 * sqrt(tau e*tau_s))
   !    if we assume tau_e =~ tau_s
   !    we get the equation below
   do i = 1,n
      tau_e(i) = tau_s(i) + (tau_s(i) * 2.0d0/Q_real)
-  end do
+  enddo
 
   ! Run a simplex search to determine the optimum values of tau_e
   call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err)
@@ -761,8 +761,8 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
      write(*,*)'    Min Value:  ', min_value
      write(*,*)'    Aborting program'
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
-  end if
- 
+  endif
+
   deallocate(f)
   call attenuation_simplex_finish()
 
@@ -787,9 +787,9 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in)
   implicit none
 
   integer nf_in, nsls_in
-  real(8) Q_in
-  real(8), dimension(nf_in)   :: f_in
-  real(8), dimension(nsls_in) :: tau_s_in
+  double precision Q_in
+  double precision, dimension(nf_in)   :: f_in
+  double precision, dimension(nsls_in) :: tau_s_in
 
   allocate(f(nf_in))
   allocate(tau_s(nsls_in))
@@ -827,24 +827,18 @@ end subroutine attenuation_simplex_setup
 !     A     = Imaginary Moduli ( M1 Dahlen and Tromp pp.203 )
 !                dimension(nf)
 !
-!   Dahlen and Tromp, 1998
-!      Theoritical Global Seismology
-!
-!   Liu et al. 1976
-!      Velocity dispersion due to anelasticity; implications for seismology and mantle composition
-!      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
   implicit none
 
   ! Input
   integer nf, nsls
-  real(8), dimension(nf)   :: f
-  real(8), dimension(nsls) :: tau_s, tau_e
+  double precision, dimension(nf)   :: f
+  double precision, dimension(nsls) :: tau_s, tau_e
   ! Output
-  real(8), dimension(nf)   :: A,B
+  double precision, dimension(nf)   :: A,B
 
   integer i,j
-  real(8) w, pi, demon
+  double precision w, pi, demon
 
   PI = 3.14159265358979d0
 
@@ -857,7 +851,7 @@ subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
         demon = 1.0d0 + w**2 * tau_s(j)**2
         A(i) = A(i) + ((1.0d0 + (w**2 * tau_e(j) * tau_s(j)))/ demon)
         B(i) = B(i) + ((w * (tau_e(j) - tau_s(j))) / demon)
-     end do
+     enddo
 !     write(*,*)A(i),B(i),10**f(i)
   enddo
 
@@ -885,17 +879,17 @@ end subroutine attenuation_maxwell
 !
 !    See atteunation_simplex_setup
 !
-real(8) function attenuation_eval(Xin)
+double precision function attenuation_eval(Xin)
   use attenuation_simplex_variables
   implicit none
    ! Input
-  real(8), dimension(nsls) :: Xin
-  real(8), dimension(nsls) :: tau_e
+  double precision, dimension(nsls) :: Xin
+  double precision, dimension(nsls) :: tau_e
 
-  real(8), dimension(nf)   :: A, B, tan_delta
+  double precision, dimension(nf)   :: A, B, tan_delta
 
   integer i
-  real(8) xi, iQ2
+  double precision xi, iQ2
 
   tau_e = Xin
 
@@ -908,7 +902,7 @@ real(8) function attenuation_eval(Xin)
   do i = 1,nf
      xi = sqrt(( ( (tan_delta(i) - iQ) ** 2 ) / iQ2 ))
      attenuation_eval = attenuation_eval + xi
-  end do
+  enddo
 
 end function attenuation_eval
 
@@ -919,8 +913,8 @@ end function attenuation_eval
 !   - This subroutine is copied from Matlab fminsearch.m
 !         and modified to suit my nefarious needs
 !   Input
-!     funk = real(8) function with one input parameter
-!                real(8) function the_funk(x)
+!     funk = double precision function with one input parameter
+!                double precision function the_funk(x)
 !     x    = Input/Output
 !               variables to be minimized
 !               dimension(n)
@@ -948,13 +942,13 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
   implicit none
 
   ! Input
-  real(8) funk
+  double precision funk
   EXTERNAL funk
 
   integer n
-  real(8) x(n) ! Also Output
+  double precision x(n) ! Also Output
   integer itercount, prnt, err
-  real(8) tolf
+  double precision tolf
 
   !Internal
   integer i,j, how
@@ -968,16 +962,16 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
 
   integer maxiter, maxfun
   integer func_evals
-  real(8) tolx
+  double precision tolx
 
-  real(8) rho, chi, psi, sigma
-  real(8) xin(n), y(n), v(n,n+1), fv(n+1)
-  real(8) vtmp(n,n+1)
-  real(8) usual_delta, zero_term_delta
-  real(8) xbar(n), xr(n), fxr, xe(n), fxe, xc(n), fxc, fxcc, xcc(n)
+  double precision rho, chi, psi, sigma
+  double precision xin(n), y(n), v(n,n+1), fv(n+1)
+  double precision vtmp(n,n+1)
+  double precision usual_delta, zero_term_delta
+  double precision xbar(n), xr(n), fxr, xe(n), fxe, xc(n), fxc, fxcc, xcc(n)
   integer place(n+1)
 
-  real(8) max_size_simplex, max_value
+  double precision max_size_simplex, max_value
 
   rho   = 1.0d0
   chi   = 2.0d0
@@ -989,7 +983,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
      maxiter = itercount
   else
      maxiter = 200 * n
-  end if
+  endif
   itercount = 0
   maxfun  = 200 * n
 
@@ -998,7 +992,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
   else
      tolx = 1.0e-4
      tolf = 1.0e-4
-  end if
+  endif
 
   err = 0
 
@@ -1020,17 +1014,17 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
         y(j) = (1.0d0 + usual_delta) * y(j)
      else
         y(j) = zero_term_delta
-     end if
+     endif
      v(:,j+1) = y
      x(:) = y
      fv(j+1) = funk(x)
-  end do
+  enddo
 
   call qsort(fv,n+1,place)
 
   do i = 1,n+1
      vtmp(:,i) = v(:,place(i))
-  end do
+  enddo
   v = vtmp
 
   how = initial
@@ -1045,7 +1039,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
      write(*,*)'V: ', v
      write(*,*)'fv: ',fv
      write(*,*)'evals: ',func_evals
-  end if
+  endif
 
   do while (func_evals < maxfun .AND. itercount < maxiter)
 
@@ -1055,7 +1049,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
      if(max_size_simplex(v,n) .LE. tolx .AND. &
           max_value(fv,n+1) .LE. tolf) then
         goto 666
-     end if
+     endif
      how = none
 
      ! xbar = average of the n (NOT n+1) best points
@@ -1064,9 +1058,9 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
      do i = 1,n
         do j = 1,n
            xbar(i) = xbar(i) + v(i,j)
-        end do
+        enddo
         xbar(i) = xbar(i) / (n*1.0d0)
-     end do
+     enddo
      xr = (1 + rho)*xbar - rho*v(:,n+1)
      x(:) = xr
      fxr = funk(x)
@@ -1085,7 +1079,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
            v(:,n+1) = xr
            fv(n+1) = fxr
            how = reflect
-        end if
+        endif
      else ! fv(:,1) <= fxr
         if (fxr < fv(n)) then
            v(:,n+1) = xr
@@ -1107,7 +1101,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
               else
                  ! perform a shrink
                  how = shrink
-              end if
+              endif
            else
               ! Perform an inside contraction
               xcc = (1-psi)*xbar + psi*v(:,n+1)
@@ -1122,23 +1116,23 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
               else
                  ! perform a shrink
                  how = shrink
-              end if
-           end if
+              endif
+           endif
            if (how .EQ. shrink) then
               do j=2,n+1
                  v(:,j)=v(:,1)+sigma*(v(:,j) - v(:,1))
                  x(:) = v(:,j)
                  fv(j) = funk(x)
-              end do
+              enddo
               func_evals = func_evals + n
-           end if
-        end if
-     end if
+           endif
+        endif
+     endif
 
      call qsort(fv,n+1,place)
      do i = 1,n+1
         vtmp(:,i) = v(:,place(i))
-     end do
+     enddo
      v = vtmp
 
      itercount = itercount + 1
@@ -1150,17 +1144,17 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
         write(*,*)'v: ',v
         write(*,*)'fv: ',fv
         write(*,*)'evals: ',func_evals
-     end if
-  end do
+     endif
+  enddo
 
   if(func_evals > maxfun) then
      write(*,*)'function evaluations exceeded prescribed limit', maxfun
      err = 1
-  end if
+  endif
   if(itercount > maxiter) then
      write(*,*)'iterations exceeded prescribed limit', maxiter
      err = 2
-  end if
+  endif
 
 666 continue
   x = v(:,1)
@@ -1170,7 +1164,7 @@ end subroutine fminsearch
 
 
 !!!!!!!
-! real(8) function max_value
+! double precision function max_value
 !    - Finds the maximim value of the difference of between the first
 !          value and the remaining values of a vector
 !    Input
@@ -1181,23 +1175,24 @@ end subroutine fminsearch
 !             Length of fv
 !
 !      Returns:
-!         Xi = max( || fv(1)- fv(i) || ); i=2:n
+!         Xi = max( || fv(1)- fv(i) || )
+!         i=2:n
 !
-real(8) function max_value(fv,n)
+double precision function max_value(fv,n)
   implicit none
   integer n
-  real(8) fv(n)
+  double precision fv(n)
 
   integer i
-  real(8) m, z
+  double precision m, z
 
   m = 0.0d0
   do i = 2,n
      z = abs(fv(1) - fv(i))
      if(z > m) then
         m = z
-     end if
-  end do
+     endif
+  enddo
 
   max_value = m
 
@@ -1213,15 +1208,16 @@ end function max_value
 !     n  = Pseudo Length of n
 !
 !     Returns:
-!       Xi = max( max( || v(:,1) - v(:,i) || ) ) ; i=2:n+1
+!       Xi = max( max( || v(:,1) - v(:,i) || ) )
+!       i=2:n+1
 !
-real(8) function max_size_simplex(v,n)
+double precision function max_size_simplex(v,n)
   implicit none
   integer n
-  real(8) v(n,n+1)
+  double precision v(n,n+1)
 
   integer i,j
-  real(8) m, z
+  double precision m, z
 
   m = 0.0d0
   do i = 1,n
@@ -1229,9 +1225,9 @@ real(8) function max_size_simplex(v,n)
         z = abs(v(i,j) - v(i,1))
         if(z > m) then
            m = z
-        end if
-     end do
-  end do
+        endif
+     enddo
+  enddo
 
   max_size_simplex = m
 
@@ -1248,7 +1244,7 @@ end function max_size_simplex
 !      n = Input
 !         Length of X
 !      I = Output
-!         Sorted Indicies of vecotr X
+!         Sorted Indicies of vector X
 !
 !      Example:
 !         X = [ 4 3 1 2 ] on Input
@@ -1260,16 +1256,16 @@ end function max_size_simplex
 subroutine qsort(X,n,I)
   implicit none
   integer n
-  real(8) X(n)
+  double precision X(n)
   integer I(n)
 
   integer j,k
-  real(8) rtmp
+  double precision rtmp
   integer itmp
 
   do j = 1,n
      I(j) = j
-  end do
+  enddo
 
   do j = 1,n
      do k = 1,n-j
@@ -1281,11 +1277,9 @@ subroutine qsort(X,n,I)
            itmp   = I(k)
            I(k)   = I(k+1)
            I(k+1) = itmp
-        end if
+        endif
      enddo
   enddo
 
 end subroutine qsort
-
-
 

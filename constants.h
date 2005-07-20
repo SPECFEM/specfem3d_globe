@@ -22,7 +22,7 @@
 !
 ! solver in single or double precision depending on the machine (4 or 8 bytes)
 !
-!  ALSO CHANGE FILE  precision.h ACCORDINGLY
+!  ALSO CHANGE FILE precision.h ACCORDINGLY
 !
   integer, parameter :: SIZE_REAL = 4, SIZE_DOUBLE = 8
 

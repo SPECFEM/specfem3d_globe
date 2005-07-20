@@ -43,19 +43,19 @@
 
 ################ PC Linux #################
 #
-# Beowulf Portland pgf90
+# Portland pgf90
 #
-F90 = pgf90
-MPIF90 = mpif90
-FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard -Knoieee
-FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
-MPI_FLAGS =
+#F90 = pgf90
+#MPIF90 = mpif90
+#FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard -Knoieee
+#FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
+#MPI_FLAGS =
 
 #
 # Intel ifort Fortran90 for Linux
 #
-#F90 = ifort
-#MPIF90 = mpif90
+F90 = ifort
+MPIF90 = mpif90
 #
 # Caltech cluster
 #
@@ -67,9 +67,9 @@ MPI_FLAGS =
 #
 # debug with range checking
 #
-#FLAGS_NO_CHECK = -O0 -static -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
-#FLAGS_CHECK = $(FLAGS_NO_CHECK)
-#MPI_FLAGS = -Vaxlib
+FLAGS_NO_CHECK = -O0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
+FLAGS_CHECK = $(FLAGS_NO_CHECK)
+MPI_FLAGS =
 
 #
 # g95 (free f95 compiler from http://www.g95.org, still under development, but works)
@@ -197,7 +197,6 @@ meshfem3D: constants.h \
        $O/save_header_file.o \
        $O/attenuation_model.o \
        $O/gll_library.o
-## use MPI here
 	${MPIF90} $(FLAGS_CHECK) -o xmeshfem3D \
        $O/meshfem3D.o \
        $O/create_regions_mesh.o \
@@ -290,7 +289,6 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/recompute_jacobian.o \
        $O/attenuation_model.o \
        $O/gll_library.o
-## use MPI here
 	${MPIF90} $(FLAGS_NO_CHECK) -o xspecfem3D \
        $O/specfem3D.o \
        $O/read_arrays_solver.o \
@@ -381,7 +379,7 @@ clean:
 	rm -f $O/*.o *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt
 
 ####
-#### rule for each .o file below
+#### rule to build each .o file below
 ####
 
 ###
