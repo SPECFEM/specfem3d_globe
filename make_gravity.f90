@@ -29,6 +29,11 @@
 
   logical ONE_CRUST
 
+! radius of the Earth for gravity calculation
+  double precision, parameter :: R_EARTH_GRAVITY = 6371000.d0
+! radius of the ocean floor for gravity calculation
+  double precision, parameter :: ROCEAN_GRAVITY = 6368000.d0
+
   double precision rspl(NR),gspl(NR),gspl2(NR),RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
@@ -40,18 +45,18 @@
   double precision s1(NR),s2(NR),s3(NR)
   double precision yp1,ypn
 
-  r_icb = RICB/R_EARTH
-  r_cmb = RCMB/R_EARTH
-  r_topddoubleprime = RTOPDDOUBLEPRIME/R_EARTH
-  r_771 = R771/R_EARTH
-  r_670 = R670/R_EARTH
-  r_600 = R600/R_EARTH
-  r_400 = R400/R_EARTH
-  r_220 = R220/R_EARTH
-  r_80 = R80/R_EARTH
-  r_moho = RMOHO/R_EARTH
-  r_middle_crust = RMIDDLE_CRUST/R_EARTH
-  r_ocean = ROCEAN/R_EARTH
+  r_icb = RICB/R_EARTH_GRAVITY
+  r_cmb = RCMB/R_EARTH_GRAVITY
+  r_topddoubleprime = RTOPDDOUBLEPRIME/R_EARTH_GRAVITY
+  r_771 = R771/R_EARTH_GRAVITY
+  r_670 = R670/R_EARTH_GRAVITY
+  r_600 = R600/R_EARTH_GRAVITY
+  r_400 = R400/R_EARTH_GRAVITY
+  r_220 = R220/R_EARTH_GRAVITY
+  r_80 = R80/R_EARTH_GRAVITY
+  r_moho = RMOHO/R_EARTH_GRAVITY
+  r_middle_crust = RMIDDLE_CRUST/R_EARTH_GRAVITY
+  r_ocean = ROCEAN_GRAVITY/R_EARTH_GRAVITY
   r_0 = 1.d0
 
   do i=1,163
@@ -96,7 +101,7 @@
 
   do i=1,NR
     call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN_GRAVITY)
   enddo
 
   g(1)=0.0d0
