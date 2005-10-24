@@ -25,7 +25,7 @@
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
           TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
           ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
@@ -51,7 +51,7 @@
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
@@ -493,6 +493,13 @@
   call read_value_logical(MOVIE_SURFACE)
   call read_value_logical(MOVIE_VOLUME)
   call read_value_integer(NTSTEP_BETWEEN_FRAMES)
+  call read_value_double_precision(HDUR_MOVIE)
+
+! computes a default hdur_movie that creates nice looking movies. 
+! Sets HDUR_MOVIE as the minimum period the mesh can resolve
+  if(HDUR_MOVIE <=TINYVAL) &
+    HDUR_MOVIE = 1.1d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0,240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
+  
 
 ! compute the minimum value of hdur in CMTSOLUTION file
   open(unit=1,file='DATA/CMTSOLUTION',status='old')
@@ -518,8 +525,8 @@
   close(1)
 
 ! one cannot use a Heaviside source for the movies
-  if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval_hdur < TINYVAL) &
-    stop 'hdur too small for movie creation, movies do not make sense for Heaviside source'
+!  if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. sqrt(minval_hdur**2+HDUR_MOVIE**2) < TINYVAL) &
+!    stop 'hdur too small for movie creation, movies do not make sense for Heaviside source'
 
   call read_value_logical(SAVE_AVS_DX_MESH_FILES)
   call read_value_integer(NUMBER_OF_RUNS)

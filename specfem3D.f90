@@ -428,10 +428,11 @@
   double precision sec,stf
   double precision, dimension(:), allocatable :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
-  double precision, dimension(:), allocatable :: t_cmt,hdur
+  double precision, dimension(:), allocatable :: t_cmt,hdur,hdur_gaussian
   double precision, dimension(:), allocatable :: theta_source,phi_source
   double precision, external :: comp_source_time_function
-
+  double precision :: t0
+                                                                                                                                                          
 ! Newmark time scheme parameters and non-dimensionalization
   real(kind=CUSTOM_REAL) time,deltat,deltatover2,deltatsqover2
   double precision scale_t,scale_displ,scale_veloc
@@ -544,7 +545,7 @@
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
@@ -612,7 +613,7 @@
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
           TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
           ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
@@ -1020,6 +1021,7 @@
   allocate(gamma_source(NSOURCES))
   allocate(t_cmt(NSOURCES))
   allocate(hdur(NSOURCES))
+  allocate(hdur_gaussian(NSOURCES))
   allocate(theta_source(NSOURCES))
   allocate(phi_source(NSOURCES))
 
@@ -1035,6 +1037,21 @@
             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION)
 
   if(minval(t_cmt) /= 0.) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
+
+! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
+  if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
+     hdur = sqrt(hdur**2 + HDUR_MOVIE**2)
+     if(myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',HDUR_MOVIE
+        write(IMAIN,*)
+     endif
+  endif
+! convert the half duration for triangle STF to the one for gaussian STF
+  hdur_gaussian = hdur/SOURCE_DECAY_RATE
+
+! define t0 as the earliest start time
+  t0 = - 1.5d0*minval(t_cmt-hdur)
 
   open(unit=IIN,file='DATA/STATIONS',status='old')
   read(IIN,*) nrec
@@ -2462,7 +2479,8 @@
     write(IMAIN,*)
     write(IMAIN,*) '           time step: ',sngl(DT),' s'
     write(IMAIN,*) 'number of time steps: ',NSTEP
-    write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-hdur(1))/60.d0),' minutes'
+    write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
+    write(IMAIN,*) 'start time:',sngl(-t0),' seconds'
     write(IMAIN,*)
   endif
 
@@ -2653,7 +2671,7 @@
     if(myrank == 0) then
 
       write(IMAIN,*) 'Time step # ',it
-      write(IMAIN,*) 'Time: ',sngl(((it-1)*DT-hdur(1))/60.d0),' minutes'
+      write(IMAIN,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
 
 ! elapsed time since beginning of the simulation
       tCPU = MPI_WTIME() - time_start
@@ -2675,7 +2693,7 @@
       write(outputname,"('OUTPUT_FILES/timestamp',i6.6)") it
       open(unit=IOUT,file=outputname,status='unknown')
       write(IOUT,*) 'Time step # ',it
-      write(IOUT,*) 'Time: ',sngl(((it-1)*DT-hdur(1))/60.d0),' minutes'
+      write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
       write(IOUT,*) 'Elapsed time in seconds = ',tCPU
       write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
       write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
@@ -2695,9 +2713,9 @@
 
 ! compute internal forces in the fluid region
   if(CUSTOM_REAL == SIZE_REAL) then
-    time = sngl((dble(it-1)*DT-hdur(1))/scale_t)
+    time = sngl((dble(it-1)*DT-t0)/scale_t)
   else
-    time = (dble(it-1)*DT-hdur(1))/scale_t
+    time = (dble(it-1)*DT-t0)/scale_t
   endif
 
   call compute_forces_outer_core(time,deltat,two_omega_earth, &
@@ -3172,7 +3190,7 @@
 !   add the source (only if this proc carries the source)
     if(myrank == islice_selected_source(isource)) then
 
-      stf = comp_source_time_function(dble(it-1)*DT-hdur(isource)-t_cmt(isource),hdur(isource))
+      stf = comp_source_time_function(dble(it-1)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
 
 !     distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
@@ -3606,7 +3624,7 @@
 ! write the current seismograms
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) &
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-          network_name,nrec,nrec_local,DT,NSTEP,minval(hdur),LOCAL_PATH,it_begin,it_end)
+          network_name,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
 
 ! save movie on surface
   if(MOVIE_SURFACE .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
@@ -4238,7 +4256,7 @@ if (ifirst_movie) then
 
 ! write the final seismograms
   call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-          network_name,nrec,nrec_local,DT,NSTEP,minval(hdur),LOCAL_PATH,it_begin,it_end)
+          network_name,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
 
 ! save files to local disk or MT tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
