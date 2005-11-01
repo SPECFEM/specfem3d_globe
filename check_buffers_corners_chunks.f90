@@ -178,13 +178,13 @@
 ! read 1-D buffers for the corners
 
 ! master
-  write(filename,200) imsg
+  write(filename,"('buffer_corners_chunks_master_msg',i4.4,'.txt')") imsg
   iproc = iproc_master_corners(imsg)
   call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
   open(unit=34,file=prname(1:len_trim(prname))//filename,status='old')
 
 ! first slave
-  write(filename,210) imsg
+  write(filename,"('buffer_corners_chunks_slave1_msg',i4.4,'.txt')") imsg
   iproc = iproc_slave1_corners(imsg)
   call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
   open(unit=35,file=prname(1:len_trim(prname))//filename,status='old')
@@ -192,15 +192,11 @@
 ! second slave
 ! if only two chunks then there is no second slave
   if(NCHUNKS /= 2) then
-    write(filename,220) imsg
+    write(filename,"('buffer_corners_chunks_slave2_msg',i4.4,'.txt')") imsg
     iproc = iproc_slave2_corners(imsg)
     call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
     open(unit=36,file=prname(1:len_trim(prname))//filename,status='old')
   endif
-
-  200 format('buffer_corners_chunks_master_msg',i4.4,'.txt')
-  210 format('buffer_corners_chunks_slave1_msg',i4.4,'.txt')
-  220 format('buffer_corners_chunks_slave2_msg',i4.4,'.txt')
 
   write(*,*) 'reading MPI 1D buffers for 3 procs corner'
 

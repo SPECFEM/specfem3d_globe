@@ -16,7 +16,7 @@
 !=====================================================================
 
   subroutine make_gravity(nspl,rspl,gspl,gspl2,ONE_CRUST,RICB,RCMB, &
-      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
 
 ! creates a spline for the gravity profile in PREM
 ! radius and density are non-dimensional
@@ -35,7 +35,7 @@
   double precision, parameter :: ROCEAN_GRAVITY = 6368000.d0
 
   double precision rspl(NR),gspl(NR),gspl2(NR),RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST
 
   integer i
 
