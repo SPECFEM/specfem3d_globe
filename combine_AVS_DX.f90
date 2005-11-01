@@ -561,9 +561,9 @@
 ! in the case of AVS, node numbers start at one
       if(USE_OPENDX) then
 ! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
-        write(11,210) iglob1-1,iglob4-1,iglob2-1,iglob3-1
+        write(11,"(i6,1x,i6,1x,i6,1x,i6)") iglob1-1,iglob4-1,iglob2-1,iglob3-1
       else
-        write(11,211) numelem + iglobelemoffset,imatprop,iglob1,iglob2,iglob3,iglob4
+        write(11,"(i6,1x,i3,' quad ',i6,1x,i6,1x,i6,1x,i6)") numelem + iglobelemoffset,imatprop,iglob1,iglob2,iglob3,iglob4
       endif
 
 ! get number of GLL points in current element
@@ -717,9 +717,6 @@
 
   enddo
   enddo
-
- 210 format(i6,1x,i6,1x,i6,1x,i6)
- 211 format(i6,1x,i3,' quad ',i6,1x,i6,1x,i6,1x,i6)
 
 ! saturate color scale for elevation since small values
 ! apply non linear scaling if topography to enhance regions around sea level

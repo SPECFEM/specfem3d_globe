@@ -498,8 +498,8 @@
 ! computes a default hdur_movie that creates nice looking movies. 
 ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if(HDUR_MOVIE <=TINYVAL) &
-    HDUR_MOVIE = 1.1d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0,240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
-  
+    HDUR_MOVIE = 1.1d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
+                           240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
 
 ! compute the minimum value of hdur in CMTSOLUTION file
   open(unit=1,file='DATA/CMTSOLUTION',status='old')

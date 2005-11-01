@@ -190,18 +190,15 @@
   print *,'Checking message ',imsg,' out of ',NUMMSGS_FACES
 
 ! read 2-D buffer for the sender and the receiver
-  write(filename,200) imsg
+  write(filename,"('buffer_faces_chunks_sender_msg',i4.4,'.txt')") imsg
   iproc = iprocfrom_faces(imsg)
   call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
   open(unit=34,file=prname(1:len_trim(prname))//filename,status='old')
 
-  write(filename,210) imsg
+  write(filename,"('buffer_faces_chunks_receiver_msg',i4.4,'.txt')") imsg
   iproc = iprocto_faces(imsg)
   call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
   open(unit=35,file=prname(1:len_trim(prname))//filename,status='old')
-
-  200 format('buffer_faces_chunks_sender_msg',i4.4,'.txt')
-  210 format('buffer_faces_chunks_receiver_msg',i4.4,'.txt')
 
   write(*,*) 'reading MPI 2D buffer for sender'
   read(34,*) npoin2D_sender

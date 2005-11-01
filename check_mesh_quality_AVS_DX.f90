@@ -580,10 +580,11 @@
 ! in the case of AVS, node numbers start at one
         if(USE_OPENDX) then
 ! point order in OpenDX is 4,1,8,5,3,2,7,6, *not* 1,2,3,4,5,6,7,8 as in AVS
-          write(11,200) iglob4-1,iglob1-1,iglob8-1,iglob5-1,iglob3-1,iglob2-1,iglob7-1,iglob6-1
+          write(11,"(i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)") &
+            iglob4-1,iglob1-1,iglob8-1,iglob5-1,iglob3-1,iglob2-1,iglob7-1,iglob6-1
         else
-          write(11,201) numelem + iglobelemoffset, &
-              iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
+          write(11,"(i6,' 1 hex ',i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)") &
+            numelem + iglobelemoffset,iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
         endif
       endif
   enddo
@@ -597,9 +598,6 @@
 
   enddo
   enddo
-
- 200 format(i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)
- 201 format(i6,' 1 hex ',i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)
 
 ! ************* generate element data values ******************
 

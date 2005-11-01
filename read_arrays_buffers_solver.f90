@@ -204,9 +204,9 @@
 
 ! read file with 2D buffer for faces
     if(myrank == iprocfrom_faces(imsg)) then
-      write(filename,500) imsg
+      write(filename,"('buffer_faces_chunks_sender_msg',i4.4,'.txt')") imsg
     else if(myrank == iprocto_faces(imsg)) then
-      write(filename,510) imsg
+      write(filename,"('buffer_faces_chunks_receiver_msg',i4.4,'.txt')") imsg
     endif
 
     open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old')
@@ -235,11 +235,11 @@
 
 ! read file with 1D buffer for corner
     if(myrank == iproc_master_corners(imsg)) then
-      write(filename,600) imsg
+      write(filename,"('buffer_corners_chunks_master_msg',i4.4,'.txt')") imsg
     else if(myrank == iproc_slave1_corners(imsg)) then
-      write(filename,610) imsg
+      write(filename,"('buffer_corners_chunks_slave1_msg',i4.4,'.txt')") imsg
     else if(myrank == iproc_slave2_corners(imsg)) then
-      write(filename,620) imsg
+      write(filename,"('buffer_corners_chunks_slave2_msg',i4.4,'.txt')") imsg
     endif
 
 ! matching codes
@@ -255,13 +255,6 @@
   enddo
 
   endif
-
-  500 format('buffer_faces_chunks_sender_msg',i4.4,'.txt')
-  510 format('buffer_faces_chunks_receiver_msg',i4.4,'.txt')
-
-  600 format('buffer_corners_chunks_master_msg',i4.4,'.txt')
-  610 format('buffer_corners_chunks_slave1_msg',i4.4,'.txt')
-  620 format('buffer_corners_chunks_slave2_msg',i4.4,'.txt')
 
   end subroutine read_arrays_buffers_solver
 

@@ -431,8 +431,8 @@
   double precision, dimension(:), allocatable :: t_cmt,hdur,hdur_gaussian
   double precision, dimension(:), allocatable :: theta_source,phi_source
   double precision, external :: comp_source_time_function
-  double precision :: t0
-                                                                                                                                                          
+  double precision t0
+
 ! Newmark time scheme parameters and non-dimensionalization
   real(kind=CUSTOM_REAL) time,deltat,deltatover2,deltatsqover2
   double precision scale_t,scale_displ,scale_veloc
@@ -2407,7 +2407,7 @@
 ! this is probably a rather reasonable assumption
   if(GRAVITY) then
     call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST,RICB,RCMB, &
-      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
     do int_radius = 1,NRAD_GRAVITY
       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
       call splint(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g)
@@ -3823,17 +3823,12 @@
               curl_x = (dvzdyl(i,j,k) - dvydzl(i,j,k)) * scale_veloc / R_EARTH
               curl_y = (dvxdzl(i,j,k) - dvzdxl(i,j,k)) * scale_veloc / R_EARTH
               curl_z = (dvydxl(i,j,k) - dvxdyl(i,j,k)) * scale_veloc / R_EARTH
-              write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
+              write(IOUT,"(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6)") &
+                            xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
                             veloc_crust_mantle(1,ipoin)*scale_veloc, &
                             veloc_crust_mantle(2,ipoin)*scale_veloc, &
                             veloc_crust_mantle(3,ipoin)*scale_veloc, &
                             div,curl_x,curl_y,curl_z
-! PvK Change output to more compact and binary format
-!             write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
-!                           veloc_crust_mantle(1,ipoin)*scale_veloc, &
-!                           veloc_crust_mantle(2,ipoin)*scale_veloc, &
-!                           veloc_crust_mantle(3,ipoin)*scale_veloc, &
-!                           div,curl_x,curl_y,curl_z
               write(IOUT) real(veloc_crust_mantle(1,ipoin)*scale_veloc), &
                             real(veloc_crust_mantle(2,ipoin)*scale_veloc), &
                             real(veloc_crust_mantle(3,ipoin)*scale_veloc), &
@@ -4029,12 +4024,6 @@ if (ifirst_movie) then
               curl_y = 0.
               curl_z = 0.
 
-! PvK 071803 Change output to more compact and binary format
-!             write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
-!                   dpotentialdxl(i,j,k)*scale_veloc, &
-!                   dpotentialdyl(i,j,k)*scale_veloc, &
-!                   dpotentialdzl(i,j,k)*scale_veloc, &
-!                   div,curl_x,curl_y,curl_z
               write(IOUT) real(dpotentialdxl(i,j,k)*scale_veloc), &
                     real(dpotentialdyl(i,j,k)*scale_veloc), &
                     real(dpotentialdzl(i,j,k)*scale_veloc), &
@@ -4204,12 +4193,6 @@ if (ifirst_movie) then
               curl_x = (dvzdyl(i,j,k) - dvydzl(i,j,k)) * scale_veloc / R_EARTH
               curl_y = (dvxdzl(i,j,k) - dvzdxl(i,j,k)) * scale_veloc / R_EARTH
               curl_z = (dvydxl(i,j,k) - dvxdyl(i,j,k)) * scale_veloc / R_EARTH
-! PvK Change output to more compact and binary format
-!             write(IOUT,200) xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
-!                           veloc_inner_core(1,ipoin)*scale_veloc, &
-!                           veloc_inner_core(2,ipoin)*scale_veloc, &
-!                           veloc_inner_core(3,ipoin)*scale_veloc, &
-!                           div,curl_x,curl_y,curl_z
               write(IOUT)   real(veloc_inner_core(1,ipoin)*scale_veloc), &
                             real(veloc_inner_core(2,ipoin)*scale_veloc), &
                             real(veloc_inner_core(3,ipoin)*scale_veloc), &
@@ -4244,9 +4227,6 @@ if (ifirst_movie) then
 
 ! PvK After first movie snapshot has been written there is no more need to output topology and coordinates
     ifirst_movie=.false.
-
- 200 format(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6)
- 210 format(i10)
 
   endif
 

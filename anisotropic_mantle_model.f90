@@ -367,10 +367,10 @@ end module aniso_mantle_model_variables
     ipa = ipa + 1
     do idep = 1,npar1
       il = idep + np1 - 1
-      read(19,2011,end = 88) xinf,yinf,nx,ny,pxy
+      read(19,"(2f4.0,2i3,f4.0)",end = 88) xinf,yinf,nx,ny,pxy
 
       ppp = 1.
-      read(19,2013,end = 88) pro(idep),ppp
+      read(19,"(f5.0,f8.4)",end = 88) pro(idep),ppp
 
       if(nf == 1) pari(nf,il) = ppp
       if(nf == 2) pari(nf,il) = ppp
@@ -378,7 +378,7 @@ end module aniso_mantle_model_variables
       if(nf == 4) ppp = pari(nf,il)
       if(nf == 5) ppp = pari(nf,il)
       do ilat = 1,nx
-        read(19,2015,end = 88) (beta(ipa,idep,ilat,ilon),ilon = 1,ny)
+        read(19,"(17f7.2)",end = 88) (beta(ipa,idep,ilat,ilon),ilon = 1,ny)
 !
 ! calculation of A,C,F,L,N
 !
@@ -416,8 +416,8 @@ end module aniso_mantle_model_variables
     ipa1 = ipa + 1
     do idep = 1,npar1
       il = idep + np1 - 1
-      read(15,2011,end = 888) xinf,yinf,nx,ny,pxy
-      read(15,2013,end = 888) pro(idep),ppp
+      read(15,"(2f4.0,2i3,f4.0)",end = 888) xinf,yinf,nx,ny,pxy
+      read(15,"(f5.0,f8.4)",end = 888) pro(idep),ppp
       if(nf == 7) ppp = pari(2,il)
       if(nf == 9) ppp = pari(3,il)
       af = pari(6,il)*(pari(2,il) - 2.*pari(3,il))
@@ -425,11 +425,11 @@ end module aniso_mantle_model_variables
       if(nf == 13) ppp = (pari(4,il) + 1.)*pari(3,il)
 
       do ilat = 1,nx
-        read(15,2015,end = 888) (alph(ilon,ilat),ilon = 1,ny)
+        read(15,"(17f7.2)",end = 888) (alph(ilon,ilat),ilon = 1,ny)
       enddo
 
       do ilat=1,nx
-        read(15,2015,end = 888) (ph(ilon,ilat),ilon = 1,ny)
+        read(15,"(17f7.2)",end = 888) (ph(ilon,ilat),ilon = 1,ny)
       enddo
 
       do ilat = 1,nx
@@ -481,12 +481,7 @@ end module aniso_mantle_model_variables
     enddo
   enddo
 
- 2011 format(2f4.0,2i3,f4.0)
- 2013 format(f5.0,f8.4)
- 2015 format(17f7.2)
-
  end subroutine read_aniso_mantle_model
-
 
 !--------------------------------------------------------------------
 
@@ -512,12 +507,12 @@ end module aniso_mantle_model_variables
      open(unit=13,file='DATA/Montagner_model/Adrem119',status='old')
      read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,null
 
-     if(kiti == 0) read(13,1000,end = 77) idum1
-     read(13,1000,end = 77) idum2
-     read(13,1000,end = 77) idum3
+     if(kiti == 0) read(13,"(20a4)",end = 77) idum1
+     read(13,"(20a4)",end = 77) idum2
+     read(13,"(20a4)",end = 77) idum3
 
      do i = 1,nlayer
-       read(13,1203,end = 77) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
+       read(13,"(4x,f11.1,8d12.5)",end = 77) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
      enddo
 
      do i = 1,nlayer
@@ -557,7 +552,7 @@ end module aniso_mantle_model_variables
 
   red = 1.
   do i = 1,nlayer
-    read(13,1205,end = 77) (epa(j,i),j = 1,6),dcori(i)
+    read(13,"(15x,6e12.5,f11.1)",end = 77) (epa(j,i),j = 1,6),dcori(i)
     epa(7,i) = epa(2,i)
     epa(8,i) = epa(2,i)
     epa(9,i) = epa(3,i)
@@ -573,16 +568,11 @@ end module aniso_mantle_model_variables
       epa(j,i) = red*epa(j,i)
     enddo
 
-    read(13,1208,end = 77) (corpar(j,i),j = 1,21)
+    read(13,"(21f7.3)",end = 77) (corpar(j,i),j = 1,21)
 
   enddo
 
 77 close(13)
-
- 1000 format(20a4)
- 1203 format(4x,f11.1,8d12.5)
- 1205 format(15X,6e12.5,f11.1)
- 1208 format(21f7.3)
 
   end subroutine lecmod
 
