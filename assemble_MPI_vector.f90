@@ -128,7 +128,6 @@
 
 ! all slices add the buffer received to the contributions on the left face
   if(iproc_xi > 0) then
-!CDIR NODEP(array_val)
   do ipoin=1,npoin2D_xi
     array_val(1,iboolleft_xi(ipoin)) = array_val(1,iboolleft_xi(ipoin)) + &
                               buffer_received_faces_vector(1,ipoin)
@@ -205,7 +204,6 @@
 
 ! all slices add the buffer received to the contributions on the left face
   if(iproc_eta > 0) then
-!CDIR NODEP(array_val)
   do ipoin=1,npoin2D_eta
     array_val(1,iboolleft_eta(ipoin)) = array_val(1,iboolleft_eta(ipoin)) + &
                               buffer_received_faces_vector(1,ipoin)
@@ -280,7 +278,6 @@
     call MPI_RECV(buffer_received_faces_vector, &
               NDIM*npoin2D_chunks,CUSTOM_MPI_TYPE,isender, &
               itag,MPI_COMM_WORLD,msg_status,ier)
-!CDIR NODEP(array_val)
     do ipoin2D=1,npoin2D_chunks
       array_val(1,iboolfaces(ipoin2D,icount_faces)) = &
          array_val(1,iboolfaces(ipoin2D,icount_faces)) + buffer_received_faces_vector(1,ipoin2D)
@@ -383,7 +380,6 @@
     isender = iproc_slave1_corners(imsg)
     call MPI_RECV(buffer_recv_chunkcorners_vector,NDIM*NPOIN1D_RADIAL, &
           CUSTOM_MPI_TYPE,isender,itag,MPI_COMM_WORLD,msg_status,ier)
-!CDIR NODEP(array_val)
     do ipoin1D=1,NPOIN1D_RADIAL
       array_val(1,iboolcorner(ipoin1D,icount_corners)) = array_val(1,iboolcorner(ipoin1D,icount_corners)) + &
                buffer_recv_chunkcorners_vector(1,ipoin1D)
@@ -398,7 +394,6 @@
     isender = iproc_slave2_corners(imsg)
     call MPI_RECV(buffer_recv_chunkcorners_vector,NDIM*NPOIN1D_RADIAL, &
           CUSTOM_MPI_TYPE,isender,itag,MPI_COMM_WORLD,msg_status,ier)
-!CDIR NODEP(array_val)
     do ipoin1D=1,NPOIN1D_RADIAL
       array_val(1,iboolcorner(ipoin1D,icount_corners)) = array_val(1,iboolcorner(ipoin1D,icount_corners)) + &
                buffer_recv_chunkcorners_vector(1,ipoin1D)
