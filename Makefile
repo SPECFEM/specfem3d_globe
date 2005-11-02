@@ -187,7 +187,7 @@ meshfem3D: constants.h \
        $O/anisotropic_mantle_model.o \
        $O/anisotropic_inner_core_model.o \
        $O/reduce.o \
-       $O/save_arrays.o \
+       $O/save_arrays_solver.o \
        $O/add_topography.o \
        $O/exit_mpi.o \
        $O/read_parameter_file.o \
@@ -238,7 +238,7 @@ meshfem3D: constants.h \
        $O/anisotropic_mantle_model.o \
        $O/anisotropic_inner_core_model.o \
        $O/reduce.o \
-       $O/save_arrays.o \
+       $O/save_arrays_solver.o \
        $O/add_topography.o \
        $O/exit_mpi.o \
        $O/read_parameter_file.o \
@@ -577,8 +577,8 @@ $O/anisotropic_inner_core_model.o: constants.h anisotropic_inner_core_model.f90
 $O/reduce.o: constants.h reduce.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/reduce.o reduce.f90
 
-$O/save_arrays.o: constants.h save_arrays.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/save_arrays.o save_arrays.f90
+$O/save_arrays_solver.o: constants.h save_arrays_solver.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/save_arrays_solver.o save_arrays_solver.f90
 
 $O/save_header_file.o: constants.h save_header_file.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/save_header_file.o save_header_file.f90
