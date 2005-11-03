@@ -672,7 +672,35 @@
    end select
 
   else
-    call exit_MPI(myrank,'incorrect minimum or maximum attenuation period')
+     
+     if(myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*)'Determining Attenuation Parameters ...'
+        write(IMAIN,*)
+        write(IMAIN,*)'MIN_ATTENUATION_PERIOD: ',MIN_ATTENUATION_PERIOD
+        write(IMAIN,*)'MAx_ATTENUATION_PERIOD: ',MAX_ATTENUATION_PERIOD
+        write(IMAIN,*)'iregion:                ',iregion_attenuation
+        write(IMAIN,*)
+     endif
+     
+     call attenuation_model_1D(myrank, iregion_attenuation, Q_mu)
+     call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+     call attenuation_conversion(myrank, Q_mu, T_c_source, tau_sigma, tau_mu)
+     
+     if(myrank == 0) then
+        write(IMAIN,*)'Q_mu:         ',Q_mu
+        write(IMAIN,*)'T_c_source:   ',T_c_source
+        write(IMAIN,*)
+        write(IMAIN,*)'tau_sigma(1): ',tau_sigma(1)
+        write(IMAIN,*)'tau_sigma(2): ',tau_sigma(2)
+        write(IMAIN,*)'tau_sigma(3): ',tau_sigma(3)
+        write(IMAIN,*)
+        write(IMAIN,*)'tau_mu(1):    ',tau_mu(1)
+        write(IMAIN,*)'tau_mu(2):    ',tau_mu(2)
+        write(IMAIN,*)'tau_mu(3):    ',tau_mu(3)
+        write(IMAIN,*)
+     endif
+     
   endif
 
 !--- non-dimensionalize the tau values and the period of the source
