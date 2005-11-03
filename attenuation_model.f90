@@ -48,9 +48,47 @@ module attenuation_model_variables
 
 end module attenuation_model_variables
 
-subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source,RICB,RCMB, &
-      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80)
+! BK The ATTENUATION Values can be found in the code in a variety of places and forms
+! BK We should really be using one section to determine the Attenation values
+! BK prem_iso() or whatever model would be the best solution, but I need to pass in 
+! BK ALL the Depths for that model, but I would think prem_iso should know its own
+! BK depths of interfaces.  
+! BK
+! BK The solver would also need to be modified, i.e. compute_forces_*()
+! BK To compute PREM or a 3D model is relativly easy, but computation of a different
+! BK 1D model with a different number of layers, a gradient, or slightly different structure
+! BK would require substantial effort
 
+subroutine attenuation_model_1D(myrank, iregion_attenuation, Q_mu)
+  implicit none
+  include "constants.h"
+  integer myrank
+  integer iregion_attenuation
+  double precision Q_mu
+  
+  ! This is the PREM Attenuation Structure
+  ! check in which region we are based upon doubling flag         
+  select case(iregion_attenuation)
+  case(IREGION_ATTENUATION_INNER_CORE) !--- inner core, target Q_mu: 84.60
+     Q_mu =        84.6000000000d0
+  case(IREGION_ATTENUATION_CMB_670)    !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+     Q_mu =       312.0000000000d0
+  case(IREGION_ATTENUATION_670_220)    !--- d670 -> d220, target Q_mu: 143.
+     Q_mu =       143.0000000000d0
+  case(IREGION_ATTENUATION_220_80)     !--- d220 -> depth of 80 km, target Q_mu:  80.
+     Q_mu =        80.0000000000d0
+  case(IREGION_ATTENUATION_80_SURFACE) !--- depth of 80 km -> surface, target Q_mu: 600.
+     Q_mu =       600.0000000000d0
+  !--- do nothing for fluid outer core (no attenuation there)
+  case default
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+  end select
+  
+end subroutine attenuation_model_1D
+
+subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source,RICB,RCMB, &
+     RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80)
+  
 !
 ! xlat, xlon currently not used in this routine (which uses PREM).
 ! The user needs to modify this routine if he wants to use
