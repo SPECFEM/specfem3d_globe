@@ -42,8 +42,8 @@ MOVIE_VOLUME                    = .false.
 NTSTEP_BETWEEN_FRAMES           = 100
 HDUR_MOVIE                      = 0.d0
 
-# save AVS or OpenDX mesh files to check the mesh
-SAVE_AVS_DX_MESH_FILES          = .false.
+# save mesh files to check the mesh
+SAVE_MESH_FILES                 = .false.
 
 # restart files (number of runs can be 1, 2 or 3, choose 1 for no restart files)
 NUMBER_OF_RUNS                  = 1
