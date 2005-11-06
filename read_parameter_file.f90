@@ -659,14 +659,21 @@
   write(IMAIN,*)'   z    CMB ICB   : ', (RCMB - RICB) / (dble(NER_ICB_CMB) * 1000.0d0)
   write(IMAIN,*)'   xi             : ', (RICB/1000.0d0) * ELEMENT_WIDTH
   write(IMAIN,*)'   z    ICB 0     : ', (RICB - R_CENTRAL_CUBE)   / (dble(NER_TOP_CENTRAL_CUBE_ICB) * 1000.0d0)
+
   end subroutine read_parameter_file
+
+!
+!----
+!
 
   subroutine auto_ner(WIDTH, NEX_MAX, &
        NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
        NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
        NER_CMB_TOPDDOUBLEPRIME, RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC, &
        NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB)
+
     implicit none
+
     include 'constants.h'
 
     double precision WIDTH
@@ -749,8 +756,8 @@
     ! Find the Number of Radial Elements in a region based upon
     ! the aspect ratio of the elements
     write(IMAIN,*)'auto_ner: Finding Optimal Number of Elements per region'
-    call auto_optimal_ner(NUM_REGIONS, radius, element_width, &
-         NER, ratio_top, ratio_bottom)
+
+    call auto_optimal_ner(NUM_REGIONS, radius, element_width, NER, ratio_top, ratio_bottom)
 
     ! Set Output arguments
     NER_CRUST                = NER(1)
@@ -821,6 +828,7 @@
   end subroutine auto_ner
 
   subroutine auto_optimal_ner(NUM_REGIONS, r, ew, NER, rt, rb)
+
     implicit none
 
     integer NUM_REGIONS
@@ -857,9 +865,10 @@
   end subroutine auto_optimal_ner
 
 
-  subroutine auto_fluid_double(WIDTH, NEX_MAX, NUM_REGIONS, r, s, &
-       NER_FLUID, RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC)
+  subroutine auto_fluid_double(WIDTH, NEX_MAX, NUM_REGIONS, r, s, NER_FLUID, RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC)
+
     implicit none
+
     include 'constants.h'
 
     double precision WIDTH
@@ -910,5 +919,6 @@
           end if
        enddo
     enddo
+
   end subroutine auto_fluid_double
 

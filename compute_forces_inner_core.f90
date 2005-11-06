@@ -23,21 +23,21 @@
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev, &
-          one_minus_sum_beta,&
-          alphaval,betaval,gammaval, &
-          factor_common, &
-          vx, vy, vz, vnspec)
+          one_minus_sum_beta,alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec, &
+          nspec_inner_core,nglob_inner_core,NSPEC_INNER_CORE_ATTENUATION, &
+          ATTENUATION,ATTENUATION_3D,GRAVITY,ANISOTROPIC_INNER_CORE)
 
   implicit none
 
   include "constants.h"
 
-! include values created by the mesher
-! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
+  integer nspec_inner_core,nglob_inner_core
+  integer NSPEC_INNER_CORE_ATTENUATION
+
+  logical ATTENUATION,ATTENUATION_3D,GRAVITY,ANISOTROPIC_INNER_CORE
 
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ,accel
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_inner_core) :: displ,accel
 
 ! for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -60,11 +60,11 @@
   real(kind=CUSTOM_REAL) epsilon_trace_over_3
 
 ! array with the local to global mapping per slice
-  integer, dimension(NSPEC_INNER_CORE) :: idoubling
+  integer, dimension(nspec_inner_core) :: idoubling
 
 ! arrays with mesh parameters per slice
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: xix,xiy,xiz, &
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec_inner_core) :: ibool
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_inner_core) :: xix,xiy,xiz, &
                       etax,etay,etaz,gammax,gammay,gammaz,jacobian
 
 ! array with derivatives of Lagrange polynomials and precalculated products
@@ -78,9 +78,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore,muvstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_inner_core) :: kappavstore,muvstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_inner_core) :: &
     c11store,c33store,c12store,c13store,c44store
 
   integer ispec,iglob
@@ -119,7 +119,7 @@
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(nglob_inner_core) :: xstore,ystore,zstore
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -128,7 +128,7 @@
 ! set acceleration to zero
   accel(:,:) = 0._CUSTOM_REAL
 
-  do ispec = 1,NSPEC_INNER_CORE
+  do ispec = 1,nspec_inner_core
 
 ! exclude fictitious elements in central cube
     if(idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
@@ -207,8 +207,8 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
 ! compute deviatoric strain
-  if(ATTENUATION_VAL) then
-    if(ATTENUATION_VAL_3D) then
+  if(ATTENUATION) then
+    if(ATTENUATION_3D) then
       minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
     else
       minus_sum_beta =  one_minus_sum_beta(1,1,1,IREGION_ATTENUATION_INNER_CORE) - 1.
@@ -221,7 +221,7 @@
     epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
   endif
 
-       if(ANISOTROPIC_INNER_CORE_VAL) then
+       if(ANISOTROPIC_INNER_CORE) then
 
 ! elastic tensor for hexagonal symmetry in reduced notation:
 !
@@ -247,7 +247,7 @@
          c44l = c44store(i,j,k,ispec)
 
 ! use unrelaxed parameters if attenuation
-         if(ATTENUATION_VAL) then
+         if(ATTENUATION) then
            mul = muvstore(i,j,k,ispec)
            c11l = c11l + FOUR_THIRDS * minus_sum_beta * mul
            c12l = c12l - TWO_THIRDS * minus_sum_beta * mul
@@ -270,8 +270,8 @@
           mul = muvstore(i,j,k,ispec)
 
 ! use unrelaxed parameters if attenuation
-  if(ATTENUATION_VAL) then
-    if(ATTENUATION_VAL_3D) then
+  if(ATTENUATION) then
+    if(ATTENUATION_3D) then
       mul = mul * one_minus_sum_beta(i,j,k,ispec)
     else
       mul = mul * one_minus_sum_beta(1,1,1,1)
@@ -294,7 +294,7 @@
         endif
 
 ! subtract memory variables if attenuation
-  if(ATTENUATION_VAL) then
+  if(ATTENUATION) then
     do i_sls = 1,N_SLS
       R_xx_val = R_memory(1,i_sls,i,j,k,ispec)
       R_yy_val = R_memory(2,i_sls,i,j,k,ispec)
@@ -313,7 +313,7 @@
   sigma_zy = sigma_yz
 
 ! compute non-symmetric terms for gravity
-  if(GRAVITY_VAL) then
+  if(GRAVITY) then
 
 ! use mesh coordinates to get theta and phi
 ! x y and z contain r theta and phi
@@ -488,7 +488,7 @@
           sum_terms(2,i,j,k) = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l)
           sum_terms(3,i,j,k) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
 
-     if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
+     if(GRAVITY) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
 
         enddo
       enddo
@@ -513,10 +513,10 @@
 ! term in yz = 5
 ! term in zz not computed since zero trace
 
-    if(ATTENUATION_VAL) then
+    if(ATTENUATION) then
 
        do i_sls = 1,N_SLS
-          if(ATTENUATION_VAL_3D) then
+          if(ATTENUATION_3D) then
              factor_common_use = factor_common(i_sls,:,:,:,ispec)
           else
              factor_common_use(:,:,:) = factor_common(i_sls,1,1,1,IREGION_ATTENUATION_INNER_CORE)
