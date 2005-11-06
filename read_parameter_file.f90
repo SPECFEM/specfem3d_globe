@@ -30,7 +30,7 @@
           ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
-          PRINT_SOURCE_TIME_FUNCTION,SAVE_AVS_DX_MESH_FILES, &
+          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL)
 
@@ -57,7 +57,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_AVS_DX_MESH_FILES,ATTENUATION,IASPEI, &
+          SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
   character(len=150) LOCAL_PATH,MODEL
@@ -108,7 +108,7 @@
 
 ! set time step, radial distribution of elements, and attenuation period range
 ! right distribution is determined based upon maximum value of NEX
-  NEX_MAX = max(NEX_XI,NEX_ETA) 
+  NEX_MAX = max(NEX_XI,NEX_ETA)
 
 ! standard mesh on Caltech cluster
   if(NEX_MAX <= 160) then   !  Element Width = 0.5625 degrees =~ 62 km
@@ -242,7 +242,7 @@
     NER_ICB_BOTTOMDBL        = 12
     NER_TOP_CENTRAL_CUBE_ICB = 4
 
-! Par_file_ES_1944procs_243nodes_5sec 
+! Par_file_ES_1944procs_243nodes_5sec
   else if(NEX_MAX <= 864) then ! Element Width = 0.1042 degrees =~ 11 km
 
     DT                       = 0.05d0
@@ -311,8 +311,9 @@
 !  else
 !    stop 'this value of NEX_MAX is not in the database, edit read_parameter_file.f90 and recompile'
   endif
-  
+
   if(ANGULAR_WIDTH_XI_IN_DEGREES < 90.0d0 .OR. NEX_MAX > 1248) then
+
     call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
           NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
           NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
@@ -327,27 +328,25 @@
     !  degrees to km          = 111.11d0
     !  spacing for GLL point  = 4
     !  points per wavelength  = 4
-    DT = (ANGULAR_WIDTH_XI_IN_DEGREES / (4.0d0 * dble(NEX_MAX)) &
-         * 111.11d0 * 4.0d0 ) / 2.25d0;
+    DT = (ANGULAR_WIDTH_XI_IN_DEGREES / (4.0d0 * dble(NEX_MAX)) * 111.11d0 * 4.0d0 ) / 2.25d0
     MIN_ATTENUATION_PERIOD = DT
 
-    ! The max attenuation period for 3 SLS is optimally 
+    ! The max attenuation period for 3 SLS is optimally
     !   1.75 decades from the min attenuation period
     DT = dble(MIN_ATTENUATION_PERIOD) * 10.0d0**1.75d0
     MAX_ATTENUATION_PERIOD = DT
 
     ! 0.173 is the minimum spacing between GLL points for NGLL = 5
     ! This should be changed in the future, placed in a header file
-    ! 0.40 is the ratio of radial lengths of elements inside the 
+    ! 0.40 is the ratio of radial lengths of elements inside the
     ! central cube to those just outside the central cube
     ! 1221.0 is the Radius of the inncer core in km
     ! 0.40 is the maximum stability condition
     ! 11.02827 is Vp near the inner core boundary
     ! See equation 48 in Komatitsch and Tromp (2002, Part I)
-    DT = (0.40d0 * & 
-         ((ANGULAR_WIDTH_XI_IN_DEGREES * (PI/180.0d0)) * 1221.0d0) / & 
-         (dble(NEX_MAX) / 8.0d0) / & 
-          11.02827d0 ) * 0.173d0 * 0.4d0
+    DT = (0.40d0 * &
+         ((ANGULAR_WIDTH_XI_IN_DEGREES * (PI/180.0d0)) * 1221.0d0) / &
+         (dble(NEX_MAX) / 8.0d0) / 11.02827d0 ) * 0.173d0 * 0.4d0
 
     open(unit=127, file='OUTPUT_FILES/auto_variables.txt', status='unknown')
     write(127, *)'double precision, parameter :: DT = ', DT
@@ -428,7 +427,7 @@
     ANISOTROPIC_INNER_CORE = .false.
     CRUSTAL = .false.
     ATTENUATION_3D = .true.
-    
+
   else if(MODEL == 'Min_Chen') then
     IASPEI = .false.
     TRANSVERSE_ISOTROPY = .true.
@@ -577,7 +576,7 @@
 !  if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval_hdur < TINYVAL) &
 !    stop 'hdur too small for movie creation, movies do not make sense for Heaviside source'
 
-  call read_value_logical(SAVE_AVS_DX_MESH_FILES)
+  call read_value_logical(SAVE_MESH_FILES)
   call read_value_integer(NUMBER_OF_RUNS)
   call read_value_integer(NUMBER_OF_THIS_RUN)
   call read_value_string(LOCAL_PATH)
@@ -669,7 +668,7 @@
        NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB)
     implicit none
     include 'constants.h'
-    
+
     double precision WIDTH
     integer NEX_MAX
     integer NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
@@ -697,7 +696,7 @@
        write(i,*)
        write(i,*)'Automatically Determining Number of Radial Elements'
     enddo
-    
+
 
     ! This is PREM in Kilometers
     radius(1)  = 6371.00d0 ! Surface
@@ -727,7 +726,7 @@
     NER(12) = 2
 
     NER_FLUID = 6
-    
+
 
     ! Find the Optimal Height of the Fluid Region based on the
     ! Aspect ratio of elements within the fluid and the total
@@ -735,7 +734,7 @@
     write(IMAIN,*)'auto_ner: Finding fluid region doubling radius'
     call auto_fluid_double(WIDTH, NEX_MAX, NUM_REGIONS, radius, scaling, &
          NER_FLUID, RATIO_TOP_DBL_OC,  RATIO_BOTTOM_DBL_OC)
-    
+
     ! Determine the Radius of Top and Bottom of Fluid Doubling Region
     radius(10) = radius(12) + RATIO_TOP_DBL_OC    * (radius(9) - radius(12))
     radius(11) = radius(12) + RATIO_BOTTOM_DBL_OC * (radius(9) - radius(12))
@@ -766,8 +765,8 @@
     NER_FLUID                = NER(10)
     NER_ICB_BOTTOMDBL        = NER(11)
     NER_TOP_CENTRAL_CUBE_ICB = NER(12)
-    
-    ! This is all OUTPUT from here on 
+
+    ! This is all OUTPUT from here on
     do j=IMAIN,IMESH
        write(j,*)
        write(j,*)'                  Region(#)    Radial Elements'
@@ -785,7 +784,7 @@
        write(j,*)'               NER_FLUID(10): ',NER_FLUID
        write(j,*)'       NER_ICB_BOTTOMBDL(11): ',NER_ICB_BOTTOMDBL
        write(j,*)'NER_TOP_CENTRAL_CUBE_ICB(12): ',NER_TOP_CENTRAL_CUBE_ICB
-       
+
        write(j,*)
        write(j,*)'                  Region(#)       Ratio Top          Ratio Bottom'
        write(j,*)'               NER_CRUST( 1): ',ratio_top(1),ratio_bottom(1)
@@ -800,7 +799,7 @@
        write(j,*)'               NER_FLUID(10): ',ratio_top(10),ratio_bottom(10)
        write(j,*)'       NER_ICB_BOTTOMBDL(11): ',ratio_top(11),ratio_bottom(11)
        write(j,*)'NER_TOP_CENTRAL_CUBE_ICB(12): ',ratio_top(12),ratio_bottom(12)
-       
+
        do i = 1,NUM_REGIONS-1
           if(ratio_top(i) < 0.5 .OR. ratio_top(i) > 2.0) then
              write(j,*)
@@ -811,26 +810,26 @@
           if(ratio_bottom(i) < 0.5 .OR. ratio_bottom(i) > 2.0) then
              write(j,*)
              write(j,*)'WARNING: Unexpected Results may occur'
-             write(j,*)'         Elements at Bottom of Region ',i, ' are elongated ' 
+             write(j,*)'         Elements at Bottom of Region ',i, ' are elongated '
              write(j,*)'         Radial / Width = ', ratio_bottom(i)
           endif
        enddo
     enddo
-    
+
     close(IMESH)
 
   end subroutine auto_ner
-     
+
   subroutine auto_optimal_ner(NUM_REGIONS, r, ew, NER, rt, rb)
     implicit none
-    
+
     integer NUM_REGIONS
     integer,          dimension(NUM_REGIONS-1) :: NER ! Elements per Region
     double precision, dimension(NUM_REGIONS)   :: r   ! Radius
     double precision, dimension(NUM_REGIONS)   :: ew  ! Element Width
     double precision, dimension(NUM_REGIONS-1) :: rt  ! Ratio at Top
     double precision, dimension(NUM_REGIONS-1) :: rb  ! Ratio at Bottom
-    
+
     double precision dr, w, ratio, xi, ximin
     integer ner_test
     integer i
@@ -848,7 +847,7 @@
           NER(i) = ner_test            ! Found a better solution
           ximin = xi                   !
           ner_test = ner_test + 1      ! Increment ner_test and
-          ratio = (dr / ner_test) / w  ! look for a better 
+          ratio = (dr / ner_test) / w  ! look for a better
           xi = dabs(ratio - 1.0d0)     ! solution
        end do
        rt(i) = dr / NER(i) / ew(i)     ! Find the Ratio of Top
@@ -856,8 +855,8 @@
     end do
 
   end subroutine auto_optimal_ner
-  
-    
+
+
   subroutine auto_fluid_double(WIDTH, NEX_MAX, NUM_REGIONS, r, s, &
        NER_FLUID, RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC)
     implicit none
@@ -878,30 +877,30 @@
     double precision wave, xi, ximin
 
     ! Find width of Fluid region
-    ximin = 1e7;  ! Initial Minimum
+    ximin = 1.d7  ! Initial Minimum
 
-    do i = 1,91    
-       do j = 1,91 
+    do i = 1,91
+       do j = 1,91
           ! 0.05 <= R(1,2) <= 0.96
-          r1 = 0.05d0 + i * 0.01d0 
+          r1 = 0.05d0 + i * 0.01d0
           r2 = 0.05d0 + j * 0.01d0
 
           ! R2 is defined to be less than R1 by definition
-          if(r2 < r1) then 
+          if(r2 < r1) then
              ! Radii ( top, bottom, and element_radius)
              rtop = r(12) + r1 * (r(9) - r(12))                  ! Top
              rbot = r(12) + r2 * (r(9) - r(12))                  ! Bottom
              fluid_radius = (rtop - rbot) / NER_FLUID            ! Radius Element
-             
+
              ! Element Widths ( top, bottom and average )
-             wtop = (WIDTH * (PI/180) * rtop) / (NEX_MAX/s(10)); ! Top
-             wbot = (WIDTH * (PI/180) * rbot) / (NEX_MAX/s(11)); ! Bottom
-             wave = (wtop + wbot) / 2                            ! Average 
-             
+             wtop = (WIDTH * (PI/180) * rtop) / (NEX_MAX/s(10))  ! Top
+             wbot = (WIDTH * (PI/180) * rbot) / (NEX_MAX/s(11))  ! Bottom
+             wave = (wtop + wbot) / 2                            ! Average
+
              ! Aspect Ration should be near 1.0 and
              ! Centered around the middle of the Fluid Outer Core (Ratio = 0.5)
              xi = dabs(fluid_radius/wave - 1.0d0) + dabs((r1 + r2)/2.0d0 - 0.50d0)
-             
+
              if(xi < ximin) then
                 ! Set our current best solution
                 ximin = xi
@@ -912,8 +911,4 @@
        enddo
     enddo
   end subroutine auto_fluid_double
-
-
-
-    
 

@@ -32,7 +32,7 @@
            myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
            crustal_model,mantle_model,aniso_mantle_model, &
            aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
-           attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES, &
+           attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
            NCHUNKS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASPEI, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
@@ -63,7 +63,7 @@
   logical ELLIPTICITY,TOPOGRAPHY,IASPEI
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,OCEANS
 
-  logical ATTENUATION,ATTENUATION_3D,SAVE_AVS_DX_MESH_FILES, &
+  logical ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS
 
   double precision R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
@@ -786,7 +786,7 @@
                        NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 
 ! create AVS or DX mesh data for the slices
-  if(SAVE_AVS_DX_MESH_FILES) then
+  if(SAVE_MESH_FILES) then
     call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
     call write_AVS_DX_mesh_quality_data(prname,nspec,xstore,ystore,zstore)
     call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &

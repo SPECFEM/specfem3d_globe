@@ -93,7 +93,7 @@ end module aniso_mantle_model_variables
   call build_cij(pro,npar1,rho,beta,r,colat,lon,&
                  d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
                  d44,d45,d46,d55,d56,d66,myrank)
- 
+
   call rotate_aniso_tensor(theta,phi,d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,&
        d33,d34,d35,d36,d44,d45,d46,d55,d56,d66,&
        c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
@@ -228,7 +228,7 @@ end module aniso_mantle_model_variables
      param = param/sd
      elpar(ipar) = param
   enddo
- 
+
   d11 = ZERO
   d12 = ZERO
   d13 = ZERO
@@ -627,171 +627,171 @@ end module aniso_mantle_model_variables
 
 ! recompute 21 anisotropic coefficients for full anisotropoc model using Mathematica
 
-c11 = d22*sinphifour - 2.*sintwophi*sinphisq*(d26*costheta + d24*sintheta) - & 
-      2.*cosphisq*sintwophi*(d16*costhetasq*costheta + & 
+c11 = d22*sinphifour - 2.*sintwophi*sinphisq*(d26*costheta + d24*sintheta) - &
+      2.*cosphisq*sintwophi*(d16*costhetasq*costheta + &
       (d14 + 2*d56)*costhetasq*sintheta + &
-      (d36 + 2*d45)*costheta*sinthetasq + d34*sintheta*sinthetasq) + & 
+      (d36 + 2*d45)*costheta*sinthetasq + d34*sintheta*sinthetasq) + &
       cosphifour*(d11*costhetafour + 2.*d15*costhetasq*sintwotheta + &
       (d13 + 2.*d55)*sintwothetasq/2. + &
-      2.*d35*sintwotheta*sinthetasq + d33*sinthetafour) + & 
+      2.*d35*sintwotheta*sinthetasq + d33*sinthetafour) + &
       (sintwophisq/4.)*(d12 + d23 + 2.*(d44 + d66) + &
       (d12 - d23 - 2.*d44 + 2.*d66)*costwotheta + &
       2.*(d25 + 2.*d46)*sintwotheta)
 
-c12 = -((sintwophi/2.)*sinphisq*((3.*d16 - 4.*d26 + d36 + 2.*d45)*costheta + & 
+c12 = -((sintwophi/2.)*sinphisq*((3.*d16 - 4.*d26 + d36 + 2.*d45)*costheta + &
       (d16 - d36 - 2.*d45)*(4.*costhetasq*costheta - 3.*costheta) + &
       2.*(d14 - 2.*d24 + d34 + 2.*d56 + &
       (d14 - d34 + 2.*d56)*costwotheta)*sintheta))/2. + &
-      cosphisq*sintwophi*(d16*costhetasq*costheta - d24*sintheta + & 
+      cosphisq*sintwophi*(d16*costhetasq*costheta - d24*sintheta + &
       (d14 + 2.*d56)*costhetasq*sintheta + d34*sintheta*sinthetasq + &
       costheta*(-d26 + (d36 + 2.*d45)*sinthetasq)) + &
       (sintwophisq/4.)*(d22 + d11*costhetafour + &
-      2.*d15*costhetasq*sintwotheta - 4.*d44*sinthetasq + & 
+      2.*d15*costhetasq*sintwotheta - 4.*d44*sinthetasq + &
       d33*sinthetafour + costhetasq*(-4.*d66 + &
-      2.*(d13 + 2.*d55)*sinthetasq) + & 
+      2.*(d13 + 2.*d55)*sinthetasq) + &
       costheta*(-8.*d46*sintheta + 4.*d35*sintheta*sinthetasq)) + &
       (cosphifour + sinphifour)*(d12*costhetasq + &
       d23*sinthetasq + d25*sintwotheta)
 
 c13 = sinphisq*(d23*costhetasq - d25*sintwotheta + d12*sinthetasq) - &
       sintwophi*(d36*costhetasq*costheta + &
-      (d34 - 2.*d56)*costhetasq*sintheta + & 
-      (d16 - 2.*d45)*costheta*sinthetasq + d14*sintheta*sinthetasq) + & 
-      (cosphisq*(d11 + 6.*d13 + d33 - 4.*d55 - & 
-      (d11 - 2.*d13 + d33 - 4.*d55)*cosfourtheta + & 
+      (d34 - 2.*d56)*costhetasq*sintheta + &
+      (d16 - 2.*d45)*costheta*sinthetasq + d14*sintheta*sinthetasq) + &
+      (cosphisq*(d11 + 6.*d13 + d33 - 4.*d55 - &
+      (d11 - 2.*d13 + d33 - 4.*d55)*cosfourtheta + &
       4.*(-d15 + d35)*sinfourtheta))/8.
 
-c14 = (-4.*cosphi*sinphisq*((-d14 - 2.*d24 + d34 + 2.*d56)*costheta + & 
+c14 = (-4.*cosphi*sinphisq*((-d14 - 2.*d24 + d34 + 2.*d56)*costheta + &
       (d14 - d34 + 2.*d56)*(4.*costhetasq*costheta - 3.*costheta) + &
       2.*(-d16 + d26 + d36 + (-d16 + d36 + 2.*d45)*costwotheta)*sintheta) + &
-      8.*cosphisq*cosphi*(d14*costhetasq*costheta - & 
+      8.*cosphisq*cosphi*(d14*costhetasq*costheta - &
       (d16 - 2.*d45)*costhetasq*sintheta + &
-      (d34 - 2.*d56)*costheta*sinthetasq - d36*sintheta*sinthetasq) + & 
-      4.*sinphi*sinphisq*(2.*d25*costwotheta + (-d12 + d23)*sintwotheta) + & 
+      (d34 - 2.*d56)*costheta*sinthetasq - d36*sintheta*sinthetasq) + &
+      4.*sinphi*sinphisq*(2.*d25*costwotheta + (-d12 + d23)*sintwotheta) + &
       cosphisq*sinphi*(4.*(d15 + d35 - 4*d46)*costwotheta + &
       4.*(d15 - d35)*cosfourtheta - &
-      2.*(d11 - d33 + 4.*d44 - 4.*d66 + & 
+      2.*(d11 - d33 + 4.*d44 - 4.*d66 + &
       (d11 - 2.*d13 + d33 - 4.*d55)*costwotheta)*sintwotheta))/8.
 
 c15 = (8.*sinphi*sinphisq*(-(d24*costheta) + d26*sintheta) + &
-      4.*cosphi*sinphisq*(2.*(d25 + 2.*d46)*costwotheta + & 
+      4.*cosphi*sinphisq*(2.*(d25 + 2.*d46)*costwotheta + &
       (-d12 + d23 + 2.*d44 - 2.*d66)*sintwotheta) + &
       cosphisq*cosphi*(4.*(d15 + d35)*costwotheta + &
       4.*(d15 - d35)*cosfourtheta - 2.*(d11 - d33 + &
       (d11 - 2.*d13 + d33 - 4.*d55)*costwotheta)*sintwotheta) - &
-      2.*cosphisq*sinphi*((d14 + 3.*d34 + 2.*d56)*costheta + & 
-      3.*(d14 - d34 + 2.*d56)*(4.*costhetasq*costheta - 3.*costheta) - & 
+      2.*cosphisq*sinphi*((d14 + 3.*d34 + 2.*d56)*costheta + &
+      3.*(d14 - d34 + 2.*d56)*(4.*costhetasq*costheta - 3.*costheta) - &
       (3.*d16 + d36 + 2.*d45)*sintheta + &
       3.*(-d16 + d36 + 2.*d45)*(-4.*sinthetasq*sintheta + 3.*sintheta)))/8.
 
-c16 = -(sinphifour*(d26*costheta + d24*sintheta)) - & 
-      (3.*(sintwophisq/4.)*((3.*d16 - 4.*d26 + d36 + 2.*d45)*costheta + & 
+c16 = -(sinphifour*(d26*costheta + d24*sintheta)) - &
+      (3.*(sintwophisq/4.)*((3.*d16 - 4.*d26 + d36 + 2.*d45)*costheta + &
       (d16 - d36 - 2.*d45)*(4.*costhetasq*costheta - 3.*costheta) + &
       2.*(d14 - 2.*d24 + d34 + 2.*d56 + &
       (d14 - d34 + 2.*d56)*costwotheta)*sintheta))/4. + &
       cosphifour*(d16*costhetasq*costheta + &
-      (d14 + 2.*d56)*costhetasq*sintheta + & 
-      (d36 + 2.*d45)*costheta*sinthetasq + d34*sintheta*sinthetasq) + & 
+      (d14 + 2.*d56)*costhetasq*sintheta + &
+      (d36 + 2.*d45)*costheta*sinthetasq + d34*sintheta*sinthetasq) + &
       (sintwophi/2.)*sinphisq*(-d22 + (d12 + 2.*d66)*costhetasq + &
       2.*d46*sintwotheta + (d23 + 2.*d44)*sinthetasq + d25*sintwotheta) + &
       cosphisq*(sintwophi/2.)*(d11*costhetafour + &
       2.*d15*costhetasq*sintwotheta - (d23 + 2.*d44)*sinthetasq + &
       d33*sinthetafour - costhetasq*(d12 + &
-      2.*d66 - 2.*(d13 + 2.*d55)*sinthetasq) - & 
+      2.*d66 - 2.*(d13 + 2.*d55)*sinthetasq) - &
       (d25 - d35 + 2.*d46 + d35*costwotheta)*sintwotheta)
 
-c22 = d22*cosphifour + 2.*cosphisq*sintwophi*(d26*costheta + d24*sintheta) + & 
+c22 = d22*cosphifour + 2.*cosphisq*sintwophi*(d26*costheta + d24*sintheta) + &
       2.*sintwophi*sinphisq*(d16*costhetasq*costheta + &
       (d14 + 2.*d56)*costhetasq*sintheta + &
-      (d36 + 2.*d45)*costheta*sinthetasq + d34*sintheta*sinthetasq) + & 
+      (d36 + 2.*d45)*costheta*sinthetasq + d34*sintheta*sinthetasq) + &
       sinphifour*(d11*costhetafour + 2.*d15*costhetasq*sintwotheta + &
-      (d13 + 2.*d55)*sintwothetasq/2. + & 
-      2.*d35*sintwotheta*sinthetasq + d33*sinthetafour) + & 
+      (d13 + 2.*d55)*sintwothetasq/2. + &
+      2.*d35*sintwotheta*sinthetasq + d33*sinthetafour) + &
       (sintwophisq/4.)*(d12 + d23 + 2.*(d44 + d66) + &
       (d12 - d23 - 2.*d44 + 2.*d66)*costwotheta + &
       2.*(d25 + 2.*d46)*sintwotheta)
 
-c23 = d13*costhetafour*sinphisq + & 
+c23 = d13*costhetafour*sinphisq + &
       sintheta*sinthetasq*(d14*sintwophi + d13*sinphisq*sintheta) + &
-      costheta*sinthetasq*((d16 - 2.*d45)*sintwophi + & 
+      costheta*sinthetasq*((d16 - 2.*d45)*sintwophi + &
       2.*(d15 - d35)*sinphisq*sintheta) + &
       costhetasq*costheta*(d36*sintwophi + &
       2.*(-d15 + d35)*sinphisq*sintheta) + &
-      costhetasq*sintheta*((d34 - 2.*d56)*sintwophi + & 
+      costhetasq*sintheta*((d34 - 2.*d56)*sintwophi + &
       (d11 + d33 - 4.*d55)*sinphisq*sintheta) + &
       cosphisq*(d23*costhetasq - d25*sintwotheta + d12*sinthetasq)
 
-c24 = (8.*cosphisq*cosphi*(d24*costheta - d26*sintheta) + & 
+c24 = (8.*cosphisq*cosphi*(d24*costheta - d26*sintheta) + &
       4.*cosphisq*sinphi*(2.*(d25 + 2.*d46)*costwotheta + &
       (-d12 + d23 + 2.*d44 - 2.*d66)*sintwotheta) + &
       sinphi*sinphisq*(4.*(d15 + d35)*costwotheta + &
       4.*(d15 - d35)*cosfourtheta - &
       2.*(d11 - d33 + (d11 - 2.*d13 + &
       d33 - 4.*d55)*costwotheta)*sintwotheta) + &
-      2.*cosphi*sinphisq*((d14 + 3.*d34 + 2.*d56)*costheta + & 
-      3.*(d14 - d34 + 2.*d56)*(4.*costhetasq*costheta - 3.*costheta) - & 
+      2.*cosphi*sinphisq*((d14 + 3.*d34 + 2.*d56)*costheta + &
+      3.*(d14 - d34 + 2.*d56)*(4.*costhetasq*costheta - 3.*costheta) - &
       (3.*d16 + d36 + 2.*d45)*sintheta + &
       3.*(-d16 + d36 + 2.*d45)*(-4.*sinthetasq*sintheta + 3.*sintheta)))/8.
 
-c25 = (4.*cosphisq*sinphi*((-d14 - 2.*d24 + d34 + 2.*d56)*costheta + & 
+c25 = (4.*cosphisq*sinphi*((-d14 - 2.*d24 + d34 + 2.*d56)*costheta + &
       (d14 - d34 + 2.*d56)*(4.*costhetasq*costheta - 3.*costheta) + &
-      2.*(-d16 + d26 + d36 + (-d16 + d36 + 2.*d45)*costwotheta)*sintheta) - & 
-      8.*sinphi*sinphisq*(d14*costhetasq*costheta - & 
+      2.*(-d16 + d26 + d36 + (-d16 + d36 + 2.*d45)*costwotheta)*sintheta) - &
+      8.*sinphi*sinphisq*(d14*costhetasq*costheta - &
       (d16 - 2.*d45)*costhetasq*sintheta + &
-      (d34 - 2.*d56)*costheta*sinthetasq - d36*sintheta*sinthetasq) + & 
-      4.*cosphisq*cosphi*(2.*d25*costwotheta + (-d12 + d23)*sintwotheta) + & 
+      (d34 - 2.*d56)*costheta*sinthetasq - d36*sintheta*sinthetasq) + &
+      4.*cosphisq*cosphi*(2.*d25*costwotheta + (-d12 + d23)*sintwotheta) + &
       cosphi*sinphisq*(4.*(d15 + d35 - 4.*d46)*costwotheta + &
-      4.*(d15 - d35)*cosfourtheta - 2.*(d11 - d33 + 4.*d44 - 4.*d66 + & 
+      4.*(d15 - d35)*cosfourtheta - 2.*(d11 - d33 + 4.*d44 - 4.*d66 + &
       (d11 - 2.*d13 + d33 - 4.*d55)*costwotheta)*sintwotheta))/8.
 
-c26 = cosphifour*(d26*costheta + d24*sintheta) + & 
-      (3.*(sintwophisq/4.)*((3.*d16 - 4.*d26 + d36 + 2.*d45)*costheta + & 
+c26 = cosphifour*(d26*costheta + d24*sintheta) + &
+      (3.*(sintwophisq/4.)*((3.*d16 - 4.*d26 + d36 + 2.*d45)*costheta + &
       (d16 - d36 - 2.*d45)*(4.*costhetasq*costheta - 3.*costheta) + &
       2.*(d14 - 2.*d24 + d34 + 2.*d56 + &
       (d14 - d34 + 2.*d56)*costwotheta)*sintheta))/4. - &
       sinphifour*(d16*costhetasq*costheta + &
-      (d14 + 2.*d56)*costhetasq*sintheta + & 
-      (d36 + 2.*d45)*costheta*sinthetasq + d34*sintheta*sinthetasq) + & 
+      (d14 + 2.*d56)*costhetasq*sintheta + &
+      (d36 + 2.*d45)*costheta*sinthetasq + d34*sintheta*sinthetasq) + &
       cosphisq*(sintwophi/2.)*(-d22 + (d12 + 2.*d66)*costhetasq + &
-      2.*d46*sintwotheta + (d23 + 2.*d44)*sinthetasq + & 
+      2.*d46*sintwotheta + (d23 + 2.*d44)*sinthetasq + &
       d25*sintwotheta) + (sintwophi/2.)*sinphisq*(d11*costhetafour + &
       2.*d15*costhetasq*sintwotheta - (d23 + 2.*d44)*sinthetasq + &
       d33*sinthetafour - costhetasq*(d12 + &
-      2.*d66 - 2.*(d13 + 2.*d55)*sinthetasq) - & 
+      2.*d66 - 2.*(d13 + 2.*d55)*sinthetasq) - &
       (d25 - d35 + 2.*d46 + d35*costwotheta)*sintwotheta)
 
 c33 = d33*costhetafour - 2.*d35*costhetasq*sintwotheta + &
       (d13 + 2.*d55)*sintwothetasq/2. - &
       2.*d15*sintwotheta*sinthetasq + d11*sinthetafour
 
-c34 = cosphi*(d34*costhetasq*costheta - (d36 + 2.*d45)*costhetasq*sintheta + & 
+c34 = cosphi*(d34*costhetasq*costheta - (d36 + 2.*d45)*costhetasq*sintheta + &
       (d14 + 2.*d56)*costheta*sinthetasq - d16*sintheta*sinthetasq) + &
       (sinphi*(4.*(d15 + d35)*costwotheta + 4.*(-d15 + d35)*cosfourtheta + &
       2.*(-d11 + d33)*sintwotheta + &
       (d11 - 2.*d13 + d33 - 4.*d55)*sinfourtheta))/8.
 
 c35 = sinphi*(-(d34*costhetasq*costheta) + &
-      (d36 + 2.*d45)*costhetasq*sintheta - & 
-      (d14 + 2.*d56)*costheta*sinthetasq + d16*sintheta*sinthetasq) + & 
+      (d36 + 2.*d45)*costhetasq*sintheta - &
+      (d14 + 2.*d56)*costheta*sinthetasq + d16*sintheta*sinthetasq) + &
       (cosphi*(4.*(d15 + d35)*costwotheta + 4.*(-d15 + d35)*cosfourtheta + &
       2.*(-d11 + d33)*sintwotheta + &
       (d11 - 2.*d13 + d33 - 4.*d55)*sinfourtheta))/8.
 
-c36 = (4.*costwophi*((d16 + 3.*d36 - 2.*d45)*costheta + & 
-      (-d16 + d36 + 2.*d45)*(4.*costhetasq*costheta - 3.*costheta) + & 
+c36 = (4.*costwophi*((d16 + 3.*d36 - 2.*d45)*costheta + &
+      (-d16 + d36 + 2.*d45)*(4.*costhetasq*costheta - 3.*costheta) + &
       (3.*d14 + d34 - 2.*d56)*sintheta + &
-      (-d14 + d34 - 2.*d56)*(-4.*sinthetasq*sintheta + 3.*sintheta)) + & 
+      (-d14 + d34 - 2.*d56)*(-4.*sinthetasq*sintheta + 3.*sintheta)) + &
       sintwophi*(d11 - 4.*d12 + 6.*d13 - 4.*d23 + d33 - 4.*d55 + &
       4.*(d12 - d23)*costwotheta - &
       (d11 - 2.*d13 + d33 - 4.*d55)*cosfourtheta + &
       8.*d25*sintwotheta + 4.*(-d15 + d35)*sinfourtheta))/16.
 
 c44 = (d11 - 2.*d13 + d33 + 4.*(d44 + d55 + d66) - &
-      (d11 - 2.*d13 + d33 - 4.*(d44 - d55 + d66))*costwophi + & 
+      (d11 - 2.*d13 + d33 - 4.*(d44 - d55 + d66))*costwophi + &
       4.*sintwophi*((d16 - d36 + 2.*d45)*costheta + &
-      (-d16 + d36 + 2.*d45)*(4.*costhetasq*costheta - 3.*costheta) - & 
+      (-d16 + d36 + 2.*d45)*(4.*costhetasq*costheta - 3.*costheta) - &
       2.*(d14 - d34 + (d14 - d34 + 2.*d56)*costwotheta)*sintheta) + &
-      8.*cosphisq*((d44 - d66)*costwotheta - 2.*d46*sintwotheta) + & 
+      8.*cosphisq*((d44 - d66)*costwotheta - 2.*d46*sintwotheta) + &
       2.*sinphisq*(-((d11 - 2.*d13 + d33 - 4.*d55)*cosfourtheta) + &
       4.*(-d15 + d35)*sinfourtheta))/16.
 
@@ -817,7 +817,7 @@ c46 = (-2.*sinphi*sinphisq*((-d14 + d34 + 2.*d56)*costheta + &
       (-d16 + d36 + 2.*d45)*(-4.*sinthetasq*sintheta + 3.*sintheta)))/8.
 
 c55 = d66*sinphisq*sinthetasq + (sintwotheta/2.)*(-2.*d46*sinphisq + &
-      (d36 + d45)*sintwophi*sintheta) + & 
+      (d36 + d45)*sintwophi*sintheta) + &
       costhetasq*(d44*sinphisq + (d14 + d56)*sintwophi*sintheta) - &
       sintwophi*(d45*costhetasq*costheta + d34*costhetasq*sintheta + &
       d16*costheta*sinthetasq + d56*sintheta*sinthetasq) + &

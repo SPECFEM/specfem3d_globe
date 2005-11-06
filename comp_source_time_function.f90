@@ -25,7 +25,7 @@
 
   double precision, external :: erf
 
-! quasi Heaviside 
+! quasi Heaviside
   comp_source_time_function = 0.5d0*(1.0d0+erf(t/hdur))
 
   end function comp_source_time_function
