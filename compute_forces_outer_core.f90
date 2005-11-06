@@ -23,18 +23,19 @@
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          ibool,nspec_outer_core,nglob_outer_core)
+          ibool,nspec_outer_core,nglob_outer_core, &
+          NSPECMAX_OUTER_CORE_ROTATION,GRAVITY,ROTATION)
 
   implicit none
 
   include "constants.h"
 
-! include values created by the mesher
-! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
-
 ! for doubling in the outer core
   integer nspec_outer_core,nglob_outer_core
+
+  integer NSPECMAX_OUTER_CORE_ROTATION
+
+  logical GRAVITY,ROTATION
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: displfluid,accelfluid
@@ -127,7 +128,7 @@
 
 ! compute contribution of rotation and add to gradient of potential
 ! this term has no Z component
-    if(ROTATION_VAL) then
+    if(ROTATION) then
 
 ! store the source for the Euler scheme for A_rotation and B_rotation
       two_omega_deltat = deltat * two_omega_earth
@@ -155,7 +156,7 @@
     endif  ! end of section with rotation
 
 ! precompute and store gravity term
-          if(GRAVITY_VAL) then
+          if(GRAVITY) then
 
 ! use mesh coordinates to get theta and phi
 ! x y z contain r theta phi
@@ -228,7 +229,7 @@
 
           iglob = ibool(i,j,k,ispec)
           sum_terms = - (wgllwgll_yz(j,k)*tempx1l + wgllwgll_xz(i,k)*tempx2l + wgllwgll_xy(i,j)*tempx3l)
-          if(GRAVITY_VAL) sum_terms = sum_terms + gravity_term(i,j,k)
+          if(GRAVITY) sum_terms = sum_terms + gravity_term(i,j,k)
           accelfluid(iglob) = accelfluid(iglob) + sum_terms
 
         enddo
@@ -236,7 +237,7 @@
     enddo
 
 ! update rotation term with Euler scheme
-    if(ROTATION_VAL) then
+    if(ROTATION) then
 
 ! use the source saved above
       A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + source_euler_A(:,:,:)

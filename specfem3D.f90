@@ -51,9 +51,6 @@
   include "constants.h"
   include "precision.h"
 
-! include values created by the mesher
-  include "OUTPUT_FILES/values_from_mesher.h"
-
 !=======================================================================!
 !                                                                       !
 !   specfem3D is a 3-D spectral-element solver for the Earth.           !
@@ -186,14 +183,10 @@
   integer iregion_attenuation
   double precision dist,scale_factor,scale_factor_minus_one
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT) :: epsilondev_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_crust_mantle,epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: R_memory_crust_mantle,R_memory_inner_core
 
 ! for matching with central cube in inner core
-
   integer nb_msgs_theor_in_cube
   integer receiver_cube_from_slices,iproc_xi_loop
   integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
@@ -209,7 +202,7 @@
   double precision, dimension(:,:), allocatable :: buffer_slices
   double precision, dimension(:,:,:), allocatable :: buffer_all_cube_from_slices
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: array_central_cube
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: array_central_cube
 
 ! to save movie frames
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
@@ -240,7 +233,9 @@
 ! for crust/oceans coupling
   integer, dimension(:), allocatable :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
     ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle,ibelm_bottom_crust_mantle,ibelm_top_crust_mantle
-  logical, dimension(NGLOBMAX_CRUST_MANTLE) :: updated_dof_ocean_load
+
+  logical, dimension(:), allocatable :: updated_dof_ocean_load
+
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_bottom_crust_mantle,jacobian2D_top_crust_mantle, &
     jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
     jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle
@@ -250,13 +245,16 @@
 
 ! Stacey
   real(kind=CUSTOM_REAL) sn,tx,ty,tz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: rho_vp_crust_mantle,rho_vs_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp_crust_mantle,rho_vs_crust_mantle
+
   integer nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
   integer, dimension(:,:), allocatable :: nimin_crust_mantle, &
     nimax_crust_mantle,njmin_crust_mantle,njmax_crust_mantle, &
     nkmin_xi_crust_mantle,nkmin_eta_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE) :: vp_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: vp_outer_core
+
   integer nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
   integer, dimension(:,:), allocatable :: nimin_outer_core, &
     nimax_outer_core,njmin_outer_core,njmax_outer_core, &
@@ -319,26 +317,27 @@
 ! ----------------- crust, mantle and oceans ---------------------
 
 ! mesh parameters
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: ibool_crust_mantle
+  integer, dimension(:,:,:,:), allocatable :: ibool_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
         xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
         etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
         gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,jacobian_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOBMAX_CRUST_MANTLE) :: &
+
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
         xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
 
 ! arrays for isotropic elements stored only where needed to save space
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
         kappavstore_crust_mantle,muvstore_crust_mantle
 
 ! arrays for anisotropic elements stored only where needed to save space
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
         kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
 
 ! arrays for full anisotropy only when needed
   integer nspec_iso,nspec_tiso,nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
         c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
         c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
         c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
@@ -348,69 +347,67 @@
         c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
 
 ! local to global mapping
-  integer, dimension(NSPECMAX_CRUST_MANTLE) :: idoubling_crust_mantle
+  integer, dimension(:), allocatable :: idoubling_crust_mantle
 
 ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOBMAX_CRUST_MANTLE) :: rmass_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_crust_mantle
 
 ! displacement, velocity, acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOBMAX_CRUST_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
      displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
 
 ! additional mass matrix for ocean load
-! ocean load mass matrix is always allocated statically even if no oceans
-  real(kind=CUSTOM_REAL), dimension(NGLOBMAX_CRUST_MANTLE) :: rmass_ocean_load
+! ocean load mass matrix is always allocated even if no oceans
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_ocean_load
   real(kind=CUSTOM_REAL) additional_term,force_normal_comp
 
 ! ----------------- outer core ---------------------
 
 ! mesh parameters
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE) :: ibool_outer_core
+  integer, dimension(:,:,:,:), allocatable :: ibool_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
         xix_outer_core,xiy_outer_core,xiz_outer_core,&
         etax_outer_core,etay_outer_core,etaz_outer_core, &
         gammax_outer_core,gammay_outer_core,gammaz_outer_core,jacobian_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLOBMAX_OUTER_CORE) :: &
+
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
         xstore_outer_core,ystore_outer_core,zstore_outer_core
 
 ! local to global mapping
-  integer, dimension(NSPECMAX_OUTER_CORE) :: idoubling_outer_core
+  integer, dimension(:), allocatable :: idoubling_outer_core
 
 ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOBMAX_OUTER_CORE) :: rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_outer_core
 
 ! velocity potential
-  real(kind=CUSTOM_REAL), dimension(NGLOBMAX_OUTER_CORE) :: displ_outer_core, &
-    veloc_outer_core,accel_outer_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: displ_outer_core,veloc_outer_core,accel_outer_core
 
 ! ----------------- inner core ---------------------
 
 ! mesh parameters
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+  integer, dimension(:,:,:,:), allocatable :: ibool_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
         xix_inner_core,xiy_inner_core,xiz_inner_core,&
         etax_inner_core,etay_inner_core,etaz_inner_core, &
         gammax_inner_core,gammay_inner_core,gammaz_inner_core,jacobian_inner_core, &
         kappavstore_inner_core,muvstore_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: &
-        xstore_inner_core,ystore_inner_core,zstore_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: xstore_inner_core,ystore_inner_core,zstore_inner_core
 
 ! arrays for inner-core anisotropy only when needed
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: &
-        c11store_inner_core,c33store_inner_core,c12store_inner_core, &
-        c13store_inner_core,c44store_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+        c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core
 
 ! local to global mapping
-  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
+  integer, dimension(:), allocatable :: idoubling_inner_core
 
 ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inner_core
 
 ! displacement, velocity, acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
-     displ_inner_core,veloc_inner_core,accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_inner_core,veloc_inner_core,accel_inner_core
 
 ! --------
 
@@ -458,8 +455,7 @@
   real(kind=CUSTOM_REAL) two_omega_earth
 
 ! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE_ROTATION) :: &
-    A_array_rotation,B_array_rotation
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_array_rotation,B_array_rotation
 
   integer i,j,k,ispec,irec,iglob,iglob_mantle,iglob_inner_core
 
@@ -517,6 +513,7 @@
 ! number of spectral elements and total number of global points
   integer nspec_crust_mantle,nglob_crust_mantle
   integer nspec_outer_core,nglob_outer_core
+  integer nspec_inner_core,nglob_inner_core
 
   integer npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
   integer npoin2D_xi_outer_core,npoin2D_eta_outer_core
@@ -531,6 +528,10 @@
 ! timer MPI
   integer ihours,iminutes,iseconds,int_tCPU
   double precision time_start,tCPU
+
+! for defining size of arrays to allocate dynamically
+  integer NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE,nspec_aniso_mantle
+  integer NSPECMAX_ANISO_MANTLE,NSPECMAX_CRUST_MANTLE_ATTENUAT,NSPEC_INNER_CORE_ATTENUATION,NSPECMAX_OUTER_CORE_ROTATION
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
@@ -689,16 +690,6 @@
 ! check that the code is running with the requested nb of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
 
-! check that the code has been compiled with the right values
-  if(NSPEC_AB(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE_AB .or. &
-     NSPEC_AC(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE_AC .or. &
-     NSPEC_BC(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE_BC .or. &
-     NSPEC_AB(IREGION_OUTER_CORE) /= nspec_outer_core_AB .or. &
-     NSPEC_AC(IREGION_OUTER_CORE) /= nspec_outer_core_AC .or. &
-     NSPEC_BC(IREGION_OUTER_CORE) /= nspec_outer_core_BC .or. &
-     NSPEC_AB(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) &
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver')
-
 ! dynamic allocation of arrays
 
 ! indirect addressing for each corner of the chunks
@@ -777,6 +768,214 @@
   else
     call exit_MPI(myrank,'incorrect chunk number')
   endif
+
+  nspec_inner_core = NSPEC_AB(IREGION_INNER_CORE)
+  nglob_inner_core = nglob_AB(IREGION_INNER_CORE)
+
+  if(ANISOTROPIC_INNER_CORE) then
+    NSPECMAX_ANISO_IC = NSPEC_AB(IREGION_INNER_CORE)
+  else
+    NSPECMAX_ANISO_IC = 1
+  endif
+
+! read number of anisotropic elements found in the mantle by the mesher from a file
+  open(unit=IIN,file='OUTPUT_FILES/nspec_aniso_mantle.txt',status='old')
+  read(IIN,*) nspec_aniso_mantle
+  close(IIN)
+
+  if(ANISOTROPIC_3D_MANTLE) then
+    NSPECMAX_ISO_MANTLE = 1
+    NSPECMAX_TISO_MANTLE = 1
+    NSPECMAX_ANISO_MANTLE = nspec_crust_mantle
+  else
+
+    NSPECMAX_ISO_MANTLE = nspec_crust_mantle
+    if(TRANSVERSE_ISOTROPY) then
+      NSPECMAX_TISO_MANTLE = nspec_aniso_mantle
+    else
+      NSPECMAX_TISO_MANTLE = 1
+    endif
+
+    NSPECMAX_ANISO_MANTLE = 1
+  endif
+
+! if attenuation is off, set dummy size of arrays to one
+  if(ATTENUATION) then
+    NSPECMAX_CRUST_MANTLE_ATTENUAT = nspec_crust_mantle
+    NSPEC_INNER_CORE_ATTENUATION = nspec_inner_core
+  else
+    NSPECMAX_CRUST_MANTLE_ATTENUAT = 1
+    NSPEC_INNER_CORE_ATTENUATION = 1
+  endif
+
+  if(ROTATION) then
+    NSPECMAX_OUTER_CORE_ROTATION = nspec_outer_core
+  else
+    NSPECMAX_OUTER_CORE_ROTATION = 1
+  endif
+
+  allocate(array_central_cube(nglob_inner_core))
+
+  allocate(R_memory_crust_mantle(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT))
+  allocate(R_memory_inner_core(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION))
+
+  allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT))
+  allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION))
+
+  allocate(updated_dof_ocean_load(nglob_crust_mantle))
+
+  allocate(rho_vp_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(rho_vs_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+
+  allocate(vp_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+
+  allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE_ROTATION))
+  allocate(B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE_ROTATION))
+
+! -------- arrays specific to each region here -----------
+
+! ----------------- crust, mantle and oceans ---------------------
+
+! mesh parameters
+  allocate(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+
+  allocate(xix_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(xiy_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(xiz_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(etax_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(etay_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(etaz_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(gammax_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(gammay_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(gammaz_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+  allocate(jacobian_crust_mantle(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle))
+
+  allocate(xstore_crust_mantle(nglob_crust_mantle))
+  allocate(ystore_crust_mantle(nglob_crust_mantle))
+  allocate(zstore_crust_mantle(nglob_crust_mantle))
+
+! arrays for isotropic elements stored only where needed to save space
+  allocate(kappavstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE))
+  allocate(muvstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE))
+
+! arrays for anisotropic elements stored only where needed to save space
+  allocate(kappahstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE))
+  allocate(muhstore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE))
+  allocate(eta_anisostore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE))
+
+! arrays for full anisotropy only when needed
+  allocate(c11store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c12store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c13store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c14store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c15store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c16store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c22store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c23store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c24store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c25store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c26store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c33store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c34store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c35store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c36store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c44store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c45store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c46store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c55store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c56store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+  allocate(c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE))
+
+! local to global mapping
+  allocate(idoubling_crust_mantle(nspec_crust_mantle))
+
+! mass matrix
+  allocate(rmass_crust_mantle(nglob_crust_mantle))
+
+! displacement, velocity, acceleration
+  allocate(displ_crust_mantle(NDIM,nglob_crust_mantle))
+  allocate(veloc_crust_mantle(NDIM,nglob_crust_mantle))
+  allocate(accel_crust_mantle(NDIM,nglob_crust_mantle))
+
+! additional mass matrix for ocean load
+! ocean load mass matrix is always allocated even if no oceans
+  allocate(rmass_ocean_load(nglob_crust_mantle))
+
+! ----------------- outer core ---------------------
+
+! mesh parameters
+  allocate(ibool_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+
+  allocate(xix_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(xiy_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(xiz_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(etax_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(etay_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(etaz_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(gammax_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(gammay_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(gammaz_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(jacobian_outer_core(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+
+  allocate(xstore_outer_core(nglob_outer_core))
+  allocate(ystore_outer_core(nglob_outer_core))
+  allocate(zstore_outer_core(nglob_outer_core))
+
+! local to global mapping
+  allocate(idoubling_outer_core(nspec_outer_core))
+
+! mass matrix
+  allocate(rmass_outer_core(nglob_outer_core))
+
+! velocity potential
+  allocate(displ_outer_core(nglob_outer_core))
+  allocate(veloc_outer_core(nglob_outer_core))
+  allocate(accel_outer_core(nglob_outer_core))
+
+! ----------------- inner core ---------------------
+
+! mesh parameters
+  allocate(ibool_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+
+  allocate(xix_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(xiy_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(xiz_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(etax_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(etay_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(etaz_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(gammax_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(gammay_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(gammaz_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(jacobian_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(kappavstore_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(muvstore_inner_core(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+
+  allocate(xstore_inner_core(nglob_inner_core))
+  allocate(ystore_inner_core(nglob_inner_core))
+  allocate(zstore_inner_core(nglob_inner_core))
+
+! arrays for inner-core anisotropy only when needed
+  allocate(c11store_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC))
+  allocate(c33store_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC))
+  allocate(c12store_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC))
+  allocate(c13store_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC))
+  allocate(c44store_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC))
+
+! local to global mapping
+  allocate(idoubling_inner_core(nspec_inner_core))
+
+! mass matrix
+  allocate(rmass_inner_core(nglob_inner_core))
+
+! displacement, velocity, acceleration
+  allocate(displ_inner_core(NDIM,nglob_inner_core))
+  allocate(veloc_inner_core(NDIM,nglob_inner_core))
+  allocate(accel_inner_core(NDIM,nglob_inner_core),stat=ier)
+
+! exit if there is not enough memory to allocate all the arrays
+  if(ier /= 0) call exit_MPI(myrank,'not enough memory to allocate arrays')
+
+! --------
 
 ! make ellipticity
   if(ELLIPTICITY) then
@@ -858,13 +1057,13 @@
         allocate(         omsb_crust_mantle_dble(       NGLLX, NGLLY, NGLLZ, nspec_crust_mantle))
         allocate(factor_common_crust_mantle_dble(N_SLS, NGLLX, NGLLY, NGLLZ, nspec_crust_mantle))
         ! Allocate INNER CORE
-        allocate(      factor_scale_inner_core(       NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
-        allocate(one_minus_sum_beta_inner_core(       NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
-        allocate(     factor_common_inner_core(N_SLS, NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
+        allocate(      factor_scale_inner_core(       NGLLX, NGLLY, NGLLZ, nspec_inner_core))
+        allocate(one_minus_sum_beta_inner_core(       NGLLX, NGLLY, NGLLZ, nspec_inner_core))
+        allocate(     factor_common_inner_core(N_SLS, NGLLX, NGLLY, NGLLZ, nspec_inner_core))
 
-        allocate( factor_scale_inner_core_dble(       NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
-        allocate(         omsb_inner_core_dble(       NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
-        allocate(factor_common_inner_core_dble(N_SLS, NGLLX, NGLLY, NGLLZ, NSPEC_INNER_CORE))
+        allocate( factor_scale_inner_core_dble(       NGLLX, NGLLY, NGLLZ, nspec_inner_core))
+        allocate(         omsb_inner_core_dble(       NGLLX, NGLLY, NGLLZ, nspec_inner_core))
+        allocate(factor_common_inner_core_dble(N_SLS, NGLLX, NGLLY, NGLLZ, nspec_inner_core))
      else
         ! Allocate CRUST MANTLE
         allocate(      factor_scale_crust_mantle(       1, 1, 1, NUM_REGIONS_ATTENUATION))
@@ -957,10 +1156,10 @@
 ! rmass_ocean_load is not modified in routine
   READ_KAPPA_MU = .true.
   READ_TISO = .false.
-  nspec_iso = NSPEC_INNER_CORE
+  nspec_iso = nspec_inner_core
   nspec_tiso = 1
   if(ANISOTROPIC_INNER_CORE) then
-    nspec_ani = NSPEC_INNER_CORE
+    nspec_ani = nspec_inner_core
   else
     nspec_ani = 1
   endif
@@ -977,7 +1176,7 @@
             dummyval,dummyval,dummyval,dummyval,c33store_inner_core,dummyval,dummyval, &
             dummyval,c44store_inner_core,dummyval,dummyval,dummyval,dummyval,dummyval, &
             ibool_inner_core,idoubling_inner_core,rmass_inner_core,rmass_ocean_load, &
-            NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+            nspec_inner_core,nglob_inner_core, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
             ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
 
@@ -991,7 +1190,7 @@
      maxval(ibool_outer_core(:,:,:,1:nspec_outer_core)) /= nglob_outer_core) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
 
-  if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
+  if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= nglob_inner_core) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -1628,7 +1827,7 @@
             NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NCHUNKS)
 
 ! inner core
-  call assemble_MPI_scalar(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
+  call assemble_MPI_scalar(myrank,rmass_inner_core,nglob_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
@@ -1957,7 +2156,7 @@
 
 ! bottom of cube
 
-  do ispec = 1,NSPEC_INNER_CORE
+  do ispec = 1,nspec_inner_core
 
 ! loop on elements at the bottom of the cube only
      if(idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE) cycle
@@ -2059,7 +2258,7 @@
    enddo
 
 ! suppress degrees of freedom already assembled at top of cube on edges
-  do ispec = 1,NSPEC_INNER_CORE
+  do ispec = 1,nspec_inner_core
     if(idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) then
       k = NGLLZ
       do j = 1,NGLLY
@@ -2179,7 +2378,7 @@
     enddo
 
 ! convert in the inner core
-    do iglob = 1,NGLOB_INNER_CORE
+    do iglob = 1,nglob_inner_core
       call xyz_2_rthetaphi(xstore_inner_core(iglob), &
     ystore_inner_core(iglob),zstore_inner_core(iglob),rval,thetaval,phival)
       xstore_inner_core(iglob) = rval
@@ -2203,7 +2402,7 @@
         ! INNER_CORE ATTENUATION
         call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
         call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
-             factor_common_inner_core_dble, factor_scale_inner_core_dble, tau_sigma_dble, NSPEC_INNER_CORE)
+             factor_common_inner_core_dble, factor_scale_inner_core_dble, tau_sigma_dble, nspec_inner_core)
      else
 
     do iregion_attenuation = 1,NUM_REGIONS_ATTENUATION
@@ -2341,7 +2540,7 @@
 ! rescale in inner core
     if(.not. ATTENUATION_3D) scale_factor_minus_one = factor_scale_inner_core(1,1,1,1) - 1.
 
-    do ispec = 1,NSPEC_INNER_CORE
+    do ispec = 1,nspec_inner_core
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
@@ -2644,7 +2843,7 @@
   enddo
 
 ! inner core
-  do i=1,NGLOB_INNER_CORE
+  do i=1,nglob_inner_core
     displ_inner_core(:,i) = displ_inner_core(:,i) + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
     veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
   enddo
@@ -2728,7 +2927,8 @@
          jacobian_outer_core,hprime_xx,hprime_yy,hprime_zz, &
          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-         ibool_outer_core,nspec_outer_core,nglob_outer_core)
+         ibool_outer_core,nspec_outer_core,nglob_outer_core, &
+         NSPECMAX_OUTER_CORE_ROTATION,GRAVITY,ROTATION)
 
 ! Stacey
   if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
@@ -2983,7 +3183,7 @@
 
 ! for anisotropy and gravity, x y and z contain r theta and phi
   call compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          nspec_crust_mantle,displ_crust_mantle,accel_crust_mantle, &
+          displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
@@ -3004,7 +3204,10 @@
           R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80, &
+          nspec_crust_mantle,nglob_crust_mantle,NSPECMAX_CRUST_MANTLE_ATTENUAT, &
+          NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE, &
+          GRAVITY,ATTENUATION,ATTENUATION_3D,ANISOTROPIC_3D_MANTLE,TRANSVERSE_ISOTROPY,ELLIPTICITY)
 
 ! Stacey
   if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
@@ -3183,7 +3386,9 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
+          nspec_inner_core,nglob_inner_core,NSPEC_INNER_CORE_ATTENUATION, &
+          ATTENUATION,ATTENUATION_3D,GRAVITY,ANISOTROPIC_INNER_CORE)
 
   do isource = 1,NSOURCES
 
@@ -3250,7 +3455,7 @@
           iglob_mantle = ibool_crust_mantle(i,j,k,ispec)
 
 ! compute pressure, taking gravity into account
-          if(GRAVITY_VAL) then
+          if(GRAVITY) then
             pressure = RHO_TOP_OC * (- accel_outer_core(iglob) &
                + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
                + displ_crust_mantle(2,iglob_mantle)*ny + displ_crust_mantle(3,iglob_mantle)*nz))
@@ -3302,7 +3507,7 @@
           iglob_inner_core = ibool_inner_core(i,j,k,ispec)
 
 ! compute pressure, taking gravity into account
-          if(GRAVITY_VAL) then
+          if(GRAVITY) then
             pressure = RHO_BOTTOM_OC * (- accel_outer_core(iglob) &
                + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
                + displ_inner_core(2,iglob_inner_core)*ny + displ_inner_core(3,iglob_inner_core)*nz))
@@ -3340,7 +3545,7 @@
             NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NCHUNKS)
 
 ! inner core
-  call assemble_MPI_vector(myrank,accel_inner_core,NGLOB_INNER_CORE, &
+  call assemble_MPI_vector(myrank,accel_inner_core,nglob_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
@@ -3426,7 +3631,7 @@
    enddo
 
 ! suppress degrees of freedom already assembled at top of cube on edges
-  do ispec = 1,NSPEC_INNER_CORE
+  do ispec = 1,nspec_inner_core
     if(idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) then
       k = NGLLZ
       do j = 1,NGLLY
@@ -3570,7 +3775,7 @@
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
   enddo
 
-  do i=1,NGLOB_INNER_CORE
+  do i=1,nglob_inner_core
     accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
              + two_omega_earth*veloc_inner_core(2,i)
     accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
@@ -4070,15 +4275,15 @@ if (ifirst_movie) then
 
 ! PvK
 
-    allocate(mask_poin(NGLOB_INNER_CORE))
-    allocate(indirect_poin(NGLOB_INNER_CORE))
+    allocate(mask_poin(nglob_inner_core))
+    allocate(indirect_poin(nglob_inner_core))
 
 ! count total number of points and define indirect addressing
     itotal_poin = 0
     itotal_spec = 0
     mask_poin(:) = .false.
     indirect_poin(:) = 0
-    do ispec=1,NSPEC_INNER_CORE
+    do ispec=1,nspec_inner_core
       if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
       itotal_spec = itotal_spec + 1
       do k = 1,NGLLZ
@@ -4107,7 +4312,7 @@ if (ifirst_movie) then
 
 ! write coordinates of points, and velocity at these points
     mask_poin(:) = .false.
-    do ispec=1,NSPEC_INNER_CORE
+    do ispec=1,nspec_inner_core
       if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
 
     do k=1,NGLLZ
@@ -4209,7 +4414,7 @@ if (ifirst_movie) then
 ! write topology of elements
 ! PvK Modified to more compact and binary format
     if (ifirst_movie) then
-     do ispec=1,NSPEC_INNER_CORE
+     do ispec=1,nspec_inner_core
        if (idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
          write(IOUT_TOPOLOGY) (((indirect_poin(ibool_inner_core(i,j,k,ispec)),i=1,NGLLX),j=1,NGLLY),k=1,NGLLZ)
        endif
