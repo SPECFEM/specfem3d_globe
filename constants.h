@@ -31,10 +31,6 @@
 ! uncomment this to run in double precision (increases memory size by 2)
 ! integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
 
-! on some processors (e.g. Pentiums) it is necessary to suppress underflows
-! by using a small initial field instead of zero
-  logical, parameter :: FIX_UNDERFLOW_PROBLEM = .true.
-
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a shared-memory machine with a common file system
 ! set to .false. typically on a cluster of nodes, e.g. on a Beowulf-type machine
@@ -135,9 +131,13 @@
   logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
   logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
 
-!
-!--- do NOT modify parameters below
-!
+!------------------------------------------------------
+!----------- do not modify anything below -------------
+!------------------------------------------------------
+
+! on some processors (e.g. Pentiums) it is necessary to suppress underflows
+! by using a small initial field instead of zero
+  logical, parameter :: FIX_UNDERFLOW_PROBLEM = .true.
 
 ! some useful constants
   double precision, parameter :: PI = 3.141592653589793d0
