@@ -73,11 +73,7 @@
   write(IOUT,*)
   write(IOUT,*) 'number of processors = ',NPROCTOT
   write(IOUT,*)
-  write(IOUT,*) 'number of ES nodes = ',real(NPROCTOT)/8.
-  write(IOUT,*) 'percentage of total 640 ES nodes = ',100.*(real(NPROCTOT)/8.)/640.,' %'
-  write(IOUT,*) 'total memory available on these ES nodes (Gb) = ',16.*real(NPROCTOT)/8.
-  write(IOUT,*)
-  write(IOUT,*) 'max points in largest region = ',nglob_BC(IREGION_CRUST_MANTLE)
+  write(IOUT,*) 'maximum number of points in largest region = ',nglob_BC(IREGION_CRUST_MANTLE)
   write(IOUT,*)
   write(IOUT,*) 'total elements per AB slice = ',sum(NSPEC_AB)
   write(IOUT,*) 'total points per AB slice = ',sum(nglob_AB)
