@@ -636,29 +636,30 @@
   if(IASPEI .and. TRANSVERSE_ISOTROPY) stop 'IASPEI is currently isotropic'
 
   ELEMENT_WIDTH = ANGULAR_WIDTH_XI_IN_DEGREES/dble(NEX_MAX) * DEGREES_TO_RADIANS
-  write(IMAIN,*)
-  write(IMAIN,*)'crust elements xi:  ', 111.11d0 * ANGULAR_WIDTH_XI_IN_DEGREES / dble(NEX_MAX)
-  write(IMAIN,*)'               eta: ', 111.11d0 * ANGULAR_WIDTH_ETA_IN_DEGREES/ dble(NEX_MAX)
-  write(IMAIN,*)
-  write(IMAIN,*)'   z    R crust   : ', (R_EARTH - RMOHO) / (dble(NER_CRUST) * 1000.0d0)
-  write(IMAIN,*)'   xi             : ', (RMOHO/1000.0d0) * ELEMENT_WIDTH
-  write(IMAIN,*)'   z    moho 220  : ', (RMOHO - R220) / (dble(NER_220_MOHO) * 1000.0d0)
-  write(IMAIN,*)'   xi             : ', (R220/1000.0d0) * ELEMENT_WIDTH
-  write(IMAIN,*)'   z    220 400   : ', (R220 - R400) / (dble(NER_400_220) * 1000.0d0)
-  write(IMAIN,*)'   xi             : ', (R400/1000.0d0) * ELEMENT_WIDTH
-  write(IMAIN,*)'   z    400 600   : ', (R400 - R600) / (dble(NER_600_400) * 1000.0d0)
-  write(IMAIN,*)'   xi             : ', (R600/1000.0d0) * ELEMENT_WIDTH
-  write(IMAIN,*)'   z    600 670   : ', (R600 - R670) / (dble(NER_670_600) * 1000.0d0)
-  write(IMAIN,*)'   xi             : ', (R670/1000.0d0) * ELEMENT_WIDTH
-  write(IMAIN,*)'   z    670 771   : ', (R670 - R771) / (dble(NER_771_670) * 1000.0d0)
-  write(IMAIN,*)'   xi             : ', (R771/1000.0d0) * ELEMENT_WIDTH
-  write(IMAIN,*)'   z    771 D     : ', (R771 - RTOPDDOUBLEPRIME) / (dble(NER_TOPDDOUBLEPRIME_771) * 1000.0d0)
-  write(IMAIN,*)'   xi             : ', (RTOPDDOUBLEPRIME/1000.0d0 )* ELEMENT_WIDTH
-  write(IMAIN,*)'   z    D   CMB   : ', (RTOPDDOUBLEPRIME - RCMB) / (dble(NER_CMB_TOPDDOUBLEPRIME) * 1000.0d0)
-  write(IMAIN,*)'   xi             : ', (RCMB/1000.0d0) * ELEMENT_WIDTH
-  write(IMAIN,*)'   z    CMB ICB   : ', (RCMB - RICB) / (dble(NER_ICB_CMB) * 1000.0d0)
-  write(IMAIN,*)'   xi             : ', (RICB/1000.0d0) * ELEMENT_WIDTH
-  write(IMAIN,*)'   z    ICB 0     : ', (RICB - R_CENTRAL_CUBE)   / (dble(NER_TOP_CENTRAL_CUBE_ICB) * 1000.0d0)
+
+!! Dimitri Komatitsch suppressed this because IMAIN is not open yet in this subroutine
+! write(IMAIN,*)'crust elements xi:  ', 111.11d0 * ANGULAR_WIDTH_XI_IN_DEGREES / dble(NEX_MAX)
+! write(IMAIN,*)'               eta: ', 111.11d0 * ANGULAR_WIDTH_ETA_IN_DEGREES/ dble(NEX_MAX)
+! write(IMAIN,*)
+! write(IMAIN,*)'   z    R crust   : ', (R_EARTH - RMOHO) / (dble(NER_CRUST) * 1000.0d0)
+! write(IMAIN,*)'   xi             : ', (RMOHO/1000.0d0) * ELEMENT_WIDTH
+! write(IMAIN,*)'   z    moho 220  : ', (RMOHO - R220) / (dble(NER_220_MOHO) * 1000.0d0)
+! write(IMAIN,*)'   xi             : ', (R220/1000.0d0) * ELEMENT_WIDTH
+! write(IMAIN,*)'   z    220 400   : ', (R220 - R400) / (dble(NER_400_220) * 1000.0d0)
+! write(IMAIN,*)'   xi             : ', (R400/1000.0d0) * ELEMENT_WIDTH
+! write(IMAIN,*)'   z    400 600   : ', (R400 - R600) / (dble(NER_600_400) * 1000.0d0)
+! write(IMAIN,*)'   xi             : ', (R600/1000.0d0) * ELEMENT_WIDTH
+! write(IMAIN,*)'   z    600 670   : ', (R600 - R670) / (dble(NER_670_600) * 1000.0d0)
+! write(IMAIN,*)'   xi             : ', (R670/1000.0d0) * ELEMENT_WIDTH
+! write(IMAIN,*)'   z    670 771   : ', (R670 - R771) / (dble(NER_771_670) * 1000.0d0)
+! write(IMAIN,*)'   xi             : ', (R771/1000.0d0) * ELEMENT_WIDTH
+! write(IMAIN,*)'   z    771 D     : ', (R771 - RTOPDDOUBLEPRIME) / (dble(NER_TOPDDOUBLEPRIME_771) * 1000.0d0)
+! write(IMAIN,*)'   xi             : ', (RTOPDDOUBLEPRIME/1000.0d0 )* ELEMENT_WIDTH
+! write(IMAIN,*)'   z    D   CMB   : ', (RTOPDDOUBLEPRIME - RCMB) / (dble(NER_CMB_TOPDDOUBLEPRIME) * 1000.0d0)
+! write(IMAIN,*)'   xi             : ', (RCMB/1000.0d0) * ELEMENT_WIDTH
+! write(IMAIN,*)'   z    CMB ICB   : ', (RCMB - RICB) / (dble(NER_ICB_CMB) * 1000.0d0)
+! write(IMAIN,*)'   xi             : ', (RICB/1000.0d0) * ELEMENT_WIDTH
+! write(IMAIN,*)'   z    ICB 0     : ', (RICB - R_CENTRAL_CUBE)   / (dble(NER_TOP_CENTRAL_CUBE_ICB) * 1000.0d0)
 
   end subroutine read_parameter_file
 
