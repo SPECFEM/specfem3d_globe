@@ -1030,8 +1030,6 @@
   write(IMAIN,*) ' - outer core: ',sngl(100.d0*dble(numelem_outer_core)/dble(numelem_total)),' %'
   write(IMAIN,*) ' - inner core: ',sngl(100.d0*dble(numelem_inner_core)/dble(numelem_total)),' %'
   write(IMAIN,*)
-  write(IMAIN,*) 'for some mesh statistics, see file OUTPUT_FILES/mesh_statistics.txt'
-  write(IMAIN,*)
 
 ! load balancing with respect to chunk of type BC (largest number of elements)
   if(NCHUNKS > 1) then
@@ -1059,8 +1057,7 @@
 
 ! save some statistics about the mesh
   call save_mesh_statistics(NSPEC_AB,NSPEC_AC,NSPEC_BC,nglob_AB,nglob_AC,nglob_BC, &
-        NEX_XI,NPROC,NPROCTOT, &
-        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
+        NEX_XI,NPROC,NPROCTOT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP)
 
   endif   ! end of section executed by main process only

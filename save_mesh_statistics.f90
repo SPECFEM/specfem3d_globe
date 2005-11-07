@@ -15,7 +15,7 @@
 !
 !=====================================================================
 
-! save some statistics about the mesh
+! output some statistics about the mesh
 
   subroutine save_mesh_statistics(NSPEC_AB,NSPEC_AC,NSPEC_BC, &
         nglob_AB,nglob_AC,nglob_BC,NEX_XI,NPROC,NPROCTOT, &
@@ -50,74 +50,72 @@
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
 
-  open(unit=IOUT,file='OUTPUT_FILES/mesh_statistics.txt',status='unknown')
-
-  write(IOUT,*)
-  write(IOUT,*) 'mesh statistics:'
-  write(IOUT,*) '---------------'
-  write(IOUT,*)
-  write(IOUT,*) 'number of chunks = ',NCHUNKS
-  write(IOUT,*)
+  write(IMAIN,*)
+  write(IMAIN,*) 'mesh statistics:'
+  write(IMAIN,*) '---------------'
+  write(IMAIN,*)
+  write(IMAIN,*) 'number of chunks = ',NCHUNKS
+  write(IMAIN,*)
 
 ! the central cube is counted 6 times, therefore remove 5 times
   if(INCLUDE_CENTRAL_CUBE) then
-    write(IOUT,*) 'these statistics include the central cube'
+    write(IMAIN,*) 'these statistics include the central cube'
     subtract_central_cube_elems = 5 * (NEX_XI/8)**3
     subtract_central_cube_points = 5.d0 * (dble(NEX_XI/8)*dble(NGLLX-1)+1.d0)**3
   else
-    write(IOUT,*) 'these statistics do not include the central cube'
+    write(IMAIN,*) 'these statistics do not include the central cube'
     subtract_central_cube_elems = 0
     subtract_central_cube_points = 0.d0
   endif
 
-  write(IOUT,*)
-  write(IOUT,*) 'number of processors = ',NPROCTOT
-  write(IOUT,*)
-  write(IOUT,*) 'maximum number of points in largest region = ',nglob_BC(IREGION_CRUST_MANTLE)
-  write(IOUT,*)
-  write(IOUT,*) 'total elements per AB slice = ',sum(NSPEC_AB)
-  write(IOUT,*) 'total points per AB slice = ',sum(nglob_AB)
-  write(IOUT,*)
-  write(IOUT,*) 'total elements per AC slice = ',sum(NSPEC_AC)
-  write(IOUT,*) 'total points per AC slice = ',sum(nglob_AC)
-  write(IOUT,*)
-  write(IOUT,*) 'total elements per BC slice = ',sum(NSPEC_BC)
-  write(IOUT,*) 'total points per BC slice = ',sum(nglob_BC)
-  write(IOUT,*)
-  write(IOUT,*) 'load balancing AB/BC for points = ',100.*real(sum(nglob_AB))/real(sum(nglob_BC)),' %'
-  write(IOUT,*) 'load balancing AB/BC for elements = ',100.*real(sum(NSPEC_AB))/real(sum(NSPEC_BC)),' %'
-  write(IOUT,*)
-  write(IOUT,*) 'load balancing AC/BC for points = ',100.*real(sum(nglob_AC))/real(sum(nglob_BC)),' %'
-  write(IOUT,*) 'load balancing AC/BC for elements = ',100.*real(sum(NSPEC_AC))/real(sum(NSPEC_BC)),' %'
-  write(IOUT,*)
-  write(IOUT,*) 'total for full 6-chunk mesh:'
-  write(IOUT,*) '---------------------------'
-  write(IOUT,*)
-  write(IOUT,*) 'exact total number of spectral elements in entire mesh = '
-  write(IOUT,*) '',2*NPROC*(sum(NSPEC_AB) + sum(NSPEC_AC) + sum(NSPEC_BC)) - subtract_central_cube_elems
-  write(IOUT,*) 'approximate total number of points in entire mesh = '
-  write(IOUT,*) '',2.d0*dble(NPROC)*(dble(sum(nglob_AB)) + dble(sum(nglob_AC)) + dble(sum(nglob_BC))) &
+  write(IMAIN,*)
+  write(IMAIN,*) 'number of processors = ',NPROCTOT
+  write(IMAIN,*)
+  write(IMAIN,*) 'maximum number of points in largest region = ',nglob_BC(IREGION_CRUST_MANTLE)
+  write(IMAIN,*)
+  write(IMAIN,*) 'total elements per AB slice = ',sum(NSPEC_AB)
+  write(IMAIN,*) 'total points per AB slice = ',sum(nglob_AB)
+  write(IMAIN,*)
+  write(IMAIN,*) 'total elements per AC slice = ',sum(NSPEC_AC)
+  write(IMAIN,*) 'total points per AC slice = ',sum(nglob_AC)
+  write(IMAIN,*)
+  write(IMAIN,*) 'total elements per BC slice = ',sum(NSPEC_BC)
+  write(IMAIN,*) 'total points per BC slice = ',sum(nglob_BC)
+  write(IMAIN,*)
+  write(IMAIN,*) 'load balancing AB/BC for points = ',100.*real(sum(nglob_AB))/real(sum(nglob_BC)),' %'
+  write(IMAIN,*) 'load balancing AB/BC for elements = ',100.*real(sum(NSPEC_AB))/real(sum(NSPEC_BC)),' %'
+  write(IMAIN,*)
+  write(IMAIN,*) 'load balancing AC/BC for points = ',100.*real(sum(nglob_AC))/real(sum(nglob_BC)),' %'
+  write(IMAIN,*) 'load balancing AC/BC for elements = ',100.*real(sum(NSPEC_AC))/real(sum(NSPEC_BC)),' %'
+  write(IMAIN,*)
+  write(IMAIN,*) 'total for full 6-chunk mesh:'
+  write(IMAIN,*) '---------------------------'
+  write(IMAIN,*)
+  write(IMAIN,*) 'exact total number of spectral elements in entire mesh = '
+  write(IMAIN,*) '',2*NPROC*(sum(NSPEC_AB) + sum(NSPEC_AC) + sum(NSPEC_BC)) - subtract_central_cube_elems
+  write(IMAIN,*) 'approximate total number of points in entire mesh = '
+  write(IMAIN,*) '',2.d0*dble(NPROC)*(dble(sum(nglob_AB)) + dble(sum(nglob_AC)) + dble(sum(nglob_BC))) &
     - subtract_central_cube_points
 ! there are 3 DOFs in solid regions, but only 1 in fluid outer core
-  write(IOUT,*) 'approximate total number of degrees of freedom in entire mesh = '
-  write(IOUT,*) '',2.d0*dble(NPROC)*(3.d0*(dble(sum(nglob_AB)) + dble(sum(nglob_AC)) + dble(sum(nglob_BC))) &
+  write(IMAIN,*) 'approximate total number of degrees of freedom in entire mesh = '
+  write(IMAIN,*) '',2.d0*dble(NPROC)*(3.d0*(dble(sum(nglob_AB)) + dble(sum(nglob_AC)) + dble(sum(nglob_BC))) &
     - 2.d0*dble(nglob_AB(IREGION_OUTER_CORE) + nglob_AC(IREGION_OUTER_CORE) + nglob_BC(IREGION_OUTER_CORE))) &
     - 3.d0*subtract_central_cube_points
-  write(IOUT,*)
+  write(IMAIN,*)
 
 ! display location of chunk if regional run
   if(NCHUNKS /= 6) then
 
-  write(IOUT,*) 'position of the mesh chunk at the surface:'
-  write(IOUT,*) '-----------------------------------------'
-  write(IOUT,*)
-  write(IOUT,*) 'angular size in first direction in degrees = ',sngl(ANGULAR_WIDTH_XI_IN_DEGREES)
-  write(IOUT,*) 'angular size in second direction in degrees = ',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES)
-  write(IOUT,*)
-  write(IOUT,*) 'longitude of center in degrees = ',sngl(CENTER_LONGITUDE_IN_DEGREES)
-  write(IOUT,*) 'latitude of center in degrees = ',sngl(CENTER_LATITUDE_IN_DEGREES)
-  write(IOUT,*)
-  write(IOUT,*) 'angle of rotation of the first chunk = ',sngl(GAMMA_ROTATION_AZIMUTH)
+  write(IMAIN,*) 'position of the mesh chunk at the surface:'
+  write(IMAIN,*) '-----------------------------------------'
+  write(IMAIN,*)
+  write(IMAIN,*) 'angular size in first direction in degrees = ',sngl(ANGULAR_WIDTH_XI_IN_DEGREES)
+  write(IMAIN,*) 'angular size in second direction in degrees = ',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES)
+  write(IMAIN,*)
+  write(IMAIN,*) 'longitude of center in degrees = ',sngl(CENTER_LONGITUDE_IN_DEGREES)
+  write(IMAIN,*) 'latitude of center in degrees = ',sngl(CENTER_LATITUDE_IN_DEGREES)
+  write(IMAIN,*)
+  write(IMAIN,*) 'angle of rotation of the first chunk = ',sngl(GAMMA_ROTATION_AZIMUTH)
 
 ! convert width to radians
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
@@ -173,32 +171,30 @@
     lat = (PI/2.0d0-colat_corner)*180.0d0/PI
     long = phi_corner*180.0d0/PI
 
-    write(IOUT,*)
-    write(IOUT,*) 'corner ',icorner
-    write(IOUT,*) 'longitude in degrees = ',long
-    write(IOUT,*) 'latitude in degrees = ',lat
+    write(IMAIN,*)
+    write(IMAIN,*) 'corner ',icorner
+    write(IMAIN,*) 'longitude in degrees = ',long
+    write(IMAIN,*) 'latitude in degrees = ',lat
 
     enddo
   enddo
 
-  write(IOUT,*)
+  write(IMAIN,*)
 
   endif  ! regional chunk
 
-  write(IOUT,*) 'resolution of the mesh at the surface:'
-  write(IOUT,*) '-------------------------------------'
-  write(IOUT,*)
-  write(IOUT,*) 'spectral elements along a great circle = ',4*NEX_XI
-  write(IOUT,*) 'GLL points along a great circle = ',4*NEX_XI*(NGLLX-1)
-  write(IOUT,*) 'average distance between points in degrees = ',360./real(4*NEX_XI*(NGLLX-1))
-  write(IOUT,*) 'average distance between points in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI*(NGLLX-1))
-  write(IOUT,*)
-  write(IOUT,*) 'number of time steps = ',NSTEP
-  write(IOUT,*)
-  write(IOUT,*) 'number of seismic sources = ',NSOURCES
-  write(IOUT,*)
-
-  close(IOUT)
+  write(IMAIN,*) 'resolution of the mesh at the surface:'
+  write(IMAIN,*) '-------------------------------------'
+  write(IMAIN,*)
+  write(IMAIN,*) 'spectral elements along a great circle = ',4*NEX_XI
+  write(IMAIN,*) 'GLL points along a great circle = ',4*NEX_XI*(NGLLX-1)
+  write(IMAIN,*) 'average distance between points in degrees = ',360./real(4*NEX_XI*(NGLLX-1))
+  write(IMAIN,*) 'average distance between points in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI*(NGLLX-1))
+  write(IMAIN,*)
+  write(IMAIN,*) 'number of time steps = ',NSTEP
+  write(IMAIN,*)
+  write(IMAIN,*) 'number of seismic sources = ',NSOURCES
+  write(IMAIN,*)
 
   end subroutine save_mesh_statistics
 
