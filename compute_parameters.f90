@@ -423,20 +423,20 @@
   write(IOUT,*)'integer :: NSPEC2D_NO_DOUBLING_XI(IREGION_OUTER_CORE) = ', NSPEC2D_NO_DOUBLING_XI(IREGION_OUTER_CORE)
   write(IOUT,*)'integer :: NSPEC2D_NO_DOUBLING_ETA(IREGION_INNER_CORE) = ', NSPEC2D_NO_DOUBLING_ETA(IREGION_INNER_CORE)
   write(IOUT,*)'integer :: NSPEC2D_NO_DOUBLING_XI(IREGION_INNER_CORE) = ', NSPEC2D_NO_DOUBLING_XI(IREGION_INNER_CORE)
-                                                                                                                                             
+
   write(IOUT,*)'integer :: NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE) = ', NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*)'integer :: NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE) = ', NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*)'integer :: NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE) = ', NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
   write(IOUT,*)'integer :: NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE) = ', NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
   write(IOUT,*)'integer :: NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE) = ', NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
   write(IOUT,*)'integer :: NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE) = ', NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
-                                                                                                                                             
+
   write(IOUT,*)'integer :: NPOIN1D_RADIAL(IREGION_CRUST_MANTLE) = ', NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)
   write(IOUT,*)'integer :: NPOIN1D_RADIAL(IREGION_OUTER_CORE) = ', NPOIN1D_RADIAL(IREGION_OUTER_CORE)
   write(IOUT,*)'integer :: NPOIN1D_RADIAL(IREGION_INNER_CORE) = ', NPOIN1D_RADIAL(IREGION_INNER_CORE)
   write(IOUT,*)'integer :: NSPEC2D_TOP = ', NSPEC2D_TOP(IREGION_CRUST_MANTLE)
   write(IOUT,*)'integer :: NSPEC2D_BOTTOM = ', NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
-                                                                                                                                             
+
   write(IOUT,*)'integer :: NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE) = ', NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*)'integer :: NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE) = ', NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*)'integer :: NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE) = ', NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
@@ -444,7 +444,7 @@
   write(IOUT,*)'integer :: NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE) = ', NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
   write(IOUT,*)'integer :: NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE) = ', NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
   close(IOUT)
-! endif ! if(1 .EQ. 0) 
+! endif ! if(1 .EQ. 0)
 
   end subroutine compute_parameters
 
