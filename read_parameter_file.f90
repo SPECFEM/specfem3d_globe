@@ -71,16 +71,24 @@
 
   double precision ELEMENT_WIDTH
 
-  open(unit=IIN,file='DATA/Par_file',status='old')
+  integer, external :: err_occurred
 
-  call read_value_integer(NCHUNKS)
+  call open_parameter_file
+
+  call read_value_integer(NCHUNKS, 'inventory.NCHUNKS')
+  if(err_occurred() /= 0) return
   if(NCHUNKS /= 1 .and. NCHUNKS /= 2 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) stop 'NCHUNKS must be either 1, 2, 3 or 6'
 
-  call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES)
-  call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES)
-  call read_value_double_precision(CENTER_LATITUDE_IN_DEGREES)
-  call read_value_double_precision(CENTER_LONGITUDE_IN_DEGREES)
-  call read_value_double_precision(GAMMA_ROTATION_AZIMUTH)
+  call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES, 'inventory.ANGULAR_WIDTH_XI_IN_DEGREES')
+  if(err_occurred() /= 0) return
+  call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES, 'inventory.ANGULAR_WIDTH_ETA_IN_DEGREES')
+  if(err_occurred() /= 0) return
+  call read_value_double_precision(CENTER_LATITUDE_IN_DEGREES, 'inventory.CENTER_LATITUDE_IN_DEGREES')
+  if(err_occurred() /= 0) return
+  call read_value_double_precision(CENTER_LONGITUDE_IN_DEGREES, 'inventory.CENTER_LONGITUDE_IN_DEGREES')
+  if(err_occurred() /= 0) return
+  call read_value_double_precision(GAMMA_ROTATION_AZIMUTH, 'inventory.GAMMA_ROTATION_AZIMUTH')
+  if(err_occurred() /= 0) return
 
 ! this MUST be 90 degrees for two chunks or more to match geometrically
   if(NCHUNKS > 1 .and. ANGULAR_WIDTH_XI_IN_DEGREES /= 90.d0) &
@@ -101,10 +109,14 @@
   endif
 
 ! number of elements at the surface along the two sides of the first chunk
-  call read_value_integer(NEX_XI)
-  call read_value_integer(NEX_ETA)
-  call read_value_integer(NPROC_XI)
-  call read_value_integer(NPROC_ETA)
+  call read_value_integer(NEX_XI, 'inventory.NEX_XI')
+  if(err_occurred() /= 0) return
+  call read_value_integer(NEX_ETA, 'inventory.NEX_ETA')
+  if(err_occurred() /= 0) return
+  call read_value_integer(NPROC_XI, 'inventory.NPROC_XI')
+  if(err_occurred() /= 0) return
+  call read_value_integer(NPROC_ETA, 'inventory.NPROC_ETA')
+  if(err_occurred() /= 0) return
 
 ! set time step, radial distribution of elements, and attenuation period range
 ! right distribution is determined based upon maximum value of NEX
@@ -381,7 +393,8 @@
   endif
 
 ! define the velocity model
-  call read_value_string(MODEL)
+  call read_value_string(MODEL, 'inventory.MODEL')
+  if(err_occurred() /= 0) return
 
   if(MODEL == 'isotropic_prem') then
     IASPEI = .false.
@@ -441,13 +454,20 @@
     stop 'model not implemented, edit read_parameter_file.f90 and recompile'
   endif
 
-  call read_value_logical(OCEANS)
-  call read_value_logical(ELLIPTICITY)
-  call read_value_logical(TOPOGRAPHY)
-  call read_value_logical(GRAVITY)
-  call read_value_logical(ROTATION)
-  call read_value_logical(ATTENUATION)
-  call read_value_logical(ABSORBING_CONDITIONS)
+  call read_value_logical(OCEANS, 'inventory.OCEANS')
+  if(err_occurred() /= 0) return
+  call read_value_logical(ELLIPTICITY, 'inventory.ELLIPTICITY')
+  if(err_occurred() /= 0) return
+  call read_value_logical(TOPOGRAPHY, 'inventory.TOPOGRAPHY')
+  if(err_occurred() /= 0) return
+  call read_value_logical(GRAVITY, 'inventory.GRAVITY')
+  if(err_occurred() /= 0) return
+  call read_value_logical(ROTATION, 'inventory.ROTATION')
+  if(err_occurred() /= 0) return
+  call read_value_logical(ATTENUATION, 'inventory.ATTENUATION')
+  if(err_occurred() /= 0) return
+  call read_value_logical(ABSORBING_CONDITIONS, 'inventory.ABSORBING_CONDITIONS')
+  if(err_occurred() /= 0) return
 
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 6) stop 'cannot have absorbing conditions in the full Earth'
 
@@ -517,7 +537,8 @@
 ! are matched (150 km below the ICB is optimal)
   R_CENTRAL_CUBE = (RICB - 150000.d0) / R_EARTH
 
-  call read_value_double_precision(RECORD_LENGTH_IN_MINUTES)
+  call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'inventory.RECORD_LENGTH_IN_MINUTES')
+  if(err_occurred() /= 0) return
 
 ! compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
@@ -537,10 +558,14 @@
   NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
   if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
 
-  call read_value_logical(MOVIE_SURFACE)
-  call read_value_logical(MOVIE_VOLUME)
-  call read_value_integer(NTSTEP_BETWEEN_FRAMES)
-  call read_value_double_precision(HDUR_MOVIE)
+  call read_value_logical(MOVIE_SURFACE, 'inventory.MOVIE_SURFACE')
+  if(err_occurred() /= 0) return
+  call read_value_logical(MOVIE_VOLUME, 'inventory.MOVIE_VOLUME')
+  if(err_occurred() /= 0) return
+  call read_value_integer(NTSTEP_BETWEEN_FRAMES, 'inventory.NTSTEP_BETWEEN_FRAMES')
+  if(err_occurred() /= 0) return
+  call read_value_double_precision(HDUR_MOVIE, 'inventory.HDUR_MOVIE')
+  if(err_occurred() /= 0) return
 
 ! computes a default hdur_movie that creates nice looking movies.
 ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
@@ -576,17 +601,25 @@
 !  if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval_hdur < TINYVAL) &
 !    stop 'hdur too small for movie creation, movies do not make sense for Heaviside source'
 
-  call read_value_logical(SAVE_MESH_FILES)
-  call read_value_integer(NUMBER_OF_RUNS)
-  call read_value_integer(NUMBER_OF_THIS_RUN)
-  call read_value_string(LOCAL_PATH)
-  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO)
-  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS)
-  call read_value_logical(RECEIVERS_CAN_BE_BURIED)
-  call read_value_logical(PRINT_SOURCE_TIME_FUNCTION)
+  call read_value_logical(SAVE_MESH_FILES, 'inventory.SAVE_MESH_FILES')
+  if(err_occurred() /= 0) return
+  call read_value_integer(NUMBER_OF_RUNS, 'inventory.NUMBER_OF_RUNS')
+  if(err_occurred() /= 0) return
+  call read_value_integer(NUMBER_OF_THIS_RUN, 'inventory.NUMBER_OF_THIS_RUN')
+  if(err_occurred() /= 0) return
+  call read_value_string(LOCAL_PATH, 'inventory.LOCAL_PATH')
+  if(err_occurred() /= 0) return
+  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'inventory.NTSTEP_BETWEEN_OUTPUT_INFO')
+  if(err_occurred() /= 0) return
+  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'inventory.NTSTEP_BETWEEN_OUTPUT_SEISMOS')
+  if(err_occurred() /= 0) return
+  call read_value_logical(RECEIVERS_CAN_BE_BURIED, 'inventory.RECEIVERS_CAN_BE_BURIED')
+  if(err_occurred() /= 0) return
+  call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'inventory.PRINT_SOURCE_TIME_FUNCTION')
+  if(err_occurred() /= 0) return
 
 ! close parameter file
-  close(IIN)
+  call close_parameter_file
 
 !--- check that parameters make sense
 
