@@ -41,7 +41,7 @@
 ! modifications.
 !
 
-  program specfem3D
+  subroutine specfem3D
 
   implicit none
 
@@ -561,6 +561,8 @@
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
   integer NER,NER_CMB_670,NER_670_400,NER_CENTRAL_CUBE_CMB
 
+  integer, external :: err_occurred
+
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_AB,NSPEC_AC,NSPEC_BC, &
                NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
@@ -593,13 +595,11 @@
 
 ! ************** PROGRAM STARTS HERE **************
 
-! initialize the MPI communicator and start the NPROCTOT MPI processes.
 ! sizeprocs returns number of processes started
 ! (should be equal to NPROCTOT if no inner core, NPROCTOT+1 if inner core).
 ! myrank is the rank of each process, between 0 and sizeprocs-1.
 ! as usual in MPI, process 0 is in charge of coordinating everything
 ! and also takes care of the main output
-  call MPI_INIT(ier)
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
@@ -622,6 +622,7 @@
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL)
+  if(err_occurred() /= 0) return
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -4476,8 +4477,5 @@ if (ifirst_movie) then
 ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
-! stop all the MPI processes, and exit
-  call MPI_FINALIZE(ier)
-
-  end program specfem3D
+  end subroutine specfem3D
 

@@ -153,6 +153,7 @@ backup:
 bak: backup
 
 meshfem3D: constants.h \
+       $O/program_meshfem3D.o \
        $O/meshfem3D.o \
        $O/create_regions_mesh.o \
        $O/create_chunk_buffers.o \
@@ -204,6 +205,7 @@ meshfem3D: constants.h \
        $O/attenuation_model.o \
        $O/gll_library.o
 	${MPIF90} $(FLAGS_CHECK) -o xmeshfem3D \
+       $O/program_meshfem3D.o \
        $O/meshfem3D.o \
        $O/create_regions_mesh.o \
        $O/create_chunk_buffers.o \
@@ -256,6 +258,7 @@ meshfem3D: constants.h \
        $O/gll_library.o $(MPI_FLAGS)
 
 specfem3D: constants.h \
+       $O/program_specfem3D.o \
        $O/specfem3D.o \
        $O/read_arrays_solver.o \
        $O/topo_bathy.o \
@@ -295,6 +298,7 @@ specfem3D: constants.h \
        $O/attenuation_model.o \
        $O/gll_library.o
 	${MPIF90} $(FLAGS_NO_CHECK) -o xspecfem3D \
+       $O/program_specfem3D.o \
        $O/specfem3D.o \
        $O/read_arrays_solver.o \
        $O/topo_bathy.o \
@@ -373,7 +377,7 @@ check_buffers_faces_chunks: constants.h $O/check_buffers_faces_chunks.o \
        $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 
 clean:
-	rm -f $O/*.o *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_movie_AVS_DX OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt
+	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_movie_AVS_DX OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt
 
 ####
 #### rule to build each .o file below
@@ -382,6 +386,9 @@ clean:
 ###
 ### optimized flags here
 ###
+
+$O/program_specfem3D.o: constants.h program_specfem3D.f90
+	${MPIF90} $(FLAGS_NO_CHECK) -c -o $O/program_specfem3D.o program_specfem3D.f90
 
 $O/specfem3D.o: constants.h specfem3D.f90
 	${MPIF90} $(FLAGS_NO_CHECK) -c -o $O/specfem3D.o specfem3D.f90
@@ -550,6 +557,10 @@ $O/euler_angles.o: constants.h euler_angles.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/euler_angles.o euler_angles.f90
 
 ## use MPI here
+$O/program_meshfem3D.o: constants.h program_meshfem3D.f90
+	${MPIF90} $(FLAGS_CHECK) -c -o $O/program_meshfem3D.o program_meshfem3D.f90
+
+## use MPI here
 $O/meshfem3D.o: constants.h meshfem3D.f90
 	${MPIF90} $(FLAGS_CHECK) -c -o $O/meshfem3D.o meshfem3D.f90
 
@@ -628,3 +639,112 @@ $O/attenuation_model.o: constants.h attenuation_model.f90
 $O/gll_library.o: constants.h gll_library.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/gll_library.o gll_library.f90
 
+###
+### Pyre-related stuff
+###
+
+CC = cc
+MPICC = mpicc
+
+PYSPECFEM_OBJ = \
+       $O/misc.o \
+       $O/Specfem3DGlobeCode.o \
+       $O/meshfem3D.o \
+       $O/specfem3D.o \
+       $O/read_arrays_solver.o \
+       $O/create_regions_mesh.o \
+       $O/create_chunk_buffers.o \
+       $O/topo_bathy.o \
+       $O/calc_jacobian.o \
+       $O/crustal_model.o \
+       $O/make_ellipticity.o \
+       $O/rthetaphi_xyz.o \
+       $O/get_jacobian_boundaries.o \
+       $O/get_flags_boundaries.o \
+       $O/get_MPI_cutplanes_xi.o \
+       $O/get_MPI_cutplanes_eta.o \
+       $O/get_MPI_1D_buffers.o \
+       $O/get_ellipticity.o \
+       $O/get_global.o \
+       $O/get_model.o \
+       $O/write_AVS_DX_global_faces_data.o \
+       $O/write_AVS_DX_global_chunks_data.o \
+       $O/write_AVS_DX_surface_data.o \
+       $O/write_AVS_DX_global_data.o \
+       $O/write_AVS_DX_mesh_quality_data.o \
+       $O/create_name_database.o \
+       $O/read_arrays_buffers_solver.o \
+       $O/define_derivation_matrices.o \
+       $O/compute_arrays_source.o \
+       $O/get_attenuation_model.o \
+       $O/assemble_MPI_vector.o \
+       $O/assemble_MPI_scalar.o \
+       $O/compute_forces_crust_mantle.o \
+       $O/compute_forces_outer_core.o \
+       $O/compute_forces_inner_core.o \
+       $O/define_subregions_crust_mantle.o \
+       $O/define_subregions_outer_core.o \
+       $O/define_subregions_inner_core.o \
+       $O/get_shape3D.o \
+       $O/get_shape2D.o \
+       $O/hex_nodes.o \
+       $O/lagrange_poly.o \
+       $O/get_cmt.o \
+       $O/intgrl.o \
+       $O/write_seismograms.o \
+       $O/lgndr.o \
+       $O/mesh_radial.o \
+       $O/get_absorb.o \
+       $O/euler_angles.o \
+       $O/mantle_model.o \
+       $O/numerical_recipes.o \
+       $O/prem_model.o \
+       $O/comp_source_spectrum.o \
+       $O/anisotropic_mantle_model.o \
+       $O/anisotropic_inner_core_model.o \
+       $O/comp_source_time_function.o \
+       $O/reduce.o \
+       $O/save_arrays_solver.o \
+       $O/add_topography.o \
+       $O/exit_mpi.o \
+       $O/read_parameter_file.o \
+       $O/compute_parameters.o \
+       $O/locate_sources.o \
+       $O/locate_receivers.o \
+       $O/make_gravity.o \
+       $O/sort_array_coordinates.o \
+       $O/save_mesh_statistics.o \
+       $O/recompute_jacobian.o \
+       $O/attenuation_model.o \
+       $O/gll_library.o
+
+pyrized: pymeshfem3D pyspecfem3D
+
+pymeshfem3D: constants.h $O/config $O/pymeshfem3D.o $(PYSPECFEM_OBJ)
+	${MPIF90} $(FLAGS_CHECK) -o xmeshfem3D \
+		$O/pymeshfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags`
+
+pyspecfem3D: constants.h $O/config $O/pyspecfem3D.o $(PYSPECFEM_OBJ)
+	${MPIF90} $(FLAGS_CHECK) -o xspecfem3D \
+		$O/pyspecfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags`
+
+$O/pymeshfem3D.o: main.c $O/config.h $O/config
+	${MPICC} -DSCRIPT=Meshfem -c -I$O `./$O/config --python-cppflags` -o $O/pymeshfem3D.o main.c
+
+$O/pyspecfem3D.o: main.c $O/config.h $O/config
+	${MPICC} -DSCRIPT=Specfem -c -I$O `./$O/config --python-cppflags` -o $O/pyspecfem3D.o main.c
+
+$O/misc.o: misc.c $O/config.h $O/config
+	${MPICC} -c -I$O `./$O/config --python-cppflags` -o $O/misc.o misc.c
+
+$O/Specfem3DGlobeCode.o: $O/Specfem3DGlobeCode.c $O/config.h $O/config
+	${CC} -c -I$O `./$O/config --python-cppflags` -o $O/Specfem3DGlobeCode.o $O/Specfem3DGlobeCode.c
+
+$O/Specfem3DGlobeCode.c: Specfem3DGlobeCode.pyx
+	pyrexc Specfem3DGlobeCode.pyx -o $O/Specfem3DGlobeCode.c
+
+$O/config.h: config.h.in configure
+	./configure FC=$(F90) CC=$(CC)
+
+$O/config: config.in configure
+	./configure FC=$(F90) CC=$(CC)

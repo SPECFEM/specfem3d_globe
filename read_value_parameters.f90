@@ -113,3 +113,30 @@
 
   end subroutine read_next_line
 
+!--------------------
+
+  subroutine open_parameter_file
+
+  include "constants.h"
+
+  open(unit=IIN,file='DATA/Par_file',status='old')
+
+  end subroutine open_parameter_file
+
+!--------------------
+
+  subroutine close_parameter_file
+
+  include "constants.h"
+
+  close(IIN)
+
+  end subroutine close_parameter_file
+
+!--------------------
+
+  integer function err_occurred
+
+  err_occurred = 0
+
+  end function err_occurred
