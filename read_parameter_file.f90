@@ -75,19 +75,19 @@
 
   call open_parameter_file
 
-  call read_value_integer(NCHUNKS, 'inventory.NCHUNKS')
+  call read_value_integer(NCHUNKS, 'mesher.NCHUNKS')
   if(err_occurred() /= 0) return
   if(NCHUNKS /= 1 .and. NCHUNKS /= 2 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) stop 'NCHUNKS must be either 1, 2, 3 or 6'
 
-  call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES, 'inventory.ANGULAR_WIDTH_XI_IN_DEGREES')
+  call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES, 'mesher.ANGULAR_WIDTH_XI_IN_DEGREES')
   if(err_occurred() /= 0) return
-  call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES, 'inventory.ANGULAR_WIDTH_ETA_IN_DEGREES')
+  call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES, 'mesher.ANGULAR_WIDTH_ETA_IN_DEGREES')
   if(err_occurred() /= 0) return
-  call read_value_double_precision(CENTER_LATITUDE_IN_DEGREES, 'inventory.CENTER_LATITUDE_IN_DEGREES')
+  call read_value_double_precision(CENTER_LATITUDE_IN_DEGREES, 'mesher.CENTER_LATITUDE_IN_DEGREES')
   if(err_occurred() /= 0) return
-  call read_value_double_precision(CENTER_LONGITUDE_IN_DEGREES, 'inventory.CENTER_LONGITUDE_IN_DEGREES')
+  call read_value_double_precision(CENTER_LONGITUDE_IN_DEGREES, 'mesher.CENTER_LONGITUDE_IN_DEGREES')
   if(err_occurred() /= 0) return
-  call read_value_double_precision(GAMMA_ROTATION_AZIMUTH, 'inventory.GAMMA_ROTATION_AZIMUTH')
+  call read_value_double_precision(GAMMA_ROTATION_AZIMUTH, 'mesher.GAMMA_ROTATION_AZIMUTH')
   if(err_occurred() /= 0) return
 
 ! this MUST be 90 degrees for two chunks or more to match geometrically
@@ -109,13 +109,13 @@
   endif
 
 ! number of elements at the surface along the two sides of the first chunk
-  call read_value_integer(NEX_XI, 'inventory.NEX_XI')
+  call read_value_integer(NEX_XI, 'mesher.NEX_XI')
   if(err_occurred() /= 0) return
-  call read_value_integer(NEX_ETA, 'inventory.NEX_ETA')
+  call read_value_integer(NEX_ETA, 'mesher.NEX_ETA')
   if(err_occurred() /= 0) return
-  call read_value_integer(NPROC_XI, 'inventory.NPROC_XI')
+  call read_value_integer(NPROC_XI, 'mesher.NPROC_XI')
   if(err_occurred() /= 0) return
-  call read_value_integer(NPROC_ETA, 'inventory.NPROC_ETA')
+  call read_value_integer(NPROC_ETA, 'mesher.NPROC_ETA')
   if(err_occurred() /= 0) return
 
 ! set time step, radial distribution of elements, and attenuation period range
@@ -393,7 +393,7 @@
   endif
 
 ! define the velocity model
-  call read_value_string(MODEL, 'inventory.MODEL')
+  call read_value_string(MODEL, 'MODEL')
   if(err_occurred() /= 0) return
 
   if(MODEL == 'isotropic_prem') then
@@ -454,19 +454,19 @@
     stop 'model not implemented, edit read_parameter_file.f90 and recompile'
   endif
 
-  call read_value_logical(OCEANS, 'inventory.OCEANS')
+  call read_value_logical(OCEANS, 'model.OCEANS')
   if(err_occurred() /= 0) return
-  call read_value_logical(ELLIPTICITY, 'inventory.ELLIPTICITY')
+  call read_value_logical(ELLIPTICITY, 'model.ELLIPTICITY')
   if(err_occurred() /= 0) return
-  call read_value_logical(TOPOGRAPHY, 'inventory.TOPOGRAPHY')
+  call read_value_logical(TOPOGRAPHY, 'model.TOPOGRAPHY')
   if(err_occurred() /= 0) return
-  call read_value_logical(GRAVITY, 'inventory.GRAVITY')
+  call read_value_logical(GRAVITY, 'model.GRAVITY')
   if(err_occurred() /= 0) return
-  call read_value_logical(ROTATION, 'inventory.ROTATION')
+  call read_value_logical(ROTATION, 'model.ROTATION')
   if(err_occurred() /= 0) return
-  call read_value_logical(ATTENUATION, 'inventory.ATTENUATION')
+  call read_value_logical(ATTENUATION, 'model.ATTENUATION')
   if(err_occurred() /= 0) return
-  call read_value_logical(ABSORBING_CONDITIONS, 'inventory.ABSORBING_CONDITIONS')
+  call read_value_logical(ABSORBING_CONDITIONS, 'ABSORBING_CONDITIONS')
   if(err_occurred() /= 0) return
 
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 6) stop 'cannot have absorbing conditions in the full Earth'
@@ -537,7 +537,7 @@
 ! are matched (150 km below the ICB is optimal)
   R_CENTRAL_CUBE = (RICB - 150000.d0) / R_EARTH
 
-  call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'inventory.RECORD_LENGTH_IN_MINUTES')
+  call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES')
   if(err_occurred() /= 0) return
 
 ! compute total number of time steps, rounded to next multiple of 100
@@ -558,13 +558,13 @@
   NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
   if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
 
-  call read_value_logical(MOVIE_SURFACE, 'inventory.MOVIE_SURFACE')
+  call read_value_logical(MOVIE_SURFACE, 'solver.MOVIE_SURFACE')
   if(err_occurred() /= 0) return
-  call read_value_logical(MOVIE_VOLUME, 'inventory.MOVIE_VOLUME')
+  call read_value_logical(MOVIE_VOLUME, 'solver.MOVIE_VOLUME')
   if(err_occurred() /= 0) return
-  call read_value_integer(NTSTEP_BETWEEN_FRAMES, 'inventory.NTSTEP_BETWEEN_FRAMES')
+  call read_value_integer(NTSTEP_BETWEEN_FRAMES, 'solver.NTSTEP_BETWEEN_FRAMES')
   if(err_occurred() /= 0) return
-  call read_value_double_precision(HDUR_MOVIE, 'inventory.HDUR_MOVIE')
+  call read_value_double_precision(HDUR_MOVIE, 'solver.HDUR_MOVIE')
   if(err_occurred() /= 0) return
 
 ! computes a default hdur_movie that creates nice looking movies.
@@ -601,21 +601,21 @@
 !  if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval_hdur < TINYVAL) &
 !    stop 'hdur too small for movie creation, movies do not make sense for Heaviside source'
 
-  call read_value_logical(SAVE_MESH_FILES, 'inventory.SAVE_MESH_FILES')
+  call read_value_logical(SAVE_MESH_FILES, 'mesher.SAVE_MESH_FILES')
   if(err_occurred() /= 0) return
-  call read_value_integer(NUMBER_OF_RUNS, 'inventory.NUMBER_OF_RUNS')
+  call read_value_integer(NUMBER_OF_RUNS, 'solver.NUMBER_OF_RUNS')
   if(err_occurred() /= 0) return
-  call read_value_integer(NUMBER_OF_THIS_RUN, 'inventory.NUMBER_OF_THIS_RUN')
+  call read_value_integer(NUMBER_OF_THIS_RUN, 'solver.NUMBER_OF_THIS_RUN')
   if(err_occurred() /= 0) return
-  call read_value_string(LOCAL_PATH, 'inventory.LOCAL_PATH')
+  call read_value_string(LOCAL_PATH, 'LOCAL_PATH')
   if(err_occurred() /= 0) return
-  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'inventory.NTSTEP_BETWEEN_OUTPUT_INFO')
+  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO')
   if(err_occurred() /= 0) return
-  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'inventory.NTSTEP_BETWEEN_OUTPUT_SEISMOS')
+  call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NTSTEP_BETWEEN_OUTPUT_SEISMOS')
   if(err_occurred() /= 0) return
-  call read_value_logical(RECEIVERS_CAN_BE_BURIED, 'inventory.RECEIVERS_CAN_BE_BURIED')
+  call read_value_logical(RECEIVERS_CAN_BE_BURIED, 'solver.RECEIVERS_CAN_BE_BURIED')
   if(err_occurred() /= 0) return
-  call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'inventory.PRINT_SOURCE_TIME_FUNCTION')
+  call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'solver.PRINT_SOURCE_TIME_FUNCTION')
   if(err_occurred() /= 0) return
 
 ! close parameter file
