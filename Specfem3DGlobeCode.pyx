@@ -42,8 +42,8 @@ cdef public void read_value_string "FC_FUNC_(read_value_string, READ_VALUE_STRIN
     attrName = PyString_FromStringAndSize(name, nameLen)
     v = component.readValue(attrName)
     vl = len(v)
-    if vl > nameLen:
-        raise ValueError("string '%s' is too long for destination Fortran buffer" % attrName)
+    if vl > valueLen:
+        raise ValueError("%s value '%s' is too long (%d bytes) for destination Fortran buffer (%d bytes)" % (attrName, v, vl, valueLen))
     vp = v
     strncpy(value, vp, vl)
     for i from vl <= i < valueLen:
