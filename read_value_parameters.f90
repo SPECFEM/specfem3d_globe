@@ -17,11 +17,12 @@
 
 ! read values from parameter file, ignoring white lines and comments
 
-  subroutine read_value_integer(value_to_read)
+  subroutine read_value_integer(value_to_read, name)
 
   implicit none
 
   integer value_to_read
+  character(len=*) name
   character(len=100) string_read
 
   call read_next_line(string_read)
@@ -31,11 +32,12 @@
 
 !--------------------
 
-  subroutine read_value_double_precision(value_to_read)
+  subroutine read_value_double_precision(value_to_read, name)
 
   implicit none
 
   double precision value_to_read
+  character(len=*) name
   character(len=100) string_read
 
   call read_next_line(string_read)
@@ -45,11 +47,12 @@
 
 !--------------------
 
-  subroutine read_value_logical(value_to_read)
+  subroutine read_value_logical(value_to_read, name)
 
   implicit none
 
   logical value_to_read
+  character(len=*) name
   character(len=100) string_read
 
   call read_next_line(string_read)
@@ -59,11 +62,12 @@
 
 !--------------------
 
-  subroutine read_value_string(value_to_read)
+  subroutine read_value_string(value_to_read, name)
 
   implicit none
 
   character(len=*) value_to_read
+  character(len=*) name
   character(len=100) string_read
 
   call read_next_line(string_read)
