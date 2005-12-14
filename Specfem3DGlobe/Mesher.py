@@ -44,5 +44,11 @@ class Mesher(Component):
             self.inventory.NPROC_XI != self.inventory.NPROC_ETA):
             raise ValueError("nproc-xi and nproc-eta must be equal for more than two chunks")
 
+    def nproc(self):
+        """Return the total number of processors needed."""
+        return (self.inventory.NCHUNKS *
+                self.inventory.NPROC_XI *
+                self.inventory.NPROC_ETA)
+
 
 # end of file
