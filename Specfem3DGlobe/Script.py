@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 
+from CodecConfig import CodecConfig
 from mpi.Application import Application
 import sys
 
@@ -34,6 +35,9 @@ class Script(Application):
         model                         = ModelFacility("model")
         solver                        = facility("solver", factory=Solver, args=["solver"])
     
+    def __init__(self):
+        Application.__init__(self, "Specfem3DGlobe")
+
     def _init(self):
         Application._init(self)
         self.MODEL = self.inventory.model.className
@@ -52,17 +56,21 @@ class Script(Application):
         try:
             Application.run(self, *args, **kwds)
         except PyrePatches.PropertyValueError, error:
-            import journal
-            import linecache
-            j = journal.journal()
-            j.device.renderer = PyrePatches.PropertyValueError.Renderer()
-            property = error.args[0]
-            locator = error.args[1]
-            entry = journal.diagnostics.Entry.Entry()
-            meta = entry.meta
+            self.reportPropertyValueError(error)
+
+    def reportPropertyValueError(self, error):
+        import journal
+        import linecache
+        j = journal.journal()
+        j.device.renderer = PyrePatches.PropertyValueError.Renderer()
+        property = error.args[0]
+        locator = error.args[1]
+        entry = journal.diagnostics.Entry.Entry()
+        meta = entry.meta
+        meta["name"] = property.name
+        meta["error"] = error
+        if locator:
             meta["filename"] = locator.source
-            meta["name"] = property.name
-            meta["error"] = error
             try:
                 line = locator.line
             except AttributeError:
@@ -73,7 +81,21 @@ class Script(Application):
                 src = src.rstrip()
                 meta["src"] = src
                 meta["line"] = locator.line
-            j.record(entry)
+        else:
+            meta["filename"] = "???"
+            meta["line"] = "???"
+            meta["src"] = ""
+        j.record(entry)
+        
+    def initializeCurator(self, curator, registry):
+        cfg = CodecConfig()
+        curator.registerCodecs(cfg)
+        return Application.initializeCurator(self, curator, registry)
+        
+    def collectUserInput(self, registry):
+        curator = self.getCurator()
+        configRegistry = curator.getTraits(self.name, extraDepositories=[], encoding='cfg')
+        registry.update(configRegistry)
         
     def readValue(self, name):
         l = name.split('.')

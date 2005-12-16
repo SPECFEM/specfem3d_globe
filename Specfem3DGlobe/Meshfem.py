@@ -8,7 +8,7 @@ import Specfem3DGlobeCode
 class Meshfem(Script):
     
     def __init__(self):
-        Script.__init__(self, "meshfem")
+        Script.__init__(self)
 
     def main(self, *args, **kwds):
         Specfem3DGlobeCode.meshfem3D(self)
