@@ -2,6 +2,7 @@
 
 
 from CodecConfig import CodecConfig
+import journal
 from mpi.Application import Application
 import sys
 
@@ -37,6 +38,7 @@ class Script(Application):
     
     def __init__(self):
         Application.__init__(self, "Specfem3DGlobe")
+        self.error = journal.error(self.name)
 
     def _init(self):
         Application._init(self)
@@ -59,7 +61,6 @@ class Script(Application):
             self.reportPropertyValueError(error)
 
     def reportPropertyValueError(self, error):
-        import journal
         import linecache
         j = journal.journal()
         j.device.renderer = PyrePatches.PropertyValueError.Renderer()
@@ -93,9 +94,27 @@ class Script(Application):
         return Application.initializeCurator(self, curator, registry)
         
     def collectUserInput(self, registry):
+        # read INI-style .cfg files
         curator = self.getCurator()
         configRegistry = curator.getTraits(self.name, extraDepositories=[], encoding='cfg')
-        registry.update(configRegistry)
+        self.updateConfiguration(configRegistry)
+        # read parameter files given on the command line
+        from os.path import isfile, splitext
+        for arg in self.argv:
+            if isfile(arg):
+                base, ext = splitext(arg)
+                encoding = ext[1:] # NYI: not quite
+                codec = self.getCurator().codecs.get(encoding)
+                if codec:
+                    shelf = codec.open(base)
+                    paramRegistry = shelf['inventory'].getFacility(self.name)
+                    if paramRegistry:
+                        self.updateConfiguration(paramRegistry)
+                else:
+                    self.error.log("unknown encoding: %s" % ext)
+            else:
+                self.error.log("cannot open '%s'" % arg)
+        return
         
     def readValue(self, name):
         l = name.split('.')

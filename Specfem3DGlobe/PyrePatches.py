@@ -52,7 +52,7 @@ class PropertyValueError(ValueError):
 
 
      def __str__(self):
-          return self.origExc[1].__str__()
+          return self.origExc[0].__name__ + ": " + self.origExc[1].__str__()
 
 
 class PropertyPatches(Category(Property)):
@@ -100,9 +100,17 @@ class PropertyPatches(Category(Property)):
         try:
             value = self._cast(value)
         except ValueError:
-            raise PropertyValueError, (self, locator)
+             raise PropertyValueError, (self, locator)
+        except KeyError: # e.g., Bool
+             raise PropertyValueError, (self, locator)
+        except NameError: # e.g., Dimensional
+             raise PropertyValueError, (self, locator)
+        except TypeError: # Dimensional again...
+             raise PropertyValueError, (self, locator)
+        except: # ...I suppose anything could happen in the 'eval'
+             raise PropertyValueError, (self, locator)
         else:
-            return value
+             return value
     
 
     def _richValidator(self, value, locator=None):
