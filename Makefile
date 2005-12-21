@@ -721,12 +721,12 @@ PYSPECFEM_OBJ = \
 pyrized: pymeshfem3D pyspecfem3D
 
 pymeshfem3D: constants.h $O/config $O/pymeshfem3D.o $(PYSPECFEM_OBJ)
-	${MPIF90} $(FLAGS_CHECK) -o xmeshfem3D \
-		$O/pymeshfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags`
+	${MPICC} -o xmeshfem3D \
+		$O/pymeshfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
 
 pyspecfem3D: constants.h $O/config $O/pyspecfem3D.o $(PYSPECFEM_OBJ)
-	${MPIF90} $(FLAGS_CHECK) -o xspecfem3D \
-		$O/pyspecfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags`
+	${MPICC} -o xspecfem3D \
+		$O/pyspecfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
 
 $O/pymeshfem3D.o: main.c $O/config.h $O/config
 	${MPICC} -DSCRIPT=Meshfem -c -I$O `./$O/config --python-cppflags` -o $O/pymeshfem3D.o main.c
