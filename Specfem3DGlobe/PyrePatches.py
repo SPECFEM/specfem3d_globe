@@ -122,4 +122,56 @@ class PropertyPatches(Category(Property)):
         return value
 
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# mpi.Application
+
+
+from mpi.Application import Application as MPIApp
+from PyxMPI import MPI_Init, MPI_Finalize
+
+
+class MPIAppPatches(Category(MPIApp)):
+
+
+    def run(self, *args, **kwds):
+        
+        # If we are a worker on a compute node -- i.e., we are a
+        # process started by 'mpirun' -- call MPI_Init() now to clean
+        # the MPI arguments from sys.argv before Pyre can see them.
+        # If we are the launcher/"server" on the login node -- i.e.,
+        # we are the process started directly by the user -- don't
+        # call MPI_Init(), as MPICH-GM will die with SIGPIPE
+        # ("<MPICH-GM> Error: Need to obtain the job magic number in
+        # GMPI_MAGIC !").
+        
+        scratchRegistry = self.createRegistry()
+        help, unprocessedArguments = self.processCommandline(scratchRegistry)
+        mode = scratchRegistry.getProperty('mode', "server")
+        
+        if mode == "worker":
+            MPI_Init(sys.argv)
+
+        super(MPIApp, self).run(self, *args, **kwds)
+        
+        if mode == "worker":
+            MPI_Finalize()
+        
+        return
+
+    
+    def onServer(self, *args, **kwds):
+        self._debug.log("%s: onServer" % self.name)
+
+        launcher = self.inventory.launcher
+        launched = launcher.launch()
+        if not launched:
+            # only one node -- nothing to launch
+            MPI_Init(sys.argv)
+            self.onComputeNodes(*args, **kwds)
+            MPI_Finalize()
+        
+        return
+
+
+
 # end of file

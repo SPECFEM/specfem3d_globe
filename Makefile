@@ -649,6 +649,7 @@ MPICC = mpicc
 PYSPECFEM_OBJ = \
        $O/misc.o \
        $O/Specfem3DGlobeCode.o \
+       $O/PyxMPI.o \
        $O/meshfem3D.o \
        $O/specfem3D.o \
        $O/read_arrays_solver.o \
@@ -721,27 +722,33 @@ PYSPECFEM_OBJ = \
 pyrized: pymeshfem3D pyspecfem3D
 
 pymeshfem3D: constants.h $O/config $O/pymeshfem3D.o $(PYSPECFEM_OBJ)
-	${MPICC} -o xmeshfem3D \
+	${MPICC} $(CFLAGS) -o xmeshfem3D \
 		$O/pymeshfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
 
 pyspecfem3D: constants.h $O/config $O/pyspecfem3D.o $(PYSPECFEM_OBJ)
-	${MPICC} -o xspecfem3D \
+	${MPICC} $(CFLAGS) -o xspecfem3D \
 		$O/pyspecfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
 
 $O/pymeshfem3D.o: main.c $O/config.h $O/config
-	${MPICC} -DSCRIPT=Meshfem -c -I$O `./$O/config --python-cppflags` -o $O/pymeshfem3D.o main.c
+	${MPICC} $(CFLAGS) -DSCRIPT=Meshfem -c -I$O `./$O/config --python-cppflags` -o $O/pymeshfem3D.o main.c
 
 $O/pyspecfem3D.o: main.c $O/config.h $O/config
-	${MPICC} -DSCRIPT=Specfem -c -I$O `./$O/config --python-cppflags` -o $O/pyspecfem3D.o main.c
+	${MPICC} $(CFLAGS) -DSCRIPT=Specfem -c -I$O `./$O/config --python-cppflags` -o $O/pyspecfem3D.o main.c
 
 $O/misc.o: misc.c $O/config.h $O/config
-	${MPICC} -c -I$O `./$O/config --python-cppflags` -o $O/misc.o misc.c
+	${MPICC} $(CFLAGS) -c -I$O `./$O/config --python-cppflags` -o $O/misc.o misc.c
 
 $O/Specfem3DGlobeCode.o: $O/Specfem3DGlobeCode.c $O/config.h $O/config
-	${CC} -c -I$O `./$O/config --python-cppflags` -o $O/Specfem3DGlobeCode.o $O/Specfem3DGlobeCode.c
+	${CC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/Specfem3DGlobeCode.o $O/Specfem3DGlobeCode.c
 
 $O/Specfem3DGlobeCode.c: Specfem3DGlobeCode.pyx
 	pyrexc Specfem3DGlobeCode.pyx -o $O/Specfem3DGlobeCode.c
+
+$O/PyxMPI.o: $O/PyxMPI.c $O/config.h $O/config
+	${MPICC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/PyxMPI.o $O/PyxMPI.c
+
+$O/PyxMPI.c: PyxMPI.pyx
+	pyrexc PyxMPI.pyx -o $O/PyxMPI.c
 
 $O/config.h: config.h.in configure
 	./configure FC=$(F90) CC=$(CC)
