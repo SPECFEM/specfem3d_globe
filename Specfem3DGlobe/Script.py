@@ -4,6 +4,7 @@
 from CodecConfig import CodecConfig
 import journal
 from mpi.Application import Application
+import Specfem3DGlobeCode
 import sys
 
 
@@ -47,7 +48,9 @@ class Script(Application):
         nodes = self.inventory.mesher.nproc()
         self.inventory.launcher.inventory.nodes = nodes
         self.inventory.launcher.nodes = nodes
-        
+        # give the Fortran code a chance to validate the parameters
+        Specfem3DGlobeCode.check_parameters(self)
+    
     def run(self, *args, **kwds):
         for i in xrange(0, len(sys.argv)):
             if sys.argv[i] == '-pdb':

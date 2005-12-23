@@ -331,10 +331,11 @@ class LauncherLSF(LauncherBatch):
 
     class Inventory(LauncherBatch.Inventory):
         
-        from pyre.inventory import str
+        from pyre.inventory import list, str
         
         command = str("command", default="mpijob mpirun")
         batch_command = str("batch-command", default="bsub")
+        bsub_options = list("bsub-options")
 
 
     def __init__(self):
@@ -370,6 +371,8 @@ class LauncherLSF(LauncherBatch):
         script += [
             "#BSUB -n %d" % self.nodes,
             ]
+
+        script += ["#BSUB " + option for option in self.inventory.bsub_options]
 
         return script
 
