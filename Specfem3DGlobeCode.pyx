@@ -73,5 +73,11 @@ def specfem3D(arg):
     component = arg
     specfem3D_f()
 
+cdef extern void check_parameters_f "FC_FUNC_(check_parameters, CHECK_PARAMETERS)" () except *
+def check_parameters(arg):
+    global component
+    component = arg
+    check_parameters_f()
+
 
 # end of file
