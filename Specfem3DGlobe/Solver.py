@@ -10,8 +10,10 @@ class Solver(Component):
     
     class Inventory(Component.Inventory):
 
-        from pyre.inventory import bool, dimensional, float, int
+        from pyre.inventory import bool, dimensional, float, int, str
     
+        CMTSOLUTION                   = str("cmt-solution", default="DATA/CMTSOLUTION")
+        
         MOVIE_SURFACE                 = bool("movie-surface")
         MOVIE_VOLUME                  = bool("movie-volume")
         RECEIVERS_CAN_BE_BURIED       = bool("receivers-can-be-buried")
@@ -25,7 +27,9 @@ class Solver(Component):
         NTSTEP_BETWEEN_OUTPUT_SEISMOS = int("ntstep-between-output-seismos")
         NUMBER_OF_RUNS                = int("number-of-runs")
         NUMBER_OF_THIS_RUN            = int("number-of-this-run")
-        
+
+        STATIONS                      = str("stations", default="DATA/STATIONS")
+
     def __init__(self, name):
         Component.__init__(self, name, "solver")
 

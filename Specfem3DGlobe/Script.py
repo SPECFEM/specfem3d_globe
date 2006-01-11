@@ -31,6 +31,7 @@ class Script(Application):
         ABSORBING_CONDITIONS          = bool("absorbing-conditions")
 
         LOCAL_PATH                    = str("local-path")
+        OUTPUT_FILES                  = str("output-dir", default=".")
         
         launcher                      = LauncherFacility("launcher")
         mesher                        = facility("mesher", factory=Mesher, args=["mesher"])

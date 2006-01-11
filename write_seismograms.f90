@@ -39,7 +39,7 @@
   double precision value
 
   character(len=4) chn
-  character(len=150) sisname,clean_LOCAL_PATH,final_LOCAL_PATH
+  character(len=150) sisname
 
   do irec_local = 1,nrec_local
 
@@ -73,18 +73,12 @@
       write(sisname,"(a,'.',a,'.',a3,'.semd')") station_name(irec)(1:length_station_name), &
                     network_name(irec)(1:length_network_name),chn
 
-! suppress white spaces if any
-    clean_LOCAL_PATH = adjustl(LOCAL_PATH)
-
-! create full final local path
-    final_LOCAL_PATH = clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // '/'
-
 ! save seismograms in text format with no subsampling.
 ! Because we do not subsample the output, this can result in large files
 ! if the simulation uses many time steps. However, subsampling the output
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
-    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),status='unknown')
+    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//trim(sisname),status='unknown')
 
 ! subtract half duration of the source to make sure travel time is correct
       do isample = it_begin,it_end

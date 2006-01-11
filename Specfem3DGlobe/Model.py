@@ -10,7 +10,7 @@ class Model(Component):
 
     class Inventory(Component.Inventory):
 
-        from pyre.inventory import bool
+        from pyre.inventory import bool, str
         
         ATTENUATION                   = bool("attenuation")
         ELLIPTICITY                   = bool("ellipticity")
@@ -18,6 +18,12 @@ class Model(Component):
         OCEANS                        = bool("oceans")
         ROTATION                      = bool("rotation")
         TOPOGRAPHY                    = bool("topography")
+
+        # The hardwired parameters NX_BATHY, NY_BATHY, and
+        # RESOLUTION_TOPO_FILE would also have to be Pyrized for the
+        # following item to be truly useful...  however this would
+        # force the array 'ibathy_topo' to be allocatable.
+        PATHNAME_TOPO_FILE            = str("topo-bathy-file", default="DATA/topo_bathy/topo_bathy_etopo4_smoothed_window7.dat")
         
     def __init__(self, name):
         Component.__init__(self, name, "model")
@@ -34,14 +40,34 @@ def BuiltInModel(name, *aliases):
         'classAliases': [name] + list(aliases)}
         )
 
+class Model3DIsotropic(Model):
+    className = "s20rts"
+    classAliases = ["s20rts", "3D_isotropic"]
+    class Inventory(Model.Inventory):
+        from pyre.inventory import str
+        CNtype2            = str("CNtype2",           default="DATA/crust2.0/CNtype2.txt")
+        CNtype2_key_modif  = str("CNtype2_key_modif", default="DATA/crust2.0/CNtype2_key_modif.txt")
+        P12                = str("P12",               default="DATA/s20rts/P12.dat")
+        S20RTS             = str("S20RTS",            default="DATA/s20rts/S20RTS.dat")
+
+class Model3DAttenuation(Model):
+    className = "Min_Chen"
+    classAliases = ["Min_Chen", "3D_attenuation"]
+    class Inventory(Model.Inventory):
+        from pyre.inventory import str
+        Adrem119           = str("Adrem119",        default="DATA/Montagner_model/Adrem119")
+        glob_prem3sm01     = str("glob_prem3sm01",  default="DATA/Montagner_model/glob-prem3sm01")
+        globpreman3sm01    = str("globpreman3sm01", default="DATA/Montagner_model/globpreman3sm01")
+        
+
 builtInModelClasses = [
     BuiltInModel("isotropic_prem"),
     BuiltInModel("transversly_isotropic_prem"),
     BuiltInModel("iaspei", "iasp91"),
     BuiltInModel("ak135"),
-    BuiltInModel("s20rts", "3D_isotropic"),
+    Model3DIsotropic,
     BuiltInModel("Brian_Savage", "3D_anisotropic"),
-    BuiltInModel("Min_Chen", "3D_attenuation"),
+    Model3DAttenuation,
     ]
 
 def retrieveBuiltInModelClass(componentName):

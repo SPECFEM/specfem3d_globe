@@ -122,10 +122,13 @@
   double precision, dimension(3,3,nrec) :: nu
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
+  character(len=150) STATIONS
 
   integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
+
+  character(len=150) OUTPUT_FILES
 
 ! **************
 
@@ -152,7 +155,8 @@
   endif
 
 ! get number of stations from receiver file
-  open(unit=1,file='DATA/STATIONS',status='old')
+  call get_value_string(STATIONS, 'solver.STATIONS', 'DATA/STATIONS')
+  open(unit=1,file=STATIONS,status='old')
   read(1,*) nrec_dummy
 
   if(nrec_dummy /= nrec) call exit_MPI(myrank,'problem with number of receivers')
@@ -319,11 +323,14 @@
 
   if(myrank == 0) then
 
+! get the base pathname for output files
+    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
 ! create file for QmX Harvard
 ! Harvard format does not support the network name
 ! therefore only the station name is included below
 ! compute total number of samples for normal modes with 1 sample per second
-    open(unit=1,file='OUTPUT_FILES/RECORDHEADERS',status='unknown')
+    open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS',status='unknown')
     nsamp = nint(dble(NSTEP-1)*DT)
     do irec = 1,nrec
       write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
@@ -539,7 +546,7 @@
     endif
 
 ! write the list of stations and associated epicentral distance
-  open(unit=27,file='OUTPUT_FILES/output_list_stations.txt',status='unknown')
+  open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt',status='unknown')
   write(27,*)
   write(27,*) 'total number of stations: ',nrec
   write(27,*)

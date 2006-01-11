@@ -65,18 +65,24 @@
 !  integer, parameter :: NX_BATHY = 4320,NY_BATHY = 2160
 !! resolution of topography file in minutes
 !  integer, parameter :: RESOLUTION_TOPO_FILE = 5
+!! pathname of the topography file
+!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
 
 !---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
   integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
 ! resolution of topography file in minutes
   integer, parameter :: RESOLUTION_TOPO_FILE = 4
+! pathname of the topography file
+  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window7.dat'
 
-!!--- ETOPO2 2-minute model
+!!--- ETOPO2 2-minute model; not implemented yet
 !! size of topography and bathymetry file
 !  integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
 !! resolution of topography file in minutes
 !  integer, parameter :: RESOLUTION_TOPO_FILE = 2
+!! pathname of the topography file
+!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat'
 
 ! maximum depth of the oceans in trenches and height of topo in mountains
 ! to avoid taking into account spurious oscillations in global model ETOPO

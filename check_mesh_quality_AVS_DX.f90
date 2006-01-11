@@ -64,7 +64,7 @@
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -191,11 +191,14 @@
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *
 
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
 ! open file with global slice number addressing
   write(*,*) 'reading slice addressing'
   write(*,*)
   allocate(ichunk_slice(0:NPROCTOT-1))
-  open(unit=IIN,file='OUTPUT_FILES/addressing.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old')
   do iproc = 0,NPROCTOT-1
     read(IIN,*) iproc_read,ichunk,idummy1,idummy2
     if(iproc_read /= iproc) stop 'incorrect slice number read'
@@ -215,7 +218,8 @@
   print *,'Reading slice ',iproc,' in region ',iregion_code
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old')
   read(10,*) npoin
@@ -259,7 +263,8 @@
   print *,'Reading slice ',iproc,' in region ',iregion_code
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old')
 
@@ -335,7 +340,8 @@
   do iproc=proc_p1,proc_p2
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old')
 
@@ -370,7 +376,7 @@
   print *,'histogram of skewness (0. good - 1. bad):'
   print *
   total_percent = 0.
-  open(unit=14,file='OUTPUT_FILES/mesh_quality_histogram.txt',status='unknown')
+  open(unit=14,file=trim(OUTPUT_FILES)//'/mesh_quality_histogram.txt',status='unknown')
   do iclass = 0,NCLASS-1
     current_percent = 100.*dble(classes_skewness(iclass))/dble(ntotspec)
     total_percent = total_percent + current_percent
@@ -380,7 +386,7 @@
   close(14)
 
 ! create script for Gnuplot histogram file
-  open(unit=14,file='OUTPUT_FILES/plot_mesh_quality_histogram.gnu',status='unknown')
+  open(unit=14,file=trim(OUTPUT_FILES)//'/plot_mesh_quality_histogram.gnu',status='unknown')
   write(14,*) 'set term x11'
   write(14,*) 'set xrange [0:1]'
   write(14,*) 'set xtics 0,0.1,1'
@@ -430,7 +436,8 @@
   do iproc=proc_p1,proc_p2
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelements.txt',status='old')
   open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old')
@@ -488,10 +495,10 @@
 
 ! write AVS or DX header with element data
   if(USE_OPENDX) then
-    open(unit=11,file='OUTPUT_FILES/DX_meshquality.dx',status='unknown')
+    open(unit=11,file=trim(OUTPUT_FILES)//'/DX_meshquality.dx',status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ntotpoinAVS_DX,' data follows'
   else
-    open(unit=11,file='OUTPUT_FILES/AVS_meshquality.inp',status='unknown')
+    open(unit=11,file=trim(OUTPUT_FILES)//'/AVS_meshquality.inp',status='unknown')
     write(11,*) ntotpoinAVS_DX,' ',ntotspecAVS_DX,' 0 1 0'
   endif
 
@@ -506,7 +513,8 @@
   do iproc=proc_p1,proc_p2
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old')
   read(10,*) npoin
@@ -547,7 +555,8 @@
   do iproc=proc_p1,proc_p2
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelements.txt',status='old')
   open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old')
@@ -621,7 +630,8 @@
   do iproc=proc_p1,proc_p2
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old')
 

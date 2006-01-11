@@ -66,7 +66,7 @@
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -125,6 +125,9 @@
       NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
       NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
 
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
   print *
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *,'There are ',NCHUNKS,' chunks'
@@ -163,7 +166,7 @@
   allocate(imsg_type(NUMMSGS_FACES))
 
 ! file with the list of processors for each message for faces
-  open(unit=IIN,file='OUTPUT_FILES/list_messages_faces.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old')
   do imsg = 1,NUMMSGS_FACES
   read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
   if      (iprocfrom_faces(imsg) < 0 &
@@ -192,12 +195,14 @@
 ! read 2-D buffer for the sender and the receiver
   write(filename,"('buffer_faces_chunks_sender_msg',i4.4,'.txt')") imsg
   iproc = iprocfrom_faces(imsg)
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
   open(unit=34,file=prname(1:len_trim(prname))//filename,status='old')
 
   write(filename,"('buffer_faces_chunks_receiver_msg',i4.4,'.txt')") imsg
   iproc = iprocto_faces(imsg)
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
   open(unit=35,file=prname(1:len_trim(prname))//filename,status='old')
 
   write(*,*) 'reading MPI 2D buffer for sender'

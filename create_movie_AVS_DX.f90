@@ -91,7 +91,7 @@
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -153,6 +153,9 @@
       NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
       NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
       NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
+
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
   print *
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
@@ -326,8 +329,8 @@
   print *
 
 ! read all the elements from the same file
-  write(outputname,"('OUTPUT_FILES/moviedata',i6.6)") it
-  open(unit=IOUT,file=outputname,status='old',form='unformatted')
+  write(outputname,"('/moviedata',i6.6)") it
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted')
   read(IOUT) store_val_x
   read(IOUT) store_val_y
   read(IOUT) store_val_z
@@ -477,24 +480,24 @@
 
 ! create file name and open file
   if(USE_OPENDX) then
-    write(outputname,"('OUTPUT_FILES/DX_movie_',i6.6,'.dx')") it
-    open(unit=11,file=outputname,status='unknown')
+    write(outputname,"('/DX_movie_',i6.6,'.dx')") it
+    open(unit=11,file=trim(OUTPUT_FILES)//outputname,status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',nglob,' data follows'
   else if(USE_AVS) then
     if(UNIQUE_FILE .and. iframe == 1) then
-      open(unit=11,file='OUTPUT_FILES/AVS_movie_all.inp',status='unknown')
+      open(unit=11,file=trim(OUTPUT_FILES)//'/AVS_movie_all.inp',status='unknown')
       write(11,*) nframes
       write(11,*) 'data'
       write(11,"('step',i1,' image',i1)") 1,1
       write(11,*) nglob,' ',nspectot_AVS_max
     else if(.not. UNIQUE_FILE) then
-      write(outputname,"('OUTPUT_FILES/AVS_movie_',i6.6,'.inp')") it
-      open(unit=11,file=outputname,status='unknown')
+      write(outputname,"('/AVS_movie_',i6.6,'.inp')") it
+      open(unit=11,file=trim(OUTPUT_FILES)//outputname,status='unknown')
       write(11,*) nglob,' ',nspectot_AVS_max,' 1 0 0'
     endif
   else if(USE_GMT) then
-    write(outputname,"('OUTPUT_FILES/gmt_movie_',i6.6,'.xyz')") it
-    open(unit=11,file=outputname,status='unknown')
+    write(outputname,"('/gmt_movie_',i6.6,'.xyz')") it
+    open(unit=11,file=trim(OUTPUT_FILES)//outputname,status='unknown')
   else
     stop 'wrong output format selected'
   endif
@@ -641,9 +644,9 @@
   print *
   print *,'done creating movie'
   print *
-  if(USE_OPENDX) print *,'DX files are stored in OUTPUT_FILES/DX_*.dx'
-  if(USE_AVS) print *,'AVS files are stored in OUTPUT_FILES/AVS_*.inp'
-  if(USE_GMT) print *,'GMT files are stored in OUTPUT_FILES/gmt_*.xyz'
+  if(USE_OPENDX) print *,'DX files are stored in ', trim(OUTPUT_FILES), '/DX_*.dx'
+  if(USE_AVS) print *,'AVS files are stored in ', trim(OUTPUT_FILES), '/AVS_*.inp'
+  if(USE_GMT) print *,'GMT files are stored in ', trim(OUTPUT_FILES), '/gmt_*.xyz'
   print *
 
   end program create_movie_AVS_DX

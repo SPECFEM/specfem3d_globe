@@ -57,9 +57,12 @@
   double precision xdummy,ydummy,zdummy
 
 ! processor identification
-  character(len=150) prname,filename
+  character(len=150) OUTPUT_FILES,prname,filename
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
@@ -165,7 +168,7 @@
 ! read messages to assemble between chunks with MPI
 
 ! file with the list of processors for each message for faces
-  open(unit=IIN,file='OUTPUT_FILES/list_messages_faces.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old')
   do imsg = 1,NUMMSGS_FACES
   read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
   if      (iprocfrom_faces(imsg) < 0 &
@@ -179,7 +182,7 @@
   close(IIN)
 
 ! file with the list of processors for each message for corners
-  open(unit=IIN,file='OUTPUT_FILES/list_messages_corners.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old')
   do imsg = 1,NCORNERSCHUNKS
   read(IIN,*) iproc_master_corners(imsg),iproc_slave1_corners(imsg), &
                           iproc_slave2_corners(imsg)

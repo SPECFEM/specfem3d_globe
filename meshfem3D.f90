@@ -248,7 +248,7 @@
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -276,9 +276,12 @@
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
 ! open main output file, only written to by process 0
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) &
-    open(unit=IMAIN,file='OUTPUT_FILES/output_mesher.txt',status='unknown')
+    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_mesher.txt',status='unknown')
 
 ! get MPI starting time
   time_start = MPI_WTIME()
@@ -356,7 +359,7 @@
 
 ! loop on all the chunks to create global slice addressing for solver
   if(myrank == 0) then
-    open(unit=IOUT,file='OUTPUT_FILES/addressing.txt',status='unknown')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/addressing.txt',status='unknown')
     write(IMAIN,*) 'creating global slice addressing'
     write(IMAIN,*)
   endif
@@ -887,7 +890,7 @@
 
 ! save number of anisotropic elements found in the mantle to a file
   if(iregion_code == IREGION_CRUST_MANTLE) then
-    open(unit=IOUT,file='OUTPUT_FILES/nspec_aniso_mantle.txt',status='unknown')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/nspec_aniso_mantle.txt',status='unknown')
     write(IOUT,*) nspec_aniso_mantle
     close(IOUT)
   endif
