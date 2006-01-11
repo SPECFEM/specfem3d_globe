@@ -131,7 +131,7 @@
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -199,6 +199,9 @@
       NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
       NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
       NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
+
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
   print *,'1 = create files in OpenDX format'
   print *,'2 = create files in AVS UCD format'
@@ -307,7 +310,7 @@
   write(*,*) 'reading slice addressing'
   write(*,*)
   allocate(ichunk_slice(0:NPROCTOT-1))
-  open(unit=IIN,file='OUTPUT_FILES/addressing.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old')
   do iproc = 0,NPROCTOT-1
     read(IIN,*) iproc_read,ichunk,idummy1,idummy2
     if(iproc_read /= iproc) stop 'incorrect slice number read'
@@ -363,7 +366,8 @@
   print *,'Reading slice ',iproc,' in region ',iregion_code
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if(ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old')
@@ -404,10 +408,10 @@
 
 ! write AVS or DX header with element data
   if(USE_OPENDX) then
-    open(unit=11,file='OUTPUT_FILES/DX_fullmesh.dx',status='unknown')
+    open(unit=11,file=trim(OUTPUT_FILES)//'/DX_fullmesh.dx',status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ntotpoinAVS_DX,' data follows'
   else
-    open(unit=11,file='OUTPUT_FILES/AVS_fullmesh.inp',status='unknown')
+    open(unit=11,file=trim(OUTPUT_FILES)//'/AVS_fullmesh.inp',status='unknown')
     write(11,*) ntotpoinAVS_DX,' ',ntotspecAVS_DX,' 0 1 0'
   endif
 
@@ -436,7 +440,8 @@
   print *,'Reading slice ',iproc,' in region ',iregion_code
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if(ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old')
@@ -503,7 +508,8 @@
   print *,'Reading slice ',iproc,' in region ',iregion_code
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if(ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old')
@@ -822,7 +828,8 @@
   print *,'Reading slice ',iproc,' in region ',iregion_code
 
 ! create the name for the database of the current slide
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if(ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old')
@@ -1056,7 +1063,7 @@
 ! add source and receivers (small AVS or DX lines)
 ! duplicate source to have right color normalization in AVS_DX
   if(USE_OPENDX) then
-    open(unit=11,file='OUTPUT_FILES/DX_source_receivers.dx',status='unknown')
+    open(unit=11,file=trim(OUTPUT_FILES)//'/DX_source_receivers.dx',status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ntotpoinAVS_DX,' data follows'
     write(11,*) sngl(x_target_source),' ',sngl(y_target_source),' ',sngl(z_target_source)
     write(11,*) sngl(x_target_source+0.1*small_offset_source),' ', &
@@ -1090,7 +1097,7 @@
     write(11,*) 'end'
     close(11)
   else
-    open(unit=11,file='OUTPUT_FILES/AVS_source_receivers.inp',status='unknown')
+    open(unit=11,file=trim(OUTPUT_FILES)//'/AVS_source_receivers.inp',status='unknown')
     write(11,*) ntotpoinAVS_DX,' ',ntotspecAVS_DX,' 0 1 0'
     write(11,*) '1 ',sngl(x_target_source),' ',sngl(y_target_source),' ',sngl(z_target_source)
     write(11,*) '2 ',sngl(x_target_source+0.1*small_offset_source),' ', &
@@ -1121,7 +1128,7 @@
 
 ! write AVS or DX header with element data
   if(USE_OPENDX) then
-    open(unit=11,file='OUTPUT_FILES/DX_epicenter.dx',status='unknown')
+    open(unit=11,file=trim(OUTPUT_FILES)//'/DX_epicenter.dx',status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items 3 data follows'
     write(11,*) sngl(x_source_trgl1),' ',sngl(y_source_trgl1),' ',sngl(z_source_trgl1)
     write(11,*) sngl(x_source_trgl2),' ',sngl(y_source_trgl2),' ',sngl(z_source_trgl2)
@@ -1140,7 +1147,7 @@
     write(11,*) 'end'
     close(11)
   else
-    open(unit=11,file='OUTPUT_FILES/AVS_epicenter.inp',status='unknown')
+    open(unit=11,file=trim(OUTPUT_FILES)//'/AVS_epicenter.inp',status='unknown')
     write(11,*) '3 1 0 1 0'
     write(11,*) '1 ',sngl(x_source_trgl1),' ',sngl(y_source_trgl1),' ',sngl(z_source_trgl1)
     write(11,*) '2 ',sngl(x_source_trgl2),' ',sngl(y_source_trgl2),' ',sngl(z_source_trgl2)

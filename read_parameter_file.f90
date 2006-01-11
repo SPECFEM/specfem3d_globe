@@ -60,7 +60,7 @@
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL,CMTSOLUTION
 
 ! local variables
   integer ios,icounter,isource,idummy,NEX_MAX
@@ -72,6 +72,9 @@
   double precision ELEMENT_WIDTH
 
   integer, external :: err_occurred
+
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
   call open_parameter_file
 
@@ -330,7 +333,8 @@
           NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
           NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
           NER_CMB_TOPDDOUBLEPRIME, RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC, &
-          NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB)
+          NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB, &
+          OUTPUT_FILES)
 
     ! Determine in appropriate period range for the current mesh
     !   Note: we are using DT as a temporary variable
@@ -360,7 +364,7 @@
          ((ANGULAR_WIDTH_XI_IN_DEGREES * (PI/180.0d0)) * 1221.0d0) / &
          (dble(NEX_MAX) / 8.0d0) / 11.02827d0 ) * 0.173d0 * 0.4d0
 
-    open(unit=127, file='OUTPUT_FILES/auto_variables.txt', status='unknown')
+    open(unit=127, file=trim(OUTPUT_FILES)//'/auto_variables.txt', status='unknown')
     write(127, *)'double precision, parameter :: DT = ', DT
     write(127, *)'integer, parameter :: MIN_ATTENUATION_PERIOD = ', MIN_ATTENUATION_PERIOD
     write(127, *)'integer, parameter :: MAX_ATTENUATION_PERIOD = ', MAX_ATTENUATION_PERIOD
@@ -545,7 +549,8 @@
 
 ! compute the total number of sources in the CMTSOLUTION file
 ! there are NLINES_PER_CMTSOLUTION_SOURCE lines per source in that file
-  open(unit=1,file='DATA/CMTSOLUTION',iostat=ios,status='old')
+  call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION', 'DATA/CMTSOLUTION')
+  open(unit=1,file=CMTSOLUTION,iostat=ios,status='old')
   if(ios /= 0) stop 'error opening CMTSOLUTION file'
   icounter = 0
   do while(ios == 0)
@@ -575,7 +580,7 @@
 
 
 ! compute the minimum value of hdur in CMTSOLUTION file
-  open(unit=1,file='DATA/CMTSOLUTION',status='old')
+  open(unit=1,file=CMTSOLUTION,status='old')
   minval_hdur = HUGEVAL
   do isource = 1,NSOURCES
 
@@ -704,7 +709,8 @@
        NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
        NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
        NER_CMB_TOPDDOUBLEPRIME, RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC, &
-       NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB)
+       NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB, &
+       OUTPUT_FILES)
 
     implicit none
 
@@ -717,6 +723,7 @@
          NER_CMB_TOPDDOUBLEPRIME, NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, &
          NER_TOP_CENTRAL_CUBE_ICB
     double precision RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC
+    character(len=150) OUTPUT_FILES
 
     integer, parameter                         :: NUM_REGIONS = 13
     integer, dimension(NUM_REGIONS)            :: scaling
@@ -732,7 +739,7 @@
 
     IMESH = IMAIN+1
     write(*,*)'auto_ner'
-    open(unit=IMESH, file='OUTPUT_FILES/auto_mesher_output.txt', status='unknown')
+    open(unit=IMESH, file=trim(OUTPUT_FILES)//'/auto_mesher_output.txt', status='unknown')
     do i=IMAIN,IMESH
        write(i,*)
        write(i,*)'Automatically Determining Number of Radial Elements'
@@ -959,6 +966,8 @@
 ! currently only called by the Pyrized version
   subroutine check_parameters
 
+  include "constants.h"
+
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -981,7 +990,10 @@
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
+
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+  open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_check_params.txt',status='unknown')
 
 ! read the parameter file
   call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
@@ -1002,5 +1014,7 @@
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL)
+
+  close(IMAIN)
 
   end subroutine check_parameters

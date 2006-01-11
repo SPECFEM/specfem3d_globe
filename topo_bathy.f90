@@ -63,26 +63,16 @@
 
   include "constants.h"
 
+  character(len=150) topo_bathy_file
+
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
 
   integer itopo_x,itopo_y
 
-! Harvard Etopo-5 is a smoothed model
-  if(RESOLUTION_TOPO_FILE == 5) then
-    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat',status='old')
+  call get_value_string(topo_bathy_file, 'model.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
-! fictitious etopo-4 created by subsampling and smoothing etopo-2
-  else if(RESOLUTION_TOPO_FILE == 4) then
-    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo4_smoothed_window7.dat',status='old')
-
-! ETOPO-2 not implemented yet
-!  else if(RESOLUTION_TOPO_FILE == 2) then
-!    open(unit=13,file='DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat',status='old')
-
-  else
-    stop 'incorrect resolution selected for topography/bathymetry file'
-  endif
+  open(unit=13,file=topo_bathy_file,status='old')
 
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY

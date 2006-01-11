@@ -49,8 +49,13 @@ end module three_d_mantle_model_variables
 
   integer k,l,m
 
+  character(len=150) S20RTS, P12
+
+  call get_value_string(S20RTS, '3D_isotropic.S20RTS', 'DATA/s20rts/S20RTS.dat')
+  call get_value_string(P12, '3D_isotropic.P12', 'DATA/s20rts/P12.dat')
+
 ! S20RTS degree 20 S model from Ritsema
-  open(unit=10,file='DATA/s20rts/S20RTS.dat',status='old')
+  open(unit=10,file=S20RTS,status='old')
   do k=0,NK
     do l=0,NS
       read(10,*) dvs_a(k,l,0),(dvs_a(k,l,m),dvs_b(k,l,m),m=1,l)
@@ -59,7 +64,7 @@ end module three_d_mantle_model_variables
   close(10)
 
 ! P12 degree 12 P model from Ritsema
-  open(unit=10,file='DATA/s20rts/P12.dat',status='old')
+  open(unit=10,file=P12,status='old')
   do k=0,NK
     do l=0,12
       read(10,*) dvp_a(k,l,0),(dvp_a(k,l,m),dvp_b(k,l,m),m=1,l)

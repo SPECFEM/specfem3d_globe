@@ -74,6 +74,8 @@
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_NO_DOUBLING,NSPEC2D_NO_DOUBLING_XI,NSPEC2D_NO_DOUBLING_ETA
 
+  character(len=150) OUTPUT_FILES
+
 ! compute parameters for the Earth
 
 ! number of elements in radial direction
@@ -405,7 +407,8 @@
      + (nblocks_eta-1)*(nblocks_xi-1)*NPOIN1D_RADIAL(IREGION_OUTER_CORE)
 
 !  if(0 .EQ. 1) then
-  open(unit=IOUT,file='OUTPUT_FILES/derived_values.h',status='unknown')
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//'/derived_values.h',status='unknown')
   write(IOUT,*)'! What is this doing here? - Well, it is used to help compute '
   write(IOUT,*)'!     the memory requirements. This file, among others, is read '
   write(IOUT,*)'!     by the memory.pl script and tries to determine'

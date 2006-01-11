@@ -341,6 +341,7 @@ end module aniso_mantle_model_variables
   double precision ra(47),pari(14,37)
   double precision bet2(14,34,37,73)
   double precision alph(73,37),ph(73,37)
+  character(len=150) glob_prem3sm01, globpreman3sm01
 
   np1 = 1
   np2 = 34
@@ -349,7 +350,8 @@ end module aniso_mantle_model_variables
 !
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
 !
-  open(19,file='DATA/Montagner_model/glob-prem3sm01',status='old')
+  call get_value_string(glob_prem3sm01, '3D_attenuation.glob_prem3sm01', 'DATA/Montagner_model/glob-prem3sm01')
+  open(19,file=glob_prem3sm01,status='old')
 
 !
 ! read the models
@@ -409,7 +411,8 @@ end module aniso_mantle_model_variables
 ! beta(ipa,idep,ilat,ilon) are sorted in (amplitude, phase)
 ! normalized, in percents: 100 G/L
 !
-  open(unit=15,file='DATA/Montagner_model/globpreman3sm01',status='old')
+  call get_value_string(globpreman3sm01, '3D_attenuation.globpreman3sm01', 'DATA/Montagner_model/globpreman3sm01')
+  open(unit=15,file=globpreman3sm01,status='old')
 
   do nf = 7,nfin,2
     ipa = nf
@@ -500,11 +503,13 @@ end module aniso_mantle_model_variables
   double precision corpar(21,47)
   double precision aa,an,al,af,ac,vpv,vph,vsv,vsh,rho,red,a2l
   character(len=80) null
+  character(len=150) Adrem119
 
      ifanis = 1
      nri = 47
 
-     open(unit=13,file='DATA/Montagner_model/Adrem119',status='old')
+     call get_value_string(Adrem119, '3D_attenuation.Adrem119', 'DATA/Montagner_model/Adrem119')
+     open(unit=13,file=Adrem119,status='old')
      read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,null
 
      if(kiti == 0) read(13,"(20a4)",end = 77) idum1

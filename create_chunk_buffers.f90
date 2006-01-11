@@ -45,7 +45,7 @@
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
-  character(len=150) LOCAL_PATH
+  character(len=150) OUTPUT_FILES,LOCAL_PATH
 
 ! array with the local to global mapping per slice
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
@@ -228,8 +228,15 @@
 
   imsg = 0
 
+  if(myrank == 0) then
+
+! get the base pathname for output files
+    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
 ! file to store the list of processors for each message for faces
-  if(myrank == 0) open(unit=IOUT,file='OUTPUT_FILES/list_messages_faces.txt',status='unknown')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='unknown')
+
+  endif
 
 ! create theoretical communication pattern
   do imsg_type = 1,NUM_MSG_TYPES
@@ -861,7 +868,7 @@
   endif
 
 ! file to store the list of processors for each message for corners
-  if(myrank == 0) open(unit=IOUT,file='OUTPUT_FILES/list_messages_corners.txt',status='unknown')
+  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
 
 ! loop over all the messages to create the addressing
   do imsg = 1,NCORNERSCHUNKS

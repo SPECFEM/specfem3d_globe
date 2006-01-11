@@ -62,7 +62,7 @@
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -147,8 +147,11 @@
   allocate(iproc_slave1_corners(NCORNERSCHUNKS))
   allocate(iproc_slave2_corners(NCORNERSCHUNKS))
 
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
 ! file with the list of processors for each message for corners
-  open(unit=IIN,file='OUTPUT_FILES/list_messages_corners.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old')
   do imsg = 1,NCORNERSCHUNKS
   read(IIN,*) iproc_master_corners(imsg),iproc_slave1_corners(imsg), &
                           iproc_slave2_corners(imsg)
@@ -180,13 +183,15 @@
 ! master
   write(filename,"('buffer_corners_chunks_master_msg',i4.4,'.txt')") imsg
   iproc = iproc_master_corners(imsg)
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
   open(unit=34,file=prname(1:len_trim(prname))//filename,status='old')
 
 ! first slave
   write(filename,"('buffer_corners_chunks_slave1_msg',i4.4,'.txt')") imsg
   iproc = iproc_slave1_corners(imsg)
-  call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  call create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
   open(unit=35,file=prname(1:len_trim(prname))//filename,status='old')
 
 ! second slave
@@ -194,7 +199,8 @@
   if(NCHUNKS /= 2) then
     write(filename,"('buffer_corners_chunks_slave2_msg',i4.4,'.txt')") imsg
     iproc = iproc_slave2_corners(imsg)
-    call create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+    call create_serial_name_database(prname,iproc,iregion_code, &
+        LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
     open(unit=36,file=prname(1:len_trim(prname))//filename,status='old')
   endif
 

@@ -56,6 +56,27 @@ cdef public void open_parameter_file "FC_FUNC_(open_parameter_file, OPEN_PARAMET
 cdef public void close_parameter_file "FC_FUNC_(close_parameter_file, CLOSE_PARAMETER_FILE)" () except *:
     return
 
+cdef public void get_value_integer "FC_FUNC_(get_value_integer, GET_VALUE_INTEGER)" (int *value, char *name, int *default, int nameLen):
+    value[0] = default[0]
+    read_value_integer(value, name, nameLen)
+
+cdef public void get_value_double_precision "FC_FUNC_(get_value_double_precision, GET_VALUE_DOUBLE_PRECISION)" (double *value, char *name, double *default, int nameLen):
+    value[0] = default[0]
+    read_value_double_precision(value, name, nameLen)
+    
+cdef public void get_value_logical "FC_FUNC_(get_value_logical, GET_VALUE_LOGICAL)" (int *value, char *name, int *default, int nameLen):
+    value[0] = default[0]
+    read_value_logical(value, name, nameLen)
+    
+cdef public void get_value_string "FC_FUNC_(get_value_string, GET_VALUE_STRING)" (char *value, char *name, char *default, int valueLen, int nameLen, int defaultLen):
+    if defaultLen > valueLen:
+        strncpy(value, default, valueLen)
+    else:
+        strncpy(value, default, defaultLen)
+        for i from defaultLen <= i < valueLen:
+            value[i] = c' '
+    read_value_string(value, name, valueLen, nameLen)
+
 
 # external Fortran functions
 

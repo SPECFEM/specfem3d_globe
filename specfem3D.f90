@@ -440,6 +440,7 @@
   integer, allocatable, dimension(:) :: islice_selected_rec,ispec_selected_rec,number_receiver_global
   double precision, allocatable, dimension(:) :: xi_receiver,eta_receiver,gamma_receiver
   double precision hlagrange
+  character(len=150) STATIONS
 
 ! timing information for the stations
   double precision, allocatable, dimension(:,:,:) :: nu
@@ -555,7 +556,7 @@
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
 
-  character(len=150) LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -573,7 +574,7 @@
                NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
                NGLOB_AB,NGLOB_AC,NGLOB_BC
 
-  character(len=150) clean_LOCAL_PATH,final_LOCAL_PATH,prname
+  character(len=150) prname
 
 ! lookup table every km for gravity
   integer int_radius,nspl_gravity,idoubling
@@ -639,9 +640,12 @@
       NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
       NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
 
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
 ! open main output file, only written to by process 0
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) &
-    open(unit=IMAIN,file='OUTPUT_FILES/output_solver.txt',status='unknown')
+    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown')
 
   if(myrank == 0) then
 
@@ -734,7 +738,7 @@
   allocate(iproc_eta_slice(0:NPROCTOT-1))
 
 ! open file with global slice number addressing
-  open(unit=IIN,file='OUTPUT_FILES/addressing.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old')
   do iproc = 0,NPROCTOT-1
     read(IIN,*) iproc_read,ichunk,iproc_xi,iproc_eta
     if(iproc_read /= iproc) call exit_MPI(myrank,'incorrect slice number read')
@@ -780,7 +784,7 @@
   endif
 
 ! read number of anisotropic elements found in the mantle by the mesher from a file
-  open(unit=IIN,file='OUTPUT_FILES/nspec_aniso_mantle.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/nspec_aniso_mantle.txt',status='old')
   read(IIN,*) nspec_aniso_mantle
   close(IIN)
 
@@ -1253,7 +1257,8 @@
 ! define t0 as the earliest start time
   t0 = - 1.5d0*minval(t_cmt-hdur)
 
-  open(unit=IIN,file='DATA/STATIONS',status='old')
+  call get_value_string(STATIONS, 'solver.STATIONS', 'DATA/STATIONS')
+  open(unit=IIN,file=STATIONS,status='old')
   read(IIN,*) nrec
   close(IIN)
 
@@ -2734,7 +2739,7 @@
 
 ! create an empty file to monitor the start of the simulation
   if(myrank == 0) then
-    open(unit=IOUT,file='OUTPUT_FILES/starttimeloop.txt',status='unknown')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown')
     write(IOUT,*) 'hello, starting time loop'
     close(IOUT)
   endif
@@ -2794,16 +2799,10 @@
     it_end = NSTEP
   endif
 
-! suppress white spaces if any
-  clean_LOCAL_PATH = adjustl(LOCAL_PATH)
-
-! create full final local path
-  final_LOCAL_PATH = clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // '/'
-
 ! read files back from local disk or MT tape system if restart file
   if(NUMBER_OF_THIS_RUN > 1) then
     write(outputname,"('dump_all_arrays',i4.4)") myrank
-    open(unit=55,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='old',form='unformatted')
+    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',form='unformatted')
     read(55) displ_crust_mantle
     read(55) veloc_crust_mantle
     read(55) accel_crust_mantle
@@ -2890,8 +2889,8 @@
       write(IMAIN,*)
 
 ! write time stamp file to give information about progression of simulation
-      write(outputname,"('OUTPUT_FILES/timestamp',i6.6)") it
-      open(unit=IOUT,file=outputname,status='unknown')
+      write(outputname,"('/timestamp',i6.6)") it
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown')
       write(IOUT,*) 'Time step # ',it
       write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
       write(IOUT,*) 'Elapsed time in seconds = ',tCPU
@@ -3873,8 +3872,8 @@
 
 ! save movie data to disk in home directory
     if(myrank == 0) then
-      write(outputname,"('OUTPUT_FILES/moviedata',i6.6)") it
-      open(unit=IOUT,file=outputname,status='unknown',form='unformatted')
+      write(outputname,"('/moviedata',i6.6)") it
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted')
       write(IOUT) store_val_x_all
       write(IOUT) store_val_y_all
       write(IOUT) store_val_z_all
@@ -3900,15 +3899,15 @@
 
 ! PvK Change output format to more compact and binary form
 !    write(outputname,"('snapshot_full_mantle_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
-!    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+!    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown')
     write(outputname,"('mantle_veloc_proc',i4.4,'_it',i6.6)") myrank,it
-    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
 
     if (ifirst_movie) then
        write(outputname,"('mantle_topology_proc',i4.4)") myrank
-       open(unit=IOUT_TOPOLOGY,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+       open(unit=IOUT_TOPOLOGY,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
        write(outputname,"('mantle_coord_proc',i4.4)") myrank
-       open(unit=IOUT_COORD,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+       open(unit=IOUT_COORD,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
     endif
 
 ! PvK 071803
@@ -4070,12 +4069,12 @@
 
 ! PvK Change output to more compact and binary format
 !   write(outputname,"('snapshot_full_outer_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
-!   open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+!   open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown')
 if (ifirst_movie) then
        write(outputname,"('outer_core_topology_proc',i4.4)") myrank
-       open(unit=IOUT_TOPOLOGY,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+       open(unit=IOUT_TOPOLOGY,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
        write(outputname,"('outer_core_coord_proc',i4.4)") myrank
-       open(unit=IOUT_COORD,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+       open(unit=IOUT_COORD,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
     endif
 
 ! PvK
@@ -4263,15 +4262,15 @@ if (ifirst_movie) then
 
 ! PvK Change output to more compact and binary format
 !   write(outputname,"('snapshot_full_inner_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
-!   open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown')
+!   open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown')
     write(outputname,"('inner_core_veloc_proc',i4.4,'_it',i6.6)") myrank,it
-    open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
 
     if (ifirst_movie) then
        write(outputname,"('inner_core_topology_proc',i4.4)") myrank
-       open(unit=IOUT_TOPOLOGY,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+       open(unit=IOUT_TOPOLOGY,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
        write(outputname,"('inner_core_coord_proc',i4.4)") myrank
-       open(unit=IOUT_COORD,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+       open(unit=IOUT_COORD,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
     endif
 
 ! PvK
@@ -4447,7 +4446,7 @@ if (ifirst_movie) then
 ! save files to local disk or MT tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
     write(outputname,"('dump_all_arrays',i4.4)") myrank
-    open(unit=55,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//outputname,status='unknown',form='unformatted')
+    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
     write(55) displ_crust_mantle
     write(55) veloc_crust_mantle
     write(55) accel_crust_mantle

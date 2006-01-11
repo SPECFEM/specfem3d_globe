@@ -15,7 +15,8 @@
 !
 !=====================================================================
 
-  subroutine create_serial_name_database(prname,iproc,iregion_code,LOCAL_PATH,NPROCTOT)
+  subroutine create_serial_name_database(prname,iproc,iregion_code, &
+      LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
 ! create name of the database for serial codes (AVS_DX and codes to check buffers)
 
@@ -26,7 +27,8 @@
   integer iproc,iregion_code,NPROCTOT
 
 ! name of the database file
-  character(len=150) prname,procname,LOCAL_PATH,clean_LOCAL_PATH,serial_prefix
+  character(len=150) prname,procname,base_path,serial_prefix, &
+      LOCAL_PATH,OUTPUT_FILES
 
   integer iprocloop
   integer, dimension(:), allocatable :: num_active_proc
@@ -41,7 +43,7 @@
     allocate(num_active_proc(0:NPROCTOT-1))
 
 ! read filtered file with name of active machines
-    open(unit=48,file='OUTPUT_FILES/filtered_machines.txt',status='old')
+    open(unit=48,file=trim(OUTPUT_FILES)//'/filtered_machines.txt',status='old')
     do iprocloop = 0,NPROCTOT-1
       read(48,*) num_active_proc(iprocloop)
     enddo
@@ -53,10 +55,10 @@
 ! suppress everything until the last "/" to define the base name of local path
 ! this is system dependent since it assumes the disks are mounted
 ! as on our Beowulf (Unix and NFS)
-    clean_LOCAL_PATH = LOCAL_PATH(index(LOCAL_PATH,'/',.true.)+1:len_trim(LOCAL_PATH))
+    base_path = LOCAL_PATH(index(LOCAL_PATH,'/',.true.)+1:len_trim(LOCAL_PATH))
 
 ! create full name with path
-    prname = serial_prefix(1:len_trim(serial_prefix)) // clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // procname
+    prname = trim(serial_prefix) // trim(base_path) // procname
 
 ! deallocate array
     deallocate(num_active_proc)
@@ -64,11 +66,8 @@
 ! on shared-memory machines, global path is the same as local path
   else
 
-! suppress white spaces if any
-    clean_LOCAL_PATH = adjustl(LOCAL_PATH)
-
 ! create full name with path
-    prname = clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // procname
+    prname = trim(LOCAL_PATH) // procname
 
   endif
 

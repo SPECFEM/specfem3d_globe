@@ -121,13 +121,18 @@ end module crustal_model_variables
 
   double precision h_moho_min,h_moho_max
 
-  open (unit=1,file='DATA/crust2.0/CNtype2.txt',status='old')
+  character(len=150) CNtype2, CNtype2_key_modif
+
+  call get_value_string(CNtype2, '3D_isotropic.CNtype2', 'DATA/crust2.0/CNtype2.txt')
+  call get_value_string(CNtype2_key_modif, '3D_isotropic.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
+
+  open (unit=1,file=CNtype2,status='old')
   do ila=1,NCAP_CRUST/2
     read(1,*) icolat,(abbreviation(ila,i),i=1,NCAP_CRUST)
   enddo
   close(1)
 
-  open(unit=1,file='DATA/crust2.0/CNtype2_key_modif.txt',status='old')
+  open(unit=1,file=CNtype2_key_modif,status='old')
   h_moho_min=HUGEVAL
   h_moho_max=-HUGEVAL
   do ikey=1,NKEYS_CRUST
