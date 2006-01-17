@@ -26,25 +26,29 @@ class Script(Application):
         from Launchers import LauncherFacility
         from Mesher import Mesher
         from Model import ModelFacility
+        from Properties import OutputDir
         from Solver import Solver
         
         ABSORBING_CONDITIONS          = bool("absorbing-conditions")
 
         LOCAL_PATH                    = str("local-path")
-        OUTPUT_FILES                  = str("output-dir", default=".")
+        OUTPUT_FILES                  = OutputDir("output-dir")
         
         launcher                      = LauncherFacility("launcher")
         mesher                        = facility("mesher", factory=Mesher, args=["mesher"])
         model                         = ModelFacility("model")
         solver                        = facility("solver", factory=Solver, args=["solver"])
     
-    def __init__(self):
+    def __init__(self, outputFilename):
         Application.__init__(self, "Specfem3DGlobe")
+        self.outputFilename = outputFilename
         self.error = journal.error(self.name)
 
     def _init(self):
         Application._init(self)
         self.MODEL = self.inventory.model.className
+        # make sure the output directory is writable
+        self.checkOutputDir()
         # compute the total number of processors needed
         nodes = self.inventory.mesher.nproc()
         self.inventory.launcher.inventory.nodes = nodes
@@ -63,6 +67,11 @@ class Script(Application):
             Application.run(self, *args, **kwds)
         except PyrePatches.PropertyValueError, error:
             self.reportPropertyValueError(error)
+
+    def raisePropertyValueError(self, traitName):
+        desc = self.inventory.getTraitDescriptor(traitName)
+        trait = self.inventory.getTrait(traitName)
+        raise PyrePatches.PropertyValueError, (trait, desc.locator)
 
     def reportPropertyValueError(self, error):
         import linecache
@@ -129,6 +138,18 @@ class Script(Application):
             except AttributeError:
                 o = getattr(o.inventory, n)
         return o
+
+    def checkOutputDir(self):
+        from os import remove
+        from os.path import join
+        outputDir = self.inventory.OUTPUT_FILES
+        temp = join(outputDir, self.outputFilename)
+        try:
+            f = open(temp, 'w')
+        except IOError:
+            self.raisePropertyValueError('output-dir')
+        f.close()
+        remove(temp)
 
 
 # end of file

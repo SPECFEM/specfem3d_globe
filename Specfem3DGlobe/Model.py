@@ -10,7 +10,7 @@ class Model(Component):
 
     class Inventory(Component.Inventory):
 
-        from pyre.inventory import bool, str
+        from pyre.inventory import bool, inputFile
         
         ATTENUATION                   = bool("attenuation")
         ELLIPTICITY                   = bool("ellipticity")
@@ -23,11 +23,18 @@ class Model(Component):
         # RESOLUTION_TOPO_FILE would also have to be Pyrized for the
         # following item to be truly useful...  however this would
         # force the array 'ibathy_topo' to be allocatable.
-        PATHNAME_TOPO_FILE            = str("topo-bathy-file", default="DATA/topo_bathy/topo_bathy_etopo4_smoothed_window7.dat")
+        PATHNAME_TOPO_FILE            = inputFile("topo-bathy-file", default="DATA/topo_bathy/topo_bathy_etopo4_smoothed_window7.dat")
         
     def __init__(self, name):
         Component.__init__(self, name, "model")
         self.aliases.extend(self.classAliases)
+
+    def _init(self):
+        Component._init(self)
+        # Access our InputFile inventory items, forcing them to be
+        # opened, to make sure they're readable.  Then close them
+        # (they will be reopened by the Fortran code).
+        self.inventory.PATHNAME_TOPO_FILE.close()
 
 
 # built-in models
@@ -44,21 +51,31 @@ class Model3DIsotropic(Model):
     className = "s20rts"
     classAliases = ["s20rts", "3D_isotropic"]
     class Inventory(Model.Inventory):
-        from pyre.inventory import str
-        CNtype2            = str("CNtype2",           default="DATA/crust2.0/CNtype2.txt")
-        CNtype2_key_modif  = str("CNtype2_key_modif", default="DATA/crust2.0/CNtype2_key_modif.txt")
-        P12                = str("P12",               default="DATA/s20rts/P12.dat")
-        S20RTS             = str("S20RTS",            default="DATA/s20rts/S20RTS.dat")
+        from pyre.inventory import inputFile
+        CNtype2            = inputFile("CNtype2",           default="DATA/crust2.0/CNtype2.txt")
+        CNtype2_key_modif  = inputFile("CNtype2_key_modif", default="DATA/crust2.0/CNtype2_key_modif.txt")
+        P12                = inputFile("P12",               default="DATA/s20rts/P12.dat")
+        S20RTS             = inputFile("S20RTS",            default="DATA/s20rts/S20RTS.dat")
+    def _init(self):
+        Model._init(self)
+        self.inventory.CNtype2.close()
+        self.inventory.CNtype2_key_modif.close()
+        self.inventory.P12.close()
+        self.inventory.S20RTS.close()
 
 class Model3DAttenuation(Model):
     className = "Min_Chen"
     classAliases = ["Min_Chen", "3D_attenuation"]
     class Inventory(Model.Inventory):
-        from pyre.inventory import str
-        Adrem119           = str("Adrem119",        default="DATA/Montagner_model/Adrem119")
-        glob_prem3sm01     = str("glob_prem3sm01",  default="DATA/Montagner_model/glob-prem3sm01")
-        globpreman3sm01    = str("globpreman3sm01", default="DATA/Montagner_model/globpreman3sm01")
-        
+        from pyre.inventory import inputFile
+        Adrem119           = inputFile("Adrem119",        default="DATA/Montagner_model/Adrem119")
+        glob_prem3sm01     = inputFile("glob_prem3sm01",  default="DATA/Montagner_model/glob-prem3sm01")
+        globpreman3sm01    = inputFile("globpreman3sm01", default="DATA/Montagner_model/globpreman3sm01")
+    def _init(self):
+        Model._init(self)
+        self.inventory.Adrem119.close()
+        self.inventory.glob_prem3sm01.close()
+        self.inventory.globpreman3sm01.close()
 
 builtInModelClasses = [
     BuiltInModel("isotropic_prem"),
