@@ -41,7 +41,7 @@ class PropertyValueError(ValueError):
           def __init__(self, header=None, format=None, footer=None):
                PyreRenderer.__init__(
                     self,
-                    header="[%(filename)s:%(line)s] property '%(name)s': %(error)s\n >> %(src)s",
+                    header="%(filename)s:%(line)s: property '%(name)s': %(error)s\n >> %(src)s",
                     format=format, footer=footer
                     )
 
@@ -99,15 +99,7 @@ class PropertyPatches(Category(Property)):
     def _richCast(self, value, locator=None):
         try:
             value = self._cast(value)
-        except ValueError:
-             raise PropertyValueError, (self, locator)
-        except KeyError: # e.g., Bool
-             raise PropertyValueError, (self, locator)
-        except NameError: # e.g., Dimensional
-             raise PropertyValueError, (self, locator)
-        except TypeError: # Dimensional again...
-             raise PropertyValueError, (self, locator)
-        except: # ...I suppose anything could happen in the 'eval'
+        except:
              raise PropertyValueError, (self, locator)
         else:
              return value
