@@ -23,18 +23,21 @@ class Model(Component):
         # RESOLUTION_TOPO_FILE would also have to be Pyrized for the
         # following item to be truly useful...  however this would
         # force the array 'ibathy_topo' to be allocatable.
-        PATHNAME_TOPO_FILE            = inputFile("topo-bathy-file", default="DATA/topo_bathy/topo_bathy_etopo4_smoothed_window7.dat")
+        topoBathyFile                 = inputFile("topo-bathy-file", default="DATA/topo_bathy/topo_bathy_etopo4_smoothed_window7.dat")
         
     def __init__(self, name):
         Component.__init__(self, name, "model")
         self.aliases.extend(self.classAliases)
+        self.PATHNAME_TOPO_FILE = None
 
     def _init(self):
         Component._init(self)
-        # Access our InputFile inventory items, forcing them to be
-        # opened, to make sure they're readable.  Then close them
-        # (they will be reopened by the Fortran code).
-        self.inventory.PATHNAME_TOPO_FILE.close()
+        # Access our InputFile inventory items to make sure they're
+        # readable.  (They will be reopened by the Fortran code.)
+        if self.inventory.TOPOGRAPHY or self.inventory.OCEANS:
+            f = self.inventory.topoBathyFile
+            self.PATHNAME_TOPO_FILE = f.name
+            f.close()
 
 
 # built-in models
@@ -56,12 +59,20 @@ class Model3DIsotropic(Model):
         CNtype2_key_modif  = inputFile("CNtype2_key_modif", default="DATA/crust2.0/CNtype2_key_modif.txt")
         P12                = inputFile("P12",               default="DATA/s20rts/P12.dat")
         S20RTS             = inputFile("S20RTS",            default="DATA/s20rts/S20RTS.dat")
+    def __init__(self, name):
+        Model.__init__(self, name)
+        self.CNtype2           = None
+        self.CNtype2_key_modif = None
+        self.P12               = None
+        self.S20RTS            = None
     def _init(self):
         Model._init(self)
-        self.inventory.CNtype2.close()
-        self.inventory.CNtype2_key_modif.close()
-        self.inventory.P12.close()
-        self.inventory.S20RTS.close()
+        # Access our InputFile inventory items to make sure they're
+        # readable.  (They will be reopened by the Fortran code.)
+        f = self.inventory.CNtype2;            self.CNtype2           = f.name;  f.close()
+        f = self.inventory.CNtype2_key_modif;  self.CNtype2_key_modif = f.name;  f.close()
+        f = self.inventory.P12;                self.P12               = f.name;  f.close()
+        f = self.inventory.S20RTS;             self.S20RTS            = f.name;  f.close()
 
 class Model3DAttenuation(Model):
     className = "Min_Chen"
