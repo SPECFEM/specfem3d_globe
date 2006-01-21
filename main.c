@@ -13,6 +13,8 @@
 extern void initSpecfem3DGlobeCode(void);
 extern void initPyxMPI(void);
 
+static int status;
+
 struct _inittab inittab[] = {
     { "Specfem3DGlobeCode", initSpecfem3DGlobeCode },
     { "PyxMPI", initPyxMPI },
@@ -22,9 +24,6 @@ struct _inittab inittab[] = {
 
 int main(int argc, char **argv)
 {
-    int status;
-    FILE *fp;
-    
     /* add our extension module */
     if (PyImport_ExtendInittab(inittab) == -1) {
         fprintf(stderr, "%s: PyImport_ExtendInittab failed! Exiting ...", argv[0]);
@@ -37,13 +36,20 @@ int main(int argc, char **argv)
     /* initialize sys.argv */
     PySys_SetArgv(argc, argv);
     
-    /* run the Python command */
-    status = PyRun_SimpleString(RUN_SCRIPT(SCRIPT)) != 0;
+    /* call the Fortran trampoline */
+    FC_MAIN();
     
     /* shut down Python */
     Py_Finalize();
     
     return status;
+}
+
+
+void FC_FUNC_(run_python_script, RUN_PYTHON_SCRIPT)()
+{
+    /* run the Python command */
+    status = PyRun_SimpleString(RUN_SCRIPT(SCRIPT)) != 0;
 }
 
 
