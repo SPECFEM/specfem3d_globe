@@ -657,6 +657,7 @@ PYSPECFEM_OBJ = \
        $O/misc.o \
        $O/Specfem3DGlobeCode.o \
        $O/PyxMPI.o \
+       $O/trampoline.o \
        $O/meshfem3D.o \
        $O/specfem3D.o \
        $O/read_arrays_solver.o \
@@ -756,6 +757,9 @@ $O/PyxMPI.o: $O/PyxMPI.c $O/config.h $O/config
 
 $O/PyxMPI.c: PyxMPI.pyx
 	pyrexc PyxMPI.pyx -o $O/PyxMPI.c
+
+$O/trampoline.o: trampoline.f90
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/trampoline.o trampoline.f90
 
 $O/config.h: config.h.in configure
 	./configure FC=$(F90) CC=$(CC)
