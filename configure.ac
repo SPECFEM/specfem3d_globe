@@ -30,7 +30,7 @@ F77=$FC
 FFLAGS=$FCFLAGS
 AC_PROVIDE([AC_PROG_F77])
 AC_FC_WRAPPERS
-AC_FC_MAIN
+CIT_FC_MAIN
 AC_PROG_CC
 
 # Checks for Python modules and packages.
