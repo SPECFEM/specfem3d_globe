@@ -4,12 +4,6 @@
 #include "config.h"
 
 
-#define STR(s) #s
-#define RUN_SCRIPT(s) "from Specfem3DGlobe."STR(s)" import "STR(s)"; app = "STR(s)"(); app.run()"
-#ifndef SCRIPT
-#define SCRIPT Specfem
-#endif
-
 extern void initSpecfem3DGlobeCode(void);
 extern void initPyxMPI(void);
 
@@ -20,6 +14,19 @@ struct _inittab inittab[] = {
     { "PyxMPI", initPyxMPI },
     { 0, 0 }
 };
+
+
+#define FC_RUN_PYTHON_SCRIPT FC_FUNC_(run_python_script, RUN_PYTHON_SCRIPT)
+void FC_RUN_PYTHON_SCRIPT()
+{
+    /* run the Python script */
+#ifndef SCRIPT
+#define SCRIPT Specfem
+#endif
+#define STR(s) #s
+#define COMMAND(s) "from Specfem3DGlobe."STR(s)" import "STR(s)"; app = "STR(s)"(); app.run()"
+    status = PyRun_SimpleString(COMMAND(SCRIPT)) != 0;
+}
 
 
 int main(int argc, char **argv)
@@ -36,20 +43,19 @@ int main(int argc, char **argv)
     /* initialize sys.argv */
     PySys_SetArgv(argc, argv);
     
-    /* call the Fortran trampoline */
+#define main 42
+#if FC_MAIN == main
+    /* run the Python script */
+    FC_RUN_PYTHON_SCRIPT();
+#else
+    /* call the Fortran trampoline (which runs the Python script) */
     FC_MAIN();
+#endif
     
     /* shut down Python */
     Py_Finalize();
     
     return status;
-}
-
-
-void FC_FUNC_(run_python_script, RUN_PYTHON_SCRIPT)()
-{
-    /* run the Python command */
-    status = PyRun_SimpleString(RUN_SCRIPT(SCRIPT)) != 0;
 }
 
 
