@@ -4,7 +4,6 @@
 from CodecConfig import CodecConfig
 import journal
 from mpi.Application import Application
-import Specfem3DGlobeCode
 import sys
 
 
@@ -29,8 +28,6 @@ class Script(Application):
         from Properties import OutputDir
         from Solver import Solver
         
-        ABSORBING_CONDITIONS          = bool("absorbing-conditions")
-
         LOCAL_PATH                    = str("local-path")
         OUTPUT_FILES                  = OutputDir("output-dir")
         
@@ -47,14 +44,24 @@ class Script(Application):
     def _init(self):
         Application._init(self)
         self.MODEL = self.inventory.model.className
+        
         # make sure the output directory is writable
-        self.checkOutputDir()
+        if self.inventory.mode == "server": # NYI: MPI_Comm_rank() == 0???
+            self.checkOutputDir()
+        
         # compute the total number of processors needed
         nodes = self.inventory.mesher.nproc()
         self.inventory.launcher.inventory.nodes = nodes
         self.inventory.launcher.nodes = nodes
-        # give the Fortran code a chance to validate the parameters
-        Specfem3DGlobeCode.check_parameters(self)
+
+        # validate absorbing conditions
+        if self.inventory.solver.inventory.ABSORBING_CONDITIONS:
+            NCHUNKS = self.inventory.mesher.inventory.NCHUNKS
+            if NCHUNKS == 6:
+                raise ValueError("cannot have absorbing conditions in the full Earth")
+            elif NCHUNKS == 3:
+                raise ValueError("absorbing conditions not supported for three chunks yet")
+        
     
     def run(self, *args, **kwds):
         for i in xrange(0, len(sys.argv)):

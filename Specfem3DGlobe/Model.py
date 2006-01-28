@@ -88,13 +88,24 @@ class Model3DAttenuation(Model):
         self.inventory.glob_prem3sm01.close()
         self.inventory.globpreman3sm01.close()
 
+class Model3DAnisotropic(Model):
+    className = "Brian_Savage"
+    classAliases = ["Brian_Savage", "3D_anisotropic"]
+    def _init(self):
+        Model._init(self)
+        if not self.inventory.ATTENUATION:
+            import journal
+            journal.warning("Specfem3DGlobe.Model").log("setting 'attenuation' to 'True' for 3D anisotropic model")
+            self.inventory.ATTENUATION = True
+        return
+
 builtInModelClasses = [
     BuiltInModel("isotropic_prem"),
     BuiltInModel("transversly_isotropic_prem"),
     BuiltInModel("iaspei", "iasp91"),
     BuiltInModel("ak135"),
     Model3DIsotropic,
-    BuiltInModel("Brian_Savage", "3D_anisotropic"),
+    Model3DAnisotropic,
     Model3DAttenuation,
     ]
 

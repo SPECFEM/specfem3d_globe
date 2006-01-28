@@ -14,6 +14,7 @@ class Solver(Component):
     
         cmtSolution                   = inputFile("cmt-solution", default="DATA/CMTSOLUTION")
         
+        ABSORBING_CONDITIONS          = bool("absorbing-conditions")
         MOVIE_SURFACE                 = bool("movie-surface")
         MOVIE_VOLUME                  = bool("movie-volume")
         RECEIVERS_CAN_BE_BURIED       = bool("receivers-can-be-buried")
@@ -43,8 +44,21 @@ class Solver(Component):
 
         # Access our InputFile inventory items to make sure they're
         # readable.  (They will be reopened by the Fortran code.)
-        f = self.inventory.cmtSolution;  self.CMTSOLUTION = f.name;  f.close()
-        f = self.inventory.stations;     self.STATIONS    = f.name;  f.close()
+        f = self.inventory.cmtSolution;  self.checkCMTSolution(f);  self.CMTSOLUTION = f.name;  f.close()
+        f = self.inventory.stations;                                self.STATIONS    = f.name;  f.close()
+
+    def checkCMTSolution(self, f):
+        NLINES_PER_CMTSOLUTION_SOURCE = 13 # constants.h
+        lineTally = 0
+        for line in f:
+            lineTally = lineTally + 1
+        if lineTally % NLINES_PER_CMTSOLUTION_SOURCE != 0:
+            raise ValueError("total number of lines in 'cmt-solution' file '%s' should be a multiple of %d"
+                             % (f.name, NLINES_PER_CMTSOLUTION_SOURCE))
+        NSOURCES = lineTally / NLINES_PER_CMTSOLUTION_SOURCE
+        if NSOURCES < 1:
+            raise ValueError("need at least one source in 'cmt-solution' file '%s'" % f.name)
+        return
 
 
 # end of file
