@@ -200,7 +200,7 @@ class LauncherBatch(Launcher):
         nodegen = str("nodegen")
         nodegen.meta['tip'] = """(ignored)"""
 
-        walltime = dimensional("walltime", default=30.0*minute)
+        walltime = dimensional("walltime", default=0*minute)
         mail = bool("mail", default=False)
         queue = str("queue")
 
