@@ -746,17 +746,11 @@ $O/pyspecfem3D.o: main.c $O/config.h $O/config
 $O/misc.o: misc.c $O/config.h $O/config
 	${MPICC} $(CFLAGS) -c -I$O `./$O/config --python-cppflags` -o $O/misc.o misc.c
 
-$O/Specfem3DGlobeCode.o: $O/Specfem3DGlobeCode.c $O/config.h $O/config
-	${CC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/Specfem3DGlobeCode.o $O/Specfem3DGlobeCode.c
+$O/Specfem3DGlobeCode.o: Specfem3DGlobeCode.c $O/config.h $O/config
+	${CC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/Specfem3DGlobeCode.o Specfem3DGlobeCode.c
 
-$O/Specfem3DGlobeCode.c: Specfem3DGlobeCode.pyx
-	pyrexc Specfem3DGlobeCode.pyx -o $O/Specfem3DGlobeCode.c
-
-$O/PyxMPI.o: $O/PyxMPI.c $O/config.h $O/config
-	${MPICC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/PyxMPI.o $O/PyxMPI.c
-
-$O/PyxMPI.c: PyxMPI.pyx
-	pyrexc PyxMPI.pyx -o $O/PyxMPI.c
+$O/PyxMPI.o: PyxMPI.c $O/config.h $O/config
+	${MPICC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/PyxMPI.o PyxMPI.c
 
 $O/trampoline.o: trampoline.f90
 	${F90} $(FLAGS_NO_CHECK) -c -o $O/trampoline.o trampoline.f90
@@ -766,3 +760,9 @@ $O/config.h: config.h.in configure
 
 $O/config: config.in configure
 	./configure FC=$(F90) CC=$(CC)
+
+# target to update the Pyrex-generated code
+# requires Pyrex:  http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+pyrex:
+	pyrexc Specfem3DGlobeCode.pyx -o Specfem3DGlobeCode.c
+	pyrexc PyxMPI.pyx -o PyxMPI.c
