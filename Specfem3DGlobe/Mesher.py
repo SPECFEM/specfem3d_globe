@@ -3,7 +3,6 @@
 
 from pyre.components.Component import Component
 from pyre.units.angle import deg
-import Specfem3DGlobeCode
 
 
 class Mesher(Component):

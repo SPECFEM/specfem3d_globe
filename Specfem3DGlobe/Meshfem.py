@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 
 
-from Script import Script
-import Specfem3DGlobeCode
+from MPIDriver import MPIDriver
 
 
-class Meshfem(Script):
+class Meshfem(MPIDriver):
     
     def __init__(self):
-        Script.__init__(self, "output_mesher.txt")
+        super(Meshfem, self).__init__("output_mesher.txt")
 
     def main(self, *args, **kwds):
-        Specfem3DGlobeCode.meshfem3D(self)
+        self.code.meshfem3D(self)
 
 
 # end of file

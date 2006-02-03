@@ -119,7 +119,6 @@ class PropertyPatches(Category(Property)):
 
 
 from mpi.Application import Application as MPIApp
-from PyxMPI import MPI_Init, MPI_Finalize
 
 
 class MPIAppPatches(Category(MPIApp)):
@@ -141,12 +140,12 @@ class MPIAppPatches(Category(MPIApp)):
         mode = scratchRegistry.getProperty('mode', "server")
         
         if mode == "worker":
+            from PyxMPI import MPI_Init, MPI_Finalize
             MPI_Init(sys.argv)
-
-        super(MPIApp, self).run(self, *args, **kwds)
-        
-        if mode == "worker":
+            super(MPIApp, self).run(self, *args, **kwds)
             MPI_Finalize()
+        else:
+            super(MPIApp, self).run(self, *args, **kwds)
         
         return
 
@@ -158,6 +157,7 @@ class MPIAppPatches(Category(MPIApp)):
         launched = launcher.launch()
         if not launched:
             # only one node -- nothing to launch
+            from PyxMPI import MPI_Init, MPI_Finalize
             MPI_Init(sys.argv)
             self.onComputeNodes(*args, **kwds)
             MPI_Finalize()
