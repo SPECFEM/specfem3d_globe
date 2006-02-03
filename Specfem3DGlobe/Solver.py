@@ -3,7 +3,6 @@
 
 from pyre.components.Component import Component
 from pyre.units.time import minute
-import Specfem3DGlobeCode
 
 
 class Solver(Component):

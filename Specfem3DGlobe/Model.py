@@ -3,7 +3,6 @@
 
 from pyre.components.Component import Component
 from pyre.inventory.Facility import Facility
-import Specfem3DGlobeCode
 
 
 class Model(Component):

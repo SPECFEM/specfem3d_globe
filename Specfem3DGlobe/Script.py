@@ -3,7 +3,7 @@
 
 from CodecConfig import CodecConfig
 import journal
-from mpi.Application import Application
+from pyre.applications.Script import Script as PyreScript
 import sys
 
 
@@ -17,9 +17,9 @@ def myexcepthook(type, value, traceback):
     pdb.post_mortem(traceback)
 
 
-class Script(Application):
+class Script(PyreScript):
 
-    class Inventory(Application.Inventory):
+    class Inventory(PyreScript.Inventory):
 
         from pyre.inventory import bool, facility, str
         from Launchers import LauncherFacility
@@ -36,18 +36,13 @@ class Script(Application):
         model                         = ModelFacility("model")
         solver                        = facility("solver", factory=Solver, args=["solver"])
     
-    def __init__(self, outputFilename):
-        Application.__init__(self, "Specfem3DGlobe")
-        self.outputFilename = outputFilename
+    def __init__(self):
+        super(Script, self).__init__("Specfem3DGlobe")
         self.error = journal.error(self.name)
 
     def _init(self):
-        Application._init(self)
+        super(Script, self)._init()
         self.MODEL = self.inventory.model.className
-        
-        # make sure the output directory is writable
-        if self.inventory.mode == "server": # NYI: MPI_Comm_rank() == 0???
-            self.checkOutputDir()
         
         # compute the total number of processors needed
         nodes = self.inventory.mesher.nproc()
@@ -71,7 +66,7 @@ class Script(Application):
                 del sys.argv[i]
                 break
         try:
-            Application.run(self, *args, **kwds)
+            super(Script, self).run(*args, **kwds)
         except PyrePatches.PropertyValueError, error:
             self.reportPropertyValueError(error)
 
@@ -111,7 +106,7 @@ class Script(Application):
     def initializeCurator(self, curator, registry):
         cfg = CodecConfig()
         curator.registerCodecs(cfg)
-        return Application.initializeCurator(self, curator, registry)
+        return super(Script, self).initializeCurator(curator, registry)
         
     def collectUserInput(self, registry):
         # read INI-style .cfg files
@@ -136,27 +131,5 @@ class Script(Application):
                 self.error.log("cannot open '%s'" % arg)
         return
         
-    def readValue(self, name):
-        l = name.split('.')
-        o = self
-        for n in l:
-            try:
-                o = getattr(o, n)
-            except AttributeError:
-                o = getattr(o.inventory, n)
-        return o
-
-    def checkOutputDir(self):
-        from os import remove
-        from os.path import join
-        outputDir = self.inventory.OUTPUT_FILES
-        temp = join(outputDir, self.outputFilename)
-        try:
-            f = open(temp, 'w')
-        except IOError:
-            self.raisePropertyValueError('output-dir')
-        f.close()
-        remove(temp)
-
 
 # end of file
