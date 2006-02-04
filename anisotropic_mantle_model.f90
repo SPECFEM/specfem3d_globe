@@ -338,7 +338,7 @@ end module aniso_mantle_model_variables
 
   integer nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
   double precision xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
-  double precision ra(47),pari(14,37)
+  double precision ra(47),pari(14,47)
   double precision bet2(14,34,37,73)
   double precision alph(73,37),ph(73,37)
   character(len=150) glob_prem3sm01, globpreman3sm01
