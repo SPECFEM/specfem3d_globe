@@ -588,9 +588,11 @@
 ! flags to read kappa and mu and anisotropy arrays in regions where needed
   logical READ_KAPPA_MU,READ_TISO
 
-! dummy value to be used instead of arrays that do not need to be read
-  real(kind=CUSTOM_REAL) dummyval
-
+! dummy arrays that do not need to be read
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: dummy_rho
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+        dummy_vstore, dummy_hstore, dummy_cstore
+  
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
 
@@ -1140,22 +1142,37 @@
   nspec_iso = 1
   nspec_tiso = 1
   nspec_ani = 1
+
+  allocate(dummy_rho(NGLLX,NGLLY,NGLLZ,nspec_outer_core))
+  allocate(dummy_vstore(NGLLX,NGLLY,NGLLZ,nspec_iso))
+  allocate(dummy_hstore(NGLLX,NGLLY,NGLLZ,nspec_tiso))
+  allocate(dummy_cstore(NGLLX,NGLLY,NGLLZ,nspec_ani))
+
   call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
-            vp_outer_core,dummyval, &
+            vp_outer_core,dummy_rho, &
             xstore_outer_core,ystore_outer_core,zstore_outer_core, &
             xix_outer_core,xiy_outer_core,xiz_outer_core, &
             etax_outer_core,etay_outer_core,etaz_outer_core, &
             gammax_outer_core,gammay_outer_core,gammaz_outer_core,jacobian_outer_core, &
-            dummyval,dummyval, &
-            dummyval,dummyval,dummyval, &
+            dummy_vstore,dummy_vstore, &
+            dummy_hstore,dummy_hstore,dummy_hstore, &
             nspec_iso,nspec_tiso,nspec_ani, &
-            dummyval,dummyval,dummyval,dummyval,dummyval,dummyval,dummyval, &
-            dummyval,dummyval,dummyval,dummyval,dummyval,dummyval,dummyval, &
-            dummyval,dummyval,dummyval,dummyval,dummyval,dummyval,dummyval, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
             ibool_outer_core,idoubling_outer_core,rmass_outer_core,rmass_ocean_load, &
             nspec_outer_core,nglob_outer_core, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
             ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
+
+  deallocate(dummy_rho)
+  deallocate(dummy_vstore)
+  deallocate(dummy_hstore)
+  deallocate(dummy_cstore)
 
 ! inner core (no anisotropy)
 ! rmass_ocean_load is not modified in routine
@@ -1168,22 +1185,37 @@
   else
     nspec_ani = 1
   endif
+
+  allocate(dummy_rho(NGLLX,NGLLY,NGLLZ,nspec_inner_core))
+  allocate(dummy_vstore(NGLLX,NGLLY,NGLLZ,nspec_iso))
+  allocate(dummy_hstore(NGLLX,NGLLY,NGLLZ,nspec_tiso))
+  allocate(dummy_cstore(NGLLX,NGLLY,NGLLZ,nspec_ani))
+
   call read_arrays_solver(IREGION_INNER_CORE,myrank, &
-            dummyval,dummyval, &
+            dummy_rho,dummy_rho, &
             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
             xix_inner_core,xiy_inner_core,xiz_inner_core, &
             etax_inner_core,etay_inner_core,etaz_inner_core, &
             gammax_inner_core,gammay_inner_core,gammaz_inner_core,jacobian_inner_core, &
             kappavstore_inner_core,muvstore_inner_core, &
-            dummyval,dummyval,dummyval, &
+            dummy_hstore,dummy_hstore,dummy_hstore, &
             nspec_iso,nspec_tiso,nspec_ani, &
-            c11store_inner_core,c12store_inner_core,c13store_inner_core,dummyval,dummyval,dummyval,dummyval, &
-            dummyval,dummyval,dummyval,dummyval,c33store_inner_core,dummyval,dummyval, &
-            dummyval,c44store_inner_core,dummyval,dummyval,dummyval,dummyval,dummyval, &
+            c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_cstore,dummy_cstore,c33store_inner_core, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
+            c44store_inner_core,dummy_cstore,dummy_cstore, &
+            dummy_cstore,dummy_cstore,dummy_cstore, &
             ibool_inner_core,idoubling_inner_core,rmass_inner_core,rmass_ocean_load, &
             nspec_inner_core,nglob_inner_core, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
             ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
+
+  deallocate(dummy_rho)
+  deallocate(dummy_vstore)
+  deallocate(dummy_hstore)
+  deallocate(dummy_cstore)
 
 ! check that the number of points in this slice is correct
 

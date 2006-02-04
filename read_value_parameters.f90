@@ -139,7 +139,7 @@
 
 !--------------------
 
-  integer function err_occurred
+  integer function err_occurred()
 
   err_occurred = 0
 
