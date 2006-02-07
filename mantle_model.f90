@@ -51,8 +51,8 @@ end module three_d_mantle_model_variables
 
   character(len=150) S20RTS, P12
 
-  call get_value_string(S20RTS, '3D_isotropic.S20RTS', 'DATA/s20rts/S20RTS.dat')
-  call get_value_string(P12, '3D_isotropic.P12', 'DATA/s20rts/P12.dat')
+  call get_value_string(S20RTS, 'model.S20RTS', 'DATA/s20rts/S20RTS.dat')
+  call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')
 
 ! S20RTS degree 20 S model from Ritsema
   open(unit=10,file=S20RTS,status='old')

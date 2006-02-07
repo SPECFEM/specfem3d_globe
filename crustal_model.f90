@@ -123,8 +123,8 @@ end module crustal_model_variables
 
   character(len=150) CNtype2, CNtype2_key_modif
 
-  call get_value_string(CNtype2, '3D_isotropic.CNtype2', 'DATA/crust2.0/CNtype2.txt')
-  call get_value_string(CNtype2_key_modif, '3D_isotropic.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
+  call get_value_string(CNtype2, 'model.CNtype2', 'DATA/crust2.0/CNtype2.txt')
+  call get_value_string(CNtype2_key_modif, 'model.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
 
   open (unit=1,file=CNtype2,status='old')
   do ila=1,NCAP_CRUST/2
