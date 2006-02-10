@@ -47,8 +47,8 @@
 #
 #F90 = pgf90
 #MPIF90 = mpif90
-#FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Mstandard -Knoieee
-#FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Mstandard -Knoieee
+#FLAGS_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Knoieee
+#FLAGS_NO_CHECK = -fast -Mnobounds -Mneginfo -Mdclchk -Munroll=c:6 -Knoieee
 #MPI_FLAGS =
 
 #
