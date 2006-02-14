@@ -27,7 +27,7 @@
                  sec,t_cmt,yr,jda,ho,mi,theta_source,phi_source, &
                  NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                  islice_selected_source,ispec_selected_source, &
-                 xi_source,eta_source,gamma_source, &
+                 xi_source,eta_source,gamma_source, nu_source, &
                  rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION)
 
   implicit none
@@ -62,6 +62,8 @@
 
 ! Gauss-Lobatto-Legendre points of integration
   double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
+
+  double precision nu_source(NDIM,NDIM,NSOURCES)
 
   integer yr,jda,ho,mi
 
@@ -144,6 +146,9 @@
 ! number of points to plot the source time function and spectrum
   integer, parameter :: NSAMP_PLOT_SOURCE = 1000
 
+  integer iorientation
+  double precision stazi,stdip,thetan,phin,n(3)
+
 ! **************
 
 ! read all the sources
@@ -190,6 +195,48 @@
   Myz(isource)=st*ct*sp*Mrr-st*ct*sp*Mtt &
       +(ct*ct-st*st)*sp*Mrt+ct*cp*Mrp-st*cp*Mtp
 
+
+! record three components for each station
+  do iorientation = 1,3
+
+!     North
+    if(iorientation == 1) then
+      stazi = 0.d0
+      stdip = 0.d0
+!     East
+    else if(iorientation == 2) then
+      stazi = 90.d0
+      stdip = 0.d0
+!     Vertical
+    else if(iorientation == 3) then
+      stazi = 0.d0
+      stdip = - 90.d0
+    else
+      call exit_MPI(myrank,'incorrect orientation')
+    endif
+
+!     get the orientation of the seismometer
+    thetan=(90.0d0+stdip)*PI/180.0d0
+    phin=stazi*PI/180.0d0
+
+! we use the same convention as in Harvard normal modes for the orientation
+
+!     vertical component
+    n(1) = dcos(thetan)
+!     N-S component
+    n(2) = - dsin(thetan)*dcos(phin)
+!     E-W component
+    n(3) = dsin(thetan)*dsin(phin)
+
+!     get the Cartesian components of n in the model: nu
+
+    nu_source(iorientation,1,isource) = n(1)*st*cp+n(2)*ct*cp-n(3)*sp
+    nu_source(iorientation,2,isource) = n(1)*st*sp+n(2)*ct*sp+n(3)*cp
+    nu_source(iorientation,3,isource) = n(1)*ct-n(2)*st
+
+  enddo
+
+
 ! normalized source radius
   r0 = R_UNIT_SPHERE
 
@@ -210,6 +257,8 @@
   x_target_source = r_target_source*dsin(theta)*dcos(phi)
   y_target_source = r_target_source*dsin(theta)*dsin(phi)
   z_target_source = r_target_source*dcos(theta)
+
+  if (myrank == 0) write(IOVTK,*) x_target_source,y_target_source,z_target_source
 
 ! set distance to huge initial value
   distmin = HUGEVAL

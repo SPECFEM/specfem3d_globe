@@ -25,8 +25,8 @@
           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-          ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80)
+          ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80,MOVIE_VOLUME)
 
   implicit none
 
@@ -37,6 +37,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer nspec
+  logical MOVIE_VOLUME
 
 ! for ellipticity for d80 attenuation
   real(kind=CUSTOM_REAL) ell_d80,p20,cost
@@ -65,14 +66,15 @@
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: epsilondev
+
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL) epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: epsilon_trace_over_3
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: ibool
@@ -236,16 +238,20 @@
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
 
-! precompute terms for attenuation if needed
-  if(ATTENUATION_VAL) then
-
+ if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+   
 ! compute deviatoric strain
-    epsilon_trace_over_3 = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-    epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3
-    epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3
+    epsilon_trace_over_3(i,j,k,ispec) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+    epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec)
+    epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec)
     epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
     epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
     epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+
+  endif
+
+! precompute terms for attenuation if needed
+  if(ATTENUATION_VAL) then
 
 ! distinguish regions in the mantle, including case of the d80
 
@@ -834,10 +840,13 @@
      enddo
   enddo
 
-! save deviatoric strain for Runge-Kutta scheme
-    epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-
   endif
+
+! save deviatoric strain for Runge-Kutta scheme
+  if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+    epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+  endif
+  
 
   enddo   ! spectral element loop
 

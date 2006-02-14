@@ -15,7 +15,7 @@
 !
 !=====================================================================
 
-!  This portion of the SPECFEM3D Code was written in 2004-2005 by:
+!  This portion of the SPECFEM3D Code was written by:
 !  Brian Savage while at
 !     California Institute of Technology
 !     Department of Terrestrial Magnetism / Carnegie Institute of Washington
@@ -23,16 +23,17 @@
 !  <savage13@gps.caltech.edu>
 !  <savage13@dtm.ciw.edu>
 !
-!   It is based upon formulations in the following references:
+!   It is based upon formulation in the following references:
 !
 !   Dahlen and Tromp, 1998
-!   Theoretical Global Seismology
+!      Theoritical Global Seismology
 !
-!   Liu et al., 1976
-!   Velocity dispersion due to anelasticity: implications for seismology and mantle composition
-!   Geophys. J. R. Astr. Soc., vol. 47, pp. 41-58
+!   Liu et al. 1976
+!      Velocity dispersion due to anelasticity; implications for seismology and mantle composition
+!      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 !
-!   The methodology can be found in Savage and Tromp, 2005, unpublished
+!   The methodology can be found in
+!   Savage and Tromp, 2005, unpublished
 !
 
 module attenuation_model_constants
@@ -495,7 +496,7 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
   double precision, DIMENSION(p,p), INTENT(INOUT) :: a
   double precision, DIMENSION(p), INTENT(OUT) :: w
   double precision, DIMENSION(p,p), INTENT(OUT) :: v
-  INTEGER :: i,its,j,k,l,m,n,nm
+  INTEGER(4) :: i,its,j,k,l,m,n,nm
   double precision :: anorm,c,f,g,h,s,scale,x,y,z
   double precision, DIMENSION(size(a,1)) :: tempm
   double precision, DIMENSION(size(a,2)) :: rv1,tempn
@@ -719,8 +720,8 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
   f2 = 1.0d0 / t2
 
   ! Determine the exponents of the frequencies
-  exp1 = log10(f1)
-  exp2 = log10(f2)
+  exp1 = log10(f1);
+  exp2 = log10(f2);
 
   if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
      call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
@@ -745,8 +746,7 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
   call attenuation_simplex_setup(nf,n,f,Q_real,tau_s)
 
   ! Set the Tau_epsilon (tau_e) to an initial value
-  ! at omega*tau = 1
-  ! tan_delta = 1/Q = (tau_e - tau_s)/(2 * sqrt(tau e*tau_s))
+  ! at omega*tau = 1; tan_delta = 1/Q = (tau_e - tau_s)/(2 * sqrt(tau e*tau_s))
   !    if we assume tau_e =~ tau_s
   !    we get the equation below
   do i = 1,n
@@ -762,7 +762,7 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
      write(*,*)'    Aborting program'
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
   endif
-
+ 
   deallocate(f)
   call attenuation_simplex_finish()
 
@@ -827,6 +827,12 @@ end subroutine attenuation_simplex_setup
 !     A     = Imaginary Moduli ( M1 Dahlen and Tromp pp.203 )
 !                dimension(nf)
 !
+!   Dahlen and Tromp, 1998
+!      Theoritical Global Seismology
+!
+!   Liu et al. 1976
+!      Velocity dispersion due to anelasticity; implications for seismology and mantle composition
+!      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
   implicit none
 
@@ -851,7 +857,7 @@ subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
         demon = 1.0d0 + w**2 * tau_s(j)**2
         A(i) = A(i) + ((1.0d0 + (w**2 * tau_e(j) * tau_s(j)))/ demon)
         B(i) = B(i) + ((w * (tau_e(j) - tau_s(j))) / demon)
-     enddo
+     end do
 !     write(*,*)A(i),B(i),10**f(i)
   enddo
 
@@ -1175,8 +1181,7 @@ end subroutine fminsearch
 !             Length of fv
 !
 !      Returns:
-!         Xi = max( || fv(1)- fv(i) || )
-!         i=2:n
+!         Xi = max( || fv(1)- fv(i) || ); i=2:n
 !
 double precision function max_value(fv,n)
   implicit none
@@ -1208,8 +1213,7 @@ end function max_value
 !     n  = Pseudo Length of n
 !
 !     Returns:
-!       Xi = max( max( || v(:,1) - v(:,i) || ) )
-!       i=2:n+1
+!       Xi = max( max( || v(:,1) - v(:,i) || ) ) ; i=2:n+1
 !
 double precision function max_size_simplex(v,n)
   implicit none
@@ -1244,7 +1248,7 @@ end function max_size_simplex
 !      n = Input
 !         Length of X
 !      I = Output
-!         Sorted Indicies of vector X
+!         Sorted Indicies of vecotr X
 !
 !      Example:
 !         X = [ 4 3 1 2 ] on Input
@@ -1282,4 +1286,6 @@ subroutine qsort(X,n,I)
   enddo
 
 end subroutine qsort
+
+
 

@@ -27,7 +27,7 @@
 
   integer nrec,nrec_local,NSTEP,myrank,it_begin,it_end
   integer, dimension(nrec_local) :: number_receiver_global
-  real(kind=CUSTOM_REAL), dimension(3,nrec_local,NSTEP) :: seismograms
+  real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local,NSTEP) :: seismograms
   double precision hdur,DT
   character(len=150) LOCAL_PATH
 
@@ -105,3 +105,83 @@
 
   end subroutine write_seismograms
 
+!=====================================================================
+
+! write adjoint seismograms to text files
+
+  subroutine write_adj_seismograms(myrank,seismograms,number_receiver_global, &
+               nrec_local,it,DT,NSTEP,hdur,LOCAL_PATH)
+
+  implicit none
+
+  include "constants.h"
+
+  integer nrec_local,NSTEP,it,myrank
+  integer, dimension(nrec_local) :: number_receiver_global
+  real(kind=CUSTOM_REAL), dimension(6,nrec_local,NSTEP) :: seismograms
+  double precision hdur,DT
+  character(len=150) LOCAL_PATH
+
+  integer irec,irec_local
+  integer iorientation,isample
+
+  character(len=4) chn
+  character(len=150) sisname,clean_LOCAL_PATH,final_LOCAL_PATH
+
+  do irec_local = 1,nrec_local
+
+! get global number of that receiver
+    irec = number_receiver_global(irec_local)
+
+    do iorientation = 1,6
+
+      if(iorientation == 1) then
+        chn = 'SNN'
+      else if(iorientation == 2) then
+        chn = 'SEE'
+      else if(iorientation == 3) then
+        chn = 'SZZ'
+      else if(iorientation == 4) then
+        chn = 'SNE'
+      else if(iorientation == 5) then
+        chn = 'SNZ'
+      else if(iorientation == 6) then
+        chn = 'SEZ'
+      endif
+
+! create the name of the seismogram file for each slice
+! file name includes the name of the station, the network and the component
+
+      write(sisname,"(a,i3.3,'.',a,'.',a3,'.sem')") 'S',irec,&
+           'NT',chn
+
+! suppress white spaces if any
+    clean_LOCAL_PATH = adjustl(LOCAL_PATH)
+
+! create full final local path
+    final_LOCAL_PATH = clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // '/'
+
+! save seismograms in text format with no subsampling.
+! Because we do not subsample the output, this can result in large files
+! if the simulation uses many time steps. However, subsampling the output
+! here would result in a loss of accuracy when one later convolves
+! the results with the source time function
+      open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),status='unknown')
+! make sure we never write more than the maximum number of time steps
+! subtract half duration of the source to make sure travel time is correct
+      do isample = 1,min(it,NSTEP)
+! distinguish between single and double precision for reals
+        if(CUSTOM_REAL == SIZE_REAL) then
+          write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',seismograms(iorientation,irec_local,isample)
+        else
+          write(IOUT,*) dble(isample-1)*DT - hdur,' ',seismograms(iorientation,irec_local,isample)
+        endif
+      enddo
+
+      close(IOUT)
+
+      enddo
+
+  enddo
+
+  end subroutine write_adj_seismograms
