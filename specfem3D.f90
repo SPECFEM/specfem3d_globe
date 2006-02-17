@@ -3769,7 +3769,7 @@
 ! add only if this proc carries the source
     if(myrank == islice_selected_source(isource)) then
 
-      stf = comp_source_time_function(dble(it-1)*DT-t0-t_cmt(isource),hdur(isource))
+      stf = comp_source_time_function(dble(it-1)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
 
 !     distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
@@ -3821,7 +3821,7 @@
 !   add the source (only if this proc carries the source)
     if(myrank == islice_selected_source(isource)) then
 
-      stf = comp_source_time_function(dble(NSTEP-it+1)*DT-t0-t_cmt(isource),hdur(isource))
+      stf = comp_source_time_function(dble(NSTEP-it+1)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
 
 !     distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then

@@ -114,7 +114,7 @@
   integer, parameter :: MAX_LENGTH_NETWORK_NAME = 8
 
 ! source decay rate
-  double precision, parameter :: SOURCE_DECAY_RATE = 2.628d0
+  double precision, parameter :: SOURCE_DECAY_RATE = 1.628d0
 
 !! DK DK UGLY in the case of a very fine mesh, move the bottom of crustal
 !! DK DK UGLY elements below the PREM Moho, otherwise the elements become
