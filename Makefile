@@ -43,7 +43,7 @@
 
 ################ PC Linux #################
 #
-# Portland pgf90
+# Beowulf Portland pgf90
 #
 #F90 = pgf90
 #MPIF90 = mpif90
@@ -63,13 +63,15 @@ MPIF90 = mpif90
 #
 # more recent machines
 #
-#FLAGS_NO_CHECK = -fast -tpp7 -xN -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
+#FLAGS_NO_CHECK = -O2 -static  -tpp7  -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations  -check nobounds -132 #-e95 -std95 -xN -fast 
+#Pangu
+FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O2 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
 #
 # debug with range checking
 #
-FLAGS_NO_CHECK = -O0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
+#FLAGS_NO_CHECK = -O0 -static -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
 FLAGS_CHECK = $(FLAGS_NO_CHECK)
-MPI_FLAGS =
+#MPI_FLAGS = -Vaxlib
 
 #
 # g95 (free f95 compiler from http://www.g95.org, still under development, but works)
@@ -79,6 +81,7 @@ MPI_FLAGS =
 #FLAGS_CHECK = -O
 #FLAGS_NO_CHECK = -O
 #MPI_FLAGS =
+
 
 #
 # AbSoft
@@ -197,6 +200,7 @@ meshfem3D: constants.h \
        $O/save_header_file.o \
        $O/attenuation_model.o \
        $O/gll_library.o
+## use MPI here
 	${MPIF90} $(FLAGS_CHECK) -o xmeshfem3D \
        $O/meshfem3D.o \
        $O/create_regions_mesh.o \
@@ -279,6 +283,7 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/get_attenuation_model.o \
        $O/assemble_MPI_vector.o \
        $O/assemble_MPI_scalar.o \
+       $O/assemble_MPI_central_cube.o \
        $O/compute_forces_crust_mantle.o \
        $O/compute_forces_outer_core.o \
        $O/compute_forces_inner_core.o \
@@ -289,6 +294,7 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/recompute_jacobian.o \
        $O/attenuation_model.o \
        $O/gll_library.o
+## use MPI here
 	${MPIF90} $(FLAGS_NO_CHECK) -o xspecfem3D \
        $O/specfem3D.o \
        $O/read_arrays_solver.o \
@@ -318,6 +324,7 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/get_attenuation_model.o \
        $O/assemble_MPI_vector.o \
        $O/assemble_MPI_scalar.o \
+       $O/assemble_MPI_central_cube.o \
        $O/compute_forces_crust_mantle.o \
        $O/compute_forces_outer_core.o \
        $O/compute_forces_inner_core.o \
@@ -375,11 +382,13 @@ check_buffers_faces_chunks: constants.h $O/check_buffers_faces_chunks.o \
 	${F90} $(FLAGS_CHECK) -o xcheck_buffers_faces_chunks $O/check_buffers_faces_chunks.o \
        $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o
 
+combine_paraview_data: constants.h $O/combine_paraview_data.o $O/write_c_binary.o
+	${F90} $(FLAGS_CHECK) -o xcombine_paraview_data  $O/combine_paraview_data.o $O/write_c_binary.o
 clean:
-	rm -f $O/*.o *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt
+	rm -f $O/*.o *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt PI*
 
 ####
-#### rule to build each .o file below
+#### rule for each .o file below
 ####
 
 ###
@@ -405,6 +414,9 @@ $O/assemble_MPI_vector.o: constants.h assemble_MPI_vector.f90
 ### use MPI here
 $O/assemble_MPI_scalar.o: constants.h assemble_MPI_scalar.f90
 	${MPIF90} $(FLAGS_NO_CHECK) -c -o $O/assemble_MPI_scalar.o assemble_MPI_scalar.f90
+
+$O/assemble_MPI_central_cube.o: constants.h OUTPUT_FILES/values_from_mesher.h assemble_MPI_central_cube.f90
+	${MPIF90} $(FLAGS_NO_CHECK) -c -o $O/assemble_MPI_central_cube.o assemble_MPI_central_cube.f90
 
 $O/read_arrays_solver.o: constants.h OUTPUT_FILES/values_from_mesher.h read_arrays_solver.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/read_arrays_solver.o read_arrays_solver.f90
@@ -633,4 +645,11 @@ $O/attenuation_model.o: constants.h attenuation_model.f90
 
 $O/gll_library.o: constants.h gll_library.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/gll_library.o gll_library.f90
+
+$O/combine_paraview_data.o: constants.h combine_paraview_data.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/combine_paraview_data.o combine_paraview_data.f90
+
+$O/write_c_binary.o: write_c_binary.c
+	cc -c -o $O/write_c_binary.o write_c_binary.c
+
 
