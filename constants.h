@@ -53,6 +53,9 @@
   integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
 ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+! I/O unit for source and receiver vtk file
+  integer, parameter :: IOVTK = 98
+
 
 ! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
@@ -112,6 +115,9 @@
 ! maximum length of station and network name for receivers
   integer, parameter :: MAX_LENGTH_STATION_NAME = 32
   integer, parameter :: MAX_LENGTH_NETWORK_NAME = 8
+
+! half duration for movies
+  double precision, parameter :: HDUR_MOVIE = 10.0d0
 
 ! source decay rate
   double precision, parameter :: SOURCE_DECAY_RATE = 1.628d0
