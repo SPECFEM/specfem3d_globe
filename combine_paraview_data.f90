@@ -36,7 +36,7 @@ program combine_paraview_data
   real(kind=CUSTOM_REAL) data(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(NGLOBMAX_CRUST_MANTLE) :: xstore, ystore, zstore
   real x, y, z, dat(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE)
-  character(len=150) :: sline, arg(5), filename, indir, outdir, prname, dimension_file
+  character(len=150) :: sline, arg(6), filename, indir, outdir, prname, dimension_file
   character(len=150) :: mesh_file, local_point_file, local_element_file, local_file, local_data_file, local_ibool_file
   integer :: num_ibool(NGLOBMAX_CRUST_MANTLE)
   logical :: HIGH_RESOLUTION_MESH
