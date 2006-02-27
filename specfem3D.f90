@@ -838,6 +838,8 @@
 
   allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE_ROTATION))
   allocate(B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE_ROTATION))
+  A_array_rotation(:,:,:,:) = 0._CUSTOM_REAL
+  B_array_rotation(:,:,:,:) = 0._CUSTOM_REAL
 
 ! -------- arrays specific to each region here -----------
 
