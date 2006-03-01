@@ -59,4 +59,16 @@ int main(int argc, char **argv)
 }
 
 
+void xxxxfem3D_dispatch()
+{
+#define Meshfem 42
+#define Specfem 24
+#if SCRIPT == Meshfem
+    FC_FUNC(meshfem3d, MESHFEM3D)();
+#else
+    FC_FUNC(specfem3d, SPECFEM3D)();
+#endif
+}
+
+
 /* end of file */

@@ -33,6 +33,8 @@
 
   include "constants.h"
 
+  include "OUTPUT_FILES/values_from_mesher.h"
+
   integer iregion_code,myrank,NCHUNKS
 
 ! flags to know if we should read Vs and anisotropy arrays

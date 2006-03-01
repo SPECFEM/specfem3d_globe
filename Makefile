@@ -143,7 +143,7 @@ MPI_FLAGS =
 
 O = obj
 
-default: meshfem3D specfem3D combine_AVS_DX check_mesh_quality_AVS_DX check_buffers_1D check_buffers_2D check_buffers_corners_chunks check_buffers_faces_chunks convolve_source_timefunction create_movie_AVS_DX
+default: meshfem3D combine_AVS_DX check_mesh_quality_AVS_DX check_buffers_1D check_buffers_2D check_buffers_corners_chunks check_buffers_faces_chunks convolve_source_timefunction create_movie_AVS_DX
 
 all: clean default
 
@@ -202,7 +202,7 @@ meshfem3D: constants.h \
        $O/compute_parameters.o \
        $O/get_value_parameters.o \
        $O/sort_array_coordinates.o \
-       $O/save_mesh_statistics.o \
+       $O/save_header_file.o \
        $O/attenuation_model.o \
        $O/gll_library.o
 	${MPIF90} $(FLAGS_CHECK) -o xmeshfem3D \
@@ -255,11 +255,12 @@ meshfem3D: constants.h \
        $O/compute_parameters.o \
        $O/get_value_parameters.o \
        $O/sort_array_coordinates.o \
-       $O/save_mesh_statistics.o \
+       $O/save_header_file.o \
        $O/attenuation_model.o \
        $O/gll_library.o $(MPI_FLAGS)
 
-specfem3D: constants.h \
+# solver also depends on values from mesher
+specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
        $O/program_specfem3D.o \
        $O/specfem3D.o \
        $O/read_arrays_solver.o \
@@ -345,6 +346,16 @@ specfem3D: constants.h \
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
+create_header_file: $O/create_header_file.o $O/read_parameter_file.o \
+     $O/compute_parameters.o $O/define_subregions_crust_mantle.o \
+     $O/hex_nodes.o $O/save_header_file.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o \
+     $O/read_value_parameters.o $O/get_value_parameters.o
+	${F90} $(FLAGS_CHECK) -o xcreate_header_file $O/create_header_file.o \
+     $O/read_parameter_file.o $O/compute_parameters.o \
+     $O/define_subregions_crust_mantle.o $O/hex_nodes.o $O/save_header_file.o \
+     $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o \
+     $O/read_value_parameters.o $O/get_value_parameters.o
+
 create_movie_AVS_DX: $O/create_movie_AVS_DX.o $O/read_parameter_file.o \
      $O/compute_parameters.o $O/rthetaphi_xyz.o $O/read_value_parameters.o $O/get_value_parameters.o
 	${F90} $(FLAGS_CHECK) -o xcreate_movie_AVS_DX $O/create_movie_AVS_DX.o \
@@ -381,29 +392,30 @@ check_buffers_faces_chunks: constants.h $O/check_buffers_faces_chunks.o \
        $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
 
 clean:
-	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_movie_AVS_DX OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt
+	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt
+
 
 ####
 #### rule to build each .o file below
 ####
 
 ###
-### optimized flags here
+### optimized flags and dependence on values from mesher here
 ###
 
 $O/program_specfem3D.o: constants.h program_specfem3D.f90
 	${MPIF90} $(FLAGS_NO_CHECK) -c -o $O/program_specfem3D.o program_specfem3D.f90
 
-$O/specfem3D.o: constants.h specfem3D.f90
+$O/specfem3D.o: constants.h OUTPUT_FILES/values_from_mesher.h specfem3D.f90
 	${MPIF90} $(FLAGS_NO_CHECK) -c -o $O/specfem3D.o specfem3D.f90
 
-$O/compute_forces_crust_mantle.o: constants.h compute_forces_crust_mantle.f90
+$O/compute_forces_crust_mantle.o: constants.h OUTPUT_FILES/values_from_mesher.h compute_forces_crust_mantle.f90
 	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_crust_mantle.o compute_forces_crust_mantle.f90
 
-$O/compute_forces_outer_core.o: constants.h compute_forces_outer_core.f90
+$O/compute_forces_outer_core.o: constants.h OUTPUT_FILES/values_from_mesher.h compute_forces_outer_core.f90
 	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_outer_core.o compute_forces_outer_core.f90
 
-$O/compute_forces_inner_core.o: constants.h compute_forces_inner_core.f90
+$O/compute_forces_inner_core.o: constants.h OUTPUT_FILES/values_from_mesher.h compute_forces_inner_core.f90
 	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_inner_core.o compute_forces_inner_core.f90
 
 ### use MPI here
@@ -414,15 +426,18 @@ $O/assemble_MPI_vector.o: constants.h assemble_MPI_vector.f90
 $O/assemble_MPI_scalar.o: constants.h assemble_MPI_scalar.f90
 	${MPIF90} $(FLAGS_NO_CHECK) -c -o $O/assemble_MPI_scalar.o assemble_MPI_scalar.f90
 
+$O/read_arrays_solver.o: constants.h OUTPUT_FILES/values_from_mesher.h read_arrays_solver.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/read_arrays_solver.o read_arrays_solver.f90
+
 ###
 ### regular compilation options here
 ###
 
-$O/read_arrays_solver.o: constants.h read_arrays_solver.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/read_arrays_solver.o read_arrays_solver.f90
-
 $O/convolve_source_timefunction.o: convolve_source_timefunction.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/convolve_source_timefunction.o convolve_source_timefunction.f90
+
+$O/create_header_file.o: create_header_file.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/create_header_file.o create_header_file.f90
 
 $O/comp_source_time_function.o: comp_source_time_function.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/comp_source_time_function.o comp_source_time_function.f90
@@ -592,8 +607,8 @@ $O/reduce.o: constants.h reduce.f90
 $O/save_arrays_solver.o: constants.h save_arrays_solver.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/save_arrays_solver.o save_arrays_solver.f90
 
-$O/save_mesh_statistics.o: constants.h save_mesh_statistics.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/save_mesh_statistics.o save_mesh_statistics.f90
+$O/save_header_file.o: constants.h save_header_file.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/save_header_file.o save_header_file.f90
 
 $O/comp_source_spectrum.o: constants.h comp_source_spectrum.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/comp_source_spectrum.o comp_source_spectrum.f90
@@ -653,14 +668,11 @@ $O/gll_library.o: constants.h gll_library.f90
 CC = cc
 MPICC = mpicc
 
-PYSPECFEM_OBJ = \
+PYCOMMON_OBJ = \
        $O/misc.o \
        $O/Specfem3DGlobeCode.o \
        $O/PyxMPI.o \
        $O/trampoline.o \
-       $O/meshfem3D.o \
-       $O/specfem3D.o \
-       $O/read_arrays_solver.o \
        $O/create_regions_mesh.o \
        $O/create_chunk_buffers.o \
        $O/topo_bathy.o \
@@ -688,9 +700,6 @@ PYSPECFEM_OBJ = \
        $O/get_attenuation_model.o \
        $O/assemble_MPI_vector.o \
        $O/assemble_MPI_scalar.o \
-       $O/compute_forces_crust_mantle.o \
-       $O/compute_forces_outer_core.o \
-       $O/compute_forces_inner_core.o \
        $O/define_subregions_crust_mantle.o \
        $O/define_subregions_outer_core.o \
        $O/define_subregions_inner_core.o \
@@ -722,20 +731,32 @@ PYSPECFEM_OBJ = \
        $O/locate_receivers.o \
        $O/make_gravity.o \
        $O/sort_array_coordinates.o \
-       $O/save_mesh_statistics.o \
+       $O/save_header_file.o \
        $O/recompute_jacobian.o \
        $O/attenuation_model.o \
        $O/gll_library.o
 
-pyrized: pymeshfem3D pyspecfem3D
+PYMESHFEM_OBJ = \
+       $(PYCOMMON_OBJ) \
+       $O/pymeshfem3D.o \
+       $O/meshfem3D.o 
 
-pymeshfem3D: constants.h $O/config $O/pymeshfem3D.o $(PYSPECFEM_OBJ)
+PYSPECFEM_OBJ = \
+       $(PYCOMMON_OBJ) \
+       $O/compute_forces_crust_mantle.o \
+       $O/compute_forces_outer_core.o \
+       $O/compute_forces_inner_core.o \
+       $O/read_arrays_solver.o \
+       $O/pyspecfem3D.o \
+       $O/specfem3D.o 
+
+pymeshfem3D: constants.h $O/config $(PYMESHFEM_OBJ)
 	${MPICC} $(CFLAGS) -o xmeshfem3D \
-		$O/pymeshfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
+		$(PYMESHFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
 
-pyspecfem3D: constants.h $O/config $O/pyspecfem3D.o $(PYSPECFEM_OBJ)
+pyspecfem3D: constants.h $O/config $(PYSPECFEM_OBJ)
 	${MPICC} $(CFLAGS) -o xspecfem3D \
-		$O/pyspecfem3D.o $(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
+		$(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
 
 $O/pymeshfem3D.o: main.c $O/config.h $O/config
 	${MPICC} $(CFLAGS) -DSCRIPT=Meshfem -c -I$O `./$O/config --python-cppflags` -o $O/pymeshfem3D.o main.c
