@@ -162,7 +162,8 @@
        aniso_inner_core_model,attenuation_model
 
 ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,nspec_aniso_mantle,npointot
+
+  integer nspec,nspec_aniso,nspec_aniso_mantle,nspec_aniso_mantle_all,npointot
 
 ! meshing parameters
   double precision, dimension(:), allocatable :: rns,rmins,rmaxs
@@ -795,6 +796,9 @@
 ! volume of the slice
   volume_total = ZERO
 
+! number of anisotropic elements in the mantle
+  nspec_aniso_mantle = 0
+
 ! make sure everybody is synchronized
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
@@ -852,15 +856,12 @@
   allocate(ibool(NGLLX,NGLLY,NGLLZ,nspec))
   allocate(xstore(NGLLX,NGLLY,NGLLZ,nspec))
   allocate(ystore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(zstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
-
-! exit if there is not enough memory to allocate all the arrays
-  if(ier /= 0) call exit_MPI(myrank,'not enough memory to allocate arrays')
+  allocate(zstore(NGLLX,NGLLY,NGLLZ,nspec))
 
 ! create all the regions of the mesh
   call create_regions_mesh(iregion_code,xgrid,ygrid,zgrid,ibool,idoubling, &
          xstore,ystore,zstore,npx,npy,rmins,rmaxs, &
-         iproc_xi,iproc_eta,ichunk,nspec,nspec_aniso_mantle, &
+         iproc_xi,iproc_eta,ichunk,nspec,nspec_aniso, &
          volume_local,area_local_bottom,area_local_top, &
          nspl,rspl,espl,espl2, &
          nglob_AB(iregion_code),nglob_AC(iregion_code),nglob_BC(iregion_code),npointot, &
@@ -882,18 +883,13 @@
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
 ! store number of anisotropic elements found in the mantle
-  if(nspec_aniso_mantle /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
+  if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
     call exit_MPI(myrank,'found anisotropic elements outside of the mantle')
 
-  if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_aniso_mantle == 0) &
+  if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_aniso == 0) &
     call exit_MPI(myrank,'found no anisotropic elements in the mantle')
 
-! save number of anisotropic elements found in the mantle to a file
-  if(iregion_code == IREGION_CRUST_MANTLE) then
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/nspec_aniso_mantle.txt',status='unknown')
-    write(IOUT,*) nspec_aniso_mantle
-    close(IOUT)
-  endif
+  if(iregion_code == IREGION_CRUST_MANTLE) nspec_aniso_mantle = nspec_aniso
 
 ! use MPI reduction to compute total area and volume
   volume_total_region = ZERO
@@ -996,6 +992,10 @@
 ! end of loop on all the regions
   enddo
 
+! compute the maximum number of anisotropic elements found in all the slices
+  call MPI_ALLREDUCE(nspec_aniso_mantle,nspec_aniso_mantle_all,1,MPI_INTEGER, &
+              MPI_MAX,MPI_COMM_WORLD,ier)
+
   if(myrank == 0) then
 ! check volume of chunk
       write(IMAIN,*)
@@ -1034,6 +1034,8 @@
   write(IMAIN,*) ' - outer core: ',sngl(100.d0*dble(numelem_outer_core)/dble(numelem_total)),' %'
   write(IMAIN,*) ' - inner core: ',sngl(100.d0*dble(numelem_inner_core)/dble(numelem_total)),' %'
   write(IMAIN,*)
+  write(IMAIN,*) 'for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.h'
+  write(IMAIN,*)
 
 ! load balancing with respect to chunk of type BC (largest number of elements)
   if(NCHUNKS > 1) then
@@ -1059,9 +1061,12 @@
   write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
   write(IMAIN,*)
 
-! save some statistics about the mesh
-  call save_mesh_statistics(NSPEC_AB,NSPEC_AC,NSPEC_BC,nglob_AB,nglob_AC,nglob_BC, &
-        NEX_XI,NPROC,NPROCTOT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
+! create include file for the solver
+  call save_header_file(NSPEC_AB,NSPEC_AC,NSPEC_BC,nglob_AB,nglob_AC,nglob_BC, &
+        NEX_XI,NEX_ETA,nspec_aniso_mantle_all,NPROC,NPROCTOT, &
+        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
+        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP)
 
   endif   ! end of section executed by main process only

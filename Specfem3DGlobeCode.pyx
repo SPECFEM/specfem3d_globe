@@ -80,19 +80,11 @@ cdef public void get_value_string "FC_FUNC_(get_value_string, GET_VALUE_STRING)"
 
 # external Fortran functions
 
-cdef extern void meshfem3D_f "FC_FUNC(meshfem3d, MESHFEM3D)" () except *
-def meshfem3D(arg):
-    """Run the SPECFEM3D Global Mesher."""
+cdef extern void xxxxfem3D_dispatch() except *
+def xxxxfem3D(arg):
+    """Run the SPECFEM3D Global Mesher/Solver."""
     global component
     component = arg
-    meshfem3D_f()
-
-cdef extern void specfem3D_f "FC_FUNC(specfem3d, SPECFEM3D)" () except *
-def specfem3D(arg):
-    """Run the SPECFEM3D Global Solver."""
-    global component
-    component = arg
-    specfem3D_f()
-
+    xxxxfem3D_dispatch()
 
 # end of file

@@ -10,7 +10,8 @@ class Meshfem(MPIDriver):
         super(Meshfem, self).__init__("output_mesher.txt")
 
     def main(self, *args, **kwds):
-        self.code.meshfem3D(self)
+        #self.code.meshfem3D(self)
+        self.code.xxxxfem3D(self)
 
 
 # end of file

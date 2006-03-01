@@ -16,7 +16,7 @@
 !=====================================================================
 
   subroutine compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ,accel,xstore,ystore,zstore, &
+          nspec,displ,accel,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
@@ -26,28 +26,26 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80, &
-          nspec_crust_mantle,nglob_crust_mantle,NSPECMAX_CRUST_MANTLE_ATTENUAT, &
-          NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE, &
-          GRAVITY,ATTENUATION,ATTENUATION_3D,ANISOTROPIC_3D_MANTLE,TRANSVERSE_ISOTROPY,ELLIPTICITY)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80)
 
   implicit none
 
   include "constants.h"
 
-  integer nspec_crust_mantle,nglob_crust_mantle
-  integer NSPECMAX_CRUST_MANTLE_ATTENUAT,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE
+! include values created by the mesher
+! done for performance only using static allocation to allow for loop unrolling
+  include "OUTPUT_FILES/values_from_mesher.h"
 
-  logical GRAVITY,ATTENUATION,ATTENUATION_3D,ANISOTROPIC_3D_MANTLE,TRANSVERSE_ISOTROPY,ELLIPTICITY
+  integer nspec
 
 ! for ellipticity for d80 attenuation
   real(kind=CUSTOM_REAL) ell_d80,p20,cost
 
 ! array with the local to global mapping per slice
-  integer, dimension(nspec_crust_mantle) :: idoubling
+  integer, dimension(NSPECMAX_CRUST_MANTLE) :: idoubling
 
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_crust_mantle) :: displ,accel
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOBMAX_CRUST_MANTLE) :: displ,accel
 
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -77,8 +75,8 @@
   real(kind=CUSTOM_REAL) epsilon_trace_over_3
 
 ! arrays with mesh parameters per slice
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle) :: ibool
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_crust_mantle) :: &
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: ibool
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: &
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian
 
 ! array with derivatives of Lagrange polynomials and precalculated products
@@ -93,7 +91,7 @@
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
 
 ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(nglob_crust_mantle) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(NGLOBMAX_CRUST_MANTLE) :: xstore,ystore,zstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
         kappavstore,muvstore
@@ -163,7 +161,7 @@
 ! set acceleration to zero
   accel(:,:) = 0._CUSTOM_REAL
 
-  do ispec = 1,nspec_crust_mantle
+  do ispec = 1,nspec
 
     do k=1,NGLLZ
       do j=1,NGLLY
@@ -239,7 +237,7 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
 ! precompute terms for attenuation if needed
-  if(ATTENUATION) then
+  if(ATTENUATION_VAL) then
 
 ! compute deviatoric strain
     epsilon_trace_over_3 = ONE_THIRD * (duxdxl + duydyl + duzdzl)
@@ -251,7 +249,7 @@
 
 ! distinguish regions in the mantle, including case of the d80
 
-    if(ATTENUATION_3D) then
+    if(ATTENUATION_VAL_3D) then
        one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
     else
 
@@ -274,7 +272,7 @@
 
 ! map ellipticity back for d80 detection
 ! ystore contains theta
-    if(ELLIPTICITY) then
+    if(ELLIPTICITY_VAL) then
       theta = ystore(iglob)
       cost = cos(theta)
       p20 = 0.5*(3.*cost*cost-1.)
@@ -301,7 +299,7 @@
 ! compute either isotropic or anisotropic elements
 !
 
-  if(ANISOTROPIC_3D_MANTLE) then
+  if(ANISOTROPIC_3D_MANTLE_VAL) then
 
     c11 = c11store(i,j,k,ispec)
     c12 = c12store(i,j,k,ispec)
@@ -325,7 +323,7 @@
     c56 = c56store(i,j,k,ispec)
     c66 = c66store(i,j,k,ispec)
 
-    if(ATTENUATION) then
+    if(ATTENUATION_VAL) then
       mul = c44
       c11 = c11 + FOUR_THIRDS * minus_sum_beta * mul
       c12 = c12 - TWO_THIRDS * minus_sum_beta * mul
@@ -359,14 +357,14 @@
   else
 
 ! do not use transverse isotropy except if element is between d220 and Moho
-  if(.not. (TRANSVERSE_ISOTROPY .and. idoubling(ispec) == IFLAG_220_MOHO)) then
+  if(.not. (TRANSVERSE_ISOTROPY_VAL .and. idoubling(ispec) == IFLAG_220_MOHO)) then
 
 ! layer with no transverse isotropy, use kappav and muv
           kappal = kappavstore(i,j,k,ispec)
           mul = muvstore(i,j,k,ispec)
 
 ! use unrelaxed parameters if attenuation
-    if(ATTENUATION) mul = mul * one_minus_sum_beta_use
+    if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta_use
 
           lambdalplus2mul = kappal + FOUR_THIRDS * mul
           lambdal = lambdalplus2mul - 2.*mul
@@ -392,7 +390,7 @@
 
 ! use unrelaxed parameters if attenuation
 ! eta does not need to be shifted since it is a ratio
-  if(ATTENUATION) then
+  if(ATTENUATION_VAL) then
     muvl = muvl * one_minus_sum_beta_use
     muhl = muhl * one_minus_sum_beta_use
   endif
@@ -591,7 +589,7 @@
   endif   ! end of test whether isotropic or anisotropic element
 
 ! subtract memory variables if attenuation
-  if(ATTENUATION) then
+  if(ATTENUATION_VAL) then
     do i_sls = 1,N_SLS
       R_xx_val = R_memory(1,i_sls,i,j,k,ispec)
       R_yy_val = R_memory(2,i_sls,i,j,k,ispec)
@@ -610,7 +608,7 @@
   sigma_zy = sigma_yz
 
 ! compute non-symmetric terms for gravity
-  if(GRAVITY) then
+  if(GRAVITY_VAL) then
 
 ! use mesh coordinates to get theta and phi
 ! x y and z contain r theta and phi
@@ -779,7 +777,7 @@
           sum_terms(2,i,j,k) = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l)
           sum_terms(3,i,j,k) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
 
-     if(GRAVITY) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
+     if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
 
         enddo
       enddo
@@ -806,7 +804,7 @@
 ! term in yz = 5
 ! term in zz not computed since zero trace
 
-  if(ATTENUATION) then
+  if(ATTENUATION_VAL) then
 
 ! use Runge-Kutta scheme to march in time
   do i_sls = 1,N_SLS
@@ -817,12 +815,12 @@
 ! IMPROVE we should probably use an average value instead
 
 ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-     if(ATTENUATION_3D) then
+     if(ATTENUATION_VAL_3D) then
         factor_common_c44_muv = factor_common(i_sls,:,:,:,ispec)
      else
         factor_common_c44_muv(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
      endif
-     if(ANISOTROPIC_3D_MANTLE) then
+     if(ANISOTROPIC_3D_MANTLE_VAL) then
         factor_common_c44_muv = factor_common_c44_muv * c44store(:,:,:,ispec)
      else
         factor_common_c44_muv = factor_common_c44_muv * muvstore(:,:,:,ispec)

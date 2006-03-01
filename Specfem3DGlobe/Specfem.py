@@ -10,7 +10,8 @@ class Specfem(MPIDriver):
         super(Specfem, self).__init__("output_solver.txt")
 
     def main(self, *args, **kwds):
-        self.code.specfem3D(self)
+        #self.code.specfem3D(self)
+        self.code.xxxxfem3D(self)
 
 
 # end of file
