@@ -254,7 +254,7 @@
 ! spectral element one should have (NGLL-1)^2 OpenDX "elements"
 
 ! define the total number of OpenDX "elements" at the surface
-  nspectot_AVS_max = 6 * NEX_XI * NEX_ETA * (NGLLX-1) * (NGLLY-1)
+  nspectot_AVS_max = NCHUNKS * NEX_XI * NEX_ETA * (NGLLX-1) * (NGLLY-1)
 
   print *
   print *,'there are a total of ',nspectot_AVS_max,' OpenDX "elements" at the surface'
@@ -569,7 +569,7 @@
         ireorder(ibool_number4)-1,ireorder(ibool_number2)-1,ireorder(ibool_number3)-1
     else
       write(11,"(i10,' 1 quad ',i10,1x,i10,1x,i10,1x,i10)") ispec,ireorder(ibool_number1), &
-        ireorder(ibool_number4),ireorder(ibool_number2),ireorder(ibool_number3)
+        ireorder(ibool_number2),ireorder(ibool_number3),ireorder(ibool_number4)
     endif
   enddo
 
