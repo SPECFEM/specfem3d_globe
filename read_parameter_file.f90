@@ -333,8 +333,7 @@
           NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
           NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
           NER_CMB_TOPDDOUBLEPRIME, RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC, &
-          NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB, &
-          OUTPUT_FILES)
+          NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB)
 
     ! Determine in appropriate period range for the current mesh
     !   Note: we are using DT as a temporary variable
@@ -363,12 +362,6 @@
     DT = (0.40d0 * &
          ((ANGULAR_WIDTH_XI_IN_DEGREES * (PI/180.0d0)) * 1221.0d0) / &
          (dble(NEX_MAX) / 8.0d0) / 11.02827d0 ) * 0.173d0 * 0.4d0
-
-    open(unit=127, file=trim(OUTPUT_FILES)//'/auto_variables.txt', status='unknown')
-    write(127, *)'double precision, parameter :: DT = ', DT
-    write(127, *)'integer, parameter :: MIN_ATTENUATION_PERIOD = ', MIN_ATTENUATION_PERIOD
-    write(127, *)'integer, parameter :: MAX_ATTENUATION_PERIOD = ', MAX_ATTENUATION_PERIOD
-    close(127)
 
   endif
 
@@ -674,29 +667,6 @@
   if(IASPEI .and. TRANSVERSE_ISOTROPY) stop 'IASPEI is currently isotropic'
 
   ELEMENT_WIDTH = ANGULAR_WIDTH_XI_IN_DEGREES/dble(NEX_MAX) * DEGREES_TO_RADIANS
-!! Dimitri Komatitsch suppressed this because IMAIN is not open yet in this subroutine
-! write(IMAIN,*)'crust elements xi:  ', 111.11d0 * ANGULAR_WIDTH_XI_IN_DEGREES / dble(NEX_MAX)
-! write(IMAIN,*)'               eta: ', 111.11d0 * ANGULAR_WIDTH_ETA_IN_DEGREES/ dble(NEX_MAX)
-! write(IMAIN,*)
-! write(IMAIN,*)'   z    R crust   : ', (R_EARTH - RMOHO) / (dble(NER_CRUST) * 1000.0d0)
-! write(IMAIN,*)'   xi             : ', (RMOHO/1000.0d0) * ELEMENT_WIDTH
-! write(IMAIN,*)'   z    moho 220  : ', (RMOHO - R220) / (dble(NER_220_MOHO) * 1000.0d0)
-! write(IMAIN,*)'   xi             : ', (R220/1000.0d0) * ELEMENT_WIDTH
-! write(IMAIN,*)'   z    220 400   : ', (R220 - R400) / (dble(NER_400_220) * 1000.0d0)
-! write(IMAIN,*)'   xi             : ', (R400/1000.0d0) * ELEMENT_WIDTH
-! write(IMAIN,*)'   z    400 600   : ', (R400 - R600) / (dble(NER_600_400) * 1000.0d0)
-! write(IMAIN,*)'   xi             : ', (R600/1000.0d0) * ELEMENT_WIDTH
-! write(IMAIN,*)'   z    600 670   : ', (R600 - R670) / (dble(NER_670_600) * 1000.0d0)
-! write(IMAIN,*)'   xi             : ', (R670/1000.0d0) * ELEMENT_WIDTH
-! write(IMAIN,*)'   z    670 771   : ', (R670 - R771) / (dble(NER_771_670) * 1000.0d0)
-! write(IMAIN,*)'   xi             : ', (R771/1000.0d0) * ELEMENT_WIDTH
-! write(IMAIN,*)'   z    771 D     : ', (R771 - RTOPDDOUBLEPRIME) / (dble(NER_TOPDDOUBLEPRIME_771) * 1000.0d0)
-! write(IMAIN,*)'   xi             : ', (RTOPDDOUBLEPRIME/1000.0d0 )* ELEMENT_WIDTH
-! write(IMAIN,*)'   z    D   CMB   : ', (RTOPDDOUBLEPRIME - RCMB) / (dble(NER_CMB_TOPDDOUBLEPRIME) * 1000.0d0)
-! write(IMAIN,*)'   xi             : ', (RCMB/1000.0d0) * ELEMENT_WIDTH
-! write(IMAIN,*)'   z    CMB ICB   : ', (RCMB - RICB) / (dble(NER_ICB_CMB) * 1000.0d0)
-! write(IMAIN,*)'   xi             : ', (RICB/1000.0d0) * ELEMENT_WIDTH
-! write(IMAIN,*)'   z    ICB 0     : ', (RICB - R_CENTRAL_CUBE)   / (dble(NER_TOP_CENTRAL_CUBE_ICB) * 1000.0d0)
 
   end subroutine read_parameter_file
 
@@ -704,9 +674,10 @@
        NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
        NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
        NER_CMB_TOPDDOUBLEPRIME, RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC, &
-       NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB, &
-       OUTPUT_FILES)
+       NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, NER_TOP_CENTRAL_CUBE_ICB)
+
     implicit none
+
     include 'constants.h'
 
     double precision WIDTH
@@ -716,7 +687,6 @@
          NER_CMB_TOPDDOUBLEPRIME, NER_TOPDBL_CMB, NER_ICB_BOTTOMDBL, &
          NER_TOP_CENTRAL_CUBE_ICB
     double precision RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC
-    character(len=150) OUTPUT_FILES
 
     integer, parameter                         :: NUM_REGIONS = 13
     integer, dimension(NUM_REGIONS)            :: scaling
@@ -727,17 +697,6 @@
     double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
     integer, dimension(NUM_REGIONS-1)          :: NER
     integer NER_FLUID
-    integer i,j
-    integer IMESH
-
-    IMESH = IMAIN+1
-    write(*,*)'auto_ner'
-    open(unit=IMESH, file=trim(OUTPUT_FILES)//'/auto_mesher_output.txt', status='unknown')
-    do i=IMAIN,IMESH
-       write(i,*)
-       write(i,*)'Automatically Determining Number of Radial Elements'
-    enddo
-
 
     ! This is PREM in Kilometers
     radius(1)  = 6371.00d0 ! Surface
@@ -772,9 +731,7 @@
     ! Find the Optimal Height of the Fluid Region based on the
     ! Aspect ratio of elements within the fluid and the total
     ! number of elements within the fluid
-    write(IMAIN,*)'auto_ner: Finding fluid region doubling radius'
-    call auto_fluid_double(WIDTH, NEX_MAX, NUM_REGIONS, radius, scaling, &
-         NER_FLUID, RATIO_TOP_DBL_OC,  RATIO_BOTTOM_DBL_OC)
+    call auto_fluid_double(WIDTH, NEX_MAX, NUM_REGIONS, radius, scaling, NER_FLUID, RATIO_TOP_DBL_OC,  RATIO_BOTTOM_DBL_OC)
 
     ! Determine the Radius of Top and Bottom of Fluid Doubling Region
     radius(10) = radius(12) + RATIO_TOP_DBL_OC    * (radius(9) - radius(12))
@@ -789,9 +746,7 @@
 
     ! Find the Number of Radial Elements in a region based upon
     ! the aspect ratio of the elements
-    write(IMAIN,*)'auto_ner: Finding Optimal Number of Elements per region'
-    call auto_optimal_ner(NUM_REGIONS, radius, element_width, &
-         NER, ratio_top, ratio_bottom)
+    call auto_optimal_ner(NUM_REGIONS, radius, element_width,NER, ratio_top, ratio_bottom)
 
     ! Set Output arguments
     NER_CRUST                = NER(1)
@@ -806,58 +761,6 @@
     NER_FLUID                = NER(10)
     NER_ICB_BOTTOMDBL        = NER(11)
     NER_TOP_CENTRAL_CUBE_ICB = NER(12)
-
-    ! This is all OUTPUT from here on
-    do j=IMAIN,IMESH
-       write(j,*)
-       write(j,*)'                  Region(#)    Radial Elements'
-       write(j,*)'               NER_CRUST( 1): ',NER_CRUST
-       write(j,*)'            NER_220_MOHO( 2): ',NER_220_MOHO
-       write(j,*)'             NER_400_220( 3): ',NER_400_220
-       write(j,*)'             NER_600_400( 4): ',NER_600_400
-       write(j,*)'             NER_670_600( 5): ',NER_670_600
-       write(j,*)'             NER_771_670( 6): ',NER_771_670
-       write(j,*)' NER_TOPDDOUBLEPRIME_771( 7): ',NER_TOPDDOUBLEPRIME_771
-       write(j,*)' NER_CMB_TOPDDOUBLEPRIME( 8): ',NER_CMB_TOPDDOUBLEPRIME
-       write(j,*)'        RATIO_TOP_DBL_OC(  ): ',RATIO_TOP_DBL_OC
-       write(j,*)'     RATIO_BOTTOM_DBL_OC(  ): ',RATIO_BOTTOM_DBL_OC
-       write(j,*)'          NER_TOPDBL_CMB( 9): ',NER_TOPDBL_CMB
-       write(j,*)'               NER_FLUID(10): ',NER_FLUID
-       write(j,*)'       NER_ICB_BOTTOMBDL(11): ',NER_ICB_BOTTOMDBL
-       write(j,*)'NER_TOP_CENTRAL_CUBE_ICB(12): ',NER_TOP_CENTRAL_CUBE_ICB
-
-       write(j,*)
-       write(j,*)'                  Region(#)       Ratio Top          Ratio Bottom'
-       write(j,*)'               NER_CRUST( 1): ',ratio_top(1),ratio_bottom(1)
-       write(j,*)'            NER_220_MOHO( 2): ',ratio_top(2),ratio_bottom(2)
-       write(j,*)'             NER_400_220( 3): ',ratio_top(3),ratio_bottom(3)
-       write(j,*)'             NER_600_400( 4): ',ratio_top(4),ratio_bottom(4)
-       write(j,*)'             NER_670_600( 5): ',ratio_top(5),ratio_bottom(5)
-       write(j,*)'             NER_771_670( 6): ',ratio_top(6),ratio_bottom(6)
-       write(j,*)' NER_TOPDDOUBLEPRIME_771( 7): ',ratio_top(7),ratio_bottom(7)
-       write(j,*)' NER_CMB_TOPDDOUBLEPRIME( 8): ',ratio_top(8),ratio_bottom(8)
-       write(j,*)'          NER_TOPDBL_CMB( 9): ',ratio_top(9),ratio_bottom(9)
-       write(j,*)'               NER_FLUID(10): ',ratio_top(10),ratio_bottom(10)
-       write(j,*)'       NER_ICB_BOTTOMBDL(11): ',ratio_top(11),ratio_bottom(11)
-       write(j,*)'NER_TOP_CENTRAL_CUBE_ICB(12): ',ratio_top(12),ratio_bottom(12)
-
-       do i = 1,NUM_REGIONS-1
-          if(ratio_top(i) < 0.5 .OR. ratio_top(i) > 2.0) then
-             write(j,*)
-             write(j,*)'WARNING: Unexpected Results may occur'
-             write(j,*)'         Elements at Top of Region ',i, ' are elongated'
-             write(j,*)'         Radial / Width = ', ratio_top(i)
-          endif
-          if(ratio_bottom(i) < 0.5 .OR. ratio_bottom(i) > 2.0) then
-             write(j,*)
-             write(j,*)'WARNING: Unexpected Results may occur'
-             write(j,*)'         Elements at Bottom of Region ',i, ' are elongated '
-             write(j,*)'         Radial / Width = ', ratio_bottom(i)
-          endif
-       enddo
-    enddo
-
-    close(IMESH)
 
   end subroutine auto_ner
 
