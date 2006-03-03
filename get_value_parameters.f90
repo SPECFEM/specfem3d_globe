@@ -22,6 +22,8 @@
   integer value_to_get, default_value
   character(len=*) name
 
+  call unused_string(name)
+
   value_to_get = default_value
 
   end subroutine get_value_integer
@@ -34,6 +36,8 @@
 
   double precision value_to_get, default_value
   character(len=*) name
+
+  call unused_string(name)
 
   value_to_get = default_value
 
@@ -48,6 +52,8 @@
   logical value_to_get, default_value
   character(len=*) name
 
+  call unused_string(name)
+
   value_to_get = default_value
 
   end subroutine get_value_logical
@@ -60,6 +66,8 @@
 
   character(len=*) value_to_get, default_value
   character(len=*) name
+
+  call unused_string(name)
 
   value_to_get = default_value
 
