@@ -155,6 +155,7 @@
 
 !--------------------
 
+! dummy subroutine to avoid warnings about variable not used in other subroutines
   subroutine unused_string(s)
 
   character(len=*) s
