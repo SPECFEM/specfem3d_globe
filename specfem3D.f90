@@ -4496,7 +4496,7 @@
 
 !---- end of time iteration loop
 !
-enddo   ! end of main time loop
+  enddo   ! end of main time loop
 
 ! write the final seismograms
 
