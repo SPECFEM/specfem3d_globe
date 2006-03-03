@@ -25,6 +25,8 @@
   character(len=*) name
   character(len=100) string_read
 
+  call unused_string(name)
+
   call read_next_line(string_read)
   read(string_read,*) value_to_read
 
@@ -39,6 +41,8 @@
   double precision value_to_read
   character(len=*) name
   character(len=100) string_read
+
+  call unused_string(name)
 
   call read_next_line(string_read)
   read(string_read,*) value_to_read
@@ -55,6 +59,8 @@
   character(len=*) name
   character(len=100) string_read
 
+  call unused_string(name)
+
   call read_next_line(string_read)
   read(string_read,*) value_to_read
 
@@ -69,6 +75,8 @@
   character(len=*) value_to_read
   character(len=*) name
   character(len=100) string_read
+
+  call unused_string(name)
 
   call read_next_line(string_read)
   value_to_read = string_read
@@ -144,3 +152,14 @@
   err_occurred = 0
 
   end function err_occurred
+
+!--------------------
+
+  subroutine unused_string(s)
+
+  character(len=*) s
+
+  if (len(s) == 1) continue
+
+  end subroutine unused_string
+
