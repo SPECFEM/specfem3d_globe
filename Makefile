@@ -57,21 +57,24 @@
 F90 = ifort
 MPIF90 = mpif90
 #
-# Caltech cluster
+# standard options
+#
+FLAGS_NO_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
+#
+# old hrothgar cluster at Caltech
 #
 #FLAGS_NO_CHECK = -O3 -tpp6 -xK -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
 #
-# more recent machines
+# Pangu at Caltech
 #
-#FLAGS_NO_CHECK = -O2 -static  -tpp7  -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations  -check nobounds -132 #-e95 -std95 -xN -fast 
-#Pangu
-FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O2 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
+#FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O2 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
 #
 # debug with range checking
 #
 #FLAGS_NO_CHECK = -O0 -static -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
 FLAGS_CHECK = $(FLAGS_NO_CHECK)
 #MPI_FLAGS = -Vaxlib
+MPI_FLAGS =
 
 #
 # g95 (free f95 compiler from http://www.g95.org, still under development, but works)

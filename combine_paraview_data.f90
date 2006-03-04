@@ -26,8 +26,8 @@ program combine_paraview_data
   include 'OUTPUT_FILES/values_from_mesher.h'
 
   integer i,j,k,ispec, ios, it
-  integer iproc, proc1, proc2, num_node, node_list(300), nspec(300), nglob(300), nglob1(300),npoint_all, nelement_all
-  integer np, ne, npp, np1, nee, npoint(300), nelement(300), njunk, njunk2, n1, n2, n3, n4, n5, n6, n7, n8
+  integer iproc, num_node, node_list(300), nspec(300), nglob(300), nglob1(300),npoint_all, nelement_all
+  integer np, ne, npoint(300), nelement(300), njunk, njunk2, n1, n2, n3, n4, n5, n6, n7, n8
   integer ibool(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE)
 
   integer numpoin, iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8, iglob
@@ -69,7 +69,6 @@ program combine_paraview_data
   if (iregion > 3 .or. iregion < 0) stop 'Iregion = 0,1,2,3'
   num_node = 0
   open(unit = 20, file = trim(arg(1)), status = 'unknown',iostat = ios)
-!  if (ios /= 0) stop 'Error opening '//trim(arg(1))
   if (ios /= 0) stop 'Error opening file'
   do while ( 1 == 1)
     read(20,'(a)',iostat=ios) sline
@@ -122,7 +121,6 @@ program combine_paraview_data
 
     dimension_file = trim(prname) //'array_dims.txt'
     open(unit = 27,file = trim(dimension_file),status='old', iostat = ios)
-!    if (ios /= 0) stop 'Error opening '// trim(dimension_file)
     if (ios /= 0) stop 'Error opening file'
 
     read(27,*) nspec(it)
@@ -137,7 +135,6 @@ program combine_paraview_data
     if (.not. HIGH_RESOLUTION_MESH) then
       local_point_file = trim(prname) //'AVS_DXpoints' // '.txt'
       open(unit = 27,file = trim(local_point_file),status='old', iostat = ios)
-!      if (ios /= 0) stop 'Error opening '// trim(local_point_file)
       if (ios /= 0) stop 'Error opening file'
 
       read(27,*) npoint(it)
@@ -167,7 +164,6 @@ program combine_paraview_data
 
     local_data_file = trim(prname) // trim(filename) // '.bin'
     open(unit = 27,file = trim(local_data_file),status='old', iostat = ios,form ='unformatted')
-!    if (ios /= 0) stop 'Error opening '// trim(local_data_file)
     if (ios /= 0) stop 'Error opening file'
 
     read(27) data(:,:,:,1:nspec(it))
@@ -183,7 +179,6 @@ program combine_paraview_data
   ! ibool file
     local_ibool_file = trim(prname) // 'ibool' // '.bin'
     open(unit = 28,file = trim(local_ibool_file),status='old', iostat = ios, form='unformatted')
-!    if (ios /= 0) stop 'Error opening '// trim(local_data_file)
     if (ios /= 0) stop 'Error opening file'
 
     read(28) ibool(:,:,:,1:nspec(it))
@@ -197,7 +192,6 @@ program combine_paraview_data
 
       local_point_file = trim(prname) // 'AVS_DXpoints.txt'
       open(unit = 25, file = trim(local_point_file), status = 'old', iostat = ios)
-!      if (ios /= 0) stop 'Error opening '// trim(local_point_file)
       if (ios /= 0) stop 'Error opening file'
 
       read(25,*) njunk
@@ -299,21 +293,18 @@ program combine_paraview_data
 
       local_file = trim(prname)//'x.bin'
       open(unit = 27,file = trim(prname)//'x.bin',status='old', iostat = ios,form ='unformatted')
-!      if (ios /= 0) stop 'Error opening '// trim(local_file)
      if (ios /= 0) stop 'Error opening file'
 
       read(27) xstore(1:nglob(it))
       close(27)
       local_file = trim(prname)//'y.bin'
       open(unit = 27,file = trim(prname)//'y.bin',status='old', iostat = ios,form ='unformatted')
-!      if (ios /= 0) stop 'Error opening '// trim(local_file)
      if (ios /= 0) stop 'Error opening file'
 
       read(27) ystore(1:nglob(it))
       close(27)
       local_file = trim(prname)//'z.bin'
       open(unit = 27,file = trim(prname)//'z.bin',status='old', iostat = ios,form ='unformatted')
-!      if (ios /= 0) stop 'Error opening '// trim(local_file)
       if (ios /= 0) stop 'Error opening file'
 
       read(27) zstore(1:nglob(it))
@@ -368,7 +359,6 @@ program combine_paraview_data
     if (.not. HIGH_RESOLUTION_MESH) then
       local_point_file = trim(prname) //'AVS_DXelements' // '.txt'
       open(unit = 27,file = trim(local_point_file),status='old', iostat = ios)
-!     if (ios /= 0) stop 'Error opening '// trim(local_point_file)
      if (ios /= 0) stop 'Error opening file'
 
       read(27,*) nelement(it)
@@ -400,7 +390,6 @@ program combine_paraview_data
 
       local_element_file = trim(prname) // 'AVS_DXelements.txt'
       open(unit = 26, file = trim(local_element_file), status = 'old', iostat = ios)
-!      if (ios /= 0) stop 'Error opening '// trim(local_element_file)
       if (ios /= 0) stop 'Error opening file'
 
       print *, trim(local_element_file)
@@ -433,7 +422,6 @@ program combine_paraview_data
 
       local_ibool_file = trim(prname) // 'ibool' // '.bin'
       open(unit = 28,file = trim(local_ibool_file),status='old', iostat = ios, form='unformatted')
-!      if (ios /= 0) stop 'Error opening '// trim(local_data_file)
        if (ios /= 0) stop 'Error opening file'
 
       read(28) ibool(:,:,:,1:nspec(it))

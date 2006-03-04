@@ -19,7 +19,7 @@
 !---- locate_receivers finds the correct position of the receivers
 !----
 
-  subroutine locate_receivers(myrank,DT,NSTEP,nspec,nglob,idoubling,ibool, &
+  subroutine locate_receivers(myrank,DT,NSTEP,nspec,nglob,ibool, &
                  xstore,ystore,zstore,xigll,yigll,zigll,rec_filename, &
                  nrec,islice_selected_rec,ispec_selected_rec, &
                  xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,nu, &
@@ -47,7 +47,6 @@
   integer yr,jda,ho,mi
   double precision sec
 
-  integer idoubling(nspec)
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
   integer NSTEP
   double precision DT
