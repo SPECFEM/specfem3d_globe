@@ -26,7 +26,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80,MOVIE_VOLUME)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80,MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
 
   implicit none
 
@@ -35,6 +35,10 @@
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
+
+! for forward or backward simulations
+  integer SIMULATION_TYPE
+  logical SAVE_FORWARD
 
   integer nspec
   logical MOVIE_VOLUME

@@ -24,7 +24,7 @@
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          ibool,nspec_outer_core,nglob_outer_core)
+          ibool,nspec_outer_core,nglob_outer_core,SIMULATION_TYPE)
 
   implicit none
 
@@ -33,6 +33,9 @@
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
+
+! for forward or backward simulations
+  integer SIMULATION_TYPE
 
 ! for doubling in the outer core
   integer nspec_outer_core,nglob_outer_core

@@ -350,15 +350,6 @@
   endif
   write(IOUT,*)
 
-! default simulation type - forward simulation
-  write(IOUT,*) 'integer, parameter :: SIMULATION_TYPE = 1'
-
-! default NOT saving forward simulation last frame and
-! absorbing boundary contribution
-  write(IOUT,*) 'logical, parameter :: SAVE_FORWARD = .false.'
-
-  write(IOUT,*)
-
   close(IOUT)
 
   end subroutine save_header_file

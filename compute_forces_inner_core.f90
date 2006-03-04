@@ -22,11 +22,9 @@
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
-          c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev, epsilon_trace_over_3,&
-          one_minus_sum_beta,&
-          alphaval,betaval,gammaval, &
-          factor_common, &
-          vx, vy, vz, vnspec,MOVIE_VOLUME)
+          c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
+          one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
+          vx,vy,vz,vnspec,MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
 
   implicit none
 
@@ -35,6 +33,10 @@
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
+
+! for forward or backward simulations
+  integer SIMULATION_TYPE
+  logical SAVE_FORWARD
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ,accel

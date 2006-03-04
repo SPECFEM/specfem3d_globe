@@ -607,7 +607,7 @@
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-          NUMBER_OF_THIS_RUN,NCHUNKS
+          NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE
 
   double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -620,7 +620,7 @@
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION,IASPEI, &
-          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
+          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -694,7 +694,8 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL)
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+
   if(err_occurred() /= 0) return
 
 ! check simulation pararmeters
@@ -1257,7 +1258,7 @@
 
 ! locate receivers in the crust in the mesh
   call locate_receivers(myrank,DT,NSTEP,nspec_crust_mantle, &
-            nglob_crust_mantle,idoubling_crust_mantle,ibool_crust_mantle, &
+            nglob_crust_mantle,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xigll,yigll,zigll,trim(rec_filename), &
             nrec,islice_selected_rec,ispec_selected_rec, &
@@ -3098,7 +3099,7 @@
          jacobian_outer_core,hprime_xx,hprime_yy,hprime_zz, &
          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-         ibool_outer_core,nspec_outer_core,nglob_outer_core)
+         ibool_outer_core,nspec_outer_core,nglob_outer_core,SIMULATION_TYPE)
 
   if (SIMULATION_TYPE == 3) then
     call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
@@ -3111,7 +3112,7 @@
          jacobian_outer_core,hprime_xx,hprime_yy,hprime_zz, &
          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-         ibool_outer_core,nspec_outer_core,nglob_outer_core)
+         ibool_outer_core,nspec_outer_core,nglob_outer_core,SIMULATION_TYPE)
   endif
 
 ! Stacey
@@ -3507,7 +3508,7 @@
           R_memory_crust_mantle,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80,MOVIE_VOLUME)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80,MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
 
   if (SIMULATION_TYPE == 3) then
 ! for anisotropy and gravity, x y and z contain r theta and phi
@@ -3533,7 +3534,7 @@
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80,MOVIE_VOLUME)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80,MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
   endif
 
 
@@ -3783,7 +3784,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),MOVIE_VOLUME )
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
 
   if (SIMULATION_TYPE == 3) then
   call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -3802,7 +3803,7 @@
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),MOVIE_VOLUME )
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
   endif
 
 ! add the sources
@@ -4349,7 +4350,7 @@
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
           network_name,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
     else
-      call write_adj_seismograms(myrank,seismograms,number_receiver_global, &
+      call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,DT,NSTEP,t0,LOCAL_PATH)
     endif
   endif
@@ -5093,7 +5094,7 @@ if (ifirst_movie) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
         network_name,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
     else
-      call write_adj_seismograms(myrank,seismograms,number_receiver_global, &
+      call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,DT,NSTEP,t0,LOCAL_PATH)
     endif
   endif

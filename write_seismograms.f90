@@ -103,14 +103,14 @@
 
 ! write adjoint seismograms to text files
 
-  subroutine write_adj_seismograms(myrank,seismograms,number_receiver_global, &
+  subroutine write_adj_seismograms(seismograms,number_receiver_global, &
                nrec_local,it,DT,NSTEP,hdur,LOCAL_PATH)
 
   implicit none
 
   include "constants.h"
 
-  integer nrec_local,NSTEP,it,myrank
+  integer nrec_local,NSTEP,it
   integer, dimension(nrec_local) :: number_receiver_global
   real(kind=CUSTOM_REAL), dimension(6,nrec_local,NSTEP) :: seismograms
   double precision hdur,DT
