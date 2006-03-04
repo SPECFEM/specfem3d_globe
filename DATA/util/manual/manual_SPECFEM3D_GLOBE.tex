@@ -70,7 +70,7 @@ kernel simulations.
 For a detailed introduction to the spectral-element method as applied
 to global and regional seismic wave propagation, please consult
 \cite{KoTr02a,KoTr02b,KoRiTr02}.
-If you use 3D mantle model S20RTS, please cite \cite{ritsemaetal1999}.
+If you use 3D mantle model S20RTS, please cite \cite{RiVaWo99}.
 
 All SPECFEM3D\_GLOBE software is written in Fortran90, and conforms strictly to
 the Fortran95 standard. It uses no obsolete features of Fortran77.
@@ -277,7 +277,7 @@ isotropic version of PREM.
 \item[\texttt{ak135}] Spherically symmetric isotropic AK135 model \cite{KeEnBu95}.
 \toall{Make sure AK135 gets added to the code.}
 \item[\texttt{3D\_isotropic}] By default,
-the code uses 3D mantle model S20RTS \cite{ritsemaetal1999}
+the code uses 3D mantle model S20RTS \cite{RiVaWo99}
 and 3D crustal model Crust2.0 \cite{BaLaMa00}.
 Note that S20RTS uses transversely isotropic PREM as a background model,
 and that we use the PREM radial attenuation model when
@@ -285,11 +285,11 @@ and that we use the PREM radial attenuation model when
 See section~\ref{section:changingmodels} for a discussion on
 how to change 3D models.
 \toall{Make sure this gets modified from s20rts in the code.}
-\item[\texttt{3D\_anisotropic}] 
+\item[\texttt{3D\_anisotropic}]
 See section~\ref{section:changingmodels} for a discussion on
 how to specify your own 3D anisotropic model.
 \toall{Make sure this gets modified from Min\_Chen in the code.}
-\item[\texttt{3D\_attenuation}] 
+\item[\texttt{3D\_attenuation}]
 See section~\ref{section:changingmodels} for a discussion on
 how to specify your own 3D attenuation model.
 \toall{Make sure this gets modified from Brian\_Savage in the code.}
@@ -888,7 +888,7 @@ a system that uses a scheduler:
 by the scheduler, based on availability.
 Therefore, in order for the mesher and the solver to have access to the same
 mesh files (usually stored on hard drives local to the nodes on which the
-code is run), they must be launched in sequence as a single job.  
+code is run), they must be launched in sequence as a single job.
 \item On some systems, the nodes to which running jobs are assigned are
 not configured for compilation.
 It may, therefore, be necessary to pre-compile both the mesher and the solver.
@@ -930,7 +930,7 @@ compiled version of the \texttt{SPECFEM3D} code,
 Harvard CMT format (see section~\ref{section:running}, \texttt{STATION-FILE}
 is a file containing the list of stations (again see section~\ref{section:running}
 for the format), and  \texttt{QUEUE-NAME} is an optional argument specifying
-the name of the queue the job is to be submitted to.  
+the name of the queue the job is to be submitted to.
 
 The script starts by parsing the input information, setting up the environment,
 and if necessary creating the base directory in which the launch directory
@@ -1073,7 +1073,7 @@ The final step is to \texttt{cd} to the launch directory and submit
 the job using the lsf job submission command, \texttt{bsub}
 (type '\texttt{man bsub}' on CITerra to learn about the \texttt{bsub} command).
 The job sequence itself is detailed in the \texttt{go\_mesher\_solver\_lsf.bash}
-script described in the following sub-section.  
+script described in the following sub-section.
 
 {\small
 \begin{verbatim}
@@ -1126,8 +1126,8 @@ The script then changes the \texttt{LOCAL\_PATH} parameter in
 {\small
 \begin{verbatim}
 if [ -z $USER ]; then
-	echo "could not run go_mesher_solver_lsf.bash as no USER env is set"
-	exit 2
+  echo "could not run go_mesher_solver_lsf.bash as no USER env is set"
+  exit 2
 fi
 
 BASEMPIDIR=/state/partition1/scratch/${USER}/DATABASES_MPI
@@ -1300,7 +1300,7 @@ changing the 3D crustal model.
 
 \subsubsection{Isotropic Models}
 
-The 3D mantle model S20RTS \cite{ritsemaetal1999} is superimposed on to
+The 3D mantle model S20RTS \cite{RiVaWo99} is superimposed on to
 the mantle mesh by the subroutine \texttt{mantle\_model.f90}.
 The call to this subroutine is of the form
 \begin{verbatim}
@@ -1419,13 +1419,13 @@ as discussed in appendix~\ref{appendix:coordinates}.
 %
 \subsection{Anelastic Models}
 
-3D anelastic (attenuation) models may be superimposed on the mesh based 
+3D anelastic (attenuation) models may be superimposed on the mesh based
 upon the subroutine
 \texttt{attenuation\_model}.  The call to this routine is as such
 \begin{verbatim}
-call attenuation_model(myrank, latitude, longitude, radius, Qmu, tau_s, 
+call attenuation_model(myrank, latitude, longitude, radius, Qmu, tau_s,
 tau_e, T_c_source, &
- 
+
 RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80)
 \end{verbatim}
 Input to this routine are:
@@ -1439,37 +1439,37 @@ Input to this routine are:
 Output to this routine are:
 \begin{description}
 \item[\texttt{Qmu}] Shear wave quality factor ($ 0 < Q_\mu < 5000 $).
-\item[\texttt{tau\_s}] dimension(N\_SLS) Stress relaxation time.  These 
+\item[\texttt{tau\_s}] dimension(N\_SLS) Stress relaxation time.  These
 values only depend on the
-curent period range of interest.  They should be constant across all 
+curent period range of interest.  They should be constant across all
 calls to this subroutine.
-\item[\texttt{tau\_e}] dimension(N\_SLS) Strain relaxation time.  These 
+\item[\texttt{tau\_e}] dimension(N\_SLS) Strain relaxation time.  These
 values depend on the period
-range of interest and on the value of the quality factor (\texttt{Qmu}) for that 
+range of interest and on the value of the quality factor (\texttt{Qmu}) for that
 specific point.
-\item[\texttt{T\_c\_source}] Effective time width of the source, should 
+\item[\texttt{T\_c\_source}] Effective time width of the source, should
 be constant across all calls
 to te subroutine.
 \end{description}
 
-If run without modification, the subroutine \texttt{attenuation\_model} 
+If run without modification, the subroutine \texttt{attenuation\_model}
 will implement the PREM attneuation
-structure.  If you would like to implement your own attenuation model, 
+structure.  If you would like to implement your own attenuation model,
 you need to modify your model
-using the \texttt{attenuation\_model} subroutine as a guide or write 
+using the \texttt{attenuation\_model} subroutine as a guide or write
 your own.  It is not enough to just set
-the value of Qmu to the edesired value, the internal solver variables 
+the value of Qmu to the edesired value, the internal solver variables
 tau\_s, tau\_e, and T\_c\_source must be determined.
-Conversion from Qmu to the internal solver variables is done by calling 
+Conversion from Qmu to the internal solver variables is done by calling
 the subroutine \texttt{attenuation\_conversion}
 as such
 \begin{verbatim}
 call attenuation_conversion(myrank, Qmu, T_c_source, tau_s, tau_e)
 \end{verbatim}
-with the input being myrank and Qmu and the output as T\_c\_source, tau\_s 
+with the input being myrank and Qmu and the output as T\_c\_source, tau\_s
 and tau\_e.
 
-\tojeroen{I think variables myrank and the RICB, R* need to be removed 
+\tojeroen{I think variables myrank and the RICB, R* need to be removed
 from the function calls}
 
 \section*{Notes \& Acknowledgments}
@@ -1590,7 +1590,7 @@ and that the Harvard CMT convention is
 
 All physical parameters used by the code are non-dimensionalized according
 to the conventions summarized in table~\ref{table:conventions}.
-\begin{table}[h]
+\begin{table}[ht]
 \begin{tabular}{|c|c|} \hline
 quantity (units) & non-dimensionalized with \\ \hline
 distance (m) & \texttt{R\_EARTH} \\
