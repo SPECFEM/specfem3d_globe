@@ -20,7 +20,7 @@
   subroutine read_arrays_solver(iregion_code,myrank, &
               rho_vp,rho_vs,xstore,ystore,zstore, &
               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
-              kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
+              rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
               nspec_iso,nspec_tiso,nspec_ani, &
               c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
               c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
@@ -52,6 +52,7 @@
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian
 
 ! material properties
+  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec_iso)
   real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec_iso)
   real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec_iso)
 
@@ -171,12 +172,17 @@
 
 ! model arrays
 
-  if(READ_KAPPA_MU) then
+!   rho
+    open(unit=IIN,file=prname(1:len_trim(prname))//'rho.bin',status='old',form='unformatted')
+    read(IIN) rhostore
+    close(IIN)
 
 !   kappav
     open(unit=IIN,file=prname(1:len_trim(prname))//'kappav.bin',status='old',form='unformatted')
     read(IIN) kappavstore
     close(IIN)
+
+  if(READ_KAPPA_MU) then
 
 !   muv
     open(unit=IIN,file=prname(1:len_trim(prname))//'muv.bin',status='old',form='unformatted')

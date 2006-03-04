@@ -18,6 +18,7 @@
   subroutine compute_forces_outer_core(time,deltat,two_omega_earth, &
           A_array_rotation,B_array_rotation, &
           minus_rho_g_over_kappa_fluid,displfluid,accelfluid, &
+          div_displfluid, &
           xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
           hprime_xx,hprime_yy,hprime_zz, &
@@ -39,6 +40,9 @@
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: displfluid,accelfluid
 
+! divergent of displacement
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: div_displfluid
+ 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: ibool
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: xix,xiy,xiz, &
@@ -85,12 +89,15 @@
 
 ! set acceleration to zero
   accelfluid(:) = 0._CUSTOM_REAL
+  if (SIMULATION_TYPE == 3) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
 
   do ispec = 1,nspec_outer_core
 
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
+
+          iglob = ibool(i,j,k,ispec)
 
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
@@ -147,6 +154,7 @@
 
       dpotentialdx_with_rot = dpotentialdxl + ux_rotation
       dpotentialdy_with_rot = dpotentialdyl + uy_rotation
+
     else
 
       dpotentialdx_with_rot = dpotentialdxl
@@ -154,13 +162,14 @@
 
     endif  ! end of section with rotation
 
+! compute divergent of displacment
+
 ! precompute and store gravity term
           if(GRAVITY_VAL) then
 
 ! use mesh coordinates to get theta and phi
 ! x y z contain r theta phi
 
-            iglob = ibool(i,j,k,ispec)
             radius = dble(xstore(iglob))
             theta = dble(ystore(iglob))
             phi = dble(zstore(iglob))
@@ -191,6 +200,13 @@
             else
               gravity_term(i,j,k) = minus_rho_g_over_kappa_fluid(int_radius) * &
                  jacobianl * wgll_cube(i,j,k) * (dpotentialdx_with_rot * gxl + &
+                 dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
+            endif
+
+! divergent of displacement field with gravity on
+            if (SIMULATION_TYPE == 3) then
+              div_displfluid(i,j,k,ispec) =  &
+                 minus_rho_g_over_kappa_fluid(int_radius) * (dpotentialdx_with_rot * gxl + &
                  dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
             endif
 
@@ -248,3 +264,51 @@
 
   end subroutine compute_forces_outer_core
 
+!------------------------------------------------------------------------------------------------
+
+subroutine compute_field_gradient(field,nrank,i,j,k,grad_field, &
+   hprime_xx,hprime_yy,hprime_zz, xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl, &
+   gammayl,gammazl,ibool,nglob_field)
+
+  implicit none
+  include 'constants.h'
+
+  integer nrank, i,j,k, nglob_field
+  real(kind=CUSTOM_REAL), dimension(nrank,nglob_field) ::field
+  real(kind=CUSTOM_REAL), dimension(NDIM,nrank):: grad_field
+
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
+  integer,dimension(NGLLX,NGLLY,NGLLZ) :: ibool
+
+  integer irank,l
+  real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
+  
+  do irank = 1, nrank
+            
+    tempx1l = 0._CUSTOM_REAL
+    tempx2l = 0._CUSTOM_REAL
+    tempx3l = 0._CUSTOM_REAL
+
+    do l=1,NGLLX
+      tempx1l = tempx1l + field(irank,ibool(l,j,k)) * hprime_xx(l,i)
+    enddo
+
+    do l=1,NGLLY
+      tempx2l = tempx2l + field(irank,ibool(i,l,k)) * hprime_yy(l,j)
+    enddo
+
+    do l=1,NGLLZ
+      tempx3l = tempx3l + field(irank,ibool(i,j,l)) * hprime_zz(l,k)
+    enddo
+
+    grad_field(1,irank) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+    grad_field(2,irank) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+    grad_field(3,irank) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+  enddo
+
+    
+  end subroutine compute_field_gradient

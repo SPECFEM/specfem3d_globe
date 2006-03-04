@@ -224,7 +224,7 @@
   endif
   close(34)
 
-! save to compare to other side
+! save to compare to other side
   npoin2D_xi_save = npoin2D_xi
 
 ! read iboolleft_xi of other slice
@@ -314,7 +314,7 @@
   endif
   close(34)
 
-! save to compare to other side
+! save to compare to other side
   npoin2D_eta_save = npoin2D_eta
 
 ! read iboolleft_eta of other slice

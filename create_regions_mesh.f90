@@ -892,7 +892,7 @@
             prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore,jacobianstore, &
-            xstore,ystore,zstore, &
+            xstore,ystore,zstore, rhostore, &
             kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
             nspec_ani, &
             c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -910,7 +910,8 @@
             TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
             tau_s,tau_e_store,Qmu_store,T_c_source, &
             ATTENUATION,ATTENUATION_3D, &
-            size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),NCHUNKS)
+            size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS)
 
   do ispec=1,nspec
     do k=1,NGLLZ

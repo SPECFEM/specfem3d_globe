@@ -19,10 +19,8 @@
 !---- locate_receivers finds the correct position of the receivers
 !----
 
-! to locate the receivers we loop on elements located at the surface only
-
   subroutine locate_receivers(myrank,DT,NSTEP,nspec,nglob,idoubling,ibool, &
-                 xstore,ystore,zstore,xigll,yigll, &
+                 xstore,ystore,zstore,xigll,yigll,zigll,rec_filename, &
                  nrec,islice_selected_rec,ispec_selected_rec, &
                  xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,nu, &
                  yr,jda,ho,mi,sec,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
@@ -58,12 +56,14 @@
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
 
 ! Gauss-Lobatto-Legendre points of integration
-  double precision xigll(NGLLX),yigll(NGLLY)
+  double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
+
+  character(len=*)  rec_filename
 
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
 
-  integer, allocatable, dimension(:) :: ix_initial_guess,iy_initial_guess
+  integer, allocatable, dimension(:) :: ix_initial_guess,iy_initial_guess,iz_initial_guess
 
   integer iorientation
   integer iprocloop
@@ -155,7 +155,7 @@
   endif
 
 ! get number of stations from receiver file
-  call get_value_string(STATIONS, 'solver.STATIONS', 'DATA/STATIONS')
+  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
   open(unit=1,file=STATIONS,status='old')
   read(1,*) nrec_dummy
 
@@ -170,6 +170,7 @@
 
   allocate(ix_initial_guess(nrec))
   allocate(iy_initial_guess(nrec))
+  allocate(iz_initial_guess(nrec))
   allocate(x_target(nrec))
   allocate(y_target(nrec))
   allocate(z_target(nrec))
@@ -278,17 +279,17 @@
       x_target(irec) = r0*dsin(theta)*dcos(phi)
       y_target(irec) = r0*dsin(theta)*dsin(phi)
       z_target(irec) = r0*dcos(theta)
+     
+      if (myrank == 0) write(IOVTK,*) x_target(irec), y_target(irec), z_target(irec)
 
 ! examine top of the elements only (receivers always at the surface)
-      k = NGLLZ
+!      k = NGLLZ
 
       do ispec=1,nspec
 
-! examine elements located in the crust only (receivers always at the surface)
-      if(idoubling(ispec) == IFLAG_CRUST) then
-
 ! loop only on points inside the element
 ! exclude edges to ensure this point is not shared with other elements
+        do k=2,NGLLZ-1
         do j=2,NGLLY-1
           do i=2,NGLLX-1
 
@@ -303,12 +304,12 @@
               ispec_selected_rec(irec) = ispec
               ix_initial_guess(irec) = i
               iy_initial_guess(irec) = j
+              iz_initial_guess(irec) = k
             endif
 
           enddo
         enddo
-
-      endif
+        enddo
 
 ! end of loop on all the spectral elements in current slice
       enddo
@@ -359,6 +360,7 @@
 ! use initial guess in xi and eta
         xi = xigll(ix_initial_guess(irec))
         eta = yigll(iy_initial_guess(irec))
+        gamma = zigll(iz_initial_guess(irec))
 
 ! define coordinates of the control points of the element
 
@@ -580,6 +582,7 @@
   deallocate(epidist)
   deallocate(ix_initial_guess)
   deallocate(iy_initial_guess)
+  deallocate(iz_initial_guess)
   deallocate(x_target)
   deallocate(y_target)
   deallocate(z_target)

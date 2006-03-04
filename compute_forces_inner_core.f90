@@ -22,11 +22,11 @@
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore,muvstore,ibool,idoubling, &
-          c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev, &
+          c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev, epsilon_trace_over_3,&
           one_minus_sum_beta,&
           alphaval,betaval,gammaval, &
           factor_common, &
-          vx, vy, vz, vnspec)
+          vx, vy, vz, vnspec,MOVIE_VOLUME)
 
   implicit none
 
@@ -38,6 +38,7 @@
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ,accel
+  logical MOVIE_VOLUME
 
 ! for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -55,9 +56,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL) epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilon_trace_over_3
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPEC_INNER_CORE) :: idoubling
@@ -205,6 +206,18 @@
           duxdyl_plus_duydxl = duxdyl + duydxl
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
+          
+  if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+
+    epsilon_trace_over_3(i,j,k,ispec) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+    epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec)
+    epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec)
+    epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+    epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+    epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+
+  endif
+
 
 ! compute deviatoric strain
   if(ATTENUATION_VAL) then
@@ -213,12 +226,6 @@
     else
       minus_sum_beta =  one_minus_sum_beta(1,1,1,IREGION_ATTENUATION_INNER_CORE) - 1.
     endif
-    epsilon_trace_over_3 = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-    epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3
-    epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3
-    epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-    epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-    epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
   endif
 
        if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -531,13 +538,15 @@
           enddo
        enddo
 
+     endif
+
+     if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
 ! save deviatoric strain for Runge-Kutta scheme
-    epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+       epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+     endif
 
-  endif
-
-  endif   ! end test to exclude fictitious elements in central cube
-
+   endif   ! end test to exclude fictitious elements in central cube
+   
   enddo ! spectral element loop
 
   end subroutine compute_forces_inner_core
