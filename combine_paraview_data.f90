@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  B a s i n  V e r s i o n  1 . 2
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!         (c) California Institute of Technology July 2004
+!        (c) California Institute of Technology July 2004
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -14,7 +14,6 @@
 !      Do not redistribute this program without written permission.
 !
 !=====================================================================
-
 
 program combine_paraview_data
 
@@ -30,7 +29,7 @@ program combine_paraview_data
   integer iproc, proc1, proc2, num_node, node_list(300), nspec(300), nglob(300), nglob1(300),npoint_all, nelement_all
   integer np, ne, npp, np1, nee, npoint(300), nelement(300), njunk, njunk2, n1, n2, n3, n4, n5, n6, n7, n8
   integer ibool(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE)
-  
+
   integer numpoin, iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8, iglob
   logical mask_ibool(NGLOBMAX_CRUST_MANTLE)
   real(kind=CUSTOM_REAL) data(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE)
@@ -106,7 +105,7 @@ program combine_paraview_data
 
   do ir = irs, ire
     print *, '----------- Region ', ir, '----------------'
-    
+
   ! open paraview output mesh file
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.mesh'
     call open_file(trim(mesh_file)//char(0))
@@ -120,7 +119,7 @@ program combine_paraview_data
 
     print *, 'Reading slice ', iproc
     write(prname,'(a,i4.4,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
-    
+
     dimension_file = trim(prname) //'array_dims.txt'
     open(unit = 27,file = trim(dimension_file),status='old', iostat = ios)
 !    if (ios /= 0) stop 'Error opening '// trim(dimension_file)
@@ -134,7 +133,7 @@ program combine_paraview_data
       nglob1(it) = nglob(it)
     endif
     close(27)
-  
+
     if (.not. HIGH_RESOLUTION_MESH) then
       local_point_file = trim(prname) //'AVS_DXpoints' // '.txt'
       open(unit = 27,file = trim(local_point_file),status='old', iostat = ios)
@@ -153,7 +152,7 @@ program combine_paraview_data
   print *, 'Region ', ir, ' total number of points = ', npoint_all
   print *, 'nspec(it) = ', nspec(1:num_node)
   print *, 'nglob(it) = ', nglob1(1:num_node)
-  
+
   np = 0
 
   ! write point and scalar information
@@ -190,7 +189,7 @@ program combine_paraview_data
     read(28) ibool(:,:,:,1:nspec(it))
     close(28)
     print *, trim(local_ibool_file)
-    
+
     mask_ibool(:) = .false.
     numpoin = 0
 
@@ -198,11 +197,11 @@ program combine_paraview_data
 
       local_point_file = trim(prname) // 'AVS_DXpoints.txt'
       open(unit = 25, file = trim(local_point_file), status = 'old', iostat = ios)
-!      if (ios /= 0) stop 'Error opening '// trim(local_point_file) 
+!      if (ios /= 0) stop 'Error opening '// trim(local_point_file)
       if (ios /= 0) stop 'Error opening file'
 
       read(25,*) njunk
-    
+
       if (it == 1) then
         call write_integer(npoint_all)
       endif
@@ -216,7 +215,7 @@ program combine_paraview_data
         iglob6=ibool(NGLLX,1,NGLLZ,ispec)
         iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
         iglob8=ibool(1,NGLLY,NGLLZ,ispec)
-        
+
         if(.not. mask_ibool(iglob1)) then
           numpoin = numpoin + 1
           read(25,*) njunk, x, y, z
@@ -288,7 +287,7 @@ program combine_paraview_data
           call write_real(z)
           call write_real(dat(1,NGLLY,NGLLZ,ispec))
           mask_ibool(iglob8) = .true.
-        endif 
+        endif
       enddo ! ispec
       close(25)
 
@@ -297,7 +296,7 @@ program combine_paraview_data
       if (it == 1) then
         call write_integer(npoint_all)
       endif
-      
+
       local_file = trim(prname)//'x.bin'
       open(unit = 27,file = trim(prname)//'x.bin',status='old', iostat = ios,form ='unformatted')
 !      if (ios /= 0) stop 'Error opening '// trim(local_file)
@@ -347,7 +346,7 @@ program combine_paraview_data
         enddo ! k
       enddo !ispec
     endif
-    
+
     if (numpoin /= npoint(it)) stop 'different number of points'
     np = np + npoint(it)
 
@@ -365,7 +364,7 @@ program combine_paraview_data
 
     print *, 'Reading slice ', iproc
     write(prname,'(a,i4.4,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
-   
+
     if (.not. HIGH_RESOLUTION_MESH) then
       local_point_file = trim(prname) //'AVS_DXelements' // '.txt'
       open(unit = 27,file = trim(local_point_file),status='old', iostat = ios)
@@ -471,7 +470,7 @@ program combine_paraview_data
               iglob8 = ibool(i,j+1,k+1,ispec)
               n1 = num_ibool(iglob1)+np-1
               n2 = num_ibool(iglob2)+np-1
-              n3 = num_ibool(iglob3)+np-1 
+              n3 = num_ibool(iglob3)+np-1
               n4 = num_ibool(iglob4)+np-1
               n5 = num_ibool(iglob5)+np-1
               n6 = num_ibool(iglob6)+np-1
@@ -489,7 +488,7 @@ program combine_paraview_data
           enddo
         enddo
       enddo
- 
+
     endif
     ne = ne + nelement(it)
 
