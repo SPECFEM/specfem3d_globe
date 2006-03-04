@@ -19,7 +19,7 @@
             prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore,jacobianstore, &
-            xstore,ystore,zstore, &
+            xstore,ystore,zstore, rhostore, &
             kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
             nspec_ani, &
             c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -36,13 +36,16 @@
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
             TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
             tau_s,tau_e_store,Qmu_store,T_c_source, &
-            ATTENUATION,ATTENUATION_3D,vx,vy,vz,vnspec,NCHUNKS)
+            ATTENUATION,ATTENUATION_3D,vx,vy,vz,vnspec, &
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS)
 
   implicit none
 
   include "constants.h"
 
   logical ATTENUATION,ATTENUATION_3D
+
+  integer NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk
 
   integer nspec,nglob,nspec_stacey,NCHUNKS
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
@@ -61,7 +64,7 @@
 
 ! for anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
+    rhostore, kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
   integer nspec_ani
 
@@ -112,7 +115,7 @@
 ! MPI cut-planes parameters along xi and along eta
   logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
 
-  integer i,j,k,ispec,iglob
+  integer i,j,k,ispec,iglob,nspec1, nglob1
 
 ! attenuation
   integer vx, vy, vz, vnspec
@@ -125,6 +128,21 @@
   character(len=150) prname
 
   integer iregion_code
+
+! nspec and nglob
+  open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt',status='unknown')
+  if (NCHUNKS == 6 .and. ichunk /= CHUNK_AB .and. iregion_code == IREGION_INNER_CORE) then
+     nspec1 = nspec - (NEX_PER_PROC_XI/8) * (NEX_PER_PROC_ETA/8) * (NEX_XI/8)
+     nglob1 = nglob -   ((NEX_PER_PROC_XI/8)*(NGLLX-1)+1) * ((NEX_PER_PROC_ETA/8)*(NGLLY-1)+1) &
+       * (NEX_XI/8)*(NGLLZ-1) 
+  else
+     nspec1 = nspec
+     nglob1 = nglob
+  endif
+  write(27,*) nspec1
+  write(27,*) nglob
+  write(27,*) nglob1
+  close(27)
 
 ! xix
   open(unit=27,file=prname(1:len_trim(prname))//'xix.bin',status='unknown',form='unformatted')
@@ -174,6 +192,11 @@
 ! jacobian
   open(unit=27,file=prname(1:len_trim(prname))//'jacobian.bin',status='unknown',form='unformatted')
   write(27) jacobianstore
+  close(27)
+
+! rho
+  open(unit=27,file=prname(1:len_trim(prname))//'rho.bin',status='unknown',form='unformatted')
+  write(27) rhostore
   close(27)
 
 ! kappav
