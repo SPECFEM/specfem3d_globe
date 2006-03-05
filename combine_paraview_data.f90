@@ -19,7 +19,8 @@
 program combine_paraview_data
 
 ! combines the database files on several slices.
-! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
+! the local database file needs to have been collected onto the frontend (copy_global_database.pl)
+! Qinya Liu, June 2005
 
   implicit none
 
@@ -27,8 +28,8 @@ program combine_paraview_data
   include 'OUTPUT_FILES/values_from_mesher.h'
 
   integer i,j,k,ispec, ios, it
-  integer iproc, proc1, proc2, num_node, node_list(300), nspec(300), nglob(300), nglob1(300),npoint_all, nelement_all
-  integer np, ne, npp, np1, nee, npoint(300), nelement(300), njunk, njunk2, n1, n2, n3, n4, n5, n6, n7, n8
+  integer iproc, num_node, node_list(300), nspec(300), nglob(300), nglob1(300),npoint_all, nelement_all
+  integer np, ne, npoint(300), nelement(300), njunk, njunk2, n1, n2, n3, n4, n5, n6, n7, n8
   integer ibool(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE)
   
   integer numpoin, iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8, iglob
@@ -175,11 +176,11 @@ program combine_paraview_data
     close(27)
     print *, trim(local_data_file)
 
-    if (CUSTOM_REAL == SIZE_DOUBLE) then
-      dat = sngl(data)
-    else
+!    if (CUSTOM_REAL == SIZE_DOUBLE) then
+!      dat = sngl(data)
+!    else
       dat = data
-    endif
+!    endif
 
   ! ibool file
     local_ibool_file = trim(prname) // 'ibool' // '.bin'
@@ -327,15 +328,15 @@ program combine_paraview_data
               iglob = ibool(i,j,k,ispec)
               if(.not. mask_ibool(iglob)) then
                 numpoin = numpoin + 1
-                if (CUSTOM_REAL == SIZE_DOUBLE) then
-                  x = sngl(xstore(iglob))
-                  y = sngl(ystore(iglob))
-                  z = sngl(zstore(iglob))
-                else
+!                if (CUSTOM_REAL == SIZE_DOUBLE) then
+!                  x = sngl(xstore(iglob))
+!                  y = sngl(ystore(iglob))
+!                  z = sngl(zstore(iglob))
+!                else
                   x = xstore(iglob)
                   y = ystore(iglob)
                   z = zstore(iglob)
-                endif
+!                endif
                 call write_real(x)
                 call write_real(y)
                 call write_real(z)
