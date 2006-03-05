@@ -424,7 +424,7 @@
 
 ! Newmark time scheme parameters and non-dimensionalization
   real(kind=CUSTOM_REAL) time,deltat,deltatover2,deltatsqover2
-  double precision scale_t,scale_displ,scale_veloc
+  double precision scale_t,scale_displ,scale_veloc,scale_kl
 
 ! ADJOINT
   real(kind=CUSTOM_REAL) b_additional_term,b_force_normal_comp
@@ -4323,17 +4323,17 @@
           do i = 1, NGLLX
             iglob = ibool_crust_mantle(i,j,k,ispec)
             rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
-               + DT * dot_product(accel_crust_mantle(:,iglob), b_displ_crust_mantle(:,iglob)) 
+               + deltat * dot_product(accel_crust_mantle(:,iglob), b_displ_crust_mantle(:,iglob)) 
 
             epsilondev_loc(:) = epsilondev_crust_mantle(:,i,j,k,ispec)
             b_epsilondev_loc(:) = b_epsilondev_crust_mantle(:,i,j,k,ispec)
             beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
-               + DT * (dot_product(epsilondev_loc(1:2) ,b_epsilondev_loc(1:2)) &
+               + deltat * (dot_product(epsilondev_loc(1:2) ,b_epsilondev_loc(1:2)) &
                + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
                 + 2 * dot_product(epsilondev_loc(3:5), b_epsilondev_loc(3:5)) )
                
             alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
-               + DT * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
+               + deltat * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
           enddo
         enddo
       enddo
@@ -4365,14 +4365,14 @@
                gammayl,gammazl, ibool_outer_core(:,:,:,ispec),nglob_outer_core)
             
             rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-               + DT * dot_product(vector_displ_outer_core,b_vector_accel_outer_core)
+               + deltat * dot_product(vector_displ_outer_core,b_vector_accel_outer_core)
 
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
             div_displ_outer_core(i,j,k,ispec) = div_displ_outer_core(i,j,k,ispec) + kappal * accel_outer_core(iglob)
             b_div_displ_outer_core(i,j,k,ispec) = b_div_displ_outer_core(i,j,k,ispec) + kappal * b_accel_outer_core(iglob)
 
             alpha_kl_outer_core(i,j,k,ispec) = alpha_kl_outer_core(i,j,k,ispec) &
-               + DT * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core(i,j,k,ispec)
+               + deltat * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core(i,j,k,ispec)
 
           enddo
         enddo
@@ -4387,16 +4387,16 @@
             iglob = ibool_inner_core(i,j,k,ispec)
 
             rho_kl_inner_core(i,j,k,ispec) =  rho_kl_inner_core(i,j,k,ispec) &
-               + DT * dot_product(accel_inner_core(:,iglob), b_displ_inner_core(:,iglob)) 
+               + deltat * dot_product(accel_inner_core(:,iglob), b_displ_inner_core(:,iglob)) 
             epsilondev_loc(:) = epsilondev_inner_core(:,i,j,k,ispec)
             b_epsilondev_loc(:) = b_epsilondev_inner_core(:,i,j,k,ispec)
             beta_kl_inner_core(i,j,k,ispec) =  beta_kl_inner_core(i,j,k,ispec) &
-               + DT * (dot_product(epsilondev_loc(1:2), b_epsilondev_loc(1:2)) &
+               + deltat * (dot_product(epsilondev_loc(1:2), b_epsilondev_loc(1:2)) &
                   + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
                   + 2 * dot_product(epsilondev_loc(3:5), b_epsilondev_loc(3:5))  )
                
             alpha_kl_inner_core(i,j,k,ispec) = alpha_kl_inner_core(i,j,k,ispec) &
-               + DT * (9 * eps_trace_over_3_inner_core(i,j,k,ispec) * b_eps_trace_over_3_inner_core(i,j,k,ispec))
+               + deltat * (9 * eps_trace_over_3_inner_core(i,j,k,ispec) * b_eps_trace_over_3_inner_core(i,j,k,ispec))
           enddo
         enddo
       enddo
@@ -4560,6 +4560,7 @@
 
 ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
+    scale_kl = scale_t/scale_disp * 1.d9
 ! crust_mantle
     do ispec = 1, nspec_crust_mantle
       do k = 1, NGLLZ
@@ -4571,9 +4572,9 @@
             rho_kl = - rhol * rho_kl_crust_mantle(i,j,k,ispec)
             alpha_kl = - kappal * alpha_kl_crust_mantle(i,j,k,ispec)
             beta_kl =  - 2 * mul * beta_kl_crust_mantle(i,j,k,ispec)
-            rho_kl_crust_mantle(i,j,k,ispec) = rho_kl + alpha_kl + beta_kl
-            beta_kl_crust_mantle(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal)
-            alpha_kl_crust_mantle(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl
+            rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
+            beta_kl_crust_mantle(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+            alpha_kl_crust_mantle(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
           enddo
         enddo
       enddo
@@ -4599,8 +4600,8 @@
             kappal = kappavstore_outer_core(i,j,k,ispec)
             rho_kl = - rhol * rho_kl_outer_core(i,j,k,ispec)
             alpha_kl = - kappal * alpha_kl_outer_core(i,j,k,ispec)
-            rho_kl_outer_core(i,j,k,ispec) = rho_kl + alpha_kl
-            alpha_kl_outer_core(i,j,k,ispec) = 2 * alpha_kl
+            rho_kl_outer_core(i,j,k,ispec) = (rho_kl + alpha_kl) * scale_kl
+            alpha_kl_outer_core(i,j,k,ispec) = 2 * alpha_kl * scale_kl
           enddo
         enddo
       enddo
@@ -4625,9 +4626,9 @@
             rho_kl = -rhol * rho_kl_inner_core(i,j,k,ispec)
             alpha_kl = -kappal * alpha_kl_inner_core(i,j,k,ispec)
             beta_kl =  - 2 * mul * beta_kl_inner_core(i,j,k,ispec)
-            rho_kl_inner_core(i,j,k,ispec) = rho_kl + alpha_kl + beta_kl
-            beta_kl_inner_core(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal)
-            alpha_kl_inner_core(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl
+            rho_kl_inner_core(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
+            beta_kl_inner_core(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+            alpha_kl_inner_core(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
           enddo
         enddo
       enddo
