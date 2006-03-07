@@ -4560,7 +4560,7 @@
 
 ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
-    scale_kl = scale_t/scale_disp * 1.d9
+    scale_kl = scale_t/scale_displ * 1.d9
 ! crust_mantle
     do ispec = 1, nspec_crust_mantle
       do k = 1, NGLLZ
