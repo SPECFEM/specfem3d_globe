@@ -78,8 +78,10 @@
 
   call open_parameter_file
 
-  call read_value_integer(SIMULATION_TYPE, 'mesher.SIMULATION_TYPE')
-  call read_value_logical(SAVE_FORWARD, 'mesher.SAVE_FORWARD')
+  call read_value_integer(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
+  if(err_occurred() /= 0) return
+  call read_value_logical(SAVE_FORWARD, 'solver.SAVE_FORWARD')
+  if(err_occurred() /= 0) return
 
   call read_value_integer(NCHUNKS, 'mesher.NCHUNKS')
   if(err_occurred() /= 0) return
@@ -466,11 +468,6 @@
   if(err_occurred() /= 0) return
   call read_value_logical(ATTENUATION, 'model.ATTENUATION')
   if(err_occurred() /= 0) return
-
-!  call read_value_integer(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
-!  if(err_occurred() /= 0) return
-!  call read_value_logical(SAVE_FORWARD, 'solver.SAVE_FORWARD')
-!  if(err_occurred() /= 0) return
 
   call read_value_logical(ABSORBING_CONDITIONS, 'solver.ABSORBING_CONDITIONS')
   if(err_occurred() /= 0) return

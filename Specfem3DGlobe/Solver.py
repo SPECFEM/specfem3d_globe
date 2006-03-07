@@ -9,7 +9,7 @@ class Solver(Component):
     
     class Inventory(Component.Inventory):
 
-        from pyre.inventory import bool, dimensional, float, inputFile, int
+        from pyre.inventory import bool, choice, dimensional, float, inputFile, int, str
     
         cmtSolution                   = inputFile("cmt-solution", default="DATA/CMTSOLUTION")
         
@@ -28,6 +28,8 @@ class Solver(Component):
         NUMBER_OF_RUNS                = int("number-of-runs")
         NUMBER_OF_THIS_RUN            = int("number-of-this-run")
 
+        SAVE_FORWARD                  = bool("save-forward")
+        simulation_type               = str("simulation-type", validator=choice(['forward', 'adjoint', 'both']), default='forward')
         stations                      = inputFile("stations", default="DATA/STATIONS")
 
     def __init__(self, name):
@@ -40,6 +42,9 @@ class Solver(Component):
 
         # convert to minutes
         self.RECORD_LENGTH_IN_MINUTES = self.inventory.record_length / minute
+
+        st = { 'forward':1, 'adjoint':2, 'both':3 }
+        self.SIMULATION_TYPE = st[self.inventory.simulation_type]
 
         # Access our InputFile inventory items to make sure they're
         # readable.  (They will be reopened by the Fortran code.)
