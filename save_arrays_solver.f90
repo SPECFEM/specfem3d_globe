@@ -15,7 +15,7 @@
 !
 !=====================================================================
 
-  subroutine save_arrays(rho_vp,rho_vs,nspec_stacey, &
+  subroutine save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
             prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore,jacobianstore, &
@@ -552,5 +552,5 @@
      close(27)
   endif
 
-  end subroutine save_arrays
+  end subroutine save_arrays_solver
 

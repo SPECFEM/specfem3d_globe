@@ -888,7 +888,7 @@
   endif
 
 ! save the binary files
-    call save_arrays(rho_vp,rho_vs,nspec_stacey, &
+    call save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
             prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore,jacobianstore, &
