@@ -62,7 +62,7 @@
 !=======================================================================!
 !
 ! If you use this code for your own research, please send an email
-! to Jeroen Tromp <jtromp@caltech.edu> for information, and cite:
+! to Jeroen Tromp <jtromp AT caltech.edu> for information, and cite:
 !
 ! @ARTICLE{KoRiTr02,
 ! author={D. Komatitsch and J. Ritsema and J. Tromp},
