@@ -147,6 +147,8 @@
   real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
   real(kind=CUSTOM_REAL) tempz1l,tempz2l,tempz3l
 
+  logical SAVE_EPS
+
 ! for gravity
   integer int_radius
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
@@ -163,6 +165,12 @@
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
+
+  if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+    SAVE_EPS = .true.
+  else
+    SAVE_EPS = .false.
+  endif
 
 ! set acceleration to zero
   accel(:,:) = 0._CUSTOM_REAL
@@ -242,7 +250,7 @@
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
 
- if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+ if (SAVE_EPS) then
    
 ! compute deviatoric strain
     epsilon_trace_over_3(i,j,k,ispec) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
@@ -847,7 +855,7 @@
   endif
 
 ! save deviatoric strain for Runge-Kutta scheme
-  if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+  if (SAVE_EPS) then
     epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
   endif
   
