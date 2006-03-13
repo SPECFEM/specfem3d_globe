@@ -469,6 +469,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM):: vector_displ_outer_core,b_vector_accel_outer_core
 
+  double precision scale_kl
 ! ADJOINT
 
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
@@ -672,10 +673,6 @@
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
-! check SIMULATION_TYPE
-  if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
-          call exit_mpi(myrank, 'SIMULATION_TYPE could be only 1, 2, or 3')
-
 ! read the parameter file
   call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -699,6 +696,8 @@
   if(err_occurred() /= 0) return
 
 ! check simulation pararmeters
+  if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
+          call exit_mpi(myrank, 'SIMULATION_TYPE could be only 1, 2, or 3')
   if (SIMULATION_TYPE /= 1 .and. NSOURCES >= 1000)  &
     call exit_mpi(myrank, 'for adjoint simulations, NSOURCES < 1000')
   if (SIMULATION_TYPE == 3 .and. ATTENUATION) &
@@ -1743,7 +1742,7 @@
       if(myrank == islice_selected_source(isource)) nrec_local = nrec_local + 1
     enddo
   endif
-  
+
   if (nrec_local > 0) then
 
 ! allocate Lagrange interpolators for receivers
@@ -1771,21 +1770,27 @@
   endif
 
 ! define and store Lagrange interpolators at all the receivers
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
   do irec_local = 1,nrec_local
     irec = number_receiver_global(irec_local)
-    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
-      call lagrange_any(eta_receiver(irec),NGLLY,yigll,hetar,hpetar)
-      call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-    else
-      call lagrange_any(xi_source(irec),NGLLX,xigll,hxir,hpxir)
-      call lagrange_any(eta_source(irec),NGLLY,yigll,hetar,hpetar)
-      call lagrange_any(gamma_source(irec),NGLLZ,zigll,hgammar,hpgammar)
-    endif
+    call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+    call lagrange_any(eta_receiver(irec),NGLLY,yigll,hetar,hpetar)
+    call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
     hxir_store(irec_local,:) = hxir(:)
     hetar_store(irec_local,:) = hetar(:)
     hgammar_store(irec_local,:) = hgammar(:)
   enddo
+  else 
+  do irec_local = 1,nrec_local
+    irec = number_receiver_global(irec_local)
+    call lagrange_any(xi_source(irec),NGLLX,xigll,hxir,hpxir)
+    call lagrange_any(eta_source(irec),NGLLY,yigll,hetar,hpetar)
+    call lagrange_any(gamma_source(irec),NGLLZ,zigll,hgammar,hpgammar)
+    hxir_store(irec_local,:) = hxir(:)
+    hetar_store(irec_local,:) = hetar(:)
+    hgammar_store(irec_local,:) = hgammar(:)
+  enddo
+  endif
   endif ! nrec_local
 
 ! check that the sum of the number of receivers in each slice is nrec
@@ -2963,32 +2968,38 @@
   do i=1,nglob_crust_mantle
     displ_crust_mantle(:,i) = displ_crust_mantle(:,i) + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-    if (SIMULATION_TYPE == 3) then
-      b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) + b_deltat*b_veloc_crust_mantle(:,i) + &
-         b_deltatsqover2*b_accel_crust_mantle(:,i)
-      b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-    endif
   enddo
+  if (SIMULATION_TYPE == 3) then
+  do i=1,nglob_crust_mantle 
+    b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) + b_deltat*b_veloc_crust_mantle(:,i) + &
+         b_deltatsqover2*b_accel_crust_mantle(:,i)
+    b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
+  enddo
+  endif
 
 ! outer core
   do i=1,nglob_outer_core
     displ_outer_core(i) = displ_outer_core(i) + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-    if (SIMULATION_TYPE == 3) then
-      b_displ_outer_core(i) = b_displ_outer_core(i) + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
-      b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
-    endif
   enddo
+  if (SIMULATION_TYPE == 3) then
+  do i=1,nglob_outer_core
+    b_displ_outer_core(i) = b_displ_outer_core(i) + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
+    b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
+  enddo
+  endif
 
 ! inner core
   do i=1,NGLOB_INNER_CORE
     displ_inner_core(:,i) = displ_inner_core(:,i) + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
     veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-    if (SIMULATION_TYPE == 3) then
-      b_displ_inner_core(:,i) = b_displ_inner_core(:,i) + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
-      b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
-    endif
   enddo
+  if (SIMULATION_TYPE == 3) then
+  do i=1,NGLOB_INNER_CORE
+    b_displ_inner_core(:,i) = b_displ_inner_core(:,i) + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
+    b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
+  enddo
+  endif
 
 ! compute the maximum of the norm of the displacement
 ! in all the slices using an MPI reduction
@@ -3473,11 +3484,13 @@
   do i=1,nglob_outer_core
     accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-    if (SIMULATION_TYPE == 3) then
+  enddo
+  if (SIMULATION_TYPE == 3) then
+    do i=1,nglob_outer_core
       b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
       b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
-    endif
-  enddo
+    enddo
+  endif
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -4126,14 +4139,16 @@
     accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
                - two_omega_earth*veloc_crust_mantle(1,i)
     accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-    if (SIMULATION_TYPE == 3) then
+  enddo
+  if (SIMULATION_TYPE == 3) then
+    do i=1,nglob_crust_mantle
       b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
          + b_two_omega_earth*b_veloc_crust_mantle(2,i)
       b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
          - b_two_omega_earth*b_veloc_crust_mantle(1,i)
       b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-    endif
-  enddo
+    enddo
+  endif
 
   if(OCEANS) then
 
@@ -4199,10 +4214,12 @@
 
   do i=1,nglob_crust_mantle
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-    if (SIMULATION_TYPE == 3) then
-      b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-    endif
   enddo
+  if (SIMULATION_TYPE == 3) then
+    do i=1,nglob_crust_mantle
+      b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
+    enddo
+  endif
 
 
   do i=1,NGLOB_INNER_CORE
@@ -4213,16 +4230,18 @@
     accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
 
     veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-    if (SIMULATION_TYPE == 3) then
+  enddo
+  if (SIMULATION_TYPE == 3) then
+    do i=1,NGLOB_INNER_CORE
       b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
          + b_two_omega_earth*b_veloc_inner_core(2,i)
       b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
          - b_two_omega_earth*b_veloc_inner_core(1,i)
       b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
-
+      
       b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
-    endif
-  enddo
+    enddo
+  endif
 
 ! write the seismograms with time shift
 
@@ -4367,17 +4386,17 @@
           do i = 1, NGLLX
             iglob = ibool_crust_mantle(i,j,k,ispec)
             rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
-               + DT * dot_product(accel_crust_mantle(:,iglob), b_displ_crust_mantle(:,iglob)) 
+               + deltat * dot_product(accel_crust_mantle(:,iglob), b_displ_crust_mantle(:,iglob)) 
 
             epsilondev_loc(:) = epsilondev_crust_mantle(:,i,j,k,ispec)
             b_epsilondev_loc(:) = b_epsilondev_crust_mantle(:,i,j,k,ispec)
             beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
-               + DT * (dot_product(epsilondev_loc(1:2) ,b_epsilondev_loc(1:2)) &
+               + deltat * (dot_product(epsilondev_loc(1:2) ,b_epsilondev_loc(1:2)) &
                + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
                 + 2 * dot_product(epsilondev_loc(3:5), b_epsilondev_loc(3:5)) )
                
             alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
-               + DT * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
+               + deltat * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
           enddo
         enddo
       enddo
@@ -4409,14 +4428,14 @@
                gammayl,gammazl, ibool_outer_core(:,:,:,ispec),nglob_outer_core)
             
             rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-               + DT * dot_product(vector_displ_outer_core,b_vector_accel_outer_core)
+               + deltat * dot_product(vector_displ_outer_core,b_vector_accel_outer_core)
 
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
             div_displ_outer_core(i,j,k,ispec) = div_displ_outer_core(i,j,k,ispec) + kappal * accel_outer_core(iglob)
             b_div_displ_outer_core(i,j,k,ispec) = b_div_displ_outer_core(i,j,k,ispec) + kappal * b_accel_outer_core(iglob)
 
             alpha_kl_outer_core(i,j,k,ispec) = alpha_kl_outer_core(i,j,k,ispec) &
-               + DT * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core(i,j,k,ispec)
+               + deltat * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core(i,j,k,ispec)
 
           enddo
         enddo
@@ -4431,16 +4450,16 @@
             iglob = ibool_inner_core(i,j,k,ispec)
 
             rho_kl_inner_core(i,j,k,ispec) =  rho_kl_inner_core(i,j,k,ispec) &
-               + DT * dot_product(accel_inner_core(:,iglob), b_displ_inner_core(:,iglob)) 
+               + deltat * dot_product(accel_inner_core(:,iglob), b_displ_inner_core(:,iglob)) 
             epsilondev_loc(:) = epsilondev_inner_core(:,i,j,k,ispec)
             b_epsilondev_loc(:) = b_epsilondev_inner_core(:,i,j,k,ispec)
             beta_kl_inner_core(i,j,k,ispec) =  beta_kl_inner_core(i,j,k,ispec) &
-               + DT * (dot_product(epsilondev_loc(1:2), b_epsilondev_loc(1:2)) &
+               + deltat * (dot_product(epsilondev_loc(1:2), b_epsilondev_loc(1:2)) &
                   + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
                   + 2 * dot_product(epsilondev_loc(3:5), b_epsilondev_loc(3:5))  )
                
             alpha_kl_inner_core(i,j,k,ispec) = alpha_kl_inner_core(i,j,k,ispec) &
-               + DT * (9 * eps_trace_over_3_inner_core(i,j,k,ispec) * b_eps_trace_over_3_inner_core(i,j,k,ispec))
+               + deltat * (9 * eps_trace_over_3_inner_core(i,j,k,ispec) * b_eps_trace_over_3_inner_core(i,j,k,ispec))
           enddo
         enddo
       enddo
@@ -5149,6 +5168,7 @@ if (ifirst_movie) then
 
 ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
+    scale_kl = scale_t/scale_displ * 1.d9
 ! crust_mantle
     do ispec = 1, nspec_crust_mantle
       do k = 1, NGLLZ
@@ -5160,9 +5180,9 @@ if (ifirst_movie) then
             rho_kl = - rhol * rho_kl_crust_mantle(i,j,k,ispec)
             alpha_kl = - kappal * alpha_kl_crust_mantle(i,j,k,ispec)
             beta_kl =  - 2 * mul * beta_kl_crust_mantle(i,j,k,ispec)
-            rho_kl_crust_mantle(i,j,k,ispec) = rho_kl + alpha_kl + beta_kl
-            beta_kl_crust_mantle(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal)
-            alpha_kl_crust_mantle(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl
+            rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
+            beta_kl_crust_mantle(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+            alpha_kl_crust_mantle(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
           enddo
         enddo
       enddo
@@ -5188,8 +5208,8 @@ if (ifirst_movie) then
             kappal = kappavstore_outer_core(i,j,k,ispec)
             rho_kl = - rhol * rho_kl_outer_core(i,j,k,ispec)
             alpha_kl = - kappal * alpha_kl_outer_core(i,j,k,ispec)
-            rho_kl_outer_core(i,j,k,ispec) = rho_kl + alpha_kl
-            alpha_kl_outer_core(i,j,k,ispec) = 2 * alpha_kl
+            rho_kl_outer_core(i,j,k,ispec) = (rho_kl + alpha_kl) * scale_kl
+            alpha_kl_outer_core(i,j,k,ispec) = 2 * alpha_kl * scale_kl
           enddo
         enddo
       enddo
@@ -5214,9 +5234,9 @@ if (ifirst_movie) then
             rho_kl = -rhol * rho_kl_inner_core(i,j,k,ispec)
             alpha_kl = -kappal * alpha_kl_inner_core(i,j,k,ispec)
             beta_kl =  - 2 * mul * beta_kl_inner_core(i,j,k,ispec)
-            rho_kl_inner_core(i,j,k,ispec) = rho_kl + alpha_kl + beta_kl
-            beta_kl_inner_core(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal)
-            alpha_kl_inner_core(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl
+            rho_kl_inner_core(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
+            beta_kl_inner_core(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+            alpha_kl_inner_core(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
           enddo
         enddo
       enddo

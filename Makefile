@@ -404,7 +404,7 @@ check_buffers_faces_chunks: constants.h $O/check_buffers_faces_chunks.o \
 combine_paraview_data: constants.h $O/combine_paraview_data.o $O/write_c_binary.o
 	${F90} $(FLAGS_CHECK) -o xcombine_paraview_data  $O/combine_paraview_data.o $O/write_c_binary.o
 clean:
-	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt PI*
+	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcombine_paraview_data OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt PI*
 
 
 ####
