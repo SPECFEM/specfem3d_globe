@@ -2703,7 +2703,7 @@
 
 ! allocate files to save movies
   if(MOVIE_SURFACE) then 
-    nmovie_points = NGLLSQUARE*NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     allocate(store_val_x(nmovie_points))
     allocate(store_val_y(nmovie_points))
     allocate(store_val_z(nmovie_points))
