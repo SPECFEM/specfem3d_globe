@@ -5,7 +5,7 @@ dnl
 # $Id: configure.ac,v 1.1 2005/08/24 22:45:51 leif Exp $
 
 AC_PREREQ(2.59)
-AC_INIT([Specfem 3D Globe], [3.5.0], [jtromp@caltech.edu], [Specfem3DGlobe])
+AC_INIT([Specfem 3D Globe], [3.5.0], [jtromp AT caltech.edu], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([specfem3D.f90])
 AC_CONFIG_HEADER([obj/config.h:config.h.in])
 AC_CONFIG_MACRO_DIR([m4])
