@@ -651,7 +651,7 @@
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
 
   do ispec=1,nspec
-  ieoff = NGLLCUBE*(ispec-1)
+  ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
   ilocnum = 0
   do k=1,NGLLZ
     do j=1,NGLLY
@@ -683,7 +683,7 @@
 
 ! put in classical format
   do ispec=1,nspec
-  ieoff = NGLLCUBE*(ispec-1)
+  ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
   ilocnum = 0
   do k=1,NGLLZ
     do j=1,NGLLY

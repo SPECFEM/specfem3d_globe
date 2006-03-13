@@ -849,7 +849,7 @@
   endif
 
 ! compute maximum number of points
-  npointot = nspec * NGLLCUBE
+  npointot = nspec * NGLLX * NGLLY * NGLLZ
 
 ! use dynamic allocation to allocate memory for arrays
   allocate(idoubling(nspec))

@@ -146,9 +146,9 @@ subroutine compute_arrays_adjoint_source(myrank, adj_source_file, &
   integer myrank, NSTEP
 
   double precision xi_receiver, eta_receiver, gamma_receiver
-  
+
   character(len=*) adj_source_file
-  
+
 ! output
   real(kind=CUSTOM_REAL) :: adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLY,NGLLZ)
 
@@ -188,8 +188,8 @@ subroutine compute_arrays_adjoint_source(myrank, adj_source_file, &
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src(itime,icomp)
     enddo
-    close(IIN) 
- 
+    close(IIN)
+
   enddo
 
   adj_src = adj_src/scale_displ
@@ -205,8 +205,8 @@ subroutine compute_arrays_adjoint_source(myrank, adj_source_file, &
       enddo
     enddo
   enddo
-      
+
 
 end subroutine compute_arrays_adjoint_source
-    
-    
+
+

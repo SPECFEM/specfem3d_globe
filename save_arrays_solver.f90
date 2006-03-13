@@ -134,7 +134,7 @@
   if (NCHUNKS == 6 .and. ichunk /= CHUNK_AB .and. iregion_code == IREGION_INNER_CORE) then
      nspec1 = nspec - (NEX_PER_PROC_XI/8) * (NEX_PER_PROC_ETA/8) * (NEX_XI/8)
      nglob1 = nglob -   ((NEX_PER_PROC_XI/8)*(NGLLX-1)+1) * ((NEX_PER_PROC_ETA/8)*(NGLLY-1)+1) &
-       * (NEX_XI/8)*(NGLLZ-1) 
+       * (NEX_XI/8)*(NGLLZ-1)
   else
      nspec1 = nspec
      nglob1 = nglob

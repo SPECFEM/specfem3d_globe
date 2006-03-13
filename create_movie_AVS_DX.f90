@@ -161,7 +161,7 @@
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *
 
-  ilocnum = NGLLSQUARE*NEX_PER_PROC_XI*NEX_PER_PROC_ETA
+  ilocnum = NGLLX * NGLLY * NEX_PER_PROC_XI * NEX_PER_PROC_ETA
 
   print *
   print *,'Allocating arrays of size ',ilocnum*NPROCTOT
