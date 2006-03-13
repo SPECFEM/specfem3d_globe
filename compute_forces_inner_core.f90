@@ -216,7 +216,7 @@
           duxdyl_plus_duydxl = duxdyl + duydxl
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
-          
+
   if (SAVE_EPS) then
 
     epsilon_trace_over_3(i,j,k,ispec) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
@@ -556,7 +556,7 @@
      endif
 
    endif   ! end test to exclude fictitious elements in central cube
-   
+
   enddo ! spectral element loop
 
   end subroutine compute_forces_inner_core

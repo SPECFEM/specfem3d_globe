@@ -92,8 +92,6 @@
   write(IOUT,*) '! max points in largest region = ',nglob_BC(IREGION_CRUST_MANTLE)
 ! use fused loops on the ES
   write(IOUT,*) '! max vector length = ',nglob_BC(IREGION_CRUST_MANTLE)*NDIM
-  write(IOUT,*) '! min vector length = ',NGLLSQUARE
-  write(IOUT,*) '! min critical vector length = ',NGLLSQUARE_NDIM
   write(IOUT,*) '!'
   write(IOUT,*) '! on ES and SX-5, make sure "loopcnt=" parameter'
 ! use fused loops on the ES

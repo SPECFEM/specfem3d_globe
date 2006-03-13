@@ -251,7 +251,7 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
  if (SAVE_EPS) then
-   
+
 ! compute deviatoric strain
     epsilon_trace_over_3(i,j,k,ispec) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
     epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec)
@@ -858,7 +858,7 @@
   if (SAVE_EPS) then
     epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
   endif
-  
+
 
   enddo   ! spectral element loop
 

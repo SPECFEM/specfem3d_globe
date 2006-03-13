@@ -102,12 +102,6 @@
   integer, parameter :: NGLLY = NGLLX
   integer, parameter :: NGLLZ = NGLLX
 
-! number of points per surface element
-  integer, parameter :: NGLLSQUARE = NGLLX * NGLLY
-
-! number of points per spectral element
-  integer, parameter :: NGLLCUBE = NGLLX * NGLLY * NGLLZ
-
 ! flag to exclude elements that are too far from target in source detection
   logical, parameter :: USE_DISTANCE_CRITERION = .true.
 
@@ -284,10 +278,6 @@
 
 ! number of elements used in radial direction in outer core doubling region
   integer, parameter :: NER_BOTTOMDBL_TOPDBL = 6*4
-
-! for vectorization of loops
-  integer, parameter :: NGLLSQUARE_NDIM = NGLLSQUARE * NDIM
-  integer, parameter :: NGLLCUBE_NDIM = NGLLCUBE * NDIM
 
 ! number of layers in PREM
   integer, parameter :: NR = 640

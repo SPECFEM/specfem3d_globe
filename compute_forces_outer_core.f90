@@ -45,7 +45,7 @@
 
 ! divergent of displacement
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: div_displfluid
- 
+
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: ibool
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: xix,xiy,xiz, &
@@ -288,9 +288,9 @@ subroutine compute_field_gradient(field,nrank,i,j,k,grad_field, &
 
   integer irank,l
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
-  
+
   do irank = 1, nrank
-            
+
     tempx1l = 0._CUSTOM_REAL
     tempx2l = 0._CUSTOM_REAL
     tempx3l = 0._CUSTOM_REAL
@@ -313,5 +313,5 @@ subroutine compute_field_gradient(field,nrank,i,j,k,grad_field, &
 
   enddo
 
-    
+
   end subroutine compute_field_gradient

@@ -48,8 +48,8 @@
 
 ! establish initial pointers
   do ispec=1,nspec
-    ieoff=NGLLCUBE*(ispec-1)
-    do ilocnum=1,NGLLCUBE
+    ieoff=NGLLX * NGLLY * NGLLZ * (ispec-1)
+    do ilocnum=1,NGLLX * NGLLY * NGLLZ
       loc(ilocnum+ieoff)=ilocnum+ieoff
     enddo
   enddo
