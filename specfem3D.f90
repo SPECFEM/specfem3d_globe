@@ -230,18 +230,6 @@
       store_val_x_all,store_val_y_all,store_val_z_all, &
       store_val_ux_all,store_val_uy_all,store_val_uz_all
 
-! to save full 3D snapshot of velocity
-  integer itotal_spec,itotal_poin,l
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
-  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l,tempy1l,tempy2l,tempy3l,tempz1l,tempz2l,tempz3l
-  real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord
-  real(kind=CUSTOM_REAL) hp1,hp2,hp3
-  real(kind=CUSTOM_REAL) div,curl_x,curl_y,curl_z
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dvxdxl,dvxdyl,dvxdzl,dvydxl,dvydyl,dvydzl,dvzdxl,dvzdyl,dvzdzl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dpotentialdxl,dpotentialdyl,dpotentialdzl
-  integer, dimension(:), allocatable :: indirect_poin
-  logical, dimension(:), allocatable :: mask_poin
-
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
 
@@ -319,11 +307,6 @@
 ! buffers for send and receive between faces of the slices and the chunks
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_faces_vector,buffer_received_faces_vector
-
-! PvK: Flag indicating whether topology and coordinates need to be output
-! for first movie file only
-  logical ifirst_movie
-  integer IOUT_COORD,IOUT_TOPOLOGY
 
 ! -------- arrays specific to each region here -----------
 
@@ -469,6 +452,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM):: vector_displ_outer_core,b_vector_accel_outer_core
 
+  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   double precision scale_kl
 ! ADJOINT
 
@@ -631,6 +615,8 @@
 
   integer, external :: err_occurred
 
+  logical SAVE_STRAIN
+
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_AB,NSPEC_AC,NSPEC_BC, &
                NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
@@ -704,6 +690,11 @@
     call exit_mpi(myrank, 'attenuation is not implemented for kernel simulations yet')
   if (SIMULATION_TYPE == 3 .and. ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL) &
      call exit_mpi(myrank, 'anisotropic model is not implemented for kernel simulations yet')
+  if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+    SAVE_STRAIN = .true.
+  else
+    SAVE_STRAIN = .false.
+  endif
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
@@ -2827,7 +2818,7 @@
     close(IOUT)
   endif
 
-  if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. MOVIE_VOLUME) then
+  if (SAVE_STRAIN) then
     allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE))
     allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
     allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE))
@@ -2956,11 +2947,6 @@
     close(55)
     
   endif
-
-! PvK Initialize movie parameter (needs to be moved to constants.h)
-  ifirst_movie=.true.
-  IOUT_COORD=21
-  IOUT_TOPOLOGY=22
 
   do it=it_begin,it_end
  
@@ -3521,7 +3507,7 @@
           R_memory_crust_mantle,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80,MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80,SAVE_STRAIN)
 
   if (SIMULATION_TYPE == 3) then
 ! for anisotropy and gravity, x y and z contain r theta and phi
@@ -3547,7 +3533,7 @@
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80,MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),R80,SAVE_STRAIN)
   endif
 
 
@@ -3797,7 +3783,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),SAVE_STRAIN)
 
   if (SIMULATION_TYPE == 3) then
   call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -3816,7 +3802,7 @@
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),SAVE_STRAIN)
   endif
 
 ! add the sources
@@ -4555,552 +4541,6 @@
     close(27)
 
   endif
-
-! adjoint nukes following code >>>>
-  if (.false.) then
-
-! save full snapshot data to local disk
-
-!--- first region is the mantle/crust
-
-! PvK Change output format to more compact and binary form
-!    write(outputname,"('snapshot_full_mantle_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
-!    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown')
-    write(outputname,"('mantle_veloc_proc',i4.4,'_it',i6.6)") myrank,it
-    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-
-    if (ifirst_movie) then
-       write(outputname,"('mantle_topology_proc',i4.4)") myrank
-       open(unit=IOUT_TOPOLOGY,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-       write(outputname,"('mantle_coord_proc',i4.4)") myrank
-       open(unit=IOUT_COORD,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-    endif
-
-! PvK 071803
-
-    allocate(mask_poin(nglob_crust_mantle))
-    allocate(indirect_poin(nglob_crust_mantle))
-
-! count total number of points and define indirect addressing
-    itotal_poin = 0
-    mask_poin(:) = .false.
-    indirect_poin(:) = 0
-    do ispec=1,nspec_crust_mantle
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-            ipoin = ibool_crust_mantle(i,j,k,ispec)
-            if(.not. mask_poin(ipoin)) then
-              itotal_poin = itotal_poin + 1
-              indirect_poin(ipoin) = itotal_poin
-              mask_poin(ipoin) = .true.
-            endif
-          enddo
-        enddo
-      enddo
-    enddo
-
-! write number of elements and points
-! PvK
-    if (ifirst_movie) then
-      write(IOUT_COORD) itotal_poin
-      write(IOUT_TOPOLOGY) nspec_crust_mantle
-    endif
-
-! write coordinates of points, and velocity at these points
-    mask_poin(:) = .false.
-    do ispec=1,nspec_crust_mantle
-
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-
-          tempx1l = 0._CUSTOM_REAL
-          tempx2l = 0._CUSTOM_REAL
-          tempx3l = 0._CUSTOM_REAL
-
-          tempy1l = 0._CUSTOM_REAL
-          tempy2l = 0._CUSTOM_REAL
-          tempy3l = 0._CUSTOM_REAL
-
-          tempz1l = 0._CUSTOM_REAL
-          tempz2l = 0._CUSTOM_REAL
-          tempz3l = 0._CUSTOM_REAL
-
-          do l=1,NGLLX
-            hp1 = hprime_xx(l,i)
-            iglob = ibool_crust_mantle(l,j,k,ispec)
-            tempx1l = tempx1l + veloc_crust_mantle(1,iglob)*hp1
-            tempy1l = tempy1l + veloc_crust_mantle(2,iglob)*hp1
-            tempz1l = tempz1l + veloc_crust_mantle(3,iglob)*hp1
-          enddo
-
-          do l=1,NGLLY
-            hp2 = hprime_yy(l,j)
-            iglob = ibool_crust_mantle(i,l,k,ispec)
-            tempx2l = tempx2l + veloc_crust_mantle(1,iglob)*hp2
-            tempy2l = tempy2l + veloc_crust_mantle(2,iglob)*hp2
-            tempz2l = tempz2l + veloc_crust_mantle(3,iglob)*hp2
-          enddo
-
-          do l=1,NGLLZ
-            hp3 = hprime_zz(l,k)
-            iglob = ibool_crust_mantle(i,j,l,ispec)
-            tempx3l = tempx3l + veloc_crust_mantle(1,iglob)*hp3
-            tempy3l = tempy3l + veloc_crust_mantle(2,iglob)*hp3
-            tempz3l = tempz3l + veloc_crust_mantle(3,iglob)*hp3
-          enddo
-
-!         get derivatives of ux, uy and uz with respect to x, y and z
-
-          xixl = xix_crust_mantle(i,j,k,ispec)
-          xiyl = xiy_crust_mantle(i,j,k,ispec)
-          xizl = xiz_crust_mantle(i,j,k,ispec)
-          etaxl = etax_crust_mantle(i,j,k,ispec)
-          etayl = etay_crust_mantle(i,j,k,ispec)
-          etazl = etaz_crust_mantle(i,j,k,ispec)
-          gammaxl = gammax_crust_mantle(i,j,k,ispec)
-          gammayl = gammay_crust_mantle(i,j,k,ispec)
-          gammazl = gammaz_crust_mantle(i,j,k,ispec)
-
-          dvxdxl(i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          dvxdyl(i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-          dvxdzl(i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
-
-          dvydxl(i,j,k) = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l
-          dvydyl(i,j,k) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
-          dvydzl(i,j,k) = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l
-
-          dvzdxl(i,j,k) = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l
-          dvzdyl(i,j,k) = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l
-          dvzdzl(i,j,k) = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
-
-        enddo
-      enddo
-    enddo
-
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-            ipoin = ibool_crust_mantle(i,j,k,ispec)
-            if(.not. mask_poin(ipoin)) then
-! coordinates actually contain r theta phi, therefore convert back to x y z
-              rval = xstore_crust_mantle(ipoin)
-              thetaval = ystore_crust_mantle(ipoin)
-              phival = zstore_crust_mantle(ipoin)
-              call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
-! compute div and curl of velocity
-              div = (dvxdxl(i,j,k) + dvydyl(i,j,k) + dvzdzl(i,j,k)) * scale_veloc / R_EARTH
-              curl_x = (dvzdyl(i,j,k) - dvydzl(i,j,k)) * scale_veloc / R_EARTH
-              curl_y = (dvxdzl(i,j,k) - dvzdxl(i,j,k)) * scale_veloc / R_EARTH
-              curl_z = (dvydxl(i,j,k) - dvxdyl(i,j,k)) * scale_veloc / R_EARTH
-              write(IOUT,"(e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6,1x,e13.6)") &
-                            xcoord*R_EARTH,ycoord*R_EARTH,zcoord*R_EARTH, &
-                            veloc_crust_mantle(1,ipoin)*scale_veloc, &
-                            veloc_crust_mantle(2,ipoin)*scale_veloc, &
-                            veloc_crust_mantle(3,ipoin)*scale_veloc, &
-                            div,curl_x,curl_y,curl_z
-              write(IOUT) real(veloc_crust_mantle(1,ipoin)*scale_veloc), &
-                            real(veloc_crust_mantle(2,ipoin)*scale_veloc), &
-                            real(veloc_crust_mantle(3,ipoin)*scale_veloc), &
-                            real(div),real(curl_x),real(curl_y),real(curl_z)
-              if (ifirst_movie) write(IOUT_COORD) real(xcoord*R_EARTH),real(ycoord*R_EARTH),real(zcoord*R_EARTH)
-! PvK
-              mask_poin(ipoin) = .true.
-            endif
-          enddo
-        enddo
-      enddo
-    enddo
-
-! write topology of elements
-! PvK  Modified to more compact and binary format
-    if (ifirst_movie) then
-      do ispec=1,nspec_crust_mantle
-         write(IOUT_TOPOLOGY) (((indirect_poin(ibool_crust_mantle(i,j,k,ispec)),i=1,NGLLX),j=1,NGLLY),k=1,NGLLZ)
-      enddo
-    endif
-
-! PvK 071803 Close binary files
-    close(IOUT)
-    if (ifirst_movie) then
-       close(IOUT_TOPOLOGY)
-       close(IOUT_COORD)
-    endif
-
-    deallocate(mask_poin)
-    deallocate(indirect_poin)
-
-!--- second region is the outer core
-
-! PvK Change output to more compact and binary format
-!   write(outputname,"('snapshot_full_outer_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
-!   open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown')
-if (ifirst_movie) then
-       write(outputname,"('outer_core_topology_proc',i4.4)") myrank
-       open(unit=IOUT_TOPOLOGY,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-       write(outputname,"('outer_core_coord_proc',i4.4)") myrank
-       open(unit=IOUT_COORD,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-    endif
-
-! PvK
-
-
-    allocate(mask_poin(nglob_outer_core))
-    allocate(indirect_poin(nglob_outer_core))
-
-! count total number of points and define indirect addressing
-    itotal_poin = 0
-    mask_poin(:) = .false.
-    indirect_poin(:) = 0
-    do ispec=1,nspec_outer_core
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-            ipoin = ibool_outer_core(i,j,k,ispec)
-            if(.not. mask_poin(ipoin)) then
-              itotal_poin = itotal_poin + 1
-              indirect_poin(ipoin) = itotal_poin
-              mask_poin(ipoin) = .true.
-            endif
-          enddo
-        enddo
-      enddo
-    enddo
-
-! write number of elements and points
-! PvK
-!   write(IOUT,*) itotal_poin
-!   write(IOUT,*) nspec_outer_core
-    if (ifirst_movie) then
-      write(IOUT_COORD) itotal_poin
-      write(IOUT_TOPOLOGY) nspec_outer_core
-    endif
-
-! write coordinates of points, and velocity at these points
-    mask_poin(:) = .false.
-    do ispec=1,nspec_outer_core
-
-! compute gradient of velocity potential to get velocity
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-
-          tempx1l = 0._CUSTOM_REAL
-          tempx2l = 0._CUSTOM_REAL
-          tempx3l = 0._CUSTOM_REAL
-
-          do l=1,NGLLX
-            tempx1l = tempx1l + veloc_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(l,i)
-          enddo
-
-          do l=1,NGLLY
-            tempx2l = tempx2l + veloc_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(l,j)
-          enddo
-
-          do l=1,NGLLZ
-            tempx3l = tempx3l + veloc_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(l,k)
-          enddo
-
-!         get derivatives of velocity potential with respect to x, y and z
-
-          xixl = xix_outer_core(i,j,k,ispec)
-          xiyl = xiy_outer_core(i,j,k,ispec)
-          xizl = xiz_outer_core(i,j,k,ispec)
-          etaxl = etax_outer_core(i,j,k,ispec)
-          etayl = etay_outer_core(i,j,k,ispec)
-          etazl = etaz_outer_core(i,j,k,ispec)
-          gammaxl = gammax_outer_core(i,j,k,ispec)
-          gammayl = gammay_outer_core(i,j,k,ispec)
-          gammazl = gammaz_outer_core(i,j,k,ispec)
-
-          dpotentialdxl(i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          dpotentialdyl(i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-          dpotentialdzl(i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
-
-        enddo
-      enddo
-    enddo
-
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-
-          tempx1l = 0._CUSTOM_REAL
-          tempx2l = 0._CUSTOM_REAL
-          tempx3l = 0._CUSTOM_REAL
-
-          tempy1l = 0._CUSTOM_REAL
-          tempy2l = 0._CUSTOM_REAL
-          tempy3l = 0._CUSTOM_REAL
-
-          tempz1l = 0._CUSTOM_REAL
-          tempz2l = 0._CUSTOM_REAL
-          tempz3l = 0._CUSTOM_REAL
-
-          do l=1,NGLLX
-            hp1 = hprime_xx(l,i)
-            tempx1l = tempx1l + dpotentialdxl(l,j,k)*hp1
-            tempy1l = tempy1l + dpotentialdyl(l,j,k)*hp1
-            tempz1l = tempz1l + dpotentialdzl(l,j,k)*hp1
-          enddo
-
-          do l=1,NGLLY
-            hp2 = hprime_yy(l,j)
-            tempx2l = tempx2l + dpotentialdxl(i,l,k)*hp2
-            tempy2l = tempy2l + dpotentialdyl(i,l,k)*hp2
-            tempz2l = tempz2l + dpotentialdzl(i,l,k)*hp2
-          enddo
-
-          do l=1,NGLLZ
-            hp3 = hprime_zz(l,k)
-            tempx3l = tempx3l + dpotentialdxl(i,j,l)*hp3
-            tempy3l = tempy3l + dpotentialdyl(i,j,l)*hp3
-            tempz3l = tempz3l + dpotentialdzl(i,j,l)*hp3
-          enddo
-
-!         get derivatives of ux, uy and uz with respect to x, y and z
-
-          xixl = xix_outer_core(i,j,k,ispec)
-          xiyl = xiy_outer_core(i,j,k,ispec)
-          xizl = xiz_outer_core(i,j,k,ispec)
-          etaxl = etax_outer_core(i,j,k,ispec)
-          etayl = etay_outer_core(i,j,k,ispec)
-          etazl = etaz_outer_core(i,j,k,ispec)
-          gammaxl = gammax_outer_core(i,j,k,ispec)
-          gammayl = gammay_outer_core(i,j,k,ispec)
-          gammazl = gammaz_outer_core(i,j,k,ispec)
-
-          dvxdxl(i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          dvydyl(i,j,k) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
-          dvzdzl(i,j,k) = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
-
-        enddo
-      enddo
-    enddo
-
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-            ipoin = ibool_outer_core(i,j,k,ispec)
-            if(.not. mask_poin(ipoin)) then
-! coordinates actually contain r theta phi, therefore convert back to x y z
-              rval = xstore_outer_core(ipoin)
-              thetaval = ystore_outer_core(ipoin)
-              phival = zstore_outer_core(ipoin)
-              call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
-! compute div and curl of velocity
-              div = (dvxdxl(i,j,k) + dvydyl(i,j,k) + dvzdzl(i,j,k)) * scale_veloc / R_EARTH
-              curl_x = 0.
-              curl_y = 0.
-              curl_z = 0.
-
-              write(IOUT) real(dpotentialdxl(i,j,k)*scale_veloc), &
-                    real(dpotentialdyl(i,j,k)*scale_veloc), &
-                    real(dpotentialdzl(i,j,k)*scale_veloc), &
-                    real(div),real(curl_x),real(curl_y),real(curl_z)
-              if (ifirst_movie) write(IOUT_COORD) real(xcoord*R_EARTH),real(ycoord*R_EARTH),real(zcoord*R_EARTH)
-              mask_poin(ipoin) = .true.
-            endif
-          enddo
-        enddo
-      enddo
-    enddo
-
-! write topology of elements
-! PvK Modified to more compact and binary format
-    if (ifirst_movie) then
-     do ispec=1,nspec_outer_core
-        write(IOUT_TOPOLOGY) (((indirect_poin(ibool_outer_core(i,j,k,ispec)),i=1,NGLLX),j=1,NGLLY),k=1,NGLLZ)
-     enddo
-    endif
-
-    close(IOUT)
-    if (ifirst_movie) then
-       close(IOUT_TOPOLOGY)
-       close(IOUT_COORD)
-    endif
-
-    deallocate(mask_poin)
-    deallocate(indirect_poin)
-
-!--- third region is the inner core
-
-! PvK Change output to more compact and binary format
-!   write(outputname,"('snapshot_full_inner_core_proc',i4.4,'_it',i6.6,'.dat')") myrank,it
-!   open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown')
-    write(outputname,"('inner_core_veloc_proc',i4.4,'_it',i6.6)") myrank,it
-    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-
-    if (ifirst_movie) then
-       write(outputname,"('inner_core_topology_proc',i4.4)") myrank
-       open(unit=IOUT_TOPOLOGY,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-       write(outputname,"('inner_core_coord_proc',i4.4)") myrank
-       open(unit=IOUT_COORD,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-    endif
-
-! PvK
-
-    allocate(mask_poin(NGLOB_INNER_CORE))
-    allocate(indirect_poin(NGLOB_INNER_CORE))
-
-! count total number of points and define indirect addressing
-    itotal_poin = 0
-    itotal_spec = 0
-    mask_poin(:) = .false.
-    indirect_poin(:) = 0
-    do ispec=1,NSPEC_INNER_CORE
-      if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
-      itotal_spec = itotal_spec + 1
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-            ipoin = ibool_inner_core(i,j,k,ispec)
-            if(.not. mask_poin(ipoin)) then
-              itotal_poin = itotal_poin + 1
-              indirect_poin(ipoin) = itotal_poin
-              mask_poin(ipoin) = .true.
-            endif
-          enddo
-        enddo
-      enddo
-      endif
-    enddo
-
-! write number of elements and points
-! PvK
-!   write(IOUT,*) itotal_poin
-!   write(IOUT,*) itotal_spec
-    if (ifirst_movie) then
-      write(IOUT_COORD) itotal_poin
-      write(IOUT_TOPOLOGY) itotal_spec
-    endif
-
-! write coordinates of points, and velocity at these points
-    mask_poin(:) = .false.
-    do ispec=1,NSPEC_INNER_CORE
-      if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
-
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-
-          tempx1l = 0._CUSTOM_REAL
-          tempx2l = 0._CUSTOM_REAL
-          tempx3l = 0._CUSTOM_REAL
-
-          tempy1l = 0._CUSTOM_REAL
-          tempy2l = 0._CUSTOM_REAL
-          tempy3l = 0._CUSTOM_REAL
-
-          tempz1l = 0._CUSTOM_REAL
-          tempz2l = 0._CUSTOM_REAL
-          tempz3l = 0._CUSTOM_REAL
-
-          do l=1,NGLLX
-            hp1 = hprime_xx(l,i)
-            iglob = ibool_inner_core(l,j,k,ispec)
-            tempx1l = tempx1l + veloc_inner_core(1,iglob)*hp1
-            tempy1l = tempy1l + veloc_inner_core(2,iglob)*hp1
-            tempz1l = tempz1l + veloc_inner_core(3,iglob)*hp1
-          enddo
-
-          do l=1,NGLLY
-            hp2 = hprime_yy(l,j)
-            iglob = ibool_inner_core(i,l,k,ispec)
-            tempx2l = tempx2l + veloc_inner_core(1,iglob)*hp2
-            tempy2l = tempy2l + veloc_inner_core(2,iglob)*hp2
-            tempz2l = tempz2l + veloc_inner_core(3,iglob)*hp2
-          enddo
-
-          do l=1,NGLLZ
-            hp3 = hprime_zz(l,k)
-            iglob = ibool_inner_core(i,j,l,ispec)
-            tempx3l = tempx3l + veloc_inner_core(1,iglob)*hp3
-            tempy3l = tempy3l + veloc_inner_core(2,iglob)*hp3
-            tempz3l = tempz3l + veloc_inner_core(3,iglob)*hp3
-          enddo
-
-!         get derivatives of ux, uy and uz with respect to x, y and z
-
-          xixl = xix_inner_core(i,j,k,ispec)
-          xiyl = xiy_inner_core(i,j,k,ispec)
-          xizl = xiz_inner_core(i,j,k,ispec)
-          etaxl = etax_inner_core(i,j,k,ispec)
-          etayl = etay_inner_core(i,j,k,ispec)
-          etazl = etaz_inner_core(i,j,k,ispec)
-          gammaxl = gammax_inner_core(i,j,k,ispec)
-          gammayl = gammay_inner_core(i,j,k,ispec)
-          gammazl = gammaz_inner_core(i,j,k,ispec)
-
-          dvxdxl(i,j,k) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-          dvxdyl(i,j,k) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-          dvxdzl(i,j,k) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
-
-          dvydxl(i,j,k) = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l
-          dvydyl(i,j,k) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
-          dvydzl(i,j,k) = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l
-
-          dvzdxl(i,j,k) = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l
-          dvzdyl(i,j,k) = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l
-          dvzdzl(i,j,k) = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
-
-        enddo
-      enddo
-    enddo
-
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-            ipoin = ibool_inner_core(i,j,k,ispec)
-            if(.not. mask_poin(ipoin)) then
-! coordinates actually contain r theta phi, therefore convert back to x y z
-              rval = xstore_inner_core(ipoin)
-              thetaval = ystore_inner_core(ipoin)
-              phival = zstore_inner_core(ipoin)
-              call rthetaphi_2_xyz(xcoord,ycoord,zcoord,rval,thetaval,phival)
-! compute div and curl of velocity
-              div = (dvxdxl(i,j,k) + dvydyl(i,j,k) + dvzdzl(i,j,k)) * scale_veloc / R_EARTH
-              curl_x = (dvzdyl(i,j,k) - dvydzl(i,j,k)) * scale_veloc / R_EARTH
-              curl_y = (dvxdzl(i,j,k) - dvzdxl(i,j,k)) * scale_veloc / R_EARTH
-              curl_z = (dvydxl(i,j,k) - dvxdyl(i,j,k)) * scale_veloc / R_EARTH
-              write(IOUT)   real(veloc_inner_core(1,ipoin)*scale_veloc), &
-                            real(veloc_inner_core(2,ipoin)*scale_veloc), &
-                            real(veloc_inner_core(3,ipoin)*scale_veloc), &
-                            real(div),real(curl_x),real(curl_y),real(curl_z)
-              if (ifirst_movie) write(IOUT_COORD) real(xcoord*R_EARTH),real(ycoord*R_EARTH),real(zcoord*R_EARTH)
-              mask_poin(ipoin) = .true.
-            endif
-          enddo
-        enddo
-      enddo
-      endif
-    enddo
-
-! write topology of elements
-! PvK Modified to more compact and binary format
-    if (ifirst_movie) then
-     do ispec=1,NSPEC_INNER_CORE
-       if (idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
-         write(IOUT_TOPOLOGY) (((indirect_poin(ibool_inner_core(i,j,k,ispec)),i=1,NGLLX),j=1,NGLLY),k=1,NGLLZ)
-       endif
-     enddo
-    endif
-
-    close(IOUT)
-    if (ifirst_movie) then
-       close(IOUT_TOPOLOGY)
-       close(IOUT_COORD)
-    endif
-
-    deallocate(mask_poin)
-    deallocate(indirect_poin)
-
-! PvK After first movie snapshot has been written there is no more need to output topology and coordinates
-    ifirst_movie=.false.
-
-  endif
-! <<<< adjoint nukes preceding code
 
 !---- end of time iteration loop
 !
