@@ -26,7 +26,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80,MOVIE_VOLUME,SIMULATION_TYPE,SAVE_FORWARD)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80,SAVE_STRAIN)
 
   implicit none
 
@@ -37,11 +37,9 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
 ! for forward or backward simulations
-  integer SIMULATION_TYPE
-  logical SAVE_FORWARD
+  logical SAVE_STRAIN
 
   integer nspec
-  logical MOVIE_VOLUME
 
 ! for ellipticity for d80 attenuation
   real(kind=CUSTOM_REAL) ell_d80,p20,cost
@@ -147,8 +145,6 @@
   real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
   real(kind=CUSTOM_REAL) tempz1l,tempz2l,tempz3l
 
-  logical SAVE_EPS
-
 ! for gravity
   integer int_radius
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
@@ -165,12 +161,6 @@
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
-
-  if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    SAVE_EPS = .true.
-  else
-    SAVE_EPS = .false.
-  endif
 
 ! set acceleration to zero
   accel(:,:) = 0._CUSTOM_REAL
@@ -250,7 +240,7 @@
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
 
- if (SAVE_EPS) then
+ if (SAVE_STRAIN) then
 
 ! compute deviatoric strain
     epsilon_trace_over_3(i,j,k,ispec) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
@@ -855,7 +845,7 @@
   endif
 
 ! save deviatoric strain for Runge-Kutta scheme
-  if (SAVE_EPS) then
+  if (SAVE_STRAIN) then
     epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
   endif
 
