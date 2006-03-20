@@ -62,14 +62,12 @@ end module aniso_mantle_model_variables
 
 !-------------------
 
-  subroutine aniso_mantle_model(myrank,r,theta,phi,rho, &
+  subroutine aniso_mantle_model(r,theta,phi,rho, &
     c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
   use aniso_mantle_model_variables
 
   implicit none
-
-  integer myrank
 
   double precision r,theta,phi
   double precision rho
@@ -85,14 +83,14 @@ end module aniso_mantle_model_variables
   colat = theta / DEGREES_TO_RADIANS
 
 ! uncomment this line to suppress the anisotropic mantle model
-! call exit_MPI(myrank,'please provide an anisotropic mantle model for subroutine aniso_mantle_model')
+! call exit_MPI_without_rank('please provide an anisotropic mantle model for subroutine aniso_mantle_model')
 
 ! assign the local (d_ij) or global (c_ij) anisotropic parameters.
 ! The c_ij are the coefficients in the global
 ! reference frame used in SPECFEM3D.
   call build_cij(pro,npar1,rho,beta,r,colat,lon,&
                  d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
-                 d44,d45,d46,d55,d56,d66,myrank)
+                 d44,d45,d46,d55,d56,d66)
 
   call rotate_aniso_tensor(theta,phi,d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,&
        d33,d34,d35,d36,d44,d45,d46,d55,d56,d66,&
@@ -105,14 +103,14 @@ end module aniso_mantle_model_variables
 
   subroutine build_cij(pro,npar1,rho,beta,r,theta,phi,&
        d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
-       d44,d45,d46,d55,d56,d66,myrank)
+       d44,d45,d46,d55,d56,d66)
 
   use aniso_mantle_model_constants
 
   implicit none
 
   integer npar1,ndepth,idep,ipar,itheta,ilon,icz0,nx0,ny0,nz0,&
-          ict0,ict1,icp0,icp1,icz1,myrank
+          ict0,ict1,icp0,icp1,icz1
 
   double precision d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26, &
                    d33,d34,d35,d36,d44,d45,d46,d55,d56,d66
@@ -139,7 +137,7 @@ end module aniso_mantle_model_variables
 
 ! dimensionalize
   depth = R_EARTH_KM*(R_UNIT_SPHERE - r)
-  if(depth <= pro(nz0) .or. depth >= pro(1)) call exit_MPI(myrank,'r out of range in build_cij')
+  if(depth <= pro(nz0) .or. depth >= pro(1)) call exit_MPI_without_rank('r out of range in build_cij')
   itheta = int(theta + pxy0)/pxy0
   ilon = int(phi + pxy0)/pxy0
   tet = theta
@@ -164,12 +162,12 @@ end module aniso_mantle_model_variables
   icz1 = icz0 + 1
 
 ! check that parameters make sense
-  if(ict0 < 1 .or. ict0 > nx0) call exit_MPI(myrank,'ict0 out of range')
-  if(ict1 < 1 .or. ict1 > nx0) call exit_MPI(myrank,'ict1 out of range')
-  if(icp0 < 1 .or. icp0 > ny0) call exit_MPI(myrank,'icp0 out of range')
-  if(icp1 < 1 .or. icp1 > ny0) call exit_MPI(myrank,'icp1 out of range')
-  if(icz0 < 1 .or. icz0 > nz0) call exit_MPI(myrank,'icz0 out of range')
-  if(icz1 < 1 .or. icz1 > nz0) call exit_MPI(myrank,'icz1 out of range')
+  if(ict0 < 1 .or. ict0 > nx0) call exit_MPI_without_rank('ict0 out of range')
+  if(ict1 < 1 .or. ict1 > nx0) call exit_MPI_without_rank('ict1 out of range')
+  if(icp0 < 1 .or. icp0 > ny0) call exit_MPI_without_rank('icp0 out of range')
+  if(icp1 < 1 .or. icp1 > ny0) call exit_MPI_without_rank('icp1 out of range')
+  if(icz0 < 1 .or. icz0 > nz0) call exit_MPI_without_rank('icz0 out of range')
+  if(icz1 < 1 .or. icz1 > nz0) call exit_MPI_without_rank('icz1 out of range')
 
   do ipar = 1,14
     anispara(ipar,1,1) = beta(ipar,icz0,ict0,icp0)

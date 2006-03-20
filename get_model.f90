@@ -192,16 +192,14 @@
          if(r_prem < RMOHO/R_EARTH .and. r_prem > R670/R_EARTH) then
            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
            call reduce(theta,phi)
-           call aniso_mantle_model(myrank,r_prem,theta,phi, &
-              rho,c11,c12,c13,c14,c15,c16, &
+           call aniso_mantle_model(r_prem,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
               c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 ! extend 3-D mantle model above the Moho to the surface before adding the crust
          elseif(r_prem >= RMOHO/R_EARTH) then
            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
            call reduce(theta,phi)
            r_moho = RMOHO/R_EARTH
-           call aniso_mantle_model(myrank,r_moho,theta,phi, &
-              rho,c11,c12,c13,c14,c15,c16, &
+           call aniso_mantle_model(r_moho,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
               c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 ! fill the rest of the mantle with the isotropic model
          else
