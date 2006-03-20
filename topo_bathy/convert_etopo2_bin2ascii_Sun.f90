@@ -37,6 +37,8 @@
   print *,'min and max of original topography = ',minval(ibathy_topo),maxval(ibathy_topo)
 
 ! save the ASCII file
+!! DK DK beware, longitude blocks MUST be swapped
+  stop 'beware, longitude blocks MUST be swapped, see file swap_topo_bathy_Sun.f90 for details'
   open(unit=13,file='topo_bathy_etopo2.dat',status='unknown')
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY

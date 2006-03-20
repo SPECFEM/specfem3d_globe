@@ -20,11 +20,11 @@
 !--- read topography and bathymetry ASCII file, smooth it and create PNM image to check it
 !
 
-!! DK DK this program uses a very simple window filter
-!! DK DK it works fine because the model has a very high resolution
-!! DK DK in principle it would be better to use a circular cap to take
-!! DK DK the notion of angular distance between points into account in the filter
-!! DK DK in practice though this simple filter works perfectly fine
+! this program uses a very simple window filter
+! it works fine because the model has a very high resolution
+! in principle it would be better to use a circular cap to take
+! the notion of angular distance between points into account in the filter
+! in practice though this simple filter works perfectly fine
 
   implicit none
 
@@ -38,8 +38,7 @@
   integer ibathy_topo(NX_BATHY,NY_BATHY)
   integer ibathy_topo_ori(NX_BATHY,NY_BATHY)
 
-  integer ivalue,icurrent_rec,ix,iy
-  integer minvalue,maxvalue
+  integer ix,iy,minvalue,maxvalue
   integer ix_current,iy_current,ix_min,ix_max,iy_min,iy_max,ix_value,iy_value
 
   double precision value_sum,area_window
@@ -53,7 +52,7 @@
   print *
   print *,'reading topo file'
 
-  open(unit=13,file='topo_bathy_etopo4_ori_from_etopo2_subsampled.dat',status='old')
+  open(unit=13,file='topo_bathy_etopo4_from_etopo2_subsampled.dat',status='old')
   do iy=1,NY_BATHY
     do ix=1,NX_BATHY
       read(13,*) ibathy_topo_ori(ix,iy)
@@ -61,15 +60,14 @@
   enddo
   close(13)
 
-!! DK DK compute min and max before smoothing
+! compute min and max before smoothing
   minvalue = minval(ibathy_topo_ori)
   maxvalue = maxval(ibathy_topo_ori)
   print *,'min and max of topography before smoothing = ',minvalue,maxvalue
 
 !----
 
-!! DK DK smooth topography/bathymetry model
-
+! smooth topography/bathymetry model
   if(SMOOTH_THE_MODEL) then
 
   print *
@@ -131,16 +129,16 @@
 
 !----
 
-!! DK DK compute min and max after smoothing
+! compute min and max after smoothing
   minvalue = minval(ibathy_topo)
   maxvalue = maxval(ibathy_topo)
   print *,'min and max of topography after smoothing = ',minvalue,maxvalue
 
-!! DK DK save the smoothed model
+! save the smoothed model
   if(SMOOTH_THE_MODEL) then
     print *
     print *,'saving the smoothed model'
-    open(unit=13,file='topo_bathy_etopo4_smoothed_window7.dat',status='unknown')
+    open(unit=13,file='topo_bathy_etopo4_smoothed_window_7.dat',status='unknown')
     do iy=1,NY_BATHY
       do ix=1,NX_BATHY
         write(13,*) ibathy_topo(ix,iy)
@@ -168,12 +166,10 @@
 ! creating the header
   open(unit=27,file='image_topo_bathy.pnm',status='unknown')
   write(27,100)
-  write(27,101)
   write(27,102) NX_BATHY,NY_BATHY
   write(27,103)
 
  100 format('P3')
- 101 format('# creator DK')
  102 format(i6,' ',i6)
  103 format('255')
  104 format(i3)
