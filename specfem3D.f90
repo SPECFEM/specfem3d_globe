@@ -194,7 +194,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
-  
+
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: epsilondev_inner_core
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: eps_trace_over_3_inner_core
@@ -205,7 +205,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: b_epsilondev_crust_mantle, b_epsilondev_inner_core
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: b_eps_trace_over_3_crust_mantle, b_eps_trace_over_3_inner_core
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
-   
+
 ! ADJOINT
 
 ! for matching with central cube in inner core
@@ -387,7 +387,7 @@
 
 ! divergent of displ
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable  :: div_displ_outer_core
-  
+
 ! ----------------- inner core ---------------------
 
 ! mesh parameters
@@ -436,10 +436,10 @@
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable:: rho_kl_crust_mantle, &
      beta_kl_crust_mantle, alpha_kl_crust_mantle
-  
+
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable:: rho_kl_outer_core, &
      alpha_kl_outer_core
- 
+
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable:: rho_kl_inner_core, &
      beta_kl_inner_core, alpha_kl_inner_core
 
@@ -649,7 +649,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: dummy_rho
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
         dummy_vstore, dummy_hstore, dummy_cstore
-  
+
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
 
@@ -1715,7 +1715,7 @@
         adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
         call compute_arrays_adjoint_source(myrank, adj_source_file, &
           xi_receiver(irec), eta_receiver(irec), gamma_receiver(irec), &
-          nu(:,:,irec),adj_sourcearray, xigll,yigll,zigll,NSTEP)   
+          nu(:,:,irec),adj_sourcearray, xigll,yigll,zigll,NSTEP)
         adj_sourcearrays(irec_local,:,:,:,:,:) = adj_sourcearray(:,:,:,:,:)
       endif
 
@@ -1775,7 +1775,7 @@
     hetar_store(irec_local,:) = hetar(:)
     hgammar_store(irec_local,:) = hgammar(:)
   enddo
-  else 
+  else
   do irec_local = 1,nrec_local
     irec = number_receiver_global(irec_local)
     call lagrange_any(xi_source(irec),NGLLX,xigll,hxir,hpxir)
@@ -2629,7 +2629,7 @@
     rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     alpha_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-    
+
     rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
     alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
 
@@ -2697,7 +2697,7 @@
   if(myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
 
 ! allocate files to save movies
-  if(MOVIE_SURFACE) then 
+  if(MOVIE_SURFACE) then
     nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     allocate(store_val_x(nmovie_points))
     allocate(store_val_y(nmovie_points))
@@ -2737,7 +2737,7 @@
     deltat = sngl(DT/scale_t)
   else
     deltat = DT/scale_t
-  endif    
+  endif
   deltatover2 = 0.5d0*deltat
   deltatsqover2 = 0.5d0*deltat*deltat
 
@@ -2782,7 +2782,7 @@
     two_omega_earth = 0._CUSTOM_REAL
     if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
   endif
-  
+
 ! precompute Runge-Kutta coefficients if attenuation
   if(ATTENUATION) then
      call attenuation_memory_values(tau_sigma_dble, deltat, alphaval_dble, betaval_dble, gammaval_dble)
@@ -2827,7 +2827,7 @@
     allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
     allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE))
     allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE))
-   
+
     if (SIMULATION_TYPE == 3) then
       allocate(b_epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE))
       allocate(b_epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
@@ -2840,7 +2840,7 @@
   endif
 
 ! clear memory variables if attenuation
-  if(ATTENUATION) then 
+  if(ATTENUATION) then
     if (NSPECMAX_CRUST_MANTLE_ATTENUAT /= NSPECMAX_CRUST_MANTLE) &
        call exit_mpi(myrank, 'NSPECMAX_CRUST_MANTLE_ATTENUAT /= NSPECMAX_CRUST_MANTLE, exit')
     if (NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE) &
@@ -2858,7 +2858,7 @@
       epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
       epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
     endif
-    
+
     if (SIMULATION_TYPE == 3) then
       allocate(b_R_memory_crust_mantle(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT))
       allocate(b_R_memory_inner_core(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION))
@@ -2949,18 +2949,18 @@
       read(55) b_B_array_rotation
     endif
     close(55)
-    
+
   endif
 
   do it=it_begin,it_end
- 
+
 ! mantle
   do i=1,nglob_crust_mantle
     displ_crust_mantle(:,i) = displ_crust_mantle(:,i) + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
   enddo
   if (SIMULATION_TYPE == 3) then
-  do i=1,nglob_crust_mantle 
+  do i=1,nglob_crust_mantle
     b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) + b_deltat*b_veloc_crust_mantle(:,i) + &
          b_deltatsqover2*b_accel_crust_mantle(:,i)
     b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
@@ -3014,9 +3014,9 @@
                  maxval(sqrt(b_displ_crust_mantle(1,1:nglob_crust_mantle)**2 + &
                  b_displ_crust_mantle(2,1:nglob_crust_mantle)**2 + b_displ_crust_mantle(3,1:nglob_crust_mantle)**2)), &
                  maxval(sqrt(b_displ_inner_core(1,:)**2 + b_displ_inner_core(2,:)**2 + b_displ_inner_core(3,:)**2)))
-      
+
       b_Ufluidnorm = maxval(abs(b_displ_outer_core(1:nglob_outer_core)))
-      
+
 ! compute the maximum of the maxima for all the slices using an MPI reduction
       call MPI_REDUCE(b_Usolidnorm,b_Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                  MPI_COMM_WORLD,ier)
@@ -3024,7 +3024,7 @@
                  MPI_COMM_WORLD,ier)
 
     endif
-    
+
     if(myrank == 0) then
 
       write(IMAIN,*) 'Time step # ',it
@@ -3122,7 +3122,7 @@
 !   xmin
 ! if two chunks exclude this face for one of them
   if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
-    
+
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_outer_core > 0)  then
       read(61,rec=NSTEP-it+1) reclen1,absorb_xmin_outer_core,reclen2
       if (reclen1 /= reclen_xmin_outer_core .or. reclen1 /= reclen2)  &
@@ -3843,7 +3843,7 @@
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     irec_Local = 0
     do irec = 1,nrec
-    
+
 !   add the source (only if this proc carries the source)
       if(myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
@@ -4228,7 +4228,7 @@
       b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
          - b_two_omega_earth*b_veloc_inner_core(1,i)
       b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
-      
+
       b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
     enddo
   endif
@@ -4250,9 +4250,9 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            
+
             iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
-            
+
             hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
 
             uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
@@ -4303,7 +4303,7 @@
       eps_loc_new(:,:) = eps_loc(:,:)
 ! LQY -- does not rotate eps_loc first.
 !      eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
-      
+
 ! distinguish between single and double precision for reals
       if (CUSTOM_REAL == SIZE_REAL) then
         seismograms(1,irec_local,it) = sngl(eps_loc_new(1,1))
@@ -4320,21 +4320,21 @@
         seismograms(5,irec_local,it) = eps_loc_new(1,3)
         seismograms(6,irec_local,it) = eps_loc_new(2,3)
       endif
-      
+
     else  if (SIMULATION_TYPE == 3) then
 
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            
+
             iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
-            
+
             hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
-            
+
             uxd = uxd + dble(b_displ_crust_mantle(1,iglob))*hlagrange
             uyd = uyd + dble(b_displ_crust_mantle(2,iglob))*hlagrange
             uzd = uzd + dble(b_displ_crust_mantle(3,iglob))*hlagrange
-            
+
           enddo
         enddo
         enddo
@@ -4352,7 +4352,7 @@
       endif
 
     enddo
-      
+
 ! write the current seismograms
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
@@ -4376,7 +4376,7 @@
           do i = 1, NGLLX
             iglob = ibool_crust_mantle(i,j,k,ispec)
             rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * dot_product(accel_crust_mantle(:,iglob), b_displ_crust_mantle(:,iglob)) 
+               + deltat * dot_product(accel_crust_mantle(:,iglob), b_displ_crust_mantle(:,iglob))
 
             epsilondev_loc(:) = epsilondev_crust_mantle(:,i,j,k,ispec)
             b_epsilondev_loc(:) = b_epsilondev_crust_mantle(:,i,j,k,ispec)
@@ -4384,7 +4384,7 @@
                + deltat * (dot_product(epsilondev_loc(1:2) ,b_epsilondev_loc(1:2)) &
                + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
                 + 2 * dot_product(epsilondev_loc(3:5), b_epsilondev_loc(3:5)) )
-               
+
             alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
                + deltat * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
           enddo
@@ -4405,7 +4405,7 @@
             etaxl = etax_outer_core(i,j,k,ispec)
             etayl = etay_outer_core(i,j,k,ispec)
             etazl = etaz_outer_core(i,j,k,ispec)
-            gammaxl = gammax_outer_core(i,j,k,ispec) 
+            gammaxl = gammax_outer_core(i,j,k,ispec)
             gammayl = gammay_outer_core(i,j,k,ispec)
             gammazl = gammaz_outer_core(i,j,k,ispec)
 
@@ -4416,7 +4416,7 @@
             call compute_field_gradient(b_accel_outer_core,1,i,j,k,b_vector_accel_outer_core, &
                hprime_xx,hprime_yy,hprime_zz, xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl, &
                gammayl,gammazl, ibool_outer_core(:,:,:,ispec),nglob_outer_core)
-            
+
             rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
                + deltat * dot_product(vector_displ_outer_core,b_vector_accel_outer_core)
 
@@ -4440,14 +4440,14 @@
             iglob = ibool_inner_core(i,j,k,ispec)
 
             rho_kl_inner_core(i,j,k,ispec) =  rho_kl_inner_core(i,j,k,ispec) &
-               + deltat * dot_product(accel_inner_core(:,iglob), b_displ_inner_core(:,iglob)) 
+               + deltat * dot_product(accel_inner_core(:,iglob), b_displ_inner_core(:,iglob))
             epsilondev_loc(:) = epsilondev_inner_core(:,i,j,k,ispec)
             b_epsilondev_loc(:) = b_epsilondev_inner_core(:,i,j,k,ispec)
             beta_kl_inner_core(i,j,k,ispec) =  beta_kl_inner_core(i,j,k,ispec) &
                + deltat * (dot_product(epsilondev_loc(1:2), b_epsilondev_loc(1:2)) &
                   + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
                   + 2 * dot_product(epsilondev_loc(3:5), b_epsilondev_loc(3:5))  )
-               
+
             alpha_kl_inner_core(i,j,k,ispec) = alpha_kl_inner_core(i,j,k,ispec) &
                + deltat * (9 * eps_trace_over_3_inner_core(i,j,k,ispec) * b_eps_trace_over_3_inner_core(i,j,k,ispec))
           enddo
@@ -4458,7 +4458,7 @@
   endif
 
 
-   
+
 ! save movie on surface
   if(MOVIE_SURFACE .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
@@ -4631,7 +4631,7 @@
         enddo
       enddo
     enddo
-    
+
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
     open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
     write(27) rho_kl_crust_mantle
@@ -4665,7 +4665,7 @@
     close(27)
     open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted')
     write(27) alpha_kl_outer_core
-    close(27)   
+    close(27)
 
 ! inner_core
    do ispec = 1, nspec_inner_core
@@ -4685,7 +4685,7 @@
         enddo
       enddo
     enddo
-    
+
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
     open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
     write(27) rho_kl_inner_core
