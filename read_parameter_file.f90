@@ -407,7 +407,7 @@
     CRUSTAL = .false.
     ATTENUATION_3D = .false.
 
-  else if(MODEL == 'transversly_isotropic_prem') then
+  else if(MODEL == 'transversely_isotropic_prem') then
     IASPEI = .false.
     TRANSVERSE_ISOTROPY = .true.
     ISOTROPIC_3D_MANTLE = .false.
