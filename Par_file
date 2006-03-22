@@ -22,7 +22,7 @@ NEX_ETA                         = 160
 NPROC_XI                        = 5
 NPROC_ETA                       = 5
 
-# model (isotropic_prem, transversly_isotropic_prem,
+# model (isotropic_prem, transversely_isotropic_prem,
 # iaspei, s20rts, Brian_Savage, Min_Chen)
 MODEL                           = isotropic_prem
 
