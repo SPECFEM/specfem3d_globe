@@ -184,7 +184,7 @@ subroutine compute_arrays_adjoint_source(myrank, adj_source_file, &
 
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)
-    if (ios /= 0) call exit_MPI(myrank, ' file '//trim(filename)//'does not exist')
+    if (ios /= 0) call exit_MPI(myrank, ' file '//trim(filename)//' does not exist')
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src(itime,icomp)
     enddo

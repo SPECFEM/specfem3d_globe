@@ -687,13 +687,13 @@
 
 ! check simulation pararmeters
   if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
-          call exit_mpi(myrank, 'SIMULATION_TYPE could be only 1, 2, or 3')
+          call exit_MPI(myrank, 'SIMULATION_TYPE could be only 1, 2, or 3')
   if (SIMULATION_TYPE /= 1 .and. NSOURCES >= 1000)  &
-    call exit_mpi(myrank, 'for adjoint simulations, NSOURCES < 1000')
+    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES < 1000')
   if (SIMULATION_TYPE == 3 .and. ATTENUATION) &
-    call exit_mpi(myrank, 'attenuation is not implemented for kernel simulations yet')
+    call exit_MPI(myrank, 'attenuation is not implemented for kernel simulations yet')
   if (SIMULATION_TYPE == 3 .and. ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL) &
-     call exit_mpi(myrank, 'anisotropic model is not implemented for kernel simulations yet')
+     call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
   if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     SAVE_STRAIN = .true.
   else
@@ -2842,9 +2842,9 @@
 ! clear memory variables if attenuation
   if(ATTENUATION) then
     if (NSPECMAX_CRUST_MANTLE_ATTENUAT /= NSPECMAX_CRUST_MANTLE) &
-       call exit_mpi(myrank, 'NSPECMAX_CRUST_MANTLE_ATTENUAT /= NSPECMAX_CRUST_MANTLE, exit')
+       call exit_MPI(myrank, 'NSPECMAX_CRUST_MANTLE_ATTENUAT /= NSPECMAX_CRUST_MANTLE, exit')
     if (NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE) &
-       call exit_mpi(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')
+       call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')
     R_memory_crust_mantle(:,:,:,:,:,:) = 0._CUSTOM_REAL
     R_memory_inner_core(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
@@ -2927,7 +2927,7 @@
   endif
 
   if (SIMULATION_TYPE == 3) then
-    write(outputname,"('save_forward_arrays',i4.4,'.bin')") myrank
+    write(outputname,'(a,i4.4,a)') 'proc',myrank,'_save_forward_arrays.bin'
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',form='unformatted')
     read(55) b_displ_crust_mantle
     read(55) b_veloc_crust_mantle
@@ -3126,7 +3126,7 @@
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_outer_core > 0)  then
       read(61,rec=NSTEP-it+1) reclen1,absorb_xmin_outer_core,reclen2
       if (reclen1 /= reclen_xmin_outer_core .or. reclen1 /= reclen2)  &
-         call exit_mpi(myrank,'Error reading absorbing contribution absorb_xmin_outer_core')
+         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmin_outer_core')
     endif
 
     do ispec2D=1,nspec2D_xmin_outer_core
@@ -3167,7 +3167,7 @@
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_outer_core > 0)  then
       read(62,rec=NSTEP-it+1) reclen1,absorb_xmax_outer_core,reclen2
       if (reclen1 /= reclen_xmax_outer_core .or. reclen1 /= reclen2)  &
-         call exit_mpi(myrank,'Error reading absorbing contribution absorb_xmax_outer_core')
+         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax_outer_core')
     endif
 
     do ispec2D=1,nspec2D_xmax_outer_core
@@ -3207,7 +3207,7 @@
     if (SIMULATION_TYPE == 3 .and. nspec2D_ymin_outer_core > 0)  then
       read(63,rec=NSTEP-it+1) reclen1,absorb_ymin_outer_core,reclen2
       if (reclen1 /= reclen_ymin_outer_core .or. reclen1 /= reclen2)  &
-         call exit_mpi(myrank,'Error reading absorbing contribution absorb_ymin_outer_core')
+         call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin_outer_core')
     endif
 
     do ispec2D=1,nspec2D_ymin_outer_core
@@ -3246,7 +3246,7 @@
     if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_outer_core > 0)  then
       read(64,rec=NSTEP-it+1) reclen1,absorb_ymax_outer_core,reclen2
       if (reclen1 /= reclen_ymax_outer_core .or. reclen1 /= reclen2)  &
-         call exit_mpi(myrank,'Error reading absorbing contribution absorb_ymax_outer_core')
+         call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax_outer_core')
     endif
     do ispec2D=1,nspec2D_ymax_outer_core
 
@@ -3284,7 +3284,7 @@
    if (SIMULATION_TYPE == 3 .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE)> 0)  then
       read(65,rec=NSTEP-it+1) reclen1,absorb_zmin_outer_core,reclen2
       if (reclen1 /= reclen_zmin .or. reclen1 /= reclen2)  &
-         call exit_mpi(myrank,'Error reading absorbing contribution absorb_zmin_outer_core')
+         call exit_MPI(myrank,'Error reading absorbing contribution absorb_zmin_outer_core')
     endif
     do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
 
@@ -3553,7 +3553,7 @@
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_crust_mantle > 0)  then
       read(51,rec=NSTEP-it+1) reclen1,absorb_xmin_crust_mantle,reclen2
       if (reclen1 /= reclen_xmin_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_mpi(myrank,'Error reading absorbing contribution absorb_xmin')
+         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmin')
     endif
 
     do ispec2D=1,nspec2D_xmin_crust_mantle
@@ -3611,7 +3611,7 @@
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_crust_mantle > 0)  then
       read(52,rec=NSTEP-it+1) reclen1,absorb_xmax_crust_mantle,reclen2
       if (reclen1 /= reclen_xmax_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_mpi(myrank,'Error reading absorbing contribution absorb_xmax')
+         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax')
     endif
 
     do ispec2D=1,nspec2D_xmax_crust_mantle
@@ -3667,7 +3667,7 @@
     if (SIMULATION_TYPE == 3 .and. nspec2D_ymin_crust_mantle > 0)  then
       read(53,rec=NSTEP-it+1) reclen1,absorb_ymin_crust_mantle,reclen2
       if (reclen1 /= reclen_ymin_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_mpi(myrank,'Error reading absorbing contribution absorb_ymin')
+         call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin')
     endif
     do ispec2D=1,nspec2D_ymin_crust_mantle
 
@@ -3721,7 +3721,7 @@
     if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_crust_mantle > 0)  then
       read(54,rec=NSTEP-it+1) reclen1,absorb_ymax_crust_mantle,reclen2
       if (reclen1 /= reclen_ymax_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_mpi(myrank,'Error reading absorbing contribution absorb_ymax')
+         call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax')
     endif
     do ispec2D=1,nspec2D_ymax_crust_mantle
 
@@ -4517,29 +4517,29 @@
   if(MOVIE_VOLUME .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
 ! div
-    write(outputname,"('crust_mantle_div_displ_proc',i4.4,'_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i4.4,'_crust_mantle_div_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) eps_trace_over_3_crust_mantle
     close(27)
 
-    write(outputname,"('outer_core_div_displ_proc',i4.4,'_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i4.4,'_outer_core_div_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27)  ONE_THIRD * div_displ_outer_core
     close(27)
 
-    write(outputname,"('inner_core_div_displ_proc',i4.4,'_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i4.4,'_inner_core_div_displ_proc_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) eps_trace_over_3_inner_core
     close(27)
 
 ! epsilondev
 
-    write(outputname,"('crust_mantle_epsdev_displ_proc',i4.4,'_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i4.4,'_crust_mantle_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) epsilondev_crust_mantle
     close(27)
 
-    write(outputname,"('inner_core_epsdev_displ_proc',i4.4,'_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i4.4,'inner_core_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) epsilondev_inner_core
     close(27)
