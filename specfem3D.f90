@@ -454,7 +454,7 @@
      reclen_ymax_crust_mantle, reclen_xmin_outer_core, reclen_xmax_outer_core,&
      reclen_ymin_outer_core, reclen_ymax_outer_core, reclen_zmin, reclen1, reclen2
 
-  real(kind=CUSTOM_REAL), dimension(NDIM):: vector_displ_outer_core,b_vector_accel_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM):: vector_accel_outer_core,b_vector_displ_outer_core
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   double precision scale_kl
@@ -512,7 +512,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE_ROTATION) :: &
     A_array_rotation,B_array_rotation
 
-  integer i,j,k,ispec,irec,iglob,iglob_mantle,iglob_inner_core
+  integer i,j,k,l,ispec,irec,iglob,iglob_mantle,iglob_inner_core
 
 ! number of faces between chunks
   integer NUM_FACES,NUMMSGS_FACES
@@ -583,6 +583,7 @@
   real(kind=CUSTOM_REAL) b_two_omega_earth
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_A_array_rotation,b_B_array_rotation
   real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
+  real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
 !ADJOINT
 
 ! timer MPI
@@ -2959,32 +2960,30 @@
     displ_crust_mantle(:,i) = displ_crust_mantle(:,i) + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
   enddo
-  if (SIMULATION_TYPE == 3) then
-  do i=1,nglob_crust_mantle
-    b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) + b_deltat*b_veloc_crust_mantle(:,i) + &
-         b_deltatsqover2*b_accel_crust_mantle(:,i)
-    b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-  enddo
-  endif
 
 ! outer core
   do i=1,nglob_outer_core
     displ_outer_core(i) = displ_outer_core(i) + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
   enddo
-  if (SIMULATION_TYPE == 3) then
-  do i=1,nglob_outer_core
-    b_displ_outer_core(i) = b_displ_outer_core(i) + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
-    b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
-  enddo
-  endif
 
 ! inner core
   do i=1,NGLOB_INNER_CORE
     displ_inner_core(:,i) = displ_inner_core(:,i) + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
     veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
   enddo
+
+! backward field
   if (SIMULATION_TYPE == 3) then
+  do i=1,nglob_crust_mantle
+    b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) + b_deltat*b_veloc_crust_mantle(:,i) + &
+         b_deltatsqover2*b_accel_crust_mantle(:,i)
+    b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
+  enddo
+  do i=1,nglob_outer_core
+    b_displ_outer_core(i) = b_displ_outer_core(i) + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
+    b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
+  enddo
   do i=1,NGLOB_INNER_CORE
     b_displ_inner_core(:,i) = b_displ_inner_core(:,i) + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
     b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
@@ -3455,6 +3454,12 @@
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NCHUNKS)
 
+! multiply by the inverse of the mass matrix and update velocity
+  do i=1,nglob_outer_core
+    accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
+    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
+  enddo
+
   if (SIMULATION_TYPE == 3) then
   call assemble_MPI_scalar(myrank,b_accel_outer_core,nglob_outer_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3468,18 +3473,11 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
             NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NCHUNKS)
-  endif
 
-! multiply by the inverse of the mass matrix and update velocity
   do i=1,nglob_outer_core
-    accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
+    b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
+    b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
   enddo
-  if (SIMULATION_TYPE == 3) then
-    do i=1,nglob_outer_core
-      b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
-      b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
-    enddo
   endif
 
 ! ****************************************************
@@ -4073,6 +4071,14 @@
 
   endif   ! end of assembling forces with the central cube
 
+  do i=1,nglob_crust_mantle
+    accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+               + two_omega_earth*veloc_crust_mantle(2,i)
+    accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+               - two_omega_earth*veloc_crust_mantle(1,i)
+    accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
+  enddo
+
   if (SIMULATION_TYPE == 3) then
 !  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
@@ -4119,25 +4125,14 @@
 
   endif   ! end of assembling forces with the central cube
 
-  endif
-
-
-
   do i=1,nglob_crust_mantle
-    accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
-               + two_omega_earth*veloc_crust_mantle(2,i)
-    accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
-               - two_omega_earth*veloc_crust_mantle(1,i)
-    accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
+    b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+               + b_two_omega_earth*b_veloc_crust_mantle(2,i)
+    b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+               - b_two_omega_earth*b_veloc_crust_mantle(1,i)
+    b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
   enddo
-  if (SIMULATION_TYPE == 3) then
-    do i=1,nglob_crust_mantle
-      b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
-         + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-      b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
-         - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-      b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-    enddo
+
   endif
 
   if(OCEANS) then
@@ -4205,13 +4200,7 @@
   do i=1,nglob_crust_mantle
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
   enddo
-  if (SIMULATION_TYPE == 3) then
-    do i=1,nglob_crust_mantle
-      b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-    enddo
-  endif
-
-
+  
   do i=1,NGLOB_INNER_CORE
     accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
              + two_omega_earth*veloc_inner_core(2,i)
@@ -4221,7 +4210,11 @@
 
     veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
   enddo
+
   if (SIMULATION_TYPE == 3) then
+    do i=1,nglob_crust_mantle
+      b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
+    enddo
     do i=1,NGLOB_INNER_CORE
       b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
          + b_two_omega_earth*b_veloc_inner_core(2,i)
@@ -4409,16 +4402,48 @@
             gammayl = gammay_outer_core(i,j,k,ispec)
             gammazl = gammaz_outer_core(i,j,k,ispec)
 
-            call compute_field_gradient(displ_outer_core,1,i,j,k,vector_displ_outer_core, &
-               hprime_xx,hprime_yy,hprime_zz, xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl, &
-               gammayl,gammazl,ibool_outer_core(:,:,:,ispec),nglob_outer_core)
+            tempx1l = 0._CUSTOM_REAL
+            tempx2l = 0._CUSTOM_REAL
+            tempx3l = 0._CUSTOM_REAL
 
-            call compute_field_gradient(b_accel_outer_core,1,i,j,k,b_vector_accel_outer_core, &
-               hprime_xx,hprime_yy,hprime_zz, xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl, &
-               gammayl,gammazl, ibool_outer_core(:,:,:,ispec),nglob_outer_core)
+            do l=1,NGLLX
+              tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(l,i)
+            enddo
+
+            do l=1,NGLLY
+              tempx2l = tempx2l + b_displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(l,j)
+            enddo
+
+            do l=1,NGLLZ
+              tempx3l = tempx3l +  b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(l,k)
+            enddo
+
+            b_vector_displ_outer_core(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+            b_vector_displ_outer_core(2) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+            b_vector_displ_outer_core(3) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+            tempx1l = 0._CUSTOM_REAL
+            tempx2l = 0._CUSTOM_REAL
+            tempx3l = 0._CUSTOM_REAL
+
+            do l=1,NGLLX
+              tempx1l = tempx1l + accel_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(l,i)
+            enddo
+
+            do l=1,NGLLY
+              tempx2l = tempx2l + accel_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(l,j)
+            enddo
+
+            do l=1,NGLLZ
+              tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(l,k)
+            enddo
+
+            vector_accel_outer_core(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+            vector_accel_outer_core(2) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+            vector_accel_outer_core(3) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
             rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-               + deltat * dot_product(vector_displ_outer_core,b_vector_accel_outer_core)
+               + deltat * dot_product(b_vector_displ_outer_core,vector_accel_outer_core)
 
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
             div_displ_outer_core(i,j,k,ispec) = div_displ_outer_core(i,j,k,ispec) + kappal * accel_outer_core(iglob)
