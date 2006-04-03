@@ -4368,15 +4368,19 @@
         do j = 1, NGLLY
           do i = 1, NGLLX
             iglob = ibool_crust_mantle(i,j,k,ispec)
+
             rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * dot_product(accel_crust_mantle(:,iglob), b_displ_crust_mantle(:,iglob))
+               + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
+               + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
+               + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
 
             epsilondev_loc(:) = epsilondev_crust_mantle(:,i,j,k,ispec)
             b_epsilondev_loc(:) = b_epsilondev_crust_mantle(:,i,j,k,ispec)
             beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * (dot_product(epsilondev_loc(1:2) ,b_epsilondev_loc(1:2)) &
+               + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
                + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-                + 2 * dot_product(epsilondev_loc(3:5), b_epsilondev_loc(3:5)) )
+                + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
+                epsilondev_loc(5)*b_epsilondev_loc(5)) )
 
             alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
                + deltat * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
@@ -4443,7 +4447,9 @@
             vector_accel_outer_core(3) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
             rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-               + deltat * dot_product(b_vector_displ_outer_core,vector_accel_outer_core)
+               + deltat * (vector_accel_outer_core(1) * b_vector_displ_outer_core(1) &
+               + vector_accel_outer_core(2) * b_vector_displ_outer_core(2) &
+               + vector_accel_outer_core(3) * b_vector_displ_outer_core(3) )
 
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
             div_displ_outer_core(i,j,k,ispec) = div_displ_outer_core(i,j,k,ispec) + kappal * accel_outer_core(iglob)
@@ -4465,13 +4471,17 @@
             iglob = ibool_inner_core(i,j,k,ispec)
 
             rho_kl_inner_core(i,j,k,ispec) =  rho_kl_inner_core(i,j,k,ispec) &
-               + deltat * dot_product(accel_inner_core(:,iglob), b_displ_inner_core(:,iglob))
+               + deltat * (accel_inner_core(1,iglob) * b_displ_inner_core(1,iglob) &
+               + accel_inner_core(2,iglob) * b_displ_inner_core(2,iglob) &
+               + accel_inner_core(3,iglob) * b_displ_inner_core(3,iglob) )
+
             epsilondev_loc(:) = epsilondev_inner_core(:,i,j,k,ispec)
             b_epsilondev_loc(:) = b_epsilondev_inner_core(:,i,j,k,ispec)
             beta_kl_inner_core(i,j,k,ispec) =  beta_kl_inner_core(i,j,k,ispec) &
-               + deltat * (dot_product(epsilondev_loc(1:2), b_epsilondev_loc(1:2)) &
+               + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
                   + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-                  + 2 * dot_product(epsilondev_loc(3:5), b_epsilondev_loc(3:5))  )
+                  + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) &
+                  + epsilondev_loc(5)*b_epsilondev_loc(5)) )
 
             alpha_kl_inner_core(i,j,k,ispec) = alpha_kl_inner_core(i,j,k,ispec) &
                + deltat * (9 * eps_trace_over_3_inner_core(i,j,k,ispec) * b_eps_trace_over_3_inner_core(i,j,k,ispec))
