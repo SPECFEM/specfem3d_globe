@@ -127,6 +127,7 @@ program combine_paraview_data
     read(27,*) nglob(it)
     if (ir == 3) then
       read(27,*) nglob1(it)
+      if (.not. HIGH_RESOLUTION_MESH) nspec(it) = nspec_inner_core
     else
       nglob1(it) = nglob(it)
     endif
