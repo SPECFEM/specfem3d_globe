@@ -41,6 +41,79 @@
   character(len=4) chn
   character(len=150) sisname
 
+
+! BS BS begin section added for SAC
+  double precision, dimension(nrec) ::  stlon, stlat, stele
+  double precision t_cmt,elat,elon,depth
+
+  double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
+
+  double precision value1,value2, value3,value4,value5
+
+  integer write_counter,i
+
+  integer NSOURCES
+
+  integer, parameter :: IOUT_SAC=44
+  character(len=256) sisname_2
+  
+!variables for SAC header fields ---------------v
+
+  integer yr,jda, ho, mi
+  double precision sec
+  real mb,ms
+  character(len=150) region
+  character(12) ename
+
+  real DELTA 
+  real DEPMIN 
+  real DEPMAX 
+  real SCALE_F
+  real ODELTA
+  real B,E,O,A 
+
+  real STLA,STLO,STEL,STDP
+
+  real EVLA,EVLO,EVEL,EVDP
+  real MAG,DIST,AZ,BAZ,GCARC 
+  real DEPMEN 
+
+  real USER0,USER1,USER2,USER3
+
+  real CMPAZ,CMPINC
+
+  integer NZYEAR,NZJDAY,NZHOUR,NZMIN,NZSEC
+  integer NZMSEC,NVHDR,NORID,NEVID
+! NUMBER of POINTS:
+  integer NPTS
+  integer IFTYPE,IMAGTYP
+  integer IDEP
+  integer IZTYPE
+  integer IEVTYP
+  integer IQUAL
+  integer ISYNTH
+! permission flags:
+  integer LEVEN
+  integer LPSPOL
+  integer LOVROK
+  integer LCALDA
+
+  character(8) KSTNM
+  character(16) KEVNM
+  character(8) KCMPNM
+  character(8) KNETWK
+
+  character(8) KUSER0,KUSER1,KUSER2
+
+!
+  real UNUSED   ! header fields unused by SAC
+  real ndef     ! not defined values
+  real INTERNAL ! SAC internal variables, always leave undefined
+  real BYSAC  
+! end BS BS SAC header variables ---------------------------^
+
+!----------------------------------------------------------------
+
   do irec_local = 1,nrec_local
 
 ! get global number of that receiver
@@ -93,9 +166,264 @@
 
       close(IOUT)
 
+! BS BS begin of section added (SAC output)
+
+! get event information for SAC header 
+
+  call get_event_info(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ms,region,&
+                      cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES) ! BS BS added 12.10.2005
+
+  write(ename(1:12),'(a12)') region(1:12)
+
+  do i=1,len_trim(ename)
+    if (ename(i:i)==' ') ename(i:i)='_'
+  enddo
+
+! get station information for SAC header 
+
+  call get_station_info(myrank,nrec,station_name,network_name,stlat,stlon,stele)
+
+      write(sisname_2,"(a,'.sac')") trim(sisname)
+      
+    open(unit=IOUT_SAC,file=trim(LOCAL_PATH)//'/'//trim(sisname_2),status='unknown')
+
+
+!######################## SAC Alphanumeric Seismos ############################
+!
+! written by Markus Treml and Bernhard Schuberth, Dept. for Earth and Environ-
+! mental Sciences, Ludwig-Maximilians-University Munich, Germany
+!
+! some words about SAC timing:
+!==============================
+!
+!NPTS,DELTA,B,E:
+! These define the timing of the seismogram; E is calculated by sac. So, say 
+! you have 100 NPTS, a DELTA of 0.5, and set B to 0, E should be 50.   
+! Likewise setting B to -50 gives an E of 0.  Cutting basically cuts out points 
+! between the two times you designate based on these values.
+!KZTIME and KZDATE:
+! Now things get funky.  KZTIME defines the exact time that the trace begins 
+! at; it has no affect on timing per se.  You'll really notice its effect if 
+! you read in two traces from different dates.
+
+! Reference markers, (e.g. the o-marker) are not defined relative to this time,
+! but rather to the begin time (B) of the seismo, so if you adjust B, you also 
+! need to adjust KZTIME to match.  l would suggest experimenting with this until 
+! you understand it; it's a little non-intuitive until you see it for yourself.
+!
+!-----------------------------------------------------------------------------
+!
+! This file is essentially the alphanumeric equivalent of the SAC binary data 
+! file. The header section is stored on the first 30 cards. This is followed 
+! by one or two data sections. The data is in 5G15.7 format.
+!----------------------------------------------------------------------
+!
+!define certain default values
+!
+!  unused of undefined values are set to '-12345.00'
+  UNUSED   = -12345.00 ! header fields unused by SAC
+  ndef     = -12345.00 ! not defined values
+  INTERNAL = -12345.00 ! SAC internal variables, always left undefined
+  BYSAC    = -12345.00 ! values calculated by SAC from other variables
+!
+!
+  DELTA  = DT          ! [REQUIRED]
+  DEPMIN = BYSAC
+  DEPMAX = BYSAC
+  DEPMEN = BYSAC
+  SCALE_F= 1000000000  ! factor for y-value, set to 10e9, so that values are in nm
+  ODELTA = ndef        ! increment from delta
+  B      = sngl((it_begin -1)*DT-hdur + t_cmt) ! [REQUIRED]
+  E      = BYSAC       ! [REQUIRED]
+  O      = ndef  !###
+  A      = ndef  !###
+!station values: 
+  STLA = stlat(irec)
+  STLO = stlon(irec)
+  STEL = stele(irec)
+  STDP = ndef    !stdep(irec)
+!event values (hypocenter):
+  EVLA   = elat
+  EVLO   = elon
+  EVEL   = ndef  !not defined 
+  EVDP   = depth
+
+!cmt location values (different from hypocenter location, usually):
+  USER0  = cmt_lat
+  USER1  = cmt_lon
+  USER2  = cmt_depth
+
+  USER3  = cmt_hdur !half duration from CMT if not changed to hdur=0.d0 (point source)
+
+  MAG    = mb    ! 
+  IMAGTYP= 52    ! 52 = Mb? 55 = Mw!
+
+  DIST   = BYSAC ! cause
+  AZ     = BYSAC ! LCALDA
+  BAZ    = BYSAC ! is
+  GCARC  = BYSAC ! TRUE
+
+! instrument orientation
+  if(iorientation == 1) then !N
+     CMPAZ  = 0.00
+     CMPINC =90.00
+  else if(iorientation == 2) then !E
+     CMPAZ  =90.00
+     CMPINC =90.00
+  else if(iorientation == 3) then !Z
+     CMPAZ  = 0.00
+     CMPINC = 0.00
+  endif
+!----------------end format G15.7--------
+
+! date and time:
+  NZYEAR =yr
+  NZJDAY =jda
+  NZHOUR =ho
+  NZMIN  =mi
+  NZSEC  =int(sec)
+  NZMSEC =int((sec-int(sec))*1000)
+
+  NVHDR=6 ! SAC header version number. Current is 6
+
+! CSS3.0 variables:
+  NORID =int(ndef) !origin ID
+  NEVID =int(ndef) !event  ID
+!NWVID =ndef !waveform ID
+
+! NUMBER of POINTS:
+  NPTS = it_end-it_begin + 1 ! [REQUIRED] 
+! event type
+  IFTYPE = 1 ! 1=ITIME, i.e. seismogram  [REQUIRED] # numbering system is 
+  IDEP   = 6 ! 6: displ/nm                          # quite strange, best 
+  IZTYPE = 11 !=origint reference time equivalent ! # by chnhdr and write
+  IEVTYP = 40 !event type, 40: Earthquake           # alpha and check
+  IQUAL  = int(ndef) ! quality
+  ISYNTH = int(ndef) ! 1 real data, 2...n synth. flag
+! permission flags:
+  LEVEN =1 ! evenly spaced data [REQUIRED]
+  LPSPOL=1 ! ? pos. polarity of components (has to be TRUE for LCALDA=1)
+  LOVROK=1 ! 1: OK to overwrite file on disk
+  LCALDA=1 ! 1: calculate DIST, AZ, BAZ, and GCARC, 0: do nothing
+! ------------------end format 5I10---------
+!
+!----------------------------------
+  KSTNM  = station_name(irec) ! A8
+
+  if (NSOURCES == 1) then
+    KEVNM  = ename(1:len_trim(ename))//'_syn'! A16
+  else
+    KEVNM  = ename(1:len_trim(ename))//'_sFS'! A16
+  endif
+
+!----------------------------------
+  KCMPNM = chn(3:3)           ! 3A8
+  KNETWK = network_name(irec) !  A6
+  
+  KUSER0 = 'CMT_LAT_'          !  A8
+  KUSER1 = 'CMT_LON_'          !  A8
+  KUSER2 = 'CMTDEPTH'          !  A8
+!----------------------------------
+
+!
+! Formats of alphanumerical SAC header fields
+510 format(5G15.7,5G15.7,5G15.7,5G15.7,5G15.7)
+520 format(5I10,5I10,5I10,5I10,5I10)
+530 format(A8,A16)
+540 format(A8,A8,A8)
+!
+! now write actual header:
+! ------------------------
+!
+! real variables:
+!
+  write(IOUT_SAC,510) DELTA,    DEPMIN,  DEPMAX,  SCALE_F,  ODELTA
+!                                 DELTA     DEPMIN   DEPMAX   SCALE   ODELTA
+  write(IOUT_SAC,510) B,        E,       O,       A,      INTERNAL
+!                                 B         E        O        A       INTERNAL
+  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+!                                 T0        T1       T2       T3      T4
+  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+!                                 T5        T6       T7       T8      T9
+  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+!                                 F         RESP0    RESP1    RESP2   RESP3
+  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+!                                 RESP4     RESP5    RESP6    RESP7   RESP8
+  write(IOUT_SAC,510) ndef,     STLA,    STLO,    STEL,   STDP  
+!                                 RESP9     STLA     STLO     STEL    STDP 
+  write(IOUT_SAC,510) EVLA,     EVLO,    EVEL,    EVDP,   MAG
+!                                 EVLA      EVLO     EVEL     EVDP    MAG
+  write(IOUT_SAC,510) USER0,    USER1,   USER2,   USER3,   ndef
+!                                 USER0     USER1    USER2    USER3   USER4
+  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+!                                 USER5     USER6    USER7    USER8   USER9
+  write(IOUT_SAC,510) DIST,     AZ,      BAZ,     GCARC,  INTERNAL
+!                                 DIST      AZ       BAZ      GCARC   INTERNAL
+  write(IOUT_SAC,510) INTERNAL, DEPMEN,  CMPAZ,   CMPINC, ndef 
+!                                 INTERNAL  DEPMEN   CMPAZ    CMPINC  XMINIMUM
+  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+!                                 XMAXIMUM  YMINIMUM YMAXIMUM ADJTM   UNUSED
+  write(IOUT_SAC,510) UNUSED,   UNUSED,  UNUSED,  UNUSED, UNUSED
+!
+! integer variables:
+!
+  write(IOUT_SAC,520) NZYEAR, NZJDAY, NZHOUR, NZMIN, NZSEC
+  write(IOUT_SAC,520) NZMSEC, NVHDR, NORID, NEVID, NPTS
+  write(IOUT_SAC,520) int(ndef),int(ndef),int(ndef),int(ndef),int(ndef)
+!                                 NSPTS, NWFID, NXSIZE, NYSIZE, UNUSED
+  write(IOUT_SAC,520) IFTYPE, IDEP, IZTYPE, int(UNUSED), int(ndef) 
+!                                                                    IINST
+  write(IOUT_SAC,520) int(ndef),int(ndef),IEVTYP, int(ndef), ISYNTH 
+!                                 ISTREG IEVREG IEVTYP IQUAL ISYNTH
+  write(IOUT_SAC,520) IMAGTYP,int(ndef),int(ndef),int(ndef),int(ndef) 
+!                                 IMAGTYP, IMAGSRC, UNUSED, UNUSED, UNUSED
+  write(IOUT_SAC,520) int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED)
+  write(IOUT_SAC,520) LEVEN, LPSPOL, LOVROK, LCALDA, int(UNUSED)
+  write(IOUT_SAC,530) KSTNM, KEVNM
+!
+! character variables:
+!
+  write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
+!                                   KHOLE    KO       KA 
+  write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
+!                                   KT0      KT1      KT2 
+  write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
+!                                   KT3      KT4      KT5 
+  write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
+!                                   KT6      KT7      KT8 
+  write(IOUT_SAC,540) '-12345  ','-12345  ',KUSER0
+!                                   KT9      KF       KUSER0 
+  write(IOUT_SAC,540)   KUSER1, KUSER2, KCMPNM
+!                                   KUSER1     KUSER2       KCMPNM 
+  write(IOUT_SAC,540)   KNETWK,'-12345  ','-12345  '     
+!                                   KNETWK   KDATRD   KINST 
+!
+! now write data - in steps of 5 per row:
+! ---------------
+  write_counter=0
+      do isample = it_begin+5,it_end+1,5
+         !
+         value1 = dble(seismograms(iorientation,irec_local,isample-5))
+         value2 = dble(seismograms(iorientation,irec_local,isample-4))
+         value3 = dble(seismograms(iorientation,irec_local,isample-3))
+         value4 = dble(seismograms(iorientation,irec_local,isample-2))
+         value5 = dble(seismograms(iorientation,irec_local,isample-1))
+         !
+         write(IOUT_SAC,510) &
+              sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
+         write_counter=write_counter+1
       enddo
 
-  enddo
+
+!#################### end SAC Alphanumeric Seismos ############################
+
+  close(IOUT_SAC)
+
+! BS BS end of section added (SAC output)
+
+      enddo ! do iorientation = 1,3
+
+  enddo ! do irec_local = 1,nrec_local
 
   end subroutine write_seismograms
 
@@ -179,3 +507,235 @@
   enddo
 
   end subroutine write_adj_seismograms
+
+
+! BS BS begin of section added for SAC output
+! additional routines
+  
+!=====================================================================
+
+  subroutine get_event_info(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ms,region,&
+                            cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES) 
+
+! written by Bernhard Schuberth
+
+! This subroutine reads the first line of the DATA/CMTSOLUTION file and extracts event information
+! needed for SAC or PITSA headers
+
+! based on existing subroutine get_cmt.f90
+
+  implicit none
+
+  include "constants.h"
+
+  integer ios,icounter,NSOURCES
+
+  logical ext
+
+  integer yr,jda,ho,mi
+  double precision sec
+  double precision t_cmt,elat,elon,depth
+
+  double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
+
+  integer mo,da,julian_day
+  character(len=5) datasource
+  character(len=150) string
+
+  character(len=150) dummystring
+
+  character(len=150) region !event name for SAC header
+  real mb,ms
+
+  character(len=150) CMTSOLUTION
+
+!
+!---- read hypocenter info
+!
+  !open(unit=821,file='DATA/CMTSOLUTION',iostat=ios,status='old')
+  call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION')
+  open(unit=821,file=CMTSOLUTION,iostat=ios,status='old')
+  if(ios /= 0) stop 'error opening CMTSOLUTION file (in get_event_info.f90)'
+
+  icounter = 0
+  do while(ios == 0)
+    read(821,"(a)",iostat=ios) dummystring
+    if(ios == 0) icounter = icounter + 1
+  enddo
+  close(821)
+  if(mod(icounter,NLINES_PER_CMTSOLUTION_SOURCE) /= 0) &
+    stop 'total number of lines in CMTSOLUTION file should be a multiple of NLINES_PER_CMTSOLUTION_SOURCE'
+  NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
+  if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
+
+  if (NSOURCES == 1) then
+
+  open(unit=821,file=CMTSOLUTION,status='old')
+
+  ! example header line of CMTSOLUTION file  
+  !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
+  !event_id, date,origin time,latitude,longitude,depth, mb, MS, region
+
+  ! read header with event information
+    read(821,*) &
+          datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
+    jda=julian_day(yr,mo,da)
+
+ 
+  ! ignore line with event name
+    read(821,"(a)") string
+
+  ! read time shift
+    read(821,"(a)") string
+    read(string(12:len_trim(string)),*) t_cmt
+
+  ! read half duration
+    read(821,"(a)") string
+    read(string(15:len_trim(string)),*) cmt_hdur
+
+  ! read latitude
+    read(821,"(a)") string
+    read(string(10:len_trim(string)),*) cmt_lat
+
+  ! read longitude
+    read(821,"(a)") string
+    read(string(11:len_trim(string)),*) cmt_lon
+
+  ! read depth
+    read(821,"(a)") string
+    read(string(7:len_trim(string)),*) cmt_depth
+
+  else
+
+    INQUIRE (FILE='DATA/CMTSOLUTION_point_source', EXIST=ext)
+
+    if(ext) then
+
+    !open(unit=821,file='DATA/CMTSOLUTION_CMT',iostat=ios,status='old')
+
+    call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION_point_source')
+    open(unit=821,file=CMTSOLUTION,iostat=ios,status='old')
+    if(ios /= 0) stop 'error opening CMTSOLUTION_point_source file (in get_event_info.f90)'
+
+  ! example header line of CMTSOLUTION file  
+  !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
+  !event_id, date,origin time,latitude,longitude,depth, mb, MS, region
+
+  ! read header with event information
+    read(821,*) &
+          datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
+    jda=julian_day(yr,mo,da)
+
+ 
+  ! ignore line with event name
+    read(821,"(a)") string
+
+  ! read time shift
+    read(821,"(a)") string
+    read(string(12:len_trim(string)),*) t_cmt
+
+  ! read half duration
+    read(821,"(a)") string
+    read(string(15:len_trim(string)),*) cmt_hdur
+
+  ! read latitude
+    read(821,"(a)") string
+    read(string(10:len_trim(string)),*) cmt_lat
+
+  ! read longitude
+    read(821,"(a)") string
+    read(string(11:len_trim(string)),*) cmt_lon
+
+  ! read depth
+    read(821,"(a)") string
+    read(string(7:len_trim(string)),*) cmt_depth
+
+    else
+
+    open(unit=821,file=CMTSOLUTION,status='old')
+
+  ! example header line of CMTSOLUTION file  
+  !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
+  !event_id, date,origin time,latitude,longitude,depth, mb, MS, region
+
+  ! read header with event information
+    read(821,*) &
+          datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
+    jda=julian_day(yr,mo,da)
+
+ 
+  ! ignore line with event name
+    read(821,"(a)") string
+
+  ! read time shift
+    read(821,"(a)") string
+    read(string(12:len_trim(string)),*) t_cmt
+
+
+    cmt_hdur=-1e8
+    cmt_lat=-1e8
+    cmt_lon=-1e8
+    cmt_depth=-1e8
+
+
+    endif
+
+  endif
+
+  close(821)
+
+  end subroutine get_event_info
+
+!--------------------------------------------------------------------
+
+  subroutine get_station_info(myrank,nrec,station_name,network_name,stlat,stlon,stele)
+
+! written by Bernhard Schuberth
+
+! This subroutine reads the DATA/Stations file and extracts station information
+! needed for SAC or PITSA headers
+
+! based on existing subroutine locate_receivers.f90
+
+  implicit none
+
+  include 'constants.h'
+
+  integer irec,nrec_dummy,myrank
+  integer, intent(in) :: nrec
+  character(len=MAX_LENGTH_STATION_NAME), intent(in),dimension(nrec) :: station_name
+  character(len=MAX_LENGTH_NETWORK_NAME), intent(in),dimension(nrec) :: network_name
+  double precision, intent(out),dimension(nrec) :: stlat,stlon,stele
+  double precision :: stbur
+  character(len=MAX_LENGTH_STATION_NAME) :: dummy_str_1
+  character(len=MAX_LENGTH_NETWORK_NAME) :: dummy_str_2 
+
+  character(len=150) STATIONS
+
+  !open(unit=812,file='DATA/STATIONS',status='old')
+  
+  call get_value_string(STATIONS, 'solver.STATIONS', 'DATA/STATIONS')
+  open(unit=812,file=STATIONS,status='old')
+  
+  read(812,*) nrec_dummy
+
+  if(nrec_dummy /= nrec) call exit_MPI(myrank,'problem with number of receivers in get_station_info ( BS BS!)')
+
+  do irec=1,nrec
+
+    read(812,*) dummy_str_1,dummy_str_2,stlat(irec),stlon(irec),stele(irec),stbur ! stbur only used as a dummy 
+
+    ! test if get_station_info works! 
+
+    if (trim(dummy_str_1) .ne. trim(station_name(irec)) .or. trim(dummy_str_2) .ne. trim(network_name(irec))) &
+       call exit_MPI(myrank,'problem with receiver info in get_station_info ( BS BS!)') 
+
+  enddo
+
+  close(unit=812)
+
+  end subroutine get_station_info
+
+! BS BS end of section added for SAC output
+! additional routines
+  
