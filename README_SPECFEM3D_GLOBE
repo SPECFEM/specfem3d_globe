@@ -24,16 +24,7 @@
 !=======================================================================!
 
 Instructions on how to install and use SPECFEM3D_GLOBE are
-available in the manual located in DATA/util/manual.
+available in the manual located in USERS_MANUAL.
 
-Main developers: Dimitri Komatitsch and Jeroen Tromp
-
-Additional contributions by:
-
-Qinya Liu
-Brian Savage
-Leif Strand
-Min Chen
-Vala Hjorleifsdottir
-Bernhard Schuberth
+Main developers: Dimitri Komatitsch, Jeroen Tromp and Qinya Liu.
 
