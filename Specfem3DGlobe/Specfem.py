@@ -183,6 +183,7 @@ class Specfem(Script):
         self.inventory.launcher.inventory.nodes = nodes
         self.inventory.launcher.nodes = nodes
         self.inventory.scheduler.inventory.nodes = nodes
+        self.inventory.scheduler.nodes = nodes
         
         # validate absorbing conditions
         if self.inventory.solver.inventory.ABSORBING_CONDITIONS:
