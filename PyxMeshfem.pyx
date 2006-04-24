@@ -14,8 +14,8 @@ cdef extern from "config.h":
 cdef extern void meshfem3D_f "FC_FUNC(meshfem3d, MESHFEM3D)" () except *
 def meshfem3D(arg):
     """Run the SPECFEM3D Global Mesher."""
-    from PyxParameters import component
-    component = arg
+    import PyxParameters
+    PyxParameters.component = arg
     meshfem3D_f()
 
 

@@ -14,8 +14,8 @@ cdef extern from "config.h":
 cdef extern void specfem3D_f "FC_FUNC(specfem3d, SPECFEM3D)" () except *
 def specfem3D(arg):
     """Run the SPECFEM3D Global Solver."""
-    from PyxParameters import component
-    component = arg
+    import PyxParameters
+    PyxParameters.component = arg
     specfem3D_f()
 
 
