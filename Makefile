@@ -356,11 +356,11 @@ specfem3D: constants.h OUTPUT_FILES/values_from_mesher.h \
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
-create_header_file: $O/create_header_file.o $O/read_parameter_file.o \
+create_header_file: $O/program_create_header_file.o $O/create_header_file.o $O/read_parameter_file.o \
      $O/compute_parameters.o $O/define_subregions_crust_mantle.o \
      $O/hex_nodes.o $O/save_header_file.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o \
      $O/read_value_parameters.o $O/get_value_parameters.o
-	${F90} $(FLAGS_CHECK) -o xcreate_header_file $O/create_header_file.o \
+	${F90} $(FLAGS_CHECK) -o xcreate_header_file $O/program_create_header_file.o  $O/create_header_file.o \
      $O/read_parameter_file.o $O/compute_parameters.o \
      $O/define_subregions_crust_mantle.o $O/hex_nodes.o $O/save_header_file.o \
      $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o \
@@ -450,6 +450,9 @@ $O/read_arrays_solver.o: constants.h OUTPUT_FILES/values_from_mesher.h read_arra
 
 $O/convolve_source_timefunction.o: convolve_source_timefunction.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/convolve_source_timefunction.o convolve_source_timefunction.f90
+
+$O/program_create_header_file.o: program_create_header_file.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/program_create_header_file.o program_create_header_file.f90
 
 $O/create_header_file.o: create_header_file.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/create_header_file.o create_header_file.f90
@@ -689,11 +692,29 @@ $O/write_c_binary.o: write_c_binary.c
 CC = cc
 MPICC = mpicc
 
-PYCOMMON_OBJ = \
+PYSPECFEM_SUPPORT_OBJ = \
        $O/misc.o \
-       $O/Specfem3DGlobeCode.o \
-       $O/PyxMPI.o \
        $O/trampoline.o \
+       $O/PyxParameters.o
+
+PYSPECFEM_BOOTSTRAP_OBJ = \
+       $(PYSPECFEM_SUPPORT_OBJ) \
+       $O/compute_parameters.o \
+       $O/create_header_file.o \
+       $O/define_subregions_crust_mantle.o \
+       $O/euler_angles.o \
+       $O/hex_nodes.o \
+       $O/read_parameter_file.o \
+       $O/reduce.o \
+       $O/rthetaphi_xyz.o \
+       $O/save_header_file.o
+
+PYSPECFEM_OBJ = \
+       $(PYSPECFEM_SUPPORT_OBJ) \
+       $O/PyxMeshfem.o \
+       $O/PyxSpecfem.o \
+       $O/PyxMPI.o \
+       $O/create_header_file.o \
        $O/create_regions_mesh.o \
        $O/create_chunk_buffers.o \
        $O/topo_bathy.o \
@@ -755,42 +776,36 @@ PYCOMMON_OBJ = \
        $O/save_header_file.o \
        $O/recompute_jacobian.o \
        $O/attenuation_model.o \
-       $O/gll_library.o
-
-PYMESHFEM_OBJ = \
-       $(PYCOMMON_OBJ) \
-       $O/pymeshfem3D.o \
-       $O/meshfem3D.o 
-
-PYSPECFEM_OBJ = \
-       $(PYCOMMON_OBJ) \
+       $O/gll_library.o \
+       $O/meshfem3D.o \
        $O/assemble_MPI_central_cube.o \
        $O/compute_forces_crust_mantle.o \
        $O/compute_forces_outer_core.o \
        $O/compute_forces_inner_core.o \
        $O/read_arrays_solver.o \
-       $O/pyspecfem3D.o \
-       $O/specfem3D.o 
+       $O/specfem3D.o
 
-pymeshfem3D: constants.h $O/config $(PYMESHFEM_OBJ)
-	${MPICC} $(CFLAGS) -o xmeshfem3D \
-		$(PYMESHFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
+OUTPUT_DIR = OUTPUT_FILES
 
-pyspecfem3D: constants.h $O/config $(PYSPECFEM_OBJ)
-	${MPICC} $(CFLAGS) -o xspecfem3D \
-		$(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config --python-ldflags` `./$O/config --fclibs`
+pyspecfem3D: main.c $O/config.h $O/config $(PYSPECFEM_BOOTSTRAP_OBJ)
+	${CC} $(CFLAGS) -o xspecfem3D $(CFLAGS) -I$O main.c \
+		$(PYSPECFEM_BOOTSTRAP_OBJ) `./$O/config  --python-cppflags --python-ldflags` `./$O/config --fclibs`
 
-$O/pymeshfem3D.o: main.c $O/config.h $O/config
-	${MPICC} $(CFLAGS) -DSCRIPT=Meshfem -c -I$O `./$O/config --python-cppflags` -o $O/pymeshfem3D.o main.c
-
-$O/pyspecfem3D.o: main.c $O/config.h $O/config
-	${MPICC} $(CFLAGS) -DSCRIPT=Specfem -c -I$O `./$O/config --python-cppflags` -o $O/pyspecfem3D.o main.c
+$(OUTPUT_DIR)/specfem3D: main.c $O/config.h $O/config $(PYSPECFEM_OBJ)
+	${MPICC} $(CFLAGS) -o $@ $(CFLAGS) -DUSE_MPI -I$O main.c \
+		$(PYSPECFEM_OBJ) $(MPI_FLAGS) `./$O/config  --python-cppflags --python-ldflags` `./$O/config --fclibs`
 
 $O/misc.o: misc.c $O/config.h $O/config
 	${MPICC} $(CFLAGS) -c -I$O `./$O/config --python-cppflags` -o $O/misc.o misc.c
 
-$O/Specfem3DGlobeCode.o: Specfem3DGlobeCode.c $O/config.h $O/config
-	${CC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/Specfem3DGlobeCode.o Specfem3DGlobeCode.c
+$O/PyxParameters.o: PyxParameters.c $O/config.h $O/config
+	${CC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/PyxParameters.o PyxParameters.c
+
+$O/PyxMeshfem.o: PyxMeshfem.c $O/config.h $O/config
+	${CC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/PyxMeshfem.o PyxMeshfem.c
+
+$O/PyxSpecfem.o: PyxSpecfem.c $O/config.h $O/config
+	${CC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/PyxSpecfem.o PyxSpecfem.c
 
 $O/PyxMPI.o: PyxMPI.c $O/config.h $O/config
 	${MPICC} -c $(CFLAGS) -I$O `./$O/config --python-cppflags` -o $O/PyxMPI.o PyxMPI.c
@@ -807,5 +822,7 @@ $O/config: config.in configure
 # target to update the Pyrex-generated code
 # requires Pyrex:  http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 pyrex:
-	pyrexc Specfem3DGlobeCode.pyx -o Specfem3DGlobeCode.c
+	pyrexc PyxParameters.pyx -o PyxParameters.c
+	pyrexc PyxMeshfem.pyx -o PyxMeshfem.c
+	pyrexc PyxSpecfem.pyx -o PyxSpecfem.c
 	pyrexc PyxMPI.pyx -o PyxMPI.c

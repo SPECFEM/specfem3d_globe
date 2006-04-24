@@ -1,4 +1,4 @@
-# Process this file with Pyrex to produce Specfem3DGlobeCode.c
+# Process this file with Pyrex to produce PyxParameters.c
 
 
 """Python bindings for the SPECFEM3D Global Solver."""
@@ -80,11 +80,12 @@ cdef public void get_value_string "FC_FUNC_(get_value_string, GET_VALUE_STRING)"
 
 # external Fortran functions
 
-cdef extern void xxxxfem3D_dispatch() except *
-def xxxxfem3D(arg):
-    """Run the SPECFEM3D Global Mesher/Solver."""
+cdef extern void create_header_file_f "FC_FUNC_(create_header_file, CREATE_HEADER_FILE)" () except *
+def create_header_file(arg):
+    """Create the include file for the solver."""
     global component
     component = arg
-    xxxxfem3D_dispatch()
+    create_header_file_f()
+
 
 # end of file

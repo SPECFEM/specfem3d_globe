@@ -1,17 +1,27 @@
 
 #include <Python.h>
 #include <stdio.h>
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
 #include "config.h"
 
-
-extern void initSpecfem3DGlobeCode(void);
+extern void initPyxParameters(void);
+#ifdef USE_MPI
+extern void initPyxMeshfem(void);
+extern void initPyxSpecfem(void);
 extern void initPyxMPI(void);
+#endif
 
 static int status;
 
 struct _inittab inittab[] = {
-    { "Specfem3DGlobeCode", initSpecfem3DGlobeCode },
+    { "PyxParameters", initPyxParameters },
+#ifdef USE_MPI
+    { "PyxMeshfem", initPyxMeshfem },
+    { "PyxSpecfem", initPyxSpecfem },
     { "PyxMPI", initPyxMPI },
+#endif
     { 0, 0 }
 };
 
@@ -31,12 +41,32 @@ void FC_RUN_PYTHON_SCRIPT()
 
 int main(int argc, char **argv)
 {
+#ifdef USE_MPI
+    /*
+      We are a worker on a compute node -- i.e., we are a process
+      started by 'mpirun'.  Call MPI_Init() now to clean/set-up
+      'argv'.
+    */
+    status = MPI_Init(&argc, &argv);
+    if (status != MPI_SUCCESS) {
+	fprintf(stderr, "%s: MPI_Init failed! Exiting ...\n", argv[0]);
+	return status;
+    }
+#else
+    /*
+      We are either the launcher, or the scheduler started directly by
+      the user on the login node.  Don't call MPI_Init(), as MPICH-GM
+      will die with SIGPIPE ("<MPICH-GM> Error: Need to obtain the job
+      magic number in GMPI_MAGIC !").
+    */
+#endif
+    
     /* add our extension module */
     if (PyImport_ExtendInittab(inittab) == -1) {
         fprintf(stderr, "%s: PyImport_ExtendInittab failed! Exiting ...", argv[0]);
         return 1;
     }
-    
+
     /* initialize Python */
     Py_Initialize();
     
@@ -55,19 +85,12 @@ int main(int argc, char **argv)
     /* shut down Python */
     Py_Finalize();
     
-    return status;
-}
-
-
-void xxxxfem3D_dispatch()
-{
-#define Meshfem 42
-#define Specfem 24
-#if SCRIPT == Meshfem
-    FC_FUNC(meshfem3d, MESHFEM3D)();
-#else
-    FC_FUNC(specfem3d, SPECFEM3D)();
+#ifdef USE_MPI
+    /* shut down MPI */
+    MPI_Finalize();
 #endif
+
+    return status;
 }
 
 
