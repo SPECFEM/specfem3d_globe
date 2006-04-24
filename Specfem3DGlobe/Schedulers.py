@@ -151,7 +151,7 @@ class BatchScheduler(Scheduler):
             expandMacros('''\
 
 cd ${directory}
-${command} ''' + args, self.inv)
+''' + args, self.inv)
             ]
         script = "\n".join(script) + "\n"
         return script

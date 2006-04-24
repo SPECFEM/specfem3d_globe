@@ -54,6 +54,9 @@ class LauncherMPI(Launcher):
 
 
     def launch(self, script, method):
+
+        self.inventory.executable = os.path.abspath(self.inventory.executable)
+
         args = self._buildArgumentList(method)
         if not args:
             return self.inventory.dry
@@ -75,7 +78,6 @@ class LauncherMPI(Launcher):
 
         if self.nodes < 1:
             self.nodes = 1
-        self.nodes = 2
 
         # build the command
         args = []
