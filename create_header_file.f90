@@ -18,7 +18,7 @@
 ! create file OUTPUT_FILES/values_from_mesher.h based upon DATA/Par_file
 ! in order to compile the solver with the right array sizes
 
-  program create_header_file
+  subroutine create_header_file
 
   implicit none
 
@@ -173,5 +173,5 @@
   print *,'done'
   print *
 
-  end program create_header_file
+  end subroutine create_header_file
 

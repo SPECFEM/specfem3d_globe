@@ -4,77 +4,105 @@
 from CodecConfig import CodecConfig
 import journal
 from pyre.applications.Script import Script as PyreScript
-import sys
+import os, sys
 
 
 # patch Pyre to our liking
 import PyrePatches
 
 
-def myexcepthook(type, value, traceback):
-    sys.__excepthook__(type, value, traceback)
-    import pdb
-    pdb.post_mortem(traceback)
-
-
 class Script(PyreScript):
 
     class Inventory(PyreScript.Inventory):
-
-        from pyre.inventory import bool, facility, str
+        
+        from pyre.inventory import str
         from Launchers import LauncherFacility
-        from Mesher import Mesher
-        from Model import ModelFacility
-        from Properties import OutputDir
-        from Solver import Solver
+        from Schedulers import SchedulerFacility
         
-        LOCAL_PATH                    = str("local-path")
-        OUTPUT_FILES                  = OutputDir("output-dir")
+        launcher                      = LauncherFacility("launcher", default="mpich")
+        scheduler                     = SchedulerFacility("scheduler", default="lsf")
         
-        launcher                      = LauncherFacility("launcher")
-        mesher                        = facility("mesher", factory=Mesher, args=["mesher"])
-        model                         = ModelFacility("model")
-        solver                        = facility("solver", factory=Solver, args=["solver"])
-    
-    def __init__(self):
-        super(Script, self).__init__("Specfem3DGlobe")
-        self.error = journal.error(self.name)
+        command                       = str("command", default="go")
+        
+    class ShellError(RuntimeError): pass
 
-    def _init(self):
-        super(Script, self)._init()
-        self.MODEL = self.inventory.model.className
-        
-        # compute the total number of processors needed
-        nodes = self.inventory.mesher.nproc()
-        self.inventory.launcher.inventory.nodes = nodes
-        self.inventory.launcher.nodes = nodes
-
-        # validate absorbing conditions
-        if self.inventory.solver.inventory.ABSORBING_CONDITIONS:
-            NCHUNKS = self.inventory.mesher.inventory.NCHUNKS
-            if NCHUNKS == 6:
-                raise ValueError("cannot have absorbing conditions in the full Earth")
-            elif NCHUNKS == 3:
-                raise ValueError("absorbing conditions not supported for three chunks yet")
-        
+    #
+    #--- top-level entry points for all cases (login, batch, compute)
+    #
     
     def run(self, *args, **kwds):
-        for i in xrange(0, len(sys.argv)):
-            if sys.argv[i] == '-pdb':
-                if sys.stdin.isatty():
-                    sys.excepthook = myexcepthook
-                del sys.argv[i]
-                break
+        # This method is run *before* the Pyre framework has processed
+        # our command-line arguments and input files.
         try:
             super(Script, self).run(*args, **kwds)
         except PyrePatches.PropertyValueError, error:
             self.reportPropertyValueError(error)
+        return
+
+    def main(self, *args, **kwds):
+        # This method is run *after* the Pyre framework has processed
+        # our command-line arguments and input files.  All the
+        # properties and components in our inventory are ready.
+        command = self.inventory.command
+        try:
+            method = getattr(self, command)
+        except AttributeError:
+            print "%s: unknown command: %s" % (sys.argv[0], command)
+            sys.exit(1)
+        else:
+            try:
+                method()
+            except Script.ShellError, error:
+                print "%s: %s" % (sys.argv[0], error)
+                sys.exit(1)
+        return
+
+    #
+    #--- methods performed on the login node
+    #
+    
+    def schedule(self, method):
+        scheduler = self.inventory.scheduler
+        scheduler.inventory.executable = self.launcherExe
+        scheduler.schedule(self, method)
+
+    #
+    #--- methods performed when the batch job runs
+    #
+    
+    def launch(self, method):
+        launcher = self.inventory.launcher
+        launcher.inventory.executable = self.computeExe
+        launcher.launch(self, method)
+
+    #
+    #--- performing
+    #
+
+    def perform(self, method):
+        method = getattr(self, method)
+        method()
+
+    #
+    #--- shell
+    #
+
+    def shellCommand(self, *args):
+        print ' '.join(args)
+        status = os.spawnvp(os.P_WAIT, args[0], args)
+        if status != 0:
+            raise Script.ShellError("%s: exit %d" % (args[0], status))
+        return
+    
+    #
+    #--- error handling
+    #
 
     def raisePropertyValueError(self, traitName):
         desc = self.inventory.getTraitDescriptor(traitName)
         trait = self.inventory.getTrait(traitName)
         raise PyrePatches.PropertyValueError, (trait, desc.locator)
-
+    
     def reportPropertyValueError(self, error):
         import linecache
         j = journal.journal()
@@ -102,7 +130,11 @@ class Script(PyreScript):
             meta["line"] = "???"
             meta["src"] = ""
         j.record(entry)
-        
+
+    #
+    #--- support for '.cfg' files and specifying parameter files on the command line
+    #
+    
     def initializeCurator(self, curator, registry):
         cfg = CodecConfig()
         curator.registerCodecs(cfg)
@@ -126,10 +158,42 @@ class Script(PyreScript):
                     if paramRegistry:
                         self.updateConfiguration(paramRegistry)
                 else:
-                    self.error.log("unknown encoding: %s" % ext)
+                    self._error.log("unknown encoding: %s" % ext)
             else:
-                self.error.log("cannot open '%s'" % arg)
+                self._error.log("cannot open '%s'" % arg)
         return
+
+    #
+    #--- support for reading Python variables from Fortran
+    #
+    
+    def readValue(self, name):
+        """Callback from Fortran into Python."""
+        l = name.split('.')
+        o = self
+        for n in l:
+            try:
+                o = getattr(o, n)
+            except AttributeError:
+                o = getattr(o.inventory, n)
+        return o
+    
+    #
+    #--- high-level Pyre Component initialization
+    #
+
+    def _init(self):
+        super(Script, self)._init()
+        self.launcherExe = None
+        self.computeExe = None
         
+    #
+    #--- low-level object initialization
+    #
+
+    def __init__(self, name):
+        super(Script, self).__init__(name)
+        self._error = journal.error(self.name)
+
 
 # end of file
