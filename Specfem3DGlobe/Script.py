@@ -132,7 +132,7 @@ class Script(PyreScript):
         j.record(entry)
 
     #
-    #--- support for '.cfg' files and specifying parameter files on the command line
+    #--- support for '.cfg' files, specifying parameter files on the command line, etc.
     #
     
     def initializeCurator(self, curator, registry):
@@ -162,6 +162,15 @@ class Script(PyreScript):
             else:
                 self._error.log("cannot open '%s'" % arg)
         return
+
+    def retrieveUsableConfiguration(self):
+        # As of Pythia v0.8, the method "self.retrieveConfiguration()"
+        # produces garbage XML for InputFile/OutputFile, and bogus
+        # values for Dimensional.  Therefore, return a verbatim copy
+        # of the user input instead.
+        registry = self.createRegistry()
+        registry.attachNode(self.inventory._priv_registry)
+        return registry
 
     #
     #--- support for reading Python variables from Fortran
