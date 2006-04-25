@@ -22,7 +22,7 @@ class Model(Component):
         # RESOLUTION_TOPO_FILE would also have to be Pyrized for the
         # following item to be truly useful...  however this would
         # force the array 'ibathy_topo' to be allocatable.
-        topoBathyFile                 = inputFile("topo-bathy-file", default="DATA/topo_bathy/topo_bathy_etopo4_smoothed_window7.dat")
+        topoBathyFile                 = inputFile("topo-bathy-file", default="DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat")
         
     def __init__(self, name):
         Component.__init__(self, name, "model")

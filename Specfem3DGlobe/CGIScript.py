@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 
-from Script import Script
+from Specfem import Specfem
 from opal.applications.WebApplication import WebApplication
 
 
-class CGIScript(Script, WebApplication):
+class CGIScript(Specfem, WebApplication):
 
-    class Inventory(Script.Inventory, WebApplication.Inventory):
+    class Inventory(Specfem.Inventory, WebApplication.Inventory):
         from pyre.inventory import bool, facility, outputFile
         from opal.components.Login import Login
         actor = facility("actor", factory=Login)
@@ -21,7 +21,7 @@ class CGIScript(Script, WebApplication):
         return
 
     def dumpConfiguration(self):
-        configuration = self.retrieveConfiguration()
+        configuration = self.retrieveUsableConfiguration()
         print >> self.inventory.output, "\n".join(self.weaver.render(configuration))
 
     def printWebPage(self):
