@@ -1,0 +1,28 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+<title>SPECFEM3D Global Solver</title>
+</head>
+<body>
+<p>
+<img src="http://www.gps.caltech.edu/research/jtromp/research/graphics/mpi_slicesThumbnail.gif">
+Hello from the SPECFEM3D Global Solver!
+
+<form action="specfem.py" method="POST">
+
+Enter CMT Solution:<br>
+<textarea rows=14 cols=80 name="solver.cmt-solution"></textarea>
+
+<p>Simulation type:
+<input type="radio", name="solver.simulation-type", value="forward" CHECKED>Forward
+<input type="radio", name="solver.simulation-type", value="adjoint">Adjoint
+<input type="radio", name="solver.simulation-type", value="both">Both
+
+<p><input type="submit" value="Next">
+
+</form>
+
+<p>$simulation_type
+
+</body>
+</html>
