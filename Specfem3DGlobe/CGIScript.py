@@ -1,47 +1,33 @@
 #!/usr/bin/env python
 
 
+from opal.applications.CGI import CGI
 from Specfem import Specfem
-from opal.applications.WebApplication import WebApplication
+from Cheetah.Template import Template
+import os
 
 
-class CGIScript(Specfem, WebApplication):
+class CGIScript(CGI, Specfem):
 
-    class Inventory(Specfem.Inventory, WebApplication.Inventory):
-        from pyre.inventory import bool, facility, outputFile
-        from opal.components.Login import Login
-        actor = facility("actor", factory=Login)
-        dump = bool("dump")
+    class Inventory(CGI.Inventory, Specfem.Inventory):
+        from pyre.inventory import bool, facility, outputFile, str
         output = outputFile("output")
     
-    def main(self, *args, **kwds):
-        if self.inventory.dump:
-            self.dumpConfiguration()
-        self.printWebPage()
-        return
-
     def dumpConfiguration(self):
         configuration = self.retrieveUsableConfiguration()
         print >> self.inventory.output, "\n".join(self.weaver.render(configuration))
 
-    def printWebPage(self):
-        import opal.content
-        page = opal.content.page()
-        head = page.head()
-        head.title("SPECFEM3D Global Solver")
-        body = page.body()
-        content = body.pageContent()
-        main = content.main()
-        document = main.document(title='Welcome')
-        p = document.paragraph()
-        p.text = [
-                  '<img src="http://www.gps.caltech.edu/research/jtromp/research/graphics/mpi_slicesThumbnail.gif">',
-                  'Hello from the SPECFEM3D Global Solver!',
-                  ]
-        if self.inventory.dump:
-            p.text.append('<p>Configuration written to %s.' % self.inventory.output.name)
-        footer = body.pageFooter()
-        self.render(page)
+    def main(self, *args, **kwds):
+        import Specfem3DGlobe
+	scriptDir = Specfem3DGlobe.__path__[0]
+        simulation_type = self.inventory.solver.inventory.simulation_type
+	# os.environ['REQUEST_METHOD']
+	from os.path import join
+        template = Template(file=join(scriptDir, "page1.html.tmpl"), searchList=[locals()])
+	print template
+
+    def __init__(self):
+        super(CGIScript, self).__init__("specfem")
 
 
 if __name__ == '__main__':
