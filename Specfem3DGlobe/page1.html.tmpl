@@ -11,9 +11,13 @@ Hello from the SPECFEM3D Global Solver!
 <form action="specfem.py" method="POST">
 
 Enter CMT Solution:<br>
-<textarea rows=14 cols=80 name="solver.cmt-solution"></textarea>
+<textarea rows=14 cols=80 name="inventory.solver.inventory.cmt-solution"></textarea>
 
 <p>Simulation type:
+<input type="radio", name="template", value="global.html.tmpl" CHECKED>Global
+<input type="radio", name="template", value="regional.html.tmpl">Regional
+
+<p>
 <input type="radio", name="solver.simulation-type", value="forward" CHECKED>Forward
 <input type="radio", name="solver.simulation-type", value="adjoint">Adjoint
 <input type="radio", name="solver.simulation-type", value="both">Both
@@ -21,8 +25,6 @@ Enter CMT Solution:<br>
 <p><input type="submit" value="Next">
 
 </form>
-
-<p>$simulation_type
 
 </body>
 </html>
