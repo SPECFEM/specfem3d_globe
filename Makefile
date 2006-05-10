@@ -137,19 +137,21 @@ MPI_FLAGS =
 #FLAGS_NO_CHECK = $(FLAGS_CHECK)
 #MPI_FLAGS =
 
-######## IBM SP or Power 4 ######
+######## IBM ######
 #F90 = mpxlf_r
 #MPIF90 = mpxlf_r
 #FLAGS_CHECK = -O3 -Q -qarch=auto -qcache=auto -qtune=auto -qlanglvl=95pure -qmaxmem=65536 -qflag=L:L -qhalt=L -qsuffix=f=f90
 #FLAGS_CHECK = -q32 -O3 -qarch=pwr4 -qlanglvl=95pure -qflag=L:L -qhalt=L -qsuffix=f=f90
 # use this on IDRIS machines, www.idris.fr
 #FLAGS_CHECK = -q64 -O4 -qfree=f90 -qsuffix=f=f90
+# use this on MareNostrum at the Barcelona SuperComputing Center (Spain)
+#FLAGS_CHECK = -O3 -qstrict -qtune=ppc970 -qarch=ppc970 -qfree=f90 -qsuffix=f=f90
 #FLAGS_NO_CHECK = $(FLAGS_CHECK)
 #MPI_FLAGS = 
 
 O = obj
 
-default: meshfem3D combine_AVS_DX check_mesh_quality_AVS_DX check_buffers_1D check_buffers_2D check_buffers_corners_chunks check_buffers_faces_chunks convolve_source_timefunction create_movie_AVS_DX
+default: meshfem3D combine_AVS_DX check_mesh_quality_AVS_DX check_buffers_1D check_buffers_2D check_buffers_corners_chunks check_buffers_faces_chunks convolve_source_timefunction create_movie_AVS_DX specfem3D
 
 all: clean default
 
