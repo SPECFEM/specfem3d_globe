@@ -151,7 +151,7 @@ MPI_FLAGS =
 
 O = obj
 
-default: meshfem3D combine_AVS_DX check_mesh_quality_AVS_DX check_buffers_1D check_buffers_2D check_buffers_corners_chunks check_buffers_faces_chunks convolve_source_timefunction create_movie_AVS_DX specfem3D
+default: meshfem3D combine_AVS_DX check_mesh_quality_AVS_DX check_buffers_1D check_buffers_2D check_buffers_corners_chunks check_buffers_faces_chunks convolve_source_timefunction create_movie_AVS_DX create_header_file specfem3D
 
 all: clean default
 
