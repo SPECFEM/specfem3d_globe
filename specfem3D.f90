@@ -1903,7 +1903,6 @@
   write(IMAIN,*)
   write(IMAIN,*)
 
-  call flush(IMAIN)
   endif
 
 ! synchronize all the processes before assembling the mass matrix
@@ -3050,7 +3049,6 @@
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
       write(IMAIN,*)
       endif
-      call flush(IMAIN)
 
 ! write time stamp file to give information about progression of simulation
       write(outputname,"('/timestamp',i6.6)") it
