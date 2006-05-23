@@ -15,6 +15,8 @@
 !
 !=====================================================================
 
+! @configure_input@
+
 !
 !--- user can modify parameters below
 !
@@ -26,10 +28,9 @@
 !
   integer, parameter :: SIZE_REAL = 4, SIZE_DOUBLE = 8
 
-! uncomment this to run in single precision
-  integer, parameter :: CUSTOM_REAL = SIZE_REAL
-! uncomment this to run in double precision (increases memory size by 2)
-! integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
+! set to SIZE_REAL to run in single precision
+! set to SIZE_DOUBLE to run in double precision (increases memory size by 2)
+  integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
 
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a shared-memory machine with a common file system
@@ -38,7 +39,7 @@
 ! files in create_serial_name_database.f90 ("20 format ...")
 ! Flag is used only when one checks the mesh with the serial codes
 ! ("xcheck_buffers_1D" etc.), ignore it if you do not plan to use them
-  logical, parameter :: LOCAL_PATH_IS_ALSO_GLOBAL = .false.
+  logical, parameter :: LOCAL_PATH_IS_ALSO_GLOBAL = .@LOCAL_PATH_IS_ALSO_GLOBAL@.
 
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
