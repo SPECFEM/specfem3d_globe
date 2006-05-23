@@ -10,15 +10,15 @@
 
 <p>Simulation type: $solver.simulation_type
 
-<form action="specfem.py" method="POST">
+<form name="default" action="specfem.py" method="POST">
 
 <input type="hidden", name="template", value="regional2.html.tmpl">
 <input type="hidden", name="solver.simulation-type", value="$solver.simulation_type">
 
 <p>Number of chunks:<br>
-<input type="radio", name="mesher.nchunks", value="1" CHECKED>1
-<input type="radio", name="mesher.nchunks", value="2">2
-<input type="radio", name="mesher.nchunks", value="3">3
+<input type="radio", name="template", value="regional_c1_1.html.tmpl" CHECKED>1
+<input type="radio", name="template", value="regional_c2_1.html.tmpl">2
+<input type="radio", name="template", value="regional_c3_1.html.tmpl">3
 
 <p><input type="submit" value="Next">
 

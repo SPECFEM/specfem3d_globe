@@ -1,25 +1,25 @@
 <!doctype html public "-//w3c//dtd html 4.0 transitional//en">
 <html>
 <head>
-<title>SPECFEM3D Global Solver</title>
+<title>SPECFEM3D Regional Solver</title>
 </head>
 <body>
 <img src="http://www.gps.caltech.edu/research/jtromp/research/graphics/mpi_slicesThumbnail.gif">
-<h1>Global Simulation</h1>
+<h1>Regional Simulation</h1>
 
 <p>&nbsp;&nbsp;Simulation type: $solver.simulation_type</p>
 
 <form action="specfem.py" method="POST">
 
-<input type="hidden", name="template", value="global2.html.tmpl">
+<input type="hidden", name="template", value="page1.html.tmpl">
 <input type="hidden", name="solver.simulation-type", value="$solver.simulation_type">
-<input type="hidden", name="mesher.nchunks", value="6">
+<input type="hidden", name="mesher.nchunks", value="3">
 <input type="hidden", name="solver.absorbing-conditions", value="0">
 <input type="hidden", name="solver.number-of-runs", value="1">
 <input type="hidden", name="solver.number-of-this-run", value="1">
 <input type="hidden", name="solver.ntstep-between-output-info", value="100">
 <input type="hidden", name="solver.ntstep-between-output-seismos", value="100">
-&nbsp;&nbsp;Parameter Settings for Global Simulation<br>
+&nbsp;&nbsp;Parameter Settings for Regional Simulation<br>
 
 <table border=1>
 	<tr>
@@ -27,11 +27,42 @@
 		<td>
 			<table border=1>
 				<tr>
+					<td width="351" colspan="3">REGION</td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Angular Width Eta</td>
+					<td width="120"><input type="text" name="mesher.angular-width-eta" value="90.0*deg"></td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Angular Width Xi</td>
+					<td width="120"><input type="text" name="mesher.angular-width-xi" value="90.0*deg"></td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Center Latitude</td>
+					<td width="120"><input type="text" name="mesher.center-latitude" value="0.0*deg"></td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Center Longitude</td>
+					<td width="120"><input type="text" name="mesher.center-longitude" value="0.0*deg"></td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Gamma Rotation Azimuth</td>
+					<td width="120"><input type="text" name="mesher.gamma-rotation-azimuth" value="0.0*deg"></td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+			</table>
+
+			<table border=1>
+				<tr>
 					<td width="351" colspan="3">MESH</td>
 				</tr>
 				<tr>
 					<td width="196">&nbsp;&nbsp;Number of Chunks</td>
-					<td width="120">6</td>
+					<td width="120">3</td>
 					<td width="35">&nbsp;</td>
 				</tr>
 				<tr>
