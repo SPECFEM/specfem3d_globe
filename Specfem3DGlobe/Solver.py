@@ -48,8 +48,8 @@ class Solver(Component):
 
         # Access our InputFile inventory items to make sure they're
         # readable.  (They will be reopened by the Fortran code.)
-        f = self.inventory.cmtSolution;  self.checkCMTSolution(f);  self.CMTSOLUTION = f.name;  f.close()
-        f = self.inventory.stations;                                self.STATIONS    = f.name;  f.close()
+        #f = self.inventory.cmtSolution;  self.checkCMTSolution(f);  self.CMTSOLUTION = f.name;  f.close()
+        #f = self.inventory.stations;                                self.STATIONS    = f.name;  f.close()
 
     def checkCMTSolution(self, f):
         NLINES_PER_CMTSOLUTION_SOURCE = 13 # constants.h
