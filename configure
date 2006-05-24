@@ -2120,176 +2120,15 @@ F77="$FC"
 FFLAGS="$FCFLAGS"
 
 
-if test x"$UNAME_MS" = x; then
-    UNAME_MACHINE=`(uname -m) 2>/dev/null` || UNAME_MACHINE=unknown
-    UNAME_SYSTEM=`(uname -s) 2>/dev/null`  || UNAME_SYSTEM=unknown
-    UNAME_MS="${UNAME_MACHINE}:${UNAME_SYSTEM}"
-fi
 
-case $UNAME_MS in
-    i*86:Linux | x86_64:Linux)
-        ################ PC Linux #################
-        case $FC in
-            pgf90|*/pgf90)
-		#
-		# Beowulf Portland pgf90
-		#
-                if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="-O2 -Mbounds -Mneginfo -Mdclchk -Knoieee"
-                fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    FLAGS_NO_CHECK="-O2 -Mnobounds -Mneginfo -Mdclchk -Knoieee"
-                fi
-                ;;
-            ifort|*/ifort)
-		#
-		# Intel ifort Fortran90 for Linux
-		#
-                if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="\$(FLAGS_NO_CHECK)"
-                fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    # standard options
-                    FLAGS_NO_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds"
-                    # old hrothgar cluster at Caltech
-                    #FLAGS_NO_CHECK = -O3 -tpp6 -xK -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
-                    # Pangu at Caltech
-                    #FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O2 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
-                    # debug with range checking
-                    #FLAGS_NO_CHECK = -O0 -static -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
-                fi
-                #MPI_LIBS = -Vaxlib
-                ;;
-            g95|*/g95)
-		#
-		# g95 (free f95 compiler from http://www.g95.org, still under development, but works)
-		#
-                if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="-O"
-                fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    FLAGS_NO_CHECK="-O"
-                fi
-                ;;
-            f90|*/f90)
-		#
-		# AbSoft
-		#
-                if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="-s -O2 -cpu:p7 -v -YDEALLOC=ALL"
-                fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
-                fi
-                ;;
-            f95|*/f95)
-		#
-		# NAG compiler for Linux
-		#
-                if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="-O -u -strict95 -C=all"
-                fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    FLAGS_NO_CHECK="-O -u -strict95"
-                fi
-                ;;
-            lf95|*/lf95)
-		#
-		# Lahey f90
-		#
-                if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="--warn --wo --tpp --f95 --dal -O --chk"
-                fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    FLAGS_NO_CHECK="--warn --wo --tpp --f95 --dal -O"
-                fi
-                ;;
-        esac
-        ;;
-    *:IRIX*)
-	################ SGI Irix #################
-        case $FC in
-            f90|*/f90)
-                if test x"$MPIFC" = x; then
-                    MPIFC=$FC
-		    if test x"$MPILIBS" = x; then
-                        MPILIBS="-lmpi -lfastm -lfpe"
-                    fi
-                fi
-		if test x"$FLAGS_CHECK" = x; then
-		    FLAGS_CHECK="\$(FLAGS_NO_CHECK) -check_bounds"
-		fi
-		if test x"$FLAGS_NO_CHECK" = x; then
-		    FLAGS_NO_CHECK="-ansi -u -64 -O3 -OPT:Olimit=0 -OPT:roundoff=3 -OPT:IEEE_arithmetic=3 -r10000 -mips4"
-		fi
-                ;;
-        esac
-	##
-	##  CAUTION: always define setenv TRAP_FPE OFF on SGI before compiling
-	##
-	FCENV="TRAP_FPE=OFF"
-        ;;
-    alpha:OSF1)
-        ################## Compaq Dec Alpha #################
-        case $FC in
-            f90|*/f90)
-                if test x"$MPIFC" = x; then
-                    MPIFC=$FC
-		    if test x"$MPILIBS" = x; then
-                        MPILIBS="-lfmpi -lmpi"
-                    fi
-                fi
-		if test x"$FLAGS_CHECK" = x; then
-		    FLAGS_CHECK="\$(FLAGS_NO_CHECK) -check bounds"
-		fi
-		if test x"$FLAGS_NO_CHECK" = x; then
-		    FLAGS_NO_CHECK="-fast -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nounderflow"
-		fi
-                ;;
-        esac
-        ;;
-    SX-*:SUPER-UX | ES:ESOS)
-        ################## Earth Simulator and NEC SX-5 ##################
-        case $FC in
-            f90|*/f90)
-                if test x"$MPIFC" = x; then
-                    MPIFC=$FC
-                fi
-		if test x"$FLAGS_CHECK" = x; then
-		    FLAGS_CHECK="-C hopt -R2 -Wf\" -L nostdout noinclist mrgmsg noeject -msg b -pvctl loopcnt=14000000 expand=10 fullmsg vecthreshold=20 -s\" -pi auto line=100 exp=swap_all,rank"
-		fi
-		if test x"$FLAGS_NO_CHECK" = x; then
-		    FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
-		fi
-                ;;
-        esac
-        ;;
-    *:AIX)
-        ######## IBM ######
-        case $FC in
-            mpxlf*|*/mpxlf*)
-                if test x"$MPIFC" = x; then
-                    MPIFC=$FC
-                fi
-                ;;
-        esac
-        case $FC in
-            *xlf*|*/*xlf*)
-		if test x"$FLAGS_CHECK" = x; then
-		    FLAGS_CHECK="-O3 -Q -qarch=auto -qcache=auto -qtune=auto -qlanglvl=95pure -qmaxmem=65536 -qflag=L:L -qhalt=L -qsuffix=f=f90"
-                    #FLAGS_CHECK = -q32 -O3 -qarch=pwr4 -qlanglvl=95pure -qflag=L:L -qhalt=L -qsuffix=f=f90
-		fi
-		if test x"$FLAGS_NO_CHECK" = x; then
-		    FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
-		fi
-                # use this on IDRIS machines, www.idris.fr
-                #FLAGS_CHECK = -q64 -O4 -qfree=f90 -qsuffix=f=f90
-                # use this on MareNostrum at the Barcelona SuperComputing Center (Spain)
-                #FLAGS_CHECK = -O3 -qstrict -qtune=ppc970 -qarch=ppc970 -qfree=f90 -qsuffix=f=f90
-                ;;
-        esac
-        ;;
-esac
+flags_guess="$SHELL flags.guess"
+{ echo "$as_me:$LINENO: running $flags_guess" >&5
+echo "$as_me: running $flags_guess" >&6;}
+flags=`$flags_guess` ||
+    { { echo "$as_me:$LINENO: error: $flags_guess failed" >&5
+echo "$as_me: error: $flags_guess failed" >&2;}
+   { (exit 1); exit 1; }; }
+eval $flags
 
 
 ac_ext=${FC_SRCEXT-f}
@@ -2342,7 +2181,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_verb"
-(eval echo $as_me:2345: \"$ac_link\") >&5
+(eval echo $as_me:2184: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
@@ -2420,7 +2259,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_cv_prog_fc_v"
-(eval echo $as_me:2423: \"$ac_link\") >&5
+(eval echo $as_me:2262: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
