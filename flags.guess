@@ -158,17 +158,22 @@ case $UNAME_MS in
         esac
         case $FC in
             *xlf*|*/*xlf*)
+                #
+                # do NOT remove option -qsave otherwise the IBM compiler allocates the
+                # arrays in the stack and the code crashes if the stack size is too
+                # small (which is often the case)
+                #
                 if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="-O3 -Q -qarch=auto -qcache=auto -qtune=auto -qlanglvl=95pure -qmaxmem=65536 -qflag=L:L -qhalt=L -qsuffix=f=f90"
-                    #FLAGS_CHECK = -q32 -O3 -qarch=pwr4 -qlanglvl=95pure -qflag=L:L -qhalt=L -qsuffix=f=f90
+                    FLAGS_CHECK="-O3 -qsave -Q -qarch=auto -qcache=auto -qtune=auto -qlanglvl=95pure -qmaxmem=65536 -qflag=L:L -qhalt=L -qsuffix=f=f90"
+                    #FLAGS_CHECK = -q32 -qsave -O3 -qarch=pwr4 -qlanglvl=95pure -qflag=L:L -qhalt=L -qsuffix=f=f90
                 fi
                 if test x"$FLAGS_NO_CHECK" = x; then
                     FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
                 fi
                 # use this on IDRIS machines, www.idris.fr
-                #FLAGS_CHECK = -q64 -O4 -qfree=f90 -qsuffix=f=f90
+                #FLAGS_CHECK = -q64 -qsave -O4 -qfree=f90 -qsuffix=f=f90
                 # use this on MareNostrum at the Barcelona SuperComputing Center (Spain)
-                #FLAGS_CHECK = -O3 -qstrict -qtune=ppc970 -qarch=ppc970 -qfree=f90 -qsuffix=f=f90
+                #FLAGS_CHECK = -O3 -qsave -qstrict -qtune=ppc970 -qarch=ppc970 -qfree=f90 -qsuffix=f=f90
                 ;;
         esac
         ;;
