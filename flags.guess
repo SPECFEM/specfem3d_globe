@@ -14,9 +14,9 @@ case $UNAME_MS in
         ################ PC Linux #################
         case $FC in
             pgf90|*/pgf90)
-		#
-		# Beowulf Portland pgf90
-		#
+                #
+                # Beowulf Portland pgf90
+                #
                 if test x"$FLAGS_CHECK" = x; then
                     FLAGS_CHECK="-O2 -Mbounds -Mneginfo -Mdclchk -Knoieee"
                 fi
@@ -25,9 +25,9 @@ case $UNAME_MS in
                 fi
                 ;;
             ifort|*/ifort)
-		#
-		# Intel ifort Fortran90 for Linux
-		#
+                #
+                # Intel ifort Fortran90 for Linux
+                #
                 if test x"$FLAGS_CHECK" = x; then
                     FLAGS_CHECK="\$(FLAGS_NO_CHECK)"
                 fi
@@ -44,9 +44,9 @@ case $UNAME_MS in
                 #MPI_LIBS = -Vaxlib
                 ;;
             g95|*/g95)
-		#
-		# g95 (free f95 compiler from http://www.g95.org, still under development, but works)
-		#
+                #
+                # g95 (free f95 compiler from http://www.g95.org, still under development, but works)
+                #
                 if test x"$FLAGS_CHECK" = x; then
                     FLAGS_CHECK="-O"
                 fi
@@ -55,9 +55,9 @@ case $UNAME_MS in
                 fi
                 ;;
             f90|*/f90)
-		#
-		# AbSoft
-		#
+                #
+                # AbSoft
+                #
                 if test x"$FLAGS_CHECK" = x; then
                     FLAGS_CHECK="-s -O2 -cpu:p7 -v -YDEALLOC=ALL"
                 fi
@@ -66,9 +66,9 @@ case $UNAME_MS in
                 fi
                 ;;
             f95|*/f95)
-		#
-		# NAG compiler for Linux
-		#
+                #
+                # NAG compiler for Linux
+                #
                 if test x"$FLAGS_CHECK" = x; then
                     FLAGS_CHECK="-O -u -strict95 -C=all"
                 fi
@@ -77,9 +77,9 @@ case $UNAME_MS in
                 fi
                 ;;
             lf95|*/lf95)
-		#
-		# Lahey f90
-		#
+                #
+                # Lahey f90
+                #
                 if test x"$FLAGS_CHECK" = x; then
                     FLAGS_CHECK="--warn --wo --tpp --f95 --dal -O --chk"
                 fi
@@ -90,27 +90,27 @@ case $UNAME_MS in
         esac
         ;;
     *:IRIX*)
-	################ SGI Irix #################
+        ################ SGI Irix #################
         case $FC in
             f90|*/f90)
                 if test x"$MPIFC" = x; then
                     MPIFC=$FC
-		    if test x"$MPILIBS" = x; then
+                    if test x"$MPILIBS" = x; then
                         MPILIBS="-lmpi -lfastm -lfpe"
                     fi
                 fi
-		if test x"$FLAGS_CHECK" = x; then
-		    FLAGS_CHECK="\$(FLAGS_NO_CHECK) -check_bounds"
-		fi
-		if test x"$FLAGS_NO_CHECK" = x; then
-		    FLAGS_NO_CHECK="-ansi -u -64 -O3 -OPT:Olimit=0 -OPT:roundoff=3 -OPT:IEEE_arithmetic=3 -r10000 -mips4"
-		fi
+                if test x"$FLAGS_CHECK" = x; then
+                    FLAGS_CHECK="\$(FLAGS_NO_CHECK) -check_bounds"
+                fi
+                if test x"$FLAGS_NO_CHECK" = x; then
+                    FLAGS_NO_CHECK="-ansi -u -64 -O3 -OPT:Olimit=0 -OPT:roundoff=3 -OPT:IEEE_arithmetic=3 -r10000 -mips4"
+                fi
                 ;;
         esac
-	##
-	##  CAUTION: always define setenv TRAP_FPE OFF on SGI before compiling
-	##
-	FCENV="TRAP_FPE=OFF"
+        ##
+        ##  CAUTION: always define setenv TRAP_FPE OFF on SGI before compiling
+        ##
+        FCENV="TRAP_FPE=OFF"
         ;;
     alpha:OSF1)
         ################## Compaq Dec Alpha #################
@@ -118,16 +118,16 @@ case $UNAME_MS in
             f90|*/f90)
                 if test x"$MPIFC" = x; then
                     MPIFC=$FC
-		    if test x"$MPILIBS" = x; then
+                    if test x"$MPILIBS" = x; then
                         MPILIBS="-lfmpi -lmpi"
                     fi
                 fi
-		if test x"$FLAGS_CHECK" = x; then
-		    FLAGS_CHECK="\$(FLAGS_NO_CHECK) -check bounds"
-		fi
-		if test x"$FLAGS_NO_CHECK" = x; then
-		    FLAGS_NO_CHECK="-fast -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nounderflow"
-		fi
+                if test x"$FLAGS_CHECK" = x; then
+                    FLAGS_CHECK="\$(FLAGS_NO_CHECK) -check bounds"
+                fi
+                if test x"$FLAGS_NO_CHECK" = x; then
+                    FLAGS_NO_CHECK="-fast -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nounderflow"
+                fi
                 ;;
         esac
         ;;
@@ -138,12 +138,12 @@ case $UNAME_MS in
                 if test x"$MPIFC" = x; then
                     MPIFC=$FC
                 fi
-		if test x"$FLAGS_CHECK" = x; then
-		    FLAGS_CHECK="-C hopt -R2 -Wf\" -L nostdout noinclist mrgmsg noeject -msg b -pvctl loopcnt=14000000 expand=10 fullmsg vecthreshold=20 -s\" -pi auto line=100 exp=swap_all,rank"
-		fi
-		if test x"$FLAGS_NO_CHECK" = x; then
-		    FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
-		fi
+                if test x"$FLAGS_CHECK" = x; then
+                    FLAGS_CHECK="-C hopt -R2 -Wf\" -L nostdout noinclist mrgmsg noeject -msg b -pvctl loopcnt=14000000 expand=10 fullmsg vecthreshold=20 -s\" -pi auto line=100 exp=swap_all,rank"
+                fi
+                if test x"$FLAGS_NO_CHECK" = x; then
+                    FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
+                fi
                 ;;
         esac
         ;;
@@ -158,13 +158,13 @@ case $UNAME_MS in
         esac
         case $FC in
             *xlf*|*/*xlf*)
-		if test x"$FLAGS_CHECK" = x; then
-		    FLAGS_CHECK="-O3 -Q -qarch=auto -qcache=auto -qtune=auto -qlanglvl=95pure -qmaxmem=65536 -qflag=L:L -qhalt=L -qsuffix=f=f90"
+                if test x"$FLAGS_CHECK" = x; then
+                    FLAGS_CHECK="-O3 -Q -qarch=auto -qcache=auto -qtune=auto -qlanglvl=95pure -qmaxmem=65536 -qflag=L:L -qhalt=L -qsuffix=f=f90"
                     #FLAGS_CHECK = -q32 -O3 -qarch=pwr4 -qlanglvl=95pure -qflag=L:L -qhalt=L -qsuffix=f=f90
-		fi
-		if test x"$FLAGS_NO_CHECK" = x; then
-		    FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
-		fi
+                fi
+                if test x"$FLAGS_NO_CHECK" = x; then
+                    FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
+                fi
                 # use this on IDRIS machines, www.idris.fr
                 #FLAGS_CHECK = -q64 -O4 -qfree=f90 -qsuffix=f=f90
                 # use this on MareNostrum at the Barcelona SuperComputing Center (Spain)
@@ -174,8 +174,10 @@ case $UNAME_MS in
         ;;
 esac
 
+echo MPIFC=\"$MPIFC\" | sed 's/\$/\\\$/g'
+echo MPILIBS=\"$MPILIBS\" | sed 's/\$/\\\$/g'
 echo FLAGS_CHECK=\"$FLAGS_CHECK\" | sed 's/\$/\\\$/g'
-echo FLAGS_NO_CHECK=\"$FLAGS_NO_CHECK\" | sed 's/\$/\$\$/g'
-echo FCENV=\"$FCENV\" | sed 's/\$/\$\$/g'
+echo FLAGS_NO_CHECK=\"$FLAGS_NO_CHECK\" | sed 's/\$/\\\$/g'
+echo FCENV=\"$FCENV\" | sed 's/\$/\\\$/g'
 
 # end of file
