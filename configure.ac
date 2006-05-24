@@ -51,9 +51,11 @@ fi
 # a courtesy to the installed base of users
 if test x"$FC" = x && test x"$F90" != x; then
     FC="$F90"
+    export FC
 fi
 if test x"$MPIFC" = x && test x"$MPIF90" != x; then
     MPIFC="$MPIF90"
+    export MPIFC
 fi
 
 AC_PROG_FC
