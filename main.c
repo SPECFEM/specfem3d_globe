@@ -1,9 +1,6 @@
 
 #include <Python.h>
 #include <stdio.h>
-#ifdef USE_MPI
-#include <mpi.h>
-#endif
 #include "config.h"
 
 extern void initPyxParameters(void);
@@ -13,7 +10,9 @@ extern void initPyxSpecfem(void);
 extern void initPyxMPI(void);
 #endif
 
-static int status;
+static int g_status;
+int g_argc;
+char **g_argv;
 
 struct _inittab inittab[] = {
     { "PyxParameters", initPyxParameters },
@@ -26,71 +25,34 @@ struct _inittab inittab[] = {
 };
 
 
-#define FC_RUN_PYTHON_SCRIPT FC_FUNC_(run_python_script, RUN_PYTHON_SCRIPT)
-void FC_RUN_PYTHON_SCRIPT()
+#define FC_PY_MAIN FC_FUNC_(fc_py_main, FC_PY_MAIN)
+void FC_PY_MAIN()
 {
-    /* run the Python script */
-#ifndef SCRIPT
-#define SCRIPT Specfem
-#endif
-#define STR(s) #s
-#define COMMAND(s) "from Specfem3DGlobe."STR(s)" import "STR(s)"; app = "STR(s)"(); app.run()"
-    status = PyRun_SimpleString(COMMAND(SCRIPT)) != 0;
+    /* start Python */
+    g_status = Py_Main(g_argc, g_argv);
 }
 
 
 int main(int argc, char **argv)
 {
-#ifdef USE_MPI
-    /*
-      We are a worker on a compute node -- i.e., we are a process
-      started by 'mpirun'.  Call MPI_Init() now to clean/set-up
-      'argv'.
-    */
-    status = MPI_Init(&argc, &argv);
-    if (status != MPI_SUCCESS) {
-	fprintf(stderr, "%s: MPI_Init failed! Exiting ...\n", argv[0]);
-	return status;
-    }
-#else
-    /*
-      We are either the launcher, or the scheduler started directly by
-      the user on the login node.  Don't call MPI_Init(), as MPICH-GM
-      will die with SIGPIPE ("<MPICH-GM> Error: Need to obtain the job
-      magic number in GMPI_MAGIC !").
-    */
-#endif
-    
     /* add our extension module */
     if (PyImport_ExtendInittab(inittab) == -1) {
         fprintf(stderr, "%s: PyImport_ExtendInittab failed! Exiting ...", argv[0]);
         return 1;
     }
-
-    /* initialize Python */
-    Py_Initialize();
     
-    /* initialize sys.argv */
-    PySys_SetArgv(argc, argv);
-    
+    g_argc = argc;
+    g_argv = argv;
 #define main 42
 #if FC_MAIN == main
-    /* run the Python script */
-    FC_RUN_PYTHON_SCRIPT();
+    /* start Python */
+    FC_PY_MAIN();
 #else
-    /* call the Fortran trampoline (which runs the Python script) */
+    /* call the Fortran trampoline (which, in turn, starts Python) */
     FC_MAIN();
 #endif
     
-    /* shut down Python */
-    Py_Finalize();
-    
-#ifdef USE_MPI
-    /* shut down MPI */
-    MPI_Finalize();
-#endif
-
-    return status;
+    return g_status;
 }
 
 

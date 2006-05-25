@@ -70,7 +70,7 @@
 
   integer itopo_x,itopo_y
 
-  call get_value_string(topo_bathy_file, 'model.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
+  call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
   open(unit=13,file=topo_bathy_file,status='old')
 

@@ -1,68 +1,107 @@
 #!/usr/bin/env python
 
 
-from pyre.components.Component import Component
+from cig.addyndum.components import Component
 from pyre.units.time import minute
 
 
 class Solver(Component):
+
     
-    class Inventory(Component.Inventory):
-
-        from pyre.inventory import bool, choice, dimensional, float, inputFile, int, str
+    # name by which the user refers to this component
+    componentName = "solver"
     
-        cmtSolution                   = inputFile("cmt-solution", default="DATA/CMTSOLUTION")
+    
+    #
+    #--- parameters
+    #
+    
+    import pyre.inventory as pyre
+    from CMTSolution import cmtValidator
+
+    cmtSolution                   = pyre.inputFile("cmt-solution", default="DATA/CMTSOLUTION", validator=cmtValidator)
+    stations                      = pyre.inputFile("stations", default="DATA/STATIONS")
+
+    outputFile                    = pyre.outputFile("output-file", default="output_solver.txt")
+
+    ABSORBING_CONDITIONS          = pyre.bool("absorbing-conditions")
+    MOVIE_SURFACE                 = pyre.bool("movie-surface")
+    MOVIE_VOLUME                  = pyre.bool("movie-volume")
+    RECEIVERS_CAN_BE_BURIED       = pyre.bool("receivers-can-be-buried")
+    PRINT_SOURCE_TIME_FUNCTION    = pyre.bool("print-source-time-function")
+
+    HDUR_MOVIE                    = pyre.float("hdur-movie")
+    record_length                 = pyre.dimensional("record-length", default=0.0*minute)
+
+    NTSTEP_BETWEEN_FRAMES         = pyre.int("ntstep-between-frames")
+    NTSTEP_BETWEEN_OUTPUT_INFO    = pyre.int("ntstep-between-output-info")
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS = pyre.int("ntstep-between-output-seismos")
+    NUMBER_OF_RUNS                = pyre.int("number-of-runs")
+    NUMBER_OF_THIS_RUN            = pyre.int("number-of-this-run")
+
+    SAVE_FORWARD                  = pyre.bool("save-forward")
+    simulation_type               = pyre.str("simulation-type", validator=pyre.choice(['forward', 'adjoint', 'both']), default='forward')
+    
+    
+    #
+    #--- configuration
+    #
+    
+    def _configure(self):
+        Component._configure(self)
         
-        ABSORBING_CONDITIONS          = bool("absorbing-conditions")
-        MOVIE_SURFACE                 = bool("movie-surface")
-        MOVIE_VOLUME                  = bool("movie-volume")
-        RECEIVERS_CAN_BE_BURIED       = bool("receivers-can-be-buried")
-        PRINT_SOURCE_TIME_FUNCTION    = bool("print-source-time-function")
-        
-        HDUR_MOVIE                    = float("hdur-movie")
-        record_length                 = dimensional("record-length", default=0.0*minute)
-        
-        NTSTEP_BETWEEN_FRAMES         = int("ntstep-between-frames")
-        NTSTEP_BETWEEN_OUTPUT_INFO    = int("ntstep-between-output-info")
-        NTSTEP_BETWEEN_OUTPUT_SEISMOS = int("ntstep-between-output-seismos")
-        NUMBER_OF_RUNS                = int("number-of-runs")
-        NUMBER_OF_THIS_RUN            = int("number-of-this-run")
-
-        SAVE_FORWARD                  = bool("save-forward")
-        simulation_type               = str("simulation-type", validator=choice(['forward', 'adjoint', 'both']), default='forward')
-        stations                      = inputFile("stations", default="DATA/STATIONS")
-
-    def __init__(self, name):
-        Component.__init__(self, name, "solver")
-        self.CMTSOLUTION = None
-        self.STATIONS = None
-
-    def _init(self):
-        Component._init(self)
-
         # convert to minutes
-        self.RECORD_LENGTH_IN_MINUTES = self.inventory.record_length / minute
-
+        self.RECORD_LENGTH_IN_MINUTES = self.record_length / minute
+        
+        # convert to the ID numbers understood by the Fortran code
         st = { 'forward':1, 'adjoint':2, 'both':3 }
-        self.SIMULATION_TYPE = st[self.inventory.simulation_type]
-
-        # Access our InputFile inventory items to make sure they're
-        # readable.  (They will be reopened by the Fortran code.)
-        #f = self.inventory.cmtSolution;  self.checkCMTSolution(f);  self.CMTSOLUTION = f.name;  f.close()
-        #f = self.inventory.stations;                                self.STATIONS    = f.name;  f.close()
-
-    def checkCMTSolution(self, f):
-        NLINES_PER_CMTSOLUTION_SOURCE = 13 # constants.h
-        lineTally = 0
-        for line in f:
-            lineTally = lineTally + 1
-        if lineTally % NLINES_PER_CMTSOLUTION_SOURCE != 0:
-            raise ValueError("total number of lines in 'cmt-solution' file '%s' should be a multiple of %d"
-                             % (f.name, NLINES_PER_CMTSOLUTION_SOURCE))
-        NSOURCES = lineTally / NLINES_PER_CMTSOLUTION_SOURCE
-        if NSOURCES < 1:
-            raise ValueError("need at least one source in 'cmt-solution' file '%s'" % f.name)
+        self.SIMULATION_TYPE = st[self.simulation_type]
+        
         return
+    
+    
+    #
+    #--- building
+    #
+    
+    def build(self, script):
+        """Build the solver."""
+
+        import os
+        
+        # create the include file for the solver
+        self.createheader(script)
+        
+        # now finally build the solver
+        pyspecfem3D = script.computeExe
+        argv = ['make', 'OUTPUT_DIR=' + script.outputDir, pyspecfem3D]
+        print ' '.join(argv)
+        status = os.spawnvp(os.P_WAIT, argv[0], argv)
+        if status != 0:
+            sys.exit("%s: %s: exit %d" % (sys.argv[0], args[0], status))
+        
+        return
+    
+    
+    def createheader(self, script):
+        """Create the include file for the solver."""
+        self.CMTSOLUTION = self.cmtSolution.name
+        self.STATIONS = self.stations.name
+        from PyxParameters import create_header_file
+        create_header_file(script) # call into Fortran
+    
+    
+    #
+    #--- execution
+    #
+    
+    def execute(self, script):
+        """Execute the solver."""
+        self.CMTSOLUTION = self.cmtSolution.name
+        self.STATIONS = self.stations.name
+        from PyxSpecfem import specfem3D
+        #specfem3D(script) # call into Fortran
+        print "execute", specfem3D
 
 
 # end of file

@@ -395,7 +395,7 @@
   endif
 
 ! define the velocity model
-  call read_value_string(MODEL, 'MODEL')
+  call read_value_string(MODEL, 'model.MODEL')
   if(err_occurred() /= 0) return
 
   if(MODEL == 'isotropic_prem') then
