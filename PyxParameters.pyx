@@ -22,25 +22,33 @@ cdef extern from "Python.h":
 component = None
 
 
+def getValue(o, name):
+    """Get a value from the Python scripts."""
+    l = name.split('.')
+    for n in l:
+        o = getattr(o, n)
+    return o
+
+
 # replacements for Fortran functions
 
 cdef public void read_value_integer "FC_FUNC_(read_value_integer, READ_VALUE_INTEGER)" (int *value, char *name, int nameLen) except *:
     attrName = PyString_FromStringAndSize(name, nameLen)
-    value[0] = component.readValue(attrName)
+    value[0] = getValue(component, attrName)
 
 cdef public void read_value_double_precision "FC_FUNC_(read_value_double_precision, READ_VALUE_DOUBLE_PRECISION)" (double *value, char *name, int nameLen) except *:
     attrName = PyString_FromStringAndSize(name, nameLen)
-    value[0] = component.readValue(attrName)
+    value[0] = getValue(component, attrName)
 
 cdef public void read_value_logical "FC_FUNC_(read_value_logical, READ_VALUE_LOGICAL)" (int *value, char *name, int nameLen) except *:
     attrName = PyString_FromStringAndSize(name, nameLen)
-    value[0] = component.readValue(attrName)
+    value[0] = getValue(component, attrName)
 
 cdef public void read_value_string "FC_FUNC_(read_value_string, READ_VALUE_STRING)" (char *value, char *name, int valueLen, int nameLen) except *:
     cdef char *vp
     cdef int vl, i
     attrName = PyString_FromStringAndSize(name, nameLen)
-    v = component.readValue(attrName)
+    v = getValue(component, attrName)
     vl = len(v)
     if vl > valueLen:
         raise ValueError("%s value '%s' is too long (%d bytes) for destination Fortran buffer (%d bytes)" % (attrName, v, vl, valueLen))

@@ -227,11 +227,15 @@ specfem3D: xspecfem3D
 @COND_PYRE_FALSE@
 
 # rules for the Pyrized version
-@COND_PYRE_TRUE@xspecfem3D: main.c $(XMESHFEM_OBJECTS)
-@COND_PYRE_TRUE@	${MPICC} $(CFLAGS) -o xspecfem3D $(CFLAGS) $(PYTHON_CPPFLAGS) main.c \
+@COND_PYRE_TRUE@xspecfem3D: Specfem3DGlobe/xspecfem3D.tmpl pyspecfem3D
+@COND_PYRE_TRUE@	./pyspecfem3D setup.py develop
+@COND_PYRE_TRUE@	chmod +x $@
+@COND_PYRE_TRUE@
+@COND_PYRE_TRUE@pyspecfem3D: main.c $(XMESHFEM_OBJECTS)
+@COND_PYRE_TRUE@	${MPICC} $(CFLAGS) -o $@ $(CFLAGS) $(PYTHON_CPPFLAGS) main.c \
 @COND_PYRE_TRUE@		$(XMESHFEM_OBJECTS) $(MPILIBS) $(PYTHON_LDFLAGS) $(FCLIBS)
 @COND_PYRE_TRUE@
-@COND_PYRE_TRUE@$(OUTPUT_DIR)/specfem3D: main.c $(XSPECFEM_OBJECTS)
+@COND_PYRE_TRUE@$(OUTPUT_DIR)/pyspecfem3D: main.c $(XSPECFEM_OBJECTS)
 @COND_PYRE_TRUE@	${MPICC} $(CFLAGS) -o $@ $(CFLAGS) $(PYTHON_CPPFLAGS) -DUSE_MPI main.c \
 @COND_PYRE_TRUE@		$(XSPECFEM_OBJECTS) $(MPILIBS) $(PYTHON_LDFLAGS) $(FCLIBS)
 

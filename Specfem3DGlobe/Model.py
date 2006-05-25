@@ -1,138 +1,128 @@
 #!/usr/bin/env python
 
 
-from pyre.components.Component import Component
-from pyre.inventory.Facility import Facility
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# base class for all models
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+from cig.addyndum.components import Component
 
 
 class Model(Component):
-
-    class Inventory(Component.Inventory):
-
-        from pyre.inventory import bool, inputFile
-        
-        ATTENUATION                   = bool("attenuation")
-        ELLIPTICITY                   = bool("ellipticity")
-        GRAVITY                       = bool("gravity")
-        OCEANS                        = bool("oceans")
-        ROTATION                      = bool("rotation")
-        TOPOGRAPHY                    = bool("topography")
-
-        # The hardwired parameters NX_BATHY, NY_BATHY, and
-        # RESOLUTION_TOPO_FILE would also have to be Pyrized for the
-        # following item to be truly useful...  however this would
-        # force the array 'ibathy_topo' to be allocatable.
-        topoBathyFile                 = inputFile("topo-bathy-file", default="DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat")
-        
-    def __init__(self, name):
-        Component.__init__(self, name, "model")
-        self.aliases.extend(self.classAliases)
-        self.PATHNAME_TOPO_FILE = None
-
-    def _init(self):
-        Component._init(self)
-        # Access our InputFile inventory items to make sure they're
-        # readable.  (They will be reopened by the Fortran code.)
-        if self.inventory.TOPOGRAPHY or self.inventory.OCEANS:
-            f = self.inventory.topoBathyFile
-            self.PATHNAME_TOPO_FILE = f.name
-            f.close()
+    
+    # parameters for all models
+    import pyre.inventory as pyre
+    import cig.addyndum.inventory as addyndum
+    from TopoBathy import TopoBathy
+    ATTENUATION        = pyre.bool("attenuation")
+    ELLIPTICITY        = pyre.bool("ellipticity")
+    GRAVITY            = pyre.bool("gravity")
+    OCEANS             = pyre.bool("oceans")
+    ROTATION           = pyre.bool("rotation")
+    TOPOGRAPHY         = pyre.bool("topography")
+    topoBathy          = addyndum.facility("topo-bathy", factory=TopoBathy)
+    
+    # configuration
+    def _configure(self):
+        Component._configure(self)
+        if not (self.TOPOGRAPHY or self.OCEANS):
+            # We don't need topo-bathy data.
+            self.topoBathy = None
+        return
 
 
-# built-in models
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 3D isotropic (S20RTS)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def BuiltInModel(name, *aliases):
-    return type(Model)(
-        'BuiltInModel(%s)' % name,
-        (Model,),
-        {'className': name,
-        'classAliases': [name] + list(aliases)}
-        )
 
 class Model3DIsotropic(Model):
-    className = "s20rts"
-    classAliases = ["s20rts", "3D_isotropic"]
-    class Inventory(Model.Inventory):
-        from pyre.inventory import inputFile
-        CNtype2            = inputFile("CNtype2",           default="DATA/crust2.0/CNtype2.txt")
-        CNtype2_key_modif  = inputFile("CNtype2_key_modif", default="DATA/crust2.0/CNtype2_key_modif.txt")
-        P12                = inputFile("P12",               default="DATA/s20rts/P12.dat")
-        S20RTS             = inputFile("S20RTS",            default="DATA/s20rts/S20RTS.dat")
-    def __init__(self, name):
-        Model.__init__(self, name)
-        self.CNtype2           = None
-        self.CNtype2_key_modif = None
-        self.P12               = None
-        self.S20RTS            = None
-    def _init(self):
-        Model._init(self)
-        # Access our InputFile inventory items to make sure they're
-        # readable.  (They will be reopened by the Fortran code.)
-        f = self.inventory.CNtype2;            self.CNtype2           = f.name;  f.close()
-        f = self.inventory.CNtype2_key_modif;  self.CNtype2_key_modif = f.name;  f.close()
-        f = self.inventory.P12;                self.P12               = f.name;  f.close()
-        f = self.inventory.S20RTS;             self.S20RTS            = f.name;  f.close()
+
+    # name by which the Fortran code knows this model
+    MODEL = "s20rts"
+
+    # names by which the user refers to this model
+    componentNames = [ "3D_isotropic", "s20rts" ]
+
+    # additional parameters for this model
+    import pyre.inventory as pyre
+    CNtype2            = pyre.inputFile("CNtype2",           default="DATA/crust2.0/CNtype2.txt")
+    CNtype2_key_modif  = pyre.inputFile("CNtype2_key_modif", default="DATA/crust2.0/CNtype2_key_modif.txt")
+    P12                = pyre.inputFile("P12",               default="DATA/s20rts/P12.dat")
+    S20RTS             = pyre.inputFile("S20RTS",            default="DATA/s20rts/S20RTS.dat")
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 3D attenuation (Min Chen)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Model3DAttenuation(Model):
-    className = "Min_Chen"
-    classAliases = ["Min_Chen", "3D_attenuation"]
-    class Inventory(Model.Inventory):
-        from pyre.inventory import inputFile
-        Adrem119           = inputFile("Adrem119",        default="DATA/Montagner_model/Adrem119")
-        glob_prem3sm01     = inputFile("glob_prem3sm01",  default="DATA/Montagner_model/glob-prem3sm01")
-        globpreman3sm01    = inputFile("globpreman3sm01", default="DATA/Montagner_model/globpreman3sm01")
-    def _init(self):
-        Model._init(self)
-        self.inventory.Adrem119.close()
-        self.inventory.glob_prem3sm01.close()
-        self.inventory.globpreman3sm01.close()
+    
+    # name by which the Fortran code knows this model
+    MODEL = "Min_Chen"
+    
+    # names by which the user refers to this model
+    componentNames = [ "3D_attenuation", "Min_Chen" ]
+    
+    # additional parameters for this model
+    import pyre.inventory as pyre
+    Adrem119           = pyre.inputFile("Adrem119",        default="DATA/Montagner_model/Adrem119")
+    glob_prem3sm01     = pyre.inputFile("glob_prem3sm01",  default="DATA/Montagner_model/glob-prem3sm01")
+    globpreman3sm01    = pyre.inputFile("globpreman3sm01", default="DATA/Montagner_model/globpreman3sm01")
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 3D anisotropic (Brian Savage)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Model3DAnisotropic(Model):
-    className = "Brian_Savage"
-    classAliases = ["Brian_Savage", "3D_anisotropic"]
+
+    # name by which the Fortran code knows this model
+    MODEL = "Brian_Savage"
+    
+    # names by which the user refers to this model
+    componentNames = [ "3D_anisotropic", "Brian_Savage" ]
+
+    # initialization
     def _init(self):
         Model._init(self)
-        if not self.inventory.ATTENUATION:
-            import journal
-            journal.warning("Specfem3DGlobe.Model").log("setting 'attenuation' to 'True' for 3D anisotropic model")
-            self.inventory.ATTENUATION = True
+        # force 'attenuation' to 'True'
+        if not self.ATTENUATION:
+            self._warning.log("setting 'attenuation' to 'True' for 3D anisotropic model")
+            self.ATTENUATION = True
         return
 
-builtInModelClasses = [
-    BuiltInModel("isotropic_prem"),
-    BuiltInModel("transversly_isotropic_prem"),
-    BuiltInModel("iaspei", "iasp91"),
-    BuiltInModel("ak135"),
-    Model3DIsotropic,
-    Model3DAnisotropic,
-    Model3DAttenuation,
-    ]
 
-def retrieveBuiltInModelClass(componentName):
-    for cls in builtInModelClasses:
-        for name in cls.classAliases:
-            if name == componentName:
-                return cls
-    return None
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# other assorted models
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+#                                            name by which the Fortran code
+#     Python class name                      knows the model                        names by which the user refers to the model
+#     -------------------------------------  -------------------------------------  -------------------------------------------------
+class ModelIsotropicPrem(Model):             MODEL = "isotropic_prem";              componentNames = [ "isotropic_prem" ]
+class ModelTransverslyIsotropicPrem(Model):  MODEL = "transversly_isotropic_prem";  componentNames = [ "transversly_isotropic_prem" ]
+class ModelIaspei(Model):                    MODEL = "iaspei";                      componentNames = [ "iaspei", "iasp91" ]
+class ModelAK135(Model):                     MODEL = "ak135";                       componentNames = [ "ak135" ]
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # model facility
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ModelFacility(Facility):
 
-    def __init__(self, name):
-        Facility.__init__(self, name, default="isotropic_prem")
-        return
-    
-    def _retrieveComponent(self, instance, componentName):
-        cls = retrieveBuiltInModelClass(componentName)
-        if cls is None:
-            return Facility._retrieveComponent(self, instance, componentName)
-        model = cls(componentName)
-        model.aliases.append(self.name)
-        import pyre.parsing.locators
-        locator = pyre.parsing.locators.simple('built-in')
-        return model, locator
+from cig.addyndum.inventory import builtInComponents
+builtins = builtInComponents(globals())
+
+
+def model(*args, **kwds):
+    from cig.addyndum.inventory import Facility
+    kwds['builtins'] = builtins
+    return Facility(*args, **kwds)
 
 
 # end of file
