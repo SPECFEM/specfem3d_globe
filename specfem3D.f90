@@ -841,7 +841,7 @@
     do iproc_xi = NPROC_XI-1, 0, -1
       write(IMAIN,'(20x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i4)',advance='no') addressing(CHUNK_AB,iproc_xi,iproc_eta)
+        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_AB,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
@@ -849,15 +849,15 @@
     do iproc_xi = NPROC_XI-1, 0, -1
       write(IMAIN,'(1x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i4)',advance='no') addressing(CHUNK_BC,iproc_xi,iproc_eta)
+        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_BC,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(3x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i4)',advance='no') addressing(CHUNK_AC,iproc_xi,iproc_eta)
+        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_AC,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(3x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i4)',advance='no') addressing(CHUNK_BC_ANTIPODE,iproc_xi,iproc_eta)
+        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_BC_ANTIPODE,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
@@ -865,7 +865,7 @@
     do iproc_xi = NPROC_XI-1, 0, -1
       write(IMAIN,'(20x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i4)',advance='no') addressing(CHUNK_AB_ANTIPODE,iproc_xi,iproc_eta)
+        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_AB_ANTIPODE,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
@@ -873,7 +873,7 @@
     do iproc_xi = NPROC_XI-1, 0, -1
       write(IMAIN,'(20x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i4)',advance='no') addressing(CHUNK_AC_ANTIPODE,iproc_xi,iproc_eta)
+        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_AC_ANTIPODE,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
