@@ -108,13 +108,13 @@
 
           do l=1,NGLLX
             tempx1l = tempx1l + displfluid(ibool(l,j,k,ispec)) * hprime_xx(l,i)
-          enddo
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-          do l=1,NGLLY
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
             tempx2l = tempx2l + displfluid(ibool(i,l,k,ispec)) * hprime_yy(l,j)
-          enddo
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-          do l=1,NGLLZ
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
             tempx3l = tempx3l + displfluid(ibool(i,j,l,ispec)) * hprime_zz(l,k)
           enddo
 
@@ -233,13 +233,13 @@
 
           do l=1,NGLLX
             tempx1l = tempx1l + tempx1(l,j,k) * hprimewgll_xx(i,l)
-          enddo
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-          do l=1,NGLLY
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
             tempx2l = tempx2l + tempx2(i,l,k) * hprimewgll_yy(j,l)
-          enddo
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-          do l=1,NGLLZ
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
             tempx3l = tempx3l + tempx3(i,j,l) * hprimewgll_zz(k,l)
           enddo
 
@@ -297,13 +297,13 @@ subroutine compute_field_gradient(field,nrank,i,j,k,grad_field, &
 
     do l=1,NGLLX
       tempx1l = tempx1l + field(irank,ibool(l,j,k)) * hprime_xx(l,i)
-    enddo
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ    enddo
 
-    do l=1,NGLLY
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ    do l=1,NGLLY
       tempx2l = tempx2l + field(irank,ibool(i,l,k)) * hprime_yy(l,j)
-    enddo
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ    enddo
 
-    do l=1,NGLLZ
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ    do l=1,NGLLZ
       tempx3l = tempx3l + field(irank,ibool(i,j,l)) * hprime_zz(l,k)
     enddo
 
