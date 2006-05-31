@@ -19,7 +19,7 @@
      iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
      npoin2D_xi,npoin2D_eta, &
      iprocfrom_faces,iprocto_faces,imsg_type, &
-     iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
      iboolfaces,npoin2D_faces,iboolcorner, &
      NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY,NPOIN1D_RADIAL, &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
@@ -46,7 +46,7 @@
   integer, dimension(NUMMSGS_FACES) :: iprocfrom_faces,iprocto_faces,imsg_type
 
 ! allocate array for messages for corners
-  integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners
+  integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
   integer npoin2D_xi_mesher,npoin2D_eta_mesher
   integer npoin1D_corner
@@ -186,14 +186,14 @@
 ! file with the list of processors for each message for corners
   open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old')
   do imsg = 1,NCORNERSCHUNKS
-  read(IIN,*) iproc_master_corners(imsg),iproc_slave1_corners(imsg), &
-                          iproc_slave2_corners(imsg)
+  read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
+                          iproc_worker2_corners(imsg)
   if    (iproc_master_corners(imsg) < 0 &
-    .or. iproc_slave1_corners(imsg) < 0 &
-    .or. iproc_slave2_corners(imsg) < 0 &
+    .or. iproc_worker1_corners(imsg) < 0 &
+    .or. iproc_worker2_corners(imsg) < 0 &
     .or. iproc_master_corners(imsg) > NPROCTOT-1 &
-    .or. iproc_slave1_corners(imsg) > NPROCTOT-1 &
-    .or. iproc_slave2_corners(imsg) > NPROCTOT-1) &
+    .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
+    .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
       call exit_MPI(myrank,'incorrect chunk corner numbering')
   enddo
   close(IIN)
@@ -206,8 +206,8 @@
   call MPI_BCAST(iprocto_faces,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_slave1_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_slave2_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(iproc_worker1_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(iproc_worker2_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
 !---- read indirect addressing for each message for faces of the chunks
 !---- a given slice can belong to at most two faces
@@ -242,8 +242,8 @@
   icount_corners = 0
   do imsg = 1,NCORNERSCHUNKS
   if(myrank == iproc_master_corners(imsg) .or. &
-       myrank == iproc_slave1_corners(imsg) .or. &
-       myrank == iproc_slave2_corners(imsg)) then
+       myrank == iproc_worker1_corners(imsg) .or. &
+       myrank == iproc_worker2_corners(imsg)) then
     icount_corners = icount_corners + 1
     if(icount_corners>1 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) &
       call exit_MPI(myrank,'more than one corner for this slice')
@@ -252,10 +252,10 @@
 ! read file with 1D buffer for corner
     if(myrank == iproc_master_corners(imsg)) then
       write(filename,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
-    else if(myrank == iproc_slave1_corners(imsg)) then
-      write(filename,"('buffer_corners_chunks_slave1_msg',i6.6,'.txt')") imsg
-    else if(myrank == iproc_slave2_corners(imsg)) then
-      write(filename,"('buffer_corners_chunks_slave2_msg',i6.6,'.txt')") imsg
+    else if(myrank == iproc_worker1_corners(imsg)) then
+      write(filename,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
+    else if(myrank == iproc_worker2_corners(imsg)) then
+      write(filename,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
     endif
 
 ! matching codes

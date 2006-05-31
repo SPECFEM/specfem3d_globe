@@ -299,7 +299,7 @@
   integer, dimension(:), allocatable :: iprocfrom_faces,iprocto_faces,imsg_type
 
 ! communication pattern for corners between chunks
-  integer, dimension(:), allocatable :: iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners
+  integer, dimension(:), allocatable :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
 ! indirect addressing for each message for faces and corners of the chunks
 ! a given slice can belong to at most one corner and at most two faces
@@ -977,8 +977,8 @@
 
 ! allocate array for messages for corners
   allocate(iproc_master_corners(NCORNERSCHUNKS))
-  allocate(iproc_slave1_corners(NCORNERSCHUNKS))
-  allocate(iproc_slave2_corners(NCORNERSCHUNKS))
+  allocate(iproc_worker1_corners(NCORNERSCHUNKS))
+  allocate(iproc_worker2_corners(NCORNERSCHUNKS))
 
 ! attenuation
   if(ATTENUATION) then
@@ -1279,7 +1279,7 @@
      iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
      npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
      iprocfrom_faces,iprocto_faces,imsg_type, &
-     iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
      iboolfaces_crust_mantle,npoin2D_faces_crust_mantle, &
      iboolcorner_crust_mantle, &
      NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE), &
@@ -1291,7 +1291,7 @@
      iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
      npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
      iprocfrom_faces,iprocto_faces,imsg_type, &
-     iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
      iboolfaces_outer_core,npoin2D_faces_outer_core, &
      iboolcorner_outer_core, &
      NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE), &
@@ -1303,7 +1303,7 @@
      iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
      npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
      iprocfrom_faces,iprocto_faces,imsg_type, &
-     iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
      iboolfaces_inner_core,npoin2D_faces_inner_core, &
      iboolcorner_inner_core, &
      NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
@@ -1927,7 +1927,7 @@
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -1942,7 +1942,7 @@
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -1956,7 +1956,7 @@
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -1970,7 +1970,7 @@
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -3453,7 +3453,7 @@
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -3473,7 +3473,7 @@
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -4043,7 +4043,7 @@
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -4057,7 +4057,7 @@
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -4097,7 +4097,7 @@
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -4111,7 +4111,7 @@
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_slave1_corners,iproc_slave2_corners, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
@@ -4206,7 +4206,7 @@
   do i=1,nglob_crust_mantle
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
   enddo
-  
+
   do i=1,NGLOB_INNER_CORE
     accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
              + two_omega_earth*veloc_inner_core(2,i)
