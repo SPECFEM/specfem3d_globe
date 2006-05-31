@@ -28,7 +28,7 @@ class Model(Component):
         Component._configure(self)
         if not (self.TOPOGRAPHY or self.OCEANS):
             # We don't need topo-bathy data.
-            self.topoBathy = None
+            self.jettison(Model.topoBathy)
         return
 
 
@@ -46,11 +46,11 @@ class Model3DIsotropic(Model):
     componentNames = [ "3D_isotropic", "s20rts" ]
 
     # additional parameters for this model
-    import pyre.inventory as pyre
-    CNtype2            = pyre.inputFile("CNtype2",           default="DATA/crust2.0/CNtype2.txt")
-    CNtype2_key_modif  = pyre.inputFile("CNtype2_key_modif", default="DATA/crust2.0/CNtype2_key_modif.txt")
-    P12                = pyre.inputFile("P12",               default="DATA/s20rts/P12.dat")
-    S20RTS             = pyre.inputFile("S20RTS",            default="DATA/s20rts/S20RTS.dat")
+    import cig.addyndum.inventory as addyndum
+    CNtype2            = addyndum.inputFile("CNtype2",           default="DATA/crust2.0/CNtype2.txt")
+    CNtype2_key_modif  = addyndum.inputFile("CNtype2_key_modif", default="DATA/crust2.0/CNtype2_key_modif.txt")
+    P12                = addyndum.inputFile("P12",               default="DATA/s20rts/P12.dat")
+    S20RTS             = addyndum.inputFile("S20RTS",            default="DATA/s20rts/S20RTS.dat")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,10 +67,10 @@ class Model3DAttenuation(Model):
     componentNames = [ "3D_attenuation", "Min_Chen" ]
     
     # additional parameters for this model
-    import pyre.inventory as pyre
-    Adrem119           = pyre.inputFile("Adrem119",        default="DATA/Montagner_model/Adrem119")
-    glob_prem3sm01     = pyre.inputFile("glob_prem3sm01",  default="DATA/Montagner_model/glob-prem3sm01")
-    globpreman3sm01    = pyre.inputFile("globpreman3sm01", default="DATA/Montagner_model/globpreman3sm01")
+    import cig.addyndum.inventory as addyndum
+    Adrem119           = addyndum.inputFile("Adrem119",        default="DATA/Montagner_model/Adrem119")
+    glob_prem3sm01     = addyndum.inputFile("glob_prem3sm01",  default="DATA/Montagner_model/glob-prem3sm01")
+    globpreman3sm01    = addyndum.inputFile("globpreman3sm01", default="DATA/Montagner_model/globpreman3sm01")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

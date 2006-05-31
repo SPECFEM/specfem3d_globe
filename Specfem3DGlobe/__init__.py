@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import os
+import os, sys
 
 dir = __path__[0] # this package's top-level directory
-__path__.append(os.path.join(dir, "tools"))
+sys.path.append(os.path.join(dir, "tools"))
 
 # end of file
