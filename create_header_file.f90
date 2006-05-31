@@ -76,10 +76,13 @@
   integer ispec_aniso
   integer npx,npy
 
+  character(len=150) HEADER_FILE
+
 ! ************** PROGRAM STARTS HERE **************
 
+  call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
   print *
-  print *,'creating file OUTPUT_FILES/values_from_mesher.h to compile solver with correct values'
+  print *,'creating file ', trim(HEADER_FILE), ' to compile solver with correct values'
 
 ! read the parameter file
   call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &

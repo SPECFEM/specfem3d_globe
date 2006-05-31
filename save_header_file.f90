@@ -45,6 +45,8 @@
   integer subtract_central_cube_elems
   double precision subtract_central_cube_points
 
+  character(len=150) HEADER_FILE
+
 ! for regional code
   double precision x,y,gamma,rgt,xi,eta
   double precision x_top,y_top,z_top
@@ -57,7 +59,8 @@
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
 
 ! copy number of elements and points in an include file for the solver
-  open(unit=IOUT,file='OUTPUT_FILES/values_from_mesher.h',status='unknown')
+  call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
+  open(unit=IOUT,file=HEADER_FILE,status='unknown')
   write(IOUT,*)
 
   write(IOUT,*) '!'

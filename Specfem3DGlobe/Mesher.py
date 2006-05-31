@@ -17,10 +17,13 @@ class Mesher(Component):
     #
     
     import pyre.inventory as pyre
+    import cig.addyndum.inventory as addyndum
 
-    outputFile                    = pyre.outputFile("output-file", default="output_mesher.txt")
+    outputFile                    = addyndum.outputFile("output-file",
+                                                        default="${output-dir}/output_mesher.txt")
     
     SAVE_MESH_FILES               = pyre.bool("save-files")
+    dry                           = pyre.bool("dry")
 
     angular_width_eta             = pyre.dimensional("angular-width-eta", default=90.0*deg)
     angular_width_xi              = pyre.dimensional("angular-width-xi", default=90.0*deg)
@@ -109,8 +112,11 @@ class Mesher(Component):
     def execute(self, script):
         """Execute the mesher."""
         from PyxMeshfem import meshfem3D
-        #meshfem3D(script) # call into Fortran
-        print "execute", meshfem3D
+        if self.dry:
+            print >> outputFile, "execute", meshfem3D
+        else:
+            meshfem3D(script) # call into Fortran
+        return
 
 
 # end of file

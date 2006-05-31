@@ -1,8 +1,30 @@
 #!${interpreter}
 # -*- Python -*-
 
-from Specfem3DGlobe.Specfem import main
 
-main()
+import sys
+
+
+# Fire-up pdb and IPython when an exception occurs -- if IPython is available.
+try:
+    import IPython.ultraTB
+    if sys.stderr.isatty():
+        colorScheme = 'Linux'
+    else:
+        colorScheme = 'NoColor'
+    if sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty():
+        callPdb = 1
+    else:
+        callPdb = 0
+    sys.excepthook = IPython.ultraTB.FormattedTB(mode='Verbose', color_scheme=colorScheme, call_pdb=callPdb)
+except ImportError:
+    pass
+
+
+srcdir = "${srcdir}"
+sys.path.insert(1, srcdir)
+from Specfem3DGlobe.Specfem import main
+main(srcdir="${srcdir}")
+
 
 # end of file

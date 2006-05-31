@@ -23,7 +23,7 @@ class Specfem(ParallelScript):
     from Solver import Solver
     
     LOCAL_PATH                    = pyre.str("local-path")
-    outputDir                     = addyndum.outputdir("output-dir", default="OUTPUT_FILES")
+    outputDir                     = addyndum.outputDir("output-dir", default="OUTPUT_FILES")
         
     model                         = model("model", default="isotropic_prem")
     mesher                        = addyndum.facility("mesher", factory=Mesher)
@@ -44,10 +44,9 @@ class Specfem(ParallelScript):
         
         self.OUTPUT_FILES = self.outputDir
 
-        # declare the exectuables used for launching and computing
+        # declare the interpreter to be used on the compute nodes
         from os.path import join
-        self.computeExe = join(self.outputDir, "pyspecfem3D")
-        self.launcherExe = self.computeExe
+        self.interpreter = join(self.outputDir, "pyspecfem3D") # includes solver
 
         # validate absorbing conditions
         if self.solver.ABSORBING_CONDITIONS:
@@ -68,17 +67,18 @@ class Specfem(ParallelScript):
         
         import sys
         import shutil
+        import journal
+        
+        # turn on my channels so we can watch what happens
+        journal.info(self.name).activate()
         
         pyspecfem3D = sys.executable # the current executable
         
-        # the launcher is simply a copy of the current executable
-        shutil.copyfile(pyspecfem3D, self.launcherExe)
-        
         # build the solver
-        self.solver.build(self)
+        self.solver.build(self, kwds['srcdir'])
         
         # compute the total number of processors needed
-        self.nodes = self.mesher.nproc()
+        self.nodes = 4 #self.mesher.nproc()
 
         self.schedule() # bsub
         
@@ -113,9 +113,9 @@ class Specfem(ParallelScript):
             
 
 
-def main():
+def main(*args, **kwds):
     script = Specfem()
-    script.run()
+    script.run(*args, **kwds)
 
 
 # end of file
