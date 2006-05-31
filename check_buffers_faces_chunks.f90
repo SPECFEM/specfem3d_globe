@@ -193,13 +193,13 @@
   print *,'Checking message ',imsg,' out of ',NUMMSGS_FACES
 
 ! read 2-D buffer for the sender and the receiver
-  write(filename,"('buffer_faces_chunks_sender_msg',i4.4,'.txt')") imsg
+  write(filename,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
   iproc = iprocfrom_faces(imsg)
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
   open(unit=34,file=prname(1:len_trim(prname))//filename,status='old')
 
-  write(filename,"('buffer_faces_chunks_receiver_msg',i4.4,'.txt')") imsg
+  write(filename,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
   iproc = iprocto_faces(imsg)
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)

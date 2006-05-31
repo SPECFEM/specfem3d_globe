@@ -117,7 +117,7 @@ program combine_paraview_data
     iproc = node_list(it)
 
     print *, 'Reading slice ', iproc
-    write(prname,'(a,i4.4,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
+    write(prname,'(a,i6.6,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
 
     dimension_file = trim(prname) //'array_dims.txt'
     open(unit = 27,file = trim(dimension_file),status='old', iostat = ios)
@@ -161,7 +161,7 @@ program combine_paraview_data
 
     print *, ' '
     print *, 'Reading slice ', iproc
-    write(prname,'(a,i4.4,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
+    write(prname,'(a,i6.6,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
 
     local_data_file = trim(prname) // trim(filename) // '.bin'
     open(unit = 27,file = trim(local_data_file),status='old', iostat = ios,form ='unformatted')
@@ -345,7 +345,7 @@ program combine_paraview_data
     iproc = node_list(it)
 
     print *, 'Reading slice ', iproc
-    write(prname,'(a,i4.4,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
+    write(prname,'(a,i6.6,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
 
     if (.not. HIGH_RESOLUTION_MESH) then
       local_point_file = trim(prname) //'AVS_DXelements' // '.txt'
@@ -369,7 +369,7 @@ program combine_paraview_data
     iproc = node_list(it)
 
     print *, 'Reading slice ', iproc
-    write(prname,'(a,i4.4,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
+    write(prname,'(a,i6.6,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
 
     if (it == 1) then
       np = 0

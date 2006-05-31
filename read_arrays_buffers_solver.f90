@@ -220,9 +220,9 @@
 
 ! read file with 2D buffer for faces
     if(myrank == iprocfrom_faces(imsg)) then
-      write(filename,"('buffer_faces_chunks_sender_msg',i4.4,'.txt')") imsg
+      write(filename,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
     else if(myrank == iprocto_faces(imsg)) then
-      write(filename,"('buffer_faces_chunks_receiver_msg',i4.4,'.txt')") imsg
+      write(filename,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
     endif
 
     open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old')
@@ -251,11 +251,11 @@
 
 ! read file with 1D buffer for corner
     if(myrank == iproc_master_corners(imsg)) then
-      write(filename,"('buffer_corners_chunks_master_msg',i4.4,'.txt')") imsg
+      write(filename,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
     else if(myrank == iproc_slave1_corners(imsg)) then
-      write(filename,"('buffer_corners_chunks_slave1_msg',i4.4,'.txt')") imsg
+      write(filename,"('buffer_corners_chunks_slave1_msg',i6.6,'.txt')") imsg
     else if(myrank == iproc_slave2_corners(imsg)) then
-      write(filename,"('buffer_corners_chunks_slave2_msg',i4.4,'.txt')") imsg
+      write(filename,"('buffer_corners_chunks_slave2_msg',i6.6,'.txt')") imsg
     endif
 
 ! matching codes

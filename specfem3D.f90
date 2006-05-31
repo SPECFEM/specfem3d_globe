@@ -2914,7 +2914,7 @@
 
 ! read files back from local disk or MT tape system if restart file
   if(NUMBER_OF_THIS_RUN > 1) then
-    write(outputname,"('dump_all_arrays',i4.4)") myrank
+    write(outputname,"('dump_all_arrays',i6.6)") myrank
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',form='unformatted')
     read(55) displ_crust_mantle
     read(55) veloc_crust_mantle
@@ -2935,7 +2935,7 @@
   endif
 
   if (SIMULATION_TYPE == 3) then
-    write(outputname,'(a,i4.4,a)') 'proc',myrank,'_save_forward_arrays.bin'
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',form='unformatted')
     read(55) b_displ_crust_mantle
     read(55) b_veloc_crust_mantle
@@ -4558,29 +4558,29 @@
   if(MOVIE_VOLUME .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
 ! div
-    write(outputname,"('proc',i4.4,'_crust_mantle_div_displ_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i6.6,'_crust_mantle_div_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) eps_trace_over_3_crust_mantle
     close(27)
 
-    write(outputname,"('proc',i4.4,'_outer_core_div_displ_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i6.6,'_outer_core_div_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27)  ONE_THIRD * div_displ_outer_core
     close(27)
 
-    write(outputname,"('proc',i4.4,'_inner_core_div_displ_proc_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i6.6,'_inner_core_div_displ_proc_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) eps_trace_over_3_inner_core
     close(27)
 
 ! epsilondev
 
-    write(outputname,"('proc',i4.4,'_crust_mantle_epsdev_displ_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i6.6,'_crust_mantle_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) epsilondev_crust_mantle
     close(27)
 
-    write(outputname,"('proc',i4.4,'inner_core_epsdev_displ_it',i6.6,'.bin')") myrank,it
+    write(outputname,"('proc',i6.6,'inner_core_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) epsilondev_inner_core
     close(27)
@@ -4605,7 +4605,7 @@
 
 ! save files to local disk or MT tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
-    write(outputname,"('dump_all_arrays',i4.4)") myrank
+    write(outputname,"('dump_all_arrays',i6.6)") myrank
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
     write(55) displ_crust_mantle
     write(55) veloc_crust_mantle
@@ -4627,7 +4627,7 @@
 
 ! save last frame of the forward simulation
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-    write(outputname,"('save_forward_arrays',i4.4,'.bin')") myrank
+    write(outputname,"('save_forward_arrays',i6.6,'.bin')") myrank
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
     write(55) displ_crust_mantle
     write(55) veloc_crust_mantle
