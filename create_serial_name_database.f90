@@ -34,7 +34,7 @@
   integer, dimension(:), allocatable :: num_active_proc
 
 ! create the name for the database of the current slide and region
-  write(procname,"('/proc',i4.4,'_reg',i1,'_')") iproc,iregion_code
+  write(procname,"('/proc',i6.6,'_reg',i1,'_')") iproc,iregion_code
 
 ! on a Beowulf-type machine, path on frontend can be different from local paths
   if(.not. LOCAL_PATH_IS_ALSO_GLOBAL) then
@@ -50,7 +50,7 @@
     close(48)
 
 ! create the serial prefix pointing to the correct machine
-    write(serial_prefix,"('/auto/scratch_n',i3.3,'/')") num_active_proc(iproc)
+    write(serial_prefix,"('/auto/scratch_n',i6.6,'/')") num_active_proc(iproc)
 
 ! suppress everything until the last "/" to define the base name of local path
 ! this is system dependent since it assumes the disks are mounted

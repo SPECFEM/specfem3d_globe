@@ -426,11 +426,11 @@
   if(imode_comm == 1) then
     iproc = iproc_sender(imsg)
     iedge = iproc_edge_send
-    write(filename_out,"('buffer_faces_chunks_sender_msg',i4.4,'.txt')") imsg
+    write(filename_out,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
   else if(imode_comm == 2) then
     iproc = iproc_receiver(imsg)
     iedge = iproc_edge_receive
-    write(filename_out,"('buffer_faces_chunks_receiver_msg',i4.4,'.txt')") imsg
+    write(filename_out,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
   else
     call exit_MPI(myrank,'incorrect communication mode')
   endif
@@ -882,11 +882,11 @@
   do imember_corner = 1,3
 
     if(imember_corner == 1) then
-      write(filename_out,"('buffer_corners_chunks_master_msg',i4.4,'.txt')") imsg
+      write(filename_out,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
     else if(imember_corner == 2) then
-      write(filename_out,"('buffer_corners_chunks_slave1_msg',i4.4,'.txt')") imsg
+      write(filename_out,"('buffer_corners_chunks_slave1_msg',i6.6,'.txt')") imsg
     else
-      write(filename_out,"('buffer_corners_chunks_slave2_msg',i4.4,'.txt')") imsg
+      write(filename_out,"('buffer_corners_chunks_slave2_msg',i6.6,'.txt')") imsg
     endif
 
 ! only do this if current processor is the right one for MPI version
