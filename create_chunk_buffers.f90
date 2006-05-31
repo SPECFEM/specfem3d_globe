@@ -884,9 +884,9 @@
     if(imember_corner == 1) then
       write(filename_out,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
     else if(imember_corner == 2) then
-      write(filename_out,"('buffer_corners_chunks_slave1_msg',i6.6,'.txt')") imsg
+      write(filename_out,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
     else
-      write(filename_out,"('buffer_corners_chunks_slave2_msg',i6.6,'.txt')") imsg
+      write(filename_out,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
     endif
 
 ! only do this if current processor is the right one for MPI version
