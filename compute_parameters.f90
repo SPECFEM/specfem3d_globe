@@ -406,48 +406,5 @@
      - (nblocks_eta-1)*nblocks_xi*(nglob_surface_typeC + nglob_no_doubling_surface) &
      + (nblocks_eta-1)*(nblocks_xi-1)*NPOIN1D_RADIAL(IREGION_OUTER_CORE)
 
-!  if(0 .EQ. 1) then
-  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
-  open(unit=IOUT,file=trim(OUTPUT_FILES)//'/derived_values.h',status='unknown')
-  write(IOUT,*)'! What is this doing here? - Well, it is used to help compute '
-  write(IOUT,*)'!     the memory requirements. This file, among others, is read '
-  write(IOUT,*)'!     by the memory.pl script and tries to determine'
-  write(IOUT,*)'!     the memory requirements for this particular run; total and pre processor'
-  write(IOUT,*)'!     If this file bothers you, remove it, nothing depends on it'
-  write(IOUT,*)'!     If this file really bothers you, comment it out at the '
-  write(IOUT,*)'!     bottom of compute_parameters.f90'
-  write(IOUT,*)
-  write(IOUT,*)'integer, parameter :: NER = ', NER
-  write(IOUT,*)'integer :: NPROCTOT = ', NPROCTOT
-  write(IOUT,*)'integer :: NPROC = ', NPROC
-  write(IOUT,*)'integer :: NSPEC2D_NO_DOUBLING_ETA(IREGION_CRUST_MANTLE) = ', NSPEC2D_NO_DOUBLING_ETA(IREGION_CRUST_MANTLE)
-  write(IOUT,*)'integer :: NSPEC2D_NO_DOUBLING_XI(IREGION_CRUST_MANTLE) = ', NSPEC2D_NO_DOUBLING_XI(IREGION_CRUST_MANTLE)
-  write(IOUT,*)'integer :: NSPEC2D_NO_DOUBLING_ETA(IREGION_OUTER_CORE) = ', NSPEC2D_NO_DOUBLING_ETA(IREGION_OUTER_CORE)
-  write(IOUT,*)'integer :: NSPEC2D_NO_DOUBLING_XI(IREGION_OUTER_CORE) = ', NSPEC2D_NO_DOUBLING_XI(IREGION_OUTER_CORE)
-  write(IOUT,*)'integer :: NSPEC2D_NO_DOUBLING_ETA(IREGION_INNER_CORE) = ', NSPEC2D_NO_DOUBLING_ETA(IREGION_INNER_CORE)
-  write(IOUT,*)'integer :: NSPEC2D_NO_DOUBLING_XI(IREGION_INNER_CORE) = ', NSPEC2D_NO_DOUBLING_XI(IREGION_INNER_CORE)
-
-  write(IOUT,*)'integer :: NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE) = ', NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*)'integer :: NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE) = ', NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*)'integer :: NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE) = ', NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
-  write(IOUT,*)'integer :: NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE) = ', NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
-  write(IOUT,*)'integer :: NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE) = ', NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
-  write(IOUT,*)'integer :: NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE) = ', NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
-
-  write(IOUT,*)'integer :: NPOIN1D_RADIAL(IREGION_CRUST_MANTLE) = ', NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)
-  write(IOUT,*)'integer :: NPOIN1D_RADIAL(IREGION_OUTER_CORE) = ', NPOIN1D_RADIAL(IREGION_OUTER_CORE)
-  write(IOUT,*)'integer :: NPOIN1D_RADIAL(IREGION_INNER_CORE) = ', NPOIN1D_RADIAL(IREGION_INNER_CORE)
-  write(IOUT,*)'integer :: NSPEC2D_TOP = ', NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-  write(IOUT,*)'integer :: NSPEC2D_BOTTOM = ', NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
-
-  write(IOUT,*)'integer :: NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE) = ', NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*)'integer :: NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE) = ', NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
-  write(IOUT,*)'integer :: NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE) = ', NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
-  write(IOUT,*)'integer :: NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE) = ', NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
-  write(IOUT,*)'integer :: NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE) = ', NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
-  write(IOUT,*)'integer :: NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE) = ', NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
-  close(IOUT)
-! endif ! if(1 .EQ. 0)
-
   end subroutine compute_parameters
 
