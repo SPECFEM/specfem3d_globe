@@ -824,16 +824,24 @@
   allocate(iproc_eta_slice(0:NPROCTOT-1))
 
 ! open file with global slice number addressing
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old')
-  do iproc = 0,NPROCTOT-1
-    read(IIN,*) iproc_read,ichunk,iproc_xi,iproc_eta
-    if(iproc_read /= iproc) call exit_MPI(myrank,'incorrect slice number read')
-    addressing(ichunk,iproc_xi,iproc_eta) = iproc
-    ichunk_slice(iproc) = ichunk
-    iproc_xi_slice(iproc) = iproc_xi
-    iproc_eta_slice(iproc) = iproc_eta
-  enddo
-  close(IIN)
+  if(myrank == 0) then
+    open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old')
+    do iproc = 0,NPROCTOT-1
+      read(IIN,*) iproc_read,ichunk,iproc_xi,iproc_eta
+      if(iproc_read /= iproc) call exit_MPI(myrank,'incorrect slice number read')
+      addressing(ichunk,iproc_xi,iproc_eta) = iproc
+      ichunk_slice(iproc) = ichunk
+      iproc_xi_slice(iproc) = iproc_xi
+      iproc_eta_slice(iproc) = iproc_eta
+    enddo
+    close(IIN)
+  endif
+
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(addressing,NCHUNKS*NPROC_XI*NPROC_ETA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(ichunk_slice,NPROCTOT,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(iproc_xi_slice,NPROCTOT,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(iproc_eta_slice,NPROCTOT,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
 ! LQY - output a topology map of slices - fix 20x by nproc
   if (myrank == 0 .and. NCHUNKS == 6) then

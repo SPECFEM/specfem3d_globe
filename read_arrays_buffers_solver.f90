@@ -167,6 +167,8 @@
 
 ! read messages to assemble between chunks with MPI
 
+  if(myrank == 0) then
+
 ! file with the list of processors for each message for faces
   open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old')
   do imsg = 1,NUMMSGS_FACES
@@ -195,6 +197,17 @@
       call exit_MPI(myrank,'incorrect chunk corner numbering')
   enddo
   close(IIN)
+
+  endif
+
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(imsg_type,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(iprocfrom_faces,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(iprocto_faces,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+  call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(iproc_slave1_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(iproc_slave2_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
 !---- read indirect addressing for each message for faces of the chunks
 !---- a given slice can belong to at most two faces
