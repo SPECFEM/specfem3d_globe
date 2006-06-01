@@ -54,7 +54,7 @@ NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
-LOCAL_PATH                      = /scratch/DATABASES_MPI_DIMITRI
+LOCAL_PATH                      = /scratch/komatits/DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
 NTSTEP_BETWEEN_OUTPUT_INFO      = 200
