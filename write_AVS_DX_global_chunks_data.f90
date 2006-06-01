@@ -20,7 +20,7 @@
   subroutine write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun, &
         ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
         npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-        ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,IASP91, &
+        ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
         RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO, &
         RMIDDLE_CRUST,ROCEAN)
 
@@ -28,12 +28,12 @@
 
   include "constants.h"
 
-  integer nspec,myrank
+  integer nspec,myrank,REFERENCE_1D_MODEL
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer idoubling(nspec)
 
-  logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,IASP91
+  logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
 
   double precision RICB,RCMB,RTOPDDOUBLEPRIME, &
         R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
@@ -575,9 +575,20 @@
               factor=ONE-(TWO/3.0d0)*ell*p20
               r=r/factor
             endif
-            call prem_iso(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &
-              CRUSTAL,ONE_CRUST,.true.,IASP91,RICB,RCMB,RTOPDDOUBLEPRIME, &
-              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+            if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
+              call model_iasp91(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &
+                .true.,RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,RMOHO)
+
+            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
+              call prem_iso(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &
+                CRUSTAL,ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+            else
+              stop 'unknown 1D reference Earth model in writing of AVS/DX data'
+            endif
+
             dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
             dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)
           enddo

@@ -99,7 +99,10 @@ COMMON_OBJECTS = \
 	$O/lagrange_poly.o \
 	$O/make_ellipticity.o \
 	$O/numerical_recipes.o \
-	$O/prem_model.o \
+	$O/model_prem.o \
+	$O/model_iasp91.o \
+	$O/model_1066a.o \
+	$O/model_ak135.o \
 	$O/topo_bathy.o \
 	$(PARAM_OBJECTS)
 
@@ -488,8 +491,17 @@ $O/numerical_recipes.o: constants.h numerical_recipes.f90
 $O/lgndr.o: constants.h lgndr.f90
 	${FCCOMPILE_CHECK} -c -o $O/lgndr.o lgndr.f90
 
-$O/prem_model.o: constants.h prem_model.f90
-	${FCCOMPILE_CHECK} -c -o $O/prem_model.o prem_model.f90
+$O/model_prem.o: constants.h model_prem.f90
+	${FCCOMPILE_CHECK} -c -o $O/model_prem.o model_prem.f90
+
+$O/model_iasp91.o: constants.h model_iasp91.f90
+	${FCCOMPILE_CHECK} -c -o $O/model_iasp91.o model_iasp91.f90
+
+$O/model_1066a.o: constants.h model_1066a.f90
+	${FCCOMPILE_CHECK} -c -o $O/model_1066a.o model_1066a.f90
+
+$O/model_ak135.o: constants.h model_ak135.f90
+	${FCCOMPILE_CHECK} -c -o $O/model_ak135.o model_ak135.f90
 
 $O/anisotropic_mantle_model.o: constants.h anisotropic_mantle_model.f90
 	${FCCOMPILE_CHECK} -c -o $O/anisotropic_mantle_model.o anisotropic_mantle_model.f90
