@@ -188,19 +188,19 @@
 !==============================
 !
 !NPTS,DELTA,B,E:
-! These define the timing of the seismogram; E is calculated by sac. So, say
+! These define the timing of the seismogram. E is calculated by sac. So, say
 ! you have 100 NPTS, a DELTA of 0.5, and set B to 0, E should be 50.
 ! Likewise setting B to -50 gives an E of 0.  Cutting basically cuts out points
 ! between the two times you designate based on these values.
 !KZTIME and KZDATE:
 ! Now things get funky.  KZTIME defines the exact time that the trace begins
-! at; it has no affect on timing per se.  You'll really notice its effect if
+! at. It has no affect on timing per se.  You'll really notice its effect if
 ! you read in two traces from different dates.
 
 ! Reference markers, (e.g. the o-marker) are not defined relative to this time,
 ! but rather to the begin time (B) of the seismo, so if you adjust B, you also
 ! need to adjust KZTIME to match.  l would suggest experimenting with this until
-! you understand it; it's a little non-intuitive until you see it for yourself.
+! you understand it. It is a little non-intuitive until you see it for yourself.
 !
 !-----------------------------------------------------------------------------
 !

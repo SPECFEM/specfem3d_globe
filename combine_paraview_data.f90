@@ -97,9 +97,11 @@ program combine_paraview_data
   ! write point and scalar information
 
   if (iregion == 0) then
-    irs = 1; ire = 3
+    irs = 1
+    ire = 3
   else
-    irs = iregion; ire = irs
+    irs = iregion
+    ire = irs
   endif
 
   do ir = irs, ire
@@ -392,8 +394,14 @@ program combine_paraview_data
 
       do i = 1, nelement(it)
         read(26,*) njunk, njunk2, n1, n2, n3, n4, n5, n6, n7, n8
-        n1 = n1+np-1; n2 = n2+np-1; n3 = n3+np-1; n4 = n4+np-1
-        n5 = n5+np-1; n6 = n6+np-1; n7 = n7+np-1; n8 = n8+np-1
+        n1 = n1+np-1
+        n2 = n2+np-1
+        n3 = n3+np-1
+        n4 = n4+np-1
+        n5 = n5+np-1
+        n6 = n6+np-1
+        n7 = n7+np-1
+        n8 = n8+np-1
         call write_integer(n1)
         call write_integer(n2)
         call write_integer(n3)

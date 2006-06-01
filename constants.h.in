@@ -80,7 +80,7 @@
 ! pathname of the topography file
   character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat'
 
-!!--- ETOPO2 2-minute model; not implemented yet
+!!--- ETOPO2 2-minute model, not implemented yet
 !! size of topography and bathymetry file
 !  integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
 !! resolution of topography file in minutes
