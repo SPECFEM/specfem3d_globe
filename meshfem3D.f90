@@ -43,6 +43,10 @@
 
   subroutine meshfem3D
 
+  use three_d_mantle_model_variables
+  use crustal_model_variables
+  use aniso_mantle_model_variables
+
   implicit none
 
 ! standard include of the MPI library
@@ -250,7 +254,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION,IASPEI, &
+          SAVE_MESH_FILES,ATTENUATION,IASP91, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
@@ -316,7 +320,7 @@
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          ATTENUATION,IASP91,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
   if(err_occurred() /= 0) return
 
@@ -500,20 +504,53 @@
   if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB)
 
-  if(ISOTROPIC_3D_MANTLE) call read_mantle_model
+  if(ISOTROPIC_3D_MANTLE) then
+    if(myrank == 0) call read_mantle_model
+! broadcast the information read on the master to the nodes
+    call MPI_BCAST(dvs_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(dvs_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(dvp_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(dvp_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(spknt,NK+1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(qq0,(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(qq,3*(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  endif
 
-! read anisotropic model
-  if(ANISOTROPIC_3D_MANTLE) call read_aniso_mantle_model
+  if(ANISOTROPIC_3D_MANTLE) then
+    if(myrank == 0) call read_aniso_mantle_model
+! broadcast the information read on the master to the nodes
+    call MPI_BCAST(npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  endif
 
-  if(CRUSTAL) call read_crustal_model
+  if(CRUSTAL) then
+    if(myrank == 0) call read_crustal_model
+! broadcast the information read on the master to the nodes
+    call MPI_BCAST(thlr,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(velocp,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(velocs,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(dens,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(abbreviation,NCAP_CRUST*NCAP_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(code,2*NKEYS_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  endif
 
-  if (ANISOTROPIC_INNER_CORE) call read_aniso_inner_core_model
+  if(ANISOTROPIC_INNER_CORE) then
+    if(myrank == 0) call read_aniso_inner_core_model
+!   one should add an MPI_BCAST here if one adds a read_aniso_inner_core_model subroutine
+  endif
 
-  if(ATTENUATION .and. ATTENUATION_3D) &
-     call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+  if(ATTENUATION .and. ATTENUATION_3D) then
+    if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+!   one should add an MPI_BCAST here if one adds a read_attenuation_model subroutine
+  endif
 
 ! read topography and bathymetry file
-  if(TOPOGRAPHY .or. OCEANS) call read_topo_bathy_file(ibathy_topo)
+  if(TOPOGRAPHY .or. OCEANS) then
+    if(myrank == 0) call read_topo_bathy_file(ibathy_topo)
+! broadcast the information read on the master to the nodes
+    call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  endif
 
 ! get addressing for this process
   ichunk = ichunk_slice(myrank)
@@ -883,7 +920,7 @@
          crustal_model,mantle_model,aniso_mantle_model, &
          aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
-         NCHUNKS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASPEI, &
+         NCHUNKS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASP91, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
 ! store number of anisotropic elements found in the mantle

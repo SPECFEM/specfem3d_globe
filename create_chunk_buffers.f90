@@ -475,14 +475,14 @@
 
 ! read boundary parameters
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',form='unformatted')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
   read(IIN) ibelm_xmin
   read(IIN) ibelm_xmax
   read(IIN) ibelm_ymin
   read(IIN) ibelm_ymax
   close(IIN)
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'nspec2D.bin',status='old',form='unformatted')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'nspec2D.bin',status='old',action='read',form='unformatted')
   read(IIN) nspec2D_xmin
   read(IIN) nspec2D_xmax
   read(IIN) nspec2D_ymin
@@ -490,25 +490,25 @@
   close(IIN)
 
 ! read 1D buffers to remove corner points
-  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='old')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')
   do ipoin1D = 1,NPOIN1D_RADIAL
     read(IIN,*) ibool1D_leftxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
   enddo
   close(IIN)
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='old')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='old',action='read')
   do ipoin1D = 1,NPOIN1D_RADIAL
     read(IIN,*) ibool1D_rightxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
   enddo
   close(IIN)
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='old')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='old',action='read')
   do ipoin1D = 1,NPOIN1D_RADIAL
     read(IIN,*) ibool1D_leftxi_righteta(ipoin1D),xdummy,ydummy,zdummy
   enddo
   close(IIN)
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old',action='read')
   do ipoin1D = 1,NPOIN1D_RADIAL
     read(IIN,*) ibool1D_rightxi_righteta(ipoin1D),xdummy,ydummy,zdummy
   enddo
@@ -908,7 +908,7 @@
   endif
 
 ! read 1D buffer for corner
-    open(unit=IIN,file=filename_in,status='old')
+    open(unit=IIN,file=filename_in,status='old',action='read')
     do ipoin1D = 1,NPOIN1D_RADIAL
       read(IIN,*) ibool1D(ipoin1D), &
               xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)

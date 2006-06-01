@@ -31,7 +31,7 @@
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          ATTENUATION,IASP91,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
   implicit none
@@ -57,7 +57,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION,IASPEI, &
+          SAVE_MESH_FILES,ATTENUATION,IASP91, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL,CMTSOLUTION
@@ -399,7 +399,7 @@
   if(err_occurred() /= 0) return
 
   if(MODEL == 'isotropic_prem') then
-    IASPEI = .false.
+    IASP91 = .false.
     TRANSVERSE_ISOTROPY = .false.
     ISOTROPIC_3D_MANTLE = .false.
     ANISOTROPIC_3D_MANTLE = .false.
@@ -408,7 +408,7 @@
     ATTENUATION_3D = .false.
 
   else if(MODEL == 'transversely_isotropic_prem') then
-    IASPEI = .false.
+    IASP91 = .false.
     TRANSVERSE_ISOTROPY = .true.
     ISOTROPIC_3D_MANTLE = .false.
     ANISOTROPIC_3D_MANTLE = .false.
@@ -416,8 +416,8 @@
     CRUSTAL = .false.
     ATTENUATION_3D = .false.
 
-  else if(MODEL == 'iaspei') then
-    IASPEI = .true.
+  else if(MODEL == 'iasp91') then
+    IASP91 = .true.
     TRANSVERSE_ISOTROPY = .false.
     ISOTROPIC_3D_MANTLE = .false.
     ANISOTROPIC_3D_MANTLE = .false.
@@ -426,7 +426,7 @@
     ATTENUATION_3D = .false.
 
   else if(MODEL == 's20rts') then
-    IASPEI = .false.
+    IASP91 = .false.
     TRANSVERSE_ISOTROPY = .true.
     ISOTROPIC_3D_MANTLE = .true.
     ANISOTROPIC_3D_MANTLE = .false.
@@ -435,7 +435,7 @@
     ATTENUATION_3D = .false.
 
   else if(MODEL == 'Brian_Savage') then
-    IASPEI = .false.
+    IASP91 = .false.
     TRANSVERSE_ISOTROPY = .false.
     ISOTROPIC_3D_MANTLE = .false.
     ANISOTROPIC_3D_MANTLE = .false.
@@ -444,7 +444,7 @@
     ATTENUATION_3D = .true.
 
   else if(MODEL == 'Min_Chen') then
-    IASPEI = .false.
+    IASP91 = .false.
     TRANSVERSE_ISOTROPY = .true.
     ISOTROPIC_3D_MANTLE = .false.
     ANISOTROPIC_3D_MANTLE = .true.
@@ -478,7 +478,7 @@
 
   if(ATTENUATION_3D .and. .not. ATTENUATION) stop 'need ATTENUATION to use ATTENUATION_3D'
 
-! radii in PREM or IASPEI
+! radii in PREM or IASP91
 ! and normalized density at fluid-solid interface on fluid size for coupling
 ! ROCEAN: radius of the ocean (m)
 ! RMIDDLE_CRUST: radius of the middle crust (m)
@@ -493,22 +493,23 @@
 ! RCMB: radius of CMB (m)
 ! RICB: radius of ICB (m)
 
-! values common to PREM and IASPEI
+! values common to PREM and IASP91
   ROCEAN = 6368000.d0
   RMIDDLE_CRUST = 6356000.d0
   R80 = 6291000.d0
 
   RHO_OCEANS = 1020.0 / RHOAV
 
-  if(IASPEI) then
+  if(IASP91) then
 
-! IASPEI
-    RMOHO = 6341000.d0
+! IASP91
+    RMOHO = 6336000.d0
     R220 = 6161000.d0
     R400 = 5961000.d0
-    R600 = 5781000.d0
-!    R670 = 5711000.d0
-    R670 = 5701000.d0
+! there is no d600 discontinuity in IASP91 therefore this value is useless
+! but it needs to be there for compatibility with other subroutines
+    R600 = R_EARTH - 600000.d0
+    R670 = 5711000.d0
     R771 = 5611000.d0
     RTOPDDOUBLEPRIME = 3631000.d0
     RCMB = 3482000.d0
@@ -549,7 +550,7 @@
 ! compute the total number of sources in the CMTSOLUTION file
 ! there are NLINES_PER_CMTSOLUTION_SOURCE lines per source in that file
   call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION', 'DATA/CMTSOLUTION')
-  open(unit=1,file=CMTSOLUTION,iostat=ios,status='old')
+  open(unit=1,file=CMTSOLUTION,iostat=ios,status='old',action='read')
   if(ios /= 0) stop 'error opening CMTSOLUTION file'
   icounter = 0
   do while(ios == 0)
@@ -579,7 +580,7 @@
 
 
 ! compute the minimum value of hdur in CMTSOLUTION file
-  open(unit=1,file=CMTSOLUTION,status='old')
+  open(unit=1,file=CMTSOLUTION,status='old',action='read')
   minval_hdur = HUGEVAL
   do isource = 1,NSOURCES
 
@@ -669,8 +670,8 @@
   if(NER_220_MOHO/2<3) stop 'NER_220_MOHO should be at least 3'
   if(NER_400_220/2<2) stop 'NER_400_220 should be at least 2'
 
-! check that IASPEI is isotropic
-  if(IASPEI .and. TRANSVERSE_ISOTROPY) stop 'IASPEI is currently isotropic'
+! check that IASP91 is isotropic
+  if(IASP91 .and. TRANSVERSE_ISOTROPY) stop 'IASP91 is currently isotropic'
 
   ELEMENT_WIDTH = ANGULAR_WIDTH_XI_IN_DEGREES/dble(NEX_MAX) * DEGREES_TO_RADIANS
 

@@ -518,8 +518,6 @@
 
   integer ios,icounter,NSOURCES
 
-  logical ext
-
   integer yr,jda,ho,mi
   double precision sec
   double precision t_cmt,elat,elon,depth
@@ -540,9 +538,8 @@
 !
 !---- read hypocenter info
 !
-  !open(unit=821,file='DATA/CMTSOLUTION',iostat=ios,status='old')
   call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION')
-  open(unit=821,file=CMTSOLUTION,iostat=ios,status='old')
+  open(unit=821,file=CMTSOLUTION,iostat=ios,status='old',action='read')
   if(ios /= 0) stop 'error opening CMTSOLUTION file (in get_event_info.f90)'
 
   icounter = 0
@@ -558,7 +555,7 @@
 
   if (NSOURCES == 1) then
 
-  open(unit=821,file=CMTSOLUTION,status='old')
+  open(unit=821,file=CMTSOLUTION,status='old',action='read')
 
   ! example header line of CMTSOLUTION file
   !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
@@ -595,52 +592,7 @@
 
   else
 
-    INQUIRE (FILE='DATA/CMTSOLUTION_point_source', EXIST=ext)
-
-    if(ext) then
-
-    !open(unit=821,file='DATA/CMTSOLUTION_CMT',iostat=ios,status='old')
-
-    call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION_point_source')
-    open(unit=821,file=CMTSOLUTION,iostat=ios,status='old')
-    if(ios /= 0) stop 'error opening CMTSOLUTION_point_source file (in get_event_info.f90)'
-
-  ! example header line of CMTSOLUTION file
-  !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
-  !event_id, date,origin time,latitude,longitude,depth, mb, MS, region
-
-  ! read header with event information
-    read(821,*) &
-          datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
-    jda=julian_day(yr,mo,da)
-
-
-  ! ignore line with event name
-    read(821,"(a)") string
-
-  ! read time shift
-    read(821,"(a)") string
-    read(string(12:len_trim(string)),*) t_cmt
-
-  ! read half duration
-    read(821,"(a)") string
-    read(string(15:len_trim(string)),*) cmt_hdur
-
-  ! read latitude
-    read(821,"(a)") string
-    read(string(10:len_trim(string)),*) cmt_lat
-
-  ! read longitude
-    read(821,"(a)") string
-    read(string(11:len_trim(string)),*) cmt_lon
-
-  ! read depth
-    read(821,"(a)") string
-    read(string(7:len_trim(string)),*) cmt_depth
-
-    else
-
-    open(unit=821,file=CMTSOLUTION,status='old')
+    open(unit=821,file=CMTSOLUTION,status='old',action='read')
 
   ! example header line of CMTSOLUTION file
   !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
@@ -664,9 +616,6 @@
     cmt_lat=-1e8
     cmt_lon=-1e8
     cmt_depth=-1e8
-
-
-    endif
 
   endif
 
@@ -700,10 +649,8 @@
 
   character(len=150) STATIONS
 
-  !open(unit=812,file='DATA/STATIONS',status='old')
-
   call get_value_string(STATIONS, 'solver.STATIONS', 'DATA/STATIONS')
-  open(unit=812,file=STATIONS,status='old')
+  open(unit=812,file=STATIONS,status='old',action='read')
 
   read(812,*) nrec_dummy
 

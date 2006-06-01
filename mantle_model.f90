@@ -19,12 +19,7 @@ module three_d_mantle_model_constants
 
   implicit none
 
-  double precision, parameter :: RMOHO = 6346600.d0
-  double precision, parameter :: RCMB = 3480000.d0
-  double precision, parameter :: R_EARTH = 6371000.d0
-  double precision, parameter :: ZERO = 0.d0
-
-  ! S20RTS
+! S20RTS
   integer, parameter :: NK = 20,NS = 20,ND = 1
 
 end module three_d_mantle_model_constants
@@ -32,10 +27,13 @@ end module three_d_mantle_model_constants
 module three_d_mantle_model_variables
 
   use three_d_mantle_model_constants
+
   implicit none
 
+! S20RTS
   double precision dvs_a(0:NK,0:NS,0:NS),dvs_b(0:NK,0:NS,0:NS)
   double precision dvp_a(0:NK,0:NS,0:NS),dvp_b(0:NK,0:NS,0:NS)
+
   double precision spknt(NK+1),qq0(NK+1,NK+1),qq(3,NK+1,NK+1)
 
 end module three_d_mantle_model_variables
@@ -45,6 +43,7 @@ end module three_d_mantle_model_variables
   subroutine read_mantle_model
 
   use three_d_mantle_model_variables
+
   implicit none
 
   integer k,l,m
@@ -55,7 +54,7 @@ end module three_d_mantle_model_variables
   call get_value_string(P12, 'model.P12', 'DATA/s20rts/P12.dat')
 
 ! S20RTS degree 20 S model from Ritsema
-  open(unit=10,file=S20RTS,status='old')
+  open(unit=10,file=S20RTS,status='old',action='read')
   do k=0,NK
     do l=0,NS
       read(10,*) dvs_a(k,l,0),(dvs_a(k,l,m),dvs_b(k,l,m),m=1,l)
@@ -64,7 +63,7 @@ end module three_d_mantle_model_variables
   close(10)
 
 ! P12 degree 12 P model from Ritsema
-  open(unit=10,file=P12,status='old')
+  open(unit=10,file=P12,status='old',action='read')
   do k=0,NK
     do l=0,12
       read(10,*) dvp_a(k,l,0),(dvp_a(k,l,m),dvp_b(k,l,m),m=1,l)
@@ -79,8 +78,8 @@ end module three_d_mantle_model_variables
   enddo
   close(10)
 
-! set up the splines used as radial bais functions by Ritsema
-  call splhsetup(spknt,qq0,qq)
+! set up the splines used as radial basis functions by Ritsema
+  call splhsetup!!!!!!!!!!!!!!(spknt,qq0,qq)
 
   end subroutine read_mantle_model
 
@@ -89,12 +88,18 @@ end module three_d_mantle_model_variables
   subroutine mantle_model(radius,theta,phi,dvs,dvp,drho)
 
   use three_d_mantle_model_variables
+
   implicit none
 
 ! factor to convert perturbations in shear speed to perturbations in density
   double precision, parameter :: SCALE_RHO = 0.40d0
 
   double precision radius,theta,phi,dvs,dvp,drho
+
+  double precision, parameter :: RMOHO = 6346600.d0
+  double precision, parameter :: RCMB = 3480000.d0
+  double precision, parameter :: R_EARTH = 6371000.d0
+  double precision, parameter :: ZERO = 0.d0
 
   integer l,m,k
   double precision r_moho,r_cmb,xr
@@ -150,13 +155,13 @@ end module three_d_mantle_model_variables
 
 !----------------------------------
 
-  subroutine splhsetup(spknt,qq0,qq)
+  subroutine splhsetup!!!!!!!!!!!!!!(spknt,qq0,qq)
 
-  use three_d_mantle_model_constants
+  use three_d_mantle_model_variables
+
   implicit none
 
-
-  double precision spknt(NK+1),qq0(NK+1,NK+1),qq(3,NK+1,NK+1)
+!!!!!!!!!!!!!!!!!!!  double precision spknt(NK+1),qq0(NK+1,NK+1),qq(3,NK+1,NK+1)
 
   integer i,j
   double precision qqwk(3,NK+1)

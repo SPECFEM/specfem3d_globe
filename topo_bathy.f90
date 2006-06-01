@@ -72,7 +72,7 @@
 
   call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
-  open(unit=13,file=topo_bathy_file,status='old')
+  open(unit=13,file=topo_bathy_file,status='old',action='read')
 
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY

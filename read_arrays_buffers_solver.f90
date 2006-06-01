@@ -26,9 +26,12 @@
 
   implicit none
 
+! standard include of the MPI library
+  include 'mpif.h'
+
   include "constants.h"
 
-  integer iregion_code,myrank,NCHUNKS
+  integer iregion_code,myrank,NCHUNKS,ier
 
   integer npoin2D_xi,npoin2D_eta
   integer NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY,NPOIN1D_RADIAL
@@ -70,7 +73,7 @@
 ! read 2-D addressing for summation between slices along xi with MPI
 
 ! read iboolleft_xi of this slice
-  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_xi.txt',status='old')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_xi.txt',status='old',action='read')
   npoin2D_xi = 1
  350  continue
   read(IIN,*) iboolleft_xi(npoin2D_xi),xdummy,ydummy,zdummy
@@ -87,7 +90,7 @@
   close(IIN)
 
 ! read iboolright_xi of this slice
-  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='old')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='old',action='read')
   npoin2D_xi = 1
  360  continue
   read(IIN,*) iboolright_xi(npoin2D_xi),xdummy,ydummy,zdummy
@@ -117,7 +120,7 @@
 ! read 2-D addressing for summation between slices along eta with MPI
 
 ! read iboolleft_eta of this slice
-  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_eta.txt',status='old')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_eta.txt',status='old',action='read')
   npoin2D_eta = 1
  370  continue
   read(IIN,*) iboolleft_eta(npoin2D_eta),xdummy,ydummy,zdummy
@@ -134,7 +137,7 @@
   close(IIN)
 
 ! read iboolright_eta of this slice
-  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='old')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='old',action='read')
   npoin2D_eta = 1
  380  continue
   read(IIN,*) iboolright_eta(npoin2D_eta),xdummy,ydummy,zdummy
@@ -170,7 +173,7 @@
   if(myrank == 0) then
 
 ! file with the list of processors for each message for faces
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old',action='read')
   do imsg = 1,NUMMSGS_FACES
   read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
   if      (iprocfrom_faces(imsg) < 0 &
@@ -184,7 +187,7 @@
   close(IIN)
 
 ! file with the list of processors for each message for corners
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
   do imsg = 1,NCORNERSCHUNKS
   read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
                           iproc_worker2_corners(imsg)
@@ -225,7 +228,7 @@
       write(filename,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
     endif
 
-    open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old')
+    open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
     read(IIN,*) npoin2D_faces(icount_faces)
     if(npoin2D_faces(icount_faces) > NPOIN2DMAX_XY) &
       call exit_MPI(myrank,'incorrect nb of points in face buffer')
@@ -259,7 +262,7 @@
     endif
 
 ! matching codes
-    open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old')
+    open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
     read(IIN,*) npoin1D_corner
     if(npoin1D_corner /= NPOIN1D_RADIAL) &
       call exit_MPI(myrank,'incorrect nb of points in corner buffer')

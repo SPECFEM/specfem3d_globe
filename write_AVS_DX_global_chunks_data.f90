@@ -20,7 +20,7 @@
   subroutine write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun, &
         ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
         npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-        ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,IASPEI, &
+        ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,IASP91, &
         RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO, &
         RMIDDLE_CRUST,ROCEAN)
 
@@ -33,7 +33,7 @@
 
   integer idoubling(nspec)
 
-  logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,IASPEI
+  logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,IASP91
 
   double precision RICB,RCMB,RTOPDDOUBLEPRIME, &
         R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
@@ -576,7 +576,7 @@
               r=r/factor
             endif
             call prem_iso(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &
-              CRUSTAL,ONE_CRUST,.true.,IASPEI,RICB,RCMB,RTOPDDOUBLEPRIME, &
+              CRUSTAL,ONE_CRUST,.true.,IASP91,RICB,RCMB,RTOPDDOUBLEPRIME, &
               R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
             dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
             dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)

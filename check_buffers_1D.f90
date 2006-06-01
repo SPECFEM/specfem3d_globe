@@ -61,7 +61,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION,IASPEI, &
+          SAVE_MESH_FILES,ATTENUATION,IASP91, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
@@ -106,7 +106,7 @@
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          ATTENUATION,IASP91,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
 ! compute other parameters based upon values read
@@ -139,7 +139,7 @@
 
 ! open file with global slice number addressing
   print *,'reading slice addressing'
-  open(unit=34,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old')
+  open(unit=34,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read')
   do iproc = 0,NPROCTOT-1
       read(34,*) iproc_read,ichunk,iproc_xi,iproc_eta
       if(iproc_read /= iproc) stop 'incorrect slice number read'
@@ -205,11 +205,11 @@
   if(icorners == 1) then
 ! read ibool1D_rightxi_lefteta of this slice
   write(*,*) 'reading MPI 1D buffer ibool1D_rightxi_lefteta slice ',ithisproc
-  open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='old')
+  open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='old',action='read')
   else if(icorners == 2) then
 ! read ibool1D_rightxi_righteta of this slice
   write(*,*) 'reading MPI 1D buffer ibool1D_rightxi_righteta slice ',ithisproc
-  open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old')
+  open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old',action='read')
   else
       stop 'incorrect corner number'
   endif
@@ -230,11 +230,11 @@
   if(icorners == 1) then
 ! read ibool1D_leftxi_lefteta of other slice
   write(*,*) 'reading MPI 1D buffer ibool1D_leftxi_lefteta slice ',iotherproc
-  open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_leftxi_lefteta.txt',status='old')
+  open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')
   else if(icorners == 2) then
 ! read ibool1D_leftxi_righteta of other slice
   write(*,*) 'reading MPI 1D buffer ibool1D_leftxi_righteta slice ',iotherproc
-  open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_leftxi_righteta.txt',status='old')
+  open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_leftxi_righteta.txt',status='old',action='read')
   else
       stop 'incorrect corner number'
   endif
@@ -311,11 +311,11 @@
   if(icorners == 1) then
 ! read ibool1D_leftxi_righteta of this slice
   write(*,*) 'reading MPI 1D buffer ibool1D_leftxi_righteta slice ',ithisproc
-  open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='old')
+  open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='old',action='read')
   else if(icorners == 2) then
 ! read ibool1D_rightxi_righteta of this slice
   write(*,*) 'reading MPI 1D buffer ibool1D_rightxi_righteta slice ',ithisproc
-  open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old')
+  open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old',action='read')
   else
       stop 'incorrect corner number'
   endif
@@ -336,11 +336,11 @@
   if(icorners == 1) then
 ! read ibool1D_leftxi_lefteta of other slice
   write(*,*) 'reading MPI 1D buffer ibool1D_leftxi_lefteta slice ',iotherproc
-  open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_leftxi_lefteta.txt',status='old')
+  open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')
   else if(icorners == 2) then
 ! read ibool1D_rightxi_lefteta of other slice
   write(*,*) 'reading MPI 1D buffer ibool1D_rightxi_lefteta slice ',iotherproc
-  open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_rightxi_lefteta.txt',status='old')
+  open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_rightxi_lefteta.txt',status='old',action='read')
   else
       stop 'incorrect corner number'
   endif

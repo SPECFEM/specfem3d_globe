@@ -22,6 +22,7 @@
 module crustal_model_constants
 
   implicit none
+
   double precision, parameter :: PI = 3.141592653589793d0
   double precision, parameter :: HUGEVAL = 1.d+30
   double precision, parameter :: R_EARTH = 6371000.d0
@@ -33,6 +34,7 @@ module crustal_model_constants
   integer, parameter :: NKEYS_CRUST = 359
   integer, parameter :: NLAYERS_CRUST = 8
   integer, parameter :: NCAP_CRUST = 180
+
   ! use sedimentary layers of crust 2.0
   logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
 
@@ -41,14 +43,17 @@ end module crustal_model_constants
 module crustal_model_variables
 
   use crustal_model_constants
+
   implicit none
+
+  double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr,velocp,velocs,dens
+
   character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST),code(NKEYS_CRUST)
-  double precision thlr(NKEYS_CRUST,NLAYERS_CRUST),velocp(NKEYS_CRUST,NLAYERS_CRUST)
-  double precision velocs(NKEYS_CRUST,NLAYERS_CRUST),dens(NKEYS_CRUST,NLAYERS_CRUST)
 
 end module crustal_model_variables
 
 !---------------------------
+
   subroutine crustal_model(xlat,xlon,x,vp,vs,rho,moho,found_crust)
 
   use crustal_model_variables
@@ -126,13 +131,13 @@ end module crustal_model_variables
   call get_value_string(CNtype2, 'model.CNtype2', 'DATA/crust2.0/CNtype2.txt')
   call get_value_string(CNtype2_key_modif, 'model.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
 
-  open (unit=1,file=CNtype2,status='old')
+  open(unit=1,file=CNtype2,status='old',action='read')
   do ila=1,NCAP_CRUST/2
     read(1,*) icolat,(abbreviation(ila,i),i=1,NCAP_CRUST)
   enddo
   close(1)
 
-  open(unit=1,file=CNtype2_key_modif,status='old')
+  open(unit=1,file=CNtype2_key_modif,status='old',action='read')
   h_moho_min=HUGEVAL
   h_moho_max=-HUGEVAL
   do ikey=1,NKEYS_CRUST

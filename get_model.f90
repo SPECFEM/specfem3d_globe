@@ -30,7 +30,7 @@
     crustal_model,mantle_model,aniso_mantle_model, &
     aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
     attenuation_model,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
-    NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASPEI, &
+    NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASP91, &
     R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
   implicit none
@@ -43,7 +43,7 @@
   integer ispec,nspec,ichunk,idoubling,iregion_code,myrank,nspec_stacey
   integer NPROC_XI,NPROC_ETA,NCHUNKS
 
-  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS,INFLATE_CENTRAL_CUBE,IASPEI
+  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS,INFLATE_CENTRAL_CUBE,IASP91
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
 
   logical iboun(6,nspec)
@@ -141,7 +141,7 @@
            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
        else
          call prem_iso(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-           ONE_CRUST,.true.,IASPEI,RICB,RCMB,RTOPDDOUBLEPRIME, &
+           ONE_CRUST,.true.,IASP91,RICB,RCMB,RTOPDDOUBLEPRIME, &
            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
          vpv = vp
          vph = vp
@@ -184,7 +184,7 @@
        endif
 
        if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) &
-           call aniso_inner_core_model(r_prem,c11,c33,c12,c13,c44,IASPEI)
+           call aniso_inner_core_model(r_prem,c11,c33,c12,c13,c44,IASP91)
 
        if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
 
@@ -293,7 +293,7 @@
 
          if(ABSORBING_CONDITIONS) then
            if(iregion_code == IREGION_OUTER_CORE) then
-! we need just vp in the outer core for STacey conditions
+! we need just vp in the outer core for Stacey conditions
              rho_vp(i,j,k,ispec) = sngl(vph)
              rho_vs(i,j,k,ispec) = sngl(0.d0)
            else
@@ -344,7 +344,7 @@
 
          if(ABSORBING_CONDITIONS) then
            if(iregion_code == IREGION_OUTER_CORE) then
-! we need just vp in the outer core for STacey conditions
+! we need just vp in the outer core for Stacey conditions
              rho_vp(i,j,k,ispec) = vph
              rho_vs(i,j,k,ispec) = 0.d0
            else

@@ -55,8 +55,9 @@ module aniso_mantle_model_variables
 
   implicit none
 
-  double precision beta(14,34,37,73),pro(47)
   integer npar1
+
+  double precision beta(14,34,37,73),pro(47)
 
 end module aniso_mantle_model_variables
 
@@ -332,6 +333,7 @@ end module aniso_mantle_model_variables
   subroutine read_aniso_mantle_model
 
   use aniso_mantle_model_variables
+
   implicit none
 
   integer nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
@@ -349,7 +351,7 @@ end module aniso_mantle_model_variables
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
 !
   call get_value_string(glob_prem3sm01, 'model.glob_prem3sm01', 'DATA/Montagner_model/glob-prem3sm01')
-  open(19,file=glob_prem3sm01,status='old')
+  open(19,file=glob_prem3sm01,status='old',action='read')
 
 !
 ! read the models
@@ -410,7 +412,7 @@ end module aniso_mantle_model_variables
 ! normalized, in percents: 100 G/L
 !
   call get_value_string(globpreman3sm01, 'model.globpreman3sm01', 'DATA/Montagner_model/globpreman3sm01')
-  open(unit=15,file=globpreman3sm01,status='old')
+  open(unit=15,file=globpreman3sm01,status='old',action='read')
 
   do nf = 7,nfin,2
     ipa = nf
@@ -507,7 +509,7 @@ end module aniso_mantle_model_variables
      nri = 47
 
      call get_value_string(Adrem119, 'model.Adrem119', 'DATA/Montagner_model/Adrem119')
-     open(unit=13,file=Adrem119,status='old')
+     open(unit=13,file=Adrem119,status='old',action='read')
      read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,null
 
      if(kiti == 0) read(13,"(20a4)",end = 77) idum1

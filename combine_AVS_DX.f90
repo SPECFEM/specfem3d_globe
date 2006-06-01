@@ -128,7 +128,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION,IASPEI, &
+          SAVE_MESH_FILES,ATTENUATION,IASP91, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
@@ -180,7 +180,7 @@
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          ATTENUATION,IASP91,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
   if(.not. SAVE_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
@@ -310,7 +310,7 @@
   write(*,*) 'reading slice addressing'
   write(*,*)
   allocate(ichunk_slice(0:NPROCTOT-1))
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read')
   do iproc = 0,NPROCTOT-1
     read(IIN,*) iproc_read,ichunk,idummy1,idummy2
     if(iproc_read /= iproc) stop 'incorrect slice number read'
@@ -370,11 +370,11 @@
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if(ivalue == 1) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old',action='read')
   else if(ivalue == 2) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old',action='read')
   else if(ivalue == 3) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
   endif
 
   read(10,*) npoin
@@ -383,11 +383,11 @@
   close(10)
 
   if(ivalue == 1) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')
   else if(ivalue == 2) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old',action='read')
   else if(ivalue == 3) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
   endif
 
   read(10,*) nspec
@@ -444,12 +444,12 @@
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if(ivalue == 1) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old',action='read')
   else if(ivalue == 2) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old')
-    open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointschunks_stability.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old',action='read')
+    open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointschunks_stability.txt',status='old',action='read')
   else if(ivalue == 3) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
   endif
 
   read(10,*) npoin
@@ -512,16 +512,16 @@
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if(ivalue == 1) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old')
-    open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')
+    open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old',action='read')
   else if(ivalue == 2) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old',action='read')
     if(icolor == 5 .or. icolor == 6) &
-      open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementschunks_dvp_dvs.txt',status='old')
-    open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old')
+      open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementschunks_dvp_dvs.txt',status='old',action='read')
+    open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old',action='read')
   else if(ivalue == 3) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old')
-    open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
+    open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
   endif
 
   read(10,*) nspec
@@ -832,11 +832,11 @@
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if(ivalue == 1) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')
   else if(ivalue == 2) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old',action='read')
   else if(ivalue == 3) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old')
+    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
   endif
 
   read(10,*) nspec
@@ -1015,7 +1015,7 @@
     print *,'reading position of the receivers'
 
 ! get number of stations from receiver file
-    open(unit=11,file='DATA/STATIONS',status='old')
+    open(unit=11,file='DATA/STATIONS',status='old',action='read')
 
 ! read total number of receivers
     read(11,*) nrec

@@ -74,8 +74,6 @@
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_NO_DOUBLING,NSPEC2D_NO_DOUBLING_XI,NSPEC2D_NO_DOUBLING_ETA
 
-  character(len=150) OUTPUT_FILES
-
 ! compute parameters for the Earth
 
 ! number of elements in radial direction
