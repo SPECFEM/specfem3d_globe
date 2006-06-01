@@ -236,6 +236,12 @@
 ! dummy flag
   integer, parameter :: IFLAG_DUMMY = 100
 
+! define flag for reference 1D Earth model
+  integer, parameter :: REFERENCE_MODEL_PREM   = 1
+  integer, parameter :: REFERENCE_MODEL_IASP91 = 2
+  integer, parameter :: REFERENCE_MODEL_1066A  = 3
+  integer, parameter :: REFERENCE_MODEL_AK135  = 4
+
 ! define flag for regions of the global Earth for attenuation
   integer, parameter :: NUM_REGIONS_ATTENUATION = 5
 
@@ -249,11 +255,11 @@
   integer, parameter :: N_SLS = 3
 
 ! flag for the four edges of each slice and for the bottom edge
-  integer, parameter :: XI_MIN = 1
-  integer, parameter :: XI_MAX = 2
+  integer, parameter :: XI_MIN  = 1
+  integer, parameter :: XI_MAX  = 2
   integer, parameter :: ETA_MIN = 3
   integer, parameter :: ETA_MAX = 4
-  integer, parameter :: BOTTOM = 5
+  integer, parameter :: BOTTOM  = 5
 
 ! flags to select the right corner in each slice
   integer, parameter :: ILOWERLOWER = 1

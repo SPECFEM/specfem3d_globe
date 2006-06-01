@@ -30,7 +30,7 @@
     crustal_model,mantle_model,aniso_mantle_model, &
     aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
     attenuation_model,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
-    NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,IASP91, &
+    NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
     R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
 
   implicit none
@@ -41,9 +41,9 @@
        aniso_inner_core_model,attenuation_model
 
   integer ispec,nspec,ichunk,idoubling,iregion_code,myrank,nspec_stacey
-  integer NPROC_XI,NPROC_ETA,NCHUNKS
+  integer NPROC_XI,NPROC_ETA,NCHUNKS,REFERENCE_1D_MODEL
 
-  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS,INFLATE_CENTRAL_CUBE,IASP91
+  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS,INFLATE_CENTRAL_CUBE
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
 
   logical iboun(6,nspec)
@@ -140,9 +140,26 @@
            Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
        else
-         call prem_iso(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-           ONE_CRUST,.true.,IASP91,RICB,RCMB,RTOPDDOUBLEPRIME, &
-           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+         if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
+           call model_iasp91(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
+             .true.,RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,RMOHO)
+
+         else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
+           call prem_iso(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+             ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+             R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+         else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+           call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,CRUSTAL)
+
+         else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+           call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,CRUSTAL)
+
+         else
+           stop 'unknown 1D reference Earth model in get_model'
+         endif
+
          vpv = vp
          vph = vp
          vsv = vs
@@ -184,7 +201,7 @@
        endif
 
        if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) &
-           call aniso_inner_core_model(r_prem,c11,c33,c12,c13,c44,IASP91)
+           call aniso_inner_core_model(r_prem,c11,c33,c12,c13,c44,REFERENCE_1D_MODEL)
 
        if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
 

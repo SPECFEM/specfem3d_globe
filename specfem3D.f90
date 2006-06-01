@@ -597,7 +597,7 @@
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-          NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE
+          NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE,REFERENCE_1D_MODEL
 
   double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -609,7 +609,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION,IASP91, &
+          SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
@@ -681,7 +681,7 @@
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,IASP91,ABSORBING_CONDITIONS, &
+          ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
   if(err_occurred() /= 0) return
@@ -2664,9 +2664,26 @@
       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
       call splint(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g)
       idoubling = 0
-      call prem_iso(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling,.false., &
-        ONE_CRUST,.false.,IASP91,RICB,RCMB,RTOPDDOUBLEPRIME, &
-        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+      if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
+        call model_iasp91(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling, &
+          .false.,RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,RMOHO)
+
+      else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
+        call prem_iso(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling,.false., &
+          ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+          R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+      else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+        call model_1066a(radius,rho,vp,vs,Qkappa,Qmu,.false.)
+
+      else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+        call model_ak135(radius,rho,vp,vs,Qkappa,Qmu,.false.)
+
+      else
+        stop 'unknown 1D reference Earth model in specfem3D'
+      endif
+
       dg = 4.0d0*rho - 2.0d0*g/radius
       minus_gravity_table(int_radius) = - g
       minus_deriv_gravity_table(int_radius) = - dg
