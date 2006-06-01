@@ -75,6 +75,7 @@ class Solver(Component):
         from os.path import abspath
         self.CMTSOLUTION = abspath(self.cmtSolution.name)
         self.STATIONS = abspath(self.stations.name)
+        self.HEADER_FILE = "OUTPUT_FILES/values_from_mesher.h"
 
 
     #
@@ -153,7 +154,7 @@ class Solver(Component):
         """Execute the solver."""
         from PyxSpecfem import specfem3D
         if self.dry:
-            print >> outputFile, "execute", specfem3D
+            print >> self.outputFile, "execute", specfem3D
         else:
             specfem3D(script) # call into Fortran
         return
