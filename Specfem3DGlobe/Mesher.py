@@ -113,7 +113,7 @@ class Mesher(Component):
         """Execute the mesher."""
         from PyxMeshfem import meshfem3D
         if self.dry:
-            print >> outputFile, "execute", meshfem3D
+            print >> self.outputFile, "execute", meshfem3D
         else:
             meshfem3D(script) # call into Fortran
         return

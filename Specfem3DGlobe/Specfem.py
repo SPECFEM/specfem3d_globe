@@ -21,7 +21,8 @@ class Specfem(ParallelScript):
     from Mesher import Mesher
     from Model import model
     from Solver import Solver
-    
+
+    #LOCAL_PATH                    = addyndum.scratchDir("local-path", default="/tmp/${user}/${job.id}")
     LOCAL_PATH                    = pyre.str("local-path")
     outputDir                     = addyndum.outputDir("output-dir", default="OUTPUT_FILES")
         
@@ -63,24 +64,21 @@ class Specfem(ParallelScript):
     #--- executed on the login node in response to the user's command
     #
     
-    def onLoginNode(self, *args, **kwds):
+    def onLoginNode(self, context):
         
         import sys
         import shutil
         import journal
         
-        # turn on my channels so we can watch what happens
-        journal.info(self.name).activate()
-        
         pyspecfem3D = sys.executable # the current executable
         
         # build the solver
-        self.solver.build(self, kwds['srcdir'])
+        self.solver.build(self, context.kwds['srcdir'])
         
         # compute the total number of processors needed
-        self.nodes = 4 #self.mesher.nproc()
+        self.nodes = self.mesher.nproc()
 
-        self.schedule() # bsub
+        self.schedule(context) # bsub
         
         return
 
@@ -89,8 +87,8 @@ class Specfem(ParallelScript):
     #--- executed when the batch job is scheduled
     #
 
-    def onLauncherNode(self, *args, **kwds):
-        self.launch(*args, **kwds) # mpirun
+    def onLauncherNode(self, context):
+        self.launch(context) # mpirun
         # tar up results
         return
 
@@ -99,7 +97,7 @@ class Specfem(ParallelScript):
     #--- executed in parallel on the compute nodes
     #
     
-    def onComputeNodes(self, *args, **kwds):
+    def onComputeNodes(self, context):
 
         # execute mesher and/or solver
         
