@@ -26,10 +26,10 @@
 !   It is based upon formulation in the following references:
 !
 !   Dahlen and Tromp, 1998
-!      Theoritical Global Seismology
+!      Theoretical Global Seismology
 !
 !   Liu et al. 1976
-!      Velocity dispersion due to anelasticity; implications for seismology and mantle composition
+!      Velocity dispersion due to anelasticity: implications for seismology and mantle composition
 !      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 !
 !   The methodology can be found in
@@ -760,8 +760,8 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
   f2 = 1.0d0 / t2
 
   ! Determine the exponents of the frequencies
-  exp1 = log10(f1);
-  exp2 = log10(f2);
+  exp1 = log10(f1)
+  exp2 = log10(f2)
 
   if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
      call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
@@ -785,8 +785,8 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
   ! Shove the paramters into the module
   call attenuation_simplex_setup(nf,n,f,Q_real,tau_s)
 
-  ! Set the Tau_epsilon (tau_e) to an initial value
-  ! at omega*tau = 1; tan_delta = 1/Q = (tau_e - tau_s)/(2 * sqrt(tau e*tau_s))
+  ! Set the Tau_epsilon (tau_e) to an initial value at omega*tau = 1
+  ! tan_delta = 1/Q = (tau_e - tau_s)/(2 * sqrt(tau e*tau_s))
   !    if we assume tau_e =~ tau_s
   !    we get the equation below
   do i = 1,n
@@ -868,10 +868,10 @@ end subroutine attenuation_simplex_setup
 !                dimension(nf)
 !
 !   Dahlen and Tromp, 1998
-!      Theoritical Global Seismology
+!      Theoretical Global Seismology
 !
 !   Liu et al. 1976
-!      Velocity dispersion due to anelasticity; implications for seismology and mantle composition
+!      Velocity dispersion due to anelasticity: implications for seismology and mantle composition
 !      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
   implicit none
@@ -1221,7 +1221,7 @@ end subroutine fminsearch
 !             Length of fv
 !
 !      Returns:
-!         Xi = max( || fv(1)- fv(i) || ); i=2:n
+!         Xi = max( || fv(1)- fv(i) || ) for i=2:n
 !
 double precision function max_value(fv,n)
   implicit none
@@ -1253,7 +1253,7 @@ end function max_value
 !     n  = Pseudo Length of n
 !
 !     Returns:
-!       Xi = max( max( || v(:,1) - v(:,i) || ) ) ; i=2:n+1
+!       Xi = max( max( || v(:,1) - v(:,i) || ) ) for i=2:n+1
 !
 double precision function max_size_simplex(v,n)
   implicit none

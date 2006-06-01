@@ -4293,7 +4293,12 @@
 
     else if (SIMULATION_TYPE == 2) then
 
-      eps_trace = ZERO; dxx = ZERO; dyy = ZERO; dxy = ZERO; dxz = ZERO; dyz = ZERO
+      eps_trace = ZERO
+      dxx = ZERO
+      dyy = ZERO
+      dxy = ZERO
+      dxz = ZERO
+      dyz = ZERO
 
       do k = 1,NGLLZ
         do j = 1,NGLLY
@@ -4314,9 +4319,15 @@
         enddo
       enddo
 
-      eps_loc(1,1) = eps_trace + dxx; eps_loc(2,2) = eps_trace + dyy; eps_loc(3,3) = eps_trace - dxx - dyy
-      eps_loc(1,2) = dxy; eps_loc(1,3) = dxz; eps_loc(2,3) = dyz
-      eps_loc(2,1) = dxy; eps_loc(3,1) = dxz; eps_loc(3,2) = dyz
+      eps_loc(1,1) = eps_trace + dxx
+      eps_loc(2,2) = eps_trace + dyy
+      eps_loc(3,3) = eps_trace - dxx - dyy
+      eps_loc(1,2) = dxy
+      eps_loc(1,3) = dxz
+      eps_loc(2,3) = dyz
+      eps_loc(2,1) = dxy
+      eps_loc(3,1) = dxz
+      eps_loc(3,2) = dyz
 
       eps_loc_new(:,:) = eps_loc(:,:)
 ! LQY -- does not rotate eps_loc first.
