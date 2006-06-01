@@ -19,11 +19,13 @@
 
   implicit none
 
+! one should add an MPI_BCAST in meshfem3D.f90 if one adds a read_aniso_inner_core_model subroutine
+
   end subroutine read_aniso_inner_core_model
 
 !-----------------------------------
 
-  subroutine aniso_inner_core_model(x,c11,c33,c12,c13,c44,IASPEI)
+  subroutine aniso_inner_core_model(x,c11,c33,c12,c13,c44,IASP91)
 
   implicit none
 
@@ -31,7 +33,7 @@
 
 ! given a normalized radius x, gives non-dimensionalized c11,c33,c12,c13,c44
 
-  logical IASPEI
+  logical IASP91
 
   double precision x,c11,c33,c12,c13,c44
 
@@ -40,7 +42,7 @@
   double precision c66
   double precision scale_fac
 
-  if(IASPEI) then
+  if(IASP91) then
     vp=11.24094d0-4.09689d0*x*x
     vs=3.56454d0-3.45241d0*x*x
     rho=13.0885d0-8.8381d0*x*x

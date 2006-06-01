@@ -155,7 +155,7 @@
 
 ! get number of stations from receiver file
   call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-  open(unit=1,file=STATIONS,status='old')
+  open(unit=1,file=STATIONS,status='old',action='read')
   read(1,*) nrec_dummy
 
   if(nrec_dummy /= nrec) call exit_MPI(myrank,'problem with number of receivers')

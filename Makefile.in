@@ -283,8 +283,7 @@ check_buffers_faces_chunks: constants.h $O/check_buffers_faces_chunks.o \
 combine_paraview_data: constants.h $O/combine_paraview_data.o $O/write_c_binary.o
 	${FCCOMPILE_CHECK} -o xcombine_paraview_data  $O/combine_paraview_data.o $O/write_c_binary.o
 clean:
-	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcombine_paraview_data OUTPUT_FILES/timestamp* OUTPUT_FILES/starttime*txt PI*
-
+	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcombine_paraview_data PI*
 
 ####
 #### rule for each .o file below
@@ -540,8 +539,9 @@ $O/define_subregions_outer_core.o: constants.h define_subregions_outer_core.f90
 $O/define_subregions_inner_core.o: constants.h define_subregions_inner_core.f90
 	${FCCOMPILE_CHECK} -c -o $O/define_subregions_inner_core.o define_subregions_inner_core.f90
 
+## use MPI here
 $O/read_arrays_buffers_solver.o: constants.h read_arrays_buffers_solver.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_arrays_buffers_solver.o read_arrays_buffers_solver.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/read_arrays_buffers_solver.o read_arrays_buffers_solver.f90
 
 $O/define_derivation_matrices.o: constants.h define_derivation_matrices.f90
 	${FCCOMPILE_CHECK} -c -o $O/define_derivation_matrices.o define_derivation_matrices.f90

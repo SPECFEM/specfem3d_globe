@@ -385,7 +385,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLOBMAX_OUTER_CORE) :: displ_outer_core, &
     veloc_outer_core,accel_outer_core
 
-! divergent of displ
+! divergence of displ
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable  :: div_displ_outer_core
 
 ! ----------------- inner core ---------------------
@@ -609,7 +609,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION,IASPEI, &
+          SAVE_MESH_FILES,ATTENUATION,IASP91, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
@@ -681,7 +681,7 @@
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          ATTENUATION,IASP91,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
   if(err_occurred() /= 0) return
@@ -825,7 +825,7 @@
 
 ! open file with global slice number addressing
   if(myrank == 0) then
-    open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old')
+    open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read')
     do iproc = 0,NPROCTOT-1
       read(IIN,*) iproc_read,ichunk,iproc_xi,iproc_eta
       if(iproc_read /= iproc) call exit_MPI(myrank,'incorrect slice number read')
@@ -1168,7 +1168,9 @@
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
 
 ! read topography and bathymetry file
-  if(TOPOGRAPHY .or. OCEANS) call read_topo_bathy_file(ibathy_topo)
+  if(myrank == 0 .and. (TOPOGRAPHY .or. OCEANS)) call read_topo_bathy_file(ibathy_topo)
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
 ! allocate arrays for source
   allocate(islice_selected_source(NSOURCES))
@@ -1233,7 +1235,7 @@
     rec_filename = 'DATA/STATIONS_ADJOINT'
   endif
   call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-  open(unit=IIN,file=STATIONS,status='old')
+  open(unit=IIN,file=STATIONS,status='old',action='read')
   read(IIN,*) nrec
   close(IIN)
 
@@ -1363,7 +1365,7 @@
   allocate(nkmin_eta_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
 
 ! boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
   read(27) ibelm_xmin_crust_mantle
   read(27) ibelm_xmax_crust_mantle
   read(27) ibelm_ymin_crust_mantle
@@ -1372,7 +1374,7 @@
   read(27) ibelm_top_crust_mantle
   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'normal.bin',status='old',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'normal.bin',status='old',action='read',form='unformatted')
   read(27) normal_xmin_crust_mantle
   read(27) normal_xmax_crust_mantle
   read(27) normal_ymin_crust_mantle
@@ -1381,7 +1383,7 @@
   read(27) normal_top_crust_mantle
   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',action='read',form='unformatted')
   read(27) jacobian2D_xmin_crust_mantle
   read(27) jacobian2D_xmax_crust_mantle
   read(27) jacobian2D_ymin_crust_mantle
@@ -1429,7 +1431,7 @@
         allocate(absorb_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,nspec2D_xmin_crust_mantle))
         reclen_xmin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmin_crust_mantle)
         if (SIMULATION_TYPE == 3) then
-          open(unit=51,file=trim(prname)//'absorb_xmin.bin',status='old',form='unformatted',access='direct', &
+          open(unit=51,file=trim(prname)//'absorb_xmin.bin',status='old',action='read',form='unformatted',access='direct', &
                 recl=reclen_xmin_crust_mantle+2*4)
         else
           open(unit=51,file=trim(prname)//'absorb_xmin.bin',status='unknown',form='unformatted',access='direct',&
@@ -1441,7 +1443,7 @@
         allocate(absorb_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,nspec2D_xmax_crust_mantle))
         reclen_xmax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmax_crust_mantle)
         if (SIMULATION_TYPE == 3) then
-          open(unit=52,file=trim(prname)//'absorb_xmax.bin',status='old',form='unformatted',access='direct', &
+          open(unit=52,file=trim(prname)//'absorb_xmax.bin',status='old',action='read',form='unformatted',access='direct', &
                 recl=reclen_xmax_crust_mantle+2*4)
         else
           open(unit=52,file=trim(prname)//'absorb_xmax.bin',status='unknown',form='unformatted',access='direct', &
@@ -1453,7 +1455,7 @@
         allocate(absorb_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,nspec2D_ymin_crust_mantle))
         reclen_ymin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymin_crust_mantle)
         if (SIMULATION_TYPE == 3) then
-          open(unit=53,file=trim(prname)//'absorb_ymin.bin',status='old',form='unformatted',access='direct',&
+          open(unit=53,file=trim(prname)//'absorb_ymin.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_ymin_crust_mantle+2*4)
         else
           open(unit=53,file=trim(prname)//'absorb_ymin.bin',status='unknown',form='unformatted',access='direct',&
@@ -1465,7 +1467,7 @@
         allocate(absorb_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,nspec2D_ymax_crust_mantle))
         reclen_ymax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymax_crust_mantle)
         if (SIMULATION_TYPE == 3) then
-          open(unit=54,file=trim(prname)//'absorb_ymax.bin',status='old',form='unformatted',access='direct',&
+          open(unit=54,file=trim(prname)//'absorb_ymax.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_ymax_crust_mantle+2*4)
         else
           open(unit=54,file=trim(prname)//'absorb_ymax.bin',status='unknown',form='unformatted',access='direct',&
@@ -1519,7 +1521,7 @@
   allocate(nkmin_eta_outer_core(2,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
 
 ! boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
   read(27) ibelm_xmin_outer_core
   read(27) ibelm_xmax_outer_core
   read(27) ibelm_ymin_outer_core
@@ -1528,7 +1530,7 @@
   read(27) ibelm_top_outer_core
   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'normal.bin',status='old',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'normal.bin',status='old',action='read',form='unformatted')
   read(27) normal_xmin_outer_core
   read(27) normal_xmax_outer_core
   read(27) normal_ymin_outer_core
@@ -1545,7 +1547,7 @@
   read(27) nspec2D_ymax_outer_core
   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',action='read',form='unformatted')
   read(27) jacobian2D_xmin_outer_core
   read(27) jacobian2D_xmax_outer_core
   read(27) jacobian2D_ymin_outer_core
@@ -1585,7 +1587,7 @@
         allocate(absorb_xmin_outer_core(NGLLY,NGLLZ,nspec2D_xmin_outer_core))
         reclen_xmin_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmin_outer_core)
         if (SIMULATION_TYPE == 3) then
-          open(unit=61,file=trim(prname)//'absorb_xmin.bin',status='old',form='unformatted',access='direct', &
+          open(unit=61,file=trim(prname)//'absorb_xmin.bin',status='old',action='read',form='unformatted',access='direct', &
                 recl=reclen_xmin_outer_core+2*4)
         else
           open(unit=61,file=trim(prname)//'absorb_xmin.bin',status='unknown',form='unformatted',access='direct',&
@@ -1597,7 +1599,7 @@
         allocate(absorb_xmax_outer_core(NGLLY,NGLLZ,nspec2D_xmax_outer_core))
         reclen_xmax_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmax_outer_core)
         if (SIMULATION_TYPE == 3) then
-          open(unit=62,file=trim(prname)//'absorb_xmax.bin',status='old',form='unformatted',access='direct', &
+          open(unit=62,file=trim(prname)//'absorb_xmax.bin',status='old',action='read',form='unformatted',access='direct', &
                 recl=reclen_xmax_outer_core+2*4)
         else
           open(unit=62,file=trim(prname)//'absorb_xmax.bin',status='unknown',form='unformatted',access='direct', &
@@ -1609,7 +1611,7 @@
         allocate(absorb_ymin_outer_core(NGLLX,NGLLZ,nspec2D_ymin_outer_core))
         reclen_ymin_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymin_outer_core)
         if (SIMULATION_TYPE == 3) then
-          open(unit=63,file=trim(prname)//'absorb_ymin.bin',status='old',form='unformatted',access='direct',&
+          open(unit=63,file=trim(prname)//'absorb_ymin.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_ymin_outer_core+2*4)
         else
           open(unit=63,file=trim(prname)//'absorb_ymin.bin',status='unknown',form='unformatted',access='direct',&
@@ -1621,7 +1623,7 @@
         allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nspec2D_ymax_outer_core))
         reclen_ymax_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymax_outer_core)
         if (SIMULATION_TYPE == 3) then
-          open(unit=64,file=trim(prname)//'absorb_ymax.bin',status='old',form='unformatted',access='direct',&
+          open(unit=64,file=trim(prname)//'absorb_ymax.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_ymax_outer_core+2*4)
         else
           open(unit=64,file=trim(prname)//'absorb_ymax.bin',status='unknown',form='unformatted',access='direct',&
@@ -1633,7 +1635,7 @@
         allocate(absorb_zmin_outer_core(NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
         reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
          if (SIMULATION_TYPE == 3) then
-         open(unit=65,file=trim(prname)//'absorb_zmin.bin',status='old',form='unformatted',access='direct',&
+         open(unit=65,file=trim(prname)//'absorb_zmin.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_zmin+2*4)
         else
           open(unit=65,file=trim(prname)//'absorb_zmin.bin',status='unknown',form='unformatted',access='direct',&
@@ -1660,7 +1662,7 @@
   allocate(ibelm_top_inner_core(NSPEC2D_TOP(IREGION_INNER_CORE)))
 
 ! boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
   read(27) ibelm_xmin_inner_core
   read(27) ibelm_xmax_inner_core
   read(27) ibelm_ymin_inner_core
@@ -1670,7 +1672,7 @@
   close(27)
 
 ! read info for vertical edges for central cube matching in inner core
-  open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='old',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='old',action='read',form='unformatted')
   read(27) nspec2D_xmin_inner_core
   read(27) nspec2D_xmax_inner_core
   read(27) nspec2D_ymin_inner_core
@@ -2663,7 +2665,7 @@
       call splint(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g)
       idoubling = 0
       call prem_iso(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling,.false., &
-        ONE_CRUST,.false.,IASPEI,RICB,RCMB,RTOPDDOUBLEPRIME, &
+        ONE_CRUST,.false.,IASP91,RICB,RCMB,RTOPDDOUBLEPRIME, &
         R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
       dg = 4.0d0*rho - 2.0d0*g/radius
       minus_gravity_table(int_radius) = - g
@@ -2915,7 +2917,7 @@
 ! read files back from local disk or MT tape system if restart file
   if(NUMBER_OF_THIS_RUN > 1) then
     write(outputname,"('dump_all_arrays',i6.6)") myrank
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',form='unformatted')
+    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
     read(55) displ_crust_mantle
     read(55) veloc_crust_mantle
     read(55) accel_crust_mantle
@@ -2936,7 +2938,7 @@
 
   if (SIMULATION_TYPE == 3) then
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',form='unformatted')
+    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
     read(55) b_displ_crust_mantle
     read(55) b_veloc_crust_mantle
     read(55) b_accel_crust_mantle

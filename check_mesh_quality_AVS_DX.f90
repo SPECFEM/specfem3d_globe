@@ -61,7 +61,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION,IASPEI, &
+          SAVE_MESH_FILES,ATTENUATION,IASP91, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
@@ -150,7 +150,7 @@
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          ATTENUATION,IASP91,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
   if(.not. SAVE_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
@@ -198,7 +198,7 @@
   write(*,*) 'reading slice addressing'
   write(*,*)
   allocate(ichunk_slice(0:NPROCTOT-1))
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read')
   do iproc = 0,NPROCTOT-1
     read(IIN,*) iproc_read,ichunk,idummy1,idummy2
     if(iproc_read /= iproc) stop 'incorrect slice number read'
@@ -221,13 +221,13 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old')
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old',action='read')
   read(10,*) npoin
   print *,'There are ',npoin,' global AVS or DX points in the slice'
   ntotpoin = ntotpoin + npoin
   close(10)
 
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelements.txt',status='old')
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelements.txt',status='old',action='read')
   read(10,*) nspec
   print *,'There are ',nspec,' AVS or DX elements in the slice'
   ntotspec = ntotspec + nspec
@@ -266,7 +266,7 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old')
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old',action='read')
 
   read(10,*) nspec
   print *,'There are ',nspec,' AVS or DX elements in the slice'
@@ -343,7 +343,7 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old')
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old',action='read')
 
   read(10,*) nspec
 
@@ -439,9 +439,9 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelements.txt',status='old')
-  open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old')
-  open(unit=14,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old')
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelements.txt',status='old',action='read')
+  open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old',action='read')
+  open(unit=14,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old',action='read')
 
   read(10,*) nspec
   read(12,*) npoin
@@ -516,7 +516,7 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old')
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old',action='read')
   read(10,*) npoin
 
 ! read local points in this slice and output global AVS or DX points
@@ -558,9 +558,9 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelements.txt',status='old')
-  open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old')
-  open(unit=14,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old')
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelements.txt',status='old',action='read')
+  open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='old',action='read')
+  open(unit=14,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old',action='read')
 
   read(10,*) nspec
   read(12,*) npoin
@@ -633,7 +633,7 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old')
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXmeshquality.txt',status='old',action='read')
 
   read(10,*) nspec
 

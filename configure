@@ -1709,7 +1709,7 @@ ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 if test -n "$ac_tool_prefix"; then
-  for ac_prog in f95 fort xlf95 ifc efc pgf95 lf95 gfortran f90 xlf90 pgf90 epcf90 g77 f77 xlf frt pgf77 fort77 fl32 af77
+  for ac_prog in f95 fort xlf95 ifort efc pgf95 lf95 gfortran f90 xlf90 pgf90 epcf90 g77 f77 xlf frt pgf77 fort77 fl32 af77
   do
     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
 set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -1751,7 +1751,7 @@ fi
 fi
 if test -z "$FC"; then
   ac_ct_FC=$FC
-  for ac_prog in f95 fort xlf95 ifc efc pgf95 lf95 gfortran f90 xlf90 pgf90 epcf90 g77 f77 xlf frt pgf77 fort77 fl32 af77
+  for ac_prog in f95 fort xlf95 ifort efc pgf95 lf95 gfortran f90 xlf90 pgf90 epcf90 g77 f77 xlf frt pgf77 fort77 fl32 af77
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -2202,7 +2202,7 @@ case $ac_fc_v_output in
   *xlfentry*)
     ac_fc_v_output=`echo $ac_fc_v_output | sed 's/,/ /g'` ;;
 
-  # With Intel ifc, ignore the quoted -mGLOB_options_string stuff (quoted
+  # With Intel ifort, ignore the quoted -mGLOB_options_string stuff (quoted
   # $LIBS confuse us, and the libraries appear later in the output anyway).
   *mGLOB_options_string*)
     ac_fc_v_output=`echo $ac_fc_v_output | sed 's/\"-mGLOB[^\"]*\"/ /g'` ;;
@@ -2280,7 +2280,7 @@ case $ac_fc_v_output in
   *xlfentry*)
     ac_fc_v_output=`echo $ac_fc_v_output | sed 's/,/ /g'` ;;
 
-  # With Intel ifc, ignore the quoted -mGLOB_options_string stuff (quoted
+  # With Intel ifort, ignore the quoted -mGLOB_options_string stuff (quoted
   # $LIBS confuse us, and the libraries appear later in the output anyway).
   *mGLOB_options_string*)
     ac_fc_v_output=`echo $ac_fc_v_output | sed 's/\"-mGLOB[^\"]*\"/ /g'` ;;

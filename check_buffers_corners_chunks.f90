@@ -59,7 +59,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION,IASPEI, &
+          SAVE_MESH_FILES,ATTENUATION,IASP91, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
@@ -103,7 +103,7 @@
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          ATTENUATION,IASP91,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
 ! compute other parameters based upon values read
@@ -151,7 +151,7 @@
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
 ! file with the list of processors for each message for corners
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old')
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
   do imsg = 1,NCORNERSCHUNKS
   read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
                           iproc_worker2_corners(imsg)
@@ -185,14 +185,14 @@
   iproc = iproc_master_corners(imsg)
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
-  open(unit=34,file=prname(1:len_trim(prname))//filename,status='old')
+  open(unit=34,file=prname(1:len_trim(prname))//filename,status='old',action='read')
 
 ! first worker
   write(filename,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
   iproc = iproc_worker1_corners(imsg)
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
-  open(unit=35,file=prname(1:len_trim(prname))//filename,status='old')
+  open(unit=35,file=prname(1:len_trim(prname))//filename,status='old',action='read')
 
 ! second worker
 ! if only two chunks then there is no second worker
@@ -201,7 +201,7 @@
     iproc = iproc_worker2_corners(imsg)
     call create_serial_name_database(prname,iproc,iregion_code, &
         LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
-    open(unit=36,file=prname(1:len_trim(prname))//filename,status='old')
+    open(unit=36,file=prname(1:len_trim(prname))//filename,status='old',action='read')
   endif
 
   write(*,*) 'reading MPI 1D buffers for 3 procs corner'

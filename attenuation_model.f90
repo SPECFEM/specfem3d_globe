@@ -200,6 +200,8 @@ subroutine read_attenuation_model(min, max)
   min_period = min * 1.0d0
   max_period = max * 1.0d0
 
+! one should add an MPI_BCAST in meshfem3D.f90 if one adds a read_attenuation_model subroutine
+
 end subroutine read_attenuation_model
 
 subroutine attenuation_memory_values(tau_s, deltat, alphaval,betaval,gammaval)
@@ -317,19 +319,19 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
 
-  open(unit=27, file=prname(1:len_trim(prname))//'tau_s.bin',status='old',form='unformatted')
+  open(unit=27, file=prname(1:len_trim(prname))//'tau_s.bin',status='old',action='read',form='unformatted')
   read(27) tau_s
   close(27)
 
-  open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin',status='old',form='unformatted')
+  open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin',status='old',action='read',form='unformatted')
   read(27) T_c_source
   close(27)
 
-  open(unit=27, file=prname(1:len_trim(prname))//'Q.bin',status='old',form='unformatted')
+  open(unit=27, file=prname(1:len_trim(prname))//'Q.bin',status='old',action='read',form='unformatted')
   read(27) scale_factor
   close(27)
 
-  open(unit=27, file=prname(1:len_trim(prname))//'tau_e.bin',status='old',form='unformatted')
+  open(unit=27, file=prname(1:len_trim(prname))//'tau_e.bin',status='old',action='read',form='unformatted')
   read(27) factor_common
   close(27)
 

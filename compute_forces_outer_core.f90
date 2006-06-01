@@ -43,7 +43,7 @@
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: displfluid,accelfluid
 
-! divergent of displacement
+! divergence of displacement
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: div_displfluid
 
 ! arrays with mesh parameters per slice
@@ -165,7 +165,7 @@
 
     endif  ! end of section with rotation
 
-! compute divergent of displacment
+! compute divergence of displacment
 
 ! precompute and store gravity term
           if(GRAVITY_VAL) then
@@ -206,7 +206,7 @@
                  dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
             endif
 
-! divergent of displacement field with gravity on
+! divergence of displacement field with gravity on
             if (SIMULATION_TYPE == 3) then
               div_displfluid(i,j,k,ispec) =  &
                  minus_rho_g_over_kappa_fluid(int_radius) * (dpotentialdx_with_rot * gxl + &
@@ -267,13 +267,14 @@
 
   end subroutine compute_forces_outer_core
 
-!------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------
 
-subroutine compute_field_gradient(field,nrank,i,j,k,grad_field, &
-   hprime_xx,hprime_yy,hprime_zz, xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl, &
-   gammayl,gammazl,ibool,nglob_field)
+  subroutine UNUSED_compute_field_gradient(field,nrank,i,j,k,grad_field, &
+    hprime_xx,hprime_yy,hprime_zz, xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl, &
+    gammayl,gammazl,ibool,nglob_field)
 
   implicit none
+
   include 'constants.h'
 
   integer nrank, i,j,k, nglob_field
@@ -313,5 +314,5 @@ subroutine compute_field_gradient(field,nrank,i,j,k,grad_field, &
 
   enddo
 
+  end subroutine UNUSED_compute_field_gradient
 
-  end subroutine compute_field_gradient

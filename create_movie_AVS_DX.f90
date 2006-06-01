@@ -88,7 +88,7 @@
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION,IASPEI, &
+          SAVE_MESH_FILES,ATTENUATION,IASP91, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
@@ -134,7 +134,7 @@
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,IASPEI,ABSORBING_CONDITIONS, &
+          ATTENUATION,IASP91,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
   if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
@@ -330,7 +330,7 @@
 
 ! read all the elements from the same file
   write(outputname,"('/moviedata',i6.6)") it
-  open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted')
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted')
   read(IOUT) store_val_x
   read(IOUT) store_val_y
   read(IOUT) store_val_z
