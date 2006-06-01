@@ -57,7 +57,7 @@ NUMBER_OF_THIS_RUN              = 1
 LOCAL_PATH                      = /scratch/komatits/DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 200
+NTSTEP_BETWEEN_OUTPUT_INFO      = 100
 
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
