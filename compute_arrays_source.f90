@@ -99,6 +99,10 @@
         do it=1,NGLLY
           do ir=1,NGLLX
 
+! silly work-around for hang during compile with ifort v8.1
+              do
+              enddo
+
         sourcearrayd(1,k,l,m) = sourcearrayd(1,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
                                *(G11(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
                                +G12(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
