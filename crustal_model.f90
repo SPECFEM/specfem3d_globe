@@ -23,13 +23,6 @@ module crustal_model_constants
 
   implicit none
 
-  double precision, parameter :: PI = 3.141592653589793d0
-  double precision, parameter :: HUGEVAL = 1.d+30
-  double precision, parameter :: R_EARTH = 6371000.d0
-  double precision, parameter :: GRAV = 6.6723d-11
-  ! average density in the full Earth to normalize equation
-  double precision, parameter :: RHOAV = 5514.3d0
-
   ! crustal model parameters for crust2.0
   integer, parameter :: NKEYS_CRUST = 359
   integer, parameter :: NLAYERS_CRUST = 8
@@ -58,6 +51,7 @@ end module crustal_model_variables
 
   use crustal_model_variables
   implicit none
+  include "constants.h"
 
   double precision xlat,xlon,x,vp,vs,rho,moho
   logical found_crust
@@ -118,6 +112,7 @@ end module crustal_model_variables
 
   use crustal_model_variables
   implicit none
+  include "constants.h"
 
 ! local variables
   integer i
@@ -167,6 +162,7 @@ end module crustal_model_variables
 
   use crustal_model_constants
   implicit none
+  include "constants.h"
 
   integer, parameter :: NTHETA = 2
   integer, parameter :: NPHI = 10
@@ -329,6 +325,7 @@ end module crustal_model_variables
 
   use crustal_model_constants
   implicit none
+  include "constants.h"
 
 
 ! argument variables
