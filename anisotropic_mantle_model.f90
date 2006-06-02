@@ -30,28 +30,7 @@
 !
 !======================================================================
 
-module aniso_mantle_model_constants
-
-  implicit none
-
-  double precision, parameter :: PI = 3.141592653589793d0
-  double precision, parameter :: DEGREES_TO_RADIANS = PI / 180.d0
-  double precision, parameter :: R_EARTH = 6371000.d0
-  double precision, parameter :: R_EARTH_KM = R_EARTH / 1000.d0
-  double precision, parameter :: ZERO = 0.d0,ONE = 1.d0
-  double precision, parameter :: R_UNIT_SPHERE = ONE
-  double precision, parameter :: GRAV = 6.6723d-11
-
-! average density in the full Earth to normalize equation
-  double precision, parameter :: RHOAV = 5514.3d0
-
-end module aniso_mantle_model_constants
-
-!------------
-
 module aniso_mantle_model_variables
-
-  use aniso_mantle_model_constants
 
   implicit none
 
@@ -69,6 +48,8 @@ end module aniso_mantle_model_variables
   use aniso_mantle_model_variables
 
   implicit none
+
+  include "constants.h"
 
   double precision r,theta,phi
   double precision rho
@@ -106,9 +87,9 @@ end module aniso_mantle_model_variables
        d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
        d44,d45,d46,d55,d56,d66)
 
-  use aniso_mantle_model_constants
-
   implicit none
+
+  include "constants.h"
 
   integer npar1,ndepth,idep,ipar,itheta,ilon,icz0,nx0,ny0,nz0,&
           ict0,ict1,icp0,icp1,icz1
@@ -335,6 +316,8 @@ end module aniso_mantle_model_variables
   use aniso_mantle_model_variables
 
   implicit none
+
+  include "constants.h"
 
   integer nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
   double precision xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
