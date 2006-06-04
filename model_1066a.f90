@@ -28,11 +28,13 @@
 
 !-------------------
 
-  subroutine model_1066a(r,rho,vp,vs,Qkappa,Qmu)
+  subroutine model_1066a(r,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
   use model_1066a_variables
 
   implicit none
+
+  include "constants.h"
 
 ! input:
 ! radius r: meters
@@ -41,6 +43,8 @@
 ! density rho: kg/m^3
 ! compressional wave speed vp: km/s
 ! shear wave speed vs: km/s
+
+  integer iregion_code
 
   double precision r,rho,vp,vs,Qmu,Qkappa
 
@@ -72,6 +76,9 @@
     Qkappa = Qkappa_1066a(i-1) + frac * (Qkappa_1066a(i)-Qkappa_1066a(i-1))
 
   endif
+
+! make sure Vs is zero in the outer core even if roundoff errors on depth
+  if(iregion_code == IREGION_OUTER_CORE) vs = 0.d0
 
   end subroutine model_1066a
 
@@ -1062,16 +1069,14 @@
 ! is not a problem because attenuation is not implemented in the fluid
 ! and therefore the Q values are ignored
   Qkappa_1066a(34:39) = Qkappa_1066a(33)
-  Qmu_1066a(34:39) = Qmu_1066a(33)
-
   Qkappa_1066a(60:66) = Qkappa_1066a(67)
+
+  Qmu_1066a(34:39) = Qmu_1066a(33)
   Qmu_1066a(60:66) = Qmu_1066a(67)
 
-!! DK DK UGLY UGLY there is potentially the same roundoff problem for Vs
-!! DK DK UGLY UGLY in this routine as for attenuation above. We should
-!! DK DK UGLY UGLY add a flag telling the model evaluation routine above
-!! DK DK UGLY UGLY whether we are in the outer core or not when we call it,
-!! DK DK UGLY UGLY that is the only clean solution
+! there is the same problem for Vs
+  vs_1066a(34:39) = vs_1066a(33)
+  vs_1066a(60:66) = vs_1066a(67)
 
 ! strip the crust and replace it by mantle if we use an external crustal model
   if(USE_EXTERNAL_CRUSTAL_MODEL) then
