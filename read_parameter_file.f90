@@ -571,7 +571,9 @@
    R80 = 6291000.d0
 
 !!!!!!!!!! DK DK UGLY bug here, this is greater than R_EARTH in constants.h!!
-   ROCEAN =  6372000.d0
+!!!!!!!!!! DK DK UGLY therefore I remove it for now and use R_EARTH instead
+!!!!!!!!!!!!!!   ROCEAN = 6372000.d0
+   ROCEAN = R_EARTH
 
    RHO_TOP_OC = 9917.4500 / RHOAV
    RHO_BOTTOM_OC = 12160.6500 / RHOAV

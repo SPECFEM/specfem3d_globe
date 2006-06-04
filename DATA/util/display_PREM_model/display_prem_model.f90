@@ -21,6 +21,22 @@
 
   include "../../../constants.h"
 
+! PREM
+  double precision, parameter :: RMOHO = 6346600.d0
+  double precision, parameter :: R220 = 6151000.d0
+  double precision, parameter :: R400 = 5971000.d0
+  double precision, parameter :: R600 = 5771000.d0
+  double precision, parameter :: R670 = 5701000.d0
+  double precision, parameter :: R771 = 5600000.d0
+  double precision, parameter :: RTOPDDOUBLEPRIME = 3630000.d0
+  double precision, parameter :: RCMB = 3480000.d0
+  double precision, parameter :: RICB = 1221000.d0
+
+! values common to PREM and IASP91
+  double precision, parameter :: ROCEAN = 6368000.d0
+  double precision, parameter :: RMIDDLE_CRUST = 6356000.d0
+  double precision, parameter :: R80 = 6291000.d0
+
   integer i
 
   double precision r
