@@ -22,8 +22,7 @@ class Specfem(ParallelScript):
     from Model import model
     from Solver import Solver
 
-    #LOCAL_PATH                    = addyndum.scratchDir("local-path", default="/tmp/${user}/${job.id}")
-    LOCAL_PATH                    = pyre.str("local-path")
+    LOCAL_PATH                    = addyndum.scratchDir("local-path", default="/tmp/${user}/${job.id}")
     outputDir                     = addyndum.outputDir("output-dir", default="OUTPUT_FILES")
         
     model                         = model("model", default="isotropic_prem")
@@ -43,8 +42,6 @@ class Specfem(ParallelScript):
     def _configure(self):
         ParallelScript._configure(self)
         
-        self.OUTPUT_FILES = self.outputDir
-
         # declare the interpreter to be used on the compute nodes
         from os.path import join
         self.interpreter = join(self.outputDir, "pyspecfem3D") # includes solver
@@ -58,6 +55,15 @@ class Specfem(ParallelScript):
                 raise ValueError("absorbing conditions not supported for three chunks yet")
         
         return
+
+
+    #
+    #--- final initialization
+    #
+    
+    def _init(self):
+        ParallelScript._init(self)
+        self.OUTPUT_FILES = self.outputDir
 
 
     #
