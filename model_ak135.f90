@@ -15,7 +15,22 @@
 !
 !=====================================================================
 
-  subroutine model_ak135(r,rho,vp,vs,Qkappa,Qmu,USE_EXTERNAL_CRUSTAL_MODEL)
+  module model_ak135_variables
+
+  implicit none
+
+! number of layers in DATA/ak135/ak135.dat
+  integer, parameter :: NR_AK135 = 144
+
+  double precision, dimension(NR_AK135) :: radius_ak135,density_ak135,vp_ak135,vs_ak135,Qkappa_ak135,Qmu_ak135
+
+  end module model_ak135_variables
+
+!-------------------
+
+  subroutine model_ak135(r,rho,vp,vs,Qkappa,Qmu)
+
+  use model_ak135_variables
 
   implicit none
 
@@ -29,16 +44,49 @@
 
   double precision r,rho,vp,vs,Qmu,Qkappa
 
-  logical USE_EXTERNAL_CRUSTAL_MODEL
-
   integer i
 
   double precision frac
 
-! number of layers in DATA/ak135/ak135.dat
-  integer, parameter :: NR_AK135 = 144
+  i = 1
+  do while(r >= radius_ak135(i) .and. i /=NR_AK135)
+    i = i + 1
+  enddo
 
-  double precision, dimension(NR_AK135), save :: radius_ak135,density_ak135,vp_ak135,vs_ak135,Qkappa_ak135,Qmu_ak135
+  if(i == 1) then
+    rho = density_ak135(i)
+    vp = vp_ak135(i)
+    vs = vs_ak135(i)
+    Qmu = Qmu_ak135(i)
+    Qkappa = Qkappa_ak135(i)
+  else
+
+! interpolate from radius_ak135(i-1) to r using the values at i-1 and i
+
+    frac = (r-radius_ak135(i-1))/(radius_ak135(i)-radius_ak135(i-1))
+
+    rho = density_ak135(i-1) + frac * (density_ak135(i)-density_ak135(i-1))
+    vp = vp_ak135(i-1) + frac * (vp_ak135(i)-vp_ak135(i-1))
+    vs = vs_ak135(i-1) + frac * (vs_ak135(i)-vs_ak135(i-1))
+    Qmu = Qmu_ak135(i-1) + frac * (Qmu_ak135(i)-Qmu_ak135(i-1))
+    Qkappa = Qkappa_ak135(i-1) + frac * (Qkappa_ak135(i)-Qkappa_ak135(i-1))
+
+  endif
+
+  end subroutine model_ak135
+
+
+!-------------------
+
+  subroutine define_model_ak135(USE_EXTERNAL_CRUSTAL_MODEL)
+
+  use model_ak135_variables
+
+  implicit none
+
+  logical USE_EXTERNAL_CRUSTAL_MODEL
+
+  integer i
 
 ! define all the values in the model
 
@@ -912,8 +960,8 @@
   Qmu_ak135(143) =   599.990000000000
   Qmu_ak135(144) =   599.990000000000
 
-  if(USE_EXTERNAL_CRUSTAL_MODEL) then
 ! strip the crust and replace it by mantle
+  if(USE_EXTERNAL_CRUSTAL_MODEL) then
     do i=NR_AK135-8,NR_AK135
       density_ak135(i) = density_ak135(NR_AK135-9)
       vp_ak135(i) = vp_ak135(NR_AK135-9)
@@ -923,30 +971,5 @@
     enddo
   endif
 
-  i = 1
-  do while(r >= radius_ak135(i) .and. i /=NR_AK135)
-    i = i + 1
-  enddo
-
-  if(i == 1) then
-    rho = density_ak135(i)
-    vp = vp_ak135(i)
-    vs = vs_ak135(i)
-    Qmu = Qmu_ak135(i)
-    Qkappa = Qkappa_ak135(i)
-  else
-
-! interpolate from radius_ak135(i-1) to r using the values at i-1 and i
-
-    frac = (r-radius_ak135(i-1))/(radius_ak135(i)-radius_ak135(i-1))
-
-    rho = density_ak135(i-1) + frac * (density_ak135(i)-density_ak135(i-1))
-    vp = vp_ak135(i-1) + frac * (vp_ak135(i)-vp_ak135(i-1))
-    vs = vs_ak135(i-1) + frac * (vs_ak135(i)-vs_ak135(i-1))
-    Qmu = Qmu_ak135(i-1) + frac * (Qmu_ak135(i)-Qmu_ak135(i-1))
-    Qkappa = Qkappa_ak135(i-1) + frac * (Qkappa_ak135(i)-Qkappa_ak135(i-1))
-
-  endif
-
-  end subroutine model_ak135
+  end subroutine define_model_ak135
 

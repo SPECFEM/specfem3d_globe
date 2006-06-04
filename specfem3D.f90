@@ -2675,10 +2675,12 @@
           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
       else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-        call model_1066a(radius,rho,vp,vs,Qkappa,Qmu,.false.)
+        call define_model_1066a(.false.)
+        call model_1066a(radius,rho,vp,vs,Qkappa,Qmu)
 
       else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-        call model_ak135(radius,rho,vp,vs,Qkappa,Qmu,.false.)
+        call define_model_ak135(.false.)
+        call model_ak135(radius,rho,vp,vs,Qkappa,Qmu)
 
       else
         stop 'unknown 1D reference Earth model in specfem3D'
