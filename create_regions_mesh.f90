@@ -384,6 +384,10 @@
   allocate(yp(npointot))
   allocate(zp(npointot))
 
+! define models 1066a and ak135
+  call define_model_1066a(CRUSTAL)
+  call define_model_ak135(CRUSTAL)
+
 ! generate the elements in all the regions of the mesh
   ispec = 0
 

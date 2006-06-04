@@ -15,13 +15,27 @@
 !
 !=====================================================================
 
-  subroutine model_1066a(r,rho,vp,vs,Qkappa,Qmu,USE_EXTERNAL_CRUSTAL_MODEL)
+  module model_1066a_variables
+
+  implicit none
+
+! number of layers in DATA/1066a/1066a.dat
+  integer, parameter :: NR_1066A = 160
+
+  double precision, dimension(NR_1066A) :: radius_1066a,density_1066a,vp_1066a,vs_1066a,Qkappa_1066a,Qmu_1066a
+
+  end module model_1066a_variables
+
+!-------------------
+
+  subroutine model_1066a(r,rho,vp,vs,Qkappa,Qmu)
+
+  use model_1066a_variables
 
   implicit none
 
 ! input:
 ! radius r: meters
-! flag USE_EXTERNAL_CRUSTAL_MODEL
 
 ! output:
 ! density rho: kg/m^3
@@ -30,16 +44,48 @@
 
   double precision r,rho,vp,vs,Qmu,Qkappa
 
-  logical USE_EXTERNAL_CRUSTAL_MODEL
-
   integer i
 
   double precision frac
 
-! number of layers in DATA/1066a/1066a.dat
-  integer, parameter :: NR_1066A = 160
+  i = 1
+  do while(r >= radius_1066a(i) .and. i /=NR_1066A)
+    i = i + 1
+  enddo
 
-  double precision, dimension(NR_1066A), save :: radius_1066a,density_1066a,vp_1066a,vs_1066a,Qkappa_1066a,Qmu_1066a
+  if(i == 1) then
+    rho = density_1066a(i)
+    vp = vp_1066a(i)
+    vs = vs_1066a(i)
+    Qmu = Qmu_1066a(i)
+    Qkappa = Qkappa_1066a(i)
+  else
+
+! interpolate from radius_1066a(i-1) to r using the values at i-1 and i
+
+    frac = (r-radius_1066a(i-1))/(radius_1066a(i)-radius_1066a(i-1))
+
+    rho = density_1066a(i-1) + frac * (density_1066a(i)-density_1066a(i-1))
+    vp = vp_1066a(i-1) + frac * (vp_1066a(i)-vp_1066a(i-1))
+    vs = vs_1066a(i-1) + frac * (vs_1066a(i)-vs_1066a(i-1))
+    Qmu = Qmu_1066a(i-1) + frac * (Qmu_1066a(i)-Qmu_1066a(i-1))
+    Qkappa = Qkappa_1066a(i-1) + frac * (Qkappa_1066a(i)-Qkappa_1066a(i-1))
+
+  endif
+
+  end subroutine model_1066a
+
+!-------------------
+
+  subroutine define_model_1066a(USE_EXTERNAL_CRUSTAL_MODEL)
+
+  use model_1066a_variables
+
+  implicit none
+
+  logical USE_EXTERNAL_CRUSTAL_MODEL
+
+  integer i
 
 ! define all the values in the model
 
@@ -1020,30 +1066,5 @@
     enddo
   endif
 
-  i = 1
-  do while(r >= radius_1066a(i) .and. i /=NR_1066A)
-    i = i + 1
-  enddo
-
-  if(i == 1) then
-    rho = density_1066a(i)
-    vp = vp_1066a(i)
-    vs = vs_1066a(i)
-    Qmu = Qmu_1066a(i)
-    Qkappa = Qkappa_1066a(i)
-  else
-
-! interpolate from radius_1066a(i-1) to r using the values at i-1 and i
-
-    frac = (r-radius_1066a(i-1))/(radius_1066a(i)-radius_1066a(i-1))
-
-    rho = density_1066a(i-1) + frac * (density_1066a(i)-density_1066a(i-1))
-    vp = vp_1066a(i-1) + frac * (vp_1066a(i)-vp_1066a(i-1))
-    vs = vs_1066a(i-1) + frac * (vs_1066a(i)-vs_1066a(i-1))
-    Qmu = Qmu_1066a(i-1) + frac * (Qmu_1066a(i)-Qmu_1066a(i-1))
-    Qkappa = Qkappa_1066a(i-1) + frac * (Qkappa_1066a(i)-Qkappa_1066a(i-1))
-
-  endif
-
-  end subroutine model_1066a
+  end subroutine define_model_1066a
 
