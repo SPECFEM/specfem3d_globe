@@ -100,8 +100,7 @@
           do ir=1,NGLLX
 
 ! silly work-around for hang during compile with ifort v8.1
-              do
-              enddo
+            if (1 == 2) return
 
         sourcearrayd(1,k,l,m) = sourcearrayd(1,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
                                *(G11(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
