@@ -2676,11 +2676,11 @@
 
       else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
         call define_model_1066a(.false.)
-        call model_1066a(radius,rho,vp,vs,Qkappa,Qmu)
+        call model_1066a(radius,rho,vp,vs,Qkappa,Qmu,IREGION_CRUST_MANTLE)
 
       else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
         call define_model_ak135(.false.)
-        call model_ak135(radius,rho,vp,vs,Qkappa,Qmu)
+        call model_ak135(radius,rho,vp,vs,Qkappa,Qmu,IREGION_CRUST_MANTLE)
 
       else
         stop 'unknown 1D reference Earth model in specfem3D'

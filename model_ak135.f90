@@ -28,11 +28,13 @@
 
 !-------------------
 
-  subroutine model_ak135(r,rho,vp,vs,Qkappa,Qmu)
+  subroutine model_ak135(r,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
   use model_ak135_variables
 
   implicit none
+
+  include "constants.h"
 
 ! input:
 ! radius r: meters
@@ -41,6 +43,8 @@
 ! density rho: kg/m^3
 ! compressional wave speed vp: km/s
 ! shear wave speed vs: km/s
+
+  integer iregion_code
 
   double precision r,rho,vp,vs,Qmu,Qkappa
 
@@ -73,8 +77,10 @@
 
   endif
 
-  end subroutine model_ak135
+! make sure Vs is zero in the outer core even if roundoff errors on depth
+  if(iregion_code == IREGION_OUTER_CORE) vs = 0.d0
 
+  end subroutine model_ak135
 
 !-------------------
 
@@ -967,16 +973,14 @@
 ! is not a problem because attenuation is not implemented in the fluid
 ! and therefore the Q values are ignored
   Qkappa_ak135(26:30) = Qkappa_ak135(25)
-  Qmu_ak135(26:30) = Qmu_ak135(25)
-
   Qkappa_ak135(66:71) = Qkappa_ak135(72)
+
+  Qmu_ak135(26:30) = Qmu_ak135(25)
   Qmu_ak135(66:71) = Qmu_ak135(72)
 
-!! DK DK UGLY UGLY there is potentially the same roundoff problem for Vs
-!! DK DK UGLY UGLY in this routine as for attenuation above. We should
-!! DK DK UGLY UGLY add a flag telling the model evaluation routine above
-!! DK DK UGLY UGLY whether we are in the outer core or not when we call it,
-!! DK DK UGLY UGLY that is the only clean solution
+! there is the same problem for Vs
+  vs_ak135(26:30) = vs_ak135(25)
+  vs_ak135(66:71) = vs_ak135(72)
 
 ! strip the crust and replace it by mantle
   if(USE_EXTERNAL_CRUSTAL_MODEL) then

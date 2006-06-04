@@ -526,6 +526,9 @@
 
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
 
+!! DK DK UGLY our implementation of AK135 has not been checked carefully yet
+!! DK DK UGLY therefore let's doublecheck it carefully before using it
+
 ! AK135
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6351000.d0
@@ -544,6 +547,9 @@
     RHO_BOTTOM_OC = 12139.1 / RHOAV
 
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+
+!! DK DK UGLY according to Ying Zhou <yingz@gps.caltech.edu>
+!! DK DK UGLY these depths are wrong; let us change them
 
 ! 1066A
     ROCEAN = 6368000.d0

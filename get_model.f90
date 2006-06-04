@@ -94,7 +94,7 @@
   double precision lat,lon
   double precision vpc,vsc,rhoc,moho
 
-  ! Attenuation values
+! attenuation values
   integer vx, vy, vz, vnspec
   double precision, dimension(N_SLS)                     :: tau_s, tau_e
   double precision, dimension(vx, vy, vz, vnspec)        :: Qmu_store
@@ -151,10 +151,10 @@
              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-           call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu)
+           call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-           call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu)
+           call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
          else
            stop 'unknown 1D reference Earth model in get_model'
