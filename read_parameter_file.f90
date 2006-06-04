@@ -570,6 +570,7 @@
    RMIDDLE_CRUST = 6361000.d0
    R80 = 6291000.d0
 
+!!!!!!!!!! DK DK UGLY bug here, this is greater than R_EARTH in constants.h!!
    ROCEAN =  6372000.d0
 
    RHO_TOP_OC = 9917.4500 / RHOAV
