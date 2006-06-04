@@ -25,8 +25,7 @@
 
   include "constants.h"
 
-  integer ispec_selected_source
-  integer nspec
+  integer ispec_selected_source,nspec
 
   double precision xi_source,eta_source,gamma_source
   double precision Mxx,Myy,Mzz,Mxy,Mxz,Myz
@@ -51,7 +50,6 @@
   double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
   integer k,l,m
-  integer ir,it,iv
 
 ! calculate G_ij for general source location
 ! the source does not necessarily correspond to a Gauss-Lobatto point
@@ -92,35 +90,8 @@
   do m=1,NGLLZ
     do l=1,NGLLY
       do k=1,NGLLX
-
-      sourcearrayd(:,k,l,m) = ZERO
-
-      do iv=1,NGLLZ
-        do it=1,NGLLY
-          do ir=1,NGLLX
-
-! silly work-around for hang during compile with ifort v8.1
-            if (1 == 2) return
-
-        sourcearrayd(1,k,l,m) = sourcearrayd(1,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
-                               *(G11(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
-                               +G12(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
-                               +G13(ir,it,iv)*hxis(k)*hetas(l)*hpgammas(m))
-
-        sourcearrayd(2,k,l,m) = sourcearrayd(2,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
-                               *(G21(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
-                               +G22(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
-                               +G23(ir,it,iv)*hxis(k)*hetas(l)*hpgammas(m))
-
-        sourcearrayd(3,k,l,m) = sourcearrayd(3,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
-                               *(G31(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
-                               +G32(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
-                               +G33(ir,it,iv)*hxis(k)*hetas(l)*hpgammas(m))
-
-          enddo
-        enddo
-      enddo
-
+        call multiply_arrays_source(sourcearrayd,G11,G12,G13,G21,G22,G23, &
+                  G31,G32,G33,hxis,hpxis,hetas,hpetas,hgammas,hpgammas,k,l,m)
       enddo
     enddo
   enddo
@@ -134,6 +105,54 @@
 
   end subroutine compute_arrays_source
 
+!================================================================
+
+! we put these multiplications in a separate routine because otherwise
+! some compilers try to unroll the six loops above and take forever to compile
+  subroutine multiply_arrays_source(sourcearrayd,G11,G12,G13,G21,G22,G23, &
+                  G31,G32,G33,hxis,hpxis,hetas,hpetas,hgammas,hpgammas,k,l,m)
+
+  implicit none
+
+  include "constants.h"
+
+! source arrays
+  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
+  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: G11,G12,G13,G21,G22,G23,G31,G32,G33
+  double precision, dimension(NGLLX) :: hxis,hpxis
+  double precision, dimension(NGLLY) :: hetas,hpetas
+  double precision, dimension(NGLLZ) :: hgammas,hpgammas
+
+  integer k,l,m
+
+  integer ir,it,iv
+
+  sourcearrayd(:,k,l,m) = ZERO
+
+  do iv=1,NGLLZ
+    do it=1,NGLLY
+      do ir=1,NGLLX
+
+        sourcearrayd(1,k,l,m) = sourcearrayd(1,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
+                           *(G11(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
+                           +G12(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
+                           +G13(ir,it,iv)*hxis(k)*hetas(l)*hpgammas(m))
+
+        sourcearrayd(2,k,l,m) = sourcearrayd(2,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
+                           *(G21(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
+                           +G22(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
+                           +G23(ir,it,iv)*hxis(k)*hetas(l)*hpgammas(m))
+
+        sourcearrayd(3,k,l,m) = sourcearrayd(3,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
+                           *(G31(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
+                           +G32(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
+                           +G33(ir,it,iv)*hxis(k)*hetas(l)*hpgammas(m))
+
+      enddo
+    enddo
+  enddo
+
+  end subroutine multiply_arrays_source
 
 !================================================================
 
