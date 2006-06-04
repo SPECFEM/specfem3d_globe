@@ -114,7 +114,32 @@ class Specfem(ParallelScript):
             self.solver.execute(self)
 
         return
-            
+
+    
+    #
+    #--- support for reading Par_file
+    #
+    
+
+    def collectUserInput(self, registry):
+        # read Par_files given on the command line
+        from ParFileCodec import ParFileCodec
+        from os.path import isfile, splitext
+        argv = self.argv
+        self.argv = []
+        codec = ParFileCodec(self.name)
+        for arg in argv:
+            base, ext = splitext(arg)
+            if not ext and isfile(arg):
+                shelf = codec.open(base)
+                paramRegistry = shelf['inventory'].getFacility(self.name)
+                if paramRegistry:
+                    self.updateConfiguration(paramRegistry)
+            else:
+                self.argv.append(arg)
+        super(Specfem, self).collectUserInput(registry)
+        return
+
 
 
 def main(*args, **kwds):
