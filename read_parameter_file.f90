@@ -542,7 +542,8 @@
    RTOPDDOUBLEPRIME = 3631000.d0
    RCMB   = 3479500.d0
    RICB   = 1217500.d0
-! values for AK135 (that are not discontinuities)
+
+! values for AK135 that are not discontinuities
    R600 = 5771000.d0
    R771 = 5611000.d0
 
