@@ -529,44 +529,51 @@
 !! DK DK UGLY our implementation of AK135 has not been checked carefully yet
 !! DK DK UGLY therefore let's doublecheck it carefully before using it
 
-! AK135
-    ROCEAN = 6368000.d0
-    RMIDDLE_CRUST = 6351000.d0
-    RMOHO = 6336000.d0
-    R80 = 6291000.d0
-    R220 = 6161000.d0
-    R400 = 5961000.d0
-    R600 = 5781000.d0
-    R670 = 5711000.d0
-    R771 = 5610000.d0
-    RTOPDDOUBLEPRIME = 3631000.d0
-    RCMB = 3479500.d0
-    RICB = 1221000.d0
+! values below corrected by Ying Zhou <yingz@gps.caltech.edu>
 
-    RHO_TOP_OC = 9914.5 / RHOAV
-    RHO_BOTTOM_OC = 12139.1 / RHOAV
+! AK135 without the 300 meters of mud layer
+   ROCEAN = 6368000.d0
+   RMIDDLE_CRUST = 6361000.d0
+   RMOHO  = 6353000.d0
+   R80    = 6291000.d0
+   R220   = 6161000.d0
+   R400   = 5961000.d0
+   R670   = 5711000.d0
+   RTOPDDOUBLEPRIME = 3631000.d0
+   RCMB   = 3479500.d0
+   RICB   = 1217500.d0
+! values for AK135 (that are not discontinuities)
+   R600 = 5771000.d0
+   R771 = 5611000.d0
+
+   RHO_TOP_OC = 9914.5000 / RHOAV
+   RHO_BOTTOM_OC = 12139.1000 / RHOAV
 
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
 
-!! DK DK UGLY according to Ying Zhou <yingz@gps.caltech.edu>
-!! DK DK UGLY these depths are wrong; let us change them
+! values below corrected by Ying Zhou <yingz@gps.caltech.edu>
 
 ! 1066A
-    ROCEAN = 6368000.d0
-    RMIDDLE_CRUST = 6351000.d0
-    RMOHO = 6336000.d0
-    R80 = 6291000.d0
-    R220 = 6151000.d0
-    R400 = 5950000.d0
-    R600 = 5781000.d0
-    R670 = 5700000.d0
-    R771 = 5600000.d0
-    RTOPDDOUBLEPRIME = 3631000.d0
-    RCMB = 3479500.d0
-    RICB = 1221000.d0
+   RMOHO = 6360000.d0
+   R400 = 5950000.d0
+   R600 = 5781000.d0
+   R670 = 5700000.d0
+   RCMB = 3484300.d0
+   RICB = 1229480.d0
 
-    RHO_TOP_OC = 9914.5 / RHOAV
-    RHO_BOTTOM_OC = 12139.1 / RHOAV
+! values for 1066A that are not discontinuities
+   RTOPDDOUBLEPRIME = 3631000.d0
+   R220 = 6161000.d0
+   R771 = 5611000.d0
+! RMIDDLE_CRUST used only for high resolution FFSW1C model, with 3 elements crust simulations
+! mid_crust = 10 km
+   RMIDDLE_CRUST = 6361000.d0
+   R80 = 6291000.d0
+
+   ROCEAN =  6372000.d0
+
+   RHO_TOP_OC = 9917.4500 / RHOAV
+   RHO_BOTTOM_OC = 12160.6500 / RHOAV
 
   else
 
