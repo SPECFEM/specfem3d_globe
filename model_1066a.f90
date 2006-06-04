@@ -1055,6 +1055,24 @@
   Qmu_1066a(159) =   117.900000000000
   Qmu_1066a(160) =   117.900000000000
 
+! fix a potential roundoff problem in the code: across the CMB and ICB
+! assign the same attenuation values on the fluid side as on the solid side
+! just in case a point in the elastic medium falls on the acoustic side
+! due to roundoff errors on depth; on the acoustic side this modification
+! is not a problem because attenuation is not implemented in the fluid
+! and therefore the Q values are ignored
+  Qkappa_1066a(34:39) = Qkappa_1066a(33)
+  Qmu_1066a(34:39) = Qmu_1066a(33)
+
+  Qkappa_1066a(60:66) = Qkappa_1066a(67)
+  Qmu_1066a(60:66) = Qmu_1066a(67)
+
+!! DK DK UGLY UGLY there is potentially the same roundoff problem for Vs
+!! DK DK UGLY UGLY in this routine as for attenuation above. We should
+!! DK DK UGLY UGLY add a flag telling the model evaluation routine above
+!! DK DK UGLY UGLY whether we are in the outer core or not when we call it,
+!! DK DK UGLY UGLY that is the only clean solution
+
 ! strip the crust and replace it by mantle if we use an external crustal model
   if(USE_EXTERNAL_CRUSTAL_MODEL) then
     do i=NR_1066A-3,NR_1066A
