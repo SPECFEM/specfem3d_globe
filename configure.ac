@@ -71,7 +71,12 @@ flags=`$flags_guess` ||
 eval $flags
 
 AC_FC_WRAPPERS
+AC_LANG(Fortran)
+AC_FC_SRCEXT(f90)
+AC_FC_FREEFORM()
+
 AC_PROG_CC
+
 
 
 # influential environment variables
@@ -111,6 +116,8 @@ fi
 
 
 # Checks for header files.
+
+CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 
 
 # Checks for typedefs, structures, and compiler characteristics.
