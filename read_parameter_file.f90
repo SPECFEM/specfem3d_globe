@@ -571,9 +571,7 @@
    RMIDDLE_CRUST = 6361000.d0
    R80 = 6291000.d0
 
-!!!!!!!!!! DK DK UGLY bug here, this is greater than R_EARTH in constants.h!!
-!!!!!!!!!! DK DK UGLY therefore I remove it for now and use R_EARTH instead
-!!!!!!!!!!!!!!   ROCEAN = 6372000.d0
+! model 1066A has no oceans, therefore we use the radius of the Earth instead
    ROCEAN = R_EARTH
 
    RHO_TOP_OC = 9917.4500 / RHOAV
