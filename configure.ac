@@ -105,6 +105,7 @@ AC_ARG_VAR(PYTHONPATH, [Python module search path])
 
 # Checks for Python modules and packages.
 
+AC_LANG(C)
 if test "$want_pyre" = yes; then
     PYTHONPATH="${pythondir}${PYTHONPATH:+:${PYTHONPATH}}"; export PYTHONPATH
     CIT_PATH_PYTHIA([0.8], [mpi])
