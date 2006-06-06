@@ -22,7 +22,7 @@
   subroutine locate_receivers(myrank,DT,NSTEP,nspec,nglob,ibool, &
                  xstore,ystore,zstore,xigll,yigll,zigll,rec_filename, &
                  nrec,islice_selected_rec,ispec_selected_rec, &
-                 xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,nu, &
+                 xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,stlat,stlon,stele,nu, &
                  yr,jda,ho,mi,sec,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
                  theta_source,phi_source, &
                  rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED)
@@ -83,7 +83,7 @@
   double precision n(3)
   double precision thetan,phin
   double precision sint,cost,sinp,cosp
-  double precision r0,dcost,p20
+  double precision r0,p20
   double precision theta,phi
   double precision theta_source,phi_source
   double precision dist
@@ -124,7 +124,8 @@
   character(len=150) STATIONS
 
   integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
-  double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
+  double precision, dimension(nrec) :: stlat,stlon,stele
+  double precision, allocatable, dimension(:) :: stbur
   double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
 
   character(len=150) OUTPUT_FILES
@@ -153,17 +154,7 @@
     write(IMAIN,*)
   endif
 
-! get number of stations from receiver file
-  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-  open(unit=1,file=STATIONS,status='old',action='read')
-  read(1,*) nrec_dummy
-
-  if(nrec_dummy /= nrec) call exit_MPI(myrank,'problem with number of receivers')
-
 ! allocate memory for arrays using number of stations
-  allocate(stlat(nrec))
-  allocate(stlon(nrec))
-  allocate(stele(nrec))
   allocate(stbur(nrec))
   allocate(epidist(nrec))
 
@@ -187,31 +178,55 @@
   allocate(z_found_all(nrec,0:NPROCTOT-1))
   allocate(final_distance_all(nrec,0:NPROCTOT-1))
 
-! loop on all the stations
+! read that STATIONS file on the master
+  if(myrank == 0) then
+
+    call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
+
+    open(unit=1,file=STATIONS,status='old',action='read')
+
+! get number of stations from receiver file
+    read(1,*) nrec_dummy
+    if(nrec_dummy /= nrec) call exit_MPI(myrank,'problem with number of receivers')
+
+! loop on all the stations to read station information
+    do irec=1,nrec
+      read(1,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+    enddo
+
+! close receiver file
+    close(1)
+
+  endif
+
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(station_name,nrec*MAX_LENGTH_STATION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(network_name,nrec*MAX_LENGTH_NETWORK_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+
+  call MPI_BCAST(stlat,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(stlon,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(stbur,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+! loop on all the stations to locate them in the mesh
   do irec=1,nrec
 
 ! set distance to huge initial value
-  distmin=HUGEVAL
+    distmin=HUGEVAL
 
-    read(1,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
-
-!
-! full Earth, use latitude and longitude
-!
-
-!     convert geographic latitude stlat (degrees)
-!     to geocentric colatitude theta (radians)
-      theta=PI/2.0d0-atan(0.99329534d0*dtan(stlat(irec)*PI/180.0d0))
-      phi=stlon(irec)*PI/180.0d0
-      call reduce(theta,phi)
+! convert geographic latitude stlat (degrees)
+! to geocentric colatitude theta (radians)
+    theta=PI/2.0d0-atan(0.99329534d0*dtan(stlat(irec)*PI/180.0d0))
+    phi=stlon(irec)*PI/180.0d0
+    call reduce(theta,phi)
 
 ! compute epicentral distance
-      epidist(irec) = dacos(dcos(theta)*dcos(theta_source) + &
-              dsin(theta)*dsin(theta_source)*dcos(phi-phi_source))*180.0d0/PI
+    epidist(irec) = acos(cos(theta)*cos(theta_source) + &
+              sin(theta)*sin(theta_source)*cos(phi-phi_source))*180.0d0/PI
 
 ! print some information about stations
-      if(myrank == 0) &
-        write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
+    if(myrank == 0) &
+      write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
                        '.',network_name(irec)(1:len_trim(network_name(irec))), &
                        '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
 
@@ -241,17 +256,17 @@
 ! we use the same convention as in Harvard normal modes for the orientation
 
 !     vertical component
-      n(1) = dcos(thetan)
+      n(1) = cos(thetan)
 !     N-S component
-      n(2) = - dsin(thetan)*dcos(phin)
+      n(2) = - sin(thetan)*cos(phin)
 !     E-W component
-      n(3) = dsin(thetan)*dsin(phin)
+      n(3) = sin(thetan)*sin(phin)
 
 !     get the Cartesian components of n in the model: nu
-      sint = dsin(theta)
-      cost = dcos(theta)
-      sinp = dsin(phi)
-      cosp = dcos(phi)
+      sint = sin(theta)
+      cost = cos(theta)
+      sinp = sin(phi)
+      cosp = cos(phi)
       nu(iorientation,1,irec) = n(1)*sint*cosp+n(2)*cost*cosp-n(3)*sinp
       nu(iorientation,2,irec) = n(1)*sint*sinp+n(2)*cost*sinp+n(3)*cosp
       nu(iorientation,3,irec) = n(1)*cost-n(2)*sint
@@ -265,8 +280,8 @@
            call get_topo_bathy(stlat(irec),stlon(irec),elevation,ibathy_topo)
            r0 = r0 + elevation/R_EARTH
         endif
-        dcost=dcos(theta)
-        p20=0.5d0*(3.0d0*dcost*dcost-1.0d0)
+        cost=cos(theta)
+        p20=0.5d0*(3.0d0*cost*cost-1.0d0)
         call splint(rspl,espl,espl2,nspl,r0,ell)
         r0=r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
       endif
@@ -275,9 +290,9 @@
       r0 = r0 - stbur(irec)/R_EARTH
 
 ! compute the Cartesian position of the receiver
-      x_target(irec) = r0*dsin(theta)*dcos(phi)
-      y_target(irec) = r0*dsin(theta)*dsin(phi)
-      z_target(irec) = r0*dcos(theta)
+      x_target(irec) = r0*sin(theta)*cos(phi)
+      y_target(irec) = r0*sin(theta)*sin(phi)
+      z_target(irec) = r0*cos(theta)
 
       if (myrank == 0) write(IOVTK,*) x_target(irec), y_target(irec), z_target(irec)
 
@@ -316,11 +331,7 @@
 ! end of loop on all the stations
   enddo
 
-! close receiver file
-  close(1)
-
 ! create RECORDHEADER file with usual format for normal-mode codes
-
   if(myrank == 0) then
 
 ! get the base pathname for output files
@@ -574,9 +585,6 @@
   call MPI_BCAST(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
 ! deallocate arrays
-  deallocate(stlat)
-  deallocate(stlon)
-  deallocate(stele)
   deallocate(stbur)
   deallocate(epidist)
   deallocate(ix_initial_guess)

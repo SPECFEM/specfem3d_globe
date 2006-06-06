@@ -19,7 +19,7 @@
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
+          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
           NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -32,7 +32,7 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD,myrank)
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
   implicit none
 
@@ -43,7 +43,7 @@
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
+          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
           NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE,REFERENCE_1D_MODEL
 
@@ -60,22 +60,14 @@
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL,CMTSOLUTION
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! local variables
-  integer ios,icounter,isource,idummy,NEX_MAX
+  integer NEX_MAX
 
-  double precision RECORD_LENGTH_IN_MINUTES,hdur,minval_hdur
-
-  character(len=150) dummystring
-
-  double precision ELEMENT_WIDTH
+  double precision RECORD_LENGTH_IN_MINUTES,ELEMENT_WIDTH
 
   integer, external :: err_occurred
-
-!! DK DK UGLY if running on MareNostrum in Barcelona
-  integer myrank
-  character(len=150) procname
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -83,24 +75,24 @@
   call open_parameter_file
 
   call read_value_integer(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(SAVE_FORWARD, 'solver.SAVE_FORWARD')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
   call read_value_integer(NCHUNKS, 'mesher.NCHUNKS')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   if(NCHUNKS /= 1 .and. NCHUNKS /= 2 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) stop 'NCHUNKS must be either 1, 2, 3 or 6'
 
   call read_value_double_precision(ANGULAR_WIDTH_XI_IN_DEGREES, 'mesher.ANGULAR_WIDTH_XI_IN_DEGREES')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(ANGULAR_WIDTH_ETA_IN_DEGREES, 'mesher.ANGULAR_WIDTH_ETA_IN_DEGREES')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(CENTER_LATITUDE_IN_DEGREES, 'mesher.CENTER_LATITUDE_IN_DEGREES')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(CENTER_LONGITUDE_IN_DEGREES, 'mesher.CENTER_LONGITUDE_IN_DEGREES')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(GAMMA_ROTATION_AZIMUTH, 'mesher.GAMMA_ROTATION_AZIMUTH')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! this MUST be 90 degrees for two chunks or more to match geometrically
   if(NCHUNKS > 1 .and. ANGULAR_WIDTH_XI_IN_DEGREES /= 90.d0) &
@@ -122,13 +114,13 @@
 
 ! number of elements at the surface along the two sides of the first chunk
   call read_value_integer(NEX_XI, 'mesher.NEX_XI')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NEX_ETA, 'mesher.NEX_ETA')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NPROC_XI, 'mesher.NPROC_XI')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NPROC_ETA, 'mesher.NPROC_ETA')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! set time step, radial distribution of elements, and attenuation period range
 ! right distribution is determined based upon maximum value of NEX
@@ -400,7 +392,7 @@
 
 ! define the velocity model
   call read_value_string(MODEL, 'model.MODEL')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! use PREM as the 1D reference model by default
   REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
@@ -467,20 +459,20 @@
   endif
 
   call read_value_logical(OCEANS, 'model.OCEANS')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(ELLIPTICITY, 'model.ELLIPTICITY')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(TOPOGRAPHY, 'model.TOPOGRAPHY')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(GRAVITY, 'model.GRAVITY')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(ROTATION, 'model.ROTATION')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(ATTENUATION, 'model.ATTENUATION')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
   call read_value_logical(ABSORBING_CONDITIONS, 'solver.ABSORBING_CONDITIONS')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 6) stop 'cannot have absorbing conditions in the full Earth'
 
@@ -605,92 +597,42 @@
   R_CENTRAL_CUBE = (RICB - 150000.d0) / R_EARTH
 
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
 
-! compute the total number of sources in the CMTSOLUTION file
-! there are NLINES_PER_CMTSOLUTION_SOURCE lines per source in that file
-  call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION', 'DATA/CMTSOLUTION')
-  open(unit=1,file=CMTSOLUTION,iostat=ios,status='old',action='read')
-  if(ios /= 0) stop 'error opening CMTSOLUTION file'
-  icounter = 0
-  do while(ios == 0)
-    read(1,"(a)",iostat=ios) dummystring
-    if(ios == 0) icounter = icounter + 1
-  enddo
-  close(1)
-  if(mod(icounter,NLINES_PER_CMTSOLUTION_SOURCE) /= 0) &
-    stop 'total number of lines in CMTSOLUTION file should be a multiple of NLINES_PER_CMTSOLUTION_SOURCE'
-  NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
-  if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
-
   call read_value_logical(MOVIE_SURFACE, 'solver.MOVIE_SURFACE')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(MOVIE_VOLUME, 'solver.MOVIE_VOLUME')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_FRAMES, 'solver.NTSTEP_BETWEEN_FRAMES')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(HDUR_MOVIE, 'solver.HDUR_MOVIE')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! computes a default hdur_movie that creates nice looking movies.
 ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
-  if(HDUR_MOVIE <=TINYVAL) &
+  if(HDUR_MOVIE <= TINYVAL) &
     HDUR_MOVIE = 1.1d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
 
-
-! compute the minimum value of hdur in CMTSOLUTION file
-  open(unit=1,file=CMTSOLUTION,status='old',action='read')
-  minval_hdur = HUGEVAL
-  do isource = 1,NSOURCES
-
-! skip other information
-    do idummy = 1,3
-      read(1,"(a)") dummystring
-    enddo
-
-! read half duration and compute minimum
-    read(1,"(a)") dummystring
-    read(dummystring(15:len_trim(dummystring)),*) hdur
-    minval_hdur = min(minval_hdur,hdur)
-
-! skip other information
-    do idummy = 1,9
-      read(1,"(a)") dummystring
-    enddo
-
-  enddo
-  close(1)
-
-! one cannot use a Heaviside source for the movies
-!  if((MOVIE_SURFACE .or. MOVIE_VOLUME) .and. minval_hdur < TINYVAL) &
-!    stop 'hdur too small for movie creation, movies do not make sense for Heaviside source'
-
   call read_value_logical(SAVE_MESH_FILES, 'mesher.SAVE_MESH_FILES')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NUMBER_OF_RUNS, 'solver.NUMBER_OF_RUNS')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NUMBER_OF_THIS_RUN, 'solver.NUMBER_OF_THIS_RUN')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_string(LOCAL_PATH, 'LOCAL_PATH')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NTSTEP_BETWEEN_OUTPUT_SEISMOS')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(RECEIVERS_CAN_BE_BURIED, 'solver.RECEIVERS_CAN_BE_BURIED')
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'solver.PRINT_SOURCE_TIME_FUNCTION')
-  if(err_occurred() /= 0) return
-
-!! DK DK UGLY if running on MareNostrum in Barcelona, add processor name to local /scratch/komatits path
-  if(RUN_ON_MARENOSTRUM_BARCELONA) then
-    write(procname,"('_proc',i4.4)") myrank
-    LOCAL_PATH = trim(LOCAL_PATH) // procname
-  endif
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! close parameter file
   call close_parameter_file
@@ -748,6 +690,10 @@
   ELEMENT_WIDTH = ANGULAR_WIDTH_XI_IN_DEGREES/dble(NEX_MAX) * DEGREES_TO_RADIANS
 
   end subroutine read_parameter_file
+
+!
+!----
+!
 
   subroutine auto_ner(WIDTH, NEX_MAX, &
        NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
@@ -843,7 +789,12 @@
 
   end subroutine auto_ner
 
+!
+!----
+!
+
   subroutine auto_optimal_ner(NUM_REGIONS, r, ew, NER, rt, rb)
+
     implicit none
 
     integer NUM_REGIONS
@@ -879,10 +830,15 @@
 
   end subroutine auto_optimal_ner
 
+!
+!----
+!
 
   subroutine auto_fluid_double(WIDTH, NEX_MAX, NUM_REGIONS, r, s, &
        NER_FLUID, RATIO_TOP_DBL_OC, RATIO_BOTTOM_DBL_OC)
+
     implicit none
+
     include 'constants.h'
 
     double precision WIDTH
@@ -933,5 +889,6 @@
           end if
        enddo
     enddo
+
   end subroutine auto_fluid_double
 

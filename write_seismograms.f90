@@ -18,10 +18,13 @@
 ! write seismograms to text files
 
   subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
-               station_name,network_name,nrec,nrec_local, &
+               station_name,network_name,stlat,stlon,stele,nrec,nrec_local, &
                DT,NSTEP,hdur,LOCAL_PATH,it_begin,it_end)
 
   implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
 
   include "constants.h"
 
@@ -42,26 +45,27 @@
   character(len=150) sisname
 
 ! BS BS begin section added for SAC
-  double precision, dimension(nrec) ::  stlon, stlat, stele
+  double precision, dimension(nrec) :: stlat,stlon,stele
   double precision t_cmt,elat,elon,depth
 
   double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
 
   double precision value1,value2, value3,value4,value5
 
-  integer write_counter,i
+  integer write_counter,i,ier
 
   integer NSOURCES
 
   integer, parameter :: IOUT_SAC=44
   character(len=256) sisname_2
 
-!variables for SAC header fields ---------------v
-
+! variables for SAC header fields
   integer yr,jda, ho, mi
   double precision sec
-  real mb,ms
-  character(len=150) region
+  real mb
+  integer, parameter :: LENGTH_REGION_NAME = 150
+  character(len=LENGTH_REGION_NAME) region
+
   character(12) ename
 
   real DELTA
@@ -103,7 +107,7 @@
   real ndef     ! not defined values
   real INTERNAL ! SAC internal variables, always leave undefined
   real BYSAC
-! end BS BS SAC header variables ---------------------------^
+! end BS BS SAC header variables
 
 !----------------------------------------------------------------
 
@@ -162,19 +166,32 @@
 ! BS BS beginning of section added (SAC output)
 
 ! get event information for SAC header
+  if(myrank == 0) call get_event_info(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,region, &
+                        cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(mi,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-  call get_event_info(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ms,region,&
-                      cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES) ! BS BS added 12.10.2005
+  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(t_cmt,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(elat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(elon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(cmt_lat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(cmt_lon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(cmt_depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(cmt_hdur,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  call MPI_BCAST(region,LENGTH_REGION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
   write(ename(1:12),'(a12)') region(1:12)
 
   do i=1,len_trim(ename)
     if (ename(i:i)==' ') ename(i:i)='_'
   enddo
-
-! get station information for SAC header
-
-  call get_station_info(myrank,nrec,station_name,network_name,stlat,stlon,stele)
 
   write(sisname_2,"(a,'.sac')") trim(sisname)
   open(unit=IOUT_SAC,file=trim(LOCAL_PATH)//'/'//trim(sisname_2),status='unknown')
@@ -386,22 +403,24 @@
 !                                   KUSER1     KUSER2       KCMPNM
   write(IOUT_SAC,540)   KNETWK,'-12345  ','-12345  '
 !                                   KNETWK   KDATRD   KINST
-!
-! now write data - in steps of 5 per row:
+
+! now write data - with five values per row:
 ! ---------------
-  write_counter=0
-      do isample = it_begin+5,it_end+1,5
-         !
-         value1 = dble(seismograms(iorientation,irec_local,isample-5))
-         value2 = dble(seismograms(iorientation,irec_local,isample-4))
-         value3 = dble(seismograms(iorientation,irec_local,isample-3))
-         value4 = dble(seismograms(iorientation,irec_local,isample-2))
-         value5 = dble(seismograms(iorientation,irec_local,isample-1))
-         !
-         write(IOUT_SAC,510) &
-              sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
-         write_counter=write_counter+1
-      enddo
+  write_counter = 0
+
+  do isample = it_begin+5,it_end+1,5
+
+    value1 = dble(seismograms(iorientation,irec_local,isample-5))
+    value2 = dble(seismograms(iorientation,irec_local,isample-4))
+    value3 = dble(seismograms(iorientation,irec_local,isample-3))
+    value4 = dble(seismograms(iorientation,irec_local,isample-2))
+    value5 = dble(seismograms(iorientation,irec_local,isample-1))
+
+    write(IOUT_SAC,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
+
+    write_counter=write_counter+1
+
+  enddo
 
 !#################### end SAC Alphanumeric Seismos ############################
 
@@ -462,8 +481,7 @@
 ! create the name of the seismogram file for each slice
 ! file name includes the name of the station, the network and the component
 
-      write(sisname,"(a,i5.5,'.',a,'.',a3,'.sem')") 'S',irec,&
-           'NT',chn
+      write(sisname,"(a,i5.5,'.',a,'.',a3,'.sem')") 'S',irec,'NT',chn
 
 ! suppress white spaces if any
     clean_LOCAL_PATH = adjustl(LOCAL_PATH)
@@ -496,51 +514,49 @@
 
   end subroutine write_adj_seismograms
 
-
-! BS BS begin of section added for SAC output
-! additional routines
-
 !=====================================================================
 
-  subroutine get_event_info(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ms,region,&
-                            cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
+! BS BS beginning of additional routine for SAC output
+
+  subroutine get_event_info(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,region,&
+                            cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
 
 ! written by Bernhard Schuberth
 
-! This subroutine reads the first line of the DATA/CMTSOLUTION file and extracts event information
-! needed for SAC or PITSA headers
-
-! based on existing subroutine get_cmt.f90
+! This subroutine reads the first line of the DATA/CMTSOLUTION file
+! and extracts event information needed for SAC or PITSA headers
 
   implicit none
 
   include "constants.h"
 
-  integer ios,icounter,NSOURCES
+!--- arguments of the subroutine below
 
-  integer yr,jda,ho,mi
-  double precision sec
-  double precision t_cmt,elat,elon,depth
+  integer, intent(out) :: NSOURCES,yr,jda,ho,mi
 
-  double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
+  real, intent(out) :: mb
 
-  integer mo,da,julian_day
+  double precision, intent(out) :: sec,t_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
+
+  integer, intent(in) :: LENGTH_REGION_NAME
+  character(len=LENGTH_REGION_NAME), intent(out) :: region ! event name for SAC header
+
+!--- local variables here
+
+  integer ios,icounter,mo,da,julian_day
+
+  real ms
+
   character(len=5) datasource
-  character(len=150) string
-
-  character(len=150) dummystring
-
-  character(len=150) region !event name for SAC header
-  real mb,ms
-
-  character(len=150) CMTSOLUTION
+  character(len=150) string,dummystring,CMTSOLUTION
 
 !
 !---- read hypocenter info
 !
   call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION')
+
   open(unit=821,file=CMTSOLUTION,iostat=ios,status='old',action='read')
-  if(ios /= 0) stop 'error opening CMTSOLUTION file (in get_event_info.f90)'
+  if(ios /= 0) stop 'error opening CMTSOLUTION file (in get_event_info)'
 
   icounter = 0
   do while(ios == 0)
@@ -553,8 +569,6 @@
   NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
   if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
 
-  if (NSOURCES == 1) then
-
   open(unit=821,file=CMTSOLUTION,status='old',action='read')
 
   ! example header line of CMTSOLUTION file
@@ -562,10 +576,9 @@
   !event_id, date,origin time,latitude,longitude,depth, mb, MS, region
 
   ! read header with event information
-    read(821,*) &
-          datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
-    jda=julian_day(yr,mo,da)
+    read(821,*) datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
 
+    jda=julian_day(yr,mo,da)
 
   ! ignore line with event name
     read(821,"(a)") string
@@ -573,6 +586,8 @@
   ! read time shift
     read(821,"(a)") string
     read(string(12:len_trim(string)),*) t_cmt
+
+  if (NSOURCES == 1) then
 
   ! read half duration
     read(821,"(a)") string
@@ -592,26 +607,6 @@
 
   else
 
-    open(unit=821,file=CMTSOLUTION,status='old',action='read')
-
-  ! example header line of CMTSOLUTION file
-  !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
-  !event_id, date,origin time,latitude,longitude,depth, mb, MS, region
-
-  ! read header with event information
-    read(821,*) &
-          datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
-    jda=julian_day(yr,mo,da)
-
-
-  ! ignore line with event name
-    read(821,"(a)") string
-
-  ! read time shift
-    read(821,"(a)") string
-    read(string(12:len_trim(string)),*) t_cmt
-
-
     cmt_hdur=-1e8
     cmt_lat=-1e8
     cmt_lon=-1e8
@@ -622,55 +617,4 @@
   close(821)
 
   end subroutine get_event_info
-
-!--------------------------------------------------------------------
-
-  subroutine get_station_info(myrank,nrec,station_name,network_name,stlat,stlon,stele)
-
-! written by Bernhard Schuberth
-
-! This subroutine reads the DATA/Stations file and extracts station information
-! needed for SAC or PITSA headers
-
-! based on existing subroutine locate_receivers.f90
-
-  implicit none
-
-  include 'constants.h'
-
-  integer irec,nrec_dummy,myrank
-  integer, intent(in) :: nrec
-  character(len=MAX_LENGTH_STATION_NAME), intent(in),dimension(nrec) :: station_name
-  character(len=MAX_LENGTH_NETWORK_NAME), intent(in),dimension(nrec) :: network_name
-  double precision, intent(out),dimension(nrec) :: stlat,stlon,stele
-  double precision :: stbur
-  character(len=MAX_LENGTH_STATION_NAME) :: dummy_str_1
-  character(len=MAX_LENGTH_NETWORK_NAME) :: dummy_str_2
-
-  character(len=150) STATIONS
-
-  call get_value_string(STATIONS, 'solver.STATIONS', 'DATA/STATIONS')
-  open(unit=812,file=STATIONS,status='old',action='read')
-
-  read(812,*) nrec_dummy
-
-  if(nrec_dummy /= nrec) call exit_MPI(myrank,'problem with number of receivers in get_station_info ( BS BS!)')
-
-  do irec=1,nrec
-
-    read(812,*) dummy_str_1,dummy_str_2,stlat(irec),stlon(irec),stele(irec),stbur ! stbur only used as a dummy
-
-    ! test if get_station_info works!
-
-    if (trim(dummy_str_1) .ne. trim(station_name(irec)) .or. trim(dummy_str_2) .ne. trim(network_name(irec))) &
-       call exit_MPI(myrank,'problem with receiver info in get_station_info ( BS BS!)')
-
-  enddo
-
-  close(unit=812)
-
-  end subroutine get_station_info
-
-! BS BS end of section added for SAC output
-! additional routines
 
