@@ -25,7 +25,7 @@
 
   include "constants.h"
 
-  integer iproc,nspec,npoin
+  integer iproc,nspec,npoin,myrank
   integer ispec
   integer iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
   integer ipoin,numpoin,iglobpointoffset,ntotpoin,ntotspec
@@ -151,7 +151,7 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD,myrank)
 
   if(.not. SAVE_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
 

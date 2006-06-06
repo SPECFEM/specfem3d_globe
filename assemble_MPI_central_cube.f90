@@ -46,7 +46,7 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
 
   integer ipoin,idimension, ispec2D, ispec
   integer i,j,k
-  integer isender,ireceiver,imsg
+  integer sender,receiver,imsg
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: array_central_cube
 
@@ -65,9 +65,9 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
    do imsg = 1,nb_msgs_theor_in_cube
 
 ! receive buffers from slices
-  isender = sender_from_slices_to_cube(imsg)
+  sender = sender_from_slices_to_cube(imsg)
   call MPI_RECV(buffer_slices, &
-              ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,isender, &
+              ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
               itag,MPI_COMM_WORLD,msg_status,ier)
 
 ! copy buffer in 2D array for each slice
@@ -97,9 +97,9 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
     enddo
 
 ! send buffer to central cube
-    ireceiver = receiver_cube_from_slices
+    receiver = receiver_cube_from_slices
     call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,ireceiver,itag,MPI_COMM_WORLD,ier)
+              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
 
  endif  ! end sending info to central cube
 
@@ -156,9 +156,9 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
   if(ichunk /= CHUNK_AB) then
 
 ! receive buffers from slices
-  isender = receiver_cube_from_slices
+  sender = receiver_cube_from_slices
   call MPI_RECV(buffer_slices, &
-              ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,isender, &
+              ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
               itag,MPI_COMM_WORLD,msg_status,ier)
 
 ! for bottom elements in contact with central cube from the slices side
@@ -197,9 +197,9 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
    buffer_slices(:,1:ndim_assemble) = buffer_all_cube_from_slices(imsg,:,1:ndim_assemble)
 
 ! send buffers to slices
-    ireceiver = sender_from_slices_to_cube(imsg)
+    receiver = sender_from_slices_to_cube(imsg)
     call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,ireceiver,itag,MPI_COMM_WORLD,ier)
+              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
 
    enddo
    endif

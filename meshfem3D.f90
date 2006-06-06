@@ -275,6 +275,9 @@
                NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
                nglob_AB,nglob_AC,nglob_BC
 
+!! DK DK UGLY if running on MareNostrum in Barcelona
+  character(len=400) system_command
+
 ! ************** PROGRAM STARTS HERE **************
 
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
@@ -303,6 +306,12 @@
     write(IMAIN,*)
   endif
 
+!! DK DK UGLY if running on MareNostrum in Barcelona, added this to save seismograms
+  if(RUN_ON_MARENOSTRUM_BARCELONA) then
+    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4,' ; mkdir /scratch/komatits_proc',i4.4)") myrank,myrank
+    call system(system_command)
+  endif
+
 ! read the parameter file
   call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -321,7 +330,7 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD,myrank)
   if(err_occurred() /= 0) return
 
 ! compute other parameters based upon values read
