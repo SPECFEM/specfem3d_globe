@@ -215,7 +215,7 @@
   integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
   integer ipoin
   integer npoin2D_cube_from_slices
-  integer isender,ireceiver,imsg
+  integer sender,receiver,imsg
 
   double precision x_target,y_target,z_target
   double precision x_current,y_current,z_current
@@ -654,6 +654,10 @@
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
 
+!! DK DK UGLY if running on MareNostrum in Barcelona
+  integer jobid,unused_value
+  character(len=400) system_command
+
 ! ************** PROGRAM STARTS HERE **************
 
 ! sizeprocs returns number of processes started
@@ -682,7 +686,7 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD,myrank)
 
   if(err_occurred() /= 0) return
 
@@ -2116,9 +2120,9 @@
    do imsg = 1,nb_msgs_theor_in_cube
 
 ! receive buffers from slices
-  isender = sender_from_slices_to_cube(imsg)
+  sender = sender_from_slices_to_cube(imsg)
   call MPI_RECV(buffer_slices, &
-              NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,isender, &
+              NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
               itag,MPI_COMM_WORLD,msg_status,ier)
 
 ! copy buffer in 2D array for each slice
@@ -2151,9 +2155,9 @@
     enddo
 
 ! send buffer to central cube
-    ireceiver = receiver_cube_from_slices
+    receiver = receiver_cube_from_slices
     call MPI_SEND(buffer_slices,NDIM*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,ireceiver,itag,MPI_COMM_WORLD,ier)
+              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
 
  endif  ! end sending info to central cube
 
@@ -2721,10 +2725,6 @@
 
    endif
 
-! synchronize all processes to make sure everybody is ready to start time loop
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-  if(myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
-
 ! allocate files to save movies
   if(MOVIE_SURFACE) then
     nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
@@ -2742,10 +2742,6 @@
     allocate(store_val_uy_all(nmovie_points,0:NPROCTOT-1))
     allocate(store_val_uz_all(nmovie_points,0:NPROCTOT-1))
   endif
-
-!
-!   s t a r t   t i m e   i t e r a t i o n s
-!
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -2838,19 +2834,6 @@
      endif
   endif
 
-  if(myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Starting time iteration loop...'
-    write(IMAIN,*)
-  endif
-
-! create an empty file to monitor the start of the simulation
-  if(myrank == 0) then
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown')
-    write(IOUT,*) 'hello, starting time loop'
-    close(IOUT)
-  endif
-
   if (SAVE_STRAIN) then
     allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE))
     allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
@@ -2894,13 +2877,6 @@
     endif
 
   endif
-
-! get MPI starting time
-  time_start = MPI_WTIME()
-
-! *********************************************************
-! ************* MAIN LOOP OVER THE TIME STEPS *************
-! *********************************************************
 
 ! define correct time steps if restart files
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > 3) stop 'number of restart runs can be 1, 2 or 3'
@@ -2980,6 +2956,34 @@
     close(55)
 
   endif
+
+!
+!   s t a r t   t i m e   i t e r a t i o n s
+!
+
+! synchronize all processes to make sure everybody is ready to start time loop
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  if(myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
+
+  if(myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Starting time iteration loop...'
+    write(IMAIN,*)
+  endif
+
+! create an empty file to monitor the start of the simulation
+  if(myrank == 0) then
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown')
+    write(IOUT,*) 'hello, starting time loop'
+    close(IOUT)
+  endif
+
+! get MPI starting time
+  time_start = MPI_WTIME()
+
+! *********************************************************
+! ************* MAIN LOOP OVER THE TIME STEPS *************
+! *********************************************************
 
   do it=it_begin,it_end
 
@@ -4255,7 +4259,9 @@
 
 ! write the seismograms with time shift
 
+! write the seismograms only if there is at least one receiver located in this slice
   if (nrec_local > 0) then
+
   do irec_local = 1,nrec_local
 
 ! get global number of that receiver
@@ -4531,7 +4537,6 @@
   endif
 
 
-
 ! save movie on surface
   if(MOVIE_SURFACE .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
@@ -4780,6 +4785,45 @@
     write(IMAIN,*)
     close(IMAIN)
   endif
+
+!! DK DK UGLY if running on MareNostrum in Barcelona, create a tar file
+!! DK DK UGLY with all the local seismograms and move to GPFS on MareNostrum
+  if(RUN_ON_MARENOSTRUM_BARCELONA) then
+
+! get the job ID from file output by LoadLeveler script
+    if(myrank == 0) then
+      open(unit=27,file='OUTPUT_FILES/jobid',status='old',action='read')
+      read(27,*) jobid
+      close(27)
+    endif
+    call MPI_BCAST(jobid,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+! write the seismograms only if there is at least one receiver located in this slice
+    if (nrec_local > 0) then
+! create the tar command with the right syntax to store seismograms in GPFS
+      write(system_command,"('cd /scratch/komatits_proc',i4.4,' ; tar cvf &
+        &/gpfs/scratch/hpce07/hpce07084/seismograms_BSC/seismos_jobid_',i7.7,&
+        &'_proc_',i4.4,'.tar *.semd ; rm -r -f /scratch/komatits_proc',i4.4)") myrank,jobid,myrank,myrank
+    else
+! otherwise simply remove all the files stored on the local disk
+      write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4)") myrank
+    endif
+
+! implement cascading to avoid overloading the GPFS file system:
+! make sure that only one processor writes to it at a given time
+    sender = myrank - 1
+    receiver = myrank + 1
+
+! wait for previous processor to unlock me in the cascade
+    if(myrank /= 0) call MPI_RECV(unused_value,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+
+! call the system to execute the command
+    call system(system_command)
+
+! when I am done, I unlock the next processor in the cascade
+    if(myrank < sizeprocs - 1) call MPI_SEND(unused_value,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+
+  endif ! of RUN_ON_MARENOSTRUM_BARCELONA
 
 ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)

@@ -78,7 +78,13 @@
 
   character(len=150) HEADER_FILE
 
+!! DK DK UGLY if running on MareNostrum in Barcelona
+  integer myrank
+
 ! ************** PROGRAM STARTS HERE **************
+
+!! DK DK UGLY if running on MareNostrum in Barcelona (value is unused but needs to be there)
+  if(RUN_ON_MARENOSTRUM_BARCELONA) myrank = 1000
 
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
   print *
@@ -102,7 +108,7 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD,myrank)
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &

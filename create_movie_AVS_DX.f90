@@ -38,7 +38,7 @@
 ! flag to cut amplitude below a certain threshold
   logical, parameter :: APPLY_THRESHOLD = .false.
 
-  integer i,j,it
+  integer i,j,it,myrank
   integer it1,it2
   integer nspectot_AVS_max
   integer ispec
@@ -135,7 +135,7 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD,myrank)
 
   if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
 

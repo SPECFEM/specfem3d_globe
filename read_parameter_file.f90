@@ -32,7 +32,7 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD,myrank)
 
   implicit none
 
@@ -72,6 +72,10 @@
   double precision ELEMENT_WIDTH
 
   integer, external :: err_occurred
+
+!! DK DK UGLY if running on MareNostrum in Barcelona
+  integer myrank
+  character(len=150) procname
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -681,6 +685,12 @@
   if(err_occurred() /= 0) return
   call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'solver.PRINT_SOURCE_TIME_FUNCTION')
   if(err_occurred() /= 0) return
+
+!! DK DK UGLY if running on MareNostrum in Barcelona, add processor name to local /scratch/komatits path
+  if(RUN_ON_MARENOSTRUM_BARCELONA) then
+    write(procname,"('_proc',i4.4)") myrank
+    LOCAL_PATH = trim(LOCAL_PATH) // procname
+  endif
 
 ! close parameter file
   call close_parameter_file
