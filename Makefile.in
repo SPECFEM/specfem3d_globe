@@ -78,6 +78,7 @@ O = obj
 PARAM_OBJECTS = \
 	$O/create_header_file.o \
 	$O/read_parameter_file.o \
+	$O/count_number_of_sources.o \
 	$O/compute_parameters.o \
 	$O/define_subregions_crust_mantle.o \
 	$O/hex_nodes.o \
@@ -394,6 +395,9 @@ $O/exit_mpi.o: constants.h exit_mpi.f90
 $O/read_parameter_file.o: constants.h read_parameter_file.f90
 	${FCCOMPILE_CHECK} -c -o $O/read_parameter_file.o ${FCFLAGS_f90} read_parameter_file.f90
 
+$O/count_number_of_sources.o: constants.h count_number_of_sources.f90
+	${FCCOMPILE_CHECK} -c -o $O/count_number_of_sources.o ${FCFLAGS_f90} count_number_of_sources.f90
+
 $O/read_value_parameters.o: constants.h read_value_parameters.f90
 	${FCCOMPILE_CHECK} -c -o $O/read_value_parameters.o ${FCFLAGS_f90} read_value_parameters.f90
 
@@ -538,7 +542,7 @@ $O/add_topography.o: constants.h add_topography.f90
 	${FCCOMPILE_CHECK} -c -o $O/add_topography.o ${FCFLAGS_f90} add_topography.f90
 
 $O/write_seismograms.o: constants.h write_seismograms.f90
-	${FCCOMPILE_CHECK} -c -o $O/write_seismograms.o ${FCFLAGS_f90} write_seismograms.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/write_seismograms.o ${FCFLAGS_f90} write_seismograms.f90
 
 $O/lagrange_poly.o: constants.h lagrange_poly.f90
 	${FCCOMPILE_CHECK} -c -o $O/lagrange_poly.o ${FCFLAGS_f90} lagrange_poly.f90

@@ -489,6 +489,7 @@
   character(len=150) STATIONS
   character(len=150) :: rec_filename
   double precision, dimension(:,:,:), allocatable :: nu
+  double precision, allocatable, dimension(:) :: stlat,stlon,stele
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
 
@@ -673,7 +674,7 @@
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
+          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
           NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -686,9 +687,21 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD,myrank)
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
 
-  if(err_occurred() /= 0) return
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+
+! count the total number of sources in the CMTSOLUTION file
+  call count_number_of_sources(NSOURCES)
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+!! DK DK UGLY if running on MareNostrum in Barcelona
+  if(RUN_ON_MARENOSTRUM_BARCELONA) then
+! add processor name to local /scratch/komatits path
+    write(system_command,"('_proc',i4.4)") myrank
+    LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
+  endif
 
 ! check simulation pararmeters
   if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
@@ -1239,9 +1252,14 @@
     rec_filename = 'DATA/STATIONS_ADJOINT'
   endif
   call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-  open(unit=IIN,file=STATIONS,status='old',action='read')
-  read(IIN,*) nrec
-  close(IIN)
+
+  if(myrank == 0) then
+    open(unit=IIN,file=STATIONS,status='old',action='read')
+    read(IIN,*) nrec
+    close(IIN)
+  endif
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -1263,6 +1281,9 @@
   allocate(gamma_receiver(nrec))
   allocate(station_name(nrec))
   allocate(network_name(nrec))
+  allocate(stlat(nrec))
+  allocate(stlon(nrec))
+  allocate(stele(nrec))
   allocate(nu(NDIM,NDIM,nrec))
 
 ! locate receivers in the crust in the mesh
@@ -1271,7 +1292,7 @@
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xigll,yigll,zigll,trim(rec_filename), &
             nrec,islice_selected_rec,ispec_selected_rec, &
-            xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,nu, &
+            xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,stlat,stlon,stele,nu, &
             yr,jda,ho,mi,sec, &
             NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
             theta_source(1),phi_source(1),rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED)
@@ -4394,7 +4415,7 @@
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-          network_name,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
+          network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,DT,NSTEP,t0,LOCAL_PATH)
@@ -4633,7 +4654,7 @@
   if (nrec_local > 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-        network_name,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
+        network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,DT,NSTEP,t0,LOCAL_PATH)
@@ -4796,6 +4817,7 @@
       read(27,*) jobid
       close(27)
     endif
+! broadcast the information read on the master to the nodes
     call MPI_BCAST(jobid,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
 ! write the seismograms only if there is at least one receiver located in this slice

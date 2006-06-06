@@ -306,18 +306,12 @@
     write(IMAIN,*)
   endif
 
-!! DK DK UGLY if running on MareNostrum in Barcelona, added this to save seismograms
-  if(RUN_ON_MARENOSTRUM_BARCELONA) then
-    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4,' ; mkdir /scratch/komatits_proc',i4.4)") myrank,myrank
-    call system(system_command)
-  endif
-
 ! read the parameter file
   call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
+          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
           NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -330,8 +324,27 @@
           MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD,myrank)
-  if(err_occurred() /= 0) return
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+
+! count the total number of sources in the CMTSOLUTION file
+  call count_number_of_sources(NSOURCES)
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+!! DK DK UGLY if running on MareNostrum in Barcelona
+  if(RUN_ON_MARENOSTRUM_BARCELONA) then
+
+! add processor name to local /scratch/komatits path
+    write(system_command,"('_proc',i4.4)") myrank
+    LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
+
+! create a local directory to store all the local files
+    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4,' ; mkdir /scratch/komatits_proc',i4.4)") myrank,myrank
+    call system(system_command)
+
+  endif
 
 ! compute other parameters based upon values read
   call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &

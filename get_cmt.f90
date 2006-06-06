@@ -21,11 +21,17 @@
 
   include "constants.h"
 
-  integer yr,jda,ho,mi,NSOURCES
-  double precision sec
-  double precision, dimension(NSOURCES) :: t_cmt,hdur,lat,long,depth
-  double precision moment_tensor(6,NSOURCES)
-  double precision DT
+!--- input or output arguments of the subroutine below
+
+  integer, intent(in) :: NSOURCES
+  double precision, intent(in) :: DT
+
+  integer, intent(out) :: yr,jda,ho,mi
+  double precision, intent(out) :: sec
+  double precision, dimension(NSOURCES), intent(out) :: t_cmt,hdur,lat,long,depth
+  double precision, dimension(6,NSOURCES), intent(out) :: moment_tensor
+
+!--- local variables below
 
   integer mo,da,julian_day,isource
   double precision scaleM
@@ -36,6 +42,7 @@
 !---- read hypocenter info
 !
   call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION', 'DATA/CMTSOLUTION')
+
   open(unit=1,file=CMTSOLUTION,status='old',action='read')
 
 ! read source number isource
