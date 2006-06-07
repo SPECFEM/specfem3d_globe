@@ -336,6 +336,9 @@
 !! DK DK UGLY if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
 
+! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
+    LOCAL_PATH = '/scratch/komatits'
+
 ! add processor name to local /scratch/komatits path
     write(system_command,"('_proc',i4.4)") myrank
     LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)

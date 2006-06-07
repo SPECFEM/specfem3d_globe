@@ -159,6 +159,7 @@ SOLVER_DYNAMIC_OBJECTS = \
 	$O/define_derivation_matrices.o \
 	$O/get_attenuation_model.o \
 	$O/get_cmt.o \
+	$O/get_event_info.o \
 	$O/locate_receivers.o \
 	$O/locate_sources.o \
 	$O/make_gravity.o \
@@ -439,6 +440,9 @@ $O/get_MPI_1D_buffers.o: constants.h get_MPI_1D_buffers.f90
 
 $O/get_cmt.o: constants.h get_cmt.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_cmt.o ${FCFLAGS_f90} get_cmt.f90
+
+$O/get_event_info.o: constants.h get_event_info.f90
+	${FCCOMPILE_CHECK} -c -o $O/get_event_info.o ${FCFLAGS_f90} get_event_info.f90
 
 $O/get_ellipticity.o: constants.h get_ellipticity.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_ellipticity.o ${FCFLAGS_f90} get_ellipticity.f90

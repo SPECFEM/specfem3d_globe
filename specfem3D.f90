@@ -623,6 +623,12 @@
 
   logical SAVE_STRAIN
 
+! for SAC headers for seismograms
+  integer NSOURCES_SAC,yr_SAC,jda_SAC,ho_SAC,mi_SAC
+  real mb_SAC
+  double precision t_cmt_SAC,elat_SAC,elon_SAC,depth_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,sec_SAC
+  character(len=12) ename_SAC
+
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_AB,NSPEC_AC,NSPEC_BC, &
                NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
@@ -656,13 +662,13 @@
   character(len=150) outputname
 
 !! DK DK UGLY if running on MareNostrum in Barcelona
-  integer jobid,unused_value
+  integer jobid,total_seismos_marenostrum
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram_marenostrum
   character(len=400) system_command
 
 ! ************** PROGRAM STARTS HERE **************
 
-! sizeprocs returns number of processes started
-! (should be equal to NPROCTOT if no inner core, NPROCTOT+1 if inner core).
+! sizeprocs returns number of processes started (should be equal to NPROCTOT).
 ! myrank is the rank of each process, between 0 and sizeprocs-1.
 ! as usual in MPI, process 0 is in charge of coordinating everything
 ! and also takes care of the main output
@@ -698,9 +704,17 @@
 
 !! DK DK UGLY if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
+
+! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
+    LOCAL_PATH = '/scratch/komatits'
+
 ! add processor name to local /scratch/komatits path
     write(system_command,"('_proc',i4.4)") myrank
     LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
+
+! allocate array to gather the seismograms
+    allocate(one_seismogram_marenostrum(NDIM,NSTEP))
+
   endif
 
 ! check simulation pararmeters
@@ -2899,6 +2913,10 @@
 
   endif
 
+! get information about event name and location for SAC seismograms
+  call get_event_info_parallel(myrank,yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
+                 elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
+
 ! define correct time steps if restart files
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > 3) stop 'number of restart runs can be 1, 2 or 3'
   if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
@@ -4415,7 +4433,9 @@
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-          network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
+          network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end, &
+      yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
+                 elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,DT,NSTEP,t0,LOCAL_PATH)
@@ -4654,7 +4674,9 @@
   if (nrec_local > 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-        network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end)
+        network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end, &
+      yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
+                 elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,DT,NSTEP,t0,LOCAL_PATH)
@@ -4798,6 +4820,88 @@
 
   endif
 
+!! DK DK UGLY if running on MareNostrum in Barcelona, gather all
+!! DK DK UGLY the seismograms on the master to write them to GPFS
+  if(RUN_ON_MARENOSTRUM_BARCELONA) then
+
+    if(myrank == 0) then ! on the master, gather all the seismograms
+
+! get the job ID from file output by LoadLeveler script
+      open(unit=27,file='OUTPUT_FILES/jobid',status='old',action='read')
+      read(27,*) jobid
+      close(27)
+
+! open a file on the GPFS file system
+    write(system_command,"('/gpfs/scratch/hpce07/hpce07084/seismograms_BSC/all_seismos_jobid_',i7.7,'.bin')") jobid
+    open(unit=133,file=system_command,status='replace',action='write',form='unformatted')
+
+    total_seismos_marenostrum = 0
+
+! receive information from all the slices
+    do iproc = 0,NPROCTOT-1
+
+! receive except from proc 0, which is me and therefore I already have this value
+      sender = iproc
+      if(iproc /= 0) call MPI_RECV(nrec_local,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+
+      if (nrec_local > 0) then
+
+        do irec_local = 1,nrec_local
+
+! receive except from proc 0, which is myself and therefore I already have these values
+          if(iproc == 0) then
+! get global number of that receiver
+            irec = number_receiver_global(irec_local)
+            one_seismogram_marenostrum(:,:) = seismograms(:,irec_local,:)
+          else
+            call MPI_RECV(irec,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+            call MPI_RECV(one_seismogram_marenostrum,NDIM*NSTEP,CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+          endif
+
+          total_seismos_marenostrum = total_seismos_marenostrum + 1
+          write(133) irec
+          write(133) one_seismogram_marenostrum
+
+        enddo
+
+      endif
+
+    enddo
+
+    close(133)
+
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of receivers saved to GPFS is ',total_seismos_marenostrum,' out of ',nrec
+    write(IMAIN,*)
+    if(total_seismos_marenostrum /= nrec) call exit_MPI(myrank, 'incorrect total number of receivers saved to GPFS')
+
+  else  ! on the nodes, send the seismograms to the master
+
+    receiver = 0
+
+    call MPI_SEND(nrec_local,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+
+    if (nrec_local > 0) then
+
+      do irec_local = 1,nrec_local
+
+! get global number of that receiver
+        irec = number_receiver_global(irec_local)
+        call MPI_SEND(irec,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+
+        one_seismogram_marenostrum(:,:) = seismograms(:,irec_local,:)
+        call MPI_SEND(one_seismogram_marenostrum,NDIM*NSTEP,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+
+      enddo
+    endif
+
+  endif
+
+! remove all the files stored on the local disk
+    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4)") myrank
+    call system(system_command)
+
+  endif ! of RUN_ON_MARENOSTRUM_BARCELONA
 
 ! close the main output file
   if(myrank == 0) then
@@ -4806,46 +4910,6 @@
     write(IMAIN,*)
     close(IMAIN)
   endif
-
-!! DK DK UGLY if running on MareNostrum in Barcelona, create a tar file
-!! DK DK UGLY with all the local seismograms and move to GPFS on MareNostrum
-  if(RUN_ON_MARENOSTRUM_BARCELONA) then
-
-! get the job ID from file output by LoadLeveler script
-    if(myrank == 0) then
-      open(unit=27,file='OUTPUT_FILES/jobid',status='old',action='read')
-      read(27,*) jobid
-      close(27)
-    endif
-! broadcast the information read on the master to the nodes
-    call MPI_BCAST(jobid,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-! write the seismograms only if there is at least one receiver located in this slice
-    if (nrec_local > 0) then
-! create the tar command with the right syntax to store seismograms in GPFS
-      write(system_command,"('cd /scratch/komatits_proc',i4.4,' ; tar cvf &
-        &/gpfs/scratch/hpce07/hpce07084/seismograms_BSC/seismos_jobid_',i7.7,&
-        &'_proc_',i4.4,'.tar *.semd ; rm -r -f /scratch/komatits_proc',i4.4)") myrank,jobid,myrank,myrank
-    else
-! otherwise simply remove all the files stored on the local disk
-      write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4)") myrank
-    endif
-
-! implement cascading to avoid overloading the GPFS file system:
-! make sure that only one processor writes to it at a given time
-    sender = myrank - 1
-    receiver = myrank + 1
-
-! wait for previous processor to unlock me in the cascade
-    if(myrank /= 0) call MPI_RECV(unused_value,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call the system to execute the command
-    call system(system_command)
-
-! when I am done, I unlock the next processor in the cascade
-    if(myrank < sizeprocs - 1) call MPI_SEND(unused_value,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
-
-  endif ! of RUN_ON_MARENOSTRUM_BARCELONA
 
 ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
