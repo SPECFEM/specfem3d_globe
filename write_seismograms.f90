@@ -19,7 +19,8 @@
 
   subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
                station_name,network_name,stlat,stlon,stele,nrec,nrec_local, &
-               DT,NSTEP,hdur,LOCAL_PATH,it_begin,it_end)
+               DT,NSTEP,hdur,LOCAL_PATH,it_begin,it_end, &
+ yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
   implicit none
 
@@ -45,27 +46,21 @@
   character(len=150) sisname
 
 ! BS BS begin section added for SAC
-  double precision, dimension(nrec) :: stlat,stlon,stele
+  integer NSOURCES
+  integer write_counter
+
   double precision t_cmt,elat,elon,depth
-
   double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
-
   double precision value1,value2, value3,value4,value5
 
-  integer write_counter,i,ier
+  double precision, dimension(nrec) :: stlat,stlon,stele
 
-  integer NSOURCES
-
-  integer, parameter :: IOUT_SAC=44
   character(len=256) sisname_2
 
 ! variables for SAC header fields
-  integer yr,jda, ho, mi
+  integer yr,jda,ho,mi
   double precision sec
   real mb
-  integer, parameter :: LENGTH_REGION_NAME = 150
-  character(len=LENGTH_REGION_NAME) region
-
   character(12) ename
 
   real DELTA
@@ -104,13 +99,14 @@
   character(8) KUSER0,KUSER1,KUSER2
 
   real UNUSED   ! header fields unused by SAC
-  real ndef     ! not defined values
+  real undef    ! undefined values
   real INTERNAL ! SAC internal variables, always leave undefined
   real BYSAC
 ! end BS BS SAC header variables
 
 !----------------------------------------------------------------
 
+! loop on all the local receivers
   do irec_local = 1,nrec_local
 
 ! get global number of that receiver
@@ -140,6 +136,7 @@
       if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) &
            call exit_MPI(myrank,'wrong length of network name')
 
+! create the name of the seismogram file using the station name and network name
       write(sisname,"(a,'.',a,'.',a3,'.semd')") station_name(irec)(1:length_station_name), &
                     network_name(irec)(1:length_network_name),chn
 
@@ -162,39 +159,6 @@
       enddo
 
       close(IOUT)
-
-! BS BS beginning of section added (SAC output)
-
-! get event information for SAC header
-  if(myrank == 0) call get_event_info(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,region, &
-                        cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
-! broadcast the information read on the master to the nodes
-  call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(mi,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(t_cmt,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(elat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(elon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_lat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_lon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_hdur,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
-  call MPI_BCAST(region,LENGTH_REGION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-
-  write(ename(1:12),'(a12)') region(1:12)
-
-  do i=1,len_trim(ename)
-    if (ename(i:i)==' ') ename(i:i)='_'
-  enddo
-
-  write(sisname_2,"(a,'.sac')") trim(sisname)
-  open(unit=IOUT_SAC,file=trim(LOCAL_PATH)//'/'//trim(sisname_2),status='unknown')
 
 !######################## SAC Alphanumeric Seismos ############################
 !
@@ -225,12 +189,16 @@
 ! file. The header section is stored on the first 30 cards. This is followed
 ! by one or two data sections. The data is in 5G15.7 format.
 !----------------------------------------------------------------------
-!
-!define certain default values
-!
-!  unused of undefined values are set to '-12345.00'
+
+! add .sac extension to seismogram file name for SAC seismograms
+  write(sisname_2,"(a,'.sac')") trim(sisname)
+  open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//trim(sisname_2),status='unknown')
+
+! define certain default values
+
+! unused or undefined values are set to '-12345.00'
   UNUSED   = -12345.00 ! header fields unused by SAC
-  ndef     = -12345.00 ! not defined values
+  undef    = -12345.00 ! undefined values
   INTERNAL = -12345.00 ! SAC internal variables, always left undefined
   BYSAC    = -12345.00 ! values calculated by SAC from other variables
 !
@@ -239,20 +207,20 @@
   DEPMAX = BYSAC
   DEPMEN = BYSAC
   SCALE_F= 1000000000  ! factor for y-value, set to 10e9, so that values are in nm
-  ODELTA = ndef        ! increment from delta
+  ODELTA = undef       ! increment from delta
   B      = sngl((it_begin -1)*DT-hdur + t_cmt) ! [REQUIRED]
   E      = BYSAC       ! [REQUIRED]
-  O      = ndef  !###
-  A      = ndef  !###
+  O      = undef  !###
+  A      = undef  !###
 !station values:
   STLA = stlat(irec)
   STLO = stlon(irec)
   STEL = stele(irec)
-  STDP = ndef    !stdep(irec)
+  STDP = undef    !stdep(irec)
 !event values (hypocenter):
   EVLA   = elat
   EVLO   = elon
-  EVEL   = ndef  !not defined
+  EVEL   = undef  !not defined
   EVDP   = depth
 
 !cmt location values (different from hypocenter location, usually):
@@ -294,9 +262,9 @@
   NVHDR=6 ! SAC header version number. Current is 6
 
 ! CSS3.0 variables:
-  NORID =int(ndef) !origin ID
-  NEVID =int(ndef) !event  ID
-!NWVID =ndef !waveform ID
+  NORID =int(undef) !origin ID
+  NEVID =int(undef) !event  ID
+!NWVID =undef !waveform ID
 
 ! NUMBER of POINTS:
   NPTS = it_end-it_begin + 1 ! [REQUIRED]
@@ -305,8 +273,8 @@
   IDEP   = 6 ! 6: displ/nm                          # quite strange, best
   IZTYPE = 11 !=origint reference time equivalent ! # by chnhdr and write
   IEVTYP = 40 !event type, 40: Earthquake           # alpha and check
-  IQUAL  = int(ndef) ! quality
-  ISYNTH = int(ndef) ! 1 real data, 2...n synth. flag
+  IQUAL  = int(undef) ! quality
+  ISYNTH = int(undef) ! 1 real data, 2...n synth. flag
 ! permission flags:
   LEVEN =1 ! evenly spaced data [REQUIRED]
   LPSPOL=1 ! ? pos. polarity of components (has to be TRUE for LCALDA=1)
@@ -343,65 +311,65 @@
 !
 ! real variables:
 !
-  write(IOUT_SAC,510) DELTA,    DEPMIN,  DEPMAX,  SCALE_F,  ODELTA
+  write(IOUT,510) DELTA,    DEPMIN,  DEPMAX,  SCALE_F,  ODELTA
 !                                 DELTA     DEPMIN   DEPMAX   SCALE   ODELTA
-  write(IOUT_SAC,510) B,        E,       O,       A,      INTERNAL
+  write(IOUT,510) B,        E,       O,       A,      INTERNAL
 !                                 B         E        O        A       INTERNAL
-  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+  write(IOUT,510) undef,    undef,   undef,   undef,  undef
 !                                 T0        T1       T2       T3      T4
-  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+  write(IOUT,510) undef,    undef,   undef,   undef,  undef
 !                                 T5        T6       T7       T8      T9
-  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+  write(IOUT,510) undef,    undef,   undef,   undef,  undef
 !                                 F         RESP0    RESP1    RESP2   RESP3
-  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+  write(IOUT,510) undef,    undef,   undef,   undef,  undef
 !                                 RESP4     RESP5    RESP6    RESP7   RESP8
-  write(IOUT_SAC,510) ndef,     STLA,    STLO,    STEL,   STDP
+  write(IOUT,510) undef,    STLA,    STLO,    STEL,   STDP
 !                                 RESP9     STLA     STLO     STEL    STDP
-  write(IOUT_SAC,510) EVLA,     EVLO,    EVEL,    EVDP,   MAG
+  write(IOUT,510) EVLA,     EVLO,    EVEL,    EVDP,   MAG
 !                                 EVLA      EVLO     EVEL     EVDP    MAG
-  write(IOUT_SAC,510) USER0,    USER1,   USER2,   USER3,   ndef
+  write(IOUT,510) USER0,    USER1,   USER2,   USER3,  undef
 !                                 USER0     USER1    USER2    USER3   USER4
-  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+  write(IOUT,510) undef,    undef,   undef,   undef,  undef
 !                                 USER5     USER6    USER7    USER8   USER9
-  write(IOUT_SAC,510) DIST,     AZ,      BAZ,     GCARC,  INTERNAL
+  write(IOUT,510) DIST,     AZ,      BAZ,     GCARC,  INTERNAL
 !                                 DIST      AZ       BAZ      GCARC   INTERNAL
-  write(IOUT_SAC,510) INTERNAL, DEPMEN,  CMPAZ,   CMPINC, ndef
+  write(IOUT,510) INTERNAL, DEPMEN,  CMPAZ,   CMPINC, undef
 !                                 INTERNAL  DEPMEN   CMPAZ    CMPINC  XMINIMUM
-  write(IOUT_SAC,510) ndef,     ndef,    ndef,    ndef,   ndef
+  write(IOUT,510) undef,    undef,   undef,   undef,  undef
 !                                 XMAXIMUM  YMINIMUM YMAXIMUM ADJTM   UNUSED
-  write(IOUT_SAC,510) UNUSED,   UNUSED,  UNUSED,  UNUSED, UNUSED
+  write(IOUT,510) UNUSED,   UNUSED,  UNUSED,  UNUSED, UNUSED
 !
 ! integer variables:
 !
-  write(IOUT_SAC,520) NZYEAR, NZJDAY, NZHOUR, NZMIN, NZSEC
-  write(IOUT_SAC,520) NZMSEC, NVHDR, NORID, NEVID, NPTS
-  write(IOUT_SAC,520) int(ndef),int(ndef),int(ndef),int(ndef),int(ndef)
+  write(IOUT,520) NZYEAR, NZJDAY, NZHOUR, NZMIN, NZSEC
+  write(IOUT,520) NZMSEC, NVHDR, NORID, NEVID, NPTS
+  write(IOUT,520) int(undef),int(undef),int(undef),int(undef),int(undef)
 !                                 NSPTS, NWFID, NXSIZE, NYSIZE, UNUSED
-  write(IOUT_SAC,520) IFTYPE, IDEP, IZTYPE, int(UNUSED), int(ndef)
+  write(IOUT,520) IFTYPE, IDEP, IZTYPE, int(UNUSED), int(undef)
 !                                                                    IINST
-  write(IOUT_SAC,520) int(ndef),int(ndef),IEVTYP, int(ndef), ISYNTH
+  write(IOUT,520) int(undef),int(undef),IEVTYP, int(undef), ISYNTH
 !                                 ISTREG IEVREG IEVTYP IQUAL ISYNTH
-  write(IOUT_SAC,520) IMAGTYP,int(ndef),int(ndef),int(ndef),int(ndef)
+  write(IOUT,520) IMAGTYP,int(undef),int(undef),int(undef),int(undef)
 !                                 IMAGTYP, IMAGSRC, UNUSED, UNUSED, UNUSED
-  write(IOUT_SAC,520) int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED)
-  write(IOUT_SAC,520) LEVEN, LPSPOL, LOVROK, LCALDA, int(UNUSED)
-  write(IOUT_SAC,530) KSTNM, KEVNM
+  write(IOUT,520) int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED)
+  write(IOUT,520) LEVEN, LPSPOL, LOVROK, LCALDA, int(UNUSED)
+  write(IOUT,530) KSTNM, KEVNM
 !
 ! character variables:
 !
-  write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
+  write(IOUT,540) '-12345  ','-12345  ','-12345  '
 !                                   KHOLE    KO       KA
-  write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
+  write(IOUT,540) '-12345  ','-12345  ','-12345  '
 !                                   KT0      KT1      KT2
-  write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
+  write(IOUT,540) '-12345  ','-12345  ','-12345  '
 !                                   KT3      KT4      KT5
-  write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
+  write(IOUT,540) '-12345  ','-12345  ','-12345  '
 !                                   KT6      KT7      KT8
-  write(IOUT_SAC,540) '-12345  ','-12345  ',KUSER0
+  write(IOUT,540) '-12345  ','-12345  ',KUSER0
 !                                   KT9      KF       KUSER0
-  write(IOUT_SAC,540)   KUSER1, KUSER2, KCMPNM
+  write(IOUT,540)   KUSER1, KUSER2, KCMPNM
 !                                   KUSER1     KUSER2       KCMPNM
-  write(IOUT_SAC,540)   KNETWK,'-12345  ','-12345  '
+  write(IOUT,540)   KNETWK,'-12345  ','-12345  '
 !                                   KNETWK   KDATRD   KINST
 
 ! now write data - with five values per row:
@@ -416,17 +384,15 @@
     value4 = dble(seismograms(iorientation,irec_local,isample-2))
     value5 = dble(seismograms(iorientation,irec_local,isample-1))
 
-    write(IOUT_SAC,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
+    write(IOUT,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
 
     write_counter=write_counter+1
 
   enddo
 
+  close(IOUT)
+
 !#################### end SAC Alphanumeric Seismos ############################
-
-  close(IOUT_SAC)
-
-! BS BS end of section added (SAC output)
 
       enddo ! do iorientation = 1,3
 
@@ -513,108 +479,4 @@
   enddo
 
   end subroutine write_adj_seismograms
-
-!=====================================================================
-
-! BS BS beginning of additional routine for SAC output
-
-  subroutine get_event_info(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,region,&
-                            cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
-
-! written by Bernhard Schuberth
-
-! This subroutine reads the first line of the DATA/CMTSOLUTION file
-! and extracts event information needed for SAC or PITSA headers
-
-  implicit none
-
-  include "constants.h"
-
-!--- arguments of the subroutine below
-
-  integer, intent(out) :: NSOURCES,yr,jda,ho,mi
-
-  real, intent(out) :: mb
-
-  double precision, intent(out) :: sec,t_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
-
-  integer, intent(in) :: LENGTH_REGION_NAME
-  character(len=LENGTH_REGION_NAME), intent(out) :: region ! event name for SAC header
-
-!--- local variables here
-
-  integer ios,icounter,mo,da,julian_day
-
-  real ms
-
-  character(len=5) datasource
-  character(len=150) string,dummystring,CMTSOLUTION
-
-!
-!---- read hypocenter info
-!
-  call get_value_string(CMTSOLUTION, 'solver.CMTSOLUTION','DATA/CMTSOLUTION')
-
-  open(unit=821,file=CMTSOLUTION,iostat=ios,status='old',action='read')
-  if(ios /= 0) stop 'error opening CMTSOLUTION file (in get_event_info)'
-
-  icounter = 0
-  do while(ios == 0)
-    read(821,"(a)",iostat=ios) dummystring
-    if(ios == 0) icounter = icounter + 1
-  enddo
-  close(821)
-  if(mod(icounter,NLINES_PER_CMTSOLUTION_SOURCE) /= 0) &
-    stop 'total number of lines in CMTSOLUTION file should be a multiple of NLINES_PER_CMTSOLUTION_SOURCE'
-  NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
-  if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
-
-  open(unit=821,file=CMTSOLUTION,status='old',action='read')
-
-  ! example header line of CMTSOLUTION file
-  !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
-  !event_id, date,origin time,latitude,longitude,depth, mb, MS, region
-
-  ! read header with event information
-    read(821,*) datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
-
-    jda=julian_day(yr,mo,da)
-
-  ! ignore line with event name
-    read(821,"(a)") string
-
-  ! read time shift
-    read(821,"(a)") string
-    read(string(12:len_trim(string)),*) t_cmt
-
-  if (NSOURCES == 1) then
-
-  ! read half duration
-    read(821,"(a)") string
-    read(string(15:len_trim(string)),*) cmt_hdur
-
-  ! read latitude
-    read(821,"(a)") string
-    read(string(10:len_trim(string)),*) cmt_lat
-
-  ! read longitude
-    read(821,"(a)") string
-    read(string(11:len_trim(string)),*) cmt_lon
-
-  ! read depth
-    read(821,"(a)") string
-    read(string(7:len_trim(string)),*) cmt_depth
-
-  else
-
-    cmt_hdur=-1e8
-    cmt_lat=-1e8
-    cmt_lon=-1e8
-    cmt_depth=-1e8
-
-  endif
-
-  close(821)
-
-  end subroutine get_event_info
 
