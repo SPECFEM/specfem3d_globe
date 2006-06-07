@@ -50,7 +50,7 @@
 
   integer i
 
-  double precision frac
+  double precision frac,scaleval
 
   i = 1
   do while(r >= radius_1066a(i) .and. i /=NR_1066A)
@@ -79,6 +79,13 @@
 
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
   if(iregion_code == IREGION_OUTER_CORE) vs = 0.d0
+
+! non-dimensionalize
+! time scaling (s^{-1}) is done with scaleval
+  scaleval=dsqrt(PI*GRAV*RHOAV)
+  rho=rho*1000.0d0/RHOAV
+  vp=vp*1000.0d0/(R_EARTH*scaleval)
+  vs=vs*1000.0d0/(R_EARTH*scaleval)
 
   end subroutine model_1066a
 
