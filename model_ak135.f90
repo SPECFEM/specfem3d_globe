@@ -52,10 +52,22 @@
 
   double precision frac,scaleval
 
+!! DK DK UGLY implementation of model ak135 below and its radii in
+!! DK DK UGLY subroutine read_parameter_file.f90 has not been thoroughly
+!! DK DK UGLY checked yet
+
   i = 1
-  do while(r >= radius_ak135(i) .and. i /=NR_AK135)
+  do while(r >= radius_ak135(i) .and. i /= NR_AK135)
     i = i + 1
   enddo
+
+! make sure we stay in the right region
+  if(iregion_code == IREGION_INNER_CORE .and. i > 25) i = 25
+
+  if(iregion_code == IREGION_OUTER_CORE .and. i < 27) i = 27
+  if(iregion_code == IREGION_OUTER_CORE .and. i > 71) i = 71
+
+  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 73) i = 73
 
   if(i == 1) then
     rho = density_ak135(i)
@@ -66,7 +78,6 @@
   else
 
 ! interpolate from radius_ak135(i-1) to r using the values at i-1 and i
-
     frac = (r-radius_ak135(i-1))/(radius_ak135(i)-radius_ak135(i-1))
 
     rho = density_ak135(i-1) + frac * (density_ak135(i)-density_ak135(i-1))
@@ -78,7 +89,12 @@
   endif
 
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
-  if(iregion_code == IREGION_OUTER_CORE) vs = 0.d0
+! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
+  if(iregion_code == IREGION_OUTER_CORE) then
+    vs = 0.d0
+    Qkappa = 100000.d0
+    Qmu = 100000.d0
+  endif
 
 ! non-dimensionalize
 ! time scaling (s^{-1}) is done with scaleval
