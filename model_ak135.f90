@@ -989,22 +989,6 @@
   Qmu_ak135(143) =   599.990000000000
   Qmu_ak135(144) =   599.990000000000
 
-! fix a potential roundoff problem in the code: across the CMB and ICB
-! assign the same attenuation values on the fluid side as on the solid side
-! just in case a point in the elastic medium falls on the acoustic side
-! due to roundoff errors on depth; on the acoustic side this modification
-! is not a problem because attenuation is not implemented in the fluid
-! and therefore the Q values are ignored
-  Qkappa_ak135(26:30) = Qkappa_ak135(25)
-  Qkappa_ak135(66:71) = Qkappa_ak135(72)
-
-  Qmu_ak135(26:30) = Qmu_ak135(25)
-  Qmu_ak135(66:71) = Qmu_ak135(72)
-
-! there is the same problem for Vs
-  vs_ak135(26:30) = vs_ak135(25)
-  vs_ak135(66:71) = vs_ak135(72)
-
 ! strip the crust and replace it by mantle
   if(USE_EXTERNAL_CRUSTAL_MODEL) then
     do i=NR_AK135-8,NR_AK135
