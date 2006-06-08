@@ -53,9 +53,17 @@
   double precision frac,scaleval
 
   i = 1
-  do while(r >= radius_1066a(i) .and. i /=NR_1066A)
+  do while(r >= radius_1066a(i) .and. i /= NR_1066A)
     i = i + 1
   enddo
+
+! make sure we stay in the right region
+  if(iregion_code == IREGION_INNER_CORE .and. i > 33) i = 33
+
+  if(iregion_code == IREGION_OUTER_CORE .and. i < 35) i = 35
+  if(iregion_code == IREGION_OUTER_CORE .and. i > 66) i = 66
+
+  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 68) i = 68
 
   if(i == 1) then
     rho = density_1066a(i)
@@ -66,7 +74,6 @@
   else
 
 ! interpolate from radius_1066a(i-1) to r using the values at i-1 and i
-
     frac = (r-radius_1066a(i-1))/(radius_1066a(i)-radius_1066a(i-1))
 
     rho = density_1066a(i-1) + frac * (density_1066a(i)-density_1066a(i-1))
@@ -78,7 +85,12 @@
   endif
 
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
-  if(iregion_code == IREGION_OUTER_CORE) vs = 0.d0
+! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
+  if(iregion_code == IREGION_OUTER_CORE) then
+    vs = 0.d0
+    Qkappa = 100000.d0
+    Qmu = 100000.d0
+  endif
 
 ! non-dimensionalize
 ! time scaling (s^{-1}) is done with scaleval
@@ -1068,22 +1080,6 @@
   Qmu_1066a(158) =   117.900000000000
   Qmu_1066a(159) =   117.900000000000
   Qmu_1066a(160) =   117.900000000000
-
-! fix a potential roundoff problem in the code: across the CMB and ICB
-! assign the same attenuation values on the fluid side as on the solid side
-! just in case a point in the elastic medium falls on the acoustic side
-! due to roundoff errors on depth; on the acoustic side this modification
-! is not a problem because attenuation is not implemented in the fluid
-! and therefore the Q values are ignored
-  Qkappa_1066a(34:39) = Qkappa_1066a(33)
-  Qkappa_1066a(60:66) = Qkappa_1066a(67)
-
-  Qmu_1066a(34:39) = Qmu_1066a(33)
-  Qmu_1066a(60:66) = Qmu_1066a(67)
-
-! there is the same problem for Vs
-  vs_1066a(34:39) = vs_1066a(33)
-  vs_1066a(60:66) = vs_1066a(67)
 
 ! strip the crust and replace it by mantle if we use an external crustal model
   if(USE_EXTERNAL_CRUSTAL_MODEL) then
