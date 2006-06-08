@@ -206,27 +206,17 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: b_eps_trace_over_3_crust_mantle, b_eps_trace_over_3_inner_core
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
 
-! ADJOINT
-
 ! for matching with central cube in inner core
-
-  integer nb_msgs_theor_in_cube
-  integer receiver_cube_from_slices,iproc_xi_loop
-  integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
-  integer ipoin
-  integer npoin2D_cube_from_slices
-  integer sender,receiver,imsg
-
-  double precision x_target,y_target,z_target
-  double precision x_current,y_current,z_current
-
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
   integer, dimension(:,:), allocatable :: ibool_central_cube
   double precision, dimension(:,:), allocatable :: buffer_slices
   double precision, dimension(:,:,:), allocatable :: buffer_all_cube_from_slices
+  integer nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,receiver_cube_from_slices
+
+  integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core,ndim_assemble
 
 ! to save movie frames
-  integer nmovie_points
+  integer nmovie_points,ipoin
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
       store_val_x,store_val_y,store_val_z, &
       store_val_ux,store_val_uy,store_val_uz
@@ -662,7 +652,7 @@
   character(len=150) outputname
 
 !! DK DK UGLY if running on MareNostrum in Barcelona
-  integer jobid,total_seismos_marenostrum
+  integer jobid,total_seismos_marenostrum,sender,receiver
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram_marenostrum
   character(len=400) system_command
 
@@ -2021,367 +2011,60 @@
   if(myrank == 0) write(IMAIN,*) 'end assembling MPI mass matrix'
 
 !
-!--- create buffers to assemble with central cube
+!--- handle the communications with the central cube if it was included in the mesh
 !
-
   if(INCLUDE_CENTRAL_CUBE) then
-  if(myrank == 0) write(IMAIN,*) 'including central cube'
-!--- number of messages to expect in cube
-!--- take into account vertical sides and bottom side
 
-! only for slices in central cube
-  if(ichunk == CHUNK_AB) then
-    if(NPROC_XI == 1) then
-! five sides if only one processor in cube
-      nb_msgs_theor_in_cube = 5
+    if(myrank == 0) write(IMAIN,*) 'including central cube'
+
+! compute number of messages to expect in cube as well as their size
+    call comp_central_cube_buffer_size(iproc_xi,iproc_eta,ichunk,NPROC_XI,NPROC_ETA,NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
+                nb_msgs_theor_in_cube,npoin2D_cube_from_slices)
+
+! this value is used for dynamic memory allocation, therefore make sure it is never zero
+    if(nb_msgs_theor_in_cube > 0) then
+      non_zero_nb_msgs_theor_in_cube = nb_msgs_theor_in_cube
     else
-! case of corner
-      if((iproc_xi == 0 .or. iproc_xi == NPROC_XI-1).and. &
-         (iproc_eta == 0 .or. iproc_eta == NPROC_ETA-1)) then
-        nb_msgs_theor_in_cube = 2*NPROC_XI + 1
-! case of edge
-      else if(iproc_xi == 0 .or. iproc_xi == NPROC_XI-1 .or. &
-              iproc_eta == 0 .or. iproc_eta == NPROC_ETA-1) then
-        nb_msgs_theor_in_cube = NPROC_XI + 1
-      else
-! bottom element only
-        nb_msgs_theor_in_cube = 1
-      endif
+      non_zero_nb_msgs_theor_in_cube = 1
     endif
-  else
-! not in chunk AB
-    nb_msgs_theor_in_cube = 0
-  endif
-
-!--- processor to send information to in cube from slices
-
-! only for slices that are not in central cube
-  if(ichunk /= CHUNK_AB) then
-
-! four vertical sides first
-    if(ichunk == CHUNK_AC) then
-      receiver_cube_from_slices = addressing(CHUNK_AB,0,iproc_eta)
-
-    else if(ichunk == CHUNK_BC) then
-      receiver_cube_from_slices = addressing(CHUNK_AB,iproc_eta,NPROC_ETA-1)
-
-    else if(ichunk == CHUNK_AC_ANTIPODE) then
-      receiver_cube_from_slices = addressing(CHUNK_AB,NPROC_XI-1,iproc_eta)
-
-    else if(ichunk == CHUNK_BC_ANTIPODE) then
-      receiver_cube_from_slices = addressing(CHUNK_AB,NPROC_XI-1-iproc_eta,0)
-
-! bottom of cube, direct correspondence but with inverted xi axis
-    else if(ichunk == CHUNK_AB_ANTIPODE) then
-      receiver_cube_from_slices = addressing(CHUNK_AB,NPROC_XI-1-iproc_xi,iproc_eta)
-
-    endif
-
-  else
-! dummy value in cube
-    receiver_cube_from_slices = -1
-  endif
-
-
-!--- list of processors to receive information from in cube
-
-! only for slices in central cube
-  if(ichunk == CHUNK_AB) then
-
-    allocate(sender_from_slices_to_cube(nb_msgs_theor_in_cube))
-
-! initialize index of sender
-    imsg = 0
-
-! define sender for bottom edge
-! bottom of cube, direct correspondence but with inverted xi axis
-    imsg = imsg + 1
-    sender_from_slices_to_cube(imsg) = addressing(CHUNK_AB_ANTIPODE,NPROC_XI-1-iproc_xi,iproc_eta)
-
-! define sender for xi = xi_min edge
-    if(iproc_xi == 0) then
-      do iproc_xi_loop = 0,NPROC_XI-1
-        imsg = imsg + 1
-        sender_from_slices_to_cube(imsg) = addressing(CHUNK_AC,iproc_xi_loop,iproc_eta)
-      enddo
-    endif
-
-! define sender for xi = xi_max edge
-    if(iproc_xi == NPROC_XI-1) then
-      do iproc_xi_loop = 0,NPROC_XI-1
-        imsg = imsg + 1
-        sender_from_slices_to_cube(imsg) = addressing(CHUNK_AC_ANTIPODE,iproc_xi_loop,iproc_eta)
-      enddo
-    endif
-
-! define sender for eta = eta_min edge
-    if(iproc_eta == 0) then
-      do iproc_xi_loop = 0,NPROC_XI-1
-        imsg = imsg + 1
-        sender_from_slices_to_cube(imsg) = addressing(CHUNK_BC_ANTIPODE,iproc_xi_loop,NPROC_ETA-1-iproc_xi)
-      enddo
-    endif
-
-! define sender for eta = eta_max edge
-    if(iproc_eta == NPROC_ETA-1) then
-      do iproc_xi_loop = 0,NPROC_XI-1
-        imsg = imsg + 1
-        sender_from_slices_to_cube(imsg) = addressing(CHUNK_BC,iproc_xi_loop,iproc_xi)
-      enddo
-    endif
-
-! check that total number of faces found is correct
-   if(imsg /= nb_msgs_theor_in_cube) call exit_MPI(myrank,'wrong number of faces found for central cube')
-
-  else
-
-! dummy value in slices
-    allocate(sender_from_slices_to_cube(1))
-    sender_from_slices_to_cube(1) = -1
-
-  endif
-
-! number of points to send or receive (bottom of slices)
-  npoin2D_cube_from_slices = NSPEC2D_BOTTOM(IREGION_INNER_CORE) * NGLLX * NGLLY
 
 ! allocate buffers for cube and slices
-  allocate(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM))
-  allocate(buffer_slices(npoin2D_cube_from_slices,NDIM))
-  allocate(ibool_central_cube(nb_msgs_theor_in_cube,npoin2D_cube_from_slices))
-
-! on chunk AB, receive all the messages from slices
-  if(ichunk == CHUNK_AB) then
-
-   do imsg = 1,nb_msgs_theor_in_cube
-
-! receive buffers from slices
-  sender = sender_from_slices_to_cube(imsg)
-  call MPI_RECV(buffer_slices, &
-              NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-              itag,MPI_COMM_WORLD,msg_status,ier)
-
-! copy buffer in 2D array for each slice
-   buffer_all_cube_from_slices(imsg,:,:) = buffer_slices(:,:)
-
-   enddo
-   endif
-
-
-! send info to central cube from all the slices except those in CHUNK_AB
-  if(ichunk /= CHUNK_AB) then
-
-! for bottom elements in contact with central cube from the slices side
-    ipoin = 0
-    do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_INNER_CORE)
-
-      ispec = ibelm_bottom_inner_core(ispec2D)
-
-! only for DOFs exactly on surface of central cube (bottom of these elements)
-      k = 1
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          ipoin = ipoin + 1
-          iglob = ibool_inner_core(i,j,k,ispec)
-          buffer_slices(ipoin,1) = dble(xstore_inner_core(iglob))
-          buffer_slices(ipoin,2) = dble(ystore_inner_core(iglob))
-          buffer_slices(ipoin,3) = dble(zstore_inner_core(iglob))
-        enddo
-      enddo
-    enddo
-
-! send buffer to central cube
-    receiver = receiver_cube_from_slices
-    call MPI_SEND(buffer_slices,NDIM*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
-
- endif  ! end sending info to central cube
-
-!--- now we need to find the points received and create indirect addressing
-
-  if(ichunk == CHUNK_AB) then
-
-   do imsg = 1,nb_msgs_theor_in_cube
-
-   do ipoin = 1,npoin2D_cube_from_slices
-
-     x_target = buffer_all_cube_from_slices(imsg,ipoin,1)
-     y_target = buffer_all_cube_from_slices(imsg,ipoin,2)
-     z_target = buffer_all_cube_from_slices(imsg,ipoin,3)
-
-! x = x_min
-
-  do ispec2D = 1,nspec2D_xmin_inner_core
-
-      ispec = ibelm_xmin_inner_core(ispec2D)
-
-! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_IN_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-
-     i = 1
-     do k = 1,NGLLZ
-       do j = 1,NGLLY
-
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
-
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
-
-       enddo
-     enddo
-
-   enddo
-
-! x = x_max
-
-  do ispec2D = 1,nspec2D_xmax_inner_core
-
-      ispec = ibelm_xmax_inner_core(ispec2D)
-
-! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_IN_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-
-     i = NGLLX
-     do k = 1,NGLLZ
-       do j = 1,NGLLY
-
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
-
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
-
-       enddo
-     enddo
-
-   enddo
-
-! y = y_min
-
-  do ispec2D = 1,nspec2D_ymin_inner_core
-
-      ispec = ibelm_ymin_inner_core(ispec2D)
-
-! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_IN_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-
-     j = 1
-     do k = 1,NGLLZ
-       do i = 1,NGLLX
-
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
-
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
-
-       enddo
-     enddo
-
-   enddo
-
-! y = y_max
-
-  do ispec2D = 1,nspec2D_ymax_inner_core
-
-      ispec = ibelm_ymax_inner_core(ispec2D)
-
-! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_IN_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-
-     j = NGLLY
-     do k = 1,NGLLZ
-       do i = 1,NGLLX
-
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
-
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
-
-       enddo
-     enddo
-
-   enddo
-
-! bottom of cube
-
-  do ispec = 1,NSPEC_INNER_CORE
-
-! loop on elements at the bottom of the cube only
-     if(idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE) cycle
-
-     k = 1
-     do j = 1,NGLLY
-       do i = 1,NGLLX
-
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
-
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
-
-       enddo
-     enddo
-
-   enddo
-
-! check that a matching point is found in all cases
-  call exit_MPI(myrank,'point never found in central cube')
-
- 100 continue
-
-   enddo
-   enddo
-   endif
-
-   call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
+    allocate(sender_from_slices_to_cube(non_zero_nb_msgs_theor_in_cube))
+    allocate(buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM))
+    allocate(buffer_slices(npoin2D_cube_from_slices,NDIM))
+    allocate(ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices))
+
+! create buffers to assemble with the central cube
+    call create_central_cube_buffers(myrank,iproc_xi,iproc_eta,ichunk, &
+       NPROC_XI,NPROC_ETA,NCHUNKS,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+       NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+       NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
+       addressing,ibool_inner_core,idoubling_inner_core, &
+       xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+       nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+       ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+       nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
+       receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube,buffer_slices,buffer_all_cube_from_slices)
+
+    if(myrank == 0) write(IMAIN,*) 'done including central cube'
+
+! the mass matrix to assemble is a scalar, not a vector
+    ndim_assemble = 1
+
+! use these buffers to assemble the inner core mass matrix with the central cube
+    call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
      npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, ibool_central_cube, &
      receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
-     ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,rmass_inner_core,1)
-
-   if(myrank == 0) write(IMAIN,*) 'done including central cube'
-
-  endif   ! end of assembling mass matrix for matching with central cube
-
+     ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,rmass_inner_core,ndim_assemble)
 
 ! suppress fictitious mass matrix elements in central cube
-  if(INCLUDE_CENTRAL_CUBE) where(rmass_inner_core(:) <= 0.) rmass_inner_core = 1.
+! because the slices do not compute all their spectral elements in the cube
+    where(rmass_inner_core(:) <= 0.) rmass_inner_core = 1.
 
-! check that mass matrix is positive
+  endif   ! end of handling the communications with the central cube
+
+
+! check that all the mass matrices are positive
   if((OCEANS .and. minval(rmass_ocean_load(1:nglob_crust_mantle)) <= 0.) .or. &
      minval(rmass_crust_mantle(1:nglob_crust_mantle)) <= 0. .or. &
      (minval(rmass_inner_core) <= 0. .or. &

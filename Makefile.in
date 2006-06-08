@@ -156,6 +156,7 @@ SOLVER_DYNAMIC_OBJECTS = \
 	$O/comp_source_spectrum.o \
 	$O/comp_source_time_function.o \
 	$O/compute_arrays_source.o \
+	$O/create_central_cube_buffers.o \
 	$O/define_derivation_matrices.o \
 	$O/get_attenuation_model.o \
 	$O/get_cmt.o \
@@ -581,6 +582,9 @@ $O/define_derivation_matrices.o: constants.h define_derivation_matrices.f90
 
 $O/compute_arrays_source.o: constants.h compute_arrays_source.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} compute_arrays_source.f90
+
+$O/create_central_cube_buffers.o: constants.h create_central_cube_buffers.f90
+	${FCCOMPILE_CHECK} -c -o $O/create_central_cube_buffers.o ${FCFLAGS_f90} create_central_cube_buffers.f90
 
 $O/get_attenuation_model.o: constants.h get_attenuation_model.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_attenuation_model.o ${FCFLAGS_f90} get_attenuation_model.f90
