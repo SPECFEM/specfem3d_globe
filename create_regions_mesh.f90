@@ -1006,7 +1006,7 @@
   deallocate(rho_vp,rho_vs)
 
 ! attenuation
-      deallocate(Qmu_store)
+  deallocate(Qmu_store)
   deallocate(tau_e_store)
 
   end subroutine create_regions_mesh

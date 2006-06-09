@@ -28,7 +28,7 @@
 
 !-------------------
 
-  subroutine model_ak135(r,rho,vp,vs,Qkappa,Qmu,iregion_code)
+  subroutine model_ak135(x,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
   use model_ak135_variables
 
@@ -46,15 +46,18 @@
 
   integer iregion_code
 
-  double precision r,rho,vp,vs,Qmu,Qkappa
+  double precision x,rho,vp,vs,Qmu,Qkappa
 
   integer i
 
-  double precision frac,scaleval
+  double precision r,frac,scaleval
 
 !! DK DK UGLY implementation of model ak135 below and its radii in
 !! DK DK UGLY subroutine read_parameter_file.f90 has not been thoroughly
 !! DK DK UGLY checked yet
+
+! compute real physical radius in meters
+  r = x * R_EARTH
 
   i = 1
   do while(r >= radius_ak135(i) .and. i /= NR_AK135)

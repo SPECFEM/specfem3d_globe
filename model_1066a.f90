@@ -28,7 +28,7 @@
 
 !-------------------
 
-  subroutine model_1066a(r,rho,vp,vs,Qkappa,Qmu,iregion_code)
+  subroutine model_1066a(x,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
   use model_1066a_variables
 
@@ -46,11 +46,14 @@
 
   integer iregion_code
 
-  double precision r,rho,vp,vs,Qmu,Qkappa
+  double precision x,rho,vp,vs,Qmu,Qkappa
 
   integer i
 
-  double precision frac,scaleval
+  double precision r,frac,scaleval
+
+! compute real physical radius in meters
+  r = x * R_EARTH
 
   i = 1
   do while(r >= radius_1066a(i) .and. i /= NR_1066A)

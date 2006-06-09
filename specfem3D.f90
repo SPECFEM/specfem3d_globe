@@ -4115,7 +4115,8 @@
 ! write the current seismograms
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+      if(.not. RUN_ON_MARENOSTRUM_BARCELONA) &
+        call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
           network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end, &
       yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
                  elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
@@ -4356,7 +4357,8 @@
 
   if (nrec_local > 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+      if(.not. RUN_ON_MARENOSTRUM_BARCELONA) &
+        call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
         network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end, &
       yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
                  elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
