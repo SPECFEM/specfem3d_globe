@@ -9,6 +9,17 @@ cdef extern from "stdlib.h":
     void free(void *)
 
 
+cdef class MPI_Comm:
+
+    cdef mpi.MPI_Comm comm
+
+    def __init__(MPI_Comm self):
+        self.comm = mpi.MPI_COMM_WORLD
+
+
+MPI_COMM_WORLD = MPI_Comm()
+
+
 class MPI_Error(EnvironmentError):
     pass
 
@@ -50,5 +61,16 @@ def MPI_Finalize():
         raise MPI_Error, error
     return
 
+
+def MPI_Comm_rank(comm):
+    cdef int error
+    cdef int rank
+    cdef MPI_Comm c_comm
+    c_comm = comm
+    error = mpi.MPI_Comm_rank(c_comm.comm, &rank)
+    if error != mpi.MPI_SUCCESS:
+        raise MPI_Error, error
+    return rank
+    
 
 # end of file

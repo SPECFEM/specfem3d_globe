@@ -1,7 +1,14 @@
 
 #include <Python.h>
+
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+
 #include "config.h"
+
 
 extern void initPyxParameters(void);
 #ifdef USE_MPI
@@ -25,6 +32,68 @@ struct _inittab inittab[] = {
 };
 
 
+void handler()
+{
+    pid_t pid;
+    char *argv[10];
+    char pidstr[42];
+    int status;
+    struct sigaction sa;
+    int tfd;
+    char gdbScriptName[] = "gdbXXXXXX";
+    static char gdbScript[] = "bt\nkill\n";
+    
+#if 0
+    sa.sa_handler = SIG_DFL;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_SIGINFO;
+    sigaction(SIGABRT, &sa, NULL);
+#endif
+    
+    tfd = mkstemp(gdbScriptName);
+    if (tfd == -1) {
+        abort();
+    }
+    write(tfd, gdbScript, sizeof(gdbScript));
+    close(tfd);
+    
+    pid = getpid();
+    sprintf(pidstr, "%d", pid);
+    
+    argv[0] = "/usr/bin/gdb";
+    argv[1] = "-batch";
+    argv[2] = "-x";
+    argv[3] = gdbScriptName;
+    argv[4] = g_argv[0];
+    argv[5] = pidstr;
+    argv[6] = 0;
+    
+    int cpid = fork();
+    if (cpid) {
+        /* parent */
+        wait(&status);
+        exit(0);
+    } else {
+        /* child */
+        execv(argv[0], argv);
+    }
+}
+
+
+void trapSignals()
+{
+    struct sigaction sa;
+    
+    sa.sa_sigaction = handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_SIGINFO | SA_ONESHOT;
+    sigaction(SIGSEGV, &sa, NULL);
+    /*sigaction(SIGABRT, &sa, NULL);*/
+    
+    return;
+}
+
+
 #define FC_PY_MAIN FC_FUNC_(fc_py_main, FC_PY_MAIN)
 void FC_PY_MAIN()
 {
@@ -43,6 +112,9 @@ int main(int argc, char **argv)
     
     g_argc = argc;
     g_argv = argv;
+    
+    trapSignals();
+    
 #define main 42
 #if FC_MAIN == main
     /* start Python */
