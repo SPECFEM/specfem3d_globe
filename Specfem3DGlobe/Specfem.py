@@ -22,7 +22,6 @@ class Specfem(ParallelScript):
     from Model import model
     from Solver import Solver
 
-    LOCAL_PATH                    = addyndum.scratchDir("local-path", default="/tmp/${user}/${job.id}")
     outputDir                     = addyndum.outputDir("output-dir", default="OUTPUT_FILES")
         
     model                         = model("model", default="isotropic_prem")
@@ -64,6 +63,9 @@ class Specfem(ParallelScript):
     def _init(self):
         ParallelScript._init(self)
         self.OUTPUT_FILES = self.outputDir
+        self.LOCAL_PATH = self.scratchDir
+        self.solver.LOCAL_PATH = self.LOCAL_PATH
+        self.solver.OUTPUT_FILES = self.OUTPUT_FILES
 
 
     #

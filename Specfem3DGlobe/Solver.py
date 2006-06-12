@@ -27,6 +27,11 @@ class Solver(Component):
 
     outputFile                    = addyndum.outputFile("output-file",
                                                         default="${output-dir}/output_solver.txt")
+    seismogramArchive             = addyndum.outputFile("seismogram-archive",
+                                                        default="${output-dir}/seismograms.tar.gz")
+    scratchSeismogramArchive      = addyndum.scratchFile("scratch-seismogram-archive",
+                                                         default="${scratch-dir}/seismograms-${rank}.tar.gz")
+    
 
     ABSORBING_CONDITIONS          = pyre.bool("absorbing-conditions")
     MOVIE_SURFACE                 = pyre.bool("movie-surface")
@@ -46,7 +51,7 @@ class Solver(Component):
 
     SAVE_FORWARD                  = pyre.bool("save-forward")
     simulation_type               = pyre.str("simulation-type", validator=pyre.choice(['forward', 'adjoint', 'both']), default='forward')
-    
+
     
     #
     #--- configuration
@@ -76,6 +81,10 @@ class Solver(Component):
         self.CMTSOLUTION = abspath(self.cmtSolution.name)
         self.STATIONS = abspath(self.stations.name)
         self.HEADER_FILE = "OUTPUT_FILES/values_from_mesher.h"
+
+        # filled-in by _init() in Specfem.py
+        self.LOCAL_PATH = None
+        self.OUTPUT_FILES = None
 
 
     #
@@ -157,6 +166,93 @@ class Solver(Component):
             print >> self.outputFile, "execute", specfem3D
         else:
             specfem3D(script) # call into Fortran
+        return
+
+
+    #
+    #--- clean-up
+    #
+    
+    def finiForComputeNode(self, context):
+        """collect seismograms (part 1/2)"""
+
+        import os, shutil, tarfile
+        from os.path import basename, join
+        from glob import glob
+
+        archive = self.scratchSeismogramArchive
+        
+        pattern = join(self.LOCAL_PATH, "*.sem*")
+        files = []
+        for name in glob(pattern):
+            files.append(name)
+        if len(files) == 0:
+            # no seismograms on this node
+            archive.close()
+            os.remove(archive.name)
+            return
+        
+        # A compressed tar file is between 10-15% of the size of the
+        # raw data files.  By taring and compressing it now -- in
+        # parallel, on local filesystems -- we sharply reduce the
+        # amount of data we have to shovel over the network.
+        
+        tgz = tarfile.open(archive.name, "w:gz", archive)
+        for name in files:
+            arcname = basename(name)
+            tgz.add(name, arcname)
+        tgz.close()
+        archive.close()
+
+        # Copy the archive to the shared filesystem.
+
+        outputDir = context.application.outputDir
+        src = archive.name
+        dst = join(outputDir, basename(src))
+        shutil.copyfile(src, dst)
+
+        return
+
+
+    def finiForLauncherNode(self, context):
+        """collect seismograms (part 2/2)"""
+        
+        import os, tarfile
+        from os.path import join
+        from glob import glob
+
+        archiveOut = self.seismogramArchive
+
+        # Search for the intermediate seismogram archives delivered
+        # from the compute nodes.
+        
+        pattern = join(self.OUTPUT_FILES, "seismograms-*.tar.gz")
+        archivesIn = []
+        for name in glob(pattern):
+            archivesIn.append(name)
+        if len(archivesIn) == 0:
+            self._warning.log("No seismograms!")
+            archiveOut.close()
+            os.remove(archiveOut.name)
+            return
+
+        # Rearchive the seismograms in one, big archive.
+        
+        tgzOut = tarfile.open(archiveOut.name, "w:gz", archiveOut)
+        for archiveIn in archivesIn:
+            tgzIn = tarfile.open(archiveIn, "r:gz")
+            for member in tgzIn.getmembers():
+                seismogram = tgzIn.extractfile(member)
+                tgzOut.addfile(member, seismogram)
+            tgzIn.close()
+        tgzOut.close()
+        archiveOut.close()
+
+        # Delete the intermediate seismogram archives.
+        
+        for archiveIn in archivesIn:
+            os.remove(archiveIn)
+
         return
 
 
