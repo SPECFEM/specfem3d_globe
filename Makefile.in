@@ -602,6 +602,13 @@ $O/write_c_binary.o: write_c_binary.c config.h
 	$(CC) $(CFLAGS) -c -o $O/write_c_binary.o write_c_binary.c
 
 ###
+### rule for the header file
+###
+
+@COND_PYRE_FALSE@OUTPUT_FILES/values_from_mesher.h: xcreate_header_file
+@COND_PYRE_FALSE@	./xcreate_header_file
+
+###
 ### additional rules for the Pyrized version
 ###
 
