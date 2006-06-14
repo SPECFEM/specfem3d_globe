@@ -27,6 +27,8 @@ class Solver(Component):
 
     outputFile                    = addyndum.outputFile("output-file",
                                                         default="${output-dir}/output_solver.txt")
+    headerFile                    = addyndum.outputFile("header-file",
+                                                        default="${output-dir}/values_from_mesher.h")
     seismogramArchive             = addyndum.outputFile("seismogram-archive",
                                                         default="${output-dir}/seismograms.tar.gz")
     scratchSeismogramArchive      = addyndum.scratchFile("scratch-seismogram-archive",
@@ -80,7 +82,7 @@ class Solver(Component):
         from os.path import abspath
         self.CMTSOLUTION = abspath(self.cmtSolution.name)
         self.STATIONS = abspath(self.stations.name)
-        self.HEADER_FILE = "OUTPUT_FILES/values_from_mesher.h"
+        self.HEADER_FILE = abspath(self.headerFile.name) # always written by the mesher
 
         # filled-in by _init() in Specfem.py
         self.LOCAL_PATH = None
@@ -176,6 +178,9 @@ class Solver(Component):
     def finiForComputeNode(self, context):
         """collect seismograms (part 1/2)"""
 
+        if self.dry:
+            return
+        
         import os, shutil, tarfile
         from os.path import basename, join
         from glob import glob
@@ -216,6 +221,9 @@ class Solver(Component):
 
     def finiForLauncherNode(self, context):
         """collect seismograms (part 2/2)"""
+        
+        if self.dry:
+            return
         
         import os, tarfile
         from os.path import join
