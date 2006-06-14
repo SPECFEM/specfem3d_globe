@@ -1213,7 +1213,7 @@
   allocate(nu_source(NDIM,NDIM,NSOURCES))
 
   if (myrank == 0) then
-    open(IOVTK,file='OUTPUT_FILES/sr.vtk',status='unknown')
+    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr.vtk',status='unknown')
     write(IOVTK,'(a)') '# vtk DataFile Version 2.0'
     write(IOVTK,'(a)') 'Source(one) and Receiver(one) VTK file'
     write(IOVTK,'(a)') 'ASCII'
@@ -4512,7 +4512,7 @@
     if(myrank == 0) then ! on the master, gather all the seismograms
 
 ! get the job ID from file output by LoadLeveler script
-      open(unit=27,file='OUTPUT_FILES/jobid',status='old',action='read')
+      open(unit=27,file=trim(OUTPUT_FILES)//'/jobid',status='old',action='read')
       read(27,*) jobid
       close(27)
 
