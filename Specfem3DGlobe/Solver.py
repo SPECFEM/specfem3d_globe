@@ -126,15 +126,22 @@ class Solver(Component):
         """Create the include file for the solver."""
 
         import os, shutil, sys
+        from os.path import exists
+        from PyxParameters import create_header_file
         
         # This path is hardwired into the Fortran source.
         oldHeader = 'OUTPUT_FILES/values_from_mesher.h'
+
+        # If the header doesn't exist, simply create it.
+        if not exists(oldHeader):
+            self.HEADER_FILE = oldHeader
+            create_header_file(script) # call into Fortran
+            return
         
         # First generate the header into a temporary file.
         from tempfile import mktemp
         newHeader  = mktemp()
         self.HEADER_FILE = newHeader
-        from PyxParameters import create_header_file
         create_header_file(script) # call into Fortran
         
         # Did the header file change?

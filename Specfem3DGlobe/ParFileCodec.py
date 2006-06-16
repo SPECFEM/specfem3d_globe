@@ -96,7 +96,7 @@ xlate = {
                       'SAVE_MESH_FILES': 'mesher.save-files',
                        'NUMBER_OF_RUNS': 'solver.number-of-runs',
                    'NUMBER_OF_THIS_RUN': 'solver.number-of-this-run',
-                           'LOCAL_PATH': 'local-path',
+                           'LOCAL_PATH': 'scratch-dir',
            'NTSTEP_BETWEEN_OUTPUT_INFO': 'solver.ntstep-between-output-info',
         'NTSTEP_BETWEEN_OUTPUT_SEISMOS': 'solver.ntstep-between-output-seismos',
               'RECEIVERS_CAN_BE_BURIED': 'solver.receivers-can-be-buried',
