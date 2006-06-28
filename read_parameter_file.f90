@@ -495,17 +495,17 @@
 ! RCMB: radius of CMB (m)
 ! RICB: radius of ICB (m)
 
-! values common to PREM and IASP91
-  ROCEAN = 6368000.d0
-  RMIDDLE_CRUST = 6356000.d0
-  R80 = 6291000.d0
 
+! value common to all models
   RHO_OCEANS = 1020.0 / RHOAV
 
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
 
 ! IASP91
+    ROCEAN = 6371000.d0
+    RMIDDLE_CRUST = 6351000.d0
     RMOHO = 6336000.d0
+    R80  = 6291000.d0
     R220 = 6161000.d0
     R400 = 5961000.d0
 ! there is no d600 discontinuity in IASP91 therefore this value is useless
@@ -576,7 +576,10 @@
   else
 
 ! PREM
+    ROCEAN = 6368000.d0
+    RMIDDLE_CRUST = 6356000.d0
     RMOHO = 6346600.d0
+    R80  = 6291000.d0
     R220 = 6151000.d0
     R400 = 5971000.d0
     R600 = 5771000.d0
