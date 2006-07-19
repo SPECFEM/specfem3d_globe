@@ -249,7 +249,7 @@ subroutine comp_subarrays_adjoint_src(myrank, adj_source_file, &
   character(len=*) adj_source_file
 
 ! Vala added
-  integer it_sub_adj,iline,NSTEP_SUB_ADJ
+  integer it_sub_adj,NSTEP_SUB_ADJ
   integer, dimension(NSTEP_SUB_ADJ,2) :: iadjsrc
 
 ! output
