@@ -453,11 +453,14 @@
 
 ! now gather information from all the nodes
   ispec_selected_source_all(:,:) = -1
-  call MPI_GATHER(ispec_selected_source_sub,NSOURCES_SUB,MPI_INTEGER,ispec_selected_source_all,NSOURCES_SUB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-  call MPI_GATHER(xi_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION,xi_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(eta_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION,eta_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(gamma_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION,gamma_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(ispec_selected_source_sub,NSOURCES_SUB,MPI_INTEGER, &
+                  ispec_selected_source_all,NSOURCES_SUB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(xi_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
+                  xi_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(eta_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
+                  eta_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(gamma_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
+                  gamma_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(final_distance_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
     final_distance_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(x_found_source,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
