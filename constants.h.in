@@ -116,6 +116,9 @@
 ! source decay rate
   double precision, parameter :: SOURCE_DECAY_RATE = 1.628d0
 
+! number of sources to locate simultaneously 
+  integer, parameter :: NSOURCES_SUB = 1000
+
 !! DK DK UGLY in the case of a very fine mesh, move the bottom of crustal
 !! DK DK UGLY elements below the PREM Moho, otherwise the elements become
 !! DK DK UGLY too distorted in the radial distribution of elements.

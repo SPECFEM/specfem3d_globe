@@ -488,11 +488,15 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: adj_sourcearrays
   integer nrec_simulation, nadj_rec_local
+  logical ibool_read_adj_arrays
+  integer NSTEP_SUB_ADJ,it_sub_adj,iadj_block !To read input in chunks
+  integer, dimension(:,:), allocatable :: iadjsrc !To read input in chunks
+  integer, dimension(:), allocatable :: iadjsrc_len,iadj_vec
 !ADJOINT
 
 
 ! seismograms
-  integer it_begin,it_end
+  integer it_begin,it_end,nit_written
   double precision uxd, uyd, uzd, eps_trace,dxx,dyy,dxy,dxz,dyz,eps_loc(NDIM,NDIM), eps_loc_new(NDIM,NDIM)
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
 
@@ -586,7 +590,8 @@
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
+          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,&
+          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
           NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE,REFERENCE_1D_MODEL
 
@@ -670,7 +675,8 @@
           NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP,NTSTEP_BETWEEN_FRAMES, &
+          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
           NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -710,8 +716,8 @@
 ! check simulation pararmeters
   if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
           call exit_MPI(myrank, 'SIMULATION_TYPE could be only 1, 2, or 3')
-  if (SIMULATION_TYPE /= 1 .and. NSOURCES >= 1000)  &
-    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES < 1000')
+  if (SIMULATION_TYPE /= 1 .and. NSOURCES >= 100000)  &
+    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES < 100000')
   if (SIMULATION_TYPE == 3 .and. ATTENUATION) &
     call exit_MPI(myrank, 'attenuation is not implemented for kernel simulations yet')
   if (SIMULATION_TYPE == 3 .and. ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL) &
@@ -1745,21 +1751,44 @@
         nadj_rec_local = nadj_rec_local + 1
       endif
     enddo
-    allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLY,NGLLZ))
-    if (nadj_rec_local > 0) allocate(adj_sourcearrays(nadj_rec_local,NSTEP,NDIM,NGLLX,NGLLY,NGLLZ))
-    irec_local = 0
-    do irec = 1, nrec
-!   compute only adjoint source arrays in the local slice
-      if(myrank == islice_selected_rec(irec)) then
-        irec_local = irec_local + 1
-        adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
-        call compute_arrays_adjoint_source(myrank, adj_source_file, &
-          xi_receiver(irec), eta_receiver(irec), gamma_receiver(irec), &
-          nu(:,:,irec),adj_sourcearray, xigll,yigll,zigll,NSTEP)
-        adj_sourcearrays(irec_local,:,:,:,:,:) = adj_sourcearray(:,:,:,:,:)
-      endif
 
+    NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
+    allocate(iadj_vec(NSTEP))
+    iadj_block = 1  !counts blocks
+    do it=1,NSTEP
+       iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record
     enddo
+
+    if(nadj_rec_local > 0) then
+     ! allocate adjoint source arrays
+     allocate(adj_sourcearray(NTSTEP_BETWEEN_READ_ADJSRC,NDIM,NGLLX,NGLLY,NGLLZ))
+     allocate(adj_sourcearrays(nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC,NDIM,NGLLX,NGLLY,NGLLZ))
+
+     ! allocate and initialize indexing arrays
+     allocate(iadjsrc(NSTEP_SUB_ADJ,2))
+     allocate(iadjsrc_len(NSTEP_SUB_ADJ))
+     iadjsrc(:,:) = 0 
+     iadjsrc_len(:) = 0
+
+     do it=1,NSTEP
+
+       it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) ) !block number
+
+       if(mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then !we are at the edge of a block
+         iadjsrc(iadj_block,1) = NSTEP-it_sub_adj*NTSTEP_BETWEEN_READ_ADJSRC+1
+         iadjsrc(iadj_block,2) = NSTEP-(it_sub_adj-1)*NTSTEP_BETWEEN_READ_ADJSRC
+         if(iadjsrc(iadj_block,1) < 0) iadjsrc(iadj_block,1) = 1         ! final adj src array
+         iadjsrc_len(iadj_block) = iadjsrc(iadj_block,2)-iadjsrc(iadj_block,1)+1
+         iadj_block = iadj_block+1
+       endif
+
+       iadj_vec(it) = iadjsrc_len(it_sub_adj) - mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC)
+     enddo
+
+    endif
+
+
+
   endif
 
 !--- select local receivers
@@ -2304,10 +2333,11 @@
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       allocate(seismograms(NDIM,nrec_local,NSTEP))
     else
-      allocate(seismograms(6,nrec_local,NSTEP))
+      allocate(seismograms(9,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS))
     endif
 ! initialize seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
+    nit_written = 0
   endif
 
 ! initialize arrays to zero
@@ -3592,18 +3622,48 @@
   endif
 
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-    irec_Local = 0
+! figure out if we need to read in a chunk of the adjoint source at this timestep
+        it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )   !chunk_number
+        ibool_read_adj_arrays = (((it == it_begin) .or. (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0)) .and. (nadj_rec_local > 0))
+
+        if(ibool_read_adj_arrays) then
+           irec_local = 0
+           do irec = 1, nrec
+! check that the source slice number is okay
+              if(islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT-1) then
+                 if(islice_selected_rec(irec) < 0) call exit_MPI(myrank,'islice < 0')
+                 if(islice_selected_rec(irec) > NPROCTOT-1) call exit_MPI(myrank,'islice > NPROCTOT-1')
+                 call exit_MPI(myrank,'now: something is wrong with the source slice number in adjoint simulation')
+              endif
+! compute source arrays 
+              if(myrank == islice_selected_rec(irec)) then
+                 irec_local = irec_local + 1
+                 adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
+                 call comp_subarrays_adjoint_src(myrank,adj_source_file, &
+                      xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec), &
+                      nu(:,:,irec),adj_sourcearray, xigll,yigll,zigll,iadjsrc_len(it_sub_adj), &
+                      iadjsrc,it_sub_adj,NSTEP_SUB_ADJ)
+                 adj_sourcearrays(irec_local,:,:,:,:,:) = adj_sourcearray(:,:,:,:,:)
+              endif
+           enddo
+           if(irec_local /= nadj_rec_local) &
+                call exit_MPI(myrank,'irec_local /= nadj_rec_local in adjoint simulation')
+        endif
+
+    irec_local = 0
     do irec = 1,nrec
+!
 
 !   add the source (only if this proc carries the source)
       if(myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
+
 !     add source array
         do k=1,NGLLZ
           do j=1,NGLLY
             do i=1,NGLLX
               iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
-              accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,:,i,j,k)
+              accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) + adj_sourcearrays(irec_local,iadj_vec(it),:,i,j,k)
             enddo
           enddo
         enddo
@@ -4038,6 +4098,10 @@
 
             hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
 
+            uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
+            uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
+            uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
+
             eps_trace = eps_trace + dble(eps_trace_over_3_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
             dxx = dxx + dble(epsilondev_crust_mantle(1,i,j,k,ispec_selected_source(irec)))*hlagrange
             dyy = dyy + dble(epsilondev_crust_mantle(2,i,j,k,ispec_selected_source(irec)))*hlagrange
@@ -4065,19 +4129,23 @@
 
 ! distinguish between single and double precision for reals
       if (CUSTOM_REAL == SIZE_REAL) then
-        seismograms(1,irec_local,it) = sngl(eps_loc_new(1,1))
-        seismograms(2,irec_local,it) = sngl(eps_loc_new(2,2))
-        seismograms(3,irec_local,it) = sngl(eps_loc_new(3,3))
-        seismograms(4,irec_local,it) = sngl(eps_loc_new(1,2))
-        seismograms(5,irec_local,it) = sngl(eps_loc_new(1,3))
-        seismograms(6,irec_local,it) = sngl(eps_loc_new(2,3))
-      else
-        seismograms(1,irec_local,it) = eps_loc_new(1,1)
-        seismograms(2,irec_local,it) = eps_loc_new(2,2)
-        seismograms(3,irec_local,it) = eps_loc_new(3,3)
-        seismograms(4,irec_local,it) = eps_loc_new(1,2)
-        seismograms(5,irec_local,it) = eps_loc_new(1,3)
-        seismograms(6,irec_local,it) = eps_loc_new(2,3)
+        seismograms(1,irec_local,it-nit_written) = sngl(eps_loc_new(1,1))
+        seismograms(2,irec_local,it-nit_written) = sngl(eps_loc_new(2,2))
+        seismograms(3,irec_local,it-nit_written) = sngl(eps_loc_new(3,3))
+        seismograms(4,irec_local,it-nit_written) = sngl(eps_loc_new(1,2))
+        seismograms(5,irec_local,it-nit_written) = sngl(eps_loc_new(1,3))
+        seismograms(6,irec_local,it-nit_written) = sngl(eps_loc_new(2,3))
+        seismograms(7:9,irec_local,it-nit_written) = sngl(scale_displ*(nu_source(:,1,irec)*uxd + &
+                    nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd)) 
+     else
+        seismograms(1,irec_local,it-nit_written) = eps_loc_new(1,1)
+        seismograms(2,irec_local,it-nit_written) = eps_loc_new(2,2)
+        seismograms(3,irec_local,it-nit_written) = eps_loc_new(3,3)
+        seismograms(4,irec_local,it-nit_written) = eps_loc_new(1,2)
+        seismograms(5,irec_local,it-nit_written) = eps_loc_new(1,3)
+        seismograms(6,irec_local,it-nit_written) = eps_loc_new(2,3)
+        seismograms(7:9,irec_local,it-nit_written) = scale_displ*(nu_source(:,1,irec)*uxd + &
+                    nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd) 
       endif
 
     else  if (SIMULATION_TYPE == 3) then
@@ -4122,7 +4190,8 @@
                  elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
-        nrec_local,it,DT,NSTEP,t0,LOCAL_PATH)
+        nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
+        nit_written = it
     endif
   endif
   endif ! nrec_local
@@ -4364,7 +4433,7 @@
                  elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
-        nrec_local,it,DT,NSTEP,t0,LOCAL_PATH)
+        nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
     endif
   endif
 

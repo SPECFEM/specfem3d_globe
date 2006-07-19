@@ -100,6 +100,7 @@
   double precision dgamma
 
   double precision final_distance_source(NSOURCES)
+  double precision final_distance_source_sub(NSOURCES_SUB)
 
   double precision x_target_source,y_target_source,z_target_source
   double precision r_target_source
@@ -109,16 +110,19 @@
 ! timer MPI
   double precision time_start,tCPU
 
+  integer isources_read,itsource
   integer ispec_selected_source(NSOURCES)
+  integer ispec_selected_source_sub(NSOURCES_SUB)
 
-  integer, dimension(NSOURCES,0:NPROCTOT-1) :: ispec_selected_source_all
-  double precision, dimension(NSOURCES,0:NPROCTOT-1) :: xi_source_all,eta_source_all,gamma_source_all, &
+  integer, dimension(NSOURCES_SUB,0:NPROCTOT-1) :: ispec_selected_source_all
+  double precision, dimension(NSOURCES_SUB,0:NPROCTOT-1) :: xi_source_all,eta_source_all,gamma_source_all, &
      final_distance_source_all,x_found_source_all,y_found_source_all,z_found_source_all
 
   double precision hdur(NSOURCES)
 
   double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
+  double precision, dimension(NSOURCES_SUB) :: xi_source_sub,eta_source_sub,gamma_source_sub
 
   double precision, dimension(NSOURCES) :: lat,long,depth
   double precision scalar_moment
@@ -127,7 +131,7 @@
 
   character(len=150) OUTPUT_FILES,plot_file
 
-  double precision, dimension(NSOURCES) :: x_found_source,y_found_source,z_found_source
+  double precision, dimension(NSOURCES_SUB) :: x_found_source,y_found_source,z_found_source
   double precision r_found_source
   double precision st,ct,sp,cp
   double precision Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
@@ -179,7 +183,12 @@
   time_start = MPI_WTIME()
 
 ! loop on all the sources
-  do isource = 1,NSOURCES
+! gather source information in chunks to reduce memory requirements
+! loop over chunks of sources
+  do isources_read = 0,NSOURCES,NSOURCES_SUB
+! loop over sources within chunks
+  do itsource = 1,min(NSOURCES_SUB,NSOURCES-isources_read)
+  isource = itsource+isources_read
 
 ! convert geographic latitude lat (degrees)
 ! to geocentric colatitude theta (radians)
@@ -318,7 +327,7 @@
                   +(z_target_source-dble(zstore(iglob)))**2)
         if(dist < distmin) then
           distmin=dist
-          ispec_selected_source(isource)=ispec
+          ispec_selected_source_sub(itsource)=ispec
           ix_initial_guess_source = i
           iy_initial_guess_source = j
           iz_initial_guess_source = k
@@ -338,7 +347,7 @@
 ! if we have not located a target element, the source is not in this slice
 ! therefore use first element only for fictitious iterative search
   if(.not. located_target) then
-    ispec_selected_source(isource)=1
+    ispec_selected_source_sub(itsource)=1
     ix_initial_guess_source = 2
     iy_initial_guess_source = 2
     iz_initial_guess_source = 2
@@ -383,7 +392,7 @@
       call exit_MPI(myrank,'incorrect value of iaddz')
     endif
 
-    iglob = ibool(iax,iay,iaz,ispec_selected_source(isource))
+    iglob = ibool(iax,iay,iaz,ispec_selected_source_sub(itsource))
     xelm(ia) = dble(xstore(iglob))
     yelm(ia) = dble(ystore(iglob))
     zelm(ia) = dble(zstore(iglob))
@@ -428,35 +437,35 @@
          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
 ! store xi,eta,gamma and x,y,z of point found
-  xi_source(isource) = xi
-  eta_source(isource) = eta
-  gamma_source(isource) = gamma
-  x_found_source(isource) = x
-  y_found_source(isource) = y
-  z_found_source(isource) = z
+  xi_source_sub(itsource) = xi
+  eta_source_sub(itsource) = eta
+  gamma_source_sub(itsource) = gamma
+  x_found_source(itsource) = x
+  y_found_source(itsource) = y
+  z_found_source(itsource) = z
 
 ! compute final distance between asked and found (converted to km)
-  final_distance_source(isource) = dsqrt((x_target_source-x_found_source(isource))**2 + &
-    (y_target_source-y_found_source(isource))**2 + (z_target_source-z_found_source(isource))**2)*R_EARTH/1000.d0
+  final_distance_source_sub(itsource) = dsqrt((x_target_source-x_found_source(itsource))**2 + &
+    (y_target_source-y_found_source(itsource))**2 + (z_target_source-z_found_source(itsource))**2)*R_EARTH/1000.d0
 
 ! end of loop on all the sources
   enddo
 
 ! now gather information from all the nodes
   ispec_selected_source_all(:,:) = -1
-  call MPI_GATHER(ispec_selected_source,NSOURCES,MPI_INTEGER,ispec_selected_source_all,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(ispec_selected_source_sub,NSOURCES_SUB,MPI_INTEGER,ispec_selected_source_all,NSOURCES_SUB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-  call MPI_GATHER(xi_source,NSOURCES,MPI_DOUBLE_PRECISION,xi_source_all,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(eta_source,NSOURCES,MPI_DOUBLE_PRECISION,eta_source_all,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(gamma_source,NSOURCES,MPI_DOUBLE_PRECISION,gamma_source_all,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(final_distance_source,NSOURCES,MPI_DOUBLE_PRECISION, &
-    final_distance_source_all,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(x_found_source,NSOURCES,MPI_DOUBLE_PRECISION, &
-    x_found_source_all,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(y_found_source,NSOURCES,MPI_DOUBLE_PRECISION, &
-    y_found_source_all,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(z_found_source,NSOURCES,MPI_DOUBLE_PRECISION, &
-    z_found_source_all,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(xi_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION,xi_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(eta_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION,eta_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(gamma_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION,gamma_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(final_distance_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
+    final_distance_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(x_found_source,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
+    x_found_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(y_found_source,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
+    y_found_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(z_found_source,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
+    z_found_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
 ! this is executed by main process only
   if(myrank == 0) then
@@ -464,22 +473,22 @@
 ! check that the gather operation went well
   if(any(ispec_selected_source_all(:,:) == -1)) call exit_MPI(myrank,'gather operation failed for source')
 
-! loop on all the sources
-  do isource = 1,NSOURCES
-
+! loop on all the sources within chunk
+  do itsource = 1,min(NSOURCES_SUB,NSOURCES-isources_read)
+     isource = isources_read+itsource 
 ! loop on all the results to determine the best slice
   distmin = HUGEVAL
   do iprocloop = 0,NPROCTOT-1
-    if(final_distance_source_all(isource,iprocloop) < distmin) then
-      distmin = final_distance_source_all(isource,iprocloop)
+    if(final_distance_source_all(itsource,iprocloop) < distmin) then
+      distmin = final_distance_source_all(itsource,iprocloop)
       islice_selected_source(isource) = iprocloop
-      ispec_selected_source(isource) = ispec_selected_source_all(isource,iprocloop)
-      xi_source(isource) = xi_source_all(isource,iprocloop)
-      eta_source(isource) = eta_source_all(isource,iprocloop)
-      gamma_source(isource) = gamma_source_all(isource,iprocloop)
-      x_found_source(isource) = x_found_source_all(isource,iprocloop)
-      y_found_source(isource) = y_found_source_all(isource,iprocloop)
-      z_found_source(isource) = z_found_source_all(isource,iprocloop)
+      ispec_selected_source(isource) = ispec_selected_source_all(itsource,iprocloop)
+      xi_source(isource) = xi_source_all(itsource,iprocloop)
+      eta_source(isource) = eta_source_all(itsource,iprocloop)
+      gamma_source(isource) = gamma_source_all(itsource,iprocloop)
+      x_found_source(itsource) = x_found_source_all(itsource,iprocloop)
+      y_found_source(itsource) = y_found_source_all(itsource,iprocloop)
+      z_found_source(itsource) = z_found_source_all(itsource,iprocloop)
     endif
   enddo
   final_distance_source(isource) = distmin
@@ -489,8 +498,8 @@
     write(IMAIN,*) ' locating source ',isource
     write(IMAIN,*) '*************************************'
     write(IMAIN,*)
-    write(IMAIN,*) 'source located in slice ',islice_selected_source(isource)
-    write(IMAIN,*) '               in element ',ispec_selected_source(isource)
+    write(IMAIN,*) 'source located in slice ',islice_selected_source(itsource)
+    write(IMAIN,*) '               in element ',ispec_selected_source(itsource)
     write(IMAIN,*)
     write(IMAIN,*) '   xi coordinate of source in that element: ',xi_source(isource)
     write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
@@ -508,7 +517,7 @@
     write(IMAIN,*) '    time shift: ',t_cmt(isource),' seconds'
 
 ! get latitude, longitude and depth of the source that will be used
-    call xyz_2_rthetaphi_dble(x_found_source(isource),y_found_source(isource),z_found_source(isource), &
+    call xyz_2_rthetaphi_dble(x_found_source(itsource),y_found_source(itsource),z_found_source(itsource), &
            r_found_source,theta_source(isource),phi_source(isource))
     call reduce(theta_source(isource),phi_source(isource))
 
@@ -603,15 +612,18 @@
 
   endif
 
-! end of loop on all the sources
+! end of loop on all the sources within source chunk
   enddo
-
+  endif     ! end of section executed by main process only
+! end of loop over all source chunks
+  enddo
 ! display maximum error in location estimate
+  if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance_source)),' km'
     write(IMAIN,*)
+  endif
 
-  endif     ! end of section executed by main process only
 
 ! main process broadcasts the results to all the slices
   call MPI_BCAST(islice_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)

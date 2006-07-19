@@ -48,6 +48,7 @@ class Solver(Component):
     NTSTEP_BETWEEN_FRAMES         = pyre.int("ntstep-between-frames")
     NTSTEP_BETWEEN_OUTPUT_INFO    = pyre.int("ntstep-between-output-info")
     NTSTEP_BETWEEN_OUTPUT_SEISMOS = pyre.int("ntstep-between-output-seismos")
+    NTSTEP_BETWEEN_READ_ADJSRC    = pyre.int("ntstep-between-read-adjsrc")
     NUMBER_OF_RUNS                = pyre.int("number-of-runs")
     NUMBER_OF_THIS_RUN            = pyre.int("number-of-this-run")
 

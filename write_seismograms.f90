@@ -405,15 +405,16 @@
 ! write adjoint seismograms to text files
 
   subroutine write_adj_seismograms(seismograms,number_receiver_global, &
-               nrec_local,it,DT,NSTEP,hdur,LOCAL_PATH)
+               nrec_local,it,nit_written,DT,NSTEP, &
+               NTSTEP_BETWEEN_OUTPUT_SEISMOS,hdur,LOCAL_PATH)
 
   implicit none
 
   include "constants.h"
 
-  integer nrec_local,NSTEP,it
+  integer nrec_local,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,it,nit_written
   integer, dimension(nrec_local) :: number_receiver_global
-  real(kind=CUSTOM_REAL), dimension(6,nrec_local,NSTEP) :: seismograms
+  real(kind=CUSTOM_REAL), dimension(9,nrec_local,NSTEP) :: seismograms
   double precision hdur,DT
   character(len=150) LOCAL_PATH
 
@@ -428,7 +429,7 @@
 ! get global number of that receiver
     irec = number_receiver_global(irec_local)
 
-    do iorientation = 1,6
+    do iorientation = 1,9
 
       if(iorientation == 1) then
         chn = 'SNN'
@@ -442,6 +443,12 @@
         chn = 'SNZ'
       else if(iorientation == 6) then
         chn = 'SEZ'
+      else if(iorientation == 7) then
+        chn = 'LHN'
+      else if(iorientation == 8) then
+        chn = 'LHE'
+      else if(iorientation == 9) then
+        chn = 'LHZ'
       endif
 
 ! create the name of the seismogram file for each slice
@@ -460,15 +467,23 @@
 ! if the simulation uses many time steps. However, subsampling the output
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
-      open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),status='unknown')
+    if(it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
+       !open new file
+       open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
+            status='unknown')
+    else if(it > NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
+       !append to existing file
+       open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
+            status='old',position='append')
+    endif
 ! make sure we never write more than the maximum number of time steps
 ! subtract half duration of the source to make sure travel time is correct
-      do isample = 1,min(it,NSTEP)
+      do isample = nit_written+1,min(it,NSTEP)
 ! distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then
-          write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',seismograms(iorientation,irec_local,isample)
+          write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',seismograms(iorientation,irec_local,isample-nit_written)
         else
-          write(IOUT,*) dble(isample-1)*DT - hdur,' ',seismograms(iorientation,irec_local,isample)
+          write(IOUT,*) dble(isample-1)*DT - hdur,' ',seismograms(iorientation,irec_local,isample-nit_written)
         endif
       enddo
 
