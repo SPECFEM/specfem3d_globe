@@ -1,6 +1,6 @@
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint, 3 = both simultaneously
+SIMULATION_TYPE                 = 2
 SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
@@ -15,7 +15,7 @@ GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be 16 * multiple of NPROC below)
-NEX_XI                          = 160
+NEX_XI                          = 160 
 NEX_ETA                         = 160
 
 # number of MPI processors along the two sides of the first chunk
@@ -24,21 +24,21 @@ NPROC_ETA                       = 5
 
 # model (isotropic_prem, transversely_isotropic_prem,
 # iasp91, 1066a, ak135, s20rts, Brian_Savage, Min_Chen)
-MODEL                           = isotropic_prem
+MODEL                           = s20rts 
 
 # parameters describing the Earth model
-OCEANS                          = .false.
-ELLIPTICITY                     = .false.
-TOPOGRAPHY                      = .false.
-GRAVITY                         = .false.
-ROTATION                        = .false.
-ATTENUATION                     = .false.
+OCEANS                          = .true.
+ELLIPTICITY                     = .true.
+TOPOGRAPHY                      = .true.
+GRAVITY                         = .true.
+ROTATION                        = .true.
+ATTENUATION                     = .true.
 
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 40.d0
+RECORD_LENGTH_IN_MINUTES        = 100.0d0
 
 # save AVS or OpenDX movies
 MOVIE_SURFACE                   = .false.
@@ -60,7 +60,8 @@ LOCAL_PATH                      = /scratch/komatits/DATABASES_MPI
 NTSTEP_BETWEEN_OUTPUT_INFO      = 100
 
 # interval in time steps for temporary writing of seismograms
-NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
+NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 1000
+NTSTEP_BETWEEN_READ_ADJSRC      = 1000
 
 # flag to impose receivers at the surface or allow them to be buried
 RECEIVERS_CAN_BE_BURIED         = .false.
