@@ -99,7 +99,7 @@ xlate = {
                            'LOCAL_PATH': 'scratch-dir',
            'NTSTEP_BETWEEN_OUTPUT_INFO': 'solver.ntstep-between-output-info',
         'NTSTEP_BETWEEN_OUTPUT_SEISMOS': 'solver.ntstep-between-output-seismos',
-           'NTSTEP_BETWEEN_READ_ADJSRC': 'solver.ntstep-between-read_adjsrc',
+           'NTSTEP_BETWEEN_READ_ADJSRC': 'solver.ntstep-between-read-adjsrc',
               'RECEIVERS_CAN_BE_BURIED': 'solver.receivers-can-be-buried',
            'PRINT_SOURCE_TIME_FUNCTION': 'solver.print-source-time-function',
     }
