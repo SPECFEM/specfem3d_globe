@@ -550,6 +550,8 @@
      open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin', status='unknown', form='unformatted')
      write(27) T_c_source
      close(27)
+  else if(ATTENUATION) then
+     call attenuation_save_arrays(prname, iregion_code)
   endif
 
   end subroutine save_arrays_solver

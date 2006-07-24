@@ -95,8 +95,8 @@
 ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
   if(iregion_code == IREGION_OUTER_CORE) then
     vs = 0.d0
-    Qkappa = 100000.d0
-    Qmu = 100000.d0
+    Qkappa = 3000.d0
+    Qmu = 3000.d0
   endif
 
 ! non-dimensionalize

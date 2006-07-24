@@ -38,7 +38,6 @@
 
 module attenuation_model_constants
   implicit none
-  include 'constants.h'
 
 end module attenuation_model_constants
 
@@ -46,147 +45,262 @@ module attenuation_model_variables
   use attenuation_model_constants
   implicit none
   double precision min_period, max_period
+  double precision                              :: QT_c_source        ! Source Frequency
+  double precision, dimension(:), allocatable   :: Qtau_s             ! tau_sigma
+
+  integer                                       :: Qn                 ! Number of points
+  double precision, dimension(:), allocatable   :: Qr, Qs             ! Radius and Steps
+  double precision, dimension(:), allocatable   :: Qmu                ! Shear Attenuation
+  double precision, dimension(:,:), allocatable :: Qtau_e             ! tau_epsilon
+  double precision, dimension(:), allocatable   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+  double precision, dimension(:,:), allocatable :: Qfc, Qfc2          ! factor_common
+  double precision, dimension(:), allocatable   :: Qsf, Qsf2          ! scale_factor
+  
+  ! a 2 at the end stands for a second derivative
+  ! Qkappa                - Compressional Attenutation, User Defined
+  ! Qmu                   - Shear Attenuation, User Defined
+  !
+  ! tau_sigma             -                       use attenuation_tau_sigma()
+  !         Dependent on min and max period       
+  ! tau_epislon           -                       use attenuation_invert_by_simplex()
+  !         Dependent on tau_sigma and Qmu        
+  ! [alpha,beta,gamma]val - For memory variables  use attenuation_memory_values()
+  !         Dependent on tau_simga and delta_T
+  ! one_minus_sum_beta    -                       use attenuation_property_values()
+  !         Dependent on tau_sigma and Qmu
+  ! factor_common         -                       use attenuation_property_values()
+  !         Dependent on tau_sigma and Qmu
+  ! scale_factor          - Scaling the velocity  use attenuation_scale_factor()
+  !         Dependent on tau_sigma and Qmu        
 
 end module attenuation_model_variables
 
-! BK The ATTENUATION Values can be found in the code in a variety of places and forms
-! BK We should really be using one section to determine the Attenation values
-! BK prem_iso() or whatever model would be the best solution, but I need to pass in
-! BK ALL the Depths for that model, but I would think prem_iso should know its own
-! BK depths of interfaces.
-! BK
-! BK The solver would also need to be modified, i.e. compute_forces_*()
-! BK To compute PREM or a 3D model is relativly easy, but computation of a different
-! BK 1D model with a different number of layers, a gradient, or slightly different structure
-! BK would require substantial effort
-
-subroutine attenuation_model_1D(myrank, iregion_attenuation, Q_mu)
+module attenuation_model_storage
   implicit none
-  include "constants.h"
-  integer myrank
-  integer iregion_attenuation
-  double precision Q_mu
+  integer Q_resolution, Q_max
+  double precision, dimension(:,:), allocatable :: tau_e_storage
+  double precision, dimension(:),   allocatable :: Qmu_storage
 
-  ! This is the PREM Attenuation Structure
-  ! check in which region we are based upon doubling flag
-  select case(iregion_attenuation)
-  case(IREGION_ATTENUATION_INNER_CORE) !--- inner core, target Q_mu: 84.60
-     Q_mu =        84.6000000000d0
-  case(IREGION_ATTENUATION_CMB_670)    !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
-     Q_mu =       312.0000000000d0
-  case(IREGION_ATTENUATION_670_220)    !--- d670 -> d220, target Q_mu: 143.
-     Q_mu =       143.0000000000d0
-  case(IREGION_ATTENUATION_220_80)     !--- d220 -> depth of 80 km, target Q_mu:  80.
-     Q_mu =        80.0000000000d0
-  case(IREGION_ATTENUATION_80_SURFACE) !--- depth of 80 km -> surface, target Q_mu: 600.
-     Q_mu =       600.0000000000d0
-  !--- do nothing for fluid outer core (no attenuation there)
-  case default
-     call exit_MPI(myrank,'wrong attenuation flag in mesh')
-  end select
+end module attenuation_model_storage
 
-end subroutine attenuation_model_1D
+subroutine attenuation_lookup_value(i, r)
+  implicit none
+  include 'constants.h'
+  integer i
+  double precision r
+  r = dble(i) / TABLE_ATTENUATION
+end subroutine attenuation_lookup_value
 
-subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source,RICB,RCMB, &
-     RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80)
 
-!
-! xlat, xlon currently not used in this routine (which uses PREM).
-! The user needs to modify this routine if he wants to use
-! a particular 3D attenuation model. The current version is 1D.
-!
+ subroutine attenuation_lookup_index(i, r, theta, idoubling, ell_d80, ellipticity_val)
+   implicit none
+   include 'mpif.h'
+   include 'constants.h'
+   integer i, idoubling, ier, myrank
+   logical ellipticity_val
+   real(kind=CUSTOM_REAL) r, theta
+   real(kind=CUSTOM_REAL) cost, p20, ell_d80
+   if(r < 100.d0 / R_EARTH) r = 100.d0 / R_EARTH
+   
+ 
+   i = max(1, nint(r * TABLE_ATTENUATION))
+   if(ELLIPTICITY_VAL .AND. idoubling <= IFLAG_220_MOHO) then
+      ! particular case of d80 which is not honored by the mesh
+      ! map ellipticity back for d80 detection
+      ! ystore contains theta
+      cost = cos(theta)
+      p20 = 0.5 * (3.0 * cost * cost - 1.0)
+      r = r * (1.0 + (2.0/3.0) * ell_d80 * p20)
+   endif
+   if(i > NRAD_ATTENUATION) then
+      write(*,*)'index: ',i,r
+      call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+      call exit_MPI(myrank, 'bad index in attenuation lookup table')
+   endif
+ end subroutine attenuation_lookup_index
 
+
+! This Subroutine is Hackish.  It could probably all be moved to an input attenuation file.
+! Actually all the velocities, densities and attenuations could be moved to seperate input
+! files rather than be defined within the CODE
+! 
+! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
+! Variables (tau_sigma and tau_epslion ( or tau_mu) )
+subroutine attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80)
   use attenuation_model_variables
-
+  use model_ak135_variables
+  use model_1066a_variables
   implicit none
+  include 'constants.h'
 
   integer myrank
+  integer REFERENCE_1D_MODEL
+  double precision RICB, RCMB, R670, R220, R80
+  double precision tau_e(N_SLS)
 
-  double precision xlat, xlon, r, x, Qmu,RICB,RCMB, &
-      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80
-  double precision Qkappa, T_c_source
-  double precision, dimension(N_SLS) :: tau_s, tau_e
+  integer i
+  double precision Qb
+  double precision R120
 
-! dummy lines to suppress warning about variables not used
-  double precision xdummy
-  xdummy = xlat + xlon
-! end of dummy lines to suppress warning about variables not used
+  Qb = 57287.0d0
+  R120 = 6251.d3 
 
-  r = x * R_EARTH
+  if(myrank > 0) return
 
-! PREM
-!
-!--- inner core
-!
-  if(r >= 0.d0 .and. r <= RICB) then
-     Qmu=84.6d0
-     Qkappa=1327.7d0
-!
-!--- outer core
-!
-  else if(r > RICB .and. r <= RCMB) then
-     Qmu=0.0d0
-     Qkappa=57827.0d0
-     if(RCMB - r .LT. r - RICB) then
-        Qmu = 312.0d0  ! CMB
-     else
-        Qmu = 84.6d0   ! ICB
-     endif
-!
-!--- D" at the base of the mantle
-!
-  else if(r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
-     Qmu=312.0d0
-     Qkappa=57827.0d0
-!
-!--- mantle: from top of D" to d670
-!
-  else if(r > RTOPDDOUBLEPRIME .and. r <= R771) then
-     Qmu=312.0d0
-     Qkappa=57827.0d0
-  else if(r > R771 .and. r <= R670) then
-     Qmu=312.0d0
-     Qkappa=57827.0d0
-!
-!--- mantle: above d670
-!
-  else if(r > R670 .and. r <= R600) then
-     Qmu=143.0d0
-     Qkappa=57827.0d0
-  else if(r > R600 .and. r <= R400) then
-     Qmu=143.0d0
-     Qkappa=57827.0d0
-  else if(r > R400 .and. r <= R220) then
-     Qmu=143.0d0
-     Qkappa=57827.0d0
-  else if(r > R220 .and. r <= R80) then
-     Qmu=80.0d0
-     Qkappa=57827.0d0
-  else if(r > R80) then
-     Qmu=600.0d0
-     Qkappa=57827.0d0
+  call define_model_ak135(.FALSE.)
+  call define_model_1066a(.FALSE.)
+
+  if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
+     Qn = 12
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
+     Qn = 12
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+     Qn = NR_AK135
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066a) then
+     Qn = NR_1066A
+  else 
+     call exit_MPI(myrank, 'Reference 1D Model Not recognized')
   endif
 
-  call attenuation_conversion(myrank, Qmu, T_c_source, tau_s, tau_e)
+  allocate(Qr(Qn))
+  allocate(Qmu(Qn))
+  allocate(Qs(Qn))
+  allocate(Qtau_e(N_SLS,Qn))
 
-end subroutine attenuation_model
+  if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
+     Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
+     Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /) 
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
+     Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
+     Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+     Qr(:)     = radius_ak135(:)
+     Qmu(:)    = Qmu_ak135(:)
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066a) then
+     Qr(:)     = radius_1066a(:)
+     Qmu(:)    = Qmu_1066a(:)
+  end if
 
+  do i = 1, Qn
+     call attenuation_conversion(myrank, Qmu(i), QT_c_source, Qtau_s, tau_e)
+     Qtau_e(:,i) = tau_e(:)
+  end do
+  
+end subroutine attenuation_model_setup
 
-subroutine attenuation_conversion(myrank, Qmu, T_c_source, tau_s, tau_e)
-  use attenuation_model_variables ! includes min_period, max_period, and N_SLS
+subroutine attenuation_save_arrays(prname, iregion_code)
+  use attenuation_model_variables
   implicit none
+  include 'mpif.h'
+  include 'constants.h'
+
+  integer iregion_code
+  character(len=150) prname
+  integer ier
   integer myrank
-  double precision Qmu, T_c_source
+  integer, SAVE :: virgin = 1
+
+  call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+  if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. virgin == 1) then
+     virgin = 0
+     open(unit=27,file=prname(1:len_trim(prname))//'1D_Q.bin', status='unknown', form='unformatted')
+     write(27) QT_c_source
+     write(27) Qtau_s
+     write(27) Qn
+     write(27) Qr
+     write(27) Qmu
+     write(27) Qtau_e
+     close(27) 
+  else 
+     return
+  endif
+
+end subroutine attenuation_save_arrays
+
+subroutine attenuation_storage(myrank, Qmu, tau_e, rw)
+  use attenuation_model_storage
+  implicit none
+  include 'constants.h'
+
+  integer myrank
+  double precision Qmu
+  double precision, dimension(N_SLS) :: tau_e
+  integer rw
+  
+  integer Qtmp
+  integer, SAVE :: virgin = 1
+  
+  if(virgin == 1) then
+     virgin       = 0
+     Q_resolution = 10**ATTENUATION_COMP_RESOLUTION
+     Q_max        = ATTENUATION_COMP_MAXIMUM
+     Qtmp         = Q_resolution * Q_max
+     allocate(tau_e_storage(N_SLS, Qtmp))
+     allocate(Qmu_storage(Qtmp))
+     Qmu_storage(:) = -1
+  endif
+
+
+  if(Qmu < 0.0d0 .OR. Qmu >= Q_max) then
+     write(IMAIN,*) 'Error'
+     write(IMAIN,*) 'attenuation_conversion/storage()'
+     write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
+     write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, Q_max
+     call exit_MPI(myrank, 'Attenuation Value out of Range')
+  endif
+
+  if(rw > 0 .AND. Qmu == 0.0d0) then
+     Qmu = 0.0d0;
+     tau_e(:) = 0.0d0;
+     return
+  endif
+  ! Generate index for Storage Array
+  ! and Recast Qmu using this index
+  Qtmp = Qmu * Q_resolution
+  Qmu = Qtmp / Q_resolution;
+  
+  if(rw > 0) then
+     ! READ 
+     if(Qmu_storage(Qtmp) > 0) then
+        ! READ SUCCESSFUL
+        tau_e(:)   = tau_e_storage(:, Qtmp)
+        Qmu        = Qmu_storage(Qtmp)
+        rw = 1
+     else 
+        ! READ NOT SUCCESSFUL
+        rw = -1
+     endif
+  else
+     ! WRITE SUCCESSFUL
+     tau_e_storage(:,Qtmp)    = tau_e(:)
+     Qmu_storage(Qtmp)        = Qmu
+     rw = 1
+  endif
+
+  return
+
+end subroutine attenuation_storage
+
+subroutine attenuation_conversion(myrank, Qmu_in, T_c_source, tau_s, tau_e)
+  use attenuation_model_variables ! includes min_period, max_period, and N_SLS
+!  use attenuation_model_storage
+  implicit none
+  include 'constants.h'
+  
+  integer myrank
+  double precision Qmu_in, T_c_source
   double precision, dimension(N_SLS) :: tau_s, tau_e
+  
+  integer rw
 
-!  This subroutine works fine for large values of Q
-!     However when Q becomes small ( Q < 80 ), the methodology breaks down
-!  call attenuation_invert_by_SVD(myrank, min_period, max_period, N_SLS, Qmu, T_c_source, tau_s, tau_e)
+  rw = 1
+  call attenuation_storage(myrank, Qmu_in, tau_e, rw)
+  if(rw > 0) return
 
-!  We are now using a much robust method of attenuation parameter determination
-!    Although this method may be a bit slower, it will determine the parameters
-!    when the value of Q is low (Q < 80)
-  call attenuation_invert_by_simplex(myrank, min_period, max_period, N_SLS, Qmu, T_c_source, tau_s, tau_e)
+  call attenuation_invert_by_simplex(myrank, min_period, max_period, N_SLS, Qmu_in, T_c_source, tau_s, tau_e)
+
+  rw = -1
+  call attenuation_storage(myrank, Qmu_in, tau_e, rw)
 
 end subroutine attenuation_conversion
 
@@ -194,19 +308,23 @@ subroutine read_attenuation_model(min, max)
 
   use attenuation_model_variables
   implicit none
+  include 'constants.h'
 
   integer min, max
 
   min_period = min * 1.0d0
   max_period = max * 1.0d0
-
-! one should add an MPI_BCAST in meshfem3D.f90 if one adds a read_attenuation_model subroutine
+  
+  allocate(Qtau_s(N_SLS))
+  call attenuation_tau_sigma(Qtau_s, N_SLS, min_period, max_period)
+  call attenuation_source_frequency(QT_c_source, min_period, max_period)
 
 end subroutine read_attenuation_model
 
 subroutine attenuation_memory_values(tau_s, deltat, alphaval,betaval,gammaval)
   use attenuation_model_variables
   implicit none
+  include 'constants.h'
 
   double precision, dimension(N_SLS) :: tau_s, alphaval, betaval,gammaval
   real(kind=CUSTOM_REAL) deltat
@@ -225,6 +343,7 @@ end subroutine attenuation_memory_values
 subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
   use attenuation_model_variables
   implicit none
+  include 'constants.h'
 
   integer myrank
   double precision scale_factor, Q_mu, T_c_source
@@ -270,6 +389,7 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
 
 !--- check that the correction factor is close to one
   if(scale_factor < 0.9 .or. scale_factor > 1.1) then
+     write(*,*)'scale factor: ', scale_factor
      call exit_MPI(myrank,'incorrect correction factor in attenuation model')
   endif
 
@@ -281,6 +401,7 @@ subroutine attenuation_property_values(tau_s, tau_e, factor_common, one_minus_su
 
   use attenuation_model_variables
   implicit none
+  include 'constants.h'
 
   double precision, dimension(N_SLS) :: tau_s, tau_e, beta, factor_common
   double precision  one_minus_sum_beta
@@ -301,9 +422,135 @@ subroutine attenuation_property_values(tau_s, tau_e, factor_common, one_minus_su
 
 end subroutine attenuation_property_values
 
+subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_minus_sum_beta, factor_common, scale_factor, vn,vx,vy,vz)
+  use attenuation_model_variables
+  implicit none
+  include 'mpif.h'
+  include 'constants.h'
+  integer myrank, iregion_code
+  character(len=150) prname
+  integer vn, vx,vy,vz
+  double precision, dimension(N_SLS)              :: tau_s
+  double precision, dimension(vx,vy,vz,vn)        :: scale_factor, one_minus_sum_beta
+  double precision, dimension(N_SLS, vx,vy,vz,vn) :: factor_common
+  
+  integer i,j,ier,rmax
+  double precision scale_t
+  double precision Qp1, Qpn, radius, fctmp
+  double precision, dimension(:), allocatable :: Qfctmp, Qfc2tmp
+
+  integer, SAVE :: virgin = 1
+
+  if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. virgin == 1) then
+     open(unit=27, file=prname(1:len_trim(prname))//'1D_Q.bin', status='unknown', form='unformatted')
+     read(27) QT_c_source
+     read(27) tau_s
+     read(27) Qn
+     allocate(Qr(Qn))
+     allocate(Qmu(Qn))
+     allocate(Qtau_e(N_SLS,Qn))
+     read(27) Qr
+     read(27) Qmu
+     read(27) Qtau_e
+     close(27)
+  endif
+
+  ! Synch up after the Read 
+  call MPI_BCAST(QT_c_source, 1,     MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call MPI_BCAST(tau_s,       N_SLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call MPI_BCAST(Qn,          1,     MPI_INTEGER,          0, MPI_COMM_WORLD, ier)
+  call MPI_BCAST(QT_c_source, 1,     MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  if(myrank .NE. 0) then
+     allocate(Qr(Qn))
+     allocate(Qmu(Qn))
+     allocate(Qtau_e(N_SLS,Qn))
+  endif
+  call MPI_BCAST(Qr,     Qn,       MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call MPI_BCAST(Qmu,    Qn,       MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call MPI_BCAST(Qtau_e, Qn*N_SLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+
+  scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
+  
+  ! Scale the Attenuation Values
+  tau_s(:)    = tau_s(:)    / scale_t
+  Qtau_e(:,:) = Qtau_e(:,:) / scale_t
+  QT_c_source = 1000.0d0 / QT_c_source / scale_t
+  Qr(:)       = Qr(:) / R_EARTH
+  
+  allocate(Qsf(Qn))
+  allocate(Qomsb(Qn))
+  allocate(Qfc(N_SLS,Qn))
+
+  allocate(Qsf2(Qn))
+  allocate(Qomsb2(Qn))
+  allocate(Qfc2(N_SLS,Qn))
+
+  allocate(Qs(Qn))
+
+  allocate(Qfctmp(Qn))
+  allocate(Qfc2tmp(Qn))
+
+  do i = 1,Qn
+     if(Qmu(i) == 0.0d0) then
+        Qomsb(i) = 0.0d0
+        Qfc(:,i) = 0.0d0
+        Qsf(i)   = 0.0d0
+     else
+        call attenuation_property_values(tau_s, Qtau_e(:,i), Qfc(:,i), Qomsb(i))
+        call attenuation_scale_factor(myrank, QT_c_source, Qtau_e(:,i), tau_s, Qmu(i), Qsf(i))
+     endif
+  enddo
+
+  ! Determine the Spline Coefficients or Second Derivatives
+  call pspline(Qr, Qsf,   Qn, Qp1, Qpn, Qsf2,   Qs)
+  call pspline(Qr, Qomsb, Qn, Qp1, Qpn, Qomsb2, Qs)
+  do i = 1,N_SLS
+     call pspline(Qr, Qfc(i,:), Qn, Qp1, Qpn, Qfc2(i,:),Qs)
+  enddo
+  
+  radius = 0.0d0
+  rmax = nint(TABLE_ATTENUATION)
+  do i = 1,rmax
+     call attenuation_lookup_value(i, radius)
+     call psplint(Qr, Qsf,   Qsf2,   Qn, radius, scale_factor(1,1,1,i),       Qs)
+     call psplint(Qr, Qomsb, Qomsb2, Qn, radius, one_minus_sum_beta(1,1,1,i), Qs)
+     do j = 1,N_SLS
+        Qfctmp  = Qfc(j,:)
+        Qfc2tmp = Qfc2(j,:)
+        call psplint(Qr, Qfctmp, Qfc2tmp, Qn, radius, fctmp, Qs)        
+        factor_common(j,1,1,1,i) = fctmp
+     enddo
+  enddo
+  do i = rmax+1,NRAD_ATTENUATION
+     scale_factor(1,1,1,i)       = scale_factor(1,1,1,rmax)
+     one_minus_sum_beta(1,1,1,i) = one_minus_sum_beta(1,1,1,rmax)
+     factor_common(1,1,1,1,i)    = factor_common(1,1,1,1,rmax)
+     factor_common(2,1,1,1,i)    = factor_common(2,1,1,1,rmax)
+     factor_common(3,1,1,1,i)    = factor_common(3,1,1,1,rmax)
+  end do
+
+  deallocate(Qfc2)
+  deallocate(Qsf2)
+  deallocate(Qomsb2)
+  deallocate(Qfc)
+  deallocate(Qsf)
+  deallocate(Qomsb)
+  deallocate(Qr)
+  deallocate(Qs)
+  deallocate(Qtau_e)
+  deallocate(Qmu)
+  deallocate(Qfctmp)
+  deallocate(Qfc2tmp)
+  
+  call MPI_BARRIER(MPI_COMM_WORLD, ier)
+
+end subroutine get_attenuation_model_1D
+
+
 subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_common, scale_factor, tau_s, vnspec)
   use attenuation_model_variables
   implicit none
+  include 'constants.h'
 
   integer myrank, vnspec
   character(len=150) prname
@@ -338,7 +585,7 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
 
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
 
-  factor_common(:,:,:,:,:) = factor_common(:,:,:,:,:) / scale_t
+  factor_common(:,:,:,:,:) = factor_common(:,:,:,:,:) / scale_t ! This is really tau_e, not factor_common
   tau_s(:)                 = tau_s(:) / scale_t
   T_c_source               = 1000.0d0 / T_c_source
   T_c_source               = T_c_source / scale_t
@@ -365,348 +612,44 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
   enddo
 end subroutine get_attenuation_model_3D
 
-
-
-subroutine attenuation_invert_by_SVD(myrank, t2, t1, n,Q_real,omega_not,tau_s,tau_e)
-  use attenuation_model_variables
+subroutine attenuation_source_frequency(omega_not, min_period, max_period)
+  ! Determine the Source Frequency
   implicit none
-  double precision  t1, t2
-  integer  myrank, n
-  double precision  Q_real
-  double precision  omega_not
-  double precision, dimension(n)   :: tau_s, tau_e
+  double precision omega_not
+  double precision f1, f2
+  double precision min_period, max_period
+  
+  f1 = 1.0d0 / max_period
+  f2 = 1.0d0 / min_period
+  
+  omega_not =  1.0e+03 * 10.0d0**(0.5 * (log10(f1) + log10(f2)))
+  
+end subroutine attenuation_source_frequency
 
-  integer i, j, k
-
-  double precision, dimension(n)   :: gradient, dadp, dbdp, dqdp, x1, x2
-  double precision, dimension(n,n) :: hessian
-
-  double precision a, b, demon, Q_omega, Q_ratio, F_ratio, PI2, q
-  double precision f1, f2, exp1, exp2, expo, dexp, omega, df, d2qdp2
-
-  gradient(:)  = 0.0d0
-  hessian(:,:) = 0.0d0
-  tau_e(:)     = 0.0d0
-  tau_s(:)     = 0.0d0
-
-  PI2 = 6.28318530717958d0
-
-  f1 = 1.0d0/t1
-  f2 = 1.0d0/t2
-
-  if(f2 < f1) call exit_MPI(myrank, 'max frequency is less than min frequency')
-
-  if(Q_real < 0.0) call exit_MPI(myrank, 'Attenuation is less than zero')
-
-  if(n < 1) call exit_MPI(myrank, 'Number of standard linear solids is less than one')
-
-  omega_not = 1.0e+3 * 10.0**(0.5 * (log10(f1) + log10(f2)))
-
-  exp1 = log10(f1)
-  exp2 = log10(f2)
-
-  dexp = (exp2 - exp1) / real(n - 1.0)
-
-  q = 1.0 / (real(n - 1.0) * Q_real )
-
-  do i = 1,n
-     expo     = exp1 + (i-1) * dexp
-     omega    = PI2 * 10.0**expo
-     tau_s(i) = 1.0 / omega
-     tau_e(i) = tau_s(i) * (1.0 + q) / (1.0 - q)
-  enddo
-
-  x1(:) = tau_e(:) - tau_s(:)
-  x2(:) = tau_s(:)
-
-  exp1 = log10(f1)
-  exp2 = log10(f2)
-  dexp = (exp2 - exp1) / 100.0
-
-  expo = exp1 - dexp
-  do i = 1,100
-     expo = expo + dexp
-     df       = 10.0**(expo+dexp) - 10.0**(expo)
-     omega    = PI2 * 10.0**(expo)
-     a = real(1.0 - n)
-     b = 0.0
-     do j = 1,n
-        tau_e(j) = x1(j) + x2(j)
-        tau_s(j) = x2(j)
-        demon   = 1.0 + omega**2.0 * tau_s(j)**2.0
-        a       = a + (1.0 + omega**2.0 * tau_e(j) * tau_s(j)) / demon
-        b       = b + ( omega * ( tau_e(j) - tau_s(j) ) ) / demon
-        dadp(j) = omega**2.0 * tau_s(j) / demon
-        dbdp(j) = omega / demon
-     enddo
-
-     Q_omega = a / b
-     Q_ratio = 1.0 / Q_omega - 1.0 / Q_real
-     F_ratio = df / (f2 - f1)
-     do j = 1,n
-        dqdp(j)     = (dbdp(j) - ( b / a ) * dadp(j)) / a
-        gradient(j) = gradient(j) + 2.0 * (Q_ratio) * dqdp(j) * F_ratio
-        do k = 1,j
-           d2qdp2   = -(dadp(j) * dbdp(k) + dbdp(j) * dadp(k) - 2.0 * (b / a) * dadp(j) * dadp(k)) / (a * a)
-           hessian(j,k) = hessian(j,k) + (2.0 * dqdp(j) * dqdp(k) + 2.0 * Q_ratio * d2qdp2) * F_ratio
-           hessian(k,j) = hessian(j,k)
-        enddo
-     enddo
-  enddo
-
-  call invert(x1, gradient, hessian, n)
-  tau_e(:) = x1(:) + x2(:)
-  tau_s(:) = x2(:)
-
-end subroutine attenuation_invert_by_SVD
-
-!----
-
-subroutine invert(x,b,A,n)
-
-  use attenuation_model_variables
+subroutine attenuation_tau_sigma(tau_s, n, min_period, max_period)
+  ! Set the Tau_sigma (tau_s) to be equally spaced in log10 frequency
   implicit none
-
   integer n
+  double precision tau_s(n)
+  double precision min_period, max_period
+  double precision f1, f2
+  double precision exp1, exp2
+  double precision dexp
+  integer i
+  double precision, parameter :: PI = 3.14159265358979d0
 
-  double precision, dimension(n)   :: x, b
-  double precision, dimension(n,n) :: A
+  f1 = 1.0d0 / max_period
+  f2 = 1.0d0 / min_period
 
-  integer i, j, k
-  double precision, dimension(n)   :: W, xp
-  double precision, dimension(n,n) :: V
-  double precision, dimension(n,n) :: A_inverse
+  exp1 = log10(f1)
+  exp2 = log10(f2)
 
-  call svdcmp_dp(A,W,V,n)
-
+  dexp = (exp2-exp1) / ((n*1.0d0) - 1)
   do i = 1,n
-     do j = 1,n
-        V(i,j) = (1.0d0 / W(i)) * A(j,i)
-     enddo
+     tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexp))
   enddo
 
-  do i = 1,n
-     do j = 1,n
-        A_inverse(i,j) = 0.0d0
-        do k = 1,n
-           A_inverse(i,j) = A_inverse(i,j) + A(i,k) * V(k,j)
-        enddo
-     enddo
-  enddo
-
-  do i = 1,n
-     xp(i) = x(i)
-     do j = 1, n
-        xp(i) = xp(i) - A_inverse(i,j) * b(j)
-     enddo
-     x(i) = xp(i)
-  enddo
-
-end subroutine invert
-
-
-FUNCTION pythag_dp(a,b)
-  use attenuation_model_variables
-  IMPLICIT NONE
-
-  double precision, INTENT(IN) :: a,b
-  double precision :: pythag_dp
-  double precision :: absa,absb
-  absa=abs(a)
-  absb=abs(b)
-  if (absa > absb) then
-     pythag_dp=absa*sqrt(1.0d0+(absb/absa)**2)
-  else
-     if (absb == 0.0d0) then
-        pythag_dp=0.0d0
-     else
-        pythag_dp=absb*sqrt(1.0+(absa/absb)**2)
-     endif
-  endif
-END FUNCTION pythag_dp
-
-SUBROUTINE svdcmp_dp(a,w,v,p)
-
-  use attenuation_model_variables
-
-  IMPLICIT NONE
-
-  integer p
-  INTEGER, PARAMETER :: DP = KIND(1.0D0)
-  double precision, DIMENSION(p,p), INTENT(INOUT) :: a
-  double precision, DIMENSION(p), INTENT(OUT) :: w
-  double precision, DIMENSION(p,p), INTENT(OUT) :: v
-  INTEGER(4) :: i,its,j,k,l,m,n,nm
-  double precision :: anorm,c,f,g,h,s,scale,x,y,z
-  double precision, DIMENSION(size(a,1)) :: tempm
-  double precision, DIMENSION(size(a,2)) :: rv1,tempn
-  double precision PYTHAG_DP
-
-  m=size(a,1)
-  n = size(a,2)
-
-  g=0.0d0
-  scale=0.0d0
-  do i=1,n
-     l=i+1
-     rv1(i)=scale*g
-     g=0.0d0
-     scale=0.0d0
-
-     if (i <= m) then
-        scale=sum(abs(a(i:m,i)))
-        if (scale /= 0.0d0) then
-           a(i:m,i)=a(i:m,i)/scale
-           s=dot_product(a(i:m,i),a(i:m,i))
-           f=a(i,i)
-           g=-sign(sqrt(s),f)
-           h=f*g-s
-           a(i,i)=f-g
-           tempn(l:n)=matmul(a(i:m,i),a(i:m,l:n))/h
-
-           a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
-                spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
-           a(i:m,i)=scale*a(i:m,i)
-        endif
-     endif
-     w(i)=scale*g
-     g=0.0d0
-     scale=0.0d0
-     if ((i <= m) .and. (i /= n)) then
-        scale=sum(abs(a(i,l:n)))
-        if (scale /= 0.0d0) then
-           a(i,l:n)=a(i,l:n)/scale
-           s=dot_product(a(i,l:n),a(i,l:n))
-           f=a(i,l)
-           g=-sign(sqrt(s),f)
-           h=f*g-s
-           a(i,l)=f-g
-           rv1(l:n)=a(i,l:n)/h
-           tempm(l:m)=matmul(a(l:m,l:n),a(i,l:n))
-
-           a(l:m,l:n)=a(l:m,l:n)+spread(tempm(l:m),dim=2,ncopies=size(rv1(l:n))) * &
-                spread(rv1(l:n),dim=1,ncopies=size(tempm(l:m)))
-           a(i,l:n)=scale*a(i,l:n)
-        endif
-     endif
-  enddo
-  anorm=maxval(abs(w)+abs(rv1))
-
-  do i=n,1,-1
-     if (i < n) then
-        if (g /= 0.0d0) then
-           v(l:n,i)=(a(i,l:n)/a(i,l))/g
-           tempn(l:n)=matmul(a(i,l:n),v(l:n,l:n))
-           v(l:n,l:n)=v(l:n,l:n)+spread(v(l:n,i),dim=2,ncopies=size(tempn(l:n))) * &
-                spread(tempn(l:n), dim=1, ncopies=size(v(l:n,i)))
-        endif
-        v(i,l:n)=0.0d0
-        v(l:n,i)=0.0d0
-     endif
-     v(i,i)=1.0d0
-     g=rv1(i)
-     l=i
-  enddo
-  do i=min(m,n),1,-1
-     l=i+1
-     g=w(i)
-     a(i,l:n)=0.0d0
-     if (g /= 0.0d0) then
-        g=1.0d0/g
-        tempn(l:n)=(matmul(a(l:m,i),a(l:m,l:n))/a(i,i))*g
-        a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
-             spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
-        a(i:m,i)=a(i:m,i)*g
-     else
-        a(i:m,i)=0.0d0
-     endif
-     a(i,i)=a(i,i)+1.0d0
-  enddo
-  do k=n,1,-1
-     do its=1,30
-        do l=k,1,-1
-           nm=l-1
-           if ((abs(rv1(l))+anorm) == anorm) exit
-           if ((abs(w(nm))+anorm) == anorm) then
-              c=0.0d0
-              s=1.0d0
-              do i=l,k
-                 f=s*rv1(i)
-                 rv1(i)=c*rv1(i)
-                 if ((abs(f)+anorm) == anorm) exit
-                 g=w(i)
-                 h=pythag_dp(f,g)
-                 w(i)=h
-                 h=1.0d0/h
-                 c= (g*h)
-                 s=-(f*h)
-                 tempm(1:m)=a(1:m,nm)
-                 a(1:m,nm)=a(1:m,nm)*c+a(1:m,i)*s
-                 a(1:m,i)=-tempm(1:m)*s+a(1:m,i)*c
-              enddo
-              exit
-           endif
-        enddo
-        z=w(k)
-        if (l == k) then
-           if (z < 0.0d0) then
-              w(k)=-z
-              v(1:n,k)=-v(1:n,k)
-           endif
-           exit
-        endif
-
-        if (its == 30) stop 'svdcmp_dp: no convergence in svdcmp'
-
-        x=w(l)
-        nm=k-1
-        y=w(nm)
-        g=rv1(nm)
-        h=rv1(k)
-        f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0d0*h*y)
-        g=pythag_dp(f,1.0d0)
-        f=((x-z)*(x+z)+h*((y/(f+sign(g,f)))-h))/x
-        c=1.0d0
-        s=1.0d0
-        do j=l,nm
-           i=j+1
-           g=rv1(i)
-           y=w(i)
-           h=s*g
-           g=c*g
-           z=pythag_dp(f,h)
-           rv1(j)=z
-           c=f/z
-           s=h/z
-           f= (x*c)+(g*s)
-           g=-(x*s)+(g*c)
-           h=y*s
-           y=y*c
-           tempn(1:n)=v(1:n,j)
-           v(1:n,j)=v(1:n,j)*c+v(1:n,i)*s
-           v(1:n,i)=-tempn(1:n)*s+v(1:n,i)*c
-           z=pythag_dp(f,h)
-           w(j)=z
-           if (z /= 0.0d0) then
-              z=1.0d0/z
-              c=f*z
-              s=h*z
-           endif
-           f= (c*g)+(s*y)
-           x=-(s*g)+(c*y)
-           tempm(1:m)=a(1:m,j)
-           a(1:m,j)=a(1:m,j)*c+a(1:m,i)*s
-           a(1:m,i)=-tempm(1:m)*s+a(1:m,i)*c
-        enddo
-        rv1(l)=0.0d0
-        rv1(k)=f
-        w(k)=x
-     enddo
-  enddo
-
-END SUBROUTINE svdcmp_dp
-
-
+end subroutine attenuation_tau_sigma
 
 module attenuation_simplex_variables
   implicit none
@@ -1327,5 +1270,555 @@ subroutine qsort(X,n,I)
 
 end subroutine qsort
 
+! Piecewise Continuous Splines
+!   - Uses the Numerical Recipes for Spline interpolation
+!   - Added Steps which describes the discontinuities
+!   - Steps must be repeats in the dependent variable, X
+!   - Derivates at the steps are computed using the point
+!     at the derivate and the closest point within that piece
+!   - A point lying directly on the discontinuity will recieve the
+!     value of the first or smallest piece in terms of X
+!   - Beginning and Ending points of the Function become beginning
+!     and ending points of the first and last splines
+!   - A Step with a value of zero is undefined
+!   - Works with functions with steps or no steps
+
+
+subroutine psplint(xa, ya, y2a, n, x, y, steps)
+  implicit none
+  integer n
+  double precision xa(n),ya(n),y2a(n)
+  integer steps(n)
+  double precision x, y
+
+  integer i, l, n1, n2
+
+  do i = 1,n-1
+     if(steps(i+1) == 0) return
+     if(x >= xa(steps(i)) .AND. x <= xa(steps(i+1))) then
+        call pspline_piece(i,n1,n2,l,n,steps)
+        call splint(xa(n1), ya(n1), y2a(n1), l, x, y)
+        return
+     endif
+  end do
+
+  return
+
+end subroutine psplint
+
+subroutine pspline_piece(i,n1,n2,l,n,s)
+  implicit none
+  integer i, n1, n2, l, n, s(n)
+  n1 = s(i)+1
+  if(i == 1) n1 = s(i)
+  n2 = s(i+1)
+  l = n2 - n1 + 1
+  return
+end subroutine pspline_piece
+
+subroutine pspline(x, y, n, yp1, ypn, y2, steps)
+  implicit none
+  integer n
+  double precision x(n),y(n),y2(n)
+  double precision yp1, ypn
+  integer steps(n)
+  
+  integer i,r, l, n1,n2
+
+  steps(:) = 0
+
+  ! Find steps in x, defining pieces
+  steps(1) = 1
+  r = 2
+  do i = 2,n
+     if(x(i) == x(i-1)) then
+        steps(r) = i-1
+        r = r + 1
+     endif
+  end do
+  steps(r) = n
+
+  ! Run spline for each piece
+  do i = 1,r-1
+     call pspline_piece(i,n1,n2,l,n,steps)
+     ! Determine the First Derivates at Begin/End Points
+     yp1 = ( y(n1+1) - y(n1) ) / ( x(n1+1) - x(n1))
+     ypn = ( y(n2) - y(n2-1) ) / ( x(n2) - x(n2-1))
+     call spline(x(n1),y(n1),l,yp1,ypn,y2(n1))
+  enddo
+
+end subroutine pspline
+
+
+
+subroutine attenuation_model_1D(myrank, iregion_attenuation, Q_mu)
+  implicit none
+  include "constants.h"
+  integer myrank
+  integer iregion_attenuation
+  double precision Q_mu
+
+  ! This is the PREM Attenuation Structure
+  ! check in which region we are based upon doubling flag
+  select case(iregion_attenuation)
+  case(IREGION_ATTENUATION_INNER_CORE) !--- inner core, target Q_mu: 84.60
+     Q_mu =        84.6000000000d0
+  case(IREGION_ATTENUATION_CMB_670)    !--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.
+     Q_mu =       312.0000000000d0
+  case(IREGION_ATTENUATION_670_220)    !--- d670 -> d220, target Q_mu: 143.
+     Q_mu =       143.0000000000d0
+  case(IREGION_ATTENUATION_220_80)     !--- d220 -> depth of 80 km, target Q_mu:  80.
+     Q_mu =        80.0000000000d0
+  case(IREGION_ATTENUATION_80_SURFACE) !--- depth of 80 km -> surface, target Q_mu: 600.
+     Q_mu =       600.0000000000d0
+  !--- do nothing for fluid outer core (no attenuation there)
+  case default
+     call exit_MPI(myrank,'wrong attenuation flag in mesh')
+  end select
+
+end subroutine attenuation_model_1D
+
+subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source,RICB,RCMB, &
+     RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80)
+
+!
+! xlat, xlon currently not used in this routine (which uses PREM).
+! The user needs to modify this routine if he wants to use
+! a particular 3D attenuation model. The current version is 1D.
+!
+
+!  use attenuation_model_variables
+
+  implicit none
+  include 'constants.h'
+
+  integer myrank
+
+  double precision xlat, xlon, r, x, Qmu,RICB,RCMB, &
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80
+  double precision Qkappa, T_c_source
+  double precision, dimension(N_SLS) :: tau_s, tau_e
+
+! dummy lines to suppress warning about variables not used
+  double precision xdummy
+  xdummy = xlat + xlon
+! end of dummy lines to suppress warning about variables not used
+
+  r = x * R_EARTH
+
+! PREM
+!
+!--- inner core
+!
+  if(r >= 0.d0 .and. r <= RICB) then
+     Qmu=84.6d0
+     Qkappa=1327.7d0
+!
+!--- outer core
+!
+  else if(r > RICB .and. r <= RCMB) then
+     Qmu=0.0d0
+     Qkappa=57827.0d0
+     if(RCMB - r .LT. r - RICB) then
+        Qmu = 312.0d0  ! CMB
+     else
+        Qmu = 84.6d0   ! ICB
+     endif
+!
+!--- D" at the base of the mantle
+!
+  else if(r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
+     Qmu=312.0d0
+     Qkappa=57827.0d0
+!
+!--- mantle: from top of D" to d670
+!
+  else if(r > RTOPDDOUBLEPRIME .and. r <= R771) then
+     Qmu=312.0d0
+     Qkappa=57827.0d0
+  else if(r > R771 .and. r <= R670) then
+     Qmu=312.0d0
+     Qkappa=57827.0d0
+!
+!--- mantle: above d670
+!
+  else if(r > R670 .and. r <= R600) then
+     Qmu=143.0d0
+     Qkappa=57827.0d0
+  else if(r > R600 .and. r <= R400) then
+     Qmu=143.0d0
+     Qkappa=57827.0d0
+  else if(r > R400 .and. r <= R220) then
+     Qmu=143.0d0
+     Qkappa=57827.0d0
+  else if(r > R220 .and. r <= R80) then
+     Qmu=80.0d0
+     Qkappa=57827.0d0
+  else if(r > R80) then
+     Qmu=600.0d0
+     Qkappa=57827.0d0
+  endif
+
+  call attenuation_conversion(myrank, Qmu, T_c_source, tau_s, tau_e)
+
+end subroutine attenuation_model
+
+
+! This is not used anymore
+
+!  This subroutine works fine for large values of Q
+!     However when Q becomes small ( Q < 80 ), the methodology breaks down
+!  call attenuation_invert_by_SVD(myrank, min_period, max_period, N_SLS, Qmu, T_c_source, tau_s, tau_e)
+
+!  We are now using a much robust method of attenuation parameter determination
+!    Although this method may be a bit slower, it will determine the parameters
+!    when the value of Q is low (Q < 80)
+!   attenuation_invert_by_simplex()
+
+
+! subroutine attenuation_invert_by_SVD(myrank, t2, t1, n,Q_real,omega_not,tau_s,tau_e)
+!   use attenuation_model_variables
+!   implicit none
+!   include 'constants.h'
+
+!   double precision  t1, t2
+!   integer  myrank, n
+!   double precision  Q_real
+!   double precision  omega_not
+!   double precision, dimension(n)   :: tau_s, tau_e
+
+!   integer i, j, k
+
+!   double precision, dimension(n)   :: gradient, dadp, dbdp, dqdp, x1, x2
+!   double precision, dimension(n,n) :: hessian
+
+!   double precision a, b, demon, Q_omega, Q_ratio, F_ratio, PI2, q
+!   double precision f1, f2, exp1, exp2, expo, dexp, omega, df, d2qdp2
+
+!   gradient(:)  = 0.0d0
+!   hessian(:,:) = 0.0d0
+!   tau_e(:)     = 0.0d0
+!   tau_s(:)     = 0.0d0
+
+!   PI2 = 6.28318530717958d0
+
+!   f1 = 1.0d0/t1
+!   f2 = 1.0d0/t2
+
+!   if(f2 < f1) call exit_MPI(myrank, 'max frequency is less than min frequency')
+
+!   if(Q_real < 0.0) call exit_MPI(myrank, 'Attenuation is less than zero')
+
+!   if(n < 1) call exit_MPI(myrank, 'Number of standard linear solids is less than one')
+
+!   omega_not = 1.0e+3 * 10.0**(0.5 * (log10(f1) + log10(f2)))
+
+!   exp1 = log10(f1)
+!   exp2 = log10(f2)
+
+!   dexp = (exp2 - exp1) / real(n - 1.0)
+
+!   q = 1.0 / (real(n - 1.0) * Q_real )
+
+!   do i = 1,n
+!      expo     = exp1 + (i-1) * dexp
+!      omega    = PI2 * 10.0**expo
+!      tau_s(i) = 1.0 / omega
+!      tau_e(i) = tau_s(i) * (1.0 + q) / (1.0 - q)
+!   enddo
+
+!   x1(:) = tau_e(:) - tau_s(:)
+!   x2(:) = tau_s(:)
+
+!   exp1 = log10(f1)
+!   exp2 = log10(f2)
+!   dexp = (exp2 - exp1) / 100.0
+
+!   expo = exp1 - dexp
+!   do i = 1,100
+!      expo = expo + dexp
+!      df       = 10.0**(expo+dexp) - 10.0**(expo)
+!      omega    = PI2 * 10.0**(expo)
+!      a = real(1.0 - n)
+!      b = 0.0
+!      do j = 1,n
+!         tau_e(j) = x1(j) + x2(j)
+!         tau_s(j) = x2(j)
+!         demon   = 1.0 + omega**2.0 * tau_s(j)**2.0
+!         a       = a + (1.0 + omega**2.0 * tau_e(j) * tau_s(j)) / demon
+!         b       = b + ( omega * ( tau_e(j) - tau_s(j) ) ) / demon
+!         dadp(j) = omega**2.0 * tau_s(j) / demon
+!         dbdp(j) = omega / demon
+!      enddo
+
+!      Q_omega = a / b
+!      Q_ratio = 1.0 / Q_omega - 1.0 / Q_real
+!      F_ratio = df / (f2 - f1)
+!      do j = 1,n
+!         dqdp(j)     = (dbdp(j) - ( b / a ) * dadp(j)) / a
+!         gradient(j) = gradient(j) + 2.0 * (Q_ratio) * dqdp(j) * F_ratio
+!         do k = 1,j
+!            d2qdp2   = -(dadp(j) * dbdp(k) + dbdp(j) * dadp(k) - 2.0 * (b / a) * dadp(j) * dadp(k)) / (a * a)
+!            hessian(j,k) = hessian(j,k) + (2.0 * dqdp(j) * dqdp(k) + 2.0 * Q_ratio * d2qdp2) * F_ratio
+!            hessian(k,j) = hessian(j,k)
+!         enddo
+!      enddo
+!   enddo
+
+!   call invert(x1, gradient, hessian, n)
+!   tau_e(:) = x1(:) + x2(:)
+!   tau_s(:) = x2(:)
+
+! end subroutine attenuation_invert_by_SVD
+
+! !----
+
+! subroutine invert(x,b,A,n)
+
+!   use attenuation_model_variables
+!   implicit none
+!   include 'constants.h'
+
+!   integer n
+
+!   double precision, dimension(n)   :: x, b
+!   double precision, dimension(n,n) :: A
+
+!   integer i, j, k
+!   double precision, dimension(n)   :: W, xp
+!   double precision, dimension(n,n) :: V
+!   double precision, dimension(n,n) :: A_inverse
+
+!   call svdcmp_dp(A,W,V,n)
+
+!   do i = 1,n
+!      do j = 1,n
+!         V(i,j) = (1.0d0 / W(i)) * A(j,i)
+!      enddo
+!   enddo
+
+!   do i = 1,n
+!      do j = 1,n
+!         A_inverse(i,j) = 0.0d0
+!         do k = 1,n
+!            A_inverse(i,j) = A_inverse(i,j) + A(i,k) * V(k,j)
+!         enddo
+!      enddo
+!   enddo
+
+!   do i = 1,n
+!      xp(i) = x(i)
+!      do j = 1, n
+!         xp(i) = xp(i) - A_inverse(i,j) * b(j)
+!      enddo
+!      x(i) = xp(i)
+!   enddo
+
+! end subroutine invert
+
+
+! FUNCTION pythag_dp(a,b)
+!   use attenuation_model_variables
+!   IMPLICIT NONE
+!   include 'constants.h'
+
+!   double precision, INTENT(IN) :: a,b
+!   double precision :: pythag_dp
+!   double precision :: absa,absb
+!   absa=abs(a)
+!   absb=abs(b)
+!   if (absa > absb) then
+!      pythag_dp=absa*sqrt(1.0d0+(absb/absa)**2)
+!   else
+!      if (absb == 0.0d0) then
+!         pythag_dp=0.0d0
+!      else
+!         pythag_dp=absb*sqrt(1.0+(absa/absb)**2)
+!      endif
+!   endif
+! END FUNCTION pythag_dp
+
+! SUBROUTINE svdcmp_dp(a,w,v,p)
+
+!   use attenuation_model_variables
+
+!   IMPLICIT NONE
+!   include 'constants.h'
+
+
+!   integer p
+!   INTEGER, PARAMETER :: DP = KIND(1.0D0)
+!   double precision, DIMENSION(p,p), INTENT(INOUT) :: a
+!   double precision, DIMENSION(p), INTENT(OUT) :: w
+!   double precision, DIMENSION(p,p), INTENT(OUT) :: v
+!   INTEGER(4) :: i,its,j,k,l,m,n,nm
+!   double precision :: anorm,c,f,g,h,s,scale,x,y,z
+!   double precision, DIMENSION(size(a,1)) :: tempm
+!   double precision, DIMENSION(size(a,2)) :: rv1,tempn
+!   double precision PYTHAG_DP
+
+!   m=size(a,1)
+!   n = size(a,2)
+
+!   g=0.0d0
+!   scale=0.0d0
+!   do i=1,n
+!      l=i+1
+!      rv1(i)=scale*g
+!      g=0.0d0
+!      scale=0.0d0
+
+!      if (i <= m) then
+!         scale=sum(abs(a(i:m,i)))
+!         if (scale /= 0.0d0) then
+!            a(i:m,i)=a(i:m,i)/scale
+!            s=dot_product(a(i:m,i),a(i:m,i))
+!            f=a(i,i)
+!            g=-sign(sqrt(s),f)
+!            h=f*g-s
+!            a(i,i)=f-g
+!            tempn(l:n)=matmul(a(i:m,i),a(i:m,l:n))/h
+
+!            a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
+!                 spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
+!            a(i:m,i)=scale*a(i:m,i)
+!         endif
+!      endif
+!      w(i)=scale*g
+!      g=0.0d0
+!      scale=0.0d0
+!      if ((i <= m) .and. (i /= n)) then
+!         scale=sum(abs(a(i,l:n)))
+!         if (scale /= 0.0d0) then
+!            a(i,l:n)=a(i,l:n)/scale
+!            s=dot_product(a(i,l:n),a(i,l:n))
+!            f=a(i,l)
+!            g=-sign(sqrt(s),f)
+!            h=f*g-s
+!            a(i,l)=f-g
+!            rv1(l:n)=a(i,l:n)/h
+!            tempm(l:m)=matmul(a(l:m,l:n),a(i,l:n))
+
+!            a(l:m,l:n)=a(l:m,l:n)+spread(tempm(l:m),dim=2,ncopies=size(rv1(l:n))) * &
+!                 spread(rv1(l:n),dim=1,ncopies=size(tempm(l:m)))
+!            a(i,l:n)=scale*a(i,l:n)
+!         endif
+!      endif
+!   enddo
+!   anorm=maxval(abs(w)+abs(rv1))
+
+!   do i=n,1,-1
+!      if (i < n) then
+!         if (g /= 0.0d0) then
+!            v(l:n,i)=(a(i,l:n)/a(i,l))/g
+!            tempn(l:n)=matmul(a(i,l:n),v(l:n,l:n))
+!            v(l:n,l:n)=v(l:n,l:n)+spread(v(l:n,i),dim=2,ncopies=size(tempn(l:n))) * &
+!                 spread(tempn(l:n), dim=1, ncopies=size(v(l:n,i)))
+!         endif
+!         v(i,l:n)=0.0d0
+!         v(l:n,i)=0.0d0
+!      endif
+!      v(i,i)=1.0d0
+!      g=rv1(i)
+!      l=i
+!   enddo
+!   do i=min(m,n),1,-1
+!      l=i+1
+!      g=w(i)
+!      a(i,l:n)=0.0d0
+!      if (g /= 0.0d0) then
+!         g=1.0d0/g
+!         tempn(l:n)=(matmul(a(l:m,i),a(l:m,l:n))/a(i,i))*g
+!         a(i:m,l:n)=a(i:m,l:n)+spread(a(i:m,i),dim=2,ncopies=size(tempn(l:n))) * &
+!              spread(tempn(l:n),dim=1,ncopies=size(a(i:m,i)))
+!         a(i:m,i)=a(i:m,i)*g
+!      else
+!         a(i:m,i)=0.0d0
+!      endif
+!      a(i,i)=a(i,i)+1.0d0
+!   enddo
+!   do k=n,1,-1
+!      do its=1,30
+!         do l=k,1,-1
+!            nm=l-1
+!            if ((abs(rv1(l))+anorm) == anorm) exit
+!            if ((abs(w(nm))+anorm) == anorm) then
+!               c=0.0d0
+!               s=1.0d0
+!               do i=l,k
+!                  f=s*rv1(i)
+!                  rv1(i)=c*rv1(i)
+!                  if ((abs(f)+anorm) == anorm) exit
+!                  g=w(i)
+!                  h=pythag_dp(f,g)
+!                  w(i)=h
+!                  h=1.0d0/h
+!                  c= (g*h)
+!                  s=-(f*h)
+!                  tempm(1:m)=a(1:m,nm)
+!                  a(1:m,nm)=a(1:m,nm)*c+a(1:m,i)*s
+!                  a(1:m,i)=-tempm(1:m)*s+a(1:m,i)*c
+!               enddo
+!               exit
+!            endif
+!         enddo
+!         z=w(k)
+!         if (l == k) then
+!            if (z < 0.0d0) then
+!               w(k)=-z
+!               v(1:n,k)=-v(1:n,k)
+!            endif
+!            exit
+!         endif
+
+!         if (its == 30) stop 'svdcmp_dp: no convergence in svdcmp'
+
+!         x=w(l)
+!         nm=k-1
+!         y=w(nm)
+!         g=rv1(nm)
+!         h=rv1(k)
+!         f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0d0*h*y)
+!         g=pythag_dp(f,1.0d0)
+!         f=((x-z)*(x+z)+h*((y/(f+sign(g,f)))-h))/x
+!         c=1.0d0
+!         s=1.0d0
+!         do j=l,nm
+!            i=j+1
+!            g=rv1(i)
+!            y=w(i)
+!            h=s*g
+!            g=c*g
+!            z=pythag_dp(f,h)
+!            rv1(j)=z
+!            c=f/z
+!            s=h/z
+!            f= (x*c)+(g*s)
+!            g=-(x*s)+(g*c)
+!            h=y*s
+!            y=y*c
+!            tempn(1:n)=v(1:n,j)
+!            v(1:n,j)=v(1:n,j)*c+v(1:n,i)*s
+!            v(1:n,i)=-tempn(1:n)*s+v(1:n,i)*c
+!            z=pythag_dp(f,h)
+!            w(j)=z
+!            if (z /= 0.0d0) then
+!               z=1.0d0/z
+!               c=f*z
+!               s=h*z
+!            endif
+!            f= (c*g)+(s*y)
+!            x=-(s*g)+(c*y)
+!            tempm(1:m)=a(1:m,j)
+!            a(1:m,j)=a(1:m,j)*c+a(1:m,i)*s
+!            a(1:m,i)=-tempm(1:m)*s+a(1:m,i)*c
+!         enddo
+!         rv1(l)=0.0d0
+!         rv1(k)=f
+!         w(k)=x
+!      enddo
+!   enddo
+
+! END SUBROUTINE svdcmp_dp
 
 
