@@ -90,6 +90,10 @@ PARAM_OBJECTS = \
 
 # objects common to both the mesher and the solver
 COMMON_OBJECTS = \
+	$O/model_prem.o \
+	$O/model_iasp91.o \
+	$O/model_1066a.o \
+	$O/model_ak135.o \
 	$O/attenuation_model.o \
 	$O/calc_jacobian.o \
 	$O/create_name_database.o \
@@ -101,10 +105,6 @@ COMMON_OBJECTS = \
 	$O/lagrange_poly.o \
 	$O/make_ellipticity.o \
 	$O/numerical_recipes.o \
-	$O/model_prem.o \
-	$O/model_iasp91.o \
-	$O/model_1066a.o \
-	$O/model_ak135.o \
 	$O/topo_bathy.o \
 	$(PARAM_OBJECTS)
 
@@ -172,8 +172,8 @@ SOLVER_DYNAMIC_OBJECTS = \
 SOLVER_OBJECTS = $(SOLVER_DYNAMIC_OBJECTS) $(SOLVER_STATIC_OBJECTS)
 
 # objects for the pure Fortran version
-@COND_PYRE_FALSE@XMESHFEM_OBJECTS = $O/program_meshfem3D.o $(MESHER_OBJECTS) $(COMMON_OBJECTS) $(EXTRA_OBJECTS)
-@COND_PYRE_FALSE@XSPECFEM_OBJECTS = $O/program_specfem3D.o $(SOLVER_OBJECTS) $(COMMON_OBJECTS) $(EXTRA_OBJECTS)
+@COND_PYRE_FALSE@XMESHFEM_OBJECTS = $O/program_meshfem3D.o $(COMMON_OBJECTS) $(MESHER_OBJECTS) $(EXTRA_OBJECTS)
+@COND_PYRE_FALSE@XSPECFEM_OBJECTS = $O/program_specfem3D.o $(COMMON_OBJECTS) $(SOLVER_OBJECTS) $(EXTRA_OBJECTS)
 
 # objects for the Pyrized version
 @COND_PYRE_TRUE@PYRE_EXTRA_OBJECTS = $O/misc.o $O/trampoline.o

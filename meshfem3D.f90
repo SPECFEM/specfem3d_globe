@@ -46,6 +46,7 @@
   use three_d_mantle_model_variables
   use crustal_model_variables
   use aniso_mantle_model_variables
+  use attenuation_model_variables
 
   implicit none
 
@@ -569,8 +570,20 @@
 
   if(ATTENUATION .and. ATTENUATION_3D) then
     if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
-!   one should add an MPI_BCAST here if one adds a read_attenuation_model subroutine
+
+    call MPI_BCAST(min_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(max_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+
   endif
+  if(ATTENUATION .AND. .NOT. ATTENUATION_3D) then
+     if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+
+    call MPI_BCAST(min_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(max_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+
+    call attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80)
+  endif
+
 
 ! read topography and bathymetry file
   if(TOPOGRAPHY .or. OCEANS) then

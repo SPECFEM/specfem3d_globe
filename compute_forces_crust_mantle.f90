@@ -26,7 +26,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,R80,SAVE_STRAIN)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,SAVE_STRAIN)
 
   implicit none
 
@@ -42,7 +42,7 @@
   integer nspec
 
 ! for ellipticity for d80 attenuation
-  real(kind=CUSTOM_REAL) ell_d80,p20,cost
+  real(kind=CUSTOM_REAL) ell_d80, p20, cost
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPECMAX_CRUST_MANTLE) :: idoubling
@@ -57,12 +57,9 @@
 ! variable sized array variables for one_minus_sum_beta and factor_common
   integer vx, vy, vz, vnspec
 
-  double precision R80
-
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
-  double precision dist
   integer iregion_selected
 
 ! for attenuation
@@ -148,6 +145,7 @@
 ! for gravity
   integer int_radius
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
+  real(kind=CUSTOM_REAL) radius_cr
   double precision radius,rho,minus_g,minus_dg
   double precision minus_g_over_radius,minus_dg_plus_g_over_radius
   double precision cos_theta,sin_theta,cos_phi,sin_phi
@@ -166,7 +164,6 @@
   accel(:,:) = 0._CUSTOM_REAL
 
   do ispec = 1,nspec
-
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -254,53 +251,34 @@
 
 ! precompute terms for attenuation if needed
   if(ATTENUATION_VAL) then
-
-! distinguish regions in the mantle, including case of the d80
-
-    if(ATTENUATION_VAL_3D) then
-       one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-    else
-
-  if(idoubling(ispec) == IFLAG_DOUBLING_670 .or. &
-     idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_MANTLE) then
-
-    iregion_selected = IREGION_ATTENUATION_CMB_670
-
-  else if(idoubling(ispec) == IFLAG_670_220) then
-
-    iregion_selected = IREGION_ATTENUATION_670_220
-
-  else
-
-! particular case of d80 which is not honored by the mesh
-! xstore contains the radius
-    iglob = ibool(i,j,k,ispec)
-    dist = xstore(iglob)
-
-! map ellipticity back for d80 detection
-! ystore contains theta
-    if(ELLIPTICITY_VAL) then
-      theta = ystore(iglob)
-      cost = cos(theta)
-      p20 = 0.5*(3.*cost*cost-1.)
-      dist = dist*(1.+(2./3.)*ell_d80*p20)
-    endif
-
-    if(dist > R80/R_EARTH) then
-      iregion_selected = IREGION_ATTENUATION_80_SURFACE
-    else
-      iregion_selected = IREGION_ATTENUATION_220_80
-    endif
-
-   endif
-
-    one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
-
-  endif ! ATTENUATION_3D
-
-    minus_sum_beta =  one_minus_sum_beta_use - 1.
-
+     if(ATTENUATION_VAL_3D) then
+        one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+     else
+        iglob     = ibool(i,j,k,ispec)
+        radius_cr = xstore(iglob)
+        theta     = ystore(iglob)
+        if(ELLIPTICITY_VAL .AND. idoubling(ispec) .LE. IFLAG_220_MOHO) then
+           ! particular case of d80 which is not honored by the mesh
+           ! map ellipticity back for d80 detection
+           ! ystore contains theta
+           cost = cos(theta)
+           p20 = 0.5 * (3.0 * cost * cost - 1.0)
+           radius_cr = radius_cr * (1.0 + (2.0/3.0) * ell_d80 * p20)
+        endif
+        iregion_selected = nint(dble(radius_cr) * TABLE_ATTENUATION)
+        one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
+        ! If the Attenuation Value is not defined ( we are in the outer core )
+        ! Continue to increase the radius ( move towards the surface ) to find
+        ! a Value within the Mantle
+        do while(one_minus_sum_beta_use .LE. 1e-5) 
+           iregion_selected = iregion_selected + 1
+           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)           
+           if(iregion_selected > NRAD_ATTENUATION) then
+              call exit_MPI_without_rank('compute_forces_crust_mantle error in attenuation')
+           endif
+        enddo
+     endif
+     minus_sum_beta =  one_minus_sum_beta_use - 1.
   endif
 
 !

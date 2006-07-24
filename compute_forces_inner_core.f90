@@ -121,6 +121,9 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: xstore,ystore,zstore
+  integer iregion_selected
+
+  real(kind=CUSTOM_REAL) radius_cr
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -221,13 +224,26 @@
 
 ! compute deviatoric strain
   if(ATTENUATION_VAL) then
-    if(ATTENUATION_VAL_3D) then
-      minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
-    else
-      minus_sum_beta =  one_minus_sum_beta(1,1,1,IREGION_ATTENUATION_INNER_CORE) - 1.
-    endif
-  endif
-
+     if(ATTENUATION_VAL_3D) then
+        minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
+     else
+        iglob     = ibool(i,j,k,ispec)
+        radius_cr = xstore(iglob)
+        iregion_selected = max(1,nint(radius_cr * TABLE_ATTENUATION))
+        minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.
+        ! If the Attenuation Value is not defined ( we are in the outer core )
+        ! Continue to decrease the radius ( move towards the center ) to find
+        ! a Value within the Outer Core
+        do while(minus_sum_beta <= 0.0) 
+           iregion_selected = iregion_selected - 1
+           minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.
+           if(iregion_selected < 1) then
+              call exit_MPI_without_rank('compute_forces_inner_core error in attenuation')
+           endif
+        end do
+     endif ! ATTENUATION_VAL_3D
+  endif ! ATTENUATION_VAL
+  
        if(ANISOTROPIC_INNER_CORE_VAL) then
 
 ! elastic tensor for hexagonal symmetry in reduced notation:
@@ -526,7 +542,7 @@
           if(ATTENUATION_VAL_3D) then
              factor_common_use = factor_common(i_sls,:,:,:,ispec)
           else
-             factor_common_use(:,:,:) = factor_common(i_sls,1,1,1,IREGION_ATTENUATION_INNER_CORE)
+             factor_common_use(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
           endif
           do i_memory = 1,5
              R_memory(i_memory,i_sls,:,:,:,ispec) = &
