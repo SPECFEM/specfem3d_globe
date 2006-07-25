@@ -1,0 +1,55 @@
+
+{% extends "Specfem3DGlobe/base.html" %}
+
+{% block content %}
+
+<h1>Model</h1>
+
+{% if form.has_errors %}
+<h2>Please correct the following error{{ form.error_dict|pluralize }}:</h2>
+{% endif %}
+
+<form method="post" action=".">
+    <table border="0">
+
+
+        <tr>
+            <td align="right" valign="top">{{ form.oceans }}</td>
+            <td valign="top"><label for="id_oceans">oceans</label></td>
+            <td valign="top">{% if form.oceans.errors %}<span class=error>{{ form.oceans.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.gravity }}</td>
+            <td valign="top"><label for="id_gravity">gravity</label></td>
+            <td valign="top">{% if form.gravity.errors %}<span class=error>{{ form.gravity.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.attenuation }}</td>
+            <td valign="top"><label for="id_attenuation">attenuation</label></td>
+            <td valign="top">{% if form.attenuation.errors %}<span class=error>{{ form.attenuation.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.topography }}</td>
+            <td valign="top"><label for="id_topography">topography</label></td>
+            <td valign="top">{% if form.topography.errors %}<span class=error>{{ form.topography.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.rotation }}</td>
+            <td valign="top"><label for="id_rotation">rotation</label></td>
+            <td valign="top">{% if form.rotation.errors %}<span class=error>{{ form.rotation.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.ellipticity }}</td>
+            <td valign="top"><label for="id_ellipticity">ellipticity</label></td>
+            <td valign="top">{% if form.ellipticity.errors %}<span class=error>{{ form.ellipticity.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+    </table>
+    <p><input type="submit" value="Save" />
+</form>
+{% endblock %}

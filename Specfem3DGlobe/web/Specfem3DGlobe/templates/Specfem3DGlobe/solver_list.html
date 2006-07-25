@@ -1,0 +1,62 @@
+
+{% extends "Specfem3DGlobe/base.html" %}
+
+{% block content %}
+
+<h1>Solver List</h1>
+
+{% if object_list %}
+    <table border="0">
+        <tr>
+            <th align="left" valign="top">id</th>
+            <th align="left" valign="top">actions</th>
+            <th align="left" valign="top">receivers can be buried</th>
+            <th align="left" valign="top">hdur movie</th>
+            <th align="left" valign="top">ntstep between read adjsrc</th>
+            <th align="left" valign="top">movie volume</th>
+            <th align="left" valign="top">record length</th>
+            <th align="left" valign="top">save forward</th>
+            <th align="left" valign="top">absorbing conditions</th>
+            <th align="left" valign="top">number of this run</th>
+            <th align="left" valign="top">number of runs</th>
+            <th align="left" valign="top">ntstep between frames</th>
+            <th align="left" valign="top">simulation type</th>
+            <th align="left" valign="top">movie surface</th>
+            <th align="left" valign="top">dry</th>
+            <th align="left" valign="top">ntstep between output seismos</th>
+            <th align="left" valign="top">print source time function</th>
+            <th align="left" valign="top">ntstep between output info</th>
+
+        </tr>
+
+        {% for object in object_list %}
+        <tr>
+            <th valign="top">{{ object.id }}</th>
+            <td valign="top"><a href="{{ object.id }}/">Edit</a> <a href="{{ object.id }}/delete/">Delete</a></td>
+            <td valign="top">{{ object.receivers_can_be_buried }}</td>
+            <td valign="top">{{ object.hdur_movie }}</td>
+            <td valign="top">{{ object.ntstep_between_read_adjsrc }}</td>
+            <td valign="top">{{ object.movie_volume }}</td>
+            <td valign="top">{{ object.record_length }}</td>
+            <td valign="top">{{ object.save_forward }}</td>
+            <td valign="top">{{ object.absorbing_conditions }}</td>
+            <td valign="top">{{ object.number_of_this_run }}</td>
+            <td valign="top">{{ object.number_of_runs }}</td>
+            <td valign="top">{{ object.ntstep_between_frames }}</td>
+            <td valign="top">{{ object.simulation_type }}</td>
+            <td valign="top">{{ object.movie_surface }}</td>
+            <td valign="top">{{ object.dry }}</td>
+            <td valign="top">{{ object.ntstep_between_output_seismos }}</td>
+            <td valign="top">{{ object.print_source_time_function }}</td>
+            <td valign="top">{{ object.ntstep_between_output_info }}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+{% else %}
+    <p>You have no solvers.</p>
+{% endif %}
+
+<p><a href="create/">Create solver</a>
+
+{% endblock %}
