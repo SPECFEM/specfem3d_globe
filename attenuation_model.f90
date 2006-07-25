@@ -422,7 +422,8 @@ subroutine attenuation_property_values(tau_s, tau_e, factor_common, one_minus_su
 
 end subroutine attenuation_property_values
 
-subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_minus_sum_beta, factor_common, scale_factor, vn,vx,vy,vz)
+subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_minus_sum_beta, &
+                                    factor_common, scale_factor, vn,vx,vy,vz)
   use attenuation_model_variables
   implicit none
   include 'mpif.h'
