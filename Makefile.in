@@ -63,6 +63,7 @@ CPPFLAGS = @CPPFLAGS@
 # extra defines for the Pyrized version
 @COND_PYRE_TRUE@MPICC = @MPICC@
 @COND_PYRE_TRUE@FCLIBS = @FCLIBS@
+@COND_PYRE_TRUE@PYTHON = @PYTHON@
 @COND_PYRE_TRUE@PYTHON_CPPFLAGS = -I@PYTHON_INCDIR@
 @COND_PYRE_TRUE@PYTHON_LDFLAGS = @PYTHON_LDFLAGS@ @PYTHON_LINKFORSHARED@ @PYTHON_BLDLIBRARY@ @PYTHON_LIBS@ @PYTHON_MODLIBS@ @PYTHON_SYSLIBS@ @PYTHON_LDLAST@
 @COND_PYRE_TRUE@OUTPUT_DIR = OUTPUT_FILES
@@ -234,9 +235,9 @@ specfem3D: xspecfem3D
 @COND_PYRE_FALSE@
 
 # rules for the Pyrized version
-@COND_PYRE_TRUE@xspecfem3D: Specfem3DGlobe/xspecfem3D.tmpl pyspecfem3D
-@COND_PYRE_TRUE@	./pyspecfem3D setup.py develop
-@COND_PYRE_TRUE@	chmod +x $@
+@COND_PYRE_TRUE@xspecfem3D: setup.py pyspecfem3D
+@COND_PYRE_TRUE@	$(PYTHON) setup.py develop
+@COND_PYRE_TRUE@	cp $(HOME)/.cig/bin/xspecfem3D xspecfem3D
 @COND_PYRE_TRUE@
 @COND_PYRE_TRUE@pyspecfem3D: main.c $(XMESHFEM_OBJECTS)
 @COND_PYRE_TRUE@	${MPICC} $(CFLAGS) -o $@ $(CFLAGS) $(PYTHON_CPPFLAGS) main.c \
@@ -443,7 +444,7 @@ $O/get_cmt.o: constants.h get_cmt.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_cmt.o ${FCFLAGS_f90} get_cmt.f90
 
 $O/get_event_info.o: constants.h get_event_info.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_event_info.o ${FCFLAGS_f90} get_event_info.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/get_event_info.o ${FCFLAGS_f90} get_event_info.f90
 
 $O/get_ellipticity.o: constants.h get_ellipticity.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_ellipticity.o ${FCFLAGS_f90} get_ellipticity.f90
@@ -584,13 +585,13 @@ $O/compute_arrays_source.o: constants.h compute_arrays_source.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} compute_arrays_source.f90
 
 $O/create_central_cube_buffers.o: constants.h create_central_cube_buffers.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_central_cube_buffers.o ${FCFLAGS_f90} create_central_cube_buffers.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/create_central_cube_buffers.o ${FCFLAGS_f90} create_central_cube_buffers.f90
 
 $O/get_attenuation_model.o: constants.h get_attenuation_model.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_attenuation_model.o ${FCFLAGS_f90} get_attenuation_model.f90
 
 $O/attenuation_model.o: constants.h attenuation_model.f90
-	${FCCOMPILE_CHECK} -c -o $O/attenuation_model.o ${FCFLAGS_f90} attenuation_model.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/attenuation_model.o ${FCFLAGS_f90} attenuation_model.f90
 
 $O/gll_library.o: constants.h gll_library.f90
 	${FCCOMPILE_CHECK} -c -o $O/gll_library.o ${FCFLAGS_f90} gll_library.f90

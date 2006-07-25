@@ -107,9 +107,8 @@ AC_ARG_VAR(PYTHONPATH, [Python module search path])
 
 AC_LANG(C)
 if test "$want_pyre" = yes; then
-    PYTHONPATH="${pythondir}${PYTHONPATH:+:${PYTHONPATH}}"; export PYTHONPATH
-    CIT_PATH_PYTHIA([0.8], [mpi])
-    AC_SUBST([PYTHONPATH])
+    AC_MSG_NOTICE([running $PYTHON setup.py develop])
+    $PYTHON setup.py develop
 fi
 
 

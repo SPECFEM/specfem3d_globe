@@ -14,16 +14,20 @@ the appropriate options to ``use_setuptools()``.
 This file can also be run as a script to install or upgrade setuptools.
 """
 import sys
-DEFAULT_VERSION = "0.6b1"
+DEFAULT_VERSION = "0.6c1"
 DEFAULT_URL     = "http://cheeseshop.python.org/packages/%s/s/setuptools/" % sys.version[:3]
 
 md5_data = {
-    'setuptools-0.6a10-py2.3.egg': '162d8357f1aff2b0349c6c247ee62987',
-    'setuptools-0.6a10-py2.4.egg': '803a2d8db501c1ac3b5b6fb4e907f788',
-    'setuptools-0.6a11-py2.3.egg': 'd12bf8e13aaeb25c91350c8d77f01a71',
-    'setuptools-0.6a11-py2.4.egg': 'a95d5bc7a070aa1028bc4dcb5270b133',
     'setuptools-0.6b1-py2.3.egg': '8822caf901250d848b996b7f25c6e6ca',
     'setuptools-0.6b1-py2.4.egg': 'b79a8a403e4502fbb85ee3f1941735cb',
+    'setuptools-0.6b2-py2.3.egg': '5657759d8a6d8fc44070a9d07272d99b',
+    'setuptools-0.6b2-py2.4.egg': '4996a8d169d2be661fa32a6e52e4f82a',
+    'setuptools-0.6b3-py2.3.egg': 'bb31c0fc7399a63579975cad9f5a0618',
+    'setuptools-0.6b3-py2.4.egg': '38a8c6b3d6ecd22247f179f7da669fac',
+    'setuptools-0.6b4-py2.3.egg': '62045a24ed4e1ebc77fe039aa4e6f7e5',
+    'setuptools-0.6b4-py2.4.egg': '4cb2a185d228dacffb2d17f103b3b1c4',
+    'setuptools-0.6c1-py2.3.egg': 'b3f2b5539d65cb7f74ad79127f1a908c',
+    'setuptools-0.6c1-py2.4.egg': 'b45adeda0667d2d2ffe14009364f2a4b',
 }
 
 import sys, os
@@ -141,7 +145,7 @@ def main(argv, version=DEFAULT_VERSION):
             egg = download_setuptools(version, to_dir=tmpdir, delay=0)
             sys.path.insert(0,egg)
             from setuptools.command.easy_install import main
-            main(list(argv)+[egg])
+            return main(list(argv)+[egg])   # we're done here
         finally:
             shutil.rmtree(tmpdir)
     else:

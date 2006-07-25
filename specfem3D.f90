@@ -2248,7 +2248,8 @@
                iglob   = ibool_crust_mantle(i,j,k,ispec)
                dist_cr = xstore_crust_mantle(iglob)
                theta   = ystore_crust_mantle(iglob)
-               call attenuation_lookup_index(iregion_selected, dist_cr, theta, idoubling_crust_mantle(ispec), ell_d80, ELLIPTICITY_VAL)
+               call attenuation_lookup_index(iregion_selected, dist_cr, theta, &
+                   idoubling_crust_mantle(ispec), ell_d80, ELLIPTICITY_VAL)
                scale_factor_minus_one = factor_scale_inner_core(1,1,1,iregion_selected) - 1.
             endif
 

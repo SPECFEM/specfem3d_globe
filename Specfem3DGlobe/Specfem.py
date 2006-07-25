@@ -81,7 +81,10 @@ class Specfem(ParallelScript):
         pyspecfem3D = sys.executable # the current executable
         
         # build the solver
-        self.solver.build(self, context.kwds['srcdir'])
+        import __main__
+        from os.path import dirname
+        srcdir = dirname(__main__.__file__)
+        self.solver.build(self, srcdir)
         
         # compute the total number of processors needed
         self.nodes = self.mesher.nproc()
