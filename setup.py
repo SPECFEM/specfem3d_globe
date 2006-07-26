@@ -11,7 +11,7 @@ setup(
     packages = [ 'Specfem3DGlobe' ],
     
     install_requires = [
-    'cig >= 1.0dev-4103, < 2.0, == dev',
+    'cig >= 1.0dev-r4103, < 2.0, == dev',
     'pythia >= 0.8-1.0dev-r4100, < 0.9, == dev',
     ],
     
