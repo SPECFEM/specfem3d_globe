@@ -192,13 +192,21 @@ class Solver(Component):
         import os, shutil, tarfile
         from os.path import basename, join
         from glob import glob
+        from cig.seismo.sac import asc2sac
 
         archive = self.scratchSeismogramArchive
         
-        pattern = join(self.LOCAL_PATH, "*.sem*")
         files = []
-        for name in glob(pattern):
-            files.append(name)
+        for sem in glob(join(self.LOCAL_PATH, "*.sem")):
+            files.append(sem)
+            sac = sem + ".sac"
+            asc2sac(sem, sac)
+            files.append(sac)
+        for semd in glob(join(self.LOCAL_PATH, "*.semd")):
+            files.append(semd)
+            sac = semd + ".sac"
+            asc2sac(semd, sac)
+            files.append(sac)
         if len(files) == 0:
             # no seismograms on this node
             archive.close()
