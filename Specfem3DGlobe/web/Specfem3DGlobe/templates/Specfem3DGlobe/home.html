@@ -1,18 +1,40 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+<title>SPECFEM3D Solver</title>
+</head>
+<body>
+<p>
+<img src="http://www.gps.caltech.edu/research/jtromp/research/graphics/mpi_slicesThumbnail.gif">
+Hello from the SPECFEM3D Solver! <hr>
+<br>
+Previous Simulations:<br>
+{% if prev_simulations %}
+    {% for sim in prev_simulations %}
+        <a href="/specfem3dglobe/detail/{{ sim.id }}/">DATE: {{ sim.date }}, STATUS: {{ sim.get_status_display }}</a>&nbsp;&nbsp; 
+        <a href="/specfem3dglobe/delete/{{ sim.id }}/">delete</a><br>
+    {% endfor %}
+{% else %}
+    - There is no previous simulation. <br>
+{% endif %}
 
-{% extends "Specfem3DGlobe/base.html" %}
+<form action="/specfem3dglobe/setparam/" method="POST">
 
-{% block content %}
+Enter CMT Solution:<br>
+<textarea rows=14 cols=80 name="simulation_cmt_solution"></textarea>
 
-<h1>Home</h1>
+<p>Simulation type:
+<input type="radio", name="mesh_type", value="global" CHECKED>Global
+<input type="radio", name="mesh_type", value="regional">Regional
 
-<ul>
+<p>
+<input type="radio", name="simulation_type", value="forward" CHECKED>Forward
+<input type="radio", name="simulation_type", value="adjoint">Adjoint
+<input type="radio", name="simulation_type", value="both">Both
 
-    <li><a href="mesher/">Mesher</a>
+<p><input type="submit" value="Next">
 
-    <li><a href="model/">Model</a>
+</form>
 
-    <li><a href="solver/">Solver</a>
-
-</ul>
-
-{% endblock %}
+</body>
+</html>
