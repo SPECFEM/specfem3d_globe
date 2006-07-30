@@ -1,23 +1,23 @@
 
 
 from django.conf.urls.defaults import *
-from models import  Mesher, Model, Solver
+from models import  Mesh, Model, Simulation
 
-# Mesher
+# Mesh
 
-mesher_list_detail_args = {
-    'queryset': Mesher.objects.all(),
+mesh_list_detail_args = {
+    'queryset': Mesh.objects.all(),
     'allow_empty': True,
 }
 
-mesher_create_update_args = {
-    'model': Mesher,
-    'post_save_redirect': '/specfem3dglobe/mesher/',
+mesh_create_update_args = {
+    'model': Mesh,
+    'post_save_redirect': '/specfem3dglobe/mesh/',
     }
 
-mesher_delete_args = {
-    'model': Mesher,
-    'post_delete_redirect': '/specfem3dglobe/mesher/',
+mesh_delete_args = {
+    'model': Mesh,
+    'post_delete_redirect': '/specfem3dglobe/mesh/',
     }
 
 
@@ -41,21 +41,21 @@ model_delete_args = {
 
 
 
-# Solver
+# Simulation
 
-solver_list_detail_args = {
-    'queryset': Solver.objects.all(),
+simulation_list_detail_args = {
+    'queryset': Simulation.objects.all(),
     'allow_empty': True,
 }
 
-solver_create_update_args = {
-    'model': Solver,
-    'post_save_redirect': '/specfem3dglobe/solver/',
+simulation_create_update_args = {
+    'model': Simulation,
+    'post_save_redirect': '/specfem3dglobe/simulation/',
     }
 
-solver_delete_args = {
-    'model': Solver,
-    'post_delete_redirect': '/specfem3dglobe/solver/',
+simulation_delete_args = {
+    'model': Simulation,
+    'post_delete_redirect': '/specfem3dglobe/simulation/',
     }
 
 
@@ -63,12 +63,16 @@ solver_delete_args = {
 # URLs
 
 urlpatterns = patterns('',
-    (r'^$', 'django.views.generic.simple.direct_to_template', { 'template': 'Specfem3DGlobe/home.html' }),
+    (r'^$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.index'),
+    (r'^setparam/$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.setparam'),
+    (r'^detail/(?P<sim_id>\d+)/$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.detail'),
+    (r'^delete/(?P<sim_id>\d+)/$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.delete'),
+    (r'^create_simulation/$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.create_simulation'),
 
-    (r'^mesher/$', 'django.views.generic.list_detail.object_list', mesher_list_detail_args),
-    (r'^mesher/create/$', 'django.views.generic.create_update.create_object', mesher_create_update_args),
-    (r'^mesher/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', mesher_create_update_args),
-    (r'^mesher/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', mesher_delete_args),
+    (r'^mesh/$', 'django.views.generic.list_detail.object_list', mesh_list_detail_args),
+    (r'^mesh/create/$', 'django.views.generic.create_update.create_object', mesh_create_update_args),
+    (r'^mesh/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', mesh_create_update_args),
+    (r'^mesh/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', mesh_delete_args),
 
 
     (r'^model/$', 'django.views.generic.list_detail.object_list', model_list_detail_args),
@@ -77,10 +81,10 @@ urlpatterns = patterns('',
     (r'^model/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', model_delete_args),
 
 
-    (r'^solver/$', 'django.views.generic.list_detail.object_list', solver_list_detail_args),
-    (r'^solver/create/$', 'django.views.generic.create_update.create_object', solver_create_update_args),
-    (r'^solver/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', solver_create_update_args),
-    (r'^solver/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', solver_delete_args),
+    (r'^simulation/$', 'django.views.generic.list_detail.object_list', simulation_list_detail_args),
+    (r'^simulation/create/$', 'django.views.generic.create_update.create_object', simulation_create_update_args),
+    (r'^simulation/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', simulation_create_update_args),
+    (r'^simulation/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', simulation_delete_args),
 
 
 )
