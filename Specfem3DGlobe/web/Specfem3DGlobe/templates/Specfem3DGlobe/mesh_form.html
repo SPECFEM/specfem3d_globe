@@ -19,18 +19,6 @@
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_result_file">result-file:</label></td>
-            <td valign="top">{{ form.result_file }}</td>
-            <td valign="top">{% if form.result_file.errors %}<span class=error>{{ form.result_file.errors|join:", " }}</span>{% endif %}</td>
-        </tr>
-
-        <tr>
-            <td align="right" valign="top">{{ form.dry }}</td>
-            <td valign="top"><label for="id_dry">dry</label></td>
-            <td valign="top">{% if form.dry.errors %}<span class=error>{{ form.dry.errors|join:", " }}</span>{% endif %}</td>
-        </tr>
-
-        <tr>
             <td align="right" valign="top"><label for="id_center_longitude">center-longitude:</label></td>
             <td valign="top">{{ form.center_longitude }}</td>
             <td valign="top">{% if form.center_longitude.errors %}<span class=error>{{ form.center_longitude.errors|join:", " }}</span>{% endif %}</td>

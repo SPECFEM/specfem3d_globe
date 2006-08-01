@@ -24,6 +24,12 @@ STATUS_TYPES = (
     (5, 'done'),
 )
     
+SIMULATION_TYPES = (
+    (1, 'forward'),
+    (2, 'adjoint'),
+    (3, 'both forward and adjoint'),
+)
+
 class UserInfo(models.Model):
     userid = models.CharField(maxlength=100, core=True)
     lastname = models.CharField(maxlength=100, core=True)
@@ -44,11 +50,7 @@ class Mesh(models.Model):
     nex_xi = models.IntegerField(core=True)
     nex_eta = models.IntegerField(core=True)
     save_files = models.BooleanField(core=True)
-    result_file = models.CharField(maxlength=100, core=True, null=True)
     type = models.IntegerField(choices=MESH_TYPES, core=True)
-
-    # what should be the default value for this?
-    dry = models.BooleanField(core=True, default=False)
 
     # this is for regional only (when type == 2), and when global, all these values are null
     angular_width_eta = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
@@ -89,38 +91,18 @@ class Simulation(models.Model):
 
     # this is the solution file path
     cmt_solution = models.CharField(maxlength=255, core=True, null=True)
-    # header file path
-    header_file = models.CharField(maxlength=255, core=True, null=True)
-    # scratch_seismogram_archive
-    scratch_seismogram_archive = models.CharField(maxlength=255, core=True, null=True)
-    # seismogram_archive
-    seismogram_archive = models.CharField(maxlength=255, core=True, null=True)
     # stations
     stations = models.CharField(maxlength=255, core=True, null=True)
-    # output_file
-    output_file = models.CharField(maxlength=255, core=True, null=True)
 
     # need to find out what the fields are for...
     # hdur_movie:
     hdur_movie = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
     # absorbing_conditions: set to true for regional, and false for global
     absorbing_conditions = models.BooleanField(core=True)
-    # number_of_this_run:
-    number_of_this_run = models.IntegerField(core=True, default=1)
-    # number_of_runs: choose 1 for a run without restart
-    number_of_runs = models.IntegerField(core=True, default=1)
     # ntstep_between_frames: typical value is 100 time steps
     ntstep_between_frames = models.IntegerField(core=True, default=100)
     # simulation_type:
-    simulation_type = models.CharField(maxlength=255, core=True, null=True)
-    # dry:
-    dry = models.BooleanField(core=True, default=False)
-    # ntstep_between_output_seismos:
-    ntstep_between_output_seismos = models.IntegerField(core=True, default=100)
-    # ntstep_between_read_adjsrc:
-    ntstep_between_read_adjsrc = models.IntegerField(core=True, default=100)
-    # ntstep_between_output_info:
-    ntstep_between_output_info = models.IntegerField(core=True, default=100)
+    simulation_type = models.IntegerField(choices=SIMULATION_TYPES, default=1)
 
     class Admin:
         pass
