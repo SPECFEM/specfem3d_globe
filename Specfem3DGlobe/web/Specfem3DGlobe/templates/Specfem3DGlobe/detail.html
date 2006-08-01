@@ -1,0 +1,181 @@
+
+{% extends "Specfem3DGlobe/base.html" %}
+
+{% block content %}
+
+<h1>Home</h1>
+
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+<title>SPECFEM3D Solver</title>
+</head>
+<body>
+<img src="http://www.gps.caltech.edu/research/jtromp/research/graphics/mpi_slicesThumbnail.gif">
+{% ifequal sim.mesh.get_type_display 'regional' %}
+<h1>Regional Simulation</h1>
+{% else %}
+<h1>Global Simulation</h1>
+{% endifequal %}
+
+MESH TYPE: {{ sim.mesh.get_type_display }}<br>
+SIMULATION TYPE: {{ sim.simulation_type }}<br>
+CMT SOLUTION: {{ sim.cmt_solution }}<br><br>
+<table border=1>
+    <tr>
+        <td width=10>&nbsp;</td>
+        <td>
+{% ifequal sim.mesh.get_type_display 'regional' %}
+			<table border=1>
+				<tr>
+					<td width="351" colspan="3">REGION</td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Angular Width Eta</td>
+					<td width="120">{{ sim.mesh.angular_width_eta }} * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Angular Width Xi</td>
+					<td width="120">{{ sim.mesh.angular_width_xi }} * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Center Latitude</td>
+					<td width="120">{{ sim.mesh.center_latitude }} * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Center Longitude</td>
+					<td width="120">{{ sim.mesh.center_longitude }} * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Gamma Rotation Azimuth</td>
+					<td width="120">{{ sim.mesh.gamma_rotation_azimuth }} * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+			</table>
+{% endifequal %}
+            <table border=1>
+                <tr>
+                    <td width="351" colspan="3">MESH</td>
+                </tr>
+                <tr>
+                    <td width="196">&nbsp;&nbsp;Number of Chunks</td>
+                    <td width="120">&nbsp;&nbsp;{{ sim.mesh.nchunks }}</td>
+                    <td width="35">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td width="196">&nbsp;&nbsp;Nproc Xi</td>
+                    <td width="120">&nbsp;&nbsp;{{ sim.mesh.nproc_xi }}</td>
+                    <td width="35">
+                        <INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="196">&nbsp;&nbsp;Nproc&nbsp;Eta</td>
+                    <td width="120">&nbsp;&nbsp;{{ sim.mesh.nproc_eta }}</td>
+                    <td width="35"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="196">&nbsp;&nbsp;Nex Xi</td>
+                    <td width="120">&nbsp;&nbsp;{{ sim.mesh.nex_xi }}</td>
+                    <td width="35"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="196">&nbsp;&nbsp;Nex Eta</td>
+                    <td width="120">&nbsp;&nbsp;{{ sim.mesh.nex_eta }}</td>
+                    <td width="35"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+            </table>
+
+            <table border=1 width=400>
+                <tr>
+                <td width="400" colspan="3">MODEL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    {{ sim.model.get_type_display }}
+                    &nbsp;&nbsp;<font face="Arial"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0>
+                </td>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="205">&nbsp;Oceans: {{ sim.model.oceans }}</td>
+                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="205">&nbsp;Ellipticity: {{ sim.model.ellipticity }}</td>
+                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="205">&nbsp;Topography: {{ sim.model.topography }}</td>
+                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="205">&nbsp;Gravity: {{ sim.model.gravity }}</td>
+                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="205">&nbsp;Rotations: {{ sim.model.rotation }}</td>
+                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="205">&nbsp;Attenuation: {{ sim.model.attenuation }}</td>
+                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+            </table>
+
+            <table border=1>
+                <tr>
+                    <td width="441" colspan="3">OUTPUT FORMAT</td>
+                </tr>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="249" height="24">&nbsp;Record Length: {{ sim.record_length }} minutes </td>
+                    <td width="22" height="24"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="249">&nbsp;Receiver at depth: {{ sim.receivers_can_be_buried }}</td>
+                    <td width="22"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="249">&nbsp;Print Source Time Function: {{ sim.print_source_time_function }}</td>
+                    <td width="22"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td width="32">&nbsp;</td>
+                    <td width="249">Save Mesh Files: {{ sim.mesh.save_files }}</td>
+                    <td width="22"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <table border=1 cellspacing="0" cellpadding="2">
+                            <tr>
+                                <td width="444" colspan=4>&nbsp;Movie</td>
+                            </tr>
+                            <tr>
+                                <td width="94">&nbsp;</td>
+                                <td width="113">&nbsp;Surface: {{ sim.movie_surface }}</td>
+                                <td width="211" rowspan="2"><i>timestep</i>: {{ sim.ntstep_between_frames }}</td>
+                                <td width="30" rowspan="2"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                            </tr>
+                            <tr>
+                                <td width="94">&nbsp;</td>
+                                <td width="113">&nbsp;Volume: {{ sim.movie_volume }}</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
+
+{% endblock %}
