@@ -3,7 +3,7 @@
 from django.shortcuts import render_to_response, get_object_or_404
 from datetime import datetime
 from django.http import HttpResponseRedirect
-from mysite.Specfem3DGlobe.web.Specfem3DGlobe.models import Mesh, Model, Simulation, UserInfo
+from Specfem3DGlobe.web.Specfem3DGlobe.models import Mesh, Model, Simulation, UserInfo
 
 def create_test_user():
     _userid = 'test_user'
