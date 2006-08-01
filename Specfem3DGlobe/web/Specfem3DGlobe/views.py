@@ -80,11 +80,9 @@ def create_simulation(request):
     _nex_xi = request.POST['mesh_nex_xi']
     _nex_eta = request.POST['mesh_nex_eta']
     _save_files = getres_checkbox(request,'mesh_save_files')
-    _result_file = ''
     _type = 1
     if request.POST['mesh_type'] == 'regional':
         _type = 2
-    _dry = False
     _angular_width_eta = 0.0
     _angular_width_xi = 0.0
     _center_latitude = 0.0
@@ -104,9 +102,7 @@ def create_simulation(request):
                     nex_xi                          = _nex_xi,
                     nex_eta                         = _nex_eta,
                     save_files                      = _save_files,
-                    result_file                     = _result_file,
                     type                            = _type,
-                    dry                             = _dry,
                     angular_width_eta               = _angular_width_eta,
                     angular_width_xi                = _angular_width_xi,
                     center_latitude                 = _center_latitude,
@@ -148,22 +144,13 @@ def create_simulation(request):
     _movie_surface = getres_checkbox(request,'simulation_movie_surface')
     _movie_volume = getres_checkbox(request,'simulation_movie_volume')
     _cmt_solution = request.POST['simulation_cmt_solution']
-    _header_file = ''
-    _scratch_seismogram_archive = ''
     _stations = ''
-    _output_file = ''
     _hdur_movie = ''
     _absorbing_conditions = False
     if request.POST['mesh_type'] == 'regional':
         _absorbing_conditions = True
-    _number_of_this_run = 1
-    _number_of_runs = 1
     _ntstep_between_frames = 100
     _simulation_type = request.POST['simulation_type']
-    _dry = False
-    _ntstep_between_output_seismos = 100
-    _ntstep_between_read_adjsrc = 100
-    _ntstep_between_output_info = 100
     try:
         user = UserInfo.objects.get(userid='test_user')
     except UserInfo.DoesNotExist:
@@ -183,20 +170,11 @@ def create_simulation(request):
                     movie_surface                   = _movie_surface,
                     movie_volume                    = _movie_volume,
                     cmt_solution                    = _cmt_solution,
-                    header_file                     = _header_file,
-                    scratch_seismogram_archive      = _scratch_seismogram_archive,
                     stations                        = _stations,
-                    output_file                     = _output_file,
                     hdur_movie                      = _hdur_movie,
                     absorbing_conditions            = _absorbing_conditions,
-                    number_of_this_run              = _number_of_this_run,
-                    number_of_runs                  = _number_of_runs,
                     ntstep_between_frames           = _ntstep_between_frames,
                     simulation_type                 = _simulation_type,
-                    dry                             = _dry,
-                    ntstep_between_output_seismos   = _ntstep_between_output_seismos,
-                    ntstep_between_read_adjsrc      = _ntstep_between_read_adjsrc,
-                    ntstep_between_output_info      = _ntstep_between_output_info
                 )
     simulation.save()
 
