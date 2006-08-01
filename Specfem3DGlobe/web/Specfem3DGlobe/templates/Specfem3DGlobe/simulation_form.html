@@ -1,0 +1,115 @@
+
+{% extends "Specfem3DGlobe/base.html" %}
+
+{% block content %}
+
+<h1>Solver</h1>
+
+{% if form.has_errors %}
+<h2>Please correct the following error{{ form.error_dict|pluralize }}:</h2>
+{% endif %}
+
+<form method="post" action=".">
+    <table border="0">
+
+
+        <tr>
+            <td align="right" valign="top">{{ form.receivers_can_be_buried }}</td>
+            <td valign="top"><label for="id_receivers_can_be_buried">receivers-can-be-buried</label></td>
+            <td valign="top">{% if form.receivers_can_be_buried.errors %}<span class=error>{{ form.receivers_can_be_buried.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align=right valign="top"><label for="id_hdur_movie">hdur-movie:</label></td>
+            <td valign="top">{{ form.hdur_movie }}</td>
+            <td valign="top">{% if form.hdur_movie.errors %}<span class=error>{{ form.hdur_movie.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align=right valign="top"><label for="id_ntstep_between_read_adjsrc">ntstep-between-read-adjsrc:</label></td>
+            <td valign="top">{{ form.ntstep_between_read_adjsrc }}</td>
+            <td valign="top">{% if form.ntstep_between_read_adjsrc.errors %}<span class=error>{{ form.ntstep_between_read_adjsrc.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.movie_volume }}</td>
+            <td valign="top"><label for="id_movie_volume">movie-volume</label></td>
+            <td valign="top">{% if form.movie_volume.errors %}<span class=error>{{ form.movie_volume.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align=right valign="top"><label for="id_record_length">record-length:</label></td>
+            <td valign="top">{{ form.record_length }}</td>
+            <td valign="top">{% if form.record_length.errors %}<span class=error>{{ form.record_length.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.save_forward }}</td>
+            <td valign="top"><label for="id_save_forward">save-forward</label></td>
+            <td valign="top">{% if form.save_forward.errors %}<span class=error>{{ form.save_forward.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.absorbing_conditions }}</td>
+            <td valign="top"><label for="id_absorbing_conditions">absorbing-conditions</label></td>
+            <td valign="top">{% if form.absorbing_conditions.errors %}<span class=error>{{ form.absorbing_conditions.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align=right valign="top"><label for="id_number_of_this_run">number-of-this-run:</label></td>
+            <td valign="top">{{ form.number_of_this_run }}</td>
+            <td valign="top">{% if form.number_of_this_run.errors %}<span class=error>{{ form.number_of_this_run.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align=right valign="top"><label for="id_number_of_runs">number-of-runs:</label></td>
+            <td valign="top">{{ form.number_of_runs }}</td>
+            <td valign="top">{% if form.number_of_runs.errors %}<span class=error>{{ form.number_of_runs.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align=right valign="top"><label for="id_ntstep_between_frames">ntstep-between-frames:</label></td>
+            <td valign="top">{{ form.ntstep_between_frames }}</td>
+            <td valign="top">{% if form.ntstep_between_frames.errors %}<span class=error>{{ form.ntstep_between_frames.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align=right valign="top"><label for="id_simulation_type">simulation-type:</label></td>
+            <td valign="top">{{ form.simulation_type }}</td>
+            <td valign="top">{% if form.simulation_type.errors %}<span class=error>{{ form.simulation_type.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.movie_surface }}</td>
+            <td valign="top"><label for="id_movie_surface">movie-surface</label></td>
+            <td valign="top">{% if form.movie_surface.errors %}<span class=error>{{ form.movie_surface.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.dry }}</td>
+            <td valign="top"><label for="id_dry">dry</label></td>
+            <td valign="top">{% if form.dry.errors %}<span class=error>{{ form.dry.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align=right valign="top"><label for="id_ntstep_between_output_seismos">ntstep-between-output-seismos:</label></td>
+            <td valign="top">{{ form.ntstep_between_output_seismos }}</td>
+            <td valign="top">{% if form.ntstep_between_output_seismos.errors %}<span class=error>{{ form.ntstep_between_output_seismos.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top">{{ form.print_source_time_function }}</td>
+            <td valign="top"><label for="id_print_source_time_function">print-source-time-function</label></td>
+            <td valign="top">{% if form.print_source_time_function.errors %}<span class=error>{{ form.print_source_time_function.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align=right valign="top"><label for="id_ntstep_between_output_info">ntstep-between-output-info:</label></td>
+            <td valign="top">{{ form.ntstep_between_output_info }}</td>
+            <td valign="top">{% if form.ntstep_between_output_info.errors %}<span class=error>{{ form.ntstep_between_output_info.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+    </table>
+    <p><input type="submit" value="Save" />
+</form>
+{% endblock %}

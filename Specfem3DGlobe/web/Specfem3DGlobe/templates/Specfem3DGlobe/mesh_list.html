@@ -1,0 +1,54 @@
+
+{% extends "Specfem3DGlobe/base.html" %}
+
+{% block content %}
+
+<h1>Mesh List</h1>
+
+{% if object_list %}
+    <table border="0">
+        <tr>
+            <th align="left" valign="top">id</th>
+            <th align="left" valign="top">actions</th>
+            <th align="left" valign="top">dry</th>
+            <th align="left" valign="top">center longitude</th>
+            <th align="left" valign="top">angular width eta</th>
+            <th align="left" valign="top">nex eta</th>
+            <th align="left" valign="top">center latitude</th>
+            <th align="left" valign="top">angular width xi</th>
+            <th align="left" valign="top">nproc eta</th>
+            <th align="left" valign="top">gamma rotation azimuth</th>
+            <th align="left" valign="top">nchunks</th>
+            <th align="left" valign="top">nproc xi</th>
+            <th align="left" valign="top">save files</th>
+            <th align="left" valign="top">nex xi</th>
+
+        </tr>
+
+        {% for object in object_list %}
+        <tr>
+            <th valign="top">{{ object.id }}</th>
+            <td valign="top"><a href="{{ object.id }}/">Edit</a> <a href="{{ object.id }}/delete/">Delete</a></td>
+            <td valign="top">{{ object.dry }}</td>
+            <td valign="top">{{ object.center_longitude }}</td>
+            <td valign="top">{{ object.angular_width_eta }}</td>
+            <td valign="top">{{ object.nex_eta }}</td>
+            <td valign="top">{{ object.center_latitude }}</td>
+            <td valign="top">{{ object.angular_width_xi }}</td>
+            <td valign="top">{{ object.nproc_eta }}</td>
+            <td valign="top">{{ object.gamma_rotation_azimuth }}</td>
+            <td valign="top">{{ object.nchunks }}</td>
+            <td valign="top">{{ object.nproc_xi }}</td>
+            <td valign="top">{{ object.save_files }}</td>
+            <td valign="top">{{ object.nex_xi }}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+{% else %}
+    <p>You have no meshs.</p>
+{% endif %}
+
+<p><a href="create/">Create mesh</a>
+
+{% endblock %}
