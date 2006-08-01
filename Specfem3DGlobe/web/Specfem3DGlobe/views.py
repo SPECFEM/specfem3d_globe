@@ -46,9 +46,13 @@ def index(request):
                              {'prev_simulations': prev_simulations})
 
 def setparam(request):
-    return render_to_response('Specfem3DGlobe/setparam.html', 
+    mesh_type = request.POST['mesh_type']
+    if mesh_type == 'regional':
+        template = 'Specfem3DGlobe/simulation_form_regional.html'
+    else:
+        template = 'Specfem3DGlobe/simulation_form_global.html'
+    return render_to_response(template, 
                              {'simulation_cmt_solution': request.POST['simulation_cmt_solution'],
-                              'mesh_type': request.POST['mesh_type'],
                               'simulation_type': request.POST['simulation_type']})
 
 def detail(request, sim_id):

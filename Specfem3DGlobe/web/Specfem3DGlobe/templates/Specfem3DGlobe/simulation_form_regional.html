@@ -1,0 +1,44 @@
+
+{% extends "Specfem3DGlobe/simulation_base.html" %}
+
+{% block heading %}Regional Simulation{% endblock %}
+{% block mesh_type %}regional{% endblock %}
+
+                {% block mesh %}
+				<tr>
+					<td width="196">&nbsp;&nbsp;Angular Width Eta</td>
+					<td width="120"><input type="text" name="mesh_angular_width_eta" value="90.0" size="5"> * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Angular Width Xi</td>
+					<td width="120"><input type="text" name="mesh_angular_width_xi" value="90.0" size="5"> * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Center Latitude</td>
+					<td width="120"><input type="text" name="mesh_center_latitude" value="0.0" size="5"> * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Center Longitude</td>
+					<td width="120"><input type="text" name="mesh_center_longitude" value="0.0" size="5"> * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+				<tr>
+					<td width="196">&nbsp;&nbsp;Gamma Rotation Azimuth</td>
+					<td width="120"><input type="text" name="mesh_gamma_rotation_azimuth" value="0.0" size="5"> * deg </td>
+					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+				</tr>
+                <tr>
+                    <td width="196">&nbsp;&nbsp;Number of Chunks</td>
+                    <td width="120">
+                        <select name="mesh_nchunks" size="1">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                    </td>
+                    <td width="35">&nbsp;</td>
+                </tr>
+                {% endblock %}
