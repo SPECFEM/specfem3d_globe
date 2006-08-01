@@ -2,15 +2,27 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-    <link rel="stylesheet" href="style.css" />
+    <style type="text/css">
+        .error { color: red; }
+        #sidebar { width: 200px; height: 400px; border-right: thick double grey }
+        #content { position: absolute; top:  0px; left: 250px; }
+    </STYLE>
     <title>{% block title %}Specfem3DGlobe{% endblock %}</title>
 </head>
 
 <body>
     <div id="sidebar">
         {% block sidebar %}
-        <ul>
+        <center><tt>S P E C F E M  3 D<br>G L O B E</tt></center>
+        <p><img src="http://www.gps.caltech.edu/research/jtromp/research/graphics/mpi_slicesThumbnail.gif">
+        
+        <p><ul>
             <li><a href="/specfem3dglobe/">Home</a></li>
+        </ul>
+        <ul>
+            <li><a href="/specfem3dglobe/simulations/">My Simulations</a></li>
+            <li><a href="/specfem3dglobe/meshes/">My Meshes</a></li>
+            <li><a href="/specfem3dglobe/models/">My Models</a></li>
         </ul>
         {% endblock %}
     </div>

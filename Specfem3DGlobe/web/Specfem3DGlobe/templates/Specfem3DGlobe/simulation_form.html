@@ -3,10 +3,15 @@
 
 {% block content %}
 
-<h1>Solver</h1>
+<h1>Simulation</h1>
 
 {% if form.has_errors %}
-<h2>Please correct the following error{{ form.error_dict|pluralize }}:</h2>
+<p><b class=error>Please correct the following error{{ form.error_dict|pluralize }}:</b>
+<ul>
+    {% for e in form.error_dict.iteritems %}
+    <li>Field "{{ e.0 }}": {{ e.1|join:", " }}</li>
+    {% endfor %}
+</ul>
 {% endif %}
 
 <form method="post" action=".">

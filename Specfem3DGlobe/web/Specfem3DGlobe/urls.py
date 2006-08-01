@@ -12,12 +12,12 @@ mesh_list_detail_args = {
 
 mesh_create_update_args = {
     'model': Mesh,
-    'post_save_redirect': '/specfem3dglobe/mesh/',
+    'post_save_redirect': '/specfem3dglobe/meshes/',
     }
 
 mesh_delete_args = {
     'model': Mesh,
-    'post_delete_redirect': '/specfem3dglobe/mesh/',
+    'post_delete_redirect': '/specfem3dglobe/meshes/',
     }
 
 
@@ -31,12 +31,12 @@ model_list_detail_args = {
 
 model_create_update_args = {
     'model': Model,
-    'post_save_redirect': '/specfem3dglobe/model/',
+    'post_save_redirect': '/specfem3dglobe/models/',
     }
 
 model_delete_args = {
     'model': Model,
-    'post_delete_redirect': '/specfem3dglobe/model/',
+    'post_delete_redirect': '/specfem3dglobe/models/',
     }
 
 
@@ -50,12 +50,12 @@ simulation_list_detail_args = {
 
 simulation_create_update_args = {
     'model': Simulation,
-    'post_save_redirect': '/specfem3dglobe/simulation/',
+    'post_save_redirect': '/specfem3dglobe/simulations/',
     }
 
 simulation_delete_args = {
     'model': Simulation,
-    'post_delete_redirect': '/specfem3dglobe/simulation/',
+    'post_delete_redirect': '/specfem3dglobe/simulations/',
     }
 
 
@@ -63,28 +63,28 @@ simulation_delete_args = {
 # URLs
 
 urlpatterns = patterns('',
-    (r'^$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.index'),
-    (r'^setparam/$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.setparam'),
-    (r'^detail/(?P<sim_id>\d+)/$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.detail'),
-    (r'^delete/(?P<sim_id>\d+)/$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.delete'),
-    (r'^create_simulation/$', 'mysite.Specfem3DGlobe.web.Specfem3DGlobe.views.create_simulation'),
+    (r'^$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.index'),
+    (r'^setparam/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.setparam'),
+    (r'^detail/(?P<sim_id>\d+)/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.detail'),
+    (r'^delete/(?P<sim_id>\d+)/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.delete'),
+    (r'^create_simulation/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.create_simulation'),
 
-    (r'^mesh/$', 'django.views.generic.list_detail.object_list', mesh_list_detail_args),
-    (r'^mesh/create/$', 'django.views.generic.create_update.create_object', mesh_create_update_args),
-    (r'^mesh/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', mesh_create_update_args),
-    (r'^mesh/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', mesh_delete_args),
-
-
-    (r'^model/$', 'django.views.generic.list_detail.object_list', model_list_detail_args),
-    (r'^model/create/$', 'django.views.generic.create_update.create_object', model_create_update_args),
-    (r'^model/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', model_create_update_args),
-    (r'^model/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', model_delete_args),
+    (r'^meshes/$', 'django.views.generic.list_detail.object_list', mesh_list_detail_args),
+    (r'^meshes/create/$', 'django.views.generic.create_update.create_object', mesh_create_update_args),
+    (r'^meshes/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', mesh_create_update_args),
+    (r'^meshes/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', mesh_delete_args),
 
 
-    (r'^simulation/$', 'django.views.generic.list_detail.object_list', simulation_list_detail_args),
-    (r'^simulation/create/$', 'django.views.generic.create_update.create_object', simulation_create_update_args),
-    (r'^simulation/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', simulation_create_update_args),
-    (r'^simulation/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', simulation_delete_args),
+    (r'^models/$', 'django.views.generic.list_detail.object_list', model_list_detail_args),
+    (r'^models/create/$', 'django.views.generic.create_update.create_object', model_create_update_args),
+    (r'^models/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', model_create_update_args),
+    (r'^models/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', model_delete_args),
+
+
+    (r'^simulations/$', 'django.views.generic.list_detail.object_list', simulation_list_detail_args),
+    (r'^simulations/create/$', 'django.views.generic.create_update.create_object', simulation_create_update_args),
+    (r'^simulations/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', simulation_create_update_args),
+    (r'^simulations/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', simulation_delete_args),
 
 
 )

@@ -3,15 +3,6 @@
 
 {% block content %}
 
-<h1>Home</h1>
-
-<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
-<html>
-<head>
-<title>SPECFEM3D Solver</title>
-</head>
-<body>
-<img src="http://www.gps.caltech.edu/research/jtromp/research/graphics/mpi_slicesThumbnail.gif">
 {% ifequal sim.mesh.get_type_display 'regional' %}
 <h1>Regional Simulation</h1>
 {% else %}
@@ -175,7 +166,5 @@ CMT SOLUTION: {{ sim.cmt_solution }}<br><br>
         </td>
     </tr>
 </table>
-</body>
-</html>
 
 {% endblock %}

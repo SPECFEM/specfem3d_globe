@@ -6,12 +6,17 @@
 <h1>Model</h1>
 
 {% if form.has_errors %}
-<h2>Please correct the following error{{ form.error_dict|pluralize }}:</h2>
+<p><b class=error>Please correct the following error{{ form.error_dict|pluralize }}:</b>
 {% endif %}
 
 <form method="post" action=".">
     <table border="0">
 
+        <tr>
+            <td align="right" valign="top"><label for="id_type">type:</label></td>
+            <td valign="top">{{ form.type }}</td>
+            <td valign="top">{% if form.type.errors %}<span class=error>{{ form.type.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
 
         <tr>
             <td align="right" valign="top">{{ form.oceans }}</td>
