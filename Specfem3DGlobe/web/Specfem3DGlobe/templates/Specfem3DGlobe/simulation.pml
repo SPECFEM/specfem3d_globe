@@ -13,7 +13,7 @@
 <inventory>
 
     <component name="Specfem3DGlobe">
-        <facility name="model">isotropic_prem</facility>
+        <facility name="model">{{ simulation.model.get_type_display }}</facility>
         <property name="nodes">24</property>
         <property name="scratch-dir">/scratch/${user}/${job.name}-${job.id}-${rank}</property>
 
@@ -25,27 +25,27 @@
 
         <component name="solver">
             <property name="number-of-runs">1</property>
-            <property name="record-length">2.0*minute</property>
-            <property name="save-forward">False</property>
-            <property name="ntstep-between-output-seismos">5000000</property>
+            <property name="record-length">{{ simulation.record_length }}*minute</property>
+            <property name="save-forward">{{ simulation.save_forward }}</property>
+            <property name="ntstep-between-output-seismos">{{ simulation.ntstep_between_output_seismos }}</property>
             <property name="stations">STATIONS</property>
-            <property name="absorbing-conditions">False</property>
+            <property name="absorbing-conditions">{{ simulation.absorbing_conditions }}</property>
             <property name="output-file">OUTPUT_FILES/output_solver.txt</property>
-            <property name="movie-volume">False</property>
+            <property name="movie-volume">{{ simulation.movie_volume }}</property>
             <property name="header-file">OUTPUT_FILES/values_from_mesher.h</property>
             <property name="number-of-this-run">1</property>
-            <property name="receivers-can-be-buried">False</property>
-            <property name="print-source-time-function">False</property>
+            <property name="receivers-can-be-buried">{{ simulation.receivers_can_be_buried }}</property>
+            <property name="print-source-time-function">{{ simulation.print_source_time_function }}</property>
             <property name="cmt-solution">CMTSOLUTION</property>
             <property name="seismogram-archive">OUTPUT_FILES/seismograms.tar.gz</property>
 
             <!-- here is an example -->
             <property name="ntstep-between-frames">{{ simulation.ntstep_between_frames }}</property>
 
-            <property name="ntstep-between-output-info">200</property>
-            <property name="hdur-movie">0.0</property>
-            <property name="simulation-type">forward</property>
-            <property name="movie-surface">False</property>
+            <property name="ntstep-between-output-info">{{ simulation.ntstep_between_output_info }}</property>
+            <property name="hdur-movie">{{ simulation.hdur_movie }}</property>
+            <property name="simulation-type">{{ simulation.model.get_type_display }}</property>
+            <property name="movie-surface">{{ simulation.movie_surface }}</property>
         </component>
 
 
@@ -66,28 +66,28 @@
 
 
         <component name="mesher">
-            <property name="nex-eta">64</property>
-            <property name="nchunks">6</property>
-            <property name="nex-xi">64</property>
+            <property name="nex-eta">{{ simulation.mesh.nex_eta }}</property>
+            <property name="nchunks">{{ simulation.mesh.nchunks }}</property>
+            <property name="nex-xi">{{ simulation.mesh.nex_xi }}</property>
             <property name="output-file">OUTPUT_FILES/output_mesher.txt</property>
-            <property name="center-longitude">10.0*deg</property>
-            <property name="center-latitude">40.0*deg</property>
-            <property name="angular-width-xi">90.0*deg</property>
-            <property name="nproc-eta">2</property>
-            <property name="gamma-rotation-azimuth">20.0*deg</property>
-            <property name="nproc-xi">2</property>
-            <property name="angular-width-eta">90.0*deg</property>
-            <property name="save-files">False</property>
+            <property name="center-longitude">{{ simulation.mesh.center_longitude }}*deg</property>
+            <property name="center-latitude">{{ simulation.mesh.center_latitude }}*deg</property>
+            <property name="angular-width-xi">{{ simulation.mesh.angular_width_xi }}*deg</property>
+            <property name="nproc-eta">{{ simulation.mesh.nproc_eta }}</property>
+            <property name="gamma-rotation-azimuth">{{ simulation.mesh.gamma_rotation_azimuth }}*deg</property>
+            <property name="nproc-xi">{{ simulation.mesh.nproc_xi }}</property>
+            <property name="angular-width-eta">{{ simulation.mesh.angular_width_eta }}*deg</property>
+            <property name="save-files">{{ simulation.mesh.save_files }}</property>
         </component>
 
 
         <component name="model">
-            <property name="topography">False</property>
-            <property name="oceans">False</property>
-            <property name="gravity">False</property>
-            <property name="attenuation">False</property>
-            <property name="ellipticity">False</property>
-            <property name="rotation">False</property>
+            <property name="topography">{{ simulation.model.topography }}</property>
+            <property name="oceans">{{ simulation.model.oceans }}</property>
+            <property name="gravity">{{ simulation.model.gravity }}</property>
+            <property name="attenuation">{{ simulation.model.attenuation }}</property>
+            <property name="ellipticity">{{ simulation.model.ellipticity }}</property>
+            <property name="rotation">{{ simulation.model.rotation }}</property>
         </component>
 
     </component>

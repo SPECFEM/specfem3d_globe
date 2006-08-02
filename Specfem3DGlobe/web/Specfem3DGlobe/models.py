@@ -96,11 +96,15 @@ class Simulation(models.Model):
 
     # need to find out what the fields are for...
     # hdur_movie:
-    hdur_movie = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
+    hdur_movie = models.FloatField(max_digits=19, decimal_places=10, core=True, default=1000.0)
     # absorbing_conditions: set to true for regional, and false for global
     absorbing_conditions = models.BooleanField(core=True)
     # ntstep_between_frames: typical value is 100 time steps
     ntstep_between_frames = models.IntegerField(core=True, default=100)
+    # ntstep_between_output_info: typical value is 100 time steps
+    ntstep_between_output_info = models.IntegerField(core=True, default=100)
+    # ntstep_between_output_seismos : typical value is 5000
+    ntstep_between_output_seismos = models.IntegerField(core=True, default=5000)
     # simulation_type:
     simulation_type = models.IntegerField(choices=SIMULATION_TYPES, default=1)
 

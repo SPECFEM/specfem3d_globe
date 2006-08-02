@@ -75,6 +75,8 @@ def create_simulation(request):
     #
     # Do some checking here!
 
+
+
     #
     # mesh information
     #
@@ -149,7 +151,6 @@ def create_simulation(request):
     _movie_volume = getres_checkbox(request,'simulation_movie_volume')
     _cmt_solution = request.POST['simulation_cmt_solution']
     _stations = ''
-    _hdur_movie = ''
     _absorbing_conditions = False
     if request.POST['mesh_type'] == 'regional':
         _absorbing_conditions = True
@@ -175,7 +176,6 @@ def create_simulation(request):
                     movie_volume                    = _movie_volume,
                     cmt_solution                    = _cmt_solution,
                     stations                        = _stations,
-                    hdur_movie                      = _hdur_movie,
                     absorbing_conditions            = _absorbing_conditions,
                     ntstep_between_frames           = _ntstep_between_frames,
                     simulation_type                 = _simulation_type,
@@ -191,12 +191,7 @@ def simulation_pml(request, sim_id):
     #response['Content-Disposition'] = 'attachment; filename=parameters.xml'
 
     # Get data from the database here.
-    if False:
-        # Like this, maybe?
-        simulation = get_object_or_404(Simulation, id=sim_id)
-    else:
-        # dummy value
-        simulation = { 'ntstep_between_frames': 123456 }
+    simulation = get_object_or_404(Simulation, id=sim_id)
 
     t = loader.get_template('Specfem3DGlobe/simulation.pml')
     c = Context({
