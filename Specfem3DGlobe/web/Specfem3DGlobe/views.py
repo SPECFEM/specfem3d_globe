@@ -2,7 +2,7 @@
 
 from django.shortcuts import render_to_response, get_object_or_404
 from datetime import datetime
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from Specfem3DGlobe.web.Specfem3DGlobe.models import Mesh, Model, Simulation, UserInfo
 
 def create_test_user():
@@ -183,3 +183,24 @@ def create_simulation(request):
     simulation.save()
 
     return HttpResponseRedirect('/specfem3dglobe/')
+
+def simulation_pml(request, sim_id):
+    from django.template import loader, Context
+
+    response = HttpResponse(mimetype='text/xml')
+    #response['Content-Disposition'] = 'attachment; filename=parameters.xml'
+
+    # Get data from the database here.
+    if False:
+        # Like this, maybe?
+        simulation = get_object_or_404(Simulation, id=sim_id)
+    else:
+        # dummy value
+        simulation = { 'ntstep_between_frames': 123456 }
+
+    t = loader.get_template('Specfem3DGlobe/simulation.pml')
+    c = Context({
+        'simulation': simulation,
+    })
+    response.write(t.render(c))
+    return response
