@@ -10,12 +10,13 @@
 <input type="hidden" name="simulation_type" value="{{ simulation_type }}">
 <input type="hidden" name="simulation_cmt_solution" value="{{ simulation_cmt_solution }}">
 
+            <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/{% block mesh_image %}{% endblock %}">
             <h2>Mesh</h2>
 
             <table border=0>
                 <tr>
-                    <td width="196">&nbsp;&nbsp;Nproc Xi</td>
-                    <td width="120">
+                    <td>Nproc &xi;</td>
+                    <td>
                         <select name="mesh_nproc_xi" size="1">
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -24,13 +25,13 @@
                             <option value="5">5</option>
                         </select>
                     </td>
-                    <td width="35">
+                    <td>
                         <INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0>
                     </td>
                 </tr>
                 <tr>
-                    <td width="196">&nbsp;&nbsp;Nproc&nbsp;Eta</td>
-                    <td width="120">
+                    <td>Nproc &eta;</td>
+                    <td>
                         <select name="mesh_nproc_eta" size="1">
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -39,11 +40,11 @@
                             <option value="5">5</option>
                         </select>
                     </td>
-                    <td width="35"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="196">&nbsp;&nbsp;Nex Xi</td>
-                    <td width="120">
+                    <td>Nex &xi;</td>
+                    <td>
                         <select name="mesh_nex_xi" size="1">
                             <option value="64">c = 1 --&gt; 64</option>
                             <option value="128">c = 2 --&gt; 128</option>
@@ -52,11 +53,11 @@
                             <option value="320">c = 5 --&gt; 320</option>
                         </select>
                     </td>
-                    <td width="35"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="196">&nbsp;&nbsp;Nex Eta</td>
-                    <td width="120">
+                    <td>Nex &eta;</td>
+                    <td>
                         <select name="mesh_nex_eta" size="1">
                             <option value="64">c = 1 --&gt; 64</option>
                             <option value="128">c = 2 --&gt; 128</option>
@@ -65,7 +66,7 @@
                             <option value="320">c = 5 --&gt; 320</option>
                         </select>
                     </td>
-                    <td width="35"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 {% block mesh %}
                 {% endblock %}
@@ -73,9 +74,11 @@
 
             <h2>Model</h2>
 
-            <table border=0 width=400>
+            <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/ellipticity_mesh.gif">
+
+            <table border=0>
                 <tr>
-                <td width="400" colspan="3">
+                <td colspan="3">
                     <select name="model_type" size="1">
                         <option value="1">isotropic prem</option>
                         <option value="2">transversely isotropic prem</option>
@@ -85,38 +88,38 @@
                         <option value="6">3D anisotropic</option>
                         <option value="7">3D attenuation</option>
                     </select>
-                    &nbsp;&nbsp;<font face="Arial"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0>
+                    <font face="Arial"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0>
                 </td>
                 </tr>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="205"><input type="checkbox" name="model_oceans">&nbsp;Oceans</td>
-                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td><input type="checkbox" name="model_oceans">Oceans</td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="205"><input type="checkbox" name="model_ellipticity">&nbsp;Ellipticity&nbsp;</td>
-                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td><input type="checkbox" name="model_ellipticity">Ellipticity</td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="205"><input type="checkbox" name="model_topography">&nbsp;Topography</td>
-                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td><input type="checkbox" name="model_topography">Topography</td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="205"><input type="checkbox" name="model_gravity">&nbsp;Gravity&nbsp;&nbsp;&nbsp;</td>
-                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td><input type="checkbox" name="model_gravity">Gravity</td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="205"><input type="checkbox" name="model_rotation">&nbsp;Rotations</td>
-                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td><input type="checkbox" name="model_rotation">Rotations</td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="205"><input type="checkbox" name="model_attenuation">&nbsp;Attenuation&nbsp;</td>
-                    <td width="163"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td><input type="checkbox" name="model_attenuation">Attenuation</td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
             </table>
 
@@ -124,40 +127,40 @@
 
             <table border=0>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="249" height="24">&nbsp;Record Length&nbsp;&nbsp;<input type="text" name="simulation_record_length" value="10.0" size="10" > minutes </td>
-                    <td width="22" height="24"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td>Record Length<input type="text" name="simulation_record_length" value="10.0" size="10" > minutes </td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="249"><input type="checkbox" name="simulation_receivers_can_be_buried">&nbsp;Receiver at depth</td>
-                    <td width="22"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td><input type="checkbox" name="simulation_receivers_can_be_buried">Receiver at depth</td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="249"><input type="checkbox" name="simulation_print_source_time_function">&nbsp;Print Source Time Function&nbsp;</td>
-                    <td width="22"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td><input type="checkbox" name="simulation_print_source_time_function">Print Source Time Function</td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td width="32">&nbsp;</td>
-                    <td width="249"><input type="checkbox" name="mesh_save_files">&nbsp;Save Mesh Files</td>
-                    <td width="22"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td></td>
+                    <td><input type="checkbox" name="mesh_save_files">Save Mesh Files</td>
+                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
                     <td colspan="3">
                         <table border=0 cellspacing="0" cellpadding="2">
                             <tr>
-                                <td width="444" colspan=4><h2>Movie</h2></td>
+                                <td colspan=4><h2>Movie</h2></td>
                             </tr>
                             <tr>
-                                <td width="94">&nbsp;</td>
-                                <td width="113"><input type="checkbox" name="simulation_movie_surface">&nbsp;Surface&nbsp;</td>
-                                <td width="211" rowspan="2"><i>timestep</i>&nbsp;<input type="text" name="simulation_ntstep_between_frames" value="1" size="10" ></td>
-                                <td width="30" rowspan="2"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                                <td></td>
+                                <td><input type="checkbox" name="simulation_movie_surface">Surface</td>
+                                <td rowspan="2"><i>timestep</i><input type="text" name="simulation_ntstep_between_frames" value="1" size="10" ></td>
+                                <td rowspan="2"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                             </tr>
                             <tr>
-                                <td width="94">&nbsp;</td>
-                                <td width="113"><input type="checkbox" name="simulation_movie_volume">&nbsp;Volume</td>
+                                <td></td>
+                                <td><input type="checkbox" name="simulation_movie_volume">Volume</td>
                             </tr>
                         </table>
                     </td>
