@@ -4,41 +4,42 @@
 {% block heading %}Regional Simulation{% endblock %}
 {% block mesh_type %}regional{% endblock %}
 
+                {% block mesh_image %}gridpoints.gif{% endblock %}
                 {% block mesh %}
 				<tr>
-					<td width="196">&nbsp;&nbsp;Angular Width Eta</td>
-					<td width="120"><input type="text" name="mesh_angular_width_eta" value="90.0" size="5"> * deg </td>
-					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+					<td>Angular Width &eta;</td>
+					<td><input type="text" name="mesh_angular_width_eta" value="90.0" size="5"> * deg </td>
+					<td><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
 				</tr>
 				<tr>
-					<td width="196">&nbsp;&nbsp;Angular Width Xi</td>
-					<td width="120"><input type="text" name="mesh_angular_width_xi" value="90.0" size="5"> * deg </td>
-					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+					<td>Angular Width &xi;</td>
+					<td><input type="text" name="mesh_angular_width_xi" value="90.0" size="5"> * deg </td>
+					<td><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
 				</tr>
 				<tr>
-					<td width="196">&nbsp;&nbsp;Center Latitude</td>
-					<td width="120"><input type="text" name="mesh_center_latitude" value="0.0" size="5"> * deg </td>
-					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+					<td>Center Latitude</td>
+					<td><input type="text" name="mesh_center_latitude" value="0.0" size="5"> * deg </td>
+					<td><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
 				</tr>
 				<tr>
-					<td width="196">&nbsp;&nbsp;Center Longitude</td>
-					<td width="120"><input type="text" name="mesh_center_longitude" value="0.0" size="5"> * deg </td>
-					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+					<td>Center Longitude</td>
+					<td><input type="text" name="mesh_center_longitude" value="0.0" size="5"> * deg </td>
+					<td><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
 				</tr>
 				<tr>
-					<td width="196">&nbsp;&nbsp;Gamma Rotation Azimuth</td>
-					<td width="120"><input type="text" name="mesh_gamma_rotation_azimuth" value="0.0" size="5"> * deg </td>
-					<td width="35"><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
+					<td>Gamma Rotation Azimuth</td>
+					<td><input type="text" name="mesh_gamma_rotation_azimuth" value="0.0" size="5"> * deg </td>
+					<td><input style="font-weight: bold; font-style: italic" type=button value=" i " name=0></td>
 				</tr>
                 <tr>
-                    <td width="196">&nbsp;&nbsp;Number of Chunks</td>
-                    <td width="120">
+                    <td>Number of Chunks</td>
+                    <td>
                         <select name="mesh_nchunks" size="1">
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
                         </select>
                     </td>
-                    <td width="35">&nbsp;</td>
+                    <td></td>
                 </tr>
                 {% endblock %}
