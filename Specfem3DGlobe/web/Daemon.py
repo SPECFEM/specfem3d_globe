@@ -7,8 +7,6 @@ import pysqlite2.dbapi2 as sqlite
 # database related
 #
 sDatabaseFile       = '../../data/data.db'
-sTargetFieldName    = 'id'
-sCondFieldName      = 'status'
 sTableName          = 'Specfem3DGlobe_simulation'
 nReady              = 2
 nPending            = 3
@@ -18,7 +16,7 @@ nPending            = 3
 #
 sUrlPrefix          = 'http://localhost:8000/specfem3dglobe/simulations/'
 sUrlPostfix         = '.pml'
-lsReadySimID        = []
+lsUpdateID          = []
 
 #
 # destination 
@@ -33,7 +31,7 @@ sMode               = 'w'
 #
 conn = sqlite.connect(sDatabaseFile)
 cur = conn.cursor()
-cur.execute('select %s from %s where %s = %d' % (sTargetFieldName,sTableName,sCondFieldName,nReady)) 
+cur.execute('select id from %s where status = %d' % (sTableName,nReady)) 
 
 #
 # for each sim id, get xml file and save
@@ -49,7 +47,10 @@ for id in cur:
         outfile.write(infile.read())
         infile.close()
         outfile.close()
-        cur.execute('update %s set %s = %d' % (sTableName,sCondFieldName,nPending))
+        lsUpdateID.append(id[0])
+
+for id in lsUpdateID:
+    cur.execute('update %s set status = %d where id = %d' % (sTableName,nPending,id))
 
 conn.commit()
 cur.close()
