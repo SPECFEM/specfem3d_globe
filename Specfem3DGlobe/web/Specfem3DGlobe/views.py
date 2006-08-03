@@ -2,7 +2,7 @@
 
 from django.shortcuts import render_to_response, get_object_or_404
 from datetime import datetime
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from Specfem3DGlobe.web.Specfem3DGlobe.models import Mesh, Model, Simulation, UserInfo
 
 def create_test_user():
@@ -183,6 +183,22 @@ def create_simulation(request):
     simulation.save()
 
     return HttpResponseRedirect('/specfem3dglobe/')
+
+def info(request, info_str):
+    template = None
+    if info_str == 'mesh':
+        template = 'Specfem3DGlobe/mesh_info.html'
+    elif info_str == 'model':
+        template = 'Specfem3DGlobe/model_info.html'
+    elif info_str == 'output_format':
+        template = 'Specfem3DGlobe/output_format_info.html'
+    elif info_str == 'movie':
+        template = 'Specfem3DGlobe/movie_info.html'
+
+    if template == None:
+        raise Http404
+
+    return render_to_response(template)
 
 def simulation_pml(request, sim_id):
     from django.template import loader, Context

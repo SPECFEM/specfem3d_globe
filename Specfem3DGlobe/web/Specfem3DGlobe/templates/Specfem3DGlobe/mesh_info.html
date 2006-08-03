@@ -1,0 +1,26 @@
+<html>
+<body>
+<h1>MESH</h1>
+
+<b>Number of chunks</b>:  Must be set to 1, 2, and 3 for regional simulations<br><br>
+
+<b>ANGULAR WIDTH &xi; IN DEGREES</b>:  Denotes the width of one side of the chunk in degrees.<br><br>
+
+<b>ANGULAR WIDTH &eta; IN DEGREES</b>:  Denotes the width of the second side of the chunk in degrees.  Note that this value may be different from ANGULAR WIDTH XI IN DEGREES.<br><br>
+
+<b>CENTER LATITUDE IN DEGREES</b>:  Denotes the latitude of the center of the chunk in degrees.  <br><br>
+
+<b>CENTER LONGITUDE IN DEGREES</b>:  Denotes the longitude of the center of the chunk in degrees.<br><br>
+
+<b>GAMMA ROTATION AZIMUTH</b>:  Denotes the rotation angle of the chunk about its center measured clockwise from due North in degrees.  <br><br>
+
+<b>NEX_&xi;</b>:  The number of spectral elements along the ;xi; side of the chunk.  This number must be 16 * a multiple of NPROC &xi; defined below.  For a 90 chunk, we do not recommend using NEX &xi; less than 64 because the curvature of the Earth cannot be honored if one uses too few elements, which results in inaccurate and unstable simulations.<br><br>
+
+<b>NEX &eta;</b>:  The number of spectral elements along the &eta; side of the chunk.  This number must be 16 * a multiple of NPROC &eta; defined below.  Note that to get elements that are close to square on the Earth's surface the ratios (ANGULAR_WIDTH_&xi;_IN_DEGREES / NEX &xi;) and (ANGULAR_WIDTH_&eta;_IN_DEGREES / NEX &eta;) should be similar. <br><br>
+
+<b>NPROC &xi;</b>:  The number of processors or mesh slices along the &xi; side of the chunk.  To accommodate the mesh doubling layers, we must have NEX &xi; = 16 * c * NPROC &xi;, where c &gt;= 1 is a positive integer. <br><br>
+
+<b>NPROC_&eta;</b>:  The number of processors or slices along the &eta; side of the chunk; we must have NEX &eta; = 16 * c * NPROC &eta; , where c &gt;= 1 is a positive integer. NPROC &xi; and NPROC &eta; must be equal when NCHUNKS = 6 or NCHUNKS = 3. The option of having different values for NPROC &xi; and NPROC &eta; is available only for regional simulations when NCHUNKS = 1 (1/6th of the sphere) or NCHUNKS = 2. <br><br>
+
+</body>
+</html>

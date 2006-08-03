@@ -68,6 +68,7 @@ urlpatterns = patterns('',
     (r'^detail/(?P<sim_id>\d+)/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.detail'),
     (r'^delete/(?P<sim_id>\d+)/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.delete'),
     (r'^create_simulation/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.create_simulation'),
+    (r'^info/(?P<info_str>\w+)/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.info'),
 
     (r'^meshes/$', 'django.views.generic.list_detail.object_list', mesh_list_detail_args),
     (r'^meshes/create/$', 'django.views.generic.create_update.create_object', mesh_create_update_args),

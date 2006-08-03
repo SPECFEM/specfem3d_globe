@@ -11,9 +11,14 @@
 <input type="hidden" name="simulation_cmt_solution" value="{{ simulation_cmt_solution }}">
 
             <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/{% block mesh_image %}{% endblock %}">
-            <h2>Mesh</h2>
 
             <table border=0>
+                <tr>
+                    <td><h2>Mesh</h2></td>
+                    <td valign="top">
+                        <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/mesh/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
+                    </td>
+                </tr>
                 <tr>
                     <td>Nproc &xi;</td>
                     <td>
@@ -24,9 +29,6 @@
                             <option value="4" selected>4</option>
                             <option value="5">5</option>
                         </select>
-                    </td>
-                    <td>
-                        <INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0>
                     </td>
                 </tr>
                 <tr>
@@ -40,7 +42,6 @@
                             <option value="5">5</option>
                         </select>
                     </td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
                     <td>Nex &xi;</td>
@@ -53,7 +54,6 @@
                             <option value="320">c = 5 --&gt; 320</option>
                         </select>
                     </td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
                     <td>Nex &eta;</td>
@@ -63,103 +63,91 @@
                             <option value="128">c = 2 --&gt; 128</option>
                             <option value="192">c = 3 --&gt; 192</option>
                             <option value="256" selected>c = 4 --&gt; 256</option>
-                            <option value="320">c = 5 --&gt; 320</option>
+               
                         </select>
                     </td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 {% block mesh %}
                 {% endblock %}
             </table>
 
-            <h2>Model</h2>
-
             <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/ellipticity_mesh.gif">
 
+            <br>
             <table border=0>
                 <tr>
-                <td colspan="3">
-                    <select name="model_type" size="1">
-                        <option value="1">isotropic prem</option>
-                        <option value="2">transversely isotropic prem</option>
-                        <option value="3">iaspei</option>
-                        <option value="4">ak135</option>
-                        <option value="5">3D isotropic</option>
-                        <option value="6">3D anisotropic</option>
-                        <option value="7">3D attenuation</option>
-                    </select>
-                    <font face="Arial"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0>
-                </td>
+                    <td>
+                        <h2>Model&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/model/','infowin','width=500,height=400,resizable=1,top=50,left=50');"></h2>
+                    </td>
                 </tr>
                 <tr>
-                    <td></td>
+                    <td>
+                        <select name="model_type" size="1">
+                            <option value="1">isotropic prem</option>
+                            <option value="2">transversely isotropic prem</option>
+                            <option value="3">iaspei</option>
+                            <option value="4">ak135</option>
+                            <option value="5">3D isotropic</option>
+                            <option value="6">3D anisotropic</option>
+                            <option value="7">3D attenuation</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
                     <td><input type="checkbox" name="model_oceans">Oceans</td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td><input type="checkbox" name="model_ellipticity">Ellipticity</td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td><input type="checkbox" name="model_topography">Topography</td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td><input type="checkbox" name="model_gravity">Gravity</td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td><input type="checkbox" name="model_rotation">Rotations</td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td><input type="checkbox" name="model_attenuation">Attenuation</td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
             </table>
 
-            <h2>Output Format</h2>
-
+            <br>
             <table border=0>
                 <tr>
-                    <td></td>
-                    <td>Record Length<input type="text" name="simulation_record_length" value="10.0" size="10" > minutes </td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                    <td>
+                        <h2>Output Format&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/output_format/','infowin','width=500,height=400,resizable=1,top=50,left=50');"></h2>
+                    </td>
                 </tr>
                 <tr>
-                    <td></td>
+                    <td>&nbsp;Record Length&nbsp;<input type="text" name="simulation_record_length" value="10.0" size="10" > minutes </td>
+                </tr>
+                <tr>
                     <td><input type="checkbox" name="simulation_receivers_can_be_buried">Receiver at depth</td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td><input type="checkbox" name="simulation_print_source_time_function">Print Source Time Function</td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td><input type="checkbox" name="mesh_save_files">Save Mesh Files</td>
-                    <td><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
                 </tr>
                 <tr>
-                    <td colspan="3">
+                    <td>
                         <table border=0 cellspacing="0" cellpadding="2">
                             <tr>
-                                <td colspan=4><h2>Movie</h2></td>
+                                <td colspan=2>
+                                    <h2>Movie&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/movie/','infowin','width=500,height=400,resizable=1,top=50,left=50');"></h2>
+                                </td>
                             </tr>
                             <tr>
-                                <td></td>
                                 <td><input type="checkbox" name="simulation_movie_surface">Surface</td>
-                                <td rowspan="2"><i>timestep</i><input type="text" name="simulation_ntstep_between_frames" value="100" size="10" ></td>
-                                <td rowspan="2"><INPUT style="FONT-WEIGHT: bold; FONT-STYLE: italic" type=button value=" i " name=0></td>
+                                <td rowspan="2">&nbsp;<i>timestep</i>&nbsp;<input type="text" name="simulation_ntstep_between_frames" value="100" size="10" ></td>
                             </tr>
                             <tr>
-                                <td></td>
                                 <td><input type="checkbox" name="simulation_movie_volume">Volume</td>
                             </tr>
                         </table>
