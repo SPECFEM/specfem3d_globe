@@ -15,8 +15,39 @@
 {% endif %}
 
 <form method="post" action=".">
+
     <table border="0">
 
+
+        <tr>
+            <td align="right" valign="top"><label for="id_simulation_type">simulation-type:</label></td>
+            <td valign="top">{{ form.simulation_type }}</td>
+            <td valign="top">{% if form.simulation_type.errors %}<span class=error>{{ form.simulation_type.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top"><label for="id_mesh">mesh:</label></td>
+            <td valign="top">{{ form.mesh }}</td>
+            <td valign="top">{% if form.mesh.errors %}<span class=error>{{ form.mesh.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top"><label for="id_model">model:</label></td>
+            <td valign="top">{{ form.model }}</td>
+            <td valign="top">{% if form.model.errors %}<span class=error>{{ form.model.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top"><label for="id_events">events:</label></td>
+            <td valign="top">{{ form.events }}</td>
+            <td valign="top">{% if form.events.errors %}<span class=error>{{ form.events.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top"><label for="id_stations">stations:</label></td>
+            <td valign="top">{{ form.stations }}</td>
+            <td valign="top">{% if form.stations.errors %}<span class=error>{{ form.stations.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
 
         <tr>
             <td align="right" valign="top">{{ form.receivers_can_be_buried }}</td>
@@ -61,9 +92,15 @@
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_simulation_type">simulation-type:</label></td>
-            <td valign="top">{{ form.simulation_type }}</td>
-            <td valign="top">{% if form.simulation_type.errors %}<span class=error>{{ form.simulation_type.errors|join:", " }}</span>{% endif %}</td>
+            <td align="right" valign="top"><label for="id_ntstep_between_output_info">ntstep-between-output-info:</label></td>
+            <td valign="top">{{ form.ntstep_between_output_info }}</td>
+            <td valign="top">{% if form.ntstep_between_output_info.errors %}<span class=error>{{ form.ntstep_between_output_info.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td align="right" valign="top"><label for="id_ntstep_between_output_seismos">ntstep-between-output-seismos:</label></td>
+            <td valign="top">{{ form.ntstep_between_output_seismos }}</td>
+            <td valign="top">{% if form.ntstep_between_output_seismos.errors %}<span class=error>{{ form.ntstep_between_output_seismos.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
