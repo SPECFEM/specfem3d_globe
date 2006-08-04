@@ -1,5 +1,6 @@
 # Create your views here.
 
+from django import forms
 from django.shortcuts import render_to_response, get_object_or_404
 from datetime import datetime
 from django.http import HttpResponse, HttpResponseRedirect, Http404
@@ -41,9 +42,11 @@ def index(request):
         create_test_user()
         user = UserInfo.objects.get(userid='test_user')
     prev_simulations = Simulation.objects.filter(user=user)
+    form = forms.FormWrapper(Simulation.AddManipulator(), {}, {})
     
     return render_to_response('Specfem3DGlobe/home.html',
-                             {'prev_simulations': prev_simulations})
+                             {'prev_simulations': prev_simulations,
+                              'form': form})
 
 def setparam(request):
     mesh_type = request.POST['mesh_type']
@@ -52,7 +55,7 @@ def setparam(request):
     else:
         template = 'Specfem3DGlobe/simulation_form_global.html'
     return render_to_response(template, 
-                             {'simulation_cmt_solution': request.POST['simulation_cmt_solution'],
+                             {'events': request.POST['events'],
                               'simulation_type': request.POST['simulation_type']})
 
 def detail(request, sim_id):
@@ -149,8 +152,6 @@ def create_simulation(request):
     _save_forward = False
     _movie_surface = getres_checkbox(request,'simulation_movie_surface')
     _movie_volume = getres_checkbox(request,'simulation_movie_volume')
-    _cmt_solution = request.POST['simulation_cmt_solution']
-    _stations = ''
     _absorbing_conditions = False
     if request.POST['mesh_type'] == 'regional':
         _absorbing_conditions = True
@@ -174,8 +175,6 @@ def create_simulation(request):
                     save_forward                    = _save_forward,
                     movie_surface                   = _movie_surface,
                     movie_volume                    = _movie_volume,
-                    cmt_solution                    = _cmt_solution,
-                    stations                        = _stations,
                     absorbing_conditions            = _absorbing_conditions,
                     ntstep_between_frames           = _ntstep_between_frames,
                     simulation_type                 = _simulation_type,

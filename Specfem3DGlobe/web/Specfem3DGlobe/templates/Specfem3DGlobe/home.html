@@ -17,8 +17,9 @@ Previous Simulations:<br>
 
 <form action="/specfem3dglobe/setparam/" method="POST">
 
-Enter CMT Solution:<br>
-<textarea rows=14 cols=80 name="simulation_cmt_solution"></textarea>
+<p>Events:
+
+<p>{{ form.events }}
 
 <p>Simulation type:
 <input type="radio", name="mesh_type", value="global" CHECKED>Global

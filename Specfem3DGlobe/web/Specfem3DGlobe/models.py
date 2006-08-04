@@ -1,5 +1,8 @@
 
 from django.db import models
+from cig.web.seismo.events.models import Event
+from cig.web.seismo.stations.models import Station
+
 
 MESH_TYPES = (
     (1, 'global'),
@@ -30,6 +33,7 @@ SIMULATION_TYPES = (
     (3, 'both forward and adjoint'),
 )
 
+
 class UserInfo(models.Model):
     userid = models.CharField(maxlength=100, core=True)
     lastname = models.CharField(maxlength=100, core=True)
@@ -42,6 +46,7 @@ class UserInfo(models.Model):
     phone = models.CharField(maxlength=20, null=True)
     class Admin:
         pass
+
 
 class Mesh(models.Model):
     nchunks = models.IntegerField(core=True)
@@ -59,6 +64,7 @@ class Mesh(models.Model):
     center_longitude = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
     gamma_rotation_azimuth = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
 
+
 class Model(models.Model):
     type = models.IntegerField(choices=MODEL_TYPES, core=True, default=False)
     oceans = models.BooleanField(core=True, default=False)
@@ -68,15 +74,16 @@ class Model(models.Model):
     rotation = models.BooleanField(core=True, default=False)
     ellipticity = models.BooleanField(core=True, default=False)
 
+
 class Simulation(models.Model):
     #
     # general information about the simulation
     #
-    user = models.ForeignKey(UserInfo, edit_inline=models.TABULAR, num_in_admin=1)
-    date = models.DateTimeField('simuation date')
+    user = models.ForeignKey(UserInfo, editable=False, edit_inline=models.TABULAR, num_in_admin=1)
+    date = models.DateTimeField('simuation date', editable=False)
     mesh = models.ForeignKey(Mesh, edit_inline=models.TABULAR, num_in_admin=1)
     model = models.ForeignKey(Model, edit_inline=models.TABULAR, num_in_admin=1)
-    status = models.IntegerField(choices=STATUS_TYPES, default=1)
+    status = models.IntegerField(choices=STATUS_TYPES, default=1, editable=False)
 
     #
     # specific information starts here
@@ -89,10 +96,10 @@ class Simulation(models.Model):
     movie_surface = models.BooleanField(core=True)
     movie_volume = models.BooleanField(core=True)
 
-    # this is the solution file path
-    cmt_solution = models.CharField(maxlength=255, core=True, null=True)
-    # stations
-    stations = models.CharField(maxlength=255, core=True, null=True)
+    # CMTSOLUTION
+    events = models.ManyToManyField(Event, num_in_admin=1)
+    # STATIONS
+    stations = models.ManyToManyField(Station, num_in_admin=1)
 
     # need to find out what the fields are for...
     # hdur_movie:

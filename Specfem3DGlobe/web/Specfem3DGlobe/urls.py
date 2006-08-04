@@ -1,7 +1,7 @@
 
 
 from django.conf.urls.defaults import *
-from models import  Mesh, Model, Simulation
+from models import Mesh, Model, Simulation
 
 # Mesh
 
@@ -87,6 +87,9 @@ urlpatterns = patterns('',
     (r'^simulations/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', simulation_create_update_args),
     (r'^simulations/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', simulation_delete_args),
     (r'^simulations/(?P<sim_id>\d+).pml$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.simulation_pml'),
+
+
+    (r'^events/', include('cig.web.seismo.events.urls')),
 
 
 )
