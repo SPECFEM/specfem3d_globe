@@ -60,6 +60,10 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 
+AR = ar
+ARFLAGS = cru
+RANLIB = ranlib
+
 # extra defines for the Pyrized version
 @COND_PYRE_TRUE@MPICC = @MPICC@
 @COND_PYRE_TRUE@FCLIBS = @FCLIBS@
@@ -72,77 +76,89 @@ CPPFLAGS = @CPPFLAGS@
 O = obj
 
 # objects toggled between the pure Fortran and Pyrized version
+@COND_PYRE_TRUE@PYRE_EXTRA_OBJECTS = $O/misc.o $O/trampoline.o $O/PyxMeshfem.o $O/PyxMPI.o
+@COND_PYRE_TRUE@TOGGLED_OBJECTS = $O/PyxParameters.o $(PYRE_EXTRA_OBJECTS)
+
+# objects toggled between the pure Fortran and Pyrized version
 @COND_PYRE_FALSE@TOGGLED_OBJECTS = $O/read_value_parameters.o $O/get_value_parameters.o
-@COND_PYRE_TRUE@TOGGLED_OBJECTS = $O/PyxParameters.o
 
-# objects for reading/computing parameters, creating values_from_mesher.h
-PARAM_OBJECTS = \
-	$O/create_header_file.o \
-	$O/read_parameter_file.o \
-	$O/count_number_of_sources.o \
-	$O/compute_parameters.o \
-	$O/define_subregions_crust_mantle.o \
-	$O/hex_nodes.o \
-	$O/save_header_file.o \
-	$O/euler_angles.o \
-	$O/reduce.o \
-	$O/rthetaphi_xyz.o \
-	$(TOGGLED_OBJECTS)
-
-# objects common to both the mesher and the solver
-COMMON_OBJECTS = \
-	$O/model_prem.o \
-	$O/model_iasp91.o \
-	$O/model_1066a.o \
-	$O/model_ak135.o \
-	$O/attenuation_model.o \
-	$O/calc_jacobian.o \
-	$O/create_name_database.o \
-	$O/exit_mpi.o \
-	$O/get_ellipticity.o \
-	$O/get_shape3D.o \
-	$O/gll_library.o \
-	$O/intgrl.o \
-	$O/lagrange_poly.o \
-	$O/make_ellipticity.o \
-	$O/numerical_recipes.o \
-	$O/topo_bathy.o \
-	$(PARAM_OBJECTS)
-
-MESHER_OBJECTS = \
+libspecfem_a_OBJECTS = \
 	$O/add_topography.o \
 	$O/anisotropic_inner_core_model.o \
 	$O/anisotropic_mantle_model.o \
+	$O/assemble_MPI_scalar.o \
+	$O/assemble_MPI_vector.o \
+	$O/attenuation_model.o \
+	$O/calc_jacobian.o \
+	$O/comp_source_spectrum.o \
+	$O/comp_source_time_function.o \
+	$O/compute_arrays_source.o \
+	$O/compute_parameters.o \
+	$O/count_number_of_sources.o \
+	$O/create_central_cube_buffers.o \
 	$O/create_chunk_buffers.o \
+	$O/create_header_file.o \
+	$O/create_name_database.o \
 	$O/create_regions_mesh.o \
+	$O/create_serial_name_database.o \
 	$O/crustal_model.o \
+	$O/define_derivation_matrices.o \
+	$O/define_subregions_crust_mantle.o \
 	$O/define_subregions_inner_core.o \
 	$O/define_subregions_outer_core.o \
+	$O/euler_angles.o \
+	$O/exit_mpi.o \
 	$O/get_MPI_1D_buffers.o \
 	$O/get_MPI_cutplanes_eta.o \
 	$O/get_MPI_cutplanes_xi.o \
 	$O/get_absorb.o \
+	$O/get_attenuation_model.o \
+	$O/get_cmt.o \
+	$O/get_ellipticity.o \
+	$O/get_event_info.o \
 	$O/get_flags_boundaries.o \
 	$O/get_global.o \
 	$O/get_jacobian_boundaries.o \
 	$O/get_model.o \
 	$O/get_shape2D.o \
+	$O/get_shape3D.o \
+	$O/gll_library.o \
+	$O/hex_nodes.o \
+	$O/intgrl.o \
+	$O/lagrange_poly.o \
 	$O/lgndr.o \
+	$O/locate_receivers.o \
+	$O/locate_sources.o \
+	$O/make_ellipticity.o \
+	$O/make_gravity.o \
 	$O/mantle_model.o \
 	$O/mesh_radial.o \
 	$O/meshfem3D.o \
+	$O/model_1066a.o \
+	$O/model_ak135.o \
+	$O/model_iasp91.o \
+	$O/model_prem.o \
+	$O/numerical_recipes.o \
+	$O/read_arrays_buffers_solver.o \
+	$O/read_parameter_file.o \
+	$O/recompute_jacobian.o \
+	$O/reduce.o \
+	$O/rthetaphi_xyz.o \
 	$O/save_arrays_solver.o \
+	$O/save_header_file.o \
 	$O/sort_array_coordinates.o \
+	$O/topo_bathy.o \
 	$O/write_AVS_DX_global_chunks_data.o \
 	$O/write_AVS_DX_global_data.o \
 	$O/write_AVS_DX_global_faces_data.o \
 	$O/write_AVS_DX_mesh_quality_data.o \
 	$O/write_AVS_DX_surface_data.o \
+	$O/write_seismograms.o \
 	$(EMPTY_MACRO)
 
 # solver objects with statically allocated arrays; dependent upon
 # values_from_mesher.h
-SOLVER_STATIC_OBJECTS = \
+SOLVER_ARRAY_OBJECTS = \
 	$O/assemble_MPI_central_cube.o \
 	$O/compute_forces_crust_mantle.o \
 	$O/compute_forces_inner_core.o \
@@ -151,35 +167,15 @@ SOLVER_STATIC_OBJECTS = \
 	$O/specfem3D.o \
 	$(EMPTY_MACRO)
 
-SOLVER_DYNAMIC_OBJECTS = \
-	$O/assemble_MPI_scalar.o \
-	$O/assemble_MPI_vector.o \
-	$O/comp_source_spectrum.o \
-	$O/comp_source_time_function.o \
-	$O/compute_arrays_source.o \
-	$O/create_central_cube_buffers.o \
-	$O/define_derivation_matrices.o \
-	$O/get_attenuation_model.o \
-	$O/get_cmt.o \
-	$O/get_event_info.o \
-	$O/locate_receivers.o \
-	$O/locate_sources.o \
-	$O/make_gravity.o \
-	$O/read_arrays_buffers_solver.o \
-	$O/recompute_jacobian.o \
-	$O/write_seismograms.o \
-	$(EMPTY_MACRO)
-
-SOLVER_OBJECTS = $(SOLVER_DYNAMIC_OBJECTS) $(SOLVER_STATIC_OBJECTS)
+LIBSPECFEM = $(TOGGLED_OBJECTS) $O/libspecfem.a
 
 # objects for the pure Fortran version
-@COND_PYRE_FALSE@XMESHFEM_OBJECTS = $O/program_meshfem3D.o $(COMMON_OBJECTS) $(MESHER_OBJECTS) $(EXTRA_OBJECTS)
-@COND_PYRE_FALSE@XSPECFEM_OBJECTS = $O/program_specfem3D.o $(COMMON_OBJECTS) $(SOLVER_OBJECTS) $(EXTRA_OBJECTS)
+@COND_PYRE_FALSE@XMESHFEM_OBJECTS = $O/program_meshfem3D.o $(LIBSPECFEM)
+@COND_PYRE_FALSE@XSPECFEM_OBJECTS = $O/program_specfem3D.o $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
 
 # objects for the Pyrized version
-@COND_PYRE_TRUE@PYRE_EXTRA_OBJECTS = $O/misc.o $O/trampoline.o
-@COND_PYRE_TRUE@XMESHFEM_OBJECTS = $(COMMON_OBJECTS) $(PYRE_EXTRA_OBJECTS) $(MESHER_OBJECTS) $(SOLVER_DYNAMIC_OBJECTS) 
-@COND_PYRE_TRUE@XSPECFEM_OBJECTS = $(COMMON_OBJECTS) $(PYRE_EXTRA_OBJECTS) $(MESHER_OBJECTS) $(SOLVER_OBJECTS) $O/PyxMeshfem.o $O/PyxSpecfem.o $O/PyxMPI.o
+@COND_PYRE_TRUE@XMESHFEM_OBJECTS = $(LIBSPECFEM)
+@COND_PYRE_TRUE@XSPECFEM_OBJECTS = $O/PyxSpecfem.o $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
 
 
 ####
@@ -262,48 +258,44 @@ combine_paraview_data: xcombine_paraview_data
 xconvolve_source_timefunction: $O/convolve_source_timefunction.o
 	${FCCOMPILE_CHECK} -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
-xcreate_header_file: $O/program_create_header_file.o $(PARAM_OBJECTS)
-	${FCCOMPILE_CHECK} -o xcreate_header_file $O/program_create_header_file.o $(PARAM_OBJECTS)
+xcreate_header_file: $O/program_create_header_file.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xcreate_header_file $O/program_create_header_file.o $(LIBSPECFEM)
 
-xcreate_movie_AVS_DX: $O/create_movie_AVS_DX.o $O/read_parameter_file.o \
-     $O/compute_parameters.o $O/rthetaphi_xyz.o $O/read_value_parameters.o $O/get_value_parameters.o
-	${FCCOMPILE_CHECK} -o xcreate_movie_AVS_DX $O/create_movie_AVS_DX.o \
-     $O/read_parameter_file.o $O/compute_parameters.o $O/rthetaphi_xyz.o $O/read_value_parameters.o $O/get_value_parameters.o
+xcreate_movie_AVS_DX: $O/create_movie_AVS_DX.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xcreate_movie_AVS_DX $O/create_movie_AVS_DX.o $(LIBSPECFEM)
 
-xcombine_AVS_DX: constants.h $O/combine_AVS_DX.o $O/get_cmt.o $O/reduce.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/rthetaphi_xyz.o $O/read_value_parameters.o $O/get_value_parameters.o
-	${FCCOMPILE_CHECK} -o xcombine_AVS_DX $O/combine_AVS_DX.o $O/get_cmt.o \
-       $O/reduce.o $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/rthetaphi_xyz.o $O/read_value_parameters.o $O/get_value_parameters.o
+xcombine_AVS_DX: $O/combine_AVS_DX.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xcombine_AVS_DX $O/combine_AVS_DX.o $(LIBSPECFEM)
 
-xcheck_mesh_quality_AVS_DX: constants.h $O/check_mesh_quality_AVS_DX.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
-	${FCCOMPILE_CHECK} -o xcheck_mesh_quality_AVS_DX $O/check_mesh_quality_AVS_DX.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
+xcheck_mesh_quality_AVS_DX: $O/check_mesh_quality_AVS_DX.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xcheck_mesh_quality_AVS_DX $O/check_mesh_quality_AVS_DX.o $(LIBSPECFEM)
 
-xcheck_buffers_1D: constants.h $O/check_buffers_1D.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
-	${FCCOMPILE_CHECK} -o xcheck_buffers_1D $O/check_buffers_1D.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
+xcheck_buffers_1D: $O/check_buffers_1D.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xcheck_buffers_1D $O/check_buffers_1D.o $(LIBSPECFEM)
 
-xcheck_buffers_2D: constants.h $O/check_buffers_2D.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
-	${FCCOMPILE_CHECK} -o xcheck_buffers_2D $O/check_buffers_2D.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
+xcheck_buffers_2D: $O/check_buffers_2D.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xcheck_buffers_2D $O/check_buffers_2D.o $(LIBSPECFEM)
 
-xcheck_buffers_corners_chunks: constants.h $O/check_buffers_corners_chunks.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
-	${FCCOMPILE_CHECK} -o xcheck_buffers_corners_chunks $O/check_buffers_corners_chunks.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
+xcheck_buffers_corners_chunks: $O/check_buffers_corners_chunks.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xcheck_buffers_corners_chunks $O/check_buffers_corners_chunks.o $(LIBSPECFEM)
 
-xcheck_buffers_faces_chunks: constants.h $O/check_buffers_faces_chunks.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
-	${FCCOMPILE_CHECK} -o xcheck_buffers_faces_chunks $O/check_buffers_faces_chunks.o \
-       $O/read_parameter_file.o $O/compute_parameters.o $O/create_serial_name_database.o $O/read_value_parameters.o $O/get_value_parameters.o
+xcheck_buffers_faces_chunks: $O/check_buffers_faces_chunks.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xcheck_buffers_faces_chunks $O/check_buffers_faces_chunks.o $(LIBSPECFEM)
 
-xcombine_paraview_data: constants.h $O/combine_paraview_data.o $O/write_c_binary.o
+xcombine_paraview_data: $O/combine_paraview_data.o $O/write_c_binary.o
 	${FCCOMPILE_CHECK} -o xcombine_paraview_data  $O/combine_paraview_data.o $O/write_c_binary.o
 clean:
 	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcombine_paraview_data PI*
+
+
+###
+### rule for the archive library
+###
+
+$O/libspecfem.a: $(libspecfem_a_OBJECTS)
+	-rm -f $O/libspecfem.a
+	$(AR) $(ARFLAGS) $O/libspecfem.a $(libspecfem_a_OBJECTS)
+	$(RANLIB) $O/libspecfem.a
 
 ####
 #### rule for each .o file below
@@ -590,7 +582,7 @@ $O/create_central_cube_buffers.o: constants.h create_central_cube_buffers.f90
 $O/get_attenuation_model.o: constants.h get_attenuation_model.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_attenuation_model.o ${FCFLAGS_f90} get_attenuation_model.f90
 
-$O/attenuation_model.o: constants.h attenuation_model.f90
+$O/attenuation_model.o: constants.h attenuation_model.f90 $O/model_ak135.o $O/model_1066a.o
 	${MPIFCCOMPILE_CHECK} -c -o $O/attenuation_model.o ${FCFLAGS_f90} attenuation_model.f90
 
 $O/gll_library.o: constants.h gll_library.f90
