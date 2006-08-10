@@ -19,4 +19,12 @@ def meshfem3D(arg):
     meshfem3D_f()
 
 
+cdef extern void read_params_and_create_movie_f "FC_FUNC_(read_params_and_create_movie, READ_PARAMS_AND_CREATE_MOVIE)" () except *
+def read_params_and_create_movie(arg):
+    """Create a movie."""
+    import PyxParameters
+    PyxParameters.component = arg
+    read_params_and_create_movie_f()
+
+
 # end of file
