@@ -45,10 +45,10 @@ class Solver(Component):
     HDUR_MOVIE                    = pyre.float("hdur-movie")
     record_length                 = pyre.dimensional("record-length", default=0.0*minute)
 
-    NTSTEP_BETWEEN_FRAMES         = pyre.int("ntstep-between-frames")
-    NTSTEP_BETWEEN_OUTPUT_INFO    = pyre.int("ntstep-between-output-info")
-    NTSTEP_BETWEEN_OUTPUT_SEISMOS = pyre.int("ntstep-between-output-seismos")
-    NTSTEP_BETWEEN_READ_ADJSRC    = pyre.int("ntstep-between-read-adjsrc")
+    NTSTEP_BETWEEN_FRAMES         = pyre.int("ntstep-between-frames", default=100, validator=pyre.greaterEqual(1))
+    NTSTEP_BETWEEN_OUTPUT_INFO    = pyre.int("ntstep-between-output-info", default=200, validator=pyre.greaterEqual(1))
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS = pyre.int("ntstep-between-output-seismos", default=5000000, validator=pyre.greaterEqual(1))
+    NTSTEP_BETWEEN_READ_ADJSRC    = pyre.int("ntstep-between-read-adjsrc", default=1000, validator=pyre.greaterEqual(1))
     NUMBER_OF_RUNS                = pyre.int("number-of-runs")
     NUMBER_OF_THIS_RUN            = pyre.int("number-of-this-run")
 

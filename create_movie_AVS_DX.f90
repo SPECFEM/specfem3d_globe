@@ -20,7 +20,11 @@
 !---  in AVS or OpenDX format
 !
 
-  program create_movie_AVS_DX
+  subroutine create_movie_AVS_DX(iformat,it1,it2, &
+          NEX_XI,NEX_ETA, &
+          NSTEP,NTSTEP_BETWEEN_FRAMES, &
+          NCHUNKS, &
+          NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA)
 
   implicit none
 
@@ -70,91 +74,41 @@
          store_val_ux,store_val_uy,store_val_uz
 
 ! parameters read from parameter file
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-          NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE,REFERENCE_1D_MODEL
+  integer NEX_XI,NEX_ETA
+  integer NSTEP,NTSTEP_BETWEEN_FRAMES,NCHUNKS
+  integer NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
-  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
-          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE
+  character(len=150) OUTPUT_FILES
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
-          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION, &
-          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
+! --------------------------------------
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
-
-! parameters deduced from parameters read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-  integer NER,NER_CMB_670,NER_670_400,NER_CENTRAL_CUBE_CMB
-
-! this for all the regions
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_AB,NSPEC_AC,NSPEC_BC, &
-               NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
-               NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA, &
-               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-               NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
-               NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
-               NGLOB_AB,NGLOB_AC,NGLOB_BC
-
-! ************** PROGRAM STARTS HERE **************
+  if(iformat == 1) then
+    USE_OPENDX = .true.
+    USE_AVS = .false.
+    USE_GMT = .false.
+    UNIQUE_FILE = .false.
+  else if(iformat == 2) then
+    USE_OPENDX = .false.
+    USE_AVS = .true.
+    USE_GMT = .false.
+    UNIQUE_FILE = .false.
+  else if(iformat == 3) then
+    USE_OPENDX = .false.
+    USE_AVS = .true.
+    USE_GMT = .false.
+    UNIQUE_FILE = .true.
+  else if(iformat == 4) then
+    USE_OPENDX = .false.
+    USE_AVS = .false.
+    USE_GMT = .true.
+    UNIQUE_FILE = .false.
+  else
+    stop 'error: invalid format'
+  endif
 
   print *
   print *,'Recombining all movie frames to create a movie'
   print *
-
-  print *
-  print *,'reading parameter file'
-  print *
-
-! read the parameter file
-  call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-          NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
-          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
-          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-          MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
-          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
-
-  if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
-
-! compute other parameters based upon values read
-  call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
-      NER_600_400,NER_670_600,NER_771_670,NER_TOPDDOUBLEPRIME_771, &
-      NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB,NER_TOP_CENTRAL_CUBE_ICB, &
-      NER,NER_CMB_670,NER_670_400,NER_CENTRAL_CUBE_CMB, &
-      NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
-      NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-      NSPEC_AB,NSPEC_AC,NSPEC_BC, &
-      NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
-      NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA, &
-      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-      NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
-      NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
-      NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -198,46 +152,6 @@
 
   allocate(displn(NGLLX,NGLLY),stat=ierror)
   if(ierror /= 0) stop 'error while allocating displn'
-
-  print *,'1 = create files in OpenDX format'
-  print *,'2 = create files in AVS UCD format with individual files'
-  print *,'3 = create files in AVS UCD format with one time-dependent file'
-  print *,'4 = create files in GMT xyz Ascii long/lat/Uz format'
-  print *,'any other value = exit'
-  print *
-  print *,'enter value:'
-  read(5,*) iformat
-  if(iformat<1 .or. iformat>4) stop 'exiting...'
-  if(iformat == 1) then
-    USE_OPENDX = .true.
-    USE_AVS = .false.
-    USE_GMT = .false.
-    UNIQUE_FILE = .false.
-  else if(iformat == 2) then
-    USE_OPENDX = .false.
-    USE_AVS = .true.
-    USE_GMT = .false.
-    UNIQUE_FILE = .false.
-  else if(iformat == 3) then
-    USE_OPENDX = .false.
-    USE_AVS = .true.
-    USE_GMT = .false.
-    UNIQUE_FILE = .true.
-  else
-    USE_OPENDX = .false.
-    USE_AVS = .false.
-    USE_GMT = .true.
-    UNIQUE_FILE = .false.
-  endif
-
-  print *,'movie frames have been saved every ',NTSTEP_BETWEEN_FRAMES,' time steps'
-  print *
-
-  print *,'enter first time step of movie (e.g. 1)'
-  read(5,*) it1
-
-  print *,'enter last time step of movie (e.g. ',NSTEP,')'
-  read(5,*) it2
 
   print *
   print *,'looping from ',it1,' to ',it2,' every ',NTSTEP_BETWEEN_FRAMES,' time steps'
@@ -651,11 +565,146 @@
   if(USE_GMT) print *,'GMT files are stored in ', trim(OUTPUT_FILES), '/gmt_*.xyz'
   print *
 
-  end program create_movie_AVS_DX
+  end subroutine create_movie_AVS_DX
 
 !
 !=====================================================================
 !
+
+  subroutine read_params_and_create_movie
+
+!
+! This routine is called by the Pyrized version.
+!
+
+  implicit none
+
+  integer it1,it2
+  integer iformat
+
+! parameters read from parameter file
+  integer NEX_XI,NEX_ETA
+  integer NSTEP,NTSTEP_BETWEEN_FRAMES,NCHUNKS
+  integer NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  logical MOVIE_SURFACE
+
+  integer, external :: err_occurred
+
+  call read_AVS_DX_parameters(NEX_XI,NEX_ETA, &
+           NSTEP,NTSTEP_BETWEEN_FRAMES, &
+           NCHUNKS,MOVIE_SURFACE, &
+           NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA)
+
+! read additional parameters for making movies
+  call read_value_integer(iformat, 'format')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_integer(it1, 'beginning')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_integer(it2, 'end')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+
+! run the main program
+  call create_movie_AVS_DX(iformat,it1,it2, &
+           NEX_XI,NEX_ETA, &
+           NSTEP,NTSTEP_BETWEEN_FRAMES, &
+           NCHUNKS, &
+           NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA)
+
+  end subroutine read_params_and_create_movie
+
+! ------------------------------------------------------------------
+
+  subroutine read_AVS_DX_parameters(NEX_XI,NEX_ETA, &
+          NSTEP,NTSTEP_BETWEEN_FRAMES, &
+          NCHUNKS,MOVIE_SURFACE, &
+          NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA)
+
+  implicit none
+
+  include "constants.h"
+
+! parameters read from parameter file
+  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
+          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
+          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
+          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
+          NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE,REFERENCE_1D_MODEL
+
+  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
+          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE
+
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
+          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
+          SAVE_MESH_FILES,ATTENUATION, &
+          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
+
+! parameters deduced from parameters read from file
+  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer NER,NER_CMB_670,NER_670_400,NER_CENTRAL_CUBE_CMB
+
+! this for all the regions
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_AB,NSPEC_AC,NSPEC_BC, &
+               NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
+               NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA, &
+               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+               NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
+               NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
+               NGLOB_AB,NGLOB_AC,NGLOB_BC
+
+  character(len=150) LOCAL_PATH,MODEL
+
+  print *
+  print *,'reading parameter file'
+  print *
+
+! read the parameter file
+  call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
+          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
+          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
+          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
+          NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
+          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
+          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
+          MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
+          ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+
+! compute other parameters based upon values read
+  call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
+      NER_600_400,NER_670_600,NER_771_670,NER_TOPDDOUBLEPRIME_771, &
+      NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB,NER_TOP_CENTRAL_CUBE_ICB, &
+      NER,NER_CMB_670,NER_670_400,NER_CENTRAL_CUBE_CMB, &
+      NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
+      NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+      NSPEC_AB,NSPEC_AC,NSPEC_BC, &
+      NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
+      NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA, &
+      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+      NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
+      NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
+      NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
+
+  end subroutine read_AVS_DX_parameters
+
+! ------------------------------------------------------------------
 
   subroutine get_global_AVS(nspec,xp,yp,zp,iglob,loc,ifseg,nglob,npointot)
 
@@ -773,11 +822,15 @@
   deallocate(iwork)
   deallocate(work)
 
-  end subroutine get_global_AVS
-
 ! -----------------------------------
 
+! get_global_AVS internal procedures follow
+
 ! sorting routines put in same file to allow for inlining
+
+  contains
+
+! -----------------------------------
 
   subroutine rank(A,IND,N)
 !
@@ -873,3 +926,6 @@
 
   end subroutine swap_all
 
+! ------------------------------------------------------------------
+
+  end subroutine get_global_AVS

@@ -11,10 +11,10 @@
 
 
 extern void initPyxParameters(void);
-#ifdef USE_MPI
 extern void initPyxMeshfem(void);
-extern void initPyxSpecfem(void);
 extern void initPyxMPI(void);
+#ifdef BUILDING_SOLVER
+extern void initPyxSpecfem(void);
 #endif
 
 static int g_status;
@@ -23,10 +23,10 @@ char **g_argv;
 
 struct _inittab inittab[] = {
     { "PyxParameters", initPyxParameters },
-#ifdef USE_MPI
     { "PyxMeshfem", initPyxMeshfem },
-    { "PyxSpecfem", initPyxSpecfem },
     { "PyxMPI", initPyxMPI },
+#ifdef BUILDING_SOLVER
+    { "PyxSpecfem", initPyxSpecfem },
 #endif
     { 0, 0 }
 };
