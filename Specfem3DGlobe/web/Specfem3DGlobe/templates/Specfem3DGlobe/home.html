@@ -18,8 +18,8 @@ Previous Simulations:<br>
 <form action="/specfem3dglobe/setparam/" method="POST">
 
 <p>Events:
-
-<p>{{ form.events }}
+{% if errors %}<p><font color='red'>{{ errors }}</font>{% endif %}
+<p>{{ form.events }} 
 
 <p>Simulation type:
 <input type="radio", name="mesh_type", value="global" CHECKED>Global
