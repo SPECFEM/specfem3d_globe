@@ -15,7 +15,7 @@ nPending            = 3
 # source address
 #
 sUrlPrefix          = 'http://localhost:8000/specfem3dglobe/simulations/'
-sUrlPostfix         = '.pml'
+sUrlPostfix         = '/parameters.pml'
 lsUpdateID          = []
 
 #
