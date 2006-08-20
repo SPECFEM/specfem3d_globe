@@ -7,29 +7,6 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from Specfem3DGlobe.web.Specfem3DGlobe.models import Mesh, Model, Simulation, UserInfo
 from cig.web.seismo.events.models import Event
 
-def create_test_user():
-	_userid = 'test_user'
-	_lastname = 'test_user'
-	_firstname = 'test_user'
-	_email = ''
-	_institution = ''
-	_address1 = ''
-	_address2 = ''
-	_address3 = ''
-	_phone = ''
-	userinfo = UserInfo(
-				userid      = _userid,
-				lastname    = _lastname,
-				firstname   = _firstname,
-				email       = _email,
-				institution = _institution,
-				address1    = _address1,
-				address2    = _address2,
-				address3    = _address3,
-				phone       = _phone
-				)
-	userinfo.save()
-
 def getres_checkbox(request,key):
 	if request.has_key(key) and request.POST[key] == 'on':
 		return True
@@ -37,17 +14,14 @@ def getres_checkbox(request,key):
 		return False
 
 def index(request):
-	try:
-		user = UserInfo.objects.get(userid='test_user')
-	except UserInfo.DoesNotExist:
-		create_test_user()
-		user = UserInfo.objects.get(userid='test_user')
+	user = login_check(request);
 	prev_simulations = Simulation.objects.filter(user=user)
 	form = forms.FormWrapper(Simulation.AddManipulator(), {}, {})
 
 	return render_to_response('Specfem3DGlobe/home.html',
 							 {'prev_simulations': prev_simulations,
-							  'form': form})
+							  'form': form,
+							  'userinfo': user})
 
 def setparam(request):
 	if not request.has_key('events'):
@@ -86,6 +60,10 @@ def create_simulation(request):
 	# first, do some parameter validity checking!!!
 	#
 	# Do some checking here!
+	user = login_check(request);
+
+	if user == None:
+		return HttpResponseRedirect('/specfem3dglobe/')
 
 	#
 	# mesh information
@@ -164,11 +142,8 @@ def create_simulation(request):
 		_absorbing_conditions = True
 	_ntstep_between_frames = 100
 	_simulation_type = request.POST['simulation_type']
-	try:
-		user = UserInfo.objects.get(userid='test_user')
-	except UserInfo.DoesNotExist:
-		create_test_user()
-		user = UserInfo.objects.get(userid='test_user')
+
+	user = UserInfo.objects.get(userid=request.session['userid'])
 
 	# 
 	# event information
@@ -225,3 +200,68 @@ def simulation_pml(request, sim_id):
 	})
 	response.write(t.render(c))
 	return response
+
+def events_txt(request, sim_id):
+	from django.template import loader, Context
+
+	response = HttpResponse(mimetype='text/plain')
+
+	# Get data from the database here.
+	simulation = get_object_or_404(Simulation, id=sim_id)
+
+	t = loader.get_template('Specfem3DGlobe/events.txt')
+	c = Context({
+		'events': simulation.events.all(),
+	})
+	response.write(t.render(c))
+	return response
+
+def stations_txt(request, sim_id):
+	from django.template import loader, Context
+
+	response = HttpResponse(mimetype='text/plain')
+
+	# Get data from the database here.
+	simulation = get_object_or_404(Simulation, id=sim_id)
+
+	t = loader.get_template('Specfem3DGlobe/stations.txt')
+	c = Context({
+		'stations': simulation.stations.all(),
+	})
+	response.write(t.render(c))
+	return response
+
+def login_check(request):
+	user = None
+	try:
+		user = UserInfo.objects.get(userid=request.session['userid'])
+	except UserInfo.DoesNotExist:
+		pass
+	except KeyError:
+		pass
+
+	return user
+
+def login(request):
+	user = None
+	error = None
+	try:
+		user = UserInfo.objects.get(userid=request.POST['userid'])
+	except UserInfo.DoesNotExist:
+		error = "user does not exist"
+	except KeyError:
+		error = "post error"
+
+	if user and user.password == request.POST['password']:
+		request.session['userid'] = user.userid
+		return HttpResponseRedirect('/specfem3dglobe/')
+	else:
+		return HttpResponseRedirect('/specfem3dglobe/')
+
+def logout(request):
+	try:
+		del request.session['userid']
+	except KeyError:
+		pass
+	return HttpResponseRedirect('/specfem3dglobe/')
+
