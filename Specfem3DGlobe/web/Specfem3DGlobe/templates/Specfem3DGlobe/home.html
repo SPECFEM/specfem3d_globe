@@ -3,33 +3,38 @@
 
 {% block content %}
 
-<p>Hello from the SPECFEM3D Solver! <hr>
-<br>
-Previous Simulations:<br>
-{% if prev_simulations %}
-    {% for sim in prev_simulations %}
-        <a href="/specfem3dglobe/detail/{{ sim.id }}/">DATE: {{ sim.date }}, STATUS: {{ sim.get_status_display }}</a>&nbsp;&nbsp; 
-        <a href="/specfem3dglobe/delete/{{ sim.id }}/">delete</a><br>
-    {% endfor %}
+
+{% if userinfo %}
+	<form action="/specfem3dglobe/setparam/" method="POST">
+
+	<p>Events:
+	<p><a href="/specfem3dglobe/events/">Maange Events!</a>
+	{% if errors %}<p><font color='red'>{{ errors }}</font>{% endif %}
+	<p>{{ form.events }} 
+
+	<p>Simulation type:
+	<input type="radio", name="mesh_type", value="global" CHECKED>Global
+	<input type="radio", name="mesh_type", value="regional">Regional
+
+	<p>
+	<input type="radio", name="simulation_type", value="forward" CHECKED>Forward
+	<input type="radio", name="simulation_type", value="adjoint">Adjoint
+	<input type="radio", name="simulation_type", value="both">Both
+
+	<p><input type="submit" value="Next">
+	</form>
+
+	Previous Simulations:<br>
+	{% if prev_simulations %}
+		{% for sim in prev_simulations %}
+			<a href="/specfem3dglobe/detail/{{ sim.id }}/">DATE: {{ sim.date }}, STATUS: {{ sim.get_status_display }}</a>&nbsp;&nbsp; 
+			<a href="/specfem3dglobe/delete/{{ sim.id }}/">delete</a><br>
+		{% endfor %}
+	{% else %}
+		- There is no previous simulation. <br>
+	{% endif %}
 {% else %}
-    - There is no previous simulation. <br>
+	- Service is not available.  You need to login to use this service.
 {% endif %}
-
-<form action="/specfem3dglobe/setparam/" method="POST">
-
-<p>Events:
-{% if errors %}<p><font color='red'>{{ errors }}</font>{% endif %}
-<p>{{ form.events }} 
-
-<p>Simulation type:
-<input type="radio", name="mesh_type", value="global" CHECKED>Global
-<input type="radio", name="mesh_type", value="regional">Regional
-
-<p>
-<input type="radio", name="simulation_type", value="forward" CHECKED>Forward
-<input type="radio", name="simulation_type", value="adjoint">Adjoint
-<input type="radio", name="simulation_type", value="both">Both
-
-<p><input type="submit" value="Next">
 
 {% endblock %}

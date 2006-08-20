@@ -1,0 +1,15 @@
+{% for event in events %}
+PDE {{ event.when.year }} {{ event.when.month }} {{ event.when.day }} {{ event.when.hour }} {{ event.when.minute }} {{ event.when.second }}.{{ event.microsecond }} {{ event.sourceLatitude }} {{ event.sourceLongitude }} {{ event.sourceDepth }} {{ event.sourceMB }} {{ event.sourceMs }} VANUATU ISLANDS
+event name:	{{ event.eventName }}
+time shift:	{{ event.timeShift }}
+half duration:	{{ event.halfDuration }}
+latitude:	{{ event.latitude }}
+longitude:	{{ event.longitude }}
+depth:	{{ event.depth }}
+Mrr:	{{ event.Mrr }}
+Mtt:	{{ event.Mtt }}
+Mpp:	{{ event.Mpp }}
+Mrt:	{{ event.Mrt }}
+Mrp:	{{ event.Mrp }}
+Mtp:	{{ event.Mtp }}
+{% endfor %}
