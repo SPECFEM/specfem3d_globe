@@ -35,15 +35,16 @@ SIMULATION_TYPES = (
 
 
 class UserInfo(models.Model):
-	userid = models.CharField(maxlength=100, core=True)
+	userid = models.CharField(maxlength=100, core=True, unique=True)
+	password = models.CharField(maxlength=100, core=True)
 	lastname = models.CharField(maxlength=100, core=True)
 	firstname = models.CharField(maxlength=100, core=True)
-	email = models.CharField(maxlength=100, null=True)
-	institution = models.CharField(maxlength=100, null=True)
-	address1 = models.CharField(maxlength=100, null=True)
-	address2 = models.CharField(maxlength=100, null=True)
-	address3 = models.CharField(maxlength=100, null=True)
-	phone = models.CharField(maxlength=20, null=True)
+	email = models.CharField(maxlength=100, core=True)
+	institution = models.CharField(maxlength=100, core=True)
+	address1 = models.CharField(maxlength=100, null=True, blank=True)
+	address2 = models.CharField(maxlength=100, null=True, blank=True)
+	address3 = models.CharField(maxlength=100, null=True, blank=True)
+	phone = models.CharField(maxlength=20, null=True, blank=True)
 	class Admin:
 		pass
 
