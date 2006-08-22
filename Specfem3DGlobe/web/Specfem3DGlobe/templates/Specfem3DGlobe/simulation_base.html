@@ -5,157 +5,136 @@
 
 <h1>{% block heading %}Simulation{% endblock %}</h1>
 
-<form action="/specfem3dglobe/create_simulation/" method="POST">
-<input type="hidden" name="mesh_type" value="{% block mesh_type %}{% endblock %}">
-<input type="hidden" name="simulation_type" value="{{ simulation_type }}">
-<input type="hidden" name="simulation_cmt_solution" value="{{ simulation_cmt_solution }}">
-<input type="hidden" name="events" value="{{ events }}">
+{% if form.has_errors %}
+<p><b class=error>Please correct the following error{{ form.error_dict|pluralize }}:</b>
+<ul>
+    {% for e in form.error_dict.iteritems %}
+    <li>Field "{{ e.0 }}": {{ e.1|join:", " }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 
-            <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/{% block mesh_image %}{% endblock %}">
+<form action="." method="POST">
+    <input type="hidden" name="mesh__type" value="{% block mesh__type %}{% endblock %}">
+    <input type="hidden" name="simulation_type" value="{{ form.data.simulation_type }}">
 
-            <table border=0>
-                <tr>
-                    <td><h2>Mesh</h2></td>
-                    <td valign="top">
-                        <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/mesh/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
-                    </td>
-                </tr>
-                <tr>
-                    <td>Nproc &xi;</td>
-                    <td>
-                        <select name="mesh_nproc_xi" size="1">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4" selected>4</option>
-                            <option value="5">5</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Nproc &eta;</td>
-                    <td>
-                        <select name="mesh_nproc_eta" size="1">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4" selected>4</option>
-                            <option value="5">5</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Nex &xi;</td>
-                    <td>
-                        <select name="mesh_nex_xi" size="1">
-                            <option value="64">c = 1 --&gt; 64</option>
-                            <option value="128">c = 2 --&gt; 128</option>
-                            <option value="192">c = 3 --&gt; 192</option>
-                            <option value="256" selected>c = 4 --&gt; 256</option>
-                            <option value="320">c = 5 --&gt; 320</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Nex &eta;</td>
-                    <td>
-                        <select name="mesh_nex_eta" size="1">
-                            <option value="64">c = 1 --&gt; 64</option>
-                            <option value="128">c = 2 --&gt; 128</option>
-                            <option value="192">c = 3 --&gt; 192</option>
-                            <option value="256" selected>c = 4 --&gt; 256</option>
-               
-                        </select>
-                    </td>
-                </tr>
-                {% block mesh %}
-                {% endblock %}
-            </table>
+    <h2>Event</h2>
 
-            <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/ellipticity_mesh.gif">
+    <p>{{ form.events }} {% if form.events.errors %}<span class=error>{{ form.events.errors|join:", " }}</span>{% endif %}
 
-            <br>
-            <table border=0>
-                <tr>
-                    <td>
-                        <h2>Model&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/model/','infowin','width=500,height=400,resizable=1,top=50,left=50');"></h2>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <select name="model_type" size="1">
-                            <option value="1">isotropic prem</option>
-                            <option value="2">transversely isotropic prem</option>
-                            <option value="3">iaspei</option>
-                            <option value="4">ak135</option>
-                            <option value="5">3D isotropic</option>
-                            <option value="6">3D anisotropic</option>
-                            <option value="7">3D attenuation</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="model_oceans">Oceans</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="model_ellipticity">Ellipticity</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="model_topography">Topography</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="model_gravity">Gravity</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="model_rotation">Rotations</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="model_attenuation">Attenuation</td>
-                </tr>
-            </table>
+    <h2>Stations</h2>
 
-            <br>
-            <table border=0>
-                <tr>
-                    <td>
-                        <h2>Output Format&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/output_format/','infowin','width=500,height=400,resizable=1,top=50,left=50');"></h2>
-                    </td>
-                </tr>
-                <tr>
-                    <td>&nbsp;Record Length&nbsp;<input type="text" name="simulation_record_length" value="10.0" size="10" > minutes </td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="simulation_receivers_can_be_buried">Receiver at depth</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="simulation_print_source_time_function">Print Source Time Function</td>
-                </tr>
-                <tr>
-                    <td><input type="checkbox" name="mesh_save_files">Save Mesh Files</td>
-                </tr>
-                <tr>
-                    <td>
-                        <table border=0 cellspacing="0" cellpadding="2">
-                            <tr>
-                                <td colspan=2>
-                                    <h2>Movie&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/movie/','infowin','width=500,height=400,resizable=1,top=50,left=50');"></h2>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><input type="checkbox" name="simulation_movie_surface">Surface</td>
-                                <td rowspan="2">&nbsp;<i>timestep</i>&nbsp;<input type="text" name="simulation_ntstep_between_frames" value="100" size="10" ></td>
-                            </tr>
-                            <tr>
-                                <td><input type="checkbox" name="simulation_movie_volume">Volume</td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
+    <p>{{ form.stations }} {% if form.stations.errors %}<span class=error>{{ form.stations.errors|join:", " }}</span>{% endif %}
 
-<input type="submit" value="Create">
+    <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/{% block mesh_image %}{% endblock %}">
+
+    <h2>Mesh</h2>
+
+    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/mesh/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
+
+    <p>
+
+    <table border=0>
+      {% block mesh %}
+        <tr>
+            <td valign="top"><label for="id_mesh__nproc_xi">Nproc &xi;:</label></td>
+            <td valign="top">{{ form.mesh__nproc_xi }}</td>
+            <td valign="top">{% if form.mesh__nproc_xi.errors %}<span class=error>{{ form.mesh__nproc_xi.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__nproc_eta">Nproc &eta;:</label></td>
+            <td valign="top">{{ form.mesh__nproc_eta }}</td>
+            <td valign="top">{% if form.mesh__nproc_eta.errors %}<span class=error>{{ form.mesh__nproc_eta.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__nex_xi">Nex &xi;:</label></td>
+            <td valign="top">{{ form.mesh__nex_xi }}</td>
+            <td valign="top">{% if form.mesh__nex_xi.errors %}<span class=error>{{ form.mesh__nex_xi.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__nex_eta">Nex &eta;:</label></td>
+            <td valign="top">{{ form.mesh__nex_eta }}</td>
+            <td valign="top">{% if form.mesh__nex_eta.errors %}<span class=error>{{ form.mesh__nex_eta.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+      {% endblock %}
+    </table>
+
+    <h2>Model</h2>
+
+    <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/ellipticity_mesh.gif">
+
+    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/model/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
+
+    <p>{{ form.model__type }} {% if form.model__type.errors %}<span class=error>{{ form.model__type.errors|join:", " }}</span>{% endif %}
+
+    <ul>
+        <li>{{ form.model__oceans }}       <label for="id_model__oceans">Oceans</label>
+        <li>{{ form.model__ellipticity }}  <label for="id_model__ellipticity">Ellipticity</label>
+        <li>{{ form.model__topography }}   <label for="id_model__topography">Topography</label>
+        <li>{{ form.model__gravity }}      <label for="id_model__gravity">Gravity</label>
+        <li>{{ form.model__rotation }}     <label for="id_model__rotation">Rotation</label>
+        <li>{{ form.model__attenuation }}  <label for="id_model__attenuation">Attenuation</label>
+    </ul>
+
+    <h2>Output Format</h2>
+
+    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/output_format/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
+
+    <table border=0>
+        <tr>
+            <td valign="top"><label for="id_record_length">Time steps between frames:</label></td>
+            <td valign="top">{{ form.record_length }}</td>
+            <td valign="top">{% if form.record_length.errors %}<span class=error>{{ form.record_length.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_ntstep_between_output_info">Time steps between info output:</label></td>
+            <td valign="top">{{ form.ntstep_between_output_info }}</td>
+            <td valign="top">{% if form.ntstep_between_output_info.errors %}<span class=error>{{ form.ntstep_between_output_info.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_ntstep_between_output_seismos">Time steps between seismo output:</label></td>
+            <td valign="top">{{ form.ntstep_between_output_seismos }}</td>
+            <td valign="top">{% if form.ntstep_between_output_seismos.errors %}<span class=error>{{ form.ntstep_between_output_seismos.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+    </table>
+
+    <ul>
+        <li>{{ form.receivers_can_be_buried }}     <label for="id_receivers_can_be_buried">Receiver at depth</label>
+        <li>{{ form.print_source_time_function }}  <label for="id_print_source_time_function">Print Source Time Function</label>
+        <li>{{ form.mesh__save_files }}            <label for="id_mesh__save_files">Save Mesh Files</label>
+    </ul>
+
+    <h2>Movie</h2>
+
+    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/movie/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
+
+    <ul>
+        <li>{{ form.movie_surface }}  <label for="id_movie_surface">Surface</label>
+        <li>{{ form.movie_volume }}   <label for="id_movie_volume">Volume</label>
+    </ul>
+
+    <table border=0>
+        <tr>
+            <td valign="top"><label for="id_ntstep_between_frames">Time steps between frames:</label></td>
+            <td valign="top">{{ form.ntstep_between_frames }}</td>
+            <td valign="top">{% if form.ntstep_between_frames.errors %}<span class=error>{{ form.ntstep_between_frames.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_hdur_movie">Convolve source time function by Gaussian with half duration:</label></td>
+            <td valign="top">{{ form.hdur_movie }}</td>
+            <td valign="top">{% if form.hdur_movie.errors %}<span class=error>{{ form.hdur_movie.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+    </table>
+
+    <p><input type="submit" value="Create">
+
+</form>
 
 {% endblock %}

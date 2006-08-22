@@ -1,0 +1,41 @@
+
+{% extends "Specfem3DGlobe/root.html" %}
+
+{% block body %}
+
+    <center>
+
+    <h1><tt>S P E C F E M 3 D<br>G L O B E</tt></h1>
+
+    <h2>Login</h2>
+
+    <img src="http://www.gps.caltech.edu/research/jtromp/research/maps/specfem_users_map.gif">
+
+    <p>
+    {% if form.has_errors %}
+    <span class=error>Your username and password didn't match. Please try again.</span>
+    {% else %}
+    &nbsp;
+    {% endif %}
+
+    <form method="post" action=".">
+        <table>
+            <tr><td><label for="id_username">username:</label></td><td>{{ form.username }}</td></tr>
+            <tr><td><label for="id_password">password:</label></td><td>{{ form.password }}</td></tr>
+        </table>
+        <p>
+        <input type="submit" value="login" />
+
+        {% if next %}
+        <input type="hidden" name="next" value="{{ next }}" />
+        {% else %}
+        <input type="hidden" name="next" value="/specfem3dglobe/" />
+        {% endif %}
+
+    </form>
+
+    <p>New user? Please <a href="/specfem3dglobe/registration/">register</a>.
+
+    </center>
+
+{% endblock %}

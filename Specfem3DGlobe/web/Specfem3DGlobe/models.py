@@ -1,5 +1,6 @@
 
 from django.db import models
+from django.contrib.auth.models import User
 from cig.web.seismo.events.models import Event
 from cig.web.seismo.stations.models import Station
 
@@ -34,12 +35,16 @@ SIMULATION_TYPES = (
 )
 
 
+NCHUNKS_CHOICES = (
+    (1, '1'),
+    (2, '2'),
+    (3, '3'),
+    (6, '6'),
+    )
+
+
 class UserInfo(models.Model):
-	userid = models.CharField(maxlength=100, core=True, unique=True)
-	password = models.CharField(maxlength=100, core=True)
-	lastname = models.CharField(maxlength=100, core=True)
-	firstname = models.CharField(maxlength=100, core=True)
-	email = models.CharField(maxlength=100, core=True)
+	user = models.OneToOneField(User, edit_inline=models.TABULAR)
 	institution = models.CharField(maxlength=100, core=True)
 	address1 = models.CharField(maxlength=100, null=True, blank=True)
 	address2 = models.CharField(maxlength=100, null=True, blank=True)
@@ -50,7 +55,12 @@ class UserInfo(models.Model):
 
 
 class Mesh(models.Model):
-	nchunks = models.IntegerField(core=True)
+
+	user = models.ForeignKey(User)
+	created = models.DateTimeField(auto_now_add=True, editable=False)
+        modified = models.DateTimeField(auto_now=True, editable=False)
+	
+	nchunks = models.IntegerField(core=True, choices=NCHUNKS_CHOICES, default=1)
 	nproc_xi = models.IntegerField(core=True)
 	nproc_eta = models.IntegerField(core=True)
 	nex_xi = models.IntegerField(core=True)
@@ -58,15 +68,23 @@ class Mesh(models.Model):
 	save_files = models.BooleanField(core=True)
 	type = models.IntegerField(choices=MESH_TYPES, core=True)
 
-	# this is for regional only (when type == 2), and when global, all these values are null
-	angular_width_eta = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
-	angular_width_xi = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
-	center_latitude = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
-	center_longitude = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
-	gamma_rotation_azimuth = models.FloatField(max_digits=19, decimal_places=10, core=True, null=True)
+	# this is for regional only (when type == 2), and when global, all these values are fixed
+	angular_width_eta = models.FloatField(max_digits=19, decimal_places=10, core=True)
+	angular_width_xi = models.FloatField(max_digits=19, decimal_places=10, core=True)
+	center_latitude = models.FloatField(max_digits=19, decimal_places=10, core=True)
+	center_longitude = models.FloatField(max_digits=19, decimal_places=10, core=True)
+	gamma_rotation_azimuth = models.FloatField(max_digits=19, decimal_places=10, core=True)
+
+        class Admin:
+            pass
 
 
 class Model(models.Model):
+	
+	user = models.ForeignKey(User)
+	created = models.DateTimeField(auto_now_add=True, editable=False)
+        modified = models.DateTimeField(auto_now=True, editable=False)
+	
 	type = models.IntegerField(choices=MODEL_TYPES, core=True, default=False)
 	oceans = models.BooleanField(core=True, default=False)
 	gravity = models.BooleanField(core=True, default=False)
@@ -75,13 +93,20 @@ class Model(models.Model):
 	rotation = models.BooleanField(core=True, default=False)
 	ellipticity = models.BooleanField(core=True, default=False)
 
+        class Admin:
+            pass
+
 
 class Simulation(models.Model):
 	#
 	# general information about the simulation
 	#
-	user = models.ForeignKey(UserInfo, editable=False, edit_inline=models.TABULAR, num_in_admin=1)
-	date = models.DateTimeField('simuation date', editable=False)
+	user = models.ForeignKey(User)
+	created = models.DateTimeField(auto_now_add=True, editable=False)
+        modified = models.DateTimeField(auto_now=True, editable=False)
+	started = models.DateTimeField(editable=False, null=True)
+	finished = models.DateTimeField(editable=False, null=True)
+	
 	mesh = models.ForeignKey(Mesh, edit_inline=models.TABULAR, num_in_admin=1)
 	model = models.ForeignKey(Model, edit_inline=models.TABULAR, num_in_admin=1)
 	status = models.IntegerField(choices=STATUS_TYPES, default=1, editable=False)
@@ -89,7 +114,7 @@ class Simulation(models.Model):
 	#
 	# specific information starts here
 	#
-	record_length = models.FloatField(max_digits=19, decimal_places=10, core=True)
+	record_length = models.FloatField(max_digits=19, decimal_places=10, core=True, default=10.0)
 	receivers_can_be_buried = models.BooleanField(core=True)
 	print_source_time_function = models.BooleanField(core=True)
 	save_forward = models.BooleanField(core=True, default=False)
@@ -100,11 +125,11 @@ class Simulation(models.Model):
 	# CMTSOLUTION
 	events = models.ManyToManyField(Event, num_in_admin=1)
 	# STATIONS
-	stations = models.ManyToManyField(Station, num_in_admin=1)
+	stations = models.ManyToManyField(Station, num_in_admin=1, limit_choices_to = {'code__startswith': 'pas'})
 
 	# need to find out what the fields are for...
 	# hdur_movie:
-	hdur_movie = models.FloatField(max_digits=19, decimal_places=10, core=True, default=1000.0)
+	hdur_movie = models.FloatField(max_digits=19, decimal_places=10, core=True, default=0.0, blank=True)
 	# absorbing_conditions: set to true for regional, and false for global
 	absorbing_conditions = models.BooleanField(core=True)
 	# ntstep_between_frames: typical value is 100 time steps
