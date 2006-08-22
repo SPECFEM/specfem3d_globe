@@ -1,33 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-    <style type="text/css">
-        .error { color: red; }
-        #header { top: 0px; left: 0px; width: 100%; height: 120px; border-right: thick double grey }
-        #sidebar { top: 100px; left: 0px; width: 200px; height: 100%; border-right: thick double grey }
-        #content { position: absolute; top: 135px; left: 250px; width: 100%; height: 100%; }
 
-		BODY,TD,SELECT,input,DIV,form,TEXTAREA,center,option,pre,blockquote {font-size:9pt; font-family:'Brush Script MT'}
+{% extends "Specfem3DGlobe/root.html" %}
 
-		A:link    {color:black;text-decoration:none;}
-		A:visited {color:black;text-decoration:none;}
-		A:active  {color:black;text-decoration:none;}
-		A:hover  {color:444444;text-decoration:underline}
-
-		.head {border:solid 1 black;font-size:9pt;color:black;background-color:white;height:19px}
-		.textarea {border:solid 1;font-size:9pt;color:black;background-color:white;}
-		.input {border:solid 1;font-size:9pt;color:black;background-color:white;}
-		.submit {border:solid 0;font-size:9pt;color:white;background-color:black;height:19px}
-    </STYLE>
-    <title>{% block title %}Specfem3DGlobe{% endblock %}</title>
-</head>
-
-<body>
+{% block body %}
     <div id="header">
 	<table width=100%>
 	<tr><td width=330 align=left nowrap><b><font size=5>
-	<a href="/specfem3dglobe/">ON DEMAND SIMULATION</a>
+	<a href="/specfem3dglobe/" style="color: black; text-decoration: none;">ON DEMAND SIMULATION</a>
 	</font></b> </td>
 	<td align=right nowrap>
 	| <a href="/specfem3dglobe/">Home</a> 
@@ -38,16 +16,38 @@
 	</div>
     <div id="sidebar">
         {% block sidebar %}
-		{% if userinfo %}
+
+        <center><tt>S P E C F E M  3 D<br>G L O B E</tt></center>
+        <p><img src="http://www.gps.caltech.edu/research/jtromp/research/graphics/mpi_slicesThumbnail.gif">
+        
+        <p><ul>
+            <li><a href="/specfem3dglobe/">Home</a></li>
+        </ul>
+        <ul>
+            <li><a href="/specfem3dglobe/events/">My Events</a></li>
+            <li><a href="/specfem3dglobe/stations/">My Stations</a></li>
+        </ul>
+        <ul>
+            <li><a href="/specfem3dglobe/simulations/">My Simulations</a></li>
+            <li><a href="/specfem3dglobe/meshes/">My Meshes</a></li>
+            <li><a href="/specfem3dglobe/models/">My Models</a></li>
+        </ul>
+
+        <hr width="50%">
+
+        <p>You are logged-in as <b>{{ user.username }}</b>.
+        <p><a href="/specfem3dglobe/logout/">Logout</a></li>
+
+		{% if user %}
 			<form action="/specfem3dglobe/logout/" method="POST">
 			<table>
-			<tr><td colspan=2 align=left>Welcome, {{ userinfo.firstname }} !</td></tr>
-			<tr height=30 valign=top><td colspan=2 align=left><a href="/specfem3dglobe/user/{{ userinfo.id }}/">Change My Information</a></td></tr>
+			<tr><td colspan=2 align=left>Welcome, {{ user.username }}!</td></tr>
+			<tr height=30 valign=top><td colspan=2 align=left><a href="/specfem3dglobe/registration/">Change My Information</a></td></tr>
 			<tr><td colspan=2 align=right><input type="submit" value="Logout"></td></tr>
 			</table>
 			</form>
 		{% else %}
-			<form action="/specfem3dglobe/login/" method="POST">
+			<form action="/accounts/login/" method="POST">
 			<table>
 			<tr><td colspan=2 align=left><a href="/specfem3dglobe/user/register/">REGISTER (New Users)!</a></td></tr>
 			<tr height=30 valign=top><td colspan=2 align=left>MEMBER LOGIN</td></tr>
@@ -60,10 +60,11 @@
 			</table>
 			</form>
 		{% endif %}
+
         {% endblock %}
     </div>
 
     <div id="content">
         {% block content %}{% endblock %}
     </div>
-</body>
+{% endblock %}

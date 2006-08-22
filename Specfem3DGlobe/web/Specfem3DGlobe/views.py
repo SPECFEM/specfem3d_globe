@@ -1,45 +1,136 @@
 # Create your views here.
 
 from django import forms
-from django.shortcuts import render_to_response, get_object_or_404
-from datetime import datetime
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.shortcuts import render_to_response, get_object_or_404
+from django.template.context import RequestContext
+from datetime import datetime
 from Specfem3DGlobe.web.Specfem3DGlobe.models import Mesh, Model, Simulation, UserInfo
+from cig.web.forms import TeeManipulator
 from cig.web.seismo.events.models import Event
 
-def getres_checkbox(request,key):
-	if request.has_key(key) and request.POST[key] == 'on':
-		return True
-	else: 
-		return False
+class SimulationTypeManipulator(forms.Manipulator):
+	def __init__(self):
+		forms.Manipulator.__init__(self)
+		from models import MESH_TYPES, SIMULATION_TYPES
+		self.fields = (
+			forms.RadioSelectField(field_name='mesh__type', choices=MESH_TYPES),
+			forms.RadioSelectField(field_name='simulation_type', choices=SIMULATION_TYPES),
+			)
 
 def index(request):
-	user = login_check(request);
-	prev_simulations = Simulation.objects.filter(user=user)
-	form = forms.FormWrapper(Simulation.AddManipulator(), {}, {})
+	prev_simulations = Simulation.objects.filter(user=request.user)
+	manipulator = SimulationTypeManipulator()
+	new_data = {'mesh__type': '1', 'simulation_type': '1' }
+	form = forms.FormWrapper(manipulator, new_data, {})
 
 	return render_to_response('Specfem3DGlobe/home.html',
-							 {'prev_simulations': prev_simulations,
-							  'form': form,
-							  'userinfo': user})
+				  {'prev_simulations': prev_simulations,
+				   'form': form},
+				  RequestContext(request, {}))
+index = login_required(index)
 
-def setparam(request):
-	if not request.has_key('events'):
-		errors = 'you must select an event.'
-		form = forms.FormWrapper(Simulation.AddManipulator(), {}, {})
-		return render_to_response('Specfem3DGlobe/home.html', 
-								  {'errors': errors,
-								  'form': form})
 
-	mesh_type = request.POST['mesh_type']
-	if mesh_type == 'regional':
-		template = 'Specfem3DGlobe/simulation_form_regional.html'
-	else:
+
+	
+
+class SimulationWizardManipulator(TeeManipulator):
+	
+	def __init__(self, mesh_type):
+		TeeManipulator.__init__(self,
+					{'mesh__': Mesh.AddManipulator(),
+					 'model__': Model.AddManipulator(),
+					 '': Simulation.AddManipulator()},
+					['user',
+					 'mesh',
+					 'mesh__user',
+					 'mesh__nchunks', # see below
+					 'model',
+					 'model__user'])
+		# Create our own custom fields.
+		from models import NCHUNKS_CHOICES
+		if mesh_type == '1':
+			nchunks_choices = NCHUNKS_CHOICES
+		else:
+			nchunks_choices = NCHUNKS_CHOICES[:-1]
+		regional_field = forms.RadioSelectField(field_name='mesh__nchunks',
+							choices=nchunks_choices)
+		self.manipulators['mesh__'].fields.append(regional_field)
+		self.fields.append(regional_field)
+		return
+	
+	def save(self, new_data):
+		self._revert_field_names(new_data)
+		mesh = self.manipulators['mesh__'].save(new_data)
+		new_data['mesh'] = mesh.id
+		model = self.manipulators['model__'].save(new_data)
+		new_data['model'] = model.id
+		# Save the simulation last.
+		self.manipulators[''].save(new_data)
+		return
+
+
+def create_simulation(request):
+
+	mesh_type = request.POST['mesh__type']
+	if mesh_type == '1':
 		template = 'Specfem3DGlobe/simulation_form_global.html'
+		absorbing_conditions = False
+	elif mesh_type == '2':
+		template = 'Specfem3DGlobe/simulation_form_regional.html'
+		absorbing_conditions = True
+	else:
+		raise RuntimeError()
 
-	return render_to_response(template, 
-							 {'events': request.POST['events'],
-							  'simulation_type': request.POST['simulation_type']})
+	manipulator = SimulationWizardManipulator(mesh_type)
+
+	if request.POST.has_key('blank'):
+		# Return a new, blank form of the requested type.
+		new_data = manipulator.flatten_data()
+		new_data['mesh__type'] = mesh_type
+		new_data['mesh__nchunks'] = '1'
+		new_data['simulation_type'] = request.POST['simulation_type']
+		new_data['absorbing_conditions'] = absorbing_conditions
+		form = forms.FormWrapper(manipulator, new_data, {})
+		return render_to_response(template,
+					  { 'form': form },
+					  RequestContext(request, {}))
+
+	# User is POSTing data.
+	
+	new_data = request.POST.copy()
+
+	# 
+	# First, do some parameter validity checking!!!
+	#
+	# Do some checking here!
+	#
+	# This only checks for simple errors.
+	#
+	
+	errors = manipulator.get_validation_errors(new_data)
+	if errors:
+		form = forms.FormWrapper(manipulator, new_data, errors)
+		return render_to_response(template, { 'form': form }, RequestContext(request, {}))
+
+	manipulator.do_html2python(new_data)
+	
+	# Fill-in user data.
+	new_data['user'] = request.user.id
+	new_data['mesh__user'] = request.user.id
+	new_data['model__user'] = request.user.id
+
+	# Fill-in automatic fields.
+	new_data['absorbing_conditions'] = absorbing_conditions
+	
+	manipulator.save(new_data)
+	
+	return HttpResponseRedirect('/specfem3dglobe/')
+
+create_simulation = login_required(create_simulation)
+
 
 def detail(request, sim_id):
 	sim = get_object_or_404(Simulation,id=sim_id)
@@ -53,120 +144,6 @@ def delete(request,sim_id):
 		if sim.model:
 			sim.model.delete()
 		sim.delete()
-	return HttpResponseRedirect('/specfem3dglobe/')
-
-def create_simulation(request):
-	# 
-	# first, do some parameter validity checking!!!
-	#
-	# Do some checking here!
-	user = login_check(request);
-
-	if user == None:
-		return HttpResponseRedirect('/specfem3dglobe/')
-
-	#
-	# mesh information
-	#
-	_nchunks = request.POST['mesh_nchunks']
-	_nproc_xi = request.POST['mesh_nproc_xi']
-	_nproc_eta = request.POST['mesh_nproc_eta']
-	_nex_xi = request.POST['mesh_nex_xi']
-	_nex_eta = request.POST['mesh_nex_eta']
-	_save_files = getres_checkbox(request,'mesh_save_files')
-	_type = 1
-	if request.POST['mesh_type'] == 'regional':
-		_type = 2
-	_angular_width_eta = 0.0
-	_angular_width_xi = 0.0
-	_center_latitude = 0.0
-	_center_longitude = 0.0
-	_gamma_rotation_azimuth = 0.0
-	if request.POST['mesh_type'] == 'regional':
-		_angular_width_eta = request.POST['mesh_angular_width_xi']
-		_angular_width_xi = request.POST['mesh_angular_width_eta']
-		_center_latitude = request.POST['mesh_center_latitude']
-		_center_longitude = request.POST['mesh_center_longitude']
-		_gamma_rotation_azimuth = request.POST['mesh_gamma_rotation_azimuth']
-		
-	mesh = Mesh(    
-					nchunks                         = _nchunks, 
-					nproc_xi                        = _nproc_xi,
-					nproc_eta                       = _nproc_eta,
-					nex_xi                          = _nex_xi,
-					nex_eta                         = _nex_eta,
-					save_files                      = _save_files,
-					type                            = _type,
-					angular_width_eta               = _angular_width_eta,
-					angular_width_xi                = _angular_width_xi,
-					center_latitude                 = _center_latitude,
-					center_longitude                = _center_longitude,
-					gamma_rotation_azimuth          = _gamma_rotation_azimuth 
-				)
-	mesh.save()
-
-	# 
-	# model information
-	#
-	_type = request.POST['model_type']
-	_oceans = getres_checkbox(request,'model_oceans')
-	_gravity = getres_checkbox(request,'model_gravity')
-	_attenuation = getres_checkbox(request,'model_attenuation')
-	_topography = getres_checkbox(request,'model_topography')
-	_rotation = getres_checkbox(request,'model_rotation')
-	_ellipticity = getres_checkbox(request,'model_ellipticity')
-	model = Model(  
-					type                            = _type,
-					oceans                          = _oceans,
-					gravity                         = _gravity,
-					attenuation                     = _attenuation,
-					topography                      = _topography,
-					rotation                        = _rotation,
-					ellipticity                     = _ellipticity 
-				)
-	model.save()
-
-	# 
-	# simulation information
-	#
-	_date = datetime.now()
-	_status = 2
-	_record_length = request.POST['simulation_record_length']
-	_receivers_can_be_buried = getres_checkbox(request,'simulation_receivers_can_be_buried')
-	_print_source_time_function = getres_checkbox(request,'simulation_print_source_time_function')
-	_save_forward = False
-	_movie_surface = getres_checkbox(request,'simulation_movie_surface')
-	_movie_volume = getres_checkbox(request,'simulation_movie_volume')
-	_absorbing_conditions = False
-	if request.POST['mesh_type'] == 'regional':
-		_absorbing_conditions = True
-	_ntstep_between_frames = 100
-	_simulation_type = request.POST['simulation_type']
-
-	user = UserInfo.objects.get(userid=request.session['userid'])
-
-	# 
-	# event information
-	#
-	simulation = Simulation(
-					user                            = user,
-					date                            = _date,
-					mesh                            = mesh,
-					model                           = model,
-					status                          = _status,
-					record_length                   = _record_length,
-					receivers_can_be_buried         = _receivers_can_be_buried,
-					print_source_time_function      = _print_source_time_function,
-					save_forward                    = _save_forward,
-					movie_surface                   = _movie_surface,
-					movie_volume                    = _movie_volume,
-					absorbing_conditions            = _absorbing_conditions,
-					ntstep_between_frames           = _ntstep_between_frames,
-					simulation_type                 = _simulation_type
-				)
-	simulation.save()
-	simulation.events.add(Event.objects.get(id=request.POST['events']))
-
 	return HttpResponseRedirect('/specfem3dglobe/')
 
 def info(request, info_str):
@@ -201,6 +178,10 @@ def simulation_pml(request, sim_id):
 	response.write(t.render(c))
 	return response
 
+def logout_view(request):
+	logout(request)
+	return HttpResponseRedirect('/specfem3dglobe/login/')
+
 def events_txt(request, sim_id):
 	from django.template import loader, Context
 
@@ -231,37 +212,114 @@ def stations_txt(request, sim_id):
 	response.write(t.render(c))
 	return response
 
-def login_check(request):
-	user = None
-	try:
-		user = UserInfo.objects.get(userid=request.session['userid'])
-	except UserInfo.DoesNotExist:
-		pass
-	except KeyError:
-		pass
 
-	return user
+class RegistrationManipulator(TeeManipulator):
+	
+	def __init__(self, mesh_type):
+		TeeManipulator.__init__(self,
+					{'user__': User.AddManipulator(),
+					 '': UserInfo.AddManipulator()},
+					['user'])
+		return
+	
+	def save(self, new_data):
+		self._revert_field_names(new_data)
+		user = self.manipulators['user__'].save(new_data)
+		new_data['user'] = user.id
+		self.manipulators[''].save(new_data)
+		return
 
-def login(request):
-	user = None
-	error = None
-	try:
-		user = UserInfo.objects.get(userid=request.POST['userid'])
-	except UserInfo.DoesNotExist:
-		error = "user does not exist"
-	except KeyError:
-		error = "post error"
-
-	if user and user.password == request.POST['password']:
-		request.session['userid'] = user.userid
-		return HttpResponseRedirect('/specfem3dglobe/')
+def xxxregistration(request):
+	from django.views.generic.create_update import create_object, update_object
+	follow = {
+		'user' : True  # follow the foreign key relationship 'user'
+		}
+	user = request.user
+	if user.is_anonymous():
+		response = create_object(request, UserInfo,
+					 template_name='Specfem3DGlobe/register.html',
+					 post_save_redirect='/specfem3dglobe/')
 	else:
-		return HttpResponseRedirect('/specfem3dglobe/')
+		# Create UserInfo if it doesn't exist.
+		try:
+			userInfo = user.userinfo
+		except UserInfo.DoesNotExist:
+			userInfo = UserInfo()
+			user.userinfo = userInfo
+			user.save()
+			userInfo.save()
+		response = update_object(request, UserInfo,
+					 object_id=userInfo,
+					 post_save_redirect='/specfem3dglobe/',
+					 edit_inline=True,
+					 follow=follow)
+	return response
 
-def logout(request):
-	try:
-		del request.session['userid']
-	except KeyError:
+
+
+def registration(request):
+	user = request.user
+	follow = {
+		'user': True,  # follow the foreign key relationship 'user'
+		}
+	if user.is_anonymous():
+		manipulator = UserInfo.AddManipulator(getattr(object, object._meta.pk.name)) #, follow)
+	else:
+		# Create UserInfo if it doesn't exist.
+		try:
+			userInfo = user.userinfo
+		except UserInfo.DoesNotExist:
+			userInfo = UserInfo()
+			user.userinfo = userInfo
+			user.save()
+			userInfo.save()
+		manipulator = UserInfo.ChangeManipulator(getattr(userInfo, userInfo._meta.pk.name), follow)
+
+	if request.POST:
+		new_data = request.POST.copy()
+		errors = manipulator.get_validation_errors(new_data)
+		manipulator.do_html2python(new_data)
+		if not errors:
+			manipulator.save(new_data)
+			return HttpResponseRedirect('')
+	else:
+		# Populate new_data with a 'flattened' version of the current data.
+		new_data = manipulator.flatten_data()
+		errors = {}
+
+	# Populate the FormWrapper.
+	form = forms.FormWrapper(manipulator, new_data, errors, edit_inline = True)
+	
+	return render_to_response('Specfem3DGlobe/register.html', { 'form': form })
+
+
+def frustration(request, object_id):
+	# Desperately trying to get inline editing to work:
+	# http://code.djangoproject.com/wiki/NewAdminChanges
+	simulation = get_object_or_404(Simulation, id=object_id)
+	if simulation.mesh:
 		pass
-	return HttpResponseRedirect('/specfem3dglobe/')
+	follow = {
+		'mesh': {'angular_width_eta': True},  # follow the foreign key relationship
+		}
+	if False:
+		manipulator = Simulation.AddManipulator()
+	else:
+		manipulator = Simulation.ChangeManipulator(getattr(simulation, simulation._meta.pk.name), follow)
 
+	if request.POST:
+		new_data = request.POST.copy()
+		errors = manipulator.get_validation_errors(new_data)
+		manipulator.do_html2python(new_data)
+		if not errors:
+			manipulator.save(new_data)
+			return HttpResponseRedirect('')
+	else:
+		# Populate new_data with a 'flattened' version of the current data.
+		new_data = manipulator.flatten_data()
+		errors = {}
+
+	# Populate the FormWrapper.
+	form = forms.FormWrapper(manipulator, new_data, errors, edit_inline = True)
+	
+	return render_to_response('Specfem3DGlobe/simulation_form.html', { 'form': form })

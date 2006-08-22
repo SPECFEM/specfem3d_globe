@@ -3,27 +3,6 @@
 
 {% block content %}
 
-
-{% if userinfo %}
-	<form action="/specfem3dglobe/setparam/" method="POST">
-
-	<p>Events:
-	<p><a href="/specfem3dglobe/events/">Maange Events!</a>
-	{% if errors %}<p><font color='red'>{{ errors }}</font>{% endif %}
-	<p>{{ form.events }} 
-
-	<p>Simulation type:
-	<input type="radio", name="mesh_type", value="global" CHECKED>Global
-	<input type="radio", name="mesh_type", value="regional">Regional
-
-	<p>
-	<input type="radio", name="simulation_type", value="forward" CHECKED>Forward
-	<input type="radio", name="simulation_type", value="adjoint">Adjoint
-	<input type="radio", name="simulation_type", value="both">Both
-
-	<p><input type="submit" value="Next">
-	</form>
-
 	Previous Simulations:<br>
 	{% if prev_simulations %}
 		{% for sim in prev_simulations %}
@@ -33,8 +12,19 @@
 	{% else %}
 		- There is no previous simulation. <br>
 	{% endif %}
-{% else %}
-	- Service is not available.  You need to login to use this service.
-{% endif %}
+
+<p><form action="/specfem3dglobe/wizard/" method="POST">
+
+<b>Simulation type:</b>
+
+<p>{{ form.mesh__type }}
+
+<p>{{ form.simulation_type }}
+
+<input type="hidden" name="blank" value="1">
+
+<p><input type="submit" value="Next">
+
+</form>
 
 {% endblock %}

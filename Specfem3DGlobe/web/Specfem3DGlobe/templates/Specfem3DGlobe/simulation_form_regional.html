@@ -2,38 +2,46 @@
 {% extends "Specfem3DGlobe/simulation_base.html" %}
 
 {% block heading %}Regional Simulation{% endblock %}
-{% block mesh_type %}regional{% endblock %}
+{% block mesh__type %}2{% endblock %}
 
-                {% block mesh_image %}gridpoints.gif{% endblock %}
-                {% block mesh %}
-				<tr>
-					<td>Angular Width &eta;</td>
-					<td><input type="text" name="mesh_angular_width_eta" value="90.0" size="5"> * deg </td>
-				</tr>
-				<tr>
-					<td>Angular Width &xi;</td>
-					<td><input type="text" name="mesh_angular_width_xi" value="90.0" size="5"> * deg </td>
-				</tr>
-				<tr>
-					<td>Center Latitude</td>
-					<td><input type="text" name="mesh_center_latitude" value="0.0" size="5"> * deg </td>
-				</tr>
-				<tr>
-					<td>Center Longitude</td>
-					<td><input type="text" name="mesh_center_longitude" value="0.0" size="5"> * deg </td>
-				</tr>
-				<tr>
-					<td>Gamma Rotation Azimuth</td>
-					<td><input type="text" name="mesh_gamma_rotation_azimuth" value="0.0" size="5"> * deg </td>
-				</tr>
-                <tr>
-                    <td>Number of Chunks</td>
-                    <td>
-                        <select name="mesh_nchunks" size="1">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                        </select>
-                    </td>
-                </tr>
-                {% endblock %}
+{% block mesh_image %}gridpoints.gif{% endblock %}
+
+      {% block mesh %}
+        {{ block.super }}
+        <tr>
+            <td valign="top"><label for="id_mesh__nchunks">Number of Chunks:</label></td>
+            <td valign="top">{{ form.mesh__nchunks }}</td>
+            <td valign="top">{% if form.mesh__nchunks.errors %}<span class=error>{{ form.mesh__nchunks.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__angular_width_eta">Angular Width &eta;:</label></td>
+            <td valign="top">{{ form.mesh__angular_width_eta }}</td>
+            <td valign="top">{% if form.mesh__angular_width_eta.errors %}<span class=error>{{ form.mesh__angular_width_eta.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__angular_width_xi">Angular Width &xi;:</label></td>
+            <td valign="top">{{ form.mesh__angular_width_xi }}</td>
+            <td valign="top">{% if form.mesh__angular_width_xi.errors %}<span class=error>{{ form.mesh__angular_width_xi.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__center_latitude">Center Latitude:</label></td>
+            <td valign="top">{{ form.mesh__center_latitude }}</td>
+            <td valign="top">{% if form.mesh__center_latitude.errors %}<span class=error>{{ form.mesh__center_latitude.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__center_longitude">Center Longitude:</label></td>
+            <td valign="top">{{ form.mesh__center_longitude }}</td>
+            <td valign="top">{% if form.mesh__center_longitude.errors %}<span class=error>{{ form.mesh__center_longitude.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__gamma_rotation_azimuth">Gamma Rotation Azimuth:</label></td>
+            <td valign="top">{{ form.mesh__gamma_rotation_azimuth }}</td>
+            <td valign="top">{% if form.mesh__gamma_rotation_azimuth.errors %}<span class=error>{{ form.mesh__gamma_rotation_azimuth.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+      {% endblock %}
