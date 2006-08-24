@@ -1,32 +1,35 @@
 
 {% extends "Specfem3DGlobe/root.html" %}
 
+<!-- Django bug? -->
+{% block scripts %}
+{% endblock %}
+
 {% block body %}
     <div id="header">
-	<table width=100%>
-	<tr><td width=330 align=left nowrap><b><font size=5>
-	<a href="/specfem3dglobe/" style="color: black; text-decoration: none;">ON DEMAND SIMULATION</a>
-	</font></b> </td>
-	<td align=right nowrap>
-	| <a href="/specfem3dglobe/">Home</a> 
-	| <a href="mailto:ykim@gps.caltech.edu">Contact Us</a> 
-	| <a href="/admin/">Admin</a> |</td> </tr>
-	</td></tr>
-	</table>
-	</div>
+        <div class="navbar">
+        <ul class=navbar>
+            <li><a href="/specfem3dglobe/">Home</a> 
+            <li><a href="mailto:ykim@gps.caltech.edu">Contact Us</a> 
+            <li><a href="/admin/">Admin</a>
+        </ul>
+        </div>
+        <h1 class=ondemand><a href="/specfem3dglobe/">On Demand Simulation</a></h1>
+    </div>
+
     <div id="sidebar">
         {% block sidebar %}
 
-        <center><tt>S P E C F E M  3 D<br>G L O B E</tt></center>
+        <center class=specfem>Specfem3D Globe</center>
         <p><img src="http://www.gps.caltech.edu/research/jtromp/research/graphics/mpi_slicesThumbnail.gif">
         
-        <p><ul>
-            <li><a href="/specfem3dglobe/">Home</a></li>
-        </ul>
+        <p>
+
         <ul>
             <li><a href="/specfem3dglobe/events/">My Events</a></li>
             <li><a href="/specfem3dglobe/stations/">My Stations</a></li>
         </ul>
+
         <ul>
             <li><a href="/specfem3dglobe/simulations/">My Simulations</a></li>
             <li><a href="/specfem3dglobe/meshes/">My Meshes</a></li>
@@ -35,31 +38,16 @@
 
         <hr width="50%">
 
-        <p>You are logged-in as <b>{{ user.username }}</b>.
-        <p><a href="/specfem3dglobe/logout/">Logout</a></li>
-
-		{% if user %}
-			<form action="/specfem3dglobe/logout/" method="POST">
-			<table>
-			<tr><td colspan=2 align=left>Welcome, {{ user.username }}!</td></tr>
-			<tr height=30 valign=top><td colspan=2 align=left><a href="/specfem3dglobe/registration/">Change My Information</a></td></tr>
-			<tr><td colspan=2 align=right><input type="submit" value="Logout"></td></tr>
-			</table>
-			</form>
-		{% else %}
-			<form action="/accounts/login/" method="POST">
-			<table>
-			<tr><td colspan=2 align=left><a href="/specfem3dglobe/user/register/">REGISTER (New Users)!</a></td></tr>
-			<tr height=30 valign=top><td colspan=2 align=left>MEMBER LOGIN</td></tr>
-			{% if login_error %}
-				<tr height=30 valign=top><font color=red>{{ login_error }}. Please try again.</font></td></tr>
-			{% endif %}
-			<tr><td>USERNAME:</td><td><input type="text" name="userid" size=10></td></tr>
-			<tr><td>PASSWORD:</td><td><input type="password" name="password" size=12></td></tr>
-			<tr><td colspan=2 align=right><input type="submit" value="Login"></td></tr>
-			</table>
-			</form>
-		{% endif %}
+        {% if user %}
+            <p>Welcome, {{ user.username }}!
+            <p><a href="/specfem3dglobe/registration/">Change My Information</a>
+            <p>
+            <form action="/specfem3dglobe/logout/" method="POST">
+                <input type="submit" value="Logout">
+            </form>
+        {% else %}
+            <p><a href="/specfem3dglobe/login/">Login</a>
+        {% endif %}
 
         {% endblock %}
     </div>

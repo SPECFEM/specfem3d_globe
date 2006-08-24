@@ -5,7 +5,9 @@
 
     <center>
 
-    <h1><tt>S P E C F E M 3 D<br>G L O B E</tt></h1>
+    <h1 class=specfem>Specfem3D Globe</h1>
+
+    <p><span class=watermark>$Revision$</span>
 
     <h2>Login</h2>
 
@@ -13,7 +15,11 @@
 
     <p>
     {% if form.has_errors %}
-    <span class=error>Your username and password didn't match. Please try again.</span>
+        <ul>
+            {% for e in form.error_dict.iteritems %}
+                <li class=error>{{ e.0 }}: {{ e.1|join:", " }}</li>
+            {% endfor %}
+        </ul>
     {% else %}
     &nbsp;
     {% endif %}

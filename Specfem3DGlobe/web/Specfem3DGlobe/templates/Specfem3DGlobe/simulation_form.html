@@ -15,9 +15,6 @@
 {% endif %}
 
 <form method="post" action=".">
-
-    <p>hey {{ form.mesh.angular_width_eta }}
-
     <table border="0">
 
         <tr>
@@ -42,12 +39,6 @@
             <td align="right" valign="top"><label for="id_events">events:</label></td>
             <td valign="top">{{ form.events }}</td>
             <td valign="top">{% if form.events.errors %}<span class=error>{{ form.events.errors|join:", " }}</span>{% endif %}</td>
-        </tr>
-
-        <tr>
-            <td align="right" valign="top"><label for="id_stations">stations:</label></td>
-            <td valign="top">{{ form.stations }}</td>
-            <td valign="top">{% if form.stations.errors %}<span class=error>{{ form.stations.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>

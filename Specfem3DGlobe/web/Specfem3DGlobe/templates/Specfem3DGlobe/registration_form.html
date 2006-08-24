@@ -6,69 +6,70 @@
 &nbsp;
 {% endif %}
 
-<form method="post" action=".">
+<form method="post" action="." id=registration>
     <table border="0">
 
         <tr>
-            <td align="right" valign="top"><label for="id_userid">USERNAME:</label></td>
-            <td valign="top">{{ form.user.username }}</td>
+            <td align="right" valign="top"><label for="id_userid">Username:</label></td>
+            <td valign="top">{{ form.username }}</td>
             <td valign="top">{% if form.userid.errors %}<span class=error>{{ form.userid.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_password">PASSWORD:</label></td>
-            <td valign="top">{{ form.user.password}}</td>
+            <td align="right" valign="top"><label for="id_password">Password:</label></td>
+            <td valign="top">{{ form.password}}</td>
             <td valign="top">{% if form.password.errors %}<span class=error>{{ form.password.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_lastname">LAST NAME:</label></td>
-            <td valign="top">{{ form.user.lastname}}</td>
-            <td valign="top">{% if form.lastname.errors %}<span class=error>{{ form.lastname.errors|join:", " }}</span>{% endif %}</td>
+            <td align="right" valign="top"><label for="id_last_name">Last name:</label></td>
+            <td valign="top">{{ form.last_name}}</td>
+            <td valign="top">{% if form.last_name.errors %}<span class=error>{{ form.last_name.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_firstname">FIRST NAME:</label></td>
-            <td valign="top">{{ form.user.firstname}}</td>
-            <td valign="top">{% if form.firstname.errors %}<span class=error>{{ form.firstname.errors|join:", " }}</span>{% endif %}</td>
+            <td align="right" valign="top"><label for="id_first_name">First name:</label></td>
+            <td valign="top">{{ form.first_name}}</td>
+            <td valign="top">{% if form.first_name.errors %}<span class=error>{{ form.first_name.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_email">EMAIL:</label></td>
-            <td valign="top">{{ form.user.email}}</td>
+            <td align="right" valign="top"><label for="id_email">E-Mail:</label></td>
+            <td valign="top">{{ form.email}}</td>
             <td valign="top">{% if form.email.errors %}<span class=error>{{ form.email.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_institution">INSTITUTION:</label></td>
-            <td valign="top">{{ form.institution}}</td>
-            <td valign="top">{% if form.institution.errors %}<span class=error>{{ form.institution.errors|join:", " }}</span>{% endif %}</td>
+            <td align="right" valign="top"><label for="id_userinfo.0.institution">Institution:</label></td>
+            <td valign="top">{{ form.userinfo.0.institution}}</td>
+            <td valign="top">{% if form.userinfo.0.institution.errors %}<span class=error>{{ form.userinfo.0.institution.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_address1">ADDRESS:</label></td>
-            <td valign="top">{{ form.address1 }} (optional)</td>
-            <td valign="top">{% if form.address1.errors %}<span class=error>{{ form.address1.errors|join:", " }}</span>{% endif %}</td>
+            <td align="right" valign="top"><label for="id_userinfo.0.address1">Address:</label></td>
+            <td valign="top">{{ form.userinfo.0.address1 }} (optional)</td>
+            <td valign="top">{% if form.userinfo.0.address1.errors %}<span class=error>{{ form.userinfo.0.address1.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_address2">CITY:</label></td>
-            <td valign="top">{{ form.address2}} (optional)</td>
-            <td valign="top">{% if form.address2.errors %}<span class=error>{{ form.address2.errors|join:", " }}</span>{% endif %}</td>
+            <td align="right" valign="top"><label for="id_userinfo.0.address2">City:</label></td>
+            <td valign="top">{{ form.userinfo.0.address2}} (optional)</td>
+            <td valign="top">{% if form.userinfo.0.address2.errors %}<span class=error>{{ form.userinfo.0.address2.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_address3">STATE &amp; ZIP:</label></td>
-            <td valign="top">{{ form.address3 }} (optional)</td>
-            <td valign="top">{% if form.address3.errors %}<span class=error>{{ form.address3.errors|join:", " }}</span>{% endif %}</td>
+            <td align="right" valign="top"><label for="id_userinfo.0.address3">State &amp; ZIP:</label></td>
+            <td valign="top">{{ form.userinfo.0.address3 }} (optional)</td>
+            <td valign="top">{% if form.userinfo.0.address3.errors %}<span class=error>{{ form.userinfo.0.address3.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
         <tr>
-            <td align="right" valign="top"><label for="id_phone">PHONE #:</label></td>
-            <td valign="top">{{ form.phone}} (optional)</td>
-            <td valign="top">{% if form.phone.errors %}<span class=error>{{ form.phone.errors|join:", " }}</span>{% endif %}</td>
+            <td align="right" valign="top"><label for="id_userinfo.0.phone">Phone #:</label></td>
+            <td valign="top">{{ form.userinfo.0.phone}} (optional)</td>
+            <td valign="top">{% if form.userinfo.0.phone.errors %}<span class=error>{{ form.userinfo.0.phone.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
     </table>
+
     <p><input type="submit" value="Save"/>
 </form>

@@ -1,6 +1,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+from cig.web.models import CurrentUser
 from cig.web.seismo.events.models import Event
 from cig.web.seismo.stations.models import Station
 
@@ -49,9 +50,15 @@ class UserInfo(models.Model):
 	address1 = models.CharField(maxlength=100, null=True, blank=True)
 	address2 = models.CharField(maxlength=100, null=True, blank=True)
 	address3 = models.CharField(maxlength=100, null=True, blank=True)
-	phone = models.CharField(maxlength=20, null=True, blank=True)
+	phone = models.PhoneNumberField(null=True, blank=True)
 	class Admin:
 		pass
+        def get(self, user__exact):
+            # Django bug?  The registration() view barfs if this
+            # method is not present.  Perhaps edit_inline doesn't work
+            # with OneToOneField?
+            assert self.user.id == user__exact
+            return self
 
 
 class Mesh(models.Model):
@@ -107,8 +114,8 @@ class Simulation(models.Model):
 	started = models.DateTimeField(editable=False, null=True)
 	finished = models.DateTimeField(editable=False, null=True)
 	
-	mesh = models.ForeignKey(Mesh, edit_inline=models.TABULAR, num_in_admin=1)
-	model = models.ForeignKey(Model, edit_inline=models.TABULAR, num_in_admin=1)
+	mesh = models.ForeignKey(Mesh, num_in_admin=1)
+	model = models.ForeignKey(Model, num_in_admin=1)
 	status = models.IntegerField(choices=STATUS_TYPES, default=1, editable=False)
 
 	#
@@ -123,9 +130,17 @@ class Simulation(models.Model):
 	movie_volume = models.BooleanField(core=True)
 
 	# CMTSOLUTION
-	events = models.ManyToManyField(Event, num_in_admin=1)
+	events = models.ManyToManyField(Event, num_in_admin=1,
+					limit_choices_to = {'user__exact' : CurrentUser()})
 	# STATIONS
-	stations = models.ManyToManyField(Station, num_in_admin=1, limit_choices_to = {'code__startswith': 'pas'})
+	stations = models.ManyToManyField(Station, num_in_admin=1,
+					  limit_choices_to = {'user__exact' : CurrentUser()})
+        def user_stations(self):
+            #return self.stations_set.all()
+            return Station.objects.filter(user=self.user)
+            #return ['red', 'green', 'blue']
+        def tomato(self):
+            return "banana"
 
 	# need to find out what the fields are for...
 	# hdur_movie:
