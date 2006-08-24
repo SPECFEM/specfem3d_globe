@@ -24,6 +24,8 @@
 
     <h2>Stations</h2>
 
+    <p><span class=hint>Hold down "Control", or "Command" on a Mac, to select more than one. Hold down "Shift" to select a range of stations.</span> 
+
     <p>{{ form.stations }} {% if form.stations.errors %}<span class=error>{{ form.stations.errors|join:", " }}</span>{% endif %}
 
     <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/{% block mesh_image %}{% endblock %}">

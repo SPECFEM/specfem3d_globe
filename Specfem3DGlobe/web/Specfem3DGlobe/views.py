@@ -2,7 +2,8 @@
 
 from django import forms
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
@@ -10,6 +11,11 @@ from datetime import datetime
 from Specfem3DGlobe.web.Specfem3DGlobe.models import Mesh, Model, Simulation, UserInfo
 from cig.web.forms import TeeManipulator
 from cig.web.seismo.events.models import Event
+
+
+# Create our own version of 'login_required' which redirects to our login page.
+login_required = user_passes_test(lambda u: not u.is_anonymous(), "/specfem3dglobe/login")
+
 
 class SimulationTypeManipulator(forms.Manipulator):
 	def __init__(self):
@@ -213,57 +219,20 @@ def stations_txt(request, sim_id):
 	return response
 
 
-class RegistrationManipulator(TeeManipulator):
-	
-	def __init__(self, mesh_type):
-		TeeManipulator.__init__(self,
-					{'user__': User.AddManipulator(),
-					 '': UserInfo.AddManipulator()},
-					['user'])
-		return
-	
-	def save(self, new_data):
-		self._revert_field_names(new_data)
-		user = self.manipulators['user__'].save(new_data)
-		new_data['user'] = user.id
-		self.manipulators[''].save(new_data)
-		return
-
-def xxxregistration(request):
-	from django.views.generic.create_update import create_object, update_object
-	follow = {
-		'user' : True  # follow the foreign key relationship 'user'
-		}
-	user = request.user
-	if user.is_anonymous():
-		response = create_object(request, UserInfo,
-					 template_name='Specfem3DGlobe/register.html',
-					 post_save_redirect='/specfem3dglobe/')
-	else:
-		# Create UserInfo if it doesn't exist.
-		try:
-			userInfo = user.userinfo
-		except UserInfo.DoesNotExist:
-			userInfo = UserInfo()
-			user.userinfo = userInfo
-			user.save()
-			userInfo.save()
-		response = update_object(request, UserInfo,
-					 object_id=userInfo,
-					 post_save_redirect='/specfem3dglobe/',
-					 edit_inline=True,
-					 follow=follow)
-	return response
-
-
-
 def registration(request):
 	user = request.user
 	follow = {
-		'user': True,  # follow the foreign key relationship 'user'
+		# Suppress these fields.
+		'password': False,
+		'date_joined': False,
+		'last_login': False,
+		'is_staff': False,
+		'is_active': False,
+		'is_superuser': False,
 		}
 	if user.is_anonymous():
-		manipulator = UserInfo.AddManipulator(getattr(object, object._meta.pk.name)) #, follow)
+		manipulator = User.AddManipulator(follow)
+		template = 'Specfem3DGlobe/register.html'
 	else:
 		# Create UserInfo if it doesn't exist.
 		try:
@@ -273,15 +242,18 @@ def registration(request):
 			user.userinfo = userInfo
 			user.save()
 			userInfo.save()
-		manipulator = UserInfo.ChangeManipulator(getattr(userInfo, userInfo._meta.pk.name), follow)
+		manipulator = User.ChangeManipulator(user.id, follow)
+		template = 'Specfem3DGlobe/userinfo_form.html'
 
 	if request.POST:
 		new_data = request.POST.copy()
 		errors = manipulator.get_validation_errors(new_data)
 		manipulator.do_html2python(new_data)
+		new_data['userinfo.0.user'] = user.id # Not sure why this is this necessary.
+		new_data['userinfo.0.user_id'] = user.id # Not sure why this is this necessary.
 		if not errors:
 			manipulator.save(new_data)
-			return HttpResponseRedirect('')
+			return HttpResponseRedirect('/specfem3dglobe/')
 	else:
 		# Populate new_data with a 'flattened' version of the current data.
 		new_data = manipulator.flatten_data()
@@ -290,36 +262,4 @@ def registration(request):
 	# Populate the FormWrapper.
 	form = forms.FormWrapper(manipulator, new_data, errors, edit_inline = True)
 	
-	return render_to_response('Specfem3DGlobe/register.html', { 'form': form })
-
-
-def frustration(request, object_id):
-	# Desperately trying to get inline editing to work:
-	# http://code.djangoproject.com/wiki/NewAdminChanges
-	simulation = get_object_or_404(Simulation, id=object_id)
-	if simulation.mesh:
-		pass
-	follow = {
-		'mesh': {'angular_width_eta': True},  # follow the foreign key relationship
-		}
-	if False:
-		manipulator = Simulation.AddManipulator()
-	else:
-		manipulator = Simulation.ChangeManipulator(getattr(simulation, simulation._meta.pk.name), follow)
-
-	if request.POST:
-		new_data = request.POST.copy()
-		errors = manipulator.get_validation_errors(new_data)
-		manipulator.do_html2python(new_data)
-		if not errors:
-			manipulator.save(new_data)
-			return HttpResponseRedirect('')
-	else:
-		# Populate new_data with a 'flattened' version of the current data.
-		new_data = manipulator.flatten_data()
-		errors = {}
-
-	# Populate the FormWrapper.
-	form = forms.FormWrapper(manipulator, new_data, errors, edit_inline = True)
-	
-	return render_to_response('Specfem3DGlobe/simulation_form.html', { 'form': form })
+	return render_to_response(template, { 'form': form }, RequestContext(request, {}))
