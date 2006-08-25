@@ -53,12 +53,6 @@ class UserInfo(models.Model):
 	phone = models.PhoneNumberField(null=True, blank=True)
 	class Admin:
 		pass
-        def get(self, user__exact):
-            # Django bug?  The registration() view barfs if this
-            # method is not present.  Perhaps edit_inline doesn't work
-            # with OneToOneField?
-            assert self.user.id == user__exact
-            return self
 
 
 class Mesh(models.Model):

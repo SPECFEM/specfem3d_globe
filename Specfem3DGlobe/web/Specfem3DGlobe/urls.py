@@ -60,6 +60,13 @@ simulation_delete_args = {
 }
 
 
+# Registration
+
+password_change_args = {
+    'template_name': 'Specfem3DGlobe/password_change_form.html',
+    }
+
+
 
 # URLs
 
@@ -73,6 +80,8 @@ urlpatterns = patterns('',
 	(r'^login/$', 'django.contrib.auth.views.login'),
 	(r'^logout/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.logout_view'),
 	(r'^registration/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.registration'),
+	(r'^registration/password/$', 'django.contrib.auth.views.password_change', password_change_args),
+	(r'^registration/password/done/$', 'django.views.generic.simple.direct_to_template', { 'template': 'Specfem3DGlobe/password_changed.html'}),
 
 	(r'^meshes/$', 'django.views.generic.list_detail.object_list', mesh_list_detail_args),
 	(r'^meshes/create/$', 'django.views.generic.create_update.create_object', mesh_create_update_args),
