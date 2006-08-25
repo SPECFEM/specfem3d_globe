@@ -1,9 +1,10 @@
 # Create your views here.
 
 from django import forms
-from django.contrib.auth import logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
+from django.core import validators
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.context import RequestContext
@@ -219,41 +220,139 @@ def stations_txt(request, sim_id):
 	return response
 
 
-def registration(request):
-	user = request.user
-	follow = {
-		# Suppress these fields.
-		'password': False,
-		'date_joined': False,
-		'last_login': False,
-		'is_staff': False,
-		'is_active': False,
-		'is_superuser': False,
-		}
-	if user.is_anonymous():
-		manipulator = User.AddManipulator(follow)
-		template = 'Specfem3DGlobe/register.html'
-	else:
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Registration
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+usernameTaken = "This username is already taken."
+
+
+def isNotExistingUser(field_data, all_data):
+	try:
+		User.objects.get(username = field_data)
+	except User.DoesNotExist:
+		return
+	raise validators.ValidationError(usernameTaken)
+
+
+class RegistrationManipulator(forms.Manipulator):
+	
+	def __init__(self):
+		self.fields = [
+			# User
+			forms.TextField('first_name',   maxlength=30,  is_required=True),
+			forms.TextField('last_name',    maxlength=30,  is_required=True),
+			forms.EmailField('email',                      is_required=True),
+			# UserInfo
+			forms.TextField('institution',  maxlength=100, is_required=True),
+			forms.TextField('address1',     maxlength=100),
+			forms.TextField('address2',     maxlength=100),
+			forms.TextField('address3',     maxlength=100),
+			forms.PhoneNumberField('phone'),
+		]
+
+	def usernameValidatorList(self):
+		return [validators.isAlphaNumeric]
+
+
+class RegistrationAddManipulator(RegistrationManipulator):
+	
+	def __init__(self):
+		super(RegistrationAddManipulator, self).__init__()
+		self.fields.extend([
+			forms.TextField('username',     maxlength=30,  is_required=True, validator_list=self.usernameValidatorList()),
+			forms.PasswordField('password', maxlength=128, is_required=True),
+			])
+		
+	def save(self, new_data, request):
+		user, created = User.objects.get_or_create(
+			username = new_data['username'],
+			defaults = {'first_name': new_data['first_name'],
+				    'last_name':  new_data['last_name'],
+				    'email':      new_data['email']})
+		if not created:
+			# Race: the username was just taken!
+			return {'username': [usernameTaken]}
+		user.set_password(new_data['password'])
+		user.save()
+		UserInfo.objects.create(user        = user,
+					institution = new_data['institution'],
+					address1    = new_data['address1'],
+					address2    = new_data['address2'],
+					address3    = new_data['address3'],
+					phone       = new_data['phone'])
+		# Log-in the new user.
+		user = authenticate(username=new_data['username'], password=new_data['password'])
+		if user is not None:
+			login(request, user)
+		return {}
+
+	def flatten_data(self):
+		return {}
+	
+	def usernameValidatorList(self):
+		validator_list = super(RegistrationAddManipulator, self).usernameValidatorList()
+		validator_list.append(isNotExistingUser)
+		return validator_list
+	
+	
+class RegistrationChangeManipulator(RegistrationManipulator):
+
+	def __init__(self, user):
+		super(RegistrationChangeManipulator, self).__init__()
+		self.user = user
+	
+	def flatten_data(self):
+		new_data = {}
+		new_data.update(self.user.__dict__)
+		try:
+			userInfo = self.user.userinfo
+		except UserInfo.DoesNotExist:
+			pass
+		else:
+			new_data.update(userInfo.__dict__)
+		return new_data
+	
+	def save(self, new_data, request):
 		# Create UserInfo if it doesn't exist.
+		user = self.user
 		try:
 			userInfo = user.userinfo
 		except UserInfo.DoesNotExist:
 			userInfo = UserInfo()
 			user.userinfo = userInfo
-			user.save()
-			userInfo.save()
-		manipulator = User.ChangeManipulator(user.id, follow)
+		# Save the new user.
+		user.first_name      = new_data['first_name']
+		user.last_name       = new_data['last_name']
+		user.email           = new_data['email']
+		userInfo.institution = new_data['institution']
+		userInfo.address1    = new_data['address1']
+		userInfo.address2    = new_data['address2']
+		userInfo.address3    = new_data['address3']
+		userInfo.phone       = new_data['phone']
+		user.save()
+		userInfo.save()
+		return {}
+
+
+def registration(request):
+	user = request.user
+	if user.is_anonymous():
+		manipulator = RegistrationAddManipulator()
+		template = 'Specfem3DGlobe/register.html'
+	else:
+		manipulator = RegistrationChangeManipulator(user)
 		template = 'Specfem3DGlobe/userinfo_form.html'
 
 	if request.POST:
 		new_data = request.POST.copy()
 		errors = manipulator.get_validation_errors(new_data)
-		manipulator.do_html2python(new_data)
-		new_data['userinfo.0.user'] = user.id # Not sure why this is this necessary.
-		new_data['userinfo.0.user_id'] = user.id # Not sure why this is this necessary.
 		if not errors:
-			manipulator.save(new_data)
-			return HttpResponseRedirect('/specfem3dglobe/')
+			manipulator.do_html2python(new_data)
+			errors = manipulator.save(new_data, request)
+			if not errors:
+				return HttpResponseRedirect('/specfem3dglobe/')
 	else:
 		# Populate new_data with a 'flattened' version of the current data.
 		new_data = manipulator.flatten_data()

@@ -9,9 +9,11 @@
     <div id="header">
         <div class="navbar">
         <ul class=navbar>
-            <li><a href="/specfem3dglobe/">Home</a> 
-            <li><a href="mailto:ykim@gps.caltech.edu">Contact Us</a> 
-            <li><a href="/admin/">Admin</a>
+            <li><a href="/specfem3dglobe/">Home</a>
+            <li><a href="mailto:ykim@gps.caltech.edu">Contact Us</a>
+            {% if user.is_staff %}
+                <li><a href="/admin/">Admin</a>
+            {% endif %}
         </ul>
         </div>
         <h1 class=ondemand><a href="/specfem3dglobe/">On Demand Simulation</a></h1>
