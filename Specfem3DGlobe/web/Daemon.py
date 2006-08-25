@@ -1,57 +1,63 @@
 #!/usr/bin/env python
 
 import urllib2
-import pysqlite2.dbapi2 as sqlite
-
-# 
-# database related
-#
-sDatabaseFile       = '../../data/data.db'
-sTableName          = 'Specfem3DGlobe_simulation'
-nReady              = 2
-nPending            = 3
+import shutil
 
 # 
 # source address
 #
-sUrlPrefix          = 'http://localhost:8000/specfem3dglobe/simulations/'
-sUrlPostfix         = '/parameters.pml'
-lsUpdateID          = []
+urlPrefix           = 'http://localhost:8000/specfem3dglobe/'
+simulationsUrl      = urlPrefix + 'simulations/list.py'
+inputFileUrl        = urlPrefix + 'simulations/%s/%s'
+inputFiles          = ['parameters.pml', 'events.txt', 'stations.txt']
 
 #
 # destination 
 #
-sSaveDir            = './'
-sFileExt            = '.xml'
-sMode               = 'w'
+sSaveDir            = './output'
 
-#
-# read 'ready' records from database, and save them in list
-# for now, let's assume that we have 1 as ready sim id.
-#
-conn = sqlite.connect(sDatabaseFile)
-cur = conn.cursor()
-cur.execute('select id from %s where status = %d' % (sTableName,nReady)) 
 
-#
-# for each sim id, get xml file and save
-#
-for id in cur:
-    try:
-        infile = urllib2.urlopen('%s%d%s' % (sUrlPrefix,id[0],sUrlPostfix))
-    except urllib2.HTTPError:
-        # print error to log
-        pass
-    else:
-        outfile = open('%s%d%s' % (sSaveDir,id[0],sFileExt),sMode)
-        outfile.write(infile.read())
-        infile.close()
+infile = urllib2.urlopen(simulationsUrl)
+simulations = infile.read()
+infile.close()
+simulations = eval(simulations)
+
+
+def newSimulation(sim):
+    id = sim['id']
+    status = sim['status']
+    for inputFile in inputFiles:
+        infile = urllib2.urlopen(inputFileUrl % (id, inputFile))
+        outfile = open('%s/%d-%s' % (sSaveDir, id, inputFile), 'w')
+        shutil.copyfileobj(infile,  outfile)
         outfile.close()
-        lsUpdateID.append(id[0])
+        infile.close()
+    print "run simulation", id
+    return
 
-for id in lsUpdateID:
-    cur.execute('update %s set status = %d where id = %d' % (sTableName,nPending,id))
+#
+# for each sim, get input files and save
+#
+for sim in simulations:
+    switch = {
+        'new': lambda sim: newSimulation(sim),
+        }
+    switch[sim['status']](sim)
 
-conn.commit()
-cur.close()
-conn.close()
+
+# Here is an example session that shows how to "POST" requests:
+
+# >>> import httplib, urllib
+# >>> params = urllib.urlencode({'spam': 1, 'eggs': 2, 'bacon': 0})
+# >>> headers = {"Content-type": "application/x-www-form-urlencoded",
+# ...            "Accept": "text/plain"}
+# >>> conn = httplib.HTTPConnection("musi-cal.mojam.com:80")
+# >>> conn.request("POST", "/cgi-bin/query", params, headers)
+# >>> response = conn.getresponse()
+# >>> print response.status, response.reason
+# 200 OK
+# >>> data = response.read()
+# >>> conn.close()
+
+
+# end of file
