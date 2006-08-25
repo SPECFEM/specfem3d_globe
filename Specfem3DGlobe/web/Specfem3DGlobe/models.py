@@ -22,11 +22,10 @@ MODEL_TYPES = (
 )
 
 STATUS_TYPES = (
-	(1, 'preparing'),
-	(2, 'ready'),
-	(3, 'pending'),
-	(4, 'running'),
-	(5, 'done'),
+	(1, 'new'),
+	(2, 'pending'),
+	(3, 'running'),
+	(4, 'done'),
 )
     
 SIMULATION_TYPES = (
