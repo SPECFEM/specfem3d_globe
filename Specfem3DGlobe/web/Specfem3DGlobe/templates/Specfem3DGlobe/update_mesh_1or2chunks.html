@@ -1,0 +1,28 @@
+
+<script language="javascript"><!--
+
+// JavaScript to dynamically compute mesh parameters/info.  Degrades
+// gracefully when JavaScript is unavailable.
+
+function update_mesh() {
+    form = document.simulation_form;
+    nchunks = {{ form.data.mesh__nchunks }};
+    nproc_xi = (form.mesh__nproc_xi.value-0);
+    nproc_eta = (form.mesh__nproc_eta.value-0);
+
+    c = (form.mesh__nex_xi_c.value-0);
+    form.mesh__nex_xi.value = 16 * c * nproc_xi;
+
+    c = (form.mesh__nex_eta_c.value-0);
+    form.mesh__nex_eta.value = 16 * c * nproc_eta;
+
+    form.total_nproc.value = nchunks * nproc_xi * nproc_eta;
+}
+
+// event binding
+document.simulation_form.mesh__nproc_xi.onchange = update_mesh;
+document.simulation_form.mesh__nproc_eta.onchange = update_mesh;
+document.simulation_form.mesh__nex_xi_c.onchange = update_mesh;
+document.simulation_form.mesh__nex_eta_c.onchange = update_mesh;
+
+//--></script>

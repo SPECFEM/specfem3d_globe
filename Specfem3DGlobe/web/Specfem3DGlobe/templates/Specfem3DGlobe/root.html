@@ -17,17 +17,32 @@
         div.navbar li { display: inline; padding: 0 .5em 0 .5em; border-left: thin solid grey; }
         h1.ondemand { text-transform: uppercase; }
         h1.ondemand a { color: black; text-decoration: none;  }
+        h3 { color: grey; font-style: oblique; border-bottom: thin solid silver; }
 
         #registration label { text-transform: uppercase }
 
-		BODY,TD,SELECT,input,DIV,form,TEXTAREA,center,option,pre,blockquote {font-size:9pt; font-family:'Brush Script MT'}
+		BODY,TD,SELECT,input,DIV,form,TEXTAREA,center,option,pre,blockquote { font-family:'Brush Script MT' }
 
 		.head {border:solid 1 black;font-size:9pt;color:black;background-color:white;height:19px}
 		.textarea {border:solid 1;font-size:9pt;color:black;background-color:white;}
 		.input {border:solid 1;font-size:9pt;color:black;background-color:white;}
 		.submit {border:solid 0;font-size:9pt;color:white;background-color:black;height:19px}
-    </STYLE>
+    </style>
+
+    <noscript>
+        <style type="text/css"><!--
+            .scripted { display: none; }
+        </style>
+    </noscript>
+    <script language="javascript"><!--
+        document.write('<style type="text/css">');
+        document.write('    .scripted { }');
+        document.write('    .computed { background-color: aqua; border:none; }');
+        document.write('</style>');
+    //--></script>
+
     <title>{% block title %}Specfem3DGlobe{% endblock %}</title>
+
     {% block scripts %}
     {% endblock %}
 </head>
