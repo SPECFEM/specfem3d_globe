@@ -16,18 +16,24 @@ from models import Simulation
 login_required = user_passes_test(lambda u: not u.is_anonymous(), "/specfem3dglobe/login")
 
 
-def index(request):
-	prev_simulations = Simulation.objects.filter(user=request.user)
+def simulation_start_form():
 	manipulator = SimulationTypeManipulator()
 	new_data = {'mesh__nchunks': '6', 'simulation_type': '1' }
-	form = forms.FormWrapper(manipulator, new_data, {})
+	return forms.FormWrapper(manipulator, new_data, {})
 
+def index(request):
+	recent_simulations = Simulation.objects.filter(user=request.user)
 	return render_to_response('Specfem3DGlobe/home.html',
-				  {'prev_simulations': prev_simulations,
-				   'form': form},
+				  {'recent_simulations': recent_simulations,
+				   'form': simulation_start_form()},
 				  RequestContext(request, {}))
 index = login_required(index)
-	
+
+def simulation_index(request):
+	from django.views.generic.list_detail import object_list
+	return object_list(request, Simulation.objects.all(),
+			   allow_empty=True,
+			   extra_context={'form': simulation_start_form()})
 
 def create_simulation(request):
 
@@ -91,20 +97,17 @@ def create_simulation(request):
 
 create_simulation = login_required(create_simulation)
 
-
-def detail(request, sim_id):
-	sim = get_object_or_404(Simulation,id=sim_id)
-	return render_to_response('Specfem3DGlobe/detail.html', {'sim': sim}) 
-
-def delete(request,sim_id):
-	sim = get_object_or_404(Simulation,id=sim_id)
-	if sim:
-		if sim.mesh:
-			sim.mesh.delete()
-		if sim.model:
-			sim.model.delete()
+def delete(request, sim_id):
+	from django.views.generic.create_update import delete_object
+	post_delete_redirect = '/specfem3dglobe/'
+ 	if request.method == 'POST':
+ 		sim = get_object_or_404(Simulation, id=sim_id)
+ 		sim.mesh.delete()
+ 		sim.model.delete()
 		sim.delete()
-	return HttpResponseRedirect('/specfem3dglobe/')
+		return HttpResponseRedirect(post_delete_redirect)
+	return delete_object(request, Simulation, post_delete_redirect,
+			     object_id=sim_id)
 
 def info(request, info_str):
 	template = None
