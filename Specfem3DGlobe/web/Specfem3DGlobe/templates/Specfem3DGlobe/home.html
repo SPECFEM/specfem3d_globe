@@ -11,7 +11,7 @@
       {% for sim in recent_simulations %}
       <tr>
         <td><a href="/specfem3dglobe/simulations/{{ sim.id }}/">{{ sim.name }}</a></td>
-        <td>{{ sim.created }}</td>
+        <td>{{ sim.created|date }} {{ sim.created|time }}</td>
         <td>{{ sim.get_status_display }}</td>
         <td><a href="/specfem3dglobe/simulations/{{ sim.id }}/delete/">delete</a></td>
       </tr>

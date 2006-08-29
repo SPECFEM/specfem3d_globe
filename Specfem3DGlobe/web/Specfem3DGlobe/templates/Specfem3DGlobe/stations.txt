@@ -1,4 +1,0 @@
-{{ stations|length }}
-{% for station in stations %}
-{{ station.name }}	{{ station.network_id }}	{{ station.latitude }}	{{ station.longitude }}	{{ station.ele }}	{{ station.bur }}
-{% endfor %}

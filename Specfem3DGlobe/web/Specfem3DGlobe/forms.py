@@ -109,6 +109,7 @@ class ModelAddManipulator(Model.AddManipulator):
 
 
 class SimulationAddManipulator(Simulation.AddManipulator):
+	
 	def __init__(self):
 		super(SimulationAddManipulator, self).__init__()
 		# replace generic fields with custom fields
@@ -124,6 +125,13 @@ class SimulationAddManipulator(Simulation.AddManipulator):
 			forms.HiddenField(field_name='simulation_type', is_required=True),
 			forms.HiddenField(field_name='absorbing_conditions'),
 			])
+		
+	def do_html2python(self, new_data):
+		super(SimulationAddManipulator, self).do_html2python(new_data)
+		# This field requires special love and care, I guess
+		# because it's a HiddenField instead of a
+		# CheckboxField.
+		new_data['absorbing_conditions'] = {'True': True, 'False': False}[new_data['absorbing_conditions']]
 
 
 class SimulationWizardManipulator(TeeManipulator):
@@ -138,7 +146,7 @@ class SimulationWizardManipulator(TeeManipulator):
 					 'model__': ModelAddManipulator(),
 					 '': SimulationAddManipulator()})
 		return
-	
+
 	def save(self, new_data):
 		self._revert_field_names(new_data)
 		mesh = self.manipulators['mesh__'].save(new_data)
