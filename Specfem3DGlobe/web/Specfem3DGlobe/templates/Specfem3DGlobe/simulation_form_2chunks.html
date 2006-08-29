@@ -1,0 +1,39 @@
+
+{% extends "Specfem3DGlobe/simulation_base.html" %}
+
+      {% block mesh_chunk_size %}
+        <!-- for 2 or more chunks, to match geometrically, the chunks must have an angular-width-xi of 90 degrees -->
+        <input type="hidden" name="mesh__angular_width_xi" value="90.0">
+        <tr>
+            <td valign="top"><label for="id_mesh__angular_width_eta">Angular Width &eta;:</label></td>
+            <td valign="top">{{ form.mesh__angular_width_eta }}</td>
+            <td valign="top">{% if form.mesh__angular_width_eta.errors %}<span class=error>{{ form.mesh__angular_width_eta.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top">Angular Width &xi;:</td>
+            <td valign="top">90</td>
+            <td valign="top"></td>
+        </tr>
+      {% endblock %}
+
+   <!-- Django bug? These must be here for sub-templates to override them. -->
+
+    {% block heading %}{{ block.super }}{% endblock %}
+    {% block mesh_image %}{{ block.super }}{% endblock %}
+
+      {% block mesh_chunk_position %}
+      {{ block.super }}
+      {% endblock %}
+
+    {% block mesh_nproc %}
+    {{ block.super }}
+    {% endblock %}
+
+    {% block mesh_nex %}
+    {{ block.super }}
+    {% endblock %}
+
+    {% block mesh_script %}
+    {{ block.super }}
+    {% endblock %}

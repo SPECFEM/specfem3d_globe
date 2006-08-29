@@ -6,11 +6,6 @@ from cig.web.seismo.events.models import Event
 from cig.web.seismo.stations.models import Station
 
 
-MESH_TYPES = (
-	(1, 'global'),
-	(2, 'regional'),
-)
-
 MODEL_TYPES = (
 	(1, 'isotropic prem'),
 	(2, 'transversely isotropic prem'),
@@ -36,15 +31,19 @@ SIMULATION_TYPES = (
 
 
 NCHUNKS_CHOICES = (
-    (1, '1'),
-    (2, '2'),
-    (3, '3'),
-    (6, '6'),
-    )
+	(1, 'regional with 1 chunk'),
+	(2, 'regional with 2 chunks'),
+	(3, 'regional with 3 chunks'),
+	(6, 'global (6 chunks)'),
+)
+
+oneThruNine = tuple([(i, str(i)) for i in xrange(1, 10)])
+NPROC_CHOICES = oneThruNine
+NEX_C_CHOICES = oneThruNine
 
 
 class UserInfo(models.Model):
-	user = models.OneToOneField(User, edit_inline=models.TABULAR)
+	user = models.OneToOneField(User)
 	institution = models.CharField(maxlength=100, core=True)
 	address1 = models.CharField(maxlength=100, null=True, blank=True)
 	address2 = models.CharField(maxlength=100, null=True, blank=True)
@@ -61,12 +60,11 @@ class Mesh(models.Model):
         modified = models.DateTimeField(auto_now=True, editable=False)
 	
 	nchunks = models.IntegerField(core=True, choices=NCHUNKS_CHOICES, default=1)
-	nproc_xi = models.IntegerField(core=True)
-	nproc_eta = models.IntegerField(core=True)
+	nproc_xi = models.IntegerField(core=True, choices=NPROC_CHOICES)
+	nproc_eta = models.IntegerField(core=True, choices=NPROC_CHOICES)
 	nex_xi = models.IntegerField(core=True)
 	nex_eta = models.IntegerField(core=True)
 	save_files = models.BooleanField(core=True)
-	type = models.IntegerField(choices=MESH_TYPES, core=True)
 
 	# this is for regional only (when type == 2), and when global, all these values are fixed
 	angular_width_eta = models.FloatField(max_digits=19, decimal_places=10, core=True)
@@ -102,13 +100,14 @@ class Simulation(models.Model):
 	# general information about the simulation
 	#
 	user = models.ForeignKey(User)
+	name = models.CharField(maxlength=100, unique=True, core=True)
 	created = models.DateTimeField(auto_now_add=True, editable=False)
         modified = models.DateTimeField(auto_now=True, editable=False)
 	started = models.DateTimeField(editable=False, null=True)
 	finished = models.DateTimeField(editable=False, null=True)
 	
-	mesh = models.ForeignKey(Mesh, num_in_admin=1)
-	model = models.ForeignKey(Model, num_in_admin=1)
+	mesh = models.ForeignKey(Mesh)
+	model = models.ForeignKey(Model)
 	status = models.IntegerField(choices=STATUS_TYPES, default=1, editable=False)
 
 	#
@@ -123,17 +122,11 @@ class Simulation(models.Model):
 	movie_volume = models.BooleanField(core=True)
 
 	# CMTSOLUTION
-	events = models.ManyToManyField(Event, num_in_admin=1,
+	events = models.ManyToManyField(Event,
 					limit_choices_to = {'user__exact' : CurrentUser()})
 	# STATIONS
-	stations = models.ManyToManyField(Station, num_in_admin=1,
+	stations = models.ManyToManyField(Station,
 					  limit_choices_to = {'user__exact' : CurrentUser()})
-        def user_stations(self):
-            #return self.stations_set.all()
-            return Station.objects.filter(user=self.user)
-            #return ['red', 'green', 'blue']
-        def tomato(self):
-            return "banana"
 
 	# need to find out what the fields are for...
 	# hdur_movie:

@@ -3,20 +3,35 @@
 
 {% block content %}
 
-<h1>{% block heading %}Simulation{% endblock %}</h1>
+<h1>{% block heading %}Regional Simulation{% endblock %}</h1>
 
+<p>
 {% if form.has_errors %}
-<p><b class=error>Please correct the following error{{ form.error_dict|pluralize }}:</b>
+<b class=error>Please correct the following error{{ form.error_dict|pluralize }}:</b>
+<!-- for debugging
 <ul>
     {% for e in form.error_dict.iteritems %}
     <li>Field "{{ e.0 }}": {{ e.1|join:", " }}</li>
     {% endfor %}
 </ul>
+-->
+{% else %}
+&nbsp;
 {% endif %}
 
-<form action="." method="POST">
-    <input type="hidden" name="mesh__type" value="{% block mesh__type %}{% endblock %}">
-    <input type="hidden" name="simulation_type" value="{{ form.data.simulation_type }}">
+<form name="simulation_form" action="." method="POST">
+
+    <!-- hidden fields -->
+    {{ form.mesh__user }}
+    {{ form.mesh__nchunks }}
+    {{ form.model__user }}
+    {{ form.user }}
+    {{ form.mesh }}
+    {{ form.model }}
+    {{ form.simulation_type }}
+    {{ form.absorbing_conditions }}
+
+    <p>Name for this simulation: {{ form.name }} {% if form.name.errors %}<span class=error>{{ form.name.errors|join:", " }}</span>{% endif %}
 
     <h2>Event</h2>
 
@@ -28,16 +43,58 @@
 
     <p>{{ form.stations }} {% if form.stations.errors %}<span class=error>{{ form.stations.errors|join:", " }}</span>{% endif %}
 
-    <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/{% block mesh_image %}{% endblock %}">
-
     <h2>Mesh</h2>
+
+    <img align="right" src="{% block mesh_image %}http://www.gps.caltech.edu/research/jtromp/research/graphics/gridpoints.gif{% endblock %}">
 
     <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/mesh/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
 
-    <p>
+    <h3>Chunks</h3>
+
+    <p>Nchunks = {{ form.data.mesh__nchunks }}
 
     <table border=0>
-      {% block mesh %}
+      {% block mesh_chunk_size %}
+        <tr>
+            <td valign="top"><label for="id_mesh__angular_width_eta">Angular Width &eta;:</label></td>
+            <td valign="top">{{ form.mesh__angular_width_eta }}</td>
+            <td valign="top">{% if form.mesh__angular_width_eta.errors %}<span class=error>{{ form.mesh__angular_width_eta.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__angular_width_xi">Angular Width &xi;:</label></td>
+            <td valign="top">{{ form.mesh__angular_width_xi }}</td>
+            <td valign="top">{% if form.mesh__angular_width_xi.errors %}<span class=error>{{ form.mesh__angular_width_xi.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+      {% endblock %}
+
+      {% block mesh_chunk_position %}
+        <tr>
+            <td valign="top"><label for="id_mesh__center_latitude">Center Latitude:</label></td>
+            <td valign="top">{{ form.mesh__center_latitude }}</td>
+            <td valign="top">{% if form.mesh__center_latitude.errors %}<span class=error>{{ form.mesh__center_latitude.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__center_longitude">Center Longitude:</label></td>
+            <td valign="top">{{ form.mesh__center_longitude }}</td>
+            <td valign="top">{% if form.mesh__center_longitude.errors %}<span class=error>{{ form.mesh__center_longitude.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+
+        <tr>
+            <td valign="top"><label for="id_mesh__gamma_rotation_azimuth">Gamma Rotation Azimuth:</label></td>
+            <td valign="top">{{ form.mesh__gamma_rotation_azimuth }}</td>
+            <td valign="top">{% if form.mesh__gamma_rotation_azimuth.errors %}<span class=error>{{ form.mesh__gamma_rotation_azimuth.errors|join:", " }}</span>{% endif %}</td>
+        </tr>
+      {% endblock %}
+
+    </table>
+
+    <h3>Processors</h3>
+
+    {% block mesh_nproc %}
+
+    <table border=0>
         <tr>
             <td valign="top"><label for="id_mesh__nproc_xi">Nproc &xi;:</label></td>
             <td valign="top">{{ form.mesh__nproc_xi }}</td>
@@ -49,21 +106,37 @@
             <td valign="top">{{ form.mesh__nproc_eta }}</td>
             <td valign="top">{% if form.mesh__nproc_eta.errors %}<span class=error>{{ form.mesh__nproc_eta.errors|join:", " }}</span>{% endif %}</td>
         </tr>
-
-        <tr>
-            <td valign="top"><label for="id_mesh__nex_xi">Nex &xi;:</label></td>
-            <td valign="top">{{ form.mesh__nex_xi }}</td>
-            <td valign="top">{% if form.mesh__nex_xi.errors %}<span class=error>{{ form.mesh__nex_xi.errors|join:", " }}</span>{% endif %}</td>
-        </tr>
-
-        <tr>
-            <td valign="top"><label for="id_mesh__nex_eta">Nex &eta;:</label></td>
-            <td valign="top">{{ form.mesh__nex_eta }}</td>
-            <td valign="top">{% if form.mesh__nex_eta.errors %}<span class=error>{{ form.mesh__nex_eta.errors|join:", " }}</span>{% endif %}</td>
-        </tr>
-
-      {% endblock %}
     </table>
+
+    <div class="scripted">
+        <p>Total number of required processors:
+           Nchunks &times; Nproc &xi; &times; Nproc &eta; =
+           <input class="computed" name="total_nproc" readonly value="?" size="4">
+    </div>
+
+    {% endblock %}
+
+    <h3>Spectral Elements</h3>
+
+    {% block mesh_nex %}
+
+    <p>Number of spectral elements per chunk at the earth's surface:
+
+    <p>Nex &xi; = 16 &times; {{ form.mesh__nex_xi_c }}
+                  &times; Nproc &xi;
+                  <span id="mesh__nex_xi_span" class="scripted">= <input name="mesh__nex_xi" class="computed" readonly value="?" size="3"></span>
+                  {% if form.mesh__nex_xi.errors %}<span class=error>{{ form.mesh__nex_xi.errors|join:", " }}</span>{% endif %}
+
+    <p>Nex &eta; = 16 &times; {{ form.mesh__nex_eta_c }}
+                  &times; Nproc &eta;
+                  <span id="mesh__nex_eta_span" class="scripted">= <input name="mesh__nex_eta" class="computed" readonly value="?" size="3"></span>
+                  {% if form.mesh__nex_eta.errors %}<span class=error>{{ form.mesh__nex_eta.errors|join:", " }}</span>{% endif %}
+
+    {% endblock %}
+
+    {% block mesh_script %}
+    {% include "Specfem3DGlobe/update_mesh_1or2chunks.html" %}
+    {% endblock %}
 
     <h2>Model</h2>
 
