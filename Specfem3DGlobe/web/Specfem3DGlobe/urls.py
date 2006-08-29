@@ -59,12 +59,18 @@ simulation_delete_args = {
 	'post_delete_redirect': '/specfem3dglobe/simulations/',
 }
 
+simulation_detail_args = {
+	'queryset': Simulation.objects.all(),
+	'template_name': 'Specfem3DGlobe/detail.html',
+	'template_object_name': 'sim',
+}
+
 
 # Registration
 
 password_change_args = {
-    'template_name': 'Specfem3DGlobe/password_change_form.html',
-    }
+	'template_name': 'Specfem3DGlobe/password_change_form.html',
+}
 
 
 
@@ -72,9 +78,6 @@ password_change_args = {
 
 urlpatterns = patterns('',
 	(r'^$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.index'),
-	(r'^detail/(?P<sim_id>\d+)/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.detail'),
-	(r'^delete/(?P<sim_id>\d+)/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.delete'),
-	(r'^wizard/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.create_simulation'),
 	(r'^info/(?P<info_str>\w+)/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.info'),
 
 	(r'^login/$', 'django.contrib.auth.views.login'),
@@ -93,13 +96,14 @@ urlpatterns = patterns('',
 	(r'^models/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', model_create_update_args),
 	(r'^models/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', model_delete_args),
 
-	(r'^simulations/$', 'django.views.generic.list_detail.object_list', simulation_list_detail_args),
+	(r'^simulations/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.simulation_index'),
+	(r'^simulations/create/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.create_simulation'),
 	(r'^simulations/list.py$', 'django.views.generic.list_detail.object_list', dict(simulation_list_detail_args,
                                                                                         template_name='Specfem3DGlobe/simulation_list.py',
                                                                                         mimetype='text/plain')),
-	(r'^simulations/create/$', 'django.views.generic.create_update.create_object', simulation_create_update_args),
-	(r'^simulations/(?P<object_id>\d+)/$', 'django.views.generic.create_update.update_object', simulation_create_update_args),
-	(r'^simulations/(?P<object_id>\d+)/delete/$', 'django.views.generic.create_update.delete_object', simulation_delete_args),
+	(r'^simulations/(?P<object_id>\d+)/$', 'django.views.generic.list_detail.object_detail', simulation_detail_args),
+	(r'^simulations/(?P<object_id>\d+)/edit/$', 'django.views.generic.create_update.update_object', simulation_create_update_args),
+	(r'^simulations/(?P<sim_id>\d+)/delete/$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.delete'),
 	(r'^simulations/(?P<sim_id>\d+)/parameters.pml$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.simulation_pml'),
 	(r'^simulations/(?P<sim_id>\d+)/stations.txt$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.stations_txt'),
 	(r'^simulations/(?P<sim_id>\d+)/events.txt$', 'Specfem3DGlobe.web.Specfem3DGlobe.views.events_txt'),
