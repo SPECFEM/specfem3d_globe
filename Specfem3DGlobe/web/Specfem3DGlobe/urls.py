@@ -52,6 +52,7 @@ simulation_list_detail_args = {
 simulation_create_update_args = {
 	'model': Simulation,
 	'post_save_redirect': '/specfem3dglobe/simulations/',
+        'follow': { 'user': False },
 }
 
 simulation_delete_args = {

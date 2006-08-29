@@ -46,7 +46,7 @@ def create_simulation(request):
 	elif nchunks == 3:
 		template = 'Specfem3DGlobe/simulation_form_3chunks.html'
 	else: # nchunks == 6
-		absorbing_conditions = ""
+		absorbing_conditions = "False"
 		template = 'Specfem3DGlobe/simulation_form_global.html'
 
 	manipulator = SimulationWizardManipulator(nchunks)
@@ -71,7 +71,7 @@ def create_simulation(request):
 					  RequestContext(request, {}))
 
 	# User is POSTing data.
-	
+
 	new_data = request.POST.copy()
 
 	# 
@@ -146,18 +146,16 @@ def logout_view(request):
 	return HttpResponseRedirect('/specfem3dglobe/login/')
 
 def events_txt(request, sim_id):
-	from django.template import loader, Context
+	from cig.seismo.events import CMTSolution
 
 	response = HttpResponse(mimetype='text/plain')
 
-	# Get data from the database here.
 	simulation = get_object_or_404(Simulation, id=sim_id)
 
-	t = loader.get_template('Specfem3DGlobe/events.txt')
-	c = Context({
-		'events': simulation.events.all(),
-	})
-	response.write(t.render(c))
+	for event in simulation.events.all():
+		cmtSolution = CMTSolution.createFromDBModel(event)
+		response.write(str(cmtSolution))
+
 	return response
 
 def stations_txt(request, sim_id):
@@ -165,14 +163,15 @@ def stations_txt(request, sim_id):
 
 	response = HttpResponse(mimetype='text/plain')
 
-	# Get data from the database here.
 	simulation = get_object_or_404(Simulation, id=sim_id)
+	stations = simulation.stations.all()
 
-	t = loader.get_template('Specfem3DGlobe/stations.txt')
-	c = Context({
-		'stations': simulation.stations.all(),
-	})
-	response.write(t.render(c))
+	response.write("%d\n" % len(stations))
+	for station in stations:
+		response.write("%-5s %-3s %8.4f %10.4f %6.1f %6.1f\n" %
+			       (station.code, station.network.code,
+				station.latitude, station.longitude, station.elevation, station.bur))
+
 	return response
 
 
