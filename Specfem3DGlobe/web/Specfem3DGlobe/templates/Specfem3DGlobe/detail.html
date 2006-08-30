@@ -3,70 +3,71 @@
 
 {% block content %}
 
-{% ifequal sim.mesh.get_type_display 'regional' %}
-<h1>Regional Simulation</h1>
-{% else %}
+{% ifequal sim.mesh.nchunks 6 %}
 <h1>Global Simulation</h1>
+{% else %}
+<h1>Regional Simulation</h1>
 {% endifequal %}
 
-<table width=400>
-<tr><td width=200>MESH TYPE:</td><td>{{ sim.mesh.get_type_display }}&nbsp;</td></tr>
-<tr><td width=200>SIMULATION TYPE:</td><td>{{ sim.simulation_type }}&nbsp;</td></tr>
-<tr><td width=200>CMT SOLUTION:</td><td>{{ sim.cmt_solution }}&nbsp;</td></tr>
-</table>
-<br><br>
-<b><font size=3>MESH</font></b>
-<table width=400>
-{% ifequal sim.mesh.get_type_display 'regional' %}
-	<tr><td width="200" colspan="2">Regional Information</td></tr>
-	<tr><td width="200">&nbsp;&nbsp;Angular Width Eta</td><td>{{ sim.mesh.angular_width_eta }} * deg </td></tr>
-	<tr><td width="200">&nbsp;&nbsp;Angular Width Xi</td><td>{{ sim.mesh.angular_width_xi }} * deg </td></tr>
-	<tr><td width="200">&nbsp;&nbsp;Center Latitude</td><td>{{ sim.mesh.center_latitude }} * deg </td></tr>
-	<tr><td width="200">&nbsp;&nbsp;Center Longitude</td><td>{{ sim.mesh.center_longitude }} * deg </td></tr>
-	<tr><td width="200">&nbsp;&nbsp;Gamma Rotation Azimuth</td><td>{{ sim.mesh.gamma_rotation_azimuth }} * deg </td></tr>
-{% endifequal %}
-	<tr><td width="200">Number of Chunks</td><td>{{ sim.mesh.nchunks }}&nbsp;</td></tr>
-	<tr><td width="200">Nproc Xi</td><td>{{ sim.mesh.nproc_xi }}&nbsp;</td></tr>
-	<tr><td width="200">Nproc Eta</td><td>{{ sim.mesh.nproc_eta }}&nbsp;</td></tr>
-	<tr><td width="200">Nex Xi</td><td>{{ sim.mesh.nex_xi }}&nbsp;</td></tr>
-	<tr><td width="200">Nex Eta</td><td>{{ sim.mesh.nex_eta }}&nbsp;</td></tr>
+<table class=properties>
+<tr><th>Status:</th><td>{{ sim.get_status_display }}</td></tr>
+<tr><th>Created:</th><td>{{ sim.created|date }} {{ sim.created|time }}</td></tr>
+<tr><th>Modifed:</th><td>{{ sim.modified|date }} {{ sim.modified|time }}</td></tr>
+<tr><th>Started:</th><td>{{ sim.started|date }} {{ sim.started|time }}</td></tr>
+<tr><th>Finished:</th><td>{{ sim.finished|date }} {{ sim.finished|time }}</td></tr>
+<tr><th>Output:</th><td>{% ifequal sim.get_status_display 'done' %}<a href="output.tar.gz">Download</a>{% endifequal %}</td></tr>
 </table>
 
-<br><br>
-<b><font size=3>MODEL</font></b>
-<table width=400>
-	<tr><td width="200">Type</td><td>{{ sim.model.get_type_display }}&nbsp;</td></tr>
-	<tr><td width="200">Oceans</td><td>{{ sim.model.oceans }}&nbsp;</td></tr>
-	<tr><td width="200">Ellipticity</td><td>{{ sim.model.ellipticity }}</td></tr>
-	<tr><td width="200">Topography</td><td>{{ sim.model.topography }}</td></tr>
-	<tr><td width="200">Gravity</td><td>{{ sim.model.gravity }}</td></tr>
-	<tr><td width="200">Rotations</td><td>{{ sim.model.rotation }}</td></tr>
-	<tr><td width="200">Attenuation</td><td>{{ sim.model.attenuation }}</td></tr>
+<p>
+
+<table class=properties>
+<tr><td>Simulation type:</td><td>{{ sim.get_simulation_type_display }}</td></tr>
 </table>
 
-<br><br>
-<b><font size=3>OUTPUT FORMAT</font></b>
-<table width=400>
-	<tr><td width="200">Record Length</td><td>{{ sim.record_length }} minutes</td></tr>
-	<tr><td width="200">Receiver at depth</td><td>{{ sim.receivers_can_be_buried }}</td></tr>
-	<tr><td width="200">Print Source Time Function</td><td>{{ sim.print_source_time_function }}</td></tr>
-	<tr><td width="200">Save Mesh Files</td><td>{{ sim.mesh.save_files }}</td></tr>
-	<tr>
-		<table>
-			<tr><td colspan=3>Movie</td></tr>
+<h2>Mesh</h2>
+<table class=properties>
+	<tr><th>Number of Chunks:</th><td>{{ sim.mesh.nchunks }}</td></tr>
+	<tr><th>Angular Width &eta;:</th><td>{{ sim.mesh.angular_width_eta }}&deg;</td></tr>
+	<tr><th>Angular Width &xi;:</th><td>{{ sim.mesh.angular_width_xi }}&deg;</td></tr>
+	<tr><th>Center Latitude:</th><td>{{ sim.mesh.center_latitude }}&deg;</td></tr>
+	<tr><th>Center Longitude:</th><td>{{ sim.mesh.center_longitude }}&deg;</td></tr>
+	<tr><th>Gamma Rotation Azimuth:</th><td>{{ sim.mesh.gamma_rotation_azimuth }}&deg;</td></tr>
+	<tr><th>Nproc &xi;:</th><td>{{ sim.mesh.nproc_xi }}</td></tr>
+	<tr><th>Nproc &eta;:</th><td>{{ sim.mesh.nproc_eta }}</td></tr>
+	<tr><th>Nex &xi;:</th><td>{{ sim.mesh.nex_xi }}</td></tr>
+	<tr><th>Nex &eta;:</th><td>{{ sim.mesh.nex_eta }}</td></tr>
+</table>
+
+<h2>Model</h2>
+<table class=properties>
+	<tr><th>Type:</th><td>{{ sim.model.get_type_display }}</td></tr>
+	<tr><th>Oceans:</th><td>{{ sim.model.oceans }}</td></tr>
+	<tr><th>Ellipticity:</th><td>{{ sim.model.ellipticity }}</td></tr>
+	<tr><th>Topography:</th><td>{{ sim.model.topography }}</td></tr>
+	<tr><th>Gravity:</th><td>{{ sim.model.gravity }}</td></tr>
+	<tr><th>Rotation:</th><td>{{ sim.model.rotation }}</td></tr>
+	<tr><th>Attenuation:</th><td>{{ sim.model.attenuation }}</td></tr>
+</table>
+
+
+<h2>Output Format</h2>
+<table class=properties>
+	<tr><th>Record Length:</th><td>{{ sim.record_length }} minutes</td></tr>
+	<tr><th>Receiver at depth:</th><td>{{ sim.receivers_can_be_buried }}</td></tr>
+	<tr><th>Print Source Time Function:</th><td>{{ sim.print_source_time_function }}</td></tr>
+	<tr><th>Save Mesh Files:</th><td>{{ sim.mesh.save_files }}</td></tr>
+	<tr><td colspan=2>
+		<table class=properties width="100%">
+			<caption>Movie</caption>
 			<tr>
-				<td width="50">&nbsp;</td>
-				<td width="150">Surface: {{ sim.movie_surface }}</td>
-				<td rowspan="2"><i>timestep</i>: {{ sim.ntstep_between_frames }}</td>
+				<th>Surface:</th><td>{{ sim.movie_surface }}</td>
+				<th rowspan=2><i>timestep</i>:</th><td rowspan="2">{{ sim.ntstep_between_frames }}</td>
 			</tr>
 			<tr>
-				<td width="50">&nbsp;</td>
-				<td width="150">Volume: {{ sim.movie_volume }}</td>
+				<th>Volume:</th><td>{{ sim.movie_volume }}</td>
 			</tr>
 		</table>
-	</tr>
+	</tr></td>
 </table>
 
-<br><br>
-<a href="/specfem3dglobe/">go back</a>
 {% endblock %}
