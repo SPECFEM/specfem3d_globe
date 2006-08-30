@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
-import urllib2
-import shutil
 
 # 
 # source address
 #
-urlPrefix           = 'http://localhost:8000/specfem3dglobe/'
+host                = 'localhost:8000'
+urlRoot             = '/specfem3dglobe/'
+urlPrefix           = 'http://%s%s' % (host, urlRoot)
 simulationsUrl      = urlPrefix + 'simulations/list.py'
-inputFileUrl        = urlPrefix + 'simulations/%s/%s'
+inputFileUrl        = urlPrefix + 'simulations/%d/%s'
 inputFiles          = ['parameters.pml', 'events.txt', 'stations.txt']
+simStatusUrl        = urlRoot + 'simulations/%s/status/'
 
 #
 # destination 
@@ -17,47 +18,104 @@ inputFiles          = ['parameters.pml', 'events.txt', 'stations.txt']
 sSaveDir            = './output'
 
 
-infile = urllib2.urlopen(simulationsUrl)
-simulations = infile.read()
-infile.close()
-simulations = eval(simulations)
+# /!\ These SimStatus* class names are stored in the database on the web server!
+
+class SimStatus(object):
+    
+    def display(cls):
+        """Return the string displayed to the web user."""
+        raise NotImplementedError()
+    display = classmethod(display)
+
+    def poll(self, sim): pass
+    
+    def postStatusChange(self, sim, newStatus):
+        import httplib
+        import urllib
+        id = sim['id']
+        params = urllib.urlencode({'status': newStatus.__name__})
+        headers = {"Content-type": "application/x-www-form-urlencoded",
+                   "Accept": "text/plain"}
+        conn = httplib.HTTPConnection(host)
+        conn.request("POST", (simStatusUrl % id), params, headers)
+        response = conn.getresponse()
+        data = response.read()
+        conn.close()
+        return
 
 
-def newSimulation(sim):
-    id = sim['id']
-    status = sim['status']
-    for inputFile in inputFiles:
-        infile = urllib2.urlopen(inputFileUrl % (id, inputFile))
-        outfile = open('%s/%d-%s' % (sSaveDir, id, inputFile), 'w')
-        shutil.copyfileobj(infile,  outfile)
-        outfile.close()
-        infile.close()
-    print "run simulation", id
+class SimStatusNew(SimStatus):
+    def display(cls): return 'new'
+    display = classmethod(display)
+
+    def poll(self, sim):
+        # get input files and save
+        import urllib2
+        import shutil
+        id = sim['id']
+        for inputFile in inputFiles:
+            infile = urllib2.urlopen(inputFileUrl % (id, inputFile))
+            outfile = open('%s/%d-%s' % (sSaveDir, id, inputFile), 'w')
+            shutil.copyfileobj(infile,  outfile)
+            outfile.close()
+            infile.close()
+        print "run simulation", id
+        self.postStatusChange(sim, SimStatusPending)
+        return
+
+
+class SimStatusPending(SimStatus):
+    def display(cls): return 'pending'
+    display = classmethod(display)
+
+    def poll(self, sim):
+        id = sim['id']
+        print "check job status (waiting)", id
+        self.postStatusChange(sim, SimStatusRunning)
+        return
+
+
+class SimStatusRunning(SimStatus):
+    def display(cls): return 'running'
+    display = classmethod(display)
+
+    def poll(self, sim):
+        id = sim['id']
+        print "check job status (running)", id
+        self.postStatusChange(sim, SimStatusDone)
+        return
+
+
+class SimStatusDone(SimStatus):
+    def display(cls): return 'done'
+    display = classmethod(display)
+
+
+simStatusList = [
+    SimStatusNew,
+    SimStatusPending,
+    SimStatusRunning,
+    SimStatusDone,
+    ]
+
+# /!\ This is imported by the Django app!
+STATUS_CHOICES = tuple([(cls.__name__, cls.display()) for cls in simStatusList])
+
+
+def main():
+    import urllib2
+    infile = urllib2.urlopen(simulationsUrl)
+    simulations = infile.read()
+    infile.close()
+    simulations = eval(simulations)
+    for sim in simulations:
+        cls = globals()[sim['status']]
+        status = cls()
+        status.poll(sim)
     return
 
-#
-# for each sim, get input files and save
-#
-for sim in simulations:
-    switch = {
-        'new': lambda sim: newSimulation(sim),
-        }
-    switch[sim['status']](sim)
-
-
-# Here is an example session that shows how to "POST" requests:
-
-# >>> import httplib, urllib
-# >>> params = urllib.urlencode({'spam': 1, 'eggs': 2, 'bacon': 0})
-# >>> headers = {"Content-type": "application/x-www-form-urlencoded",
-# ...            "Accept": "text/plain"}
-# >>> conn = httplib.HTTPConnection("musi-cal.mojam.com:80")
-# >>> conn.request("POST", "/cgi-bin/query", params, headers)
-# >>> response = conn.getresponse()
-# >>> print response.status, response.reason
-# 200 OK
-# >>> data = response.read()
-# >>> conn.close()
+if __name__ == '__main__':
+    main()
 
 
 # end of file

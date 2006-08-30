@@ -161,9 +161,9 @@ class SimulationWizardManipulator(TeeManipulator):
 class SimulationStatusManipulator(forms.Manipulator):
 
 	def __init__(self):
-		from models import STATUS_TYPES
+		from models import STATUS_CHOICES
 		self.fields = [
-			forms.SelectField(field_name='status', choices=STATUS_TYPES, is_required=True),
+			forms.SelectField(field_name='status', choices=STATUS_CHOICES, is_required=True),
 			forms.FileUploadField(field_name='output'),
 			]
 		return

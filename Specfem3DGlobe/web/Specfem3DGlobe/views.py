@@ -214,8 +214,8 @@ def update_simulation_status(request, sim_id):
 				stream = open(filename, 'wb')
 				stream.write(content)
 				stream.close()
-				simulation.status = new_data['status']
-				simulation.save()
+			simulation.status = new_data['status']
+			simulation.save()
 			return HttpResponseRedirect('/specfem3dglobe/simulations/%s/' % sim_id)
 	else:
 		errors = {}
