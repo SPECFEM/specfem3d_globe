@@ -1,6 +1,7 @@
 # Create your views here.
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import user_passes_test
 from django.core import validators
@@ -10,6 +11,10 @@ from django.template.context import RequestContext
 from cig.web.seismo.events.models import Event
 from forms import SimulationTypeManipulator, SimulationWizardManipulator, RegistrationAddManipulator, RegistrationChangeManipulator
 from models import Simulation
+import os, os.path
+
+
+OUTPUT_ROOT = os.path.join(settings.MEDIA_ROOT, 'Specfem3DGlobe', 'output')
 
 
 # Create our own version of 'login_required' which redirects to our login page.
@@ -31,9 +36,10 @@ index = login_required(index)
 
 def simulation_index(request):
 	from django.views.generic.list_detail import object_list
-	return object_list(request, Simulation.objects.all(),
+	return object_list(request, Simulation.objects.filter(user=request.user),
 			   allow_empty=True,
 			   extra_context={'form': simulation_start_form()})
+simulation_index = login_required(simulation_index)
 
 def create_simulation(request):
 
@@ -108,6 +114,7 @@ def delete(request, sim_id):
 		return HttpResponseRedirect(post_delete_redirect)
 	return delete_object(request, Simulation, post_delete_redirect,
 			     object_id=sim_id)
+delete = login_required(delete)
 
 def info(request, info_str):
 	template = None
@@ -159,8 +166,6 @@ def events_txt(request, sim_id):
 	return response
 
 def stations_txt(request, sim_id):
-	from django.template import loader, Context
-
 	response = HttpResponse(mimetype='text/plain')
 
 	simulation = get_object_or_404(Simulation, id=sim_id)
@@ -174,6 +179,52 @@ def stations_txt(request, sim_id):
 
 	return response
 
+def output_tar_gz(request, sim_id):
+	import shutil
+	response = HttpResponse(mimetype='application/x-gtar')
+	response['Content-Encoding'] = 'gzip'
+	response['Content-Disposition'] = 'attachment; filename=simulation-%s.tar.gz' % sim_id
+	filename = os.path.join(OUTPUT_ROOT, sim_id + '.tar.gz')
+	stream = open(filename, 'rb')
+	shutil.copyfileobj(stream,  response)
+	stream.close()
+	return response
+
+def update_simulation_status(request, sim_id):
+	from forms import SimulationStatusManipulator
+
+	manipulator = SimulationStatusManipulator()
+
+	simulation = get_object_or_404(Simulation, id=sim_id)
+
+	if request.method == 'POST':
+		new_data = request.POST.copy()
+		new_data.update(request.FILES)
+		errors = manipulator.get_validation_errors(new_data)
+		if not errors:
+			manipulator.do_html2python(new_data)
+			output = new_data['output']
+			if output:
+				content = output['content']
+				try:
+					os.makedirs(OUTPUT_ROOT)
+				except OSError: # Directory probably already exists.
+					pass
+				filename = os.path.join(OUTPUT_ROOT, sim_id + '.tar.gz')
+				stream = open(filename, 'wb')
+				stream.write(content)
+				stream.close()
+				simulation.status = new_data['status']
+				simulation.save()
+			return HttpResponseRedirect('/specfem3dglobe/simulations/%s/' % sim_id)
+	else:
+		errors = {}
+		new_data = {'status': simulation.status}
+
+	form = forms.FormWrapper(manipulator, new_data, errors)
+	return render_to_response('Specfem3DGlobe/simulation_status.html',
+				  {'form': form},
+				  RequestContext(request, {}))
 
 def registration(request):
 	user = request.user
@@ -184,7 +235,7 @@ def registration(request):
 		manipulator = RegistrationChangeManipulator(user)
 		template = 'Specfem3DGlobe/userinfo_form.html'
 
-	if request.POST:
+	if request.method == 'POST':
 		new_data = request.POST.copy()
 		errors = manipulator.get_validation_errors(new_data)
 		if not errors:
