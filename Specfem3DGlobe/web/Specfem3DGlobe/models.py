@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from cig.web.models import CurrentUser
 from cig.web.seismo.events.models import Event
 from cig.web.seismo.stations.models import Station
+from Specfem3DGlobe.web.Daemon import STATUS_CHOICES
 
 
 MODEL_TYPES = (
@@ -16,13 +17,6 @@ MODEL_TYPES = (
 	(7, '3d attenuation'),
 )
 
-STATUS_TYPES = (
-	(1, 'new'),
-	(2, 'pending'),
-	(3, 'running'),
-	(4, 'done'),
-)
-    
 SIMULATION_TYPES = (
 	(1, 'forward'),
 	(2, 'adjoint'),
@@ -108,7 +102,7 @@ class Simulation(models.Model):
 	
 	mesh = models.ForeignKey(Mesh)
 	model = models.ForeignKey(Model)
-	status = models.IntegerField(choices=STATUS_TYPES, default=1, editable=False)
+	status = models.CharField(maxlength=100, choices=STATUS_CHOICES, default='SimStatusNew', editable=False)
 
 	#
 	# specific information starts here
