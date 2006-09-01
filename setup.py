@@ -11,7 +11,7 @@ setup(
     packages = [ 'Specfem3DGlobe' ],
     
     install_requires = [
-    'cig >= 1.0dev-r4255, < 2.0, == dev',
+    'cig >= 1.0dev-r4449, < 2.0, == dev',
     'pythia >= 0.8-1.0dev-r4100, < 0.9, == dev',
     ],
     
@@ -25,6 +25,7 @@ setup(
     'console_scripts': [
     'xspecfem3D = Specfem3DGlobe.Specfem:main',
     'xcreate_movie_AVS_DX = Specfem3DGlobe.Specfem:create_movie_AVS_DX',
+    'xsfdaemon = Specfem3DGlobe.Daemon:main',
     ],
     },
 )

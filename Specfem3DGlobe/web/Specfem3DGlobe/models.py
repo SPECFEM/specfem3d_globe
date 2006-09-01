@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from cig.web.models import CurrentUser
 from cig.web.seismo.events.models import Event
 from cig.web.seismo.stations.models import Station
-from Specfem3DGlobe.web.Daemon import STATUS_CHOICES
+from Specfem3DGlobe.Daemon import STATUS_CHOICES
 
 
 MODEL_TYPES = (
@@ -85,6 +85,16 @@ class Model(models.Model):
 	rotation = models.BooleanField(core=True, default=False)
 	ellipticity = models.BooleanField(core=True, default=False)
 
+	def get_type_id(self):
+		return {
+			1: 'isotropic_prem',
+			2: 'transversly_isotropic_prem',
+			3: 'iaspei',
+			4: 'ak135',
+			5: '3D_isotropic',
+			6: '3D_anisotropic',
+			7: '3D_attenuation'}[self.type]
+
         class Admin:
             pass
 
@@ -135,6 +145,9 @@ class Simulation(models.Model):
 	ntstep_between_output_seismos = models.IntegerField(core=True, default=5000)
 	# simulation_type:
 	simulation_type = models.IntegerField(choices=SIMULATION_TYPES, default=1)
+
+	def get_simulation_type_id(self):
+		return {1: 'forward', 2: 'adjoint', 3: 'both'}[self.simulation_type]
 
 	class Admin:
 		pass
