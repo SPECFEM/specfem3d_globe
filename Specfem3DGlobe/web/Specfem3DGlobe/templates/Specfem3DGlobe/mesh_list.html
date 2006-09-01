@@ -6,43 +6,63 @@
 <h1>Meshes</h1>
 
 {% if object_list %}
-    <table border="0">
+    <table border=1 rules=groups>
+        <colgroup><col class=odd><col class=even></colgroup>
+        <colgroup><col class=odd></colgroup>
+        <colgroup><col class=even><col class=odd></colgroup>
+        <colgroup><col class=even><col class=odd></colgroup>
+        <colgroup><col class=even><col class=odd></colgroup>
+        <colgroup><col class=even><col class=odd></colgroup>
+        <colgroup><col class=even></colgroup>
+        <colgroup><col class=odd></colgroup>
+
+        <thead>
+        <tr>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th align="center" valign="bottom" colspan=2>nproc</th>
+            <th align="center" valign="bottom" colspan=2>nex</th>
+            <th align="center" valign="bottom" colspan=2>angular width</th>
+            <th align="center" valign="bottom" colspan=2>center</th>
+            <th align="left" valign="top" rowspan=2>gamma rotation azimuth</th>
+            <th align="left" valign="top" rowspan=2>save files</th>
+        </tr>
+
         <tr>
             <th align="left" valign="top">id</th>
             <th align="left" valign="top">actions</th>
-            <th align="left" valign="top">dry</th>
-            <th align="left" valign="top">center longitude</th>
-            <th align="left" valign="top">angular width eta</th>
-            <th align="left" valign="top">nex eta</th>
-            <th align="left" valign="top">center latitude</th>
-            <th align="left" valign="top">angular width xi</th>
-            <th align="left" valign="top">nproc eta</th>
-            <th align="left" valign="top">gamma rotation azimuth</th>
             <th align="left" valign="top">nchunks</th>
-            <th align="left" valign="top">nproc xi</th>
-            <th align="left" valign="top">save files</th>
-            <th align="left" valign="top">nex xi</th>
-
+            <th align="left" valign="top">&eta;</th>
+            <th align="left" valign="top">&xi;</th>
+            <th align="left" valign="top">&eta;</th>
+            <th align="left" valign="top">&xi;</th>
+            <th align="left" valign="top">&eta;</th>
+            <th align="left" valign="top">&xi;</th>
+            <th align="left" valign="top">latitude</th>
+            <th align="left" valign="top">longitude</th>
         </tr>
+        </thead>
 
+        <tbody>
         {% for object in object_list %}
         <tr>
             <th valign="top">{{ object.id }}</th>
             <td valign="top"><a href="{{ object.id }}/">Edit</a> <a href="{{ object.id }}/delete/">Delete</a></td>
-            <td valign="top">{{ object.dry }}</td>
-            <td valign="top">{{ object.center_longitude }}</td>
-            <td valign="top">{{ object.angular_width_eta }}</td>
-            <td valign="top">{{ object.nex_eta }}</td>
-            <td valign="top">{{ object.center_latitude }}</td>
-            <td valign="top">{{ object.angular_width_xi }}</td>
-            <td valign="top">{{ object.nproc_eta }}</td>
-            <td valign="top">{{ object.gamma_rotation_azimuth }}</td>
             <td valign="top">{{ object.nchunks }}</td>
+            <td valign="top">{{ object.nproc_eta }}</td>
             <td valign="top">{{ object.nproc_xi }}</td>
-            <td valign="top">{{ object.save_files }}</td>
+            <td valign="top">{{ object.nex_eta }}</td>
             <td valign="top">{{ object.nex_xi }}</td>
+            <td valign="top">{{ object.angular_width_eta }}&deg;</td>
+            <td valign="top">{{ object.angular_width_xi }}&deg;</td>
+            <td valign="top">{{ object.center_latitude }}</td>
+            <td valign="top">{{ object.center_longitude }}</td>
+            <td valign="top">{{ object.gamma_rotation_azimuth }}&deg;</td>
+            <td valign="top">{{ object.save_files }}</td>
         </tr>
         {% endfor %}
+        </tbody>
 
     </table>
 {% else %}

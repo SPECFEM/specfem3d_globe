@@ -6,10 +6,16 @@
 <h1>Models</h1>
 
 {% if object_list %}
-    <table border="0">
+    <table border=1 rules=groups>
+        <colgroup><col class=odd><col class=even></colgroup>
+        <colgroup>
+        <colgroup><col class=even><col class=odd><col class=even><col class=odd><col class=even><col class=odd></colgroup>
+
+        <thead>
         <tr>
             <th align="left" valign="top">id</th>
             <th align="left" valign="top">actions</th>
+            <th align="left" valign="top">type</th>
             <th align="left" valign="top">oceans</th>
             <th align="left" valign="top">gravity</th>
             <th align="left" valign="top">attenuation</th>
@@ -18,11 +24,14 @@
             <th align="left" valign="top">ellipticity</th>
 
         </tr>
+        </thead>
 
+        <tbody>
         {% for object in object_list %}
         <tr>
             <th valign="top">{{ object.id }}</th>
             <td valign="top"><a href="{{ object.id }}/">Edit</a> <a href="{{ object.id }}/delete/">Delete</a></td>
+            <td valign="top">{{ object.get_type_display }}</td>
             <td valign="top">{{ object.oceans }}</td>
             <td valign="top">{{ object.gravity }}</td>
             <td valign="top">{{ object.attenuation }}</td>
@@ -31,6 +40,7 @@
             <td valign="top">{{ object.ellipticity }}</td>
         </tr>
         {% endfor %}
+        </tbody>
 
     </table>
 {% else %}
