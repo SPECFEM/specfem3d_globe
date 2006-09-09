@@ -160,7 +160,12 @@ class SimStatusNew(SimStatus):
             ]
         
         # schedule
-        simulation.run()
+        try:
+            simulation.run()
+        except Exception, e:
+            self.daemon._error.log("simulation %d: error: %s" % (self.sim.id, e))
+            self.postStatusChange(SimStatusDone)
+            return
         
         self.postStatusChange(SimStatusPending)
         
