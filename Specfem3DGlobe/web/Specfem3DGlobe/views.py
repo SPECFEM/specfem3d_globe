@@ -161,6 +161,13 @@ def events_txt(request, sim_id):
 
 	for event in simulation.events.all():
 		cmtSolution = CMTSolution.createFromDBModel(event)
+
+		# NYI: Specfem requires this to be zero for one
+		# source, and positive for others.  For now we set it
+		# to zero for all sources -- kinematic ruptures
+		# require more work.
+		cmtSolution.timeShift = 0.0
+		
 		response.write(str(cmtSolution))
 
 	return response
