@@ -106,7 +106,7 @@ class Model3DAnisotropic(Model):
 #     -------------------------------------  -------------------------------------  -------------------------------------------------
 class ModelIsotropicPrem(Model):             MODEL = "isotropic_prem";              componentNames = [ "isotropic_prem" ]
 class ModelTransverslyIsotropicPrem(Model):  MODEL = "transversly_isotropic_prem";  componentNames = [ "transversly_isotropic_prem" ]
-class ModelIaspei(Model):                    MODEL = "iaspei";                      componentNames = [ "iaspei", "iasp91" ]
+class ModelIaspei(Model):                    MODEL = "iasp91";                      componentNames = [ "iaspei", "iasp91" ]
 class ModelAK135(Model):                     MODEL = "ak135";                       componentNames = [ "ak135" ]
 
 

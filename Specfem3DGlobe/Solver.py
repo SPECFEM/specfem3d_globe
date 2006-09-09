@@ -184,7 +184,7 @@ class Solver(Component):
     #
     
     def finiForComputeNode(self, context):
-        """collect seismograms (part 1/2)"""
+        """collect seismograms"""
 
         if self.dry:
             return
@@ -236,39 +236,52 @@ class Solver(Component):
 
 
     def finiForLauncherNode(self, context):
-        """collect seismograms (part 2/2)"""
+        """collect output files"""
         
         if self.dry:
             return
         
         import os, tarfile
-        from os.path import join
-        from glob import glob
+        from os.path import basename, join
 
         archiveOut = self.seismogramArchive
+        skipList = ['pyspecfem3D', basename(archiveOut.name)]
 
-        # Search for the intermediate seismogram archives delivered
-        # from the compute nodes.
-        
-        pattern = join(self.OUTPUT_FILES, "seismograms-*.tar.gz")
+        # Archive output files -- including the intermediate seismogram
+        # archives delivered from the compute nodes.
+
+        filesIn = []
         archivesIn = []
-        for name in glob(pattern):
-            archivesIn.append(name)
-        if len(archivesIn) == 0:
-            self._warning.log("No seismograms!")
+        for name in os.listdir(self.OUTPUT_FILES):
+            if name in skipList:
+                continue
+            pathname = join(self.OUTPUT_FILES, name)
+            if name.startswith("seismograms-"):
+                archivesIn.append(pathname)
+            else:
+                filesIn.append((pathname, name))
+        if len(filesIn) == 0:
+            self._warning.log("No output files!")
             archiveOut.close()
             os.remove(archiveOut.name)
             return
 
-        # Rearchive the seismograms in one, big archive.
-        
         tgzOut = tarfile.open(archiveOut.name, "w:gz", archiveOut)
+        
+        # Rearchive seismograms.
+
         for archiveIn in archivesIn:
             tgzIn = tarfile.open(archiveIn, "r:gz")
             for member in tgzIn.getmembers():
                 seismogram = tgzIn.extractfile(member)
                 tgzOut.addfile(member, seismogram)
             tgzIn.close()
+
+        # Archive other output files.
+        
+        for name, arcname in filesIn:
+            tgzOut.add(name, arcname)
+        
         tgzOut.close()
         archiveOut.close()
 
