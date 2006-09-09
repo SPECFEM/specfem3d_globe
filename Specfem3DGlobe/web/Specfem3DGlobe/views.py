@@ -198,10 +198,13 @@ def update_simulation_status(request, sim_id):
 	simulation = get_object_or_404(Simulation, id=sim_id)
 
 	if request.method == 'POST':
+		response = HttpResponse(mimetype='text/plain')
 		new_data = request.POST.copy()
 		new_data.update(request.FILES)
 		errors = manipulator.get_validation_errors(new_data)
-		if not errors:
+		if errors:
+			response.write(repr(errors))
+		else:
 			manipulator.do_html2python(new_data)
 			output = new_data['output']
 			if output:
@@ -216,11 +219,11 @@ def update_simulation_status(request, sim_id):
 				stream.close()
 			simulation.status = new_data['status']
 			simulation.save()
-			return HttpResponseRedirect('/specfem3dglobe/simulations/%s/' % sim_id)
-	else:
-		errors = {}
-		new_data = {'status': simulation.status}
-
+			response.write(repr('OK'))
+		return response
+	
+	errors = {}
+	new_data = {'status': simulation.status}
 	form = forms.FormWrapper(manipulator, new_data, errors)
 	return render_to_response('Specfem3DGlobe/simulation_status.html',
 				  {'form': form},
