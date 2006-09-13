@@ -207,7 +207,12 @@ class SimStatusRunning(SimStatus):
         id = self.sim.id
         simDir = join(self.daemon.simulationRoot, str(id))
         outputName = join(simDir, 'output.tar.gz')
-        if getsize(outputName) > 0:
+        size = 0
+        try:
+            size = getsize(outputName)
+        except Exception, e:
+            self.daemon._error.log("simulation %d: error: %s" % (self.sim.id, e))
+        if size > 0:
             output = open(outputName, 'rb')
             self.postStatusChangeAndUploadOutput(SimStatusDone, output)
             output.close()
