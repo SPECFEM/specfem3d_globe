@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology July 2004
+!       (c) California Institute of Technology September 2006
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -234,7 +234,7 @@
         ! If the Attenuation Value is not defined ( we are in the outer core )
         ! Continue to decrease the radius ( move towards the center ) to find
         ! a Value within the Outer Core
-        do while(minus_sum_beta <= 0.0) 
+        do while(minus_sum_beta <= 0.0)
            iregion_selected = iregion_selected - 1
            minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.
            if(iregion_selected < 1) then
@@ -243,7 +243,7 @@
         end do
      endif ! ATTENUATION_VAL_3D
   endif ! ATTENUATION_VAL
-  
+
        if(ANISOTROPIC_INNER_CORE_VAL) then
 
 ! elastic tensor for hexagonal symmetry in reduced notation:

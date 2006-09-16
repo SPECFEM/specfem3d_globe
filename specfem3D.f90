@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology July 2004
+!       (c) California Institute of Technology September 2006
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -1027,7 +1027,7 @@
      allocate(      factor_scale_crust_mantle(       i, j, k, l))
      allocate(one_minus_sum_beta_crust_mantle(       i, j, k, l))
      allocate(     factor_common_crust_mantle(N_SLS, i, j, k, l))
-     
+
      allocate( factor_scale_crust_mantle_dble(       i, j, k, l))
      allocate(         omsb_crust_mantle_dble(       i, j, k, l))
      allocate(factor_common_crust_mantle_dble(N_SLS, i, j, k, l))
@@ -1035,7 +1035,7 @@
      allocate(      factor_scale_inner_core(       i, j, k, ispec))
      allocate(one_minus_sum_beta_inner_core(       i, j, k, ispec))
      allocate(     factor_common_inner_core(N_SLS, i, j, k, ispec))
-     
+
      allocate( factor_scale_inner_core_dble(       i, j, k, ispec))
      allocate(         omsb_inner_core_dble(       i, j, k, ispec))
      allocate(factor_common_inner_core_dble(N_SLS, i, j, k, ispec))
@@ -1761,7 +1761,7 @@
      ! allocate and initialize indexing arrays
      allocate(iadjsrc(NSTEP_SUB_ADJ,2))
      allocate(iadjsrc_len(NSTEP_SUB_ADJ))
-     iadjsrc(:,:) = 0 
+     iadjsrc(:,:) = 0
      iadjsrc_len(:) = 0
 
      do it=1,NSTEP
@@ -2148,7 +2148,7 @@
         call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
              factor_common_inner_core_dble, factor_scale_inner_core_dble, tau_sigma_dble, NSPEC_INNER_CORE)
      else ! ATTENUATION = .true. .AND. ATTENUATION_3D = .false.
-        call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)           
+        call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
         call get_attenuation_model_1D(myrank, prname, IREGION_CRUST_MANTLE, tau_sigma_dble, &
              omsb_crust_mantle_dble, factor_common_crust_mantle_dble,  &
              factor_scale_crust_mantle_dble, NRAD_ATTENUATION,1,1,1)
@@ -2202,7 +2202,7 @@
                 call attenuation_lookup_index(iregion_selected, dist_cr, theta, l, ell_d80, ELLIPTICITY_VAL)
                 scale_factor = factor_scale_crust_mantle(1,1,1,iregion_selected)
              endif ! ATTENUATION_3D
-                 
+
     if(ANISOTROPIC_3D_MANTLE) then
       scale_factor_minus_one = scale_factor - 1.
       mul = c44store_crust_mantle(i,j,k,ispec)
@@ -2241,10 +2241,10 @@
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
-                 
+
             if(ATTENUATION_3D) then
                scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
-            else 
+            else
                iglob   = ibool_crust_mantle(i,j,k,ispec)
                dist_cr = xstore_crust_mantle(iglob)
                theta   = ystore_crust_mantle(iglob)
@@ -3592,7 +3592,7 @@
                  if(islice_selected_rec(irec) > NPROCTOT-1) call exit_MPI(myrank,'islice > NPROCTOT-1')
                  call exit_MPI(myrank,'now: something is wrong with the source slice number in adjoint simulation')
               endif
-! compute source arrays 
+! compute source arrays
               if(myrank == islice_selected_rec(irec)) then
                  irec_local = irec_local + 1
                  adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
@@ -4093,7 +4093,7 @@
         seismograms(5,irec_local,it-nit_written) = sngl(eps_loc_new(1,3))
         seismograms(6,irec_local,it-nit_written) = sngl(eps_loc_new(2,3))
         seismograms(7:9,irec_local,it-nit_written) = sngl(scale_displ*(nu_source(:,1,irec)*uxd + &
-                    nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd)) 
+                    nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd))
      else
         seismograms(1,irec_local,it-nit_written) = eps_loc_new(1,1)
         seismograms(2,irec_local,it-nit_written) = eps_loc_new(2,2)
@@ -4102,7 +4102,7 @@
         seismograms(5,irec_local,it-nit_written) = eps_loc_new(1,3)
         seismograms(6,irec_local,it-nit_written) = eps_loc_new(2,3)
         seismograms(7:9,irec_local,it-nit_written) = scale_displ*(nu_source(:,1,irec)*uxd + &
-                    nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd) 
+                    nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd)
       endif
 
     else  if (SIMULATION_TYPE == 3) then
