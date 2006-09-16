@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology July 2004
+!       (c) California Institute of Technology September 2006
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -55,15 +55,15 @@ module attenuation_model_variables
   double precision, dimension(:), allocatable   :: Qomsb, Qomsb2      ! one_minus_sum_beta
   double precision, dimension(:,:), allocatable :: Qfc, Qfc2          ! factor_common
   double precision, dimension(:), allocatable   :: Qsf, Qsf2          ! scale_factor
-  
+
   ! a 2 at the end stands for a second derivative
   ! Qkappa                - Compressional Attenutation, User Defined
   ! Qmu                   - Shear Attenuation, User Defined
   !
   ! tau_sigma             -                       use attenuation_tau_sigma()
-  !         Dependent on min and max period       
+  !         Dependent on min and max period
   ! tau_epislon           -                       use attenuation_invert_by_simplex()
-  !         Dependent on tau_sigma and Qmu        
+  !         Dependent on tau_sigma and Qmu
   ! [alpha,beta,gamma]val - For memory variables  use attenuation_memory_values()
   !         Dependent on tau_simga and delta_T
   ! one_minus_sum_beta    -                       use attenuation_property_values()
@@ -71,7 +71,7 @@ module attenuation_model_variables
   ! factor_common         -                       use attenuation_property_values()
   !         Dependent on tau_sigma and Qmu
   ! scale_factor          - Scaling the velocity  use attenuation_scale_factor()
-  !         Dependent on tau_sigma and Qmu        
+  !         Dependent on tau_sigma and Qmu
 
 end module attenuation_model_variables
 
@@ -101,8 +101,8 @@ end subroutine attenuation_lookup_value
    real(kind=CUSTOM_REAL) r, theta
    real(kind=CUSTOM_REAL) cost, p20, ell_d80
    if(r < 100.d0 / R_EARTH) r = 100.d0 / R_EARTH
-   
- 
+
+
    i = max(1, nint(r * TABLE_ATTENUATION))
    if(ELLIPTICITY_VAL .AND. idoubling <= IFLAG_220_MOHO) then
       ! particular case of d80 which is not honored by the mesh
@@ -123,7 +123,7 @@ end subroutine attenuation_lookup_value
 ! This Subroutine is Hackish.  It could probably all be moved to an input attenuation file.
 ! Actually all the velocities, densities and attenuations could be moved to seperate input
 ! files rather than be defined within the CODE
-! 
+!
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epslion ( or tau_mu) )
 subroutine attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80)
@@ -143,7 +143,7 @@ subroutine attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670,
   double precision R120
 
   Qb = 57287.0d0
-  R120 = 6251.d3 
+  R120 = 6251.d3
 
   if(myrank > 0) return
 
@@ -158,7 +158,7 @@ subroutine attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670,
      Qn = NR_AK135
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066a) then
      Qn = NR_1066A
-  else 
+  else
      call exit_MPI(myrank, 'Reference 1D Model Not recognized')
   endif
 
@@ -169,7 +169,7 @@ subroutine attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670,
 
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
      Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
-     Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /) 
+     Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
      Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
      Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
@@ -185,7 +185,7 @@ subroutine attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670,
      call attenuation_conversion(myrank, Qmu(i), QT_c_source, Qtau_s, tau_e)
      Qtau_e(:,i) = tau_e(:)
   end do
-  
+
 end subroutine attenuation_model_setup
 
 subroutine attenuation_save_arrays(prname, iregion_code)
@@ -210,8 +210,8 @@ subroutine attenuation_save_arrays(prname, iregion_code)
      write(27) Qr
      write(27) Qmu
      write(27) Qtau_e
-     close(27) 
-  else 
+     close(27)
+  else
      return
   endif
 
@@ -226,10 +226,10 @@ subroutine attenuation_storage(myrank, Qmu, tau_e, rw)
   double precision Qmu
   double precision, dimension(N_SLS) :: tau_e
   integer rw
-  
+
   integer Qtmp
   integer, SAVE :: virgin = 1
-  
+
   if(virgin == 1) then
      virgin       = 0
      Q_resolution = 10**ATTENUATION_COMP_RESOLUTION
@@ -258,15 +258,15 @@ subroutine attenuation_storage(myrank, Qmu, tau_e, rw)
   ! and Recast Qmu using this index
   Qtmp = Qmu * Q_resolution
   Qmu = Qtmp / Q_resolution;
-  
+
   if(rw > 0) then
-     ! READ 
+     ! READ
      if(Qmu_storage(Qtmp) > 0) then
         ! READ SUCCESSFUL
         tau_e(:)   = tau_e_storage(:, Qtmp)
         Qmu        = Qmu_storage(Qtmp)
         rw = 1
-     else 
+     else
         ! READ NOT SUCCESSFUL
         rw = -1
      endif
@@ -286,11 +286,11 @@ subroutine attenuation_conversion(myrank, Qmu_in, T_c_source, tau_s, tau_e)
 !  use attenuation_model_storage
   implicit none
   include 'constants.h'
-  
+
   integer myrank
   double precision Qmu_in, T_c_source
   double precision, dimension(N_SLS) :: tau_s, tau_e
-  
+
   integer rw
 
   rw = 1
@@ -314,7 +314,7 @@ subroutine read_attenuation_model(min, max)
 
   min_period = min * 1.0d0
   max_period = max * 1.0d0
-  
+
   allocate(Qtau_s(N_SLS))
   call attenuation_tau_sigma(Qtau_s, N_SLS, min_period, max_period)
   call attenuation_source_frequency(QT_c_source, min_period, max_period)
@@ -434,7 +434,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   double precision, dimension(N_SLS)              :: tau_s
   double precision, dimension(vx,vy,vz,vn)        :: scale_factor, one_minus_sum_beta
   double precision, dimension(N_SLS, vx,vy,vz,vn) :: factor_common
-  
+
   integer i,j,ier,rmax
   double precision scale_t
   double precision Qp1, Qpn, radius, fctmp
@@ -456,7 +456,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
      close(27)
   endif
 
-  ! Synch up after the Read 
+  ! Synch up after the Read
   call MPI_BCAST(QT_c_source, 1,     MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(tau_s,       N_SLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   call MPI_BCAST(Qn,          1,     MPI_INTEGER,          0, MPI_COMM_WORLD, ier)
@@ -471,13 +471,13 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   call MPI_BCAST(Qtau_e, Qn*N_SLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
 
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
-  
+
   ! Scale the Attenuation Values
   tau_s(:)    = tau_s(:)    / scale_t
   Qtau_e(:,:) = Qtau_e(:,:) / scale_t
   QT_c_source = 1000.0d0 / QT_c_source / scale_t
   Qr(:)       = Qr(:) / R_EARTH
-  
+
   allocate(Qsf(Qn))
   allocate(Qomsb(Qn))
   allocate(Qfc(N_SLS,Qn))
@@ -508,7 +508,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   do i = 1,N_SLS
      call pspline(Qr, Qfc(i,:), Qn, Qp1, Qpn, Qfc2(i,:),Qs)
   enddo
-  
+
   radius = 0.0d0
   rmax = nint(TABLE_ATTENUATION)
   do i = 1,rmax
@@ -518,7 +518,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
      do j = 1,N_SLS
         Qfctmp  = Qfc(j,:)
         Qfc2tmp = Qfc2(j,:)
-        call psplint(Qr, Qfctmp, Qfc2tmp, Qn, radius, fctmp, Qs)        
+        call psplint(Qr, Qfctmp, Qfc2tmp, Qn, radius, fctmp, Qs)
         factor_common(j,1,1,1,i) = fctmp
      enddo
   enddo
@@ -542,7 +542,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   deallocate(Qmu)
   deallocate(Qfctmp)
   deallocate(Qfc2tmp)
-  
+
   call MPI_BARRIER(MPI_COMM_WORLD, ier)
 
 end subroutine get_attenuation_model_1D
@@ -619,12 +619,12 @@ subroutine attenuation_source_frequency(omega_not, min_period, max_period)
   double precision omega_not
   double precision f1, f2
   double precision min_period, max_period
-  
+
   f1 = 1.0d0 / max_period
   f2 = 1.0d0 / min_period
-  
+
   omega_not =  1.0e+03 * 10.0d0**(0.5 * (log10(f1) + log10(f2)))
-  
+
 end subroutine attenuation_source_frequency
 
 subroutine attenuation_tau_sigma(tau_s, n, min_period, max_period)
@@ -1323,7 +1323,7 @@ subroutine pspline(x, y, n, yp1, ypn, y2, steps)
   double precision x(n),y(n),y2(n)
   double precision yp1, ypn
   integer steps(n)
-  
+
   integer i,r, l, n1,n2
 
   steps(:) = 0

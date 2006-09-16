@@ -1,11 +1,11 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 5
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
 !          --------------------------------------------------
 !
 !                 Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology July 2004
+!       (c) California Institute of Technology September 2006
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -270,9 +270,9 @@
         ! If the Attenuation Value is not defined ( we are in the outer core )
         ! Continue to increase the radius ( move towards the surface ) to find
         ! a Value within the Mantle
-        do while(one_minus_sum_beta_use .LE. 1e-5) 
+        do while(one_minus_sum_beta_use .LE. 1e-5)
            iregion_selected = iregion_selected + 1
-           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)           
+           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
            if(iregion_selected > NRAD_ATTENUATION) then
               call exit_MPI_without_rank('compute_forces_crust_mantle error in attenuation')
            endif
