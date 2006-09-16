@@ -142,7 +142,12 @@
 ! Evolution of the code:
 ! ---------------------
 !
-! v. 3.6 Many people, many affiliations, September 2006: kernel calculations, fixed IASP91 model, added AK135 and 1066a, fixed topography/bathymetry routine, new attenuation routines, new "configure" script, new user's manual etc.
+! v. 3.6 Many people, many affiliations, September 2006:
+!      adjoint and kernel calculations, fixed IASP91 model,
+!      added AK135 and 1066a, fixed topography/bathymetry routine,
+!      new attenuation routines, faster and better I/Os on very large
+!      systems, many small improvements and bug fixes, new "configure"
+!      script, new Pyre version, new user's manual etc.
 ! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
 !      any size of chunk, 3D attenuation, case of two chunks,
 !      more precise topography/bathymetry model, new Par_file structure
