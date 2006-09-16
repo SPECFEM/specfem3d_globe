@@ -15,7 +15,7 @@
 !
 !=====================================================================
 !
-! Copyright July 2004, by the California Institute of Technology.
+! Copyright September 2006, by the California Institute of Technology.
 ! ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
 !
 ! Any commercial use must be negotiated with the Office of Technology
@@ -142,6 +142,7 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! v. 3.6 Many people, many affiliations, September 2006: kernel calculations, fixed IASP91 model, added AK135 and 1066a, fixed topography/bathymetry routine, new attenuation routines, new "configure" script, new user's manual etc.
 ! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
 !      any size of chunk, 3D attenuation, case of two chunks,
 !      more precise topography/bathymetry model, new Par_file structure
