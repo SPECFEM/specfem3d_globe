@@ -8,13 +8,11 @@ from Specfem3DGlobe.Daemon import STATUS_CHOICES
 
 
 MODEL_TYPES = (
-	(1, 'isotropic prem'),
-	(2, 'transversely isotropic prem'),
-	(3, 'iaspei'),
-	(4, 'ak135'),
-	(5, '3d isotropic'),
-	(6, '3d anisotropic'),
-	(7, '3d attenuation'),
+	(1, 'isotropic PREM'),
+	(2, 'transversely isotropic PREM'),
+	(3, 's20rts'),
+	(4, '3d anisotropic'),
+	(5, '3d attenuation'),
 )
 
 SIMULATION_TYPES = (
