@@ -47,7 +47,7 @@
 
     <img align="right" src="{% block mesh_image %}http://www.gps.caltech.edu/research/jtromp/research/graphics/gridpoints.gif{% endblock %}">
 
-    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/mesh/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
+    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/mesh/','infowin','width=500,height=400,resizable=1,top=50,left=50,scrollbars=1');">
 
     <h3>Chunks</h3>
 
@@ -142,7 +142,7 @@
 
     <img align="right" src="http://www.gps.caltech.edu/research/jtromp/research/graphics/ellipticity_mesh.gif">
 
-    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/model/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
+    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/model/','infowin','width=500,height=400,resizable=1,top=50,left=50,scrollbars=1');">
 
     <p>{{ form.model__type }} {% if form.model__type.errors %}<span class=error>{{ form.model__type.errors|join:", " }}</span>{% endif %}
 
@@ -157,42 +157,34 @@
 
     <h2>Output Format</h2>
 
-    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/output_format/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
+    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/output_format/','infowin','width=500,height=400,resizable=1,top=50,left=50,scrollbars=1');">
 
+	<br><br>
     <table border=0>
         <tr>
             <td valign="top"><label for="id_record_length">Record length:</label></td>
-            <td valign="top">{{ form.record_length }}</td>
+            <td valign="top">{{ form.record_length }} minutes</td>
             <td valign="top">{% if form.record_length.errors %}<span class=error>{{ form.record_length.errors|join:", " }}</span>{% endif %}</td>
         </tr>
 
-        <tr>
-            <td valign="top"><label for="id_ntstep_between_output_info">Time steps between info output:</label></td>
-            <td valign="top">{{ form.ntstep_between_output_info }}</td>
-            <td valign="top">{% if form.ntstep_between_output_info.errors %}<span class=error>{{ form.ntstep_between_output_info.errors|join:", " }}</span>{% endif %}</td>
-        </tr>
-
-        <tr>
-            <td valign="top"><label for="id_ntstep_between_output_seismos">Time steps between seismo output:</label></td>
-            <td valign="top">{{ form.ntstep_between_output_seismos }}</td>
-            <td valign="top">{% if form.ntstep_between_output_seismos.errors %}<span class=error>{{ form.ntstep_between_output_seismos.errors|join:", " }}</span>{% endif %}</td>
-        </tr>
     </table>
+	<input type="hidden" name="ntstep_between_output_info" value="100">
+	<input type="hidden" name="ntstep_between_output_seismos" value="5000">
 
     <ul>
         <li>{{ form.receivers_can_be_buried }}     <label for="id_receivers_can_be_buried">Receiver at depth</label>
-        <li>{{ form.print_source_time_function }}  <label for="id_print_source_time_function">Print Source Time Function</label>
-        <li>{{ form.mesh__save_files }}            <label for="id_mesh__save_files">Save Mesh Files</label>
     </ul>
+	<input type="hidden" name="print_source_time_function" value="False">
+	<input type="hidden" name="mesh__save_files" value="False">
 
     <h2>Movie</h2>
 
-    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/movie/','infowin','width=500,height=400,resizable=1,top=50,left=50');">
+    <input type="button" value="info" onclick="window.open('/specfem3dglobe/info/movie/','infowin','width=500,height=400,resizable=1,top=50,left=50,scrollbars=1');">
 
     <ul>
         <li>{{ form.movie_surface }}  <label for="id_movie_surface">Surface</label>
-        <li>{{ form.movie_volume }}   <label for="id_movie_volume">Volume</label>
     </ul>
+	<input type="hidden" name="movie_volume" value="False">
 
     <table border=0>
         <tr>
