@@ -11,8 +11,7 @@ MODEL_TYPES = (
 	(1, 'isotropic PREM'),
 	(2, 'transversely isotropic PREM'),
 	(3, 's20rts'),
-	(4, '3d anisotropic'),
-	(5, '3d attenuation'),
+	(4, '3d attenuation'),
 )
 
 SIMULATION_TYPES = (
