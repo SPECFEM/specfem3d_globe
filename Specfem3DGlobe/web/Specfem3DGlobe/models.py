@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from cig.web.models import CurrentUser
 from cig.web.seismo.events.models import Event
-from cig.web.seismo.stations.models import Station
+from cig.web.seismo.stations.models import StationList
 from Specfem3DGlobe.Daemon import STATUS_CHOICES
 
 
@@ -123,11 +123,9 @@ class Simulation(models.Model):
 	movie_volume = models.BooleanField(core=True)
 
 	# CMTSOLUTION
-	events = models.ManyToManyField(Event,
-					limit_choices_to = {'user__exact' : CurrentUser()})
+	events = models.ForeignKey(Event, limit_choices_to = {'user__exact' : CurrentUser()})
 	# STATIONS
-	stations = models.ManyToManyField(Station,
-					  limit_choices_to = {'user__exact' : CurrentUser()})
+	stations = models.ForeignKey(StationList, limit_choices_to = {'user__exact' : CurrentUser()})
 
 	# need to find out what the fields are for...
 	# hdur_movie:
