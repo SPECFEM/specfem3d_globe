@@ -32,6 +32,20 @@
 
 <p>&nbsp;
 
+{% if user.event_set.count and user.stationlist_set.count %}
+
 {% include "Specfem3DGlobe/simulation_form_start.html" %}
+
+{% else %}
+
+{% if not user.event_set.count %}
+<p>You have no events.  See <a href="events/">events</a>.
+{% endif %}
+
+{% if not user.stationlist_set.count %}
+<p>You have no station lists.  See <a href="stations/">stations</a>.
+{% endif %}
+
+{% endif %}
 
 {% endblock %}

@@ -159,14 +159,17 @@ def events_txt(request, sim_id):
 
 	simulation = get_object_or_404(Simulation, id=sim_id)
 
-	for event in simulation.events.all():
+	count = simulation.events.source_set.count()
+	for event in simulation.events.source_set.all():
 		cmtSolution = CMTSolution.createFromDBModel(event)
 
 		# NYI: Specfem requires this to be zero for one
-		# source, and positive for others.  For now we set it
-		# to zero for all sources -- kinematic ruptures
-		# require more work.
-		cmtSolution.timeShift = 0.0
+		# source, and positive for others.  Set it to zero for
+		# single-source events.  For multi-source kinematic
+		# ruptures, for now we assume the user uploaded a
+		# proper CMTSOLUTION file.
+		if count == 1:
+			cmtSolution.timeShift = 0.0
 		
 		response.write(str(cmtSolution))
 
@@ -176,7 +179,7 @@ def stations_txt(request, sim_id):
 	response = HttpResponse(mimetype='text/plain')
 
 	simulation = get_object_or_404(Simulation, id=sim_id)
-	stations = simulation.stations.all()
+	stations = simulation.stations.station_set.all()
 
 	response.write("%d\n" % len(stations))
 	for station in stations:
