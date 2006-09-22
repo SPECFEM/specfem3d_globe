@@ -16,8 +16,6 @@ MODEL_TYPES = (
 
 SIMULATION_TYPES = (
 	(1, 'forward'),
-	(2, 'adjoint'),
-	(3, 'both forward and adjoint'),
 )
 
 
