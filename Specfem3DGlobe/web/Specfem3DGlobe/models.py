@@ -33,6 +33,9 @@ NEX_C_CHOICES = oneThruNine
 
 class UserInfo(models.Model):
 	user = models.OneToOneField(User)
+			4: 'ak135',
+			5: '3D_isotropic',
+			6: '3D_anisotropic',
 	institution = models.CharField(maxlength=100, core=True)
 	address1 = models.CharField(maxlength=100, null=True, blank=True)
 	address2 = models.CharField(maxlength=100, null=True, blank=True)
@@ -84,11 +87,8 @@ class Model(models.Model):
 		return {
 			1: 'isotropic_prem',
 			2: 'transversly_isotropic_prem',
-			3: 'iaspei',
-			4: 'ak135',
-			5: '3D_isotropic',
-			6: '3D_anisotropic',
-			7: '3D_attenuation'}[self.type]
+			3: 's20rts',
+			4: '3D_attenuation'}[self.type]
 
         class Admin:
             pass
