@@ -33,9 +33,6 @@ NEX_C_CHOICES = oneThruNine
 
 class UserInfo(models.Model):
 	user = models.OneToOneField(User)
-			4: 'ak135',
-			5: '3D_isotropic',
-			6: '3D_anisotropic',
 	institution = models.CharField(maxlength=100, core=True)
 	address1 = models.CharField(maxlength=100, null=True, blank=True)
 	address2 = models.CharField(maxlength=100, null=True, blank=True)
