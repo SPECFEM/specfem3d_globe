@@ -587,7 +587,7 @@
     call MPI_BCAST(min_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(max_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
 
-    call attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80)
+    call attenuation_model_setup(REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80)
   endif
 
 

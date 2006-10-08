@@ -19,7 +19,9 @@
 !  Brian Savage while at
 !     California Institute of Technology
 !     Department of Terrestrial Magnetism / Carnegie Institute of Washington
+!     Univeristy of Rhode Island
 !
+!  <savage@uri.edu>.
 !  <savage13@gps.caltech.edu>
 !  <savage13@dtm.ciw.edu>
 !
@@ -33,7 +35,7 @@
 !      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 !
 !   The methodology can be found in
-!   Savage and Tromp, 2005, unpublished
+!   Savage and Tromp, 2006, unpublished
 !
 
 module attenuation_model_constants
@@ -126,11 +128,12 @@ end subroutine attenuation_lookup_value
 !
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epslion ( or tau_mu) )
-subroutine attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80)
+subroutine attenuation_model_setup(REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80)
   use attenuation_model_variables
   use model_ak135_variables
   use model_1066a_variables
   implicit none
+  include 'mpif.h'
   include 'constants.h'
 
   integer myrank
@@ -138,13 +141,14 @@ subroutine attenuation_model_setup(myrank, REFERENCE_1D_MODEL, RICB, RCMB, R670,
   double precision RICB, RCMB, R670, R220, R80
   double precision tau_e(N_SLS)
 
-  integer i
+  integer i,ier
   double precision Qb
   double precision R120
 
   Qb = 57287.0d0
   R120 = 6251.d3
-
+  
+  call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
   if(myrank > 0) return
 
   call define_model_ak135(.FALSE.)
@@ -217,12 +221,13 @@ subroutine attenuation_save_arrays(prname, iregion_code)
 
 end subroutine attenuation_save_arrays
 
-subroutine attenuation_storage(myrank, Qmu, tau_e, rw)
+subroutine attenuation_storage(Qmu, tau_e, rw)
   use attenuation_model_storage
   implicit none
+  include 'mpif.h'
   include 'constants.h'
 
-  integer myrank
+  integer myrank, ier
   double precision Qmu
   double precision, dimension(N_SLS) :: tau_e
   integer rw
@@ -246,6 +251,7 @@ subroutine attenuation_storage(myrank, Qmu, tau_e, rw)
      write(IMAIN,*) 'attenuation_conversion/storage()'
      write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
      write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, Q_max
+     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
      call exit_MPI(myrank, 'Attenuation Value out of Range')
   endif
 
@@ -281,26 +287,25 @@ subroutine attenuation_storage(myrank, Qmu, tau_e, rw)
 
 end subroutine attenuation_storage
 
-subroutine attenuation_conversion(myrank, Qmu_in, T_c_source, tau_s, tau_e)
+subroutine attenuation_conversion(Qmu_in, T_c_source, tau_s, tau_e)
   use attenuation_model_variables ! includes min_period, max_period, and N_SLS
 !  use attenuation_model_storage
   implicit none
   include 'constants.h'
 
-  integer myrank
   double precision Qmu_in, T_c_source
   double precision, dimension(N_SLS) :: tau_s, tau_e
 
   integer rw
 
   rw = 1
-  call attenuation_storage(myrank, Qmu_in, tau_e, rw)
+  call attenuation_storage(Qmu_in, tau_e, rw)
   if(rw > 0) return
 
-  call attenuation_invert_by_simplex(myrank, min_period, max_period, N_SLS, Qmu_in, T_c_source, tau_s, tau_e)
+  call attenuation_invert_by_simplex(min_period, max_period, N_SLS, Qmu_in, T_c_source, tau_s, tau_e)
 
   rw = -1
-  call attenuation_storage(myrank, Qmu_in, tau_e, rw)
+  call attenuation_storage(Qmu_in, tau_e, rw)
 
 end subroutine attenuation_conversion
 
@@ -672,10 +677,11 @@ module attenuation_simplex_variables
 
 end module attenuation_simplex_variables
 
-subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, tau_s, tau_e)
+subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, tau_e)
   implicit none
+  include 'mpif.h'
   ! Input / Output
-  integer myrank
+  integer myrank, ier
   double precision  t1, t2
   double precision  Q_real
   double precision  omega_not
@@ -708,6 +714,7 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
   exp2 = log10(f2)
 
   if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
+     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)     
      call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
 
@@ -744,6 +751,7 @@ subroutine attenuation_invert_by_simplex(myrank, t2, t1, n, Q_real, omega_not, t
      write(*,*)'    Iterations: ', iterations
      write(*,*)'    Min Value:  ', min_value
      write(*,*)'    Aborting program'
+     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
   endif
 
@@ -1379,13 +1387,12 @@ subroutine attenuation_model_1D(myrank, iregion_attenuation, Q_mu)
 
 end subroutine attenuation_model_1D
 
-subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_source,RICB,RCMB, &
-     RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80)
+subroutine attenuation_model(x, xlat, xlon,Qmu)
 
-!
+! x in the radius from 0 to 1 where 0 is the center and 1 is the surface
 ! xlat, xlon currently not used in this routine (which uses PREM).
 ! The user needs to modify this routine if he wants to use
-! a particular 3D attenuation model. The current version is 1D.
+! a particular 3D attenuation model. The current version is 1D PREM.
 !
 
 !  use attenuation_model_variables
@@ -1393,12 +1400,10 @@ subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_sourc
   implicit none
   include 'constants.h'
 
-  integer myrank
-
   double precision xlat, xlon, r, x, Qmu,RICB,RCMB, &
-      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80
-  double precision Qkappa, T_c_source
-  double precision, dimension(N_SLS) :: tau_s, tau_e
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80, ROCEAN, &
+      RMOHO, RMIDDLE_CRUST
+  double precision Qkappa
 
 ! dummy lines to suppress warning about variables not used
   double precision xdummy
@@ -1406,6 +1411,20 @@ subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_sourc
 ! end of dummy lines to suppress warning about variables not used
 
   r = x * R_EARTH
+
+  ROCEAN = 6368000.d0
+  RMIDDLE_CRUST = 6356000.d0
+  RMOHO = 6346600.d0
+  R80  = 6291000.d0
+  R220 = 6151000.d0
+  R400 = 5971000.d0
+  R600 = 5771000.d0
+  R670 = 5701000.d0
+  R771 = 5600000.d0
+  RTOPDDOUBLEPRIME = 3630000.d0
+  RCMB = 3480000.d0
+  RICB = 1221000.d0
+
 
 ! PREM
 !
@@ -1460,7 +1479,8 @@ subroutine attenuation_model(myrank, xlat, xlon, x, Qmu, tau_s, tau_e, T_c_sourc
      Qkappa=57827.0d0
   endif
 
-  call attenuation_conversion(myrank, Qmu, T_c_source, tau_s, tau_e)
+!  This will be called from get_model.f90
+!  call attenuation_conversion(myrank, Qmu, T_c_source, tau_s, tau_e)
 
 end subroutine attenuation_model
 

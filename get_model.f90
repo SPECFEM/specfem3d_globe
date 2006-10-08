@@ -250,7 +250,8 @@
          lat=(PI/2.0d0-theta)*180.0d0/PI
          lon=phi*180.0d0/PI
          if(lon > 180.0d0) lon = lon - 360.0d0
-         call attenuation_conversion(myrank, Qmu, T_c_source, tau_s, tau_e)
+         call attenuation_model(r_prem, lat, lon, Qmu)
+         call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e)
        endif
 
 !      get the 3-D crustal model
