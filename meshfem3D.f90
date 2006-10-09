@@ -551,6 +551,7 @@
   endif
 
   if(ANISOTROPIC_3D_MANTLE) then
+! the variables read are declared and stored in module aniso_mantle_model_variables
     if(myrank == 0) call read_aniso_mantle_model
 ! broadcast the information read on the master to the nodes
     call MPI_BCAST(npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
