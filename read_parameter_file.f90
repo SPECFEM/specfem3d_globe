@@ -415,6 +415,16 @@
     CRUSTAL = .false.
     ATTENUATION_3D = .false.
 
+
+  else if(MODEL == 'crust_2.0_plus_transversely_isotropic_prem') then
+    TRANSVERSE_ISOTROPY = .true.
+    ISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_INNER_CORE = .false.
+    CRUSTAL = .true.
+    ATTENUATION_3D = .false.
+
+
   else if(MODEL == 'iasp91' .or. MODEL == '1066a' .or. MODEL == 'ak135') then
     if(MODEL == 'iasp91') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
@@ -440,7 +450,7 @@
     CRUSTAL = .true.
     ATTENUATION_3D = .false.
 
-  else if(MODEL == 'Brian_Savage') then
+  else if(MODEL == '3D_attenuation') then
     TRANSVERSE_ISOTROPY = .false.
     ISOTROPIC_3D_MANTLE = .false.
     ANISOTROPIC_3D_MANTLE = .false.
@@ -448,7 +458,7 @@
     CRUSTAL = .false.
     ATTENUATION_3D = .true.
 
-  else if(MODEL == 'Min_Chen') then
+  else if(MODEL == '3D_anisotropic') then
     TRANSVERSE_ISOTROPY = .true.
     ISOTROPIC_3D_MANTLE = .false.
     ANISOTROPIC_3D_MANTLE = .true.
