@@ -22,8 +22,8 @@ NEX_ETA                         = 160
 NPROC_XI                        = 5
 NPROC_ETA                       = 5
 
-# model (isotropic_prem, transversely_isotropic_prem,
-# iasp91, 1066a, ak135, s20rts, Brian_Savage, Min_Chen)
+# model (isotropic_prem, transversely_isotropic_prem, crust_2.0_plus_transversely_isotropic_prem
+# iasp91, 1066a, ak135, s20rts, 3D_anisotropic, 3D_attenuation)
 MODEL                           = isotropic_prem 
 
 # parameters describing the Earth model
