@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # use the normal queue unless otherwise directed
 queue="-q normal"
 if [ $# -eq 1 ]; then
@@ -7,33 +8,28 @@ if [ $# -eq 1 ]; then
 	queue="-q $1"
 fi
 	
-rm -r -f OUTPUT_FILES core*
-mkdir OUTPUT_FILES
-
 # need to check if the Par_file is newer than any of the files below too
 
+if [ ! -x xmeshfem3D -o ! -x xspecfem3D -o ! -x xcreate_header_file ]; then 
 	d=`date`
 	echo "Starting compilation $d"
-
-  make clean
-  make meshfem3D
-  make create_header_file
-  xcreate_header_file
-  make specfem3D
-
+	make clean
+	make meshfem3D
+	make create_header_file
+	xcreate_header_file
+	make specfem3D
 	d=`date`
 	echo "Finished compilation $d"
+fi
 
 # compute total number of nodes needed
-NPROC_XI=`grep NPROC_XI DATA/Par_file | cut -d = -f 2`
-NPROC_ETA=`grep NPROC_ETA DATA/Par_file | cut -d = -f 2 `
-NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -d = -f 2`
+NPROC_XI=`grep NPROC_XI DATA/Par_file | cut -c 34- `
+NPROC_ETA=`grep NPROC_ETA DATA/Par_file | cut -c 34- `
+NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -c 34- `
 
 
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
 echo "Submitting job"
-# syntax to specify wallclock time is -W hh:mm
-bsub $queue -n $numnodes -W 08:00 < go_mesher_solver_lsf_globe.bash
-
+bsub $queue -n $numnodes -W 58.3 -K <go_mesher_solver_lsf_global.bash

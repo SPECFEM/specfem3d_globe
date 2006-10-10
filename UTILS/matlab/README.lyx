@@ -1,0 +1,82 @@
+#LyX 1.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 221
+\textclass article
+\language english
+\inputencoding auto
+\fontscheme default
+\graphics default
+\paperfontsize default
+\papersize Default
+\paperpackage a4
+\use_geometry 0
+\use_amsmath 1
+\use_natbib 0
+\use_numerical_citations 0
+\paperorientation portrait
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\quotes_times 2
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+
+\layout Standard
+
+slice_number($elon,$elat,$slon,$slat,$nproc,[0 or 1])
+\layout Itemize
+
+elon,elat,slon,slat => normal plane -> rotation => new_elon, new_slon =>
+ lon_array along gcarc 
+\layout Itemize
+
+for every point in the lon_array -> check for each chunk, the possible 
+\begin_inset ERT
+status Collapsed
+
+\layout Standard
+$(
+\backslash 
+xi,
+\backslash 
+eta)$
+\end_inset 
+
+, and figure out the chunk number as well as the slice number => print out
+ the slice number
+\layout Itemize
+
+0 for minor arc, and 1 for major arc
+\layout Itemize
+
+use tp2norm(), norm_rot(), norm_rot_back(), tp2xyz(), chunk_map()
+\layout Itemize
+
+extra auxilliary functions:
+\begin_deeper 
+\layout Itemize
+
+slice_number2(elon,elat,slon,slat,nproc,[0,1],lat0) -- get the slice number
+ for points on a 'belt' between source and receiver points.
+\layout Itemize
+
+[nx,ny,nz] = tp2norm2(ths,phs,thr,phr) to get the coordinates of the unit
+ normal vector
+\layout Itemize
+
+[th,ph] = xyz2tp(x,y,z) 
+\layout Itemize
+
+[th,ph] = gcarc_station(lats,lons,latr,lonr,[0,1]) -- output stations with
+ 1 degree apart
+\layout Itemize
+
+[x,y,z] = xsection_translate(lats,lons,latr,lonr,[0,1],scale) -- to move
+ xsections up and down for S,P Kernels to be aligned on the same plot
+\layout Itemize
+
+new_array = compact_array(old_array) -- compacts an array by sorting and
+ removing the repeated entries
+\the_end
