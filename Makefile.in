@@ -99,6 +99,7 @@ libspecfem_a_OBJECTS = \
 	$O/create_chunk_buffers.o \
 	$O/create_header_file.o \
 	$O/create_movie_AVS_DX.o \
+	$O/create_movie_GMT_global.o \
 	$O/create_name_database.o \
 	$O/create_regions_mesh.o \
 	$O/create_serial_name_database.o \
@@ -194,6 +195,7 @@ LIBSPECFEM = $(TOGGLED_OBJECTS) $O/libspecfem.a
 @COND_PYRE_FALSE@	convolve_source_timefunction \
 @COND_PYRE_FALSE@	create_header_file \
 @COND_PYRE_FALSE@	create_movie_AVS_DX \
+@COND_PYRE_FALSE@	create_movie_GMT_global \
 @COND_PYRE_FALSE@	meshfem3D \
 @COND_PYRE_FALSE@	specfem3D \
 @COND_PYRE_FALSE@	$(EMPTY_MACRO)
@@ -256,6 +258,7 @@ combine_AVS_DX: xcombine_AVS_DX
 convolve_source_timefunction: xconvolve_source_timefunction
 create_header_file: xcreate_header_file
 create_movie_AVS_DX: xcreate_movie_AVS_DX
+create_movie_GMT_global: xcreate_movie_GMT_global
 combine_paraview_data: xcombine_paraview_data
 
 xconvolve_source_timefunction: $O/convolve_source_timefunction.o
@@ -266,6 +269,9 @@ xcreate_header_file: $O/program_create_header_file.o $(LIBSPECFEM)
 
 @COND_PYRE_FALSE@xcreate_movie_AVS_DX: $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
 @COND_PYRE_FALSE@	${FCCOMPILE_CHECK} -o xcreate_movie_AVS_DX $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
+
+@COND_PYRE_FALSE@xcreate_movie_GMT_global: $O/create_movie_GMT_global.o $(LIBSPECFEM)
+@COND_PYRE_FALSE@	${FCCOMPILE_CHECK} -o xcreate_movie_GMT_global $O/create_movie_GMT_global.o $(LIBSPECFEM)
 
 xcombine_AVS_DX: $O/combine_AVS_DX.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcombine_AVS_DX $O/combine_AVS_DX.o $(LIBSPECFEM)
@@ -288,7 +294,7 @@ xcheck_buffers_faces_chunks: $O/check_buffers_faces_chunks.o $(LIBSPECFEM)
 xcombine_paraview_data: $O/combine_paraview_data.o $O/write_c_binary.o
 	${FCCOMPILE_CHECK} -o xcombine_paraview_data  $O/combine_paraview_data.o $O/write_c_binary.o
 clean:
-	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcombine_paraview_data PI*
+	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcreate_movie_GMT_global xcombine_paraview_data PI*
 
 
 ###
@@ -423,8 +429,14 @@ $O/get_jacobian_boundaries.o: constants.h get_jacobian_boundaries.f90
 $O/program_create_movie_AVS_DX.o: constants.h program_create_movie_AVS_DX.f90
 	${FCCOMPILE_CHECK} -c -o $O/program_create_movie_AVS_DX.o ${FCFLAGS_f90} program_create_movie_AVS_DX.f90
 
+$O/program_create_movie_GMT_global.o: constants.h program_create_movie_GMT_global.f90
+	${FCCOMPILE_CHECK} -c -o $O/program_create_movie_GMT_global.o ${FCFLAGS_f90} program_create_movie_GMT_global.f90
+
 $O/create_movie_AVS_DX.o: constants.h create_movie_AVS_DX.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_movie_AVS_DX.o ${FCFLAGS_f90} create_movie_AVS_DX.f90
+
+$O/create_movie_GMT_global.o: constants.h create_movie_GMT_global.f90
+	${FCCOMPILE_CHECK} -c -o $O/create_movie_GMT_global.o ${FCFLAGS_f90} create_movie_GMT_global.f90
 
 $O/get_flags_boundaries.o: constants.h get_flags_boundaries.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_flags_boundaries.o ${FCFLAGS_f90} get_flags_boundaries.f90
