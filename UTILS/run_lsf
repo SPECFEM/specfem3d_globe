@@ -1,26 +1,22 @@
 #!/bin/bash
 
-
 # use the normal queue unless otherwise directed
 queue="-q normal"
 if [ $# -eq 1 ]; then
 	echo "Setting the queue to $1"
 	queue="-q $1"
 fi
-	
-# need to check if the Par_file is newer than any of the files below too
 
-if [ ! -x xmeshfem3D -o ! -x xspecfem3D -o ! -x xcreate_header_file ]; then 
-	d=`date`
-	echo "Starting compilation $d"
-	make clean
-	make meshfem3D
-	make create_header_file
-	xcreate_header_file
-	make specfem3D
-	d=`date`
-	echo "Finished compilation $d"
-fi
+# compile the mesher and the solver	
+d=`date`
+echo "Starting compilation $d"
+make clean
+make meshfem3D
+make create_header_file
+xcreate_header_file
+make specfem3D
+d=`date`
+echo "Finished compilation $d"
 
 # compute total number of nodes needed
 NPROC_XI=`grep NPROC_XI DATA/Par_file | cut -c 34- `
@@ -32,4 +28,4 @@ NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -c 34- `
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
 echo "Submitting job"
-bsub $queue -n $numnodes -W 58.3 -K <go_mesher_solver_lsf_global.bash
+bsub $queue -n $numnodes -W 60 -K <go_mesher_solver_lsf_global.bash
