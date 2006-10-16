@@ -7,7 +7,7 @@ use POSIX;
 sub Usage{
 print STDERR <<END;
  
-Usage:   change_simulation_type2.pl  [-a|-f|-b|-F]
+Usage:   change_simulation_type.pl  [-a|-f|-b|-F]
          Changes SIMULATION_TYPE in DATA/Par_file
          -a -- change type to run adjoint calculation(2)
          -f -- change type to run forward calculation(1)
