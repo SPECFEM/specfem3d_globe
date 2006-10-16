@@ -1218,15 +1218,6 @@
   allocate(phi_source(NSOURCES))
   allocate(nu_source(NDIM,NDIM,NSOURCES))
 
-  if (myrank == 0) then
-    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr.vtk',status='unknown')
-    write(IOVTK,'(a)') '# vtk DataFile Version 2.0'
-    write(IOVTK,'(a)') 'Source(one) and Receiver(one) VTK file'
-    write(IOVTK,'(a)') 'ASCII'
-    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-    write(IOVTK, '(a)') 'POINTS 2 float'
-  endif
-
 ! locate sources in the mesh
   call locate_sources(NSOURCES,myrank,nspec_crust_mantle, &
             nglob_crust_mantle,idoubling_crust_mantle,ibool_crust_mantle, &
@@ -1279,6 +1270,13 @@
       write(IMAIN,*) 'Total number of adjoint sources = ', nrec
     endif
     write(IMAIN,*)
+! write source and receiver VTK files for Paraview
+    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr.vtk',status='unknown')
+    write(IOVTK,'(a)') '# vtk DataFile Version 2.0'
+    write(IOVTK,'(a)') 'Source and Receiver VTK file'
+    write(IOVTK,'(a)') 'ASCII'
+    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+    write(IOVTK, '(a,i6,a)') 'POINTS ', NSOURCES+nrec, ' float'
   endif
 
   if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
