@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
+#  This program figures out the global slice number for given simulation files
 
-#This program figures out the global slice number for given simulation files
-
-use lib 'lib';
+# modify the following line for the correct location of perl libs (UTILS/lib)
+use lib '/opt/seismo-util/lib/perl';
 use CMT_TOOLS;
 
 if (@ARGV != 3) {die("Usage: globe_slice_number.pl CMTSOLUTION STATIONS_ADJOINT Par_file\n");}
@@ -81,6 +81,17 @@ for ($i = 0; $i < $nslice; $i ++ ) {
   }
 }
 }
+
+# figure out the normal to the source-receiver plane
+print "calculate normal to source and receiver plane\n";
+open(MATLAB, "| $matlab_exe -nosplash -nojvm > matlab.txt");
+print MATLAB "cd $m_dir \n";
+print  MATLAB "[s(1),s(2),s(3)] = normal_plane($elat,$elon,$slat,$slon);\ns\n";
+print MATLAB "quit\n";
+close(MATLAB);
+system(" awk 'NR >= 14 && NF > 0 {print \$0}' matlab.txt | grep -v '>' > normal_plane.txt ");
+$normal_plane = `awk 'NR >= 14 && NF > 0 {print \$0}' matlab.txt | grep -v '>' `;
+print "$normal_plane \n";
 
 # clean up temp files
 system(" rm -f matlab.txt slice_ab_old");
