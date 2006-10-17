@@ -1,8 +1,12 @@
 #!/usr/bin/perl -w
 #  This program figures out the global slice number for given simulation files
 
+#This program figures out the global slice number for given simulation files
+# please run this on a machine with matlab access.
+
 # modify the following line for the correct location of perl libs (UTILS/lib)
 use lib '/opt/seismo-util/lib/perl';
+
 use CMT_TOOLS;
 
 if (@ARGV != 3) {die("Usage: globe_slice_number.pl CMTSOLUTION STATIONS_ADJOINT Par_file\n");}
