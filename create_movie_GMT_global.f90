@@ -28,7 +28,7 @@
 
   integer i,j,it
   integer it1,it2
-  integer nspectot_AVS_max
+!  integer nspectot_AVS_max
   integer ispec
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: x,y,z,displn
   real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord,rval,thetaval,phival,lat,long
@@ -36,10 +36,10 @@
   real(kind=CUSTOM_REAL) displx,disply,displz
   real(kind=CUSTOM_REAL) normal_x,normal_y,normal_z
   real(kind=CUSTOM_REAL) thetahat_x,thetahat_y,thetahat_z
-  real(kind=CUSTOM_REAL) phihat_x,phihat_y,phihat_z
+  real(kind=CUSTOM_REAL) phihat_x,phihat_y !,phihat_z
   double precision min_field_current,max_field_current,max_absol
   real disp
-  integer iformat,nframes,iframe,USE_COMPONENT
+  integer nframes,iframe,USE_COMPONENT !,iformat
 
   character(len=150) outputname
 
