@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+# this program remaps the LSF output machine file to
+# the standard one-node-per-column machine file
+
 if (@ARGV != 1) {die("remap_lsf_machines.pl machinefile\n");}
 
 $machine = $ARGV[0];
