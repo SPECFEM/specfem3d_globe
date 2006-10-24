@@ -96,6 +96,16 @@
 ! volume=139,
 ! pages={806-822}}
 !
+! @ARTICLE{KoVi98,
+! author = {D. Komatitsch and J. P. Vilotte},
+! title = {The spectral-element method: an efficient tool to simulate
+! the seismic response of 2{D} and 3{D} geological structures},
+! journal = {Bull. Seismol. Soc. Am.},
+! year = {1998},
+! volume = {88},
+! number = {2},
+! pages = {368-392}}
+!
 ! If you use 3-D model S20RTS, please cite
 !
 ! @ARTICLE{RiVa00,
