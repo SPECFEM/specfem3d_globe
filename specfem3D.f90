@@ -113,6 +113,15 @@
 ! number=2,
 ! pages={368-392}}
 !
+! If you use the kernel capabilities of the code, please cite
+!
+!@article{Liu06b,
+!     AUTHOR = {Q. Liu and J. Tromp},
+!     TITLE = {{Finite-frequency sensitivity kernels for global seismic wave propagation based upon adjoint methods}},
+!     NOTE = {in preparation},
+!     YEAR = {2006}
+!}
+
 ! If you use 3-D model S20RTS, please cite
 !
 ! @ARTICLE{RiVa00,
