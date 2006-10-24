@@ -1,1 +1,0 @@
-g++ -I/home/nschwarz/software/vtk42/include -L/home/nschwarz/software/vtk42/lib/vtk -lvtkCommon -lvtkIO -lvtkRendering ugrid.cxx -o ugrid

@@ -70,7 +70,9 @@
 ! title={The Spectral-Element Method, {B}eowulf Computing, and Global Seismology},
 ! journal={Science},
 ! volume=298,
-! pages={1737-1742}}
+! number=5599,
+! pages={1737-1742},
+! doi={10.1126/science.1076024}}
 !
 ! @ARTICLE{KoTr02a,
 ! author={D. Komatitsch and J. Tromp},
@@ -78,7 +80,9 @@
 ! title={Spectral-Element Simulations of Global Seismic Wave Propagation{-I. V}alidation},
 ! journal={Geophys. J. Int.},
 ! volume=149,
-! pages={390-412}}
+! number=2,
+! pages={390-412},
+! doi={10.1046/j.1365-246X.2002.01653.x}}
 !
 ! @ARTICLE{KoTr02b,
 ! author={D. Komatitsch and J. Tromp},
@@ -86,7 +90,9 @@
 ! title={Spectral-Element Simulations of Global Seismic Wave Propagation{-II. 3-D} Models, Oceans, Rotation, and Self-Gravitation},
 ! journal={Geophys. J. Int.},
 ! volume=150,
-! pages={303-318}}
+! pages={303-318},
+! number=1,
+! doi={10.1046/j.1365-246X.2002.01716.x}}
 !
 ! @ARTICLE{KoTr99,
 ! author={D. Komatitsch and J. Tromp},
@@ -94,8 +100,28 @@
 ! title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
 ! journal={Geophys. J. Int.},
 ! volume=139,
-! pages={806-822}}
+! number=3,
+! pages={806-822},
+! doi={10.1046/j.1365-246x.1999.00967.x}}
 !
+! @ARTICLE{KoVi98,
+! author={D. Komatitsch and J. P. Vilotte},
+! title={The spectral-element method: an efficient tool to simulate the seismic response of 2{D} and 3{D} geological structures},
+! journal={Bull. Seismol. Soc. Am.},
+! year=1998,
+! volume=88,
+! number=2,
+! pages={368-392}}
+!
+! If you use the kernel capabilities of the code, please cite
+!
+!@article{Liu06b,
+!     AUTHOR = {Q. Liu and J. Tromp},
+!     TITLE = {{Finite-frequency sensitivity kernels for global seismic wave propagation based upon adjoint methods}},
+!     NOTE = {in preparation},
+!     YEAR = {2006}
+!}
+
 ! If you use 3-D model S20RTS, please cite
 !
 ! @ARTICLE{RiVa00,
