@@ -69,6 +69,7 @@
 
   double precision sec
   double precision t_cmt(NSOURCES)
+  double precision t0, hdur_gaussian(NSOURCES)
 
   integer iprocloop
 
@@ -181,6 +182,12 @@
 
 ! get MPI starting time for all sources
   time_start = MPI_WTIME()
+
+! convert the half duration for triangle STF to the one for gaussian STF
+  hdur_gaussian = hdur/SOURCE_DECAY_RATE
+
+! define t0 as the earliest start time
+  t0 = - 1.5d0*minval(t_cmt-hdur)
 
 ! loop on all the sources
 ! gather source information in chunks to reduce memory requirements
@@ -585,8 +592,8 @@
   scalar_moment = dsqrt(scalar_moment/2.)
 
   do it=1,NSTEP
-    time_source = dble(it-1)*DT-hdur(isource)-t_cmt(isource)
-    write(27,*) sngl(dble(it-1)*DT),sngl(scalar_moment*comp_source_time_function(time_source,hdur(isource)))
+    time_source = dble(it-1)*DT-t0-t_cmt(isource)
+    write(27,*) sngl(dble(it-1)*DT),sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
   enddo
   close(27)
 
