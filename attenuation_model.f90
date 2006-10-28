@@ -186,7 +186,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R
   end if
 
   do i = 1, Qn
-     call attenuation_conversion(myrank, Qmu(i), QT_c_source, Qtau_s, tau_e)
+     call attenuation_conversion(Qmu(i), QT_c_source, Qtau_s, tau_e)
      Qtau_e(:,i) = tau_e(:)
   end do
 
@@ -1480,7 +1480,7 @@ subroutine attenuation_model(x, xlat, xlon,Qmu)
   endif
 
 !  This will be called from get_model.f90
-!  call attenuation_conversion(myrank, Qmu, T_c_source, tau_s, tau_e)
+!  call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e)
 
 end subroutine attenuation_model
 
