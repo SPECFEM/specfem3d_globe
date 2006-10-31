@@ -151,7 +151,7 @@ class SimStatusPreparing(SimStatus):
         import os
         import urllib2
         import shutil
-        from os.path import exists, join
+        from os.path import exists, join, basename
         from tempfile import mktemp
         
         id = self.sim.id
@@ -159,7 +159,7 @@ class SimStatusPreparing(SimStatus):
 
         simDir = join(self.daemon.simulationRoot, str(id))
         if exists(simDir):
-            junkDir  = simDir + '-' + mktemp()
+            junkDir  = simDir + '-' + basename(mktemp())
             os.rename(simDir, junkDir)
         os.makedirs(simDir)
 
