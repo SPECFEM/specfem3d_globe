@@ -220,7 +220,8 @@ class SimStatusRunning(SimStatus):
     display = classmethod(display)
 
     def _poll(self):
-        from os.path import join, getsize
+        import os
+
         if not self.sim.job:
             pass
         elif self.sim.job.stat == 'RUN':
@@ -229,6 +230,29 @@ class SimStatusRunning(SimStatus):
             # error
             self.postStatusChange(SimStatusError)
             return
+        
+        self.postStatusChange(SimStatusFinishing)
+
+        pid = os.fork()
+        if pid:
+            self.daemon._info.log("forked daemon process %d for simulation %d" % (pid, self.sim.id))
+            return
+
+        # Immediately jump into the next state and get to work.
+        status = SimStatusFinishing(self.daemon, self.sim)
+        status.finish()
+        return
+    
+
+class SimStatusFinishing(SimStatus):
+    def display(cls): return 'finishing'
+    display = classmethod(display)
+
+    def _poll(self): pass # a daemon child is busy executing finish() for this sim
+    
+    def finish(self):
+        from os.path import join, getsize
+
         id = self.sim.id
         simDir = join(self.daemon.simulationRoot, str(id))
         outputName = join(simDir, 'output.tar.gz')
@@ -243,6 +267,7 @@ class SimStatusRunning(SimStatus):
             output.close()
         else:
             # error
+            self.daemon._error.log("simulation %d: output file '%s' is empty" % (self.sim.id, outputName))
             self.postStatusChange(SimStatusError)
         return
 
