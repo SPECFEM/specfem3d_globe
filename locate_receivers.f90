@@ -24,7 +24,7 @@
                  xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,stlat,stlon,stele,nu, &
                  yr,jda,ho,mi,sec,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
                  theta_source,phi_source, &
-                 rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED)
+                 rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS)
 
   implicit none
 
@@ -34,7 +34,7 @@
   include "constants.h"
   include "precision.h"
 
-  integer NPROCTOT
+  integer NPROCTOT,NCHUNKS
 
   logical ELLIPTICITY,TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
@@ -537,10 +537,14 @@
 
 ! add warning if estimate is poor
 ! (usually means receiver outside the mesh given by the user)
-    if(final_distance(irec) > 50.d0) then
+    if(final_distance(irec) > THRESHOLD_EXCLUDE_STATION) then
       write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
       write(IMAIN,*) '*****************************************************************'
-      write(IMAIN,*) '***** WARNING: receiver location estimate is poor (not used)*****'
+      if(NCHUNKS == 6) then
+        write(IMAIN,*) '***** WARNING: receiver location estimate is poor, therefore receiver excluded *****'
+      else
+        write(IMAIN,*) '***** WARNING: receiver is located outside the mesh, therefore excluded *****'
+      endif
       write(IMAIN,*) '*****************************************************************'
     else
       nrec_found = nrec_found + 1
@@ -569,11 +573,11 @@
 
 ! add warning if estimate is poor
 ! (usually means receiver outside the mesh given by the user)
-    if(final_distance_max > 50.d0) then
+    if(final_distance_max > THRESHOLD_EXCLUDE_STATION) then
       write(IMAIN,*)
       write(IMAIN,*) '************************************************************'
       write(IMAIN,*) '************************************************************'
-      write(IMAIN,*) '***** WARNING: at least one receiver is poorly located *****'
+      write(IMAIN,*) '***** WARNING: at least one receiver was excluded from the station list *****'
       write(IMAIN,*) '************************************************************'
       write(IMAIN,*) '************************************************************'
     endif
@@ -591,7 +595,7 @@
     stele(1:nrec) = stele_found(1:nrec)
     nu(:,:,1:nrec) = nu_found(:,:,1:nrec)
     epidist(1:nrec) = epidist_found(1:nrec)
-    
+
 ! write the list of stations and associated epicentral distance
   open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt',status='unknown')
   write(27,*)
@@ -613,7 +617,6 @@
   endif    ! end of section executed by main process only
 
 ! main process broadcasts the results to all the slices
-
   call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 

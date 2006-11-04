@@ -116,8 +116,12 @@
 ! source decay rate
   double precision, parameter :: SOURCE_DECAY_RATE = 1.628d0
 
-! number of sources to locate simultaneously 
+! number of sources to locate simultaneously
   integer, parameter :: NSOURCES_SUB = 1000
+
+! distance threshold (in km) above which we consider that a receiver
+! is located outside the mesh and therefore excluded from the station list
+  double precision, parameter :: THRESHOLD_EXCLUDE_STATION = 50.d0
 
 !! DK DK UGLY in the case of a very fine mesh, move the bottom of crustal
 !! DK DK UGLY elements below the PREM Moho, otherwise the elements become
