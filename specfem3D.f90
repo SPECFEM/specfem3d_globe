@@ -1329,7 +1329,7 @@
             xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,stlat,stlon,stele,nu, &
             yr,jda,ho,mi,sec, &
             NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
-            theta_source(1),phi_source(1),rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED)
+            theta_source(1),phi_source(1),rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS)
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
