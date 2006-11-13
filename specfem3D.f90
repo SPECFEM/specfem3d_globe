@@ -974,8 +974,7 @@
 
 ! make ellipticity
   if(ELLIPTICITY) then
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB)
+    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
 ! compute ellipticity at d80 once and for all for attenuation
     radius = R80/R_EARTH
@@ -2396,33 +2395,16 @@
 ! and that we can neglect the 3D model and use PREM every 100 m in all cases
 ! this is probably a rather reasonable assumption
   if(GRAVITY) then
-    call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST,RICB,RCMB, &
-      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
+    call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST)
     do int_radius = 1,NRAD_GRAVITY
       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
       call splint(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g)
       idoubling = 0
 
-      if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-        call model_iasp91(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling, &
-          .false.,RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,RMOHO)
-
-      else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
-        call prem_iso(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling,.false., &
+! use PREM density profile to calculate gravity (fine for other 1D models)
+      call prem_iso(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling,.false., &
           ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-
-      else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-        call define_model_1066a(.false.)
-        call model_1066a(radius,rho,vp,vs,Qkappa,Qmu,IREGION_CRUST_MANTLE)
-
-      else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-        call define_model_ak135(.false.)
-        call model_ak135(radius,rho,vp,vs,Qkappa,Qmu,IREGION_CRUST_MANTLE)
-
-      else
-        stop 'unknown 1D reference Earth model in specfem3D'
-      endif
 
       dg = 4.0d0*rho - 2.0d0*g/radius
       minus_gravity_table(int_radius) = - g

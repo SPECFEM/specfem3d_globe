@@ -15,8 +15,7 @@
 !
 !=====================================================================
 
-  subroutine make_gravity(nspl,rspl,gspl,gspl2,ONE_CRUST,RICB,RCMB, &
-      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
+  subroutine make_gravity(nspl,rspl,gspl,gspl2,ONE_CRUST)
 
 ! creates a spline for the gravity profile in PREM
 ! radius and density are non-dimensional
@@ -34,17 +33,32 @@
 ! radius of the ocean floor for gravity calculation
   double precision, parameter :: ROCEAN_GRAVITY = 6368000.d0
 
-  double precision rspl(NR),gspl(NR),gspl2(NR),RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST
+  double precision rspl(NR),gspl(NR),gspl2(NR)
 
   integer i
-
+  double precision ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R220,R400,R600,R670, &
+                   R771,RTOPDDOUBLEPRIME,RCMB,RICB
   double precision r_icb,r_cmb,r_topddoubleprime,r_771,r_670,r_600
   double precision r_400,r_220,r_80,r_moho,r_middle_crust,r_ocean,r_0
   double precision r(NR),rho(NR),g(NR),i_rho
   double precision s1(NR),s2(NR),s3(NR)
   double precision yp1,ypn
 
+! PREM
+  ROCEAN = 6368000.d0
+  RMIDDLE_CRUST = 6356000.d0
+  RMOHO = 6346600.d0
+  R80  = 6291000.d0
+  R220 = 6151000.d0
+  R400 = 5971000.d0
+  R600 = 5771000.d0
+  R670 = 5701000.d0
+  R771 = 5600000.d0
+  RTOPDDOUBLEPRIME = 3630000.d0
+  RCMB = 3480000.d0
+  RICB = 1221000.d0
+
+! non-dimensionalize
   r_icb = RICB/R_EARTH_GRAVITY
   r_cmb = RCMB/R_EARTH_GRAVITY
   r_topddoubleprime = RTOPDDOUBLEPRIME/R_EARTH_GRAVITY
@@ -99,6 +113,7 @@
     r(i) = r_ocean+(r_0-r_ocean)*dble(i-634)/dble(6)
   enddo
 
+! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
   do i=1,NR
     call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN_GRAVITY)
