@@ -593,7 +593,7 @@
 
   do it=1,NSTEP
     time_source = dble(it-1)*DT-t0-t_cmt(isource)
-    write(27,*) sngl(dble(it-1)*DT),sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
+    write(27,*) sngl(dble(it-1)*DT-t0),sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
   enddo
   close(27)
 

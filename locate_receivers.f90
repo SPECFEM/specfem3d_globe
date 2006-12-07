@@ -12,8 +12,7 @@
 !           Free for non-commercial academic research ONLY.
 !      This program is distributed WITHOUT ANY WARRANTY whatsoever.
 !      Do not redistribute this program without written permission.
-!
-!=====================================================================
+!!=====================================================================
 
 !----
 !---- locate_receivers finds the correct position of the receivers
@@ -25,7 +24,7 @@
                  xi_receiver,eta_receiver,gamma_receiver,station_name,network_name,stlat,stlon,stele,nu, &
                  yr,jda,ho,mi,sec,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
                  theta_source,phi_source, &
-                 rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED)
+                 rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS)
 
   implicit none
 
@@ -35,14 +34,14 @@
   include "constants.h"
   include "precision.h"
 
-  integer NPROCTOT
+  integer NPROCTOT,NCHUNKS
 
   logical ELLIPTICITY,TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
 
-  integer nspec,nglob,nrec,myrank
+  integer nspec,nglob,nrec,myrank,nrec_found
 
   integer yr,jda,ho,mi
   double precision sec
@@ -121,6 +120,13 @@
   double precision, dimension(3,3,nrec) :: nu
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
+
+  integer, dimension(nrec) :: islice_selected_rec_found,ispec_selected_rec_found
+  double precision, dimension(nrec) :: xi_receiver_found,eta_receiver_found,gamma_receiver_found
+  double precision, dimension(3,3,nrec) :: nu_found
+  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name_found
+  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name_found
+  double precision, dimension(nrec) :: stlat_found,stlon_found,stele_found, epidist_found
   character(len=150) STATIONS
 
   integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
@@ -513,6 +519,7 @@
   final_distance(irec) = distmin
   enddo
 
+  nrec_found = 0
   do irec=1,nrec
 
     if(final_distance(irec) == HUGEVAL) call exit_MPI(myrank,'error locating receiver')
@@ -530,11 +537,29 @@
 
 ! add warning if estimate is poor
 ! (usually means receiver outside the mesh given by the user)
-    if(final_distance(irec) > 50.d0) then
+    if(final_distance(irec) > THRESHOLD_EXCLUDE_STATION) then
       write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
-      write(IMAIN,*) '*******************************************************'
-      write(IMAIN,*) '***** WARNING: receiver location estimate is poor *****'
-      write(IMAIN,*) '*******************************************************'
+      write(IMAIN,*) '*****************************************************************'
+      if(NCHUNKS == 6) then
+        write(IMAIN,*) '***** WARNING: receiver location estimate is poor, therefore receiver excluded *****'
+      else
+        write(IMAIN,*) '***** WARNING: receiver is located outside the mesh, therefore excluded *****'
+      endif
+      write(IMAIN,*) '*****************************************************************'
+    else
+      nrec_found = nrec_found + 1
+      islice_selected_rec_found(nrec_found) = islice_selected_rec(irec)
+      ispec_selected_rec_found(nrec_found) = ispec_selected_rec(irec)
+      xi_receiver_found(nrec_found) = xi_receiver(irec)
+      eta_receiver_found(nrec_found) = eta_receiver(irec)
+      gamma_receiver_found(nrec_found) = gamma_receiver(irec)
+      station_name_found(nrec_found) = station_name(irec)
+      network_name_found(nrec_found) = network_name(irec)
+      stlat_found(nrec_found) = stlat(irec)
+      stlon_found(nrec_found) = stlon(irec)
+      stele_found(nrec_found) = stele(irec)
+      nu_found(:,:,nrec_found) = nu(:,:,irec)
+      epidist_found(nrec_found) = epidist(irec)
     endif
 
   enddo
@@ -548,14 +573,28 @@
 
 ! add warning if estimate is poor
 ! (usually means receiver outside the mesh given by the user)
-    if(final_distance_max > 50.d0) then
+    if(final_distance_max > THRESHOLD_EXCLUDE_STATION) then
       write(IMAIN,*)
       write(IMAIN,*) '************************************************************'
       write(IMAIN,*) '************************************************************'
-      write(IMAIN,*) '***** WARNING: at least one receiver is poorly located *****'
+      write(IMAIN,*) '***** WARNING: at least one receiver was excluded from the station list *****'
       write(IMAIN,*) '************************************************************'
       write(IMAIN,*) '************************************************************'
     endif
+
+    nrec = nrec_found
+    islice_selected_rec(1:nrec) = islice_selected_rec_found(1:nrec)
+    ispec_selected_rec(1:nrec) = ispec_selected_rec_found(1:nrec)
+    xi_receiver(1:nrec) = xi_receiver_found(1:nrec)
+    eta_receiver(1:nrec) = eta_receiver_found(1:nrec)
+    gamma_receiver(1:nrec) = gamma_receiver_found(1:nrec)
+    station_name(1:nrec) = station_name_found(1:nrec)
+    network_name(1:nrec) = network_name_found(1:nrec)
+    stlat(1:nrec) = stlat_found(1:nrec)
+    stlon(1:nrec) = stlon_found(1:nrec)
+    stele(1:nrec) = stele_found(1:nrec)
+    nu(:,:,1:nrec) = nu_found(:,:,1:nrec)
+    epidist(1:nrec) = epidist_found(1:nrec)
 
 ! write the list of stations and associated epicentral distance
   open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt',status='unknown')
@@ -578,11 +617,22 @@
   endif    ! end of section executed by main process only
 
 ! main process broadcasts the results to all the slices
+  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
   call MPI_BCAST(islice_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ispec_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(xi_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(eta_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  call MPI_BCAST(station_name,nrec*MAX_LENGTH_STATION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(network_name,nrec*MAX_LENGTH_NETWORK_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+
+  call MPI_BCAST(stlat,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(stlon,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(nu,nrec*3*3,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
 ! deallocate arrays
   deallocate(stbur)

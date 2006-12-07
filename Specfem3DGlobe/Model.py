@@ -61,7 +61,7 @@ class Model3DIsotropic(Model):
 class Model3DAttenuation(Model):
     
     # name by which the Fortran code knows this model
-    MODEL = "Min_Chen"
+    MODEL = "3D_attenuation"
     
     # names by which the user refers to this model
     componentNames = [ "3D_attenuation", "Min_Chen" ]
@@ -81,7 +81,7 @@ class Model3DAttenuation(Model):
 class Model3DAnisotropic(Model):
 
     # name by which the Fortran code knows this model
-    MODEL = "Brian_Savage"
+    MODEL = "3D_anisotropic"
     
     # names by which the user refers to this model
     componentNames = [ "3D_anisotropic", "Brian_Savage" ]
@@ -105,9 +105,11 @@ class Model3DAnisotropic(Model):
 #     Python class name                      knows the model                        names by which the user refers to the model
 #     -------------------------------------  -------------------------------------  -------------------------------------------------
 class ModelIsotropicPrem(Model):             MODEL = "isotropic_prem";              componentNames = [ "isotropic_prem" ]
-class ModelTransverslyIsotropicPrem(Model):  MODEL = "transversly_isotropic_prem";  componentNames = [ "transversly_isotropic_prem" ]
+class ModelTransverselyIsotropicPrem(Model):  MODEL = "transversely_isotropic_prem";  componentNames = [ "transversely_isotropic_prem" ]
+class ModelCrust2TransverslyIsotropicPrem(Model):  MODEL = "crust_2.0_plus_transversely_isotropic_prem"; componentNames = [ "crust_2.0_plus_transversely_isotropic_prem" ]
 class ModelIaspei(Model):                    MODEL = "iasp91";                      componentNames = [ "iaspei", "iasp91" ]
 class ModelAK135(Model):                     MODEL = "ak135";                       componentNames = [ "ak135" ]
+class Model1066A(Model):                     MODEL = "1066a";                       componentNames = [ "1066a" ]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

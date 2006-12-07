@@ -552,8 +552,7 @@
 
   endif
 
-  if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB)
+  if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
   if(ISOTROPIC_3D_MANTLE) then
     if(myrank == 0) call read_mantle_model

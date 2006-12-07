@@ -21,6 +21,6 @@ mpirun.lsf --gm-no-shmem --gm-copy-env $current_pwd/xspecfem3D
 # collect seismograms and clean up
 mkdir -p SEM
 cd SEM
-collect_seismo.pl ../OUTPUT_FILES/lsf_machines
+collect_seismo.pl ../OUTPUT_FILES/machines
 cleanbase.pl ../OUTPUT_FILES/machines
 

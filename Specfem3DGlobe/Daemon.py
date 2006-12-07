@@ -127,18 +127,41 @@ class SimStatusNew(SimStatus):
 
     def _poll(self):
         import os
+        
+        self.postStatusChange(SimStatusPreparing)
+
+        pid = os.fork()
+        if pid:
+            self.daemon._info.log("forked daemon process %d for simulation %d" % (pid, self.sim.id))
+            return
+
+        # Immediately jump into the next state and get to work.
+        status = SimStatusPreparing(self.daemon, self.sim)
+        status.prepare()
+        return
+
+
+class SimStatusPreparing(SimStatus):
+    def display(cls): return 'preparing'
+    display = classmethod(display)
+
+    def _poll(self): pass # a daemon child is busy executing prepare() for this sim
+
+    def prepare(self):
+        import os
         import urllib2
         import shutil
-        from os.path import isdir, join
+        from os.path import exists, join, basename
+        from tempfile import mktemp
         
         id = self.sim.id
         portal = self.portal
 
         simDir = join(self.daemon.simulationRoot, str(id))
-        if isdir(simDir):
-            pass
-        else:
-            os.makedirs(simDir)
+        if exists(simDir):
+            junkDir  = simDir + '-' + basename(mktemp())
+            os.rename(simDir, junkDir)
+        os.makedirs(simDir)
 
         def localCopy(inputFile):
             copy = join(simDir, inputFile)
@@ -161,10 +184,12 @@ class SimStatusNew(SimStatus):
         
         # schedule
         try:
+            #from time import sleep
+            #sleep(10)
             simulation.run()
         except Exception, e:
             self.daemon._error.log("simulation %d: error: %s" % (self.sim.id, e))
-            self.postStatusChange(SimStatusDone)
+            self.postStatusChange(SimStatusError)
             return
         
         self.postStatusChange(SimStatusPending)
@@ -195,15 +220,39 @@ class SimStatusRunning(SimStatus):
     display = classmethod(display)
 
     def _poll(self):
-        from os.path import join, getsize
+        import os
+
         if not self.sim.job:
             pass
         elif self.sim.job.stat == 'RUN':
             return
         elif self.sim.job.stat != 'DONE':
             # error
-            self.postStatusChange(SimStatusDone)
+            self.postStatusChange(SimStatusError)
             return
+        
+        self.postStatusChange(SimStatusFinishing)
+
+        pid = os.fork()
+        if pid:
+            self.daemon._info.log("forked daemon process %d for simulation %d" % (pid, self.sim.id))
+            return
+
+        # Immediately jump into the next state and get to work.
+        status = SimStatusFinishing(self.daemon, self.sim)
+        status.finish()
+        return
+    
+
+class SimStatusFinishing(SimStatus):
+    def display(cls): return 'finishing'
+    display = classmethod(display)
+
+    def _poll(self): pass # a daemon child is busy executing finish() for this sim
+    
+    def finish(self):
+        from os.path import join, getsize
+
         id = self.sim.id
         simDir = join(self.daemon.simulationRoot, str(id))
         outputName = join(simDir, 'output.tar.gz')
@@ -218,7 +267,8 @@ class SimStatusRunning(SimStatus):
             output.close()
         else:
             # error
-            self.postStatusChange(SimStatusDone)
+            self.daemon._error.log("simulation %d: output file '%s' is empty" % (self.sim.id, outputName))
+            self.postStatusChange(SimStatusError)
         return
 
 
@@ -229,11 +279,20 @@ class SimStatusDone(SimStatus):
     def poll(self): pass
 
 
+class SimStatusError(SimStatus):
+    def display(cls): return 'error'
+    display = classmethod(display)
+
+    def poll(self): pass
+
+
 simStatusList = [
     SimStatusNew,
+    SimStatusPreparing,
     SimStatusPending,
     SimStatusRunning,
     SimStatusDone,
+    SimStatusError,
     ]
 
 # /!\ This is imported by the Django app!
@@ -301,7 +360,11 @@ class Daemon(Script):
             job = jobs.get(id)
             sim = Sim(id, job)
             status = cls(self, sim)
-            status.poll()
+            try:
+                status.poll()
+            except Exception, e:
+                self._error.log("simulation %d: error: %s" % (id, e))
+                status.postStatusChange(SimStatusError)
         return
 
 
