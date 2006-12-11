@@ -43,9 +43,21 @@ case $UNAME_MS in
                 fi
                 #MPI_LIBS = -Vaxlib
                 ;;
+            f95|*/f95)
+                #
+                # GNU gfortran
+                #
+                if test x"$FLAGS_NO_CHECK" = x; then
+                    FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow"
+                fi
+                if test x"$FLAGS_CHECK" = x; then
+##############                    FLAGS_CHECK="\$(FLAGS_NO_CHECK) -fbounds-check"
+                    FLAGS_CHECK="\$(FLAGS_NO_CHECK)"
+                fi
+                ;;
             g95|*/g95)
                 #
-                # g95 (free f95 compiler from http://www.g95.org, still under development, but works)
+                # g95 (free f95 compiler from http://www.g95.org)
                 #
                 if test x"$FLAGS_CHECK" = x; then
                     FLAGS_CHECK="-O"
@@ -63,17 +75,6 @@ case $UNAME_MS in
                 fi
                 if test x"$FLAGS_NO_CHECK" = x; then
                     FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
-                fi
-                ;;
-            f95|*/f95)
-                #
-                # NAG compiler for Linux
-                #
-                if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="-O -u -strict95 -C=all"
-                fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    FLAGS_NO_CHECK="-O -u -strict95"
                 fi
                 ;;
             lf95|*/lf95)
