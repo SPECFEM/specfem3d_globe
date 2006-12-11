@@ -1566,7 +1566,7 @@ echo "${ECHO_T}$am_cv_python_pyexecdir" >&6
 
 
 
-# $Id: cit_python_sysconfig.m4 2367 2005-09-09 16:46:52Z leif $
+# $Id: cit_python_sysconfig.m4 5301 2006-11-16 12:59:42Z leif $
 
 echo "$as_me:$LINENO: checking $am_display_PYTHON sysconfig" >&5
 echo $ECHO_N "checking $am_display_PYTHON sysconfig... $ECHO_C" >&6
@@ -1593,8 +1593,12 @@ if vars['LDLIBRARY'] == vars['LIBRARY']:
     # "On systems without shared libraries, LDLIBRARY is the same as LIBRARY"
     vars['BLDLIBRARY'] = "-L%(LIBPL)s -lpython%(VERSION)s" % vars
 elif vars['BLDLIBRARY']:
-    # "On Mac OS X frameworks, BLDLIBRARY is blank"
     vars['BLDLIBRARY'] = "-L%(LIBDIR)s -lpython%(VERSION)s" % vars
+else:
+    # "On Mac OS X frameworks, BLDLIBRARY is blank"
+    # See also Issue39.
+    framework = "%(PYTHONFRAMEWORKDIR)s/Versions/%(VERSION)s/%(PYTHONFRAMEWORK)s" % vars
+    vars['LINKFORSHARED'] = vars['LINKFORSHARED'].replace(framework, "-framework " + vars.get('PYTHONFRAMEWORK', 'Python'))
 for key in keys:
     print 'PYTHON_%s="%s"' % (key, vars.get(key, ''))
 
@@ -1645,11 +1649,9 @@ fi
 # a courtesy to the installed base of users
 if test x"$FC" = x && test x"$F90" != x; then
     FC="$F90"
-    export FC
 fi
 if test x"$MPIFC" = x && test x"$MPIF90" != x; then
     MPIFC="$MPIF90"
-    export MPIFC
 fi
 
 ac_ext=${FC_SRCEXT-f}
@@ -1744,7 +1746,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:1747:" \
+echo "$as_me:1749:" \
      "checking for Fortran compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -2066,6 +2068,8 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+export FC
+export MPIFC
 F77="$FC"
 FFLAGS="$FCFLAGS"
 
@@ -2131,7 +2135,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_verb"
-(eval echo $as_me:2134: \"$ac_link\") >&5
+(eval echo $as_me:2138: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
@@ -2209,7 +2213,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_cv_prog_fc_v"
-(eval echo $as_me:2212: \"$ac_link\") >&5
+(eval echo $as_me:2216: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
