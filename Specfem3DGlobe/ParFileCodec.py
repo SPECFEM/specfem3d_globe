@@ -30,7 +30,7 @@ class ParFileCodec(CodecODB):
     def _parse(self, pathname, root):
         # Technically, the parameters must be in a specific order, but
         # we don't enforce that here.
-        from cig.addyndum.util import setPropertyWithPath
+        from pyre.inventory.util import setPropertyWithPath
         f = open(pathname, "r")
         lineno = 0
         for line in f:

@@ -1,26 +1,28 @@
 
-import os, os.path
-from cig_setup import setup
+from archimedes import use_merlin
+use_merlin()
+
+from merlin import setup
+#import os
 
 setup(
     name = 'Specfem3DGlobe', 
-    version = '3.5',
+    version = '3.6',
     url = 'http://www.gps.caltech.edu/~jtromp/research/downloads.html',
     author = 'Dimitri Komatitsch and Jeroen Tromp',
     author_email = 'jtromp AT caltech.edu',
     packages = [ 'Specfem3DGlobe' ],
     
     install_requires = [
-    'cig >= 1.0dev-r4449, < 2.0, == dev',
-    'pythia >= 0.8-1.0dev-r4100, < 0.9, == dev',
+    'cig >= 1.0dev-r4449, < 2.0a, == dev',
+    'pythia[mpi] >= 0.8.1.0, < 0.8.2a',
     ],
     
     dependency_links = [
-    'svn://geodynamics.org/cig/cs/framework/trunk#egg=cig-dev',
-    'svn://geodynamics.org/cig/cs/pythia/trunk#egg=pythia-dev',
+    'http://geodynamics.org/svn/cig/cs/framework/trunk#egg=cig-dev',
     ],
 
-    interpreter = os.path.join(os.getcwd(), "pyspecfem3D"),
+    #interpreter = os.path.join(os.getcwd(), "pyspecfem3D"),
     entry_points = {
     'console_scripts': [
     'xspecfem3D = Specfem3DGlobe.Specfem:main',
