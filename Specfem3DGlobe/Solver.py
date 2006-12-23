@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-from cig.addyndum.components import Component
+from pyre.components import Component
 from pyre.units.time import minute
 
 
@@ -9,7 +9,7 @@ class Solver(Component):
 
     
     # name by which the user refers to this component
-    componentName = "solver"
+    name = "solver"
     
     
     #
@@ -17,23 +17,12 @@ class Solver(Component):
     #
     
     import pyre.inventory as pyre
-    import cig.addyndum.inventory as addyndum
     from CMTSolution import cmtValidator
 
-    cmtSolution                   = addyndum.inputFile("cmt-solution",
-                                                       default="DATA/CMTSOLUTION")
-    stations                      = addyndum.inputFile("stations",
-                                                       default="DATA/STATIONS")
-
-    outputFile                    = addyndum.outputFile("output-file",
-                                                        default="${output-dir}/output_solver.txt")
-    headerFile                    = addyndum.outputFile("header-file",
-                                                        default="${output-dir}/values_from_mesher.h")
-    seismogramArchive             = addyndum.outputFile("seismogram-archive",
-                                                        default="${output-dir}/seismograms.tar.gz")
-    scratchSeismogramArchive      = addyndum.scratchFile("scratch-seismogram-archive",
-                                                         default="${scratch-dir}/seismograms-${rank}.tar.gz")
-    
+    cmtSolution                   = pyre.inputFile("cmt-solution",
+                                                   default="DATA/CMTSOLUTION")
+    stations                      = pyre.inputFile("stations",
+                                                   default="DATA/STATIONS")
 
     ABSORBING_CONDITIONS          = pyre.bool("absorbing-conditions")
     MOVIE_SURFACE                 = pyre.bool("movie-surface")
@@ -80,14 +69,19 @@ class Solver(Component):
     def _init(self):
         Component._init(self)
 
-        from os.path import abspath
+        from os.path import abspath, join
         self.CMTSOLUTION = abspath(self.cmtSolution.name)
         self.STATIONS = abspath(self.stations.name)
-        self.HEADER_FILE = abspath(self.headerFile.name) # always written by the mesher
 
-        # filled-in by _init() in Specfem.py
-        self.LOCAL_PATH = None
-        self.OUTPUT_FILES = None
+
+    def setOutputDirectories(self, LOCAL_PATH, OUTPUT_FILES):
+        from os.path import abspath, join
+        
+        self.LOCAL_PATH = LOCAL_PATH
+        self.OUTPUT_FILES = OUTPUT_FILES
+
+        # always written by the mesher
+        self.HEADER_FILE = abspath(join(OUTPUT_FILES, 'values_from_mesher.h'))
 
 
     #
@@ -98,10 +92,10 @@ class Solver(Component):
         """Build the solver."""
 
         import os, os.path, sys
-        from os.path import abspath
+        from os.path import abspath, join
 
         outputDir = abspath(script.outputDir)
-        pyspecfem3D = abspath(script.interpreter)
+        pyspecfem3D = abspath(script.mpiExecutable)
 
         wd = os.getcwd()
         print "cd", srcdir
@@ -173,7 +167,7 @@ class Solver(Component):
         """Execute the solver."""
         from PyxSpecfem import specfem3D
         if self.dry:
-            print >> self.outputFile, "execute", specfem3D
+            print "execute", specfem3D
         else:
             specfem3D(script) # call into Fortran
         return
@@ -183,7 +177,7 @@ class Solver(Component):
     #--- clean-up
     #
     
-    def finiForComputeNode(self, context):
+    def collectSeismograms(self):
         """collect seismograms"""
 
         if self.dry:
@@ -193,7 +187,10 @@ class Solver(Component):
         from os.path import basename, join
         from glob import glob
         from cig.seismo.sac import asc2sac
-
+        from mpi import MPI_Comm_rank, MPI_COMM_WORLD
+        
+        rank = MPI_Comm_rank(MPI_COMM_WORLD)
+        scratchSeismogramArchive = join(self.LOCAL_PATH, "seismograms-%d.tar.gz" % rank)
         archive = self.scratchSeismogramArchive
         
         files = []
@@ -227,15 +224,14 @@ class Solver(Component):
 
         # Copy the archive to the shared filesystem.
 
-        outputDir = context.application.outputDir
         src = archive.name
-        dst = join(outputDir, basename(src))
+        dst = join(self.OUTPUT_FILES, basename(src))
         shutil.copyfile(src, dst)
 
         return
 
 
-    def finiForLauncherNode(self, context):
+    def collectOutputFiles(self):
         """collect output files"""
         
         if self.dry:
@@ -244,7 +240,8 @@ class Solver(Component):
         import os, tarfile
         from os.path import basename, join
 
-        archiveOut = self.seismogramArchive
+        seismogramArchive = join(self.OUTPUT_FILES, "seismograms.tar.gz")
+        archiveOut = open(seismogramArchive, "w")
         skipList = ['pyspecfem3D', basename(archiveOut.name)]
 
         # Archive output files -- including the intermediate seismogram

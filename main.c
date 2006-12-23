@@ -12,7 +12,6 @@
 
 extern void initPyxParameters(void);
 extern void initPyxMeshfem(void);
-extern void initPyxMPI(void);
 #ifdef BUILDING_SOLVER
 extern void initPyxSpecfem(void);
 #endif
@@ -21,10 +20,13 @@ static int g_status;
 int g_argc;
 char **g_argv;
 
+/* include the implementation of _mpi */
+#include "mpi/_mpi.c"
+
 struct _inittab inittab[] = {
     { "PyxParameters", initPyxParameters },
     { "PyxMeshfem", initPyxMeshfem },
-    { "PyxMPI", initPyxMPI },
+    { "_mpi", init_mpi },
 #ifdef BUILDING_SOLVER
     { "PyxSpecfem", initPyxSpecfem },
 #endif

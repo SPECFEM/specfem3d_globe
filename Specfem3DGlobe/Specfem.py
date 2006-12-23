@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
 
-from cig.addyndum.applications import Script, ParallelScript
+from pyre.applications import Script
+from mpi import Application as MPIApplication
 
 
 class SpecfemScript(Script):
     
     
     # name by which the user refers to this application
-    componentName = "Specfem3DGlobe"
+    name = "Specfem3DGlobe"
     
     
     #
@@ -16,17 +17,16 @@ class SpecfemScript(Script):
     #
     
     import pyre.inventory as pyre
-    import cig.addyndum.inventory as addyndum
     
     from Mesher import Mesher
-    from Model import model
     from Solver import Solver
 
-    outputDir                     = addyndum.outputDir("output-dir", default="OUTPUT_FILES")
+    outputDir                     = pyre.str("output-dir", default="OUTPUT_FILES")
+    scratchDir                    = pyre.str("scratch-dir", default="/scratch")
         
-    model                         = model("model", default="isotropic_prem")
-    mesher                        = addyndum.facility("mesher", factory=Mesher)
-    solver                        = addyndum.facility("solver", factory=Solver)
+    model                         = pyre.facility("model", default="isotropic_prem")
+    mesher                        = pyre.facility("mesher", factory=Mesher)
+    solver                        = pyre.facility("solver", factory=Solver)
     
     #
     #--- configuration
@@ -42,6 +42,11 @@ class SpecfemScript(Script):
                 raise ValueError("cannot have absorbing conditions in the full Earth")
             elif NCHUNKS == 3:
                 raise ValueError("absorbing conditions not supported for three chunks yet")
+
+        from os import makedirs
+        from os.path import isdir
+        if not isdir(self.outputDir):
+            makedirs(self.outputDir)
         
         return
 
@@ -51,7 +56,7 @@ class SpecfemScript(Script):
     #
     
 
-    def collectUserInput(self, registry):
+    def collectUserInput(self, registry, context):
         # read Par_files given on the command line
         from ParFileCodec import ParFileCodec
         from os.path import isfile, splitext
@@ -67,21 +72,23 @@ class SpecfemScript(Script):
                     self.updateConfiguration(paramRegistry)
             else:
                 self.argv.append(arg)
-        super(SpecfemScript, self).collectUserInput(registry)
+        super(SpecfemScript, self).collectUserInput(registry, context)
         return
 
 
-class ParallelSpecfemScript(SpecfemScript, ParallelScript):
-
     #
-    #--- inventory
+    #--- .odb files
     #
     
-    import cig.addyndum.inventory as addyndum
-    
-    # default to LSF for Caltech cluster
-    scheduler = addyndum.scheduler("scheduler", default="lsf")
 
+    def _getPrivateDepositoryLocations(self):
+        from os.path import dirname, isdir, join
+        models = join(dirname(__file__), 'models')
+        assert isdir(models)
+        return [models]
+
+
+class ParallelSpecfemScript(SpecfemScript, MPIApplication):
 
     #
     #--- final initialization
@@ -91,9 +98,10 @@ class ParallelSpecfemScript(SpecfemScript, ParallelScript):
         super(ParallelSpecfemScript, self)._init()
         self.OUTPUT_FILES = self.outputDir
         self.LOCAL_PATH = self.scratchDir
-        self.solver.LOCAL_PATH = self.LOCAL_PATH
-        self.solver.OUTPUT_FILES = self.OUTPUT_FILES
-
+        self.solver.setOutputDirectories(
+            LOCAL_PATH = self.LOCAL_PATH,
+            OUTPUT_FILES = self.OUTPUT_FILES
+            )
 
 
 class Specfem(ParallelSpecfemScript):
@@ -116,14 +124,14 @@ class Specfem(ParallelSpecfemScript):
         
         # declare the interpreter to be used on the compute nodes
         from os.path import join
-        self.interpreter = join(self.outputDir, "pyspecfem3D") # includes solver
+        self.mpiExecutable = join(self.outputDir, "pyspecfem3D") # includes solver
 
 
     #
     #--- executed on the login node in response to the user's command
     #
     
-    def onLoginNode(self, context):
+    def onLoginNode(self, *args, **kwds):
         
         import sys
         import shutil
@@ -137,8 +145,9 @@ class Specfem(ParallelSpecfemScript):
         
         # compute the total number of processors needed
         self.nodes = self.mesher.nproc()
-
-        self.schedule(context) # bsub
+        
+        # schedule the job (bsub)
+        super(Specfem, self).onLoginNode(*args, **kwds)
         
         return
 
@@ -147,8 +156,9 @@ class Specfem(ParallelSpecfemScript):
     #--- executed when the batch job is scheduled
     #
 
-    def onLauncherNode(self, context):
-        self.launch(context) # mpirun
+    def onLauncherNode(self, *args, **kwds):
+        super(Specfem, self).onLauncherNode(*args, **kwds) # mpirun
+        self.solver.collectOutputFiles()
         return
 
     
@@ -156,7 +166,7 @@ class Specfem(ParallelSpecfemScript):
     #--- executed in parallel on the compute nodes
     #
     
-    def onComputeNodes(self, context):
+    def onComputeNodes(self, *args, **kwds):
 
         # execute mesher and/or solver
         
@@ -165,6 +175,7 @@ class Specfem(ParallelSpecfemScript):
         
         if self.command == "solve" or self.command == "go":
             self.solver.execute(self)
+            self.solver.collectSeismograms()
 
         return
 
@@ -195,13 +206,10 @@ class MovieScript(ParallelSpecfemScript):
         formatCode = { 'OpenDX':1, 'AVS-multi':2, 'AVS-single':3, 'GMT':4 }
         self.format = formatCode[self.formatName]
 
-
-    def onLoginNode(self, context):
         self.nodes = 1
-        self.schedule(context) # bsub
 
-        
-    def onLauncherNode(self, context):
+
+    def onLauncherNode(self, *args, **kwds):
         from PyxMeshfem import read_params_and_create_movie
         read_params_and_create_movie(self)
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-from cig.addyndum.components import Component
+from pyre.components import Component
 from pyre.units.angle import deg
 
 
@@ -9,7 +9,7 @@ class Mesher(Component):
 
     
     # name by which the user refers to this component
-    componentName = "mesher"
+    name = "mesher"
 
     
     #
@@ -17,11 +17,7 @@ class Mesher(Component):
     #
     
     import pyre.inventory as pyre
-    import cig.addyndum.inventory as addyndum
 
-    outputFile                    = addyndum.outputFile("output-file",
-                                                        default="${output-dir}/output_mesher.txt")
-    
     SAVE_MESH_FILES               = pyre.bool("save-files")
     dry                           = pyre.bool("dry")
 
@@ -113,7 +109,7 @@ class Mesher(Component):
         """Execute the mesher."""
         from PyxMeshfem import meshfem3D
         if self.dry:
-            print >> self.outputFile, "execute", meshfem3D
+            print "execute", meshfem3D
         else:
             meshfem3D(script) # call into Fortran
         return

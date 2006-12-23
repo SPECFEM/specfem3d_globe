@@ -393,7 +393,7 @@
   endif
 
 ! define the velocity model
-  call read_value_string(MODEL, 'model.MODEL')
+  call read_value_string(MODEL, 'model.name')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! use PREM as the 1D reference model by default
