@@ -43,6 +43,18 @@ case $UNAME_MS in
                 fi
                 #MPI_LIBS = -Vaxlib
                 ;;
+            gfortran|*/gfortran)
+                #
+                # GNU gfortran
+                #
+                if test x"$FLAGS_NO_CHECK" = x; then
+                    FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow"
+                fi
+                if test x"$FLAGS_CHECK" = x; then
+##############                    FLAGS_CHECK="\$(FLAGS_NO_CHECK) -fbounds-check"
+                    FLAGS_CHECK="\$(FLAGS_NO_CHECK)"
+                fi
+                ;;
             f95|*/f95)
                 #
                 # GNU gfortran
