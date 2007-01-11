@@ -1,0 +1,43 @@
+
+To-do list for SPECFEM3D_GLOBE, updated on January 11, 2007:
+------------------------------------------------------------
+
+Dimitri Komatitsch and David Michea
+-----------------------------------
+
+- supprimer NER_BOTTOMDBL_TOPDBL de constants.h (c'est un detail qui prend 5 minutes, Dimitri le fera demain)
+
+- carefully study and improve stability condition and increase/adapt time step DT accordingly
+
+- dire a Brian Savage (Washington D.C.) de faire un auto_NER a partir de PREM (choix automatique des parametres) a partir de display_prem_sampling_doubling.f90 dans DATA/util/mesh_doubling_superbrick
+
+- use indirect addressing to store anisotropy in the mantle to avoid having to
+  start with that region, which breaks the Cuthill-McKee sorting; once this is
+  done, suppress the statement in which we make this region become region number 1
+  in the mesh creation routine
+
+- merge the mesher in the solver, suppress storage of large mesh files on
+  local disks, but make sure we keep the creation of AVS/OpenDX mesh files
+  (which should be the case since we use specific routines called write_AVS_DX_*.f90)
+
+- implement better (partly inflated) central cube
+
+- split central cube in 2 with MPI to have better load balancing there
+
+- rewrite communications entirely (use clean non-blocking MPI communications, hide communications
+  in calculations); see how to do this in the central cube, which is more
+  difficult because it is in contact with many slices
+
+- use persistent communications
+
+- implement classical Cuthill-McKee sorting
+
+- develop two-level Cuthill-McKee sorting for the two levels of cache with Jose Maria Cela (Barcelona)
+
+- maybe use VMX/Altivec instructions in compute_forces*.f90 specifically for
+  MareNostrum with Jose Maria Cela (Barcelona)
+
+- run Sdiff calculations for Lev Vinnik (Moscow, Russia)
+
+- run 3D PKP calculations for Sebastien Chevrot (Toulouse, France)
+
