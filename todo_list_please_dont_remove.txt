@@ -1,5 +1,5 @@
 
-To-do list for SPECFEM3D_GLOBE, updated on January 11, 2007:
+To-do list for SPECFEM3D_GLOBE, updated on January 15, 2007:
 ------------------------------------------------------------
 
 Dimitri Komatitsch and David Michea
@@ -11,6 +11,37 @@ Dimitri Komatitsch and David Michea
 
 - dire a Brian Savage (Washington D.C.) de faire un auto_NER a partir de PREM (choix automatique des parametres) a partir de display_prem_sampling_doubling.f90 dans DATA/util/mesh_doubling_superbrick
 
+- enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type
+
+- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc une fois que le mesher et le solver auront été fusionnés (mettre à jour
+le manuel en enlevant les deux sections expliquant l'utilisation de ces routines);
+les enlever du Makefile.in aussi. Do not store x y z in the files that contain
+the MPI buffers anymore, since they are used only by check_buffers*.
+(in the solver they are read back as xdummy, ydummy, zdummy)
+
+- add UPPA logo and name to frontpage of the manual, add David to the list of
+  contributors, mention UPPA in the main text of the manual
+
+- dire dans manuel que number of grid points per S wavelength (purposely) pas bon
+dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien
+dans ce cas prendre un maillage prévu pour une période beaucoup plus courte
+(typiquement deux fois) que la période mentionnée dans les tables, qui concerne
+seulement les ondes P et non pas les S dans le inner core
+
+- regarder consequences de multiple de 32 au lieu de 16 dans table 3.1 du manuel,
+et refaire cette table en fonction de cette nouvelle contrainte. Mettre à jour
+la Table 3.1 avec multiples de 32 au lieu de 16 et aussi en disant qu'on peut mettre 2 ou 3 ou 6 tâches par proc et donc que le nb de procs donnés peut être divisé par 2, 3 ou 6 et donc limitation moins grande qu'on ne pourrait le croire
+(dire que c'est toujours divisible car NPROC = 6 N^2 donc divisible par 6); dire cela dans le texte principal du manuel et dans la légende de la table
+
+- afficher les courbes de nombre de points par longueur d'onde et de stabilité et les worst elements (stability et nb pts per lambda) en OpenDX
+en serial sur le maître dans le nouveau mesher, en copiant/collant ce qu'il faut depuis "DATA/util/doubling_brick/display_doubling_PREM*.f90); ajouter
+ces courbes de dispersion et stabilité au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix spécial là-dessus; dire dans cet
+appendix que dans le outer core ce n'est bien sûr par Vs qui est représenté mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity
+potential dans le outer core, ce qui demande un échantillonnage un peu meilleur)
+
+- use MPC in the code instead of MPI, if we can get MPC from CEA under GPL or CeCILL licence. Make sure the code is thread-safe (for instance
+suppress all the modules and the "use" statements, which are not thread-safe)
+
 - use indirect addressing to store anisotropy in the mantle to avoid having to
   start with that region, which breaks the Cuthill-McKee sorting; once this is
   done, suppress the statement in which we make this region become region number 1
@@ -21,6 +52,9 @@ Dimitri Komatitsch and David Michea
   (which should be the case since we use specific routines called write_AVS_DX_*.f90)
 
 - implement better (partly inflated) central cube
+
+- remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates
+a big bottleneck)
 
 - split central cube in 2 with MPI to have better load balancing there
 
