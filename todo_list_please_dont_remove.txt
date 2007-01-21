@@ -78,3 +78,80 @@ a big bottleneck)
 
 - run 3D PKP calculations for Sebastien Chevrot (Toulouse, France)
 
+- modifier le calcul des bornes de l'attenuation: car
+    MIN_ATTENUATION_PERIOD   = 20
+    MAX_ATTENUATION_PERIOD   = 1000
+est arbitraire dans read_compute_parameters.f90 actuellement,
+il faudrait ecrire une routine plus generale avec Brian Savage un jour.
+Voici son email et les miens à ce sujet :
+
+Subject: Re: attenuation (other idea)
+From: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr>
+Date: Sun, 21 Jan 2007 21:59:54 +0100
+To: Brian Savage <savage@uri.edu>
+CC: Jeroen Tromp <jtromp@gps.caltech.edu>, Qinya Liu <lqy@gps.caltech.edu>, Vala
+Hjorleifsdottir <vala@gps.caltech.edu>, Ying Zhou <yingz@gps.caltech.edu>,
+David Michéa <davidmichea@gmail.com>
+
+Dear all,
+
+Following Brian's tests described in his email below,
+I think we should change the way we set the width of the
+absorption band in read_parameters.f90. In the current implementation
+we impose an arbitrary range, e.g. for NEX=160 we set:
+
+    MIN_ATTENUATION_PERIOD   = 20
+    MAX_ATTENUATION_PERIOD   = 1000
+
+but of course we should replace this with some kind of automatic
+range selection process based on the value of N_SLS (3, 4 or 5)
+and on mesh resolution I guess.
+
+Brian, if you have a way of adding this to the general 3D attenuation
+routine you wrote, please do not hesitate to implement it
+and get rid of the current arbitrary ranges... I think having
+a flexible routine to do this would be very useful.
+
+Dimitri.
+
+Brian Savage wrote:
+> Dear All,
+>
+> I will run some tests to determine the maximum width of the absorption band
+> with 3,4 and 5 linear solids.  As I recall, the optimum for 3 was 1.75
+> decades in the frequency domain.
+>
+> By the way, I think I have tracked down the differences between 3.5 and 3.6.
+> I believe it has to do with how the sharp attenuation boundaries are
+> represented.  More testing still to be done.
+>
+> Cheers,
+> Brian
+>
+>
+> On Jan 1, 2007, at 8:02 PM, Jeroen Tromp wrote:
+>
+>> Hi Dimitri:
+>>
+>> I think this at least worth investigating, i.e., how much more memory does
+>> it take, how much flatter is the Q, how much broader is the absorption
+>> band, etc.
+>>
+>> But we still need to fix the existing bug first....
+>>
+>> Jeroen
+>>
+>>>
+>>> Dear all,
+>>>
+>>> By the way, talking about attenuation, now that memory is becoming less
+>>> of an issue it could be clever to switch from 3 memory variables to 4
+>>> (N_SLS = 4) in the global code at some point in the (near?) future. (in
+>>> particular to make attenuation more precise for the dispersion of
+>>> surface waves).
+>>>
+>>> Do you think this could be a good idea?
+>>>
+>>> Dimitri.
+>>>
+
