@@ -1,5 +1,5 @@
 
-To-do list for SPECFEM3D_GLOBE, updated on January 15, 2007:
+To-do list for SPECFEM3D_GLOBE, updated on January 21, 2007:
 ------------------------------------------------------------
 
 Dimitri Komatitsch and David Michea
@@ -11,7 +11,11 @@ Dimitri Komatitsch and David Michea
 
 - dire a Brian Savage (Washington D.C.) de faire un auto_NER a partir de PREM (choix automatique des parametres) a partir de display_prem_sampling_doubling.f90 dans DATA/util/mesh_doubling_superbrick
 
-- enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type
+- enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type (*mais* il faudra quand même laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout où il y en a, car on continue à traiter 6 blocs, même s'ils ont maintenant la même topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs
+
+- representer modele PREM, worst dispersion en OpenDX, worst stability en OpenDX comme dans code display_prem_sampling_doubling.f90 en serial sur le master seulement (rank == 0)
+
+- enlever les "modules" et "use" partout où il y en a (pour anisotropie etc) car ce n'est pas "thread safe" et donc ça se plantera si on utilise MPC au lieu de MPI. Remplacer par la transmission explicite des paramètres aux subroutines. Peut-être dire dans le manuel utilisateur qu'il ne faut pas utiliser de modules pour cette raison ?
 
 - supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc une fois que le mesher et le solver auront été fusionnés (mettre à jour
 le manuel en enlevant les deux sections expliquant l'utilisation de ces routines);
@@ -19,8 +23,7 @@ les enlever du Makefile.in aussi. Do not store x y z in the files that contain
 the MPI buffers anymore, since they are used only by check_buffers*.
 (in the solver they are read back as xdummy, ydummy, zdummy)
 
-- add UPPA logo and name to frontpage of the manual, add David to the list of
-  contributors, mention UPPA in the main text of the manual
+- add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers
 
 - dire dans manuel que number of grid points per S wavelength (purposely) pas bon
 dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien
