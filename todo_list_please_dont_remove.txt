@@ -1,89 +1,90 @@
 
-To-do list for SPECFEM3D_GLOBE, updated on January 21, 2007:
-------------------------------------------------------------
+To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
+----------------------------------------------------------------------
 
-Dimitri Komatitsch and David Michea
------------------------------------
-
-- supprimer NER_BOTTOMDBL_TOPDBL de constants.h (c'est un detail qui prend 5 minutes, Dimitri le fera demain)
-
-- carefully study and improve stability condition and increase/adapt time step DT accordingly
-
-- dire a Brian Savage (Washington D.C.) de faire un auto_NER a partir de PREM (choix automatique des parametres) a partir de display_prem_sampling_doubling.f90 dans DATA/util/mesh_doubling_superbrick
+David:
+------
 
 - enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type (*mais* il faudra quand même laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout où il y en a, car on continue à traiter 6 blocs, même s'ils ont maintenant la même topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs
 
-- representer modele PREM, worst dispersion en OpenDX, worst stability en OpenDX comme dans code display_prem_sampling_doubling.f90 en serial sur le master seulement (rank == 0)
-
 - enlever les "modules" et "use" partout où il y en a (pour anisotropie etc) car ce n'est pas "thread safe" et donc ça se plantera si on utilise MPC au lieu de MPI. Remplacer par la transmission explicite des paramètres aux subroutines. Peut-être dire dans le manuel utilisateur qu'il ne faut pas utiliser de modules pour cette raison ?
 
-- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc une fois que le mesher et le solver auront été fusionnés (mettre à jour
-le manuel en enlevant les deux sections expliquant l'utilisation de ces routines);
-les enlever du Makefile.in aussi. Do not store x y z in the files that contain
-the MPI buffers anymore, since they are used only by check_buffers*.
-(in the solver they are read back as xdummy, ydummy, zdummy)
+- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du serveur SVN (svn remove) une fois que le mesher et le solver auront été fusionnés. Les enlever du Makefile.in aussi. Do not store x y z in the files that contain the MPI buffers anymore, since they are used only by check_buffers*. (in the solver they are read back as xdummy, ydummy, zdummy)
 
-- add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers
+- afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilité et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maître dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
 
-- dire dans manuel que number of grid points per S wavelength (purposely) pas bon
-dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien
-dans ce cas prendre un maillage prévu pour une période beaucoup plus courte
-(typiquement deux fois) que la période mentionnée dans les tables, qui concerne
-seulement les ondes P et non pas les S dans le inner core
+- use MPC in the code instead of MPI, if we can get MPC from CEA under GPL or CeCILL licence. Make sure the code is thread-safe (for instance suppress all the modules and the "use" statements, which are not thread-safe)
 
-- regarder consequences de multiple de 32 au lieu de 16 dans table 3.1 du manuel,
-et refaire cette table en fonction de cette nouvelle contrainte. Mettre à jour
-la Table 3.1 avec multiples de 32 au lieu de 16 et aussi en disant qu'on peut mettre 2 ou 3 ou 6 tâches par proc et donc que le nb de procs donnés peut être divisé par 2, 3 ou 6 et donc limitation moins grande qu'on ne pourrait le croire
-(dire que c'est toujours divisible car NPROC = 6 N^2 donc divisible par 6); dire cela dans le texte principal du manuel et dans la légende de la table
+- use indirect addressing (inverse permutation array) and a flag to store anisotropy in the mantle to avoid having to start with that region, which breaks the Cuthill-McKee sorting; once this is done, suppress the statement in which we make this region become region number 1 in the mesh creation routine
 
-- afficher les courbes de nombre de points par longueur d'onde et de stabilité et les worst elements (stability et nb pts per lambda) en OpenDX
-en serial sur le maître dans le nouveau mesher, en copiant/collant ce qu'il faut depuis "DATA/util/doubling_brick/display_doubling_PREM*.f90); ajouter
-ces courbes de dispersion et stabilité au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix spécial là-dessus; dire dans cet
-appendix que dans le outer core ce n'est bien sûr par Vs qui est représenté mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity
-potential dans le outer core, ce qui demande un échantillonnage un peu meilleur)
+- merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
 
-- use MPC in the code instead of MPI, if we can get MPC from CEA under GPL or CeCILL licence. Make sure the code is thread-safe (for instance
-suppress all the modules and the "use" statements, which are not thread-safe)
+- rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices. Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Céline.
 
-- use indirect addressing to store anisotropy in the mantle to avoid having to
-  start with that region, which breaks the Cuthill-McKee sorting; once this is
-  done, suppress the statement in which we make this region become region number 1
-  in the mesh creation routine
+- modifier write_seismograms.f90 pour que tout soit écrit directement sur le home par le maître et non pas sur les disques locaux par chaque noeud. Pour cela faire des paires SEND/RECV en allouant dynamiquement un tableau de taille différente à chaque fois (de taille nrec_local, sauf si nrec_local = 0, dans ce cas on n'envoie/reçoit rien pour cette tranche qui ne contient pas de récepteur). A la fin on doit avoir exactement 3*765 = 2295 fichiers (765 stations dans DATA/STATIONS, chacune stockant les trois composantes du vecteur déplacement)
 
-- merge the mesher in the solver, suppress storage of large mesh files on
-  local disks, but make sure we keep the creation of AVS/OpenDX mesh files
-  (which should be the case since we use specific routines called write_AVS_DX_*.f90)
-
-- implement better (partly inflated) central cube
-
-- remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates
-a big bottleneck)
-
-- split central cube in 2 with MPI to have better load balancing there
-
-- rewrite communications entirely (use clean non-blocking MPI communications, hide communications
-  in calculations); see how to do this in the central cube, which is more
-  difficult because it is in contact with many slices
-
-- use persistent communications
+- utiliser netCDF pour stocker du binaire partout où c'est nécessaire. voir si ça vaut le coup de stocker les gros fichiers de topographie dans DATA/topo_bathy dans ce format ou non, afin de réduire leur taille
 
 - implement classical Cuthill-McKee sorting
-
-- develop two-level Cuthill-McKee sorting for the two levels of cache with Jose Maria Cela (Barcelona)
-
-- maybe use VMX/Altivec instructions in compute_forces*.f90 specifically for
-  MareNostrum with Jose Maria Cela (Barcelona)
 
 - run Sdiff calculations for Lev Vinnik (Moscow, Russia)
 
 - run 3D PKP calculations for Sebastien Chevrot (Toulouse, France)
 
+- carefully study and improve the stability condition and increase/adapt time step DT accordingly (do this with Dimitri, by trial and error)
+
+---------------------------------------------------------------------------------
+
+David et Dimitri, quand nous serons à Barcelone en mai:
+-------------------------------------------------------
+
+- develop two-level Cuthill-McKee sorting for the two levels of cache with Jose Maria Cela (Barcelona); write a paper in "Parallel Computing" about this
+
+- maybe use VMX/Altivec instructions in compute_forces*.f90 specifically for
+  MareNostrum with Jose Maria Cela (Barcelona)
+
+---------------------------------------------------------------------------------
+
+Dimitri:
+--------
+
+- implement better (partly inflated) central cube
+
 - modifier le calcul des bornes de l'attenuation: car
     MIN_ATTENUATION_PERIOD   = 20
     MAX_ATTENUATION_PERIOD   = 1000
-est arbitraire dans read_compute_parameters.f90 actuellement,
-il faudrait ecrire une routine plus generale avec Brian Savage un jour.
-Voici son email et les miens à ce sujet :
+est arbitraire dans read_compute_parameters.f90 actuellement, utiliser la routine plus generale de Brian Savage.
+
+************* pour le manuel ***************
+
+- add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers
+
+- regarder consequences de multiple de 32 au lieu de 16 dans table 3.1 du manuel, et refaire cette table en fonction de cette nouvelle contrainte. Mettre à jour la Table 3.1 avec multiples de 32 au lieu de 16 et aussi en disant qu'on peut mettre 2 ou 3 ou 6 tâches par proc et donc que le nb de procs donnés peut être divisé par 2, 3 ou 6 et donc limitation moins grande qu'on ne pourrait le croire (dire que c'est toujours divisible car NPROC = 6 N^2 donc divisible par 6); dire cela dans le texte principal du manuel et dans la légende de la table
+
+- ajouter les courbes de dispersion et stabilité au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix spécial là-dessus; dire dans cet appendix que dans le outer core ce n'est bien sûr par Vs qui est représenté mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un échantillonnage un peu meilleur)
+
+- dire dans manuel que number of grid points per S wavelength (purposely) pas bon dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien dans ce cas prendre un maillage prévu pour une période beaucoup plus courte (typiquement deux fois) que la période mentionnée dans les tables, qui concerne seulement les ondes P et non pas les S dans le inner core
+
+- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront été fusionnés (enlever les deux sections expliquant l'utilisation de ces routines)
+
+---------------------------------------------------------------------------------
+
+Nicolas Le Goff:
+---------------
+
+- tester l'utilisation de netCDF et nous donner les routines pour lire/ecrire du binaire à ce format depuis SPECFEM3D_BASIN. David utilisera ensuite cela depuis SPECFEM3D_GLOBE.
+
+- etudier comment lire un maillage CUBIT stocké au format natif de CUBIT
+(Exodus, basé sur netCDF) depuis SPECFEM3D_BASIN. On pourrait utiliser la
+commande "ncdump" dans CUBIT si nécessaire d'après Emanuele Casarotti. Une
+autre option serait d'utiliser le format de stockage ABAQUS dans CUBIT.
+
+---------------------------------------------------------------------------------
+
+Brian Savage:
+------------
+
+- dire a Brian Savage (Washington D.C.) de faire un auto_NER a partir de PREM (choix automatique des parametres) a partir de display_prem_sampling_doubling.f90 dans DATA/util/mesh_doubling_superbrick
 
 Subject: Re: attenuation (other idea)
 From: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr>
