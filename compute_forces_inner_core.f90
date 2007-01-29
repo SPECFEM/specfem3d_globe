@@ -229,18 +229,8 @@
      else
         iglob     = ibool(i,j,k,ispec)
         radius_cr = xstore(iglob)
-        iregion_selected = max(1,nint(radius_cr * TABLE_ATTENUATION))
-        minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.
-        ! If the Attenuation Value is not defined ( we are in the outer core )
-        ! Continue to decrease the radius ( move towards the center ) to find
-        ! a Value within the Outer Core
-        do while(minus_sum_beta <= 0.0)
-           iregion_selected = iregion_selected - 1
-           minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.
-           if(iregion_selected < 1) then
-              call exit_MPI_without_rank('compute_forces_inner_core error in attenuation')
-           endif
-        end do
+        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE.)
+        minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
      endif ! ATTENUATION_VAL_3D
   endif ! ATTENUATION_VAL
 
@@ -297,7 +287,7 @@
     if(ATTENUATION_VAL_3D) then
       mul = mul * one_minus_sum_beta(i,j,k,ispec)
     else
-      mul = mul * one_minus_sum_beta(1,1,1,1)
+      mul = mul * one_minus_sum_beta(1,1,1,iregion_selected)
     endif
   endif
 

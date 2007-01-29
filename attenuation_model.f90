@@ -58,6 +58,10 @@ module attenuation_model_variables
   double precision, dimension(:,:), allocatable :: Qfc, Qfc2          ! factor_common
   double precision, dimension(:), allocatable   :: Qsf, Qsf2          ! scale_factor
 
+  integer, dimension(:), allocatable            :: Qrmin              ! Max and Mins of idoubling
+  integer, dimension(:), allocatable            :: Qrmax              ! Max and Mins of idoubling
+  double precision, dimension(:), allocatable   :: QrDisc             ! Discontinutitues Defined
+  
   ! a 2 at the end stands for a second derivative
   ! Qkappa                - Compressional Attenutation, User Defined
   ! Qmu                   - Shear Attenuation, User Defined
@@ -105,7 +109,7 @@ end subroutine attenuation_lookup_value
    if(r < 100.d0 / R_EARTH) r = 100.d0 / R_EARTH
 
 
-   i = max(1, nint(r * TABLE_ATTENUATION))
+   i = max(1, int(r * TABLE_ATTENUATION))
    if(ELLIPTICITY_VAL .AND. idoubling <= IFLAG_220_MOHO) then
       ! particular case of d80 which is not honored by the mesh
       ! map ellipticity back for d80 detection
@@ -228,7 +232,7 @@ subroutine attenuation_storage(Qmu, tau_e, rw)
   include 'constants.h'
 
   integer myrank, ier
-  double precision Qmu
+  double precision Qmu, Qmu_new
   double precision, dimension(N_SLS) :: tau_e
   integer rw
 
@@ -262,8 +266,13 @@ subroutine attenuation_storage(Qmu, tau_e, rw)
   endif
   ! Generate index for Storage Array
   ! and Recast Qmu using this index
-  Qtmp = Qmu * Q_resolution
-  Qmu = Qtmp / Q_resolution;
+  ! Accroding to Brian, use float
+  !Qtmp = Qmu * Q_resolution
+  !Qmu = Qtmp / Q_resolution;
+
+  !
+  Qtmp    = Qmu * dble(Q_resolution)
+  Qmu_new = dble(Qtmp) / dble(Q_resolution)
 
   if(rw > 0) then
      ! READ
@@ -541,16 +550,103 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   deallocate(Qfc)
   deallocate(Qsf)
   deallocate(Qomsb)
-  deallocate(Qr)
-  deallocate(Qs)
+!  deallocate(Qr)
+!  deallocate(Qs)
   deallocate(Qtau_e)
-  deallocate(Qmu)
+!  deallocate(Qmu)
   deallocate(Qfctmp)
   deallocate(Qfc2tmp)
 
   call MPI_BARRIER(MPI_COMM_WORLD, ier)
 
 end subroutine get_attenuation_model_1D
+
+
+subroutine set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80)
+  use attenuation_model_variables
+  implicit none
+  include 'constants.h'
+ 
+  double precision RICB, RCMB, R670, R220, R80
+  integer i
+  
+  allocate(Qrmin(6))
+  allocate(Qrmax(6))
+  allocate(QrDisc(5))
+  
+  QrDisc(1) = RICB
+  QrDisc(2) = RCMB
+  QrDisc(3) = R670
+  QrDisc(4) = R220
+  QrDisc(5) = R80
+  
+   ! INNER CORE
+  Qrmin(IREGION_ATTENUATION_INNER_CORE) = 1      ! Center of the Earth
+     i = nint(RICB / 100.d0)   ! === BOUNDARY === INNER CORE / OUTER CORE 
+  Qrmax(IREGION_ATTENUATION_INNER_CORE) = i - 1  ! Inner Core Boundary (Inner)
+
+  ! OUTER_CORE
+  Qrmin(6) = i ! Inner Core Boundary (Outer)
+      i = nint(RCMB / 100.d0)  ! === BOUNDARY === INNER CORE / OUTER CORE 
+  Qrmax(6) = i - 1
+
+  ! LOWER MANTLE
+  Qrmin(IREGION_ATTENUATION_CMB_670) = i
+       i = nint(R670 / 100.d0) ! === BOUNDARY === 670 km
+  Qrmax(IREGION_ATTENUATION_CMB_670) = i - 1
+
+  ! UPPER MANTLE
+  Qrmin(IREGION_ATTENUATION_670_220) = i
+       i = nint(R220 / 100.d0) ! === BOUNDARY === 220 km  
+  Qrmax(IREGION_ATTENUATION_670_220) = i - 1
+
+  ! MANTLE ISH LITHOSPHERE
+  Qrmin(IREGION_ATTENUATION_220_80) = i
+       i = nint(R80 / 100.d0) ! === BOUNDARY === 80 km  
+  Qrmax(IREGION_ATTENUATION_220_80) = i - 1
+
+  ! CRUST ISH LITHOSPHERE
+  Qrmin(IREGION_ATTENUATION_80_SURFACE) = i
+  Qrmax(IREGION_ATTENUATION_80_SURFACE) = NRAD_ATTENUATION
+  
+end subroutine set_attenuation_regions_1D
+
+subroutine get_attenuation_index(iflag, radius, index, inner_core)
+  use attenuation_model_variables
+  implicit none
+  include 'constants.h'
+  
+  integer iflag, iregion, index
+  double precision radius
+  
+  ! Inner Core or not
+  logical inner_core
+  
+  index = nint(radius * TABLE_ATTENUATION)
+  
+  if(inner_core) then
+     if(iflag >= IFLAG_TOP_INNER_CORE) then
+        iregion = IREGION_ATTENUATION_INNER_CORE
+     else if(iflag >= IFLAG_TOP_OUTER_CORE) then
+        iregion = 6
+     endif
+  else
+     if(iflag >= IFLAG_DOUBLING_670) then
+        iregion = IREGION_ATTENUATION_CMB_670
+     else if(iflag == IFLAG_670_220) then
+        iregion = IREGION_ATTENUATION_670_220     
+     else if( radius <= QrDisc(5)/R_EARTH ) then ! R80/R_EARTH
+        iregion = IREGION_ATTENUATION_220_80
+     else
+        iregion = IREGION_ATTENUATION_80_SURFACE
+     endif
+  endif
+  
+  ! Clamp regions
+  if(index < Qrmin(iregion)) index = Qrmin(iregion)
+  if(index > Qrmax(iregion)) index = Qrmax(iregion)
+  
+end subroutine get_attenuation_index
 
 
 subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_common, scale_factor, tau_s, vnspec)
@@ -1302,12 +1398,12 @@ subroutine psplint(xa, ya, y2a, n, x, y, steps)
 
   integer i, l, n1, n2
 
-  do i = 1,n-1
+  do i = 1,n-1,1
      if(steps(i+1) == 0) return
      if(x >= xa(steps(i)) .AND. x <= xa(steps(i+1))) then
         call pspline_piece(i,n1,n2,l,n,steps)
         call splint(xa(n1), ya(n1), y2a(n1), l, x, y)
-        return
+!        return
      endif
   end do
 

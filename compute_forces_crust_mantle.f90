@@ -257,6 +257,7 @@
         iglob     = ibool(i,j,k,ispec)
         radius_cr = xstore(iglob)
         theta     = ystore(iglob)
+
         if(ELLIPTICITY_VAL .AND. idoubling(ispec) .LE. IFLAG_220_MOHO) then
            ! particular case of d80 which is not honored by the mesh
            ! map ellipticity back for d80 detection
@@ -265,20 +266,10 @@
            p20 = 0.5 * (3.0 * cost * cost - 1.0)
            radius_cr = radius_cr * (1.0 + (2.0/3.0) * ell_d80 * p20)
         endif
-        iregion_selected = nint(dble(radius_cr) * TABLE_ATTENUATION)
+        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE.)
         one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
-        ! If the Attenuation Value is not defined ( we are in the outer core )
-        ! Continue to increase the radius ( move towards the surface ) to find
-        ! a Value within the Mantle
-        do while(one_minus_sum_beta_use .LE. 1e-5)
-           iregion_selected = iregion_selected + 1
-           one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
-           if(iregion_selected > NRAD_ATTENUATION) then
-              call exit_MPI_without_rank('compute_forces_crust_mantle error in attenuation')
-           endif
-        enddo
      endif
-     minus_sum_beta =  one_minus_sum_beta_use - 1.
+     minus_sum_beta =  one_minus_sum_beta_use - 1.0
   endif
 
 !
