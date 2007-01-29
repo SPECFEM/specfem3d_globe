@@ -309,6 +309,8 @@
   double precision rspl(NR),espl(NR),espl2(NR)
   double precision ell_d80_dble
   real(kind=CUSTOM_REAL) theta,ell_d80
+  real(kind=CUSTOM_REAL) p20, cost
+
 
 ! for conversion from x y z to r theta phi
   real(kind=CUSTOM_REAL) rval,thetaval,phival
@@ -2184,6 +2186,8 @@
         omsb_inner_core_dble(:,:,:,:)            = omsb_crust_mantle_dble(:,:,:,:)
         factor_scale_inner_core_dble(:,:,:,:)    = factor_scale_crust_mantle_dble(:,:,:,:)
         factor_common_inner_core_dble(:,:,:,:,:) = factor_common_crust_mantle_dble(:,:,:,:,:)
+        ! Tell the Attenuation Code about the IDOUBLING regions within the Mesh
+        call set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80)
      endif ! ATTENUATION_3D
 
    if(CUSTOM_REAL == SIZE_REAL) then
@@ -2227,8 +2231,12 @@
                 iglob   = ibool_crust_mantle(i,j,k,ispec)
                 dist_cr = xstore_crust_mantle(iglob)
                 theta   = ystore_crust_mantle(iglob)
-                l = idoubling_crust_mantle(ispec)
-                call attenuation_lookup_index(iregion_selected, dist_cr, theta, l, ell_d80, ELLIPTICITY_VAL)
+                if(ELLIPTICITY_VAL .AND. idoubling_crust_mantle(ispec) .LE. IFLAG_220_MOHO) then
+                   cost    = cos(theta)
+                   p20     = 0.5 * (3.0 * cost * cost - 1.0)
+                   dist_cr = dist_cr * (1.0 + (2.0/3.0) * ell_d80 * p20)
+                endif
+                call get_attenuation_index(idoubling_crust_mantle(ispec), dble(dist_cr), iregion_selected, .FALSE.)
                 scale_factor = factor_scale_crust_mantle(1,1,1,iregion_selected)
              endif ! ATTENUATION_3D
 
@@ -2274,11 +2282,9 @@
             if(ATTENUATION_3D) then
                scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
             else
-               iglob   = ibool_crust_mantle(i,j,k,ispec)
-               dist_cr = xstore_crust_mantle(iglob)
-               theta   = ystore_crust_mantle(iglob)
-               call attenuation_lookup_index(iregion_selected, dist_cr, theta, &
-                   idoubling_crust_mantle(ispec), ell_d80, ELLIPTICITY_VAL)
+               iglob   = ibool_inner_core(i,j,k,ispec)
+               dist_cr = xstore_inner_core(iglob)
+               call get_attenuation_index(idoubling_inner_core(ispec), dble(dist_cr), iregion_selected, .TRUE.)
                scale_factor_minus_one = factor_scale_inner_core(1,1,1,iregion_selected) - 1.
             endif
 
