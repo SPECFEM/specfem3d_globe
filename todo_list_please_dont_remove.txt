@@ -13,6 +13,12 @@ David:
 
 - merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
 
+- modifier_creation_central_cube_now_32_au_lieu_de_16
+
+- make_sure_aniso_elements_created_first
+
+- modifier_create_header_file pour s'assurer qu'il fonctionne avec le nouveau mailleur
+
 - implement classical Cuthill-McKee sorting
 
 - ajouter une routine qui mette tous les gros tableaux à zéro avant le début
@@ -25,9 +31,13 @@ de Linux
 
 - use BLAS3 calls in compute_forces*.f90 instead of loops as in the current 
 implementation. We should gain a huge factor if we can do this, but we will
-need to change the structure of the arrays
+need to change the structure of the arrays. Mais Dimitri a deja teste BLAS3
+et on ne gagne rien, en fait on perd meme des perfs, donc voir avec Dimitri
+s'il faut laisser tomber ce point et laisser les americains de Oak Ridge
+le faire s'ils veulent, mais sans nous
 
-- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du serveur SVN (svn remove) une fois que le mesher et le solver auront été fusionnés. Les enlever du Makefile.in aussi. Do not store x y z in the files that contain the MPI buffers anymore, since they are used only by check_buffers*. (in the solver they are read back as xdummy, ydummy, zdummy)
+- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du serveur SVN (svn remove) une fois que le mesher et le solver auront été fusionnés. Les enlever du Makefile.in aussi. Do not store x y z in the files that contain the MPI buffers anymore, since they are used only by check_buffers*. (in the solver they are read back as xdummy, ydummy, zdummy); eventuellement supprimer aussi le fichier ecrit par le mailleur sur le disque et relu plus tard par ce meme mailleur, s'il n'est pas utilise par le solver (c'est a dire s'il est utilise seulement par les codes serial
+check*.f90, qui sont amenes a disparaitre)
 
 - afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilité et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maître dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
 
@@ -39,7 +49,7 @@ need to change the structure of the arrays
 
 - run Sdiff calculations for Lev Vinnik (Moscow, Russia)
 
-- run 3D PKP calculations for Sebastien Chevrot (Toulouse, France)
+- run 3D PKP calculations for Sebastien Chevrot (Toulouse, France); Dimitri va faire un code 2D serial pour etudier le modele et definir le maillage avant de lancer de gros runs a Barcelone
 
 - carefully study and improve the stability condition and increase/adapt time step DT accordingly (do this with Dimitri, by trial and error)
 
@@ -59,6 +69,15 @@ David et Dimitri, quand nous serons à Barcelone en mai:
 
 Dimitri:
 --------
+
+- distinguer_DT_suivant_si_honor_PREM_or_not
+
+- modifier RMOHO_FICTITIOUS_IN_MESHER = R80 + (R_EARTH - R80) * dble(NER_80_MOHO) / dble(NER_80_MOHO + NER_CRUST)
+!!!!!!!!!!!!!!! DK DK ceci a revoir, voir ce qu'on fait dans ce cas-la
+    ONE_CRUST = .false.
+dans display_prem_sampling_doubling.f90 et dans le nouveau code de maillage de David
+
+- verifier / ameliorer HONOR_1D_SPHERICAL_MOHO (pas vraiment traite actuellement)
 
 - implement better (partly inflated) central cube
 
