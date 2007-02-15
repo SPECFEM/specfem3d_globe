@@ -19,24 +19,45 @@ $nb_corners=8;
 
 # read datas
 open (DF, "$filein");
+$phase=1;
 while(my $line=<DF>)
 {     chomp $line;
-      if ($line =~ m/^(\s+\d+\.?\d*\s*)+$/)
-      {     if ($line =~ m/\./)
-            {     my @temp=split(/\s+/, $line);
-                  shift @temp;
-
+      if ($line =~ m/^.*object\s+1.*\s+(\d+)\s+data\s+follows\s*$/)
+      {     $nbline = $1;
+            if($phase!=1)
+            {   print "error while reading data\n";
+                exit;
+            }
+            for (my $i=0;$i<$nbline;$i++)
+            {     my $line=<DF>;
+                  chomp($line);
+                  my @temp=split(/\s+/, $line);
+                  shift @temp if (scalar(@temp)>3);
                   $nodes[$numnode] = \@temp;
                   $numnode++;
             }
-            elsif ($line =~ m/(\s+\d+\s*){8}/)
-            {     my @temp=split(/\s+/,$line);
-                  shift @temp;
+            $phase=2;
+      }
+      elsif ($line =~ m/^.*object\s+2.*\s+(\d+)\s+data\s+follows\s*$/)
+      {     $nbline = $1;
+            if($phase!=2)
+            {   print "error while reading data\n";
+                exit;
+            }
+            for (my $i=0;$i<$nbline;$i++)
+            {     my $line=<DF>;
+                  chomp($line);
+                  my @temp=split(/\s+/,$line);
+                  shift @temp if (scalar(@temp)>8);
                   $hex[$numhex] = \@temp;
                   $numhex++;
             }
-            else
-            {     # couleur
+            $phase=3;
+      }
+      else
+      {     if($phase!=3)
+            {   print "error while reading data\n";
+                exit;
             }
       }
 }
@@ -100,7 +121,7 @@ sub moy_pos
             $compt++;
       }
       ($x,$y,$z) = map ($_/$compt, ($x,$y,$z));
-      return ($x,$y,$z)
+      return ($x,$y,$z);
 }
 
 sub redefine
@@ -127,7 +148,7 @@ sub dump_dx
       {     print OUT $i," ";
             print OUT "\n" unless (($i+1)%$nb_corners);
       }
-      print OUT "\n\n",' attribute "element type" string "cubes"',"\n",'attribute "ref" string "positions"',"\n",'object 3 class array type float rank 0 items         ',$numhex,"  data follows\n";
+      print OUT ' attribute "element type" string "cubes"',"\n",'attribute "ref" string "positions"',"\n",'object 3 class array type float rank 0 items         ',$numhex,"  data follows\n";
       for ($i=1;$i<$numhex+1;$i++) {print OUT $i,"\n";}
       print OUT <<EOF
  attribute "dep" string "connections"
