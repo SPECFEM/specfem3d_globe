@@ -27,6 +27,18 @@ de Linux
 
 - use indirect addressing (inverse permutation array) and a flag to store anisotropy in the mantle to avoid having to start with that region, which breaks the Cuthill-McKee sorting; once this is done, suppress the statement in which we make this region become region number 1 in the mesh creation routine
 
+- dans constants.h il y a un flag IFLAG_220_MOHO qu'il faudra séparer en deux en
+créant IFLAG_220_80 et IFLAG_80_MOHO. Facile dans constants.h,
+mais partout où apparaît ensuite IFLAG_220_MOHO par exemple
+dans des if dans tous les *.f90 il faudra changer tous les
+if(machintruc == IFLAG_220_MOHO) then
+en
+if(machintruc == IFLAG_220_80 .or. machintruc == IFLAG_80_MOHO) then
+Faudra qu'on fasse ça à l'occasion ok ? par ex la semaine prochaine,
+c'est rapide à faire.
+(c'est Brian Savage, qui travaille sur l'atténuation dans le code,
+qui a besoin de distinguer ces deux sub-flags) 
+
 - rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices (see routine create_central_cube_buffers.f90). Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Céline. Ajouter un flag (appelé PERFECT_LOAD_CENTRAL_CUBE) pour rendre le load balancing parfait dans le central cube en calculant pour rien dans les 4 cubes marqués "FICTITIOUS" mais en n'utilisant pas les résultats dans la sommation.
 
 - use BLAS3 calls in compute_forces*.f90 instead of loops as in the current 
