@@ -261,8 +261,7 @@
 
  1200  format(a1,i3.3,i3.3,1x,e12.5,1x,e12.5,1x,e12.5)
  1210  format(a1,i3.3,i3.3,1x,e12.5)
- 1310  format(i6,1x,i1,' quad ',a1,i3.3,i3.3,1x,a1,i3.3,i3.3,1x, &
-              a1,i3.3,i3.3,1x,a1,i3.3,i3.3)
+ 1310  format(i6,1x,i1,' quad ',a1,i3.3,i3.3,1x,a1,i3.3,i3.3,1x,a1,i3.3,i3.3,1x,a1,i3.3,i3.3)
 
   end program cubed_sphere
 
