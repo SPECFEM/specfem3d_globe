@@ -57,6 +57,12 @@ check*.f90, qui sont amenes a disparaitre)
 
 - modifier write_seismograms.f90 pour que tout soit écrit directement sur le home par le maître et non pas sur les disques locaux par chaque noeud. Pour cela faire des paires SEND/RECV en allouant dynamiquement un tableau de taille différente à chaque fois (de taille nrec_local, sauf si nrec_local = 0, dans ce cas on n'envoie/reçoit rien pour cette tranche qui ne contient pas de récepteur). A la fin on doit avoir exactement 3*765 = 2295 fichiers (765 stations dans DATA/STATIONS, chacune stockant les trois composantes du vecteur déplacement)
 
+- dans specfem3D.f90 ci-dessous à un moment on appelle deux fois la routine d'assemblage MPI, une fois pour assembler le crust + mantle et une fois pour assembler le inner core, juste après, ce qui double le nombre de messages et la latence pour rien. Donc quand on réécrira le MPI du solver bien entendu il faudra penser à fusionner les deux en un seul envoi de messages contenant crust + mantle + inner core. Voici le code obsolète ci-dessous.
+! crust and mantle
+  call assemble_MPI_vector(myrank,accel_crust_mantle,nglob_crust_mantle, & ...
+! inner core
+  call assemble_MPI_vector(myrank,accel_inner_core,NGLOB_INNER_CORE, & ...
+
 - utiliser netCDF pour stocker du binaire partout où c'est nécessaire. voir si ça vaut le coup de stocker les gros fichiers de topographie dans DATA/topo_bathy dans ce format ou non, afin de réduire leur taille
 
 - run Sdiff calculations for Lev Vinnik (Moscow, Russia)
