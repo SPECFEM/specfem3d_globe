@@ -1,23 +1,23 @@
 
-# Nombre de processus MPI demandés
-# @ total_tasks = 8
+# Choix du shell
+# @ shell = /bin/ksh
 
-# Temps CPU max. en seconde par processus
-# @ cpu_limit = 400
+# Nombre de processus MPI demandés
+# @ total_tasks = 24
+
+# Temps CPU max. par processus MPI en hh:mm:ss
+# @ cpu_limit = 00:55:00
 
 # Mémoire max. utilisée par processus
-# @ data_limit = 700mb
+# @ data_limit = 1100mb
 ###################### @ data_limit   = 9.2Gb
 
 ###################### @ stack_limit  = 6.2Gb,6.2Gb
 
-##### nom du repertoire ou est stocke le code dans le home
-REPERTOIRE_CODE = SPECFEM3D_BASIN_Carcione
+# Nom arbitraire du travail LoadLeveler
+# @ job_name = run_SPECFEM3D_acoustic_MPI
 
 #----------------------------------------------------
-
-# Nom arbitraire du travail LoadLeveler
-# @ job_name = run_SPECFEM3D_Carcione_Copper_MPI
 
 # Type de travail
 # @ job_type = parallel
@@ -35,19 +35,22 @@ REPERTOIRE_CODE = SPECFEM3D_BASIN_Carcione
 # Pour avoir l'écho des commandes
 set -x
 
-# Répertoire temporaire de travail
-cd $TMPDIR
+##### nom du repertoire ou est stocke le code dans le home
+##### et nom du sous-repertoire ou est stockee la base de donnees
+export repertoire_code=SPHERE_ACOUST_3D
+export repertoire_database=DATABASES_MPI_DIMITRI
 
-################# La variable LOADL_STEP_INITDIR est automatiquement positionnée par
-################# LoadLeveler au répertoire dans lequel on tape la commande llsubmit
-################cp $LOADL_STEP_INITDIR/a.out .
+# vider les repertoires dans le home
+rm -r -f $HOME/$repertoire_code/OUTPUT_FILES $HOME/$repertoire_code/$repertoire_database
 
-cp -r -p $HOME/$REPERTOIRE_CODE .
-cd $REPERTOIRE_CODE
+# copier les codes source depuis le home vers le repertoire temporaire
+rm -r -f $TMPDIR/$repertoire_code
+cp -r -p $HOME/$repertoire_code $TMPDIR
 
-# vider les repertoires
-rm -r -f OUTPUT_FILES DATABASES_MPI_DIMITRI
-mkdir OUTPUT_FILES DATABASES_MPI_DIMITRI
+# creer les nouveaux repertoires temporaires
+mkdir $TMPDIR/$repertoire_code/OUTPUT_FILES $TMPDIR/$repertoire_code/$repertoire_database
+
+cd $TMPDIR/$repertoire_code
 
 # compiler et executer le mailleur en MPI
 make clean
@@ -58,4 +61,15 @@ make meshfem3D
 make clean
 make specfem3D
 ./xspecfem3D
+
+# supprimer la base de donnees creee
+rm -r -f $TMPDIR/$repertoire_code/$repertoire_database
+
+# recuperer le job ID
+export myjobid=$( echo $LOADL_STEP_ID | cut -d'.' -f4 )
+
+# deplacer tous les resultats dans le workdir en ajoutant le job ID au nom
+# sortir d'abord dans home pour pouvoir detruire le repertoire courant de tmpdir
+cd $HOME
+mv $TMPDIR/$repertoire_code $WORKDIR/${repertoire_code}_${myjobid}
 
