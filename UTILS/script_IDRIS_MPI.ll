@@ -6,10 +6,10 @@
 # @ total_tasks = 24
 
 # Temps CPU max. par processus MPI en hh:mm:ss
-# @ cpu_limit = 00:55:00
+# @ cpu_limit = 00:59:59
 
 # Mémoire max. utilisée par processus
-# @ data_limit = 1100mb
+###################### @ data_limit = 1100mb
 ###################### @ data_limit   = 9.2Gb
 
 ###################### @ stack_limit  = 6.2Gb,6.2Gb
@@ -61,6 +61,9 @@ make meshfem3D
 make clean
 make specfem3D
 ./xspecfem3D
+
+# deplacer les sismogrammes dans le repertoire de travail
+mv $TMPDIR/$repertoire_code/$repertoire_database/*.semd $TMPDIR/$repertoire_code
 
 # supprimer la base de donnees creee
 rm -r -f $TMPDIR/$repertoire_code/$repertoire_database
