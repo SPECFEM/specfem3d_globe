@@ -8,11 +8,10 @@
 # Temps CPU max. par processus MPI en hh:mm:ss
 # @ cpu_limit = 00:59:59
 
-# Mémoire max. utilisée par processus
-###################### @ data_limit = 1100mb
-###################### @ data_limit   = 9.2Gb
+# Mémoire max. utilisée par processus dans data et dans stack
+# @ data_limit = 2.0Gb
 
-###################### @ stack_limit  = 6.2Gb,6.2Gb
+# @ stack_limit = 1.0Gb,1.0Gb
 
 # Nom arbitraire du travail LoadLeveler
 # @ job_name = run_SPECFEM3D_acoustic_MPI
@@ -37,7 +36,7 @@ set -x
 
 ##### nom du repertoire ou est stocke le code dans le home
 ##### et nom du sous-repertoire ou est stockee la base de donnees
-export repertoire_code=SPHERE_ACOUST_3D
+export repertoire_code=papapa
 export repertoire_database=DATABASES_MPI_DIMITRI
 
 # vider les repertoires dans le home
