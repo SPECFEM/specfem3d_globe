@@ -6,7 +6,7 @@
 # @ total_tasks = 24
 
 # Temps CPU max. par processus MPI en hh:mm:ss
-# @ cpu_limit = 00:59:59
+# @ cpu_limit = 04:59:59
 
 # Mémoire max. utilisée par processus dans data et dans stack
 # @ data_limit = 2.0Gb
@@ -31,20 +31,22 @@
 
 #----------------------------------------------------
 
-# Pour avoir l'écho des commandes
+# Pour avoir l'echo des commandes
 set -x
 
-##### nom du repertoire ou est stocke le code dans le home
-##### et nom du sous-repertoire ou est stockee la base de donnees
-export repertoire_code=papapa
+##### nom du repertoire depuis ou est lance le code
+##### et nom du sous-repertoire ou sera stockee la base de donnees
+##### La variable LOADL_STEP_INITDIR est automatiquement positionnee par
+##### LoadLeveler au repertoire dans lequel on tape la commande llsubmit
+export repertoire_code=$( basename $LOADL_STEP_INITDIR )
 export repertoire_database=DATABASES_MPI_DIMITRI
 
 # vider les repertoires dans le home
-rm -r -f $HOME/$repertoire_code/OUTPUT_FILES $HOME/$repertoire_code/$repertoire_database
+rm -r -f $LOADL_STEP_INITDIR/OUTPUT_FILES $LOADL_STEP_INITDIR/$repertoire_database
 
 # copier les codes source depuis le home vers le repertoire temporaire
 rm -r -f $TMPDIR/$repertoire_code
-cp -r -p $HOME/$repertoire_code $TMPDIR
+cp -r -p $LOADL_STEP_INITDIR $TMPDIR
 
 # creer les nouveaux repertoires temporaires
 mkdir $TMPDIR/$repertoire_code/OUTPUT_FILES $TMPDIR/$repertoire_code/$repertoire_database
