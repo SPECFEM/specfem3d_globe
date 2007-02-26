@@ -1333,7 +1333,8 @@
     write(IOVTK,'(a)') 'Source and Receiver VTK file'
     write(IOVTK,'(a)') 'ASCII'
     write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-    write(IOVTK, '(a,i6,a)') 'POINTS ', NSOURCES+nrec, ' float'
+!  LQY -- won't be able to know NSOURCES+nrec at this point...
+    write(IOVTK, '(a,i6,a)') 'POINTS ', 2, ' float'
   endif
 
   if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
