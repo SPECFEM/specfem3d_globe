@@ -16,7 +16,7 @@
 !=====================================================================
 
   subroutine get_attenuation_model(myrank,iregion_attenuation,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-         tau_mu,tau_sigma,beta,one_minus_sum_beta,factor_scale)
+         tau_mu,tau_sigma,beta,one_minus_sum_beta,factor_scale, AM_V, AM_S, AS_V)
 
 ! return attenuation mechanisms Q_mu in PREM using standard linear solids
 ! the Tau values computed by Jeroen's code are used
@@ -27,6 +27,56 @@
   implicit none
 
   include "constants.h"
+
+! attenuation_model_variables
+  type attenuation_model_variables
+    sequence
+    double precision min_period, max_period
+    double precision                          :: QT_c_source        ! Source Frequency
+    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
+    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer                                   :: Qn                 ! Number of points
+  end type attenuation_model_variables
+  
+  type (attenuation_model_variables) AM_V
+! attenuation_model_variables
+
+! attenuation_model_storage
+  type attenuation_model_storage
+    sequence
+    integer Q_resolution
+    integer Q_max
+    double precision, dimension(:,:), pointer :: tau_e_storage
+    double precision, dimension(:), pointer :: Qmu_storage
+  end type attenuation_model_storage
+  
+  type (attenuation_model_storage) AM_S
+! attenuation_model_storage
+
+! attenuation_simplex_variables
+  type attenuation_simplex_variables
+    sequence
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids
+    double precision Q  ! Q     = Desired Value of Attenuation or Q
+    double precision iQ ! iQ    = 1/Q
+    double precision, dimension(:), pointer ::  f
+    ! f = Frequencies at which to evaluate the solution
+    double precision, dimension(:), pointer :: tau_s
+    ! tau_s = Tau_sigma defined by the frequency range and
+    !             number of standard linear solids
+  end type attenuation_simplex_variables
+
+  type(attenuation_simplex_variables) AS_V
+! attenuation_simplex_variables
 
   integer iregion_attenuation,myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
@@ -684,8 +734,8 @@
      endif
 
      call attenuation_model_1D(myrank, iregion_attenuation, Q_mu)
-     call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
-     call attenuation_conversion(myrank, Q_mu, T_c_source, tau_sigma, tau_mu)
+     call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
+     call attenuation_conversion(myrank,Q_mu,T_c_source,tau_sigma,tau_mu,AM_V,AM_S,AS_V)
 
      if(myrank == 0) then
         write(IMAIN,*)'Q_mu:         ',Q_mu

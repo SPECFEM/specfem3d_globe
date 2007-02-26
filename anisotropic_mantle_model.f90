@@ -30,26 +30,25 @@
 !
 !======================================================================
 
-module aniso_mantle_model_variables
-
-  implicit none
-
-  integer npar1
-
-  double precision beta(14,34,37,73),pro(47)
-
-end module aniso_mantle_model_variables
-
-!-------------------
 
   subroutine aniso_mantle_model(r,theta,phi,rho, &
-    c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
-
-  use aniso_mantle_model_variables
+    c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,&
+    AMM_V)
 
   implicit none
 
   include "constants.h"
+
+! aniso_mantle_model_variables
+  type aniso_mantle_model_variables
+    sequence
+    double precision beta(14,34,37,73)
+    double precision pro(47)
+    integer npar1
+  end type aniso_mantle_model_variables
+
+  type (aniso_mantle_model_variables) AMM_V
+! aniso_mantle_model_variables
 
   double precision r,theta,phi
   double precision rho
@@ -70,7 +69,7 @@ end module aniso_mantle_model_variables
 ! assign the local (d_ij) or global (c_ij) anisotropic parameters.
 ! The c_ij are the coefficients in the global
 ! reference frame used in SPECFEM3D.
-  call build_cij(pro,npar1,rho,beta,r,colat,lon,&
+  call build_cij(AMM_V%pro,AMM_V%npar1,rho,AMM_V%beta,r,colat,lon,&
                  d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
                  d44,d45,d46,d55,d56,d66)
 
@@ -311,13 +310,22 @@ end module aniso_mantle_model_variables
 
 !--------------------------------------------------------------
 
-  subroutine read_aniso_mantle_model
-
-  use aniso_mantle_model_variables
+  subroutine read_aniso_mantle_model(AMM_V)
 
   implicit none
 
   include "constants.h"
+
+! aniso_mantle_model_variables
+  type aniso_mantle_model_variables
+    sequence
+    double precision beta(14,34,37,73)
+    double precision pro(47)
+    integer npar1
+  end type aniso_mantle_model_variables
+
+  type (aniso_mantle_model_variables) AMM_V
+! aniso_mantle_model_variables
 
   integer nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
   double precision xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
@@ -328,7 +336,7 @@ end module aniso_mantle_model_variables
 
   np1 = 1
   np2 = 34
-  npar1 = (np2 - np1 + 1)
+  AMM_V%npar1 = (np2 - np1 + 1)
 
 !
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
@@ -350,12 +358,12 @@ end module aniso_mantle_model_variables
   nfin = 14
   do nf = 1,nfi0
     ipa = ipa + 1
-    do idep = 1,npar1
+    do idep = 1,AMM_V%npar1
       il = idep + np1 - 1
       read(19,"(2f4.0,2i3,f4.0)",end = 88) xinf,yinf,nx,ny,pxy
 
       ppp = 1.
-      read(19,"(f5.0,f8.4)",end = 88) pro(idep),ppp
+      read(19,"(f5.0,f8.4)",end = 88) AMM_V%pro(idep),ppp
 
       if(nf == 1) pari(nf,il) = ppp
       if(nf == 2) pari(nf,il) = ppp
@@ -363,7 +371,7 @@ end module aniso_mantle_model_variables
       if(nf == 4) ppp = pari(nf,il)
       if(nf == 5) ppp = pari(nf,il)
       do ilat = 1,nx
-        read(19,"(17f7.2)",end = 88) (beta(ipa,idep,ilat,ilon),ilon = 1,ny)
+        read(19,"(17f7.2)",end = 88) (AMM_V%beta(ipa,idep,ilat,ilon),ilon = 1,ny)
 !
 ! calculation of A,C,F,L,N
 !
@@ -374,10 +382,10 @@ end module aniso_mantle_model_variables
 !
         do ilon = 1,ny
           if(nf <= 3 .or. nf >= 6)then
-            bet2(ipa,idep,ilat,ilon) = beta(ipa,idep,ilat,ilon)*0.01*ppp + ppp
+            bet2(ipa,idep,ilat,ilon) = AMM_V%beta(ipa,idep,ilat,ilon)*0.01*ppp + ppp
           else
-            if(nf == 4)bet2(ipa,idep,ilat,ilon) = beta(ipa,idep,ilat,ilon)*0.01 + 1.
-            if(nf == 5)bet2(ipa,idep,ilat,ilon) = - beta(ipa,idep,ilat,ilon)*0.01 + 1.
+            if(nf == 4)bet2(ipa,idep,ilat,ilon) = AMM_V%beta(ipa,idep,ilat,ilon)*0.01 + 1.
+            if(nf == 5)bet2(ipa,idep,ilat,ilon) = - AMM_V%beta(ipa,idep,ilat,ilon)*0.01 + 1.
           endif
         enddo
 
@@ -400,10 +408,10 @@ end module aniso_mantle_model_variables
   do nf = 7,nfin,2
     ipa = nf
     ipa1 = ipa + 1
-    do idep = 1,npar1
+    do idep = 1,AMM_V%npar1
       il = idep + np1 - 1
       read(15,"(2f4.0,2i3,f4.0)",end = 888) xinf,yinf,nx,ny,pxy
-      read(15,"(f5.0,f8.4)",end = 888) pro(idep),ppp
+      read(15,"(f5.0,f8.4)",end = 888) AMM_V%pro(idep),ppp
       if(nf == 7) ppp = pari(2,il)
       if(nf == 9) ppp = pari(3,il)
       af = pari(6,il)*(pari(2,il) - 2.*pari(3,il))
@@ -421,8 +429,8 @@ end module aniso_mantle_model_variables
       do ilat = 1,nx
         do ilon = 1,ny
           angle = 2.*DEGREES_TO_RADIANS*ph(ilon,ilat)
-          beta(ipa,idep,ilat,ilon) = alph(ilon,ilat)*ppp*0.01d0
-          beta(ipa1,idep,ilat,ilon) = ph(ilon,ilat)
+          AMM_V%beta(ipa,idep,ilat,ilon) = alph(ilon,ilat)*ppp*0.01d0
+          AMM_V%beta(ipa1,idep,ilat,ilon) = ph(ilon,ilat)
           bet2(ipa,idep,ilat,ilon) = alph(ilon,ilat)*dcos(angle)*ppp*0.01d0
           bet2(ipa1,idep,ilat,ilon) = alph(ilon,ilat)*dsin(angle)*ppp*0.01d0
         enddo
@@ -433,34 +441,34 @@ end module aniso_mantle_model_variables
 
 888 close(15)
 
-  do idep = 1,npar1
+  do idep = 1,AMM_V%npar1
     do ilat = 1,nx
       do ilon = 1,ny
 
 ! rho
-        beta(1,idep,ilat,ilon) = bet2(1,idep,ilat,ilon)
+        AMM_V%beta(1,idep,ilat,ilon) = bet2(1,idep,ilat,ilon)
 
 ! A
-        beta(2,idep,ilat,ilon) = bet2(2,idep,ilat,ilon)
+        AMM_V%beta(2,idep,ilat,ilon) = bet2(2,idep,ilat,ilon)
         A=bet2(2,idep,ilat,ilon)
 
 !  C
-        beta(3,idep,ilat,ilon) = bet2(5,idep,ilat,ilon)*A
+        AMM_V%beta(3,idep,ilat,ilon) = bet2(5,idep,ilat,ilon)*A
 
 !  F
         A2L = A - 2.*bet2(3,idep,ilat,ilon)
-        beta(4,idep,ilat,ilon) = bet2(6,idep,ilat,ilon)*A2L
+        AMM_V%beta(4,idep,ilat,ilon) = bet2(6,idep,ilat,ilon)*A2L
 
 !  L
-        beta(5,idep,ilat,ilon) = bet2(3,idep,ilat,ilon)
+        AMM_V%beta(5,idep,ilat,ilon) = bet2(3,idep,ilat,ilon)
         AL = bet2(3,idep,ilat,ilon)
 
 !  N
-        beta(6,idep,ilat,ilon) = bet2(4,idep,ilat,ilon)*AL
+        AMM_V%beta(6,idep,ilat,ilon) = bet2(4,idep,ilat,ilon)*AL
 
 !  azimuthal terms
         do ipar = 7,14
-          beta(ipar,idep,ilat,ilon) = bet2(ipar,idep,ilat,ilon)
+          AMM_V%beta(ipar,idep,ilat,ilon) = bet2(ipar,idep,ilat,ilon)
         enddo
 
       enddo

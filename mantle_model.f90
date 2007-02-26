@@ -15,36 +15,26 @@
 !
 !=====================================================================
 
-module three_d_mantle_model_constants
+  subroutine read_mantle_model(D3MM_V)
 
   implicit none
 
-! S20RTS
-  integer, parameter :: NK = 20,NS = 20,ND = 1
+  include "constants.h"
 
-end module three_d_mantle_model_constants
+! three_d_mantle_model_variables
+  type three_d_mantle_model_variables
+    sequence
+    double precision dvs_a(0:NK,0:NS,0:NS)
+    double precision dvs_b(0:NK,0:NS,0:NS)
+    double precision dvp_a(0:NK,0:NS,0:NS)
+    double precision dvp_b(0:NK,0:NS,0:NS)
+    double precision spknt(NK+1)
+    double precision qq0(NK+1,NK+1)
+    double precision qq(3,NK+1,NK+1)
+  end type three_d_mantle_model_variables
 
-module three_d_mantle_model_variables
-
-  use three_d_mantle_model_constants
-
-  implicit none
-
-! S20RTS
-  double precision dvs_a(0:NK,0:NS,0:NS),dvs_b(0:NK,0:NS,0:NS)
-  double precision dvp_a(0:NK,0:NS,0:NS),dvp_b(0:NK,0:NS,0:NS)
-
-  double precision spknt(NK+1),qq0(NK+1,NK+1),qq(3,NK+1,NK+1)
-
-end module three_d_mantle_model_variables
-
-!-----------------
-
-  subroutine read_mantle_model
-
-  use three_d_mantle_model_variables
-
-  implicit none
+  type (three_d_mantle_model_variables) D3MM_V
+! three_d_mantle_model_variables
 
   integer k,l,m
 
@@ -57,7 +47,7 @@ end module three_d_mantle_model_variables
   open(unit=10,file=S20RTS,status='old',action='read')
   do k=0,NK
     do l=0,NS
-      read(10,*) dvs_a(k,l,0),(dvs_a(k,l,m),dvs_b(k,l,m),m=1,l)
+      read(10,*) D3MM_V%dvs_a(k,l,0),(D3MM_V%dvs_a(k,l,m),D3MM_V%dvs_b(k,l,m),m=1,l)
     enddo
   enddo
   close(10)
@@ -66,40 +56,55 @@ end module three_d_mantle_model_variables
   open(unit=10,file=P12,status='old',action='read')
   do k=0,NK
     do l=0,12
-      read(10,*) dvp_a(k,l,0),(dvp_a(k,l,m),dvp_b(k,l,m),m=1,l)
+      read(10,*) D3MM_V%dvp_a(k,l,0),(D3MM_V%dvp_a(k,l,m),D3MM_V%dvp_b(k,l,m),m=1,l)
     enddo
     do l=13,NS
-      dvp_a(k,l,0) = 0.0d0
+      D3MM_V%dvp_a(k,l,0) = 0.0d0
       do m=1,l
-        dvp_a(k,l,m) = 0.0d0
-        dvp_b(k,l,m) = 0.0d0
+        D3MM_V%dvp_a(k,l,m) = 0.0d0
+        D3MM_V%dvp_b(k,l,m) = 0.0d0
       enddo
     enddo
   enddo
   close(10)
 
 ! set up the splines used as radial basis functions by Ritsema
-  call splhsetup!!!!!!!!!!!!!!(spknt,qq0,qq)
+  call splhsetup(D3MM_V)!!!!!!!!!!!!!!(spknt,qq0,qq)
 
   end subroutine read_mantle_model
 
 !---------------------------
 
-  subroutine mantle_model(radius,theta,phi,dvs,dvp,drho)
-
-  use three_d_mantle_model_variables
+  subroutine mantle_model(radius,theta,phi,dvs,dvp,drho,D3MM_V)
 
   implicit none
+
+  include "constants.h"
+
+! three_d_mantle_model_variables
+  type three_d_mantle_model_variables
+    sequence
+    double precision dvs_a(0:NK,0:NS,0:NS)
+    double precision dvs_b(0:NK,0:NS,0:NS)
+    double precision dvp_a(0:NK,0:NS,0:NS)
+    double precision dvp_b(0:NK,0:NS,0:NS)
+    double precision spknt(NK+1)
+    double precision qq0(NK+1,NK+1)
+    double precision qq(3,NK+1,NK+1)
+  end type three_d_mantle_model_variables
+
+  type (three_d_mantle_model_variables) D3MM_V
+! three_d_mantle_model_variables
 
 ! factor to convert perturbations in shear speed to perturbations in density
   double precision, parameter :: SCALE_RHO = 0.40d0
 
   double precision radius,theta,phi,dvs,dvp,drho
 
-  double precision, parameter :: RMOHO = 6346600.d0
-  double precision, parameter :: RCMB = 3480000.d0
-  double precision, parameter :: R_EARTH = 6371000.d0
-  double precision, parameter :: ZERO = 0.d0
+  double precision, parameter :: RMOHO_ = 6346600.d0
+  double precision, parameter :: RCMB_ = 3480000.d0
+  double precision, parameter :: R_EARTH_ = 6371000.d0
+  double precision, parameter :: ZERO_ = 0.d0
 
   integer l,m,k
   double precision r_moho,r_cmb,xr
@@ -108,17 +113,17 @@ end module three_d_mantle_model_variables
   double precision rsple,radial_basis(0:NK)
   double precision sint,cost,x(2*NS+1),dx(2*NS+1)
 
-  dvs = ZERO
-  dvp = ZERO
-  drho = ZERO
+  dvs = ZERO_
+  dvp = ZERO_
+  drho = ZERO_
 
-  r_moho = RMOHO / R_EARTH
-  r_cmb = RCMB / R_EARTH
+  r_moho = RMOHO_ / R_EARTH_
+  r_cmb = RCMB_ / R_EARTH_
   if(radius>=r_moho .or. radius <= r_cmb) return
 
   xr=-1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
   do k=0,NK
-    radial_basis(k)=rsple(1,NK+1,spknt(1),qq0(1,NK+1-k),qq(1,1,NK+1-k),xr)
+    radial_basis(k)=rsple(1,NK+1,D3MM_V%spknt(1),D3MM_V%qq0(1,NK+1-k),D3MM_V%qq(1,1,NK+1-k),xr)
   enddo
 
   do l=0,NS
@@ -128,8 +133,8 @@ end module three_d_mantle_model_variables
     dvs_alm=0.0d0
     dvp_alm=0.0d0
     do k=0,NK
-      dvs_alm=dvs_alm+radial_basis(k)*dvs_a(k,l,0)
-      dvp_alm=dvp_alm+radial_basis(k)*dvp_a(k,l,0)
+      dvs_alm=dvs_alm+radial_basis(k)*D3MM_V%dvs_a(k,l,0)
+      dvp_alm=dvp_alm+radial_basis(k)*D3MM_V%dvp_a(k,l,0)
     enddo
     dvs=dvs+dvs_alm*x(1)
     dvp=dvp+dvp_alm*x(1)
@@ -139,10 +144,10 @@ end module three_d_mantle_model_variables
       dvs_blm=0.0d0
       dvp_blm=0.0d0
       do k=0,NK
-        dvs_alm=dvs_alm+radial_basis(k)*dvs_a(k,l,m)
-        dvp_alm=dvp_alm+radial_basis(k)*dvp_a(k,l,m)
-        dvs_blm=dvs_blm+radial_basis(k)*dvs_b(k,l,m)
-        dvp_blm=dvp_blm+radial_basis(k)*dvp_b(k,l,m)
+        dvs_alm=dvs_alm+radial_basis(k)*D3MM_V%dvs_a(k,l,m)
+        dvp_alm=dvp_alm+radial_basis(k)*D3MM_V%dvp_a(k,l,m)
+        dvs_blm=dvs_blm+radial_basis(k)*D3MM_V%dvs_b(k,l,m)
+        dvp_blm=dvp_blm+radial_basis(k)*D3MM_V%dvp_b(k,l,m)
       enddo
       dvs=dvs+(dvs_alm*dcos(dble(m)*phi)+dvs_blm*dsin(dble(m)*phi))*x(m+1)
       dvp=dvp+(dvp_alm*dcos(dble(m)*phi)+dvp_blm*dsin(dble(m)*phi))*x(m+1)
@@ -155,50 +160,65 @@ end module three_d_mantle_model_variables
 
 !----------------------------------
 
-  subroutine splhsetup!!!!!!!!!!!!!!(spknt,qq0,qq)
-
-  use three_d_mantle_model_variables
+  subroutine splhsetup(D3MM_V)!!!!!!!!!!!!!!(spknt,qq0,qq)
 
   implicit none
+  include "constants.h"
 
 !!!!!!!!!!!!!!!!!!!  double precision spknt(NK+1),qq0(NK+1,NK+1),qq(3,NK+1,NK+1)
+
+! three_d_mantle_model_variables
+  type three_d_mantle_model_variables
+    sequence
+    double precision dvs_a(0:NK,0:NS,0:NS)
+    double precision dvs_b(0:NK,0:NS,0:NS)
+    double precision dvp_a(0:NK,0:NS,0:NS)
+    double precision dvp_b(0:NK,0:NS,0:NS)
+    double precision spknt(NK+1)
+    double precision qq0(NK+1,NK+1)
+    double precision qq(3,NK+1,NK+1)
+  end type three_d_mantle_model_variables
+
+  type (three_d_mantle_model_variables) D3MM_V
+! three_d_mantle_model_variables
+
 
   integer i,j
   double precision qqwk(3,NK+1)
 
-  spknt(1) = -1.00000d0
-  spknt(2) = -0.78631d0
-  spknt(3) = -0.59207d0
-  spknt(4) = -0.41550d0
-  spknt(5) = -0.25499d0
-  spknt(6) = -0.10909d0
-  spknt(7) = 0.02353d0
-  spknt(8) = 0.14409d0
-  spknt(9) = 0.25367d0
-  spknt(10) = 0.35329d0
-  spknt(11) = 0.44384d0
-  spknt(12) = 0.52615d0
-  spknt(13) = 0.60097d0
-  spknt(14) = 0.66899d0
-  spknt(15) = 0.73081d0
-  spknt(16) = 0.78701d0
-  spknt(17) = 0.83810d0
-  spknt(18) = 0.88454d0
-  spknt(19) = 0.92675d0
-  spknt(20) = 0.96512d0
-  spknt(21) = 1.00000d0
+  D3MM_V%spknt(1) = -1.00000d0
+  D3MM_V%spknt(2) = -0.78631d0
+  D3MM_V%spknt(3) = -0.59207d0
+  D3MM_V%spknt(4) = -0.41550d0
+  D3MM_V%spknt(5) = -0.25499d0
+  D3MM_V%spknt(6) = -0.10909d0
+  D3MM_V%spknt(7) = 0.02353d0
+  D3MM_V%spknt(8) = 0.14409d0
+  D3MM_V%spknt(9) = 0.25367d0
+  D3MM_V%spknt(10) = 0.35329d0
+  D3MM_V%spknt(11) = 0.44384d0
+  D3MM_V%spknt(12) = 0.52615d0
+  D3MM_V%spknt(13) = 0.60097d0
+  D3MM_V%spknt(14) = 0.66899d0
+  D3MM_V%spknt(15) = 0.73081d0
+  D3MM_V%spknt(16) = 0.78701d0
+  D3MM_V%spknt(17) = 0.83810d0
+  D3MM_V%spknt(18) = 0.88454d0
+  D3MM_V%spknt(19) = 0.92675d0
+  D3MM_V%spknt(20) = 0.96512d0
+  D3MM_V%spknt(21) = 1.00000d0
 
   do i=1,NK+1
     do j=1,NK+1
       if(i.eq.j) then
-        qq0(j,i)=1.0d0
+        D3MM_V%qq0(j,i)=1.0d0
       else
-        qq0(j,i)=0.0d0
+        D3MM_V%qq0(j,i)=0.0d0
       endif
     enddo
   enddo
   do i=1,NK+1
-    call rspln(1,NK+1,spknt(1),qq0(1,i),qq(1,1,i),qqwk(1,1))
+    call rspln(1,NK+1,D3MM_V%spknt(1),D3MM_V%qq0(1,i),D3MM_V%qq(1,1,i),qqwk(1,1))
   enddo
 
   end subroutine splhsetup
