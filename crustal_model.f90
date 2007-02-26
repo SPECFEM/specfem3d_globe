@@ -19,39 +19,25 @@
 ! read and smooth crust2.0 model
 ! based on software routines provided with the crust2.0 model by Bassin et al.
 !
-module crustal_model_constants
 
-  implicit none
+  subroutine crustal_model(xlat,xlon,x,vp,vs,rho,moho,found_crust,CM_V)
 
-  ! crustal model parameters for crust2.0
-  integer, parameter :: NKEYS_CRUST = 359
-  integer, parameter :: NLAYERS_CRUST = 8
-  integer, parameter :: NCAP_CRUST = 180
-
-  ! use sedimentary layers of crust 2.0
-  logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
-
-end module crustal_model_constants
-
-module crustal_model_variables
-
-  use crustal_model_constants
-
-  implicit none
-
-  double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr,velocp,velocs,dens
-
-  character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST),code(NKEYS_CRUST)
-
-end module crustal_model_variables
-
-!---------------------------
-
-  subroutine crustal_model(xlat,xlon,x,vp,vs,rho,moho,found_crust)
-
-  use crustal_model_variables
   implicit none
   include "constants.h"
+
+! crustal_model_variables
+  type crustal_model_variables
+    sequence
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
+    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
+    character(len=2) code(NKEYS_CRUST)
+  end type crustal_model_variables
+  
+  type (crustal_model_variables) CM_V
+! crustal_model_variables
 
   double precision xlat,xlon,x,vp,vs,rho,moho
   logical found_crust
@@ -60,7 +46,7 @@ end module crustal_model_variables
   double precision x3,x4,x5,x6,x7,scaleval
   double precision vps(NLAYERS_CRUST),vss(NLAYERS_CRUST),rhos(NLAYERS_CRUST),thicks(NLAYERS_CRUST)
 
-  call crust(xlat,xlon,vps,vss,rhos,thicks,abbreviation,code,thlr,velocp,velocs,dens)
+  call crust(xlat,xlon,vps,vss,rhos,thicks,CM_V%abbreviation,CM_V%code,CM_V%thlr,CM_V%velocp,CM_V%velocs,CM_V%dens)
 
  x3 = (R_EARTH-thicks(3)*1000.0d0)/R_EARTH
  h_sed = thicks(3) + thicks(4)
@@ -108,11 +94,24 @@ end module crustal_model_variables
 
 !---------------------------
 
-  subroutine read_crustal_model
+  subroutine read_crustal_model(CM_V)
 
-  use crustal_model_variables
   implicit none
   include "constants.h"
+
+! crustal_model_variables
+  type crustal_model_variables
+    sequence
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
+    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
+    character(len=2) code(NKEYS_CRUST)
+  end type crustal_model_variables
+  
+  type (crustal_model_variables) CM_V
+! crustal_model_variables
 
 ! local variables
   integer i
@@ -128,7 +127,7 @@ end module crustal_model_variables
 
   open(unit=1,file=CNtype2,status='old',action='read')
   do ila=1,NCAP_CRUST/2
-    read(1,*) icolat,(abbreviation(ila,i),i=1,NCAP_CRUST)
+    read(1,*) icolat,(CM_V%abbreviation(ila,i),i=1,NCAP_CRUST)
   enddo
   close(1)
 
@@ -136,13 +135,13 @@ end module crustal_model_variables
   h_moho_min=HUGEVAL
   h_moho_max=-HUGEVAL
   do ikey=1,NKEYS_CRUST
-    read (1,"(a2)") code(ikey)
-    read (1,*) (velocp(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (velocs(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (dens(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (thlr(ikey,i),i=1,NLAYERS_CRUST-1),thlr(ikey,NLAYERS_CRUST)
-    if(thlr(ikey,NLAYERS_CRUST) > h_moho_max) h_moho_max=thlr(ikey,NLAYERS_CRUST)
-    if(thlr(ikey,NLAYERS_CRUST) < h_moho_min) h_moho_min=thlr(ikey,NLAYERS_CRUST)
+    read (1,"(a2)") CM_V%code(ikey)
+    read (1,*) (CM_V%velocp(ikey,i),i=1,NLAYERS_CRUST)
+    read (1,*) (CM_V%velocs(ikey,i),i=1,NLAYERS_CRUST)
+    read (1,*) (CM_V%dens(ikey,i),i=1,NLAYERS_CRUST)
+    read (1,*) (CM_V%thlr(ikey,i),i=1,NLAYERS_CRUST-1),CM_V%thlr(ikey,NLAYERS_CRUST)
+    if(CM_V%thlr(ikey,NLAYERS_CRUST) > h_moho_max) h_moho_max=CM_V%thlr(ikey,NLAYERS_CRUST)
+    if(CM_V%thlr(ikey,NLAYERS_CRUST) < h_moho_min) h_moho_min=CM_V%thlr(ikey,NLAYERS_CRUST)
   enddo
   close(1)
 
@@ -160,7 +159,6 @@ end module crustal_model_variables
 ! in the theta direction and NPHI in the phi direction.
 ! The cap is rotated to the North Pole.
 
-  use crustal_model_constants
   implicit none
   include "constants.h"
 
@@ -323,7 +321,6 @@ end module crustal_model_variables
   subroutine get_crust_structure(type,vptyp,vstyp,rhtyp,thtp, &
                code,thlr,velocp,velocs,dens,ierr)
 
-  use crustal_model_constants
   implicit none
   include "constants.h"
 

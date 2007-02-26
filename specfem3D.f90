@@ -51,6 +51,27 @@
   include "constants.h"
   include "precision.h"
 
+! attenuation_model_variables --- have to be checked : may be in OUTPUT_FILES/values_from_mesher.h ...
+  type attenuation_model_variables
+    sequence
+    double precision min_period, max_period
+    double precision                          :: QT_c_source        ! Source Frequency
+    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
+    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer                                   :: Qn                 ! Number of points
+  end type attenuation_model_variables
+  
+  type (attenuation_model_variables) AM_V
+! attenuation_model_variables
+
 ! include values created by the mesher
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -839,9 +860,18 @@
      NSPEC_AB(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE_AB .or. &
      NSPEC_AC(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE_AC .or. &
      NSPEC_BC(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE_BC .or. &
-     NSPEC_AB(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) &
+     NSPEC_AB(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) then 
+     if (myrank==0) then
+       write(IMAIN,*) NSPEC_AB(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE_AB
+       write(IMAIN,*) NSPEC_AC(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE_AC
+       write(IMAIN,*) NSPEC_BC(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE_BC
+       write(IMAIN,*) NSPEC_AB(IREGION_OUTER_CORE), NSPEC_OUTER_CORE_AB
+       write(IMAIN,*) NSPEC_AC(IREGION_OUTER_CORE), NSPEC_OUTER_CORE_AC
+       write(IMAIN,*) NSPEC_BC(IREGION_OUTER_CORE), NSPEC_OUTER_CORE_BC
+       write(IMAIN,*) NSPEC_AB(IREGION_INNER_CORE), NSPEC_INNER_CORE
+     endif
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver')
-
+  endif
 ! dynamic allocation of arrays
 
 ! indirect addressing for each corner of the chunks
@@ -2182,12 +2212,12 @@
         call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
         call get_attenuation_model_1D(myrank, prname, IREGION_CRUST_MANTLE, tau_sigma_dble, &
              omsb_crust_mantle_dble, factor_common_crust_mantle_dble,  &
-             factor_scale_crust_mantle_dble, NRAD_ATTENUATION,1,1,1)
+             factor_scale_crust_mantle_dble, NRAD_ATTENUATION,1,1,1, AM_V)
         omsb_inner_core_dble(:,:,:,:)            = omsb_crust_mantle_dble(:,:,:,:)
         factor_scale_inner_core_dble(:,:,:,:)    = factor_scale_crust_mantle_dble(:,:,:,:)
         factor_common_inner_core_dble(:,:,:,:,:) = factor_common_crust_mantle_dble(:,:,:,:,:)
         ! Tell the Attenuation Code about the IDOUBLING regions within the Mesh
-        call set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80)
+        call set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
      endif ! ATTENUATION_3D
 
    if(CUSTOM_REAL == SIZE_REAL) then
@@ -2236,7 +2266,7 @@
                    p20     = 0.5 * (3.0 * cost * cost - 1.0)
                    dist_cr = dist_cr * (1.0 + (2.0/3.0) * ell_d80 * p20)
                 endif
-                call get_attenuation_index(idoubling_crust_mantle(ispec), dble(dist_cr), iregion_selected, .FALSE.)
+                call get_attenuation_index(idoubling_crust_mantle(ispec), dble(dist_cr), iregion_selected, .FALSE., AM_V)
                 scale_factor = factor_scale_crust_mantle(1,1,1,iregion_selected)
              endif ! ATTENUATION_3D
 
@@ -2284,7 +2314,7 @@
             else
                iglob   = ibool_inner_core(i,j,k,ispec)
                dist_cr = xstore_inner_core(iglob)
-               call get_attenuation_index(idoubling_inner_core(ispec), dble(dist_cr), iregion_selected, .TRUE.)
+               call get_attenuation_index(idoubling_inner_core(ispec), dble(dist_cr), iregion_selected, .TRUE., AM_V)
                scale_factor_minus_one = factor_scale_inner_core(1,1,1,iregion_selected) - 1.
             endif
 
@@ -3267,7 +3297,7 @@
           R_memory_crust_mantle,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),SAVE_STRAIN)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),SAVE_STRAIN,AM_V)
 
   if (SIMULATION_TYPE == 3) then
 ! for anisotropy and gravity, x y and z contain r theta and phi
@@ -3293,7 +3323,7 @@
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),SAVE_STRAIN)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),SAVE_STRAIN,AM_V)
   endif
 
 
@@ -3543,7 +3573,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),SAVE_STRAIN)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),SAVE_STRAIN,AM_V)
 
   if (SIMULATION_TYPE == 3) then
   call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -3562,7 +3592,7 @@
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),SAVE_STRAIN)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),SAVE_STRAIN,AM_V)
   endif
 
 ! add the sources

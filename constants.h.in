@@ -348,3 +348,21 @@
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
 
+!!!!!!!!!!!!!! parameters added for the thread-safe transformation of the code
+! number of layers in DATA/1066a/1066a.dat
+  integer, parameter :: NR_1066A = 160
+
+! number of layers in DATA/ak135/ak135.dat
+  integer, parameter :: NR_AK135 = 144
+
+! three_d_mantle_model_constants
+  integer, parameter :: NK = 20,NS = 20,ND = 1
+
+! crustal_model_constants
+  ! crustal model parameters for crust2.0
+    integer, parameter :: NKEYS_CRUST = 359
+    integer, parameter :: NLAYERS_CRUST = 8
+    integer, parameter :: NCAP_CRUST = 180
+  ! use sedimentary layers of crust 2.0
+    logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
+!!!!!!!!!!!!!! parameters added for the thread-safe transformation of the code

@@ -34,7 +34,8 @@
            aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
            attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
            NCHUNKS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
-           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
+           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN,&
+           AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V, AM_S, AS_V)
 
 ! create the different regions of the mesh
 
@@ -44,6 +45,124 @@
 
   external mantle_model,crustal_model,aniso_mantle_model, &
        aniso_inner_core_model,attenuation_model
+
+! aniso_mantle_model_variables
+  type aniso_mantle_model_variables
+    sequence
+    double precision beta(14,34,37,73)
+    double precision pro(47)
+    integer npar1
+  end type aniso_mantle_model_variables
+
+  type (aniso_mantle_model_variables) AMM_V
+! aniso_mantle_model_variables
+
+! attenuation_model_variables
+  type attenuation_model_variables
+    sequence
+    double precision min_period, max_period
+    double precision                          :: QT_c_source        ! Source Frequency
+    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
+    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer                                   :: Qn                 ! Number of points
+  end type attenuation_model_variables
+  
+  type (attenuation_model_variables) AM_V
+! attenuation_model_variables
+
+! model_1066a_variables
+  type model_1066a_variables
+    sequence
+      double precision, dimension(NR_1066A) :: radius_1066a
+      double precision, dimension(NR_1066A) :: density_1066a
+      double precision, dimension(NR_1066A) :: vp_1066a
+      double precision, dimension(NR_1066A) :: vs_1066a
+      double precision, dimension(NR_1066A) :: Qkappa_1066a
+      double precision, dimension(NR_1066A) :: Qmu_1066a
+  end type model_1066a_variables
+
+  type (model_1066a_variables) M1066a_V
+! model_1066a_variables
+
+! model_ak135_variables
+  type model_ak135_variables
+    sequence
+    double precision, dimension(NR_AK135) :: radius_ak135
+    double precision, dimension(NR_AK135) :: density_ak135
+    double precision, dimension(NR_AK135) :: vp_ak135
+    double precision, dimension(NR_AK135) :: vs_ak135
+    double precision, dimension(NR_AK135) :: Qkappa_ak135
+    double precision, dimension(NR_AK135) :: Qmu_ak135
+  end type model_ak135_variables
+
+ type (model_ak135_variables) Mak135_V
+! model_ak135_variables
+
+! three_d_mantle_model_variables
+  type three_d_mantle_model_variables
+    sequence
+    double precision dvs_a(0:NK,0:NS,0:NS)
+    double precision dvs_b(0:NK,0:NS,0:NS)
+    double precision dvp_a(0:NK,0:NS,0:NS)
+    double precision dvp_b(0:NK,0:NS,0:NS)
+    double precision spknt(NK+1)
+    double precision qq0(NK+1,NK+1)
+    double precision qq(3,NK+1,NK+1)
+  end type three_d_mantle_model_variables
+
+  type (three_d_mantle_model_variables) D3MM_V
+! three_d_mantle_model_variables
+
+! crustal_model_variables
+  type crustal_model_variables
+    sequence
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
+    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
+    character(len=2) code(NKEYS_CRUST)
+  end type crustal_model_variables
+  
+  type (crustal_model_variables) CM_V
+! crustal_model_variables
+
+! attenuation_model_storage
+  type attenuation_model_storage
+    sequence
+    integer Q_resolution
+    integer Q_max
+    double precision, dimension(:,:), pointer :: tau_e_storage
+    double precision, dimension(:), pointer :: Qmu_storage
+  end type attenuation_model_storage
+  
+  type (attenuation_model_storage) AM_S
+! attenuation_model_storage
+
+! attenuation_simplex_variables
+  type attenuation_simplex_variables
+    sequence
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids
+    double precision Q  ! Q     = Desired Value of Attenuation or Q
+    double precision iQ ! iQ    = 1/Q
+    double precision, dimension(:), pointer ::  f
+    ! f = Frequencies at which to evaluate the solution
+    double precision, dimension(:), pointer :: tau_s
+    ! tau_s = Tau_sigma defined by the frequency range and
+    !             number of standard linear solids
+  end type attenuation_simplex_variables
+
+  type(attenuation_simplex_variables) AS_V
+! attenuation_simplex_variables
 
 ! correct number of spectral elements in each block depending on chunk type
   integer nspec,nspec_tiso,nspec_stacey
@@ -385,8 +504,8 @@
   allocate(zp(npointot))
 
 ! define models 1066a and ak135
-  call define_model_1066a(CRUSTAL)
-  call define_model_ak135(CRUSTAL)
+  call define_model_1066a(CRUSTAL, M1066a_V)
+  call define_model_ak135(CRUSTAL, Mak135_V)
 
 ! generate the elements in all the regions of the mesh
   ispec = 0
@@ -467,7 +586,8 @@
           attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
           size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
           NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
-          R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
+          R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN,&
+          AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
 
 ! add topography without the crustal model
         if(TOPOGRAPHY .and. (idoubling(ispec) == IFLAG_CRUST &
@@ -627,7 +747,8 @@
           attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
           size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
           NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
-          R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
+          R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN,&
+          AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
 
 ! make the Earth elliptical
         if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
@@ -915,7 +1036,7 @@
             tau_s,tau_e_store,Qmu_store,T_c_source, &
             ATTENUATION,ATTENUATION_3D, &
             size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
-            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS)
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS, AM_V)
 
   do ispec=1,nspec
     do k=1,NGLLZ

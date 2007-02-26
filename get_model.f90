@@ -31,7 +31,8 @@
     aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
     attenuation_model,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
     NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
-    R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN)
+    R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN,&
+    AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V, AM_S, AS_V)
 
   implicit none
 
@@ -39,6 +40,125 @@
 
   external mantle_model,crustal_model,aniso_mantle_model, &
        aniso_inner_core_model,attenuation_model
+
+! aniso_mantle_model_variables
+  type aniso_mantle_model_variables
+    sequence
+    double precision beta(14,34,37,73)
+    double precision pro(47)
+    integer npar1
+  end type aniso_mantle_model_variables
+
+  type (aniso_mantle_model_variables) AMM_V
+! aniso_mantle_model_variables
+
+! attenuation_model_variables
+  type attenuation_model_variables
+    sequence
+    double precision min_period, max_period
+    double precision                          :: QT_c_source        ! Source Frequency
+    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
+    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer                                   :: Qn                 ! Number of points
+  end type attenuation_model_variables
+
+  type (attenuation_model_variables) AM_V
+! attenuation_model_variables
+
+! model_1066a_variables
+  type model_1066a_variables
+    sequence
+      double precision, dimension(NR_1066A) :: radius_1066a
+      double precision, dimension(NR_1066A) :: density_1066a
+      double precision, dimension(NR_1066A) :: vp_1066a
+      double precision, dimension(NR_1066A) :: vs_1066a
+      double precision, dimension(NR_1066A) :: Qkappa_1066a
+      double precision, dimension(NR_1066A) :: Qmu_1066a
+  end type model_1066a_variables
+
+  type (model_1066a_variables) M1066a_V
+! model_1066a_variables
+
+! model_ak135_variables
+  type model_ak135_variables
+    sequence
+    double precision, dimension(NR_AK135) :: radius_ak135
+    double precision, dimension(NR_AK135) :: density_ak135
+    double precision, dimension(NR_AK135) :: vp_ak135
+    double precision, dimension(NR_AK135) :: vs_ak135
+    double precision, dimension(NR_AK135) :: Qkappa_ak135
+    double precision, dimension(NR_AK135) :: Qmu_ak135
+  end type model_ak135_variables
+
+ type (model_ak135_variables) Mak135_V
+! model_ak135_variables
+
+! three_d_mantle_model_variables
+  type three_d_mantle_model_variables
+    sequence
+    double precision dvs_a(0:NK,0:NS,0:NS)
+    double precision dvs_b(0:NK,0:NS,0:NS)
+    double precision dvp_a(0:NK,0:NS,0:NS)
+    double precision dvp_b(0:NK,0:NS,0:NS)
+    double precision spknt(NK+1)
+    double precision qq0(NK+1,NK+1)
+    double precision qq(3,NK+1,NK+1)
+  end type three_d_mantle_model_variables
+
+  type (three_d_mantle_model_variables) D3MM_V
+! three_d_mantle_model_variables
+
+! crustal_model_variables
+  type crustal_model_variables
+    sequence
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
+    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
+    character(len=2) code(NKEYS_CRUST)
+  end type crustal_model_variables
+  
+  type (crustal_model_variables) CM_V
+! crustal_model_variables
+
+! attenuation_model_storage
+  type attenuation_model_storage
+    sequence
+    integer Q_resolution
+    integer Q_max
+    double precision, dimension(:,:), pointer :: tau_e_storage
+    double precision, dimension(:), pointer :: Qmu_storage
+  end type attenuation_model_storage
+  
+  type (attenuation_model_storage) AM_S
+! attenuation_model_storage
+
+! attenuation_simplex_variables
+  type attenuation_simplex_variables
+    sequence
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids
+    double precision Q  ! Q     = Desired Value of Attenuation or Q
+    double precision iQ ! iQ    = 1/Q
+    double precision, dimension(:), pointer ::  f
+    ! f = Frequencies at which to evaluate the solution
+    double precision, dimension(:), pointer :: tau_s
+    ! tau_s = Tau_sigma defined by the frequency range and
+    !             number of standard linear solids
+  end type attenuation_simplex_variables
+
+  type(attenuation_simplex_variables) AS_V
+! attenuation_simplex_variables
+
 
   integer ispec,nspec,ichunk,idoubling,iregion_code,myrank,nspec_stacey
   integer NPROC_XI,NPROC_ETA,NCHUNKS,REFERENCE_1D_MODEL
@@ -151,10 +271,10 @@
              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-           call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
+           call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code, M1066a_V)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-           call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
+           call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code, Mak135_V)
 
          else
            stop 'unknown 1D reference Earth model in get_model'
@@ -175,7 +295,7 @@
            dvs = ZERO
            dvp = ZERO
            drho = ZERO
-           call mantle_model(r,theta,phi,dvs,dvp,drho)
+           call mantle_model(r,theta,phi,dvs,dvp,drho,D3MM_V)
            vpv=vpv*(1.0d0+dvp)
            vph=vph*(1.0d0+dvp)
            vsv=vsv*(1.0d0+dvs)
@@ -190,7 +310,7 @@
            dvp = ZERO
            drho = ZERO
            r_moho = RMOHO/R_EARTH
-           call mantle_model(r_moho,theta,phi,dvs,dvp,drho)
+           call mantle_model(r_moho,theta,phi,dvs,dvp,drho,D3MM_V)
            vpv=vpv*(1.0d0+dvp)
            vph=vph*(1.0d0+dvp)
            vsv=vsv*(1.0d0+dvs)
@@ -210,14 +330,14 @@
            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
            call reduce(theta,phi)
            call aniso_mantle_model(r_prem,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
-              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,AMM_V)
 ! extend 3-D mantle model above the Moho to the surface before adding the crust
          elseif(r_prem >= RMOHO/R_EARTH) then
            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
            call reduce(theta,phi)
            r_moho = RMOHO/R_EARTH
            call aniso_mantle_model(r_moho,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
-              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,AMM_V)
 ! fill the rest of the mantle with the isotropic model
          else
            c11 = rho*vpv*vpv
@@ -251,7 +371,7 @@
          lon=phi*180.0d0/PI
          if(lon > 180.0d0) lon = lon - 360.0d0
          call attenuation_model(r_prem, lat, lon, Qmu)
-         call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e)
+         call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
        endif
 
 !      get the 3-D crustal model
@@ -263,7 +383,7 @@
            lat=(PI/2.0d0-theta)*180.0d0/PI
            lon=phi*180.0d0/PI
            if(lon>180.0d0) lon=lon-360.0d0
-           call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust)
+           call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V)
            if (found_crust) then
              vpv=vpc
              vph=vpc

@@ -24,7 +24,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
           one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec,SAVE_STRAIN)
+          vx,vy,vz,vnspec,SAVE_STRAIN, AM_V)
 
   implicit none
 
@@ -33,6 +33,27 @@
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
+
+! attenuation_model_variables
+  type attenuation_model_variables
+    sequence
+    double precision min_period, max_period
+    double precision                          :: QT_c_source        ! Source Frequency
+    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
+    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer                                   :: Qn                 ! Number of points
+  end type attenuation_model_variables
+  
+  type (attenuation_model_variables) AM_V
+! attenuation_model_variables
 
 ! for forward or backward simulations
   logical SAVE_STRAIN
@@ -229,7 +250,7 @@
      else
         iglob     = ibool(i,j,k,ispec)
         radius_cr = xstore(iglob)
-        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE.)
+        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
         minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
      endif ! ATTENUATION_VAL_3D
   endif ! ATTENUATION_VAL
