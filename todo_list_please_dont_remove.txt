@@ -63,6 +63,8 @@ check*.f90, qui sont amenes a disparaitre)
 ! inner core
   call assemble_MPI_vector(myrank,accel_inner_core,NGLOB_INNER_CORE, & ...
 
+- compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf à l'Idris afin de vérifier avant le commit que le code ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de vérifier la portabilité du code final
+
 - utiliser netCDF pour stocker du binaire partout où c'est nécessaire. voir si ça vaut le coup de stocker les gros fichiers de topographie dans DATA/topo_bathy dans ce format ou non, afin de réduire leur taille
 
 - run Sdiff calculations for Lev Vinnik (Moscow, Russia)
