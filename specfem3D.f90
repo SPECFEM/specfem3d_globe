@@ -51,27 +51,6 @@
   include "constants.h"
   include "precision.h"
 
-! attenuation_model_variables --- have to be checked : may be in OUTPUT_FILES/values_from_mesher.h ...
-  type attenuation_model_variables
-    sequence
-    double precision min_period, max_period
-    double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
-    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-    integer                                   :: Qn                 ! Number of points
-  end type attenuation_model_variables
-  
-  type (attenuation_model_variables) AM_V
-! attenuation_model_variables
-
 ! include values created by the mesher
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -82,8 +61,7 @@
 !                                                                       !
 !=======================================================================!
 !
-! If you use this code for your own research, please send an email
-! to Jeroen Tromp <jtromp AT caltech.edu> for information, and cite:
+! If you use this code for your own research, please cite some of these articles:
 !
 ! @ARTICLE{KoRiTr02,
 ! author={D. Komatitsch and J. Ritsema and J. Tromp},
@@ -136,13 +114,16 @@
 !
 ! If you use the kernel capabilities of the code, please cite
 !
-!@article{Liu06b,
-!     AUTHOR = {Q. Liu and J. Tromp},
-!     TITLE = {{Finite-frequency sensitivity kernels for global seismic wave propagation based upon adjoint methods}},
-!     NOTE = {in preparation},
-!     YEAR = {2006}
-!}
-
+! @ARTICLE{LiTr06,
+! author={Qinya Liu and Jeroen Tromp},
+! title={Finite-frequency kernels based on adjoint methods},
+! journal={Bull. Seismol. Soc. Am.},
+! year=2006,
+! volume=96,
+! number=6,
+! pages={2383-2397},
+! doi={10.1785/0120060041}}
+!
 ! If you use 3-D model S20RTS, please cite
 !
 ! @ARTICLE{RiVa00,
@@ -221,6 +202,27 @@
 !
 ! the potential in the outer core is called displ_outer_core for simplicity
 !
+
+! attenuation_model_variables --- have to be checked : may be in OUTPUT_FILES/values_from_mesher.h ...
+  type attenuation_model_variables
+    sequence
+    double precision min_period, max_period
+    double precision                          :: QT_c_source        ! Source Frequency
+    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
+    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer                                   :: Qn                 ! Number of points
+  end type attenuation_model_variables
+
+  type (attenuation_model_variables) AM_V
+! attenuation_model_variables
 
 ! memory variables and standard linear solids for attenuation
   double precision, dimension(N_SLS) :: tau_sigma_dble
@@ -860,7 +862,7 @@
      NSPEC_AB(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE_AB .or. &
      NSPEC_AC(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE_AC .or. &
      NSPEC_BC(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE_BC .or. &
-     NSPEC_AB(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) then 
+     NSPEC_AB(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) then
      if (myrank==0) then
        write(IMAIN,*) NSPEC_AB(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE_AB
        write(IMAIN,*) NSPEC_AC(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE_AC

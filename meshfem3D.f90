@@ -51,124 +51,6 @@
   include "constants.h"
   include "precision.h"
 
-! aniso_mantle_model_variables
-  type aniso_mantle_model_variables
-    sequence
-    double precision beta(14,34,37,73)
-    double precision pro(47)
-    integer npar1
-  end type aniso_mantle_model_variables
-
-  type (aniso_mantle_model_variables) AMM_V
-! aniso_mantle_model_variables
-
-! attenuation_model_variables
-  type attenuation_model_variables
-    sequence
-    double precision min_period, max_period
-    double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
-    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-    integer                                   :: Qn                 ! Number of points
-  end type attenuation_model_variables
-  
-  type (attenuation_model_variables) AM_V
-! attenuation_model_variables
-
-! model_1066a_variables
-  type model_1066a_variables
-    sequence
-      double precision, dimension(NR_1066A) :: radius_1066a
-      double precision, dimension(NR_1066A) :: density_1066a
-      double precision, dimension(NR_1066A) :: vp_1066a
-      double precision, dimension(NR_1066A) :: vs_1066a
-      double precision, dimension(NR_1066A) :: Qkappa_1066a
-      double precision, dimension(NR_1066A) :: Qmu_1066a
-  end type model_1066a_variables
-
-  type (model_1066a_variables) M1066a_V
-! model_1066a_variables
-
-! model_ak135_variables
-  type model_ak135_variables
-    sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
-  end type model_ak135_variables
-
- type (model_ak135_variables) Mak135_V
-! model_ak135_variables
-
-! three_d_mantle_model_variables
-  type three_d_mantle_model_variables
-    sequence
-    double precision dvs_a(0:NK,0:NS,0:NS)
-    double precision dvs_b(0:NK,0:NS,0:NS)
-    double precision dvp_a(0:NK,0:NS,0:NS)
-    double precision dvp_b(0:NK,0:NS,0:NS)
-    double precision spknt(NK+1)
-    double precision qq0(NK+1,NK+1)
-    double precision qq(3,NK+1,NK+1)
-  end type three_d_mantle_model_variables
-
-  type (three_d_mantle_model_variables) D3MM_V
-! three_d_mantle_model_variables
-
-! crustal_model_variables
-  type crustal_model_variables
-    sequence
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
-    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-    character(len=2) code(NKEYS_CRUST)
-  end type crustal_model_variables
-
-  type (crustal_model_variables) CM_V
-! crustal_model_variables
-
-! attenuation_model_storage
-  type attenuation_model_storage
-    sequence
-    integer Q_resolution
-    integer Q_max
-    double precision, dimension(:,:), pointer :: tau_e_storage
-    double precision, dimension(:), pointer :: Qmu_storage
-  end type attenuation_model_storage
-  
-  type (attenuation_model_storage) AM_S
-! attenuation_model_storage
-
-! attenuation_simplex_variables
-  type attenuation_simplex_variables
-    sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
-    double precision Q  ! Q     = Desired Value of Attenuation or Q
-    double precision iQ ! iQ    = 1/Q
-    double precision, dimension(:), pointer ::  f
-    ! f = Frequencies at which to evaluate the solution
-    double precision, dimension(:), pointer :: tau_s
-    ! tau_s = Tau_sigma defined by the frequency range and
-    !             number of standard linear solids
-  end type attenuation_simplex_variables
-
-  type(attenuation_simplex_variables) AS_V
-! attenuation_simplex_variables
-
 !=====================================================================!
 !                                                                     !
 !  meshfem3D produces a spectral element grid for the Earth.          !
@@ -179,8 +61,7 @@
 !                                                                     !
 !=====================================================================!
 !
-! If you use this code for your own research, please send an email
-! to Jeroen Tromp <jtromp AT caltech.edu> for information, and cite:
+! If you use this code for your own research, please cite some of these articles:
 !
 ! @ARTICLE{KoRiTr02,
 ! author={D. Komatitsch and J. Ritsema and J. Tromp},
@@ -230,6 +111,18 @@
 ! volume=88,
 ! number=2,
 ! pages={368-392}}
+!
+! If you use the kernel capabilities of the code, please cite
+!
+! @ARTICLE{LiTr06,
+! author={Qinya Liu and Jeroen Tromp},
+! title={Finite-frequency kernels based on adjoint methods},
+! journal={Bull. Seismol. Soc. Am.},
+! year=2006,
+! volume=96,
+! number=6,
+! pages={2383-2397},
+! doi={10.1785/0120060041}}
 !
 ! If you use 3-D model S20RTS, please cite
 !
@@ -300,6 +193,124 @@
 ! Jeroen Tromp, Harvard, July 1998: first chunk solver using OpenMP on Sun
 ! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
 !
+
+! aniso_mantle_model_variables
+  type aniso_mantle_model_variables
+    sequence
+    double precision beta(14,34,37,73)
+    double precision pro(47)
+    integer npar1
+  end type aniso_mantle_model_variables
+
+  type (aniso_mantle_model_variables) AMM_V
+! aniso_mantle_model_variables
+
+! attenuation_model_variables
+  type attenuation_model_variables
+    sequence
+    double precision min_period, max_period
+    double precision                          :: QT_c_source        ! Source Frequency
+    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
+    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer                                   :: Qn                 ! Number of points
+  end type attenuation_model_variables
+
+  type (attenuation_model_variables) AM_V
+! attenuation_model_variables
+
+! model_1066a_variables
+  type model_1066a_variables
+    sequence
+      double precision, dimension(NR_1066A) :: radius_1066a
+      double precision, dimension(NR_1066A) :: density_1066a
+      double precision, dimension(NR_1066A) :: vp_1066a
+      double precision, dimension(NR_1066A) :: vs_1066a
+      double precision, dimension(NR_1066A) :: Qkappa_1066a
+      double precision, dimension(NR_1066A) :: Qmu_1066a
+  end type model_1066a_variables
+
+  type (model_1066a_variables) M1066a_V
+! model_1066a_variables
+
+! model_ak135_variables
+  type model_ak135_variables
+    sequence
+    double precision, dimension(NR_AK135) :: radius_ak135
+    double precision, dimension(NR_AK135) :: density_ak135
+    double precision, dimension(NR_AK135) :: vp_ak135
+    double precision, dimension(NR_AK135) :: vs_ak135
+    double precision, dimension(NR_AK135) :: Qkappa_ak135
+    double precision, dimension(NR_AK135) :: Qmu_ak135
+  end type model_ak135_variables
+
+ type (model_ak135_variables) Mak135_V
+! model_ak135_variables
+
+! three_d_mantle_model_variables
+  type three_d_mantle_model_variables
+    sequence
+    double precision dvs_a(0:NK,0:NS,0:NS)
+    double precision dvs_b(0:NK,0:NS,0:NS)
+    double precision dvp_a(0:NK,0:NS,0:NS)
+    double precision dvp_b(0:NK,0:NS,0:NS)
+    double precision spknt(NK+1)
+    double precision qq0(NK+1,NK+1)
+    double precision qq(3,NK+1,NK+1)
+  end type three_d_mantle_model_variables
+
+  type (three_d_mantle_model_variables) D3MM_V
+! three_d_mantle_model_variables
+
+! crustal_model_variables
+  type crustal_model_variables
+    sequence
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
+    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
+    character(len=2) code(NKEYS_CRUST)
+  end type crustal_model_variables
+
+  type (crustal_model_variables) CM_V
+! crustal_model_variables
+
+! attenuation_model_storage
+  type attenuation_model_storage
+    sequence
+    integer Q_resolution
+    integer Q_max
+    double precision, dimension(:,:), pointer :: tau_e_storage
+    double precision, dimension(:), pointer :: Qmu_storage
+  end type attenuation_model_storage
+
+  type (attenuation_model_storage) AM_S
+! attenuation_model_storage
+
+! attenuation_simplex_variables
+  type attenuation_simplex_variables
+    sequence
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids
+    double precision Q  ! Q     = Desired Value of Attenuation or Q
+    double precision iQ ! iQ    = 1/Q
+    double precision, dimension(:), pointer ::  f
+    ! f = Frequencies at which to evaluate the solution
+    double precision, dimension(:), pointer :: tau_s
+    ! tau_s = Tau_sigma defined by the frequency range and
+    !             number of standard linear solids
+  end type attenuation_simplex_variables
+
+  type(attenuation_simplex_variables) AS_V
+! attenuation_simplex_variables
 
   external read_crustal_model,read_mantle_model,  &
        read_aniso_mantle_model,read_aniso_inner_core_model, &
