@@ -2508,9 +2508,10 @@
   endif
 
 ! define constants for the time integration
-! scaling to make displacement in meters
+! scaling to make displacement in meters and velocity in meters per second
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
   scale_displ = R_EARTH
+  scale_veloc = scale_displ / scale_t
 
 ! distinguish between single and double precision for reals
   if(CUSTOM_REAL == SIZE_REAL) then
@@ -4344,9 +4345,6 @@
 
 ! save velocity here to avoid static offset on displacement for movies
 
-! rescale non-dimensional velocity to right units
-    scale_veloc = scale_displ / scale_t
-
 ! get coordinates of surface mesh and surface displacement
     ipoin = 0
     do ispec2D = 1,NSPEC2D_TOP(IREGION_CRUST_MANTLE)
@@ -4361,9 +4359,9 @@
           store_val_x(ipoin) = xstore_crust_mantle(iglob)
           store_val_y(ipoin) = ystore_crust_mantle(iglob)
           store_val_z(ipoin) = zstore_crust_mantle(iglob)
-          store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)
-          store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)
-          store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)
+          store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
+          store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
+          store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
         enddo
       enddo
 
