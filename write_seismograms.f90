@@ -112,7 +112,7 @@
 ! get global number of that receiver
     irec = number_receiver_global(irec_local)
 
-    do iorientation = 1,3
+    do iorientation = 1,NDIM
 
       if(iorientation == 1) then
         chn = 'LHN'
