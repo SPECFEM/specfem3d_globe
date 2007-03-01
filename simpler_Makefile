@@ -44,8 +44,8 @@
 ######## IBM SP or Power 4 ######
 F90 = xlf_r
 MPIF90 = mpxlf_r
-FLAGS_CHECK = -O2 -qfree=f90
-FLAGS_NO_CHECK = -O3 -qfree=f90
+FLAGS_CHECK = -O2 -qlanglvl=95pure -qfree=f90 -qsuffix=f=f90 -qsave -qnostrict -qhalt=w
+FLAGS_NO_CHECK = -O3 -qlanglvl=95pure -qfree=f90 -qsuffix=f=f90 -qsave -qnostrict -qhalt=w
 MPI_FLAGS = 
 
 O = obj
