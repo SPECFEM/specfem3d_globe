@@ -1070,11 +1070,9 @@ subroutine attenuation_simplex_finish(AS_V)
 
   type(attenuation_simplex_variables) AS_V
 ! attenuation_simplex_variables
-  write(42,*) 'debut attenuation_simplex_finish'
 
   deallocate(AS_V%f)
   deallocate(AS_V%tau_s)
-  write(42,*) 'fin attenuation_simplex_finish'
 
 end subroutine attenuation_simplex_finish
 
