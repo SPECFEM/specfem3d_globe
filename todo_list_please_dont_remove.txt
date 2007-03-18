@@ -2,9 +2,6 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
-David:
-------
-
 # enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type (*mais* il faudra quand même laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout où il y en a, car on continue à traiter 6 blocs, même s'ils ont maintenant la même topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs -> {ok pour le mailleur, reste la différentiation dans le solveur, mais sans conséquences. A mettre à plat lors de la fusion. DM.}
 
 # enlever les "modules" et "use" partout où il y en a (pour anisotropie etc) car ce n'est pas "thread safe" et donc ça se plantera si on utilise MPC au lieu de MPI. Remplacer par la transmission explicite des paramètres aux subroutines. Peut-être dire dans le manuel utilisateur qu'il ne faut pas utiliser de modules pour cette raison ? -> {OK. DM.}
@@ -73,11 +70,6 @@ check*.f90, qui sont amenes a disparaitre)
 
 - carefully study and improve the stability condition and increase/adapt time step DT accordingly (do this with Dimitri, by trial and error)
 
----------------------------------------------------------------------------------
-
-David et Dimitri, quand nous serons à Barcelone en mai:
--------------------------------------------------------
-
 - develop two-level Cuthill-McKee sorting for the two levels of cache with Jose Maria Cela (Barcelona); write a paper in "Parallel Computing" about this
 
 - maybe use VMX/Altivec instructions in compute_forces*.f90 specifically for
@@ -85,12 +77,11 @@ David et Dimitri, quand nous serons à Barcelone en mai:
   in compute_forces*.f90 turned out to be impossible; otherwise it is better
   to call BLAS3, which will already be optimized by IBM for VMX/Altivec)
 
----------------------------------------------------------------------------------
-
-Dimitri:
---------
-
 - distinguer_DT_suivant_si_honor_PREM_or_not
+
+- envoyer nvx code après cela barcelona à levesque ORNL pour optimisation BLAS3 s'ils y arrivent
+
+- Virer variables intermédiaires dans compute_forces dans codes 2D et 3D (utiliser timing 23 sec 26 sec qui est dans le directory BLAS3_SPECFEM)
 
 - modifier RMOHO_FICTITIOUS_IN_MESHER = R80 + (R_EARTH - R80) * dble(NER_80_MOHO) / dble(NER_80_MOHO + NER_CRUST)
 !!!!!!!!!!!!!!! DK DK ceci a revoir, voir ce qu'on fait dans ce cas-la
@@ -106,8 +97,6 @@ dans display_prem_sampling_doubling.f90 et dans le nouveau code de maillage de D
     MAX_ATTENUATION_PERIOD   = 1000
 est arbitraire dans read_compute_parameters.f90 actuellement, utiliser la routine plus generale de Brian Savage.
 
-************* pour le manuel ***************
-
 - add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers
 
 - regarder consequences de multiple de 32 au lieu de 16 dans table 3.1 du manuel, et refaire cette table en fonction de cette nouvelle contrainte. Mettre à jour la Table 3.1 avec multiples de 32 au lieu de 16 et aussi en disant qu'on peut mettre 2 ou 3 ou 6 tâches par proc et donc que le nb de procs donnés peut être divisé par 2, 3 ou 6 et donc limitation moins grande qu'on ne pourrait le croire (dire que c'est toujours divisible car NPROC = 6 N^2 donc divisible par 6); dire cela dans le texte principal du manuel et dans la légende de la table, par exemple "We should also keep in mind (and mention in the manual) that if 6 N^2 is a limitation on some machines, one can always run 2, 3 or 6 tasks per processor and therefore run on N^2, 2 N^2 or 3 N^2 processors. I will add a comment about this in the manual (probably in the caption of Table 3.1)."
@@ -118,11 +107,6 @@ est arbitraire dans read_compute_parameters.f90 actuellement, utiliser la routin
 
 - supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront été fusionnés (enlever les deux sections expliquant l'utilisation de ces routines)
 
----------------------------------------------------------------------------------
-
-Nicolas Le Goff:
----------------
-
 - tester l'utilisation de netCDF et nous donner les routines pour lire/ecrire du binaire à ce format depuis SPECFEM3D_BASIN. David utilisera ensuite cela depuis SPECFEM3D_GLOBE.
 
 - etudier comment lire un maillage CUBIT stocké au format natif de CUBIT
@@ -130,13 +114,7 @@ Nicolas Le Goff:
 commande "ncdump" dans CUBIT si nécessaire d'après Emanuele Casarotti. Une
 autre option serait d'utiliser le format de stockage ABAQUS dans CUBIT.
 
----------------------------------------------------------------------------------
-
-Brian Savage:
-------------
-
 - dire a Brian Savage (Washington D.C.) de faire un auto_NER a partir de PREM (choix automatique des parametres) a partir de display_prem_sampling_doubling.f90 dans DATA/util/mesh_doubling_superbrick
-
 Subject: Re: attenuation (other idea)
 From: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr>
 Date: Sun, 21 Jan 2007 21:59:54 +0100
@@ -144,66 +122,96 @@ To: Brian Savage <savage@uri.edu>
 CC: Jeroen Tromp <jtromp@gps.caltech.edu>, Qinya Liu <lqy@gps.caltech.edu>, Vala
 Hjorleifsdottir <vala@gps.caltech.edu>, Ying Zhou <yingz@gps.caltech.edu>,
 David Michéa <davidmichea@gmail.com>
-
 Dear all,
-
 Following Brian's tests described in his email below,
 I think we should change the way we set the width of the
 absorption band in read_parameters.f90. In the current implementation
 we impose an arbitrary range, e.g. for NEX=160 we set:
-
     MIN_ATTENUATION_PERIOD   = 20
     MAX_ATTENUATION_PERIOD   = 1000
-
 but of course we should replace this with some kind of automatic
 range selection process based on the value of N_SLS (3, 4 or 5)
 and on mesh resolution I guess.
-
 Brian, if you have a way of adding this to the general 3D attenuation
 routine you wrote, please do not hesitate to implement it
 and get rid of the current arbitrary ranges... I think having
 a flexible routine to do this would be very useful.
-
 Dimitri.
-
 Brian Savage wrote:
 > Dear All,
->
 > I will run some tests to determine the maximum width of the absorption band
 > with 3,4 and 5 linear solids.  As I recall, the optimum for 3 was 1.75
 > decades in the frequency domain.
->
 > By the way, I think I have tracked down the differences between 3.5 and 3.6.
 > I believe it has to do with how the sharp attenuation boundaries are
 > represented.  More testing still to be done.
->
 > Cheers,
 > Brian
->
->
 > On Jan 1, 2007, at 8:02 PM, Jeroen Tromp wrote:
->
 >> Hi Dimitri:
->>
 >> I think this at least worth investigating, i.e., how much more memory does
 >> it take, how much flatter is the Q, how much broader is the absorption
 >> band, etc.
->>
 >> But we still need to fix the existing bug first....
->>
 >> Jeroen
->>
->>>
 >>> Dear all,
->>>
 >>> By the way, talking about attenuation, now that memory is becoming less
 >>> of an issue it could be clever to switch from 3 memory variables to 4
 >>> (N_SLS = 4) in the global code at some point in the (near?) future. (in
 >>> particular to make attenuation more precise for the dispersion of
 >>> surface waves).
->>>
 >>> Do you think this could be a good idea?
->>>
 >>> Dimitri.
 >>>
+
+- Brian,
+ok, perfect, thank you. I will modify the code accordingly,
+to call your routine to define the attenuation parameters
+automatically even in the case of the full Earth.
+Cheers,
+Dimitri.
+Brian Savage wrote:
+> Dimitri,
+> short answer: yes
+> long answer:
+> The lines you are describing MIN_ATT and MAX_ATT are defined for specific
+> number of elements NEX_MAX and assuming a 90 degree chunk.  You may suppress
+> them if you wish, but you would need to remove the if(ANGULAR_WIDTH_ ...)
+> line to make certain these numbers get set.
+> Look at line numbers 333-369 or so in read_parameter_file.f90.  The equation
+> for min and max attenuation period is in there along with the DT and radial
+> distribution of elements.
+> I would also suggest testing the code a bit more than I have to be certain
+> that the values it returns are similar to the ones you wrote in a few years
+> ago.  I think running xcreate_header_file is sufficient to do this.  The
+> equations are a bit of a mess, especially the one determining the time
+> stepping.  There are some hard coded numbers in there too, which could
+> probably be cleaned up a bit.
+> I hope that made sense.
+> Cheers,
+> Brian
+> On Jan 26, 2007, at 11:20 AM, Dimitri Komatitsch wrote:
+>> Dear Brian,
+>> One quick question: do you still use
+>> MIN_ATTENUATION_PERIOD   = 20
+>> MAX_ATTENUATION_PERIOD   = 1000
+>> that are set in read_parameters.f90, or can I suppress them?
+>> If you still use them, could you write a routine to set them
+>> to the right frequency band automatically? (the current implementation,
+>> i.e. setting them to arbitrary values without adding a comment
+>> or using a formula is not very easy to maintain: I remember writing these
+>> lines a few years ago but I don't remember how I got the numerical
+>> values!
+>> Thank you,
+>> Dimitri.
+>>
+
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
+Done:
+-----
+
 
