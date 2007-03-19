@@ -2,6 +2,7 @@
 
 use Data::Dumper;
 
+#<main>
 if (scalar(@ARGV) < 1)
 {     print "usage : $0 mesh2analyse.dx [NGLL]\n";
       exit;
@@ -81,7 +82,65 @@ foreach (@nodes)
     print "\n";
 }
 reord_points(\@cubes);
+my @bound = get_boundaries(\@cubes);
+my $compt_elem==0;
+print "iboun_sb(:,:) = .false.\n";
+foreach my $res (@bound)
+{	$compt_elem++;
+	my $compt_boun==0;
+	foreach (@$res)
+	{	$compt_boun++;
+		print "iboun_sb($compt_elem,$compt_boun) = .true.\n" if ($_ == 1);
+	}
+}
 exit;
+#</main>
+
+
+sub get_boundaries
+{	my $cubes = shift;
+	my $nb=0;
+	my @bound;
+	foreach $hex (@$cubes)
+	{	$nb++;
+		my $cur_cube_faces = get_cube_faces($hex);
+		my @res =get_pos_faces($cur_cube_faces);
+		push(@bound,\@res);
+	}
+	return @bound;
+}
+
+sub get_pos_faces
+{	my $faces = shift;
+	my ($xmin,$xmax,$ymin,$ymax,$bottom,$top) = (0,0,0,0,0,0);
+	foreach my $face (@$faces)
+	{	my ($moy_x,$moy_y,$moy_z) = analyse_face2($face);
+		$xmin=1 if ($moy_x == 0);
+		$xmax=1 if ($moy_x == 2);
+		$ymin=1 if ($moy_y == 0);
+		$ymax=1 if ($moy_y == 2);
+		$bottom=1 if ($moy_z == 0);
+		$top=1 if ($moy_z == 2);
+	}
+	return ($xmin,$xmax,$ymin,$ymax,$bottom,$top);
+}
+
+sub analyse_face2
+{   my $face = shift;
+    my $moy_x=0;
+    my $moy_y=0;
+    my $moy_z=0;
+    foreach my $corner (@$face)
+    {   $moy_x+=$corner->[0];
+        $moy_y+=$corner->[1];
+        $moy_z+=$corner->[2];
+    }
+    $moy_x/=4;
+    $moy_y/=4;
+    $moy_z/=4;
+    return ($moy_x,$moy_y,$moy_z);
+}
+
 
 sub reord_points
 {     my $cubes = shift;
