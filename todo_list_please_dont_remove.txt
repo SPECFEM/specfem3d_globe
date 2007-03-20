@@ -14,6 +14,8 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 
 - make_sure_aniso_elements_created_first
 
+- utiliser auto_NER de Brian Savage pour determiner les constantes d'attenuation pour les chunks complets et non pas seulement si différent de 90 degrés. Pour cela, supprimer mes vieilles variables MIN_ATTENUATION et MAX_ATTENUATION_PERIOD
+
 # modifier_create_header_file pour s'assurer qu'il fonctionne avec le nouveau mailleur -> {OK reste à enlever les appels à exit_mpi. DM.}
 
 - implement classical Cuthill-McKee sorting
