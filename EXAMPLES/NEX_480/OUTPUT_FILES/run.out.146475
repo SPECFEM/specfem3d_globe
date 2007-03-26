@@ -1,0 +1,352 @@
+/home/yingz/SVNQ/trunk/prema-bench-ev1-NEX480
+/ibrixfs1/scratch/yingz/SVNQ/prema-bench-ev1-NEX480
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@compute-27-25>
+Subject: Job 146475: <prema-bench-ev1-NEX480> Done
+
+Job <prema-bench-ev1-NEX480> was submitted from host <login-2-3> by user <yingz>.
+Job was executed on host(s) <2*compute-27-25>, in queue <normal>, as user <yingz>.
+                            <2*compute-23-15>
+                            <2*compute-43-37>
+                            <2*compute-11-7>
+                            <2*compute-36-14>
+                            <2*compute-35-17>
+                            <2*compute-12-19>
+                            <2*compute-36-40>
+                            <2*compute-11-37>
+                            <2*compute-46-35>
+                            <2*compute-33-35>
+                            <2*compute-11-38>
+                            <2*compute-11-33>
+                            <2*compute-46-12>
+                            <2*compute-17-10>
+                            <2*compute-33-33>
+                            <2*compute-42-22>
+                            <2*compute-32-23>
+                            <2*compute-46-17>
+                            <2*compute-33-16>
+                            <2*compute-27-2>
+                            <2*compute-42-12>
+                            <2*compute-12-5>
+                            <2*compute-17-40>
+                            <2*compute-21-35>
+                            <2*compute-42-17>
+                            <2*compute-27-22>
+                            <2*compute-23-10>
+                            <2*compute-44-2>
+                            <2*compute-23-37>
+                            <2*compute-15-40>
+                            <2*compute-45-6>
+                            <2*compute-23-11>
+                            <2*compute-35-14>
+                            <2*compute-22-33>
+                            <2*compute-26-33>
+                            <2*compute-41-29>
+                            <2*compute-44-7>
+                            <2*compute-17-35>
+                            <2*compute-26-11>
+                            <2*compute-32-32>
+                            <2*compute-37-3>
+                            <2*compute-46-26>
+                            <2*compute-22-21>
+                            <2*compute-44-14>
+                            <2*compute-44-16>
+                            <2*compute-42-23>
+                            <2*compute-47-35>
+                            <2*compute-44-8>
+                            <2*compute-43-8>
+                            <2*compute-32-9>
+                            <2*compute-25-10>
+                            <2*compute-37-26>
+                            <2*compute-24-7>
+                            <2*compute-25-39>
+                            <2*compute-46-39>
+                            <2*compute-35-27>
+                            <2*compute-34-2>
+                            <2*compute-41-3>
+                            <2*compute-37-4>
+                            <2*compute-32-35>
+                            <2*compute-13-12>
+                            <2*compute-47-11>
+                            <2*compute-45-11>
+                            <2*compute-42-24>
+                            <2*compute-12-18>
+                            <2*compute-17-23>
+                            <2*compute-22-13>
+                            <2*compute-46-5>
+                            <2*compute-31-7>
+                            <2*compute-41-6>
+                            <2*compute-43-28>
+                            <2*compute-34-13>
+                            <2*compute-32-3>
+                            <2*compute-47-2>
+                            <2*compute-22-27>
+                            <2*compute-22-2>
+                            <2*compute-37-12>
+                            <2*compute-16-5>
+                            <2*compute-25-31>
+                            <2*compute-11-25>
+                            <2*compute-43-40>
+                            <2*compute-25-8>
+                            <2*compute-42-3>
+                            <2*compute-36-8>
+                            <2*compute-31-38>
+                            <2*compute-47-26>
+                            <2*compute-12-9>
+                            <2*compute-11-17>
+                            <2*compute-22-26>
+                            <2*compute-36-19>
+                            <2*compute-15-21>
+                            <2*compute-26-10>
+                            <2*compute-46-38>
+                            <2*compute-42-36>
+                            <2*compute-45-32>
+                            <2*compute-37-8>
+                            <2*compute-42-38>
+                            <2*compute-43-6>
+                            <2*compute-46-18>
+                            <2*compute-22-20>
+                            <2*compute-16-15>
+                            <2*compute-12-7>
+                            <2*compute-22-11>
+                            <2*compute-33-15>
+                            <2*compute-42-29>
+                            <2*compute-35-38>
+                            <2*compute-16-30>
+                            <2*compute-35-2>
+                            <2*compute-12-32>
+                            <2*compute-35-13>
+                            <2*compute-31-23>
+                            <2*compute-43-1>
+                            <2*compute-41-1>
+                            <2*compute-35-5>
+                            <2*compute-37-9>
+                            <2*compute-47-24>
+                            <2*compute-36-24>
+                            <2*compute-42-8>
+                            <2*compute-22-6>
+                            <2*compute-36-27>
+                            <2*compute-42-37>
+                            <2*compute-27-28>
+                            <2*compute-16-16>
+                            <2*compute-35-16>
+                            <2*compute-14-12>
+                            <2*compute-24-5>
+                            <2*compute-43-24>
+                            <2*compute-14-5>
+                            <2*compute-47-32>
+                            <2*compute-35-7>
+                            <2*compute-11-21>
+                            <2*compute-46-7>
+                            <2*compute-33-24>
+                            <2*compute-35-11>
+                            <2*compute-46-1>
+                            <2*compute-11-35>
+                            <2*compute-15-10>
+                            <2*compute-22-36>
+                            <2*compute-35-37>
+                            <2*compute-32-29>
+                            <2*compute-42-30>
+                            <2*compute-17-5>
+                            <2*compute-16-2>
+                            <2*compute-32-6>
+                            <2*compute-24-12>
+                            <2*compute-32-25>
+                            <2*compute-26-4>
+                            <2*compute-41-26>
+                            <2*compute-13-30>
+                            <2*compute-43-19>
+                            <2*compute-27-29>
+                            <2*compute-11-40>
+                            <2*compute-22-40>
+                            <2*compute-17-31>
+                            <2*compute-47-17>
+                            <2*compute-45-35>
+                            <2*compute-46-25>
+                            <2*compute-42-35>
+                            <2*compute-13-28>
+                            <2*compute-22-37>
+                            <2*compute-16-11>
+                            <2*compute-32-36>
+                            <2*compute-15-14>
+                            <2*compute-47-25>
+                            <2*compute-47-28>
+                            <2*compute-45-20>
+                            <2*compute-46-6>
+                            <2*compute-25-24>
+                            <2*compute-14-15>
+                            <2*compute-17-7>
+                            <2*compute-33-23>
+                            <2*compute-42-4>
+                            <2*compute-15-22>
+                            <2*compute-27-19>
+                            <2*compute-11-19>
+                            <2*compute-16-27>
+                            <2*compute-25-21>
+                            <2*compute-25-22>
+                            <2*compute-14-9>
+                            <2*compute-15-3>
+                            <2*compute-26-21>
+                            <2*compute-12-31>
+                            <2*compute-45-1>
+                            <2*compute-41-25>
+                            <2*compute-26-38>
+                            <2*compute-17-25>
+                            <2*compute-43-14>
+                            <2*compute-27-15>
+                            <2*compute-43-34>
+                            <2*compute-11-3>
+                            <2*compute-43-17>
+                            <2*compute-36-35>
+                            <2*compute-35-3>
+                            <2*compute-12-30>
+                            <2*compute-23-19>
+                            <2*compute-13-11>
+                            <2*compute-16-23>
+                            <2*compute-17-30>
+                            <2*compute-35-33>
+                            <2*compute-35-36>
+                            <2*compute-17-6>
+                            <2*compute-21-34>
+                            <2*compute-26-26>
+                            <2*compute-22-39>
+                            <2*compute-45-26>
+                            <2*compute-47-13>
+                            <2*compute-32-1>
+                            <2*compute-14-3>
+                            <2*compute-12-37>
+                            <2*compute-41-21>
+                            <2*compute-35-1>
+                            <2*compute-32-31>
+                            <2*compute-37-21>
+                            <2*compute-23-17>
+                            <2*compute-41-2>
+                            <2*compute-22-1>
+                            <2*compute-43-31>
+                            <2*compute-37-22>
+                            <2*compute-32-7>
+                            <2*compute-37-16>
+                            <2*compute-32-27>
+                            <2*compute-31-24>
+                            <2*compute-22-17>
+                            <2*compute-33-27>
+                            <2*compute-24-9>
+                            <2*compute-11-4>
+                            <2*compute-45-37>
+                            <2*compute-47-12>
+                            <2*compute-44-11>
+                            <2*compute-25-25>
+                            <2*compute-25-3>
+                            <2*compute-41-11>
+                            <2*compute-31-32>
+                            <2*compute-36-17>
+                            <2*compute-11-28>
+                            <2*compute-11-26>
+                            <2*compute-14-1>
+                            <2*compute-12-21>
+                            <2*compute-42-16>
+                            <2*compute-43-15>
+                            <2*compute-23-8>
+                            <2*compute-15-24>
+                            <2*compute-47-38>
+                            <2*compute-41-31>
+                            <2*compute-23-28>
+                            <2*compute-37-10>
+                            <2*compute-33-19>
+                            <2*compute-34-10>
+                            <2*compute-46-2>
+                            <2*compute-31-20>
+                            <2*compute-36-15>
+                            <2*compute-32-12>
+                            <2*compute-27-7>
+                            <2*compute-23-26>
+                            <2*compute-31-2>
+                            <2*compute-46-4>
+                            <2*compute-41-23>
+                            <2*compute-26-20>
+                            <2*compute-44-1>
+                            <2*compute-12-29>
+                            <2*compute-45-12>
+                            <2*compute-47-40>
+                            <2*compute-16-29>
+                            <2*compute-17-1>
+                            <2*compute-23-34>
+                            <2*compute-46-37>
+                            <2*compute-33-5>
+                            <2*compute-35-26>
+                            <2*compute-35-35>
+                            <2*compute-41-10>
+                            <2*compute-32-5>
+                            <2*compute-11-29>
+                            <2*compute-44-13>
+                            <2*compute-16-20>
+                            <2*compute-43-4>
+                            <2*compute-16-10>
+                            <2*compute-26-40>
+                            <2*compute-43-20>
+                            <2*compute-27-21>
+                            <2*compute-31-28>
+                            <2*compute-25-36>
+                            <1*compute-22-30>
+                            <1*compute-13-20>
+                            <1*compute-43-18>
+                            <1*compute-47-5>
+                            <1*compute-17-37>
+                            <1*compute-47-33>
+                            <1*compute-33-17>
+                            <1*compute-42-20>
+                            <1*compute-34-14>
+                            <1*compute-42-15>
+                            <1*compute-11-36>
+                            <1*compute-17-3>
+                            <1*compute-37-7>
+                            <2*compute-32-19>
+                            <1*compute-13-15>
+                            <2*compute-17-21>
+                            <2*compute-35-31>
+                            <2*compute-25-19>
+                            <2*compute-31-16>
+                            <2*compute-31-37>
+                            <2*compute-42-19>
+                            <2*compute-24-13>
+                            <2*compute-33-12>
+                            <2*compute-41-38>
+                            <2*compute-17-15>
+</home/yingz> was used as the home directory.
+</ibrixfs1/home/yingz/SVNQ/trunk/prema-bench-ev1-NEX480> was used as the working directory.
+Started at Sun Feb  4 10:33:49 2007
+Results reported at Wed Feb  7 03:24:29 2007
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/csh 
+#BSUB -o  OUTPUT_FILES/run.out.%J 
+#BSUB -a mpich_gm 
+#BSUB -n  600 
+#BSUB -q  normal 
+#BSUB -W  70:00 
+#BSUB -J  prema-bench-ev1-NEX480 
+cd /ibrixfs1/home/yingz/SVNQ/trunk/prema-bench-ev1-NEX480 
+mpirun.lsf  xmeshfem3D  > OUTPUT_FILES/output_xmeshfem3D.txt 
+mpirun.lsf xspecfem3D  > OUTPUT_FILES/output_xspecfem3D.txt 
+ cd /ibrixfs1/scratch/yingz/SVNQ/prema-bench-ev1-NEX480 
+ mv *semd /ibrixfs1/home/yingz/SVNQ/trunk/prema-bench-ev1-NEX480/SEISMO 
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time   :136603952.00 sec.
+    Max Memory :    405883 MB
+    Max Swap   :    471459 MB
+
+    Max Processes  :       600
+    Max Threads    :       600
+
+The output (if any) is above this job summary.
+
