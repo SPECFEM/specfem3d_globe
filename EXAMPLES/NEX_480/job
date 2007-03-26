@@ -1,0 +1,12 @@
+#!/bin/csh 
+#BSUB -o  OUTPUT_FILES/run.out.%J 
+#BSUB -a mpich_gm 
+#BSUB -n  600 
+#BSUB -q  normal 
+#BSUB -W  70:00 
+#BSUB -J  prema-bench-ev1-NEX480 
+cd /ibrixfs1/home/yingz/SVNQ/trunk/prema-bench-ev1-NEX480 
+mpirun.lsf  xmeshfem3D  > OUTPUT_FILES/output_xmeshfem3D.txt 
+mpirun.lsf xspecfem3D  > OUTPUT_FILES/output_xspecfem3D.txt 
+ cd /ibrixfs1/scratch/yingz/SVNQ/prema-bench-ev1-NEX480 
+ mv *semd /ibrixfs1/home/yingz/SVNQ/trunk/prema-bench-ev1-NEX480/SEISMO 

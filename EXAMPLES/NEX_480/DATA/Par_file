@@ -1,0 +1,71 @@
+
+# forward or adjoint simulation
+SIMULATION_TYPE                 = 1 
+SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
+
+# number of chunks (1,2,3 or 6)
+NCHUNKS                         = 6
+
+# angular width of the first chunk (not used if full sphere with six chunks)
+ANGULAR_WIDTH_XI_IN_DEGREES   = 90.d0      # angular size of a chunk
+ANGULAR_WIDTH_ETA_IN_DEGREES  = 90.d0
+CENTER_LATITUDE_IN_DEGREES    = 40.d0
+CENTER_LONGITUDE_IN_DEGREES   = 10.d0
+GAMMA_ROTATION_AZIMUTH        = 20.d0
+
+# number of elements at the surface along the two sides of the first chunk
+# (must be 16 * multiple of NPROC below)
+NEX_XI                          = 480 
+NEX_ETA                         = 480
+
+# number of MPI processors along the two sides of the first chunk
+NPROC_XI                        = 10
+NPROC_ETA                       = 10
+
+# model (isotropic_prem, transversely_isotropic_prem, crust_2.0_plus_transversely_isotropic_prem
+# iasp91, 1066a, ak135, s20rts, 3D_anisotropic, 3D_attenuation)
+MODEL                           = transversely_isotropic_prem 
+
+# parameters describing the Earth model
+OCEANS                          = .false.
+ELLIPTICITY                     = .false.
+TOPOGRAPHY                      = .false.
+GRAVITY                         = .false.
+ROTATION                        = .false.
+ATTENUATION                     = .true.
+
+# absorbing boundary conditions for a regional simulation
+ABSORBING_CONDITIONS            = .false.
+
+# record length in minutes
+RECORD_LENGTH_IN_MINUTES        = 120.0d0
+
+# save AVS or OpenDX movies
+MOVIE_SURFACE                   = .false.
+MOVIE_VOLUME                    = .false.
+NTSTEP_BETWEEN_FRAMES           = 1000
+HDUR_MOVIE                      = 0.d0
+
+# save mesh files to check the mesh
+SAVE_MESH_FILES                 = .false.
+
+# restart files (number of runs can be 1, 2 or 3, choose 1 for no restart files)
+NUMBER_OF_RUNS                  = 1
+NUMBER_OF_THIS_RUN              = 1
+
+# path to store the local database files on each node
+LOCAL_PATH                      = /ibrixfs1/scratch/yingz/SVNQ/prema-bench-ev1-NEX480
+
+# interval at which we output time step info and max of norm of displacement
+NTSTEP_BETWEEN_OUTPUT_INFO      = 100
+
+# interval in time steps for temporary writing of seismograms
+NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 4000
+NTSTEP_BETWEEN_READ_ADJSRC      = 1000
+
+# flag to impose receivers at the surface or allow them to be buried
+RECEIVERS_CAN_BE_BURIED         = .false.
+
+# print source time function
+PRINT_SOURCE_TIME_FUNCTION      = .false.
+

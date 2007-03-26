@@ -1,0 +1,549 @@
+ 
+ ****************************
+ *** Specfem3D MPI Mesher ***
+ ****************************
+ 
+ creating global slice addressing
+ 
+ This is process            0
+ There are          600  MPI processes
+ Processes are numbered from 0 to          599
+ 
+ There are          480  elements along xi in each chunk
+ There are          480  elements along eta in each chunk
+ 
+ There are           10  slices along xi in each chunk
+ There are           10  slices along eta in each chunk
+ There is a total of          100  slices in each chunk
+ There are            6  chunks in the global mesh
+ There is a total of          600  slices in the global mesh
+ 
+ NGLLX =            5
+ NGLLY =            5
+ NGLLZ =            5
+ 
+ Shape functions defined by NGNOD =           27  control nodes
+ Surface shape functions defined by NGNOD2D =            9  control nodes
+ 
+ 
+ 
+ no ellipticity
+ 
+ no surface topography
+ 
+ no 3-D lateral variations
+ 
+ no crustal variations
+ 
+ using one layer only in PREM crust
+ 
+ no self-gravitation
+ 
+ no rotation
+ 
+ incorporating anisotropy
+ 
+ incorporating attenuation using            3  standard linear solids
+ 
+ no oceans
+ 
+ Reference radius of the Earth used is    6371.00000000000       km
+ 
+ Central cube is at a radius of    1071.00000000000       km
+ 
+ *******************************************
+ creating mesh in region            1
+ this region is the crust and mantle
+ *******************************************
+ 
+ 
+    calculated top area:    12.5663706140420     
+             exact area:    12.5663706143592     
+ 
+ calculated bottom area:    3.74932546669071     
+             exact area:    3.74932546676467     
+ 
+ ----- creating chunk buffers -----
+ 
+ There are           10  slices along xi in each chunk
+ There are           10  slices along eta in each chunk
+ There is a total of          100  slices in each chunk
+ There are            6  chunks
+ There is a total of          600  slices in all the chunks
+ 
+ There is a total of          120  messages to assemble faces between chunks
+ 
+ Generating message            1  for faces out of          120
+ Generating message            2  for faces out of          120
+ Generating message            3  for faces out of          120
+ Generating message            4  for faces out of          120
+ Generating message            5  for faces out of          120
+ Generating message            6  for faces out of          120
+ Generating message            7  for faces out of          120
+ Generating message            8  for faces out of          120
+ Generating message            9  for faces out of          120
+ Generating message           10  for faces out of          120
+ Generating message           11  for faces out of          120
+ Generating message           12  for faces out of          120
+ Generating message           13  for faces out of          120
+ Generating message           14  for faces out of          120
+ Generating message           15  for faces out of          120
+ Generating message           16  for faces out of          120
+ Generating message           17  for faces out of          120
+ Generating message           18  for faces out of          120
+ Generating message           19  for faces out of          120
+ Generating message           20  for faces out of          120
+ Generating message           21  for faces out of          120
+ Generating message           22  for faces out of          120
+ Generating message           23  for faces out of          120
+ Generating message           24  for faces out of          120
+ Generating message           25  for faces out of          120
+ Generating message           26  for faces out of          120
+ Generating message           27  for faces out of          120
+ Generating message           28  for faces out of          120
+ Generating message           29  for faces out of          120
+ Generating message           30  for faces out of          120
+ Generating message           31  for faces out of          120
+ Generating message           32  for faces out of          120
+ Generating message           33  for faces out of          120
+ Generating message           34  for faces out of          120
+ Generating message           35  for faces out of          120
+ Generating message           36  for faces out of          120
+ Generating message           37  for faces out of          120
+ Generating message           38  for faces out of          120
+ Generating message           39  for faces out of          120
+ Generating message           40  for faces out of          120
+ Generating message           41  for faces out of          120
+ Generating message           42  for faces out of          120
+ Generating message           43  for faces out of          120
+ Generating message           44  for faces out of          120
+ Generating message           45  for faces out of          120
+ Generating message           46  for faces out of          120
+ Generating message           47  for faces out of          120
+ Generating message           48  for faces out of          120
+ Generating message           49  for faces out of          120
+ Generating message           50  for faces out of          120
+ Generating message           51  for faces out of          120
+ Generating message           52  for faces out of          120
+ Generating message           53  for faces out of          120
+ Generating message           54  for faces out of          120
+ Generating message           55  for faces out of          120
+ Generating message           56  for faces out of          120
+ Generating message           57  for faces out of          120
+ Generating message           58  for faces out of          120
+ Generating message           59  for faces out of          120
+ Generating message           60  for faces out of          120
+ Generating message           61  for faces out of          120
+ Generating message           62  for faces out of          120
+ Generating message           63  for faces out of          120
+ Generating message           64  for faces out of          120
+ Generating message           65  for faces out of          120
+ Generating message           66  for faces out of          120
+ Generating message           67  for faces out of          120
+ Generating message           68  for faces out of          120
+ Generating message           69  for faces out of          120
+ Generating message           70  for faces out of          120
+ Generating message           71  for faces out of          120
+ Generating message           72  for faces out of          120
+ Generating message           73  for faces out of          120
+ Generating message           74  for faces out of          120
+ Generating message           75  for faces out of          120
+ Generating message           76  for faces out of          120
+ Generating message           77  for faces out of          120
+ Generating message           78  for faces out of          120
+ Generating message           79  for faces out of          120
+ Generating message           80  for faces out of          120
+ Generating message           81  for faces out of          120
+ Generating message           82  for faces out of          120
+ Generating message           83  for faces out of          120
+ Generating message           84  for faces out of          120
+ Generating message           85  for faces out of          120
+ Generating message           86  for faces out of          120
+ Generating message           87  for faces out of          120
+ Generating message           88  for faces out of          120
+ Generating message           89  for faces out of          120
+ Generating message           90  for faces out of          120
+ Generating message           91  for faces out of          120
+ Generating message           92  for faces out of          120
+ Generating message           93  for faces out of          120
+ Generating message           94  for faces out of          120
+ Generating message           95  for faces out of          120
+ Generating message           96  for faces out of          120
+ Generating message           97  for faces out of          120
+ Generating message           98  for faces out of          120
+ Generating message           99  for faces out of          120
+ Generating message          100  for faces out of          120
+ Generating message          101  for faces out of          120
+ Generating message          102  for faces out of          120
+ Generating message          103  for faces out of          120
+ Generating message          104  for faces out of          120
+ Generating message          105  for faces out of          120
+ Generating message          106  for faces out of          120
+ Generating message          107  for faces out of          120
+ Generating message          108  for faces out of          120
+ Generating message          109  for faces out of          120
+ Generating message          110  for faces out of          120
+ Generating message          111  for faces out of          120
+ Generating message          112  for faces out of          120
+ Generating message          113  for faces out of          120
+ Generating message          114  for faces out of          120
+ Generating message          115  for faces out of          120
+ Generating message          116  for faces out of          120
+ Generating message          117  for faces out of          120
+ Generating message          118  for faces out of          120
+ Generating message          119  for faces out of          120
+ Generating message          120  for faces out of          120
+ 
+ all the messages for chunk faces have the right size
+ 
+ Generating message            1  for corners out of            8
+ Generating message            2  for corners out of            8
+ Generating message            3  for corners out of            8
+ Generating message            4  for corners out of            8
+ Generating message            5  for corners out of            8
+ Generating message            6  for corners out of            8
+ Generating message            7  for corners out of            8
+ Generating message            8  for corners out of            8
+ 
+ *******************************************
+ creating mesh in region            2
+ this region is the outer core
+ *******************************************
+ 
+ 
+    calculated top area:    3.74932546669071     
+             exact area:    3.74932546676467     
+ 
+ calculated bottom area:   0.461557679350501     
+             exact area:   0.461557680026829     
+ 
+ ----- creating chunk buffers -----
+ 
+ There are           10  slices along xi in each chunk
+ There are           10  slices along eta in each chunk
+ There is a total of          100  slices in each chunk
+ There are            6  chunks
+ There is a total of          600  slices in all the chunks
+ 
+ There is a total of          120  messages to assemble faces between chunks
+ 
+ Generating message            1  for faces out of          120
+ Generating message            2  for faces out of          120
+ Generating message            3  for faces out of          120
+ Generating message            4  for faces out of          120
+ Generating message            5  for faces out of          120
+ Generating message            6  for faces out of          120
+ Generating message            7  for faces out of          120
+ Generating message            8  for faces out of          120
+ Generating message            9  for faces out of          120
+ Generating message           10  for faces out of          120
+ Generating message           11  for faces out of          120
+ Generating message           12  for faces out of          120
+ Generating message           13  for faces out of          120
+ Generating message           14  for faces out of          120
+ Generating message           15  for faces out of          120
+ Generating message           16  for faces out of          120
+ Generating message           17  for faces out of          120
+ Generating message           18  for faces out of          120
+ Generating message           19  for faces out of          120
+ Generating message           20  for faces out of          120
+ Generating message           21  for faces out of          120
+ Generating message           22  for faces out of          120
+ Generating message           23  for faces out of          120
+ Generating message           24  for faces out of          120
+ Generating message           25  for faces out of          120
+ Generating message           26  for faces out of          120
+ Generating message           27  for faces out of          120
+ Generating message           28  for faces out of          120
+ Generating message           29  for faces out of          120
+ Generating message           30  for faces out of          120
+ Generating message           31  for faces out of          120
+ Generating message           32  for faces out of          120
+ Generating message           33  for faces out of          120
+ Generating message           34  for faces out of          120
+ Generating message           35  for faces out of          120
+ Generating message           36  for faces out of          120
+ Generating message           37  for faces out of          120
+ Generating message           38  for faces out of          120
+ Generating message           39  for faces out of          120
+ Generating message           40  for faces out of          120
+ Generating message           41  for faces out of          120
+ Generating message           42  for faces out of          120
+ Generating message           43  for faces out of          120
+ Generating message           44  for faces out of          120
+ Generating message           45  for faces out of          120
+ Generating message           46  for faces out of          120
+ Generating message           47  for faces out of          120
+ Generating message           48  for faces out of          120
+ Generating message           49  for faces out of          120
+ Generating message           50  for faces out of          120
+ Generating message           51  for faces out of          120
+ Generating message           52  for faces out of          120
+ Generating message           53  for faces out of          120
+ Generating message           54  for faces out of          120
+ Generating message           55  for faces out of          120
+ Generating message           56  for faces out of          120
+ Generating message           57  for faces out of          120
+ Generating message           58  for faces out of          120
+ Generating message           59  for faces out of          120
+ Generating message           60  for faces out of          120
+ Generating message           61  for faces out of          120
+ Generating message           62  for faces out of          120
+ Generating message           63  for faces out of          120
+ Generating message           64  for faces out of          120
+ Generating message           65  for faces out of          120
+ Generating message           66  for faces out of          120
+ Generating message           67  for faces out of          120
+ Generating message           68  for faces out of          120
+ Generating message           69  for faces out of          120
+ Generating message           70  for faces out of          120
+ Generating message           71  for faces out of          120
+ Generating message           72  for faces out of          120
+ Generating message           73  for faces out of          120
+ Generating message           74  for faces out of          120
+ Generating message           75  for faces out of          120
+ Generating message           76  for faces out of          120
+ Generating message           77  for faces out of          120
+ Generating message           78  for faces out of          120
+ Generating message           79  for faces out of          120
+ Generating message           80  for faces out of          120
+ Generating message           81  for faces out of          120
+ Generating message           82  for faces out of          120
+ Generating message           83  for faces out of          120
+ Generating message           84  for faces out of          120
+ Generating message           85  for faces out of          120
+ Generating message           86  for faces out of          120
+ Generating message           87  for faces out of          120
+ Generating message           88  for faces out of          120
+ Generating message           89  for faces out of          120
+ Generating message           90  for faces out of          120
+ Generating message           91  for faces out of          120
+ Generating message           92  for faces out of          120
+ Generating message           93  for faces out of          120
+ Generating message           94  for faces out of          120
+ Generating message           95  for faces out of          120
+ Generating message           96  for faces out of          120
+ Generating message           97  for faces out of          120
+ Generating message           98  for faces out of          120
+ Generating message           99  for faces out of          120
+ Generating message          100  for faces out of          120
+ Generating message          101  for faces out of          120
+ Generating message          102  for faces out of          120
+ Generating message          103  for faces out of          120
+ Generating message          104  for faces out of          120
+ Generating message          105  for faces out of          120
+ Generating message          106  for faces out of          120
+ Generating message          107  for faces out of          120
+ Generating message          108  for faces out of          120
+ Generating message          109  for faces out of          120
+ Generating message          110  for faces out of          120
+ Generating message          111  for faces out of          120
+ Generating message          112  for faces out of          120
+ Generating message          113  for faces out of          120
+ Generating message          114  for faces out of          120
+ Generating message          115  for faces out of          120
+ Generating message          116  for faces out of          120
+ Generating message          117  for faces out of          120
+ Generating message          118  for faces out of          120
+ Generating message          119  for faces out of          120
+ Generating message          120  for faces out of          120
+ 
+ all the messages for chunk faces have the right size
+ 
+ Generating message            1  for corners out of            8
+ Generating message            2  for corners out of            8
+ Generating message            3  for corners out of            8
+ Generating message            4  for corners out of            8
+ Generating message            5  for corners out of            8
+ Generating message            6  for corners out of            8
+ Generating message            7  for corners out of            8
+ Generating message            8  for corners out of            8
+ 
+ *******************************************
+ creating mesh in region            3
+ this region is the inner core
+ *******************************************
+ 
+ 
+    calculated top area:   0.461557679350501     
+             exact area:   0.461557680026829     
+ 
+ calculated bottom area:   0.226075613743651     
+             exact area (central cube):   0.226075621841487     
+ 
+ ----- creating chunk buffers -----
+ 
+ There are           10  slices along xi in each chunk
+ There are           10  slices along eta in each chunk
+ There is a total of          100  slices in each chunk
+ There are            6  chunks
+ There is a total of          600  slices in all the chunks
+ 
+ There is a total of          120  messages to assemble faces between chunks
+ 
+ Generating message            1  for faces out of          120
+ Generating message            2  for faces out of          120
+ Generating message            3  for faces out of          120
+ Generating message            4  for faces out of          120
+ Generating message            5  for faces out of          120
+ Generating message            6  for faces out of          120
+ Generating message            7  for faces out of          120
+ Generating message            8  for faces out of          120
+ Generating message            9  for faces out of          120
+ Generating message           10  for faces out of          120
+ Generating message           11  for faces out of          120
+ Generating message           12  for faces out of          120
+ Generating message           13  for faces out of          120
+ Generating message           14  for faces out of          120
+ Generating message           15  for faces out of          120
+ Generating message           16  for faces out of          120
+ Generating message           17  for faces out of          120
+ Generating message           18  for faces out of          120
+ Generating message           19  for faces out of          120
+ Generating message           20  for faces out of          120
+ Generating message           21  for faces out of          120
+ Generating message           22  for faces out of          120
+ Generating message           23  for faces out of          120
+ Generating message           24  for faces out of          120
+ Generating message           25  for faces out of          120
+ Generating message           26  for faces out of          120
+ Generating message           27  for faces out of          120
+ Generating message           28  for faces out of          120
+ Generating message           29  for faces out of          120
+ Generating message           30  for faces out of          120
+ Generating message           31  for faces out of          120
+ Generating message           32  for faces out of          120
+ Generating message           33  for faces out of          120
+ Generating message           34  for faces out of          120
+ Generating message           35  for faces out of          120
+ Generating message           36  for faces out of          120
+ Generating message           37  for faces out of          120
+ Generating message           38  for faces out of          120
+ Generating message           39  for faces out of          120
+ Generating message           40  for faces out of          120
+ Generating message           41  for faces out of          120
+ Generating message           42  for faces out of          120
+ Generating message           43  for faces out of          120
+ Generating message           44  for faces out of          120
+ Generating message           45  for faces out of          120
+ Generating message           46  for faces out of          120
+ Generating message           47  for faces out of          120
+ Generating message           48  for faces out of          120
+ Generating message           49  for faces out of          120
+ Generating message           50  for faces out of          120
+ Generating message           51  for faces out of          120
+ Generating message           52  for faces out of          120
+ Generating message           53  for faces out of          120
+ Generating message           54  for faces out of          120
+ Generating message           55  for faces out of          120
+ Generating message           56  for faces out of          120
+ Generating message           57  for faces out of          120
+ Generating message           58  for faces out of          120
+ Generating message           59  for faces out of          120
+ Generating message           60  for faces out of          120
+ Generating message           61  for faces out of          120
+ Generating message           62  for faces out of          120
+ Generating message           63  for faces out of          120
+ Generating message           64  for faces out of          120
+ Generating message           65  for faces out of          120
+ Generating message           66  for faces out of          120
+ Generating message           67  for faces out of          120
+ Generating message           68  for faces out of          120
+ Generating message           69  for faces out of          120
+ Generating message           70  for faces out of          120
+ Generating message           71  for faces out of          120
+ Generating message           72  for faces out of          120
+ Generating message           73  for faces out of          120
+ Generating message           74  for faces out of          120
+ Generating message           75  for faces out of          120
+ Generating message           76  for faces out of          120
+ Generating message           77  for faces out of          120
+ Generating message           78  for faces out of          120
+ Generating message           79  for faces out of          120
+ Generating message           80  for faces out of          120
+ Generating message           81  for faces out of          120
+ Generating message           82  for faces out of          120
+ Generating message           83  for faces out of          120
+ Generating message           84  for faces out of          120
+ Generating message           85  for faces out of          120
+ Generating message           86  for faces out of          120
+ Generating message           87  for faces out of          120
+ Generating message           88  for faces out of          120
+ Generating message           89  for faces out of          120
+ Generating message           90  for faces out of          120
+ Generating message           91  for faces out of          120
+ Generating message           92  for faces out of          120
+ Generating message           93  for faces out of          120
+ Generating message           94  for faces out of          120
+ Generating message           95  for faces out of          120
+ Generating message           96  for faces out of          120
+ Generating message           97  for faces out of          120
+ Generating message           98  for faces out of          120
+ Generating message           99  for faces out of          120
+ Generating message          100  for faces out of          120
+ Generating message          101  for faces out of          120
+ Generating message          102  for faces out of          120
+ Generating message          103  for faces out of          120
+ Generating message          104  for faces out of          120
+ Generating message          105  for faces out of          120
+ Generating message          106  for faces out of          120
+ Generating message          107  for faces out of          120
+ Generating message          108  for faces out of          120
+ Generating message          109  for faces out of          120
+ Generating message          110  for faces out of          120
+ Generating message          111  for faces out of          120
+ Generating message          112  for faces out of          120
+ Generating message          113  for faces out of          120
+ Generating message          114  for faces out of          120
+ Generating message          115  for faces out of          120
+ Generating message          116  for faces out of          120
+ Generating message          117  for faces out of          120
+ Generating message          118  for faces out of          120
+ Generating message          119  for faces out of          120
+ Generating message          120  for faces out of          120
+ 
+ all the messages for chunk faces have the right size
+ 
+ Generating message            1  for corners out of            8
+ Generating message            2  for corners out of            8
+ Generating message            3  for corners out of            8
+ Generating message            4  for corners out of            8
+ Generating message            5  for corners out of            8
+ Generating message            6  for corners out of            8
+ Generating message            7  for corners out of            8
+ Generating message            8  for corners out of            8
+ 
+ calculated volume:    4.22536009922152     
+      exact volume:    4.22536010117536     
+ 
+ Repartition of elements in regions:
+ ----------------------------------
+ 
+ total number of elements in each slice in type AB chunk:        28368
+ 
+  - crust and mantle:    76.64975      %
+  - outer core:    14.97462      %
+  - inner core:    8.375634      %
+ 
+ for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.
+ h
+ 
+ Load balancing AB blocks =    92.5969447708578       %
+ Load balancing AC blocks =    95.0646298472385       %
+ Load balancing BC blocks = 100 % by definition
+ 
+ 
+ total number of time steps in the solver will be:        72100
+ 
+ using single precision for the calculations
+ 
+ smallest and largest possible floating-point numbers are:   1.1754944E-38
+  3.4028235E+38
+ 
+ 
+ Elapsed time for mesh generation and buffer creation in seconds = 
+   751.519572019577     
+ End of mesh generation
+ 
+ done
+ 
