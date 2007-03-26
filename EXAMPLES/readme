@@ -1,0 +1,53 @@
+###########################################
+         SEM V3.6 EXAMPLE RUNS 
+  Questions?  email Ying ZHOU (yingz@vt.edu)
+###########################################
+
+  This directory contains example SEM runs at two resolutions (NEX=240, 480), 
+for transversely anisotropic prem with *ONE LAYER* crust (i.e., 
+velocities from 0 to 24.4 km are vp=5.8km/s vs=3.2km/s).  
+NEX240 runs are accurate down to ~25 s. NEX480 runs are accurate down to ~12 s. 
+
+  Seismograms in this directory have been verified to be identical to those generated
+using SEM V3.5. In NEX_240/Q and NEX_480/Q directories, PREM attenuation 
+is incorporated, in NEX_240/no_Q and NEX_480/no_Q directories, attenuation is ignored. 
+
+  Input parameters, CMT and STATION files can be found under subdirectories DATA/ 
+
+ 
+
+NEX_240/
+       Q/
+       no_Q/  
+
+
+NEX_480/
+       Q/
+       no_Q/
+
+subdirectories:
+
+DATA/          CMTSOLUTION  Par_file  STATIONS (SEM input files)
+SEISMO/        *.semd  (displacement in ascii format (time in seconds, displacement in meters) )
+               (use "tar vxfz *.gz" to extract seismogram files *.semd)
+OUTPUT_FILES/  timestamp*  (timesteps for cluster performance reference)  
+job            submission script on the Caltech cluster
+
+
+PDF/   
+     480-240-noQ-BILL-Z.pdf:  
+     480-240-Q-BILL-Z.pdf  :
+                NEX480 and NEX240 seismograms for station BILL,  vertical
+                component, lowpass filtered with corner frequency of 0.04 Hz.
+                Solid lines are NEX240 seismograms and dashed lines are NEX480
+                seismograms. 
+                             
+
+***************************
+For cluster performance reference:
+
+NEX240 runs (Q and no_Q) on the new cluster (quad core)
+NEX480 runs (Q and no_Q) on the old cluster
+***************************
+
+
