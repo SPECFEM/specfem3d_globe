@@ -1,7 +1,0 @@
- Time step #        36000
- Time:    59.98583      minutes
- Elapsed time in seconds =    115126.299149036     
- Elapsed time in hh:mm:ss =   31 h 58 m 46 s
- Mean elapsed time per time step in seconds =    3.19795275413990     
- Max norm displacement vector U in solid in all slices (m) =   8.2840279E-02
- Max non-dimensional potential Ufluid in fluid in all slices =   1.9677494E-15

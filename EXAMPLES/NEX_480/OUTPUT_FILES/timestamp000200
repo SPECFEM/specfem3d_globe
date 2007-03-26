@@ -1,7 +1,0 @@
- Time step #          200
- Time:   0.3191667      minutes
- Elapsed time in seconds =    617.793650150299     
- Elapsed time in hh:mm:ss =    0 h 10 m 17 s
- Mean elapsed time per time step in seconds =    3.08896825075150     
- Max norm displacement vector U in solid in all slices (m) =   7.9422399E-02
- Max non-dimensional potential Ufluid in fluid in all slices =   1.0289935E-24
