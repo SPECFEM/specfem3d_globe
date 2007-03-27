@@ -59,7 +59,8 @@
     double precision                          :: QT_c_source        ! Source Frequency
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
+    double precision, dimension(:), pointer   :: Qr                 ! Radius
+    integer, dimension(:), pointer            :: Qs                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta

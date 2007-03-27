@@ -2,21 +2,12 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
-# enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type (*mais* il faudra quand même laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout où il y en a, car on continue à traiter 6 blocs, même s'ils ont maintenant la même topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs -> {ok pour le mailleur, reste la différentiation dans le solveur, mais sans conséquences. A mettre à plat lors de la fusion. DM.}
-
-# enlever les "modules" et "use" partout où il y en a (pour anisotropie etc) car ce n'est pas "thread safe" et donc ça se plantera si on utilise MPC au lieu de MPI. Remplacer par la transmission explicite des paramètres aux subroutines. Peut-être dire dans le manuel utilisateur qu'il ne faut pas utiliser de modules pour cette raison ? -> {OK. DM.}
-
-# ajouter le nombre analytique de points de GLL (appelé NGLOB) dans le mailleur (dans le nouveau read_compute_parameters.f90) -> {OK. DM.}
 
 - merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
-
-# modifier_creation_central_cube_now_32_au_lieu_de_16 -> {ok, mais a revoir : 2**4=16. DM.}
 
 - make_sure_aniso_elements_created_first
 
 - utiliser auto_NER de Brian Savage pour determiner les constantes d'attenuation pour les chunks complets et non pas seulement si différent de 90 degrés. Pour cela, supprimer mes vieilles variables MIN_ATTENUATION et MAX_ATTENUATION_PERIOD
-
-# modifier_create_header_file pour s'assurer qu'il fonctionne avec le nouveau mailleur -> {OK reste à enlever les appels à exit_mpi. DM.}
 
 - implement classical Cuthill-McKee sorting
 
@@ -26,21 +17,9 @@ de Linux
 
 - use indirect addressing (inverse permutation array) and a flag to store anisotropy in the mantle to avoid having to start with that region, which breaks the Cuthill-McKee sorting; once this is done, suppress the statement in which we make this region become region number 1 in the mesh creation routine
 
-# dans constants.h il y a un flag IFLAG_220_MOHO qu'il faudra séparer en deux en
-créant IFLAG_220_80 et IFLAG_80_MOHO. Facile dans constants.h,
-mais partout où apparaît ensuite IFLAG_220_MOHO par exemple
-dans des if dans tous les *.f90 il faudra changer tous les
-if(machintruc == IFLAG_220_MOHO) then
-en
-if(machintruc == IFLAG_220_80 .or. machintruc == IFLAG_80_MOHO) then
-Faudra qu'on fasse ça à l'occasion ok ? par ex la semaine prochaine,
-c'est rapide à faire.
-(c'est Brian Savage, qui travaille sur l'atténuation dans le code,
-qui a besoin de distinguer ces deux sub-flags) -> {OK, a revoir qd meme. DM.}
-
 - rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices (see routine create_central_cube_buffers.f90). Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Céline. Ajouter un flag (appelé PERFECT_LOAD_CENTRAL_CUBE) pour rendre le load balancing parfait dans le central cube en calculant pour rien dans les 4 cubes marqués "FICTITIOUS" mais en n'utilisant pas les résultats dans la sommation.
 
-? use BLAS3 calls in compute_forces*.f90 instead of loops as in the current 
+- use BLAS3 calls in compute_forces*.f90 instead of loops as in the current 
 implementation. We should gain a huge factor if we can do this, but we will
 need to change the structure of the arrays. Mais Dimitri a deja teste BLAS3
 et on ne gagne rien, en fait on perd meme des perfs, donc voir avec Dimitri
@@ -54,7 +33,6 @@ check*.f90, qui sont amenes a disparaitre)
 
 - use MPC in the code instead of MPI, if we can get MPC from CEA under GPL or CeCILL licence. Make sure the code is thread-safe (for instance suppress all the modules and the "use" statements, which are not thread-safe); on saura le 15 mars ou en novembre (les deux prochaines reunions NUMASIS) si on peut recuperer le code MPC en licence open source de chez Dominique Rodriguez au CEA
 
-- modifier write_seismograms.f90 pour que tout soit écrit directement sur le home par le maître et non pas sur les disques locaux par chaque noeud. Pour cela faire des paires SEND/RECV en allouant dynamiquement un tableau de taille différente à chaque fois (de taille nrec_local, sauf si nrec_local = 0, dans ce cas on n'envoie/reçoit rien pour cette tranche qui ne contient pas de récepteur). A la fin on doit avoir exactement 3*765 = 2295 fichiers (765 stations dans DATA/STATIONS, chacune stockant les trois composantes du vecteur déplacement)
 
 - dans specfem3D.f90 ci-dessous à un moment on appelle deux fois la routine d'assemblage MPI, une fois pour assembler le crust + mantle et une fois pour assembler le inner core, juste après, ce qui double le nombre de messages et la latence pour rien. Donc quand on réécrira le MPI du solver bien entendu il faudra penser à fusionner les deux en un seul envoi de messages contenant crust + mantle + inner core. Voici le code obsolète ci-dessous.
 ! crust and mantle
@@ -217,3 +195,26 @@ Done:
 -----
 
 
+- enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type (*mais* il faudra quand même laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout où il y en a, car on continue à traiter 6 blocs, même s'ils ont maintenant la même topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs -> {ok pour le mailleur, reste la différentiation dans le solveur, mais sans conséquences. A mettre à plat lors de la fusion. DM.}
+
+- enlever les "modules" et "use" partout où il y en a (pour anisotropie etc) car ce n'est pas "thread safe" et donc ça se plantera si on utilise MPC au lieu de MPI. Remplacer par la transmission explicite des paramètres aux subroutines. Peut-être dire dans le manuel utilisateur qu'il ne faut pas utiliser de modules pour cette raison ? -> {OK. DM.}
+
+- ajouter le nombre analytique de points de GLL (appelé NGLOB) dans le mailleur (dans le nouveau read_compute_parameters.f90) -> {OK. DM.}
+
+- modifier_creation_central_cube_now_32_au_lieu_de_16 -> {ok, mais a revoir : 2**4=16. DM.}
+
+- modifier_create_header_file pour s'assurer qu'il fonctionne avec le nouveau mailleur -> {OK reste à enlever les appels à exit_mpi. DM.}
+
+- dans constants.h il y a un flag IFLAG_220_MOHO qu'il faudra séparer en deux en
+créant IFLAG_220_80 et IFLAG_80_MOHO. Facile dans constants.h,
+mais partout où apparaît ensuite IFLAG_220_MOHO par exemple
+dans des if dans tous les *.f90 il faudra changer tous les
+if(machintruc == IFLAG_220_MOHO) then
+en
+if(machintruc == IFLAG_220_80 .or. machintruc == IFLAG_80_MOHO) then
+Faudra qu'on fasse ça à l'occasion ok ? par ex la semaine prochaine,
+c'est rapide à faire.
+(c'est Brian Savage, qui travaille sur l'atténuation dans le code,
+qui a besoin de distinguer ces deux sub-flags) -> {OK, a revoir qd meme. DM.}
+
+- modifier write_seismograms.f90 pour que tout soit écrit directement sur le home par le maître et non pas sur les disques locaux par chaque noeud. Pour cela faire des paires SEND/RECV en allouant dynamiquement un tableau de taille différente à chaque fois (de taille nrec_local, sauf si nrec_local = 0, dans ce cas on n'envoie/reçoit rien pour cette tranche qui ne contient pas de récepteur). A la fin on doit avoir exactement 3*765 = 2295 fichiers (765 stations dans DATA/STATIONS, chacune stockant les trois composantes du vecteur déplacement)
