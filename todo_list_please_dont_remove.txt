@@ -3,6 +3,8 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
 
+- David: tu avais pu régler le coup de integer Qs ? comme je te le disais, c'est mieux que Qs soit un double precision car plus lisible pour les géophysiciens 
+
 - merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
 
 - make_sure_aniso_elements_created_first
