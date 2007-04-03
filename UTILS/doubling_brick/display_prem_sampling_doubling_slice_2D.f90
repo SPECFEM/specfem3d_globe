@@ -19,11 +19,11 @@
 
   implicit none
 
-  include "constants_modified.h"
+  include "constants_modified_2D.h"
 
 ! honor PREM Moho or not
 ! doing so drastically reduces the stability condition and therefore the time step
-  logical, parameter :: HONOR_PREM_MOHO = .false.
+  logical, parameter :: HONOR_1D_SPHERICAL_MOHO = .false.
 
 ! resolution target for minimum number of points per S wavelength in the whole mesh
   double precision, parameter :: RESOLUTION_TARGET = 4.d0
@@ -31,14 +31,12 @@
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
   double precision, parameter :: MARGIN_SAFE = 1.25d0
 
-  integer :: NEX,NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer :: NEX,NEX_XI,NPROC_XI,NEX_PER_PROC_XI
 
-  integer :: NER_CRUST,NER_220_MOHO, NER_400_220, NER_600_400, NER_670_600, NER_771_670, &
+  integer :: NER_220_CRUST, NER_400_220, NER_600_400, NER_670_600, NER_771_670, &
     NER_TOPDDOUBLEPRIME_771, NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB
 
-  double precision :: DT,RMOHO_FICTITIOUS_IN_MESHER
-
-  logical :: ONE_CRUST
+  double precision :: DT
 
   integer, dimension(NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   double precision, dimension(NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
@@ -64,30 +62,28 @@
 
 ! mesh chunk has a size of 90 x 90 degrees
   double precision, parameter :: ANGULAR_WIDTH_XI_IN_DEGREES = 90.d0
-  double precision, parameter :: ANGULAR_WIDTH_ETA_IN_DEGREES = 90.d0
-
   double precision, parameter :: ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * PI / 180.d0
-  double precision, parameter :: ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * PI / 180.d0
 
 ! show the mesh for the first slice as an example
-  integer, parameter :: iproc_xi = 0, iproc_eta = 0
+  integer, parameter :: iproc_xi = 0
 
-  integer ix,iy,ir
-  integer ix_elem,iy_elem,ir_elem
+  integer ix,ir
+  integer ix_elem,ir_elem
 
 ! number of nodes of an OpenDX element
-  integer, parameter :: NGNOD_OPENDX = 8
+  integer, parameter :: NGNOD_OPENDX = 4
 
 ! topology of the elements
-  integer, dimension(NGNOD_OPENDX) :: iaddx,iaddy,iaddr
+  integer, dimension(NGNOD_OPENDX) :: iaddx,iaddr
 
   integer :: ispec,ispec_final,nspec,npoin,ioffset,ignod,ignod2
-  double precision, dimension(NGNOD_OPENDX) :: xelm,yelm,zelm
-  double precision :: xval,yval,zval,rval
+  double precision, dimension(NGNOD_OPENDX) :: xelm,zelm
+  double precision :: xval,zval,rval
 
 ! list of corners defining the edges
+  integer, parameter :: NEDGES = 4
+  integer, dimension(NEDGES,2) :: list_corners_edge
   integer iedge
-  integer list_corner(2,12)
 
   integer :: elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
@@ -95,7 +91,7 @@
 
 ! mesh doubling superbrick
   integer, dimension(NGNOD_DOUBLING_SUPERBRICK,NSPEC_DOUBLING_SUPERBRICK) :: ibool_superbrick
-  double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick
+  double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,z_superbrick
 
 ! for the stability condition
 ! maximum polynomial degree for which we can compute the stability condition
@@ -120,12 +116,9 @@
 ! remove old files
   call system('rm -f DX_fullmesh*.dx DX_worst*.dx prem_horizontal_sampling_*.dat prem_radial_sampling*.dat')
 
-! new case of multiples of 32
+! case of multiples of 16
   NEX_val(1) = 160
-!!!!!!!!!!!!!!!!!!!!!! old case of multiples of 16
-!!!!!!!!! only one in the list that is not a multiple of 32
-!!!!!!!!!!!!!!!!!!!!!!  NEX_val(2) = 240
-  NEX_val(2) = 256
+  NEX_val(2) = 128
   NEX_val(3) = 320
   NEX_val(4) = 480
   NEX_val(5) = 512
@@ -135,32 +128,22 @@
   NEX_val(9) = 1248
 
 ! loop on all the cases to study
-!!!!!!!!!  do icase = 1,1!!!!!!!!!!!!!!!!NUM_CASES
-  do icase = 1,NUM_CASES
+!!!!!!!!!!!! DK DK only one case    do icase = 1,NUM_CASES
+  do icase = 2,2
 
 ! define value of NEX for this case
   NEX = NEX_val(icase)
 
   NEX_XI = NEX
-  NEX_ETA = NEX
 
 !!! DK DK use highest possible number of processors to create smallest slice for serial tests
-!!!!!!!!!!!!!!!!  NPROC_XI = NEX_XI/16
-  NPROC_XI = NEX_XI/32
-  NPROC_ETA = NPROC_XI
+  NPROC_XI = NEX_XI/16
 
   NEX_PER_PROC_XI = NEX_XI / NPROC_XI
-  NEX_PER_PROC_ETA = NEX_ETA / NPROC_ETA
 
-! check that mesh can be coarsened in depth three times (block size must be a multiple of 16)
-! if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
-! if(mod(NEX_ETA,16) /= 0) stop 'NEX_ETA must be a multiple of 16'
-! if(mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
-! if(mod(NEX_ETA/16,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 16*NPROC_ETA'
-  if(mod(NEX_XI,32) /= 0) stop 'NEX_XI must be a multiple of 32'
-  if(mod(NEX_ETA,32) /= 0) stop 'NEX_ETA must be a multiple of 32'
-  if(mod(NEX_XI/32,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 32*NPROC_XI'
-  if(mod(NEX_ETA/32,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 32*NPROC_ETA'
+! check that mesh can be coarsened in depth four times (block size must be a multiple of 16)
+  if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
+  if(mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
 
   print *,'-----------------------------------------'
   print *
@@ -169,34 +152,12 @@
   print *,'NPROC_XI used = ',NPROC_XI
   print *
 
-!!!!!!!! DK DK stability is controlled by the behavior in the mantle right above the second doubling
-! period min for 4.000000 points per lambda S min in horizontal direction =    27.38702
-! element width =   0.5625000      degrees =    62.54715      km
-  if(NEX == 160) then
-    DT                       = 0.26d0 * 0.30d0 / 0.2511
-! stability max = approximately 0.2511
-    NER_CRUST                = 1
-    NER_220_MOHO             = 2
-    NER_400_220              = 2
-    NER_600_400              = 2
-    NER_670_600              = 1
-    NER_771_670              = 1
-    NER_TOPDDOUBLEPRIME_771  = 15
-    NER_CMB_TOPDDOUBLEPRIME  = 1
-    NER_OUTER_CORE           = 16
-    NER_TOP_CENTRAL_CUBE_ICB = 1
-
-! period min for 4.000000 points per lambda S min in horizontal direction =    18.25801
-! element width =   0.3750000      degrees =    41.69810      km
-!!!!!!!!!!!!!!!!!!!!!!!  else if(NEX == 240) then
-! new case of multiples of 32
 ! period min for    4.000000 points per lambda S min in horizontal direction =    17.11689
 ! element width =   0.3515625      degrees =    39.09196      km
-  else if(NEX == 256) then
+  if(NEX == 128) then
     DT                       = 0.20d0 * 0.30d0 / 0.2565
 ! stability max = approximately 0.2565
-    NER_CRUST                = 1
-    NER_220_MOHO             = 3
+    NER_220_CRUST            = 4
     NER_400_220              = 3
     NER_600_400              = 3
     NER_670_600              = 1
@@ -211,8 +172,7 @@
   else if(NEX == 320) then
     DT                       = 0.125d0 * 0.30d0 / 0.2429
 ! stability max = approximately 0.2429
-    NER_CRUST                = 2
-    NER_220_MOHO             = 4
+    NER_220_CRUST            = 2
     NER_400_220              = 4
     NER_600_400              = 4
     NER_670_600              = 1
@@ -227,8 +187,7 @@
   else if(NEX == 480) then
     DT                       = 0.125d0 * 0.30d0 / 0.3235
 ! stability max = approximately 0.3235
-    NER_CRUST                = 2
-    NER_220_MOHO             = 6
+    NER_220_CRUST            = 3
     NER_400_220              = 5
     NER_600_400              = 6
     NER_670_600              = 2
@@ -243,8 +202,7 @@
   else if(NEX == 512) then
     DT                       = 0.125d0 * 0.30d0 / 0.3235
 ! stability max = approximately 0.3235
-    NER_CRUST                = 2
-    NER_220_MOHO             = 7
+    NER_220_CRUST            = 4
     NER_400_220              = 6
     NER_600_400              = 6
     NER_670_600              = 2
@@ -259,8 +217,7 @@
   else if(NEX == 640) then
     DT                       = 0.125d0 * 0.30d0 / 0.4067
 ! stability max = approximately 0.4067
-    NER_CRUST                = 2
-    NER_220_MOHO             = 8
+    NER_220_CRUST            = 4
     NER_400_220              = 7
     NER_600_400              = 8
     NER_670_600              = 3
@@ -275,8 +232,7 @@
   else if(NEX == 864) then
     DT                       = 0.0555555555d0 * 0.30d0 / 0.2565
 ! stability max = approximately 0.2565
-    NER_CRUST                = 3
-    NER_220_MOHO             = 11
+    NER_220_CRUST            = 6
     NER_400_220              = 10
     NER_600_400              = 10
     NER_670_600              = 3
@@ -291,8 +247,7 @@
   else if(NEX == 1152) then
     DT                       = 0.0555555555d0 * 0.30d0 / 0.3504
 ! stability max = approximately 0.3504
-    NER_CRUST                = 4
-    NER_220_MOHO             = 15
+    NER_220_CRUST            = 8
     NER_400_220              = 13
     NER_600_400              = 13
     NER_670_600              = 4
@@ -307,8 +262,7 @@
   else if(NEX == 1248) then
     DT                       = 0.05d0 * 0.30d0 / 0.3318
 ! stability max = approximately 0.3318
-    NER_CRUST                = 4
-    NER_220_MOHO             = 16
+    NER_220_CRUST            = 8
     NER_400_220              = 14
     NER_600_400              = 14
     NER_670_600              = 5
@@ -326,29 +280,13 @@
   print *,'DT computed for Courant number of 0.30 = ',DT
   print *
 
-! honor the PREM Moho or define a fictitious Moho in order to have even radial sampling
-! from the d220 to the Earth surface
-  if(HONOR_PREM_MOHO) then
-    RMOHO_FICTITIOUS_IN_MESHER = RMOHO
-! define ONE_CRUST flag according to number of elements in radial direction in the crust
-    if(NER_CRUST > 1) then
-      ONE_CRUST = .false.
-    else
-      ONE_CRUST = .true.
-    endif
-  else
-    RMOHO_FICTITIOUS_IN_MESHER = R220 + (R_EARTH - R220) * dble(NER_220_MOHO) / dble(NER_220_MOHO + NER_CRUST)
-!!!!!!!!!!!!!!! DK DK ceci a revoir, voir ce qu'on fait dans ce cas-la
-    ONE_CRUST = .false.
-  endif
-
 !
 !--- display the PREM model alone
 !
   open(unit=27,file='prem_model.dat',status='unknown')
   do ipoin = 2,1000
     r = R_EARTH * dble(ipoin)/1000.d0
-    call prem_iso(r,rho,vp,vs,ratio_sampling,ONE_CRUST)
+    call prem_iso(r,rho,vp,vs,ratio_sampling)
     write(27,*) sngl((R_EARTH-r)/1000.d0),sngl(vp),sngl(vs)
   enddo
   close(27)
@@ -359,7 +297,7 @@
 
 ! estimate of mesh resolution: minimum resolution is for S waves right below the second doubling
   r = R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL - SMALL_OFFSET ! in meters
-  call prem_iso(r,rho,vp,vs,ratio_sampling,ONE_CRUST)
+  call prem_iso(r,rho,vp,vs,ratio_sampling)
   period_min = RESOLUTION_TARGET / (vs * (NGLLX - 1) * (4 * NEX / ratio_sampling) / (2.d0 * PI * r))
 
   print *
@@ -391,41 +329,20 @@
   if(NGLLX > NGLLX_MAX_STABILITY) stop 'cannot estimate the stability condition for that degree'
 
 ! list of corners defining the edges
-  list_corner(1,1) = 1
-  list_corner(2,1) = 2
+! the edge number is sorted according to the numbering convention defined in file hex_nodes.f90
+! as well as in DATA/util/YYYYYYYYYYYYYYYYYYYYYYYYYYY DK DK UGLY YYYYYYYYYYYYYYYYYYY
 
-  list_corner(1,2) = 2
-  list_corner(2,2) = 3
+  list_corners_edge( 1,1) = 1
+  list_corners_edge( 1,2) = 2
 
-  list_corner(1,3) = 3
-  list_corner(2,3) = 4
+  list_corners_edge( 2,1) = 2
+  list_corners_edge( 2,2) = 3
 
-  list_corner(1,4) = 4
-  list_corner(2,4) = 1
+  list_corners_edge( 3,1) = 3
+  list_corners_edge( 3,2) = 4
 
-  list_corner(1,5) = 5
-  list_corner(2,5) = 6
-
-  list_corner(1,6) = 6
-  list_corner(2,6) = 7
-
-  list_corner(1,7) = 7
-  list_corner(2,7) = 8
-
-  list_corner(1,8) = 8
-  list_corner(2,8) = 5
-
-  list_corner(1,9) = 1
-  list_corner(2,9) = 5
-
-  list_corner(1,10) = 2
-  list_corner(2,10) = 6
-
-  list_corner(1,11) = 3
-  list_corner(2,11) = 7
-
-  list_corner(1,12) = 4
-  list_corner(2,12) = 8
+  list_corners_edge( 4,1) = 4
+  list_corners_edge( 4,2) = 1
 
   write(filename,"('prem_horizontal_sampling_',i4.4,'.dat')") NEX
   open(unit=27,file=filename,status='unknown')
@@ -434,7 +351,7 @@
 
   r = R_EARTH * dble(ipoin)/1000.d0
 
-  call prem_iso(r,rho,vp,vs,ratio_sampling,ONE_CRUST)
+  call prem_iso(r,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
   if(vs < 0.001d0) vs = vp / MARGIN_SAFE
 
@@ -451,10 +368,6 @@
   r_gnuplot = (R_EARTH-r)/1000.d0
   write(27,*) sngl(r_gnuplot),sngl(num_points_per_lambda_S * vp/vs),sngl(num_points_per_lambda_S),sngl(stability)
 
-! this to be able to see values in the crust better on a larger interval
-  if(r_gnuplot < 10.d0) &
-    write(27,*) '-200 ',sngl(num_points_per_lambda_S * vp/vs),sngl(num_points_per_lambda_S),sngl(stability)
-
   enddo
 
   close(27)
@@ -463,49 +376,45 @@
 !--- mesh resolution in the radial direction
 !------------------------------------------------
 
-  ner( 1) = NER_CRUST
-  ner( 2) = NER_220_MOHO
-  ner( 3) = NER_400_220
-  ner( 4) = NER_600_400
-  ner( 5) = NER_670_600
-  ner( 6) = NER_771_670
-  ner( 7) = NER_TOPDDOUBLEPRIME_771
-  ner( 8) = NER_CMB_TOPDDOUBLEPRIME
-  ner( 9) = NER_OUTER_CORE
-  ner(10) = NER_TOP_CENTRAL_CUBE_ICB
+  ner(1) = NER_220_CRUST
+  ner(2) = NER_400_220
+  ner(3) = NER_600_400
+  ner(4) = NER_670_600
+  ner(5) = NER_771_670
+  ner(6) = NER_TOPDDOUBLEPRIME_771
+  ner(7) = NER_CMB_TOPDDOUBLEPRIME
+  ner(8) = NER_OUTER_CORE
+  ner(9) = NER_TOP_CENTRAL_CUBE_ICB
 
 ! define the top and bottom radii of all the regions of the mesh in the radial direction
 ! the first region is the crust at the surface of the Earth
 ! the last region is in the inner core near the center of the Earth
   r_top(1) = R_EARTH
-  r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
+  r_bottom(1) = R220
 
-  r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
-  r_bottom(2) = R220
+  r_top(2) = R220
+  r_bottom(2) = R400
 
-  r_top(3) = R220
-  r_bottom(3) = R400
+  r_top(3) = R400
+  r_bottom(3) = R600
 
-  r_top(4) = R400
-  r_bottom(4) = R600
+  r_top(4) = R600
+  r_bottom(4) = R670
 
-  r_top(5) = R600
-  r_bottom(5) = R670
+  r_top(5) = R670
+  r_bottom(5) = R771
 
-  r_top(6) = R670
-  r_bottom(6) = R771
+  r_top(6) = R771
+  r_bottom(6) = RTOPDDOUBLEPRIME
 
-  r_top(7) = R771
-  r_bottom(7) = RTOPDDOUBLEPRIME
+  r_top(7) = RTOPDDOUBLEPRIME
+  r_bottom(7) = RCMB
 
-  r_top(8) = RTOPDDOUBLEPRIME
-  r_bottom(8) = RCMB
+  r_top(8) = RCMB
+  r_bottom(8) = RICB
 
-  r_top(9) = RCMB
-  r_bottom(9) = RICB
-
-  r_top(10) = RICB
-  r_bottom(10) = R_CENTRAL_CUBE
+  r_top(9) = RICB
+  r_bottom(9) = R_CENTRAL_CUBE
 
   write(filename,"('prem_radial_sampling_',i4.4,'.dat')") NEX
   open(unit=27,file=filename,status='unknown')
@@ -518,24 +427,12 @@
 
 ! compute at the bottom of the layer
   ipoin = ielem - 1
-  if(ilayer /= 9) then
-    gamma =  dble(ipoin) / dble(ner(ilayer))
-  else
-! non-constant element size in the outer core to compensate for PREM variation
-!!!!!!!!!!    gamma =  0.9d0 + (1.1d0 - 0.9d0) * dble(ipoin) / dble(ner(ilayer))
-    gamma =  (dble(ipoin) / dble(ner(ilayer)))! ** 0.95d0
-  endif
+  gamma =  dble(ipoin) / dble(ner(ilayer))
   r = r_bottom(ilayer) * (ONE - gamma) + r_top(ilayer) * gamma
 
 ! define next point at the top of the layer
   ipoin = ielem - 1 + 1
-  if(ilayer /= 9) then
-    gamma =  dble(ipoin) / dble(ner(ilayer))
-  else
-! non-constant element size in the outer core to compensate for PREM variation
-!!!!!!!!!!    gamma =  0.9d0 + (1.1d0 - 0.9d0) * dble(ipoin) / dble(ner(ilayer))
-    gamma =  (dble(ipoin) / dble(ner(ilayer)))! ** 0.95d0
-  endif
+  gamma =  dble(ipoin) / dble(ner(ilayer))
   r_next = r_bottom(ilayer) * (ONE - gamma) + r_top(ilayer) * gamma
 
 ! add security margin to avoid being exactly on an interface
@@ -546,7 +443,7 @@
   spectral_element_size = r_next - r
   average_mesh_point_size = spectral_element_size / (NGLLX - 1)
 
-  call prem_iso(r,rho,vp,vs,ratio_sampling,ONE_CRUST)
+  call prem_iso(r,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
   if(vs < 0.001d0) vs = vp / MARGIN_SAFE
 
@@ -557,20 +454,16 @@
   stability = vp * DT / (spectral_element_size * percent_GLL(NGLLX))
 
 !!!!!! DK DK quick hack to detect doublings and show problems with small doubling brick
-  call prem_iso(r_next,rho,vp_new,vs_new,ratio_sampling_new,ONE_CRUST)
+  call prem_iso(r_next,rho,vp_new,vs_new,ratio_sampling_new)
   if(ratio_sampling_new < ratio_sampling) stability = stability * 3.d0 / 2.d0
 !!!!!! DK DK quick hack to detect doublings and show problems with small doubling brick
 
   r_gnuplot = (R_EARTH-r)/1000.d0
   write(27,*) sngl(r_gnuplot),sngl(num_points_per_lambda_S * vp/vs),sngl(num_points_per_lambda_S),sngl(stability)
 
-! this to be able to see values in the crust better on a larger interval
-  if(r_gnuplot < 10.d0) &
-    write(27,*) '-200 ',sngl(num_points_per_lambda_S * vp/vs),sngl(num_points_per_lambda_S),sngl(stability)
-
 ! add one more point at the top of the last layer
   if(ielem == ner(ilayer)) then
-    call prem_iso(r_next,rho,vp,vs,ratio_sampling,ONE_CRUST)
+    call prem_iso(r_next,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
     if(vs < 0.001d0) vs = vp / MARGIN_SAFE
 
@@ -582,10 +475,6 @@
 
     r_gnuplot = (R_EARTH-r_next)/1000.d0
     write(27,*) sngl(r_gnuplot),sngl(num_points_per_lambda_S * vp/vs),sngl(num_points_per_lambda_S),sngl(stability)
-
-! this to be able to see values in the crust better on a larger interval
-    if(r_gnuplot < 10.d0) &
-      write(27,*) '-200 ',sngl(num_points_per_lambda_S * vp/vs),sngl(num_points_per_lambda_S),sngl(stability)
 
   endif
 
@@ -602,7 +491,7 @@
   distance_min = HUGEVAL
   do ielem = 1,NER_TOPDDOUBLEPRIME_771
     zval = RTOPDDOUBLEPRIME + ielem * (R771 - RTOPDDOUBLEPRIME) / dble(NER_TOPDDOUBLEPRIME_771)
-    distance = dabs(zval - (R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL))
+    distance = abs(zval - (R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL))
     if(distance < distance_min) then
       elem_doubling_mantle = ielem
       distance_min = distance
@@ -620,7 +509,7 @@
 ! implemented at the bottom of the outer core
   do ielem = 2,NER_OUTER_CORE
     zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
-    distance = dabs(zval - (R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL))
+    distance = abs(zval - (R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL))
     if(distance < distance_min) then
       elem_doubling_middle_outer_core = ielem
       distance_min = distance
@@ -638,7 +527,7 @@
 ! implemented in the middle of the outer core
   do ielem = 1,NER_OUTER_CORE-1
     zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
-    distance = dabs(zval - (R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL))
+    distance = abs(zval - (R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL))
     if(distance < distance_min) then
       elem_doubling_bottom_outer_core = ielem
       distance_min = distance
@@ -654,89 +543,72 @@
                   stop 'error in location of the two doublings in the outer core'
 
 ! define all the layers for the mesh
-  ner( 1) = NER_CRUST
-  ner( 2) = NER_220_MOHO
-  ner( 3) = NER_400_220
-  ner( 4) = NER_600_400
-  ner( 5) = NER_670_600
-  ner( 6) = NER_771_670
-  ner( 7) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-  ner( 8) = elem_doubling_mantle
-  ner( 9) = NER_CMB_TOPDDOUBLEPRIME
-! ner(10) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-! ner(11) = elem_doubling_middle_outer_core
-! ner(12) = NER_TOP_CENTRAL_CUBE_ICB
-  ner(10) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-  ner(11) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
-  ner(12) = elem_doubling_bottom_outer_core
-  ner(13) = NER_TOP_CENTRAL_CUBE_ICB
+  ner( 1) = NER_220_CRUST
+  ner( 2) = NER_400_220
+  ner( 3) = NER_600_400
+  ner( 4) = NER_670_600
+  ner( 5) = NER_771_670
+  ner( 6) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+  ner( 7) = elem_doubling_mantle
+  ner( 8) = NER_CMB_TOPDDOUBLEPRIME
+  ner( 9) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+  ner(10) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
+  ner(11) = elem_doubling_bottom_outer_core
+  ner(12) = NER_TOP_CENTRAL_CUBE_ICB
 
 ! value of the doubling ratio in each radial region of the mesh
-  ratio_sampling_array(1) = 1
-  ratio_sampling_array(2:7) = 2
-  ratio_sampling_array(8:10) = 4
-!!!!!!!!!!!!!!!!!!!!!  ratio_sampling_array(11:12) = 8
-  ratio_sampling_array(11) = 8
-  ratio_sampling_array(12:13) = 16
+  ratio_sampling_array(1:6) = 1
+  ratio_sampling_array(7:9) = 2
+  ratio_sampling_array(10) = 4
+  ratio_sampling_array(11:12) = 8
 
 ! define the three regions in which we implement a mesh doubling at the top of that region
   this_region_has_a_doubling(:)  = .false.
-  this_region_has_a_doubling(2)  = .true.
-  this_region_has_a_doubling(8)  = .true.
+  this_region_has_a_doubling(7)  = .true.
+  this_region_has_a_doubling(10) = .true.
   this_region_has_a_doubling(11) = .true.
-!!!!!!!! DK DK added this
-  this_region_has_a_doubling(12) = .true.
 
 ! define the top and bottom radii of all the regions of the mesh in the radial direction
 ! the first region is the crust at the surface of the Earth
 ! the last region is in the inner core near the center of the Earth
   r_top(1) = R_EARTH
-  r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
+  r_bottom(1) = R220
 
-  r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
-  r_bottom(2) = R220
+  r_top(2) = R220
+  r_bottom(2) = R400
 
-  r_top(3) = R220
-  r_bottom(3) = R400
+  r_top(3) = R400
+  r_bottom(3) = R600
 
-  r_top(4) = R400
-  r_bottom(4) = R600
+  r_top(4) = R600
+  r_bottom(4) = R670
 
-  r_top(5) = R600
-  r_bottom(5) = R670
+  r_top(5) = R670
+  r_bottom(5) = R771
 
-  r_top(6) = R670
-  r_bottom(6) = R771
+  r_top(6) = R771
+  r_bottom(6) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
 
-  r_top(7) = R771
-  r_bottom(7) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+  r_top(7) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+  r_bottom(7) = RTOPDDOUBLEPRIME
 
-  r_top(8) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-  r_bottom(8) = RTOPDDOUBLEPRIME
+  r_top(8) = RTOPDDOUBLEPRIME
+  r_bottom(8) = RCMB
 
-  r_top(9) = RTOPDDOUBLEPRIME
-  r_bottom(9) = RCMB
+  r_top(9) = RCMB
+  r_bottom(9) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
 
-  r_top(10) = RCMB
-  r_bottom(10) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+  r_top(10) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+  r_bottom(10) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
 
-! r_top(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-! r_bottom(11) = RICB
+  r_top(11) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+  r_bottom(11) = RICB
 
-! r_top(12) = RICB
-! r_bottom(12) = R_CENTRAL_CUBE
-
-  r_top(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-  r_bottom(11) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-
-  r_top(12) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-  r_bottom(12) = RICB
-
-  r_top(13) = RICB
-  r_bottom(13) = R_CENTRAL_CUBE
+  r_top(12) = RICB
+  r_bottom(12) = R_CENTRAL_CUBE
 
 ! create the mesh doubling superbrick
-  call define_superbrick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick)
+  call define_superbrick_2D(x_superbrick,z_superbrick,ibool_superbrick)
 
 ! compute total number of spectral elements in the mesh
   nspec = 0
@@ -749,17 +621,16 @@
 ! and therefore we suppress one layer of regular elements here
     if(this_region_has_a_doubling(ilayer)) ner_without_doubling = ner_without_doubling - 1
 
-    number_basic_elems_horizontal = (NEX_PER_PROC_XI/ratio_sampling_array(ilayer)) * (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer))
+    number_basic_elems_horizontal = (NEX_PER_PROC_XI/ratio_sampling_array(ilayer))
 
     nspec = nspec + ner_without_doubling * number_basic_elems_horizontal
 
 ! If there is a doubling at the top of this region, let us add these elements.
 ! The superbrick implements a symmetric four-to-two doubling and therefore replaces
-! a basic regular block of 2 x 2 = 4 elements.
+! a basic regular block of 2 elements.
 ! We have imposed that NEX be a multiple of 16 therefore we know that we can always create
-! these 2 x 2 blocks because NEX_PER_PROC_XI / ratio_sampling_array(ilayer) and
-! NEX_PER_PROC_ETA / ratio_sampling_array(ilayer) are always divisible by 2.
-    if(this_region_has_a_doubling(ilayer)) nspec = nspec + NSPEC_DOUBLING_SUPERBRICK * number_basic_elems_horizontal / 4
+! these 2 blocks because NEX_PER_PROC_XI / ratio_sampling_array(ilayer) is always divisible by 2.
+    if(this_region_has_a_doubling(ilayer)) nspec = nspec + NSPEC_DOUBLING_SUPERBRICK * number_basic_elems_horizontal / 2
 
   enddo
 
@@ -768,36 +639,16 @@
 
 ! corner nodes
   iaddx(1) = 0
-  iaddy(1) = 0
   iaddr(1) = 0
 
   iaddx(2) = 1
-  iaddy(2) = 0
   iaddr(2) = 0
 
   iaddx(3) = 1
-  iaddy(3) = 1
-  iaddr(3) = 0
+  iaddr(3) = 1
 
   iaddx(4) = 0
-  iaddy(4) = 1
-  iaddr(4) = 0
-
-  iaddx(5) = 0
-  iaddy(5) = 0
-  iaddr(5) = 1
-
-  iaddx(6) = 1
-  iaddy(6) = 0
-  iaddr(6) = 1
-
-  iaddx(7) = 1
-  iaddy(7) = 1
-  iaddr(7) = 1
-
-  iaddx(8) = 0
-  iaddy(8) = 1
-  iaddr(8) = 1
+  iaddr(4) = 1
 
 !---
 !--- create an OpenDX file with the whole mesh and
@@ -832,7 +683,6 @@
 
 ! loop on all the elements
    do ix_elem = 1,NEX_PER_PROC_XI,ratio_sampling_array(ilayer)
-   do iy_elem = 1,NEX_PER_PROC_ETA,ratio_sampling_array(ilayer)
 
     ner_without_doubling = ner(ilayer)
 
@@ -850,49 +700,40 @@
 
 ! define topological coordinates of this mesh point
     ix = (ix_elem - 1) + iaddx(ignod) * ratio_sampling_array(ilayer)
-    iy = (iy_elem - 1) + iaddy(ignod) * ratio_sampling_array(ilayer)
     ir = (ir_elem - 1) + iaddr(ignod)
 
 ! compute the actual position of that grid point
-    call compute_value_grid_main_mesh(dble(ix),dble(iy),dble(ir),xelm(ignod),yelm(ignod),zelm(ignod), &
-               ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-               NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
+    call compute_value_grid_main_mesh(dble(ix),dble(ir),xelm(ignod),zelm(ignod), &
+               ANGULAR_WIDTH_XI_RAD,iproc_xi,NPROC_XI,NEX_PER_PROC_XI,R_CENTRAL_CUBE, &
                r_top(ilayer),r_bottom(ilayer),ner(ilayer),ilayer)
 
-    write(11,"(f10.7,1x,f10.7,1x,f10.7)") xelm(ignod),yelm(ignod),zelm(ignod)
-    write(12,"(f10.7,1x,f10.7,1x,f10.7)") xelm(ignod),yelm(ignod),zelm(ignod)
-    write(13,"(f10.7,1x,f10.7,1x,f10.7)") xelm(ignod),yelm(ignod),zelm(ignod)
+    write(11,"(f10.7,1x,f10.7,' 0')") xelm(ignod),zelm(ignod)
+    write(12,"(f10.7,1x,f10.7,' 0')") xelm(ignod),zelm(ignod)
+    write(13,"(f10.7,1x,f10.7,' 0')") xelm(ignod),zelm(ignod)
 
 ! end of loop on all the nodes of this element
   enddo
 
 ! scale arrays from unit sphere to real Earth
    xelm(:) = xelm(:) * R_EARTH
-   yelm(:) = yelm(:) * R_EARTH
    zelm(:) = zelm(:) * R_EARTH
 
 ! compute minimum and maximum distance using the 8 corners of the element
    distance_min = + HUGEVAL
    distance_max = - HUGEVAL
-   do iedge = 1,12
-     ignod = list_corner(1,iedge)
-     ignod2 = list_corner(2,iedge)
-     distance = sqrt((xelm(ignod2) - xelm(ignod))**2 + (yelm(ignod2) - yelm(ignod))**2 + (zelm(ignod2) - zelm(ignod))**2)
-!!!!!!!!!!!!
-!!!!!!!!!!!!     if(ispec_final == 8064 .or. ispec_final == 6872) then
-!!!!!!!!!!!!       print *,ispec_final,distance
-!!!!!!!!!!!!     endif
-!!!!!!!!!!!!
+   do iedge = 1,NEDGES
+     ignod = list_corners_edge(iedge,1)
+     ignod2 = list_corners_edge(iedge,2)
+     distance = sqrt((xelm(ignod2) - xelm(ignod))**2 + (zelm(ignod2) - zelm(ignod))**2)
      distance_min = min(distance_min,distance)
      distance_max = max(distance_max,distance)
    enddo
 
 ! determine P and S velocity at the barycenter of the element
    xval = sum(xelm(:)) / NGNOD_OPENDX
-   yval = sum(yelm(:)) / NGNOD_OPENDX
    zval = sum(zelm(:)) / NGNOD_OPENDX
-   r = sqrt(xval**2 + yval**2 + zval**2)
-   call prem_iso(r,rho,vp,vs,ratio_sampling,ONE_CRUST)
+   r = sqrt(xval**2 + zval**2)
+   call prem_iso(r,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
   if(vs < 0.001d0) vs = vp / MARGIN_SAFE
 ! if we are in the last region (the inner core), ignore S-wave velocity because we purposely
@@ -902,21 +743,11 @@
 ! store stability condition (Courant number) and number of points per S wavelength for that element
    courant_stability_number(ispec_final) = vp * DT / (distance_min * percent_GLL(NGLLX))
    number_points_S_wavelength(ispec_final) = period_min * vs / (distance_max / (NGLLX - 1))
-!!!!!!!!!!!!
-!!!!!!!!!!!!   if(ispec_final == 8064 .or. ispec_final == 6872) then
-!!!!!!!!!!!!     print *
-!!!!!!!!!!!!     print *,'vp,vs,r = ',vp,vs,r
-!!!!!!!!!!!!     print *,'distance_min,distance_max,DT = ',distance_min,distance_max,DT
-!!!!!!!!!!!!     print *,'ispec_final, courant stab = ',ispec_final,courant_stability_number(ispec_final)
-!!!!!!!!!!!!     print *,'ispec_final, S-wave sampling = ',ispec_final,number_points_S_wavelength(ispec_final)
-!!!!!!!!!!!!     print *
-!!!!!!!!!!!!   endif
-!!!!!!!!!!!!
 
 ! store region number to color that element
 
 ! we are in the crust or mantle
-   if(ilayer <= 9) then
+   if(ilayer <= 8) then
      color(ispec_final) = 1
 
 ! we are in the inner core
@@ -931,22 +762,19 @@
 ! end of loop on all the regular elements
   enddo
   enddo
-  enddo
 
 ! If there is a doubling at the top of this region, let us add these elements.
 ! The superbrick implements a symmetric four-to-two doubling and therefore replaces
-! a basic regular block of 2 x 2 = 4 elements.
+! a basic regular block of 2 elements.
 ! We have imposed that NEX be a multiple of 16 therefore we know that we can always create
-! these 2 x 2 blocks because NEX_PER_PROC_XI / ratio_sampling_array(ilayer) and
-! NEX_PER_PROC_ETA / ratio_sampling_array(ilayer) are always divisible by 2.
+! these 2 blocks because NEX_PER_PROC_XI / ratio_sampling_array(ilayer) is always divisible by 2.
     if(this_region_has_a_doubling(ilayer)) then
 
-! the doubling is implemented in the last radial element (the top radial element)
+! the doubling is implemented in the last radial element
       ir_elem = ner(ilayer)
 
 ! loop on all the elements in the 2 x 2 blocks
       do ix_elem = 1,NEX_PER_PROC_XI,2*ratio_sampling_array(ilayer)
-        do iy_elem = 1,NEX_PER_PROC_ETA,2*ratio_sampling_array(ilayer)
 
 ! loop on all the elements in the mesh doubling superbrick
           do ispec = 1,NSPEC_DOUBLING_SUPERBRICK
@@ -959,49 +787,40 @@
 
 ! define topological coordinates of this mesh point
               xval = (ix_elem - 1) + x_superbrick(ibool_superbrick(ignod,ispec)) * ratio_sampling_array(ilayer)
-              yval = (iy_elem - 1) + y_superbrick(ibool_superbrick(ignod,ispec)) * ratio_sampling_array(ilayer)
               rval = (ir_elem - 1) + z_superbrick(ibool_superbrick(ignod,ispec))
 
 ! compute the actual position of that grid point
-              call compute_value_grid_main_mesh(xval,yval,rval,xelm(ignod),yelm(ignod),zelm(ignod), &
-                       ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-                       NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
+              call compute_value_grid_main_mesh(xval,rval,xelm(ignod),zelm(ignod), &
+                       ANGULAR_WIDTH_XI_RAD,iproc_xi,NPROC_XI,NEX_PER_PROC_XI,R_CENTRAL_CUBE, &
                        r_top(ilayer),r_bottom(ilayer),ner(ilayer),ilayer)
 
-              write(11,"(f10.7,1x,f10.7,1x,f10.7)") xelm(ignod),yelm(ignod),zelm(ignod)
-              write(12,"(f10.7,1x,f10.7,1x,f10.7)") xelm(ignod),yelm(ignod),zelm(ignod)
-              write(13,"(f10.7,1x,f10.7,1x,f10.7)") xelm(ignod),yelm(ignod),zelm(ignod)
+              write(11,"(f10.7,1x,f10.7,' 0')") xelm(ignod),zelm(ignod)
+              write(12,"(f10.7,1x,f10.7,' 0')") xelm(ignod),zelm(ignod)
+              write(13,"(f10.7,1x,f10.7,' 0')") xelm(ignod),zelm(ignod)
 
 ! end of loop on all the nodes of this element
             enddo
 
 ! scale arrays from unit sphere to real Earth
    xelm(:) = xelm(:) * R_EARTH
-   yelm(:) = yelm(:) * R_EARTH
    zelm(:) = zelm(:) * R_EARTH
 
 ! compute minimum and maximum distance using the 8 corners of the element
    distance_min = + HUGEVAL
    distance_max = - HUGEVAL
-   do iedge = 1,12
-     ignod = list_corner(1,iedge)
-     ignod2 = list_corner(2,iedge)
-     distance = sqrt((xelm(ignod2) - xelm(ignod))**2 + (yelm(ignod2) - yelm(ignod))**2 + (zelm(ignod2) - zelm(ignod))**2)
-!!!!!!!!!!!!
-!!!!!!!!!!!!     if(ispec_final == 8064 .or. ispec_final == 6872) then
-!!!!!!!!!!!!       print *,ispec_final,distance
-!!!!!!!!!!!!     endif
-!!!!!!!!!!!!
+   do iedge = 1,NEDGES
+     ignod = list_corners_edge(iedge,1)
+     ignod2 = list_corners_edge(iedge,2)
+     distance = sqrt((xelm(ignod2) - xelm(ignod))**2 + (zelm(ignod2) - zelm(ignod))**2)
      distance_min = min(distance_min,distance)
      distance_max = max(distance_max,distance)
    enddo
 
 ! determine P and S velocity at the barycenter of the element
    xval = sum(xelm(:)) / NGNOD_OPENDX
-   yval = sum(yelm(:)) / NGNOD_OPENDX
    zval = sum(zelm(:)) / NGNOD_OPENDX
-   r = sqrt(xval**2 + yval**2 + zval**2)
-   call prem_iso(r,rho,vp,vs,ratio_sampling,ONE_CRUST)
+   r = sqrt(xval**2 + zval**2)
+   call prem_iso(r,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
   if(vs < 0.001d0) vs = vp / MARGIN_SAFE
 ! if we are in the last region (the inner core), ignore S-wave velocity because we purposely
@@ -1011,49 +830,11 @@
 ! store stability condition (Courant number) for that element
    courant_stability_number(ispec_final) = vp * DT / (distance_min * percent_GLL(NGLLX))
    number_points_S_wavelength(ispec_final) = period_min * vs / (distance_max / (NGLLX - 1))
-!!!!!!!!!!!!
-!!!!!!!!!!!!   if(ispec_final == 8064 .or. ispec_final == 6872) then
-!!!!!!!!!!!!     print *,'vp,vs,r = ',vp,vs,r
-!!!!!!!!!!!!     print *,'distance_min,distance_max,DT = ',distance_min,distance_max,DT
-!!!!!!!!!!!!     print *,'ispec_final, courant stab = ',ispec_final,courant_stability_number(ispec_final)
-!!!!!!!!!!!!     print *,'ispec_final, S-wave sampling = ',ispec_final,number_points_S_wavelength(ispec_final)
-!!!!!!!!!!!!   endif
-!!!!!!!!!!!!
-
-
-
-
-
-
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!if(ilayer == 8) courant_stability_number(ispec_final) = 0
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-!!!!!!!!!!!!!!! DK DK UGLY hack for now to see where the others are
-
-
-
-
-
-
-
 
 ! store region number to color that element
 
 ! we are in the crust or mantle
-   if(ilayer <= 9) then
+   if(ilayer <= 8) then
      color(ispec_final) = 1
 
 ! we are in the inner core
@@ -1066,7 +847,6 @@
    endif
 
 ! end of loops on the mesh doubling elements
-          enddo
         enddo
       enddo
 
@@ -1074,35 +854,33 @@
 
   enddo
 
-!!!!!---------------------------------------------
+!---------------------------------------------
 
 ! determine the NSPEC_WORST_ELEMENTS worst elements and store their element number
   copy_courant_stability_number(:) = courant_stability_number(:)
   copy_number_points_S_wavelength(:) = number_points_S_wavelength(:)
+
   do ispec = 1,NSPEC_WORST_ELEMENTS
     ispec_worst_elements_stability(ispec) = maxloc(copy_courant_stability_number(:),dim=1)
     ispec_worst_elements_sampling(ispec) = minloc(copy_number_points_S_wavelength(:),dim=1)
-!!!!!!    print *,'found stab elem',ispec,' with stab ',courant_stability_number(ispec_worst_elements_stability(ispec))
-!!!!!!    print *,'found sampling elem',ispec,' with sampling ',number_points_S_wavelength(ispec_worst_elements_sampling(ispec))
 ! set it to a fictitious value to make sure we do not detect it a second time
     copy_courant_stability_number(ispec_worst_elements_stability(ispec)) = - HUGEVAL
     copy_number_points_S_wavelength(ispec_worst_elements_sampling(ispec)) = + HUGEVAL
   enddo
 
-!!!!!---------------------------------------------
+!---------------------------------------------
 
 ! write element header
-  write(11,*) 'object 2 class array type int rank 1 shape 8 items ',nspec,' data follows'
+  write(11,*) 'object 2 class array type int rank 1 shape 4 items ',nspec,' data follows'
 
 ! output global OpenDX elements
   ioffset = 0
 
   do ispec = 1,nspec
 
-! point order in OpenDX is 4,1,8,5,3,2,7,6, *not* 1,2,3,4,5,6,7,8 as in AVS
+! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
 ! in the case of OpenDX, node numbers start at zero
-    write(11,"(i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)") &
-            ioffset+3,ioffset+0,ioffset+7,ioffset+4,ioffset+2,ioffset+1,ioffset+6,ioffset+5
+    write(11,"(i6,1x,i6,1x,i6,1x,i6)") ioffset+0,ioffset+3,ioffset+1,ioffset+2
 
     ioffset = ioffset + NGNOD_OPENDX
 
@@ -1110,37 +888,35 @@
 
 ! write element header
 ! represent the NSPEC_WORST_ELEMENTS worst elements
-  write(12,*) 'object 2 class array type int rank 1 shape 8 items ',NSPEC_WORST_ELEMENTS,' data follows'
+  write(12,*) 'object 2 class array type int rank 1 shape 4 items ',NSPEC_WORST_ELEMENTS,' data follows'
 
   do ispec = 1,NSPEC_WORST_ELEMENTS
 
     ioffset = (ispec_worst_elements_stability(ispec) - 1) * NGNOD_OPENDX
 
-! point order in OpenDX is 4,1,8,5,3,2,7,6, *not* 1,2,3,4,5,6,7,8 as in AVS
+! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
 ! in the case of OpenDX, node numbers start at zero
-    write(12,"(i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)") &
-            ioffset+3,ioffset+0,ioffset+7,ioffset+4,ioffset+2,ioffset+1,ioffset+6,ioffset+5
+    write(12,"(i6,1x,i6,1x,i6,1x,i6)") ioffset+0,ioffset+3,ioffset+1,ioffset+2
 
   enddo
 
 ! write element header
 ! represent the NSPEC_WORST_ELEMENTS worst elements
-  write(13,*) 'object 2 class array type int rank 1 shape 8 items ',NSPEC_WORST_ELEMENTS,' data follows'
+  write(13,*) 'object 2 class array type int rank 1 shape 4 items ',NSPEC_WORST_ELEMENTS,' data follows'
 
   do ispec = 1,NSPEC_WORST_ELEMENTS
 
     ioffset = (ispec_worst_elements_sampling(ispec) - 1) * NGNOD_OPENDX
 
-! point order in OpenDX is 4,1,8,5,3,2,7,6, *not* 1,2,3,4,5,6,7,8 as in AVS
+! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
 ! in the case of OpenDX, node numbers start at zero
-    write(13,"(i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)") &
-            ioffset+3,ioffset+0,ioffset+7,ioffset+4,ioffset+2,ioffset+1,ioffset+6,ioffset+5
+    write(13,"(i6,1x,i6,1x,i6,1x,i6)") ioffset+0,ioffset+3,ioffset+1,ioffset+2
 
   enddo
 
 ! output OpenDX header for data
-! label for hexahedra in OpenDX is "cubes"
-  write(11,*) 'attribute "element type" string "cubes"'
+! label for quadrangles in OpenDX is "quads"
+  write(11,*) 'attribute "element type" string "quads"'
   write(11,*) 'attribute "ref" string "positions"'
   write(11,*) 'object 3 class array type float rank 0 items ',nspec,' data follows'
 
@@ -1151,7 +927,7 @@
   enddo
 
 ! represent the NSPEC_WORST_ELEMENTS worst elements
-  write(12,*) 'attribute "element type" string "cubes"'
+  write(12,*) 'attribute "element type" string "quads"'
   write(12,*) 'attribute "ref" string "positions"'
   write(12,*) 'object 3 class array type float rank 0 items ',NSPEC_WORST_ELEMENTS,' data follows'
 
@@ -1162,7 +938,7 @@
   enddo
 
 ! represent the NSPEC_WORST_ELEMENTS worst elements
-  write(13,*) 'attribute "element type" string "cubes"'
+  write(13,*) 'attribute "element type" string "quads"'
   write(13,*) 'attribute "ref" string "positions"'
   write(13,*) 'object 3 class array type float rank 0 items ',NSPEC_WORST_ELEMENTS,' data follows'
 
@@ -1222,11 +998,9 @@
   write(27,*) 'set term x11'
   write(27,*) '######set xrange [0:6371]'
   write(27,*) '## this to be able to see values in the crust better on a larger interval'
-  write(27,*) 'set xrange [-200:6371]'
+  write(27,*) 'set xrange [0:6371]'
   write(27,*) 'set xlabel "Depth (km)"'
   write(27,*) 'set grid'
-  write(27,*) '## this to show the Earth surface'
-  write(27,*) 'set yzeroaxis linetype 4 linewidth 2'
   write(27,*)
 
 ! display the PREM model alone
@@ -1235,7 +1009,8 @@
   write(27,*)
 
 ! loop on all the cases to study
-  do icase = 1,NUM_CASES
+!!!!!!!!!!!! DK DK only one case    do icase = 1,NUM_CASES
+  do icase = 2,2
 
 ! define value of NEX for this case
   NEX = NEX_val(icase)
@@ -1288,46 +1063,40 @@
 
 ! include code to define the mesh doubling superbrick
 
-  include "define_superbrick.f90"
+  include "define_superbrick_2D.f90"
 
 !---------------------------------------------------------------------------
 
-  subroutine compute_value_grid_main_mesh(xval,yval,rval,xgrid,ygrid,zgrid, &
-               ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-               NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE,r_top,r_bottom,ner,ilayer)
+  subroutine compute_value_grid_main_mesh(xval,rval,xgrid,zgrid, &
+               ANGULAR_WIDTH_XI_RAD,iproc_xi,NPROC_XI,NEX_PER_PROC_XI,R_CENTRAL_CUBE,r_top,r_bottom,ner,ilayer)
 
   implicit none
 
-  include "constants_modified.h"
+  include "constants_modified_2D.h"
 
-  integer :: iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ner,ilayer
+  integer :: iproc_xi,NPROC_XI,NEX_PER_PROC_XI,ner,ilayer
 
-  double precision :: xval,yval,rval,xgrid,ygrid,zgrid,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,R_CENTRAL_CUBE,r_top,r_bottom
+  double precision :: xval,rval,xgrid,zgrid,ANGULAR_WIDTH_XI_RAD,R_CENTRAL_CUBE,r_top,r_bottom
 
 ! local variables
-  double precision :: xi,eta,gamma,x,y,rgb,rgt,rn
-  double precision :: x_bot,y_bot,z_bot
-  double precision :: x_top,y_top,z_top
+  double precision :: xi,gamma,x,rgb,rgt,rn
+  double precision :: x_bot,z_bot
+  double precision :: x_top,z_top
 
 ! full Earth (cubed sphere)
   xi = - ANGULAR_WIDTH_XI_RAD/2.d0 + (iproc_xi + xval/dble(NEX_PER_PROC_XI))*ANGULAR_WIDTH_XI_RAD/dble(NPROC_XI)
   x = tan(xi)
 
-  eta = - ANGULAR_WIDTH_ETA_RAD/2.d0 + (iproc_eta + yval/dble(NEX_PER_PROC_ETA))*ANGULAR_WIDTH_ETA_RAD/dble(NPROC_ETA)
-  y = tan(eta)
-
-  gamma = ONE / sqrt(ONE + x*x + y*y)
+  gamma = ONE / sqrt(ONE + x*x)
 
   rgt = (r_top / R_EARTH)*gamma
   rgb = (r_bottom / R_EARTH)*gamma
 
 ! define the mesh points on the top and the bottom in the cubed shpere
-  x_top = -y*rgt
-  y_top = x*rgt
+  x_top = -x*rgt
   z_top = rgt
 
-  x_bot = -y*rgb
-  y_bot = x*rgb
+  x_bot = -x*rgb
   z_bot = rgb
 
 ! modify in the inner core to match the central cube instead of a sphere
@@ -1336,13 +1105,11 @@
 ! therefore it will always perfectly match the sphere defined above
   if(ilayer == NUMBER_OF_MESH_LAYERS) then ! if we are in the last region (the inner core)
 
-    x_bot = -y
-    y_bot = x
+    x_bot = -x
     z_bot = ONE
 
 ! rescale central cube to match cubed sphere
     x_bot = x_bot * (R_CENTRAL_CUBE/R_EARTH) / sqrt(3.d0)
-    y_bot = y_bot * (R_CENTRAL_CUBE/R_EARTH) / sqrt(3.d0)
     z_bot = z_bot * (R_CENTRAL_CUBE/R_EARTH) / sqrt(3.d0)
 
   endif
@@ -1350,22 +1117,19 @@
 ! compute the position of the point
   rn = rval / dble(ner)
   xgrid = x_top*rn + x_bot*(ONE-rn)
-  ygrid = y_top*rn + y_bot*(ONE-rn)
   zgrid = z_top*rn + z_bot*(ONE-rn)
 
   end subroutine compute_value_grid_main_mesh
 
 !---------------------------------------------------------------------------
 
-  subroutine prem_iso(r,rho,vp,vs,ratio_sampling,ONE_CRUST)
+  subroutine prem_iso(r,rho,vp,vs,ratio_sampling)
 
   implicit none
 
-  include "constants_modified.h"
+  include "constants_modified_2D.h"
 
   double precision :: r,x,rho,vp,vs,ratio_sampling
-
-  logical :: ONE_CRUST
 
   x = r / R_EARTH
 
@@ -1379,9 +1143,9 @@
     vp=11.2622d0-6.3640d0*x*x
     vs=3.6678d0-4.4475d0*x*x
     if(IMPLEMENT_FOURTH_DOUBLING) then
-      ratio_sampling = 16.d0
-    else
       ratio_sampling = 8.d0
+    else
+      ratio_sampling = 4.d0
     endif
 !
 !--- outer core
@@ -1394,18 +1158,18 @@
     if(IMPLEMENT_FOURTH_DOUBLING) then
 ! third and fourth doublings
       if(r > R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL) then
-        ratio_sampling = 4.d0
+        ratio_sampling = 2.d0
       else if(r > R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL) then
-        ratio_sampling = 8.d0
+        ratio_sampling = 4.d0
       else
-        ratio_sampling = 16.d0
+        ratio_sampling = 8.d0
       endif
     else
 ! third doubling
       if(r > R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL) then
-        ratio_sampling = 4.d0
+        ratio_sampling = 2.d0
       else
-        ratio_sampling = 8.d0
+        ratio_sampling = 4.d0
       endif
     endif
 
@@ -1416,7 +1180,7 @@
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
     vp=15.3891d0-5.3181d0*x+5.5242d0*x*x-2.5514d0*x*x*x
     vs=6.9254d0+1.4672d0*x-2.0834d0*x*x+0.9783d0*x*x*x
-    ratio_sampling = 4.d0
+    ratio_sampling = 2.d0
 !
 !--- mantle: from top of D" to d670
 !
@@ -1427,16 +1191,16 @@
 
 ! second doubling
     if(r > R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL) then
-      ratio_sampling = 2.d0
+      ratio_sampling = 1.d0
     else
-      ratio_sampling = 4.d0
+      ratio_sampling = 2.d0
     endif
 
   else if(r > R771 .and. r <= R670) then
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
     vp=29.2766d0-23.6027d0*x+5.5242d0*x*x-2.5514d0*x*x*x
     vs=22.3459d0-17.2473d0*x-2.0834d0*x*x+0.9783d0*x*x*x
-    ratio_sampling = 2.d0
+    ratio_sampling = 1.d0
 !
 !--- mantle: above d670
 !
@@ -1444,41 +1208,22 @@
     rho=5.3197d0-1.4836d0*x
     vp=19.0957d0-9.8672d0*x
     vs=9.9839d0-4.9324d0*x
-    ratio_sampling = 2.d0
+    ratio_sampling = 1.d0
   else if(r > R600 .and. r <= R400) then
     rho=11.2494d0-8.0298d0*x
     vp=39.7027d0-32.6166d0*x
     vs=22.3512d0-18.5856d0*x
-    ratio_sampling = 2.d0
+    ratio_sampling = 1.d0
   else if(r > R400 .and. r <= R220) then
     rho=7.1089d0-3.8045d0*x
     vp=20.3926d0-12.2569d0*x
     vs=8.9496d0-4.4597d0*x
-    ratio_sampling = 2.d0
-  else if(r > R220 .and. r <= RMOHO) then
+    ratio_sampling = 1.d0
+  else if(r > R220) then
+!! DK DK completely suppressed the crust for PKP study
     rho=2.6910d0+0.6924d0*x
     vp=4.1875d0+3.9382d0*x
     vs=2.1519d0+2.3481d0*x
-    ratio_sampling = 2.d0
-
-  else if(r > RMOHO .and. r <= RMIDDLE_CRUST) then
-    rho=2.9d0
-    vp=6.8d0
-    vs=3.9d0
-    ratio_sampling = 1.d0
-
-! same properties everywhere in PREM crust (only one layer in the crust)
-    if(ONE_CRUST) then
-      rho=2.6d0
-      vp=5.8d0
-      vs=3.2d0
-      ratio_sampling = 1.d0
-    endif
-
-  else if(r > RMIDDLE_CRUST) then
-    rho=2.6d0
-    vp=5.8d0
-    vs=3.2d0
     ratio_sampling = 1.d0
   endif
 
