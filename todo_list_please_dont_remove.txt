@@ -4,7 +4,6 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 
 - merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
 
-- make_sure_aniso_elements_created_first
 
 - utiliser auto_NER de Brian Savage pour determiner les constantes d'attenuation pour les chunks complets et non pas seulement si différent de 90 degrés. Pour cela, supprimer mes vieilles variables MIN_ATTENUATION et MAX_ATTENUATION_PERIOD
 
@@ -14,7 +13,9 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 de la boucle en temps dans le solver afin d'éviter les effets du "First Touch"
 de Linux
 
-- use indirect addressing (inverse permutation array) and a flag to store anisotropy in the mantle to avoid having to start with that region, which breaks the Cuthill-McKee sorting; once this is done, suppress the statement in which we make this region become region number 1 in the mesh creation routine
+- couper la superbrick en deux au milieu dans les deux directions par MPI pour repasser de blocs de taille 32 à des blocs de taille 16
+
+- make sure anisotropic elements created first, or use indirect addressing (inverse permutation array) and a flag to store anisotropy in the mantle to avoid having to start with that region, which breaks the Cuthill-McKee sorting; once this is done, suppress the statement in which we make this region become region number 1 in the mesh creation routine
 
 - rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices (see routine create_central_cube_buffers.f90). Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Céline. Ajouter un flag (appelé PERFECT_LOAD_CENTRAL_CUBE) pour rendre le load balancing parfait dans le central cube en calculant pour rien dans les 4 cubes marqués "FICTITIOUS" mais en n'utilisant pas les résultats dans la sommation.
 
@@ -30,8 +31,7 @@ check*.f90, qui sont amenes a disparaitre)
 
 - afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilité et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maître dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
 
-- use MPC in the code instead of MPI, if we can get MPC from CEA under GPL or CeCILL licence. Make sure the code is thread-safe (for instance suppress all the modules and the "use" statements, which are not thread-safe); on saura le 15 mars ou en novembre (les deux prochaines reunions NUMASIS) si on peut recuperer le code MPC en licence open source de chez Dominique Rodriguez au CEA
-
+- use MPC in the code instead of MPI (will be done by David from April 16 to May 7)
 
 - dans specfem3D.f90 ci-dessous à un moment on appelle deux fois la routine d'assemblage MPI, une fois pour assembler le crust + mantle et une fois pour assembler le inner core, juste après, ce qui double le nombre de messages et la latence pour rien. Donc quand on réécrira le MPI du solver bien entendu il faudra penser à fusionner les deux en un seul envoi de messages contenant crust + mantle + inner core. Voici le code obsolète ci-dessous.
 ! crust and mantle
@@ -39,61 +39,33 @@ check*.f90, qui sont amenes a disparaitre)
 ! inner core
   call assemble_MPI_vector(myrank,accel_inner_core,NGLOB_INNER_CORE, & ...
 
-- compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf à l'Idris afin de vérifier avant le commit que le code ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de vérifier la portabilité du code final
+- voir les conséquences des blocs de 32: en coupant au milieu des superbricks,
+clarifier ce qui se passe : on doit toujours prendre des multiples de 32, mais
+on peut les couper deux fois plus; voir si la Table 3.1 du manuel est toujours
+valable, ou bien sinon comment il faut la modifier
 
-- utiliser netCDF pour stocker du binaire partout où c'est nécessaire. voir si ça vaut le coup de stocker les gros fichiers de topographie dans DATA/topo_bathy dans ce format ou non, afin de réduire leur taille
+- compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf à l'Idris afin de vérifier avant le commit que le code ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de vérifier la portabilité du code final
 
 - run Sdiff calculations for Lev Vinnik (Moscow, Russia)
 
 - run 3D PKP calculations for Sebastien Chevrot (Toulouse, France); Dimitri va faire un code 2D serial pour etudier le modele et definir le maillage avant de lancer de gros runs a Barcelone
 
-- carefully study and improve the stability condition and increase/adapt time step DT accordingly (do this with Dimitri, by trial and error)
-
 - develop two-level Cuthill-McKee sorting for the two levels of cache with Jose Maria Cela (Barcelona); write a paper in "Parallel Computing" about this
 
-- maybe use VMX/Altivec instructions in compute_forces*.f90 specifically for
-  MareNostrum with Jose Maria Cela (Barcelona) (but only if using BLAS3 calls
-  in compute_forces*.f90 turned out to be impossible; otherwise it is better
-  to call BLAS3, which will already be optimized by IBM for VMX/Altivec)
+- maybe use VMX/Altivec instructions in compute_forces*.f90 specifically for MareNostrum with Jose Maria Cela (Barcelona) (but only if using BLAS3 calls in compute_forces*.f90 turned out to be impossible; otherwise it is better to call BLAS3, which will already be optimized by IBM for VMX/Altivec)
 
-- distinguer_DT_suivant_si_honor_PREM_or_not
+- portage du code sur le processeur CELL, à faire avec Jesus Labarta de Barcelone
 
 - envoyer nvx code après cela barcelona à levesque ORNL pour optimisation BLAS3 s'ils y arrivent
 
 - Virer variables intermédiaires dans compute_forces dans codes 2D et 3D (utiliser timing 23 sec 26 sec qui est dans le directory BLAS3_SPECFEM)
-
-- modifier RMOHO_FICTITIOUS_IN_MESHER = R80 + (R_EARTH - R80) * dble(NER_80_MOHO) / dble(NER_80_MOHO + NER_CRUST)
-!!!!!!!!!!!!!!! DK DK ceci a revoir, voir ce qu'on fait dans ce cas-la
-    ONE_CRUST = .false.
-dans display_prem_sampling_doubling.f90 et dans le nouveau code de maillage de David
-
-- verifier / ameliorer HONOR_1D_SPHERICAL_MOHO (pas vraiment traite actuellement)
-
-- implement better (partly inflated) central cube
 
 - modifier le calcul des bornes de l'attenuation: car
     MIN_ATTENUATION_PERIOD   = 20
     MAX_ATTENUATION_PERIOD   = 1000
 est arbitraire dans read_compute_parameters.f90 actuellement, utiliser la routine plus generale de Brian Savage.
 
-- add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers
-
-- regarder consequences de multiple de 32 au lieu de 16 dans table 3.1 du manuel, et refaire cette table en fonction de cette nouvelle contrainte. Mettre à jour la Table 3.1 avec multiples de 32 au lieu de 16 et aussi en disant qu'on peut mettre 2 ou 3 ou 6 tâches par proc et donc que le nb de procs donnés peut être divisé par 2, 3 ou 6 et donc limitation moins grande qu'on ne pourrait le croire (dire que c'est toujours divisible car NPROC = 6 N^2 donc divisible par 6); dire cela dans le texte principal du manuel et dans la légende de la table, par exemple "We should also keep in mind (and mention in the manual) that if 6 N^2 is a limitation on some machines, one can always run 2, 3 or 6 tasks per processor and therefore run on N^2, 2 N^2 or 3 N^2 processors. I will add a comment about this in the manual (probably in the caption of Table 3.1)."
-
-- ajouter les courbes de dispersion et stabilité au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix spécial là-dessus; dire dans cet appendix que dans le outer core ce n'est bien sûr par Vs qui est représenté mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un échantillonnage un peu meilleur)
-
-- dire dans manuel que number of grid points per S wavelength (purposely) pas bon dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien dans ce cas prendre un maillage prévu pour une période beaucoup plus courte (typiquement deux fois) que la période mentionnée dans les tables, qui concerne seulement les ondes P et non pas les S dans le inner core
-
-- explain this in the manual: We have implemented a simple way of handling the ONE_CRUST / two crusts issue : we let the user decide. In the new version, the models in Par_file (isotropic_prem, ak135 etc) always implement the right version with two crusts. But we have added new model names: isotropic_prem_one_crust, ak135_one_crust etc., in which case the code uses ONE_CRUST. Depending on the option chosen by the user, the code automatically selects the right time step (i.e., reduces the time step in the case of two crusts and a "small" NEX, to remain stable). This way, users can decide what they want to do.
-
-- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront été fusionnés (enlever les deux sections expliquant l'utilisation de ces routines)
-
-- tester l'utilisation de netCDF et nous donner les routines pour lire/ecrire du binaire à ce format depuis SPECFEM3D_BASIN. David utilisera ensuite cela depuis SPECFEM3D_GLOBE.
-
-- etudier comment lire un maillage CUBIT stocké au format natif de CUBIT
-(Exodus, basé sur netCDF) depuis SPECFEM3D_BASIN. On pourrait utiliser la
-commande "ncdump" dans CUBIT si nécessaire d'après Emanuele Casarotti. Une
-autre option serait d'utiliser le format de stockage ABAQUS dans CUBIT.
+- etudier comment lire un maillage CUBIT stocké au format natif de CUBIT (Exodus, basé sur netCDF) depuis SPECFEM3D_BASIN. On pourrait utiliser la commande "ncdump" dans CUBIT si nécessaire d'après Emanuele Casarotti. Une autre option serait d'utiliser le format de stockage ABAQUS dans CUBIT.
 
 - dire a Brian Savage (Washington D.C.) de faire un auto_NER a partir de PREM (choix automatique des parametres) a partir de display_prem_sampling_doubling.f90 dans DATA/util/mesh_doubling_superbrick
 Subject: Re: attenuation (other idea)
@@ -192,13 +164,34 @@ Brian Savage wrote:
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 
+Things to add later to the manual:
+----------------------------------
+
+- add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers
+
+- ajouter les courbes de dispersion et stabilité au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix spécial là-dessus; dire dans cet appendix que dans le outer core ce n'est bien sûr par Vs qui est représenté mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un échantillonnage un peu meilleur)
+
+- dire dans manuel que number of grid points per S wavelength (purposely) pas bon dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien dans ce cas prendre un maillage prévu pour une période beaucoup plus courte (typiquement deux fois) que la période mentionnée dans les tables, qui concerne seulement les ondes P et non pas les S dans le inner core
+
+- explain this in the manual: We have implemented a simple way of handling the ONE_CRUST / two crusts issue : we let the user decide. In the new version, the models in Par_file (isotropic_prem, ak135 etc) always implement the right version with two crusts. But we have added new model names: isotropic_prem_one_crust, ak135_one_crust etc., in which case the code uses ONE_CRUST. Depending on the option chosen by the user, the code automatically selects the right time step (i.e., reduces the time step in the case of two crusts and a "small" NEX, to remain stable). This way, users can decide what they want to do.
+
+- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront été fusionnés (enlever les deux sections expliquant l'utilisation de ces routines)
+
+- add this to the manual: let us recall that in SPECFEM3D we do not use our GJI 2002 formulation, we use a displacement potential in the fluid (rather than a velocity potential as in our GJI). This leads to the fluid-solid matching condition with no iterations at the CMB and ICB introduced by Chaljub and Valette (2004).  (see also Tarje's comment about this after his eq (49) in the attached PDF). I will update the comments in the source code to mention that three years ago we switched to a displacement potential with no iterations.
+
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
 Done:
 -----
-
 
 - enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type (*mais* il faudra quand même laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout où il y en a, car on continue à traiter 6 blocs, même s'ils ont maintenant la même topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs -> {ok pour le mailleur, reste la différentiation dans le solveur, mais sans conséquences. A mettre à plat lors de la fusion. DM.}
 
 - enlever les "modules" et "use" partout où il y en a (pour anisotropie etc) car ce n'est pas "thread safe" et donc ça se plantera si on utilise MPC au lieu de MPI. Remplacer par la transmission explicite des paramètres aux subroutines. Peut-être dire dans le manuel utilisateur qu'il ne faut pas utiliser de modules pour cette raison ? -> {OK. DM.}
+
+- modifier RMOHO_FICTITIOUS_IN_MESHER = R80 + (R_EARTH - R80) * dble(NER_80_MOHO) / dble(NER_80_MOHO + NER_CRUST) dans display_prem_sampling_doubling.f90 et dans le nouveau code de maillage de David: done by David
 
 - ajouter le nombre analytique de points de GLL (appelé NGLOB) dans le mailleur (dans le nouveau read_compute_parameters.f90) -> {OK. DM.}
 
@@ -226,4 +219,15 @@ par
  integer :: interval_Q
 pour des soucis de lisibilité.
 
+- utiliser netCDF pour stocker du binaire partout où c'est nécessaire. voir si ça vaut le coup de stocker les gros fichiers de topographie dans DATA/topo_bathy dans ce format ou non, afin de réduire leur taille; tester l'utilisation de netCDF et nous donner les routines pour lire/ecrire du binaire à ce format depuis SPECFEM3D_BASIN. David utilisera ensuite cela depuis SPECFEM3D_GLOBE  --> remarque de Dimitri ajoutée: probablement pas vraiment utile finalement, donc je supprime cette ligne des choses à faire
+
+- carefully study and improve the stability condition and increase/adapt time step DT accordingly: done by David and Dimitri, by trial and error
+
+- distinguer_DT_suivant_si_honor_PREM_or_not: done by David and Dimitri
+
+- verifier / ameliorer HONOR_1D_SPHERICAL_MOHO: done by David and Dimitri
+
+- implement better (partly inflated) central cube: done by David and Dimitri
+
+- regarder consequences de multiple de 32 au lieu de 16 dans table 3.1 du manuel, et refaire cette table en fonction de cette nouvelle contrainte. Mettre à jour la Table 3.1 avec multiples de 32 au lieu de 16 et aussi en disant qu'on peut mettre 2 ou 3 ou 6 tâches par proc et donc que le nb de procs donnés peut être divisé par 2, 3 ou 6 et donc limitation moins grande qu'on ne pourrait le croire (dire que c'est toujours divisible car NPROC = 6 N^2 donc divisible par 6); dire cela dans le texte principal du manuel et dans la légende de la table, par exemple "We should also keep in mind (and mention in the manual) that if 6 N^2 is a limitation on some machines, one can always run 2, 3 or 6 tasks per processor and therefore run on N^2, 2 N^2 or 3 N^2 processors. I will add a comment about this in the manual (probably in the caption of Table 3.1)." --> finalement pas nécessaire, car on a trouvé un moyen de refaire des blocs de 16 en coupant la superbrick en deux au milieu dans les deux directions
 
