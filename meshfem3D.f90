@@ -65,9 +65,9 @@
 !
 ! @ARTICLE{KoRiTr02,
 ! author={D. Komatitsch and J. Ritsema and J. Tromp},
+! year=2002,
 ! title={The Spectral-Element Method, {B}eowulf Computing, and Global Seismology},
 ! journal={Science},
-! year=2002,
 ! volume=298,
 ! number=5599,
 ! pages={1737-1742},
@@ -75,9 +75,9 @@
 !
 ! @ARTICLE{KoTr02a,
 ! author={D. Komatitsch and J. Tromp},
+! year=2002,
 ! title={Spectral-Element Simulations of Global Seismic Wave Propagation{-I. V}alidation},
 ! journal={Geophys. J. Int.},
-! year=2002,
 ! volume=149,
 ! number=2,
 ! pages={390-412},
@@ -85,19 +85,19 @@
 !
 ! @ARTICLE{KoTr02b,
 ! author={D. Komatitsch and J. Tromp},
+! year=2002,
 ! title={Spectral-Element Simulations of Global Seismic Wave Propagation{-II. 3-D} Models, Oceans, Rotation, and Self-Gravitation},
 ! journal={Geophys. J. Int.},
-! year=2002,
 ! volume=150,
-! number=1,
 ! pages={303-318},
+! number=1,
 ! doi={10.1046/j.1365-246X.2002.01716.x}}
 !
 ! @ARTICLE{KoTr99,
 ! author={D. Komatitsch and J. Tromp},
+! year=1999,
 ! title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
 ! journal={Geophys. J. Int.},
-! year=1999,
 ! volume=139,
 ! number=3,
 ! pages={806-822},
@@ -128,9 +128,9 @@
 !
 ! @ARTICLE{RiVa00,
 ! author={J. Ritsema and H. J. {Van Heijst}},
+! year=2000,
 ! title={Seismic imaging of structural heterogeneity in {E}arth's mantle: Evidence for large-scale mantle flow},
 ! journal={Science Progress},
-! year=2000,
 ! volume=83,
 ! pages={243-259}}
 !
@@ -212,7 +212,8 @@
     double precision                          :: QT_c_source        ! Source Frequency
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-    double precision, dimension(:), pointer   :: Qr, Qs             ! Radius and Steps
+    double precision, dimension(:), pointer   :: Qr                 ! Radius
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
