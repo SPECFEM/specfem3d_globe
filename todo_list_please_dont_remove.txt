@@ -2,8 +2,6 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
-- David: tu avais pu régler le coup de integer Qs ? comme je te le disais, c'est mieux que Qs soit un double precision car plus lisible pour les géophysiciens 
-
 - merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
 
 - make_sure_aniso_elements_created_first
@@ -221,3 +219,11 @@ c'est rapide à faire.
 qui a besoin de distinguer ces deux sub-flags) -> {OK, a revoir qd meme. DM.}
 
 - modifier write_seismograms.f90 pour que tout soit écrit directement sur le home par le maître et non pas sur les disques locaux par chaque noeud. Pour cela faire des paires SEND/RECV en allouant dynamiquement un tableau de taille différente à chaque fois (de taille nrec_local, sauf si nrec_local = 0, dans ce cas on n'envoie/reçoit rien pour cette tranche qui ne contient pas de récepteur). A la fin on doit avoir exactement 3*765 = 2295 fichiers (765 stations dans DATA/STATIONS, chacune stockant les trois composantes du vecteur déplacement)
+
+- remplacé :
+ double precision :: Qs 
+par 
+ integer :: interval_Q
+pour des soucis de lisibilité.
+
+

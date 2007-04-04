@@ -95,7 +95,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: Qs                 ! Steps
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -198,7 +198,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
 
   allocate(AM_V%Qr(AM_V%Qn))
   allocate(AM_V%Qmu(AM_V%Qn))
-  allocate(AM_V%Qs(AM_V%Qn))
+  allocate(AM_V%interval_Q(AM_V%Qn))
   allocate(AM_V%Qtau_e(N_SLS,AM_V%Qn))
 
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
@@ -236,7 +236,7 @@ subroutine attenuation_save_arrays(prname, iregion_code, AM_V)
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: Qs                 ! Steps
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -370,7 +370,7 @@ subroutine attenuation_conversion(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, 
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: Qs                 ! Steps
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -442,7 +442,7 @@ subroutine read_attenuation_model(min, max, AM_V)
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: Qs                 ! Steps
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -581,7 +581,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: Qs                 ! Steps
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -653,7 +653,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   allocate(AM_V%Qomsb2(AM_V%Qn))
   allocate(AM_V%Qfc2(N_SLS,AM_V%Qn))
 
-  allocate(AM_V%Qs(AM_V%Qn))
+  allocate(AM_V%interval_Q(AM_V%Qn))
 
   allocate(Qfctmp(AM_V%Qn))
   allocate(Qfc2tmp(AM_V%Qn))
@@ -670,22 +670,22 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   enddo
 
   ! Determine the Spline Coefficients or Second Derivatives
-  call pspline(AM_V%Qr, AM_V%Qsf,   AM_V%Qn, Qp1, Qpn, AM_V%Qsf2,   AM_V%Qs)
-  call pspline(AM_V%Qr, AM_V%Qomsb, AM_V%Qn, Qp1, Qpn, AM_V%Qomsb2, AM_V%Qs)
+  call pspline(AM_V%Qr, AM_V%Qsf,   AM_V%Qn, Qp1, Qpn, AM_V%Qsf2,   AM_V%interval_Q)
+  call pspline(AM_V%Qr, AM_V%Qomsb, AM_V%Qn, Qp1, Qpn, AM_V%Qomsb2, AM_V%interval_Q)
   do i = 1,N_SLS
-     call pspline(AM_V%Qr, AM_V%Qfc(i,:), AM_V%Qn, Qp1, Qpn, AM_V%Qfc2(i,:),AM_V%Qs)
+     call pspline(AM_V%Qr, AM_V%Qfc(i,:), AM_V%Qn, Qp1, Qpn, AM_V%Qfc2(i,:),AM_V%interval_Q)
   enddo
 
   radius = 0.0d0
   rmax = nint(TABLE_ATTENUATION)
   do i = 1,rmax
      call attenuation_lookup_value(i, radius)
-     call psplint(AM_V%Qr, AM_V%Qsf,   AM_V%Qsf2,   AM_V%Qn, radius, scale_factor(1,1,1,i),       AM_V%Qs)
-     call psplint(AM_V%Qr, AM_V%Qomsb, AM_V%Qomsb2, AM_V%Qn, radius, one_minus_sum_beta(1,1,1,i), AM_V%Qs)
+     call psplint(AM_V%Qr, AM_V%Qsf,   AM_V%Qsf2,   AM_V%Qn, radius, scale_factor(1,1,1,i),       AM_V%interval_Q)
+     call psplint(AM_V%Qr, AM_V%Qomsb, AM_V%Qomsb2, AM_V%Qn, radius, one_minus_sum_beta(1,1,1,i), AM_V%interval_Q)
      do j = 1,N_SLS
         Qfctmp  = AM_V%Qfc(j,:)
         Qfc2tmp = AM_V%Qfc2(j,:)
-        call psplint(AM_V%Qr, Qfctmp, Qfc2tmp, AM_V%Qn, radius, fctmp, AM_V%Qs)
+        call psplint(AM_V%Qr, Qfctmp, Qfc2tmp, AM_V%Qn, radius, fctmp, AM_V%interval_Q)
         factor_common(j,1,1,1,i) = fctmp
      enddo
   enddo
@@ -704,7 +704,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   deallocate(AM_V%Qsf)
   deallocate(AM_V%Qomsb)
 !  deallocate(AM_V%Qr)
-!  deallocate(AM_V%Qs)
+!  deallocate(AM_V%interval_Q)
   deallocate(AM_V%Qtau_e)
 !  deallocate(AM_V%Qmu)
   deallocate(Qfctmp)
@@ -727,7 +727,7 @@ subroutine set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: Qs                 ! Steps
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -798,7 +798,7 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: Qs                 ! Steps
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
