@@ -4,6 +4,7 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 
 - merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
 
+- faire un commit du script de stretching de la croûte 3D de David dans UTILS
 
 - utiliser auto_NER de Brian Savage pour determiner les constantes d'attenuation pour les chunks complets et non pas seulement si différent de 90 degrés. Pour cela, supprimer mes vieilles variables MIN_ATTENUATION et MAX_ATTENUATION_PERIOD
 
