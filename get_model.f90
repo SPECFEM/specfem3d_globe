@@ -60,7 +60,7 @@
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q                 ! Steps
+    integer, dimension(:), pointer            :: interval_Q         ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -127,7 +127,7 @@
     character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
     character(len=2) code(NKEYS_CRUST)
   end type crustal_model_variables
-  
+
   type (crustal_model_variables) CM_V
 ! crustal_model_variables
 
@@ -139,7 +139,7 @@
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
   end type attenuation_model_storage
-  
+
   type (attenuation_model_storage) AM_S
 ! attenuation_model_storage
 
@@ -205,7 +205,7 @@
   double precision xmesh,ymesh,zmesh
 
   integer i,j,k,ia
-  double precision rho,vp,vs,Qkappa,Qmu
+  double precision rho,drhodr,vp,vs,Qkappa,Qmu
   double precision vpv,vph,vsv,vsh,eta_aniso
   double precision dvp,dvs,drho
   double precision xstore(NGLLX,NGLLY,NGLLZ)
@@ -267,7 +267,7 @@
              .true.,RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,RMOHO)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
-           call prem_iso(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+           call prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
              ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 

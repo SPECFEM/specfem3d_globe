@@ -211,7 +211,7 @@
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q                 ! Steps
+    integer, dimension(:), pointer            :: interval_Q         ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -695,10 +695,10 @@
 ! lookup table every km for gravity
   integer int_radius,nspl_gravity,idoubling
   real(kind=CUSTOM_REAL) minus_g_cmb,minus_g_icb
-  double precision radius,radius_km,g,dg,rho,vp,vs,Qkappa,Qmu
+  double precision radius,radius_km,g,dg,rho,drhodr,vp,vs,Qkappa,Qmu
   double precision g_cmb_dble,g_icb_dble
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table, &
-    minus_deriv_gravity_table,density_table,minus_rho_g_over_kappa_fluid
+    minus_deriv_gravity_table,density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
   double precision rspl_gravity(NR),gspl(NR),gspl2(NR)
 
 ! flags to read kappa and mu and anisotropy arrays in regions where needed
@@ -2442,7 +2442,7 @@
       idoubling = 0
 
 ! use PREM density profile to calculate gravity (fine for other 1D models)
-      call prem_iso(myrank,radius,rho,vp,vs,Qkappa,Qmu,idoubling,.false., &
+      call prem_iso(myrank,radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
           ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
@@ -2479,7 +2479,19 @@
       minus_g_icb = - g_icb_dble
     endif
 
-   endif
+  else
+
+! tabulate d ln(rho)/dr needed for the no gravity fluid potential
+    do int_radius = 1,NRAD_GRAVITY
+      radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
+      idoubling = 0
+      call prem_iso(myrank,radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
+          ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+          R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+      d_ln_density_dr_table(int_radius) = drhodr/rho
+    enddo
+
+  endif
 
 ! allocate files to save movies
   if(MOVIE_SURFACE) then
@@ -2882,7 +2894,7 @@
 
 ! accel_outer_core, div_displ_outer_core are initialized to zero in the following subroutine.
   call compute_forces_outer_core(time,deltat,two_omega_earth, &
-         A_array_rotation,B_array_rotation, &
+         A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
          minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
          xstore_outer_core,ystore_outer_core,zstore_outer_core, &
          xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -2895,7 +2907,7 @@
 
   if (SIMULATION_TYPE == 3) then
     call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
-         b_A_array_rotation,b_B_array_rotation, &
+         b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
          minus_rho_g_over_kappa_fluid,b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
          xstore_outer_core,ystore_outer_core,zstore_outer_core, &
          xix_outer_core,xiy_outer_core,xiz_outer_core, &
