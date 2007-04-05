@@ -486,6 +486,8 @@
   call read_value_logical(ABSORBING_CONDITIONS, 'solver.ABSORBING_CONDITIONS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
+  if(ROTATION .and. .not. GRAVITY) stop 'cannot have rotation on and gravity off'
+
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 6) stop 'cannot have absorbing conditions in the full Earth'
 
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 3) stop 'absorbing conditions not supported for three chunks yet'
