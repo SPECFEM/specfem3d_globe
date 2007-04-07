@@ -325,8 +325,11 @@
     ibelm_bottom_inner_core,ibelm_top_inner_core
 
 ! for matching between fluid and solid regions
-  integer ispec2D,k_corresp,ispec_selected
-  real(kind=CUSTOM_REAL) vx,vy,vz,nx,ny,nz,vn,weight,pressure
+  integer :: ispec2D,k_corresp,ispec_selected
+  real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,nx,ny,nz,displ_n,weight,pressure
+
+! for absorbing conditions
+  real(kind=CUSTOM_REAL) :: vx,vy,vz,vn
 
 ! for ellipticity
   integer nspl
@@ -3148,9 +3151,9 @@
           k_corresp = 1
           iglob = ibool_crust_mantle(i,j,k_corresp,ispec_selected)
 
-          vx = displ_crust_mantle(1,iglob)
-          vy = displ_crust_mantle(2,iglob)
-          vz = displ_crust_mantle(3,iglob)
+          displ_x = displ_crust_mantle(1,iglob)
+          displ_y = displ_crust_mantle(2,iglob)
+          displ_z = displ_crust_mantle(3,iglob)
 
 ! get global point number
           iglob = ibool_outer_core(i,j,k,ispec)
@@ -3161,21 +3164,21 @@
           nz = normal_top_outer_core(3,i,j,ispec2D)
 
 ! compute dot product
-          vn = vx*nx+vy*ny+vz*nz
+          displ_n = displ_x*nx + displ_y*ny + displ_z*nz
 
 ! formulation with generalized potential
           weight = jacobian2D_top_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
 
-          accel_outer_core(iglob) = accel_outer_core(iglob) + weight*vn
+          accel_outer_core(iglob) = accel_outer_core(iglob) + weight*displ_n
 
           if (SIMULATION_TYPE == 3) then
             iglob = ibool_crust_mantle(i,j,k_corresp,ispec_selected)
-            vx = b_displ_crust_mantle(1,iglob)
-            vy = b_displ_crust_mantle(2,iglob)
-            vz = b_displ_crust_mantle(3,iglob)
-            vn = vx*nx+vy*ny+vz*nz
+            displ_x = b_displ_crust_mantle(1,iglob)
+            displ_y = b_displ_crust_mantle(2,iglob)
+            displ_z = b_displ_crust_mantle(3,iglob)
+            displ_n = displ_x*nx + displ_y*ny + displ_z*nz
             iglob = ibool_outer_core(i,j,k,ispec)
-            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) + weight*vn
+            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) + weight*displ_n
           endif
 
         enddo
@@ -3206,9 +3209,9 @@
           k_corresp = NGLLZ
           iglob = ibool_inner_core(i,j,k_corresp,ispec_selected)
 
-          vx = displ_inner_core(1,iglob)
-          vy = displ_inner_core(2,iglob)
-          vz = displ_inner_core(3,iglob)
+          displ_x = displ_inner_core(1,iglob)
+          displ_y = displ_inner_core(2,iglob)
+          displ_z = displ_inner_core(3,iglob)
 
 ! get global point number
           iglob = ibool_outer_core(i,j,k,ispec)
@@ -3219,21 +3222,21 @@
           nz = normal_bottom_outer_core(3,i,j,ispec2D)
 
 ! compute dot product
-          vn = vx*nx+vy*ny+vz*nz
+          displ_n = displ_x*nx + displ_y*ny + displ_z*nz
 
 ! formulation with generalized potential
           weight = jacobian2D_bottom_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
 
-          accel_outer_core(iglob) = accel_outer_core(iglob) - weight*vn
+          accel_outer_core(iglob) = accel_outer_core(iglob) - weight*displ_n
 
           if (SIMULATION_TYPE == 3) then
             iglob = ibool_inner_core(i,j,k_corresp,ispec_selected)
             vx = b_displ_inner_core(1,iglob)
             vy = b_displ_inner_core(2,iglob)
             vz = b_displ_inner_core(3,iglob)
-            vn = vx*nx+vy*ny+vz*nz
+            displ_n = displ_x*nx + displ_y*ny + displ_z*nz
             iglob = ibool_outer_core(i,j,k,ispec)
-            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - weight*vn
+            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - weight*displ_n
           endif
 
         enddo

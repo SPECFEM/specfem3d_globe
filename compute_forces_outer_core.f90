@@ -205,7 +205,7 @@
 ! adding (chi/rho)grad(rho)
       dpotentialdx_with_rot = dpotentialdxl + fac * grad_x_rho
       dpotentialdy_with_rot = dpotentialdyl + fac * grad_y_rho
-      dpotentialdz = dpotentialdzl + fac * grad_z_rho
+      dpotentialdzl = dpotentialdzl + fac * grad_z_rho
    endif
 !JT JT
 
