@@ -194,16 +194,29 @@
 ! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
 !
 ! From Dahlen and Tromp (1998):
-! ----------------------------
+! -----------------------------
 !
 ! Gravity is approximated by solving eq (3.259) without the Phi_E' term
 ! The ellipsoidal reference model is that of section 14.1
 ! The transversely isotropic expression for PREM is that of eq (8.190)
 !
-! the potential in the outer core is called displ_outer_core for simplicity
+! Formulation in the fluid (acoustic) outer core:
+! -----------------------------------------------
+!
+! In case of an acoustic medium, a displacement potential Chi is used
+! as in Chaljub and Valette, Geophysical Journal International, vol. 158,
+! p. 131-141 (2004) and *NOT* a velocity potential as in Komatitsch and Tromp,
+! Geophysical Journal International, vol. 150, p. 303-318 (2002).
+! This permits acoustic-elastic coupling based on a non-iterative time scheme.
+! Displacement is then: u = grad(Chi)
+! Velocity is then: v = grad(Chi_dot)       (Chi_dot being the time derivative of Chi)
+! and pressure is: p = - rho * Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+! The source in an acoustic element is a pressure source.
+! The potential in the outer core is called displ_outer_core for simplicity.
+! Its first time derivative is called veloc_outer_core.
+! Its second time derivative is called accel_outer_core.
 !
 
-! attenuation_model_variables --- have to be checked : may be in OUTPUT_FILES/values_from_mesher.h ...
   type attenuation_model_variables
     sequence
     double precision min_period, max_period
