@@ -18,7 +18,7 @@
   subroutine compute_forces_outer_core(time,deltat,two_omega_earth, &
           A_array_rotation,B_array_rotation, &
 !JT JT
-          density_table,d_density_dr_table, &
+          d_ln_density_dr_table, &
 !JT JT
           minus_rho_g_over_kappa_fluid,displfluid,accelfluid, &
           div_displfluid, &
@@ -71,7 +71,7 @@
   double precision cos_theta,sin_theta,cos_phi,sin_phi
   double precision, dimension(NRAD_GRAVITY) :: minus_rho_g_over_kappa_fluid
 !JT JT
-  double precision, dimension(NRAD_GRAVITY) :: density_table,d_density_dr_table
+  double precision, dimension(NRAD_GRAVITY) :: d_ln_density_dr_table
 !JT JT
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: gravity_term
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: xstore,ystore,zstore
@@ -93,7 +93,7 @@
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l,sum_terms
 
 !JT JT
-  double precision grad_x_rho,grad_y_rho,grad_z_rho,fac
+  double precision grad_x_ln_rho,grad_y_ln_rho,grad_z_ln_rho
 !JT JT
 
 ! ****************************************************
@@ -191,21 +191,17 @@
       cos_phi = dcos(phi)
       sin_phi = dsin(phi)
 
-! for efficiency replace with lookup table every 100 m in radial direction
       int_radius = nint(radius * R_EARTH_KM * 10.d0)
 
-! grad(rho) in Cartesian components
-      grad_x_rho = sin_theta * cos_phi * d_density_dr_table(int_radius)
-      grad_y_rho = sin_theta * sin_phi * d_density_dr_table(int_radius)
-      grad_z_rho = cos_theta * d_density_dr_table(int_radius)
-
-! chi/rho
-      fac = displfluid(ibool(i,j,k,ispec))/density_table(int_radius)
+! grad(rho)/rho in Cartesian components
+      grad_x_ln_rho = sin_theta * cos_phi * d_ln_density_dr_table(int_radius)
+      grad_y_ln_rho = sin_theta * sin_phi * d_ln_density_dr_table(int_radius)
+      grad_z_ln_rho = cos_theta * d_ln_density_dr_table(int_radius)
 
 ! adding (chi/rho)grad(rho)
-      dpotentialdx_with_rot = dpotentialdxl + fac * grad_x_rho
-      dpotentialdy_with_rot = dpotentialdyl + fac * grad_y_rho
-      dpotentialdzl = dpotentialdzl + fac * grad_z_rho
+      dpotentialdx_with_rot = dpotentialdxl + displfluid(iglob) * grad_x_ln_rho
+      dpotentialdy_with_rot = dpotentialdyl + displfluid(iglob) * grad_y_ln_rho
+      dpotentialdzl = dpotentialdzl + displfluid(iglob) * grad_z_ln_rho
    endif
 !JT JT
 
