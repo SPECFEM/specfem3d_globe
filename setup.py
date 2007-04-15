@@ -3,7 +3,6 @@ from archimedes import use_merlin
 use_merlin()
 
 from merlin import setup
-#import os
 
 setup(
     name = 'Specfem3DGlobe', 
@@ -14,15 +13,13 @@ setup(
     packages = [ 'Specfem3DGlobe' ],
     
     install_requires = [
-    'cig >= 1.0dev-r4449, < 2.0a, == dev',
-    'pythia[mpi] >= 0.8.1.0, < 0.8.2a',
+    'pythia[mpi] >= 0.8.1.3b2, < 0.8.2a',
+    ],
+    # temporary
+    dependency_links = [
+    'http://crust.geodynamics.org/~leif/shipping/',
     ],
     
-    dependency_links = [
-    'http://geodynamics.org/svn/cig/cs/framework/trunk#egg=cig-dev',
-    ],
-
-    #interpreter = os.path.join(os.getcwd(), "pyspecfem3D"),
     entry_points = {
     'console_scripts': [
     'xspecfem3D = Specfem3DGlobe.Specfem:main',

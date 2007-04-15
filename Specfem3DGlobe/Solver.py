@@ -20,7 +20,8 @@ class Solver(Component):
     from CMTSolution import cmtValidator
 
     cmtSolution                   = pyre.inputFile("cmt-solution",
-                                                   default="DATA/CMTSOLUTION")
+                                                   default="DATA/CMTSOLUTION",
+                                                   validator=cmtValidator)
     stations                      = pyre.inputFile("stations",
                                                    default="DATA/STATIONS")
 
@@ -191,7 +192,7 @@ class Solver(Component):
         
         rank = MPI_Comm_rank(MPI_COMM_WORLD)
         scratchSeismogramArchive = join(self.LOCAL_PATH, "seismograms-%d.tar.gz" % rank)
-        archive = self.scratchSeismogramArchive
+        archive = open(scratchSeismogramArchive, "w")
         
         files = []
         for sem in glob(join(self.LOCAL_PATH, "*.sem")):
@@ -242,7 +243,7 @@ class Solver(Component):
 
         seismogramArchive = join(self.OUTPUT_FILES, "seismograms.tar.gz")
         archiveOut = open(seismogramArchive, "w")
-        skipList = ['pyspecfem3D', basename(archiveOut.name)]
+        skipList = ['mpipyspecfem3D', basename(archiveOut.name)]
 
         # Archive output files -- including the intermediate seismogram
         # archives delivered from the compute nodes.
