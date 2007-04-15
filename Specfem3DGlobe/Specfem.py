@@ -27,22 +27,32 @@ class SpecfemScript(Script):
     model                         = pyre.facility("model", default="isotropic_prem")
     mesher                        = pyre.facility("mesher", factory=Mesher)
     solver                        = pyre.facility("solver", factory=Solver)
+
     
     #
-    #--- configuration
+    #--- validation
     #
     
-    def _configure(self):
-        super(SpecfemScript, self)._configure()
+    def _validate(self, context):
+        super(SpecfemScript, self)._validate(context)
         
         # validate absorbing conditions
         if self.solver.ABSORBING_CONDITIONS:
             NCHUNKS = self.mesher.NCHUNKS
             if NCHUNKS == 6:
-                raise ValueError("cannot have absorbing conditions in the full Earth")
+                context.error(ValueError("cannot have absorbing conditions in the full Earth"))
             elif NCHUNKS == 3:
-                raise ValueError("absorbing conditions not supported for three chunks yet")
+                context.error(ValueError("absorbing conditions not supported for three chunks yet"))
 
+        return
+
+
+    #
+    #--- initialization
+    #
+    
+    def _init(self):
+        
         from os import makedirs
         from os.path import isdir
         if not isdir(self.outputDir):
@@ -54,7 +64,6 @@ class SpecfemScript(Script):
     #
     #--- support for reading Par_file
     #
-    
 
     def collectUserInput(self, registry, context):
         # read Par_files given on the command line
@@ -79,7 +88,6 @@ class SpecfemScript(Script):
     #
     #--- .odb files
     #
-    
 
     def _getPrivateDepositoryLocations(self):
         from os.path import dirname, isdir, join
@@ -124,7 +132,12 @@ class Specfem(ParallelSpecfemScript):
         
         # declare the interpreter to be used on the compute nodes
         from os.path import join
-        self.mpiExecutable = join(self.outputDir, "pyspecfem3D") # includes solver
+        self.mpiExecutable = join(self.outputDir, "mpipyspecfem3D") # includes solver
+
+        # compute the total number of processors needed
+        self.nodes = self.mesher.nproc()
+        
+        return
 
 
     #
@@ -142,9 +155,6 @@ class Specfem(ParallelSpecfemScript):
         from os.path import dirname
         srcdir = dirname(__main__.__file__)
         self.solver.build(self, srcdir)
-        
-        # compute the total number of processors needed
-        self.nodes = self.mesher.nproc()
         
         # schedule the job (bsub)
         super(Specfem, self).onLoginNode(*args, **kwds)
@@ -188,12 +198,12 @@ class MovieScript(ParallelSpecfemScript):
     beginning  = pyre.int("beginning", default=1, validator=pyre.greaterEqual(1))
     end        = pyre.int("end", default=1, validator=pyre.greaterEqual(1))
 
-    
-    def _configure(self):
-        super(MovieScript, self)._configure()
+
+    def _validate(self, context):
+        super(MovieScript, self)._validate(context)
 
         if not self.solver.MOVIE_SURFACE:
-            raise ValueError("movie frames were not saved by the solver")
+            context.error(ValueError("movie frames were not saved by the solver"))
 
         # count number of movie frames
         nframes = 0
@@ -201,12 +211,22 @@ class MovieScript(ParallelSpecfemScript):
             if it % self.solver.NTSTEP_BETWEEN_FRAMES == 0:
                 nframes = nframes + 1
         if nframes == 0:
-            raise ValueError('null number of frames')
+            context.error(ValueError('null number of frames'),
+                          items=[self.metainventory.beginning,
+                                 self.metainventory.end])
         
+        return
+
+    
+    def _configure(self):
+        super(MovieScript, self)._configure()
+
         formatCode = { 'OpenDX':1, 'AVS-multi':2, 'AVS-single':3, 'GMT':4 }
         self.format = formatCode[self.formatName]
 
         self.nodes = 1
+
+        return
 
 
     def onLauncherNode(self, *args, **kwds):
