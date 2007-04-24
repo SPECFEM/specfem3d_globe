@@ -22,9 +22,15 @@ NEX_ETA                         = 160
 NPROC_XI                        = 5
 NPROC_ETA                       = 5
 
-# model (isotropic_prem, transversely_isotropic_prem, crust_2.0_plus_transversely_isotropic_prem
-# iasp91, 1066a, ak135, s20rts, 3D_anisotropic, 3D_attenuation)
-MODEL                           = isotropic_prem 
+# 1D models with real structure:
+# 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135
+#
+# 1D models with only one fictitious averaged crustal layer:
+# 1D_isotropic_prem_onecrust, 1D_transversely_isotropic_prem_onecrust, 1D_iasp91_onecrust, 1D_1066a_onecrust, 1D_ak135_onecrust
+#
+# fully 3D models:
+# 3D_crust_2.0_plus_transversely_isotropic_prem, 3D_s20rts, 3D_anisotropic, 3D_attenuation
+MODEL                           = 1D_isotropic_prem 
 
 # parameters describing the Earth model
 OCEANS                          = .false.
