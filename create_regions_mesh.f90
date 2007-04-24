@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,26 +16,25 @@
 !
 !=====================================================================
 
-  subroutine create_regions_mesh(iregion_code,xgrid,ygrid,zgrid,ibool,idoubling, &
-           xstore,ystore,zstore,npx,npy,rmins,rmaxs, &
+  subroutine create_regions_mesh(iregion_code,ibool,idoubling, &
+           xstore,ystore,zstore,rmins,rmaxs, &
            iproc_xi,iproc_eta,ichunk,nspec,nspec_tiso, &
            volume_local,area_local_bottom,area_local_top, &
            nspl,rspl,espl,espl2, &
-           nglob_AB,nglob_AC,nglob_BC,npointot, &
-           NER,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-           NER_TOP_CENTRAL_CUBE_ICB,NER_CENTRAL_CUBE_CMB,NER_CMB_670,NER_670_400,NER_400_220, &
-           NER_220_MOHO,NER_CRUST,NER_DOUBLING_OUTER_CORE, &
+           nglob_theor,npointot, &
+           NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
            NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
            ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-           NPROC_XI,NPROC_ETA,NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
-           NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA,NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
-           myrank,LOCAL_PATH,OCEANS,ibathy_topo,NER_ICB_BOTTOMDBL, &
+           NPROC_XI,NPROC_ETA,NSPEC2D_XI, &
+           NSPEC2D_ETA,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+           myrank,LOCAL_PATH,OCEANS,ibathy_topo, &
            crustal_model,mantle_model,aniso_mantle_model, &
            aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
            attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
-           NCHUNKS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
-           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN,&
+           NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
+           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+           ner,ratio_sampling_array, doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D,&
            AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V, AM_S, AS_V)
 
 ! create the different regions of the mesh
@@ -43,8 +43,19 @@
 
   include "constants.h"
 
-  external mantle_model,crustal_model,aniso_mantle_model, &
-       aniso_inner_core_model,attenuation_model
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+
+  integer :: ignod,ner_without_doubling,ispec_superbrick,ilayer,ix_elem,iy_elem,iz_elem, &
+               ifirst_region,ilast_region
+
+! mesh doubling superbrick
+  integer, dimension(NGNOD_EIGHT_CORNERS,NSPEC_DOUBLING_SUPERBRICK) :: ibool_superbrick
+
+  double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick
+
+  external mantle_model,crustal_model,aniso_mantle_model,aniso_inner_core_model,attenuation_model
 
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
@@ -75,7 +86,7 @@
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
-  
+
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
@@ -132,7 +143,7 @@
     character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
     character(len=2) code(NKEYS_CRUST)
   end type crustal_model_variables
-  
+
   type (crustal_model_variables) CM_V
 ! crustal_model_variables
 
@@ -144,7 +155,7 @@
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
   end type attenuation_model_storage
-  
+
   type (attenuation_model_storage) AM_S
 ! attenuation_model_storage
 
@@ -168,28 +179,25 @@
 ! correct number of spectral elements in each block depending on chunk type
   integer nspec,nspec_tiso,nspec_stacey
 
-  integer NER,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS,REFERENCE_1D_MODEL
-  integer NER_TOP_CENTRAL_CUBE_ICB,NER_CENTRAL_CUBE_CMB,NER_670_400,NER_400_220,NER_220_MOHO
-  integer NER_CRUST,NER_CMB_670,NER_DOUBLING_OUTER_CORE,NER_ICB_BOTTOMDBL
+  integer NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS,REFERENCE_1D_MODEL
 
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
 
-  integer NPROC_XI,NPROC_ETA,NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI
-  integer NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA,NSPEC1D_RADIAL,NPOIN1D_RADIAL
+  integer NPROC_XI,NPROC_ETA
+  integer NSPEC1D_RADIAL,NGLOB1D_RADIAL
 
-  integer npx,npy
   integer npointot
 
-  logical ELLIPTICITY,TOPOGRAPHY
+  logical ELLIPTICITY,TOPOGRAPHY,SAVE_MESH_FILES
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,OCEANS
 
-  logical ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS
+  logical ATTENUATION,ATTENUATION_3D, &
+          INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS
 
   double precision R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
-          RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN
+          RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
 
-  character(len=150) LOCAL_PATH
+  character(len=150) LOCAL_PATH,errmsg
 
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
@@ -199,24 +207,21 @@
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
-  double precision, dimension(0:2*NEX_PER_PROC_XI,0:2*NEX_PER_PROC_ETA,0:2*NER) :: xgrid,ygrid,zgrid
+! meshing parameters
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
 ! to define the central cube in the inner core
   integer nx_central_cube,ny_central_cube,nz_central_cube
-  double precision ratio_x,ratio_y,ratio_z,radius_cube
-  double precision xi_central_cube,eta_central_cube,gamma_central_cube
-  double precision, dimension(:,:,:), allocatable :: xgrid_central_cube,ygrid_central_cube,zgrid_central_cube
+  double precision radius_cube
+  double precision :: xgrid_central_cube,ygrid_central_cube,zgrid_central_cube
 
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-! meshing parameters
-  double precision rmins(0:2*NER),rmaxs(0:2*NER)
-
 ! auxiliary variables to generate the mesh
-  integer ix,iy,iz,ir,ir1,ir2,dir
-  integer ix1,ix2,dix,iy1,iy2,diy
-  integer iax,iay,iar
-  integer isubregion,nsubregions,doubling_index
+  integer ix,iy,iz
+
+! topology of the elements
+  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
 
 ! code for the four regions of the mesh
   integer iregion_code
@@ -236,18 +241,11 @@
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
 
-! topology of the elements
-  integer iaddx(NGNOD)
-  integer iaddy(NGNOD)
-  integer iaddz(NGNOD)
+  double precision, dimension(NGNOD) :: xelm,yelm,zelm,offset_x,offset_y,offset_z
 
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
-
-! parameters needed to store the radii of the grid points
-! in the spherically symmetric Earth
   integer idoubling(nspec)
+
+! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision rmin,rmax
 
 ! for model density and anisotropy
@@ -283,7 +281,7 @@
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: xp,yp,zp
 
-  integer nglob,nglob_theor,nglob_AB,nglob_AC,nglob_BC
+  integer nglob,nglob_theor
 
   integer ieoff,ilocnum
   integer iboolmin,iboolmax
@@ -330,7 +328,7 @@
   double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
 ! rotation matrix from Euler angles
-  double precision rotation_matrix(3,3)
+  double precision, dimension(NDIM,NDIM) :: rotation_matrix
 
 ! attenuation
   double precision, dimension(:,:,:,:),   allocatable :: Qmu_store
@@ -339,6 +337,15 @@
   double precision  T_c_source
 
 ! **************
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_ETA,NSPEC2D_XI
+  logical, dimension(NSPEC_DOUBLING_SUPERBRICK,6) :: iboun_sb
+  logical :: USE_ONE_LAYER_SB,CASE_3D
+  integer :: nspec_sb
+
+
+  integer NUMBER_OF_MESH_LAYERS,layer_shift
+  double precision, dimension(:,:), allocatable :: stretch_tab
 
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
@@ -508,108 +515,286 @@
   call define_model_1066a(CRUSTAL, M1066a_V)
   call define_model_ak135(CRUSTAL, Mak135_V)
 
-! generate the elements in all the regions of the mesh
+!------------------------------------------------------------------------
+
+! create the shape of the corner nodes of a regular mesh element
+  call hex_nodes(iaddx,iaddy,iaddz)
+
+! reference element has size one here, not two
+  iaddx(:) = iaddx(:) / 2
+  iaddy(:) = iaddy(:) / 2
+  iaddz(:) = iaddz(:) / 2
+
+  if (ONE_CRUST) then
+    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
+    layer_shift = 0
+  else
+    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
+    layer_shift = 1
+  endif
+
+! define the first and last layers that define this region in read_compute_parameters.f90
+  if(iregion_code == IREGION_CRUST_MANTLE) then
+    ifirst_region = 1
+    ilast_region = 10 + layer_shift
+
+  else if(iregion_code == IREGION_OUTER_CORE) then
+    ifirst_region = 11 + layer_shift
+    ilast_region = NUMBER_OF_MESH_LAYERS - 1
+
+  else if(iregion_code == IREGION_INNER_CORE) then
+    ifirst_region = NUMBER_OF_MESH_LAYERS
+    ilast_region = NUMBER_OF_MESH_LAYERS
+
+  else
+    call exit_MPI(myrank,'incorrect region code detected')
+
+  endif
+
+
+! init boundaries arrays
+  iboun(:,:)=.false.
+  iMPIcut_xi(:,:) = .false.
+  iMPIcut_eta(:,:) = .false.
+
+  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE) then
+    allocate(stretch_tab(2,ner(1)))
+    call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
+  endif
+! generate and count all the elements in this region of the mesh
   ispec = 0
+! loop on all the layers in this region of the mesh
+  do ilayer = ifirst_region,ilast_region
 
-! define number of subregions in current region
-  select case(iregion_code)
-    case(IREGION_CRUST_MANTLE)
-      nsubregions = 32
-    case(IREGION_OUTER_CORE)
-      nsubregions = 19
-    case(IREGION_INNER_CORE)
-      nsubregions = 3
-    case default
-      call exit_MPI(myrank,'incorrect region code')
-  end select
+! determine the radii that define the shell
+  rmin = rmins(ilayer)
+  rmax = rmaxs(ilayer)
 
-  do isubregion = 1,nsubregions
+!----
+!----   regular mesh elements
+!----
+! loop on all the elements
+   do ix_elem = 1,NEX_PER_PROC_XI,ratio_sampling_array(ilayer)
+   do iy_elem = 1,NEX_PER_PROC_ETA,ratio_sampling_array(ilayer)
 
-! define shape of elements in current subregion
-  select case(iregion_code)
+    ner_without_doubling = ner(ilayer)
 
-    case(IREGION_CRUST_MANTLE)
-      call define_subregions_crust_mantle(isubregion,ichunk,iaddx,iaddy,iaddz, &
-        ix1,ix2,dix,iy1,iy2,diy,ir1,ir2,dir,iax,iay,iar, &
-        doubling_index,npx,npy,NER_CENTRAL_CUBE_CMB,NER_CMB_670,NER_670_400, &
-        NER_400_220,NER_220_MOHO,NER_CRUST)
+! if there is a doubling at the top of this region, we implement it in the last two layers of elements
+! and therefore we suppress two layers of regular elements here
+    if(this_region_has_a_doubling(ilayer)) then
+      if (ner(ilayer) == 1) then
+        ner_without_doubling = ner_without_doubling - 1
+        USE_ONE_LAYER_SB = .true.
+      else
+        ner_without_doubling = ner_without_doubling - 2
+        USE_ONE_LAYER_SB = .false.
+      endif
+    endif
 
-    case(IREGION_OUTER_CORE)
-      call define_subregions_outer_core(isubregion,ichunk,iaddx,iaddy,iaddz, &
-        ix1,ix2,dix,iy1,iy2,diy,ir1,ir2,dir,iax,iay,iar, &
-        doubling_index,npx,npy,NER_TOP_CENTRAL_CUBE_ICB,NER_CENTRAL_CUBE_CMB,NER_DOUBLING_OUTER_CORE,NER_ICB_BOTTOMDBL)
+   do iz_elem = 1,ner_without_doubling
 
-    case(IREGION_INNER_CORE)
-      call define_subregions_inner_core(isubregion,iaddx,iaddy,iaddz, &
-        ix1,ix2,dix,iy1,iy2,diy,ir1,ir2,dir,iax,iay,iar, &
-        doubling_index,npx,npy,NER_TOP_CENTRAL_CUBE_ICB)
+! loop on all the corner nodes of this element
+   do ignod = 1,NGNOD_EIGHT_CORNERS
 
-    case default
-      call exit_MPI(myrank,'incorrect region code')
+! define topological coordinates of this mesh point
+      offset_x(ignod) = (ix_elem - 1) + iaddx(ignod) * ratio_sampling_array(ilayer)
+      offset_y(ignod) = (iy_elem - 1) + iaddy(ignod) * ratio_sampling_array(ilayer)
+      offset_z(ignod) = (iz_elem - 1) + iaddz(ignod)
+  enddo
+! the rest of the 27 nodes are missing, therefore add them
+     call add_missing_nodes(offset_x,offset_y,offset_z)
 
-  end select
+! compute the actual position of all the grid points of that element
 
-  do ir = ir1,ir2,dir
-    do iy = iy1,iy2,diy
-      do ix = ix1,ix2,dix
+  if (ilayer == 1 .and. CASE_3D) then
+      ! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
+      ! max ratio between size of upper crust elements and lower crust elements is given by the param MAX_RATIO_STRETCHING
+      ! to avoid stretching, set MAX_RATIO_STRETCHING = 1  in constants.h
+     call compute_coord_main_mesh(offset_x,offset_y,offset_z-(iz_elem - 1),xelm,yelm,zelm, &
+               ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+               NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+               stretch_tab(1,iz_elem),stretch_tab(2,iz_elem),1,ilayer,ichunk,rotation_matrix, &
+               NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
+  else
+     call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
+               ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+               NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+               r_top(ilayer),r_bottom(ilayer),ner(ilayer),ilayer,ichunk,rotation_matrix, &
+               NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
+  endif
+! add one spectral element to the list
+     ispec = ispec + 1
+     if(ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
 
-!       determine the radii that define the shell
-        rmin = rmins(ir)
-        rmax = rmaxs(ir)
+! new get_flag_boundaries
+! xmin & xmax
+  if (ix_elem == 1) then
+      iMPIcut_xi(1,ispec) = .true.
+      if (iproc_xi == 0) iboun(1,ispec)= .true.
+  endif
+  if (ix_elem == (NEX_PER_PROC_XI-ratio_sampling_array(ilayer)+1)) then
+      iMPIcut_xi(2,ispec) = .true.
+      if (iproc_xi == NPROC_XI-1) iboun(2,ispec)= .true.
+  endif
+! ymin & ymax
+  if (iy_elem == 1) then
+      iMPIcut_eta(1,ispec) = .true.
+      if (iproc_eta == 0) iboun(3,ispec)= .true.
+  endif
+  if (iy_elem == (NEX_PER_PROC_ETA-ratio_sampling_array(ilayer)+1)) then
+      iMPIcut_eta(2,ispec) = .true.
+      if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= .true.
+  endif
+! zmin & zmax
+  if (iz_elem == ner(ilayer) .and. ilayer == ifirst_region) then
+      iboun(6,ispec)= .true.
+  endif
+  if (iz_elem == 1 .and. ilayer == ilast_region) then    ! defined if no doubling in this layer
+      iboun(5,ispec)= .true.
+  endif
 
-!       loop over the NGNOD nodes
-        do ia=1,NGNOD
-          xelm(ia) = xgrid(ix+iax*iaddx(ia),iy+iay*iaddy(ia),ir+iar*iaddz(ia))
-          yelm(ia) = ygrid(ix+iax*iaddx(ia),iy+iay*iaddy(ia),ir+iar*iaddz(ia))
-          zelm(ia) = zgrid(ix+iax*iaddx(ia),iy+iay*iaddy(ia),ir+iar*iaddz(ia))
+! define the doubling flag of this element
+     idoubling(ispec) = doubling_index(ilayer)
+
+
+! compute several rheological and geometrical properties for this spectral element
+     call compute_element_properties(ispec,iregion_code,idoubling, &
+           xstore,ystore,zstore,nspec, &
+           nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
+           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+           myrank,ibathy_topo, &
+           crustal_model,mantle_model,aniso_mantle_model, &
+           aniso_inner_core_model,&
+           attenuation_model,ATTENUATION,ATTENUATION_3D, &
+           ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
+           RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
+           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+           nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
+           AMM_V,AM_V,M1066a_V,Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
+
+! end of loop on all the regular elements
+  enddo
+  enddo
+  enddo
+!----
+!----   mesh doubling elements
+!----
+
+! If there is a doubling at the top of this region, let us add these elements.
+! The superbrick implements a symmetric four-to-two doubling and therefore replaces
+! a basic regular block of 2 x 2 = 4 elements.
+! We have imposed that NEX be a multiple of 16 therefore we know that we can always create
+! these 2 x 2 blocks because NEX_PER_PROC_XI / ratio_sampling_array(ilayer) and
+! NEX_PER_PROC_ETA / ratio_sampling_array(ilayer) are always divisible by 2.
+    if(this_region_has_a_doubling(ilayer)) then
+      if (USE_ONE_LAYER_SB) then
+        call define_superbrick_one_layer(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb)
+        nspec_sb = NSPEC_SUPERBRICK_1L
+        iz_elem = ner(ilayer)
+      else
+        call define_superbrick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb)
+        nspec_sb = NSPEC_DOUBLING_SUPERBRICK
+        ! the doubling is implemented in the last two radial elements
+        ! therefore we start one element before the last one
+        iz_elem = ner(ilayer) - 1
+      endif
+
+! loop on all the elements in the 2 x 2 blocks
+      do ix_elem = 1,NEX_PER_PROC_XI,2*ratio_sampling_array(ilayer)
+        do iy_elem = 1,NEX_PER_PROC_ETA,2*ratio_sampling_array(ilayer)
+
+! loop on all the elements in the mesh doubling superbrick
+          do ispec_superbrick = 1,nspec_sb
+
+! loop on all the corner nodes of this element
+            do ignod = 1,NGNOD_EIGHT_CORNERS
+
+! define topological coordinates of this mesh point
+              offset_x(ignod) = (ix_elem - 1) + &
+         x_superbrick(ibool_superbrick(ignod,ispec_superbrick)) * ratio_sampling_array(ilayer)
+              offset_y(ignod) = (iy_elem - 1) + &
+         y_superbrick(ibool_superbrick(ignod,ispec_superbrick)) * ratio_sampling_array(ilayer)
+              offset_z(ignod) = (iz_elem - 1) + &
+         z_superbrick(ibool_superbrick(ignod,ispec_superbrick))
+
+            enddo
+! the rest of the 27 nodes are missing, therefore add them
+     call add_missing_nodes(offset_x,offset_y,offset_z)
+
+! compute the actual position of all the grid points of that element
+     call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
+               ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+               NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+               r_top(ilayer),r_bottom(ilayer),ner(ilayer),ilayer,ichunk,rotation_matrix, &
+               NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
+
+! add one spectral element to the list
+     ispec = ispec + 1
+     if(ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
+
+! new get_flag_boundaries
+! xmin & xmax
+  if (ix_elem == 1) then
+      iMPIcut_xi(1,ispec) = iboun_sb(ispec_superbrick,1)
+      if (iproc_xi == 0) iboun(1,ispec)= iboun_sb(ispec_superbrick,1)
+  endif
+  if (ix_elem == (NEX_PER_PROC_XI-2*ratio_sampling_array(ilayer)+1)) then
+      iMPIcut_xi(2,ispec) = iboun_sb(ispec_superbrick,2)
+      if (iproc_xi == NPROC_XI-1) iboun(2,ispec)= iboun_sb(ispec_superbrick,2)
+  endif
+!! ymin & ymax
+  if (iy_elem == 1) then
+      iMPIcut_eta(1,ispec) = iboun_sb(ispec_superbrick,3)
+      if (iproc_eta == 0) iboun(3,ispec)= iboun_sb(ispec_superbrick,3)
+  endif
+  if (iy_elem == (NEX_PER_PROC_ETA-2*ratio_sampling_array(ilayer)+1)) then
+      iMPIcut_eta(2,ispec) = iboun_sb(ispec_superbrick,4)
+      if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= iboun_sb(ispec_superbrick,4)
+  endif
+! zmax only
+  if (ilayer==ifirst_region) then
+    iboun(6,ispec)= iboun_sb(ispec_superbrick,6)
+  endif
+  if (ilayer==ilast_region .and. iz_elem==1) then
+    iboun(5,ispec)= iboun_sb(ispec_superbrick,5)
+  endif
+
+! define the doubling flag of this element
+     idoubling(ispec) = doubling_index(ilayer)
+
+! compute several rheological and geometrical properties for this spectral element
+     call compute_element_properties(ispec,iregion_code,idoubling, &
+           xstore,ystore,zstore,nspec, &
+           nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
+           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+           myrank,ibathy_topo, &
+           crustal_model,mantle_model,aniso_mantle_model, &
+           aniso_inner_core_model,&
+           attenuation_model,ATTENUATION,ATTENUATION_3D, &
+           ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
+           RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
+           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+           nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
+           AMM_V,AM_V,M1066a_V,Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
+
+! end of loops on the mesh doubling elements
+          enddo
         enddo
-
-! add one spectral element to the list and store its material number
-        ispec = ispec + 1
-        if(ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
-        idoubling(ispec) = doubling_index
-
-! compute values for the Earth model
-        call get_model(myrank,iregion_code,nspec,iproc_xi,iproc_eta, &
-          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rhostore, &
-          nspec_ani, &
-          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-          xelm,yelm,zelm,shape3D,ispec,iboun,iMPIcut_xi,iMPIcut_eta, &
-          rmin,rmax,ichunk,doubling_index, &
-          rho_vp,rho_vs,nspec_stacey, &
-          NPROC_XI,NPROC_ETA, &
-          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-          crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-          attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
-          size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
-          NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
-          R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN,&
-          AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
-
-! add topography without the crustal model
-        if(TOPOGRAPHY .and. (idoubling(ispec) == IFLAG_CRUST &
-                        .or. idoubling(ispec) == IFLAG_220_MOHO)) &
-          call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
-
-! make the Earth elliptical
-        if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
-
-! recompute coordinates and jacobian for real 3-D model
-        call calc_jacobian(myrank,xixstore,xiystore,xizstore, &
-               etaxstore,etaystore,etazstore, &
-               gammaxstore,gammaystore,gammazstore,jacobianstore, &
-               xstore,ystore,zstore, &
-               xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec)
       enddo
-    enddo
+    endif
+
+! end of loop on all the layers of the mesh
   enddo
 
-! end of loop on all the subregions of the current region the mesh
-  enddo
+  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE) deallocate(stretch_tab)
 
 !---
 
@@ -617,51 +802,17 @@
 
   if(INCLUDE_CENTRAL_CUBE .and. iregion_code == IREGION_INNER_CORE) then
 
-! elements are always regular in inner core
-  call usual_hex_nodes(iaddx,iaddy,iaddz)
+! create the shape of a regular mesh element in the inner core
+  call hex_nodes(iaddx,iaddy,iaddz)
 
 ! define vertical slice in central cube on current processor
 ! we can assume that NEX_XI = NEX_ETA, otherwise central cube cannot be defined
-  nx_central_cube = NEX_PER_PROC_XI / 8
-  ny_central_cube = NEX_PER_PROC_ETA / 8
-  nz_central_cube = NEX_XI / 8
-
-! allocate grid of points in central cube
-  allocate(xgrid_central_cube(0:2*nx_central_cube,0:2*ny_central_cube,0:2*nz_central_cube))
-  allocate(ygrid_central_cube(0:2*nx_central_cube,0:2*ny_central_cube,0:2*nz_central_cube))
-  allocate(zgrid_central_cube(0:2*nx_central_cube,0:2*ny_central_cube,0:2*nz_central_cube))
+  nx_central_cube = NEX_PER_PROC_XI / 16
+  ny_central_cube = NEX_PER_PROC_ETA / 16
+  nz_central_cube = NEX_XI / 16
 
 ! size of the cube along cartesian axes before rotation
-  radius_cube = R_CENTRAL_CUBE / dsqrt(3.d0)
-
-  do iz = 0,2*nz_central_cube
-    do iy = 0,2*ny_central_cube
-      do ix = 0,2*nx_central_cube
-
-! the slice extends to the entire cube along Z
-! but only to current block along X and Y
-      ratio_x = (dble(iproc_xi) + dble(ix)/dble(2*nx_central_cube)) / dble(NPROC_XI)
-      ratio_y = (dble(iproc_eta) + dble(iy)/dble(2*ny_central_cube)) / dble(NPROC_ETA)
-      ratio_z = dble(iz)/dble(2*nz_central_cube)
-
-      if(dabs(ratio_x) > 1.001d0 .or. dabs(ratio_y) > 1.001d0 .or. dabs(ratio_z) > 1.001d0) &
-        call exit_MPI(myrank,'wrong ratio in central cube')
-
-! use a "flat" cubed sphere to create the central cube
-
-! define angle in [-pi/4,pi/4]
-      xi_central_cube = - PI_OVER_FOUR*(1.d0 - ratio_x) + PI_OVER_FOUR*ratio_x
-      eta_central_cube = - PI_OVER_FOUR*(1.d0 - ratio_y) + PI_OVER_FOUR*ratio_y
-      gamma_central_cube = - PI_OVER_FOUR*(1.d0 - ratio_z) + PI_OVER_FOUR*ratio_z
-
-! take tangent of angle to map to [-1,1] and then map to real radius
-      xgrid_central_cube(ix,iy,iz) = radius_cube * tan(xi_central_cube)
-      ygrid_central_cube(ix,iy,iz) = radius_cube * tan(eta_central_cube)
-      zgrid_central_cube(ix,iy,iz) = radius_cube * tan(gamma_central_cube)
-
-      enddo
-    enddo
-  enddo
+  radius_cube = (R_CENTRAL_CUBE / R_EARTH) / sqrt(3.d0)
 
 ! define spectral elements in central cube
   do iz = 0,2*nz_central_cube-2,2
@@ -670,107 +821,113 @@
 
 !       radii that define the shell, we know that we are in the central cube
         rmin = 0.d0
-        rmax = RICB / R_EARTH
+        rmax = R_CENTRAL_CUBE / R_EARTH
 
 !       loop over the NGNOD nodes
         do ia=1,NGNOD
 
 ! flat cubed sphere with correct mapping
-        if(ichunk == CHUNK_AB) then
-          xelm(ia) = -ygrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          yelm(ia) = xgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          zelm(ia) = zgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
+          call compute_coord_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia), &
+                  xgrid_central_cube,ygrid_central_cube,zgrid_central_cube, &
+                  iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,nx_central_cube,ny_central_cube,nz_central_cube,radius_cube)
 
-        else if(ichunk == CHUNK_AB_ANTIPODE) then
-          xelm(ia) = -ygrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          yelm(ia) = -xgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          zelm(ia) = -zgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
+          if(ichunk == CHUNK_AB) then
+            xelm(ia) = - ygrid_central_cube
+            yelm(ia) = + xgrid_central_cube
+            zelm(ia) = + zgrid_central_cube
 
-        else if(ichunk == CHUNK_AC) then
-          xelm(ia) = -ygrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          yelm(ia) = -zgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          zelm(ia) = xgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
+          else if(ichunk == CHUNK_AB_ANTIPODE) then
+            xelm(ia) = - ygrid_central_cube
+            yelm(ia) = - xgrid_central_cube
+            zelm(ia) = - zgrid_central_cube
 
-        else if(ichunk == CHUNK_AC_ANTIPODE) then
-          xelm(ia) = -ygrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          yelm(ia) = zgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          zelm(ia) = -xgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
+          else if(ichunk == CHUNK_AC) then
+            xelm(ia) = - ygrid_central_cube
+            yelm(ia) = - zgrid_central_cube
+            zelm(ia) = + xgrid_central_cube
 
-        else if(ichunk == CHUNK_BC) then
-          xelm(ia) = -zgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          yelm(ia) = ygrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          zelm(ia) = xgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
+          else if(ichunk == CHUNK_AC_ANTIPODE) then
+            xelm(ia) = - ygrid_central_cube
+            yelm(ia) = + zgrid_central_cube
+            zelm(ia) = - xgrid_central_cube
 
-        else if(ichunk == CHUNK_BC_ANTIPODE) then
-          xelm(ia) = zgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          yelm(ia) = -ygrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
-          zelm(ia) = xgrid_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia))
+          else if(ichunk == CHUNK_BC) then
+            xelm(ia) = - zgrid_central_cube
+            yelm(ia) = + ygrid_central_cube
+            zelm(ia) = + xgrid_central_cube
 
-        else
-          call exit_MPI(myrank,'wrong chunk number in flat cubed sphere definition')
-        endif
+          else if(ichunk == CHUNK_BC_ANTIPODE) then
+            xelm(ia) = + zgrid_central_cube
+            yelm(ia) = - ygrid_central_cube
+            zelm(ia) = + xgrid_central_cube
+
+          else
+            call exit_MPI(myrank,'wrong chunk number in flat cubed sphere definition')
+          endif
 
         enddo
 
-! add one spectral element to the list and store its material number
+! add one spectral element to the list
         ispec = ispec + 1
         if(ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in central cube creation')
 
+! new get_flag_boundaries
+! xmin & xmax
+  if (ix == 0) then
+      iMPIcut_xi(1,ispec) = .true.
+      if (iproc_xi == 0) iboun(1,ispec)= .true.
+  endif
+  if (ix == 2*nx_central_cube-2) then
+      iMPIcut_xi(2,ispec) = .true.
+      if (iproc_xi == NPROC_XI-1) iboun(2,ispec)= .true.
+  endif
+! ymin & ymax
+  if (iy == 0) then
+      iMPIcut_eta(1,ispec) = .true.
+      if (iproc_eta == 0) iboun(3,ispec)= .true.
+  endif
+  if (iy == 2*ny_central_cube-2) then
+      iMPIcut_eta(2,ispec) = .true.
+      if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= .true.
+  endif
+
+! define the doubling flag of this element
 ! only one active central cube, the 5 others are fictitious
         if(ichunk == CHUNK_AB) then
           if(iz == 0) then
-            doubling_index = IFLAG_BOTTOM_CENTRAL_CUBE
+            idoubling(ispec) = IFLAG_BOTTOM_CENTRAL_CUBE
           else if(iz == 2*nz_central_cube-2) then
-            doubling_index = IFLAG_TOP_CENTRAL_CUBE
+            idoubling(ispec) = IFLAG_TOP_CENTRAL_CUBE
           else
-            doubling_index = IFLAG_IN_CENTRAL_CUBE
+            idoubling(ispec) = IFLAG_IN_CENTRAL_CUBE
           endif
         else
-          doubling_index = IFLAG_IN_FICTITIOUS_CUBE
+          idoubling(ispec) = IFLAG_IN_FICTITIOUS_CUBE
         endif
-        idoubling(ispec) = doubling_index
 
-! compute values for the Earth model
-        call get_model(myrank,iregion_code,nspec,iproc_xi,iproc_eta, &
-          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rhostore, &
-          nspec_ani, &
-          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-          xelm,yelm,zelm,shape3D,ispec,iboun,iMPIcut_xi,iMPIcut_eta, &
-          rmin,rmax,ichunk,doubling_index, &
-          rho_vp,rho_vs,nspec_stacey, &
-          NPROC_XI,NPROC_ETA, &
-          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-          crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-          attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
-          size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
-          NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
-          R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN,&
-          AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
-
-! make the Earth elliptical
-        if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
-
-! recompute coordinates and jacobian for real 3-D model
-        call calc_jacobian(myrank,xixstore,xiystore,xizstore, &
-               etaxstore,etaystore,etazstore, &
-               gammaxstore,gammaystore,gammazstore,jacobianstore, &
-               xstore,ystore,zstore, &
-               xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec)
+! compute several rheological and geometrical properties for this spectral element
+     call compute_element_properties(ispec,iregion_code,idoubling, &
+           xstore,ystore,zstore,nspec, &
+           nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
+           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+           myrank,ibathy_topo, &
+           crustal_model,mantle_model,aniso_mantle_model, &
+           aniso_inner_core_model,&
+           attenuation_model,ATTENUATION,ATTENUATION_3D, &
+           ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
+           RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
+           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+           nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
+           AMM_V,AM_V,M1066a_V,Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
       enddo
     enddo
   enddo
 
-! deallocate grid of points in central cube
-  deallocate(xgrid_central_cube)
-  deallocate(ygrid_central_cube)
-  deallocate(zgrid_central_cube)
-
   endif    ! end of definition of central cube in inner core
-
 !---
 
 ! check total number of spectral elements created
@@ -793,19 +950,12 @@
 
   call get_global(nspec,xp,yp,zp,iglob,locval,ifseg,nglob,npointot)
 
-! theoretical total number of points we should find
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-    nglob_theor = nglob_AB
-  else if(ichunk == CHUNK_AC .or. ichunk == CHUNK_AC_ANTIPODE) then
-    nglob_theor = nglob_AC
-  else if(ichunk == CHUNK_BC .or. ichunk == CHUNK_BC_ANTIPODE) then
-    nglob_theor = nglob_BC
-  else
-    call exit_MPI(myrank,'wrong chunk type')
-  endif
-
 ! check that number of points found equals theoretical value
-  if(nglob /= nglob_theor) call exit_MPI(myrank,'incorrect total number of points found')
+  if(nglob /= nglob_theor) then
+    write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor = ',&
+      myrank,nglob,nglob_theor
+    call exit_MPI(myrank,errmsg)
+  endif
 
 ! put in classical format
   do ispec=1,nspec
@@ -823,17 +973,15 @@
 
   iboolmin = minval(ibool(:,:,:,1:nspec))
   iboolmax = maxval(ibool(:,:,:,1:nspec))
-
   if(iboolmin /= 1 .or. iboolmax /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering')
 
 ! count number of anisotropic elements in current region
 ! should be zero in all the regions except in the mantle
-  nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_MOHO)
+  nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
 
 ! creating mass matrix in this slice (will be fully assembled in the solver)
   allocate(rmass(nglob))
   rmass(:) = 0._CUSTOM_REAL
-
   do ispec=1,nspec
 
 ! suppress fictitious elements in central cube
@@ -881,6 +1029,7 @@
   enddo
   enddo
 
+
   call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
       dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
       ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
@@ -894,34 +1043,35 @@
               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
 
+
 ! create MPI buffers
 ! arrays locval(npointot) and ifseg(npointot) used to save memory
   call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
-                  xstore,ystore,zstore,ifseg,ichunk,npointot, &
-                  NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA)
+                  xstore,ystore,zstore,ifseg,npointot, &
+                  NSPEC2D_ETA(iregion_code))
   call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
-                  xstore,ystore,zstore,ifseg,ichunk,npointot, &
-                  NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI)
+                  xstore,ystore,zstore,ifseg,npointot, &
+                  NSPEC2D_XI(iregion_code))
   call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
                   xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC1D_RADIAL,NPOIN1D_RADIAL)
+                  NSPEC1D_RADIAL,NGLOB1D_RADIAL)
 
 ! Stacey
   if(NCHUNKS /= 6) &
        call get_absorb(myrank,prname,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
                        NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 
+
 ! create AVS or DX mesh data for the slices
   if(SAVE_MESH_FILES) then
     call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
-    call write_AVS_DX_mesh_quality_data(prname,nspec,xstore,ystore,zstore)
     call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
     call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
               rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
               ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
-              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
               RMIDDLE_CRUST,ROCEAN)
     call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
@@ -1013,6 +1163,7 @@
 
   endif
 
+
 ! save the binary files
     call save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
             prname,iregion_code,xixstore,xiystore,xizstore, &
@@ -1071,7 +1222,6 @@
       enddo
     enddo
   enddo
-
 ! deallocate arrays
 
   deallocate(rmass)
@@ -1122,7 +1272,6 @@
   deallocate(normal_xmin,normal_xmax,normal_ymin,normal_ymax)
   deallocate(normal_bottom,normal_top)
   deallocate(iMPIcut_xi,iMPIcut_eta)
-
 ! Stacey
   deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
   deallocate(rho_vp,rho_vs)

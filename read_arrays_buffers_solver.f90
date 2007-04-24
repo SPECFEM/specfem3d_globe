@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -21,7 +22,7 @@
      iprocfrom_faces,iprocto_faces,imsg_type, &
      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
      iboolfaces,npoin2D_faces,iboolcorner, &
-     NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY,NPOIN1D_RADIAL, &
+     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
 
   implicit none
@@ -34,17 +35,17 @@
   integer iregion_code,myrank,NCHUNKS,ier
 
   integer npoin2D_xi,npoin2D_eta
-  integer NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY,NPOIN1D_RADIAL
+  integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL
   integer NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA
 
   integer npoin2D_faces(NUMFACES_SHARED)
 
   character(len=150) LOCAL_PATH
 
-  integer, dimension(NPOIN2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
-  integer, dimension(NPOIN1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
-  integer, dimension(NPOIN2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
-  integer, dimension(NPOIN2DMAX_YMIN_YMAX) :: iboolleft_eta,iboolright_eta
+  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
+  integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX) :: iboolleft_eta,iboolright_eta
 
   integer, dimension(NUMMSGS_FACES) :: iprocfrom_faces,iprocto_faces,imsg_type
 
@@ -85,7 +86,7 @@
   npoin2D_xi = npoin2D_xi - 1
 ! read nb of points given by the mesher
   read(IIN,*) npoin2D_xi_mesher
-  if(npoin2D_xi > NPOIN2DMAX_XMIN_XMAX .or. npoin2D_xi /= npoin2D_xi_mesher) &
+  if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi /= npoin2D_xi_mesher) &
       call exit_MPI(myrank,'incorrect iboolleft_xi read')
   close(IIN)
 
@@ -102,7 +103,7 @@
   npoin2D_xi = npoin2D_xi - 1
 ! read nb of points given by the mesher
   read(IIN,*) npoin2D_xi_mesher
-  if(npoin2D_xi > NPOIN2DMAX_XMIN_XMAX .or. npoin2D_xi /= npoin2D_xi_mesher) &
+  if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi /= npoin2D_xi_mesher) &
       call exit_MPI(myrank,'incorrect iboolright_xi read')
   close(IIN)
 
@@ -132,7 +133,7 @@
   npoin2D_eta = npoin2D_eta - 1
 ! read nb of points given by the mesher
   read(IIN,*) npoin2D_eta_mesher
-  if(npoin2D_eta > NPOIN2DMAX_YMIN_YMAX .or. npoin2D_eta /= npoin2D_eta_mesher) &
+  if(npoin2D_eta > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta /= npoin2D_eta_mesher) &
       call exit_MPI(myrank,'incorrect iboolleft_eta read')
   close(IIN)
 
@@ -149,7 +150,7 @@
   npoin2D_eta = npoin2D_eta - 1
 ! read nb of points given by the mesher
   read(IIN,*) npoin2D_eta_mesher
-  if(npoin2D_eta > NPOIN2DMAX_YMIN_YMAX .or. npoin2D_eta /= npoin2D_eta_mesher) &
+  if(npoin2D_eta > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta /= npoin2D_eta_mesher) &
       call exit_MPI(myrank,'incorrect iboolright_eta read')
   close(IIN)
 
@@ -230,7 +231,7 @@
 
     open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
     read(IIN,*) npoin2D_faces(icount_faces)
-    if(npoin2D_faces(icount_faces) > NPOIN2DMAX_XY) &
+    if(npoin2D_faces(icount_faces) > NGLOB2DMAX_XY) &
       call exit_MPI(myrank,'incorrect nb of points in face buffer')
     do ipoin2D = 1,npoin2D_faces(icount_faces)
       read(IIN,*) iboolfaces(ipoin2D,icount_faces),xdummy,ydummy,zdummy
@@ -264,7 +265,7 @@
 ! matching codes
     open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
     read(IIN,*) npoin1D_corner
-    if(npoin1D_corner /= NPOIN1D_RADIAL) &
+    if(npoin1D_corner /= NGLOB1D_RADIAL) &
       call exit_MPI(myrank,'incorrect nb of points in corner buffer')
     do ipoin1D = 1,npoin1D_corner
       read(IIN,*) iboolcorner(ipoin1D,icount_corners),xdummy,ydummy,zdummy

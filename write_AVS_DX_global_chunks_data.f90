@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -21,7 +22,7 @@
         ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
         npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
         ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
-        RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO, &
+        RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
         RMIDDLE_CRUST,ROCEAN)
 
   implicit none
@@ -35,8 +36,7 @@
 
   logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
 
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME, &
-        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -168,9 +168,7 @@
       vmax = sqrt((kappavstore(1,1,1,ispec)+4.*muvstore(1,1,1,ispec)/3.)/rhostore(1,1,1,ispec))
       vmin = sqrt(muvstore(1,1,1,ispec)/rhostore(1,1,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -188,9 +186,7 @@
       vmax = sqrt((kappavstore(1,NGLLY,1,ispec)+4.*muvstore(1,NGLLY,1,ispec)/3.)/rhostore(1,NGLLY,1,ispec))
       vmin = sqrt(muvstore(1,NGLLY,1,ispec)/rhostore(1,NGLLY,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -208,9 +204,7 @@
       vmax = sqrt((kappavstore(1,NGLLY,NGLLZ,ispec)+4.*muvstore(1,NGLLY,NGLLZ,ispec)/3.)/rhostore(1,NGLLY,NGLLZ,ispec))
       vmin = sqrt(muvstore(1,NGLLY,NGLLZ,ispec)/rhostore(1,NGLLY,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -228,9 +222,7 @@
       vmax = sqrt((kappavstore(1,1,NGLLZ,ispec)+4.*muvstore(1,1,NGLLZ,ispec)/3.)/rhostore(1,1,NGLLZ,ispec))
       vmin = sqrt(muvstore(1,1,NGLLZ,ispec)/rhostore(1,1,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -257,9 +249,7 @@
       vmax = sqrt((kappavstore(NGLLX,1,1,ispec)+4.*muvstore(NGLLX,1,1,ispec)/3.)/rhostore(NGLLX,1,1,ispec))
       vmin = sqrt(muvstore(NGLLX,1,1,ispec)/rhostore(NGLLX,1,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,1,ispec)**2 + ystore(NGLLX,1,1,ispec)**2 + zstore(NGLLX,1,1,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -277,9 +267,7 @@
       vmax = sqrt((kappavstore(NGLLX,NGLLY,1,ispec)+4.*muvstore(NGLLX,NGLLY,1,ispec)/3.)/rhostore(NGLLX,NGLLY,1,ispec))
       vmin = sqrt(muvstore(NGLLX,NGLLY,1,ispec)/rhostore(NGLLX,NGLLY,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 + ystore(NGLLX,NGLLY,1,ispec)**2 + zstore(NGLLX,NGLLY,1,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -297,9 +285,7 @@
       vmax = sqrt((kappavstore(NGLLX,NGLLY,NGLLZ,ispec)+4.*muvstore(NGLLX,NGLLY,NGLLZ,ispec)/3.)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
       vmin = sqrt(muvstore(NGLLX,NGLLY,NGLLZ,ispec)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -317,9 +303,7 @@
       vmax = sqrt((kappavstore(NGLLX,1,NGLLZ,ispec)+4.*muvstore(NGLLX,1,NGLLZ,ispec)/3.)/rhostore(NGLLX,1,NGLLZ,ispec))
       vmin = sqrt(muvstore(NGLLX,1,NGLLZ,ispec)/rhostore(NGLLX,1,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 + ystore(NGLLX,1,NGLLZ,ispec)**2 + zstore(NGLLX,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -346,9 +330,7 @@
       vmax = sqrt((kappavstore(1,1,1,ispec)+4.*muvstore(1,1,1,ispec)/3.)/rhostore(1,1,1,ispec))
       vmin = sqrt(muvstore(1,1,1,ispec)/rhostore(1,1,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -366,9 +348,7 @@
       vmax = sqrt((kappavstore(NGLLX,1,1,ispec)+4.*muvstore(NGLLX,1,1,ispec)/3.)/rhostore(NGLLX,1,1,ispec))
       vmin = sqrt(muvstore(NGLLX,1,1,ispec)/rhostore(NGLLX,1,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,1,ispec)**2 + ystore(NGLLX,1,1,ispec)**2 + zstore(NGLLX,1,1,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -386,9 +366,7 @@
       vmax = sqrt((kappavstore(NGLLX,1,NGLLZ,ispec)+4.*muvstore(NGLLX,1,NGLLZ,ispec)/3.)/rhostore(NGLLX,1,NGLLZ,ispec))
       vmin = sqrt(muvstore(NGLLX,1,NGLLZ,ispec)/rhostore(NGLLX,1,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 + ystore(NGLLX,1,NGLLZ,ispec)**2 + zstore(NGLLX,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -406,9 +384,7 @@
       vmax = sqrt((kappavstore(1,1,NGLLZ,ispec)+4.*muvstore(1,1,NGLLZ,ispec)/3.)/rhostore(1,1,NGLLZ,ispec))
       vmin = sqrt(muvstore(1,1,NGLLZ,ispec)/rhostore(1,1,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -435,9 +411,7 @@
       vmax = sqrt((kappavstore(1,NGLLY,1,ispec)+4.*muvstore(1,NGLLY,1,ispec)/3.)/rhostore(1,NGLLY,1,ispec))
       vmin = sqrt(muvstore(1,NGLLY,1,ispec)/rhostore(1,NGLLY,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -455,9 +429,7 @@
       vmax = sqrt((kappavstore(NGLLX,NGLLY,1,ispec)+4.*muvstore(NGLLX,NGLLY,1,ispec)/3.)/rhostore(NGLLX,NGLLY,1,ispec))
       vmin = sqrt(muvstore(NGLLX,NGLLY,1,ispec)/rhostore(NGLLX,NGLLY,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 + ystore(NGLLX,NGLLY,1,ispec)**2 + zstore(NGLLX,NGLLY,1,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -475,9 +447,7 @@
       vmax = sqrt((kappavstore(NGLLX,NGLLY,NGLLZ,ispec)+4.*muvstore(NGLLX,NGLLY,NGLLZ,ispec)/3.)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
       vmin = sqrt(muvstore(NGLLX,NGLLY,NGLLZ,ispec)/rhostore(NGLLX,NGLLY,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -495,9 +465,7 @@
       vmax = sqrt((kappavstore(1,NGLLY,NGLLZ,ispec)+4.*muvstore(1,NGLLY,NGLLZ,ispec)/3.)/rhostore(1,NGLLY,NGLLZ,ispec))
       vmin = sqrt(muvstore(1,NGLLY,NGLLZ,ispec)/rhostore(1,NGLLY,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_TOP_OUTER_CORE .or. &
-     idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_OUTER_CORE) then
+  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
     call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
@@ -577,8 +545,8 @@
             endif
 
             if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-              call model_iasp91(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &
-                .true.,RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,RMOHO)
+              call model_iasp91(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),ONE_CRUST, &
+                .true.,RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
             else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
               call prem_iso(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &

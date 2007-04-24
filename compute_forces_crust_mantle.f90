@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -54,7 +55,7 @@
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
-  
+
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
@@ -279,8 +280,8 @@
         iglob     = ibool(i,j,k,ispec)
         radius_cr = xstore(iglob)
         theta     = ystore(iglob)
-
-        if(ELLIPTICITY_VAL .AND. idoubling(ispec) .LE. IFLAG_220_MOHO) then
+!DM IFLAG_220_MOHO
+        if(ELLIPTICITY_VAL .and. idoubling(ispec) <= IFLAG_220_80) then
            ! particular case of d80 which is not honored by the mesh
            ! map ellipticity back for d80 detection
            ! ystore contains theta
@@ -356,7 +357,8 @@
   else
 
 ! do not use transverse isotropy except if element is between d220 and Moho
-  if(.not. (TRANSVERSE_ISOTROPY_VAL .and. idoubling(ispec) == IFLAG_220_MOHO)) then
+!DM IFLAG_220_MOHO
+  if(.not. (TRANSVERSE_ISOTROPY_VAL .and. idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO)) then
 
 ! layer with no transverse isotropy, use kappav and muv
           kappal = kappavstore(i,j,k,ispec)

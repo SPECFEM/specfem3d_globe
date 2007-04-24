@@ -1,11 +1,12 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 #          --------------------------------------------------
 #
-#                 Dimitri Komatitsch and Jeroen Tromp
-#    Seismological Laboratory - California Institute of Technology
-#       (c) California Institute of Technology September 2006
+#          Main authors: Dimitri Komatitsch and Jeroen Tromp
+#    Seismological Laboratory, California Institute of Technology, USA
+#                    and University of Pau, France
+# (c) California Institute of Technology and University of Pau, April 2007
 #
 #    A signed non-commercial agreement is required to use this program.
 #   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,7 +16,6 @@
 #
 #=====================================================================
 #
-# Copyright September 2006, by the California Institute of Technology.
 # ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
 #
 # Any commercial use must be negotiated with the Office of Technology
@@ -86,6 +86,7 @@ O = obj
 @COND_PYRE_FALSE@TOGGLED_OBJECTS = $O/read_value_parameters.o $O/get_value_parameters.o
 
 libspecfem_a_OBJECTS = \
+	$O/add_missing_nodes.o \
 	$O/add_topography.o \
 	$O/anisotropic_inner_core_model.o \
 	$O/anisotropic_mantle_model.o \
@@ -96,7 +97,8 @@ libspecfem_a_OBJECTS = \
 	$O/comp_source_spectrum.o \
 	$O/comp_source_time_function.o \
 	$O/compute_arrays_source.o \
-	$O/compute_parameters.o \
+	$O/compute_coordinates_grid.o \
+	$O/compute_element_properties.o \
 	$O/count_number_of_sources.o \
 	$O/create_central_cube_buffers.o \
 	$O/create_chunk_buffers.o \
@@ -108,9 +110,7 @@ libspecfem_a_OBJECTS = \
 	$O/create_serial_name_database.o \
 	$O/crustal_model.o \
 	$O/define_derivation_matrices.o \
-	$O/define_subregions_crust_mantle.o \
-	$O/define_subregions_inner_core.o \
-	$O/define_subregions_outer_core.o \
+	$O/define_superbrick.o \
 	$O/euler_angles.o \
 	$O/exit_mpi.o \
 	$O/get_MPI_1D_buffers.o \
@@ -121,7 +121,6 @@ libspecfem_a_OBJECTS = \
 	$O/get_cmt.o \
 	$O/get_ellipticity.o \
 	$O/get_event_info.o \
-	$O/get_flags_boundaries.o \
 	$O/get_global.o \
 	$O/get_jacobian_boundaries.o \
 	$O/get_model.o \
@@ -137,7 +136,6 @@ libspecfem_a_OBJECTS = \
 	$O/make_ellipticity.o \
 	$O/make_gravity.o \
 	$O/mantle_model.o \
-	$O/mesh_radial.o \
 	$O/meshfem3D.o \
 	$O/model_1066a.o \
 	$O/model_ak135.o \
@@ -145,18 +143,18 @@ libspecfem_a_OBJECTS = \
 	$O/model_prem.o \
 	$O/numerical_recipes.o \
 	$O/read_arrays_buffers_solver.o \
-	$O/read_parameter_file.o \
+	$O/read_compute_parameters.o \
 	$O/recompute_jacobian.o \
 	$O/reduce.o \
 	$O/rthetaphi_xyz.o \
 	$O/save_arrays_solver.o \
 	$O/save_header_file.o \
 	$O/sort_array_coordinates.o \
+	$O/stretching_function.o \
 	$O/topo_bathy.o \
 	$O/write_AVS_DX_global_chunks_data.o \
 	$O/write_AVS_DX_global_data.o \
 	$O/write_AVS_DX_global_faces_data.o \
-	$O/write_AVS_DX_mesh_quality_data.o \
 	$O/write_AVS_DX_surface_data.o \
 	$O/write_seismograms.o \
 	$(EMPTY_MACRO)
@@ -193,7 +191,6 @@ LIBSPECFEM = $(TOGGLED_OBJECTS) $O/libspecfem.a
 @COND_PYRE_FALSE@	check_buffers_2D \
 @COND_PYRE_FALSE@	check_buffers_corners_chunks \
 @COND_PYRE_FALSE@	check_buffers_faces_chunks \
-@COND_PYRE_FALSE@	check_mesh_quality_AVS_DX \
 @COND_PYRE_FALSE@	combine_AVS_DX \
 @COND_PYRE_FALSE@	convolve_source_timefunction \
 @COND_PYRE_FALSE@	create_header_file \
@@ -252,7 +249,6 @@ check_buffers_1D: xcheck_buffers_1D
 check_buffers_2D: xcheck_buffers_2D
 check_buffers_corners_chunks: xcheck_buffers_corners_chunks
 check_buffers_faces_chunks: xcheck_buffers_faces_chunks
-check_mesh_quality_AVS_DX: xcheck_mesh_quality_AVS_DX
 combine_AVS_DX: xcombine_AVS_DX
 convolve_source_timefunction: xconvolve_source_timefunction
 create_header_file: xcreate_header_file
@@ -275,9 +271,6 @@ xcreate_header_file: $O/program_create_header_file.o $(LIBSPECFEM)
 xcombine_AVS_DX: $O/combine_AVS_DX.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcombine_AVS_DX $O/combine_AVS_DX.o $(LIBSPECFEM)
 
-xcheck_mesh_quality_AVS_DX: $O/check_mesh_quality_AVS_DX.o $(LIBSPECFEM)
-	${FCCOMPILE_CHECK} -o xcheck_mesh_quality_AVS_DX $O/check_mesh_quality_AVS_DX.o $(LIBSPECFEM)
-
 xcheck_buffers_1D: $O/check_buffers_1D.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcheck_buffers_1D $O/check_buffers_1D.o $(LIBSPECFEM)
 
@@ -293,7 +286,7 @@ xcheck_buffers_faces_chunks: $O/check_buffers_faces_chunks.o $(LIBSPECFEM)
 xcombine_paraview_data: $O/combine_paraview_data.o $O/write_c_binary.o
 	${FCCOMPILE_CHECK} -o xcombine_paraview_data  $O/combine_paraview_data.o $O/write_c_binary.o
 clean:
-	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_mesh_quality_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcreate_movie_GMT_global xcombine_paraview_data PI*
+	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcreate_movie_GMT_global xcombine_paraview_data PI*
 
 
 ###
@@ -361,9 +354,6 @@ $O/comp_source_time_function.o: comp_source_time_function.f90
 $O/combine_AVS_DX.o: constants.h combine_AVS_DX.f90
 	${FCCOMPILE_CHECK} -c -o $O/combine_AVS_DX.o ${FCFLAGS_f90} combine_AVS_DX.f90
 
-$O/check_mesh_quality_AVS_DX.o: constants.h check_mesh_quality_AVS_DX.f90
-	${FCCOMPILE_CHECK} -c -o $O/check_mesh_quality_AVS_DX.o ${FCFLAGS_f90} check_mesh_quality_AVS_DX.f90
-
 ## use MPI here
 $O/create_chunk_buffers.o: constants.h create_chunk_buffers.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/create_chunk_buffers.o ${FCFLAGS_f90} create_chunk_buffers.f90
@@ -395,17 +385,11 @@ $O/locate_receivers.o: constants.h locate_receivers.f90
 $O/exit_mpi.o: constants.h exit_mpi.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/exit_mpi.o ${FCFLAGS_f90} exit_mpi.f90
 
-$O/read_parameter_file.o: constants.h read_parameter_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_parameter_file.o ${FCFLAGS_f90} read_parameter_file.f90
-
 $O/count_number_of_sources.o: constants.h count_number_of_sources.f90
 	${FCCOMPILE_CHECK} -c -o $O/count_number_of_sources.o ${FCFLAGS_f90} count_number_of_sources.f90
 
 $O/read_value_parameters.o: constants.h read_value_parameters.f90
 	${FCCOMPILE_CHECK} -c -o $O/read_value_parameters.o ${FCFLAGS_f90} read_value_parameters.f90
-
-$O/compute_parameters.o: constants.h compute_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_parameters.o ${FCFLAGS_f90} compute_parameters.f90
 
 $O/get_value_parameters.o: constants.h get_value_parameters.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_value_parameters.o ${FCFLAGS_f90} get_value_parameters.f90
@@ -428,17 +412,11 @@ $O/get_jacobian_boundaries.o: constants.h get_jacobian_boundaries.f90
 $O/program_create_movie_AVS_DX.o: constants.h program_create_movie_AVS_DX.f90
 	${FCCOMPILE_CHECK} -c -o $O/program_create_movie_AVS_DX.o ${FCFLAGS_f90} program_create_movie_AVS_DX.f90
 
-$O/program_create_movie_GMT_global.o: constants.h program_create_movie_GMT_global.f90
-	${FCCOMPILE_CHECK} -c -o $O/program_create_movie_GMT_global.o ${FCFLAGS_f90} program_create_movie_GMT_global.f90
-
 $O/create_movie_AVS_DX.o: constants.h create_movie_AVS_DX.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_movie_AVS_DX.o ${FCFLAGS_f90} create_movie_AVS_DX.f90
 
 $O/create_movie_GMT_global.o: constants.h create_movie_GMT_global.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_movie_GMT_global.o ${FCFLAGS_f90} create_movie_GMT_global.f90
-
-$O/get_flags_boundaries.o: constants.h get_flags_boundaries.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_flags_boundaries.o ${FCFLAGS_f90} get_flags_boundaries.f90
 
 $O/get_MPI_cutplanes_xi.o: constants.h get_MPI_cutplanes_xi.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_MPI_cutplanes_xi.o ${FCFLAGS_f90} get_MPI_cutplanes_xi.f90
@@ -482,9 +460,6 @@ $O/write_AVS_DX_surface_data.o: constants.h write_AVS_DX_surface_data.f90
 $O/write_AVS_DX_global_data.o: constants.h write_AVS_DX_global_data.f90
 	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_global_data.o ${FCFLAGS_f90} write_AVS_DX_global_data.f90
 
-$O/write_AVS_DX_mesh_quality_data.o: constants.h write_AVS_DX_mesh_quality_data.f90
-	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_mesh_quality_data.o ${FCFLAGS_f90} write_AVS_DX_mesh_quality_data.f90
-
 $O/get_shape3D.o: constants.h get_shape3D.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_shape3D.o ${FCFLAGS_f90} get_shape3D.f90
 
@@ -499,9 +474,6 @@ $O/intgrl.o: constants.h intgrl.f90
 
 $O/mantle_model.o: constants.h mantle_model.f90
 	${FCCOMPILE_CHECK} -c -o $O/mantle_model.o ${FCFLAGS_f90} mantle_model.f90
-
-$O/mesh_radial.o: constants.h mesh_radial.f90
-	${FCCOMPILE_CHECK} -c -o $O/mesh_radial.o ${FCFLAGS_f90} mesh_radial.f90
 
 $O/get_absorb.o: constants.h get_absorb.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_absorb.o ${FCFLAGS_f90} get_absorb.f90
@@ -574,15 +546,6 @@ $O/create_name_database.o: constants.h create_name_database.f90
 $O/create_serial_name_database.o: constants.h create_serial_name_database.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_serial_name_database.o ${FCFLAGS_f90} create_serial_name_database.f90
 
-$O/define_subregions_crust_mantle.o: constants.h define_subregions_crust_mantle.f90
-	${FCCOMPILE_CHECK} -c -o $O/define_subregions_crust_mantle.o ${FCFLAGS_f90} define_subregions_crust_mantle.f90
-
-$O/define_subregions_outer_core.o: constants.h define_subregions_outer_core.f90
-	${FCCOMPILE_CHECK} -c -o $O/define_subregions_outer_core.o ${FCFLAGS_f90} define_subregions_outer_core.f90
-
-$O/define_subregions_inner_core.o: constants.h define_subregions_inner_core.f90
-	${FCCOMPILE_CHECK} -c -o $O/define_subregions_inner_core.o ${FCFLAGS_f90} define_subregions_inner_core.f90
-
 ## use MPI here
 $O/read_arrays_buffers_solver.o: constants.h read_arrays_buffers_solver.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/read_arrays_buffers_solver.o ${FCFLAGS_f90} read_arrays_buffers_solver.f90
@@ -610,6 +573,24 @@ $O/combine_paraview_data.o: constants.h combine_paraview_data.f90
 
 $O/write_c_binary.o: write_c_binary.c config.h
 	$(CC) $(CFLAGS) -c -o $O/write_c_binary.o write_c_binary.c
+
+$O/add_missing_nodes.o: constants.h add_missing_nodes.f90
+	${FCCOMPILE_CHECK} -c -o $O/add_missing_nodes.o ${FCFLAGS_f90} add_missing_nodes.f90
+
+$O/compute_coordinates_grid.o: constants.h compute_coordinates_grid.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_coordinates_grid.o ${FCFLAGS_f90} compute_coordinates_grid.f90
+
+$O/compute_element_properties.o: constants.h compute_element_properties.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_element_properties.o ${FCFLAGS_f90} compute_element_properties.f90
+
+$O/define_superbrick.o: constants.h define_superbrick.f90
+	${FCCOMPILE_CHECK} -c -o $O/define_superbrick.o ${FCFLAGS_f90} define_superbrick.f90
+
+$O/stretching_function.o: constants.h stretching_function.f90
+	${FCCOMPILE_CHECK} -c -o $O/stretching_function.o ${FCFLAGS_f90} stretching_function.f90
+
+$O/read_compute_parameters.o: constants.h read_compute_parameters.f90
+	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} read_compute_parameters.f90
 
 ###
 ### rule for the header file

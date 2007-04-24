@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -17,7 +18,7 @@
 
   subroutine get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
                         idoubling,xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC1D_RADIAL,NPOIN1D_RADIAL)
+                        NSPEC1D_RADIAL,NGLOB1D_RADIAL)
 
 ! routine to create the MPI 1D chunk buffers for edges
 
@@ -26,7 +27,7 @@
   include "constants.h"
 
   integer nspec,myrank
-  integer NSPEC1D_RADIAL,NPOIN1D_RADIAL
+  integer NSPEC1D_RADIAL,NGLOB1D_RADIAL
 
   logical iMPIcut_xi(2,nspec)
   logical iMPIcut_eta(2,nspec)
@@ -114,7 +115,7 @@
   close(10)
 
 ! compare number of edge elements detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NPOIN1D_RADIAL) &
+  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NGLOB1D_RADIAL) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=left')
 
 ! determine if the element falls on the right MPI cut plane
@@ -172,7 +173,7 @@
   close(10)
 
 ! compare number of edge elements and points detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NPOIN1D_RADIAL) &
+  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NGLOB1D_RADIAL) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
 
 ! *****************************************************************
@@ -234,7 +235,7 @@
   close(10)
 
 ! compare number of edge elements detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NPOIN1D_RADIAL) &
+  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NGLOB1D_RADIAL) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=left')
 
 ! determine if the element falls on the right MPI cut plane
@@ -292,7 +293,7 @@
   close(10)
 
 ! compare number of edge elements and points detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NPOIN1D_RADIAL) &
+  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NGLOB1D_RADIAL) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
 
   end subroutine get_MPI_1D_buffers

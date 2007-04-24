@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,23 +16,22 @@
 !
 !=====================================================================
 
-  subroutine get_model(myrank,iregion_code,nspec,iproc_xi,iproc_eta, &
+  subroutine get_model(myrank,iregion_code,nspec, &
     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rhostore, &
     nspec_ani, &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
     xelm,yelm,zelm,shape3D,ispec, &
-    iboun,iMPIcut_xi,iMPIcut_eta,rmin,rmax,ichunk,idoubling, &
+    rmin,rmax,idoubling, &
     rho_vp,rho_vs,nspec_stacey, &
-    NPROC_XI,NPROC_ETA, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE, &
     CRUSTAL,ONE_CRUST, &
     crustal_model,mantle_model,aniso_mantle_model, &
-    aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
+    aniso_inner_core_model,&
     attenuation_model,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
-    NCHUNKS,INFLATE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
-    R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN,&
+    ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
+    RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
     AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V, AM_S, AS_V)
 
   implicit none
@@ -60,7 +60,7 @@
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q         ! Steps
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -161,14 +161,14 @@
 ! attenuation_simplex_variables
 
 
-  integer ispec,nspec,ichunk,idoubling,iregion_code,myrank,nspec_stacey
-  integer NPROC_XI,NPROC_ETA,NCHUNKS,REFERENCE_1D_MODEL
+  integer ispec,nspec,idoubling,iregion_code,myrank,nspec_stacey
+  integer REFERENCE_1D_MODEL
 
-  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS,INFLATE_CENTRAL_CUBE
+  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
 
-  logical iboun(6,nspec)
-  logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
+!   logical iboun(6,nspec)
+!   logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
 
   double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
 
@@ -176,8 +176,8 @@
   double precision yelm(NGNOD)
   double precision zelm(NGNOD)
 
-  double precision rmin,rmax,R_CENTRAL_CUBE,RCMB,RICB,R670,RMOHO, &
-    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R80,RMIDDLE_CRUST,ROCEAN
+  double precision rmin,rmax,RCMB,RICB,R670,RMOHO, &
+    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
 
   real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
   real(kind=CUSTOM_REAL) kappahstore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -200,8 +200,6 @@
     c33store,c34store,c35store,c36store, &
     c44store,c45store,c46store,c55store,c56store,c66store
 
-  integer iproc_xi,iproc_eta
-
   double precision xmesh,ymesh,zmesh
 
   integer i,j,k,ia
@@ -223,16 +221,9 @@
   double precision  T_c_source
 
   logical found_crust
-
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
-
-! rotation matrix from Euler angles
-  double precision rotation_matrix(3,3)
-
   tau_s(:)   = 0.0d0
   tau_e(:)   = 0.0d0
   T_c_source = 0.0d0
-
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -245,6 +236,7 @@
          zmesh = zmesh + shape3D(ia,i,j,k)*zelm(ia)
        enddo
        r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
+
        xstore(i,j,k) = xmesh
        ystore(i,j,k) = ymesh
        zstore(i,j,k) = zmesh
@@ -257,14 +249,14 @@
 
 !      get the anisotropic PREM parameters
        if(TRANSVERSE_ISOTROPY) then
-         call prem_aniso(myrank,r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+           call prem_aniso(myrank,r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
            Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
        else
 
          if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-           call model_iasp91(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
-             .true.,RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,RMOHO)
+           call model_iasp91(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST, &
+             .true.,RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
            call prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
@@ -422,6 +414,7 @@
 
 ! distinguish between single and double precision for reals
        if(CUSTOM_REAL == SIZE_REAL) then
+
          rhostore(i,j,k,ispec) = sngl(rho)
          kappavstore(i,j,k,ispec) = sngl(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0))
          kappahstore(i,j,k,ispec) = sngl(rho*(vph*vph - 4.d0*vsh*vsh/3.d0))
@@ -430,17 +423,21 @@
          eta_anisostore(i,j,k,ispec) = sngl(eta_aniso)
 
          if(ABSORBING_CONDITIONS) then
+
            if(iregion_code == IREGION_OUTER_CORE) then
+
 ! we need just vp in the outer core for Stacey conditions
              rho_vp(i,j,k,ispec) = sngl(vph)
              rho_vs(i,j,k,ispec) = sngl(0.d0)
            else
+
              rho_vp(i,j,k,ispec) = sngl(rho*vph)
              rho_vs(i,j,k,ispec) = sngl(rho*vsh)
            endif
          endif
 
          if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+
            c11store(i,j,k,ispec) = sngl(c11)
            c33store(i,j,k,ispec) = sngl(c33)
            c12store(i,j,k,ispec) = sngl(c12)
@@ -449,6 +446,7 @@
          endif
 
          if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+
            c11store(i,j,k,ispec) = sngl(c11)
            c12store(i,j,k,ispec) = sngl(c12)
            c13store(i,j,k,ispec) = sngl(c13)
@@ -473,6 +471,8 @@
          endif
 
        else
+
+
          rhostore(i,j,k,ispec) = rho
          kappavstore(i,j,k,ispec) = rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0)
          kappahstore(i,j,k,ispec) = rho*(vph*vph - 4.d0*vsh*vsh/3.d0)
@@ -533,11 +533,6 @@
      enddo
    enddo
  enddo
-
- call get_flags_boundaries(myrank,iregion_code,nspec,iproc_xi,iproc_eta,ispec,xstore,ystore,zstore, &
-        iboun,iMPIcut_xi,iMPIcut_eta,ichunk,idoubling,NPROC_XI,NPROC_ETA, &
-        rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-             NCHUNKS,INFLATE_CENTRAL_CUBE,R_CENTRAL_CUBE,RCMB,RICB)
 
  end subroutine get_model
 

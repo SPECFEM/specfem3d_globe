@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -44,18 +45,17 @@
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
+          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
+          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
+          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
           NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE,REFERENCE_1D_MODEL
 
-  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
-          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+  double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
@@ -63,23 +63,28 @@
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
-          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
+          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-  integer NER,NER_CMB_670,NER_670_400,NER_CENTRAL_CUBE_CMB
 
 ! this is for all the regions
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_AB,NSPEC_AC,NSPEC_BC, &
-               NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
-               NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA, &
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC, &
+               NSPEC2D_XI, &
+               NSPEC2D_ETA, &
                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-               NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
-               NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
-               nglob_AB,nglob_AC,nglob_BC
+               NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+               NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+               nglob
+! computed in read_compute_parameters
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
 ! processor identification
   character(len=150) prname,prname_other
@@ -90,41 +95,34 @@
   print *,'Check all MPI buffers along xi and eta inside each chunk'
   print *
 
-! read the parameter file
-  call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-          NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
-          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, HDUR_MOVIE, &
-          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
-          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-          MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
-          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
-
-! compute other parameters based upon values read
-  call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
-      NER_600_400,NER_670_600,NER_771_670,NER_TOPDDOUBLEPRIME_771, &
-      NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB,NER_TOP_CENTRAL_CUBE_ICB, &
-      NER,NER_CMB_670,NER_670_400,NER_CENTRAL_CUBE_CMB, &
-      NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
-      NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-      NSPEC_AB,NSPEC_AC,NSPEC_BC, &
-      NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
-      NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA, &
-      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-      NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
-      NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
-      NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
+! read the parameter file and compute additional parameters
+  call read_compute_parameters(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+         NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+         NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
+         NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
+         NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+         NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
+         NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,DT, &
+         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+         CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+         RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+         R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+         ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
+         ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
+         MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
+         ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
+         INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
+         NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+         NSPEC, &
+         NSPEC2D_XI, &
+         NSPEC2D_ETA, &
+         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+         NGLOB, &
+         ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D)
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -157,14 +155,14 @@
   print *
 
 ! dynamic memory allocation for arrays
-  allocate(iboolleft(NPOIN1D_RADIAL(iregion_code)+1))
-  allocate(iboolright(NPOIN1D_RADIAL(iregion_code)+1))
-  allocate(xleft(NPOIN1D_RADIAL(iregion_code)+1))
-  allocate(yleft(NPOIN1D_RADIAL(iregion_code)+1))
-  allocate(zleft(NPOIN1D_RADIAL(iregion_code)+1))
-  allocate(xright(NPOIN1D_RADIAL(iregion_code)+1))
-  allocate(yright(NPOIN1D_RADIAL(iregion_code)+1))
-  allocate(zright(NPOIN1D_RADIAL(iregion_code)+1))
+  allocate(iboolleft(NGLOB1D_RADIAL(iregion_code)+1))
+  allocate(iboolright(NGLOB1D_RADIAL(iregion_code)+1))
+  allocate(xleft(NGLOB1D_RADIAL(iregion_code)+1))
+  allocate(yleft(NGLOB1D_RADIAL(iregion_code)+1))
+  allocate(zleft(NGLOB1D_RADIAL(iregion_code)+1))
+  allocate(xright(NGLOB1D_RADIAL(iregion_code)+1))
+  allocate(yright(NGLOB1D_RADIAL(iregion_code)+1))
+  allocate(zright(NGLOB1D_RADIAL(iregion_code)+1))
 
 ! ********************************************************
 ! ***************  check along xi
@@ -226,7 +224,7 @@
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolright slice ',ithisproc
   read(34,*) npoin1D_mesher
-  if(npoin1D /= NPOIN1D_RADIAL(iregion_code)) stop 'incorrect iboolright read'
+  if(npoin1D /= NGLOB1D_RADIAL(iregion_code)) stop 'incorrect iboolright read'
   close(34)
 
   if(icorners == 1) then
@@ -251,7 +249,7 @@
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolleft slice ',iotherproc
   read(34,*) npoin1D_mesher
-  if(npoin1D /= NPOIN1D_RADIAL(iregion_code)) stop 'incorrect iboolleft read'
+  if(npoin1D /= NGLOB1D_RADIAL(iregion_code)) stop 'incorrect iboolleft read'
   close(34)
 
 ! check the coordinates of all the points in the buffer
@@ -332,7 +330,7 @@
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolright slice ',ithisproc
   read(34,*) npoin1D_mesher
-  if(npoin1D /= NPOIN1D_RADIAL(iregion_code)) stop 'incorrect iboolright read'
+  if(npoin1D /= NGLOB1D_RADIAL(iregion_code)) stop 'incorrect iboolright read'
   close(34)
 
   if(icorners == 1) then
@@ -357,7 +355,7 @@
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolleft slice ',iotherproc
   read(34,*) npoin1D_mesher
-  if(npoin1D /= NPOIN1D_RADIAL(iregion_code)) stop 'incorrect iboolleft read'
+  if(npoin1D /= NGLOB1D_RADIAL(iregion_code)) stop 'incorrect iboolleft read'
   close(34)
 
 ! check the coordinates of all the points in the buffer

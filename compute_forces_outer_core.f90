@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -17,9 +18,7 @@
 
   subroutine compute_forces_outer_core(time,deltat,two_omega_earth, &
           A_array_rotation,B_array_rotation, &
-!JT JT
           d_ln_density_dr_table, &
-!JT JT
           minus_rho_g_over_kappa_fluid,displfluid,accelfluid, &
           div_displfluid, &
           xstore,ystore,zstore, &
@@ -70,9 +69,7 @@
   double precision radius,theta,phi,gxl,gyl,gzl
   double precision cos_theta,sin_theta,cos_phi,sin_phi
   double precision, dimension(NRAD_GRAVITY) :: minus_rho_g_over_kappa_fluid
-!JT JT
   double precision, dimension(NRAD_GRAVITY) :: d_ln_density_dr_table
-!JT JT
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: gravity_term
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: xstore,ystore,zstore
 
@@ -92,10 +89,7 @@
   real(kind=CUSTOM_REAL) dpotentialdxl,dpotentialdyl,dpotentialdzl
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l,sum_terms
 
-!JT JT
   double precision grad_x_ln_rho,grad_y_ln_rho,grad_z_ln_rho
-!JT JT
-
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
@@ -175,7 +169,6 @@
 
     endif  ! end of section with rotation
 
-!JT JT
 ! add (chi/rho)grad(rho) term in no gravity case
    if(.not. GRAVITY_VAL) then
 
@@ -203,7 +196,8 @@
       dpotentialdy_with_rot = dpotentialdyl + displfluid(iglob) * grad_y_ln_rho
       dpotentialdzl = dpotentialdzl + displfluid(iglob) * grad_z_ln_rho
    endif
-!JT JT
+
+
 
 ! compute divergence of displacment
 
