@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -34,8 +35,7 @@
 !      Velocity dispersion due to anelasticity: implications for seismology and mantle composition
 !      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 !
-!   The methodology can be found in
-!   Savage and Tromp, 2006, unpublished
+!   The methodology can be found in Savage and Tromp, 2006, unpublished
 !
 
 subroutine attenuation_lookup_value(i, r)
@@ -59,7 +59,8 @@ end subroutine attenuation_lookup_value
 
 
    i = max(1, int(r * TABLE_ATTENUATION))
-   if(ELLIPTICITY_VAL .AND. idoubling <= IFLAG_220_MOHO) then
+!DM IFLAG_220_MOHO
+   if(ELLIPTICITY_VAL .and. idoubling <= IFLAG_220_80) then
       ! particular case of d80 which is not honored by the mesh
       ! map ellipticity back for d80 detection
       ! ystore contains theta
@@ -105,7 +106,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
-   
+
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
@@ -145,7 +146,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
   end type attenuation_model_storage
-  
+
   type (attenuation_model_storage) AM_S
 ! attenuation_model_storage
 
@@ -177,7 +178,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
 
   Qb = 57287.0d0
   R120 = 6251.d3
-  
+
   call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
   if(myrank > 0) return
 
@@ -246,7 +247,7 @@ subroutine attenuation_save_arrays(prname, iregion_code, AM_V)
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
-  
+
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
@@ -287,7 +288,7 @@ subroutine attenuation_storage(Qmu, tau_e, rw, AM_S)
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
   end type attenuation_model_storage
-  
+
   type (attenuation_model_storage) AM_S
 ! attenuation_model_storage
 
@@ -380,7 +381,7 @@ subroutine attenuation_conversion(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, 
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
-  
+
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
@@ -392,7 +393,7 @@ subroutine attenuation_conversion(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, 
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
   end type attenuation_model_storage
-  
+
   type (attenuation_model_storage) AM_S
 ! attenuation_model_storage
 
@@ -452,7 +453,7 @@ subroutine read_attenuation_model(min, max, AM_V)
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
-  
+
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
@@ -591,7 +592,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
-  
+
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
@@ -737,31 +738,31 @@ subroutine set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
-  
+
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
   double precision RICB, RCMB, R670, R220, R80
   integer i
-  
+
   allocate(AM_V%Qrmin(6))
   allocate(AM_V%Qrmax(6))
   allocate(AM_V%QrDisc(5))
-  
+
   AM_V%QrDisc(1) = RICB
   AM_V%QrDisc(2) = RCMB
   AM_V%QrDisc(3) = R670
   AM_V%QrDisc(4) = R220
   AM_V%QrDisc(5) = R80
-  
+
    ! INNER CORE
   AM_V%Qrmin(IREGION_ATTENUATION_INNER_CORE) = 1      ! Center of the Earth
-     i = nint(RICB / 100.d0)   ! === BOUNDARY === INNER CORE / OUTER CORE 
+     i = nint(RICB / 100.d0)   ! === BOUNDARY === INNER CORE / OUTER CORE
   AM_V%Qrmax(IREGION_ATTENUATION_INNER_CORE) = i - 1  ! Inner Core Boundary (Inner)
 
   ! OUTER_CORE
   AM_V%Qrmin(6) = i ! Inner Core Boundary (Outer)
-      i = nint(RCMB / 100.d0)  ! === BOUNDARY === INNER CORE / OUTER CORE 
+      i = nint(RCMB / 100.d0)  ! === BOUNDARY === INNER CORE / OUTER CORE
   AM_V%Qrmax(6) = i - 1
 
   ! LOWER MANTLE
@@ -771,25 +772,25 @@ subroutine set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
 
   ! UPPER MANTLE
   AM_V%Qrmin(IREGION_ATTENUATION_670_220) = i
-       i = nint(R220 / 100.d0) ! === BOUNDARY === 220 km  
+       i = nint(R220 / 100.d0) ! === BOUNDARY === 220 km
   AM_V%Qrmax(IREGION_ATTENUATION_670_220) = i - 1
 
   ! MANTLE ISH LITHOSPHERE
   AM_V%Qrmin(IREGION_ATTENUATION_220_80) = i
-       i = nint(R80 / 100.d0) ! === BOUNDARY === 80 km  
+       i = nint(R80 / 100.d0) ! === BOUNDARY === 80 km
   AM_V%Qrmax(IREGION_ATTENUATION_220_80) = i - 1
 
   ! CRUST ISH LITHOSPHERE
   AM_V%Qrmin(IREGION_ATTENUATION_80_SURFACE) = i
   AM_V%Qrmax(IREGION_ATTENUATION_80_SURFACE) = NRAD_ATTENUATION
-  
+
 end subroutine set_attenuation_regions_1D
 
 subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
 
   implicit none
   include 'constants.h'
- 
+
 ! attenuation_model_variables
   type attenuation_model_variables
     sequence
@@ -808,40 +809,40 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
-  
+
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
- 
+
   integer iflag, iregion, index
   double precision radius
-  
+
   ! Inner Core or not
   logical inner_core
-  
+
   index = nint(radius * TABLE_ATTENUATION)
-  
+
   if(inner_core) then
-     if(iflag >= IFLAG_TOP_INNER_CORE) then
+     if(iflag >= IFLAG_INNER_CORE_NORMAL) then
         iregion = IREGION_ATTENUATION_INNER_CORE
-     else if(iflag >= IFLAG_TOP_OUTER_CORE) then
+     else if(iflag >= IFLAG_OUTER_CORE_NORMAL) then
         iregion = 6
      endif
   else
-     if(iflag >= IFLAG_DOUBLING_670) then
+     if(iflag >= IFLAG_MANTLE_NORMAL) then
         iregion = IREGION_ATTENUATION_CMB_670
      else if(iflag == IFLAG_670_220) then
-        iregion = IREGION_ATTENUATION_670_220     
+        iregion = IREGION_ATTENUATION_670_220
      else if( radius <= AM_V%QrDisc(5)/R_EARTH ) then ! R80/R_EARTH
         iregion = IREGION_ATTENUATION_220_80
      else
         iregion = IREGION_ATTENUATION_80_SURFACE
      endif
   endif
-  
+
   ! Clamp regions
   if(index < AM_V%Qrmin(iregion)) index = AM_V%Qrmin(iregion)
   if(index > AM_V%Qrmax(iregion)) index = AM_V%Qrmax(iregion)
-  
+
 end subroutine get_attenuation_index
 
 
@@ -864,21 +865,20 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
 
-  open(unit=27, file=prname(1:len_trim(prname))//'tau_s.bin',status='old',action='read',form='unformatted')
+  open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin',status='old',action='read',form='unformatted')
+!   open(unit=27, file=prname(1:len_trim(prname))//'tau_s.bin',status='old',action='read',form='unformatted')
   read(27) tau_s
-  close(27)
-
-  open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin',status='old',action='read',form='unformatted')
+!   close(27)
+!   open(unit=27, file=prname(1:len_trim(prname))//'tau_e.bin',status='old',action='read',form='unformatted')
+  read(27) factor_common
+!   close(27)
+!   open(unit=27, file=prname(1:len_trim(prname))//'Q.bin',status='old',action='read',form='unformatted')
+  read(27) scale_factor
+!   close(27)
+!   open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin',status='old',action='read',form='unformatted')
   read(27) T_c_source
   close(27)
 
-  open(unit=27, file=prname(1:len_trim(prname))//'Q.bin',status='old',action='read',form='unformatted')
-  read(27) scale_factor
-  close(27)
-
-  open(unit=27, file=prname(1:len_trim(prname))//'tau_e.bin',status='old',action='read',form='unformatted')
-  read(27) factor_common
-  close(27)
 
 
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
@@ -1004,7 +1004,7 @@ subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, ta
   exp2 = log10(f2)
 
   if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
-     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)     
+     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
      call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
 

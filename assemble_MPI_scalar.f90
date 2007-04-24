@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -29,8 +30,8 @@
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL, &
-            NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
+            NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS)
 
   implicit none
 
@@ -49,26 +50,26 @@
   integer npoin2D_xi,npoin2D_eta
   integer npoin2D_faces(NUMFACES_SHARED)
 
-  integer NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX,NPOIN2DMAX_XY
-  integer NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL
+  integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY
+  integer NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL
   integer NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS
 
 ! for addressing of the slices
   integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
 
 ! 2-D addressing and buffers for summation between slices
-  integer, dimension(NPOIN2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
-  integer, dimension(NPOIN2DMAX_YMIN_YMAX) :: iboolleft_eta,iboolright_eta
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX) :: iboolleft_eta,iboolright_eta
 
 ! indirect addressing for each corner of the chunks
-  integer, dimension(NPOIN1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
+  integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
   integer icount_corners
 
-  integer, dimension(NPOIN2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
-  real(kind=CUSTOM_REAL), dimension(NPOIN2DMAX_XY) :: buffer_send_faces_scalar,buffer_received_faces_scalar
+  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
+  real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY) :: buffer_send_faces_scalar,buffer_received_faces_scalar
 
 ! buffers for send and receive between corners of the chunks
-  real(kind=CUSTOM_REAL), dimension(NPOIN1D_RADIAL) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
+  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
 
 ! ---- arrays to assemble between chunks
 
@@ -348,9 +349,9 @@
 
 ! receive from worker #1 and add to local array
     sender = iproc_worker1_corners(imsg)
-    call MPI_RECV(buffer_recv_chunkcorners_scalar,NPOIN1D_RADIAL, &
+    call MPI_RECV(buffer_recv_chunkcorners_scalar,NGLOB1D_RADIAL, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-    do ipoin1D=1,NPOIN1D_RADIAL
+    do ipoin1D=1,NGLOB1D_RADIAL
       array_val(iboolcorner(ipoin1D,icount_corners)) = array_val(iboolcorner(ipoin1D,icount_corners)) + &
                buffer_recv_chunkcorners_scalar(ipoin1D)
     enddo
@@ -358,9 +359,9 @@
 ! receive from worker #2 and add to local array
   if(NCHUNKS /= 2) then
     sender = iproc_worker2_corners(imsg)
-    call MPI_RECV(buffer_recv_chunkcorners_scalar,NPOIN1D_RADIAL, &
+    call MPI_RECV(buffer_recv_chunkcorners_scalar,NGLOB1D_RADIAL, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-    do ipoin1D=1,NPOIN1D_RADIAL
+    do ipoin1D=1,NGLOB1D_RADIAL
       array_val(iboolcorner(ipoin1D,icount_corners)) = array_val(iboolcorner(ipoin1D,icount_corners)) + &
                buffer_recv_chunkcorners_scalar(ipoin1D)
     enddo
@@ -373,10 +374,10 @@
               (NCHUNKS /= 2 .and. myrank==iproc_worker2_corners(imsg))) then
 
     receiver = iproc_master_corners(imsg)
-    do ipoin1D=1,NPOIN1D_RADIAL
+    do ipoin1D=1,NGLOB1D_RADIAL
       buffer_send_chunkcorners_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
     enddo
-    call MPI_SEND(buffer_send_chunkcorners_scalar,NPOIN1D_RADIAL,CUSTOM_MPI_TYPE, &
+    call MPI_SEND(buffer_send_chunkcorners_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
               receiver,itag,MPI_COMM_WORLD,ier)
 
   endif
@@ -391,9 +392,9 @@
 
 ! receive from master and copy to local array
     sender = iproc_master_corners(imsg)
-    call MPI_RECV(buffer_recv_chunkcorners_scalar,NPOIN1D_RADIAL, &
+    call MPI_RECV(buffer_recv_chunkcorners_scalar,NGLOB1D_RADIAL, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-    do ipoin1D=1,NPOIN1D_RADIAL
+    do ipoin1D=1,NGLOB1D_RADIAL
       array_val(iboolcorner(ipoin1D,icount_corners)) = buffer_recv_chunkcorners_scalar(ipoin1D)
     enddo
 
@@ -402,19 +403,19 @@
 !---- send messages from the master to the two workers
   if(myrank==iproc_master_corners(imsg)) then
 
-    do ipoin1D=1,NPOIN1D_RADIAL
+    do ipoin1D=1,NGLOB1D_RADIAL
       buffer_send_chunkcorners_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
     enddo
 
 ! send to worker #1
     receiver = iproc_worker1_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorners_scalar,NPOIN1D_RADIAL,CUSTOM_MPI_TYPE, &
+    call MPI_SEND(buffer_send_chunkcorners_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
               receiver,itag,MPI_COMM_WORLD,ier)
 
 ! send to worker #2
   if(NCHUNKS /= 2) then
     receiver = iproc_worker2_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorners_scalar,NPOIN1D_RADIAL,CUSTOM_MPI_TYPE, &
+    call MPI_SEND(buffer_send_chunkcorners_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
               receiver,itag,MPI_COMM_WORLD,ier)
   endif
 

@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -28,12 +29,15 @@
 
   include "constants.h"
 
-  integer npointot
-  integer iglob(npointot),loc(npointot)
-  logical ifseg(npointot)
-  double precision xp(npointot),yp(npointot),zp(npointot)
-  integer nspec,nglob
+! parameters
+  integer, intent(in) :: npointot,nspec
+  double precision, intent(in) :: xp(npointot),yp(npointot),zp(npointot)
 
+  integer, intent(out) :: iglob(npointot),loc(npointot)
+  logical, intent(out) :: ifseg(npointot)
+  integer, intent(out) :: nglob
+
+! variables
   integer ispec,i,j
   integer ieoff,ilocnum,nseg,ioff,iseg,ig
 
@@ -60,49 +64,49 @@
   ifseg(1)=.true.
   ninseg(1)=npointot
 
-  do j=1,NDIM
+do j=1,NDIM
 
-! sort within each segment
-  ioff=1
-  do iseg=1,nseg
-    if(j == 1) then
-      call rank(xp(ioff),ind,ninseg(iseg))
-    else if(j == 2) then
-      call rank(yp(ioff),ind,ninseg(iseg))
-    else
-      call rank(zp(ioff),ind,ninseg(iseg))
-    endif
-    call swap_all(loc(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
-    ioff=ioff+ninseg(iseg)
-  enddo
+    ! sort within each segment
+    ioff=1
+    do iseg=1,nseg
+        if(j == 1) then
+            call rank(xp(ioff),ind,ninseg(iseg))
+        else if(j == 2) then
+            call rank(yp(ioff),ind,ninseg(iseg))
+        else
+            call rank(zp(ioff),ind,ninseg(iseg))
+        endif
+        call swap_all(loc(ioff),xp(ioff),yp(ioff),zp(ioff),iwork,work,ind,ninseg(iseg))
+        ioff=ioff+ninseg(iseg)
+    enddo
 
 ! check for jumps in current coordinate
 ! compare the coordinates of the points within a small tolerance
-  if(j == 1) then
-    do i=2,npointot
-      if(dabs(xp(i)-xp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
-    enddo
-  else if(j == 2) then
-    do i=2,npointot
-      if(dabs(yp(i)-yp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
-    enddo
-  else
-    do i=2,npointot
-      if(dabs(zp(i)-zp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
-    enddo
-  endif
+    if(j == 1) then
+        do i=2,npointot
+            if(dabs(xp(i)-xp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
+        enddo
+    else if(j == 2) then
+        do i=2,npointot
+           if(dabs(yp(i)-yp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
+        enddo
+    else
+        do i=2,npointot
+            if(dabs(zp(i)-zp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
+        enddo
+    endif
 
 ! count up number of different segments
-  nseg=0
-  do i=1,npointot
-    if(ifseg(i)) then
-      nseg=nseg+1
-      ninseg(nseg)=1
-    else
-      ninseg(nseg)=ninseg(nseg)+1
-    endif
-  enddo
-  enddo
+    nseg=0
+    do i=1,npointot
+        if(ifseg(i)) then
+        nseg=nseg+1
+        ninseg(nseg)=1
+        else
+        ninseg(nseg)=ninseg(nseg)+1
+        endif
+    enddo
+enddo
 
 ! assign global node numbers (now sorted lexicographically)
   ig=0

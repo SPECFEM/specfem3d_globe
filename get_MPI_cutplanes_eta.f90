@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -16,8 +17,8 @@
 !=====================================================================
 
   subroutine get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
-                        xstore,ystore,zstore,mask_ibool,ichunk,npointot, &
-                        NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI)
+                        xstore,ystore,zstore,mask_ibool,npointot, &
+                        NSPEC2D_XI)
 
 ! this routine detects cut planes along eta
 ! In principle the left cut plane of the first slice
@@ -28,8 +29,8 @@
 
   include "constants.h"
 
-  integer nspec,ichunk,myrank
-  integer NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI
+  integer nspec,myrank
+  integer NSPEC2D_XI
 
   logical iMPIcut_eta(2,nspec)
 
@@ -48,23 +49,14 @@
 
 ! MPI cut-plane element numbering
   integer ispecc1,ispecc2,npoin2D_eta,ix,iy,iz
-  integer nspec2Dtheor1,nspec2Dtheor2
+  integer nspec2Dtheor
 
 ! processor identification
   character(len=150) prname
 
 ! theoretical number of surface elements in the buffers
 ! cut planes along eta=constant correspond to XI faces
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-      nspec2Dtheor1 = NSPEC2D_A_XI
-      nspec2Dtheor2 = NSPEC2D_B_XI
-  else if(ichunk == CHUNK_AC .or. ichunk == CHUNK_AC_ANTIPODE) then
-      nspec2Dtheor1 = NSPEC2D_A_XI
-      nspec2Dtheor2 = NSPEC2D_C_XI
-  else if(ichunk == CHUNK_BC .or. ichunk == CHUNK_BC_ANTIPODE) then
-      nspec2Dtheor1 = NSPEC2D_B_XI
-      nspec2Dtheor2 = NSPEC2D_C_XI
-  endif
+      nspec2Dtheor = NSPEC2D_XI
 
 ! write the MPI buffers for the left and right edges of the slice
 ! and the position of the points to check that the buffers are fine
@@ -119,8 +111,7 @@
   close(10)
 
 ! compare number of surface elements detected to analytical value
-  if(ispecc1 /= nspec2Dtheor1 .and. ispecc1 /= nspec2Dtheor2) &
-    call exit_MPI(myrank,'error MPI cut-planes detection in eta=left')
+  if(ispecc1 /= nspec2Dtheor) call exit_MPI(myrank,'error MPI cut-planes detection in eta=left')
 
 !
 ! determine if the element falls on the right MPI cut plane
@@ -172,8 +163,7 @@
   close(10)
 
 ! compare number of surface elements detected to analytical value
-  if(ispecc2 /= nspec2Dtheor1 .and. ispecc2 /= nspec2Dtheor2) &
-    call exit_MPI(myrank,'error MPI cut-planes detection in eta=right')
+  if(ispecc2 /= nspec2Dtheor) call exit_MPI(myrank,'error MPI cut-planes detection in eta=right')
 
   end subroutine get_MPI_cutplanes_eta
 

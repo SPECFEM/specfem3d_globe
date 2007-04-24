@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!        (c) California Institute of Technology July 2004
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -123,12 +124,14 @@
 ! is located outside the mesh and therefore excluded from the station list
   double precision, parameter :: THRESHOLD_EXCLUDE_STATION = 50.d0
 
-!! DK DK UGLY in the case of a very fine mesh, move the bottom of crustal
-!! DK DK UGLY elements below the PREM Moho, otherwise the elements become
-!! DK DK UGLY too distorted in the radial distribution of elements.
-!! DK DK UGLY Not very clean, should write something more general one day
-  double precision, parameter :: RMOHO_FICTITIOUS_2ELEMS = 6330000.d0
-  double precision, parameter :: RMOHO_FICTITIOUS_4ELEMS = 6330000.d0
+! the first doubling is implemented right below the Moho
+! it seems optimal to implement the three other doublings at these depths
+! in the mantle
+  double precision, parameter :: DEPTH_SECOND_DOUBLING_OPTIMAL = 1650000.d0
+! in the outer core
+  double precision, parameter :: DEPTH_THIRD_DOUBLING_OPTIMAL  = 3860000.d0
+! in the outer core
+  double precision, parameter :: DEPTH_FOURTH_DOUBLING_OPTIMAL = 5000000.d0
 
 !
 !--- debugging flags
@@ -200,8 +203,9 @@
 ! fixed thickness of 3 km for PREM oceans
   double precision, parameter :: THICKNESS_OCEANS_PREM = 3000.d0 / R_EARTH
 
-! shortest radius at which crust is implemented
-  double precision, parameter :: R_DEEPEST_CRUST = (R_EARTH - 90000.d0) / R_EARTH
+! shortest radius at which crust is implemented (80 km depth)
+! to be constistent with the D80 discontinuity, we impose the crust only above it
+  double precision, parameter :: R_DEEPEST_CRUST = (R_EARTH - 80000.d0) / R_EARTH
 
 ! maximum number of chunks (full sphere)
   integer, parameter :: NCHUNKS_MAX = 6
@@ -226,26 +230,37 @@
 ! define flag for elements
   integer, parameter :: IFLAG_CRUST = 1
 
-  integer, parameter :: IFLAG_220_MOHO = 2
-  integer, parameter :: IFLAG_670_220 = 3
-  integer, parameter :: IFLAG_DOUBLING_670 = 4
+  integer, parameter :: IFLAG_80_MOHO = 2
+  integer, parameter :: IFLAG_220_80 = 3
+  integer, parameter :: IFLAG_670_220 = 4
   integer, parameter :: IFLAG_MANTLE_NORMAL = 5
-  integer, parameter :: IFLAG_BOTTOM_MANTLE = 6
 
-  integer, parameter :: IFLAG_TOP_OUTER_CORE = 7
-  integer, parameter :: IFLAG_OUTER_CORE_NORMAL = 8
-  integer, parameter :: IFLAG_BOTTOM_OUTER_CORE = 9
+  integer, parameter :: IFLAG_OUTER_CORE_NORMAL = 6
 
-  integer, parameter :: IFLAG_TOP_INNER_CORE = 10
-  integer, parameter :: IFLAG_INNER_CORE_NORMAL = 11
+  integer, parameter :: IFLAG_INNER_CORE_NORMAL = 7
 
-  integer, parameter :: IFLAG_IN_CENTRAL_CUBE = 12
-  integer, parameter :: IFLAG_BOTTOM_CENTRAL_CUBE = 13
-  integer, parameter :: IFLAG_TOP_CENTRAL_CUBE = 14
-  integer, parameter :: IFLAG_IN_FICTITIOUS_CUBE = 15
+  integer, parameter :: IFLAG_IN_CENTRAL_CUBE = 8
+  integer, parameter :: IFLAG_BOTTOM_CENTRAL_CUBE = 9
+  integer, parameter :: IFLAG_TOP_CENTRAL_CUBE = 10
+  integer, parameter :: IFLAG_IN_FICTITIOUS_CUBE = 11
 
-! dummy flag
+  integer, parameter :: NSPEC2D_XI_SUPERBRICK = 8
+  integer, parameter :: NSPEC2D_ETA_SUPERBRICK = 8
+  integer, parameter :: NSPEC2D_XI_SUPERBRICK_1L = 6
+  integer, parameter :: NSPEC2D_ETA_SUPERBRICK_1L = 6
+
+! dummy flag used for mesh display purposes only
   integer, parameter :: IFLAG_DUMMY = 100
+
+! max number of layers that are used in the radial direction to build the full mesh
+  integer, parameter :: MAX_NUMBER_OF_MESH_LAYERS = 15
+
+! define number of spectral elements and points in basic symmetric mesh doubling superbrick
+  integer, parameter :: NSPEC_DOUBLING_SUPERBRICK = 32
+  integer, parameter :: NGLOB_DOUBLING_SUPERBRICK = 67
+  integer, parameter :: NSPEC_SUPERBRICK_1L = 28
+  integer, parameter :: NGLOB_SUPERBRICK_1L = 58
+  integer, parameter :: NGNOD_EIGHT_CORNERS = 8
 
 ! define flag for reference 1D Earth model
   integer, parameter :: REFERENCE_MODEL_PREM   = 1
@@ -304,14 +319,11 @@
 ! number of slaves per corner
   integer, parameter :: NUMSLAVES = 2
 
-! number of elements used in radial direction in outer core doubling region
-  integer, parameter :: NER_BOTTOMDBL_TOPDBL = 6*4
-
 ! number of layers in PREM
   integer, parameter :: NR = 640
 
-! smallest real number on the Pentium and the SGI =  1.1754944E-38
-! largest real number on the Pentium and the SGI  =  3.4028235E+38
+! smallest real number on many machines =  1.1754944E-38
+! largest real number on many machines =  3.4028235E+38
 ! small negligible initial value to avoid very slow underflow trapping
 ! but not too small to avoid trapping on velocity and acceleration in Newmark
   real(kind=CUSTOM_REAL), parameter :: VERYSMALLVAL = 1.E-24_CUSTOM_REAL
@@ -366,3 +378,7 @@
   ! use sedimentary layers of crust 2.0
     logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
 !!!!!!!!!!!!!! parameters added for the thread-safe transformation of the code
+
+  double precision, parameter :: CENTRAL_CUBE_INFLATE_FACTOR = 0.41d0
+  double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.6d0
+

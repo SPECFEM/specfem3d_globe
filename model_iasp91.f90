@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,8 +16,8 @@
 !
 !=====================================================================
 
-  subroutine model_iasp91(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling, &
-      check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,RMOHO)
+  subroutine model_iasp91(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &
+                     RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
   implicit none
 
@@ -29,17 +30,18 @@
 
   integer idoubling,myrank
 
-  double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220,R771,R400,RMOHO
+  double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST
+
+  logical ONE_CRUST
 
   double precision r,scaleval
 
-  double precision, parameter :: r120 = 6251.d3,r020 = 6351.d3
   double precision x1,x2
 
 ! compute real physical radius in meters
   r = x * R_EARTH
 
-  x1 = r120 / R_EARTH
+  x1 = R120 / R_EARTH
   x2 = RMOHO / R_EARTH
 
 ! check flags to make sure we correctly honor the discontinuities
@@ -51,8 +53,7 @@
 !--- inner core
 !
   if(r >= 0.d0 .and. r < RICB) then
-    if(idoubling /= IFLAG_TOP_INNER_CORE .and. &
-       idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
+    if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
        idoubling /= IFLAG_IN_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
@@ -62,20 +63,19 @@
 !--- outer core
 !
   else if(r > RICB .and. r < RCMB) then
-    if(idoubling /= IFLAG_OUTER_CORE_NORMAL .and. idoubling /= IFLAG_TOP_OUTER_CORE &
-    .and. idoubling /= IFLAG_BOTTOM_OUTER_CORE) &
+    if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
       call exit_MPI(myrank,'wrong doubling flag for outer core point')
 !
 !--- D" at the base of the mantle
 !
   else if(r > RCMB .and. r < RTOPDDOUBLEPRIME) then
-    if(idoubling /= IFLAG_BOTTOM_MANTLE .and. idoubling /= IFLAG_MANTLE_NORMAL) &
+    if(idoubling /= IFLAG_MANTLE_NORMAL) &
       call exit_MPI(myrank,'wrong doubling flag for D" point')
 !
 !--- mantle: from top of D" to d670
 !
   else if(r > RTOPDDOUBLEPRIME .and. r < R670) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL .and. idoubling /= IFLAG_DOUBLING_670) &
+    if(idoubling /= IFLAG_MANTLE_NORMAL) &
       call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point')
 
 !
@@ -89,7 +89,7 @@
 !--- mantle and crust: from d220 to MOHO and then to surface
 !
   else if(r > R220) then
-    if(idoubling /= IFLAG_220_MOHO .and. idoubling /= IFLAG_CRUST) &
+    if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
       call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point')
 
   endif
@@ -161,14 +161,14 @@
 ! 35-120     6251-6336   8.78541-0.74953 x       6.706231-2.248585 x
 ! with x = r / 6371
 
-  else if(r > R220 .and. r <= r120) then
+  else if(r > R220 .and. r <= R120) then
     rho=2.6910d0+0.6924d0*x
     vp=25.41389-17.69722*x
     vs=5.75020-1.27420*x
     Qmu=80.0d0
     Qkappa=57827.0d0
 
-  else if(r > r120 .and. r <= RMOHO) then
+  else if(r > R120 .and. r <= RMOHO) then
       vp = 8.78541d0-0.74953d0*x
       vs = 6.706231d0-2.248585d0*x
       rho = 3.3713d0 + (3.3198d0-3.3713d0)*(x-x1)/(x2-x1)
@@ -176,12 +176,22 @@
       Qmu=600.0d0
       Qkappa=57827.0d0
 
-  else if(r > RMOHO .and. r <= r020) then
+  else if(r > RMOHO .and. r <= RMIDDLE_CRUST) then
       vp = 6.5d0
       vs = 3.75d0
       rho = 2.92d0
       Qmu=600.0d0
       Qkappa=57827.0d0
+
+! same properties everywhere in PREM crust if we decide to define only one layer in the crust
+      if(ONE_CRUST) then
+        vp = 5.8d0
+        vs = 3.36d0
+        rho = 2.72d0
+        Qmu=600.0d0
+        Qkappa=57827.0d0
+      endif
+
   else
       vp = 5.8d0
       vs = 3.36d0

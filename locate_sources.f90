@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -21,7 +22,7 @@
 
 ! to locate the sources we loop in elements above the 670 only
 
-  subroutine locate_sources(NSOURCES,myrank,nspec,nglob,idoubling,ibool,&
+  subroutine locate_sources(NSOURCES,myrank,nspec,nglob,ibool,&
                  xstore,ystore,zstore,xigll,yigll,zigll, &
                  NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
                  sec,t_cmt,yr,jda,ho,mi,theta_source,phi_source, &
@@ -54,7 +55,6 @@
 
   integer nspec,nglob,myrank,isource
 
-  integer idoubling(nspec)
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
 ! arrays containing coordinates of the points
@@ -86,7 +86,7 @@
 
 ! topology of the control points of the surface element
   integer iax,iay,iaz
-  integer iaddx(NGNOD),iaddy(NGNOD),iaddz(NGNOD)
+  integer iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
 
 ! coordinates of the control points of the surface element
   double precision xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
@@ -178,7 +178,7 @@
   call MPI_BCAST(moment_tensor,6*NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
 ! define topology of the control element
-  call usual_hex_nodes(iaddx,iaddy,iaddz)
+  call hex_nodes(iaddx,iaddy,iaddr)
 
 ! get MPI starting time for all sources
   time_start = MPI_WTIME()
@@ -306,35 +306,35 @@
 ! flag to check that we located at least one target element
   located_target = .false.
 
-  do ispec=1,nspec
+  do ispec = 1,nspec
 
 ! loop on elements in the crust or in mantle above d660 only
-  if(idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_MANTLE) cycle
+!!!!!!! DK DK suppressed this, could be dangerous if sources are located in the vicinity of d660 in a 3D Earth
+!!!!!!! DK DK suppressed this  if(idoubling(ispec) == IFLAG_MANTLE_NORMAL) cycle
 
 ! exclude elements that are too far from target
   iglob = ibool(1,1,1,ispec)
-  dist=dsqrt((x_target_source-dble(xstore(iglob)))**2 &
-            +(y_target_source-dble(ystore(iglob)))**2 &
-            +(z_target_source-dble(zstore(iglob)))**2)
+  dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
+             + (y_target_source - dble(ystore(iglob)))**2 &
+             + (z_target_source - dble(zstore(iglob)))**2)
   if(USE_DISTANCE_CRITERION .and. dist > typical_size) cycle
 
   located_target = .true.
 
 ! loop only on points inside the element
 ! exclude edges to ensure this point is not shared with other elements
-  do k=2,NGLLZ-1
-    do j=2,NGLLY-1
-      do i=2,NGLLX-1
+  do k = 2,NGLLZ-1
+    do j = 2,NGLLY-1
+      do i = 2,NGLLX-1
 
 !       keep this point if it is closer to the receiver
         iglob = ibool(i,j,k,ispec)
-        dist=dsqrt((x_target_source-dble(xstore(iglob)))**2 &
-                  +(y_target_source-dble(ystore(iglob)))**2 &
-                  +(z_target_source-dble(zstore(iglob)))**2)
+        dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
+                    +(y_target_source - dble(ystore(iglob)))**2 &
+                    +(z_target_source - dble(zstore(iglob)))**2)
         if(dist < distmin) then
-          distmin=dist
-          ispec_selected_source_sub(itsource)=ispec
+          distmin = dist
+          ispec_selected_source_sub(itsource) = ispec
           ix_initial_guess_source = i
           iy_initial_guess_source = j
           iz_initial_guess_source = k
@@ -389,14 +389,14 @@
       call exit_MPI(myrank,'incorrect value of iaddy')
     endif
 
-    if(iaddz(ia) == 0) then
+    if(iaddr(ia) == 0) then
       iaz = 1
-    else if(iaddz(ia) == 1) then
+    else if(iaddr(ia) == 1) then
       iaz = (NGLLZ+1)/2
-    else if(iaddz(ia) == 2) then
+    else if(iaddr(ia) == 2) then
       iaz = NGLLZ
     else
-      call exit_MPI(myrank,'incorrect value of iaddz')
+      call exit_MPI(myrank,'incorrect value of iaddr')
     endif
 
     iglob = ibool(iax,iay,iaz,ispec_selected_source_sub(itsource))

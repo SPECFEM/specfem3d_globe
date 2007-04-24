@@ -1,18 +1,20 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
 !           Free for non-commercial academic research ONLY.
 !      This program is distributed WITHOUT ANY WARRANTY whatsoever.
 !      Do not redistribute this program without written permission.
-!!=====================================================================
+!
+!=====================================================================
 
 !----
 !---- locate_receivers finds the correct position of the receivers
@@ -90,7 +92,7 @@
 
 ! topology of the control points of the surface element
   integer iax,iay,iaz
-  integer iaddx(NGNOD),iaddy(NGNOD),iaddz(NGNOD)
+  integer iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
 
 ! coordinates of the control points of the surface element
   double precision xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
@@ -150,7 +152,7 @@
   endif
 
 ! define topology of the control element
-  call usual_hex_nodes(iaddx,iaddy,iaddz)
+  call hex_nodes(iaddx,iaddy,iaddr)
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -402,14 +404,14 @@
       call exit_MPI(myrank,'incorrect value of iaddy')
     endif
 
-    if(iaddz(ia) == 0) then
+    if(iaddr(ia) == 0) then
       iaz = 1
-    else if(iaddz(ia) == 1) then
+    else if(iaddr(ia) == 1) then
       iaz = (NGLLZ+1)/2
-    else if(iaddz(ia) == 2) then
+    else if(iaddr(ia) == 2) then
       iaz = NGLLZ
     else
-      call exit_MPI(myrank,'incorrect value of iaddz')
+      call exit_MPI(myrank,'incorrect value of iaddr')
     endif
 
     iglob = ibool(iax,iay,iaz,ispec_iterate)

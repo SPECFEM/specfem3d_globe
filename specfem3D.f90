@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -15,7 +16,6 @@
 !
 !=====================================================================
 !
-! Copyright September 2006, by the California Institute of Technology.
 ! ALL RIGHTS RESERVED. United States Government Sponsorship Acknowledged.
 !
 ! Any commercial use must be negotiated with the Office of Technology
@@ -165,6 +165,11 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, April 2007:
+!      new doubling brick in the mesh, new perfectly load-balanced mesh,
+!      more flexible routines for mesh design, one more doubling level
+!      at the bottom of the outer core, new inflated central cube
+!      with optimized shape, far fewer mesh files saved by the mesher.
 ! v. 3.6 Many people, many affiliations, September 2006:
 !      adjoint and kernel calculations, fixed IASP91 model,
 !      added AK135 and 1066a, fixed topography/bathymetry routine,
@@ -194,7 +199,7 @@
 ! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
 !
 ! From Dahlen and Tromp (1998):
-! -----------------------------
+! ----------------------------
 !
 ! Gravity is approximated by solving eq (3.259) without the Phi_E' term
 ! The ellipsoidal reference model is that of section 14.1
@@ -217,6 +222,7 @@
 ! Its second time derivative is called accel_outer_core.
 !
 
+! attenuation_model_variables
   type attenuation_model_variables
     sequence
     double precision min_period, max_period
@@ -295,7 +301,7 @@
   integer ibathy_topo(NX_BATHY,NY_BATHY)
 
 ! MPI status of messages to be received
-  integer msg_status(MPI_STATUS_SIZE)
+!   integer msg_status(MPI_STATUS_SIZE)
 
 ! for crust/oceans coupling
   integer, dimension(:), allocatable :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
@@ -344,6 +350,7 @@
 ! for absorbing conditions
   real(kind=CUSTOM_REAL) :: vx,vy,vz,vn
 
+
 ! for ellipticity
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
@@ -365,7 +372,7 @@
 
 ! indirect addressing for each message for faces and corners of the chunks
 ! a given slice can belong to at most one corner and at most two faces
-  integer NPOIN2DMAX_XY
+  integer NGLOB2DMAX_XY
   integer, dimension(:,:), allocatable :: iboolfaces_crust_mantle
   integer, dimension(:,:), allocatable :: iboolfaces_outer_core
   integer, dimension(:,:), allocatable :: iboolfaces_inner_core
@@ -659,18 +666,16 @@
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
+          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
+          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,&
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-          NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE,REFERENCE_1D_MODEL
+          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE,REFERENCE_1D_MODEL
 
-  double precision DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
-          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+  double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
@@ -684,7 +689,6 @@
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-  integer NER,NER_CMB_670,NER_670_400,NER_CENTRAL_CUBE_CMB
 
   integer, external :: err_occurred
 
@@ -702,8 +706,8 @@
                NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA, &
                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-               NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
-               NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
+               NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+               NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                NGLOB_AB,NGLOB_AC,NGLOB_BC
 
   character(len=150) prname
@@ -728,12 +732,19 @@
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
 
-!! DK DK UGLY if running on MareNostrum in Barcelona
-  integer jobid,total_seismos_marenostrum,sender,receiver
+! DK DK UGLY if running on MareNostrum in Barcelona
+!   integer jobid,total_seismos_marenostrum,sender,receiver
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram_marenostrum
   character(len=400) system_command
 
   integer iregion_selected
+! computed in read_compute_parameters
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
+  logical :: CASE_3D
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -744,26 +755,48 @@
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
-! read the parameter file
-  call read_parameter_file(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_220_MOHO,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,NER_DOUBLING_OUTER_CORE, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-          NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
-          NUMBER_OF_THIS_RUN,NCHUNKS,DT,RATIO_BOTTOM_DBL_OC,RATIO_TOP_DBL_OC, &
-          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
-          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-          MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
-          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
-          ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD)
+! read the parameter file and compute additional parameters
+  call read_compute_parameters(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+         NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
+         NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
+         NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
+         NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+         NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
+         NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,DT, &
+         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+         CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
+         RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+         R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+         ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
+         ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
+         MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
+         ATTENUATION,REFERENCE_1D_MODEL,ABSORBING_CONDITIONS, &
+         INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
+         NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+         NSPEC_AB, &
+         NSPEC2D_A_XI, &
+         NSPEC2D_A_ETA, &
+         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+         NGLOB_AB, &
+         ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D)
+
+! DM UGLY temp
+  NSPEC_AC(:)=NSPEC_AB(:)
+  NSPEC_BC(:)=NSPEC_AB(:)
+
+  NGLOB_AC(:)=NGLOB_AB(:)
+  NGLOB_BC(:)=NGLOB_AB(:)
+
+  NSPEC2D_B_XI(:)=NSPEC2D_A_XI(:)
+  NSPEC2D_C_XI(:)=NSPEC2D_A_XI(:)
+
+  NSPEC2D_B_ETA(:)=NSPEC2D_A_ETA(:)
+  NSPEC2D_C_ETA(:)=NSPEC2D_A_ETA(:)
+! DM UGLY temp
 
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
@@ -772,7 +805,7 @@
 ! broadcast the information read on the master to the nodes
   call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-!! DK DK UGLY if running on MareNostrum in Barcelona
+! DK DK UGLY if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
 
 ! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
@@ -801,21 +834,6 @@
   else
     SAVE_STRAIN = .false.
   endif
-
-! compute other parameters based upon values read
-  call compute_parameters(NER_CRUST,NER_220_MOHO,NER_400_220, &
-      NER_600_400,NER_670_600,NER_771_670,NER_TOPDDOUBLEPRIME_771, &
-      NER_CMB_TOPDDOUBLEPRIME,NER_ICB_CMB,NER_TOP_CENTRAL_CUBE_ICB, &
-      NER,NER_CMB_670,NER_670_400,NER_CENTRAL_CUBE_CMB, &
-      NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA, &
-      NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-      NSPEC_AB,NSPEC_AC,NSPEC_BC, &
-      NSPEC2D_A_XI,NSPEC2D_B_XI,NSPEC2D_C_XI, &
-      NSPEC2D_A_ETA,NSPEC2D_B_ETA,NSPEC2D_C_ETA, &
-      NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-      NSPEC1D_RADIAL,NPOIN1D_RADIAL, &
-      NPOIN2DMAX_XMIN_XMAX,NPOIN2DMAX_YMIN_YMAX, &
-      NGLOB_AB,NGLOB_AC,NGLOB_BC,NER_ICB_BOTTOMDBL,NER_TOPDBL_CMB,NCHUNKS,INCLUDE_CENTRAL_CUBE)
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -879,53 +897,44 @@
      NSPEC_AB(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE_AB .or. &
      NSPEC_AC(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE_AC .or. &
      NSPEC_BC(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE_BC .or. &
-     NSPEC_AB(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) then
-     if (myrank==0) then
-       write(IMAIN,*) NSPEC_AB(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE_AB
-       write(IMAIN,*) NSPEC_AC(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE_AC
-       write(IMAIN,*) NSPEC_BC(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE_BC
-       write(IMAIN,*) NSPEC_AB(IREGION_OUTER_CORE), NSPEC_OUTER_CORE_AB
-       write(IMAIN,*) NSPEC_AC(IREGION_OUTER_CORE), NSPEC_OUTER_CORE_AC
-       write(IMAIN,*) NSPEC_BC(IREGION_OUTER_CORE), NSPEC_OUTER_CORE_BC
-       write(IMAIN,*) NSPEC_AB(IREGION_INNER_CORE), NSPEC_INNER_CORE
-     endif
+     NSPEC_AB(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) &
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver')
-  endif
+
 ! dynamic allocation of arrays
 
 ! indirect addressing for each corner of the chunks
 ! maximum size is found in the mantle which has the largest number of points
-  allocate(iboolcorner_crust_mantle(NPOIN1D_RADIAL(IREGION_CRUST_MANTLE),NUMCORNERS_SHARED))
-  allocate(iboolcorner_outer_core(NPOIN1D_RADIAL(IREGION_OUTER_CORE),NUMCORNERS_SHARED))
-  allocate(iboolcorner_inner_core(NPOIN1D_RADIAL(IREGION_INNER_CORE),NUMCORNERS_SHARED))
+  allocate(iboolcorner_crust_mantle(NGLOB1D_RADIAL(IREGION_CRUST_MANTLE),NUMCORNERS_SHARED))
+  allocate(iboolcorner_outer_core(NGLOB1D_RADIAL(IREGION_OUTER_CORE),NUMCORNERS_SHARED))
+  allocate(iboolcorner_inner_core(NGLOB1D_RADIAL(IREGION_INNER_CORE),NUMCORNERS_SHARED))
 
 ! buffers for send and receive between corners of the chunks
-  allocate(buffer_send_chunkcorners_scalar(NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
-  allocate(buffer_recv_chunkcorners_scalar(NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
+  allocate(buffer_send_chunkcorners_scalar(NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)))
+  allocate(buffer_recv_chunkcorners_scalar(NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)))
 
-  allocate(buffer_send_chunkcorners_vector(NDIM,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
-  allocate(buffer_recv_chunkcorners_vector(NDIM,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE)))
+  allocate(buffer_send_chunkcorners_vector(NDIM,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)))
+  allocate(buffer_recv_chunkcorners_vector(NDIM,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)))
 
 ! 2-D addressing and buffers for summation between slices, and point codes
 ! use number of elements found in the mantle since it is the largest region
 
 ! crust and mantle
-  allocate(iboolleft_xi_crust_mantle(NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(iboolright_xi_crust_mantle(NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(iboolleft_eta_crust_mantle(NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(iboolright_eta_crust_mantle(NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
+  allocate(iboolleft_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
+  allocate(iboolright_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
+  allocate(iboolleft_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
+  allocate(iboolright_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
 
 ! outer core
-  allocate(iboolleft_xi_outer_core(NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(iboolright_xi_outer_core(NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(iboolleft_eta_outer_core(NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(iboolright_eta_outer_core(NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
+  allocate(iboolleft_xi_outer_core(NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
+  allocate(iboolright_xi_outer_core(NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
+  allocate(iboolleft_eta_outer_core(NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
+  allocate(iboolright_eta_outer_core(NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
 
 ! inner core
-  allocate(iboolleft_xi_inner_core(NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE)))
-  allocate(iboolright_xi_inner_core(NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE)))
-  allocate(iboolleft_eta_inner_core(NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE)))
-  allocate(iboolright_eta_inner_core(NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE)))
+  allocate(iboolleft_xi_inner_core(NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE)))
+  allocate(iboolright_xi_inner_core(NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE)))
+  allocate(iboolleft_eta_inner_core(NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)))
+  allocate(iboolright_eta_inner_core(NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)))
 
 ! for addressing of the slices
   allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1))
@@ -1042,19 +1051,19 @@
 
 ! define maximum size for message buffers
 ! use number of elements found in the mantle since it is the largest region
-  NPOIN2DMAX_XY = max(NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
+  NGLOB2DMAX_XY = max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
 
 ! allocate arrays for message buffers with maximum size
 
-  allocate(iboolfaces_crust_mantle(NPOIN2DMAX_XY,NUMFACES_SHARED))
-  allocate(iboolfaces_outer_core(NPOIN2DMAX_XY,NUMFACES_SHARED))
-  allocate(iboolfaces_inner_core(NPOIN2DMAX_XY,NUMFACES_SHARED))
+  allocate(iboolfaces_crust_mantle(NGLOB2DMAX_XY,NUMFACES_SHARED))
+  allocate(iboolfaces_outer_core(NGLOB2DMAX_XY,NUMFACES_SHARED))
+  allocate(iboolfaces_inner_core(NGLOB2DMAX_XY,NUMFACES_SHARED))
 
-  allocate(buffer_send_faces_scalar(NPOIN2DMAX_XY))
-  allocate(buffer_received_faces_scalar(NPOIN2DMAX_XY))
+  allocate(buffer_send_faces_scalar(NGLOB2DMAX_XY))
+  allocate(buffer_received_faces_scalar(NGLOB2DMAX_XY))
 
-  allocate(buffer_send_faces_vector(NDIM,NPOIN2DMAX_XY))
-  allocate(buffer_received_faces_vector(NDIM,NPOIN2DMAX_XY))
+  allocate(buffer_send_faces_vector(NDIM,NGLOB2DMAX_XY))
+  allocate(buffer_received_faces_vector(NDIM,NGLOB2DMAX_XY))
 
 ! number of corners and faces shared between chunks and number of message types
   if(NCHUNKS == 1 .or. NCHUNKS == 2) then
@@ -1296,7 +1305,7 @@
 
 ! locate sources in the mesh
   call locate_sources(NSOURCES,myrank,nspec_crust_mantle, &
-            nglob_crust_mantle,idoubling_crust_mantle,ibool_crust_mantle, &
+            nglob_crust_mantle,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xigll,yigll,zigll,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
             sec,t_cmt,yr,jda,ho,mi,theta_source,phi_source, &
@@ -1394,8 +1403,8 @@
      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
      iboolfaces_crust_mantle,npoin2D_faces_crust_mantle, &
      iboolcorner_crust_mantle, &
-     NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE), &
-     NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
+     NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE), &
+     NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
 
 ! outer core
@@ -1406,8 +1415,8 @@
      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
      iboolfaces_outer_core,npoin2D_faces_outer_core, &
      iboolcorner_outer_core, &
-     NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE), &
-     NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
+     NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE), &
+     NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
 
 ! inner core
@@ -1418,8 +1427,8 @@
      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
      iboolfaces_inner_core,npoin2D_faces_inner_core, &
      iboolcorner_inner_core, &
-     NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
-     NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
+     NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
+     NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -1474,26 +1483,35 @@
   allocate(nkmin_xi_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
   allocate(nkmin_eta_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
 
+! Stacey put back
+  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted')
+!   open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='unknown',form='unformatted')
+  read(27) nspec2D_xmin_crust_mantle
+  read(27) nspec2D_xmax_crust_mantle
+  read(27) nspec2D_ymin_crust_mantle
+  read(27) nspec2D_ymax_crust_mantle
+!   close(27)
+
 ! boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
+!   open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
   read(27) ibelm_xmin_crust_mantle
   read(27) ibelm_xmax_crust_mantle
   read(27) ibelm_ymin_crust_mantle
   read(27) ibelm_ymax_crust_mantle
   read(27) ibelm_bottom_crust_mantle
   read(27) ibelm_top_crust_mantle
-  close(27)
+!   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'normal.bin',status='old',action='read',form='unformatted')
+!   open(unit=27,file=prname(1:len_trim(prname))//'normal.bin',status='old',action='read',form='unformatted')
   read(27) normal_xmin_crust_mantle
   read(27) normal_xmax_crust_mantle
   read(27) normal_ymin_crust_mantle
   read(27) normal_ymax_crust_mantle
   read(27) normal_bottom_crust_mantle
   read(27) normal_top_crust_mantle
-  close(27)
+!   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',action='read',form='unformatted')
+!   open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',action='read',form='unformatted')
   read(27) jacobian2D_xmin_crust_mantle
   read(27) jacobian2D_xmax_crust_mantle
   read(27) jacobian2D_ymin_crust_mantle
@@ -1502,38 +1520,33 @@
   read(27) jacobian2D_top_crust_mantle
   close(27)
 
-! Stacey put back
-  open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='unknown',form='unformatted')
-  read(27) nspec2D_xmin_crust_mantle
-  read(27) nspec2D_xmax_crust_mantle
-  read(27) nspec2D_ymin_crust_mantle
-  read(27) nspec2D_ymax_crust_mantle
-  close(27)
+
 
 ! read arrays for Stacey conditions
 
   if(ABSORBING_CONDITIONS) then
-      open(unit=27,file=prname(1:len_trim(prname))//'nimin.bin',status='unknown',form='unformatted')
+      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'nimin.bin',status='unknown',form='unformatted')
       read(27) nimin_crust_mantle
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'nimax.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'nimax.bin',status='unknown',form='unformatted')
       read(27) nimax_crust_mantle
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'njmin.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'njmin.bin',status='unknown',form='unformatted')
       read(27) njmin_crust_mantle
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'njmax.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'njmax.bin',status='unknown',form='unformatted')
       read(27) njmax_crust_mantle
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_xi.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'nkmin_xi.bin',status='unknown',form='unformatted')
       read(27) nkmin_xi_crust_mantle
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_eta.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'nkmin_eta.bin',status='unknown',form='unformatted')
       read(27) nkmin_eta_crust_mantle
       close(27)
 
@@ -1631,33 +1644,35 @@
   allocate(nkmin_eta_outer_core(2,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
 
 ! boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
+
+! Stacey put back
+  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted')
+!   open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='unknown',form='unformatted')
+  read(27) nspec2D_xmin_outer_core
+  read(27) nspec2D_xmax_outer_core
+  read(27) nspec2D_ymin_outer_core
+  read(27) nspec2D_ymax_outer_core
+!   close(27)
+
+!   open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
   read(27) ibelm_xmin_outer_core
   read(27) ibelm_xmax_outer_core
   read(27) ibelm_ymin_outer_core
   read(27) ibelm_ymax_outer_core
   read(27) ibelm_bottom_outer_core
   read(27) ibelm_top_outer_core
-  close(27)
+!   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'normal.bin',status='old',action='read',form='unformatted')
+!   open(unit=27,file=prname(1:len_trim(prname))//'normal.bin',status='old',action='read',form='unformatted')
   read(27) normal_xmin_outer_core
   read(27) normal_xmax_outer_core
   read(27) normal_ymin_outer_core
   read(27) normal_ymax_outer_core
   read(27) normal_bottom_outer_core
   read(27) normal_top_outer_core
-  close(27)
+!   close(27)
 
-! Stacey put back
-  open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='unknown',form='unformatted')
-  read(27) nspec2D_xmin_outer_core
-  read(27) nspec2D_xmax_outer_core
-  read(27) nspec2D_ymin_outer_core
-  read(27) nspec2D_ymax_outer_core
-  close(27)
-
-  open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',action='read',form='unformatted')
+!   open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='old',action='read',form='unformatted')
   read(27) jacobian2D_xmin_outer_core
   read(27) jacobian2D_xmax_outer_core
   read(27) jacobian2D_ymin_outer_core
@@ -1669,27 +1684,28 @@
 ! read arrays for Stacey conditions
 
   if(ABSORBING_CONDITIONS) then
-      open(unit=27,file=prname(1:len_trim(prname))//'nimin.bin',status='unknown',form='unformatted')
+      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'nimin.bin',status='unknown',form='unformatted')
       read(27) nimin_outer_core
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'nimax.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'nimax.bin',status='unknown',form='unformatted')
       read(27) nimax_outer_core
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'njmin.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'njmin.bin',status='unknown',form='unformatted')
       read(27) njmin_outer_core
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'njmax.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'njmax.bin',status='unknown',form='unformatted')
       read(27) njmax_outer_core
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_xi.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'nkmin_xi.bin',status='unknown',form='unformatted')
       read(27) nkmin_xi_outer_core
-      close(27)
+!       close(27)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_eta.bin',status='unknown',form='unformatted')
+!       open(unit=27,file=prname(1:len_trim(prname))//'nkmin_eta.bin',status='unknown',form='unformatted')
       read(27) nkmin_eta_outer_core
       close(27)
 
@@ -1771,8 +1787,18 @@
   allocate(ibelm_bottom_inner_core(NSPEC2D_BOTTOM(IREGION_INNER_CORE)))
   allocate(ibelm_top_inner_core(NSPEC2D_TOP(IREGION_INNER_CORE)))
 
+
+! read info for vertical edges for central cube matching in inner core
+  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='old',action='read',form='unformatted')
+!   open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='old',action='read',form='unformatted')
+  read(27) nspec2D_xmin_inner_core
+  read(27) nspec2D_xmax_inner_core
+  read(27) nspec2D_ymin_inner_core
+  read(27) nspec2D_ymax_inner_core
+!   close(27)
+
 ! boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
+!   open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
   read(27) ibelm_xmin_inner_core
   read(27) ibelm_xmax_inner_core
   read(27) ibelm_ymin_inner_core
@@ -1781,13 +1807,7 @@
   read(27) ibelm_top_inner_core
   close(27)
 
-! read info for vertical edges for central cube matching in inner core
-  open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='old',action='read',form='unformatted')
-  read(27) nspec2D_xmin_inner_core
-  read(27) nspec2D_xmax_inner_core
-  read(27) nspec2D_ymin_inner_core
-  read(27) nspec2D_ymax_inner_core
-  close(27)
+
 
 
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -2066,8 +2086,8 @@
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS)
   endif
 
 ! crust and mantle
@@ -2081,8 +2101,8 @@
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS)
 
 ! outer core
   call assemble_MPI_scalar(myrank,rmass_outer_core,nglob_outer_core, &
@@ -2095,8 +2115,8 @@
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS)
 
 ! inner core
   call assemble_MPI_scalar(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
@@ -2109,8 +2129,8 @@
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS)
 
   if(myrank == 0) write(IMAIN,*) 'end assembling MPI mass matrix'
 
@@ -2281,7 +2301,8 @@
                 iglob   = ibool_crust_mantle(i,j,k,ispec)
                 dist_cr = xstore_crust_mantle(iglob)
                 theta   = ystore_crust_mantle(iglob)
-                if(ELLIPTICITY_VAL .AND. idoubling_crust_mantle(ispec) .LE. IFLAG_220_MOHO) then
+!DM IFLAG_220_MOHO
+                if(ELLIPTICITY_VAL .and. idoubling_crust_mantle(ispec) <= IFLAG_220_80) then
                    cost    = cos(theta)
                    p20     = 0.5 * (3.0 * cost * cost - 1.0)
                    dist_cr = dist_cr * (1.0 + (2.0/3.0) * ell_d80 * p20)
@@ -2313,7 +2334,9 @@
               + scale_factor_minus_one * mul
     else
       muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
-      if(TRANSVERSE_ISOTROPY .and. idoubling_crust_mantle(ispec) == IFLAG_220_MOHO) &
+!DM IFLAG_220_MOHO
+      if(TRANSVERSE_ISOTROPY .and. idoubling_crust_mantle(ispec) == IFLAG_220_80 &
+      .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO) &
         muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
     endif
 
@@ -2495,19 +2518,20 @@
       minus_g_icb = - g_icb_dble
     endif
 
-  else
+   else
 
-! tabulate d ln(rho)/dr needed for the no gravity fluid potential
-    do int_radius = 1,NRAD_GRAVITY
-      radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
-      idoubling = 0
-      call prem_iso(myrank,radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
-          ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-          R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-      d_ln_density_dr_table(int_radius) = drhodr/rho
-    enddo
+ ! tabulate d ln(rho)/dr needed for the no gravity fluid potential
+     do int_radius = 1,NRAD_GRAVITY
+       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
+       idoubling = 0
+       call prem_iso(myrank,radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
+           ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+       d_ln_density_dr_table(int_radius) = drhodr/rho
+     enddo
 
-  endif
+   endif
+
 
 ! allocate files to save movies
   if(MOVIE_SURFACE) then
@@ -3271,8 +3295,8 @@
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS)
 
 ! multiply by the inverse of the mass matrix and update velocity
   do i=1,nglob_outer_core
@@ -3291,8 +3315,8 @@
             buffer_send_faces_scalar,buffer_received_faces_scalar, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_OUTER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS)
 
   do i=1,nglob_outer_core
     b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
@@ -3892,8 +3916,8 @@
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS)
 
 ! inner core
   call assemble_MPI_vector(myrank,accel_inner_core,NGLOB_INNER_CORE, &
@@ -3906,8 +3930,8 @@
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS)
 
 !---
 !---  use buffers to assemble forces with the central cube
@@ -3946,8 +3970,8 @@
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS)
 
 ! inner core
   call assemble_MPI_vector(myrank,b_accel_inner_core,NGLOB_INNER_CORE, &
@@ -3960,8 +3984,8 @@
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NPOIN1D_RADIAL(IREGION_INNER_CORE), &
-            NPOIN2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NPOIN2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NPOIN2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS)
 
 !---
 !---  use buffers to assemble forces with the central cube
@@ -4221,11 +4245,11 @@
 ! write the current seismograms
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      if(.not. RUN_ON_MARENOSTRUM_BARCELONA) &
         call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-          network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end, &
-      yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
-                 elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
+              network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
+              yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
+              elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,&
+              cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT,.false.)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
@@ -4459,14 +4483,15 @@
 
 ! write the final seismograms
 
-  if (nrec_local > 0) then
-    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      if(.not. RUN_ON_MARENOSTRUM_BARCELONA) &
-        call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-        network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,LOCAL_PATH,it_begin,it_end, &
-      yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
-                 elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
+
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+    call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+        network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
+        yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
+        elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC, &
+        cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT,.true.)
     else
+    if (nrec_local > 0) then
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
     endif
@@ -4609,88 +4634,6 @@
 
   endif
 
-!! DK DK UGLY if running on MareNostrum in Barcelona, gather all
-!! DK DK UGLY the seismograms on the master to write them to GPFS
-  if(RUN_ON_MARENOSTRUM_BARCELONA) then
-
-    if(myrank == 0) then ! on the master, gather all the seismograms
-
-! get the job ID from file output by LoadLeveler script
-      open(unit=27,file=trim(OUTPUT_FILES)//'/jobid',status='old',action='read')
-      read(27,*) jobid
-      close(27)
-
-! open a file on the GPFS file system
-    write(system_command,"('/gpfs/scratch/hpce07/hpce07084/seismograms_BSC/all_seismos_jobid_',i7.7,'.bin')") jobid
-    open(unit=133,file=system_command,status='replace',action='write',form='unformatted')
-
-    total_seismos_marenostrum = 0
-
-! receive information from all the slices
-    do iproc = 0,NPROCTOT-1
-
-! receive except from proc 0, which is me and therefore I already have this value
-      sender = iproc
-      if(iproc /= 0) call MPI_RECV(nrec_local,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-
-      if (nrec_local > 0) then
-
-        do irec_local = 1,nrec_local
-
-! receive except from proc 0, which is myself and therefore I already have these values
-          if(iproc == 0) then
-! get global number of that receiver
-            irec = number_receiver_global(irec_local)
-            one_seismogram_marenostrum(:,:) = seismograms(:,irec_local,:)
-          else
-            call MPI_RECV(irec,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-            call MPI_RECV(one_seismogram_marenostrum,NDIM*NSTEP,CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-          endif
-
-          total_seismos_marenostrum = total_seismos_marenostrum + 1
-          write(133) irec
-          write(133) one_seismogram_marenostrum
-
-        enddo
-
-      endif
-
-    enddo
-
-    close(133)
-
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total number of receivers saved to GPFS is ',total_seismos_marenostrum,' out of ',nrec
-    write(IMAIN,*)
-    if(total_seismos_marenostrum /= nrec) call exit_MPI(myrank, 'incorrect total number of receivers saved to GPFS')
-
-  else  ! on the nodes, send the seismograms to the master
-
-    receiver = 0
-
-    call MPI_SEND(nrec_local,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
-
-    if (nrec_local > 0) then
-
-      do irec_local = 1,nrec_local
-
-! get global number of that receiver
-        irec = number_receiver_global(irec_local)
-        call MPI_SEND(irec,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
-
-        one_seismogram_marenostrum(:,:) = seismograms(:,irec_local,:)
-        call MPI_SEND(one_seismogram_marenostrum,NDIM*NSTEP,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
-
-      enddo
-    endif
-
-  endif
-
-! remove all the files stored on the local disk
-    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4)") myrank
-    call system(system_command)
-
-  endif ! of RUN_ON_MARENOSTRUM_BARCELONA
 
 ! close the main output file
   if(myrank == 0) then

@@ -1,11 +1,12 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  3 . 6
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
 !          --------------------------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!       (c) California Institute of Technology September 2006
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -53,12 +54,11 @@
   double precision xxi,xeta,xgamma,yxi,yeta,ygamma,zxi,zeta,zgamma
   double precision xmesh,ymesh,zmesh
   double precision xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-  double precision jacobian,jaco
+  double precision jacobian
 
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
-
       xxi = ZERO
       xeta = ZERO
       xgamma = ZERO
@@ -71,7 +71,6 @@
       xmesh = ZERO
       ymesh = ZERO
       zmesh = ZERO
-
       do ia=1,NGNOD
         xxi = xxi + dershape3D(1,ia,i,j,k)*xelm(ia)
         xeta = xeta + dershape3D(2,ia,i,j,k)*xelm(ia)
@@ -86,12 +85,12 @@
         ymesh = ymesh + shape3D(ia,i,j,k)*yelm(ia)
         zmesh = zmesh + shape3D(ia,i,j,k)*zelm(ia)
       enddo
-
       jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
              xeta*(yxi*zgamma-ygamma*zxi) + &
              xgamma*(yxi*zeta-yeta*zxi)
-      if(jacobian <= ZERO) call exit_MPI(myrank,'3D Jacobian undefined')
-
+      if(jacobian <= ZERO) then
+            call exit_MPI(myrank,'3D Jacobian undefined')
+      endif
 !     invert the relation (Fletcher p. 50 vol. 2)
       xix = (yeta*zgamma-ygamma*zeta) / jacobian
       xiy = (xgamma*zeta-xeta*zgamma) / jacobian
@@ -102,14 +101,12 @@
       gammax = (yxi*zeta-yeta*zxi) / jacobian
       gammay = (xeta*zxi-xxi*zeta) / jacobian
       gammaz = (xxi*yeta-xeta*yxi) / jacobian
-
 !     compute and store the jacobian for the solver
-      jaco = 1. / (xix*(etay*gammaz-etaz*gammay) &
-                      -xiy*(etax*gammaz-etaz*gammax) &
-                      +xiz*(etax*gammay-etay*gammax))
+      jacobian = 1.d0 / (xix*(etay*gammaz-etaz*gammay) &
+                        -xiy*(etax*gammaz-etaz*gammax) &
+                        +xiz*(etax*gammay-etay*gammax))
 
 !     save the derivatives and the jacobian
-
 ! distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
         xixstore(i,j,k,ispec) = sngl(xix)
@@ -121,7 +118,7 @@
         gammaxstore(i,j,k,ispec) = sngl(gammax)
         gammaystore(i,j,k,ispec) = sngl(gammay)
         gammazstore(i,j,k,ispec) = sngl(gammaz)
-        jacobianstore(i,j,k,ispec) = sngl(jaco)
+        jacobianstore(i,j,k,ispec) = sngl(jacobian)
       else
         xixstore(i,j,k,ispec) = xix
         xiystore(i,j,k,ispec) = xiy
@@ -132,17 +129,14 @@
         gammaxstore(i,j,k,ispec) = gammax
         gammaystore(i,j,k,ispec) = gammay
         gammazstore(i,j,k,ispec) = gammaz
-        jacobianstore(i,j,k,ispec) = jaco
+        jacobianstore(i,j,k,ispec) = jacobian
       endif
-
 ! store mesh coordinates
       xstore(i,j,k,ispec) = xmesh
       ystore(i,j,k,ispec) = ymesh
       zstore(i,j,k,ispec) = zmesh
-
       enddo
     enddo
   enddo
-
   end subroutine calc_jacobian
 
