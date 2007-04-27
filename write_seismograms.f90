@@ -52,8 +52,12 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
  integer :: iproc,sender,irec_local,irec,total_seismos,ier,receiver
  real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: one_seismogram
  integer msg_status(MPI_STATUS_SIZE)
+ character(len=150) OUTPUT_FILES
 
   if(myrank == 0) then ! on the master, gather all the seismograms
+    ! get the base pathname for output files
+    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
     total_seismos = 0
     ! receive information from all the slices
     do iproc = 0,NPROCTOT-1
@@ -76,7 +80,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
                                     station_name,network_name,stlat,stlon,stele,nrec, &
                                     DT,NSTEP,hdur,it_begin,it_end, &
                                     yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat, &
-                                    cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
+                                    cmt_lon,cmt_depth,cmt_hdur,NSOURCES,OUTPUT_FILES)
         enddo
       endif
     enddo
@@ -106,7 +110,8 @@ end subroutine write_seismograms
  subroutine write_one_seismogram(one_seismogram,irec, &
               station_name,network_name,stlat,stlon,stele,nrec, &
               DT,NSTEP,hdur,it_begin,it_end, &
- yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
+ yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
+ OUTPUT_FILES)
 
  implicit none
 
@@ -125,6 +130,7 @@ end subroutine write_seismograms
 
   character(len=4) chn
   character(len=150) sisname
+  character(len=150) OUTPUT_FILES
 
 ! BS BS begin section added for SAC
   integer NSOURCES
@@ -212,7 +218,7 @@ end subroutine write_seismograms
           stop 'wrong length of network name'
 
 ! create the name of the seismogram file using the station name and network name
-     write(sisname,"(a,'.',a,'.',a3,'.semd')") station_name(irec)(1:length_station_name), &
+     write(sisname,"('/',a,'.',a,'.',a3,'.semd')") station_name(irec)(1:length_station_name), &
                    network_name(irec)(1:length_network_name),chn
 
 ! save seismograms in text format with no subsampling.
@@ -220,7 +226,7 @@ end subroutine write_seismograms
 ! if the simulation uses many time steps. However, subsampling the output
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
-   open(unit=IOUT,file='OUTPUT_FILES/'//trim(sisname),status='unknown')
+   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname),status='unknown')
 
 ! subtract half duration of the source to make sure travel time is correct
      do isample = it_begin,it_end
@@ -265,8 +271,8 @@ end subroutine write_seismograms
 !----------------------------------------------------------------------
 
 ! add .sac extension to seismogram file name for SAC seismograms
- write(sisname_2,"(a,'.sac')") trim(sisname)
- open(unit=IOUT,file='OUTPUT_FILES/'//trim(sisname_2),status='unknown')
+ write(sisname_2,"('/',a,'.sac')") trim(sisname)
+ open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
 
 ! define certain default values
 

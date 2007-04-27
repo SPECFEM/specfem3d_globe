@@ -6,7 +6,7 @@ from Specfem3DGlobe import Model
 
 class ModelS20RTS(Model):
 
-    name = "s20rts"
+    name = "3D_s20rts"
 
     # additional parameters for this model
     import cig.addyndum.inventory as addyndum

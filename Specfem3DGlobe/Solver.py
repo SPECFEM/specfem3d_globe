@@ -178,84 +178,34 @@ class Solver(Component):
     #--- clean-up
     #
     
-    def collectSeismograms(self):
-        """collect seismograms"""
-
-        if self.dry:
-            return
-        
-        import os, shutil, tarfile
-        from os.path import basename, join
-        from glob import glob
-        from cig.seismo.sac import asc2sac
-        from mpi import MPI_Comm_rank, MPI_COMM_WORLD
-        
-        rank = MPI_Comm_rank(MPI_COMM_WORLD)
-        scratchSeismogramArchive = join(self.LOCAL_PATH, "seismograms-%d.tar.gz" % rank)
-        archive = open(scratchSeismogramArchive, "w")
-        
-        files = []
-        for sem in glob(join(self.LOCAL_PATH, "*.sem")):
-            files.append(sem)
-            sac = sem + ".sac"
-            asc2sac(sem, sac)
-            files.append(sac)
-        for semd in glob(join(self.LOCAL_PATH, "*.semd")):
-            files.append(semd)
-            sac = semd + ".sac"
-            asc2sac(semd, sac)
-            files.append(sac)
-        if len(files) == 0:
-            # no seismograms on this node
-            archive.close()
-            os.remove(archive.name)
-            return
-        
-        # A compressed tar file is between 10-15% of the size of the
-        # raw data files.  By taring and compressing it now -- in
-        # parallel, on local filesystems -- we sharply reduce the
-        # amount of data we have to shovel over the network.
-        
-        tgz = tarfile.open(archive.name, "w:gz", archive)
-        for name in files:
-            arcname = basename(name)
-            tgz.add(name, arcname)
-        tgz.close()
-        archive.close()
-
-        # Copy the archive to the shared filesystem.
-
-        src = archive.name
-        dst = join(self.OUTPUT_FILES, basename(src))
-        shutil.copyfile(src, dst)
-
-        return
-
-
-    def collectOutputFiles(self):
-        """collect output files"""
+    def processOutputFiles(self):
+        """process output files"""
         
         if self.dry:
             return
         
         import os, tarfile
         from os.path import basename, join
+        from cig.seismo.sac import asc2sac
 
         seismogramArchive = join(self.OUTPUT_FILES, "seismograms.tar.gz")
         archiveOut = open(seismogramArchive, "w")
         skipList = ['mpipyspecfem3D', basename(archiveOut.name)]
 
-        # Archive output files -- including the intermediate seismogram
-        # archives delivered from the compute nodes.
+        # Archive output files, deleting seismograms after archiving.
 
         filesIn = []
-        archivesIn = []
+        seismogramsIn = []
         for name in os.listdir(self.OUTPUT_FILES):
             if name in skipList:
                 continue
             pathname = join(self.OUTPUT_FILES, name)
-            if name.startswith("seismograms-"):
-                archivesIn.append(pathname)
+            if name.endswith(".sem") or name.endswith(".semd"):
+                seismogramsIn.append((pathname, name))
+                name_sac = name + ".sac"
+                pathname_sac = join(self.OUTPUT_FILES, name_sac)
+                asc2sac(pathname, pathname_sac)
+                seismogramsIn.append((pathname_sac, name_sac))
             else:
                 filesIn.append((pathname, name))
         if len(filesIn) == 0:
@@ -266,15 +216,11 @@ class Solver(Component):
 
         tgzOut = tarfile.open(archiveOut.name, "w:gz", archiveOut)
         
-        # Rearchive seismograms.
+        # Archive seismograms.
 
-        for archiveIn in archivesIn:
-            tgzIn = tarfile.open(archiveIn, "r:gz")
-            for member in tgzIn.getmembers():
-                seismogram = tgzIn.extractfile(member)
-                tgzOut.addfile(member, seismogram)
-            tgzIn.close()
-
+        for name, arcname in seismogramsIn:
+            tgzOut.add(name, arcname)
+        
         # Archive other output files.
         
         for name, arcname in filesIn:
@@ -283,10 +229,10 @@ class Solver(Component):
         tgzOut.close()
         archiveOut.close()
 
-        # Delete the intermediate seismogram archives.
+        # Delete seismograms.
         
-        for archiveIn in archivesIn:
-            os.remove(archiveIn)
+        for name, arcname in seismogramsIn:
+            os.remove(name)
 
         return
 

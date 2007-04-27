@@ -5,7 +5,7 @@ from Specfem3DGlobe import Model
 
 
 def model():
-    return Model("transversely_isotropic_prem")
+    return Model("1D_iasp91")
 
 
 # end of file
