@@ -13,7 +13,7 @@ setup(
     packages = [ 'Specfem3DGlobe' ],
     
     install_requires = [
-    'pythia[mpi] >= 0.8.1.3b2, < 0.8.2a',
+    'pythia[mpi] >= 0.8.1.3b4, < 0.8.2a',
     ],
     # temporary
     dependency_links = [

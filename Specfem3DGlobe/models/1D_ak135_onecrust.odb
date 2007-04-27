@@ -5,7 +5,7 @@ from Specfem3DGlobe import Model
 
 
 def model():
-    return Model("1066a")
+    return Model("1D_ak135_onecrust")
 
 
 # end of file

@@ -52,9 +52,15 @@ class SpecfemScript(Script):
     #
     
     def _init(self):
-        
+
         from os import makedirs
-        from os.path import isdir
+        from os.path import abspath, isdir
+        from pyre.util import expandMacros
+
+        macros = { 'job.name': self.job.task }
+        self.outputDir = expandMacros(self.outputDir, macros)
+        self.mpiExecutable = expandMacros(self.mpiExecutable, macros)
+        
         if not isdir(self.outputDir):
             makedirs(self.outputDir)
         
@@ -157,7 +163,7 @@ class Specfem(ParallelSpecfemScript):
         self.solver.build(self, srcdir)
         
         # schedule the job (bsub)
-        super(Specfem, self).onLoginNode(*args, **kwds)
+        self.schedule(*args, **kwds)
         
         return
 
@@ -167,8 +173,8 @@ class Specfem(ParallelSpecfemScript):
     #
 
     def onLauncherNode(self, *args, **kwds):
-        super(Specfem, self).onLauncherNode(*args, **kwds) # mpirun
-        self.solver.collectOutputFiles()
+        self.launch(*args, **kwds) # mpirun
+        self.solver.processOutputFiles()
         return
 
     
@@ -177,6 +183,13 @@ class Specfem(ParallelSpecfemScript):
     #
     
     def onComputeNodes(self, *args, **kwds):
+        import os
+
+        # There is a race condition here if the scratch directory is
+        # on a shared filesystem.  For now, incorporating ${rank} is
+        # necessary.
+
+        makedirs(self.LOCAL_PATH)
 
         # execute mesher and/or solver
         
@@ -185,7 +198,31 @@ class Specfem(ParallelSpecfemScript):
         
         if self.command == "solve" or self.command == "go":
             self.solver.execute(self)
-            self.solver.collectSeismograms()
+
+        # Once again, there is a race condition here if the scratch
+        # directory is on a shared filesystem.  We could avoid the
+        # OSError exceptions on the individual files, at least, if we
+        # knew which nodes were reponsible for which files...
+
+        from os.path import join
+
+        try:
+            files = os.listdir(self.LOCAL_PATH)
+            for file in files:
+                try:
+                    os.remove(join(self.LOCAL_PATH, file))
+                except OSError:
+                    pass
+        except OSError:
+            pass
+
+        # Don't try to remove the intermediate-level directories that
+        # may have been created by makedirs() -- they might be in use
+        # by another job anyway.
+        try:
+            os.rmdir(self.LOCAL_PATH)
+        except OSError:
+            pass
 
         return
 
@@ -232,6 +269,32 @@ class MovieScript(ParallelSpecfemScript):
     def onLauncherNode(self, *args, **kwds):
         from PyxMeshfem import read_params_and_create_movie
         read_params_and_create_movie(self)
+
+
+
+# this shall be moved to the framework
+
+def makedirs(name, mode=0777):
+    """Like os.makedirs(), but multi-{thread,process} safe."""
+    import os.path as path
+    from os import curdir, mkdir
+    head, tail = path.split(name)
+    if not tail:
+        head, tail = path.split(head)
+    if head and tail and not path.exists(head):
+        makedirs(head, mode)
+        if tail == curdir:           # xxx/newdir/. exists if xxx/newdir exists
+            return
+    try:
+        mkdir(name, mode)
+    except OSError, error:
+        # 17 == "File exists"
+        if hasattr(error, 'errno') and error.errno == 17:
+            pass
+        else:
+            raise
+    return
+
 
 
 # entry points
