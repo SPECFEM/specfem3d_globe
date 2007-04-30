@@ -46,25 +46,6 @@ subroutine attenuation_lookup_value(i, r)
   r = dble(i) / TABLE_ATTENUATION
 end subroutine attenuation_lookup_value
 
-
- subroutine attenuation_lookup_index(i, r)
-   implicit none
-   include 'mpif.h'
-   include 'constants.h'
-   integer i, ier, myrank
-   real(kind=CUSTOM_REAL) r
-   if(r < 100.d0 / R_EARTH) r = 100.d0 / R_EARTH
-
-
-   i = max(1, int(r * TABLE_ATTENUATION))
-   if(i > NRAD_ATTENUATION) then
-      write(*,*)'index: ',i,r
-      call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
-      call exit_MPI(myrank, 'bad index in attenuation lookup table')
-   endif
- end subroutine attenuation_lookup_index
-
-
 ! This Subroutine is Hackish.  It could probably all be moved to an input attenuation file.
 ! Actually all the velocities, densities and attenuations could be moved to seperate input
 ! files rather than be defined within the CODE
