@@ -579,7 +579,7 @@
     ! period min for 4.000000 points per lambda S min in horizontal direction =    13.69351
     ! element width =   0.2812500      degrees =    31.27357      km
       else if(NEX_MAX <= 320) then
-        DT                       = 0.15d0
+        DT                       = 0.16d0
 
     !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
         MIN_ATTENUATION_PERIOD   = 20
