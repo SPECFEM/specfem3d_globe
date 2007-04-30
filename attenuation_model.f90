@@ -817,21 +817,21 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
   index = nint(radius * TABLE_ATTENUATION)
 
   if(inner_core) then
-     if(iflag >= IFLAG_INNER_CORE_NORMAL) then
-        iregion = IREGION_ATTENUATION_INNER_CORE
-     else if(iflag >= IFLAG_OUTER_CORE_NORMAL) then
-        iregion = 6
-     endif
+    if(iflag >= IFLAG_INNER_CORE_NORMAL) then
+      iregion = IREGION_ATTENUATION_INNER_CORE
+    else if(iflag >= IFLAG_OUTER_CORE_NORMAL) then
+      iregion = 6
+    endif
   else
-     if(iflag >= IFLAG_MANTLE_NORMAL) then
-        iregion = IREGION_ATTENUATION_CMB_670
-     else if(iflag == IFLAG_670_220) then
-        iregion = IREGION_ATTENUATION_670_220
-     else if( radius <= AM_V%QrDisc(5)/R_EARTH ) then ! R80/R_EARTH
-        iregion = IREGION_ATTENUATION_220_80
-     else
-        iregion = IREGION_ATTENUATION_80_SURFACE
-     endif
+    if(iflag >= IFLAG_MANTLE_NORMAL) then
+      iregion = IREGION_ATTENUATION_CMB_670
+    else if(iflag == IFLAG_670_220) then
+      iregion = IREGION_ATTENUATION_670_220
+    else if( iflag <= IFLAG_220_80) then
+      iregion = IREGION_ATTENUATION_220_80
+    else
+      iregion = IREGION_ATTENUATION_80_SURFACE
+    endif
   endif
 
   ! Clamp regions
