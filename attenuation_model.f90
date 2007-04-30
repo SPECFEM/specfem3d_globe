@@ -47,14 +47,12 @@ subroutine attenuation_lookup_value(i, r)
 end subroutine attenuation_lookup_value
 
 
- subroutine attenuation_lookup_index(i, r, theta, idoubling, ell_d80, ellipticity_val)
+ subroutine attenuation_lookup_index(i, r)
    implicit none
    include 'mpif.h'
    include 'constants.h'
-   integer i, idoubling, ier, myrank
-   logical ellipticity_val
-   real(kind=CUSTOM_REAL) r, theta
-   real(kind=CUSTOM_REAL) cost, p20, ell_d80
+   integer i, ier, myrank
+   real(kind=CUSTOM_REAL) r
    if(r < 100.d0 / R_EARTH) r = 100.d0 / R_EARTH
 
 

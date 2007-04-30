@@ -16,7 +16,7 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
+  subroutine compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           nspec,displ,accel,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
           hprime_xx,hprime_yy,hprime_zz, &
@@ -63,9 +63,6 @@
   logical SAVE_STRAIN
 
   integer nspec
-
-! for ellipticity for d80 attenuation
-  real(kind=CUSTOM_REAL) ell_d80, p20, cost
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPECMAX_CRUST_MANTLE) :: idoubling
