@@ -59,15 +59,6 @@ end subroutine attenuation_lookup_value
 
 
    i = max(1, int(r * TABLE_ATTENUATION))
-!DM IFLAG_220_MOHO
-   if(ELLIPTICITY_VAL .and. idoubling <= IFLAG_220_80) then
-      ! particular case of d80 which is not honored by the mesh
-      ! map ellipticity back for d80 detection
-      ! ystore contains theta
-      cost = cos(theta)
-      p20 = 0.5 * (3.0 * cost * cost - 1.0)
-      r = r * (1.0 + (2.0/3.0) * ell_d80 * p20)
-   endif
    if(i > NRAD_ATTENUATION) then
       write(*,*)'index: ',i,r
       call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
@@ -566,6 +557,10 @@ subroutine attenuation_property_values(tau_s, tau_e, factor_common, one_minus_su
   factor_common(:) = 2.0d0 * beta(:) * tauinv(:)
 
 end subroutine attenuation_property_values
+
+!---
+!---
+!---
 
 subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_minus_sum_beta, &
                                     factor_common, scale_factor, vn,vx,vy,vz, AM_V)
