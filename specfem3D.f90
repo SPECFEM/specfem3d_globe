@@ -354,10 +354,6 @@
 ! for ellipticity
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
-  double precision ell_d80_dble
-  real(kind=CUSTOM_REAL) theta,ell_d80
-  real(kind=CUSTOM_REAL) p20, cost
-
 
 ! for conversion from x y z to r theta phi
   real(kind=CUSTOM_REAL) rval,thetaval,phival
@@ -1033,21 +1029,7 @@
   endif
 
 ! make ellipticity
-  if(ELLIPTICITY) then
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
-
-! compute ellipticity at d80 once and for all for attenuation
-    radius = R80/R_EARTH
-    call splint(rspl,espl,espl2,nspl,radius,ell_d80_dble)
-
-! distinguish between single and double precision for reals
-    if(CUSTOM_REAL == SIZE_REAL) then
-      ell_d80 = sngl(ell_d80_dble)
-    else
-      ell_d80 = ell_d80_dble
-    endif
-
-  endif
+  if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
 ! define maximum size for message buffers
 ! use number of elements found in the mantle since it is the largest region
@@ -3324,7 +3306,7 @@
 
 ! for anisotropy and gravity, x y and z contain r theta and phi
 
-  call compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
+  call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           nspec_crust_mantle,displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -3350,7 +3332,7 @@
 
   if (SIMULATION_TYPE == 3) then
 ! for anisotropy and gravity, x y and z contain r theta and phi
-  call compute_forces_crust_mantle(ell_d80,minus_gravity_table,density_table,minus_deriv_gravity_table, &
+  call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           nspec_crust_mantle,b_displ_crust_mantle,b_accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
