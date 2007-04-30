@@ -346,7 +346,6 @@
   else
 
 ! do not use transverse isotropy except if element is between d220 and Moho
-!DM IFLAG_220_MOHO
   if(.not. (TRANSVERSE_ISOTROPY_VAL .and. idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO)) then
 
 ! layer with no transverse isotropy, use kappav and muv

@@ -2294,22 +2294,15 @@
           do i=1,NGLLX
 
 ! ATTENUATION_3D get scale_factor
-             if(ATTENUATION_3D) then
-                ! tau_mu and tau_sigma need to reference a point in the mesh
-                scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
-             else
-                iglob   = ibool_crust_mantle(i,j,k,ispec)
-                dist_cr = xstore_crust_mantle(iglob)
-                theta   = ystore_crust_mantle(iglob)
-!DM IFLAG_220_MOHO
-                if(ELLIPTICITY_VAL .and. idoubling_crust_mantle(ispec) <= IFLAG_220_80) then
-                   cost    = cos(theta)
-                   p20     = 0.5 * (3.0 * cost * cost - 1.0)
-                   dist_cr = dist_cr * (1.0 + (2.0/3.0) * ell_d80 * p20)
-                endif
-                call get_attenuation_index(idoubling_crust_mantle(ispec), dble(dist_cr), iregion_selected, .FALSE., AM_V)
-                scale_factor = factor_scale_crust_mantle(1,1,1,iregion_selected)
-             endif ! ATTENUATION_3D
+            if(ATTENUATION_3D) then
+              ! tau_mu and tau_sigma need to reference a point in the mesh
+              scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
+            else
+              iglob   = ibool_crust_mantle(i,j,k,ispec)
+              dist_cr = xstore_crust_mantle(iglob)
+              call get_attenuation_index(idoubling_crust_mantle(ispec), dble(dist_cr), iregion_selected, .FALSE., AM_V)
+              scale_factor = factor_scale_crust_mantle(1,1,1,iregion_selected)
+            endif ! ATTENUATION_3D
 
     if(ANISOTROPIC_3D_MANTLE) then
       scale_factor_minus_one = scale_factor - 1.
@@ -2334,7 +2327,6 @@
               + scale_factor_minus_one * mul
     else
       muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
-!DM IFLAG_220_MOHO
       if(TRANSVERSE_ISOTROPY .and. idoubling_crust_mantle(ispec) == IFLAG_220_80 &
       .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO) &
         muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
