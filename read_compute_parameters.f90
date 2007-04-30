@@ -320,7 +320,7 @@
     if (ONE_CRUST) then
     ! case prem_onecrust
       if(NEX_MAX <= 160) then
-        DT                       = 0.31d0
+        DT                       = 0.252d0
 
     !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
         MIN_ATTENUATION_PERIOD   = 20
@@ -344,7 +344,7 @@
     ! period min for    4.000000 points per lambda S min in horizontal direction =    17.11689
     ! element width =   0.3515625      degrees =    39.09196      km
       else if(NEX_MAX <= 256) then
-        DT                       = 0.234d0
+        DT                       = 0.225d0
 
     !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
         MIN_ATTENUATION_PERIOD   = 20
@@ -367,7 +367,7 @@
     ! period min for 4.000000 points per lambda S min in horizontal direction =    13.69351
     ! element width =   0.2812500      degrees =    31.27357      km
       else if(NEX_MAX <= 320) then
-        DT                       = 0.155d0
+        DT                       = 0.16d0
 
     !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
         MIN_ATTENUATION_PERIOD   = 20
@@ -390,7 +390,7 @@
     ! period min for 4.000000 points per lambda S min in horizontal direction =    9.129005
     ! element width =   0.1875000      degrees =    20.84905      km
       else if(NEX_MAX <= 480) then
-        DT                       = 0.116d0
+        DT                       = 0.12d0
 
     !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
         MIN_ATTENUATION_PERIOD   = 20
@@ -745,7 +745,7 @@
   else
     ! case 3D
     if(NEX_MAX <= 160) then
-      DT                       = 0.31d0
+      DT                       = 0.175d0
 
   !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
       MIN_ATTENUATION_PERIOD   = 20
@@ -769,7 +769,7 @@
   ! period min for    4.000000 points per lambda S min in horizontal direction =    17.11689
   ! element width =   0.3515625      degrees =    39.09196      km
     else if(NEX_MAX <= 256) then
-      DT                       = 0.234d0
+      DT                       = 0.17d0
 
   !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
       MIN_ATTENUATION_PERIOD   = 20
@@ -815,7 +815,7 @@
   ! period min for 4.000000 points per lambda S min in horizontal direction =    9.129005
   ! element width =   0.1875000      degrees =    20.84905      km
     else if(NEX_MAX <= 480) then
-      DT                       = 0.116d0
+      DT                       = 0.12d0
 
   !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
       MIN_ATTENUATION_PERIOD   = 20
