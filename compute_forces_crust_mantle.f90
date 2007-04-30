@@ -274,25 +274,14 @@
 
 ! precompute terms for attenuation if needed
   if(ATTENUATION_VAL) then
-     if(ATTENUATION_VAL_3D) then
-        one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-     else
-        iglob     = ibool(i,j,k,ispec)
-        radius_cr = xstore(iglob)
-        theta     = ystore(iglob)
-!DM IFLAG_220_MOHO
-        if(ELLIPTICITY_VAL .and. idoubling(ispec) <= IFLAG_220_80) then
-           ! particular case of d80 which is not honored by the mesh
-           ! map ellipticity back for d80 detection
-           ! ystore contains theta
-           cost = cos(theta)
-           p20 = 0.5 * (3.0 * cost * cost - 1.0)
-           radius_cr = radius_cr * (1.0 + (2.0/3.0) * ell_d80 * p20)
-        endif
-        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
-        one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
-     endif
-     minus_sum_beta =  one_minus_sum_beta_use - 1.0
+    if(ATTENUATION_VAL_3D) then
+      one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
+    else
+      radius_cr = xstore(iglob)
+      call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
+      one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
+    endif
+    minus_sum_beta =  one_minus_sum_beta_use - 1.0
   endif
 
 !
