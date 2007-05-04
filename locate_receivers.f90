@@ -140,6 +140,9 @@
 
 ! **************
 
+! make sure we clean the array before the gather
+  ispec_selected_rec(:) = 0
+
 ! get MPI starting time
   time_start = MPI_WTIME()
 
