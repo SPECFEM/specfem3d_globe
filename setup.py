@@ -13,11 +13,7 @@ setup(
     packages = [ 'Specfem3DGlobe' ],
     
     install_requires = [
-    'pythia[mpi] >= 0.8.1.3b4, < 0.8.2a',
-    ],
-    # temporary
-    dependency_links = [
-    'http://crust.geodynamics.org/~leif/shipping/',
+    'pythia[mpi] >= 0.8.1.3, < 0.8.2a',
     ],
     
     entry_points = {

@@ -163,7 +163,7 @@ class Specfem(ParallelSpecfemScript):
         self.solver.build(self, srcdir)
         
         # schedule the job (bsub)
-        self.schedule(*args, **kwds)
+        self.scheduleJob(*args, **kwds)
         
         return
 
@@ -173,7 +173,7 @@ class Specfem(ParallelSpecfemScript):
     #
 
     def onLauncherNode(self, *args, **kwds):
-        self.launch(*args, **kwds) # mpirun
+        self.launchParallelRun(*args, **kwds) # mpirun
         self.solver.processOutputFiles()
         return
 
