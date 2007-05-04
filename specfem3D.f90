@@ -797,7 +797,7 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! count the total number of sources in the CMTSOLUTION file
-  call count_number_of_sources(NSOURCES)
+  if (myrank==0) call count_number_of_sources(NSOURCES)
 ! broadcast the information read on the master to the nodes
   call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
