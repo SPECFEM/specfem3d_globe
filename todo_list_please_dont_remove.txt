@@ -2,6 +2,23 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
+- convert *ALL* the "allocatable" arrays (including
+2D arrays for the MPI buffers etc, because for very large
+runs they are not that small) in the solver
+from dynamic to static (easy to do: write their size
+in values_from_mesher.h in the mesher; but there are
+so many of them and so many cases (with/without attenuation,
+anisotropy, absorbing edges etc.) that we need to be careful
+
+- get rid of the bottleneck in locate_sources and locate_receivers
+when one uses a huge number of sources (e.g. Vala -> 100000 sources)
+or a very large number of stations (e.g. Bernhard -> 20000 stations):
+in such a case there is a bunch of MPI_GATHERS which waste a lot
+of memory and can even use all the available memory and make the run crash.
+Vala partially fixed this problem by using subsets of 1000 stations, but after
+careful analysis we have found a way of doing better and getting rid of all
+the GATHERs and *all* the extra memory (this way we won't have to limit the number of sources to a maximum of 100000, as currently done in the solver).
+
 - merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
 
 - faire un commit du script de stretching de la croûte 3D de David dans UTILS
