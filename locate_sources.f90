@@ -156,6 +156,10 @@
 
 ! **************
 
+! make sure we clean the arrays before the gather
+  ispec_selected_source(:) = 0
+  ispec_selected_source_sub(:) = 0
+
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
