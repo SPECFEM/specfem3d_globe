@@ -531,8 +531,7 @@ end subroutine write_seismograms
 
 ! create the name of the seismogram file for each slice
 ! file name includes the name of the station, the network and the component
-
-     write(sisname,"(a,i5.5,'.',a,'.',a3,'.sem')") 'S',irec,'NT',chn
+     write(sisname,"(a,i6.6,'.',a,'.',a3,'.sem')") 'S',irec,'NT',chn
 
 ! suppress white spaces if any
    clean_LOCAL_PATH = adjustl(LOCAL_PATH)

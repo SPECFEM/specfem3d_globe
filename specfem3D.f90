@@ -819,12 +819,16 @@
 ! check simulation pararmeters
   if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
           call exit_MPI(myrank, 'SIMULATION_TYPE could be only 1, 2, or 3')
-  if (SIMULATION_TYPE /= 1 .and. NSOURCES >= 100000)  &
-    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES < 100000')
+
+  if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
+    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
+
   if (SIMULATION_TYPE == 3 .and. ATTENUATION) &
     call exit_MPI(myrank, 'attenuation is not implemented for kernel simulations yet')
+
   if (SIMULATION_TYPE == 3 .and. ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL) &
      call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
+
   if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     SAVE_STRAIN = .true.
   else
