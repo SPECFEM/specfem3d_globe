@@ -3,7 +3,10 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
 - Dear all, (this message is in particular for Vala) Is there any reason why we have a NSOURCES = 100000 limit for adjoint simulations? (apart from the GATHER problem I mentioned yesterday when NSOURCES is very large, which David and I will solve in the next few weeks). If this was the only reason, let us get rid of the limit.
-(Otherwise please let me know).
+(Otherwise please let me know). 
+(we would need to remove two lines in specfem3D.f90:
+  if (SIMULATION_TYPE /= 1 .and. NSOURCES >= 100000)  &
+    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES < 100000')
 
 - convert *ALL* the "allocatable" arrays (including
 2D arrays for the MPI buffers etc, because for very large
