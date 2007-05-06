@@ -1,7 +1,7 @@
 
   subroutine define_superbrick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick)
 
-  include "constants_modified.h"
+  include "constants_modified_v40.h"
 
   integer, dimension(NGNOD_DOUBLING_SUPERBRICK,NSPEC_DOUBLING_SUPERBRICK) :: ibool_superbrick
   double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick
