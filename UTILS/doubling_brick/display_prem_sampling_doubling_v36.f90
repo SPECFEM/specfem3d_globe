@@ -19,11 +19,11 @@
 
   implicit none
 
-  include "constants_modified.h"
+  include "constants_modified_v36.h"
 
 ! honor PREM Moho or not
 ! doing so drastically reduces the stability condition and therefore the time step
-  logical, parameter :: HONOR_1D_SPHERICAL_MOHO = .false.
+  logical, parameter :: HONOR_1D_SPHERICAL_MOHO = .true.
 
 ! resolution target for minimum number of points per S wavelength in the whole mesh
   double precision, parameter :: RESOLUTION_TARGET = 4.d0
@@ -133,7 +133,7 @@
   NEX_val(9) = 1248
 
 ! loop on all the cases to study
-  do icase = 1,NUM_CASES
+  do icase = 3,3
 
 ! define value of NEX for this case
   NEX = NEX_val(icase)
@@ -1227,7 +1227,7 @@
 
   implicit none
 
-  include "constants_modified.h"
+  include "constants_modified_v36.h"
 
   integer :: iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ner,ilayer
 
@@ -1290,7 +1290,7 @@
 
   implicit none
 
-  include "constants_modified.h"
+  include "constants_modified_v36.h"
 
   double precision :: r,x,rho,vp,vs,ratio_sampling
 
