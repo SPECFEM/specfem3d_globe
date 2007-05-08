@@ -104,7 +104,6 @@ libspecfem_a_OBJECTS = \
 	$O/create_chunk_buffers.o \
 	$O/create_header_file.o \
 	$O/create_movie_AVS_DX.o \
-	$O/create_movie_GMT_global.o \
 	$O/create_name_database.o \
 	$O/create_regions_mesh.o \
 	$O/create_serial_name_database.o \
