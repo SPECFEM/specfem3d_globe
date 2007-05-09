@@ -60,7 +60,7 @@
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
 
 ! solver's arrays size
-  integer :: static_size, dynamic_size
+  double precision :: static_size, dynamic_size
 
 ! variables added for memory size computation
   integer :: NSPECMAX_CRUST_MANTLE_ATTENUAT,NSPEC_INNER_CORE_ATTENUATION,NSPECMAX_ISO_MANTLE, &
@@ -222,8 +222,8 @@
   write(IOUT,*)
 
 ! DM memory size evaluation
-    static_size = 0
-    dynamic_size = 0
+    static_size = 0.d0
+    dynamic_size = 0.d0
 
   if(ATTENUATION) then
     if(ATTENUATION_3D) then

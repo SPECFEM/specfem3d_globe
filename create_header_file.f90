@@ -67,7 +67,8 @@
                nglob
   integer :: ilayer, ner_without_doubling
 
-  integer ispec_aniso,NUMBER_OF_MESH_LAYERS,static_size,dynamic_size
+  integer ispec_aniso,NUMBER_OF_MESH_LAYER
+  double precision :: static_size,dynamic_size
   character(len=150) HEADER_FILE
 
 ! variables added for memory size computation
@@ -155,8 +156,8 @@ enddo
   print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
 
 ! DM memory size evaluation
-    static_size = 0
-    dynamic_size = 0
+    static_size = 0.d0
+    dynamic_size = 0.d0
 
   if(ATTENUATION) then
     if(ATTENUATION_3D) then
