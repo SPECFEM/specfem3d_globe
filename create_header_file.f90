@@ -67,7 +67,7 @@
                nglob
   integer :: ilayer, ner_without_doubling
 
-  integer ispec_aniso,NUMBER_OF_MESH_LAYER
+  integer ispec_aniso,NUMBER_OF_MESH_LAYERS
   double precision :: static_size,dynamic_size
   character(len=150) HEADER_FILE
 
