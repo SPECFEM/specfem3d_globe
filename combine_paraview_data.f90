@@ -29,16 +29,16 @@ program combine_paraview_data
   integer i,j,k,ispec, ios, it
   integer iproc, num_node, node_list(300), nspec(300), nglob(300), nglob1(300),npoint_all, nelement_all
   integer np, ne, npoint(300), nelement(300), njunk, njunk2, n1, n2, n3, n4, n5, n6, n7, n8
-  integer ibool(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE)
+  integer ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
 
   integer numpoin, iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8, iglob
-  logical mask_ibool(NGLOBMAX_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL) data(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE)
-  real(kind=CUSTOM_REAL),dimension(NGLOBMAX_CRUST_MANTLE) :: xstore, ystore, zstore
-  real x, y, z, dat(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE)
+  logical mask_ibool(NGLOB_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL) data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL),dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
+  real x, y, z, dat(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
   character(len=150) :: sline, arg(6), filename, indir, outdir, prname, dimension_file
   character(len=150) :: mesh_file, local_point_file, local_element_file, local_file, local_data_file, local_ibool_file
-  integer :: num_ibool(NGLOBMAX_CRUST_MANTLE)
+  integer :: num_ibool(NGLOB_CRUST_MANTLE)
   logical :: HIGH_RESOLUTION_MESH
   integer :: ires, iregion,irs,ire,ir
 
@@ -58,8 +58,8 @@ program combine_paraview_data
     endif
   enddo
 
-  if (NSPECMAX_CRUST_MANTLE < NSPECMAX_OUTER_CORE .or. NSPECMAX_CRUST_MANTLE < NSPEC_INNER_CORE) &
-    stop 'This program needs that NSPECMAX_CRUST_MANTLE > NSPECMAX_OUTER_CORE and NSPEC_INNER_CORE'
+  if (NSPEC_CRUST_MANTLE < NSPEC_OUTER_CORE .or. NSPEC_CRUST_MANTLE < NSPEC_INNER_CORE) &
+    stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
 ! get slice list
   if (trim(arg(6)) == '') then

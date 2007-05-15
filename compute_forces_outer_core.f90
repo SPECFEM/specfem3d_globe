@@ -26,7 +26,7 @@
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          ibool,nspec_outer_core,nglob_outer_core,SIMULATION_TYPE)
+          ibool,SIMULATION_TYPE)
 
   implicit none
 
@@ -38,9 +38,6 @@
 
 ! for forward or backward simulations
   integer SIMULATION_TYPE
-
-! for doubling in the outer core
-  integer nspec_outer_core,nglob_outer_core
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: displfluid,accelfluid
@@ -75,7 +72,7 @@
 
 ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL) time,deltat,two_omega_earth
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_OUTER_CORE_ROTATION) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
     A_array_rotation,B_array_rotation
 
   real(kind=CUSTOM_REAL) two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rotation,B_rotation, &
@@ -98,7 +95,7 @@
   accelfluid(:) = 0._CUSTOM_REAL
   if (SIMULATION_TYPE == 3) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
 
-  do ispec = 1,nspec_outer_core
+  do ispec = 1,NSPEC_OUTER_CORE
 
     do k=1,NGLLZ
       do j=1,NGLLY
