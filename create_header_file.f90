@@ -72,8 +72,8 @@
   character(len=150) HEADER_FILE
 
 ! variables added for memory size computation
-  integer :: NSPECMAX_CRUST_MANTLE_ATTENUAT,NSPEC_INNER_CORE_ATTENUATION,NSPECMAX_ISO_MANTLE, &
-            NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE,NSPECMAX_ANISO_IC,NSPECMAX_OUTER_CORE_ROTATION
+  integer :: NSPEC_CRUST_MANTLE_ATTENUAT,NSPEC_INNER_CORE_ATTENUATION,NSPECMAX_ISO_MANTLE, &
+            NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE,NSPECMAX_ANISO_IC,NSPEC_OUTER_CORE_ROTATION
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -170,10 +170,10 @@ enddo
       dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*3*SIZE_DOUBLE
 ! factor_scale_inner_core_dble, omsb_inner_core_dble, factor_common_inner_core_dble
     endif
-    NSPECMAX_CRUST_MANTLE_ATTENUAT = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_CRUST_MANTLE_ATTENUAT = NSPEC(IREGION_CRUST_MANTLE)
     NSPEC_INNER_CORE_ATTENUATION = NSPEC(IREGION_INNER_CORE)
   else
-    NSPECMAX_CRUST_MANTLE_ATTENUAT = 1
+    NSPEC_CRUST_MANTLE_ATTENUAT = 1
     NSPEC_INNER_CORE_ATTENUATION = 1
   endif
   if(ANISOTROPIC_3D_MANTLE) then
@@ -195,15 +195,15 @@ enddo
     NSPECMAX_ANISO_IC = 1
   endif
   if(ROTATION) then
-    NSPECMAX_OUTER_CORE_ROTATION = NSPEC(IREGION_OUTER_CORE)
+    NSPEC_OUTER_CORE_ROTATION = NSPEC(IREGION_OUTER_CORE)
   else
-    NSPECMAX_OUTER_CORE_ROTATION = 1
+    NSPEC_OUTER_CORE_ROTATION = 1
   endif
 
 ! size of static arrays
 ! ---------------------
 
-    static_size = static_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPECMAX_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL   !R_memory_crust_mantle
+    static_size = static_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL   !R_memory_crust_mantle
     static_size = static_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION*CUSTOM_REAL     !R_memory_inner_core
     static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*12*CUSTOM_REAL
 ! rho_vp_crust_mantle,rho_vs_crust_mantle,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle
@@ -246,7 +246,7 @@ enddo
     static_size = static_size + NDIM*nglob(IREGION_INNER_CORE)*3*CUSTOM_REAL
 ! displ_inner_core,veloc_inner_core,accel_inner_core
 
-    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPECMAX_OUTER_CORE_ROTATION*2*CUSTOM_REAL
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE_ROTATION*2*CUSTOM_REAL
 ! A_array_rotation,B_array_rotation
 
 ! size of dynamic arrays
@@ -261,7 +261,7 @@ enddo
     dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*3*CUSTOM_REAL
     dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_OUTER_CORE)*2*CUSTOM_REAL
     dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*3*CUSTOM_REAL
-    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPECMAX_OUTER_CORE_ROTATION*2*CUSTOM_REAL
+    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE_ROTATION*2*CUSTOM_REAL
   endif
   if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     dynamic_size = dynamic_size + 7*NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*CUSTOM_REAL
@@ -272,11 +272,11 @@ enddo
       dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*CUSTOM_REAL
     endif
   else
-    dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPECMAX_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
+    dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
     dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION*CUSTOM_REAL
   endif
   if(ATTENUATION .and. SIMULATION_TYPE > 1) then
-    dynamic_size = dynamic_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPECMAX_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
+    dynamic_size = dynamic_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
     dynamic_size = dynamic_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION*CUSTOM_REAL
   endif
 

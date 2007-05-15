@@ -63,8 +63,8 @@
   double precision :: static_size, dynamic_size
 
 ! variables added for memory size computation
-  integer :: NSPECMAX_CRUST_MANTLE_ATTENUAT,NSPEC_INNER_CORE_ATTENUATION,NSPECMAX_ISO_MANTLE, &
-            NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE,NSPECMAX_ANISO_IC,NSPECMAX_OUTER_CORE_ROTATION
+  integer :: NSPEC_CRUST_MANTLE_ATTENUAT,NSPEC_INNER_CORE_ATTENUATION,NSPECMAX_ISO_MANTLE, &
+            NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE,NSPECMAX_ANISO_IC,NSPEC_OUTER_CORE_ROTATION
 
 ! copy number of elements and points in an include file for the solver
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
@@ -236,10 +236,10 @@
       dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*3*SIZE_DOUBLE
 ! factor_scale_inner_core_dble, omsb_inner_core_dble, factor_common_inner_core_dble
     endif
-    NSPECMAX_CRUST_MANTLE_ATTENUAT = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_CRUST_MANTLE_ATTENUAT = NSPEC(IREGION_CRUST_MANTLE)
     NSPEC_INNER_CORE_ATTENUATION = NSPEC(IREGION_INNER_CORE)
   else
-    NSPECMAX_CRUST_MANTLE_ATTENUAT = 1
+    NSPEC_CRUST_MANTLE_ATTENUAT = 1
     NSPEC_INNER_CORE_ATTENUATION = 1
   endif
   if(ANISOTROPIC_3D_MANTLE) then
@@ -261,15 +261,15 @@
     NSPECMAX_ANISO_IC = 1
   endif
   if(ROTATION) then
-    NSPECMAX_OUTER_CORE_ROTATION = NSPEC(IREGION_OUTER_CORE)
+    NSPEC_OUTER_CORE_ROTATION = NSPEC(IREGION_OUTER_CORE)
   else
-    NSPECMAX_OUTER_CORE_ROTATION = 1
+    NSPEC_OUTER_CORE_ROTATION = 1
   endif
 
 ! size of static arrays
 ! ---------------------
 
-    static_size = static_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPECMAX_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL   !R_memory_crust_mantle
+    static_size = static_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL   !R_memory_crust_mantle
     static_size = static_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION*CUSTOM_REAL     !R_memory_inner_core
     static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*12*CUSTOM_REAL
 ! rho_vp_crust_mantle,rho_vs_crust_mantle,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle
@@ -312,7 +312,7 @@
     static_size = static_size + NDIM*nglob(IREGION_INNER_CORE)*3*CUSTOM_REAL
 ! displ_inner_core,veloc_inner_core,accel_inner_core
 
-    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPECMAX_OUTER_CORE_ROTATION*2*CUSTOM_REAL
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE_ROTATION*2*CUSTOM_REAL
 ! A_array_rotation,B_array_rotation
 
 ! size of dynamic arrays
@@ -327,7 +327,7 @@
     dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*3*CUSTOM_REAL
     dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_OUTER_CORE)*2*CUSTOM_REAL
     dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*3*CUSTOM_REAL
-    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPECMAX_OUTER_CORE_ROTATION*2*CUSTOM_REAL
+    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE_ROTATION*2*CUSTOM_REAL
   endif
   if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     dynamic_size = dynamic_size + 7*NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*CUSTOM_REAL
@@ -337,11 +337,11 @@
       dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*CUSTOM_REAL
     endif
   else
-    dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPECMAX_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
+    dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
     dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION*CUSTOM_REAL
   endif
   if(ATTENUATION .and. SIMULATION_TYPE > 1) then
-    dynamic_size = dynamic_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPECMAX_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
+    dynamic_size = dynamic_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
     dynamic_size = dynamic_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION*CUSTOM_REAL
   endif
 
@@ -366,27 +366,13 @@
   write(IOUT,*) 'integer, parameter :: NEX_XI_VAL = ',NEX_XI
   write(IOUT,*) 'integer, parameter :: NEX_ETA_VAL = ',NEX_ETA
   write(IOUT,*)
-  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_AB = ',NSPEC(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_AC = ',NSPEC(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_BC = ',NSPEC(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_AB = ',NSPEC(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_AC = ',NSPEC(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_BC = ',NSPEC(IREGION_OUTER_CORE)
+  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE = ',NSPEC(IREGION_CRUST_MANTLE)
+  write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE = ',NSPEC(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE = ',NSPEC(IREGION_INNER_CORE)
   write(IOUT,*)
-  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_AB = ',nglob(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_AC = ',nglob(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_BC = ',nglob(IREGION_CRUST_MANTLE)
-  write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_AB = ',nglob(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_AC = ',nglob(IREGION_OUTER_CORE)
-  write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_BC = ',nglob(IREGION_OUTER_CORE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE = ',nglob(IREGION_CRUST_MANTLE)
+  write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE = ',nglob(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE = ',nglob(IREGION_INNER_CORE)
-  write(IOUT,*)
-  write(IOUT,*) 'integer, parameter :: NSPECMAX_CRUST_MANTLE = NSPEC_CRUST_MANTLE_BC'
-  write(IOUT,*) 'integer, parameter :: NGLOBMAX_CRUST_MANTLE = NGLOB_CRUST_MANTLE_BC'
-  write(IOUT,*)
-  write(IOUT,*) 'integer, parameter :: NSPECMAX_OUTER_CORE = NSPEC_OUTER_CORE_BC'
-  write(IOUT,*) 'integer, parameter :: NGLOBMAX_OUTER_CORE = NGLOB_OUTER_CORE_BC'
   write(IOUT,*)
 
   if(ANISOTROPIC_INNER_CORE) then
@@ -398,10 +384,10 @@
   if(ANISOTROPIC_3D_MANTLE) then
     write(IOUT,*) 'integer, parameter :: NSPECMAX_ISO_MANTLE = ',1
     write(IOUT,*) 'integer, parameter :: NSPECMAX_TISO_MANTLE = ',1
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_MANTLE = NSPECMAX_CRUST_MANTLE'
+    write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_MANTLE = NSPEC_CRUST_MANTLE'
   else
 
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_ISO_MANTLE = NSPECMAX_CRUST_MANTLE'
+    write(IOUT,*) 'integer, parameter :: NSPECMAX_ISO_MANTLE = NSPEC_CRUST_MANTLE'
     if(TRANSVERSE_ISOTROPY) then
       write(IOUT,*) 'integer, parameter :: NSPECMAX_TISO_MANTLE = ',nspec_aniso_mantle
     else
@@ -415,10 +401,10 @@
 
 ! if attenuation is off, set dummy size of arrays to one
   if(ATTENUATION) then
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_CRUST_MANTLE_ATTENUAT = NSPECMAX_CRUST_MANTLE'
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT = NSPEC_CRUST_MANTLE'
     write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ATTENUATION = NSPEC_INNER_CORE'
   else
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_CRUST_MANTLE_ATTENUAT = 1'
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT = 1'
     write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ATTENUATION = 1'
   endif
 
@@ -476,10 +462,10 @@
 
   if(ROTATION) then
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .true.'
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_OUTER_CORE_ROTATION = NSPECMAX_OUTER_CORE'
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = NSPEC_OUTER_CORE'
   else
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .false.'
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_OUTER_CORE_ROTATION = 1'
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = 1'
   endif
   write(IOUT,*)
 

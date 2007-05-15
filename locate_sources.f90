@@ -20,8 +20,6 @@
 !----  locate_sources finds the correct position of the sources
 !----
 
-! to locate the sources we loop in elements above the 670 only
-
   subroutine locate_sources(NSOURCES,myrank,nspec,nglob,ibool,&
                  xstore,ystore,zstore,xigll,yigll,zigll, &
                  NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
@@ -311,10 +309,6 @@
   located_target = .false.
 
   do ispec = 1,nspec
-
-! loop on elements in the crust or in mantle above d660 only
-!!!!!!! DK DK suppressed this, could be dangerous if sources are located in the vicinity of d660 in a 3D Earth
-!!!!!!! DK DK suppressed this  if(idoubling(ispec) == IFLAG_MANTLE_NORMAL) cycle
 
 ! exclude elements that are too far from target
   iglob = ibool(1,1,1,ispec)

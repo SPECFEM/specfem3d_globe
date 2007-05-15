@@ -17,7 +17,7 @@
 !=====================================================================
 
   subroutine compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          nspec,displ,accel,xstore,ystore,zstore, &
+          displ,accel,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
@@ -62,13 +62,11 @@
 ! for forward or backward simulations
   logical SAVE_STRAIN
 
-  integer nspec
-
 ! array with the local to global mapping per slice
-  integer, dimension(NSPECMAX_CRUST_MANTLE) :: idoubling
+  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling
 
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOBMAX_CRUST_MANTLE) :: displ,accel
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ,accel
 
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -84,8 +82,8 @@
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE_ATTENUAT) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
 
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
@@ -93,11 +91,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
 ! arrays with mesh parameters per slice
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: ibool
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_CRUST_MANTLE) :: &
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian
 
 ! array with derivatives of Lagrange polynomials and precalculated products
@@ -112,7 +110,7 @@
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
 
 ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(NGLOBMAX_CRUST_MANTLE) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
         kappavstore,muvstore
@@ -183,7 +181,7 @@
 ! set acceleration to zero
   accel(:,:) = 0._CUSTOM_REAL
 
-  do ispec = 1,nspec
+  do ispec = 1,NSPEC_CRUST_MANTLE
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -343,7 +341,7 @@
   else
 
 ! do not use transverse isotropy except if element is between d220 and Moho
-  if(.not. (TRANSVERSE_ISOTROPY_VAL .and. idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO)) then
+  if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO))) then
 
 ! layer with no transverse isotropy, use kappav and muv
           kappal = kappavstore(i,j,k,ispec)

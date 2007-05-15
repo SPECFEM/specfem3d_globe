@@ -167,237 +167,68 @@
   write(27,*) nglob1
   close(27)
 
-! xix
   open(unit=27,file=prname(1:len_trim(prname))//'solver_data_1.bin',status='unknown',form='unformatted')
+
   write(27) xixstore
-!  close(27)
-
-! xiy
-!  open(unit=27,file=prname(1:len_trim(prname))//'xiy.bin',status='unknown',form='unformatted')
   write(27) xiystore
-!  close(27)
-
-! xiz
-!  open(unit=27,file=prname(1:len_trim(prname))//'xiz.bin',status='unknown',form='unformatted')
   write(27) xizstore
-!  close(27)
-
-! etax
-!  open(unit=27,file=prname(1:len_trim(prname))//'etax.bin',status='unknown',form='unformatted')
   write(27) etaxstore
-!  close(27)
-
-! etay
-!  open(unit=27,file=prname(1:len_trim(prname))//'etay.bin',status='unknown',form='unformatted')
   write(27) etaystore
-!  close(27)
-
-! etaz
-!  open(unit=27,file=prname(1:len_trim(prname))//'etaz.bin',status='unknown',form='unformatted')
   write(27) etazstore
-!  close(27)
-
-! gammax
-!  open(unit=27,file=prname(1:len_trim(prname))//'gammax.bin',status='unknown',form='unformatted')
   write(27) gammaxstore
-!  close(27)
-
-! gammay
-!  open(unit=27,file=prname(1:len_trim(prname))//'gammay.bin',status='unknown',form='unformatted')
   write(27) gammaystore
-!  close(27)
-
-! gammaz
-!  open(unit=27,file=prname(1:len_trim(prname))//'gammaz.bin',status='unknown',form='unformatted')
   write(27) gammazstore
-!  close(27)
 
-! jacobian
-!  open(unit=27,file=prname(1:len_trim(prname))//'jacobian.bin',status='unknown',form='unformatted')
   write(27) jacobianstore
-!  close(27)
 
-! rho
-!  open(unit=27,file=prname(1:len_trim(prname))//'rho.bin',status='unknown',form='unformatted')
   write(27) rhostore
-!  close(27)
-
-! kappav
-!  open(unit=27,file=prname(1:len_trim(prname))//'kappav.bin',status='unknown',form='unformatted')
   write(27) kappavstore
-!  close(27)
 
 ! other terms needed in the solid regions only
   if(iregion_code /= IREGION_OUTER_CORE) then
 
-!   muv
-!    open(unit=27,file=prname(1:len_trim(prname))//'muv.bin',status='unknown',form='unformatted')
-! DM
-    if(.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
-        write(27) muvstore
-    endif
-!    close(27)
+    if(.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) write(27) muvstore
 
 !   save anisotropy in the mantle only
-! DM
     if(TRANSVERSE_ISOTROPY) then
       if(iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
-
-!       kappah
-!        open(unit=27,file=prname(1:len_trim(prname))//'kappah.bin',status='unknown',form='unformatted')
         write(27) kappahstore
-!        close(27)
-
-!       muh
-!        open(unit=27,file=prname(1:len_trim(prname))//'muh.bin',status='unknown',form='unformatted')
         write(27) muhstore
-!        close(27)
-
-!       eta_aniso
-!        open(unit=27,file=prname(1:len_trim(prname))//'eta_aniso.bin',status='unknown',form='unformatted')
         write(27) eta_anisostore
-!        close(27)
-
       endif
     endif
 
 !   save anisotropy in the inner core only
     if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
-
-!       c11
-!        open(unit=27,file=prname(1:len_trim(prname))//'c11_inner_core.bin',status='unknown',form='unformatted')
-        write(27) c11store
-!        close(27)
-
-!       c33
-!        open(unit=27,file=prname(1:len_trim(prname))//'c33_inner_core.bin',status='unknown',form='unformatted')
-        write(27) c33store
-!        close(27)
-
-!       c12
-!        open(unit=27,file=prname(1:len_trim(prname))//'c12_inner_core.bin',status='unknown',form='unformatted')
-        write(27) c12store
-!        close(27)
-
-!       c13
-!        open(unit=27,file=prname(1:len_trim(prname))//'c13_inner_core.bin',status='unknown',form='unformatted')
-        write(27) c13store
-!        close(27)
-
-!       c44
-!        open(unit=27,file=prname(1:len_trim(prname))//'c44_inner_core.bin',status='unknown',form='unformatted')
-        write(27) c44store
-!        close(27)
-
+      write(27) c11store
+      write(27) c33store
+      write(27) c12store
+      write(27) c13store
+      write(27) c44store
     endif
 
     if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-
-!       c11
-!        open(unit=27,file=prname(1:len_trim(prname))//'c11_mantle.bin',status='unknown',form='unformatted')
         write(27) c11store
-!        close(27)
-
-!       c12
-!        open(unit=27,file=prname(1:len_trim(prname))//'c12_mantle.bin',status='unknown',form='unformatted')
         write(27) c12store
-!         close(27)
-
-!       c13
-!         open(unit=27,file=prname(1:len_trim(prname))//'c13_mantle.bin',status='unknown',form='unformatted')
         write(27) c13store
-!         close(27)
-
-!       c14
-!         open(unit=27,file=prname(1:len_trim(prname))//'c14_mantle.bin',status='unknown',form='unformatted')
         write(27) c14store
-!         close(27)
-
-!       c15
-!         open(unit=27,file=prname(1:len_trim(prname))//'c15_mantle.bin',status='unknown',form='unformatted')
         write(27) c15store
-!         close(27)
-
-!       c16
-!         open(unit=27,file=prname(1:len_trim(prname))//'c16_mantle.bin',status='unknown',form='unformatted')
         write(27) c16store
-!         close(27)
-
-!       c22
-!         open(unit=27,file=prname(1:len_trim(prname))//'c22_mantle.bin',status='unknown',form='unformatted')
         write(27) c22store
-!         close(27)
-
-!       c23
-!         open(unit=27,file=prname(1:len_trim(prname))//'c23_mantle.bin',status='unknown',form='unformatted')
         write(27) c23store
-!         close(27)
-
-!       c24
-!         open(unit=27,file=prname(1:len_trim(prname))//'c24_mantle.bin',status='unknown',form='unformatted')
         write(27) c24store
-!         close(27)
-
-!       c25
-!         open(unit=27,file=prname(1:len_trim(prname))//'c25_mantle.bin',status='unknown',form='unformatted')
         write(27) c25store
-!         close(27)
-
-!       c26
-!         open(unit=27,file=prname(1:len_trim(prname))//'c26_mantle.bin',status='unknown',form='unformatted')
         write(27) c26store
-!         close(27)
-
-!       c33
-!         open(unit=27,file=prname(1:len_trim(prname))//'c33_mantle.bin',status='unknown',form='unformatted')
         write(27) c33store
-!         close(27)
-
-!       c34
-!         open(unit=27,file=prname(1:len_trim(prname))//'c34_mantle.bin',status='unknown',form='unformatted')
         write(27) c34store
-!         close(27)
-
-!       c35
-!         open(unit=27,file=prname(1:len_trim(prname))//'c35_mantle.bin',status='unknown',form='unformatted')
         write(27) c35store
-!         close(27)
-
-!       c36
-!         open(unit=27,file=prname(1:len_trim(prname))//'c36_mantle.bin',status='unknown',form='unformatted')
         write(27) c36store
-!         close(27)
-
-!       c44
-!         open(unit=27,file=prname(1:len_trim(prname))//'c44_mantle.bin',status='unknown',form='unformatted')
         write(27) c44store
-!         close(27)
-
-!       c45
-!         open(unit=27,file=prname(1:len_trim(prname))//'c45_mantle.bin',status='unknown',form='unformatted')
         write(27) c45store
-!         close(27)
-
-!       c46
-!         open(unit=27,file=prname(1:len_trim(prname))//'c46_mantle.bin',status='unknown',form='unformatted')
         write(27) c46store
-!         close(27)
-
-!       c55
-!         open(unit=27,file=prname(1:len_trim(prname))//'c55_mantle.bin',status='unknown',form='unformatted')
         write(27) c55store
-!         close(27)
-
-!       c56
-!         open(unit=27,file=prname(1:len_trim(prname))//'c56_mantle.bin',status='unknown',form='unformatted')
         write(27) c56store
-!         close(27)
-
-!       c66
-!         open(unit=27,file=prname(1:len_trim(prname))//'c66_mantle.bin',status='unknown',form='unformatted')
         write(27) c66store
-!         close(27)
-
     endif
 
   endif
@@ -406,50 +237,23 @@
   if(NCHUNKS /= 6) then
 
     if(iregion_code == IREGION_CRUST_MANTLE) then
-
-! rho_vp
-!       open(unit=27,file=prname(1:len_trim(prname))//'rho_vp_mantle.bin',status='unknown',form='unformatted')
       write(27) rho_vp
-!       close(27)
-
-! rho_vs
-!       open(unit=27,file=prname(1:len_trim(prname))//'rho_vs_mantle.bin',status='unknown',form='unformatted')
       write(27) rho_vs
-!       close(27)
-
-    elseif(iregion_code == IREGION_OUTER_CORE) then
-
-! we need just vp in the outer core for Stacey conditions
-!       open(unit=27,file=prname(1:len_trim(prname))//'vp_outer_core.bin',status='unknown',form='unformatted')
+    else if(iregion_code == IREGION_OUTER_CORE) then
       write(27) rho_vp
-!       close(27)
-
     endif
 
   endif
 
-! ibool
-!   open(unit=27,file=prname(1:len_trim(prname))//'ibool.bin',status='unknown',form='unformatted')
   write(27) ibool
-!   close(27)
 
-! doubling
-!   open(unit=27,file=prname(1:len_trim(prname))//'idoubling.bin',status='unknown',form='unformatted')
   write(27) idoubling
-!   close(27)
 
 ! mass matrix
-!   open(unit=27,file=prname(1:len_trim(prname))//'rmass.bin',status='unknown',form='unformatted')
   write(27) rmass
-!   close(27)
 
 ! additional ocean load mass matrix if oceans and if we are in the crust
-  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
-!     open(unit=27,file=prname(1:len_trim(prname))//'rmass_ocean_load.bin',status='unknown',form='unformatted')
-    write(27) rmass_ocean_load
-!     close(27)
-  endif
-
+  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(27) rmass_ocean_load
 
 ! mesh arrays used in the solver to locate source and receivers
 ! and for anisotropy and gravity, save in single precision
@@ -472,9 +276,7 @@
       enddo
     enddo
   enddo
-!   open(unit=27,file=prname(1:len_trim(prname))//'x.bin',status='unknown',form='unformatted')
   write(27) rmass
-!   close(27)
 
 !--- y coordinate
   rmass(:) = 0._CUSTOM_REAL
@@ -493,9 +295,7 @@
       enddo
     enddo
   enddo
-!   open(unit=27,file=prname(1:len_trim(prname))//'y.bin',status='unknown',form='unformatted')
   write(27) rmass
-!   close(27)
 
 !--- z coordinate
   rmass(:) = 0._CUSTOM_REAL
@@ -515,50 +315,41 @@
     enddo
   enddo
 
-!   open(unit=27,file=prname(1:len_trim(prname))//'z.bin',status='unknown',form='unformatted')
   write(27) rmass
+
   close(27)
-! end of writing in
-
-
 
 ! boundary parameters
 
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted')
-!   open(unit=27,file=prname(1:len_trim(prname))//'nspec2D.bin',status='unknown',form='unformatted')
+
   write(27) nspec2D_xmin
   write(27) nspec2D_xmax
   write(27) nspec2D_ymin
   write(27) nspec2D_ymax
-!   close(27)
 
-!   open(unit=27,file=prname(1:len_trim(prname))//'ibelm.bin',status='unknown',form='unformatted')
   write(27) ibelm_xmin
   write(27) ibelm_xmax
   write(27) ibelm_ymin
   write(27) ibelm_ymax
   write(27) ibelm_bottom
   write(27) ibelm_top
-!   close(27)
 
-!   open(unit=27,file=prname(1:len_trim(prname))//'normal.bin',status='unknown',form='unformatted')
   write(27) normal_xmin
   write(27) normal_xmax
   write(27) normal_ymin
   write(27) normal_ymax
   write(27) normal_bottom
   write(27) normal_top
-!   close(27)
 
-!   open(unit=27,file=prname(1:len_trim(prname))//'jacobian2D.bin',status='unknown',form='unformatted')
   write(27) jacobian2D_xmin
   write(27) jacobian2D_xmax
   write(27) jacobian2D_ymin
   write(27) jacobian2D_ymax
   write(27) jacobian2D_bottom
   write(27) jacobian2D_top
-  close(27)
 
+  close(27)
 
 ! MPI cut-planes parameters along xi and along eta
   open(unit=27,file=prname(1:len_trim(prname))//'iMPIcut_xi.bin',status='unknown',form='unformatted')
@@ -569,23 +360,11 @@
   write(27) iMPIcut_eta
   close(27)
 
-
   if(ATTENUATION .and. ATTENUATION_3D) then
-
      open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin', status='unknown', form='unformatted')
-!      open(unit=27, file=prname(1:len_trim(prname))//'tau_s.bin', status='unknown', form='unformatted')
      write(27) tau_s
-!      close(27)
-
-!      open(unit=27, file=prname(1:len_trim(prname))//'tau_e.bin', status='unknown', form='unformatted')
      write(27) tau_e_store
-!      close(27)
-
-!      open(unit=27, file=prname(1:len_trim(prname))//'Q.bin', status='unknown', form='unformatted')
      write(27) Qmu_store
-!      close(27)
-
-!      open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin', status='unknown', form='unformatted')
      write(27) T_c_source
      close(27)
   else if(ATTENUATION) then
