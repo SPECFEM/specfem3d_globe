@@ -1584,6 +1584,8 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         else
             doubling = 0
             nb_lay_sb = 0
+            nspec2D_xi_sb = 0
+            nspec2D_eta_sb = 0
         endif
 
         tmp_sum_xi = tmp_sum_xi + ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)) * &
@@ -1658,6 +1660,7 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         else
             doubling = 0
             nb_lay_sb = 0
+            nspec_sb = 0
         endif
         tmp_sum = tmp_sum + ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
@@ -1749,6 +1752,9 @@ enddo
             doubling = 0
             padding = 0
             nb_lay_sb = 0
+            nglob_vol = 0
+            nglob_surf = 0
+            nglob_edge = 0
         endif
         if (iter_layer == ilast_region) padding = padding +1
         nblocks_xi = NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)
