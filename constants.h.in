@@ -379,6 +379,11 @@
     logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
 !!!!!!!!!!!!!! parameters added for the thread-safe transformation of the code
 
+! for inflating central cube (set to 0.d0 for a non inflated cube)
   double precision, parameter :: CENTRAL_CUBE_INFLATE_FACTOR = 0.41d0
+
+! for the crust elements stretching in 3D cases
   double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.6d0
 
+! for suppressing the crustal layers (replaced by layers of mantle : R_EARTH is not modified, no more crustal doubling)
+  logical, parameter :: SUPPRESS_CRUSTALMESH = .true.
