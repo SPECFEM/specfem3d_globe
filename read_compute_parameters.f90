@@ -1252,7 +1252,132 @@
                   stop 'error in location of the two doublings in the outer core'
 
 ! define all the layers of the mesh
-  if (ONE_CRUST) then
+  if (SUPPRESS_CRUSTALMESH) then
+
+    NER_80_MOHO = NER_80_MOHO + nint(NER_80_MOHO*((R_EARTH-RMOHO_FICTITIOUS_IN_MESHER)*1.d0)/((RMOHO-R80)*1.d0))
+    NER_CRUST = 0
+    RMOHO_FICTITIOUS_IN_MESHER = R_EARTH
+
+    OCEANS= .false.
+    TOPOGRAPHY = .false.
+    CRUSTAL = .false.
+
+    NUMBER_OF_MESH_LAYERS = 14
+    layer_offset = 0
+
+    ner( 1) = NER_CRUST
+    ner( 2) = NER_80_MOHO
+    ner( 3) = NER_220_80
+    ner( 4) = NER_400_220
+    ner( 5) = NER_600_400
+    ner( 6) = NER_670_600
+    ner( 7) = NER_771_670
+    ner( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+    ner( 9) = elem_doubling_mantle
+    ner(10) = NER_CMB_TOPDDOUBLEPRIME
+    ner(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+    ner(12) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
+    ner(13) = elem_doubling_bottom_outer_core
+    ner(14) = NER_TOP_CENTRAL_CUBE_ICB
+
+  ! value of the doubling ratio in each radial region of the mesh
+    ratio_sampling_array(1:8) = 2
+    ratio_sampling_array(9:11) = 4
+    ratio_sampling_array(12) = 8
+    ratio_sampling_array(13:14) = 16
+
+  ! value of the doubling index flag in each radial region of the mesh
+    doubling_index(1:2) = IFLAG_80_MOHO
+    doubling_index(3) = IFLAG_220_80
+    doubling_index(4:6) = IFLAG_670_220
+    doubling_index(7:10) = IFLAG_MANTLE_NORMAL
+    doubling_index(11:13) = IFLAG_OUTER_CORE_NORMAL
+    doubling_index(14) = IFLAG_INNER_CORE_NORMAL
+
+  ! define the three regions in which we implement a mesh doubling at the top of that region
+    this_region_has_a_doubling(:)  = .false.
+    this_region_has_a_doubling(9)  = .true.
+    this_region_has_a_doubling(12) = .true.
+    this_region_has_a_doubling(13) = .true.
+
+    r_top(1) = R_EARTH
+    r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
+
+    r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
+    r_bottom(2) = R80
+
+    r_top(3) = R80
+    r_bottom(3) = R220
+
+    r_top(4) = R220
+    r_bottom(4) = R400
+
+    r_top(5) = R400
+    r_bottom(5) = R600
+
+    r_top(6) = R600
+    r_bottom(6) = R670
+
+    r_top(7) = R670
+    r_bottom(7) = R771
+
+    r_top(8) = R771
+    r_bottom(8) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+
+    r_top(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+    r_bottom(9) = RTOPDDOUBLEPRIME
+
+    r_top(10) = RTOPDDOUBLEPRIME
+    r_bottom(10) = RCMB
+
+    r_top(11) = RCMB
+    r_bottom(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+
+    r_top(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+    r_bottom(12) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+
+    r_top(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+    r_bottom(13) = RICB
+
+    r_top(14) = RICB
+    r_bottom(14) = R_CENTRAL_CUBE
+
+  !!! DM new definition of rmins & rmaxs in replacement of mesh_radial
+    rmaxs(1) = ONE
+    rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+
+    rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+    rmins(2) = R80 / R_EARTH
+
+    rmaxs(3) = R80 / R_EARTH
+    rmins(3) = R220 / R_EARTH
+
+    rmaxs(4) = R220 / R_EARTH
+    rmins(4) = R400 / R_EARTH
+
+    rmaxs(5) = R400 / R_EARTH
+    rmins(5) = R600 / R_EARTH
+
+    rmaxs(6) = R600 / R_EARTH
+    rmins(6) = R670 / R_EARTH
+
+    rmaxs(7) = R670 / R_EARTH
+    rmins(7) = R771 / R_EARTH
+
+    rmaxs(8:9) = R771 / R_EARTH
+    rmins(8:9) = RTOPDDOUBLEPRIME / R_EARTH
+
+    rmaxs(10) = RTOPDDOUBLEPRIME / R_EARTH
+    rmins(10) = RCMB / R_EARTH
+
+    rmaxs(11:13) = RCMB / R_EARTH
+    rmins(11:13) = RICB / R_EARTH
+
+    rmaxs(14) = RICB / R_EARTH
+    rmins(14) = R_CENTRAL_CUBE / R_EARTH
+
+  elseif (ONE_CRUST) then
+
 
     NUMBER_OF_MESH_LAYERS = 14
     layer_offset = 0
@@ -1609,12 +1734,12 @@ enddo
 ! exact number of surface elements on the bottom and top boundaries
 
 ! in the crust and mantle
-  NSPEC2D_TOP(IREGION_CRUST_MANTLE) = NEX_XI*NEX_ETA/NPROC
-  NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE) = (NEX_XI/4)*(NEX_ETA/4)/NPROC
+  NSPEC2D_TOP(IREGION_CRUST_MANTLE) = (NEX_XI/ratio_sampling_array(1))*(NEX_ETA/ratio_sampling_array(1))/NPROC
+  NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE) = (NEX_XI/ratio_sampling_array(10+layer_offset))*&
+                                         (NEX_ETA/ratio_sampling_array(10+layer_offset))/NPROC
 
 ! in the outer core with mesh doubling
   NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/4)*(NEX_ETA/4)/NPROC
-
   NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/16)*(NEX_ETA/16)/NPROC
 
 ! in the top of the inner core
@@ -1624,6 +1749,7 @@ enddo
 ! maximum number of surface elements on vertical boundaries of the slices
   NSPEC2DMAX_XMIN_XMAX(:) = NSPEC2D_ETA(:)
   NSPEC2DMAX_YMIN_YMAX(:) = NSPEC2D_XI(:)
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
