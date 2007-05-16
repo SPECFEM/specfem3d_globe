@@ -25,7 +25,7 @@
         ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,static_size,dynamic_size)
+        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME)
 
   implicit none
 
@@ -44,7 +44,7 @@
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
   integer subtract_central_cube_elems
-  double precision subtract_central_cube_points,static_size,dynamic_size
+  double precision subtract_central_cube_points
 
   character(len=150) HEADER_FILE
 
@@ -221,7 +221,130 @@
   write(IOUT,*) '!'
   write(IOUT,*)
 
-  if ((dynamic_size+static_size) /= 0.d0) then
+! DM memory size evaluation
+    static_size = 0.d0
+    dynamic_size = 0.d0
+
+  if(ATTENUATION) then
+    if(ATTENUATION_3D) then
+      dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*3*CUSTOM_REAL
+! factor_scale_crust_mantle,one_minus_sum_beta_crust_mantle,factor_common_crust_mantle
+      dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*3*CUSTOM_REAL
+! factor_scale_inner_core, one_minus_sum_beta_inner_core, factor_common_inner_core
+      dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*3*SIZE_DOUBLE
+! factor_scale_crust_mantle_dble, omsb_crust_mantle_dble, factor_common_crust_mantle_dble
+      dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*3*SIZE_DOUBLE
+! factor_scale_inner_core_dble, omsb_inner_core_dble, factor_common_inner_core_dble
+    endif
+    NSPEC_CRUST_MANTLE_ATTENUAT = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_INNER_CORE_ATTENUATION = NSPEC(IREGION_INNER_CORE)
+  else
+    NSPEC_CRUST_MANTLE_ATTENUAT = 1
+    NSPEC_INNER_CORE_ATTENUATION = 1
+  endif
+  if(ANISOTROPIC_3D_MANTLE) then
+    NSPECMAX_ISO_MANTLE = 1
+    NSPECMAX_TISO_MANTLE = 1
+    NSPECMAX_ANISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
+  else
+    NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
+    if(TRANSVERSE_ISOTROPY) then
+      NSPECMAX_TISO_MANTLE = nspec_aniso_mantle
+    else
+      NSPECMAX_TISO_MANTLE = 1
+    endif
+    NSPECMAX_ANISO_MANTLE = 1
+  endif
+  if(ANISOTROPIC_INNER_CORE) then
+    NSPECMAX_ANISO_IC = NSPEC(IREGION_INNER_CORE)
+  else
+    NSPECMAX_ANISO_IC = 1
+  endif
+  if(ROTATION) then
+    NSPEC_OUTER_CORE_ROTATION = NSPEC(IREGION_OUTER_CORE)
+  else
+    NSPEC_OUTER_CORE_ROTATION = 1
+  endif
+
+! size of static arrays
+! ---------------------
+
+    static_size = static_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL   !R_memory_crust_mantle
+    static_size = static_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION*CUSTOM_REAL     !R_memory_inner_core
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*12*CUSTOM_REAL
+! rho_vp_crust_mantle,rho_vs_crust_mantle,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle
+! etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,
+! gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,jacobian_crust_mantle
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*SIZE_REAL
+! ibool_crust_mantle
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_OUTER_CORE)*13*CUSTOM_REAL
+! vp_outer_core,xix_outer_core,xiy_outer_core,xiz_outer_core,
+! etax_outer_core,etay_outer_core,etaz_outer_core,
+! gammax_outer_core,gammay_outer_core,gammaz_outer_core,jacobian_outer_core
+! rhostore_outer_core,kappavstore_outer_core
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_OUTER_CORE)*SIZE_REAL
+! ibool_outer_core
+    static_size = static_size + nglob(IREGION_CRUST_MANTLE)*2*SIZE_REAL
+! updated_dof_ocean_load, idoubling_crust_mantle
+    static_size = static_size + nglob(IREGION_CRUST_MANTLE)*5*CUSTOM_REAL
+! xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+! rmass_crust_mantle,rmass_ocean_load
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPECMAX_ISO_MANTLE*3*CUSTOM_REAL
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPECMAX_TISO_MANTLE*3*CUSTOM_REAL
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPECMAX_ANISO_MANTLE*21*CUSTOM_REAL
+    static_size = static_size + NDIM*nglob(IREGION_CRUST_MANTLE)*3*CUSTOM_REAL
+! displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
+    static_size = static_size + nglob(IREGION_OUTER_CORE)*7*CUSTOM_REAL
+! xstore_outer_core, ystore_outer_core, zstore_outer_core, rmass_outer_core, displ_outer_core, veloc_outer_core, accel_outer_core
+
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*SIZE_REAL
+! ibool_inner_core
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*13*CUSTOM_REAL
+! xix_inner_core,xiy_inner_core,xiz_inner_core,
+! etax_inner_core,etay_inner_core,etaz_inner_core,
+! gammax_inner_core,gammay_inner_core,gammaz_inner_core,jacobian_inner_core,
+! rhostore_inner_core, kappavstore_inner_core,muvstore_inner_core
+    static_size = static_size + nglob(IREGION_INNER_CORE)*4*CUSTOM_REAL
+! xstore_inner_core,ystore_inner_core,zstore_inner_core,rmass_inner_core
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPECMAX_ANISO_IC*5*CUSTOM_REAL
+! c11store_inner_core,c33store_inner_core,c12store_inner_core,
+! c13store_inner_core,c44store_inner_core
+    static_size = static_size + NDIM*nglob(IREGION_INNER_CORE)*3*CUSTOM_REAL
+! displ_inner_core,veloc_inner_core,accel_inner_core
+
+    static_size = static_size + NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE_ROTATION*2*CUSTOM_REAL
+! A_array_rotation,B_array_rotation
+
+! size of dynamic arrays
+! ----------------------
+
+    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_OUTER_CORE)*2 !dummy_rho,dummy_vstore
+  if (SIMULATION_TYPE > 1) then
+    dynamic_size = dynamic_size + NDIM*nglob(IREGION_CRUST_MANTLE)*3*CUSTOM_REAL
+    dynamic_size = dynamic_size + nglob(IREGION_OUTER_CORE)*3*CUSTOM_REAL
+    dynamic_size = dynamic_size + NDIM*nglob(IREGION_INNER_CORE)*3*CUSTOM_REAL
+    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_OUTER_CORE)*2*CUSTOM_REAL
+    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*3*CUSTOM_REAL
+    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_OUTER_CORE)*2*CUSTOM_REAL
+    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*3*CUSTOM_REAL
+    dynamic_size = dynamic_size + NGLLX*NGLLY*NGLLZ*NSPEC_OUTER_CORE_ROTATION*2*CUSTOM_REAL
+  endif
+  if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+    dynamic_size = dynamic_size + 7*NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*CUSTOM_REAL
+    dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*CUSTOM_REAL
+    if (SIMULATION_TYPE > 1) then
+      dynamic_size = dynamic_size + 7*NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_CRUST_MANTLE)*CUSTOM_REAL
+      dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC(IREGION_INNER_CORE)*CUSTOM_REAL
+    endif
+  else
+    dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
+    dynamic_size = dynamic_size + 5*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION*CUSTOM_REAL
+  endif
+  if(ATTENUATION .and. SIMULATION_TYPE > 1) then
+    dynamic_size = dynamic_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT*CUSTOM_REAL
+    dynamic_size = dynamic_size + 5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION*CUSTOM_REAL
+  endif
+
     write(IOUT,*) '! approximate memory needed for the solver : '
     write(IOUT,*) '!'
     write(IOUT,*) '! size of static arrays per slice : ',static_size/(1024**2),' MB'
@@ -234,10 +357,8 @@
     write(IOUT,*) '! total size of arrays for all slices : ', &
                     (((dynamic_size+static_size)/(1024**2))*NPROCTOT)/1024.d0,' GB'
     write(IOUT,*)
-  else
-    write(IOUT,*) '! to display here the memory needed for the solver, please run xcreate_header_file'
-    write(IOUT,*)
-  endif
+
+! DM memory size evaluation
 
   if(NCHUNKS == 1) write(IOUT,*) '! values for AC and BC below undefined for one chunk'
   if(NCHUNKS == 2) write(IOUT,*) '! values for BC below undefined for two chunks'
