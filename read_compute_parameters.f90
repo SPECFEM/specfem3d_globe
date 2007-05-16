@@ -79,8 +79,6 @@
 
   integer, external :: err_occurred
 
-!!!!!!!!!!------------------------ from "compute_parameters" ---------------------
-
 ! parameters to be computed based upon parameters above read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
@@ -93,23 +91,14 @@
       NGLOB
 
   integer nblocks_xi,nblocks_eta
-!  integer NGLOB_NO_DOUBLING_VOLUME,NGLOB_NO_DOUBLING_SURFACE,NGLOB_SURFACE_TYPE
-
-!!!!!!!!!!------------------------ end of from "compute_parameters" ---------------------
-
-!!!!!!!!!!------------------------ from "display_prem_sampling_doubling" ---------------------
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-!  integer number_basic_elems_horizontal,ner_without_doubling
 
-!  integer :: ilayer,ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                           DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
-
-!!!!!!!!!!------------------------ end of from "display_prem_sampling_doubling" -----------------
 
 ! honor PREM Moho or not
 ! doing so drastically reduces the stability condition and therefore the time step
@@ -310,10 +299,6 @@
 ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
 
-! stability max in all cases below = approximately 0.30 (theoretical), 0.39 (measured)
-! except for NEX = 512, in which case we measure 0.44 (!!!!!!!!!! ???????? YYYYYYYYYYYYYYYYY)
-
-! period min for 4.000000 points per lambda S min in horizontal direction =    27.38702
 ! element width =   0.5625000      degrees =    62.54715      km
 
   if (HONOR_1D_SPHERICAL_MOHO) then
@@ -322,14 +307,13 @@
       if(NEX_MAX <= 160) then
         DT                       = 0.252d0
 
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
+!!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
         MIN_ATTENUATION_PERIOD   = 20
         MAX_ATTENUATION_PERIOD   = 1000
 
         NER_CRUST                = 1
         NER_80_MOHO              = 1
         NER_220_80               = 2
-    !DM    NER_220_MOHO             = 2
         NER_400_220              = 2
         NER_600_400              = 2
         NER_670_600              = 1
@@ -341,7 +325,6 @@
         R_CENTRAL_CUBE = 950000.d0
         NER_TOP_CENTRAL_CUBE_ICB = 2
 
-    ! period min for    4.000000 points per lambda S min in horizontal direction =    17.11689
     ! element width =   0.3515625      degrees =    39.09196      km
       else if(NEX_MAX <= 256) then
         DT                       = 0.225d0
@@ -353,7 +336,6 @@
         NER_CRUST                = 1
         NER_80_MOHO              = 1
         NER_220_80               = 2
-    !DM    NER_220_MOHO             = 3
         NER_400_220              = 3
         NER_600_400              = 3
         NER_670_600              = 1
@@ -364,7 +346,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 3
         R_CENTRAL_CUBE = 965000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    13.69351
     ! element width =   0.2812500      degrees =    31.27357      km
       else if(NEX_MAX <= 320) then
         DT                       = 0.16d0
@@ -376,7 +357,6 @@
         NER_CRUST                = 1
         NER_80_MOHO              = 1
         NER_220_80               = 3
-    !DM    NER_220_MOHO             = 4
         NER_400_220              = 4
         NER_600_400              = 4
         NER_670_600              = 1
@@ -387,7 +367,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 4
         R_CENTRAL_CUBE = 940000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    9.129005
     ! element width =   0.1875000      degrees =    20.84905      km
       else if(NEX_MAX <= 480) then
         DT                       = 0.12d0
@@ -399,7 +378,6 @@
         NER_CRUST                = 1
         NER_80_MOHO              = 2
         NER_220_80               = 4
-    !DM    NER_220_MOHO             = 6
         NER_400_220              = 5
         NER_600_400              = 6
         NER_670_600              = 2
@@ -410,7 +388,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 5
         R_CENTRAL_CUBE = 988000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    8.558443
     ! element width =   0.1757812      degrees =    19.54598      km
       else if(NEX_MAX <= 512) then
         DT                       = 0.1125d0
@@ -422,7 +399,6 @@
         NER_CRUST                = 1
         NER_80_MOHO              = 2
         NER_220_80               = 4
-    !DM    NER_220_MOHO             = 7
         NER_400_220              = 6
         NER_600_400              = 6
         NER_670_600              = 2
@@ -433,7 +409,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 5
         R_CENTRAL_CUBE = 1010000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    6.846754
     ! element width =   0.1406250      degrees =    15.63679      km
       else if(NEX_MAX <= 640) then
         DT                       = 0.09d0
@@ -445,7 +420,6 @@
         NER_CRUST                = 2
         NER_80_MOHO              = 3
         NER_220_80               = 5
-    !DM    NER_220_MOHO             = 8
         NER_400_220              = 7
         NER_600_400              = 8
         NER_670_600              = 3
@@ -456,7 +430,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 6
         R_CENTRAL_CUBE = 1020000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    5.071670
     ! element width =   0.1041667      degrees =    11.58280      km
       else if(NEX_MAX <= 864) then
         DT                       = 0.0667d0
@@ -468,7 +441,6 @@
         NER_CRUST                = 2
         NER_80_MOHO              = 4
         NER_220_80               = 6
-    !DM    NER_220_MOHO             = 11
         NER_400_220              = 10
         NER_600_400              = 10
         NER_670_600              = 3
@@ -479,7 +451,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 9
         R_CENTRAL_CUBE = 990000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    3.803752
     ! element width =   7.8125000E-02  degrees =    8.687103      km
       else if(NEX_MAX <= 1152) then
         DT                       = 0.05d0
@@ -491,7 +462,6 @@
         NER_CRUST                = 3
         NER_80_MOHO              = 6
         NER_220_80               = 8
-    !DM    NER_220_MOHO             = 15
         NER_400_220              = 13
         NER_600_400              = 13
         NER_670_600              = 4
@@ -502,7 +472,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 12
         R_CENTRAL_CUBE = 985000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    3.511156
     ! element width =   7.2115384E-02  degrees =    8.018865      km
       else if(NEX_MAX <= 1248) then
         DT                       = 0.0462d0
@@ -514,7 +483,6 @@
         NER_CRUST                = 3
         NER_80_MOHO              = 6
         NER_220_80               = 9
-    !DM    NER_220_MOHO             = 16
         NER_400_220              = 14
         NER_600_400              = 14
         NER_670_600              = 5
@@ -541,7 +509,6 @@
         NER_CRUST                = 1
         NER_80_MOHO              = 1
         NER_220_80               = 2
-    !DM    NER_220_MOHO             = 2
         NER_400_220              = 2
         NER_600_400              = 2
         NER_670_600              = 1
@@ -551,9 +518,7 @@
         NER_OUTER_CORE           = 16
         NER_TOP_CENTRAL_CUBE_ICB = 2
         R_CENTRAL_CUBE = 950000.d0
-    !    NER_TOP_CENTRAL_CUBE_ICB = 3
 
-    ! period min for    4.000000 points per lambda S min in horizontal direction =    17.11689
     ! element width =   0.3515625      degrees =    39.09196      km
       else if(NEX_MAX <= 256) then
         DT                       = 0.2d0
@@ -565,7 +530,6 @@
         NER_CRUST                = 1
         NER_80_MOHO              = 1
         NER_220_80               = 2
-    !DM    NER_220_MOHO             = 3
         NER_400_220              = 3
         NER_600_400              = 3
         NER_670_600              = 1
@@ -576,7 +540,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 3
         R_CENTRAL_CUBE = 965000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    13.69351
     ! element width =   0.2812500      degrees =    31.27357      km
       else if(NEX_MAX <= 320) then
         DT                       = 0.16d0
@@ -588,7 +551,6 @@
         NER_CRUST                = 1
         NER_80_MOHO              = 1
         NER_220_80               = 3
-    !DM    NER_220_MOHO             = 4
         NER_400_220              = 4
         NER_600_400              = 4
         NER_670_600              = 1
@@ -599,7 +561,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 4
         R_CENTRAL_CUBE = 940000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    9.129005
     ! element width =   0.1875000      degrees =    20.84905      km
       else if(NEX_MAX <= 480) then
         DT                       = 0.12d0
@@ -611,7 +572,6 @@
         NER_CRUST                = 1
         NER_80_MOHO              = 2
         NER_220_80               = 4
-    !DM    NER_220_MOHO             = 6
         NER_400_220              = 5
         NER_600_400              = 6
         NER_670_600              = 2
@@ -622,7 +582,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 5
         R_CENTRAL_CUBE = 988000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    8.558443
     ! element width =   0.1757812      degrees =    19.54598      km
       else if(NEX_MAX <= 512) then
         DT                       = 0.1125d0
@@ -634,7 +593,6 @@
         NER_CRUST                = 1
         NER_80_MOHO              = 2
         NER_220_80               = 4
-    !DM    NER_220_MOHO             = 7
         NER_400_220              = 6
         NER_600_400              = 6
         NER_670_600              = 2
@@ -645,7 +603,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 5
         R_CENTRAL_CUBE = 1010000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    6.846754
     ! element width =   0.1406250      degrees =    15.63679      km
       else if(NEX_MAX <= 640) then
         DT                       = 0.09d0
@@ -657,7 +614,6 @@
         NER_CRUST                = 2
         NER_80_MOHO              = 3
         NER_220_80               = 5
-    !DM    NER_220_MOHO             = 8
         NER_400_220              = 7
         NER_600_400              = 8
         NER_670_600              = 3
@@ -668,7 +624,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 6
         R_CENTRAL_CUBE = 1020000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    5.071670
     ! element width =   0.1041667      degrees =    11.58280      km
       else if(NEX_MAX <= 864) then
         DT                       = 0.0667d0
@@ -680,7 +635,6 @@
         NER_CRUST                = 2
         NER_80_MOHO              = 4
         NER_220_80               = 6
-    !DM    NER_220_MOHO             = 11
         NER_400_220              = 10
         NER_600_400              = 10
         NER_670_600              = 3
@@ -691,7 +645,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 9
         R_CENTRAL_CUBE = 990000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    3.803752
     ! element width =   7.8125000E-02  degrees =    8.687103      km
       else if(NEX_MAX <= 1152) then
         DT                       = 0.05d0
@@ -703,7 +656,6 @@
         NER_CRUST                = 3
         NER_80_MOHO              = 6
         NER_220_80               = 8
-    !DM    NER_220_MOHO             = 15
         NER_400_220              = 13
         NER_600_400              = 13
         NER_670_600              = 4
@@ -714,7 +666,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 12
         R_CENTRAL_CUBE = 985000.d0
 
-    ! period min for 4.000000 points per lambda S min in horizontal direction =    3.511156
     ! element width =   7.2115384E-02  degrees =    8.018865      km
       else if(NEX_MAX <= 1248) then
         DT                       = 0.0462d0
@@ -726,7 +677,6 @@
         NER_CRUST                = 3
         NER_80_MOHO              = 6
         NER_220_80               = 9
-    !DM    NER_220_MOHO             = 16
         NER_400_220              = 14
         NER_600_400              = 14
         NER_670_600              = 5
@@ -754,7 +704,6 @@
       NER_CRUST                = 2
       NER_80_MOHO              = 1
       NER_220_80               = 2
-  !DM    NER_220_MOHO             = 2
       NER_400_220              = 2
       NER_600_400              = 2
       NER_670_600              = 1
@@ -764,9 +713,7 @@
       NER_OUTER_CORE           = 16
       NER_TOP_CENTRAL_CUBE_ICB = 2
       R_CENTRAL_CUBE = 950000.d0
-  !    NER_TOP_CENTRAL_CUBE_ICB = 3
 
-  ! period min for    4.000000 points per lambda S min in horizontal direction =    17.11689
   ! element width =   0.3515625      degrees =    39.09196      km
     else if(NEX_MAX <= 256) then
       DT                       = 0.170d0
@@ -778,7 +725,6 @@
       NER_CRUST                = 2
       NER_80_MOHO              = 1
       NER_220_80               = 2
-  !DM    NER_220_MOHO             = 3
       NER_400_220              = 3
       NER_600_400              = 3
       NER_670_600              = 1
@@ -789,7 +735,6 @@
       NER_TOP_CENTRAL_CUBE_ICB = 3
       R_CENTRAL_CUBE = 965000.d0
 
-  ! period min for 4.000000 points per lambda S min in horizontal direction =    13.69351
   ! element width =   0.2812500      degrees =    31.27357      km
     else if(NEX_MAX <= 320) then
       DT                       = 0.155d0
@@ -801,7 +746,6 @@
       NER_CRUST                = 2
       NER_80_MOHO              = 1
       NER_220_80               = 3
-  !DM    NER_220_MOHO             = 4
       NER_400_220              = 4
       NER_600_400              = 4
       NER_670_600              = 1
@@ -812,7 +756,6 @@
       NER_TOP_CENTRAL_CUBE_ICB = 4
       R_CENTRAL_CUBE = 940000.d0
 
-  ! period min for 4.000000 points per lambda S min in horizontal direction =    9.129005
   ! element width =   0.1875000      degrees =    20.84905      km
     else if(NEX_MAX <= 480) then
       DT                       = 0.12d0
@@ -824,7 +767,6 @@
       NER_CRUST                = 2
       NER_80_MOHO              = 1
       NER_220_80               = 4
-  !DM    NER_220_MOHO             = 6
       NER_400_220              = 5
       NER_600_400              = 6
       NER_670_600              = 2
@@ -835,7 +777,6 @@
       NER_TOP_CENTRAL_CUBE_ICB = 5
       R_CENTRAL_CUBE = 988000.d0
 
-  ! period min for 4.000000 points per lambda S min in horizontal direction =    8.558443
   ! element width =   0.1757812      degrees =    19.54598      km
     else if(NEX_MAX <= 512) then
       DT                       = 0.1125d0
@@ -847,7 +788,6 @@
       NER_CRUST                = 2
       NER_80_MOHO              = 1
       NER_220_80               = 4
-  !DM    NER_220_MOHO             = 7
       NER_400_220              = 6
       NER_600_400              = 6
       NER_670_600              = 2
@@ -858,7 +798,6 @@
       NER_TOP_CENTRAL_CUBE_ICB = 5
       R_CENTRAL_CUBE = 1010000.d0
 
-  ! period min for 4.000000 points per lambda S min in horizontal direction =    6.846754
   ! element width =   0.1406250      degrees =    15.63679      km
     else if(NEX_MAX <= 640) then
       DT                       = 0.09d0
@@ -870,7 +809,6 @@
       NER_CRUST                = 3
       NER_80_MOHO              = 2
       NER_220_80               = 5
-  !DM    NER_220_MOHO             = 8
       NER_400_220              = 7
       NER_600_400              = 8
       NER_670_600              = 3
@@ -881,7 +819,6 @@
       NER_TOP_CENTRAL_CUBE_ICB = 6
       R_CENTRAL_CUBE = 1020000.d0
 
-  ! period min for 4.000000 points per lambda S min in horizontal direction =    5.071670
   ! element width =   0.1041667      degrees =    11.58280      km
     else if(NEX_MAX <= 864) then
       DT                       = 0.0667d0
@@ -893,7 +830,6 @@
       NER_CRUST                = 4
       NER_80_MOHO              = 3
       NER_220_80               = 6
-  !DM    NER_220_MOHO             = 11
       NER_400_220              = 10
       NER_600_400              = 10
       NER_670_600              = 3
@@ -904,7 +840,6 @@
       NER_TOP_CENTRAL_CUBE_ICB = 9
       R_CENTRAL_CUBE = 990000.d0
 
-  ! period min for 4.000000 points per lambda S min in horizontal direction =    3.803752
   ! element width =   7.8125000E-02  degrees =    8.687103      km
     else if(NEX_MAX <= 1152) then
       DT                       = 0.05d0
@@ -916,7 +851,6 @@
       NER_CRUST                = 4
       NER_80_MOHO              = 4
       NER_220_80               = 8
-  !DM    NER_220_MOHO             = 15
       NER_400_220              = 13
       NER_600_400              = 13
       NER_670_600              = 4
@@ -927,7 +861,6 @@
       NER_TOP_CENTRAL_CUBE_ICB = 12
       R_CENTRAL_CUBE = 985000.d0
 
-  ! period min for 4.000000 points per lambda S min in horizontal direction =    3.511156
   ! element width =   7.2115384E-02  degrees =    8.018865      km
     else if(NEX_MAX <= 1248) then
       DT                       = 0.0462d0
@@ -939,7 +872,6 @@
       NER_CRUST                = 5
       NER_80_MOHO              = 4
       NER_220_80               = 9
-  !DM    NER_220_MOHO             = 16
       NER_400_220              = 14
       NER_600_400              = 14
       NER_670_600              = 5
@@ -1284,9 +1216,6 @@
       DEPTH_SECOND_DOUBLING_REAL = R_EARTH - zval
     endif
   enddo
-! print *,'for second doubling, selected element ',elem_doubling_mantle,' at depth ', &
-!             DEPTH_SECOND_DOUBLING_REAL,' and distance ',distance_min,' from optimal depth'
-! print *
 
 ! find element below top of which we should implement the third doubling in the middle of the outer core
 ! locate element closest to optimal value
@@ -1302,9 +1231,6 @@
       DEPTH_THIRD_DOUBLING_REAL = R_EARTH - zval
     endif
   enddo
-! print *,'for third doubling, selected element ',elem_doubling_middle_outer_core,' at depth ', &
-!             DEPTH_THIRD_DOUBLING_REAL,' and distance ',distance_min,' from optimal depth'
-! print *
 
 ! find element below top of which we should implement the fourth doubling in the middle of the outer core
 ! locate element closest to optimal value
@@ -1320,141 +1246,13 @@
       DEPTH_FOURTH_DOUBLING_REAL = R_EARTH - zval
     endif
   enddo
-! print *,'for fourth doubling, selected element ',elem_doubling_bottom_outer_core,' at depth ', &
-!             DEPTH_FOURTH_DOUBLING_REAL,' and distance ',distance_min,' from optimal depth'
-! print *
 
 ! make sure that the two doublings in the outer core are found in the right order
   if(elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
                   stop 'error in location of the two doublings in the outer core'
 
-
 ! define all the layers of the mesh
-  if (SUPPRESS_CRUSTALMESH) then
-
-    NER_80_MOHO = NER_80_MOHO + nint(NER_80_MOHO*((R_EARTH-RMOHO_FICTITIOUS_IN_MESHER)*1.d0)/((RMOHO-R80)*1.d0))
-    NER_CRUST = 0
-    RMOHO_FICTITIOUS_IN_MESHER = R_EARTH
-
-    OCEANS= .false.
-    TOPOGRAPHY = .false.
-    CRUSTAL = .false.
-
-    NUMBER_OF_MESH_LAYERS = 14
-    layer_offset = 0
-
-    ner( 1) = NER_CRUST
-    ner( 2) = NER_80_MOHO
-    ner( 3) = NER_220_80
-    ner( 4) = NER_400_220
-    ner( 5) = NER_600_400
-    ner( 6) = NER_670_600
-    ner( 7) = NER_771_670
-    ner( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-    ner( 9) = elem_doubling_mantle
-    ner(10) = NER_CMB_TOPDDOUBLEPRIME
-    ner(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-    ner(12) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
-    ner(13) = elem_doubling_bottom_outer_core
-    ner(14) = NER_TOP_CENTRAL_CUBE_ICB
-
-  ! value of the doubling ratio in each radial region of the mesh
-    ratio_sampling_array(1:8) = 2
-    ratio_sampling_array(9:11) = 4
-    ratio_sampling_array(12) = 8
-    ratio_sampling_array(13:14) = 16
-
-  ! value of the doubling index flag in each radial region of the mesh
-    doubling_index(1:2) = IFLAG_80_MOHO
-    doubling_index(3) = IFLAG_220_80
-    doubling_index(4:6) = IFLAG_670_220
-    doubling_index(7:10) = IFLAG_MANTLE_NORMAL
-    doubling_index(11:13) = IFLAG_OUTER_CORE_NORMAL
-    doubling_index(14) = IFLAG_INNER_CORE_NORMAL
-
-  ! define the three regions in which we implement a mesh doubling at the top of that region
-    this_region_has_a_doubling(:)  = .false.
-    this_region_has_a_doubling(9)  = .true.
-    this_region_has_a_doubling(12) = .true.
-    this_region_has_a_doubling(13) = .true.
-
-    r_top(1) = R_EARTH
-    r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
-
-    r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
-    r_bottom(2) = R80
-
-    r_top(3) = R80
-    r_bottom(3) = R220
-
-    r_top(4) = R220
-    r_bottom(4) = R400
-
-    r_top(5) = R400
-    r_bottom(5) = R600
-
-    r_top(6) = R600
-    r_bottom(6) = R670
-
-    r_top(7) = R670
-    r_bottom(7) = R771
-
-    r_top(8) = R771
-    r_bottom(8) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-
-    r_top(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-    r_bottom(9) = RTOPDDOUBLEPRIME
-
-    r_top(10) = RTOPDDOUBLEPRIME
-    r_bottom(10) = RCMB
-
-    r_top(11) = RCMB
-    r_bottom(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-
-    r_top(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-    r_bottom(12) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-
-    r_top(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-    r_bottom(13) = RICB
-
-    r_top(14) = RICB
-    r_bottom(14) = R_CENTRAL_CUBE
-
-  !!! DM new definition of rmins & rmaxs in replacement of mesh_radial
-    rmaxs(1) = ONE
-    rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-
-    rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-    rmins(2) = R80 / R_EARTH
-
-    rmaxs(3) = R80 / R_EARTH
-    rmins(3) = R220 / R_EARTH
-
-    rmaxs(4) = R220 / R_EARTH
-    rmins(4) = R400 / R_EARTH
-
-    rmaxs(5) = R400 / R_EARTH
-    rmins(5) = R600 / R_EARTH
-
-    rmaxs(6) = R600 / R_EARTH
-    rmins(6) = R670 / R_EARTH
-
-    rmaxs(7) = R670 / R_EARTH
-    rmins(7) = R771 / R_EARTH
-
-    rmaxs(8:9) = R771 / R_EARTH
-    rmins(8:9) = RTOPDDOUBLEPRIME / R_EARTH
-
-    rmaxs(10) = RTOPDDOUBLEPRIME / R_EARTH
-    rmins(10) = RCMB / R_EARTH
-
-    rmaxs(11:13) = RCMB / R_EARTH
-    rmins(11:13) = RICB / R_EARTH
-
-    rmaxs(14) = RICB / R_EARTH
-    rmins(14) = R_CENTRAL_CUBE / R_EARTH
-
-  elseif (ONE_CRUST) then
+  if (ONE_CRUST) then
 
     NUMBER_OF_MESH_LAYERS = 14
     layer_offset = 0
@@ -1481,7 +1279,7 @@
     ratio_sampling_array(12) = 8
     ratio_sampling_array(13:14) = 16
 
-  !DM value of the doubling index flag in each radial region of the mesh
+  ! value of the doubling index flag in each radial region of the mesh
     doubling_index(1) = IFLAG_CRUST
     doubling_index(2) = IFLAG_80_MOHO
     doubling_index(3) = IFLAG_220_80
@@ -1548,7 +1346,7 @@
     r_top(14) = RICB
     r_bottom(14) = R_CENTRAL_CUBE
 
-  !!! DM new definition of rmins & rmaxs in replacement of mesh_radial
+  ! new definition of rmins & rmaxs
     rmaxs(1) = ONE
     rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
 
@@ -1680,7 +1478,7 @@
     r_top(15) = RICB
     r_bottom(15) = R_CENTRAL_CUBE
 
-  !!! DM new definition of rmins & rmaxs in replacement of mesh_radial
+  ! new definition of rmins & rmaxs
     rmaxs(1) = ONE
     rmins(1) = RMIDDLE_CRUST / R_EARTH
 
@@ -1717,6 +1515,7 @@
     rmaxs(15) = RICB / R_EARTH
     rmins(15) = R_CENTRAL_CUBE / R_EARTH
   endif
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
 !!!!!!  calculation of number of elements (NSPEC) below
@@ -1784,6 +1583,9 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
             doubling = 1
         else
             doubling = 0
+            nb_lay_sb = 0
+            nspec2D_xi_sb = 0
+            nspec2D_eta_sb = 0
         endif
 
         tmp_sum_xi = tmp_sum_xi + ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)) * &
@@ -1806,15 +1608,13 @@ enddo
 
 ! exact number of surface elements on the bottom and top boundaries
 
-ratio_sampling_array(1:8) = 2
-
 ! in the crust and mantle
-  NSPEC2D_TOP(IREGION_CRUST_MANTLE) = (NEX_XI/ratio_sampling_array(1))*(NEX_ETA/ratio_sampling_array(1))/NPROC
-  NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE) = (NEX_XI/ratio_sampling_array(10+layer_offset))*&
-                                         (NEX_ETA/ratio_sampling_array(10+layer_offset))/NPROC
+  NSPEC2D_TOP(IREGION_CRUST_MANTLE) = NEX_XI*NEX_ETA/NPROC
+  NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE) = (NEX_XI/4)*(NEX_ETA/4)/NPROC
 
 ! in the outer core with mesh doubling
   NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/4)*(NEX_ETA/4)/NPROC
+
   NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/16)*(NEX_ETA/16)/NPROC
 
 ! in the top of the inner core
@@ -1859,6 +1659,8 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
             doubling = 1
         else
             doubling = 0
+            nb_lay_sb = 0
+            nspec_sb = 0
         endif
         tmp_sum = tmp_sum + ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
@@ -1949,6 +1751,10 @@ enddo
         else
             doubling = 0
             padding = 0
+            nb_lay_sb = 0
+            nglob_vol = 0
+            nglob_surf = 0
+            nglob_edge = 0
         endif
         if (iter_layer == ilast_region) padding = padding +1
         nblocks_xi = NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)

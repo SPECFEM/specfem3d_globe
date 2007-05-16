@@ -557,7 +557,7 @@
   iMPIcut_xi(:,:) = .false.
   iMPIcut_eta(:,:) = .false.
 
-  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTALMESH) then
+  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE) then
     allocate(stretch_tab(2,ner(1)))
     call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
   endif
@@ -647,8 +647,6 @@
   endif
 ! zmin & zmax
   if (iz_elem == ner(ilayer) .and. ilayer == ifirst_region) then
-      iboun(6,ispec)= .true.
-  elseif (SUPPRESS_CRUSTALMESH .and. iz_elem == ner(ilayer) .and. ilayer == ifirst_region+1) then
       iboun(6,ispec)= .true.
   endif
   if (iz_elem == 1 .and. ilayer == ilast_region) then    ! defined if no doubling in this layer
@@ -796,7 +794,7 @@
 ! end of loop on all the layers of the mesh
   enddo
 
-  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTALMESH) deallocate(stretch_tab)
+  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE) deallocate(stretch_tab)
 
 !---
 

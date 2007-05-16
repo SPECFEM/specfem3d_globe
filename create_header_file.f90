@@ -139,6 +139,21 @@ enddo
   print *
   print *,'found ',ispec_aniso,' tranversely isotropic elements in the mantle'
 
+! create include file for the solver
+  call save_header_file(NSPEC, &
+        nglob,NEX_XI,NEX_ETA,ispec_aniso,NPROC,NPROCTOT, &
+        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
+        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
+        INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
+        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME)
+
+  print *
+  print *,'edit file OUTPUT_FILES/values_from_mesher.h to see some statistics about the mesh'
+  print *
+  print *,'on NEC SX and Earth Simulator, make sure "loopcnt=" parameter'
+! use fused loops on the ES
+  print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
 
 ! DM memory size evaluation
     static_size = 0.d0
@@ -282,24 +297,6 @@ enddo
     print *
 
 ! DM memory size evaluation
-
-
-! create include file for the solver
-  call save_header_file(NSPEC, &
-        nglob,NEX_XI,NEX_ETA,ispec_aniso,NPROC,NPROCTOT, &
-        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
-        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
-        INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,static_size,dynamic_size)
-
-  print *
-  print *,'edit file OUTPUT_FILES/values_from_mesher.h to see some statistics about the mesh'
-  print *
-  print *,'on NEC SX and Earth Simulator, make sure "loopcnt=" parameter'
-! use fused loops on the ES
-  print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
-
 
   end subroutine create_header_file
 
