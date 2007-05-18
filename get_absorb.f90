@@ -121,31 +121,5 @@
   if(ispecb5 /= NSPEC2D_BOTTOM) &
     call exit_MPI(myrank,'ispecb5 should equal NSPEC2D_BOTTOM in absorbing boundary detection')
 
-! IMPROVE save these temporary arrays for the solver for Stacey conditions
-
-      open(unit=27,file=prname(1:len_trim(prname))//'nimin.bin',status='unknown',form='unformatted')
-      write(27) nimin
-      close(27)
-
-      open(unit=27,file=prname(1:len_trim(prname))//'nimax.bin',status='unknown',form='unformatted')
-      write(27) nimax
-      close(27)
-
-      open(unit=27,file=prname(1:len_trim(prname))//'njmin.bin',status='unknown',form='unformatted')
-      write(27) njmin
-      close(27)
-
-      open(unit=27,file=prname(1:len_trim(prname))//'njmax.bin',status='unknown',form='unformatted')
-      write(27) njmax
-      close(27)
-
-      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_xi.bin',status='unknown',form='unformatted')
-      write(27) nkmin_xi
-      close(27)
-
-      open(unit=27,file=prname(1:len_trim(prname))//'nkmin_eta.bin',status='unknown',form='unformatted')
-      write(27) nkmin_eta
-      close(27)
-
   end subroutine get_absorb
 
