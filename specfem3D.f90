@@ -246,30 +246,30 @@
 
 ! memory variables and standard linear solids for attenuation
   double precision, dimension(N_SLS) :: tau_sigma_dble
-  double precision, dimension(:,:,:,:), allocatable   :: omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
-  double precision, dimension(:,:,:,:), allocatable   :: omsb_inner_core_dble, factor_scale_inner_core_dble
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable   :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable   :: one_minus_sum_beta_inner_core, factor_scale_inner_core
+  double precision, dimension(ATT1,ATT2,ATT3,ATT4) :: omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
+  double precision, dimension(ATT1,ATT2,ATT3,ATT5) :: omsb_inner_core_dble, factor_scale_inner_core_dble
+  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT4) :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT5) :: one_minus_sum_beta_inner_core, factor_scale_inner_core
 
   real(kind=CUSTOM_REAL) mul, kappal, rhol
 
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval, betaval, gammaval
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: factor_common_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: factor_common_inner_core
-  double precision, dimension(:,:,:,:,:), allocatable :: factor_common_crust_mantle_dble
-  double precision, dimension(:,:,:,:,:), allocatable :: factor_common_inner_core_dble
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core
+  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle_dble
+  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core_dble
 
   double precision scale_factor,scale_factor_minus_one
   real(kind=CUSTOM_REAL) dist_cr
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev_inner_core
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: eps_trace_over_3_inner_core
 
 ! ADJOINT
@@ -301,44 +301,59 @@
   integer ibathy_topo(NX_BATHY,NY_BATHY)
 
 ! for crust/oceans coupling
-  integer, dimension(:), allocatable :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
-    ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle,ibelm_bottom_crust_mantle,ibelm_top_crust_mantle
+  integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
+  integer, dimension(NSPEC2DMAX_YMIN_YMAX_CM) :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
+  integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
+  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
+
   logical, dimension(NGLOB_CRUST_MANTLE) :: updated_dof_ocean_load
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_bottom_crust_mantle,jacobian2D_top_crust_mantle, &
-    jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
-    jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_xmin_crust_mantle, &
-    normal_xmax_crust_mantle,normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
-    normal_bottom_crust_mantle,normal_top_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: jacobian2D_bottom_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: jacobian2D_top_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: jacobian2D_xmin_crust_mantle,&
+  jacobian2D_xmax_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_CM) :: jacobian2D_ymin_crust_mantle,&
+  jacobian2D_ymax_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: &
+  normal_xmin_crust_mantle,normal_xmax_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2DMAX_YMIN_YMAX_CM) :: &
+  normal_ymin_crust_mantle,normal_ymax_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: normal_bottom_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
 
 ! Stacey
   real(kind=CUSTOM_REAL) sn,tx,ty,tz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: rho_vp_crust_mantle,rho_vs_crust_mantle
   integer nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
-  integer, dimension(:,:), allocatable :: nimin_crust_mantle, &
-    nimax_crust_mantle,njmin_crust_mantle,njmax_crust_mantle, &
-    nkmin_xi_crust_mantle,nkmin_eta_crust_mantle
+  integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_CM) :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
+  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_CM) :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: vp_outer_core
   integer nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
-  integer, dimension(:,:), allocatable :: nimin_outer_core, &
-    nimax_outer_core,njmin_outer_core,njmax_outer_core, &
-    nkmin_xi_outer_core,nkmin_eta_outer_core
+  integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_OC) :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
+  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_OC) :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
 
 ! arrays to couple with the fluid regions by pointwise matching
-  integer, dimension(:), allocatable :: ibelm_xmin_outer_core, &
-    ibelm_xmax_outer_core,ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
-    ibelm_bottom_outer_core,ibelm_top_outer_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_xmin_outer_core, &
-    normal_xmax_outer_core,normal_ymin_outer_core,normal_ymax_outer_core, &
-    normal_bottom_outer_core,normal_top_outer_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
-    jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
-    jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
+  integer, dimension(NSPEC2DMAX_XMIN_XMAX_OC) :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
+  integer, dimension(NSPEC2DMAX_YMIN_YMAX_OC) :: ibelm_ymin_outer_core,ibelm_ymax_outer_core
+  integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
+  integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
 
-  integer, dimension(:), allocatable :: ibelm_xmin_inner_core, &
-    ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core, &
-    ibelm_bottom_inner_core,ibelm_top_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: normal_xmin_outer_core,normal_xmax_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: normal_ymin_outer_core,normal_ymax_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
+
+
+  integer, dimension(NSPEC2DMAX_XMIN_XMAX_IC) :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
+  integer, dimension(NSPEC2DMAX_YMIN_YMAX_IC) :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
+  integer, dimension(NSPEC2D_BOTTOM_IC) :: ibelm_bottom_inner_core
+  integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
 
 ! for matching between fluid and solid regions
   integer :: ispec2D,k_corresp,ispec_selected
@@ -358,21 +373,20 @@
 ! ---- arrays to assemble between chunks
 
 ! communication pattern for faces between chunks
-  integer, dimension(:), allocatable :: iprocfrom_faces,iprocto_faces,imsg_type
+  integer, dimension(NUMMSGS_FACES_) :: iprocfrom_faces,iprocto_faces,imsg_type
 
 ! communication pattern for corners between chunks
-  integer, dimension(:), allocatable :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+  integer, dimension(NCORNERSCHUNKS_) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
 ! indirect addressing for each message for faces and corners of the chunks
 ! a given slice can belong to at most one corner and at most two faces
   integer NGLOB2DMAX_XY
-  integer, dimension(:,:), allocatable :: iboolfaces_crust_mantle
-  integer, dimension(:,:), allocatable :: iboolfaces_outer_core
-  integer, dimension(:,:), allocatable :: iboolfaces_inner_core
+  integer, dimension(NGLOB2DMAX_XY_,NUMFACES_SHARED) :: iboolfaces_crust_mantle, &
+      iboolfaces_outer_core,iboolfaces_inner_core
 
 ! buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_send_faces_scalar,buffer_received_faces_scalar
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_faces_vector,buffer_received_faces_vector
+  real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY_) :: buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB2DMAX_XY_) :: buffer_send_faces_vector,buffer_received_faces_vector
 
 ! -------- arrays specific to each region here -----------
 
@@ -531,7 +545,7 @@
   integer, dimension(:), allocatable :: islice_selected_source,ispec_selected_source
   integer yr,jda,ho,mi
   real(kind=CUSTOM_REAL) stf_used
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearrays
   double precision, dimension(:,:,:) ,allocatable:: nu_source
   double precision sec,stf
@@ -591,11 +605,13 @@
   integer NUM_MSG_TYPES
 
 ! indirect addressing for each corner of the chunks
-  integer, dimension(:,:), allocatable :: iboolcorner_crust_mantle,iboolcorner_outer_core,iboolcorner_inner_core
+  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
+  integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
+  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
 
 ! buffers for send and receive between corners of the chunks
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
+  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_CM) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM) :: buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
 
 ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll,wxgll
@@ -614,20 +630,24 @@
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
 
 ! Lagrange interpolators at receivers
-  double precision, dimension(:), allocatable :: hxir,hetar,hgammar,hpxir,hpetar,hpgammar
+  double precision, dimension(NGLLX) :: hxir,hpxir
+  double precision, dimension(NGLLY) :: hpetar,hetar
+  double precision, dimension(NGLLZ) :: hgammar,hpgammar
   double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
 
 ! 2-D addressing and buffers for summation between slices
-  integer, dimension(:), allocatable :: iboolleft_xi_crust_mantle, &
-    iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
-  integer, dimension(:), allocatable :: iboolleft_xi_outer_core, &
-    iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core
-  integer, dimension(:), allocatable :: iboolleft_xi_inner_core, &
-    iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_OC) :: iboolleft_xi_outer_core,iboolright_xi_outer_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
 
 ! for addressing of the slices
-  integer, dimension(:,:,:), allocatable :: addressing
-  integer, dimension(:), allocatable :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
+  integer, dimension(NCHUNKS_,0:NPROC_XI_-1,0:NPROC_ETA_-1) :: addressing
+  integer, dimension(0:NPROCTOT_-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
 
 ! proc numbers for MPI
   integer myrank,sizeprocs,ier
@@ -713,9 +733,9 @@
   logical READ_KAPPA_MU,READ_TISO
 
 ! dummy arrays that do not need to be read
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: dummy_rho
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-        dummy_vstore, dummy_hstore, dummy_cstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX_OC_IC) :: dummy_rho, dummy_vstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_hstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ANI_) :: dummy_cstore
 
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
@@ -869,47 +889,6 @@
      NSPEC_computed(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) &
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver')
 
-! dynamic allocation of arrays
-
-! indirect addressing for each corner of the chunks
-! maximum size is found in the mantle which has the largest number of points
-  allocate(iboolcorner_crust_mantle(NGLOB1D_RADIAL(IREGION_CRUST_MANTLE),NUMCORNERS_SHARED))
-  allocate(iboolcorner_outer_core(NGLOB1D_RADIAL(IREGION_OUTER_CORE),NUMCORNERS_SHARED))
-  allocate(iboolcorner_inner_core(NGLOB1D_RADIAL(IREGION_INNER_CORE),NUMCORNERS_SHARED))
-
-! buffers for send and receive between corners of the chunks
-  allocate(buffer_send_chunkcorners_scalar(NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)))
-  allocate(buffer_recv_chunkcorners_scalar(NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)))
-
-  allocate(buffer_send_chunkcorners_vector(NDIM,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)))
-  allocate(buffer_recv_chunkcorners_vector(NDIM,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)))
-
-! 2-D addressing and buffers for summation between slices, and point codes
-! use number of elements found in the mantle since it is the largest region
-
-! crust and mantle
-  allocate(iboolleft_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(iboolright_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(iboolleft_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(iboolright_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-
-! outer core
-  allocate(iboolleft_xi_outer_core(NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(iboolright_xi_outer_core(NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(iboolleft_eta_outer_core(NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(iboolright_eta_outer_core(NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-
-! inner core
-  allocate(iboolleft_xi_inner_core(NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE)))
-  allocate(iboolright_xi_inner_core(NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE)))
-  allocate(iboolleft_eta_inner_core(NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)))
-  allocate(iboolright_eta_inner_core(NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)))
-
-! for addressing of the slices
-  allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1))
-  allocate(ichunk_slice(0:NPROCTOT-1))
-  allocate(iproc_xi_slice(0:NPROCTOT-1))
-  allocate(iproc_eta_slice(0:NPROCTOT-1))
 
 ! open file with global slice number addressing
   if(myrank == 0) then
@@ -988,18 +967,6 @@
 ! use number of elements found in the mantle since it is the largest region
   NGLOB2DMAX_XY = max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
 
-! allocate arrays for message buffers with maximum size
-
-  allocate(iboolfaces_crust_mantle(NGLOB2DMAX_XY,NUMFACES_SHARED))
-  allocate(iboolfaces_outer_core(NGLOB2DMAX_XY,NUMFACES_SHARED))
-  allocate(iboolfaces_inner_core(NGLOB2DMAX_XY,NUMFACES_SHARED))
-
-  allocate(buffer_send_faces_scalar(NGLOB2DMAX_XY))
-  allocate(buffer_received_faces_scalar(NGLOB2DMAX_XY))
-
-  allocate(buffer_send_faces_vector(NDIM,NGLOB2DMAX_XY))
-  allocate(buffer_received_faces_vector(NDIM,NGLOB2DMAX_XY))
-
 ! number of corners and faces shared between chunks and number of message types
   if(NCHUNKS == 1 .or. NCHUNKS == 2) then
     NCORNERSCHUNKS = 1
@@ -1022,50 +989,6 @@
 
 ! total number of messages corresponding to these common faces
   NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
-
-! allocate array for messages for faces
-  allocate(iprocfrom_faces(NUMMSGS_FACES))
-  allocate(iprocto_faces(NUMMSGS_FACES))
-  allocate(imsg_type(NUMMSGS_FACES))
-
-! allocate array for messages for corners
-  allocate(iproc_master_corners(NCORNERSCHUNKS))
-  allocate(iproc_worker1_corners(NCORNERSCHUNKS))
-  allocate(iproc_worker2_corners(NCORNERSCHUNKS))
-
-! attenuation
-  if(ATTENUATION) then
-     if(ATTENUATION_3D) then
-        ! for all points in the mesh
-        ! Allocate CRUST MANTLE
-        i     = NGLLX
-        j     = NGLLY
-        k     = NGLLZ
-        l     = NSPEC_CRUST_MANTLE
-        ispec = NSPEC_INNER_CORE
-     else
-        i     = 1
-        j     = 1
-        k     = 1
-        l     = NRAD_ATTENUATION
-        ispec = NRAD_ATTENUATION
-     endif
-     allocate(      factor_scale_crust_mantle(       i, j, k, l))
-     allocate(one_minus_sum_beta_crust_mantle(       i, j, k, l))
-     allocate(     factor_common_crust_mantle(N_SLS, i, j, k, l))
-
-     allocate( factor_scale_crust_mantle_dble(       i, j, k, l))
-     allocate(         omsb_crust_mantle_dble(       i, j, k, l))
-     allocate(factor_common_crust_mantle_dble(N_SLS, i, j, k, l))
-     ! Allocate INNER CORE
-     allocate(      factor_scale_inner_core(       i, j, k, ispec))
-     allocate(one_minus_sum_beta_inner_core(       i, j, k, ispec))
-     allocate(     factor_common_inner_core(N_SLS, i, j, k, ispec))
-
-     allocate( factor_scale_inner_core_dble(       i, j, k, ispec))
-     allocate(         omsb_inner_core_dble(       i, j, k, ispec))
-     allocate(factor_common_inner_core_dble(N_SLS, i, j, k, ispec))
-  endif
 
 ! start reading the databases
 
@@ -1119,10 +1042,10 @@
   nspec_tiso = 1
   nspec_ani = 1
 
-  allocate(dummy_rho(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
-  allocate(dummy_vstore(NGLLX,NGLLY,NGLLZ,nspec_iso))
-  allocate(dummy_hstore(NGLLX,NGLLY,NGLLZ,nspec_tiso))
-  allocate(dummy_cstore(NGLLX,NGLLY,NGLLZ,nspec_ani))
+  dummy_rho(:,:,:,:)=0.
+  dummy_vstore(:,:,:,:)=0.
+  dummy_hstore(:,:,:,:)=0.
+  dummy_cstore(:,:,:,:)=0.
 
   call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
             vp_outer_core,dummy_rho, &
@@ -1145,11 +1068,6 @@
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
             ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
 
-  deallocate(dummy_rho)
-  deallocate(dummy_vstore)
-  deallocate(dummy_hstore)
-  deallocate(dummy_cstore)
-
 ! inner core (no anisotropy)
 ! rmass_ocean_load is not modified in routine
   READ_KAPPA_MU = .true.
@@ -1162,10 +1080,10 @@
     nspec_ani = 1
   endif
 
-  allocate(dummy_rho(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
-  allocate(dummy_vstore(NGLLX,NGLLY,NGLLZ,nspec_iso))
-  allocate(dummy_hstore(NGLLX,NGLLY,NGLLZ,nspec_tiso))
-  allocate(dummy_cstore(NGLLX,NGLLY,NGLLZ,nspec_ani))
+  dummy_rho(:,:,:,:)=0.
+  dummy_vstore(:,:,:,:)=0.
+  dummy_hstore(:,:,:,:)=0.
+  dummy_cstore(:,:,:,:)=0.
 
   call read_arrays_solver(IREGION_INNER_CORE,myrank, &
             dummy_rho,dummy_rho, &
@@ -1187,11 +1105,6 @@
             NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
             ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
-
-  deallocate(dummy_rho)
-  deallocate(dummy_vstore)
-  deallocate(dummy_hstore)
-  deallocate(dummy_cstore)
 
 ! check that the number of points in this slice is correct
 
@@ -1366,14 +1279,6 @@
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-! allocate 1-D Lagrange interpolators and derivatives
-  allocate(hxir(NGLLX))
-  allocate(hpxir(NGLLX))
-  allocate(hetar(NGLLY))
-  allocate(hpetar(NGLLY))
-  allocate(hgammar(NGLLZ))
-  allocate(hpgammar(NGLLZ))
-
 ! to couple mantle with outer core
 
 !
@@ -1382,39 +1287,6 @@
 
 ! create name of database
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-
-! dynamic allocation of arrays
-
-! boundary parameters locator
-  allocate(ibelm_xmin_crust_mantle(NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(ibelm_xmax_crust_mantle(NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(ibelm_ymin_crust_mantle(NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(ibelm_ymax_crust_mantle(NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(ibelm_bottom_crust_mantle(NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)))
-  allocate(ibelm_top_crust_mantle(NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
-
-  allocate(jacobian2D_xmin_crust_mantle(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(jacobian2D_xmax_crust_mantle(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(jacobian2D_ymin_crust_mantle(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(jacobian2D_ymax_crust_mantle(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(jacobian2D_bottom_crust_mantle(NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)))
-  allocate(jacobian2D_top_crust_mantle(NGLLX,NGLLY,NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
-
-! normals
-  allocate(normal_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(normal_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(normal_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(normal_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(normal_bottom_crust_mantle(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)))
-  allocate(normal_top_crust_mantle(NDIM,NGLLX,NGLLY,NSPEC2D_TOP(IREGION_CRUST_MANTLE)))
-
-! Stacey
-  allocate(nimin_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(nimax_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
-  allocate(njmin_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(njmax_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(nkmin_xi_crust_mantle(2,NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)))
-  allocate(nkmin_eta_crust_mantle(2,NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)))
 
 ! Stacey put back
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted')
@@ -1516,40 +1388,6 @@
 
 ! create name of database
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-
-! dynamic allocation of arrays
-
-! boundary parameters locator
-  allocate(ibelm_xmin_outer_core(NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(ibelm_xmax_outer_core(NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(ibelm_ymin_outer_core(NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(ibelm_ymax_outer_core(NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(ibelm_bottom_outer_core(NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
-  allocate(ibelm_top_outer_core(NSPEC2D_TOP(IREGION_OUTER_CORE)))
-
-! normals
-  allocate(normal_xmin_outer_core(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(normal_xmax_outer_core(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(normal_ymin_outer_core(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(normal_ymax_outer_core(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(normal_bottom_outer_core(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
-  allocate(normal_top_outer_core(NDIM,NGLLX,NGLLY,NSPEC2D_TOP(IREGION_OUTER_CORE)))
-
-! jacobian on 2D edges
-  allocate(jacobian2D_xmin_outer_core(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(jacobian2D_xmax_outer_core(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(jacobian2D_ymin_outer_core(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(jacobian2D_ymax_outer_core(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(jacobian2D_bottom_outer_core(NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
-  allocate(jacobian2D_top_outer_core(NGLLX,NGLLY,NSPEC2D_TOP(IREGION_OUTER_CORE)))
-
-! Stacey
-  allocate(nimin_outer_core(2,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(nimax_outer_core(2,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
-  allocate(njmin_outer_core(2,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(njmax_outer_core(2,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(nkmin_xi_outer_core(2,NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)))
-  allocate(nkmin_eta_outer_core(2,NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)))
 
 ! boundary parameters
 
@@ -1662,16 +1500,6 @@
 ! create name of database
   call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
 
-! dynamic allocation of arrays
-
-! boundary parameters locator
-  allocate(ibelm_xmin_inner_core(NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE)))
-  allocate(ibelm_xmax_inner_core(NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE)))
-  allocate(ibelm_ymin_inner_core(NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE)))
-  allocate(ibelm_ymax_inner_core(NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE)))
-  allocate(ibelm_bottom_inner_core(NSPEC2D_BOTTOM(IREGION_INNER_CORE)))
-  allocate(ibelm_top_inner_core(NSPEC2D_TOP(IREGION_INNER_CORE)))
-
 ! read info for vertical edges for central cube matching in inner core
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='old',action='read',form='unformatted')
   read(27) nspec2D_xmin_inner_core
@@ -1693,7 +1521,6 @@
 
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
 
-  allocate(sourcearray(NDIM,NGLLX,NGLLY,NGLLZ))
   allocate(sourcearrays(NSOURCES,NDIM,NGLLX,NGLLY,NGLLZ))
   do isource = 1,NSOURCES
 
@@ -2154,14 +1981,6 @@
       factor_common_inner_core        = factor_common_inner_core_dble
    endif
 
-   deallocate(factor_scale_crust_mantle_dble)
-   deallocate(omsb_crust_mantle_dble)
-   deallocate(factor_common_crust_mantle_dble)
-
-   deallocate(factor_scale_inner_core_dble)
-   deallocate(omsb_inner_core_dble)
-   deallocate(factor_common_inner_core_dble)
-
 ! rescale in crust and mantle
 
     do ispec = 1,NSPEC_CRUST_MANTLE
@@ -2253,10 +2072,6 @@
         enddo
       enddo
     enddo ! END DO INNER CORE
-
-! deallocate arrays
-    deallocate(factor_scale_crust_mantle)
-    deallocate(factor_scale_inner_core)
 
   endif ! END IF(ATTENUATION)
 
@@ -2512,8 +2327,6 @@
   endif
 
   if (SAVE_STRAIN) then
-    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-    allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
     allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
 
@@ -2523,9 +2336,6 @@
       allocate(b_eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
       allocate(b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     endif
-  else
-    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT))
-    allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION))
   endif
 
 ! clear memory variables if attenuation

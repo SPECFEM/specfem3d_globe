@@ -419,6 +419,10 @@
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
+
+! computed in memory_eval
+  double precision :: static_size,dynamic_size
+
 ! ************** PROGRAM STARTS HERE **************
 
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
@@ -955,13 +959,23 @@
   write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
   write(IMAIN,*)
 ! create include file for the solver
+  call memory_eval(ATTENUATION,ATTENUATION_3D,ANISOTROPIC_3D_MANTLE,&
+                   TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
+                   SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,&
+                   ONE_CRUST,doubling_index,this_region_has_a_doubling,&
+                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
+                   NSPEC,nglob,static_size,dynamic_size)
+
   call save_header_file(NSPEC,nglob, &
         NEX_XI,NEX_ETA,nspec_aniso_mantle_all,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
         ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME)
+        static_size,dynamic_size,&
+        NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+        NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
+        NPROC_XI,NPROC_ETA)
 
   endif   ! end of section executed by main process only
 

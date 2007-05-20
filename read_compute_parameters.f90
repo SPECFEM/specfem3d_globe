@@ -1254,7 +1254,7 @@
 ! define all the layers of the mesh
   if (SUPPRESS_CRUSTALMESH) then
 
-    NER_80_MOHO = NER_80_MOHO + nint(NER_80_MOHO*((R_EARTH-RMOHO_FICTITIOUS_IN_MESHER)*1.d0)/((RMOHO-R80)*1.d0))
+    NER_80_MOHO = nint(NER_220_80*((R_EARTH-R80)*1.d0)/((R80-R220)*1.d0))
     NER_CRUST = 0
     RMOHO_FICTITIOUS_IN_MESHER = R_EARTH
 
