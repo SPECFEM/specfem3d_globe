@@ -386,4 +386,4 @@
   double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.6d0
 
 ! for suppressing the crustal layers (replaced by layers of mantle : R_EARTH is not modified, no more crustal doubling)
-  logical, parameter :: SUPPRESS_CRUSTALMESH = .true.
+  logical, parameter :: SUPPRESS_CRUSTALMESH = .false.
