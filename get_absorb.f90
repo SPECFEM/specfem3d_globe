@@ -16,7 +16,7 @@
 !
 !=====================================================================
 
-  subroutine get_absorb(myrank,prname,iboun,nspec, &
+  subroutine get_absorb(myrank,iboun,nspec, &
         nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 
@@ -42,9 +42,6 @@
 ! counters to keep track of the number of elements on each of the
 ! five absorbing boundaries
   integer ispecb1,ispecb2,ispecb3,ispecb4,ispecb5
-
-! processor identification
-  character(len=150) prname
 
   ispecb1=0
   ispecb2=0
