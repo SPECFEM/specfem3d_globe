@@ -600,7 +600,7 @@
       offset_x(ignod) = (ix_elem - 1) + iaddx(ignod) * ratio_sampling_array(ilayer)
       offset_y(ignod) = (iy_elem - 1) + iaddy(ignod) * ratio_sampling_array(ilayer)
       offset_z(ignod) = (iz_elem - 1) + iaddz(ignod)
-  enddo
+   enddo
 ! the rest of the 27 nodes are missing, therefore add them
      call add_missing_nodes(offset_x,offset_y,offset_z)
 
@@ -610,7 +610,10 @@
       ! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
       ! max ratio between size of upper crust elements and lower crust elements is given by the param MAX_RATIO_STRETCHING
       ! to avoid stretching, set MAX_RATIO_STRETCHING = 1  in constants.h
-     call compute_coord_main_mesh(offset_x,offset_y,offset_z-(iz_elem - 1),xelm,yelm,zelm, &
+    do ignod = 1,NGNOD_EIGHT_CORNERS
+      offset_z(ignod) = iaddz(ignod)
+    enddo
+    call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
                ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                stretch_tab(1,iz_elem),stretch_tab(2,iz_elem),1,ilayer,ichunk,rotation_matrix, &
