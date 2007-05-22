@@ -593,7 +593,7 @@ $O/read_compute_parameters.o: constants.h read_compute_parameters.f90
 	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} read_compute_parameters.f90
 
 $O/memory_eval.o: constants.h memory_eval.f90
-        ${FCCOMPILE_CHECK} -c -o $O/memory_eval.o ${FCFLAGS_f90} memory_eval.f90
+	${FCCOMPILE_CHECK} -c -o $O/memory_eval.o ${FCFLAGS_f90} memory_eval.f90
 
 ###
 ### rule for the header file
