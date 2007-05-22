@@ -203,7 +203,6 @@ LIBSPECFEM = $(TOGGLED_OBJECTS) $O/libspecfem.a
 # default targets for the Pyrized version
 @COND_PYRE_TRUE@DEFAULT = specfem3D
 
-
 default: $(DEFAULT)
 
 all: clean default
@@ -213,22 +212,18 @@ backup:
 
 bak: backup
 
-meshfem3D: xmeshfem3D
-
-specfem3D: xspecfem3D
-
 
 ####
 #### rules for executables
 ####
 
 # rules for the pure Fortran version
-@COND_PYRE_FALSE@xmeshfem3D: $(XMESHFEM_OBJECTS)
+@COND_PYRE_FALSE@meshfem3D: $(XMESHFEM_OBJECTS)
 @COND_PYRE_FALSE@## use MPI here
 @COND_PYRE_FALSE@	${MPIFCCOMPILE_CHECK} -o xmeshfem3D $(XMESHFEM_OBJECTS) $(MPILIBS)
 @COND_PYRE_FALSE@
 @COND_PYRE_FALSE@# solver also depends on values from mesher
-@COND_PYRE_FALSE@xspecfem3D: $(XSPECFEM_OBJECTS)
+@COND_PYRE_FALSE@specfem3D: $(XSPECFEM_OBJECTS)
 @COND_PYRE_FALSE@## use MPI here
 @COND_PYRE_FALSE@	${MPIFCCOMPILE_NO_CHECK} -o xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
 @COND_PYRE_FALSE@
@@ -245,45 +240,34 @@ specfem3D: xspecfem3D
 @COND_PYRE_TRUE@		$(XSPECFEM_OBJECTS) $(MPILIBS) $(PYTHON_LDFLAGS) $(FCLIBS)
 
 
-check_buffers_1D: xcheck_buffers_1D
-check_buffers_2D: xcheck_buffers_2D
-check_buffers_corners_chunks: xcheck_buffers_corners_chunks
-check_buffers_faces_chunks: xcheck_buffers_faces_chunks
-combine_AVS_DX: xcombine_AVS_DX
-convolve_source_timefunction: xconvolve_source_timefunction
-create_header_file: xcreate_header_file
-create_movie_AVS_DX: xcreate_movie_AVS_DX
-create_movie_GMT_global: xcreate_movie_GMT_global
-combine_paraview_data: xcombine_paraview_data
-
-xconvolve_source_timefunction: $O/convolve_source_timefunction.o
+convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${FCCOMPILE_CHECK} -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
-xcreate_header_file: $O/program_create_header_file.o $(LIBSPECFEM)
+create_header_file: $O/program_create_header_file.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcreate_header_file $O/program_create_header_file.o $(LIBSPECFEM)
 
-@COND_PYRE_FALSE@xcreate_movie_AVS_DX: $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
+@COND_PYRE_FALSE@create_movie_AVS_DX: $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
 @COND_PYRE_FALSE@	${FCCOMPILE_CHECK} -o xcreate_movie_AVS_DX $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
 
-@COND_PYRE_FALSE@xcreate_movie_GMT_global: $O/create_movie_GMT_global.o $(LIBSPECFEM)
+@COND_PYRE_FALSE@create_movie_GMT_global: $O/create_movie_GMT_global.o $(LIBSPECFEM)
 @COND_PYRE_FALSE@	${FCCOMPILE_CHECK} -o xcreate_movie_GMT_global $O/create_movie_GMT_global.o $(LIBSPECFEM)
 
-xcombine_AVS_DX: $O/combine_AVS_DX.o $(LIBSPECFEM)
+combine_AVS_DX: $O/combine_AVS_DX.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcombine_AVS_DX $O/combine_AVS_DX.o $(LIBSPECFEM)
 
-xcheck_buffers_1D: $O/check_buffers_1D.o $(LIBSPECFEM)
+check_buffers_1D: $O/check_buffers_1D.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcheck_buffers_1D $O/check_buffers_1D.o $(LIBSPECFEM)
 
-xcheck_buffers_2D: $O/check_buffers_2D.o $(LIBSPECFEM)
+check_buffers_2D: $O/check_buffers_2D.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcheck_buffers_2D $O/check_buffers_2D.o $(LIBSPECFEM)
 
-xcheck_buffers_corners_chunks: $O/check_buffers_corners_chunks.o $(LIBSPECFEM)
+check_buffers_corners_chunks: $O/check_buffers_corners_chunks.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcheck_buffers_corners_chunks $O/check_buffers_corners_chunks.o $(LIBSPECFEM)
 
-xcheck_buffers_faces_chunks: $O/check_buffers_faces_chunks.o $(LIBSPECFEM)
+check_buffers_faces_chunks: $O/check_buffers_faces_chunks.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcheck_buffers_faces_chunks $O/check_buffers_faces_chunks.o $(LIBSPECFEM)
 
-xcombine_paraview_data: $O/combine_paraview_data.o $O/write_c_binary.o
+combine_paraview_data: $O/combine_paraview_data.o $O/write_c_binary.o
 	${FCCOMPILE_CHECK} -o xcombine_paraview_data  $O/combine_paraview_data.o $O/write_c_binary.o
 clean:
 	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcreate_movie_GMT_global xcombine_paraview_data PI*
