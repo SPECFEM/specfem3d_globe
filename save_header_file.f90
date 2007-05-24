@@ -442,6 +442,8 @@
 
   write(IOUT,*) 'integer, parameter :: NSTEP_ = ',NSTEP
 
+  write(IOUT,*) ' integer, parameter :: ATTENUATION_3D_VAL = ',ATTENUATION_3D
+
   close(IOUT)
 
   end subroutine save_header_file
