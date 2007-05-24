@@ -373,20 +373,20 @@
 ! ---- arrays to assemble between chunks
 
 ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_) :: iprocfrom_faces,iprocto_faces,imsg_type
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
 
 ! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS_) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
 ! indirect addressing for each message for faces and corners of the chunks
 ! a given slice can belong to at most one corner and at most two faces
   integer NGLOB2DMAX_XY
-  integer, dimension(NGLOB2DMAX_XY_,NUMFACES_SHARED) :: iboolfaces_crust_mantle, &
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle, &
       iboolfaces_outer_core,iboolfaces_inner_core
 
 ! buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY_) :: buffer_send_faces_scalar,buffer_received_faces_scalar
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB2DMAX_XY_) :: buffer_send_faces_vector,buffer_received_faces_vector
+  real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY_VAL) :: buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB2DMAX_XY_VAL) :: buffer_send_faces_vector,buffer_received_faces_vector
 
 ! -------- arrays specific to each region here -----------
 
@@ -646,8 +646,8 @@
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
 
 ! for addressing of the slices
-  integer, dimension(NCHUNKS_,0:NPROC_XI_-1,0:NPROC_ETA_-1) :: addressing
-  integer, dimension(0:NPROCTOT_-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
+  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
+  integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
 
 ! proc numbers for MPI
   integer myrank,sizeprocs,ier
@@ -735,7 +735,7 @@
 ! dummy arrays that do not need to be read
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX_OC_IC) :: dummy_rho, dummy_vstore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_hstore
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ANI_) :: dummy_cstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ANI_VAL) :: dummy_cstore
 
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
@@ -2312,7 +2312,7 @@
 ! this assumes that the gravity perturbations are small and smooth
 ! and that we can neglect the 3D model and use PREM every 100 m in all cases
 ! this is probably a rather reasonable assumption
-  if(GRAVITY) then
+  if(GRAVITY_VAL) then
     call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST)
     do int_radius = 1,NRAD_GRAVITY
       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
