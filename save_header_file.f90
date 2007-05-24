@@ -349,7 +349,6 @@
   endif
   write(IOUT,*)
 
-! DM 04/05/07
 
   write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_CM = ',NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_OC = ',NGLOB1D_RADIAL(IREGION_OUTER_CORE)
@@ -363,12 +362,12 @@
   write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_OC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_YMIN_YMAX_IC = ',NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
 
-  write(IOUT,*) 'integer, parameter :: NPROC_XI_ = ',NPROC_XI
-  write(IOUT,*) 'integer, parameter :: NPROC_ETA_ = ',NPROC_ETA
-  write(IOUT,*) 'integer, parameter :: NCHUNKS_ = ',NCHUNKS
-  write(IOUT,*) 'integer, parameter :: NPROCTOT_ = ',NPROCTOT
+  write(IOUT,*) 'integer, parameter :: NPROC_XI_VAL = ',NPROC_XI
+  write(IOUT,*) 'integer, parameter :: NPROC_ETA_VAL = ',NPROC_ETA
+  write(IOUT,*) 'integer, parameter :: NCHUNKS_VAL = ',NCHUNKS
+  write(IOUT,*) 'integer, parameter :: NPROCTOT_VAL = ',NPROCTOT
 
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_ = ', &
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_VAL = ', &
             max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
 
   if(NCHUNKS == 1 .or. NCHUNKS == 2) then
@@ -385,8 +384,8 @@
     NUM_MSG_TYPES = 3
   endif
 
-  write(IOUT,*) 'integer, parameter :: NUMMSGS_FACES_ = ',NPROC_XI*NUM_FACES*NUM_MSG_TYPES
-  write(IOUT,*) 'integer, parameter :: NCORNERSCHUNKS_ = ',NCORNERSCHUNKS
+  write(IOUT,*) 'integer, parameter :: NUMMSGS_FACES_VAL = ',NPROC_XI*NUM_FACES*NUM_MSG_TYPES
+  write(IOUT,*) 'integer, parameter :: NCORNERSCHUNKS_VAL = ',NCORNERSCHUNKS
 
   if(ATTENUATION) then
      if(ATTENUATION_3D) then
@@ -423,7 +422,7 @@
   endif
 
   write(IOUT,*) 'integer, parameter :: NSPEC_MAX_OC_IC = ',max(NSPEC(IREGION_OUTER_CORE),NSPEC(IREGION_INNER_CORE))
-  write(IOUT,*) 'integer, parameter :: NSPEC_ANI_ = ',nspec_ani
+  write(IOUT,*) 'integer, parameter :: NSPEC_ANI_VAL = ',nspec_ani
 
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_CM = ',NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM = ',NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
@@ -440,7 +439,7 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_OC = ',NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_OC = ',NSPEC2D_TOP(IREGION_OUTER_CORE)
 
-  write(IOUT,*) 'integer, parameter :: NSTEP_ = ',NSTEP
+  write(IOUT,*) 'integer, parameter :: NSTEP_VAL = ',NSTEP
 
   write(IOUT,*) ' integer, parameter :: ATTENUATION_3D_VAL = ',ATTENUATION_3D
 
