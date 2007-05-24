@@ -29,7 +29,7 @@ NPROC_ETA                       = 5
 # 1D_isotropic_prem_onecrust, 1D_transversely_isotropic_prem_onecrust, 1D_iasp91_onecrust, 1D_1066a_onecrust, 1D_ak135_onecrust
 #
 # fully 3D models:
-# 3D_crust_2.0_plus_transversely_isotropic_prem, 3D_s20rts, 3D_anisotropic, 3D_attenuation
+# transversely_isotropic_prem_plus_3D_crust_2.0, 3D_s20rts, 3D_anisotropic, 3D_attenuation
 MODEL                           = 1D_isotropic_prem 
 
 # parameters describing the Earth model
