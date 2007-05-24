@@ -251,7 +251,7 @@
     HONOR_1D_SPHERICAL_MOHO = .true.
     ONE_CRUST = .true.
 
-  else if(MODEL == '3D_crust_2.0_plus_transversely_isotropic_prem') then
+  else if(MODEL == 'transversely_isotropic_prem_plus_3D_crust_2.0') then
     TRANSVERSE_ISOTROPY = .true.
     ISOTROPIC_3D_MANTLE = .false.
     ANISOTROPIC_3D_MANTLE = .false.
