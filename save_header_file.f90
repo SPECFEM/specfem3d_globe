@@ -28,7 +28,7 @@
         static_size,dynamic_size,&
         NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-        NPROC_XI,NPROC_ETA)
+        NPROC_XI,NPROC_ETA,SIMULATION_TYPE)
 
   implicit none
 
@@ -37,7 +37,7 @@
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC, nglob
 
   integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP
-  integer nspec_aniso_mantle
+  integer nspec_aniso_mantle,SIMULATION_TYPE
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
@@ -440,8 +440,7 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_OC = ',NSPEC2D_TOP(IREGION_OUTER_CORE)
 
   write(IOUT,*) 'integer, parameter :: NSTEP_VAL = ',NSTEP
-
-  write(IOUT,*) ' integer, parameter :: ATTENUATION_3D_VAL = ',ATTENUATION_3D
+  write(IOUT,*) 'integer, parameter :: SIMULATION_TYPE_VAL = ',SIMULATION_TYPE
 
   close(IOUT)
 

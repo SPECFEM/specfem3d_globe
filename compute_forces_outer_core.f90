@@ -26,7 +26,7 @@
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          ibool,SIMULATION_TYPE)
+          ibool)
 
   implicit none
 
@@ -35,9 +35,6 @@
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
-
-! for forward or backward simulations
-  integer SIMULATION_TYPE
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: displfluid,accelfluid
@@ -93,7 +90,7 @@
 
 ! set acceleration to zero
   accelfluid(:) = 0._CUSTOM_REAL
-  if (SIMULATION_TYPE == 3) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+  if (SIMULATION_TYPE_VAL == 3) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
 
   do ispec = 1,NSPEC_OUTER_CORE
 
@@ -238,7 +235,7 @@
             endif
 
 ! divergence of displacement field with gravity on
-            if (SIMULATION_TYPE == 3) then
+            if (SIMULATION_TYPE_VAL == 3) then
               div_displfluid(i,j,k,ispec) =  &
                  minus_rho_g_over_kappa_fluid(int_radius) * (dpotentialdx_with_rot * gxl + &
                  dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
