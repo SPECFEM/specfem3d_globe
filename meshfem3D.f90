@@ -1128,7 +1128,7 @@
         static_size,dynamic_size,&
         NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-        NPROC_XI,NPROC_ETA)
+        NPROC_XI,NPROC_ETA,SIMULATION_TYPE)
 
   endif   ! end of section executed by main process only
 
