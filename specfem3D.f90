@@ -1041,7 +1041,8 @@
 ! check that the code has been compiled with the right values
   if(NSPEC_computed(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE .or. &
      NSPEC_computed(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE .or. &
-     NSPEC_computed(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) &
+     NSPEC_computed(IREGION_INNER_CORE) /= NSPEC_INNER_CORE .or. &
+     ATTENUATION_3D /= ATTENUATION_3D_VAL) &
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver')
 
 
@@ -1896,7 +1897,7 @@
   write(IMAIN,*)
   if(ATTENUATION) then
     write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
-    if(ATTENUATION_3D) write(IMAIN,*) 'using 3D attenuation'
+    if(ATTENUATION_3D_VAL) write(IMAIN,*) 'using 3D attenuation'
   else
     write(IMAIN,*) 'no attenuation'
   endif
@@ -2097,7 +2098,7 @@
 ! get and store PREM attenuation model
 
 ! ATTENUATION_3D get values from mesher
-     if(ATTENUATION_3D) then
+     if(ATTENUATION_3D_VAL) then
         ! CRUST_MANTLE ATTENUATION
         call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
         call get_attenuation_model_3D(myrank, prname, omsb_crust_mantle_dble, &
@@ -2144,7 +2145,7 @@
           do i=1,NGLLX
 
 ! ATTENUATION_3D get scale_factor
-            if(ATTENUATION_3D) then
+            if(ATTENUATION_3D_VAL) then
               ! tau_mu and tau_sigma need to reference a point in the mesh
               scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
             else
@@ -2194,7 +2195,7 @@
         do j=1,NGLLY
           do i=1,NGLLX
 
-            if(ATTENUATION_3D) then
+            if(ATTENUATION_3D_VAL) then
                scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
             else
                iglob   = ibool_inner_core(i,j,k,ispec)
@@ -2217,7 +2218,7 @@
                   + scale_factor_minus_one * mul
         endif
 
-            if(ATTENUATION_3D) then
+            if(ATTENUATION_3D_VAL) then
                muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
             else
                muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,iregion_selected)
