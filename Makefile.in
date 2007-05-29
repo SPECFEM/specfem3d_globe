@@ -229,7 +229,7 @@ bak: backup
 @COND_PYRE_FALSE@
 
 # rules for the Pyrized version
-@COND_PYRE_TRUE@xspecfem3D: pyspecfem3D
+@COND_PYRE_TRUE@specfem3D: pyspecfem3D
 @COND_PYRE_TRUE@
 @COND_PYRE_TRUE@pyspecfem3D: main.c $(XMESHFEM_OBJECTS)
 @COND_PYRE_TRUE@	${MPICC} $(CFLAGS) -o $@ $(CFLAGS) $(PYTHON_CFLAGS) main.c \
