@@ -6,7 +6,7 @@ from merlin import setup
 
 setup(
     name = 'Specfem3DGlobe', 
-    version = '3.6',
+    version = '4.0',
     url = 'http://www.gps.caltech.edu/~jtromp/research/downloads.html',
     author = 'Dimitri Komatitsch and Jeroen Tromp',
     author_email = 'jtromp AT caltech.edu',
