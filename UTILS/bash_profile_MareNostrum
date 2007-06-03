@@ -50,6 +50,10 @@ alias bc='bc -l'
 ##alias du='du --max-depth=1 --block-size=MB --human-readable'
 alias du='du --max-depth=1 --human-readable'
 
+# set prompt: ``username@hostname:/directory $ ''
+#PS1="[\u@\h:\w] "
+PS1="\u@\h: "
+
 # Check for bash (and that we haven't already been sourced).
 [ -z "$BASH_VERSION" -o -n "$BASH_COMPLETION" ] && return
 
