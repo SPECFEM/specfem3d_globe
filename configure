@@ -629,6 +629,18 @@ pythondir
 pkgpythondir
 pyexecdir
 pkgpyexecdir
+PYTHON_INCDIR
+PYTHON_BLDLIBRARY
+PYTHON_LDFLAGS
+PYTHON_LDLAST
+PYTHON_LDLIBRARY
+PYTHON_LIBDIR
+PYTHON_LIBP
+PYTHON_LIBPL
+PYTHON_LIBS
+PYTHON_LINKFORSHARED
+PYTHON_MODLIBS
+PYTHON_SYSLIBS
 FC
 FCFLAGS
 LDFLAGS
@@ -1939,7 +1951,108 @@ echo "${ECHO_T}$am_cv_python_pyexecdir" >&6; }
   fi
 
 
-    CIT_PYTHON_SYSCONFIG
+
+# $Id: cit_python.m4 6876 2007-05-14 23:03:20Z leif $
+
+{ echo "$as_me:$LINENO: checking $am_display_PYTHON sysconfig" >&5
+echo $ECHO_N "checking $am_display_PYTHON sysconfig... $ECHO_C" >&6; }
+cat >sysconfig.py <<END_OF_PYTHON
+import os, sys
+from distutils import sysconfig
+def cygpath(wpath):
+    s = os.popen('cygpath -u "%s"' % wpath)
+    path = s.read().strip()
+    s.close()
+    return path
+incdir = sysconfig.get_python_inc()
+keys = (
+    'BLDLIBRARY',
+    'LDFLAGS',
+    'LDLAST',
+    'LDLIBRARY',
+    'LIBDIR',
+    'LIBP',
+    'LIBPL',
+    'LIBS',
+    'LINKFORSHARED',
+    'MODLIBS',
+    'SYSLIBS',
+)
+if os.name == "nt":
+    # We are running under Python for Windows (the real one...
+    # not Cygwin Python, under which 'os.name' is 'posix').
+    # We assume that we are still in the Cygwin POSIX environment,
+    # however (this is 'configure', after all); so we convert
+    # all Windows pathnames to POSIX pathnames using 'cygpath'.
+    incdir = cygpath(incdir)
+    vars = {}
+    libs = os.path.join(sys.prefix, "libs")
+    libs = cygpath(libs)
+    version = sysconfig.get_python_version()
+    version = version.replace('.', '')
+    vars['BLDLIBRARY'] = "-L%s -lpython%s" % (libs, version)
+else:
+    vars = sysconfig.get_config_vars()
+    # transform AIX's python.exp
+    vars['LINKFORSHARED'] = vars['LINKFORSHARED'].replace('Modules',vars['LIBPL'])
+    if vars['LDLIBRARY'] == vars['LIBRARY']:
+        # "On systems without shared libraries, LDLIBRARY is the same as LIBRARY"
+        vars['BLDLIBRARY'] = "-L%(LIBPL)s -lpython%(VERSION)s" % vars
+    elif vars['BLDLIBRARY']:
+        # LIBDIR is usually enough... except on Cygwin, where libpython is
+        # nested inside Python's 'config' directory (Issue39).
+        vars['BLDLIBRARY'] = "-L%(LIBDIR)s -L%(LIBPL)s -lpython%(VERSION)s" % vars
+    else:
+        # "On Mac OS X frameworks, BLDLIBRARY is blank"
+        # See also Issue39.
+        framework = "%(PYTHONFRAMEWORKDIR)s/Versions/%(VERSION)s/%(PYTHONFRAMEWORK)s" % vars
+        vars['LINKFORSHARED'] = vars['LINKFORSHARED'].replace(framework, "-framework " + vars.get('PYTHONFRAMEWORK', 'Python'))
+print 'PYTHON_INCDIR="%s"' % incdir
+for key in keys:
+    print 'PYTHON_%s="%s"' % (key, vars.get(key, ''))
+
+END_OF_PYTHON
+eval `$PYTHON sysconfig.py 2>/dev/null`
+if test -n "$PYTHON_INCDIR"; then
+    { echo "$as_me:$LINENO: result: ok" >&5
+echo "${ECHO_T}ok" >&6; }
+else
+    { { echo "$as_me:$LINENO: error: \"failed
+
+Run '$PYTHON sysconfig.py' to see what wrong.
+\"" >&5
+echo "$as_me: error: \"failed
+
+Run '$PYTHON sysconfig.py' to see what wrong.
+\"" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+rm -f sysconfig.py
+PYTHON_INCDIR=$PYTHON_INCDIR
+
+PYTHON_BLDLIBRARY=$PYTHON_BLDLIBRARY
+
+PYTHON_LDFLAGS=$PYTHON_LDFLAGS
+
+PYTHON_LDLAST=$PYTHON_LDLAST
+
+PYTHON_LDLIBRARY=$PYTHON_LDLIBRARY
+
+PYTHON_LIBDIR=$PYTHON_LIBDIR
+
+PYTHON_LIBP=$PYTHON_LIBP
+
+PYTHON_LIBPL=$PYTHON_LIBPL
+
+PYTHON_LIBS=$PYTHON_LIBS
+
+PYTHON_LINKFORSHARED=$PYTHON_LINKFORSHARED
+
+PYTHON_MODLIBS=$PYTHON_MODLIBS
+
+PYTHON_SYSLIBS=$PYTHON_SYSLIBS
+
+
 fi
 
 # a courtesy to the installed base of users
@@ -4979,13 +5092,305 @@ fi
 
 # Checks for header files.
 
-CIT_FC_MPI_HEADER($MPIFC, $FLAGS_NO_CHECK)
+
+# Generate a Fortran 9x-compatible 'mpif.h', if necessary.
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+ofile="mpif.h"
+cfgfile="${ofile}T"
+trap "rm \"$cfgfile\"; exit 1" 1 2 15
+rm -f "$cfgfile"
+
+cit_fc_save_fc=$FC
+cit_fc_save_fcflags=$FCFLAGS
+FC=$MPIFC
+FCFLAGS="$FCFLAGS $FLAGS_NO_CHECK"
+
+{ echo "$as_me:$LINENO: checking whether mpif.h works" >&5
+echo $ECHO_N "checking whether mpif.h works... $ECHO_C" >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+
+      program main
+
+      include 'mpif.h'
+      integer, parameter :: CUSTOM_MPI_TYPE = MPI_REAL
+      integer ier
+      call MPI_INIT(ier)
+      call MPI_BARRIER(MPI_COMM_WORLD,ier)
+      call MPI_FINALIZE(ier)
+
+      end
+
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_fc_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+
+    { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+    { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+    cit_mpif_h=unknown
+    cit_mpifc_info=`$FC -compile_info 2>/dev/null`
+    for cit_arg in $cit_mpifc_info; do
+        case $cit_arg in
+            */mpif.h) cit_mpif_h="$cit_arg"; break;;
+        esac
+    done
+    if test "$cit_mpif_h" == "unknown"; then
+        { { echo "$as_me:$LINENO: error: cannot compile a trivial MPI program using $MPIFC
+See \`config.log' for more details." >&5
+echo "$as_me: error: cannot compile a trivial MPI program using $MPIFC
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+
+    { echo "$as_me:$LINENO: creating $ofile" >&5
+echo "$as_me: creating $ofile" >&6;}
+    cat >"$cfgfile" <<END_OF_HEADER
+! $ofile.  Generated from $cit_mpif_h by configure.
+
+END_OF_HEADER
+    grep -v MPI_DISPLACEMENT_CURRENT "$cit_mpif_h" >>"$cfgfile"
+    mv -f "$cfgfile" "$ofile" || \
+        (rm -f "$ofile" && cp "$cfgfile" "$ofile" && rm -f "$cfgfile")
+
+    { echo "$as_me:$LINENO: checking whether generated mpif.h works" >&5
+echo $ECHO_N "checking whether generated mpif.h works... $ECHO_C" >&6; }
+    cat >conftest.$ac_ext <<_ACEOF
+
+      program main
+
+      include 'mpif.h'
+      integer, parameter :: CUSTOM_MPI_TYPE = MPI_REAL
+      integer ier
+      call MPI_INIT(ier)
+      call MPI_BARRIER(MPI_COMM_WORLD,ier)
+      call MPI_FINALIZE(ier)
+
+      end
+
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_fc_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+
+        { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+        { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+        { { echo "$as_me:$LINENO: error: cannot compile a trivial MPI program using $MPIFC
+See \`config.log' for more details." >&5
+echo "$as_me: error: cannot compile a trivial MPI program using $MPIFC
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+FC=$cit_fc_save_fc
+FCFLAGS=$cit_fc_save_fcflags
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
 
 
 # Checks for typedefs, structures, and compiler characteristics.
 
 if test "$want_pyre" = yes; then
-    CIT_FC_MAIN
+    ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+{ echo "$as_me:$LINENO: checking for alternate main to link with Fortran libraries" >&5
+echo $ECHO_N "checking for alternate main to link with Fortran libraries... $ECHO_C" >&6; }
+if test "${ac_cv_fc_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_fc_m_save_LIBS=$LIBS
+ LIBS="cfortran_test.$ac_objext $LIBS"
+ ac_fortran_dm_var=FC_DUMMY_MAIN
+ ac_cv_fortran_main="main" # default entry point name
+ for ac_func in MAIN__ MAIN_ __main MAIN _MAIN __MAIN main_ main__ _main; do
+   ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+   cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#ifdef FC_DUMMY_MAIN_EQ_F77
+#  undef F77_DUMMY_MAIN
+#  undef FC_DUMMY_MAIN
+#else
+#  undef $ac_fortran_dm_var
+#endif
+#define main $ac_func
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  mv conftest.$ac_objext cfortran_test.$ac_objext
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	{ { echo "$as_me:$LINENO: error: cannot compile a simple C program
+See \`config.log' for more details." >&5
+echo "$as_me: error: cannot compile a simple C program
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+   ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+   cat >conftest.$ac_ext <<_ACEOF
+      subroutine foobar()
+      return
+      end
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_fc_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_fortran_main=$ac_func; break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+   rm -f cfortran_test* conftest*
+ done
+ ac_cv_fc_main=$ac_cv_fortran_main
+ rm -f cfortran_test* conftest*
+ LIBS=$ac_fc_m_save_LIBS
+
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_fc_main" >&5
+echo "${ECHO_T}$ac_cv_fc_main" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define FC_MAIN $ac_cv_fc_main
+_ACEOF
+
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
 fi
 
 
@@ -5668,6 +6073,18 @@ pythondir!$pythondir$ac_delim
 pkgpythondir!$pkgpythondir$ac_delim
 pyexecdir!$pyexecdir$ac_delim
 pkgpyexecdir!$pkgpyexecdir$ac_delim
+PYTHON_INCDIR!$PYTHON_INCDIR$ac_delim
+PYTHON_BLDLIBRARY!$PYTHON_BLDLIBRARY$ac_delim
+PYTHON_LDFLAGS!$PYTHON_LDFLAGS$ac_delim
+PYTHON_LDLAST!$PYTHON_LDLAST$ac_delim
+PYTHON_LDLIBRARY!$PYTHON_LDLIBRARY$ac_delim
+PYTHON_LIBDIR!$PYTHON_LIBDIR$ac_delim
+PYTHON_LIBP!$PYTHON_LIBP$ac_delim
+PYTHON_LIBPL!$PYTHON_LIBPL$ac_delim
+PYTHON_LIBS!$PYTHON_LIBS$ac_delim
+PYTHON_LINKFORSHARED!$PYTHON_LINKFORSHARED$ac_delim
+PYTHON_MODLIBS!$PYTHON_MODLIBS$ac_delim
+PYTHON_SYSLIBS!$PYTHON_SYSLIBS$ac_delim
 FC!$FC$ac_delim
 FCFLAGS!$FCFLAGS$ac_delim
 LDFLAGS!$LDFLAGS$ac_delim
@@ -5695,7 +6112,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 75; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 87; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
