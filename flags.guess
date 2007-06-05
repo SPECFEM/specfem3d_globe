@@ -143,7 +143,7 @@ case $FC in
         # small (which is often the case)
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-O3 -qsave -qnostrict -qarch=auto -qtune=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qflttrap=en:ov:zero:inv"
+            FLAGS_CHECK="-O3 -qsave -qstrict -qarch=auto -qtune=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qflttrap=en:ov:zero:inv"
         # on MareNostrum at the Barcelona SuperComputing Center (Spain) use
         # -qtune=ppc970 -qarch=ppc64v instead of -qarch=auto -qtune=auto
         fi
