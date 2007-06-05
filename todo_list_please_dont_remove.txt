@@ -2,6 +2,8 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
+- merge assemble_MPI_vector for crust/mantle with assemble_MPI_vector for inner core in order to divide the number of MPI calls by 2 for the solid regions
+
 - *maybe* remove derived types (for attenuation, for anisotropy etc) and remove -align sequence from the Makefile; but check with David if this is needed (maybe not)
 
 - Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  
