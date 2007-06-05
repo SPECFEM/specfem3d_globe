@@ -15,10 +15,10 @@ case $FC in
         # Beowulf Portland pgf90
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-fast -Mnobounds -Mneginfo -Mdclchk -Knoieee"
+            FLAGS_CHECK="-fast -Mnobounds -Mneginfo -Mdclchk -Knoieee -mcmodel=medium"
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-fast -Mnobounds -Mneginfo -Mdclchk -Knoieee -Minline"
+            FLAGS_NO_CHECK="-fast -Mnobounds -Mneginfo -Mdclchk -Knoieee -Minline -mcmodel=medium"
         fi
         ;;
     ifort|*/ifort)
@@ -30,7 +30,7 @@ case $FC in
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
             # standard options
-            FLAGS_NO_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl"
+            FLAGS_NO_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -mcmodel=medium"
             # Pangu at Caltech
             #FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O2 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
             # debug with range checking
@@ -43,7 +43,7 @@ case $FC in
         # GNU gfortran
         #
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow"
+            FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow -mcmodel=medium"
         fi
         if test x"$FLAGS_CHECK" = x; then
 ##############            FLAGS_CHECK="\$(FLAGS_NO_CHECK) -fbounds-check"
