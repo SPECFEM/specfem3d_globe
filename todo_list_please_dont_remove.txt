@@ -2,6 +2,8 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
+- create the mesh from bottom layer to top layer (it is created the other way around right now): this will be better for Cuthill-McKee, for graphics etc
+
 - merge assemble_MPI_vector for crust/mantle with assemble_MPI_vector for inner core in order to divide the number of MPI calls by 2 for the solid regions
 
 - *maybe* remove derived types (for attenuation, for anisotropy etc) and remove -align sequence from the Makefile; but check with David if this is needed (maybe not)
