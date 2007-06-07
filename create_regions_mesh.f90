@@ -47,8 +47,9 @@
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
 
-  integer :: ignod,ner_without_doubling,ispec_superbrick,ilayer,ix_elem,iy_elem,iz_elem, &
+  integer :: ignod,ner_without_doubling,ispec_superbrick,ilayer,ilayer_loop,ix_elem,iy_elem,iz_elem, &
                ifirst_region,ilast_region
+  integer, dimension(:), allocatable :: perm_layer
 
 ! mesh doubling superbrick
   integer, dimension(NGNOD_EIGHT_CORNERS,NSPEC_DOUBLING_SUPERBRICK) :: ibool_superbrick
@@ -551,6 +552,21 @@
 
   endif
 
+! UGLY HACK for considering anisotropic elements first
+  allocate (perm_layer(ifirst_region:ilast_region))
+  perm_layer = (/ (i, i=ifirst_region,ilast_region) /)
+  if(iregion_code == IREGION_CRUST_MANTLE) then
+    if (SUPPRESS_CRUSTALMESH .or. ONE_CRUST) then
+      perm_layer(1)=2
+      perm_layer(2)=3
+      perm_layer(3)=1
+    else
+      perm_layer(1)=3
+      perm_layer(2)=4
+      perm_layer(3)=1
+      perm_layer(4)=2
+    endif
+  endif
 
 ! init boundaries arrays
   iboun(:,:)=.false.
@@ -564,8 +580,8 @@
 ! generate and count all the elements in this region of the mesh
   ispec = 0
 ! loop on all the layers in this region of the mesh
-  do ilayer = ifirst_region,ilast_region
-
+  do ilayer_loop = ifirst_region,ilast_region
+    ilayer = perm_layer(ilayer_loop)
 ! determine the radii that define the shell
   rmin = rmins(ilayer)
   rmax = rmaxs(ilayer)
@@ -800,7 +816,8 @@
   enddo
 
   if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTALMESH) deallocate(stretch_tab)
-
+  deallocate (perm_layer)
+ 
 !---
 
 ! define central cube in inner core
