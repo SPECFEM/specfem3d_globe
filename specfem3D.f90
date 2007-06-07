@@ -1640,7 +1640,7 @@
         endif
       endif
 
-      if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD))) then
+      if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE)>0.and.(SIMULATION_TYPE_VAL==3.or.(SIMULATION_TYPE_VAL==1.and.SAVE_FORWARD)))then
         allocate(absorb_zmin_outer_core(NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
         reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
          if (SIMULATION_TYPE_VAL == 3) then
