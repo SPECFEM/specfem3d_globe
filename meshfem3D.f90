@@ -641,19 +641,8 @@
 
   endif
 
-! DK DK UGLY if running on MareNostrum in Barcelona
+! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
-
-! clean the local scratch space
-    write(system_command,"('rm -r -f /scratch/komatits* ; sleep 10')")
-    call system(system_command)
-
-! use a barrier to make sure everybody has finished cleaning the scratch space
-! before creating new directories in it with mkdir; otherwise, because this
-! space is shared on the dual-core dual-processor boards, one could still be
-! destroying it while others try to write to it, and the new directories
-! could be destroyed
-    call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 ! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
     LOCAL_PATH = '/scratch/komatits'
