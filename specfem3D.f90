@@ -952,7 +952,7 @@
 
   endif
 
-! DK DK UGLY if running on MareNostrum in Barcelona
+! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
 
 ! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
@@ -4471,6 +4471,14 @@
 
   endif
 
+! if running on MareNostrum in Barcelona
+  if(RUN_ON_MARENOSTRUM_BARCELONA) then
+
+! suppress the local directory to leave space for future runs with a different rank number
+    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4)") myrank
+    call system(system_command)
+
+  endif
 
 ! close the main output file
   if(myrank == 0) then
