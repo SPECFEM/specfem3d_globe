@@ -299,6 +299,11 @@
   double precision elevation,height_oceans
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_ocean_load
 
+! mask to sort ibool
+  integer, dimension(:), allocatable :: mask_ibool
+  integer, dimension(:,:,:,:), allocatable :: copy_ibool_ori
+  integer :: inumber
+
 ! boundary parameters locator
   integer, dimension(:), allocatable :: ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top
 
@@ -996,6 +1001,38 @@
   iboolmin = minval(ibool(:,:,:,1:nspec))
   iboolmax = maxval(ibool(:,:,:,1:nspec))
   if(iboolmin /= 1 .or. iboolmax /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering')
+
+! create a new indirect addressing array instead, to reduce cache misses
+! in memory access in the solver
+  allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec))
+  allocate(mask_ibool(nglob))
+  mask_ibool(:) = -1
+  copy_ibool_ori(:,:,:,:) = ibool(:,:,:,:)
+
+  inumber = 0
+  do ispec=1,nspec
+  do k=1,NGLLZ
+    do j=1,NGLLY
+      do i=1,NGLLX
+        if(mask_ibool(copy_ibool_ori(i,j,k,ispec)) == -1) then
+! create a new point
+          inumber = inumber + 1
+          ibool(i,j,k,ispec) = inumber
+          mask_ibool(copy_ibool_ori(i,j,k,ispec)) = inumber
+        else
+! use an existing point created previously
+          ibool(i,j,k,ispec) = mask_ibool(copy_ibool_ori(i,j,k,ispec))
+        endif
+      enddo
+    enddo
+  enddo
+  enddo
+  deallocate(copy_ibool_ori)
+  deallocate(mask_ibool)
+
+  iboolmin = minval(ibool(:,:,:,1:nspec))
+  iboolmax = maxval(ibool(:,:,:,1:nspec))
+  if(iboolmin /= 1 .or. iboolmax /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering after sorting')
 
 ! count number of anisotropic elements in current region
 ! should be zero in all the regions except in the mantle

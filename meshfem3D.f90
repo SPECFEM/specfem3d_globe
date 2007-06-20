@@ -410,7 +410,9 @@
                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                nglob
 
-! DK DK UGLY if running on MareNostrum in Barcelona
+! if running on MareNostrum in Barcelona
+  integer :: sender, receiver, dummy1, dummy2
+  integer msg_status(MPI_STATUS_SIZE)
   character(len=400) system_command
 
 ! computed in read_compute_parameters
@@ -643,6 +645,25 @@
 
 ! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
+
+! clean the local scratch space using a cascade (serial removal, one process after the other)
+    if(myrank == 0) then
+
+      receiver = myrank + 1
+      call system('rm -f -r /scratch/komatits* > /dev/null')
+      call MPI_SEND(dummy1,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+
+    else
+
+      sender = myrank - 1
+      receiver = myrank + 1
+      call MPI_RECV(dummy2,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+      call system('rm -f -r /scratch/komatits* > /dev/null')
+      if(myrank < sizeprocs - 1) call MPI_SEND(dummy1,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+
+    endif
+
+    call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 ! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
     LOCAL_PATH = '/scratch/komatits'
