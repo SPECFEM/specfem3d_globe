@@ -4475,6 +4475,9 @@
 ! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
 
+! synchronize all the processes to make sure everybody has finished
+    call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
 ! suppress the local directory to leave space for future runs with a different rank number
     write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4)") myrank
     call system(system_command)

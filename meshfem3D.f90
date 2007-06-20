@@ -673,7 +673,7 @@
     LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
 
 ! create a local directory to store all the local files
-    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4,' ; mkdir /scratch/komatits_proc',i4.4)") myrank,myrank
+    write(system_command,"('mkdir /scratch/komatits_proc',i4.4)") myrank
     call system(system_command)
 
   endif
