@@ -740,7 +740,7 @@
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
 
-! DK DK UGLY if running on MareNostrum in Barcelona
+! if running on MareNostrum in Barcelona
   character(len=400) system_command
 
   integer iregion_selected
@@ -1640,7 +1640,8 @@
         endif
       endif
 
-      if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE)>0.and.(SIMULATION_TYPE_VAL==3.or.(SIMULATION_TYPE_VAL==1.and.SAVE_FORWARD)))then
+      if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. &
+         (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD)))then
         allocate(absorb_zmin_outer_core(NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
         reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
          if (SIMULATION_TYPE_VAL == 3) then
