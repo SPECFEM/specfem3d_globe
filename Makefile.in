@@ -144,6 +144,7 @@ libspecfem_a_OBJECTS = \
 	$O/numerical_recipes.o \
 	$O/read_arrays_buffers_solver.o \
 	$O/read_compute_parameters.o \
+	$O/auto_ner.o \
 	$O/recompute_jacobian.o \
 	$O/reduce.o \
 	$O/rthetaphi_xyz.o \
@@ -575,6 +576,9 @@ $O/stretching_function.o: constants.h stretching_function.f90
 
 $O/read_compute_parameters.o: constants.h read_compute_parameters.f90
 	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} read_compute_parameters.f90
+
+$O/auto_ner.o: constants.h auto_ner.f90
+	${FCCOMPILE_CHECK} -c -o $O/auto_ner.o ${FCFLAGS_f90} auto_ner.f90
 
 $O/memory_eval.o: constants.h memory_eval.f90
 	${FCCOMPILE_CHECK} -c -o $O/memory_eval.o ${FCFLAGS_f90} memory_eval.f90
