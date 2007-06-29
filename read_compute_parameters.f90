@@ -695,7 +695,7 @@
   else
     ! case 3D
     if(NEX_MAX <= 160) then
-      DT                       = 0.175d0
+      DT                       = 0.15d0
 
   !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
       MIN_ATTENUATION_PERIOD   = 20
