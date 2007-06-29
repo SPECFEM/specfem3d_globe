@@ -613,31 +613,30 @@
     endif
 
    do iz_elem = 1,ner_without_doubling
-
 ! loop on all the corner nodes of this element
    do ignod = 1,NGNOD_EIGHT_CORNERS
-
 ! define topological coordinates of this mesh point
       offset_x(ignod) = (ix_elem - 1) + iaddx(ignod) * ratio_sampling_array(ilayer)
       offset_y(ignod) = (iy_elem - 1) + iaddy(ignod) * ratio_sampling_array(ilayer)
-      offset_z(ignod) = (iz_elem - 1) + iaddz(ignod)
+      if (ilayer == 1 .and. CASE_3D) then
+        offset_z(ignod) = iaddz(ignod)
+      else
+        offset_z(ignod) = (iz_elem - 1) + iaddz(ignod)
+      endif
    enddo
 ! the rest of the 27 nodes are missing, therefore add them
      call add_missing_nodes(offset_x,offset_y,offset_z)
 
 ! compute the actual position of all the grid points of that element
-
   if (ilayer == 1 .and. CASE_3D) then
       ! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
       ! max ratio between size of upper crust elements and lower crust elements is given by the param MAX_RATIO_STRETCHING
-      ! to avoid stretching, set MAX_RATIO_STRETCHING = 1  in constants.h
-    do ignod = 1,NGNOD_EIGHT_CORNERS
-      offset_z(ignod) = iaddz(ignod)
-    enddo
+      ! to avoid stretching, set MAX_RATIO_STRETCHING = 1.0d  in constants.h
     call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
                ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-               stretch_tab(1,iz_elem),stretch_tab(2,iz_elem),1,ilayer,ichunk,rotation_matrix, &
+               stretch_tab(1,ner_without_doubling-iz_elem+1),&
+               stretch_tab(2,ner_without_doubling-iz_elem+1),1,ilayer,ichunk,rotation_matrix, &
                NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
   else
      call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &

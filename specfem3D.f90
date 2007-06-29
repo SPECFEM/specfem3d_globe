@@ -821,7 +821,7 @@
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
             ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D/)
- 
+
     bcast_dbl = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
             RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
@@ -1039,17 +1039,70 @@
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
 
 ! check that the code has been compiled with the right values
-  if(NSPEC_computed(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE .or. &
-     NSPEC_computed(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE .or. &
-     NSPEC_computed(IREGION_INNER_CORE) /= NSPEC_INNER_CORE .or. &
-     ATTENUATION_3D .NEQV. ATTENUATION_VAL_3D .or. SIMULATION_TYPE /= SIMULATION_TYPE_VAL .or. &
-     NCHUNKS /= NCHUNKS_VAL .or. GRAVITY .NEQV. GRAVITY_VAL .or. ROTATION .NEQV. ROTATION_VAL .or. &
-     ATTENUATION .NEQV. ATTENUATION_VAL .or. ELLIPTICITY .NEQV. ELLIPTICITY_VAL .or. NPROCTOT /= NPROCTOT_VAL .or. &
-     NEX_XI /= NEX_XI_VAL .or. NEX_ETA /= NEX_ETA_VAL .or. TRANSVERSE_ISOTROPY .NEQV. TRANSVERSE_ISOTROPY_VAL .or. &
-     ANISOTROPIC_3D_MANTLE .NEQV. ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE .NEQV. ANISOTROPIC_INNER_CORE_VAL) &
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver')
-
-
+  if (NSPEC_computed(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE) then
+      write(IMAIN,*) NSPEC_computed(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE
+      call exit_MPI(myrank,'error in compiled parameters, please recompile solver 1')
+  endif
+  if (NSPEC_computed(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE) then
+      write(IMAIN,*) NSPEC_computed(IREGION_OUTER_CORE),NSPEC_OUTER_CORE
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 2')
+  endif
+  if (NSPEC_computed(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) then
+      write(IMAIN,*) NSPEC_computed(IREGION_INNER_CORE),NSPEC_INNER_CORE
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 3')
+  endif
+  if (ATTENUATION_3D .NEQV. ATTENUATION_VAL_3D) then 
+      write(IMAIN,*) ATTENUATION_3D,ATTENUATION_VAL_3D
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 4')
+  endif
+  if (SIMULATION_TYPE /= SIMULATION_TYPE_VAL) then
+      write(IMAIN,*) SIMULATION_TYPE,SIMULATION_TYPE_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 5')
+  endif
+  if (NCHUNKS /= NCHUNKS_VAL) then
+      write(IMAIN,*) NCHUNKS,NCHUNKS_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 6')
+  endif
+  if (GRAVITY .NEQV. GRAVITY_VAL) then
+      write(IMAIN,*) GRAVITY,GRAVITY_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 7')
+  endif
+  if (ROTATION .NEQV. ROTATION_VAL) then
+      write(IMAIN,*) ROTATION,ROTATION_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 8')
+  endif
+  if (ATTENUATION .NEQV. ATTENUATION_VAL) then
+      write(IMAIN,*) ATTENUATION,ATTENUATION_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 9')
+  endif
+  if (ELLIPTICITY .NEQV. ELLIPTICITY_VAL) then
+      write(IMAIN,*) ELLIPTICITY,ELLIPTICITY_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 10')
+  endif
+  if (NPROCTOT /= NPROCTOT_VAL) then
+      write(IMAIN,*) NPROCTOT,NPROCTOT_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 11')
+  endif
+  if (NEX_XI /= NEX_XI_VAL) then
+      write(IMAIN,*) NEX_XI,NEX_XI_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 12')
+  endif
+  if (NEX_ETA /= NEX_ETA_VAL) then
+      write(IMAIN,*) NEX_ETA,NEX_ETA_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 13')
+  endif
+  if (TRANSVERSE_ISOTROPY .NEQV. TRANSVERSE_ISOTROPY_VAL) then
+      write(IMAIN,*) TRANSVERSE_ISOTROPY,TRANSVERSE_ISOTROPY_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 14')
+  endif
+  if (ANISOTROPIC_3D_MANTLE .NEQV. ANISOTROPIC_3D_MANTLE_VAL) then
+      write(IMAIN,*) ANISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 15')
+  endif
+  if (ANISOTROPIC_INNER_CORE .NEQV. ANISOTROPIC_INNER_CORE_VAL) then
+      write(IMAIN,*) ANISOTROPIC_INNER_CORE,ANISOTROPIC_INNER_CORE_VAL
+       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 16')
+  endif
 ! open file with global slice number addressing
   if(myrank == 0) then
     open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read')
