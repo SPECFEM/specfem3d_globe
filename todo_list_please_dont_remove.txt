@@ -2,19 +2,95 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
+- fusionner en une seule étape le assemble_MPI de inner core et de crust_mantle
+
+- resoudre bug (???) dans calc_jacobian: somme des fonctions de forme est
+testee a zero alors qu'elle ne devrait pas l'etre, et ca plante sur
+certaines machines; le pb est en particulier dans locate_source dans
+SPECFEM3D_GLOBE et aussi dans SPECFEM3D_BASIN
+
+- cuthill mckee permutation casse les deux couches aniso, et donc il faut trouver un autre moyen de les traiter et de sauver les tableaux c11 c12 etc qui sont très couteux; ne plus mettre les deux couches aniso dans les premiers elements, mais plutôt n'importe où dans le maillage à cause de cuthill mckee
+
 - create the mesh from bottom layer to top layer (it is created the other way around right now): this will be better for Cuthill-McKee, for graphics etc
 
 - merge assemble_MPI_vector for crust/mantle with assemble_MPI_vector for inner core in order to divide the number of MPI calls by 2 for the solid regions
 
 - *maybe* remove derived types (for attenuation, for anisotropy etc) and remove -align sequence from the Makefile; but check with David if this is needed (maybe not)
 
-- Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  
+- Re: revision of shortest period estimates?
+08/05/2007 14:51
+Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  
 Jeroen Tromp wrote:
 > Hi Dimitri:
 > If we are shooting for a minimum of 5 grid points per shortest wavelength,
 > perhaps we should increase our estimate of an accuracy at periods of 18 s
 > and longer for an NEX=240 run by 20% to 22 s? And perhaps NEX=320 is
 > accurate down to periods of 15 s rather than 12 s? 
+
+- merging the mesher and the solver 
+30/06/2007 18:19
+Hi Jeroen, Leif and David,
+I thought about merging the mesher and the solver, there
+might be a hidden difficulty because of memory allocation:
+the solver allocates almost all the available memory
+on a given CPU in static arrays, and the solver
+allocates a similar amount dynamically with allocate()
+statements. Therefore combining them would roughly
+double the required amount of memory and will not
+fit because the Par_file is tuned in order for the solver
+to use almost all the available memory on each CPU
+(in the case of large runs).
+On systems (such as Linux) with a "first touch" memory allocation policy
+things should be ok because (if I understand correctly,
+but I am not sure) the system will not physically
+allocate the static memory for the solver until
+it is actually called, i.e. once the mesher has finished,
+even if both are combined in the same program.
+But on other systems I guess we could have problems and the run
+would not start and exit with an "out of memory" error?
+I don't know how to solve this problem. (*if* it needs to be
+solved; if *all* modern systems use a first touch policy, then
+we are all set; please let me know; I don't know much about
+operating systems). Leif, would you have any idea about how to handle this?
+If the problem turns out to be too complex, I suggest
+*not* doing it in v4.0 and waiting until we start
+working on v4.1 after the October 9-11 workshop.
+Dimitri.
+
+- utiliser routines auto_ner de Brian Savage pour calculer MIN_ATTENUATION
+et MAX_ATTENUATION au lieu de mettre des constantes arbitraires comme
+actuellement:
+Re: mesh_radial
+22/05/2007 00:21
+Dimitri,
+Sure.  I will commit those changes when I get the R_CENTRAL_CUBE section working.
+The calculation of MIN_ATTENUATION_PERIOD is
+CHUNK_WIDTH = <user defined> [ deg ]
+NEX_MAX           = <user defined> [ elements ]
+KM_PER_DEGREE = 111.11 [ km / deg ]
+POINTS_PER_WAVELENGTH = 4
+GLL_POINT_SPACING = 4
+MIN_VELOCITY = 2.25 [ km / sec ] S wave veloicty
+CHUNK_WIDTH_KM    = CHUNK_WIDTH * KM_PER_DEGREE
+POINT_SPACING_KM = CHUNK_WIDTH_KM / ( NEX_MAX * GLL_POINT_SPACING )
+MIN_PERIOD               = (POINT_SPACING_KM * POINTS_PER_WAVELENGTH) /
+MIN_VELOCITY
+MAX_ATTENUATION_PERIOD depends on MIN_ and the number of N_SLS.  The
+dependence on N_SLS will also be included in the code
+Brian
+On May 21, 2007, at 5:11 PM, Dimitri Komatitsch wrote:
+> Brian,
+> This is perfect! Thank you very much.
+> One important thing: could you call your routine to compute
+> MIN_ATTENUATION_PERIOD and MAX_ATTENUATION_PERIOD in all cases
+> (even for 90 degrees and even for classical NEX such as 160, 320 etc)?
+> Because the current values are completely obsolete (I computed
+> them in 2000 by trial and error, I don't even remember how...
+> calling your clean routine would be *much* better);
+> please don't hesitate to do it and commit the changes.
+> Thanks!
+> Cheers,
+> Dimitri.
 
 - convert *ALL* the "allocatable" arrays (including
 2D arrays for the MPI buffers etc, because for very large
@@ -204,6 +280,10 @@ Things to add later to the manual:
 - ajouter les courbes de dispersion et stabilité au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix spécial là-dessus; dire dans cet appendix que dans le outer core ce n'est bien sûr par Vs qui est représenté mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un échantillonnage un peu meilleur)
 
 - dire dans manuel que number of grid points per S wavelength (purposely) pas bon dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien dans ce cas prendre un maillage prévu pour une période beaucoup plus courte (typiquement deux fois) que la période mentionnée dans les tables, qui concerne seulement les ondes P et non pas les S dans le inner core
+
+- dire ça dans le manuel :  grep -i xstore *f90 | grep -i double, grep -i xstore *f90 | grep -i custom, doit tjrs être en double dans le mailleur, mais sauvé en CUSTOM et relu en CUSTOM dans le solver car pas besoin de cettte précision
+
+- Dire dans manuel que par défaut le mailleur tourne lentement pour optimiser par cuthill mckee et tri de ibool, mais flag dans DATA/Par_file pour le desactiver (appeler ce flag SLOWER_MESHER_FASTER_SOLVER par exemple)
 
 - explain this in the manual: We have implemented a simple way of handling the ONE_CRUST / two crusts issue : we let the user decide. In the new version, the models in Par_file (isotropic_prem, ak135 etc) always implement the right version with two crusts. But we have added new model names: isotropic_prem_one_crust, ak135_one_crust etc., in which case the code uses ONE_CRUST. Depending on the option chosen by the user, the code automatically selects the right time step (i.e., reduces the time step in the case of two crusts and a "small" NEX, to remain stable). This way, users can decide what they want to do.
 
