@@ -5,6 +5,11 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 - fusionner en une seule étape le assemble_MPI de inner core et de crust_mantle
 merge assemble_MPI_vector for crust/mantle with assemble_MPI_vector for inner core in order to divide the number of MPI calls by 2 for the solid regions; car dans specfem3D.f90 ci-dessous à un moment on appelle deux fois la routine d'assemblage MPI, une fois pour assembler le crust + mantle et une fois pour assembler le inner core, juste après, ce qui double le nombre de messages et la latence pour rien. Donc quand on réécrira le MPI du solver bien entendu il faudra penser à fusionner les deux en un seul envoi de messages contenant crust + mantle + inner core. Voici le code obsolète ci-dessous.  ! crust and mantle call assemble_MPI_vector(myrank,accel_crust_mantle,nglob_crust_mantle, & ...  ! inner core call assemble_MPI_vector(myrank,accel_inner_core,NGLOB_INNER_CORE, & ...
 
+- bug detecte par Vala: code crashes (probably in compute_forces)
+when setting MOVIE_VOLUME = .true.
+> Stack trace terminated abnormally.
+> forrtl: severe (174): SIGSEGV, segmentation fault occurred
+
 - resoudre bug (???) dans calc_jacobian: somme des fonctions de forme est
 testee a zero alors qu'elle ne devrait pas l'etre, et ca plante sur
 certaines machines; le pb est en particulier dans locate_source dans
