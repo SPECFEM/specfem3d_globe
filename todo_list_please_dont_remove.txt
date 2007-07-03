@@ -7,6 +7,8 @@ David:
 
 - rendre plus claire la partie du code qui définit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D, suite aux remarques de Bernhard Schubert
 
+- bug estimation mémoire NEX=1248 (marche) à NEX=1664 (plante) à résoudre: passer tout en integer(kind=8)
+
 - bug movies detecte par Vala: code crashes (probably in compute_forces) when setting MOVIE_VOLUME = .true.  > Stack trace terminated abnormally.  > forrtl: severe (174): SIGSEGV, segmentation fault occurred
 
 - cuthill mckee permutation casse les deux couches aniso, et donc il faut trouver un autre moyen de les traiter et de sauver les tableaux c11 c12 etc qui sont très couteux; ne plus mettre les deux couches aniso dans les premiers elements, mais plutôt n'importe où dans le maillage à cause de cuthill mckee. Make sure anisotropic elements created first, or use indirect addressing (inverse permutation array) and a flag to store anisotropy in the mantle to avoid having to start with that region, which breaks the Cuthill-McKee sorting; once this is done, suppress the statement in which we make this region become region number 1 in the mesh creation routine
