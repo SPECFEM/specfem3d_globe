@@ -105,15 +105,15 @@
           tempx3l = 0._CUSTOM_REAL
 
           do l=1,NGLLX
-            tempx1l = tempx1l + displfluid(ibool(l,j,k,ispec)) * hprime_xx(l,i)
+            tempx1l = tempx1l + displfluid(ibool(l,j,k,ispec)) * hprime_xx(i,l)
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
-            tempx2l = tempx2l + displfluid(ibool(i,l,k,ispec)) * hprime_yy(l,j)
+            tempx2l = tempx2l + displfluid(ibool(i,l,k,ispec)) * hprime_yy(j,l)
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
-            tempx3l = tempx3l + displfluid(ibool(i,j,l,ispec)) * hprime_zz(l,k)
+            tempx3l = tempx3l + displfluid(ibool(i,j,l,ispec)) * hprime_zz(k,l)
           enddo
 
 !         get derivatives of velocity potential with respect to x, y and z
@@ -260,15 +260,15 @@
           tempx3l = 0._CUSTOM_REAL
 
           do l=1,NGLLX
-            tempx1l = tempx1l + tempx1(l,j,k) * hprimewgll_xx(i,l)
+            tempx1l = tempx1l + tempx1(l,j,k) * hprimewgll_xx(l,i)
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
-            tempx2l = tempx2l + tempx2(i,l,k) * hprimewgll_yy(j,l)
+            tempx2l = tempx2l + tempx2(i,l,k) * hprimewgll_yy(l,j)
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
-            tempx3l = tempx3l + tempx3(i,j,l) * hprimewgll_zz(k,l)
+            tempx3l = tempx3l + tempx3(i,j,l) * hprimewgll_zz(l,k)
           enddo
 
 ! sum contributions from each element to the global mesh and add gravity term
