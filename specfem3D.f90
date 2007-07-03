@@ -4208,15 +4208,15 @@
             tempx3l = 0._CUSTOM_REAL
 
             do l=1,NGLLX
-              tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(l,i)
+              tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
             enddo
 
             do l=1,NGLLY
-              tempx2l = tempx2l + b_displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(l,j)
+              tempx2l = tempx2l + b_displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
             enddo
 
             do l=1,NGLLZ
-              tempx3l = tempx3l +  b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(l,k)
+              tempx3l = tempx3l +  b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
             enddo
 
             b_vector_displ_outer_core(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
@@ -4228,15 +4228,15 @@
             tempx3l = 0._CUSTOM_REAL
 
             do l=1,NGLLX
-              tempx1l = tempx1l + accel_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(l,i)
+              tempx1l = tempx1l + accel_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
             enddo
 
             do l=1,NGLLY
-              tempx2l = tempx2l + accel_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(l,j)
+              tempx2l = tempx2l + accel_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
             enddo
 
             do l=1,NGLLZ
-              tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(l,k)
+              tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
             enddo
 
             vector_accel_outer_core(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
