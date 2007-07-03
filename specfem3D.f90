@@ -1123,13 +1123,14 @@
   call MPI_BCAST(iproc_xi_slice,NPROCTOT,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(iproc_eta_slice,NPROCTOT,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-! LQY - output a topology map of slices - fix 20x by nproc
+! output a topology map of slices - fix 20x by nproc
   if (myrank == 0 .and. NCHUNKS == 6) then
     write(IMAIN,*) 'Spatial distribution of the slices'
     do iproc_xi = NPROC_XI-1, 0, -1
       write(IMAIN,'(20x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_AB,iproc_xi,iproc_eta)
+        ichunk = CHUNK_AB
+        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
@@ -1137,15 +1138,18 @@
     do iproc_xi = NPROC_XI-1, 0, -1
       write(IMAIN,'(1x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_BC,iproc_xi,iproc_eta)
+        ichunk = CHUNK_BC 
+        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(3x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_AC,iproc_xi,iproc_eta)
+        ichunk = CHUNK_AC
+        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(3x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_BC_ANTIPODE,iproc_xi,iproc_eta)
+        ichunk = CHUNK_BC_ANTIPODE
+        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
@@ -1153,7 +1157,8 @@
     do iproc_xi = NPROC_XI-1, 0, -1
       write(IMAIN,'(20x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_AB_ANTIPODE,iproc_xi,iproc_eta)
+        ichunk = CHUNK_AB_ANTIPODE
+        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
@@ -1161,7 +1166,8 @@
     do iproc_xi = NPROC_XI-1, 0, -1
       write(IMAIN,'(20x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        write(IMAIN,'(i5)',advance='no') addressing(CHUNK_AC_ANTIPODE,iproc_xi,iproc_eta)
+        ichunk = CHUNK_AC_ANTIPODE
+        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
