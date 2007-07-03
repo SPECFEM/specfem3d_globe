@@ -19,10 +19,10 @@ main (argc,argv)
 int argc; char **argv;
 {
   int             xmgr, n, i, j, plot;
-  int counter;
-  float           T1, T2;
-  float           r, rho, v_p, v_s;
-  float           Q_kappa, Q_mu, Q_kappa_m, Q_mu_m;
+  int             counter;
+  double          T1, T2;
+  double          r, rho, v_p, v_s;
+  double          Q_kappa, Q_mu, Q_kappa_m, Q_mu_m;
   double          f1, f2, Q, om0, Omega;
   double          a, b;
   double          kappa, mu, kappa0, mu0, kappaR, muR;
@@ -33,11 +33,11 @@ int argc; char **argv;
   FILE           *fp_prem, *fp_elastic;
 
 /*  DK DK  printf("longest period (seconds): "); */
-  scanf("%g",&T1);
+  scanf("%lf",&T1);
   f1= 1.0/T1;
 
 /*  DK DK  printf("shortest period (seconds): "); */
-  scanf("%f",&T2);
+  scanf("%lf",&T2);
   f2 = 1.0/T2;
 
 /*  DK DK  printf("number of mechanisms: "); */
@@ -73,7 +73,7 @@ int argc; char **argv;
 /* DK DK  printf("\n\n! central frequency: %25.15f mHz\n\n", 1.0E+03 * om0 / PI2); */
   for (j = 0; j < NR; j++) {
           plot=0;
-    fscanf(fp_prem, "%f %f %f %f %f %f", &r, &rho, &v_p, &v_s, &Q_kappa, &Q_mu);
+    fscanf(fp_prem, "%lf %lf %lf %lf %lf %lf", &r, &rho, &v_p, &v_s, &Q_kappa, &Q_mu);
 
 /* DK DK removed for Qmu only in the Earth
     if (Q_kappa != Q_kappa_m) {
@@ -256,12 +256,12 @@ char error_text[];
   exit(1);
 }
 
-float *vector(nl,nh)
+double *vector(nl,nh)
 int nl,nh;
 {
-  float *v;
+  double *v;
 
-  v=(float *)malloc((unsigned) (nh-nl+1)*sizeof(float));
+  v=(double *)malloc((unsigned) (nh-nl+1)*sizeof(double));
   if (!v) nrerror("allocation failure in vector()");
   return v-nl;
 }
@@ -288,18 +288,18 @@ int nl,nh;
 
 
 
-float **matrix(nrl,nrh,ncl,nch)
+double **matrix(nrl,nrh,ncl,nch)
 int nrl,nrh,ncl,nch;
 {
   int i;
-  float **m;
+  double **m;
 
-  m=(float **) malloc((unsigned) (nrh-nrl+1)*sizeof(float*));
+  m=(double **) malloc((unsigned) (nrh-nrl+1)*sizeof(double*));
   if (!m) nrerror("allocation failure 1 in matrix()");
   m -= nrl;
 
   for(i=nrl;i<=nrh;i++) {
-    m[i]=(float *) malloc((unsigned) (nch-ncl+1)*sizeof(float));
+    m[i]=(double *) malloc((unsigned) (nch-ncl+1)*sizeof(double));
     if (!m[i]) nrerror("allocation failure 2 in matrix()");
     m[i] -= ncl;
   }
@@ -343,14 +343,14 @@ int nrl,nrh,ncl,nch;
 
 
 
-float **submatrix(a,oldrl,oldrh,oldcl,oldch,newrl,newcl)
-float **a;
+double **submatrix(a,oldrl,oldrh,oldcl,oldch,newrl,newcl)
+double **a;
 int oldrl,oldrh,oldcl,oldch,newrl,newcl;
 {
   int i,j;
-  float **m;
+  double **m;
 
-  m=(float **) malloc((unsigned) (oldrh-oldrl+1)*sizeof(float*));
+  m=(double **) malloc((unsigned) (oldrh-oldrl+1)*sizeof(double*));
   if (!m) nrerror("allocation failure in submatrix()");
   m -= newrl;
 
@@ -362,7 +362,7 @@ int oldrl,oldrh,oldcl,oldch,newrl,newcl;
 
 
 void free_vector(v,nl,nh)
-float *v;
+double *v;
 int nl,nh;
 {
   free((char*) (v+nl));
@@ -384,7 +384,7 @@ int nl,nh;
 
 
 void free_matrix(m,nrl,nrh,ncl,nch)
-float **m;
+double **m;
 int nrl,nrh,ncl,nch;
 {
   int i;
@@ -416,7 +416,7 @@ int nrl,nrh,ncl,nch;
 
 
 void free_submatrix(b,nrl,nrh,ncl,nch)
-float **b;
+double **b;
 int nrl,nrh,ncl,nch;
 {
   free((char*) (b+nrl));
@@ -424,16 +424,16 @@ int nrl,nrh,ncl,nch;
 
 
 
-float **convert_matrix(a,nrl,nrh,ncl,nch)
-float *a;
+double **convert_matrix(a,nrl,nrh,ncl,nch)
+double *a;
 int nrl,nrh,ncl,nch;
 {
   int i,j,nrow,ncol;
-  float **m;
+  double **m;
 
   nrow=nrh-nrl+1;
   ncol=nch-ncl+1;
-  m = (float **) malloc((unsigned) (nrow)*sizeof(float*));
+  m = (double **) malloc((unsigned) (nrow)*sizeof(double*));
   if (!m) nrerror("allocation failure in convert_matrix()");
   m -= nrl;
   for(i=0,j=nrl;i<=nrow-1;i++,j++) m[j]=a+ncol*i-ncl;
@@ -443,7 +443,7 @@ int nrl,nrh,ncl,nch;
 
 
 void free_convert_matrix(b,nrl,nrh,ncl,nch)
-float **b;
+double **b;
 int nrl,nrh,ncl,nch;
 {
   free((char*) (b+nrl));
@@ -460,11 +460,11 @@ int nrl,nrh,ncl,nch;
             sum += p[i][j]; psum[j]=sum;}
 
 void amoeba(p,y,ndim,ftol,funk,nfunk)
-float **p,y[],ftol,(*funk)();
+double **p,y[],ftol,(*funk)();
 int ndim,*nfunk;
 {
   int i,j,ilo,ihi,inhi,mpts=ndim+1;
-  float ytry,ysave,sum,rtol,amotry(),*psum,*vector();
+  double ytry,ysave,sum,rtol,amotry(),*psum,*vector();
   void nrerror(),free_vector();
 
   psum=vector(1,ndim);
@@ -508,12 +508,12 @@ int ndim,*nfunk;
   free_vector(psum,1,ndim);
 }
 
-float amotry(p,y,psum,ndim,funk,ihi,nfunk,fac)
-float **p,*y,*psum,(*funk)(),fac;
+double amotry(p,y,psum,ndim,funk,ihi,nfunk,fac)
+double **p,*y,*psum,(*funk)(),fac;
 int ndim,ihi,*nfunk;
 {
   int j;
-  float fac1,fac2,ytry,*ptry,*vector();
+  double fac1,fac2,ytry,*ptry,*vector();
   void nrerror(),free_vector();
 
   ptry=vector(1,ndim);
@@ -539,11 +539,11 @@ int ndim,ihi,*nfunk;
 #undef NMAX
 
 void spline(x,y,n,yp1,ypn,y2)
-float x[],y[],yp1,ypn,y2[];
+double x[],y[],yp1,ypn,y2[];
 int n;
 {
   int i,k;
-  float p,qn,sig,un,*u,*vector();
+  double p,qn,sig,un,*u,*vector();
   void free_vector();
 
   u=vector(1,n-1);
@@ -573,11 +573,11 @@ int n;
 }
 
 void splint(xa,ya,y2a,n,x,y)
-float xa[],ya[],y2a[],x,*y;
+double xa[],ya[],y2a[],x,*y;
 int n;
 {
   int klo,khi,k;
-  float h,b,a;
+  double h,b,a;
   void nrerror();
 
   klo=1;
@@ -596,13 +596,13 @@ int n;
 
 #define FUNC(x) ((*func)(x))
 
-float trapzd(func,a,b,n)
-float a,b;
-float (*func)();  /* ANSI: float (*func)(float); */
+double trapzd(func,a,b,n)
+double a,b;
+double (*func)();  /* ANSI: double (*func)(double); */
 int n;
 {
-  float x,tnm,sum,del;
-  static float s;
+  double x,tnm,sum,del;
+  static double s;
   static int it;
   int j;
 
@@ -627,12 +627,12 @@ int n;
 #define JMAXP JMAX+1
 #define K 5
 
-float qromb(func,a,b)
-float a,b;
-float (*func)();
+double qromb(func,a,b)
+double a,b;
+double (*func)();
 {
-  float ss,dss,trapzd();
-  float s[JMAXP+1],h[JMAXP+1];
+  double ss,dss,trapzd();
+  double s[JMAXP+1],h[JMAXP+1];
   int j;
   void polint(),nrerror();
 
@@ -657,12 +657,12 @@ float (*func)();
 #include <math.h>
 
 void polint(xa,ya,n,x,y,dy)
-float xa[],ya[],x,*y,*dy;
+double xa[],ya[],x,*y,*dy;
 int n;
 {
   int i,m,ns=1;
-  float den,dif,dift,ho,hp,w;
-  float *c,*d,*vector();
+  double den,dif,dift,ho,hp,w;
+  double *c,*d,*vector();
   void nrerror(),free_vector();
 
   dif=fabs(x-xa[1]);
@@ -698,7 +698,7 @@ int n;
 #define MZ 0
 #define FAC (1.0/MBIG)
 
-float ran3(idum)
+double ran3(idum)
 int *idum;
 {
   static int inext,inextp;
