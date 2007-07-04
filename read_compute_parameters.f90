@@ -42,7 +42,9 @@
          NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
          NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
          NGLOB, &
-         ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D)
+         ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
+         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+         ROTATE_SEISMOGRAMS_RT)
 
 
   implicit none
@@ -68,7 +70,9 @@
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
-          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
+          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
+          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+          ROTATE_SEISMOGRAMS_RT
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -494,7 +498,7 @@
         R_CENTRAL_CUBE = 985000.d0
 
       else
-!        stop 'this value of NEX_MAX is not in the database, edit read_compute_parameters.f90 and recompile'
+        stop 'this value of NEX_MAX is not in the database, edit read_compute_parameters.f90 and recompile'
     !   stop 'incorrect value of NEX_MAX, should use an updated version of auto_NER'
       endif
     else
@@ -688,7 +692,7 @@
         R_CENTRAL_CUBE = 985000.d0
 
       else
-!        stop 'this value of NEX_MAX is not in the database, edit read_compute_parameters.f90 and recompile'
+        stop 'this value of NEX_MAX is not in the database, edit read_compute_parameters.f90 and recompile'
     !   stop 'incorrect value of NEX_MAX, should use an updated version of auto_NER'
       endif
     endif
@@ -883,7 +887,7 @@
       R_CENTRAL_CUBE = 985000.d0
 
     else
-!      stop 'this value of NEX_MAX is not in the database, edit read_compute_parameters.f90 and recompile'
+      stop 'this value of NEX_MAX is not in the database, edit read_compute_parameters.f90 and recompile'
   !   stop 'incorrect value of NEX_MAX, should use an updated version of auto_NER'
     endif
   endif
@@ -894,68 +898,47 @@
 
   if(ANGULAR_WIDTH_XI_IN_DEGREES < 90.0d0 .OR. NEX_MAX > 1248) then
 
-     call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-          NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
-          NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
-          NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
-          R_CENTRAL_CUBE, CASE_3D)
-     ! Determine in appropriate period range for the current mesh
-     !   Note: we are using DT as a temporary variable
-     ! The Minimum attenuation period = (Grid Spacing in km) / V_min
-     !  Grid spacing in km     = Width of an element in km * spacing for GLL point * points per wavelength
-     !  Width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
-     !  degrees to km          = 111.11d0
-     !  spacing for GLL point  = 4
-     !  points per wavelength  = 4
-     DT = (ANGULAR_WIDTH_XI_IN_DEGREES / (4.0d0 * dble(NEX_MAX)) * 111.11d0 * 4.0d0 ) / 2.25d0
-     MIN_ATTENUATION_PERIOD = DT
-     
-     ! The max attenuation period for 3 SLS is optimally
-     !   1.75 decades from the min attenuation period
-     
-     DT = dble(MIN_ATTENUATION_PERIOD) * 10.0d0**1.75d0
-     MAX_ATTENUATION_PERIOD = DT
-     
-     ! 0.173 is the minimum spacing between GLL points for NGLL = 5
-     ! This should be changed in the future, placed in a header file
-     ! 0.40 is the ratio of radial lengths of elements inside the
-     ! central cube to those just outside the central cube
-     ! 1221.0 is the Radius of the inncer core in km
-     ! 0.40 is the maximum stability condition
-     ! 11.02827 is Vp near the inner core boundary
-     ! See equation 48 in Komatitsch and Tromp (2002, Part I)
-     DT = (0.40d0 * &
-          ((ANGULAR_WIDTH_XI_IN_DEGREES * (PI/180.0d0)) * 1221.0d0) / &
-          (dble(NEX_MAX) / 8.0d0) / 11.02827d0 ) * 0.173d0 * 0.4d0
-     
-     write(*,*)'##############################################################'
-     write(*,*)
-     write(*,*)' Auto Radial Meshing -- Experimental Code ' 
-     write(*,*)' Consult read_compute_parameters.f90 and auto_ner.f90 '
-     write(*,*)' This should only be invoked for chunks less than 90 degrees'
-     write(*,*)' and for chunks greater than 1248 elements wide'
-     write(*,*)
-     write(*,*)'CHUNK WIDTH:              ', ANGULAR_WIDTH_XI_IN_DEGREES     
-     write(*,*)'NEX:                      ', NEX_MAX
-     write(*,*)'NER_CRUST:                ', NER_CRUST
-     write(*,*)'NER_80_MOHO:              ', NER_80_MOHO
-     write(*,*)'NER_220_80:               ', NER_220_80
-     write(*,*)'NER_400_220:              ', NER_400_220
-     write(*,*)'NER_600_400:              ', NER_600_400
-     write(*,*)'NER_670_600:              ', NER_670_600
-     write(*,*)'NER_771_670:              ', NER_771_670
-     write(*,*)'NER_TOPDDOUBLEPRIME_771:  ', NER_TOPDDOUBLEPRIME_771
-     write(*,*)'NER_CMB_TOPDDOUBLEPRIME:  ', NER_CMB_TOPDDOUBLEPRIME
-     write(*,*)'NER_OUTER_CORE:           ', NER_OUTER_CORE
-     write(*,*)'NER_TOP_CENTRAL_CUBE_ICB: ', NER_TOP_CENTRAL_CUBE_ICB
-     write(*,*)'R_CENTRAL_CUBE:           ', R_CENTRAL_CUBE
-     write(*,*)
-     write(*,*)'DT:                       ',DT
-     write(*,*)'MIN_ATTENUATION_PERIOD    ',MIN_ATTENUATION_PERIOD
-     write(*,*)'MAX_ATTENUATION_PERIOD    ',MAX_ATTENUATION_PERIOD
-     write(*,*)
-     write(*,*)'##############################################################'
-     
+!!!!!! DK DK
+!!!!!! DK DK  this section written by Brian Savage, commented out by Dimitri Komatitsch
+!!!!!! DK DK  because it is based on the old mesher and therefore does not work with the new
+!!!!!! DK DK  mesher. Brian should update it and put it back.
+!!!!!! DK DK
+
+  stop 'auto_ner commented out by Dimitri Komatitsch'
+
+!   call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
+!         NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
+!         NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
+!         NER_CMB_TOPDDOUBLEPRIME, NER_TOP_CENTRAL_CUBE_ICB)
+
+    ! Determine in appropriate period range for the current mesh
+    !   Note: we are using DT as a temporary variable
+    ! The Minimum attenuation period = (Grid Spacing in km) / V_min
+    !  Grid spacing in km     = Width of an element in km * spacing for GLL point * points per wavelength
+    !  Width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
+    !  degrees to km          = 111.11d0
+    !  spacing for GLL point  = 4
+    !  points per wavelength  = 4
+!   DT = (ANGULAR_WIDTH_XI_IN_DEGREES / (4.0d0 * dble(NEX_MAX)) * 111.11d0 * 4.0d0 ) / 2.25d0
+!   MIN_ATTENUATION_PERIOD = DT
+
+    ! The max attenuation period for 3 SLS is optimally
+    !   1.75 decades from the min attenuation period
+!   DT = dble(MIN_ATTENUATION_PERIOD) * 10.0d0**1.75d0
+!   MAX_ATTENUATION_PERIOD = DT
+
+    ! 0.173 is the minimum spacing between GLL points for NGLL = 5
+    ! This should be changed in the future, placed in a header file
+    ! 0.40 is the ratio of radial lengths of elements inside the
+    ! central cube to those just outside the central cube
+    ! 1221.0 is the Radius of the inncer core in km
+    ! 0.40 is the maximum stability condition
+    ! 11.02827 is Vp near the inner core boundary
+    ! See equation 48 in Komatitsch and Tromp (2002, Part I)
+!   DT = (0.40d0 * &
+!        ((ANGULAR_WIDTH_XI_IN_DEGREES * (PI/180.0d0)) * 1221.0d0) / &
+!        (dble(NEX_MAX) / 8.0d0) / 11.02827d0 ) * 0.173d0 * 0.4d0
+
   endif
 
 
@@ -1148,7 +1131,17 @@
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NTSTEP_BETWEEN_OUTPUT_SEISMOS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_READ_ADJSRC, 'solver.NTSTEP_BETWEEN_READ_ADJSRC')
+  if(err_occurred() /= 0) return
+  
+  call read_value_logical(OUTPUT_SEISMOS_ASCII_TEXT, 'solver.OUTPUT_SEISMOS_ASCII_TEXT')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_logical(OUTPUT_SEISMOS_SAC_ALPHANUM, 'solver.OUTPUT_SEISMOS_SAC_ALPHANUM')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_logical(OUTPUT_SEISMOS_SAC_BINARY, 'solver.OUTPUT_SEISMOS_SAC_BINARY')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_logical(ROTATE_SEISMOGRAMS_RT, 'solver.ROTATE_SEISMOGRAMS_RT')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+
   call read_value_logical(RECEIVERS_CAN_BE_BURIED, 'solver.RECEIVERS_CAN_BE_BURIED')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'solver.PRINT_SOURCE_TIME_FUNCTION')
@@ -1947,3 +1940,138 @@ enddo
 !!! with an opendx file of the superbrick's geometry
 
   end subroutine read_compute_parameters
+
+!!!!!! DK DK
+!!!!!! DK DK  this section written by Brian Savage, commented out by Dimitri Komatitsch
+!!!!!! DK DK  because it is based on the old mesher and therefore does not work with the new
+!!!!!! DK DK  mesher. Brian should update it and put it back.
+!!!!!! DK DK
+!
+!----
+!
+!
+!  subroutine auto_ner(WIDTH, NEX_MAX, &
+!       NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
+!       NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
+!       NER_CMB_TOPDDOUBLEPRIME, NER_TOP_CENTRAL_CUBE_ICB)
+!
+!    implicit none
+!
+!    include 'constants.h'
+!
+!    double precision WIDTH
+!    integer NEX_MAX
+!    integer NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
+!         NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
+!         NER_CMB_TOPDDOUBLEPRIME, NER_TOP_CENTRAL_CUBE_ICB
+!
+!    integer, parameter                         :: NUM_REGIONS = 13
+!    integer, dimension(NUM_REGIONS)            :: scaling
+!    double precision, dimension(NUM_REGIONS)   :: radius
+!    double precision, dimension(NUM_REGIONS)   :: element_width
+!    double precision, dimension(NUM_REGIONS)   :: chunk_width
+!    double precision, dimension(NUM_REGIONS-1) :: ratio_top
+!    double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
+!    integer, dimension(NUM_REGIONS-1)          :: NER
+!    integer NER_FLUID
+!
+!    ! This is PREM in Kilometers
+!    radius(1)  = 6371.00d0 ! Surface
+!    radius(2)  = 6346.60d0 ! Moho
+!    radius(3)  = 6151.00d0 ! 220
+!    radius(4)  = 5971.00d0 ! 400
+!    radius(5)  = 5771.00d0 ! 600
+!    radius(6)  = 5701.00d0 ! 670
+!    radius(7)  = 5600.00d0 ! 771
+!    radius(8)  = 3630.00d0 ! D''
+!    radius(9)  = 3480.00d0 ! CMB
+!    radius(10) =    0.00d0 ! Top Double Fluid
+!    radius(11) =    0.00d0 ! Bottom Double Fluid
+!    radius(12) = 1221.00d0 ! ICB
+!    radius(13) = 1071.00d0 ! Top Central Cube
+!
+!    ! Mesh Doubling
+!    scaling(1:1)   = 1
+!    scaling(2:5)   = 2
+!    scaling(6:11)  = 4
+!    scaling(12:13) = 8
+!
+!    ! Minimum Number of Elements a Region must have
+!    NER(:)  = 1
+!    NER(2)  = 3
+!    NER(3)  = 2
+!    NER(12) = 2
+!
+!    NER_FLUID = 6
+!
+!    ! Determine the Radius of Top and Bottom of Fluid Doubling Region
+!!!!!!!!! DK DK suppressed this    radius(10) = radius(12) + RATIO_TOP_DBL_OC    * (radius(9) - radius(12))
+!!!!!!!!! DK DK suppressed this    radius(11) = radius(12) + RATIO_BOTTOM_DBL_OC * (radius(9) - radius(12))
+!    radius(10) = 0
+!    radius(11) = 0
+!
+!    ! Horizontal Width of a Chunk
+!    chunk_width(:) = WIDTH * (PI/180.0d0) * radius(:)
+!
+!    ! Horizontal Width of the elements within the chunk
+!    element_width(:) = chunk_width(:) / (NEX_MAX / scaling(:))
+!
+!
+!    ! Find the Number of Radial Elements in a region based upon
+!    ! the aspect ratio of the elements
+!    call auto_optimal_ner(NUM_REGIONS, radius, element_width,NER, ratio_top, ratio_bottom)
+!
+!    ! Set Output arguments
+!    NER_CRUST                = NER(1)
+!    NER_220_MOHO             = NER(2)
+!    NER_400_220              = NER(3)
+!    NER_600_400              = NER(4)
+!    NER_670_600              = NER(5)
+!    NER_771_670              = NER(6)
+!    NER_TOPDDOUBLEPRIME_771  = NER(7)
+!    NER_CMB_TOPDDOUBLEPRIME  = NER(8)
+!    NER_FLUID                = NER(10)
+!    NER_TOP_CENTRAL_CUBE_ICB = NER(12)
+!
+!  end subroutine auto_ner
+!
+!!
+!!----
+!!
+!
+!  subroutine auto_optimal_ner(NUM_REGIONS, r, ew, NER, rt, rb)
+!
+!    implicit none
+!
+!    integer NUM_REGIONS
+!    integer,          dimension(NUM_REGIONS-1) :: NER ! Elements per Region
+!    double precision, dimension(NUM_REGIONS)   :: r   ! Radius
+!    double precision, dimension(NUM_REGIONS)   :: ew  ! Element Width
+!    double precision, dimension(NUM_REGIONS-1) :: rt  ! Ratio at Top
+!    double precision, dimension(NUM_REGIONS-1) :: rb  ! Ratio at Bottom
+!
+!    double precision dr, w, ratio, xi, ximin
+!    integer ner_test
+!    integer i
+!
+!    ! Find optimal elements per region
+!    do i = 1,NUM_REGIONS-1
+!       dr = r(i) - r(i+1)              ! Radial Length of Ragion
+!       w  = (ew(i) + ew(i+1)) / 2.0d0  ! Average Width of Region
+!       ner_test = NER(i)               ! Initial solution
+!       ratio = (dr / ner_test) / w     ! Aspect Ratio of Element
+!       xi = dabs(ratio - 1.0d0)        ! Aspect Ratio should be near 1.0
+!       ximin = 1e7                     ! Initial Minimum
+!
+!       do while(xi <= ximin)
+!          NER(i) = ner_test            ! Found a better solution
+!          ximin = xi                   !
+!          ner_test = ner_test + 1      ! Increment ner_test and
+!          ratio = (dr / ner_test) / w  ! look for a better
+!          xi = dabs(ratio - 1.0d0)     ! solution
+!       end do
+!       rt(i) = dr / NER(i) / ew(i)     ! Find the Ratio of Top
+!       rb(i) = dr / NER(i) / ew(i+1)   ! and Bottom for completeness
+!    end do
+!
+!  end subroutine auto_optimal_ner

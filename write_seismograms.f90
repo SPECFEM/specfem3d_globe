@@ -20,8 +20,11 @@
 subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
               station_name,network_name,stlat,stlon,stele,nrec,nrec_local, &
               DT,NSTEP,hdur,it_begin,it_end, &
- yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,&
- NPROCTOT,FINAL)
+              yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename, &
+              cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
+              NPROCTOT,FINAL, &
+              OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
 
  implicit none
 
@@ -54,6 +57,12 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
  integer msg_status(MPI_STATUS_SIZE)
  character(len=150) OUTPUT_FILES
 
+! new flags to decide on seismogram type BS BS 06/2007
+  logical OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
+          OUTPUT_SEISMOS_SAC_BINARY
+! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
+  logical ROTATE_SEISMOGRAMS_RT
+
   if(myrank == 0) then ! on the master, gather all the seismograms
     ! get the base pathname for output files
     call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -80,7 +89,9 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
                                     station_name,network_name,stlat,stlon,stele,nrec, &
                                     DT,NSTEP,hdur,it_begin,it_end, &
                                     yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat, &
-                                    cmt_lon,cmt_depth,cmt_hdur,NSOURCES,OUTPUT_FILES)
+                                    cmt_lon,cmt_depth,cmt_hdur,NSOURCES,OUTPUT_FILES, &
+                                    OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+                                    OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
         enddo
       endif
     enddo
@@ -110,15 +121,20 @@ end subroutine write_seismograms
  subroutine write_one_seismogram(one_seismogram,irec, &
               station_name,network_name,stlat,stlon,stele,nrec, &
               DT,NSTEP,hdur,it_begin,it_end, &
- yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
- OUTPUT_FILES)
+              yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
+              OUTPUT_FILES, &
+              OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
 
  implicit none
 
   include "constants.h"
 
   integer nrec,NSTEP,it_begin,it_end
+
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: one_seismogram
+  real(kind=CUSTOM_REAL), dimension(5,NSTEP) :: seismogram_tmp
+
   double precision hdur,DT
 
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
@@ -184,6 +200,7 @@ end subroutine write_seismograms
   character(8) KCMPNM
   character(8) KNETWK
   character(8) KUSER0,KUSER1,KUSER2
+  character(8), parameter :: str_undef='-12345  '
 
   real UNUSED   ! header fields unused by SAC
   real undef    ! undefined values
@@ -191,9 +208,33 @@ end subroutine write_seismograms
   real BYSAC
 ! end BS BS SAC header variables
 
+! new flags to decide on seismogram type BS BS 06/2007
+  logical OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
+          OUTPUT_SEISMOS_SAC_BINARY
+! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
+  logical ROTATE_SEISMOGRAMS_RT
+
+! BS BS new variables used for calculation of backazimuth and 
+! rotation of components if ROTATE_SEISMOGRAMS=.true.
+
+  integer ior_start,ior_end
+  double precision backaz
+  real(kind=CUSTOM_REAL) phi,cphi,sphi
 !----------------------------------------------------------------
 
-   do iorientation = 1,NDIM
+
+
+  if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T LMU BS BS begin
+     ior_start=3    ! starting from Z
+     ior_end  =5    ! ending with T => ZRT
+  else
+     ior_start=1    ! starting from N
+     ior_end  =3    ! ending with Z => NEZ
+  endif
+
+    !do iorientation = 1,NDIM
+    !do iorientation = 1,5                   ! BS BS changed from 3 (NEZ) to 5 (NEZRT) components
+    do iorientation = ior_start,ior_end      ! BS BS changed according to ROTATE_SEISMOGRAMS_RT
 
      if(iorientation == 1) then
        chn = 'LHN'
@@ -201,9 +242,53 @@ end subroutine write_seismograms
        chn = 'LHE'
      else if(iorientation == 3) then
        chn = 'LHZ'
+      else if(iorientation == 4) then
+        chn = 'LHR'
+      else if(iorientation == 5) then
+        chn = 'LHT'
      else
        stop 'incorrect channel value'
      endif
+
+      if (iorientation == 4 .or. iorientation == 5) then        ! LMU BS BS
+    
+          ! BS BS calculate backazimuth needed to rotate East and North
+          ! components to Radial and Transverse components 
+          call get_backazimuth(elat,elon,stlat(irec),stlon(irec),backaz)
+    
+          if (backaz>180.) then
+             phi=backaz-180.
+          elseif (backaz<180.) then 
+             phi=backaz+180.
+          elseif (backaz==180.) then
+             phi=backaz
+          endif
+          
+          cphi=cos(phi*pi/180)
+          sphi=sin(phi*pi/180)
+          
+          ! BS BS do the rotation of the components and put result in 
+          ! new variable seismogram_tmp
+          if (iorientation == 4) then ! radial component
+             do isample = it_begin,it_end
+                seismogram_tmp(iorientation,isample) = &
+                   cphi * one_seismogram(1,isample) + sphi * one_seismogram(2,isample)
+             enddo
+          elseif (iorientation == 5) then ! transverse component
+             do isample = it_begin,it_end
+                seismogram_tmp(iorientation,isample) = &
+                -1*sphi * one_seismogram(1,isample) + cphi * one_seismogram(2,isample)
+             enddo
+          endif
+
+      else ! keep NEZ components
+
+             do isample = it_begin,it_end
+                seismogram_tmp(iorientation,isample) = one_seismogram(iorientation,isample)
+             enddo
+          
+      endif
+    
 
 ! create the name of the seismogram file for each slice
 ! file name includes the name of the station and the network
@@ -221,24 +306,7 @@ end subroutine write_seismograms
      write(sisname,"('/',a,'.',a,'.',a3,'.semd')") station_name(irec)(1:length_station_name), &
                    network_name(irec)(1:length_network_name),chn
 
-! save seismograms in text format with no subsampling.
-! Because we do not subsample the output, this can result in large files
-! if the simulation uses many time steps. However, subsampling the output
-! here would result in a loss of accuracy when one later convolves
-! the results with the source time function
-   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname),status='unknown')
-
-! subtract half duration of the source to make sure travel time is correct
-     do isample = it_begin,it_end
-       value = dble(one_seismogram(iorientation,isample))
-! distinguish between single and double precision for reals
-       if(CUSTOM_REAL == SIZE_REAL) then
-         write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',sngl(value)
-       else
-         write(IOUT,*) dble(isample-1)*DT - hdur,' ',value
-       endif
-     enddo
-     close(IOUT)
+  if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY) then 
 
 !######################## SAC Alphanumeric Seismos ############################
 !
@@ -269,10 +337,6 @@ end subroutine write_seismograms
 ! file. The header section is stored on the first 30 cards. This is followed
 ! by one or two data sections. The data is in 5G15.7 format.
 !----------------------------------------------------------------------
-
-! add .sac extension to seismogram file name for SAC seismograms
- write(sisname_2,"('/',a,'.sac')") trim(sisname)
- open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
 
 ! define certain default values
 
@@ -328,6 +392,12 @@ end subroutine write_seismograms
  else if(iorientation == 3) then !Z
     CMPAZ  = 0.00
     CMPINC = 0.00
+  else if(iorientation == 4) then !R
+     CMPAZ = modulo(phi,360.) ! phi is calculated above (see call distaz())
+     CMPINC =90.00
+  else if(iorientation == 5) then !T
+     CMPAZ = modulo(phi+90.,360.) ! phi is calculated above (see call distaz())
+     CMPINC =90.00
  endif
 !----------------end format G15.7--------
 
@@ -351,6 +421,7 @@ end subroutine write_seismograms
 ! event type
  IFTYPE = 1 ! 1=ITIME, i.e. seismogram  [REQUIRED] # numbering system is
  IDEP   = 6 ! 6: displ/nm                          # quite strange, best
+
  IZTYPE = 11 !=origint reference time equivalent ! # by chnhdr and write
  IEVTYP = 40 !event type, 40: Earthquake           # alpha and check
  IQUAL  = int(undef) ! quality
@@ -379,6 +450,13 @@ end subroutine write_seismograms
  KUSER1 = 'CMT_LON_'          !  A8
  KUSER2 = 'CMTDEPTH'          !  A8
 !----------------------------------
+
+
+  if (OUTPUT_SEISMOS_SAC_ALPHANUM) then 
+
+! add .sacan (sac alphanumeric) extension to seismogram file name for SAC seismograms
+ write(sisname_2,"('/',a,'.sacan')") trim(sisname)
+ open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
 
 ! Formats of alphanumerical SAC header fields
 510 format(5G15.7,5G15.7,5G15.7,5G15.7,5G15.7)
@@ -454,15 +532,16 @@ end subroutine write_seismograms
 
 ! now write data - with five values per row:
 ! ---------------
+
  write_counter = 0
 
  do isample = it_begin+5,it_end+1,5
 
-   value1 = dble(one_seismogram(iorientation,isample-5))
-   value2 = dble(one_seismogram(iorientation,isample-4))
-   value3 = dble(one_seismogram(iorientation,isample-3))
-   value4 = dble(one_seismogram(iorientation,isample-2))
-   value5 = dble(one_seismogram(iorientation,isample-1))
+   value1 = dble(seismogram_tmp(iorientation,isample-5))
+   value2 = dble(seismogram_tmp(iorientation,isample-4))
+   value3 = dble(seismogram_tmp(iorientation,isample-3))
+   value4 = dble(seismogram_tmp(iorientation,isample-2))
+   value5 = dble(seismogram_tmp(iorientation,isample-1))
 
    write(IOUT,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
 
@@ -472,9 +551,209 @@ end subroutine write_seismograms
 
  close(IOUT)
 
+  endif ! OUTPUT_SEISMOS_SAC_ALPHANUM
+      
+! For explaination on values set, see above (SAC ASCII)
+  if (OUTPUT_SEISMOS_SAC_BINARY) then 
+
+! add .sac (sac binary) extension to seismogram file name for SAC seismograms
+ write(sisname_2,"('/',a,'.sac')") trim(sisname)
+
+    ! open binary file
+    call open_file(trim(OUTPUT_FILES)//trim(sisname_2)//char(0))
+
+    ! write header variables 
+
+    ! write single precision header variables 1:70
+    call write_real(DELTA)         !(1)
+    call write_real(DEPMIN)        !(2)
+    call write_real(DEPMAX)        !(3)
+    call write_real(SCALE_F)       !(4)
+    call write_real(ODELTA)        !(5)
+    call write_real(B)             !(6)
+    call write_real(E)             !(7)
+    call write_real(O)             !(8)
+    call write_real(A)             !(9)
+    call write_real(INTERNAL)      !(10)
+    call write_real(undef)          !(11)T0
+    call write_real(undef)          !(12)T1
+    call write_real(undef)          !(13)T2
+    call write_real(undef)          !(14)T3
+    call write_real(undef)          !(15)T4
+    call write_real(undef)          !(16)T5
+    call write_real(undef)          !(17)T6
+    call write_real(undef)          !(18)T7
+    call write_real(undef)          !(19)T8
+    call write_real(undef)          !(20)T9
+    call write_real(undef)          !(21)F
+    call write_real(undef)          !(22)RESP0
+    call write_real(undef)          !(23)RESP1
+    call write_real(undef)          !(24)RESP2
+    call write_real(undef)          !(25)RESP3
+    call write_real(undef)          !(26)RESP4
+    call write_real(undef)          !(27)RESP5
+    call write_real(undef)          !(28)RESP6
+    call write_real(undef)          !(29)RESP7
+    call write_real(undef)          !(30)RESP8
+    call write_real(undef)          !(31)RESP9
+    call write_real(STLA)          !(32)
+    call write_real(STLO)          !(33)
+    call write_real(STEL)          !(34)
+    call write_real(STDP)          !(35)
+    call write_real(EVLA)          !(36)
+    call write_real(EVLO)          !(37)
+    call write_real(EVEL)          !(38)
+    call write_real(EVDP)          !(39)
+    call write_real(MAG)           !(40)
+    call write_real(USER0)         !(41)
+    call write_real(USER1)         !(42)
+    call write_real(USER2)         !(43)
+    call write_real(USER3)         !(44)
+    call write_real(undef)          !(45)USER4
+    call write_real(undef)          !(46)USER5
+    call write_real(undef)          !(47)USER6
+    call write_real(undef)          !(48)USER7
+    call write_real(undef)          !(49)USER8
+    call write_real(undef)          !(50)USER9
+    call write_real(DIST)          !(51)
+    call write_real(AZ)            !(52)
+    call write_real(BAZ)           !(53)
+    call write_real(GCARC)         !(54)
+    call write_real(INTERNAL)      !(55)
+    call write_real(INTERNAL)      !(56)
+    call write_real(DEPMEN)        !(57)
+    call write_real(CMPAZ)         !(58)
+    call write_real(CMPINC)        !(59)
+    call write_real(undef)          !(60)XMINIMUM 
+    call write_real(undef)          !(61)XMAXIMUM 
+    call write_real(undef)          !(62)YMINIMUM
+    call write_real(undef)          !(63)YMAXIMUM
+    call write_real(undef)          !(64)
+    call write_real(undef)          !(65)
+    call write_real(undef)          !(66)
+    call write_real(undef)          !(67)
+    call write_real(undef)          !(68)
+    call write_real(undef)          !(69)
+    call write_real(undef)          !(70)
+
+    ! write integer header variables 71:105
+    call write_integer(NZYEAR)        !(71)
+    call write_integer(NZJDAY)        !(72)
+    call write_integer(NZHOUR)        !(73)
+    call write_integer(NZMIN)         !(74)
+    call write_integer(NZSEC)         !(75)
+    call write_integer(NZMSEC)        !(76)
+    call write_integer(NVHDR)         !(77)
+    call write_integer(NORID)         !(78)
+    call write_integer(NEVID)         !(79)
+    call write_integer(NPTS)          !(80)
+    call write_integer(int(undef))     !(81)UNUSED
+    call write_integer(int(undef))     !(82)NWFID
+    call write_integer(int(undef))     !(83)NXSIZE
+    call write_integer(int(undef))     !(84)NYSIZE
+    call write_integer(int(undef))     !(85)UNUSED
+    call write_integer(IFTYPE)        !(86)
+    call write_integer(IDEP)          !(87)
+    call write_integer(IZTYPE)        !(88)
+    call write_integer(int(undef))     !(89)UNUSED
+    call write_integer(int(undef))     !(90)IINST
+    call write_integer(int(undef))     !(91)ISTREG
+    call write_integer(int(undef))     !(92)IEVREG
+    call write_integer(IEVTYP)        !(93)
+    call write_integer(int(undef))     !(94)IQUAL
+    call write_integer(ISYNTH)        !(95)
+    call write_integer(IMAGTYP)       !(96)
+    call write_integer(int(undef))     !(97)IMAGSRC
+    call write_integer(int(UNUSED))   !(98)
+    call write_integer(int(UNUSED))   !(99)
+    call write_integer(int(UNUSED))   !(100)
+    call write_integer(int(UNUSED))   !(101)
+    call write_integer(int(UNUSED))   !(102)
+    call write_integer(int(UNUSED))   !(103)
+    call write_integer(int(UNUSED))   !(104)
+    call write_integer(int(UNUSED))   !(105)
+
+    ! write logical header variables 106:110
+    call write_integer(LEVEN)         !(106)
+    call write_integer(LPSPOL)        !(107)
+    call write_integer(LOVROK)        !(108)
+    call write_integer(LCALDA)        !(109)
+    call write_integer(int(UNUSED))   !(110)
+
+
+    ! write character header variables 111:302
+    call write_character(KSTNM,8)         !(111:118)
+    call write_character(KEVNM,16)         !(119:134)
+    call write_character(str_undef,8)      !(135:142)KHOLE
+    call write_character(str_undef,8)      !(143:150)KO
+    call write_character(str_undef,8)      !(151:158)KA
+    call write_character(str_undef,8)      !(159:166)KT0
+    call write_character(str_undef,8)      !(167:174)KT1
+    call write_character(str_undef,8)      !(175:182)KT2
+    call write_character(str_undef,8)      !(183:190)KT3
+    call write_character(str_undef,8)      !(191:198)KT4
+    call write_character(str_undef,8)      !(199:206)KT5
+    call write_character(str_undef,8)      !(207:214)KT6
+    call write_character(str_undef,8)      !(215:222)KT7
+    call write_character(str_undef,8)      !(223:230)KT8
+    call write_character(str_undef,8)      !(231:238)KT9
+    call write_character(str_undef,8)      !(239:246)KF
+    call write_character(KUSER0,8)        !(247:254)
+    call write_character(KUSER1,8)        !(255:262)
+    call write_character(KUSER2,8)        !(263:270)
+    call write_character(KCMPNM,8)        !(271:278)
+    call write_character(KNETWK,8)        !(279:286)
+    call write_character(str_undef,8)      !(287:294)KDATRD
+    call write_character(str_undef,8)      !(295:302)KINST
+
+    ! now write SAC time series to file
+    ! BS BS write whole time series at once (hope to increase I/O performance
+    ! compared to using a loop on it)
+
+    if (CUSTOM_REAL == SIZE_REAL) then
+          call write_n_real(seismogram_tmp(iorientation,it_begin:it_end),it_end-it_begin+1)
+    elseif (CUSTOM_REAL == SIZE_DOUBLE) then
+          call write_n_real(real(seismogram_tmp(iorientation,it_begin:it_end)),it_end-it_begin+1)
+    endif
+
+    call close_file()
+
+
+  endif ! OUTPUT_SEISMOS_SAC_BINARY
+
 !#################### end SAC Alphanumeric Seismos ############################
 
-     enddo ! do iorientation = 1,3
+  endif ! OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY
+
+  if (OUTPUT_SEISMOS_ASCII_TEXT) then 
+
+! save seismograms in text format with no subsampling.
+! Because we do not subsample the output, this can result in large files
+! if the simulation uses many time steps. However, subsampling the output
+! here would result in a loss of accuracy when one later convolves
+! the results with the source time function
+
+! add .ascii extension to seismogram file name for ASCII seismograms
+ write(sisname_2,"('/',a,'.ascii')") trim(sisname)
+
+   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+
+! subtract half duration of the source to make sure travel time is correct
+     do isample = it_begin,it_end
+       value = dble(seismogram_tmp(iorientation,isample))
+! distinguish between single and double precision for reals
+       if(CUSTOM_REAL == SIZE_REAL) then
+         write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',sngl(value)
+       else
+         write(IOUT,*) dble(isample-1)*DT - hdur,' ',value
+       endif
+     enddo
+
+     close(IOUT)
+ 
+  endif  ! OUTPUT_SEISMOS_ASCII_TEXT
+
+  enddo ! do iorientation 
 
  end subroutine write_one_seismogram
 

@@ -54,3 +54,16 @@ FC_FUNC_(write_real,WRITE_REAL)(float *z) {
   write(fd, z, sizeof(float));
 }
 
+/* BS BS begin. Added section for writing SAC binary data*/
+void
+FC_FUNC_(write_n_real,WRITE_N_REAL)(float *z,int *n) {
+  write(fd, z, *n*sizeof(float));
+}
+
+void
+FC_FUNC_(write_character,WRITE_CHARACTER)(char *z, int *lchar) {
+  write(fd, z, *lchar*sizeof(char));
+}
+
+
+
