@@ -117,6 +117,7 @@ libspecfem_a_OBJECTS = \
 	$O/get_MPI_cutplanes_xi.o \
 	$O/get_absorb.o \
 	$O/get_attenuation_model.o \
+	$O/get_backazimuth.o \
 	$O/get_cmt.o \
 	$O/get_ellipticity.o \
 	$O/get_event_info.o \
@@ -157,6 +158,7 @@ libspecfem_a_OBJECTS = \
 	$O/write_AVS_DX_global_data.o \
 	$O/write_AVS_DX_global_faces_data.o \
 	$O/write_AVS_DX_surface_data.o \
+	$O/write_c_binary.o \
 	$O/write_seismograms.o \
 	$(EMPTY_MACRO)
 
@@ -582,6 +584,9 @@ $O/auto_ner.o: constants.h auto_ner.f90
 
 $O/memory_eval.o: constants.h memory_eval.f90
 	${FCCOMPILE_CHECK} -c -o $O/memory_eval.o ${FCFLAGS_f90} memory_eval.f90
+
+$O/get_backazimuth.o: get_backazimuth.f90
+	${FCCOMPILE_CHECK} -c -o $O/get_backazimuth.o ${FCFLAGS_f90} get_backazimuth.f90
 
 ###
 ### rule for the header file

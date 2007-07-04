@@ -692,7 +692,9 @@
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
-          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD
+          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
+          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+          ROTATE_SEISMOGRAMS_RT
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -755,7 +757,7 @@
 ! arrays for BCAST
   integer, dimension(33) :: bcast_int
   double precision, dimension(24) :: bcast_dbl
-  logical, dimension(23) :: bcast_log
+  logical, dimension(27) :: bcast_log
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -795,8 +797,9 @@
          NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
          NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
          NGLOB_computed, &
-         ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D)
-
+         ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
+         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+         ROTATE_SEISMOGRAMS_RT)
 
     if(err_occurred() /= 0) then
           call exit_MPI(myrank,'an error occurred while reading the parameter file')
@@ -820,7 +823,9 @@
             TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
-            ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D/)
+            ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
+            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+            ROTATE_SEISMOGRAMS_RT/)
 
     bcast_dbl = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -836,7 +841,7 @@
 
     call MPI_BCAST(bcast_dbl,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_log,23,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_log,27,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
   
     call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
@@ -924,6 +929,10 @@
     INFLATE_CENTRAL_CUBE = bcast_log(21)
     SAVE_FORWARD = bcast_log(22)
     CASE_3D = bcast_log(23)
+    OUTPUT_SEISMOS_ASCII_TEXT = bcast_log(24)
+    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_log(25)
+    OUTPUT_SEISMOS_SAC_BINARY = bcast_log(26)
+    ROTATE_SEISMOGRAMS_RT = bcast_log(27)
 
     DT = bcast_dbl(1)
     ANGULAR_WIDTH_XI_IN_DEGREES = bcast_dbl(2)
@@ -1370,6 +1379,19 @@
   allocate(phi_source(NSOURCES))
   allocate(nu_source(NDIM,NDIM,NSOURCES))
 
+! BS BS moved open statement and writing of first lines into sr.vtk before the
+! call to locate_sources, where further write statements to that file follow
+  if(myrank == 0) then
+! write source and receiver VTK files for Paraview
+    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr.vtk',status='unknown')
+    write(IOVTK,'(a)') '# vtk DataFile Version 2.0'
+    write(IOVTK,'(a)') 'Source and Receiver VTK file'
+    write(IOVTK,'(a)') 'ASCII'
+    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+!  LQY -- won't be able to know NSOURCES+nrec at this point...
+    write(IOVTK, '(a,i6,a)') 'POINTS ', 2, ' float'
+  endif
+
 ! locate sources in the mesh
   call locate_sources(NSOURCES,myrank,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -1421,14 +1443,6 @@
       write(IMAIN,*) 'Total number of adjoint sources = ', nrec
     endif
     write(IMAIN,*)
-! write source and receiver VTK files for Paraview
-    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr.vtk',status='unknown')
-    write(IOVTK,'(a)') '# vtk DataFile Version 2.0'
-    write(IOVTK,'(a)') 'Source and Receiver VTK file'
-    write(IOVTK,'(a)') 'ASCII'
-    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-!  LQY -- won't be able to know NSOURCES+nrec at this point...
-    write(IOVTK, '(a,i6,a)') 'POINTS ', 2, ' float'
   endif
 
   if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
@@ -4146,7 +4160,9 @@
               network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
               yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
               elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,&
-              cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT,.false.)
+              cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT,.false., &
+              OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
@@ -4386,7 +4402,9 @@
         network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
         yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
         elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC, &
-        cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT,.true.)
+        cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT,.true., &
+        OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+        OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
     else
     if (nrec_local > 0) then
       call write_adj_seismograms(seismograms,number_receiver_global, &
