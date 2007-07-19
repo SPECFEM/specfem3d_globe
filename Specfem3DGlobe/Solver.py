@@ -28,8 +28,12 @@ class Solver(Component):
     ABSORBING_CONDITIONS          = pyre.bool("absorbing-conditions")
     MOVIE_SURFACE                 = pyre.bool("movie-surface")
     MOVIE_VOLUME                  = pyre.bool("movie-volume")
-    RECEIVERS_CAN_BE_BURIED       = pyre.bool("receivers-can-be-buried")
+    OUTPUT_SEISMOS_ASCII_TEXT     = pyre.bool("output-seismos-ascii-text", default=True)
+    OUTPUT_SEISMOS_SAC_ALPHANUM   = pyre.bool("output-seismos-sac-alphanum")
+    OUTPUT_SEISMOS_SAC_BINARY     = pyre.bool("output-seismos-sac-binary")
     PRINT_SOURCE_TIME_FUNCTION    = pyre.bool("print-source-time-function")
+    RECEIVERS_CAN_BE_BURIED       = pyre.bool("receivers-can-be-buried")
+    ROTATE_SEISMOGRAMS_RT         = pyre.bool("rotate-seismograms-rt")
     dry                           = pyre.bool("dry")
 
     HDUR_MOVIE                    = pyre.float("hdur-movie")
