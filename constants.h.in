@@ -387,3 +387,13 @@
 
 ! for suppressing the crustal layers (replaced by layers of mantle : R_EARTH is not modified, no more crustal doubling)
   logical, parameter :: SUPPRESS_CRUSTALMESH = .false.
+! for the Cuthill McKee permutation
+  logical, parameter :: PERFORM_CUTHILL_MCKEE = .false.
+! for the Cuthill McKee permutation of inner core's elements
+  logical, parameter :: PERMUTE_INNER_CORE = .false.
+! for multi level Cuthill McKee
+  logical, parameter :: CMcK_MULTI = .true.
+
+! for the Cuthill McKee routines
+   integer, parameter :: NGNOD_HEXAHEDRA=8
+

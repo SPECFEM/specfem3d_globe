@@ -412,7 +412,7 @@
                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                nglob
 
-! if running on MareNostrum in Barcelona
+! DK DK UGLY if running on MareNostrum in Barcelona
   integer :: sender, receiver, dummy1, dummy2
   integer msg_status(MPI_STATUS_SIZE)
   character(len=400) system_command
@@ -491,6 +491,7 @@
           ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
           ROTATE_SEISMOGRAMS_RT)
+
 
     if(err_occurred() /= 0) then
           call exit_MPI(myrank,'an error occurred while reading the parameter file')
@@ -647,7 +648,7 @@
 
   endif
 
-! if running on MareNostrum in Barcelona
+! DK DK UGLY if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
 
 ! clean the local scratch space using a cascade (serial removal, one process after the other)
@@ -677,6 +678,8 @@
     LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
 
 ! create a local directory to store all the local files
+!!!!!!!!!!!!!    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4,' ;&
+!!!!!!!!!!!!!     mkdir /scratch/komatits_proc',i4.4)") myrank,myrank
     write(system_command,"('mkdir /scratch/komatits_proc',i4.4)") myrank
     call system(system_command)
 
@@ -968,6 +971,7 @@
          ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_XI, &
          NSPEC2D_ETA,NSPEC1D_RADIAL(iregion_code),NGLOB1D_RADIAL(iregion_code), &
+         max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo, &
          crustal_model,mantle_model,aniso_mantle_model, &
          aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &

@@ -124,6 +124,7 @@ libspecfem_a_OBJECTS = \
 	$O/get_global.o \
 	$O/get_jacobian_boundaries.o \
 	$O/get_model.o \
+	$O/get_perm_cuthill_mckee.o \
 	$O/get_shape2D.o \
 	$O/get_shape3D.o \
 	$O/gll_library.o \
@@ -584,6 +585,9 @@ $O/auto_ner.o: constants.h auto_ner.f90
 
 $O/memory_eval.o: constants.h memory_eval.f90
 	${FCCOMPILE_CHECK} -c -o $O/memory_eval.o ${FCFLAGS_f90} memory_eval.f90
+
+$O/get_perm_cuthill_mckee.o: constants.h get_perm_cuthill_mckee.f90
+	${FCCOMPILE_CHECK} -c -o $O/get_perm_cuthill_mckee.o ${FCFLAGS_f90} get_perm_cuthill_mckee.f90
 
 $O/get_backazimuth.o: get_backazimuth.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_backazimuth.o ${FCFLAGS_f90} get_backazimuth.f90

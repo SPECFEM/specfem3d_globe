@@ -18,7 +18,7 @@
 
   subroutine get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
                         idoubling,xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC1D_RADIAL,NGLOB1D_RADIAL)
+                        NSPEC1D_RADIAL,NGLOB1D_RADIAL,nglob_ori)
 
 ! routine to create the MPI 1D chunk buffers for edges
 
@@ -26,7 +26,7 @@
 
   include "constants.h"
 
-  integer nspec,myrank
+  integer nspec,myrank,nglob_ori,nglob,ipoin1D
   integer NSPEC1D_RADIAL,NGLOB1D_RADIAL
 
   logical iMPIcut_xi(2,nspec)
@@ -53,6 +53,27 @@
 ! processor identification
   character(len=150) prname
 
+! arrays for sorting routine
+  integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
+  logical, dimension(:), allocatable :: ifseg
+  double precision, dimension(:), allocatable :: work
+  integer, dimension(:), allocatable :: ibool_selected
+  double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
+
+! allocate arrays for message buffers with maximum size
+! define maximum size for message buffers
+  allocate(ibool_selected(NGLOB1D_RADIAL))
+  allocate(xstore_selected(NGLOB1D_RADIAL))
+  allocate(ystore_selected(NGLOB1D_RADIAL))
+  allocate(zstore_selected(NGLOB1D_RADIAL))
+  allocate(ind(NGLOB1D_RADIAL))
+  allocate(ninseg(NGLOB1D_RADIAL))
+  allocate(iglob(NGLOB1D_RADIAL))
+  allocate(locval(NGLOB1D_RADIAL))
+  allocate(ifseg(NGLOB1D_RADIAL))
+  allocate(iwork(NGLOB1D_RADIAL))
+  allocate(work(NGLOB1D_RADIAL))
+
 ! write the MPI buffers for the left and right edges of the slice
 ! and the position of the points to check that the buffers are fine
 
@@ -75,35 +96,38 @@
   ispeccount=0
 
   do ispec=1,nspec
-
-! remove central cube for chunk buffers
-  if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-
-! corner detection here
-  if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(1,ispec)) then
-
-    ispeccount=ispeccount+1
-
-! loop on all the points
-  ix = 1
-  iy = 1
-  do iz=1,NGLLZ
-
-! select point, if not already selected
-  if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-      mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-      npoin1D = npoin1D + 1
-
-      write(10,*) ibool(ix,iy,iz,ispec),xstore(ix,iy,iz,ispec), &
-              ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-  endif
-
+    ! remove central cube for chunk buffers
+    if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+  ! corner detection here
+    if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(1,ispec)) then
+      ispeccount=ispeccount+1
+      ! loop on all the points
+      ix = 1
+      iy = 1
+      do iz=1,NGLLZ
+        ! select point, if not already selected
+        if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+            npoin1D = npoin1D + 1
+            ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
+            xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
+            ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
+            zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+        endif
+      enddo
+    endif
   enddo
 
-  endif
+  nglob=nglob_ori
+  call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
+          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+
+  do ipoin1D=1,npoin1D
+      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
   enddo
 
 ! put flag to indicate end of the list of points
@@ -131,37 +155,39 @@
 
 ! nb of elements in this 1D buffer
   ispeccount=0
-
   do ispec=1,nspec
-
-! remove central cube for chunk buffers
-  if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-
-! corner detection here
-  if(iMPIcut_xi(2,ispec) .and. iMPIcut_eta(1,ispec)) then
-
-    ispeccount=ispeccount+1
-
-! loop on all the points
-  ix = NGLLX
-  iy = 1
-  do iz=1,NGLLZ
-
-! select point, if not already selected
-  if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-      mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-      npoin1D = npoin1D + 1
-
-      write(10,*) ibool(ix,iy,iz,ispec),xstore(ix,iy,iz,ispec), &
-              ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-  endif
-
+    ! remove central cube for chunk buffers
+    if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+      idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+  ! corner detection here
+    if(iMPIcut_xi(2,ispec) .and. iMPIcut_eta(1,ispec)) then
+      ispeccount=ispeccount+1
+      ! loop on all the points
+      ix = NGLLX
+      iy = 1
+      do iz=1,NGLLZ
+        ! select point, if not already selected
+        if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+            npoin1D = npoin1D + 1
+            ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
+            xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
+            ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
+            zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+        endif
+      enddo
+    endif
   enddo
 
-  endif
+  nglob=nglob_ori
+  call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
+          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+
+  do ipoin1D=1,npoin1D
+      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
   enddo
 
 ! put flag to indicate end of the list of points
@@ -212,18 +238,26 @@
   iy = NGLLY
   do iz=1,NGLLZ
 
-! select point, if not already selected
-  if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-      mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-      npoin1D = npoin1D + 1
-
-      write(10,*) ibool(ix,iy,iz,ispec),xstore(ix,iy,iz,ispec), &
-              ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-  endif
-
+        ! select point, if not already selected
+        if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+            npoin1D = npoin1D + 1
+            ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
+            xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
+            ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
+            zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+        endif
+      enddo
+    endif
   enddo
 
-  endif
+  nglob=nglob_ori
+  call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
+          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+
+  do ipoin1D=1,npoin1D
+      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
   enddo
 
 ! put flag to indicate end of the list of points
@@ -270,18 +304,26 @@
   iy = NGLLY
   do iz=1,NGLLZ
 
-! select point, if not already selected
-  if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-      mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-      npoin1D = npoin1D + 1
-
-      write(10,*) ibool(ix,iy,iz,ispec),xstore(ix,iy,iz,ispec), &
-              ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-  endif
-
+        ! select point, if not already selected
+        if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+            mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+            npoin1D = npoin1D + 1
+            ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
+            xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
+            ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
+            zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+        endif
+      enddo
+    endif
   enddo
 
-  endif
+  nglob=nglob_ori
+  call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
+          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+
+  do ipoin1D=1,npoin1D
+      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
   enddo
 
 ! put flag to indicate end of the list of points
@@ -295,6 +337,18 @@
 ! compare number of edge elements and points detected to analytical value
   if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NGLOB1D_RADIAL) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
+
+  deallocate(ibool_selected)
+  deallocate(xstore_selected)
+  deallocate(ystore_selected)
+  deallocate(zstore_selected)
+  deallocate(ind)
+  deallocate(ninseg)
+  deallocate(iglob)
+  deallocate(locval)
+  deallocate(ifseg)
+  deallocate(iwork)
+  deallocate(work)
 
   end subroutine get_MPI_1D_buffers
 
