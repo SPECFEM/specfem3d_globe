@@ -30,15 +30,15 @@ NPROC_ETA                       = 1
 #
 # fully 3D models:
 # transversely_isotropic_prem_plus_3D_crust_2.0, 3D_s20rts, 3D_anisotropic, 3D_attenuation
-MODEL                           = 1D_isotropic_prem 
+MODEL                           = 3D_s20rts
 
 # parameters describing the Earth model
-OCEANS                          = .false.
-ELLIPTICITY                     = .false.
-TOPOGRAPHY                      = .false.
-GRAVITY                         = .false.
-ROTATION                        = .false.
-ATTENUATION                     = .false.
+OCEANS                          = .true.
+ELLIPTICITY                     = .true.
+TOPOGRAPHY                      = .true.
+GRAVITY                         = .true.
+ROTATION                        = .true.
+ATTENUATION                     = .true.
 
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .false.
