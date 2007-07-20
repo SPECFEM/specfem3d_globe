@@ -299,6 +299,7 @@
     stop 'model not implemented, edit read_compute_parameters.f90 and recompile'
   endif
 
+
 ! set time step, radial distribution of elements, and attenuation period range
 ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
@@ -504,7 +505,7 @@
     else
     ! case prem
       if(NEX_MAX <= 160) then
-        DT                       = 0.25d0
+        DT                       = 0.20d0
 
     !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
         MIN_ATTENUATION_PERIOD   = 20

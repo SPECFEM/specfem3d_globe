@@ -2190,9 +2190,9 @@
         call get_attenuation_model_1D(myrank, prname, IREGION_CRUST_MANTLE, tau_sigma_dble, &
              omsb_crust_mantle_dble, factor_common_crust_mantle_dble,  &
              factor_scale_crust_mantle_dble, NRAD_ATTENUATION,1,1,1, AM_V)
-        omsb_inner_core_dble(:,:,:,:)            = omsb_crust_mantle_dble(:,:,:,:)
-        factor_scale_inner_core_dble(:,:,:,:)    = factor_scale_crust_mantle_dble(:,:,:,:)
-        factor_common_inner_core_dble(:,:,:,:,:) = factor_common_crust_mantle_dble(:,:,:,:,:)
+        omsb_inner_core_dble(:,:,:,1:min(ATT4,ATT5)) = omsb_crust_mantle_dble(:,:,:,1:min(ATT4,ATT5))
+        factor_scale_inner_core_dble(:,:,:,1:min(ATT4,ATT5))    = factor_scale_crust_mantle_dble(:,:,:,1:min(ATT4,ATT5))
+        factor_common_inner_core_dble(:,:,:,:,1:min(ATT4,ATT5)) = factor_common_crust_mantle_dble(:,:,:,:,1:min(ATT4,ATT5))
         ! Tell the Attenuation Code about the IDOUBLING regions within the Mesh
         call set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
      endif ! ATTENUATION_3D

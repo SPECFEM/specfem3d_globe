@@ -132,8 +132,8 @@
          NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
          NGLOB, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
-	 OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-	 ROTATE_SEISMOGRAMS_RT)
+         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+         ROTATE_SEISMOGRAMS_RT)
 
 
 ! get the base pathname for output files
@@ -265,7 +265,7 @@
        dabs(yleft_xi(ipoin)-yright_xi(ipoin)),dabs(zleft_xi(ipoin)-zright_xi(ipoin)))
       if(diff > 0.0000001d0) then
             print *,'different: ',ipoin,iboolleft_xi(ipoin),iboolright_xi(ipoin),diff
-            stop 'error: different'
+           ! stop 'error: different'
       endif
   enddo
 
@@ -355,7 +355,12 @@
        dabs(yleft_eta(ipoin)-yright_eta(ipoin)),dabs(zleft_eta(ipoin)-zright_eta(ipoin)))
       if(diff > 0.0000001d0) then
             print *,'different: ',ipoin,iboolleft_eta(ipoin),iboolright_eta(ipoin),diff
-            stop 'error: different'
+      else
+            print *,'identique: ',ipoin,iboolleft_eta(ipoin),iboolright_eta(ipoin),diff
+
+!print *,'left x,y,z = ',xleft_eta(ipoin),yleft_eta(ipoin),zleft_eta(ipoin)
+!print *,'right x,y,z = ',xright_eta(ipoin),yright_eta(ipoin),zright_eta(ipoin)
+!            stop 'error: different'
       endif
   enddo
 
