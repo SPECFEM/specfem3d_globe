@@ -33,7 +33,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
+           AMM_V,AM_V,M1066a_V,Mak135_V, Mref_V,D3MM_V,CM_V,AM_S,AS_V)
 
   implicit none
 
@@ -101,6 +101,24 @@
 
  type (model_ak135_variables) Mak135_V
 ! model_ak135_variables
+
+! model_ref_variables
+  type model_ref_variables
+    sequence
+     double precision, dimension(NR_REF) :: radius_ref
+     double precision, dimension(NR_REF) :: density_ref
+     double precision, dimension(NR_REF) :: vpv_ref
+     double precision, dimension(NR_REF) :: vph_ref
+     double precision, dimension(NR_REF) :: vsv_ref
+     double precision, dimension(NR_REF) :: vsh_ref
+     double precision, dimension(NR_REF) :: eta_ref
+     double precision, dimension(NR_REF) :: Qkappa_ref
+     double precision, dimension(NR_REF) :: Qmu_ref
+  end type model_ref_variables
+
+ type (model_ref_variables) Mref_V
+! model_ref_variables
+
 
 ! three_d_mantle_model_variables
   type three_d_mantle_model_variables
@@ -248,7 +266,7 @@
           size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
           ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
           RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
-          AMM_V,AM_V,M1066a_V,Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
+          AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
 
 
 ! add topography without the crustal model

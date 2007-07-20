@@ -267,6 +267,14 @@
   integer, parameter :: REFERENCE_MODEL_IASP91 = 2
   integer, parameter :: REFERENCE_MODEL_1066A  = 3
   integer, parameter :: REFERENCE_MODEL_AK135  = 4
+  integer, parameter :: REFERENCE_MODEL_REF  = 5
+
+! define flag for 3D Earth model
+  integer, parameter :: MANTLE_MODEL_S20RTS   = 1
+  integer, parameter :: MANTLE_MODEL_S362ANI   = 2
+  integer, parameter :: MANTLE_MODEL_S362WMANI = 3
+  integer, parameter :: MANTLE_MODEL_S362ANI_PREM  = 4
+  integer, parameter :: MANTLE_MODEL_S29EA  = 5
 
 ! define flag for regions of the global Earth for attenuation
   integer, parameter :: NUM_REGIONS_ATTENUATION = 5
@@ -367,6 +375,9 @@
 ! number of layers in DATA/ak135/ak135.dat
   integer, parameter :: NR_AK135 = 144
 
+! number of layers in DATA/s362ani/REF
+  integer, parameter :: NR_REF = 750
+
 ! three_d_mantle_model_constants
   integer, parameter :: NK = 20,NS = 20,ND = 1
 
@@ -387,7 +398,7 @@
 
 ! for suppressing the crustal layers (replaced by layers of mantle : R_EARTH is not modified, no more crustal doubling)
   logical, parameter :: SUPPRESS_CRUSTALMESH = .false.
-! for the Cuthill McKee permutation
+! for the Cuthill McKee permutation 
   logical, parameter :: PERFORM_CUTHILL_MCKEE = .false.
 ! for the Cuthill McKee permutation of inner core's elements
   logical, parameter :: PERMUTE_INNER_CORE = .false.
@@ -395,5 +406,4 @@
   logical, parameter :: CMcK_MULTI = .true.
 
 ! for the Cuthill McKee routines
-   integer, parameter :: NGNOD_HEXAHEDRA=8
-
+   integer, parameter :: NGNOD_HEXAHEDRA=8 

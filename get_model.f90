@@ -32,7 +32,7 @@
     attenuation_model,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
     ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
-    AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V, AM_S, AS_V)
+    AMM_V, AM_V, M1066a_V, Mak135_V,Mref_V,D3MM_V,CM_V, AM_S, AS_V)
 
   implicit none
 
@@ -101,6 +101,23 @@
 
  type (model_ak135_variables) Mak135_V
 ! model_ak135_variables
+
+! model_ref_variables
+  type model_ref_variables
+    sequence
+      double precision, dimension(NR_REF) :: radius_ref
+      double precision, dimension(NR_REF) :: density_ref
+      double precision, dimension(NR_REF) :: vpv_ref
+      double precision, dimension(NR_REF) :: vph_ref
+      double precision, dimension(NR_REF) :: vsv_ref
+      double precision, dimension(NR_REF) :: vsh_ref
+      double precision, dimension(NR_REF) :: eta_ref
+      double precision, dimension(NR_REF) :: Qkappa_ref
+      double precision, dimension(NR_REF) :: Qmu_ref
+  end type model_ref_variables
+
+  type (model_ref_variables) Mref_V
+! model_ref_variables
 
 ! three_d_mantle_model_variables
   type three_d_mantle_model_variables
@@ -264,10 +281,13 @@
              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-           call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code, M1066a_V)
+           call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code,M1066a_V)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-           call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code, Mak135_V)
+           call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code,Mak135_V)
+
+         else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
+           call model_ref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,Mref_V)
 
          else
            stop 'unknown 1D reference Earth model in get_model'
