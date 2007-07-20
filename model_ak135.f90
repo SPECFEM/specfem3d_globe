@@ -67,10 +67,10 @@
 ! make sure we stay in the right region
   if(iregion_code == IREGION_INNER_CORE .and. i > 25) i = 25
 
-  if(iregion_code == IREGION_OUTER_CORE .and. i < 27) i = 27
+  if(iregion_code == IREGION_OUTER_CORE .and. i < 26) i = 26
   if(iregion_code == IREGION_OUTER_CORE .and. i > 71) i = 71
 
-  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 73) i = 73
+  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 72) i = 72
 
   if(i == 1) then
     rho = Mak135_V%density_ak135(i)

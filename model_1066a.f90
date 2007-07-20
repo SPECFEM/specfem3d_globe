@@ -64,10 +64,10 @@
 ! make sure we stay in the right region
   if(iregion_code == IREGION_INNER_CORE .and. i > 33) i = 33
 
-  if(iregion_code == IREGION_OUTER_CORE .and. i < 35) i = 35
+  if(iregion_code == IREGION_OUTER_CORE .and. i < 34) i = 34
   if(iregion_code == IREGION_OUTER_CORE .and. i > 66) i = 66
 
-  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 68) i = 68
+  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 67) i = 67
 
   if(i == 1) then
     rho = M1066a_V%density_1066a(i)

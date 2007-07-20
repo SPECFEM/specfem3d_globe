@@ -272,6 +272,24 @@
     double precision qq(3,NK+1,NK+1)
   end type three_d_mantle_model_variables
 
+! model_ref_variables
+  type model_ref_variables
+    sequence
+    double precision, dimension(NR_REF) :: radius_ref
+    double precision, dimension(NR_REF) :: density_ref
+    double precision, dimension(NR_REF) :: vpv_ref
+    double precision, dimension(NR_REF) :: vph_ref
+    double precision, dimension(NR_REF) :: vsv_ref
+    double precision, dimension(NR_REF) :: vsh_ref
+    double precision, dimension(NR_REF) :: eta_ref
+    double precision, dimension(NR_REF) :: Qkappa_ref
+    double precision, dimension(NR_REF) :: Qmu_ref
+  end type model_ref_variables
+
+  type (model_ref_variables) Mref_V
+! model_ref_variables
+
+
   type (three_d_mantle_model_variables) D3MM_V
 ! three_d_mantle_model_variables
 
@@ -873,7 +891,7 @@
     call MPI_BCAST(AM_V%min_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%max_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
 
-    call attenuation_model_setup(REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80,AM_V,M1066a_V,Mak135_V,AM_S,AS_V)
+    call attenuation_model_setup(REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80,AM_V,M1066a_V,Mak135_V,Mref_V,AM_S,AS_V)
   endif
 
 
@@ -979,7 +997,7 @@
          NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
          ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
-         AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V, AM_S,AS_V)
+         AMM_V, AM_V, M1066a_V, Mak135_V, Mref_V,D3MM_V,CM_V, AM_S,AS_V)
 
 ! store number of anisotropic elements found in the mantle
   if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &

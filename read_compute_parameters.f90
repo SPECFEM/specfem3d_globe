@@ -216,6 +216,15 @@
     ATTENUATION_3D = .false.
     HONOR_1D_SPHERICAL_MOHO = .true.
 
+  else if(MODEL == '1D_ref') then
+    TRANSVERSE_ISOTROPY = .true.
+    ISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_INNER_CORE = .false.
+    CRUSTAL = .false.
+    ATTENUATION_3D = .false.
+    HONOR_1D_SPHERICAL_MOHO = .true.
+
   else if(MODEL == '1D_isotropic_prem_onecrust') then
     TRANSVERSE_ISOTROPY = .false.
     ISOTROPIC_3D_MANTLE = .false.
@@ -298,7 +307,6 @@
   else
     stop 'model not implemented, edit read_compute_parameters.f90 and recompile'
   endif
-
 
 ! set time step, radial distribution of elements, and attenuation period range
 ! right distribution is determined based upon maximum value of NEX
@@ -1062,6 +1070,25 @@
    RHO_TOP_OC = 9917.4500 / RHOAV
    RHO_BOTTOM_OC = 12160.6500 / RHOAV
 
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
+
+! REF
+    ROCEAN = 6368000.d0
+    RMIDDLE_CRUST = 6356000.d0
+    RMOHO = 6346600.d0
+    R80  = 6291000.d0
+    R220 = 6151000.d0
+    R400 = 5961000.d0
+    R600 = 5771000.d0
+    R670 = 5721000.d0
+    R771 = 5600000.d0
+    RTOPDDOUBLEPRIME = 3630000.d0
+    RCMB = 3479958.d0
+    RICB = 1221491.d0
+
+    RHO_TOP_OC = 9903.48 / RHOAV
+    RHO_BOTTOM_OC = 12166.35 / RHOAV
+
   else
 
 ! PREM
@@ -1190,7 +1217,7 @@
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) stop 'must have NEX_XI = NEX_ETA for more than two chunks'
   if(NCHUNKS > 2 .and. NPROC_XI /= NPROC_ETA) stop 'must have NPROC_XI = NPROC_ETA for more than two chunks'
 
-! check that IASP91, AK135 or 1066A is isotropic
+! check that IASP91, AK135, or 1066A is isotropic
   if((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135 .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) .and. TRANSVERSE_ISOTROPY) &

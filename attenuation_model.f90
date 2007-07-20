@@ -52,7 +52,7 @@ end subroutine attenuation_lookup_value
 !
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epslion ( or tau_mu) )
-subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM_V,M1066a_V,Mak135_V,AM_S,AS_V)
+subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM_V,M1066a_V,Mak135_V,Mref_V,AM_S,AS_V)
 
   implicit none
   include 'mpif.h'
@@ -80,6 +80,20 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
+! model_1066a_variables
+  type model_1066a_variables
+    sequence
+      double precision, dimension(NR_1066A) :: radius_1066a
+      double precision, dimension(NR_1066A) :: density_1066a
+      double precision, dimension(NR_1066A) :: vp_1066a
+      double precision, dimension(NR_1066A) :: vs_1066a
+      double precision, dimension(NR_1066A) :: Qkappa_1066a
+      double precision, dimension(NR_1066A) :: Qmu_1066a
+  end type model_1066a_variables
+
+  type (model_1066a_variables) M1066a_V
+! model_1066a_variables
+
 ! model_ak135_variables
   type model_ak135_variables
     sequence
@@ -94,19 +108,22 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
  type (model_ak135_variables) Mak135_V
 ! model_ak135_variables
 
-! model_1066a_variables
-  type model_1066a_variables
+! model_ref_variables
+  type model_ref_variables
     sequence
-      double precision, dimension(NR_1066A) :: radius_1066a
-      double precision, dimension(NR_1066A) :: density_1066a
-      double precision, dimension(NR_1066A) :: vp_1066a
-      double precision, dimension(NR_1066A) :: vs_1066a
-      double precision, dimension(NR_1066A) :: Qkappa_1066a
-      double precision, dimension(NR_1066A) :: Qmu_1066a
-  end type model_1066a_variables
+    double precision, dimension(NR_REF) :: radius_ref
+    double precision, dimension(NR_REF) :: density_ref
+    double precision, dimension(NR_REF) :: vpv_ref
+    double precision, dimension(NR_REF) :: vph_ref
+    double precision, dimension(NR_REF) :: vsv_ref
+    double precision, dimension(NR_REF) :: vsh_ref
+    double precision, dimension(NR_REF) :: eta_ref
+    double precision, dimension(NR_REF) :: Qkappa_ref
+    double precision, dimension(NR_REF) :: Qmu_ref
+  end type model_ref_variables
 
-  type (model_1066a_variables) M1066a_V
-! model_1066a_variables
+ type (model_ref_variables) Mref_V
+! model_ref_variables
 
 ! attenuation_model_storage
   type attenuation_model_storage
@@ -154,6 +171,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
 
   call define_model_ak135(.FALSE.,Mak135_V)
   call define_model_1066a(.FALSE., M1066a_V)
+  call define_model_ref(.FALSE., Mref_V)
 
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
      AM_V%Qn = 12
@@ -163,6 +181,8 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
      AM_V%Qn = NR_AK135
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066a) then
      AM_V%Qn = NR_1066A
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
+     AM_V%Qn = NR_REF
   else
      call exit_MPI(myrank, 'Reference 1D Model Not recognized')
   endif
@@ -184,6 +204,9 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066a) then
      AM_V%Qr(:)     = M1066a_V%radius_1066a(:)
      AM_V%Qmu(:)    = M1066a_V%Qmu_1066a(:)
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_ref) then
+     AM_V%Qr(:)     = Mref_V%radius_ref(:)
+     AM_V%Qmu(:)    = Mref_V%Qmu_ref(:)
   end if
 
   do i = 1, AM_V%Qn

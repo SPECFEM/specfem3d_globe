@@ -35,7 +35,7 @@
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            ner,ratio_sampling_array, doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D,&
-           AMM_V, AM_V, M1066a_V, Mak135_V,D3MM_V,CM_V, AM_S, AS_V)
+           AMM_V, AM_V, M1066a_V, Mak135_V, Mref_V,D3MM_V,CM_V, AM_S, AS_V)
 
 ! create the different regions of the mesh
 
@@ -118,6 +118,24 @@
 
  type (model_ak135_variables) Mak135_V
 ! model_ak135_variables
+
+! model_ref_variables
+  type model_ref_variables
+    sequence
+     double precision, dimension(NR_REF) :: radius_ref
+     double precision, dimension(NR_REF) :: density_ref
+     double precision, dimension(NR_REF) :: vpv_ref
+     double precision, dimension(NR_REF) :: vph_ref
+     double precision, dimension(NR_REF) :: vsv_ref
+     double precision, dimension(NR_REF) :: vsh_ref
+     double precision, dimension(NR_REF) :: eta_ref
+     double precision, dimension(NR_REF) :: Qkappa_ref
+     double precision, dimension(NR_REF) :: Qmu_ref
+  end type model_ref_variables
+
+ type (model_ref_variables) Mref_V
+! model_ref_variables
+
 
 ! three_d_mantle_model_variables
   type three_d_mantle_model_variables
@@ -528,9 +546,10 @@
   allocate(yp(npointot))
   allocate(zp(npointot))
 
-! define models 1066a and ak135
+! define models 1066a and ak135 and ref
   call define_model_1066a(CRUSTAL, M1066a_V)
   call define_model_ak135(CRUSTAL, Mak135_V)
+  call define_model_ref(CRUSTAL, Mref_V)
 
 !------------------------------------------------------------------------
 
@@ -723,7 +742,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
 
 ! end of loop on all the regular elements
   enddo
@@ -832,7 +851,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
 
 ! end of loops on the mesh doubling elements
           enddo
@@ -972,7 +991,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,D3MM_V,CM_V,AM_S,AS_V)
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
       enddo
     enddo
   enddo
