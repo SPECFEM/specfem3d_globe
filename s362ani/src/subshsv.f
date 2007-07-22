@@ -2,16 +2,18 @@ c --- evaluate perturbations in per cent
 
 	subroutine subshsv(xcolat,xlon,xrad,
      #         vshout,vsvout,vphout,vpvout,etaout,rhoout,ifknowmodel,
-     #         MANTLE_MODEL,MANTLE_MODEL_S362ANI,MANTLE_MODEL_S362WMANI,
-     #         MANTLE_MODEL_S362ANI_PREM,MANTLE_MODEL_S29EA)
+     #         THREE_D_MODEL,THREE_D_MODEL_S362ANI,
+     #         THREE_D_MODEL_S362WMANI,
+     #         THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
 
 	implicit none
 
 	real*4 xcolat,xlon,xrad
 	real*4 vshout,vsvout,vphout,vpvout,etaout,rhoout
 	integer ifknowmodel
-	integer MANTLE_MODEL,MANTLE_MODEL_S362ANI,MANTLE_MODEL_S362WMANI
-	integer MANTLE_MODEL_S362ANI_PREM,MANTLE_MODEL_S29EA
+	integer THREE_D_MODEL,THREE_D_MODEL_S362ANI
+	integer THREE_D_MODEL_S362WMANI
+	integer THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA
  
 c --- model evaluation
 
@@ -44,13 +46,13 @@ c --- read the model if necessary
 
 	if(ifknowmodel.ne.0) then
 	else
-          if(MANTLE_MODEL .eq. MANTLE_MODEL_S362ANI) then
+          if(THREE_D_MODEL .eq. THREE_D_MODEL_S362ANI) then
 	    modeldef='DATA/s362ani/S362ANI'
-          elseif(MANTLE_MODEL .eq. MANTLE_MODEL_S362WMANI) then
+          elseif(THREE_D_MODEL .eq. THREE_D_MODEL_S362WMANI) then
 	    modeldef='DATA/s362ani/S362WMANI'
-          elseif(MANTLE_MODEL .eq. MANTLE_MODEL_S362ANI_PREM) then
+          elseif(THREE_D_MODEL .eq. THREE_D_MODEL_S362ANI_PREM) then
 	    modeldef='DATA/s362ani/S362ANI_PREM'
-          elseif(MANTLE_MODEL .eq. MANTLE_MODEL_S29EA) then
+          elseif(THREE_D_MODEL .eq. THREE_D_MODEL_S29EA) then
 	    modeldef='DATA/s362ani/S2.9EA'
           else
             stop 'unknown 3D model in subshsv'

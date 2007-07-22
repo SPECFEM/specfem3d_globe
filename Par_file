@@ -15,12 +15,12 @@ GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be 16 * multiple of NPROC below)
-NEX_XI                          = 160  
-NEX_ETA                         = 160 
+NEX_XI                          = 256  
+NEX_ETA                         = 256 
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 5
-NPROC_ETA                       = 5
+NPROC_XI                        = 8
+NPROC_ETA                       = 8
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135, 1D_ref
@@ -29,7 +29,8 @@ NPROC_ETA                       = 5
 # 1D_isotropic_prem_onecrust, 1D_transversely_isotropic_prem_onecrust, 1D_iasp91_onecrust, 1D_1066a_onecrust, 1D_ak135_onecrust
 #
 # fully 3D models:
-# transversely_isotropic_prem_plus_3D_crust_2.0, 3D_s20rts, 3D_anisotropic, 3D_attenuation
+# transversely_isotropic_prem_plus_3D_crust_2.0, 3D_anisotropic, 3D_attenuation,
+# s20rts, s362ani, s362wmani, s362ani_prem, s29EA
 MODEL                           = 1D_ref
 
 # parameters describing the Earth model
@@ -44,7 +45,7 @@ ATTENUATION                     = .true.
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 3.0d0
+RECORD_LENGTH_IN_MINUTES        = 1.0d0
 
 # save AVS or OpenDX movies
 MOVIE_SURFACE                   = .false.
