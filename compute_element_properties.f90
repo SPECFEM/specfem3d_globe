@@ -25,7 +25,7 @@
            crustal_model,mantle_model,aniso_mantle_model, &
            aniso_inner_core_model,&
            attenuation_model,ATTENUATION,ATTENUATION_3D, &
-           ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
+           ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
@@ -181,7 +181,7 @@
 ! correct number of spectral elements in each block depending on chunk type
   integer ispec,nspec,nspec_stacey
 
-  integer REFERENCE_1D_MODEL
+  integer REFERENCE_1D_MODEL,THREE_D_MODEL
 
   logical ELLIPTICITY,TOPOGRAPHY
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
@@ -264,7 +264,7 @@
           aniso_inner_core_model, &
           attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
           size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
-          ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
+          ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
           RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
 
