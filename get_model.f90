@@ -30,7 +30,7 @@
     crustal_model,mantle_model,aniso_mantle_model, &
     aniso_inner_core_model,&
     attenuation_model,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
-    ABSORBING_CONDITIONS,REFERENCE_1D_MODEL, &
+    ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
     AMM_V, AM_V, M1066a_V, Mak135_V,Mref_V,D3MM_V,CM_V, AM_S, AS_V)
 
@@ -179,7 +179,7 @@
 
 
   integer ispec,nspec,idoubling,iregion_code,myrank,nspec_stacey
-  integer REFERENCE_1D_MODEL
+  integer REFERENCE_1D_MODEL,THREE_D_MODEL
 
   logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST

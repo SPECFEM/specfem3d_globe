@@ -53,7 +53,7 @@
 ! bulk quality factor Qkappa
 
   integer i,iregion_code
-  integer MANTLE_MODEL
+  integer THREE_D_MODEL
 
   real xlat,xcolat,xlon,xdep,xrad
   real vshout,vsvout,vphout,vpvout,etaout,rhoout
@@ -84,23 +84,23 @@
   read(5,*) xlon
   print *,"xdep: "
   read(5,*) xdep
-  print *,"MANTLE_MODEL: "
-  read(5,*) MANTLE_MODEL
+  print *,"THREE_D_MODEL: "
+  read(5,*) THREE_D_MODEL
 
   xcolat=90.0-xlat
   xrad=6371.0-xdep
   ifknowmodel=0
-!  MANTLE_MODEL=MANTLE_MODEL_S362ANI
+!  THREE_D_MODEL=THREE_D_MODEL_S362ANI
 
   call subshsv(xcolat,xlon,xrad,vshout,vsvout,vphout,vpvout,etaout,rhoout,ifknowmodel, &
-               MANTLE_MODEL,MANTLE_MODEL_S362ANI,MANTLE_MODEL_S362WMANI, &
-               MANTLE_MODEL_S362ANI_PREM,MANTLE_MODEL_S29EA)
+               THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
+               THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
   write(6,"('    vsh       vsv       vph       vpv       eta       rho    ')") 
   write(6,"(6f10.5)") vshout,vsvout,vphout,vpvout,etaout,rhoout
 
   call subtopo(xcolat,xlon,topo410out,topo650out,ifknowmodel, &
-               MANTLE_MODEL,MANTLE_MODEL_S362ANI,MANTLE_MODEL_S362WMANI, &
-               MANTLE_MODEL_S362ANI_PREM,MANTLE_MODEL_S29EA)
+               THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
+               THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
   write(6,"('   topo410    topo650 ')") 
   write(6,"(2f11.5)") topo410out,topo650out
 
