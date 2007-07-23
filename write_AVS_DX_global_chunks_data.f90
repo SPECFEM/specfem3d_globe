@@ -23,7 +23,7 @@
         npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
         ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
         RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-        RMIDDLE_CRUST,ROCEAN)
+        RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V)
 
   implicit none
 
@@ -61,6 +61,7 @@
   real(kind=CUSTOM_REAL) vmin,vmax
 
   double precision r,rho,vp,vs,Qkappa,Qmu
+  double precision vpv,vph,vsv,vsh,eta_aniso
   double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
   real(kind=CUSTOM_REAL) dvp,dvs
 
@@ -70,6 +71,51 @@
 
 ! processor identification
   character(len=150) prname
+
+! model_1066a_variables
+  type model_1066a_variables
+    sequence
+      double precision, dimension(NR_1066A) :: radius_1066a
+      double precision, dimension(NR_1066A) :: density_1066a
+      double precision, dimension(NR_1066A) :: vp_1066a
+      double precision, dimension(NR_1066A) :: vs_1066a
+      double precision, dimension(NR_1066A) :: Qkappa_1066a
+      double precision, dimension(NR_1066A) :: Qmu_1066a
+  end type model_1066a_variables
+
+  type (model_1066a_variables) M1066a_V
+! model_1066a_variables
+
+! model_ak135_variables
+  type model_ak135_variables
+    sequence
+    double precision, dimension(NR_AK135) :: radius_ak135
+    double precision, dimension(NR_AK135) :: density_ak135
+    double precision, dimension(NR_AK135) :: vp_ak135
+    double precision, dimension(NR_AK135) :: vs_ak135
+    double precision, dimension(NR_AK135) :: Qkappa_ak135
+    double precision, dimension(NR_AK135) :: Qmu_ak135
+  end type model_ak135_variables
+
+ type (model_ak135_variables) Mak135_V
+! model_ak135_variables
+
+! model_ref_variables
+  type model_ref_variables
+    sequence
+     double precision, dimension(NR_REF) :: radius_ref
+     double precision, dimension(NR_REF) :: density_ref
+     double precision, dimension(NR_REF) :: vpv_ref
+     double precision, dimension(NR_REF) :: vph_ref
+     double precision, dimension(NR_REF) :: vsv_ref
+     double precision, dimension(NR_REF) :: vsh_ref
+     double precision, dimension(NR_REF) :: eta_ref
+     double precision, dimension(NR_REF) :: Qkappa_ref
+     double precision, dimension(NR_REF) :: Qmu_ref
+  end type model_ref_variables
+
+ type (model_ref_variables) Mref_V
+! model_ref_variables
 
 ! writing points
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='unknown')
@@ -553,8 +599,18 @@
                 CRUSTAL,ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                 R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
+            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+              call model_1066a(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),M1066a_V)
+                
+            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+              call model_ak135(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),Mak135_V)
+             
+            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
+              call model_ref(r,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling(ispec),Mref_V)
+              vp = vpv
+              vs = vsv
             else
-              stop 'unknown 1D reference Earth model in writing of AVS/DX data'
+              call exit_MPI(myrank,'unknown 1D reference Earth model in writing of AVS/DX data')
             endif
 
             dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)

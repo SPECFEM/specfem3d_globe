@@ -56,9 +56,8 @@
   integer THREE_D_MODEL
 
   real xlat,xcolat,xlon,xdep,xrad
-  real vshout,vsvout,vphout,vpvout,etaout,rhoout
-  real topo410out,topo650out
-  integer ifknowmodel
+  real dvsh,dvsv,dvph,dvpv
+  real topo410,topo650
   double precision scaleval
   double precision x,rho,vpv,vph,vsv,vsh,eta,Qmu,Qkappa
 
@@ -80,28 +79,24 @@
 
   print *,"xlat: "
   read(5,*) xlat
+  xcolat=90.0-xlat
   print *,"xlon: "
   read(5,*) xlon
   print *,"xdep: "
   read(5,*) xdep
+  xrad=6371.0-xdep
   print *,"THREE_D_MODEL: "
   read(5,*) THREE_D_MODEL
 
-  xcolat=90.0-xlat
-  xrad=6371.0-xdep
-  ifknowmodel=0
-!  THREE_D_MODEL=THREE_D_MODEL_S362ANI
-
-  call subshsv(xcolat,xlon,xrad,vshout,vsvout,vphout,vpvout,etaout,rhoout,ifknowmodel, &
-               THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
+  call read_model_s362ani(THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
                THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
-  write(6,"('    vsh       vsv       vph       vpv       eta       rho    ')") 
-  write(6,"(6f10.5)") vshout,vsvout,vphout,vpvout,etaout,rhoout
 
-  call subtopo(xcolat,xlon,topo410out,topo650out,ifknowmodel, &
-               THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-               THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
+  call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
+  write(6,"('    dvsh      dvsv      dvph      dvpv    ')") 
+  write(6,"(6f10.5)") 100.0*dvsh,100.0*dvsv,100.0*dvph,100.0*dvpv
+
+  call subtopo(xcolat,xlon,topo410,topo650)
   write(6,"('   topo410    topo650 ')") 
-  write(6,"(2f11.5)") topo410out,topo650out
+  write(6,"(2f11.5)") topo410,topo650
 
   end program xtest_s362ani

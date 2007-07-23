@@ -223,6 +223,7 @@
   double precision rho,drhodr,vp,vs,Qkappa,Qmu
   double precision vpv,vph,vsv,vsh,eta_aniso
   double precision dvp,dvs,drho
+  real xcolat,xlon,xrad,dvpv,dvph,dvsv,dvsh
   double precision xstore(NGLLX,NGLLY,NGLLZ)
   double precision ystore(NGLLX,NGLLY,NGLLZ)
   double precision zstore(NGLLX,NGLLY,NGLLZ)
@@ -305,30 +306,70 @@
          if(r_prem > RCMB/R_EARTH .and. r_prem < RMOHO/R_EARTH) then
            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
            call reduce(theta,phi)
-           dvs = ZERO
-           dvp = ZERO
-           drho = ZERO
-           call mantle_model(r,theta,phi,dvs,dvp,drho,D3MM_V)
-           vpv=vpv*(1.0d0+dvp)
-           vph=vph*(1.0d0+dvp)
-           vsv=vsv*(1.0d0+dvs)
-           vsh=vsh*(1.0d0+dvs)
-           rho=rho*(1.0d0+drho)
+           if(THREE_D_MODEL == THREE_D_MODEL_S20RTS) then
+! s20rts
+             dvs = ZERO
+             dvp = ZERO
+             drho = ZERO
+             call mantle_model(r,theta,phi,dvs,dvp,drho,D3MM_V)
+             vpv=vpv*(1.0d0+dvp)
+             vph=vph*(1.0d0+dvp)
+             vsv=vsv*(1.0d0+dvs)
+             vsh=vsh*(1.0d0+dvs)
+             rho=rho*(1.0d0+drho)
+           elseif(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
+                  .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
+! 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
+             dvpv = 0.
+             dvph = 0.
+             dvsv = 0.
+             dvsh = 0.
+             xcolat = sngl(theta*180.0d0/PI)
+             xlon = sngl(phi*180.0d0/PI)
+             xrad = sngl(r*R_EARTH_KM)
+             call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
+             vpv=vpv*(1.0d0+dble(dvpv))
+             vph=vph*(1.0d0+dble(dvph))
+             vsv=vsv*(1.0d0+dble(dvsv))
+             vsh=vsh*(1.0d0+dble(dvsh))
+           else
+             stop 'unknown 3D Earth model in get_model'
+           endif
 
 ! extend 3-D mantle model above the Moho to the surface before adding the crust
          else if(r_prem >= RMOHO/R_EARTH) then
            call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
            call reduce(theta,phi)
-           dvs = ZERO
-           dvp = ZERO
-           drho = ZERO
-           r_moho = RMOHO/R_EARTH
-           call mantle_model(r_moho,theta,phi,dvs,dvp,drho,D3MM_V)
-           vpv=vpv*(1.0d0+dvp)
-           vph=vph*(1.0d0+dvp)
-           vsv=vsv*(1.0d0+dvs)
-           vsh=vsh*(1.0d0+dvs)
-           rho=rho*(1.0d0+drho)
+           r_moho = 0.999999d0*RMOHO/R_EARTH
+           if(THREE_D_MODEL == THREE_D_MODEL_S20RTS) then
+! s20rts
+             dvs = ZERO
+             dvp = ZERO
+             drho = ZERO
+             call mantle_model(r_moho,theta,phi,dvs,dvp,drho,D3MM_V)
+             vpv=vpv*(1.0d0+dvp)
+             vph=vph*(1.0d0+dvp)
+             vsv=vsv*(1.0d0+dvs)
+             vsh=vsh*(1.0d0+dvs)
+             rho=rho*(1.0d0+drho)
+           elseif(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
+                  .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
+! 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
+             dvpv = 0.
+             dvph = 0.
+             dvsv = 0.
+             dvsh = 0.
+             xcolat = sngl(theta*180.0d0/PI)
+             xlon = sngl(phi*180.0d0/PI)
+             xrad = sngl(r_moho*R_EARTH_KM)
+             call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
+             vpv=vpv*(1.0d0+dble(dvpv))
+             vph=vph*(1.0d0+dble(dvph))
+             vsv=vsv*(1.0d0+dble(dvsv))
+             vsh=vsh*(1.0d0+dble(dvsh))
+           else
+             stop 'unknown 3D Earth model in get_model'
+           endif
 
          endif
        endif
