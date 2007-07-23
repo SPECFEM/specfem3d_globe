@@ -16,7 +16,7 @@
 !
 !=====================================================================
 
-  subroutine add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771,ifknowmodel,THREE_D_MODEL)
+  subroutine add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771)
 
   implicit none
 
@@ -27,9 +27,6 @@
   double precision xelm(NGNOD)
   double precision yelm(NGNOD)
   double precision zelm(NGNOD)
-
-  integer ifknowmodel
-  integer THREE_D_MODEL
 
   double precision R220,R400,R670,R771
 
@@ -54,9 +51,7 @@
     xlon = sngl(phi*180.0d0/PI)
 
 ! compute topography on 410 and 650 at current point
-    call subtopo(xcolat,xlon,topo410out,topo650out,ifknowmodel, &
-                 THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-                 THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
+    call subtopo(xcolat,xlon,topo410out,topo650out)
 
 ! non-dimensionalize the topography, which is in km
 ! positive for a depression, so change the sign for a perturbation in radius

@@ -273,6 +273,11 @@
   if(TOPOGRAPHY .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO))&
           call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
 
+! add topography on 410 km and 650 km discontinuity in model S362ANI
+  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
+     .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) &
+          call add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771)
+
 ! make the Earth elliptical
   if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
 

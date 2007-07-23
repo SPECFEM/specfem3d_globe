@@ -167,6 +167,7 @@ libspecfem_a_OBJECTS = \
 	$(EMPTY_MACRO)
 
 libs362ani_a_OBJECTS = \
+	$O/read_model_s362ani.o \
 	$O/subshsv.o \
 	$O/subtopo.o \
 	$O/evradker.o \
@@ -635,6 +636,9 @@ $O/get_backazimuth.o: get_backazimuth.f90
 
 $O/test_subshsv.o: DATA/s362ani/src/test_subshsv.f
 	${FCCOMPILE_f77} -c -o $O/test_subshsv.o ${FCFLAGS_f90} DATA/s362ani/src/test_subshsv.f
+
+$O/read_model_s362ani.o: DATA/s362ani/src/read_model_s362ani.f
+	${FCCOMPILE_f77} -c -o $O/read_model_s362ani.o ${FCFLAGS_f90} DATA/s362ani/src/read_model_s362ani.f
 
 $O/subshsv.o: DATA/s362ani/src/subshsv.f
 	${FCCOMPILE_f77} -c -o $O/subshsv.o ${FCFLAGS_f90} DATA/s362ani/src/subshsv.f
