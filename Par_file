@@ -15,12 +15,12 @@ GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be 16 * multiple of NPROC below)
-NEX_XI                          = 160  
-NEX_ETA                         = 160 
+NEX_XI                          = 256  
+NEX_ETA                         = 256 
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 5
-NPROC_ETA                       = 5
+NPROC_XI                        = 8
+NPROC_ETA                       = 8
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135, 1D_ref
@@ -45,7 +45,7 @@ ATTENUATION                     = .true.
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 1.0d0
+RECORD_LENGTH_IN_MINUTES        = 60.0d0
 
 # save AVS or OpenDX movies
 MOVIE_SURFACE                   = .false.
@@ -54,7 +54,7 @@ NTSTEP_BETWEEN_FRAMES           = 100
 HDUR_MOVIE                      = 0.d0
 
 # save mesh files to check the mesh
-SAVE_MESH_FILES                 = .true.
+SAVE_MESH_FILES                 = .false.
 
 # restart files (number of runs can be 1, 2 or 3, choose 1 for no restart files)
 NUMBER_OF_RUNS                  = 1
