@@ -326,7 +326,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
     THREE_D_MODEL = THREE_D_MODEL_S362ANI_PREM
 
-  else if(MODEL == 's29EA') then
+  else if(MODEL == 's29ea') then
     TRANSVERSE_ISOTROPY = .true.
     ISOTROPIC_3D_MANTLE = .true.
     ANISOTROPIC_3D_MANTLE = .false.
