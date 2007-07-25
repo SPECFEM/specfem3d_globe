@@ -51,7 +51,6 @@ FLAGS_CHECK = @FLAGS_CHECK@
 FLAGS_NO_CHECK = @FLAGS_NO_CHECK@
 FCFLAGS_f90 = @FCFLAGS_f90@
 
-FCCOMPILE_f77 =@FCENV@ ${FC} ${FCFLAGS} -O3
 FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
 FCCOMPILE_NO_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK)
 MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK)
@@ -153,6 +152,7 @@ libspecfem_a_OBJECTS = \
 	$O/recompute_jacobian.o \
 	$O/reduce.o \
 	$O/rthetaphi_xyz.o \
+	$O/s362ani.o \
 	$O/save_arrays_solver.o \
 	$O/save_header_file.o \
 	$O/sort_array_coordinates.o \
@@ -165,19 +165,6 @@ libspecfem_a_OBJECTS = \
 	$O/write_c_binary.o \
 	$O/write_seismograms.o \
 	$(EMPTY_MACRO)
-
-libs362ani_a_OBJECTS = \
-	$O/read_model_s362ani.o \
-	$O/subshsv.o \
-	$O/subtopo.o \
-	$O/evradker.o \
-	$O/vbspl.o \
-	$O/splconsngl.o \
-	$O/ylm.o \
-	$O/gt3dmodl.o \
-	$O/rd3dmodl.o \
-	$O/putcurrmodels.o \
-	$O/getcurrmodels.o
 
 # solver objects with statically allocated arrays; dependent upon
 # values_from_mesher.h
@@ -192,14 +179,12 @@ SOLVER_ARRAY_OBJECTS = \
 
 LIBSPECFEM = $(TOGGLED_OBJECTS) $O/libspecfem.a
 
-LIBS362ANI = $O/libs362ani.a
-
 # objects for the pure Fortran version
-@COND_PYRE_FALSE@XMESHFEM_OBJECTS = $O/program_meshfem3D.o $(LIBSPECFEM) $(LIBS362ANI)
+@COND_PYRE_FALSE@XMESHFEM_OBJECTS = $O/program_meshfem3D.o $(LIBSPECFEM)
 @COND_PYRE_FALSE@XSPECFEM_OBJECTS = $O/program_specfem3D.o $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
 
 # objects for the Pyrized version
-@COND_PYRE_TRUE@XMESHFEM_OBJECTS = $(LIBSPECFEM) $(LIBS362ANI)
+@COND_PYRE_TRUE@XMESHFEM_OBJECTS = $(LIBSPECFEM)
 @COND_PYRE_TRUE@XSPECFEM_OBJECTS = $O/PyxSpecfem.o $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
 
 
@@ -265,14 +250,11 @@ bak: backup
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${FCCOMPILE_CHECK} -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
-create_header_file: $O/program_create_header_file.o $(LIBSPECFEM) $(LIBS362ANI)
-	${FCCOMPILE_CHECK} -o xcreate_header_file $O/program_create_header_file.o $(LIBSPECFEM) $(LIBS362ANI)
+create_header_file: $O/program_create_header_file.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xcreate_header_file $O/program_create_header_file.o $(LIBSPECFEM)
 
-test_s362ani: $O/program_test_s362ani.o $O/model_ref.o $(LIBS362ANI)
-	${FCCOMPILE_CHECK} -o xtest_s362ani $O/program_test_s362ani.o $O/model_ref.o $(LIBS362ANI)
-
-test_subshsv: $O/test_subshsv.o $(LIBS362ANI)
-	${FCCOMPILE_f77} -o xtest_subshsv $O/test_subshsv.o $(LIBS362ANI)
+test_s362ani: $O/program_test_s362ani.o $O/model_ref.o $O/s362ani.o
+	${FCCOMPILE_CHECK} -o xtest_s362ani $O/program_test_s362ani.o $O/model_ref.o $O/s362ani.o
 
 @COND_PYRE_FALSE@create_movie_AVS_DX: $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
 @COND_PYRE_FALSE@	${FCCOMPILE_CHECK} -o xcreate_movie_AVS_DX $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
@@ -309,11 +291,6 @@ $O/libspecfem.a: $(libspecfem_a_OBJECTS)
 	-rm -f $O/libspecfem.a
 	$(AR) $(ARFLAGS) $O/libspecfem.a $(libspecfem_a_OBJECTS)
 	$(RANLIB) $O/libspecfem.a
-
-$O/libs362ani.a: $(libs362ani_a_OBJECTS)
-	-rm -f $O/libs362ani.a
-	$(AR) $(ARFLAGS) $O/libs362ani.a $(libs362ani_a_OBJECTS)
-	$(RANLIB) $O/libs362ani.a
 
 ####
 #### rule for each .o file below
@@ -634,41 +611,8 @@ $O/get_backazimuth.o: get_backazimuth.f90
 ### rules for S362ANI
 ###
 
-$O/test_subshsv.o: DATA/s362ani/src/test_subshsv.f
-	${FCCOMPILE_f77} -c -o $O/test_subshsv.o ${FCFLAGS_f90} DATA/s362ani/src/test_subshsv.f
-
-$O/read_model_s362ani.o: DATA/s362ani/src/read_model_s362ani.f
-	${FCCOMPILE_f77} -c -o $O/read_model_s362ani.o ${FCFLAGS_f90} DATA/s362ani/src/read_model_s362ani.f
-
-$O/subshsv.o: DATA/s362ani/src/subshsv.f
-	${FCCOMPILE_f77} -c -o $O/subshsv.o ${FCFLAGS_f90} DATA/s362ani/src/subshsv.f
-
-$O/subtopo.o: DATA/s362ani/src/subtopo.f
-	${FCCOMPILE_f77} -c -o $O/subtopo.o ${FCFLAGS_f90} DATA/s362ani/src/subtopo.f
-
-$O/evradker.o: DATA/s362ani/src/evradker.f
-	${FCCOMPILE_f77} -c -o $O/evradker.o ${FCFLAGS_f90} DATA/s362ani/src/evradker.f
-
-$O/vbspl.o: DATA/s362ani/src/vbspl.f
-	${FCCOMPILE_f77} -c -o $O/vbspl.o ${FCFLAGS_f90} DATA/s362ani/src/vbspl.f
-
-$O/splconsngl.o: DATA/s362ani/src/splconsngl.f
-	${FCCOMPILE_f77} -c -o $O/splconsngl.o ${FCFLAGS_f90} DATA/s362ani/src/splconsngl.f
-
-$O/ylm.o: DATA/s362ani/src/ylm.f
-	${FCCOMPILE_f77} -c -o $O/ylm.o ${FCFLAGS_f90} DATA/s362ani/src/ylm.f
-
-$O/gt3dmodl.o: DATA/s362ani/src/gt3dmodl.f
-	${FCCOMPILE_f77} -c -o $O/gt3dmodl.o ${FCFLAGS_f90} DATA/s362ani/src/gt3dmodl.f
-
-$O/rd3dmodl.o: DATA/s362ani/src/rd3dmodl.f
-	${FCCOMPILE_f77} -c -o $O/rd3dmodl.o ${FCFLAGS_f90} DATA/s362ani/src/rd3dmodl.f
-
-$O/putcurrmodels.o: DATA/s362ani/src/putcurrmodels.f
-	${FCCOMPILE_f77} -c -o $O/putcurrmodels.o ${FCFLAGS_f90} DATA/s362ani/src/putcurrmodels.f
-
-$O/getcurrmodels.o: DATA/s362ani/src/getcurrmodels.f
-	${FCCOMPILE_f77} -c -o $O/getcurrmodels.o ${FCFLAGS_f90} DATA/s362ani/src/getcurrmodels.f
+$O/s362ani.o: mod.h 3dmodl.h s362ani.f90
+	${FCCOMPILE_CHECK} -c -o $O/s362ani.o ${FCFLAGS_f90} s362ani.f90
 
 ###
 ### rule for the header file
