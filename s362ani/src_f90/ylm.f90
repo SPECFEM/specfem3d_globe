@@ -62,7 +62,7 @@
 
   real(kind=4) :: THETA,DSFL3,COSEC,SFL3
 
-!!!!!! illegal statement, removed by Dimitri Komatitsch   dble(I)=FLOAT(I)
+!!!!!! illegal statement, removed by Dimitri Komatitsch   DFLOAT(I)=FLOAT(I)
 
   SUM=0.D0
   LP1=L+1
