@@ -14,8 +14,6 @@
 
   integer :: ncoef,i,ihor,iprtlv,ifst,ilst,ifst1,ios,lstr,nmodkern,idummy,nhorpar,lmax
 
-  common /plevel/ iprtlv
-
   open(lu,file=filename,iostat=ios)
   if(ios /= 0) then
   stop 'error opening 3-d model'
