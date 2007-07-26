@@ -253,8 +253,8 @@ convolve_source_timefunction: $O/convolve_source_timefunction.o
 create_header_file: $O/program_create_header_file.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcreate_header_file $O/program_create_header_file.o $(LIBSPECFEM)
 
-test_s362ani: $O/program_test_s362ani.o $O/model_ref.o $O/s362ani.o
-	${FCCOMPILE_CHECK} -o xtest_s362ani $O/program_test_s362ani.o $O/model_ref.o $O/s362ani.o
+test_s362ani: $O/program_test_s362ani.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o xtest_s362ani $O/program_test_s362ani.o $(LIBSPECFEM)
 
 @COND_PYRE_FALSE@create_movie_AVS_DX: $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
 @COND_PYRE_FALSE@	${FCCOMPILE_CHECK} -o xcreate_movie_AVS_DX $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)

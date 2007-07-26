@@ -547,9 +547,13 @@
   allocate(zp(npointot))
 
 ! define models 1066a and ak135 and ref
-  call define_model_1066a(CRUSTAL, M1066a_V)
-  call define_model_ak135(CRUSTAL, Mak135_V)
-  call define_model_ref(CRUSTAL, Mref_V)
+  if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+    call define_model_1066a(CRUSTAL, M1066a_V)
+  elseif(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+    call define_model_ak135(CRUSTAL, Mak135_V)
+  elseif(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
+    call define_model_ref(CRUSTAL, Mref_V)
+  endif
 
 !------------------------------------------------------------------------
 

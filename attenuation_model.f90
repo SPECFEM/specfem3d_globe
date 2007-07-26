@@ -169,19 +169,18 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
   call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
   if(myrank > 0) return
 
-  call define_model_ak135(.FALSE.,Mak135_V)
-  call define_model_1066a(.FALSE., M1066a_V)
-  call define_model_ref(.FALSE., Mref_V)
-
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
      AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
      AM_V%Qn = 12
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
+     call define_model_ak135(.FALSE.,Mak135_V)
      AM_V%Qn = NR_AK135
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066a) then
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+     call define_model_1066a(.FALSE., M1066a_V)
      AM_V%Qn = NR_1066A
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
+     call define_model_ref(.FALSE., Mref_V)
      AM_V%Qn = NR_REF
   else
      call exit_MPI(myrank, 'Reference 1D Model Not recognized')
@@ -201,7 +200,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
      AM_V%Qr(:)     = Mak135_V%radius_ak135(:)
      AM_V%Qmu(:)    = Mak135_V%Qmu_ak135(:)
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066a) then
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
      AM_V%Qr(:)     = M1066a_V%radius_1066a(:)
      AM_V%Qmu(:)    = M1066a_V%Qmu_1066a(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_ref) then
