@@ -223,7 +223,7 @@
   double precision rho,drhodr,vp,vs,Qkappa,Qmu
   double precision vpv,vph,vsv,vsh,eta_aniso
   double precision dvp,dvs,drho
-  real xcolat,xlon,xrad,dvpv,dvph,dvsv,dvsh
+  real(kind=4) xcolat,xlon,xrad,dvpv,dvph,dvsv,dvsh
   double precision xstore(NGLLX,NGLLY,NGLLZ)
   double precision ystore(NGLLX,NGLLY,NGLLZ)
   double precision zstore(NGLLX,NGLLY,NGLLZ)

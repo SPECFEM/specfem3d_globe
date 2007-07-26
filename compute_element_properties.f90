@@ -251,6 +251,7 @@
   double precision  T_c_source
 
 ! **************
+
 ! compute values for the Earth model
   call get_model(myrank,iregion_code,nspec, &
           kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rhostore,nspec_ani, &
@@ -268,10 +269,9 @@
           RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
 
-
 ! add topography without the crustal model
-  if(TOPOGRAPHY .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO))&
-          call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
+  if(TOPOGRAPHY .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
+     .or. idoubling(ispec)==IFLAG_80_MOHO)) call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
 
 ! add topography on 410 km and 650 km discontinuity in model S362ANI
   if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &

@@ -32,8 +32,8 @@
 
   integer ia
 
-  real xcolat,xlon
-  real topo410out,topo650out
+  real(kind=4) xcolat,xlon
+  real(kind=4) topo410out,topo650out
   double precision topo410,topo650
 
   double precision r,theta,phi
