@@ -251,6 +251,10 @@
   double precision  T_c_source
 
 ! **************
+! add topography on the Moho *before* adding the 3D crustal model so that the streched
+! mesh gets assigned the right model values
+  if(THREE_D_MODEL/=0 .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
+     .or. idoubling(ispec)==IFLAG_80_MOHO)) call moho_stretching(myrank,xelm,yelm,zelm,RMOHO,R220)
 
 ! compute values for the Earth model
   call get_model(myrank,iregion_code,nspec, &
