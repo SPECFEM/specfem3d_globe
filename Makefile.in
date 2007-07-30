@@ -145,6 +145,7 @@ libspecfem_a_OBJECTS = \
 	$O/model_iasp91.o \
 	$O/model_prem.o \
 	$O/model_ref.o \
+	$O/moho_stretching.o \
 	$O/numerical_recipes.o \
 	$O/read_arrays_buffers_solver.o \
 	$O/read_compute_parameters.o \
@@ -527,6 +528,9 @@ $O/comp_source_spectrum.o: constants.h comp_source_spectrum.f90
 
 $O/add_topography.o: constants.h add_topography.f90
 	${FCCOMPILE_CHECK} -c -o $O/add_topography.o ${FCFLAGS_f90} add_topography.f90
+
+$O/moho_stretching.o: constants.h  moho_stretching.f90
+	${FCCOMPILE_CHECK} -c -o $O/moho_stretching.o ${FCFLAGS_f90} moho_stretching.f90
 
 $O/add_topography_410_650.o: constants.h add_topography_410_650.f90
 	${FCCOMPILE_CHECK} -c -o $O/add_topography_410_650.o ${FCFLAGS_f90} add_topography_410_650.f90

@@ -394,7 +394,7 @@
 
     ! element width =   0.3515625      degrees =    39.09196      km
       else if(NEX_MAX <= 256) then
-        DT                       = 0.225d0
+        DT                       = 0.225
 
     !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
         MIN_ATTENUATION_PERIOD   = 20

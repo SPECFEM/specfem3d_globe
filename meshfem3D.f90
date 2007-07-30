@@ -844,6 +844,7 @@
   if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
   if(ISOTROPIC_3D_MANTLE) then
+    if(THREE_D_MODEL /= 0) call read_smooth_moho
     if(THREE_D_MODEL == THREE_D_MODEL_S20RTS) then
       if(myrank == 0) call read_mantle_model(D3MM_V)
 ! broadcast the information read on the master to the nodes
