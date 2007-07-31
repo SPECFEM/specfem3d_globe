@@ -45,7 +45,7 @@ ATTENUATION                     = .true.
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 1.0d0
+RECORD_LENGTH_IN_MINUTES        = 25.0d0
 
 # save AVS or OpenDX movies
 MOVIE_SURFACE                   = .false.
