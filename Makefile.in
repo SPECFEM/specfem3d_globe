@@ -89,6 +89,8 @@ libspecfem_a_OBJECTS = \
 	$O/add_missing_nodes.o \
 	$O/add_topography.o \
 	$O/add_topography_410_650.o \
+	$O/add_topography_cmb.o \
+	$O/add_topography_icb.o \
 	$O/anisotropic_inner_core_model.o \
 	$O/anisotropic_mantle_model.o \
 	$O/assemble_MPI_scalar.o \
@@ -534,6 +536,12 @@ $O/moho_stretching.o: constants.h  moho_stretching.f90
 
 $O/add_topography_410_650.o: constants.h add_topography_410_650.f90
 	${FCCOMPILE_CHECK} -c -o $O/add_topography_410_650.o ${FCFLAGS_f90} add_topography_410_650.f90
+
+$O/add_topography_cmb.o: constants.h add_topography_cmb.f90
+	${FCCOMPILE_CHECK} -c -o $O/add_topography_cmb.o ${FCFLAGS_f90} add_topography_cmb.f90
+
+$O/add_topography_icb.o: constants.h add_topography_icb.f90
+	${FCCOMPILE_CHECK} -c -o $O/add_topography_icb.o ${FCFLAGS_f90} add_topography_icb.f90
 
 $O/write_seismograms.o: constants.h write_seismograms.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/write_seismograms.o ${FCFLAGS_f90} write_seismograms.f90
