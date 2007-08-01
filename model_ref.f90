@@ -149,13 +149,13 @@
   logical USE_EXTERNAL_CRUSTAL_MODEL
 
   integer i
-  
+
 ! 1D REF model of Kustowski et al. (2007)
   open(unit=10,file='DATA/s362ani/REF',status='old',action='read')
 ! skip the first three lines
-  read(10,*) 
-  read(10,*) 
-  read(10,*) 
+  read(10,*)
+  read(10,*)
+  read(10,*)
 ! read the card deck model
   do i=1,NR_REF
     read(10,*) Mref_V%radius_ref(i),Mref_V%density_ref(i),Mref_V%vpv_ref(i), &

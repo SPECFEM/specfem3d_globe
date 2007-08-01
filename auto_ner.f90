@@ -5,7 +5,7 @@
        NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
        NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
        R_CENTRAL_CUBE, CASE_3D)
-    
+
     implicit none
 
     include 'constants.h'
@@ -146,7 +146,7 @@
     nex_eta_in   = -1
     ximin        = 1e7
     rcube        = rcube_test
-    
+
     do while(rcube_test <= rcubemax)
        max_edgemax = -1e7
        min_edgemin = 1e7
@@ -164,7 +164,7 @@
           min_edgemin = MIN(min_edgemin, edgemin)
           max_aspect_ratio = MAX(max_aspect_ratio, aspect_ratio)
        end do
-       xi = (max_edgemax / min_edgemin) 
+       xi = (max_edgemax / min_edgemin)
 !       xi = abs(rcube_test - 981.0d0) / 45.0d0
 !       write(*,'(a,5(f14.4,2x))')'rcube, xi, ximin:-',rcube_test, xi, min_edgemin,max_edgemax,max_aspect_ratio
        deallocate(points)
@@ -178,7 +178,7 @@
 
   end subroutine find_r_central_cube
 
-  subroutine compute_nex(nex_xi, rcube, alpha, ner) 
+  subroutine compute_nex(nex_xi, rcube, alpha, ner)
     implicit none
 
     double precision, parameter :: RICB_KM = 1221.0d0
@@ -251,7 +251,7 @@
     integer npts
     integer nspec_chunks, nspec_cube
     double precision rcube
-    double precision alpha 
+    double precision alpha
     double precision points(npts, 2)
     double precision x, y
     integer kmax
@@ -290,7 +290,7 @@
           nspec_cube = nspec_cube + 1
        end do
     end do
-    
+
   end subroutine compute_IC_mesh
 
   subroutine compute_coordinate_central_cube(ix,iy,nbx,nby,radius, alpha, x, y)
@@ -311,7 +311,7 @@
 
     factx = 2.0d0 * ratio_x - 1.0d0
     facty = 2.0d0 * ratio_y - 1.0d0
-    
+
     xi  = (PI / 2.0d0) * factx
     eta = (PI / 2.0d0) * facty
 
@@ -339,13 +339,13 @@
 
     ratio_x = (ix * 1.0d0) / (nbx * 1.0d0)
     ratio_y = (iy * 1.0d0) / (nby * 1.0d0)
-    
+
     factx = 2.0d0 * ratio_x - 1.0d0
     xi = (PI/2.0d0) * factx
 
     xcc = (rcube / sqrt(2.0d0)) * factx
     ycc = (rcube / sqrt(2.0d0)) * (1 + cos(xi) * alpha / (PI/2.0d0))
-    
+
     xsurf = RICB_KM * cos(3.0d0 * (PI/4.0d0) - ratio_x * (PI/2.0d0))
     ysurf = RICB_KM * sin(3.0d0 * (PI/4.0d0) - ratio_x * (PI/2.0d0))
 

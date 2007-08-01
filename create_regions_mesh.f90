@@ -632,7 +632,7 @@
 ! determine the radii that define the shell
   rmin = rmins(ilayer)
   rmax = rmaxs(ilayer)
-  
+
   if(iregion_code == IREGION_CRUST_MANTLE .and. ilayer_loop==3) then
     FIRST_ELT_NON_ANISO = ispec+1
   endif
@@ -868,7 +868,7 @@
 
   if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTALMESH) deallocate(stretch_tab)
   deallocate (perm_layer)
- 
+
 !---
 
 ! define central cube in inner core
@@ -972,7 +972,7 @@
           else if(iz == 2*nz_central_cube-2) then
             idoubling(ispec) = IFLAG_TOP_CENTRAL_CUBE
           else
-            idoubling(ispec) = IFLAG_IN_CENTRAL_CUBE
+            idoubling(ispec) = IFLAG_MIDDLE_CENTRAL_CUBE
           endif
         else
           idoubling(ispec) = IFLAG_IN_FICTITIOUS_CUBE
@@ -1077,11 +1077,11 @@
       ! the 3 last parameters are : PERFORM_CUTHILL_MCKEE,INVERSE,FACE
       call get_perm(ibool,perm,limit,nspec,nglob,.true.,.false.)
     endif
- 
-    ! permutation of xstore, ystore, zstore, rhostore, kappavstore, kappahstore, 
+
+    ! permutation of xstore, ystore, zstore, rhostore, kappavstore, kappahstore,
     ! muvstore, muhstore, eta_anisostore, xixstore, xiystore, xizstore, etaxstore,
     ! etaystore, etazstore, gammaxstore, gammaystore, gammazstore, jacobianstore
- 
+
     allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
     if(ATTENUATION .and. ATTENUATION_3D) then
       call permute_elements_dble(Qmu_store,temp_array_dble,perm,nspec)
@@ -1149,7 +1149,7 @@
     allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
     call permute_elements_integer(ibool,temp_array_int,perm,nspec)
     deallocate(temp_array_int)
-  
+
     ! permutation of iMPIcut_*
     allocate(temp_array_2D_log(2,nspec))
     temp_array_2D_log(:,:) = iMPIcut_xi(:,:)
@@ -1161,7 +1161,7 @@
       iMPIcut_eta(:,perm(i)) = temp_array_2D_log(:,i)
     enddo
     deallocate(temp_array_2D_log)
-  
+
     ! permutation of iboun
     allocate(temp_array_2D_log(6,nspec))
     temp_array_2D_log(:,:) = iboun(:,:)
@@ -1169,7 +1169,7 @@
       iboun(:,perm(i)) = temp_array_2D_log(:,i)
     enddo
     deallocate(temp_array_2D_log)
-  
+
     ! permutation of idoubling
     allocate(temp_array_1D_int(nspec))
     temp_array_1D_int(:) = idoubling(:)
@@ -1177,7 +1177,7 @@
       idoubling(perm(i)) = temp_array_1D_int(i)
     enddo
     deallocate(temp_array_1D_int)
-  
+
     deallocate(perm)
   endif
 

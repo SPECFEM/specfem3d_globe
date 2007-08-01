@@ -97,7 +97,7 @@
 
   do ispec=1,nspec
     ! remove central cube for chunk buffers
-    if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
@@ -157,7 +157,7 @@
   ispeccount=0
   do ispec=1,nspec
     ! remove central cube for chunk buffers
-    if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
@@ -223,7 +223,7 @@
   do ispec=1,nspec
 
 ! remove central cube for chunk buffers
-  if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
      idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
      idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
      idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
@@ -289,7 +289,7 @@
   do ispec=1,nspec
 
 ! remove central cube for chunk buffers
-  if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
      idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
      idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
      idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle

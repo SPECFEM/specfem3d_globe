@@ -214,7 +214,7 @@ end subroutine write_seismograms
 ! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
   logical ROTATE_SEISMOGRAMS_RT
 
-! BS BS new variables used for calculation of backazimuth and 
+! BS BS new variables used for calculation of backazimuth and
 ! rotation of components if ROTATE_SEISMOGRAMS=.true.
 
   integer ior_start,ior_end
@@ -251,23 +251,23 @@ end subroutine write_seismograms
      endif
 
       if (iorientation == 4 .or. iorientation == 5) then        ! LMU BS BS
-    
+
           ! BS BS calculate backazimuth needed to rotate East and North
-          ! components to Radial and Transverse components 
+          ! components to Radial and Transverse components
           call get_backazimuth(elat,elon,stlat(irec),stlon(irec),backaz)
-    
+
           if (backaz>180.) then
              phi=backaz-180.
-          elseif (backaz<180.) then 
+          elseif (backaz<180.) then
              phi=backaz+180.
           elseif (backaz==180.) then
              phi=backaz
           endif
-          
+
           cphi=cos(phi*pi/180)
           sphi=sin(phi*pi/180)
-          
-          ! BS BS do the rotation of the components and put result in 
+
+          ! BS BS do the rotation of the components and put result in
           ! new variable seismogram_tmp
           if (iorientation == 4) then ! radial component
              do isample = it_begin,it_end
@@ -286,9 +286,9 @@ end subroutine write_seismograms
              do isample = it_begin,it_end
                 seismogram_tmp(iorientation,isample) = one_seismogram(iorientation,isample)
              enddo
-          
+
       endif
-    
+
 
 ! create the name of the seismogram file for each slice
 ! file name includes the name of the station and the network
@@ -306,7 +306,7 @@ end subroutine write_seismograms
      write(sisname,"('/',a,'.',a,'.',a3,'.semd')") station_name(irec)(1:length_station_name), &
                    network_name(irec)(1:length_network_name),chn
 
-  if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY) then 
+  if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY) then
 
 !######################## SAC Alphanumeric Seismos ############################
 !
@@ -452,7 +452,7 @@ end subroutine write_seismograms
 !----------------------------------
 
 
-  if (OUTPUT_SEISMOS_SAC_ALPHANUM) then 
+  if (OUTPUT_SEISMOS_SAC_ALPHANUM) then
 
 ! add .sacan (sac alphanumeric) extension to seismogram file name for SAC seismograms
  write(sisname_2,"('/',a,'.sacan')") trim(sisname)
@@ -552,9 +552,9 @@ end subroutine write_seismograms
  close(IOUT)
 
   endif ! OUTPUT_SEISMOS_SAC_ALPHANUM
-      
+
 ! For explaination on values set, see above (SAC ASCII)
-  if (OUTPUT_SEISMOS_SAC_BINARY) then 
+  if (OUTPUT_SEISMOS_SAC_BINARY) then
 
 ! add .sac (sac binary) extension to seismogram file name for SAC seismograms
  write(sisname_2,"('/',a,'.sac')") trim(sisname)
@@ -562,7 +562,7 @@ end subroutine write_seismograms
     ! open binary file
     call open_file(trim(OUTPUT_FILES)//trim(sisname_2)//char(0))
 
-    ! write header variables 
+    ! write header variables
 
     ! write single precision header variables 1:70
     call write_real(DELTA)         !(1)
@@ -624,8 +624,8 @@ end subroutine write_seismograms
     call write_real(DEPMEN)        !(57)
     call write_real(CMPAZ)         !(58)
     call write_real(CMPINC)        !(59)
-    call write_real(undef)          !(60)XMINIMUM 
-    call write_real(undef)          !(61)XMAXIMUM 
+    call write_real(undef)          !(60)XMINIMUM
+    call write_real(undef)          !(61)XMAXIMUM
     call write_real(undef)          !(62)YMINIMUM
     call write_real(undef)          !(63)YMAXIMUM
     call write_real(undef)          !(64)
@@ -725,7 +725,7 @@ end subroutine write_seismograms
 
   endif ! OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY
 
-  if (OUTPUT_SEISMOS_ASCII_TEXT) then 
+  if (OUTPUT_SEISMOS_ASCII_TEXT) then
 
 ! save seismograms in text format with no subsampling.
 ! Because we do not subsample the output, this can result in large files
@@ -750,10 +750,10 @@ end subroutine write_seismograms
      enddo
 
      close(IOUT)
- 
+
   endif  ! OUTPUT_SEISMOS_ASCII_TEXT
 
-  enddo ! do iorientation 
+  enddo ! do iorientation
 
  end subroutine write_one_seismogram
 

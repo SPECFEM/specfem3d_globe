@@ -47,7 +47,7 @@
   if(PERFORM_CUTHILL_MCKEE) then
   ! total number of points in the mesh
     nglob_GLL_full = nglob
-  
+
   !---- call Charbel Farhat's routines
     write(IMAIN,*) 'form_elt_connectivity_foelco'
     call form_elt_connectivity_foelco(mn,mp,nspec,global_corner_number,nglob_GLL_full,ibool,nglob_eight_corners_only)
@@ -55,7 +55,7 @@
         istart = mp(i)
         istop = mp(i+1) - 1
     enddo
-  
+
     allocate(np(nglob_eight_corners_only+1))
     count_only = .true.
     total_size_ne = 1
@@ -71,7 +71,7 @@
         istart = np(i)
         istop = np(i+1) - 1
     enddo
-  
+
     count_only = .true.
     total_size_adj = 1
     write(IMAIN,*) 'create_adjacency_table_adjncy 1'

@@ -289,7 +289,7 @@
 
 ! ICB topography
 !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
-!     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_IN_CENTRAL_CUBE &
+!     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
 !     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
 !     .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
 !           call add_topography_icb(myrank,xelm,yelm,zelm,RICB,RCMB)

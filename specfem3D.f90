@@ -843,19 +843,19 @@
     call MPI_BCAST(bcast_dbl,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(bcast_log,27,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-  
+
     call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  
+
     call MPI_BCAST(ner,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(doubling_index,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  
+
     call MPI_BCAST(r_bottom,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(r_top,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(rmins,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(rmaxs,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  
+
     call MPI_BCAST(this_region_has_a_doubling,MAX_NUMBER_OF_MESH_LAYERS,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(NSPEC_computed,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -1062,7 +1062,7 @@
       write(IMAIN,*) NSPEC_computed(IREGION_INNER_CORE),NSPEC_INNER_CORE
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver 3')
   endif
-  if (ATTENUATION_3D .NEQV. ATTENUATION_VAL_3D) then 
+  if (ATTENUATION_3D .NEQV. ATTENUATION_VAL_3D) then
       write(IMAIN,*) ATTENUATION_3D,ATTENUATION_VAL_3D
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver 4')
   endif
@@ -1149,7 +1149,7 @@
     do iproc_xi = NPROC_XI-1, 0, -1
       write(IMAIN,'(1x)',advance='no')
       do iproc_eta = NPROC_ETA -1, 0, -1
-        ichunk = CHUNK_BC 
+        ichunk = CHUNK_BC
         write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(3x)',advance='no')
