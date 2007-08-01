@@ -26,12 +26,12 @@
   double precision ths, phs
   double precision az,baz,xdeg
 
-  double precision a, a1, b, b1, c, c1 
+  double precision a, a1, b, b1, c, c1
   double precision d, d1, e, e1
   double precision ec2, eps, f, f1, g, g1, h, h1, onemec2, pherad
   double precision phsrad, sc, sd, ss
   double precision temp, therad, thg, thsrad
-  
+
   double precision, parameter :: rad = 6378.160
   double precision, parameter :: fl = 0.00335293
   double precision, parameter :: twopideg = 360.
@@ -81,11 +81,11 @@
   !=====================================================================
   ! KNOWN ERRORS:
   ! - Problem with equation for distance. See discussion below.
-  !===================================================================== 
-  ! PROCEDURE: 
+  !=====================================================================
+  ! PROCEDURE:
   ! - Calculations are based upon the reference spheroid of 1968 and
-  !   are defined by the major radius (RAD) and the flattening (FL). 
-  ! - Initialize. 
+  !   are defined by the major radius (RAD) and the flattening (FL).
+  ! - Initialize.
   !nerr = 0
 
   ec2 = 2.*fl - fl*fl
@@ -93,7 +93,7 @@
   eps = 1. + ec2/onemec2
 
   ! - Convert event location to radians.
-  !   (Equations are unstable for latidudes of exactly 0 degrees.) 
+  !   (Equations are unstable for latidudes of exactly 0 degrees.)
 
   temp = the
   if( temp == 0. ) temp = 1.0e-08
@@ -102,10 +102,10 @@
 
   ! - Must convert from geographic to geocentric coordinates in order
   !   to use the spherical trig equations.  This requires a latitude
-  !   correction given by: 1-EC2=1-2*FL+FL*FL 
+  !   correction given by: 1-EC2=1-2*FL+FL*FL
 
-  if ( the == 90 .or. the == -90 ) then         ! special attention at the poles 
-              thg = the*TORAD                   ! ... to avoid division by zero. 
+  if ( the == 90 .or. the == -90 ) then         ! special attention at the poles
+              thg = the*TORAD                   ! ... to avoid division by zero.
   else
               thg = atan( onemec2*tan( therad ) )
   endif
@@ -120,15 +120,15 @@
   h = c*d
 
 
-  ! -- Convert to radians. 
+  ! -- Convert to radians.
   temp = Ths
   if( temp == 0. ) temp = 1.0e-08
   thsrad = TORAD*temp
   phsrad = TORAD*Phs
 
-  ! -- Calculate some trig constants. 
+  ! -- Calculate some trig constants.
   if ( Ths == 90 .or. Ths == -90 ) then
-        thg = Ths * TORAD 
+        thg = Ths * TORAD
   else
         thg = atan( onemec2*tan( thsrad ) )
   endif
@@ -143,7 +143,7 @@
   h1 = c1*d1
   sc = a*a1 + b*b1 + c*c1
 
-  ! - Spherical trig relationships used to compute angles. 
+  ! - Spherical trig relationships used to compute angles.
 
   sd = 0.5*sqrt( ((a - a1)**2 + (b - b1)**2 + (c - &
    c1)**2)*((a + a1)**2 + (b + b1)**2 + (c + c1)**2) )
@@ -156,7 +156,7 @@
   Az = atan2( ss, sc )*TODEG
   if( Az < 0. ) &
       Az = Az + twopideg
-    
+
   ss = (a - d1)**2 + (b - e1)**2 + (c)**2 - 2.
   sc = (a - g1)**2 + (b - h1)**2 + (c - f1)**2 - 2.
   Baz = atan2( ss, sc )*TODEG

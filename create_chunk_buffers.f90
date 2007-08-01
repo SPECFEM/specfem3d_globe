@@ -526,7 +526,7 @@
                 ispec=ibelm_xmin(ispec2D)
 
 ! remove central cube for chunk buffers
-                if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+                if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
@@ -570,7 +570,7 @@
                 ispec=ibelm_xmax(ispec2D)
 
 ! remove central cube for chunk buffers
-                if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+                if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
@@ -614,7 +614,7 @@
                 ispec=ibelm_ymin(ispec2D)
 
 ! remove central cube for chunk buffers
-                if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+                if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
@@ -658,7 +658,7 @@
                 ispec=ibelm_ymax(ispec2D)
 
 ! remove central cube for chunk buffers
-                if(idoubling(ispec) == IFLAG_IN_CENTRAL_CUBE .or. &
+                if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
                   idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle

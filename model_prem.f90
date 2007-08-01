@@ -50,7 +50,7 @@
 
   if(r >= 0.d0 .and. r < RICB) then
     if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
-       idoubling /= IFLAG_IN_CENTRAL_CUBE .and. &
+       idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
@@ -274,7 +274,7 @@
 !
   if(r >= 0.d0 .and. r < RICB) then
     if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
-       idoubling /= IFLAG_IN_CENTRAL_CUBE .and. &
+       idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &

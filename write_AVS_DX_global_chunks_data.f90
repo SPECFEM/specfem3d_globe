@@ -601,10 +601,10 @@
 
             else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
               call model_1066a(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),M1066a_V)
-                
+
             else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
               call model_ak135(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),Mak135_V)
-             
+
             else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
               call model_ref(r,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling(ispec),Mref_V)
               vp = vpv

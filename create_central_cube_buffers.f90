@@ -223,7 +223,7 @@
       ispec = ibelm_xmin_inner_core(ispec2D)
 
 ! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_IN_CENTRAL_CUBE .and. &
+     if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
         idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
         idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
 
@@ -253,7 +253,7 @@
       ispec = ibelm_xmax_inner_core(ispec2D)
 
 ! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_IN_CENTRAL_CUBE .and. &
+     if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
         idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
         idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
 
@@ -283,7 +283,7 @@
       ispec = ibelm_ymin_inner_core(ispec2D)
 
 ! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_IN_CENTRAL_CUBE .and. &
+     if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
         idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
         idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
 
@@ -313,7 +313,7 @@
       ispec = ibelm_ymax_inner_core(ispec2D)
 
 ! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_IN_CENTRAL_CUBE .and. &
+     if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
         idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
         idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
 
