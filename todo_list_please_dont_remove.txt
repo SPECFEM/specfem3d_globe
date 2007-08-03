@@ -5,6 +5,20 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 David:
 -----
 
+- Subject: permutation et aniso
+Date: Fri, 03 Aug 2007 13:03:51 +0200
+From: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr>
+Organization: University of Pau, France
+To: David Michéa <davidmichea@gmail.com>
+Salut David,
+j'ai réfléchi au coup de la permutation qui plantait et au fait que ça ne plante plus quand tu enlèves trois tableaux aniso (qui deviennent non permutés), je pense que ça ne peut pas être ça et que c'est un hasard : ça doit donner un résultat faux mais stable par hasard.  en effet, il n'est pas logique que ces tableaux ne soient pas permutés, car ce sont des propriétés de l'élément au même titre que les autres (rho, vp, vs etc) donc ils doivent être permutés pareil, sinon ils ne correspondent plus au bon élément à mon avis donc le bug est ailleurs, probablement un effet de bord caché.
+comme tu as déjà cherché partout, je pense que le mieux à la rentrée en septembre sera de remettre à plat le truc en appelant deux fois la routine de création du maillage
+au lieu d'une, comme on y avait pensé initialement :
+1/ tu appeles create_regions pour créer la liste des éléments et les xstore ystore zstore, mais rien d'autre
+2/ tu tries ça avec get_global, et tu crées la permutation en appelant get_perm
+3/ l'étape 2/ t'as donné le nouvel ordre dans lequel il faut créer les éléments, donc tu rappeles create_regions mais en bouclant sur perm(ispec) au lieu de ispec ; et cette fois-ci en créant et sauvant tous les tableaux (rhostore, vpstore vstrore etc) comme actuellement; du coup tu as la garantie que tous les tableaux sont créés et sauvés dans le bon ordre, et il n'y a plus besoin de routine de permutation des tableaux, on pourra carrément les supprimer
+on pourra voir ça tranquille début sept (je rentre le 6 sept), rien ne presse, en attendant dans SVN le Cuthill McKee est désactivé (flag à false par défaut) donc ça ne gêne aucun autre développeur donc pas de souci
+
 - rendre plus claire la partie du code qui définit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D, suite aux remarques de Bernhard Schubert
 
 - bug estimation mémoire NEX=1248 (marche) à NEX=1664 (plante) à résoudre: passer tout en integer(kind=8)
