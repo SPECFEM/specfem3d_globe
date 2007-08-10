@@ -396,7 +396,7 @@ nspec,count_only,total_size_ne)
   total_ordered_elts = 0
 
   do while(total_ordered_elts < nspec)
-    ! création of a sublist of sorted elements which fit in the cache (the criterion of size is limit)
+    ! creation of a sublist of sorted elements which fit in the cache (the criterion of size is limit)
     ! limit = nb of element that can fit in the L2 cache
     call Cut_McK( root, nspec, total_size_adj, xadj, adj, mask, gsize, invperm_sub, limit, nspec_sub, next_root)
       ! add the sublist in the main permutation list

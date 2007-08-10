@@ -368,7 +368,7 @@
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
 
-!!!!!!!!!!!!!! parameters added for the thread-safe transformation of the code
+!!!!!!!!!!!!!! parameters added for the thread-safe version of the code
 ! number of layers in DATA/1066a/1066a.dat
   integer, parameter :: NR_1066A = 160
 
@@ -388,22 +388,27 @@
     integer, parameter :: NCAP_CRUST = 180
   ! use sedimentary layers of crust 2.0
     logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
-!!!!!!!!!!!!!! parameters added for the thread-safe transformation of the code
+!!!!!!!!!!!!!! end of parameters added for the thread-safe version of the code
 
-! for inflating central cube (set to 0.d0 for a non inflated cube)
+! to inflate the central cube (set to 0.d0 for a non-inflated cube)
   double precision, parameter :: CENTRAL_CUBE_INFLATE_FACTOR = 0.41d0
 
-! for the crust elements stretching in 3D cases
+! for the stretching of crustal elements in the case of 3D models
   double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.6d0
 
-! for suppressing the crustal layers (replaced by layers of mantle : R_EARTH is not modified, no more crustal doubling)
-  logical, parameter :: SUPPRESS_CRUSTALMESH = .false.
-! for the Cuthill McKee permutation
+! to suppress the crustal layers (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
+  logical, parameter :: SUPPRESS_CRUSTAL_MESH = .false.
+
+! implement Cuthill-McKee sorting or not
   logical, parameter :: PERFORM_CUTHILL_MCKEE = .false.
-! for the Cuthill McKee permutation of inner core's elements
+
+! implement a multi-level Cuthill-McKee sorting routine instead of classical single-level
+  logical, parameter :: MULTI_LEVEL_CUTHILL = .true.
+
+! if we use Cuthill-McKee sorting, sort the inner core as well
+! (it is better not to do it because may be bad for the central cube MPI buffers)
   logical, parameter :: PERMUTE_INNER_CORE = .false.
-! for multi level Cuthill McKee
-  logical, parameter :: CMcK_MULTI = .true.
 
 ! for the Cuthill McKee routines
    integer, parameter :: NGNOD_HEXAHEDRA=8
+

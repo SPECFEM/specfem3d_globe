@@ -592,7 +592,7 @@
   endif
 
 ! For considering anisotropic elements first and to build the mesh from the bottom to the top of the Region
-  if (SUPPRESS_CRUSTALMESH .or. ONE_CRUST) then
+  if (SUPPRESS_CRUSTAL_MESH .or. ONE_CRUST) then
     first_layer_aniso=2
     last_layer_aniso=3
     nb_layer_above_aniso = 1
@@ -620,7 +620,7 @@
   iMPIcut_xi(:,:) = .false.
   iMPIcut_eta(:,:) = .false.
 
-  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTALMESH) then
+  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
     allocate(stretch_tab(2,ner(1)))
     call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
   endif
@@ -718,7 +718,7 @@
 ! zmin & zmax
   if (iz_elem == ner(ilayer) .and. ilayer == ifirst_region) then
       iboun(6,ispec)= .true.
-  elseif (SUPPRESS_CRUSTALMESH .and. iz_elem == ner(ilayer) .and. ilayer == ifirst_region+1) then
+  elseif (SUPPRESS_CRUSTAL_MESH .and. iz_elem == ner(ilayer) .and. ilayer == ifirst_region+1) then
       iboun(6,ispec)= .true.
   endif
   if (iz_elem == 1 .and. ilayer == ilast_region) then    ! defined if no doubling in this layer
@@ -866,7 +866,7 @@
 ! end of loop on all the layers of the mesh
   enddo
 
-  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTALMESH) deallocate(stretch_tab)
+  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) deallocate(stretch_tab)
   deallocate (perm_layer)
 
 !---

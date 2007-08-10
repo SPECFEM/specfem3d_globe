@@ -5,6 +5,15 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 David:
 -----
 
+- le flag pour le multilevel Cuthill-McKee qui est dans constants.h.in
+n'est jamais utilisé (un grep ne le montre dans aucun fichier Fortran90),
+il semble donc que soit on ne fait jamais de multilevel
+cuthill soit on le fait toujours (et alors on ne fait jamais le cuthill
+simple niveau cuthill). Il faudra corriger cela pour faire l'un ou l'autre
+suivant la valeur de ce flag
+dkomati1-ipigps014: grep -i MULTI_LEVEL_CUTHILL *.h* *90
+constants.h.in:  logical, parameter :: MULTI_LEVEL_CUTHILL = .true.
+
 - Subject: permutation et aniso
 Date: Fri, 03 Aug 2007 13:03:51 +0200
 From: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr>
