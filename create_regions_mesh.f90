@@ -35,7 +35,11 @@
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            ner,ratio_sampling_array, doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D,&
-           AMM_V, AM_V, M1066a_V, Mak135_V, Mref_V,D3MM_V,CM_V, AM_S, AS_V)
+           AMM_V, AM_V, M1066a_V, Mak135_V, Mref_V,D3MM_V,CM_V, AM_S, AS_V, &
+           numker,numhpa,numcof,ihpa,lmax,nylm, &
+           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
 ! create the different regions of the mesh
 
@@ -381,6 +385,40 @@
    double precision, dimension(:,:,:,:,:), allocatable :: temp_array_dble_5dim
    integer :: NGLOB2DMAX_XY
    integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
+
+  integer, parameter :: maxker=200
+  integer, parameter :: maxl=72
+  integer, parameter :: maxcoe=2000
+  integer, parameter :: maxver=1000
+  integer, parameter :: maxhpa=2
+
+  integer numker
+  integer numhpa,numcof
+  integer ihpa,lmax,nylm
+  integer lmxhpa(maxhpa)
+  integer itypehpa(maxhpa)
+  integer ihpakern(maxker)
+  integer numcoe(maxhpa)
+  integer ivarkern(maxker)
+
+  integer nconpt(maxhpa),iver
+  integer iconpt(maxver,maxhpa)
+  real(kind=4) conpt(maxver,maxhpa)
+
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+  real(kind=4) vercof(maxker)
+  real(kind=4) vercofd(maxker)
+
+  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
+  real(kind=4) wk1(maxl+1)
+  real(kind=4) wk2(maxl+1)
+  real(kind=4) wk3(maxl+1)
+
+  character(len=80) kerstr
+  character(len=40) varstr(maxker)
 
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
@@ -746,7 +784,11 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V, &
+           numker,numhpa,numcof,ihpa,lmax,nylm, &
+           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
 ! end of loop on all the regular elements
   enddo
@@ -855,7 +897,11 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V, &
+           numker,numhpa,numcof,ihpa,lmax,nylm, &
+           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
 ! end of loops on the mesh doubling elements
           enddo
@@ -995,7 +1041,11 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V, &
+           numker,numhpa,numcof,ihpa,lmax,nylm, &
+           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
       enddo
     enddo
   enddo

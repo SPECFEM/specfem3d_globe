@@ -1831,7 +1831,6 @@ subroutine attenuation_model(x, xlat, xlon,Qmu)
      Qkappa=57827.0d0
   endif
 
-!  This will be called from get_model.f90
 !  call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e, AM_V, AS_V)
 
 end subroutine attenuation_model

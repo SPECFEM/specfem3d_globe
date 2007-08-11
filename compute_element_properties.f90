@@ -33,7 +33,11 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
-           AMM_V,AM_V,M1066a_V,Mak135_V, Mref_V,D3MM_V,CM_V,AM_S,AS_V)
+           AMM_V,AM_V,M1066a_V,Mak135_V, Mref_V,D3MM_V,CM_V,AM_S,AS_V, &
+           numker,numhpa,numcof,ihpa,lmax,nylm, &
+           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
   implicit none
 
@@ -250,6 +254,40 @@
   double precision, dimension(N_SLS)                  :: tau_s
   double precision  T_c_source
 
+  integer, parameter :: maxker=200
+  integer, parameter :: maxl=72
+  integer, parameter :: maxcoe=2000
+  integer, parameter :: maxver=1000
+  integer, parameter :: maxhpa=2
+
+  integer numker
+  integer numhpa,numcof
+  integer ihpa,lmax,nylm
+  integer lmxhpa(maxhpa)
+  integer itypehpa(maxhpa)
+  integer ihpakern(maxker)
+  integer numcoe(maxhpa)
+  integer ivarkern(maxker)
+
+  integer nconpt(maxhpa),iver
+  integer iconpt(maxver,maxhpa)
+  real(kind=4) conpt(maxver,maxhpa)
+
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+  real(kind=4) vercof(maxker)
+  real(kind=4) vercofd(maxker)
+
+  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
+  real(kind=4) wk1(maxl+1)
+  real(kind=4) wk2(maxl+1)
+  real(kind=4) wk3(maxl+1)
+
+  character(len=80) kerstr
+  character(len=40) varstr(maxker)
+
 ! **************
 ! add topography on the Moho *before* adding the 3D crustal model so that the streched
 ! mesh gets assigned the right model values
@@ -271,7 +309,11 @@
           size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
           ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
           RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
-          AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V)
+          AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V, &
+          numker,numhpa,numcof,ihpa,lmax,nylm, &
+          lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+          coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
 ! add topography without the crustal model
   if(TOPOGRAPHY .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
@@ -280,7 +322,11 @@
 ! add topography on 410 km and 650 km discontinuity in model S362ANI
   if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
      .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) &
-          call add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771)
+          call add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771, &
+                                      numker,numhpa,numcof,ihpa,lmax,nylm, &
+                                      lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+                                      nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+                                      coe,ylmcof,wk1,wk2,wk3,varstr)
 
 ! CMB topography
 !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &

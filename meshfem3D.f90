@@ -451,6 +451,43 @@
   double precision, dimension(24) :: bcast_dbl
   logical, dimension(23) :: bcast_log
 
+  integer, parameter :: maxker=200
+  integer, parameter :: maxl=72
+  integer, parameter :: maxcoe=2000
+  integer, parameter :: maxver=1000
+  integer, parameter :: maxhpa=2
+
+  integer numker
+  integer numhpa,numcof
+  integer ihpa,lmax,nylm
+  integer lmxhpa(maxhpa)
+  integer itypehpa(maxhpa)
+  integer ihpakern(maxker)
+  integer numcoe(maxhpa)
+  integer ivarkern(maxker)
+  integer itpspl(maxcoe,maxhpa)
+
+  integer nconpt(maxhpa),iver
+  integer iconpt(maxver,maxhpa)
+  real(kind=4) conpt(maxver,maxhpa)
+
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+  character(len=80) hsplfl(maxhpa)
+  character(len=40) dskker(maxker)
+  real(kind=4) vercof(maxker)
+  real(kind=4) vercofd(maxker)
+
+  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
+  real(kind=4) wk1(maxl+1)
+  real(kind=4) wk2(maxl+1)
+  real(kind=4) wk3(maxl+1)
+
+  character(len=80) kerstr
+  character(len=80) refmdl
+  character(len=40) varstr(maxker)
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -858,7 +895,9 @@
     elseif(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
            .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
       call read_model_s362ani(THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-                              THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
+                              THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
+                              numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
+                              xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
     else
       call exit_MPI(myrank,'3D model not defined')
     endif
@@ -1008,7 +1047,11 @@
          NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
          ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
-         AMM_V, AM_V, M1066a_V, Mak135_V, Mref_V,D3MM_V,CM_V, AM_S,AS_V)
+         AMM_V, AM_V, M1066a_V, Mak135_V, Mref_V,D3MM_V,CM_V, AM_S,AS_V, &
+         numker,numhpa,numcof,ihpa,lmax,nylm, &
+         lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+         nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
 ! store number of anisotropic elements found in the mantle
   if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &

@@ -48,7 +48,7 @@
       double precision,dimension(NR_REF) :: Qmu_ref
   end type model_ref_variables
 
-  type (model_ref_variables) Mref_V
+! type (model_ref_variables) Mref_V
 ! model_ref_variables
 
 ! crustal_model_variables
@@ -79,14 +79,16 @@
 ! shear quality factor Qmu
 ! bulk quality factor Qkappa
 
-  integer i,iregion_code,ilat,ilon
-  integer THREE_D_MODEL
+  integer ilat,ilon
+! integer i,iregion_code
+! integer THREE_D_MODEL
 
-  real(kind=4) xlat,xcolat,xlon,xdep,xrad
-  real(kind=4) dvsh,dvsv,dvph,dvpv
-  real(kind=4) topo410,topo650
-  double precision scaleval
-  double precision xr,rho,vpv,vph,vsv,vsh,eta,Qmu,Qkappa
+! real(kind=4) xlat,xcolat,xlon,xdep,xrad
+! real(kind=4) dvsh,dvsv,dvph,dvpv
+! real(kind=4) topo410,topo650
+! double precision scaleval
+! double precision xr,vpv,vph,vsv,vsh,eta,Qmu,Qkappa
+  double precision rho
   double precision lat,lon,r,vp,vs,moho,r_moho,topomoho,elevation
   logical found_crust
 
@@ -122,13 +124,23 @@
 !  read(5,*) THREE_D_MODEL
 !!
 !  call read_model_s362ani(THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI,&
-!               THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
+!               THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
+!               numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
+!               xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
 !
-!  call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
+!  call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
+!               numker,numhpa,numcof,ihpa,lmax,nylm, &
+!               lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+!               nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+!               coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 !  write(6,"('    dvsh      dvsv      dvph      dvpv    ')")
 !  write(6,"(6f10.5)") 100.0*dvsh,100.0*dvsv,100.0*dvph,100.0*dvpv
 !
-!  call subtopo(xcolat,xlon,topo410,topo650)
+!  call subtopo(xcolat,xlon,topo410,topo650, &
+!               numker,numhpa,numcof,ihpa,lmax,nylm, &
+!               lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+!               nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+!               coe,ylmcof,wk1,wk2,wk3,varstr)
 !  write(6,"('   topo410    topo650 ')")
 !  write(6,"(2f11.5)") topo410,topo650
 !
@@ -193,8 +205,6 @@
   double precision  A_lm(0:NL_OCEAN_CONTINENT,0:NL_OCEAN_CONTINENT),B_lm(0:NL_OCEAN_CONTINENT,0:NL_OCEAN_CONTINENT)
 
   common /ocf/ A_lm,B_lm
-
-  integer l,m
 
   A_lm(0,0) = -3.8201999E-04
   B_lm(0,0) = 0.
