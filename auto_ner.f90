@@ -125,10 +125,10 @@
     integer, parameter :: NBNODE = 8
     double precision, parameter :: alpha = 0.41d0
 
-    integer i, npts
+    integer npts
     integer nex_xi, nex_eta_in, nex_xi_in
     integer nex_eta
-    double precision rcube, rcubestep, rcube_test, rcubemin, rcubemax
+    double precision rcube, rcubestep, rcube_test, rcubemax
     double precision xi, ximin
     double precision , allocatable, dimension(:,:) :: points
     double precision elem(NBNODE+1, 2)
@@ -216,7 +216,7 @@
 
   subroutine get_element(points, ispec, npts, pts)
     implicit none
-    integer i, npts, ispec
+    integer npts, ispec
     integer, parameter :: NBNODE = 8
     double precision pts(NBNODE+1,2), points(npts,2)
     pts(1:8,:) = points( ( (ispec-1) * NBNODE)+1 : ( (ispec) * NBNODE )+1, : )
@@ -250,11 +250,12 @@
     integer, parameter :: NBNODE = 8
     integer npts
     integer nspec_chunks, nspec_cube
+
     double precision rcube
     double precision alpha
     double precision points(npts, 2)
     double precision x, y
-    integer kmax
+
     integer nex_eta, nex_xi
     integer ic, ix, iy, in
     integer, parameter, dimension(NBNODE) :: iaddx(NBNODE) = (/0,1,2,2,2,1,0,0/)
