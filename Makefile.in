@@ -619,11 +619,7 @@ $O/get_perm_cuthill_mckee.o: constants.h get_perm_cuthill_mckee.f90
 $O/get_backazimuth.o: get_backazimuth.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_backazimuth.o ${FCFLAGS_f90} get_backazimuth.f90
 
-###
-### rules for S362ANI
-###
-
-$O/s362ani.o: mod.h 3dmodl.h s362ani.f90
+$O/s362ani.o: s362ani.f90
 	${FCCOMPILE_CHECK} -c -o $O/s362ani.o ${FCFLAGS_f90} s362ani.f90
 
 ###

@@ -625,7 +625,25 @@
 
   implicit none
 
-  include '3dmodl.h'
+  integer, parameter :: mxhpar=2
+  integer, parameter :: mxkern=200
+  integer, parameter :: mxcoef=2000
+
+  character(len=80) refmodel
+  character(len=80) kernstri
+  character(len=40) desckern(mxkern)
+  character(len=80) hsplfile(mxhpar)
+
+  integer ihorpar(mxkern)
+  integer ityphpar(mxhpar)
+  integer ixlspl(mxcoef,mxhpar)
+  integer lmaxhor(mxhpar)
+  integer ncoefhor(mxhpar)
+
+  real(kind=4) coef(mxcoef,mxkern)
+  real(kind=4) xlaspl(mxcoef,mxhpar)
+  real(kind=4) xlospl(mxcoef,mxhpar)
+  real(kind=4) xraspl(mxcoef,mxhpar)
 
   character(len=80) targetfile
 
@@ -653,7 +671,11 @@
   integer numvar,ierror,lu,nhorpar,nmodkern,i,j,lstr,k
 
   ierror=0
-  call rd3dmodl(lu,targetfile,ierror)
+  call rd3dmodl(lu,targetfile,ierror, &
+    nmodkern,nhorpar,ityphpar, &
+    ihorpar,lmaxhor,ncoefhor, &
+    xlaspl,xlospl,xraspl,ixlspl,coef, &
+    hsplfile,refmodel,kernstri,desckern)
 
   if(nhorpar <= maxhpa) then
   numhpa=nhorpar
@@ -747,11 +769,33 @@
   end subroutine putcurrmodels
 
 
-  subroutine rd3dmodl(lu,filename,ierror)
+  subroutine rd3dmodl(lu,filename,ierror, &
+    nmodkern,nhorpar,ityphpar, &
+    ihorpar,lmaxhor,ncoefhor, &
+    xlaspl,xlospl,xraspl,ixlspl,coef, &
+    hsplfile,refmodel,kernstri,desckern)
 
   implicit none
 
-  include '3dmodl.h'
+  integer, parameter :: mxhpar=2
+  integer, parameter :: mxkern=200
+  integer, parameter :: mxcoef=2000
+
+  character(len=80) refmodel
+  character(len=80) kernstri
+  character(len=40) desckern(mxkern)
+  character(len=80) hsplfile(mxhpar)
+
+  integer ihorpar(mxkern)
+  integer ityphpar(mxhpar)
+  integer ixlspl(mxcoef,mxhpar)
+  integer lmaxhor(mxhpar)
+  integer ncoefhor(mxhpar)
+
+  real(kind=4) coef(mxcoef,mxkern)
+  real(kind=4) xlaspl(mxcoef,mxhpar)
+  real(kind=4) xlospl(mxcoef,mxhpar)
+  real(kind=4) xraspl(mxcoef,mxhpar)
 
   character(len=*) filename
 
@@ -872,7 +916,9 @@
 
    subroutine read_model_s362ani(THREE_D_MODEL, &
               THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-              THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
+              THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
+              numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
+              xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
 
   implicit none
 
@@ -886,7 +932,32 @@
   integer numvar
   integer ierror
 
-  include 'mod.h'
+  integer, parameter :: maxker=200
+  integer, parameter :: maxl=72
+  integer, parameter :: maxcoe=2000
+  integer, parameter :: maxver=1000
+  integer, parameter :: maxhpa=2
+
+  integer numker
+  integer numhpa
+  integer ihpa
+  integer lmxhpa(maxhpa)
+  integer itypehpa(maxhpa)
+  integer ihpakern(maxker)
+  integer numcoe(maxhpa)
+  integer ivarkern(maxker)
+  integer itpspl(maxcoe,maxhpa)
+
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+  character(len=80) hsplfl(maxhpa)
+  character(len=40) dskker(maxker)
+
+  character(len=80) kerstr
+  character(len=80) refmdl
+  character(len=40) varstr(maxker)
 
 ! -------------------------------------
 
@@ -912,8 +983,7 @@
         numvar,ivarkern,varstr, &
         refmdl,kerstr,hsplfl,dskker,ierror)
   else
-    write(6,"('the model ',a,' does not exits')") &
-             modeldef(1:len_trim(modeldef))
+    write(6,"('the model ',a,' does not exits')") modeldef(1:len_trim(modeldef))
   endif
 
 !         --- check arrays
@@ -989,11 +1059,47 @@
 
 ! --- evaluate perturbations in per cent
 
-  subroutine subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
+  subroutine subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
+    numker,numhpa,numcof,ihpa,lmax,nylm, &
+    lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+    nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+    coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
   implicit none
 
-  include 'mod.h'
+  integer, parameter :: maxker=200
+  integer, parameter :: maxl=72
+  integer, parameter :: maxcoe=2000
+  integer, parameter :: maxver=1000
+  integer, parameter :: maxhpa=2
+
+  integer numker
+  integer numhpa,numcof
+  integer ihpa,lmax,nylm
+  integer lmxhpa(maxhpa)
+  integer itypehpa(maxhpa)
+  integer ihpakern(maxker)
+  integer numcoe(maxhpa)
+  integer ivarkern(maxker)
+
+  integer nconpt(maxhpa),iver
+  integer iconpt(maxver,maxhpa)
+  real(kind=4) conpt(maxver,maxhpa)
+
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+  real(kind=4) vercof(maxker)
+  real(kind=4) vercofd(maxker)
+
+  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
+  real(kind=4) wk1(maxl+1)
+  real(kind=4) wk2(maxl+1)
+  real(kind=4) wk3(maxl+1)
+
+  character(len=80) kerstr
+  character(len=40) varstr(maxker)
 
   real(kind=4) :: xcolat,xlon,xrad
   real(kind=4) :: dvsh,dvsv,dvph,dvpv
@@ -1121,11 +1227,44 @@
 
 ! --- evaluate depressions of the 410- and 650-km discontinuities in km
 
-  subroutine subtopo(xcolat,xlon,topo410,topo650)
+  subroutine subtopo(xcolat,xlon,topo410,topo650, &
+                     numker,numhpa,numcof,ihpa,lmax,nylm, &
+                     lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+                     nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+                     coe,ylmcof,wk1,wk2,wk3,varstr)
 
   implicit none
 
-  include 'mod.h'
+  integer, parameter :: maxker=200
+  integer, parameter :: maxl=72
+  integer, parameter :: maxcoe=2000
+  integer, parameter :: maxver=1000
+  integer, parameter :: maxhpa=2
+
+  integer numker
+  integer numhpa,numcof
+  integer ihpa,lmax,nylm
+  integer lmxhpa(maxhpa)
+  integer itypehpa(maxhpa)
+  integer ihpakern(maxker)
+  integer numcoe(maxhpa)
+  integer ivarkern(maxker)
+
+  integer nconpt(maxhpa),iver
+  integer iconpt(maxver,maxhpa)
+  real(kind=4) conpt(maxver,maxhpa)
+
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+
+  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
+  real(kind=4) wk1(maxl+1)
+  real(kind=4) wk2(maxl+1)
+  real(kind=4) wk3(maxl+1)
+
+  character(len=40) varstr(maxker)
 
   real(kind=4) :: xcolat,xlon
   real(kind=4) :: topo410,topo650

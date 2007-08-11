@@ -32,7 +32,11 @@
     attenuation_model,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
     ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
-    AMM_V, AM_V, M1066a_V, Mak135_V,Mref_V,D3MM_V,CM_V, AM_S, AS_V)
+    AMM_V, AM_V, M1066a_V, Mak135_V,Mref_V,D3MM_V,CM_V, AM_S, AS_V, &
+    numker,numhpa,numcof,ihpa,lmax,nylm, &
+    lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+    nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+    coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
   implicit none
 
@@ -239,6 +243,41 @@
   double precision  T_c_source
 
   logical found_crust
+
+  integer, parameter :: maxker=200
+  integer, parameter :: maxl=72
+  integer, parameter :: maxcoe=2000
+  integer, parameter :: maxver=1000
+  integer, parameter :: maxhpa=2
+
+  integer numker
+  integer numhpa,numcof
+  integer ihpa,lmax,nylm
+  integer lmxhpa(maxhpa)
+  integer itypehpa(maxhpa)
+  integer ihpakern(maxker)
+  integer numcoe(maxhpa)
+  integer ivarkern(maxker)
+
+  integer nconpt(maxhpa),iver
+  integer iconpt(maxver,maxhpa)
+  real(kind=4) conpt(maxver,maxhpa)
+
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+  real(kind=4) vercof(maxker)
+  real(kind=4) vercofd(maxker)
+
+  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
+  real(kind=4) wk1(maxl+1)
+  real(kind=4) wk2(maxl+1)
+  real(kind=4) wk3(maxl+1)
+
+  character(len=80) kerstr
+  character(len=40) varstr(maxker)
+
   tau_s(:)   = 0.0d0
   tau_e(:)   = 0.0d0
   T_c_source = 0.0d0
@@ -327,7 +366,11 @@
              xcolat = sngl(theta*180.0d0/PI)
              xlon = sngl(phi*180.0d0/PI)
              xrad = sngl(r*R_EARTH_KM)
-             call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
+             call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
+                          numker,numhpa,numcof,ihpa,lmax,nylm, &
+                          lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+                          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+                          coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
              vpv=vpv*(1.0d0+dble(dvpv))
              vph=vph*(1.0d0+dble(dvph))
              vsv=vsv*(1.0d0+dble(dvsv))
@@ -362,7 +405,11 @@
              xcolat = sngl(theta*180.0d0/PI)
              xlon = sngl(phi*180.0d0/PI)
              xrad = sngl(r_moho*R_EARTH_KM)
-             call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
+             call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
+                          numker,numhpa,numcof,ihpa,lmax,nylm, &
+                          lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+                          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+                          coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
              vpv=vpv*(1.0d0+dble(dvpv))
              vph=vph*(1.0d0+dble(dvph))
              vsv=vsv*(1.0d0+dble(dvsv))
