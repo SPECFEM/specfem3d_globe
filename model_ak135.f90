@@ -64,13 +64,16 @@
     i = i + 1
   enddo
 
-! make sure we stay in the right region
+! make sure we stay in the right region and never take a point above
+! and a point below the ICB or the CMB and interpolate between them,
+! which would lead to a wrong value (keeping in mind that we interpolate
+! between points i-1 and i below)
   if(iregion_code == IREGION_INNER_CORE .and. i > 25) i = 25
 
-  if(iregion_code == IREGION_OUTER_CORE .and. i < 26) i = 26
+  if(iregion_code == IREGION_OUTER_CORE .and. i < 27) i = 27
   if(iregion_code == IREGION_OUTER_CORE .and. i > 71) i = 71
 
-  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 72) i = 72
+  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 73) i = 73
 
   if(i == 1) then
     rho = Mak135_V%density_ak135(i)
