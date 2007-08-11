@@ -256,9 +256,6 @@ convolve_source_timefunction: $O/convolve_source_timefunction.o
 create_header_file: $O/program_create_header_file.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcreate_header_file $O/program_create_header_file.o $(LIBSPECFEM)
 
-test_s362ani: $O/program_test_s362ani.o $(LIBSPECFEM)
-	${FCCOMPILE_CHECK} -o xtest_s362ani $O/program_test_s362ani.o $(LIBSPECFEM)
-
 @COND_PYRE_FALSE@create_movie_AVS_DX: $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
 @COND_PYRE_FALSE@	${FCCOMPILE_CHECK} -o xcreate_movie_AVS_DX $O/program_create_movie_AVS_DX.o $(LIBSPECFEM)
 
@@ -341,9 +338,6 @@ $O/convolve_source_timefunction.o: convolve_source_timefunction.f90
 
 $O/program_create_header_file.o: program_create_header_file.f90
 	${FCCOMPILE_CHECK} -c -o $O/program_create_header_file.o ${FCFLAGS_f90} program_create_header_file.f90
-
-$O/program_test_s362ani.o: program_test_s362ani.f90
-	${FCCOMPILE_CHECK} -c -o $O/program_test_s362ani.o ${FCFLAGS_f90} program_test_s362ani.f90
 
 $O/create_header_file.o: create_header_file.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_header_file.o ${FCFLAGS_f90} create_header_file.f90
@@ -616,10 +610,10 @@ $O/memory_eval.o: constants.h memory_eval.f90
 $O/get_perm_cuthill_mckee.o: constants.h get_perm_cuthill_mckee.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_perm_cuthill_mckee.o ${FCFLAGS_f90} get_perm_cuthill_mckee.f90
 
-$O/get_backazimuth.o: get_backazimuth.f90
+$O/get_backazimuth.o: constants.h get_backazimuth.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_backazimuth.o ${FCFLAGS_f90} get_backazimuth.f90
 
-$O/s362ani.o: s362ani.f90
+$O/s362ani.o: constants.h s362ani.f90
 	${FCCOMPILE_CHECK} -c -o $O/s362ani.o ${FCFLAGS_f90} s362ani.f90
 
 ###
