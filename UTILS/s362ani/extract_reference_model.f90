@@ -3,11 +3,11 @@
 
 ! Author: Dimitri Komatitsch, University of Pau, France, August 2007
 
-  program extract_model_reference
+  program extract_reference_model
 
   implicit none
 
-  include "constants.h"
+  include "../../constants.h"
 
   integer :: i
 
@@ -21,7 +21,7 @@
   double precision :: Qkappa_ref
   double precision :: Qmu_ref
 
-  open(unit=10,file='DATA/s362ani/REF',status='old',action='read')
+  open(unit=10,file='./REF',status='old',action='read')
 ! skip the first three lines
   read(10,*)
   read(10,*)
@@ -47,5 +47,5 @@
   enddo
   close(10)
 
-  end program extract_model_reference
+  end program extract_reference_model
 
