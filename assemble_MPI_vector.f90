@@ -42,9 +42,9 @@
             NPROC_XI,NPROC_ETA, &
 !!!!!!!!!!!!!!!!!!!!!!
             NGLOB1D_RADIAL_crust_mantle, &
-            NGLOB2DMAX_XMIN_XMAX_crust_mantle,NGLOB2DMAX_YMIN_YMAX_crust_mantle, &
+            NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM, &
             NGLOB1D_RADIAL_inner_core, &
-            NGLOB2DMAX_XMIN_XMAX_inner_core,NGLOB2DMAX_YMIN_YMAX_inner_core, &
+            NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC, &
 !!!!!!!!!!!!!!!!!!!!!!
             NGLOB2DMAX_XY,NCHUNKS)
 
@@ -68,8 +68,8 @@
   integer npoin2D_xi_inner_core,npoin2D_eta_inner_core
   integer npoin2D_faces_inner_core(NUMFACES_SHARED)
 
-  integer NGLOB2DMAX_XMIN_XMAX_crust_mantle,NGLOB2DMAX_YMIN_YMAX_crust_mantle,NGLOB1D_RADIAL_crust_mantle
-  integer NGLOB2DMAX_XMIN_XMAX_inner_core,NGLOB2DMAX_YMIN_YMAX_inner_core,NGLOB1D_RADIAL_inner_core
+  integer NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM,NGLOB1D_RADIAL_crust_mantle
+  integer NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC,NGLOB1D_RADIAL_inner_core
   integer NPROC_XI,NPROC_ETA,NGLOB2DMAX_XY
   integer NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS
 
@@ -77,10 +77,10 @@
   integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
 
 ! 2-D addressing and buffers for summation between slices
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_crust_mantle) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_crust_mantle) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_inner_core) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_inner_core) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
 
 ! indirect addressing for each corner of the chunks
   integer, dimension(NGLOB1D_RADIAL_crust_mantle,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
