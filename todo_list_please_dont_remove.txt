@@ -2,6 +2,19 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
+Dimitri:
+-------
+
+- developper un code acoustique 3D pour le crust_mantle et ajouter une condition de Dirichlet pour la surface libre en acoustique pour le code PKP
+
+- mettre modele d'aniso de Seb dans le inner core
+
+- mettre l'attenuation dans le inner core pour run PKP Seb
+
+- run Sdiff calculations for Lev Vinnik (Moscow, Russia)
+
+- run 3D PKP calculations for Sebastien Chevrot (Toulouse, France); Dimitri va faire un code 2D serial pour etudier le modele et definir le maillage avant de lancer de gros runs a Barcelone
+
 David:
 -----
 
@@ -27,6 +40,8 @@ au lieu d'une, comme on y avait pensé initialement :
 2/ tu tries ça avec get_global, et tu crées la permutation en appelant get_perm
 3/ l'étape 2/ t'as donné le nouvel ordre dans lequel il faut créer les éléments, donc tu rappeles create_regions mais en bouclant sur perm(ispec) au lieu de ispec ; et cette fois-ci en créant et sauvant tous les tableaux (rhostore, vpstore vstrore etc) comme actuellement; du coup tu as la garantie que tous les tableaux sont créés et sauvés dans le bon ordre, et il n'y a plus besoin de routine de permutation des tableaux, on pourra carrément les supprimer
 on pourra voir ça tranquille début sept (je rentre le 6 sept), rien ne presse, en attendant dans SVN le Cuthill McKee est désactivé (flag à false par défaut) donc ça ne gêne aucun autre développeur donc pas de souci
+
+- si jamais les modifications ci-dessus pour faire marcher Cuthill-McKee ne fonctionnent pas, on peut décider de supprimer complètement Cuthill-McKee car on sait que cela ne nous fera pas gagner énormément; à voir à la rentrée, suivant si David arrive à faire marcher les modifications ci-dessus ou non 
 
 - rendre plus claire la partie du code qui définit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D, suite aux remarques de Bernhard Schubert
 
@@ -65,21 +80,6 @@ careful analysis we have found a way of doing better and getting rid of all
 the GATHERs and *all* the extra memory (this way we won't have to limit the number of sources to a maximum of 100000, as currently done in the solver).
 
 - compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf à l'Idris afin de vérifier avant le commit que le code ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de vérifier la portabilité du code final
-
-Dimitri:
--------
-
-- fusionner en une seule étape le assemble_MPI de inner core et de crust_mantle merge assemble_MPI_vector for crust/mantle with assemble_MPI_vector for inner core in order to divide the number of MPI calls by 2 for the solid regions; car dans specfem3D.f90 ci-dessous à un moment on appelle deux fois la routine d'assemblage MPI, une fois pour assembler le crust + mantle et une fois pour assembler le inner core, juste après, ce qui double le nombre de messages et la latence pour rien. Donc quand on réécrira le MPI du solver bien entendu il faudra penser à fusionner les deux en un seul envoi de messages contenant crust + mantle + inner core. Voici le code obsolète ci-dessous.  ! crust and mantle call assemble_MPI_vector(myrank,accel_crust_mantle,nglob_crust_mantle, & ...  ! inner core call assemble_MPI_vector(myrank,accel_inner_core,NGLOB_INNER_CORE, & ...
-
-- developper un code acoustique 3D pour le crust_mantle et ajouter une condition de Dirichlet pour la surface libre en acoustique pour le code PKP
-
-- mettre modele d'aniso de Seb dans le inner core
-
-- mettre l'attenuation dans le inner core pour run PKP Seb
-
-- run Sdiff calculations for Lev Vinnik (Moscow, Russia)
-
-- run 3D PKP calculations for Sebastien Chevrot (Toulouse, France); Dimitri va faire un code 2D serial pour etudier le modele et definir le maillage avant de lancer de gros runs a Barcelone
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ Brian Savage wrote:
 
 - supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du serveur SVN (svn remove) une fois que le mesher et le solver auront été fusionnés. Les enlever du Makefile.in aussi. Do not store x y z in the files that contain the MPI buffers anymore, since they are used only by check_buffers*. (in the solver they are read back as xdummy, ydummy, zdummy); eventuellement supprimer aussi le fichier ecrit par le mailleur sur le disque et relu plus tard par ce meme mailleur, s'il n'est pas utilise par le solver (c'est a dire s'il est utilise seulement par les codes serial check*.f90, qui sont amenes a disparaitre)
 
-- Re: revision of shortest period estimates?  08/05/2007 14:51 Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  Jeroen Tromp wrote: > Hi Dimitri: > If we are shooting for a minimum of 5 grid points per shortest wavelength, > perhaps we should increase our estimate of an accuracy at periods of 18 s > and longer for an NEX=240 run by 20% to 22 s? And perhaps NEX=320 is > accurate down to periods of 15 s rather than 12 s? 
+- Re: revision of shortest period estimates?  08/05/2007 14:51 Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  Jeroen Tromp wrote: > Hi Dimitri: > If we are shooting for a minimum of 5 grid points per shortest wavelength, > perhaps we should increase our estimate of an accuracy at periods of 18 s > and longer for an NEX=240 run by 20% to 22 s? And perhaps NEX=320 is > accurate down to periods of 15 s rather than 12 s?
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
@@ -226,6 +226,8 @@ Things to add later to the manual:
 DONE:
 -----
 
+- fusionner en une seule étape le assemble_MPI de inner core et de crust_mantle merge assemble_MPI_vector for crust/mantle with assemble_MPI_vector for inner core in order to divide the number of MPI calls by 2 for the solid regions; car dans specfem3D.f90 ci-dessous à un moment on appelle deux fois la routine d'assemblage MPI, une fois pour assembler le crust + mantle et une fois pour assembler le inner core, juste après, ce qui double le nombre de messages et la latence pour rien. Donc quand on réécrira le MPI du solver bien entendu il faudra penser à fusionner les deux en un seul envoi de messages contenant crust + mantle + inner core: done by Dimitri
+
 - enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type (*mais* il faudra quand même laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout où il y en a, car on continue à traiter 6 blocs, même s'ils ont maintenant la même topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs -> {ok pour le mailleur, reste la différentiation dans le solveur, mais sans conséquences. A mettre à plat lors de la fusion. DM.}
 
 - enlever les "modules" et "use" partout où il y en a (pour anisotropie etc) car ce n'est pas "thread safe" et donc ça se plantera si on utilise MPC au lieu de MPI. Remplacer par la transmission explicite des paramètres aux subroutines. Peut-être dire dans le manuel utilisateur qu'il ne faut pas utiliser de modules pour cette raison ? -> {OK. DM.}
@@ -253,8 +255,8 @@ qui a besoin de distinguer ces deux sub-flags) -> {OK, a revoir qd meme. DM.}
 - modifier write_seismograms.f90 pour que tout soit écrit directement sur le home par le maître et non pas sur les disques locaux par chaque noeud. Pour cela faire des paires SEND/RECV en allouant dynamiquement un tableau de taille différente à chaque fois (de taille nrec_local, sauf si nrec_local = 0, dans ce cas on n'envoie/reçoit rien pour cette tranche qui ne contient pas de récepteur). A la fin on doit avoir exactement 3*765 = 2295 fichiers (765 stations dans DATA/STATIONS, chacune stockant les trois composantes du vecteur déplacement)
 
 - remplacé :
- double precision :: Qs 
-par 
+ double precision :: Qs
+par
  integer :: interval_Q
 pour des soucis de lisibilité.
 

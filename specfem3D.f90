@@ -386,7 +386,8 @@
 
 ! buffers for send and receive between faces of the slices and the chunks
   real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY_VAL) :: buffer_send_faces_scalar,buffer_received_faces_scalar
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB2DMAX_XY_VAL) :: buffer_send_faces_vector,buffer_received_faces_vector
+! size of buffers is multiplied by 2 because we handle two regions in the same MPI call
+  real(kind=CUSTOM_REAL), dimension(NDIM,2*NGLOB2DMAX_XY_VAL) :: buffer_send_faces_vector,buffer_received_faces_vector
 
 ! -------- arrays specific to each region here -----------
 
@@ -611,7 +612,9 @@
 
 ! buffers for send and receive between corners of the chunks
   real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_CM) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM) :: buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
+! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
+     buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
 
 ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll,wxgll
@@ -3819,33 +3822,35 @@
 
 ! assemble all the contributions between slices using MPI
 
-! crust and mantle
-  call assemble_MPI_vector(myrank,accel_crust_mantle,NGLOB_CRUST_MANTLE, &
+! crust and mantle and inner core now handled in the same call
+! in order to reduce the number of MPI messages by 2
+  call assemble_MPI_vector(myrank, &
+!!!!!!!!!!!!!!!!!!!!!!
+            accel_crust_mantle,NGLOB_CRUST_MANTLE, &
+            accel_inner_core,NGLOB_INNER_CORE, &
+!!!!!!!!!!!!!!!!!!!!!!
             iproc_xi,iproc_eta,ichunk,addressing, &
+!!!!!!!!!!!!!!!!!!!!!!
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_vector,buffer_received_faces_vector, &
-            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS)
-
-! inner core
-  call assemble_MPI_vector(myrank,accel_inner_core,NGLOB_INNER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
+!!!!!!!!!!!!!!!!!!!!!!
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS)
+            NPROC_XI,NPROC_ETA, &
+!!!!!!!!!!!!!!!!!!!!!!
+            NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+            NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+!!!!!!!!!!!!!!!!!!!!!!
+            NGLOB2DMAX_XY,NCHUNKS)
 
 !---
 !---  use buffers to assemble forces with the central cube
