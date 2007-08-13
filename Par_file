@@ -1,6 +1,6 @@
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1 
+SIMULATION_TYPE                 = 1
 SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
@@ -14,9 +14,9 @@ CENTER_LONGITUDE_IN_DEGREES   = 10.d0
 GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
-# (must be 16 * multiple of NPROC below)
-NEX_XI                          = 256  
-NEX_ETA                         = 256 
+# (must be 32 * multiple of NPROC below)
+NEX_XI                          = 256
+NEX_ETA                         = 256
 
 # number of MPI processors along the two sides of the first chunk
 NPROC_XI                        = 8
@@ -71,9 +71,9 @@ NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
 NTSTEP_BETWEEN_READ_ADJSRC      = 1000
 
 # output format for the seismograms (one can use either or all of the three formats)
-OUTPUT_SEISMOS_ASCII_TEXT       = .true.
+OUTPUT_SEISMOS_ASCII_TEXT       = .true.
 OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
-OUTPUT_SEISMOS_SAC_BINARY       = .false.
+OUTPUT_SEISMOS_SAC_BINARY       = .false.
 
 # rotate seismograms to Radial-Transverse-Z or use default North-East-Z reference frame
 ROTATE_SEISMOGRAMS_RT           = .false.
