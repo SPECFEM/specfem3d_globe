@@ -398,7 +398,7 @@
 
     !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
         MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 150
+        MAX_ATTENUATION_PERIOD   = 1000
 
         NER_CRUST                = 1
         NER_80_MOHO              = 1
