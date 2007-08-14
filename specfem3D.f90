@@ -3822,7 +3822,7 @@
 
 ! assemble all the contributions between slices using MPI
 
-! crust and mantle and inner core now handled in the same call
+! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
   call assemble_MPI_vector(myrank, &
 !!!!!!!!!!!!!!!!!!!!!!
@@ -3877,7 +3877,7 @@
 
 ! assemble all the contributions between slices using MPI
 
-! crust and mantle and inner core now handled in the same call
+! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
   call assemble_MPI_vector(myrank, &
 !!!!!!!!!!!!!!!!!!!!!!

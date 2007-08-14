@@ -217,7 +217,7 @@ static void __Pyx_AddTraceback(char *funcname) {
     PyObject *empty_string = 0;
     PyCodeObject *py_code = 0;
     PyFrameObject *py_frame = 0;
-    
+
     py_srcfile = PyString_FromString(__pyx_filename);
     if (!py_srcfile) goto bad;
     py_funcname = PyString_FromString(funcname);

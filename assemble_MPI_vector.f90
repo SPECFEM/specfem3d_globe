@@ -18,6 +18,8 @@
 
 !----
 !---- assemble the contributions between slices and chunks using MPI
+!---- we handle two regions (crust/mantle and inner core) in the same MPI call
+!---- to reduce the total number of MPI calls
 !----
 
   subroutine assemble_MPI_vector(myrank, &

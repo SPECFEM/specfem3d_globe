@@ -1103,6 +1103,8 @@
 ! Cuthill McKee permutation
 ! ***************************************************
 
+  if(PERFORM_CUTHILL_MCKEE) then
+
   if (iregion_code /= IREGION_INNER_CORE .or. PERMUTE_INNER_CORE) then
     allocate(perm(nspec))
     if(iregion_code == IREGION_CRUST_MANTLE) then
@@ -1124,7 +1126,7 @@
       perm(FIRST_ELT_ABOVE_ANISO:nspec) = perm_tmp(:)+(FIRST_ELT_ABOVE_ANISO-1)
       deallocate(perm_tmp)
     else
-      ! the 3 last parameters are : PERFORM_CUTHILL_MCKEE,INVERSE,FACE
+      ! the last two parameters are: INVERSE,FACE
       call get_perm(ibool,perm,limit,nspec,nglob,.true.,.false.)
     endif
 
@@ -1231,13 +1233,14 @@
     deallocate(perm)
   endif
 
+  endif
+
 ! ***************************************************
 ! end of Cuthill McKee permutation
 ! ***************************************************
 
-
-! create a new indirect addressing array instead, to reduce cache misses
-! in memory access in the solver
+! create a new indirect addressing to reduce cache misses in memory access in the solver
+! this is *critical* to improve performance in the solver
   allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec))
   allocate(mask_ibool(nglob))
   mask_ibool(:) = -1
