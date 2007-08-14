@@ -72,10 +72,10 @@
 ! make sure we stay in the right region
   if(iregion_code == IREGION_INNER_CORE .and. i > 180) i = 180
 
-  if(iregion_code == IREGION_OUTER_CORE .and. i < 181) i = 181
+  if(iregion_code == IREGION_OUTER_CORE .and. i < 182) i = 182
   if(iregion_code == IREGION_OUTER_CORE .and. i > 358) i = 358
 
-  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 359) i = 359
+  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 360) i = 360
 
   if(i == 1) then
     rho = Mref_V%density_ref(i)
