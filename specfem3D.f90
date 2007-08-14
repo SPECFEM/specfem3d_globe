@@ -738,10 +738,8 @@
 ! flags to read kappa and mu and anisotropy arrays in regions where needed
   logical READ_KAPPA_MU,READ_TISO
 
-! dummy arrays that do not need to be read
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX_OC_IC) :: dummy_rho, dummy_vstore
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_hstore
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_ANI_VAL) :: dummy_cstore
+! dummy array that does not need to be actually read
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
 
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
@@ -1275,27 +1273,22 @@
   nspec_tiso = 1
   nspec_ani = 1
 
-  dummy_rho(:,:,:,:)=0.
-  dummy_vstore(:,:,:,:)=0.
-  dummy_hstore(:,:,:,:)=0.
-  dummy_cstore(:,:,:,:)=0.
-
   call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
-            vp_outer_core,dummy_rho, &
+            vp_outer_core,dummy_array, &
             xstore_outer_core,ystore_outer_core,zstore_outer_core, &
             xix_outer_core,xiy_outer_core,xiz_outer_core, &
             etax_outer_core,etay_outer_core,etaz_outer_core, &
             gammax_outer_core,gammay_outer_core,gammaz_outer_core,jacobian_outer_core, &
-            rhostore_outer_core,kappavstore_outer_core,dummy_vstore, &
-            dummy_hstore,dummy_hstore,dummy_hstore, &
+            rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+            dummy_array,dummy_array,dummy_array, &
             nspec_iso,nspec_tiso,nspec_ani, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_array,dummy_array,dummy_array, &
+            dummy_array,dummy_array,dummy_array, &
+            dummy_array,dummy_array,dummy_array, &
+            dummy_array,dummy_array,dummy_array, &
+            dummy_array,dummy_array,dummy_array, &
+            dummy_array,dummy_array,dummy_array, &
+            dummy_array,dummy_array,dummy_array, &
             ibool_outer_core,idoubling_outer_core,rmass_outer_core,rmass_ocean_load, &
             NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
@@ -1313,27 +1306,22 @@
     nspec_ani = 1
   endif
 
-  dummy_rho(:,:,:,:)=0.
-  dummy_vstore(:,:,:,:)=0.
-  dummy_hstore(:,:,:,:)=0.
-  dummy_cstore(:,:,:,:)=0.
-
   call read_arrays_solver(IREGION_INNER_CORE,myrank, &
-            dummy_rho,dummy_rho, &
+            dummy_array,dummy_array, &
             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
             xix_inner_core,xiy_inner_core,xiz_inner_core, &
             etax_inner_core,etay_inner_core,etaz_inner_core, &
             gammax_inner_core,gammay_inner_core,gammaz_inner_core,jacobian_inner_core, &
             rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-            dummy_hstore,dummy_hstore,dummy_hstore, &
+            dummy_array,dummy_array,dummy_array, &
             nspec_iso,nspec_tiso,nspec_ani, &
             c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
-            dummy_cstore,dummy_cstore,c33store_inner_core, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
-            c44store_inner_core,dummy_cstore,dummy_cstore, &
-            dummy_cstore,dummy_cstore,dummy_cstore, &
+            dummy_array,dummy_array,dummy_array, &
+            dummy_array,dummy_array,dummy_array, &
+            dummy_array,dummy_array,c33store_inner_core, &
+            dummy_array,dummy_array,dummy_array, &
+            c44store_inner_core,dummy_array,dummy_array, &
+            dummy_array,dummy_array,dummy_array, &
             ibool_inner_core,idoubling_inner_core,rmass_inner_core,rmass_ocean_load, &
             NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &

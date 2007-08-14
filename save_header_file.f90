@@ -65,7 +65,7 @@
 ! solver's arrays size
   double precision :: static_size, dynamic_size
 
-  integer :: nspec_ani,att1,att2,att3,att4,att5,NCORNERSCHUNKS,NUM_FACES,NUM_MSG_TYPES
+  integer :: att1,att2,att3,att4,att5,NCORNERSCHUNKS,NUM_FACES,NUM_MSG_TYPES
 
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                                     NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX
@@ -411,15 +411,6 @@
   write(IOUT,*) 'integer, parameter :: ATT3 = ',att3
   write(IOUT,*) 'integer, parameter :: ATT4 = ',att4
   write(IOUT,*) 'integer, parameter :: ATT5 = ',att5
-
-  if(ANISOTROPIC_INNER_CORE) then
-    nspec_ani = NSPEC(IREGION_INNER_CORE)
-  else
-    nspec_ani = 1
-  endif
-
-  write(IOUT,*) 'integer, parameter :: NSPEC_MAX_OC_IC = ',max(NSPEC(IREGION_OUTER_CORE),NSPEC(IREGION_INNER_CORE))
-  write(IOUT,*) 'integer, parameter :: NSPEC_ANI_VAL = ',nspec_ani
 
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_CM = ',NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM = ',NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
