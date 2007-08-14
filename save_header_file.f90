@@ -240,9 +240,6 @@
                   (((dynamic_size+static_size)/(1024**2))*NPROCTOT)/1024.d0,' GB'
   write(IOUT,*)
 
-  if(NCHUNKS == 1) write(IOUT,*) '! values for AC and BC below undefined for one chunk'
-  if(NCHUNKS == 2) write(IOUT,*) '! values for BC below undefined for two chunks'
-
   write(IOUT,*) 'integer, parameter :: NEX_XI_VAL = ',NEX_XI
   write(IOUT,*) 'integer, parameter :: NEX_ETA_VAL = ',NEX_ETA
   write(IOUT,*)
@@ -320,9 +317,9 @@
   write(IOUT,*)
 
   if(ATTENUATION_3D) then
-    write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL_3D = .true.'
+    write(IOUT,*) 'logical, parameter :: ATTENUATION_3D_VAL = .true.'
   else
-    write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL_3D = .false.'
+    write(IOUT,*) 'logical, parameter :: ATTENUATION_3D_VAL = .false.'
   endif
   write(IOUT,*)
 
