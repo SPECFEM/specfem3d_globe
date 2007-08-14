@@ -58,26 +58,26 @@ int main(int argc, char **argv)
         return 1;
     }
 #endif
-    
+
     /* add our extension module */
     if (PyImport_ExtendInittab(inittab) == -1) {
         fprintf(stderr, "%s: PyImport_ExtendInittab failed! Exiting ...", argv[0]);
         return 1;
     }
-    
+
     if (argc < 3 || strcmp(argv[1], "--pyre-start") != 0) {
         return Py_Main(argc, argv);
     }
-    
+
     /* make sure 'sys.executable' is set to the path of this program  */
     Py_SetProgramName(argv[0]);
-    
+
     /* initialize Python */
     Py_Initialize();
-    
+
     /* initialize sys.argv */
     PySys_SetArgv(argc - 1, argv + 1);
-    
+
 #define main 42
 #if FC_MAIN == main
     /* start Python */
@@ -86,15 +86,15 @@ int main(int argc, char **argv)
     /* call the Fortran trampoline (which, in turn, starts Python) */
     FC_MAIN();
 #endif
-    
+
     /* shut down Python */
     Py_Finalize();
-    
+
 #ifdef USE_MPI
     /* shut down MPI */
     MPI_Finalize();
 #endif
-    
+
     return g_status;
 }
 
