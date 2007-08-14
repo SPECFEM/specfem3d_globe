@@ -269,7 +269,7 @@
 
 ! precompute terms for attenuation if needed
   if(ATTENUATION_VAL) then
-    if(ATTENUATION_VAL_3D) then
+    if(ATTENUATION_3D_VAL) then
       one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
     else
       radius_cr = xstore(iglob)
@@ -799,7 +799,7 @@
 ! IMPROVE we should probably use an average value instead
 
 ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-     if(ATTENUATION_VAL_3D) then
+     if(ATTENUATION_3D_VAL) then
         factor_common_c44_muv = factor_common(i_sls,:,:,:,ispec)
      else
         factor_common_c44_muv(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)

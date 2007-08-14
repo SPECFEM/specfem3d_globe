@@ -247,14 +247,14 @@
 
 ! compute deviatoric strain
   if(ATTENUATION_VAL) then
-     if(ATTENUATION_VAL_3D) then
+     if(ATTENUATION_3D_VAL) then
         minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
      else
         iglob     = ibool(i,j,k,ispec)
         radius_cr = xstore(iglob)
         call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
         minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
-     endif ! ATTENUATION_VAL_3D
+     endif ! ATTENUATION_3D_VAL
   endif ! ATTENUATION_VAL
 
        if(ANISOTROPIC_INNER_CORE_VAL) then
@@ -307,7 +307,7 @@
 
 ! use unrelaxed parameters if attenuation
   if(ATTENUATION_VAL) then
-    if(ATTENUATION_VAL_3D) then
+    if(ATTENUATION_3D_VAL) then
       mul = mul * one_minus_sum_beta(i,j,k,ispec)
     else
       mul = mul * one_minus_sum_beta(1,1,1,iregion_selected)
@@ -552,7 +552,7 @@
     if(ATTENUATION_VAL) then
 
        do i_sls = 1,N_SLS
-          if(ATTENUATION_VAL_3D) then
+          if(ATTENUATION_3D_VAL) then
              factor_common_use = factor_common(i_sls,:,:,:,ispec)
           else
              factor_common_use(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)

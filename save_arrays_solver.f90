@@ -152,7 +152,7 @@
 
   integer iregion_code
 
-! nspec and nglob
+! save nspec and nglob, to be used in combine_paraview_data
   open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt',status='unknown')
   if (NCHUNKS == 6 .and. ichunk /= CHUNK_AB .and. iregion_code == IREGION_INNER_CORE) then
      nspec1 = nspec - (NEX_PER_PROC_XI/16) * (NEX_PER_PROC_ETA/16) * (NEX_XI/16)

@@ -759,9 +759,9 @@
   logical :: CASE_3D
 
 ! arrays for BCAST
-  integer, dimension(34) :: bcast_int
-  double precision, dimension(24) :: bcast_dbl
-  logical, dimension(27) :: bcast_log
+  integer, dimension(34) :: bcast_integer
+  double precision, dimension(24) :: bcast_double_precision
+  logical, dimension(27) :: bcast_logical
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -812,7 +812,7 @@
 ! count the total number of sources in the CMTSOLUTION file
     call count_number_of_sources(NSOURCES)
 
-    bcast_int = (/MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
+    bcast_integer = (/MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
             NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
             NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
             NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
@@ -822,7 +822,7 @@
             SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA/)
 
 
-    bcast_log = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
             TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
@@ -831,7 +831,7 @@
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
             ROTATE_SEISMOGRAMS_RT/)
 
-    bcast_dbl = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
+    bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
             RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
             R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE/)
@@ -841,11 +841,11 @@
 ! broadcast the information read on the master to the nodes
     call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_int,34,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_integer,34,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_dbl,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_double_precision,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_log,27,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_logical,27,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
@@ -876,93 +876,93 @@
 
   if (myrank /=0) then
 
-    MIN_ATTENUATION_PERIOD = bcast_int(1)
-    MAX_ATTENUATION_PERIOD = bcast_int(2)
-    NER_CRUST = bcast_int(3)
-    NER_80_MOHO = bcast_int(4)
-    NER_220_80 = bcast_int(5)
-    NER_400_220 = bcast_int(6)
-    NER_600_400 = bcast_int(7)
-    NER_670_600 = bcast_int(8)
-    NER_771_670 = bcast_int(9)
-    NER_TOPDDOUBLEPRIME_771 = bcast_int(10)
-    NER_CMB_TOPDDOUBLEPRIME = bcast_int(11)
-    NER_OUTER_CORE = bcast_int(12)
-    NER_TOP_CENTRAL_CUBE_ICB = bcast_int(13)
-    NEX_XI = bcast_int(14)
-    NEX_ETA = bcast_int(15)
-    RMOHO_FICTITIOUS_IN_MESHER = bcast_int(16)
-    NPROC_XI = bcast_int(17)
-    NPROC_ETA = bcast_int(18)
-    NTSTEP_BETWEEN_OUTPUT_SEISMOS = bcast_int(19)
-    NTSTEP_BETWEEN_READ_ADJSRC = bcast_int(20)
-    NSTEP = bcast_int(21)
-    NSOURCES = bcast_int(22)
-    NTSTEP_BETWEEN_FRAMES = bcast_int(23)
-    NTSTEP_BETWEEN_OUTPUT_INFO = bcast_int(24)
-    NUMBER_OF_RUNS = bcast_int(25)
-    NUMBER_OF_THIS_RUN = bcast_int(26)
-    NCHUNKS = bcast_int(27)
-    SIMULATION_TYPE = bcast_int(28)
-    REFERENCE_1D_MODEL = bcast_int(29)
-    THREE_D_MODEL = bcast_int(30)
-    NPROC = bcast_int(31)
-    NPROCTOT = bcast_int(32)
-    NEX_PER_PROC_XI = bcast_int(33)
-    NEX_PER_PROC_ETA = bcast_int(34)
+    MIN_ATTENUATION_PERIOD = bcast_integer(1)
+    MAX_ATTENUATION_PERIOD = bcast_integer(2)
+    NER_CRUST = bcast_integer(3)
+    NER_80_MOHO = bcast_integer(4)
+    NER_220_80 = bcast_integer(5)
+    NER_400_220 = bcast_integer(6)
+    NER_600_400 = bcast_integer(7)
+    NER_670_600 = bcast_integer(8)
+    NER_771_670 = bcast_integer(9)
+    NER_TOPDDOUBLEPRIME_771 = bcast_integer(10)
+    NER_CMB_TOPDDOUBLEPRIME = bcast_integer(11)
+    NER_OUTER_CORE = bcast_integer(12)
+    NER_TOP_CENTRAL_CUBE_ICB = bcast_integer(13)
+    NEX_XI = bcast_integer(14)
+    NEX_ETA = bcast_integer(15)
+    RMOHO_FICTITIOUS_IN_MESHER = bcast_integer(16)
+    NPROC_XI = bcast_integer(17)
+    NPROC_ETA = bcast_integer(18)
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS = bcast_integer(19)
+    NTSTEP_BETWEEN_READ_ADJSRC = bcast_integer(20)
+    NSTEP = bcast_integer(21)
+    NSOURCES = bcast_integer(22)
+    NTSTEP_BETWEEN_FRAMES = bcast_integer(23)
+    NTSTEP_BETWEEN_OUTPUT_INFO = bcast_integer(24)
+    NUMBER_OF_RUNS = bcast_integer(25)
+    NUMBER_OF_THIS_RUN = bcast_integer(26)
+    NCHUNKS = bcast_integer(27)
+    SIMULATION_TYPE = bcast_integer(28)
+    REFERENCE_1D_MODEL = bcast_integer(29)
+    THREE_D_MODEL = bcast_integer(30)
+    NPROC = bcast_integer(31)
+    NPROCTOT = bcast_integer(32)
+    NEX_PER_PROC_XI = bcast_integer(33)
+    NEX_PER_PROC_ETA = bcast_integer(34)
 
-    TRANSVERSE_ISOTROPY = bcast_log(1)
-    ANISOTROPIC_3D_MANTLE = bcast_log(2)
-    ANISOTROPIC_INNER_CORE = bcast_log(3)
-    CRUSTAL = bcast_log(4)
-    ELLIPTICITY = bcast_log(5)
-    GRAVITY = bcast_log(6)
-    ONE_CRUST = bcast_log(7)
-    ROTATION = bcast_log(8)
-    ISOTROPIC_3D_MANTLE = bcast_log(9)
-    TOPOGRAPHY = bcast_log(10)
-    OCEANS = bcast_log(11)
-    MOVIE_SURFACE = bcast_log(12)
-    MOVIE_VOLUME = bcast_log(13)
-    ATTENUATION_3D = bcast_log(14)
-    RECEIVERS_CAN_BE_BURIED = bcast_log(15)
-    PRINT_SOURCE_TIME_FUNCTION = bcast_log(16)
-    SAVE_MESH_FILES = bcast_log(17)
-    ATTENUATION = bcast_log(18)
-    ABSORBING_CONDITIONS = bcast_log(19)
-    INCLUDE_CENTRAL_CUBE = bcast_log(20)
-    INFLATE_CENTRAL_CUBE = bcast_log(21)
-    SAVE_FORWARD = bcast_log(22)
-    CASE_3D = bcast_log(23)
-    OUTPUT_SEISMOS_ASCII_TEXT = bcast_log(24)
-    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_log(25)
-    OUTPUT_SEISMOS_SAC_BINARY = bcast_log(26)
-    ROTATE_SEISMOGRAMS_RT = bcast_log(27)
+    TRANSVERSE_ISOTROPY = bcast_logical(1)
+    ANISOTROPIC_3D_MANTLE = bcast_logical(2)
+    ANISOTROPIC_INNER_CORE = bcast_logical(3)
+    CRUSTAL = bcast_logical(4)
+    ELLIPTICITY = bcast_logical(5)
+    GRAVITY = bcast_logical(6)
+    ONE_CRUST = bcast_logical(7)
+    ROTATION = bcast_logical(8)
+    ISOTROPIC_3D_MANTLE = bcast_logical(9)
+    TOPOGRAPHY = bcast_logical(10)
+    OCEANS = bcast_logical(11)
+    MOVIE_SURFACE = bcast_logical(12)
+    MOVIE_VOLUME = bcast_logical(13)
+    ATTENUATION_3D = bcast_logical(14)
+    RECEIVERS_CAN_BE_BURIED = bcast_logical(15)
+    PRINT_SOURCE_TIME_FUNCTION = bcast_logical(16)
+    SAVE_MESH_FILES = bcast_logical(17)
+    ATTENUATION = bcast_logical(18)
+    ABSORBING_CONDITIONS = bcast_logical(19)
+    INCLUDE_CENTRAL_CUBE = bcast_logical(20)
+    INFLATE_CENTRAL_CUBE = bcast_logical(21)
+    SAVE_FORWARD = bcast_logical(22)
+    CASE_3D = bcast_logical(23)
+    OUTPUT_SEISMOS_ASCII_TEXT = bcast_logical(24)
+    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_logical(25)
+    OUTPUT_SEISMOS_SAC_BINARY = bcast_logical(26)
+    ROTATE_SEISMOGRAMS_RT = bcast_logical(27)
 
-    DT = bcast_dbl(1)
-    ANGULAR_WIDTH_XI_IN_DEGREES = bcast_dbl(2)
-    ANGULAR_WIDTH_ETA_IN_DEGREES = bcast_dbl(3)
-    CENTER_LONGITUDE_IN_DEGREES = bcast_dbl(4)
-    CENTER_LATITUDE_IN_DEGREES = bcast_dbl(5)
-    GAMMA_ROTATION_AZIMUTH = bcast_dbl(6)
-    ROCEAN = bcast_dbl(7)
-    RMIDDLE_CRUST = bcast_dbl(8)
-    RMOHO = bcast_dbl(9)
-    R80 = bcast_dbl(10)
-    R120 = bcast_dbl(11)
-    R220 = bcast_dbl(12)
-    R400 = bcast_dbl(13)
-    R600 = bcast_dbl(14)
-    R670 = bcast_dbl(15)
-    R771 = bcast_dbl(16)
-    RTOPDDOUBLEPRIME = bcast_dbl(17)
-    RCMB = bcast_dbl(18)
-    RICB = bcast_dbl(19)
-    R_CENTRAL_CUBE = bcast_dbl(20)
-    RHO_TOP_OC = bcast_dbl(21)
-    RHO_BOTTOM_OC = bcast_dbl(22)
-    RHO_OCEANS = bcast_dbl(23)
-    HDUR_MOVIE = bcast_dbl(24)
+    DT = bcast_double_precision(1)
+    ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
+    ANGULAR_WIDTH_ETA_IN_DEGREES = bcast_double_precision(3)
+    CENTER_LONGITUDE_IN_DEGREES = bcast_double_precision(4)
+    CENTER_LATITUDE_IN_DEGREES = bcast_double_precision(5)
+    GAMMA_ROTATION_AZIMUTH = bcast_double_precision(6)
+    ROCEAN = bcast_double_precision(7)
+    RMIDDLE_CRUST = bcast_double_precision(8)
+    RMOHO = bcast_double_precision(9)
+    R80 = bcast_double_precision(10)
+    R120 = bcast_double_precision(11)
+    R220 = bcast_double_precision(12)
+    R400 = bcast_double_precision(13)
+    R600 = bcast_double_precision(14)
+    R670 = bcast_double_precision(15)
+    R771 = bcast_double_precision(16)
+    RTOPDDOUBLEPRIME = bcast_double_precision(17)
+    RCMB = bcast_double_precision(18)
+    RICB = bcast_double_precision(19)
+    R_CENTRAL_CUBE = bcast_double_precision(20)
+    RHO_TOP_OC = bcast_double_precision(21)
+    RHO_BOTTOM_OC = bcast_double_precision(22)
+    RHO_OCEANS = bcast_double_precision(23)
+    HDUR_MOVIE = bcast_double_precision(24)
 
   endif
 
@@ -1065,8 +1065,8 @@
       write(IMAIN,*) NSPEC_computed(IREGION_INNER_CORE),NSPEC_INNER_CORE
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver 3')
   endif
-  if (ATTENUATION_3D .NEQV. ATTENUATION_VAL_3D) then
-      write(IMAIN,*) ATTENUATION_3D,ATTENUATION_VAL_3D
+  if (ATTENUATION_3D .NEQV. ATTENUATION_3D_VAL) then
+      write(IMAIN,*) ATTENUATION_3D,ATTENUATION_3D_VAL
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver 4')
   endif
   if (SIMULATION_TYPE /= SIMULATION_TYPE_VAL) then
@@ -1980,7 +1980,7 @@
   write(IMAIN,*)
   if(ATTENUATION_VAL) then
     write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
-    if(ATTENUATION_VAL_3D) write(IMAIN,*) 'using 3D attenuation'
+    if(ATTENUATION_3D_VAL) write(IMAIN,*) 'using 3D attenuation'
   else
     write(IMAIN,*) 'no attenuation'
   endif
@@ -2181,7 +2181,7 @@
 ! get and store PREM attenuation model
 
 ! ATTENUATION_3D get values from mesher
-     if(ATTENUATION_VAL_3D) then
+     if(ATTENUATION_3D_VAL) then
         ! CRUST_MANTLE ATTENUATION
         call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
         call get_attenuation_model_3D(myrank, prname, omsb_crust_mantle_dble, &
@@ -2228,7 +2228,7 @@
           do i=1,NGLLX
 
 ! ATTENUATION_3D get scale_factor
-            if(ATTENUATION_VAL_3D) then
+            if(ATTENUATION_3D_VAL) then
               ! tau_mu and tau_sigma need to reference a point in the mesh
               scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
             else
@@ -2278,7 +2278,7 @@
         do j=1,NGLLY
           do i=1,NGLLX
 
-            if(ATTENUATION_VAL_3D) then
+            if(ATTENUATION_3D_VAL) then
                scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
             else
                iglob   = ibool_inner_core(i,j,k,ispec)
@@ -2301,7 +2301,7 @@
                   + scale_factor_minus_one * mul
         endif
 
-            if(ATTENUATION_VAL_3D) then
+            if(ATTENUATION_3D_VAL) then
                muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
             else
                muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,iregion_selected)

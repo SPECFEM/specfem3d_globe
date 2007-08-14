@@ -37,7 +37,7 @@
 ! create the name for the database of the current slide and region
   write(procname,"('/proc',i6.6,'_reg',i1,'_')") iproc,iregion_code
 
-! on a Beowulf-type machine, path on frontend can be different from local paths
+! on a machine with local disks, path on frontend can be different from local paths
   if(.not. LOCAL_PATH_IS_ALSO_GLOBAL) then
 
 ! allocate array for active processors
@@ -54,8 +54,7 @@
     write(serial_prefix,"('/auto/scratch_n',i6.6,'/')") num_active_proc(iproc)
 
 ! suppress everything until the last "/" to define the base name of local path
-! this is system dependent since it assumes the disks are mounted
-! as on our Beowulf (Unix and NFS)
+! this is system dependent since it assumes the disks are mounted remotely
     base_path = LOCAL_PATH(index(LOCAL_PATH,'/',.true.)+1:len_trim(LOCAL_PATH))
 
 ! create full name with path
