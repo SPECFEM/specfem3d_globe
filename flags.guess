@@ -143,9 +143,16 @@ case $FC in
         # small (which is often the case)
         #
         # on IBM with xlf one should also set
+        #
         # CC = xlc_r
-        # CFLAGS = -O3 -qstrict -q64 -qstatsym -qsymtab=static
-        # for the C compiler instead of using "gcc"
+        # CFLAGS = -O2 -q64
+        #
+        # or
+        #
+        # CC = gcc
+        # CFLAGS = -O2 -m64
+        #
+        # for the C compiler when using -q64 for the Fortran compiler
         #
         if test x"$FLAGS_CHECK" = x; then
             FLAGS_CHECK="-O3 -qsave -qstrict -q64 -qarch=auto -qtune=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qflttrap=en:ov:zero:inv"
