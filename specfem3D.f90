@@ -306,7 +306,13 @@
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
+! additional mass matrix for ocean load
+! ocean load mass matrix is always allocated statically even if no oceans
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_ocean_load
+
   logical, dimension(NGLOB_CRUST_MANTLE) :: updated_dof_ocean_load
+
+  real(kind=CUSTOM_REAL) additional_term,force_normal_comp
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: jacobian2D_bottom_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: jacobian2D_top_crust_mantle
@@ -405,7 +411,7 @@
 
 ! arrays for isotropic elements stored only where needed to save space
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
-        rhostore_crust_mantle, kappavstore_crust_mantle,muvstore_crust_mantle
+        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
 
 ! arrays for anisotropic elements stored only where needed to save space
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
@@ -431,11 +437,6 @@
 ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
      displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
-
-! additional mass matrix for ocean load
-! ocean load mass matrix is always allocated statically even if no oceans
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_ocean_load
-  real(kind=CUSTOM_REAL) additional_term,force_normal_comp
 
 ! ----------------- outer core ---------------------
 
