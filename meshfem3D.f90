@@ -444,7 +444,7 @@
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
 ! computed in memory_eval
-  double precision :: static_size,dynamic_size
+  double precision :: static_memory_size
 
 ! arrays for BCAST
   integer, dimension(34) :: bcast_integer
@@ -1233,22 +1233,23 @@
   write(IMAIN,*)
   write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
   write(IMAIN,*)
-! create include file for the solver
+
+! evaluate the amount of static memory needed by the solver
   call memory_eval(ATTENUATION,ATTENUATION_3D,ANISOTROPIC_3D_MANTLE,&
                    TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
                    SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,&
                    ONE_CRUST,doubling_index,this_region_has_a_doubling,&
                    ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
-                   NSPEC,nglob,static_size,dynamic_size)
+                   NSPEC,nglob,static_memory_size)
 
+! create include file for the solver
   call save_header_file(NSPEC,nglob, &
         NEX_XI,NEX_ETA,nspec_aniso_mantle_all,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
         ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-        static_size,dynamic_size,&
-        NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+        static_memory_size,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
         NPROC_XI,NPROC_ETA,SIMULATION_TYPE)
 
@@ -1267,12 +1268,7 @@
     write(IMAIN,*) 'Elapsed time for mesh generation and buffer creation in seconds = ',tCPU
     write(IMAIN,*) 'End of mesh generation'
     write(IMAIN,*)
-  endif
-
 ! close main output file
-  if(myrank == 0) then
-    write(IMAIN,*) 'done'
-    write(IMAIN,*)
     close(IMAIN)
   endif
 

@@ -25,8 +25,7 @@
         ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-        static_size,dynamic_size,&
-        NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+        static_memory_size,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
         NPROC_XI,NPROC_ETA,SIMULATION_TYPE)
 
@@ -46,8 +45,7 @@
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
-  integer subtract_central_cube_elems
-  double precision subtract_central_cube_points
+  double precision :: subtract_central_cube_elems,subtract_central_cube_points
 
   character(len=150) HEADER_FILE
 
@@ -62,8 +60,8 @@
   double precision vector_ori(3),vector_rotated(3)
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
 
-! solver's arrays size
-  double precision :: static_size, dynamic_size
+! static memory size needed by the solver
+  double precision :: static_memory_size
 
   integer :: att1,att2,att3,att4,att5,NCORNERSCHUNKS,NUM_FACES,NUM_MSG_TYPES
 
@@ -89,29 +87,22 @@
 ! the central cube is counted 6 times, therefore remove 5 times
   if(INCLUDE_CENTRAL_CUBE) then
     write(IOUT,*) '! these statistics include the central cube'
-    subtract_central_cube_elems = 5 * (NEX_XI/8)**3
+    subtract_central_cube_elems = 5.d0 * dble((NEX_XI/8))**3
     subtract_central_cube_points = 5.d0 * (dble(NEX_XI/8)*dble(NGLLX-1)+1.d0)**3
   else
     write(IOUT,*) '! these statistics do not include the central cube'
-    subtract_central_cube_elems = 0
+    subtract_central_cube_elems = 0.d0
     subtract_central_cube_points = 0.d0
   endif
 
   write(IOUT,*) '!'
   write(IOUT,*) '! number of processors = ',NPROCTOT
   write(IOUT,*) '!'
-  write(IOUT,*) '! number of ES nodes = ',real(NPROCTOT)/8.
-  write(IOUT,*) '! percentage of total 640 ES nodes = ',100.*(real(NPROCTOT)/8.)/640.,' %'
-  write(IOUT,*) '! total memory available on these ES nodes (Gb) = ',16.*real(NPROCTOT)/8.
-
-  write(IOUT,*) '!'
   write(IOUT,*) '! total points per region = ',nglob(IREGION_CRUST_MANTLE)
-! use fused loops on the ES
-  write(IOUT,*) '! max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
   write(IOUT,*) '!'
-  write(IOUT,*) '! on ES and SX-5, make sure "loopcnt=" parameter'
 ! use fused loops on the ES
-  write(IOUT,*) '! in Makefile is greater than ',nglob(IREGION_CRUST_MANTLE)*NDIM
+  write(IOUT,*) '! on NEC SX and Earth Simulator, make sure "loopcnt=" parameter'
+  write(IOUT,*) '! in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
   write(IOUT,*) '!'
 
   write(IOUT,*) '! total elements per slice = ',sum(NSPEC)
@@ -122,7 +113,7 @@
   write(IOUT,*) '! ---------------------------'
   write(IOUT,*) '!'
   write(IOUT,*) '! exact total number of spectral elements in entire mesh = '
-  write(IOUT,*) '! ',6*NPROC*(sum(NSPEC)) - subtract_central_cube_elems
+  write(IOUT,*) '! ',6.d0*dble(NPROC)*dble(sum(NSPEC)) - subtract_central_cube_elems
   write(IOUT,*) '! approximate total number of points in entire mesh = '
   write(IOUT,*) '! ',2.d0*dble(NPROC)*(3.d0*dble(sum(nglob))) - subtract_central_cube_points
 ! there are 3 DOFs in solid regions, but only 1 in fluid outer core
@@ -226,19 +217,14 @@
   write(IOUT,*) '!'
   write(IOUT,*)
 
-  write(IOUT,*) '! approximate memory needed for the solver : '
-  write(IOUT,*) '! -----------------------------------------'
+  write(IOUT,*) '! approximate static memory needed by the solver:'
+  write(IOUT,*) '! ----------------------------------------------'
   write(IOUT,*) '!'
-  write(IOUT,*) '! size of static arrays per slice : ',static_size/(1024**2),' MB'
-  write(IOUT,*) '! size of static arrays for all slices : ',((static_size/(1024**2))*NPROCTOT)/1024.d0,' GB'
+  write(IOUT,*) '! size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
   write(IOUT,*) '!'
-  write(IOUT,*) '! size of dynamic arrays per slice : ',dynamic_size/(1024**2),' MB'
-  write(IOUT,*) '! size of dynamic arrays for all slices : ',((dynamic_size/(1024**2))*NPROCTOT)/1024.d0,' GB'
+  write(IOUT,*) '! size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
+  write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
   write(IOUT,*) '!'
-  write(IOUT,*) '! total size of arrays per slice : ',(dynamic_size+static_size)/(1024**2),' MB'
-  write(IOUT,*) '! total size of arrays for all slices : ', &
-                  (((dynamic_size+static_size)/(1024**2))*NPROCTOT)/1024.d0,' GB'
-  write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NEX_XI_VAL = ',NEX_XI
   write(IOUT,*) 'integer, parameter :: NEX_ETA_VAL = ',NEX_ETA

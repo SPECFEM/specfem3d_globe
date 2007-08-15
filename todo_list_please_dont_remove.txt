@@ -9,11 +9,9 @@ Dimitri:
 
 - mettre modele d'aniso de Seb dans le inner core
 
-- mettre l'attenuation dans le inner core pour run PKP Seb
-
 - run Sdiff calculations for Lev Vinnik (Moscow, Russia)
 
-- run 3D PKP calculations for Sebastien Chevrot (Toulouse, France); Dimitri va faire un code 2D serial pour etudier le modele et definir le maillage avant de lancer de gros runs a Barcelone
+- run 3D PKP calculations for Sebastien Chevrot (Toulouse, France)
 
 David:
 -----
@@ -45,8 +43,6 @@ on pourra voir ça tranquille début sept (je rentre le 6 sept), rien ne presse, e
 
 - rendre plus claire la partie du code qui définit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D, suite aux remarques de Bernhard Schubert
 
-- bug estimation mémoire NEX=1248 (marche) à NEX=1664 (plante) à résoudre: passer tout en integer(kind=8)
-
 - bug movies detecte par Vala: code crashes (probably in compute_forces) when setting MOVIE_VOLUME = .true.  > Stack trace terminated abnormally.  > forrtl: severe (174): SIGSEGV, segmentation fault occurred
 
 - ecrire les sismogrammes (et les allouer en memoire) bout a bout les uns a la suite des autres par tranches de taille NTSTEP_BETWEEN_FRAMES (ou bien un parametre de ce genre, a ajouter dans le Par_file) pour economiser (beaucoup de) memoire pour les runs avec beaucoup de stations sur un tres grand nombre de pas de temps (idee decrite par Dominique Rodrigues fin juillet lors d'une reunion avec lui)
@@ -68,7 +64,9 @@ from dynamic to static (easy to do: write their size
 in values_from_mesher.h in the mesher; but there are
 so many of them and so many cases (with/without attenuation,
 anisotropy, absorbing edges etc.) that we need to be careful:
-DK DK already done by David in Barcelona 2007 I think
+DK DK already done by David in Barcelona 2007 I think;
+DK DK if not already done, then there is no real need to do it
+because MPI buffers have a very minor impact on performance
 
 - get rid of the bottleneck in locate_sources and locate_receivers
 when one uses a huge number of sources (e.g. Vala -> 100000 sources)
@@ -79,7 +77,7 @@ Vala partially fixed this problem by using subsets of 1000 stations, but after
 careful analysis we have found a way of doing better and getting rid of all
 the GATHERs and *all* the extra memory (this way we won't have to limit the number of sources to a maximum of 100000, as currently done in the solver).
 
-- compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf à l'Idris afin de vérifier avant le commit que le code ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de vérifier la portabilité du code final
+- compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf à l'Idris afin de vérifier avant la conference aux USA mi-octobre que le code final ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de vérifier la portabilité
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
@@ -226,6 +224,8 @@ Things to add later to the manual:
 DONE:
 -----
 
+- bug estimation mémoire NEX=1248 (marche) à NEX=1664 (plante) à résoudre: passer tout en double precision ou bien integer(kind=8): done by Dimitri
+
 - fusionner en une seule étape le assemble_MPI de inner core et de crust_mantle merge assemble_MPI_vector for crust/mantle with assemble_MPI_vector for inner core in order to divide the number of MPI calls by 2 for the solid regions; car dans specfem3D.f90 ci-dessous à un moment on appelle deux fois la routine d'assemblage MPI, une fois pour assembler le crust + mantle et une fois pour assembler le inner core, juste après, ce qui double le nombre de messages et la latence pour rien. Donc quand on réécrira le MPI du solver bien entendu il faudra penser à fusionner les deux en un seul envoi de messages contenant crust + mantle + inner core: done by Dimitri
 
 - enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type (*mais* il faudra quand même laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout où il y en a, car on continue à traiter 6 blocs, même s'ils ont maintenant la même topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs -> {ok pour le mailleur, reste la différentiation dans le solveur, mais sans conséquences. A mettre à plat lors de la fusion. DM.}
@@ -288,7 +288,11 @@ pour des soucis de lisibilité.
 
 - Virer variables intermédiaires dans compute_forces dans codes 2D et 3D : fait par Dimitri a Barcelona 2007, dans le cadre de l'ecriture des 18 versions serial pour comparaison
 
+- mettre l'attenuation dans le inner core pour run PKP Seb: not needed, attenuation was already implemented in the inner core in version 3.6
+
 - maybe use VMX/Altivec instructions in compute_forces*.f90 specifically for MareNostrum with Jose Maria Cela (Barcelona) (but only if using BLAS3 calls in compute_forces*.f90 turned out to be impossible; otherwise it is better to call BLAS3, which will already be optimized by IBM for VMX/Altivec): done by Dimitri in Barcelona 2007
+
+- Dimitri va faire un code 2D serial pour etudier le modele PKP et definir le maillage avant de lancer de gros runs a Barcelone: not needed, we decided to run directly in 3D rather than first testing in 2D
 
 - use BLAS3 calls in compute_forces*.f90 instead of loops as in the current implementation. We should gain a huge factor if we can do this, but we will need to change the structure of the arrays: done by Dimitri in Barcelone 2007
 
