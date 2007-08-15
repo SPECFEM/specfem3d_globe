@@ -233,29 +233,61 @@
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
 
+! compute deviatoric strain
   if (SAVE_STRAIN) then
-
     epsilon_trace_over_3(i,j,k,ispec) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
     epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec)
     epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec)
     epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
     epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
     epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
-
   endif
 
+!!!! DK DK beginning of section commented out because of a bug in attenuation in v4.0
+!!!! DK DK beginning of section commented out because of a bug in attenuation in v4.0
+!!!! DK DK beginning of section commented out because of a bug in attenuation in v4.0
+! precompute terms for attenuation if needed
+! if(ATTENUATION_VAL) then
+!    if(ATTENUATION_3D_VAL) then
+!       minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
+!    else
+!       iglob     = ibool(i,j,k,ispec)
+!       radius_cr = xstore(iglob)
+!       call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
+!       minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
+!    endif ! ATTENUATION_3D_VAL
+! endif ! ATTENUATION_VAL
+!!!! DK DK end of section commented out because of a bug in attenuation in v4.0
+!!!! DK DK end of section commented out because of a bug in attenuation in v4.0
+!!!! DK DK end of section commented out because of a bug in attenuation in v4.0
 
-! compute deviatoric strain
+!!!! DK DK beginning of section put back from v3.6
+!!!! DK DK beginning of section put back from v3.6
+!!!! DK DK beginning of section put back from v3.6
+! precompute terms for attenuation if needed
   if(ATTENUATION_VAL) then
      if(ATTENUATION_3D_VAL) then
         minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
      else
         iglob     = ibool(i,j,k,ispec)
         radius_cr = xstore(iglob)
-        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
-        minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
+        iregion_selected = max(1,nint(radius_cr * TABLE_ATTENUATION))
+        minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.
+        ! If the Attenuation Value is not defined ( we are in the outer core )
+        ! Continue to decrease the radius ( move towards the center ) to find
+        ! a Value within the Outer Core
+        do while(minus_sum_beta <= 0.0)
+           iregion_selected = iregion_selected - 1
+           minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.
+           if(iregion_selected < 1) then
+              call exit_MPI_without_rank('compute_forces_inner_core error in attenuation')
+           endif
+        end do
      endif ! ATTENUATION_3D_VAL
   endif ! ATTENUATION_VAL
+!!!! DK DK end of section put back from v3.6
+!!!! DK DK end of section put back from v3.6
+!!!! DK DK end of section put back from v3.6
 
        if(ANISOTROPIC_INNER_CORE_VAL) then
 
