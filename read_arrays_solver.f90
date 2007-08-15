@@ -28,7 +28,7 @@
               c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
               ibool,idoubling,rmass,rmass_ocean_load,nspec,nglob, &
               READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY, &
-              ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
+              ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
   implicit none
 
@@ -36,10 +36,10 @@
 
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer iregion_code,myrank,NCHUNKS
+  integer iregion_code,myrank
 
 ! flags to know if we should read Vs and anisotropy arrays
-  logical READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
+  logical READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,ABSORBING_CONDITIONS
 
   character(len=150) LOCAL_PATH
 
@@ -148,7 +148,7 @@
   endif
 
 ! Stacey
-  if(NCHUNKS /= 6) then
+  if(ABSORBING_CONDITIONS) then
 
     if(iregion_code == IREGION_CRUST_MANTLE) then
       read(IIN) rho_vp

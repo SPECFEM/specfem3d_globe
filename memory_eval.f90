@@ -18,7 +18,7 @@
 
 ! compute the approximate amount of static memory needed to run the solver
 
-  subroutine memory_eval(ATTENUATION,ATTENUATION_3D,ANISOTROPIC_3D_MANTLE,&
+  subroutine memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ATTENUATION_3D,ANISOTROPIC_3D_MANTLE,&
                        TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
                        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,&
                        ONE_CRUST,doubling_index,this_region_has_a_doubling,&
@@ -31,7 +31,7 @@
 
 ! input
   logical, intent(in) :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-             ROTATION,MOVIE_VOLUME,ATTENUATION_3D,ATTENUATION,SAVE_FORWARD,ONE_CRUST
+             ROTATION,MOVIE_VOLUME,ATTENUATION_3D,ATTENUATION,SAVE_FORWARD,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS
   integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob
   integer, intent(in) :: SIMULATION_TYPE,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
@@ -176,21 +176,25 @@
 ! A_array_rotation,B_array_rotation
   static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ROTATION*2.d0*dble(CUSTOM_REAL)
 
-!!!!!!!!!!!!! DK DK this should be allocated only if Stacey conditions are active
+  if(ABSORBING_CONDITIONS) then
+
 ! rho_vp_crust_mantle,rho_vs_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*2.d0*dble(CUSTOM_REAL)
+    static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*2.d0*dble(CUSTOM_REAL)
 
-!!!!!!!!!!!!! DK DK this should be allocated only if Stacey conditions are active
 ! vp_outer_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
+    static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
 
-!!!!!!!!!!!!! DK DK this should be allocated only if oceans are active
+  endif
+
+  if(OCEANS) then
+
 ! rmass_ocean_load
-  static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
+    static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
-!!!!!!!!!!!!! DK DK this should be allocated only if oceans are active
 ! updated_dof_ocean_load
-  static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
+    static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
+
+  endif
 
   end subroutine memory_eval
 

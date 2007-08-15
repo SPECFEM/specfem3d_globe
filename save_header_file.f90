@@ -18,16 +18,14 @@
 
 ! save header file OUTPUT_FILES/values_from_mesher.h
 
-  subroutine save_header_file(NSPEC, &
-        nglob,NEX_XI,NEX_ETA, &
-        nspec_aniso_mantle,NPROC,NPROCTOT, &
+  subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,nspec_aniso_mantle,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
         ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
         static_memory_size,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-        NPROC_XI,NPROC_ETA,SIMULATION_TYPE)
+        NPROC_XI,NPROC_ETA,SIMULATION_TYPE,ABSORBING_CONDITIONS,OCEANS)
 
   implicit none
 
@@ -40,7 +38,7 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
-          INCLUDE_CENTRAL_CUBE
+          INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,OCEANS
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
@@ -226,6 +224,7 @@
   write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
   write(IOUT,*) '!'
 
+  write(IOUT,*)
   write(IOUT,*) 'integer, parameter :: NEX_XI_VAL = ',NEX_XI
   write(IOUT,*) 'integer, parameter :: NEX_ETA_VAL = ',NEX_ETA
   write(IOUT,*)
@@ -269,6 +268,22 @@
   else
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT = 1'
     write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ATTENUATION = 1'
+  endif
+
+! if absorbing conditions are off, set dummy size of arrays to one
+  if(ABSORBING_CONDITIONS) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STACEY = NSPEC_CRUST_MANTLE'
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_STACEY = NSPEC_OUTER_CORE'
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STACEY = 1'
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_STACEY = 1'
+  endif
+
+! if oceans are off, set dummy size of arrays to one
+  if(OCEANS) then
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS = NGLOB_CRUST_MANTLE'
+  else
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS = 1'
   endif
 
 ! this to allow for code elimination by compiler in solver for performance
@@ -413,7 +428,6 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_OC = ',NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_OC = ',NSPEC2D_TOP(IREGION_OUTER_CORE)
 
-  write(IOUT,*) 'integer, parameter :: NSTEP_VAL = ',NSTEP
   write(IOUT,*) 'integer, parameter :: SIMULATION_TYPE_VAL = ',SIMULATION_TYPE
 
   close(IOUT)
