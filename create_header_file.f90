@@ -71,7 +71,7 @@
   integer :: ilayer, ner_without_doubling
 
   integer ispec_aniso,NUMBER_OF_MESH_LAYERS
-  double precision :: static_size,dynamic_size
+  double precision :: static_memory_size
   character(len=150) HEADER_FILE
 
 ! ************** PROGRAM STARTS HERE **************
@@ -145,7 +145,7 @@ enddo
                    SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,&
                    ONE_CRUST,doubling_index,this_region_has_a_doubling,&
                    ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
-                   NSPEC,nglob,static_size,dynamic_size)
+                   NSPEC,nglob,static_memory_size)
 
 ! create include file for the solver
   call save_header_file(NSPEC, &
@@ -154,8 +154,7 @@ enddo
         ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-        static_size,dynamic_size,&
-        NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+        static_memory_size,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
         NPROC_XI,NPROC_ETA,SIMULATION_TYPE)
 
@@ -167,21 +166,14 @@ enddo
   print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
 
   print *
-  print *, 'memory needed for the solver : '
+  print *,'approximate static memory needed by the solver:'
+  print *,'----------------------------------------------'
   print *
-  print *, 'approximate size of static arrays per slice : ',static_size/(1024**2),' MB'
-  print *, 'approximate size of static arrays for all slices : ',((static_size/(1024**2))*NPROCTOT)/1024.d0,' GB'
+  print *,'size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
   print *
-  print *, 'approximate size of dynamic arrays per slice : ',dynamic_size/(1024**2),' MB'
-  print *, 'approximate size of dynamic arrays for all slices : ',((dynamic_size/(1024**2))*NPROCTOT)/1024.d0,' GB'
+  print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
   print *
-  print *, 'approximate total size of arrays per slice : ',(dynamic_size+static_size)/(1024**2),' MB'
-  print *, 'approximate total size of arrays for all slices : ', &
-                  (((dynamic_size+static_size)/(1024**2))*NPROCTOT)/1024.d0,' GB'
-  print *
-  print *,'done'
-  print *
-
 
   end subroutine create_header_file
 
