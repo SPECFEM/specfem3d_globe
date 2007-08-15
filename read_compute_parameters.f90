@@ -142,16 +142,15 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! this MUST be 90 degrees for two chunks or more to match geometrically
-  if(NCHUNKS > 1 .and. ANGULAR_WIDTH_XI_IN_DEGREES /= 90.d0) &
+  if(NCHUNKS > 1 .and. abs(ANGULAR_WIDTH_XI_IN_DEGREES - 90.d0) > 0.00000001d0) &
     stop 'ANGULAR_WIDTH_XI_IN_DEGREES must be 90 for more than one chunk'
 
 ! this can be any value in the case of two chunks
-  if(NCHUNKS > 2 .and. ANGULAR_WIDTH_ETA_IN_DEGREES /= 90.d0) &
+  if(NCHUNKS > 2 .and. abs(ANGULAR_WIDTH_ETA_IN_DEGREES - 90.d0) > 0.00000001d0) &
     stop 'ANGULAR_WIDTH_ETA_IN_DEGREES must be 90 for more than two chunks'
 
 ! include central cube or not
 ! use regular cubed sphere instead of cube for large distances
-
   if(NCHUNKS == 6) then
     INCLUDE_CENTRAL_CUBE = .true.
     INFLATE_CENTRAL_CUBE = .false.
@@ -366,608 +365,15 @@
 ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
 
-! element width =   0.5625000      degrees =    62.54715      km
-
-  if (HONOR_1D_SPHERICAL_MOHO) then
-    if (ONE_CRUST) then
-    ! case prem_onecrust
-      if(NEX_MAX <= 160) then
-        DT                       = 0.252d0
-
-!!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 1
-        NER_220_80               = 2
-        NER_400_220              = 2
-        NER_600_400              = 2
-        NER_670_600              = 1
-        NER_771_670              = 1
-        NER_TOPDDOUBLEPRIME_771  = 15
-        NER_CMB_TOPDDOUBLEPRIME  = 1
-        NER_OUTER_CORE           = 16
-        NER_TOP_CENTRAL_CUBE_ICB = 2
-        R_CENTRAL_CUBE = 950000.d0
-        NER_TOP_CENTRAL_CUBE_ICB = 2
-
-    ! element width =   0.3515625      degrees =    39.09196      km
-      else if(NEX_MAX <= 256) then
-        DT                       = 0.225
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 1
-        NER_220_80               = 2
-        NER_400_220              = 3
-        NER_600_400              = 3
-        NER_670_600              = 1
-        NER_771_670              = 1
-        NER_TOPDDOUBLEPRIME_771  = 22
-        NER_CMB_TOPDDOUBLEPRIME  = 2
-        NER_OUTER_CORE           = 24
-        NER_TOP_CENTRAL_CUBE_ICB = 3
-        R_CENTRAL_CUBE = 965000.d0
-
-    ! element width =   0.2812500      degrees =    31.27357      km
-      else if(NEX_MAX <= 320) then
-        DT                       = 0.16d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 1
-        NER_220_80               = 3
-        NER_400_220              = 4
-        NER_600_400              = 4
-        NER_670_600              = 1
-        NER_771_670              = 2
-        NER_TOPDDOUBLEPRIME_771  = 29
-        NER_CMB_TOPDDOUBLEPRIME  = 2
-        NER_OUTER_CORE           = 32
-        NER_TOP_CENTRAL_CUBE_ICB = 4
-        R_CENTRAL_CUBE = 940000.d0
-
-    ! element width =   0.1875000      degrees =    20.84905      km
-      else if(NEX_MAX <= 480) then
-        DT                       = 0.12d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 2
-        NER_220_80               = 4
-        NER_400_220              = 5
-        NER_600_400              = 6
-        NER_670_600              = 2
-        NER_771_670              = 2
-        NER_TOPDDOUBLEPRIME_771  = 44
-        NER_CMB_TOPDDOUBLEPRIME  = 3
-        NER_OUTER_CORE           = 48
-        NER_TOP_CENTRAL_CUBE_ICB = 5
-        R_CENTRAL_CUBE = 988000.d0
-
-    ! element width =   0.1757812      degrees =    19.54598      km
-      else if(NEX_MAX <= 512) then
-        DT                       = 0.1125d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 8
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 2
-        NER_220_80               = 4
-        NER_400_220              = 6
-        NER_600_400              = 6
-        NER_670_600              = 2
-        NER_771_670              = 3
-        NER_TOPDDOUBLEPRIME_771  = 47
-        NER_CMB_TOPDDOUBLEPRIME  = 3
-        NER_OUTER_CORE           = 51
-        NER_TOP_CENTRAL_CUBE_ICB = 5
-        R_CENTRAL_CUBE = 1010000.d0
-
-    ! element width =   0.1406250      degrees =    15.63679      km
-      else if(NEX_MAX <= 640) then
-        DT                       = 0.09d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 5
-        MAX_ATTENUATION_PERIOD   = 400
-
-        NER_CRUST                = 2
-        NER_80_MOHO              = 3
-        NER_220_80               = 5
-        NER_400_220              = 7
-        NER_600_400              = 8
-        NER_670_600              = 3
-        NER_771_670              = 3
-        NER_TOPDDOUBLEPRIME_771  = 59
-        NER_CMB_TOPDDOUBLEPRIME  = 4
-        NER_OUTER_CORE           = 64
-        NER_TOP_CENTRAL_CUBE_ICB = 6
-        R_CENTRAL_CUBE = 1020000.d0
-
-    ! element width =   0.1041667      degrees =    11.58280      km
-      else if(NEX_MAX <= 864) then
-        DT                       = 0.0667d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 5
-        MAX_ATTENUATION_PERIOD   = 400
-
-        NER_CRUST                = 2
-        NER_80_MOHO              = 4
-        NER_220_80               = 6
-        NER_400_220              = 10
-        NER_600_400              = 10
-        NER_670_600              = 3
-        NER_771_670              = 4
-        NER_TOPDDOUBLEPRIME_771  = 79
-        NER_CMB_TOPDDOUBLEPRIME  = 5
-        NER_OUTER_CORE           = 86
-        NER_TOP_CENTRAL_CUBE_ICB = 9
-        R_CENTRAL_CUBE = 990000.d0
-
-    ! element width =   7.8125000E-02  degrees =    8.687103      km
-      else if(NEX_MAX <= 1152) then
-        DT                       = 0.05d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 4
-        MAX_ATTENUATION_PERIOD   = 400
-
-        NER_CRUST                = 3
-        NER_80_MOHO              = 6
-        NER_220_80               = 8
-        NER_400_220              = 13
-        NER_600_400              = 13
-        NER_670_600              = 4
-        NER_771_670              = 6
-        NER_TOPDDOUBLEPRIME_771  = 106
-        NER_CMB_TOPDDOUBLEPRIME  = 7
-        NER_OUTER_CORE           = 116
-        NER_TOP_CENTRAL_CUBE_ICB = 12
-        R_CENTRAL_CUBE = 985000.d0
-
-    ! element width =   7.2115384E-02  degrees =    8.018865      km
-      else if(NEX_MAX <= 1248) then
-        DT                       = 0.0462d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 4
-        MAX_ATTENUATION_PERIOD   = 400
-
-        NER_CRUST                = 3
-        NER_80_MOHO              = 6
-        NER_220_80               = 9
-        NER_400_220              = 14
-        NER_600_400              = 14
-        NER_670_600              = 5
-        NER_771_670              = 6
-        NER_TOPDDOUBLEPRIME_771  = 114
-        NER_CMB_TOPDDOUBLEPRIME  = 8
-        NER_OUTER_CORE           = 124
-        NER_TOP_CENTRAL_CUBE_ICB = 13
-        R_CENTRAL_CUBE = 985000.d0
-
-      else
-        stop 'this value of NEX_MAX is not in the database, edit read_compute_parameters.f90 and recompile'
-    !   stop 'incorrect value of NEX_MAX, should use an updated version of auto_NER'
-      endif
-    else
-    ! case prem
-      if(NEX_MAX <= 160) then
-        DT                       = 0.20d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 1
-        NER_220_80               = 2
-        NER_400_220              = 2
-        NER_600_400              = 2
-        NER_670_600              = 1
-        NER_771_670              = 1
-        NER_TOPDDOUBLEPRIME_771  = 15
-        NER_CMB_TOPDDOUBLEPRIME  = 1
-        NER_OUTER_CORE           = 16
-        NER_TOP_CENTRAL_CUBE_ICB = 2
-        R_CENTRAL_CUBE = 950000.d0
-
-    ! element width =   0.3515625      degrees =    39.09196      km
-      else if(NEX_MAX <= 256) then
-        DT                       = 0.2d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 1
-        NER_220_80               = 2
-        NER_400_220              = 3
-        NER_600_400              = 3
-        NER_670_600              = 1
-        NER_771_670              = 1
-        NER_TOPDDOUBLEPRIME_771  = 22
-        NER_CMB_TOPDDOUBLEPRIME  = 2
-        NER_OUTER_CORE           = 24
-        NER_TOP_CENTRAL_CUBE_ICB = 3
-        R_CENTRAL_CUBE = 965000.d0
-
-    ! element width =   0.2812500      degrees =    31.27357      km
-      else if(NEX_MAX <= 320) then
-        DT                       = 0.16d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 1
-        NER_220_80               = 3
-        NER_400_220              = 4
-        NER_600_400              = 4
-        NER_670_600              = 1
-        NER_771_670              = 2
-        NER_TOPDDOUBLEPRIME_771  = 29
-        NER_CMB_TOPDDOUBLEPRIME  = 2
-        NER_OUTER_CORE           = 32
-        NER_TOP_CENTRAL_CUBE_ICB = 4
-        R_CENTRAL_CUBE = 940000.d0
-
-    ! element width =   0.1875000      degrees =    20.84905      km
-      else if(NEX_MAX <= 480) then
-        DT                       = 0.12d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 2
-        NER_220_80               = 4
-        NER_400_220              = 5
-        NER_600_400              = 6
-        NER_670_600              = 2
-        NER_771_670              = 2
-        NER_TOPDDOUBLEPRIME_771  = 44
-        NER_CMB_TOPDDOUBLEPRIME  = 3
-        NER_OUTER_CORE           = 48
-        NER_TOP_CENTRAL_CUBE_ICB = 5
-        R_CENTRAL_CUBE = 988000.d0
-
-    ! element width =   0.1757812      degrees =    19.54598      km
-      else if(NEX_MAX <= 512) then
-        DT                       = 0.1125d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 8
-        MAX_ATTENUATION_PERIOD   = 1000
-
-        NER_CRUST                = 1
-        NER_80_MOHO              = 2
-        NER_220_80               = 4
-        NER_400_220              = 6
-        NER_600_400              = 6
-        NER_670_600              = 2
-        NER_771_670              = 3
-        NER_TOPDDOUBLEPRIME_771  = 47
-        NER_CMB_TOPDDOUBLEPRIME  = 3
-        NER_OUTER_CORE           = 51
-        NER_TOP_CENTRAL_CUBE_ICB = 5
-        R_CENTRAL_CUBE = 1010000.d0
-
-    ! element width =   0.1406250      degrees =    15.63679      km
-      else if(NEX_MAX <= 640) then
-        DT                       = 0.09d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 5
-        MAX_ATTENUATION_PERIOD   = 400
-
-        NER_CRUST                = 2
-        NER_80_MOHO              = 3
-        NER_220_80               = 5
-        NER_400_220              = 7
-        NER_600_400              = 8
-        NER_670_600              = 3
-        NER_771_670              = 3
-        NER_TOPDDOUBLEPRIME_771  = 59
-        NER_CMB_TOPDDOUBLEPRIME  = 4
-        NER_OUTER_CORE           = 64
-        NER_TOP_CENTRAL_CUBE_ICB = 6
-        R_CENTRAL_CUBE = 1020000.d0
-
-    ! element width =   0.1041667      degrees =    11.58280      km
-      else if(NEX_MAX <= 864) then
-        DT                       = 0.0667d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 5
-        MAX_ATTENUATION_PERIOD   = 400
-
-        NER_CRUST                = 2
-        NER_80_MOHO              = 4
-        NER_220_80               = 6
-        NER_400_220              = 10
-        NER_600_400              = 10
-        NER_670_600              = 3
-        NER_771_670              = 4
-        NER_TOPDDOUBLEPRIME_771  = 79
-        NER_CMB_TOPDDOUBLEPRIME  = 5
-        NER_OUTER_CORE           = 86
-        NER_TOP_CENTRAL_CUBE_ICB = 9
-        R_CENTRAL_CUBE = 990000.d0
-
-    ! element width =   7.8125000E-02  degrees =    8.687103      km
-      else if(NEX_MAX <= 1152) then
-        DT                       = 0.05d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 4
-        MAX_ATTENUATION_PERIOD   = 400
-
-        NER_CRUST                = 3
-        NER_80_MOHO              = 6
-        NER_220_80               = 8
-        NER_400_220              = 13
-        NER_600_400              = 13
-        NER_670_600              = 4
-        NER_771_670              = 6
-        NER_TOPDDOUBLEPRIME_771  = 106
-        NER_CMB_TOPDDOUBLEPRIME  = 7
-        NER_OUTER_CORE           = 116
-        NER_TOP_CENTRAL_CUBE_ICB = 12
-        R_CENTRAL_CUBE = 985000.d0
-
-    ! element width =   7.2115384E-02  degrees =    8.018865      km
-      else if(NEX_MAX <= 1248) then
-        DT                       = 0.0462d0
-
-    !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-        MIN_ATTENUATION_PERIOD   = 4
-        MAX_ATTENUATION_PERIOD   = 400
-
-        NER_CRUST                = 3
-        NER_80_MOHO              = 6
-        NER_220_80               = 9
-        NER_400_220              = 14
-        NER_600_400              = 14
-        NER_670_600              = 5
-        NER_771_670              = 6
-        NER_TOPDDOUBLEPRIME_771  = 114
-        NER_CMB_TOPDDOUBLEPRIME  = 8
-        NER_OUTER_CORE           = 124
-        NER_TOP_CENTRAL_CUBE_ICB = 13
-        R_CENTRAL_CUBE = 985000.d0
-
-      else
-        stop 'this value of NEX_MAX is not in the database, edit read_compute_parameters.f90 and recompile'
-    !   stop 'incorrect value of NEX_MAX, should use an updated version of auto_NER'
-      endif
-    endif
-  else
-    ! case 3D
-    if(NEX_MAX <= 160) then
-      DT                       = 0.15d0
-
-  !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-      MIN_ATTENUATION_PERIOD   = 20
-      MAX_ATTENUATION_PERIOD   = 1000
-
-      NER_CRUST                = 2
-      NER_80_MOHO              = 1
-      NER_220_80               = 2
-      NER_400_220              = 2
-      NER_600_400              = 2
-      NER_670_600              = 1
-      NER_771_670              = 1
-      NER_TOPDDOUBLEPRIME_771  = 15
-      NER_CMB_TOPDDOUBLEPRIME  = 1
-      NER_OUTER_CORE           = 16
-      NER_TOP_CENTRAL_CUBE_ICB = 2
-      R_CENTRAL_CUBE = 950000.d0
-
-  ! element width =   0.3515625      degrees =    39.09196      km
-    else if(NEX_MAX <= 256) then
-      DT                       = 0.170d0
-
-  !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-      MIN_ATTENUATION_PERIOD   = 20
-      MAX_ATTENUATION_PERIOD   = 1000
-
-      NER_CRUST                = 2
-      NER_80_MOHO              = 1
-      NER_220_80               = 2
-      NER_400_220              = 3
-      NER_600_400              = 3
-      NER_670_600              = 1
-      NER_771_670              = 1
-      NER_TOPDDOUBLEPRIME_771  = 22
-      NER_CMB_TOPDDOUBLEPRIME  = 2
-      NER_OUTER_CORE           = 24
-      NER_TOP_CENTRAL_CUBE_ICB = 3
-      R_CENTRAL_CUBE = 965000.d0
-
-  ! element width =   0.2812500      degrees =    31.27357      km
-    else if(NEX_MAX <= 320) then
-      DT                       = 0.155d0
-
-  !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-      MIN_ATTENUATION_PERIOD   = 20
-      MAX_ATTENUATION_PERIOD   = 1000
-
-      NER_CRUST                = 2
-      NER_80_MOHO              = 1
-      NER_220_80               = 3
-      NER_400_220              = 4
-      NER_600_400              = 4
-      NER_670_600              = 1
-      NER_771_670              = 2
-      NER_TOPDDOUBLEPRIME_771  = 29
-      NER_CMB_TOPDDOUBLEPRIME  = 2
-      NER_OUTER_CORE           = 32
-      NER_TOP_CENTRAL_CUBE_ICB = 4
-      R_CENTRAL_CUBE = 940000.d0
-
-  ! element width =   0.1875000      degrees =    20.84905      km
-    else if(NEX_MAX <= 480) then
-      DT                       = 0.12d0
-
-  !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-      MIN_ATTENUATION_PERIOD   = 20
-      MAX_ATTENUATION_PERIOD   = 1000
-
-      NER_CRUST                = 2
-      NER_80_MOHO              = 1
-      NER_220_80               = 4
-      NER_400_220              = 5
-      NER_600_400              = 6
-      NER_670_600              = 2
-      NER_771_670              = 2
-      NER_TOPDDOUBLEPRIME_771  = 44
-      NER_CMB_TOPDDOUBLEPRIME  = 3
-      NER_OUTER_CORE           = 48
-      NER_TOP_CENTRAL_CUBE_ICB = 5
-      R_CENTRAL_CUBE = 988000.d0
-
-  ! element width =   0.1757812      degrees =    19.54598      km
-    else if(NEX_MAX <= 512) then
-      DT                       = 0.1125d0
-
-  !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-      MIN_ATTENUATION_PERIOD   = 8
-      MAX_ATTENUATION_PERIOD   = 1000
-
-      NER_CRUST                = 2
-      NER_80_MOHO              = 1
-      NER_220_80               = 4
-      NER_400_220              = 6
-      NER_600_400              = 6
-      NER_670_600              = 2
-      NER_771_670              = 3
-      NER_TOPDDOUBLEPRIME_771  = 47
-      NER_CMB_TOPDDOUBLEPRIME  = 3
-      NER_OUTER_CORE           = 51
-      NER_TOP_CENTRAL_CUBE_ICB = 5
-      R_CENTRAL_CUBE = 1010000.d0
-
-  ! element width =   0.1406250      degrees =    15.63679      km
-    else if(NEX_MAX <= 640) then
-      DT                       = 0.09d0
-
-  !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-      MIN_ATTENUATION_PERIOD   = 5
-      MAX_ATTENUATION_PERIOD   = 400
-
-      NER_CRUST                = 3
-      NER_80_MOHO              = 2
-      NER_220_80               = 5
-      NER_400_220              = 7
-      NER_600_400              = 8
-      NER_670_600              = 3
-      NER_771_670              = 3
-      NER_TOPDDOUBLEPRIME_771  = 59
-      NER_CMB_TOPDDOUBLEPRIME  = 4
-      NER_OUTER_CORE           = 64
-      NER_TOP_CENTRAL_CUBE_ICB = 6
-      R_CENTRAL_CUBE = 1020000.d0
-
-  ! element width =   0.1041667      degrees =    11.58280      km
-    else if(NEX_MAX <= 864) then
-      DT                       = 0.0667d0
-
-  !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-      MIN_ATTENUATION_PERIOD   = 5
-      MAX_ATTENUATION_PERIOD   = 400
-
-      NER_CRUST                = 4
-      NER_80_MOHO              = 3
-      NER_220_80               = 6
-      NER_400_220              = 10
-      NER_600_400              = 10
-      NER_670_600              = 3
-      NER_771_670              = 4
-      NER_TOPDDOUBLEPRIME_771  = 79
-      NER_CMB_TOPDDOUBLEPRIME  = 5
-      NER_OUTER_CORE           = 86
-      NER_TOP_CENTRAL_CUBE_ICB = 9
-      R_CENTRAL_CUBE = 990000.d0
-
-  ! element width =   7.8125000E-02  degrees =    8.687103      km
-    else if(NEX_MAX <= 1152) then
-      DT                       = 0.05d0
-
-  !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-      MIN_ATTENUATION_PERIOD   = 4
-      MAX_ATTENUATION_PERIOD   = 400
-
-      NER_CRUST                = 4
-      NER_80_MOHO              = 4
-      NER_220_80               = 8
-      NER_400_220              = 13
-      NER_600_400              = 13
-      NER_670_600              = 4
-      NER_771_670              = 6
-      NER_TOPDDOUBLEPRIME_771  = 106
-      NER_CMB_TOPDDOUBLEPRIME  = 7
-      NER_OUTER_CORE           = 116
-      NER_TOP_CENTRAL_CUBE_ICB = 12
-      R_CENTRAL_CUBE = 985000.d0
-
-  ! element width =   7.2115384E-02  degrees =    8.018865      km
-    else if(NEX_MAX <= 1248) then
-      DT                       = 0.0462d0
-
-  !!!!!!! DK DK UGLY these two values should be chosen based on some criterion YYYYYYYYYYYYYYYYYYYY
-      MIN_ATTENUATION_PERIOD   = 4
-      MAX_ATTENUATION_PERIOD   = 400
-
-      NER_CRUST                = 5
-      NER_80_MOHO              = 4
-      NER_220_80               = 9
-      NER_400_220              = 14
-      NER_600_400              = 14
-      NER_670_600              = 5
-      NER_771_670              = 6
-      NER_TOPDDOUBLEPRIME_771  = 114
-      NER_CMB_TOPDDOUBLEPRIME  = 8
-      NER_OUTER_CORE           = 124
-      NER_TOP_CENTRAL_CUBE_ICB = 13
-      R_CENTRAL_CUBE = 985000.d0
-
-    else
-      stop 'this value of NEX_MAX is not in the database, edit read_compute_parameters.f90 and recompile'
-  !   stop 'incorrect value of NEX_MAX, should use an updated version of auto_NER'
-    endif
-  endif
-
-! take a 5% safety margin on the maximum stable time step
-! which was obtained by trial and error
-  DT = DT * (1.d0 - 0.05d0)
-
-  if(ANGULAR_WIDTH_XI_IN_DEGREES < 90.0d0 .OR. NEX_MAX > 1248) then
+  if(ANGULAR_WIDTH_XI_IN_DEGREES <= 89.9999d0 .OR. NEX_MAX > 1248) then
 
 !!!!!! DK DK
 !!!!!! DK DK  this section written by Brian Savage, commented out by Dimitri Komatitsch
 !!!!!! DK DK  because it is based on the old mesher and therefore does not work with the new
-!!!!!! DK DK  mesher. Brian should update it and put it back.
+!!!!!! DK DK  mesher. Brian will update it and put it back.
 !!!!!! DK DK
 
-  stop 'auto_ner commented out by Dimitri Komatitsch'
+    stop 'auto_ner commented out by Dimitri Komatitsch for now; Brian Savage will put it back'
 
 !   call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
 !         NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
@@ -1002,8 +408,249 @@
 !        ((ANGULAR_WIDTH_XI_IN_DEGREES * (PI/180.0d0)) * 1221.0d0) / &
 !        (dble(NEX_MAX) / 8.0d0) / 11.02827d0 ) * 0.173d0 * 0.4d0
 
+  else
+
+!----
+!----  case prem_onecrust by default
+!----
+
+     ! element width =   0.5625000      degrees =    62.54715      km
+      if(NEX_MAX <= 160) then
+        DT                       = 0.252d0
+
+        MIN_ATTENUATION_PERIOD   = 20
+        MAX_ATTENUATION_PERIOD   = 1000
+
+        NER_CRUST                = 1
+        NER_80_MOHO              = 1
+        NER_220_80               = 2
+        NER_400_220              = 2
+        NER_600_400              = 2
+        NER_670_600              = 1
+        NER_771_670              = 1
+        NER_TOPDDOUBLEPRIME_771  = 15
+        NER_CMB_TOPDDOUBLEPRIME  = 1
+        NER_OUTER_CORE           = 16
+        NER_TOP_CENTRAL_CUBE_ICB = 2
+        R_CENTRAL_CUBE = 950000.d0
+
+    ! element width =   0.3515625      degrees =    39.09196      km
+      else if(NEX_MAX <= 256) then
+        DT                       = 0.225d0
+
+        MIN_ATTENUATION_PERIOD   = 20
+        MAX_ATTENUATION_PERIOD   = 1000
+
+        NER_CRUST                = 1
+        NER_80_MOHO              = 1
+        NER_220_80               = 2
+        NER_400_220              = 3
+        NER_600_400              = 3
+        NER_670_600              = 1
+        NER_771_670              = 1
+        NER_TOPDDOUBLEPRIME_771  = 22
+        NER_CMB_TOPDDOUBLEPRIME  = 2
+        NER_OUTER_CORE           = 24
+        NER_TOP_CENTRAL_CUBE_ICB = 3
+        R_CENTRAL_CUBE = 965000.d0
+
+    ! element width =   0.2812500      degrees =    31.27357      km
+      else if(NEX_MAX <= 320) then
+        DT                       = 0.16d0
+
+        MIN_ATTENUATION_PERIOD   = 20
+        MAX_ATTENUATION_PERIOD   = 1000
+
+        NER_CRUST                = 1
+        NER_80_MOHO              = 1
+        NER_220_80               = 3
+        NER_400_220              = 4
+        NER_600_400              = 4
+        NER_670_600              = 1
+        NER_771_670              = 2
+        NER_TOPDDOUBLEPRIME_771  = 29
+        NER_CMB_TOPDDOUBLEPRIME  = 2
+        NER_OUTER_CORE           = 32
+        NER_TOP_CENTRAL_CUBE_ICB = 4
+        R_CENTRAL_CUBE = 940000.d0
+
+    ! element width =   0.1875000      degrees =    20.84905      km
+      else if(NEX_MAX <= 480) then
+        DT                       = 0.12d0
+
+        MIN_ATTENUATION_PERIOD   = 20
+        MAX_ATTENUATION_PERIOD   = 1000
+
+        NER_CRUST                = 1
+        NER_80_MOHO              = 2
+        NER_220_80               = 4
+        NER_400_220              = 5
+        NER_600_400              = 6
+        NER_670_600              = 2
+        NER_771_670              = 2
+        NER_TOPDDOUBLEPRIME_771  = 44
+        NER_CMB_TOPDDOUBLEPRIME  = 3
+        NER_OUTER_CORE           = 48
+        NER_TOP_CENTRAL_CUBE_ICB = 5
+        R_CENTRAL_CUBE = 988000.d0
+
+    ! element width =   0.1757812      degrees =    19.54598      km
+      else if(NEX_MAX <= 512) then
+        DT                       = 0.1125d0
+
+        MIN_ATTENUATION_PERIOD   = 8
+        MAX_ATTENUATION_PERIOD   = 1000
+
+        NER_CRUST                = 1
+        NER_80_MOHO              = 2
+        NER_220_80               = 4
+        NER_400_220              = 6
+        NER_600_400              = 6
+        NER_670_600              = 2
+        NER_771_670              = 3
+        NER_TOPDDOUBLEPRIME_771  = 47
+        NER_CMB_TOPDDOUBLEPRIME  = 3
+        NER_OUTER_CORE           = 51
+        NER_TOP_CENTRAL_CUBE_ICB = 5
+        R_CENTRAL_CUBE = 1010000.d0
+
+    ! element width =   0.1406250      degrees =    15.63679      km
+      else if(NEX_MAX <= 640) then
+        DT                       = 0.09d0
+
+        MIN_ATTENUATION_PERIOD   = 5
+        MAX_ATTENUATION_PERIOD   = 400
+
+        NER_CRUST                = 2
+        NER_80_MOHO              = 3
+        NER_220_80               = 5
+        NER_400_220              = 7
+        NER_600_400              = 8
+        NER_670_600              = 3
+        NER_771_670              = 3
+        NER_TOPDDOUBLEPRIME_771  = 59
+        NER_CMB_TOPDDOUBLEPRIME  = 4
+        NER_OUTER_CORE           = 64
+        NER_TOP_CENTRAL_CUBE_ICB = 6
+        R_CENTRAL_CUBE = 1020000.d0
+
+    ! element width =   0.1041667      degrees =    11.58280      km
+      else if(NEX_MAX <= 864) then
+        DT                       = 0.0667d0
+
+        MIN_ATTENUATION_PERIOD   = 5
+        MAX_ATTENUATION_PERIOD   = 400
+
+        NER_CRUST                = 2
+        NER_80_MOHO              = 4
+        NER_220_80               = 6
+        NER_400_220              = 10
+        NER_600_400              = 10
+        NER_670_600              = 3
+        NER_771_670              = 4
+        NER_TOPDDOUBLEPRIME_771  = 79
+        NER_CMB_TOPDDOUBLEPRIME  = 5
+        NER_OUTER_CORE           = 86
+        NER_TOP_CENTRAL_CUBE_ICB = 9
+        R_CENTRAL_CUBE = 990000.d0
+
+    ! element width =   7.8125000E-02  degrees =    8.687103      km
+      else if(NEX_MAX <= 1152) then
+        DT                       = 0.05d0
+
+        MIN_ATTENUATION_PERIOD   = 4
+        MAX_ATTENUATION_PERIOD   = 400
+
+        NER_CRUST                = 3
+        NER_80_MOHO              = 6
+        NER_220_80               = 8
+        NER_400_220              = 13
+        NER_600_400              = 13
+        NER_670_600              = 4
+        NER_771_670              = 6
+        NER_TOPDDOUBLEPRIME_771  = 106
+        NER_CMB_TOPDDOUBLEPRIME  = 7
+        NER_OUTER_CORE           = 116
+        NER_TOP_CENTRAL_CUBE_ICB = 12
+        R_CENTRAL_CUBE = 985000.d0
+
+    ! element width =   7.2115384E-02  degrees =    8.018865      km
+      else if(NEX_MAX <= 1248) then
+        DT                       = 0.0462d0
+
+        MIN_ATTENUATION_PERIOD   = 4
+        MAX_ATTENUATION_PERIOD   = 400
+
+        NER_CRUST                = 3
+        NER_80_MOHO              = 6
+        NER_220_80               = 9
+        NER_400_220              = 14
+        NER_600_400              = 14
+        NER_670_600              = 5
+        NER_771_670              = 6
+        NER_TOPDDOUBLEPRIME_771  = 114
+        NER_CMB_TOPDDOUBLEPRIME  = 8
+        NER_OUTER_CORE           = 124
+        NER_TOP_CENTRAL_CUBE_ICB = 13
+        R_CENTRAL_CUBE = 985000.d0
+
+      else
+        stop 'problem with this value of NEX_MAX'
+      endif
+
+!----
+!----  change some values in the case of regular PREM with two crustal layers or of 3D models
+!----
+    if (HONOR_1D_SPHERICAL_MOHO .and. .not. ONE_CRUST) then
+
+! case of regular PREM with two crustal layers: change the time step for small meshes
+! because of a different size of elements in the radial direction in the crust
+      if(NEX_MAX <= 160) then
+        DT = 0.20d0
+      else if(NEX_MAX <= 256) then
+        DT = 0.20d0
+      endif
+
+    else
+
+! case 3D: change the upper part of the mesh and the time step because of
+! the 3D model with faster of slower velocities in the upper mantle and crust
+      if(NEX_MAX <= 160) then
+        DT                       = 0.15d0
+        NER_CRUST                = 2
+      else if(NEX_MAX <= 256) then
+        DT                       = 0.17d0
+        NER_CRUST                = 2
+      else if(NEX_MAX <= 320) then
+        DT                       = 0.155d0
+        NER_CRUST                = 2
+      else if(NEX_MAX <= 480) then
+        NER_CRUST                = 2
+        NER_80_MOHO              = 1
+      else if(NEX_MAX <= 512) then
+        NER_CRUST                = 2
+        NER_80_MOHO              = 1
+      else if(NEX_MAX <= 640) then
+        NER_CRUST                = 3
+        NER_80_MOHO              = 2
+      else if(NEX_MAX <= 864) then
+        NER_CRUST                = 4
+        NER_80_MOHO              = 3
+      else if(NEX_MAX <= 1152) then
+        NER_CRUST                = 4
+        NER_80_MOHO              = 4
+      else if(NEX_MAX <= 1248) then
+        NER_CRUST                = 5
+        NER_80_MOHO              = 4
+      endif
+
+    endif
+
   endif
 
+! take a 5% safety margin on the maximum stable time step
+! which was obtained by trial and error
+  DT = DT * (1.d0 - 0.05d0)
 
   call read_value_logical(OCEANS, 'model.OCEANS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
