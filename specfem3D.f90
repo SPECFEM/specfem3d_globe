@@ -307,10 +307,10 @@
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
 ! additional mass matrix for ocean load
-! ocean load mass matrix is always allocated statically even if no oceans
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_ocean_load
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
 
-  logical, dimension(NGLOB_CRUST_MANTLE) :: updated_dof_ocean_load
+! flag to mask ocean-bottom degrees of freedom for ocean load
+  logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
 
   real(kind=CUSTOM_REAL) additional_term,force_normal_comp
 
@@ -329,12 +329,12 @@
 
 ! Stacey
   real(kind=CUSTOM_REAL) sn,tx,ty,tz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: rho_vp_crust_mantle,rho_vs_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: rho_vp_crust_mantle,rho_vs_crust_mantle
   integer nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
   integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_CM) :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
   integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_CM) :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: vp_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY) :: vp_outer_core
   integer nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
   integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_OC) :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
   integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_OC) :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
@@ -1264,10 +1264,10 @@
             ibool_crust_mantle,idoubling_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
             NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
+            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
 ! outer core (no anisotropy nor S velocity)
-! rmass_ocean_load is not modified in routine
+! rmass_ocean_load is not used in this routine because it is meaningless in the outer core
   READ_KAPPA_MU = .false.
   READ_TISO = .false.
   nspec_iso = NSPEC_OUTER_CORE
@@ -1293,10 +1293,10 @@
             ibool_outer_core,idoubling_outer_core,rmass_outer_core,rmass_ocean_load, &
             NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
+            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
 ! inner core (no anisotropy)
-! rmass_ocean_load is not modified in routine
+! rmass_ocean_load is not used in this routine because it is meaningless in the inner core
   READ_KAPPA_MU = .true.
   READ_TISO = .false.
   nspec_iso = NSPEC_INNER_CORE
@@ -1326,7 +1326,7 @@
             ibool_inner_core,idoubling_inner_core,rmass_inner_core,rmass_ocean_load, &
             NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,NCHUNKS)
+            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
 ! check that the number of points in this slice is correct
 
@@ -2007,7 +2007,7 @@
 
 ! ocean load
   if (OCEANS) then
-  call assemble_MPI_scalar(myrank,rmass_ocean_load,NGLOB_CRUST_MANTLE, &
+    call assemble_MPI_scalar(myrank,rmass_ocean_load,NGLOB_CRUST_MANTLE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -2118,13 +2118,13 @@
 
   endif   ! end of handling the communications with the central cube
 
-
 ! check that all the mass matrices are positive
-  if((OCEANS .and. minval(rmass_ocean_load) <= 0.) .or. &
-     minval(rmass_crust_mantle) <= 0. .or. &
-     (minval(rmass_inner_core) <= 0. .or. &
-     minval(rmass_outer_core) <= 0.)) &
-       call exit_MPI(myrank,'negative mass matrix term')
+  if(minval(rmass_crust_mantle) <= 0. .or. minval(rmass_inner_core) <= 0. .or. minval(rmass_outer_core) <= 0.) &
+       call exit_MPI(myrank,'negative mass matrix term for at least one region')
+
+  if(OCEANS) then
+    if(minval(rmass_ocean_load) <= 0.) call exit_MPI(myrank,'negative mass matrix term for the oceans')
+  endif
 
 ! for efficiency, invert final mass matrix once and for all on each slice
   if(OCEANS) rmass_ocean_load = 1._CUSTOM_REAL / rmass_ocean_load
