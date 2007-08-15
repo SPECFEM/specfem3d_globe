@@ -41,7 +41,7 @@ on pourra voir ça tranquille début sept (je rentre le 6 sept), rien ne presse, e
 
 - si jamais les modifications ci-dessus pour faire marcher Cuthill-McKee ne fonctionnent pas, on peut décider de supprimer complètement Cuthill-McKee car on sait que cela ne nous fera pas gagner énormément; à voir à la rentrée, suivant si David arrive à faire marcher les modifications ci-dessus ou non 
 
-- rendre plus claire la partie du code qui définit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D, suite aux remarques de Bernhard Schubert
+- rendre plus claire la partie du code qui définit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D dans read_compute_parameters.f90, suite aux remarques de Bernhard Schubert (partly done by Dimitri this summer, but David can clean it even more in September)
 
 - bug movies detecte par Vala: code crashes (probably in compute_forces) when setting MOVIE_VOLUME = .true.  > Stack trace terminated abnormally.  > forrtl: severe (174): SIGSEGV, segmentation fault occurred
 
@@ -79,23 +79,11 @@ the GATHERs and *all* the extra memory (this way we won't have to limit the numb
 
 - compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf à l'Idris afin de vérifier avant la conference aux USA mi-octobre que le code final ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de vérifier la portabilité
 
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
-
-Things to do later:
--------------------
-
-- afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilité et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maître dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
-
-- see if this would be useful (probably NOT, according to the ParaVer analysis done in Barcelona): rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices (see routine create_central_cube_buffers.f90). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Céline.
-
-- utiliser routines auto_ner de Brian Savage pour calculer MIN_ATTENUATION et MAX_ATTENUATION au lieu de mettre des constantes arbitraires comme actuellement: utiliser auto_NER de Brian Savage pour determiner les constantes d'attenuation pour les chunks complets et non pas seulement si différent de 90 degrés. Pour cela, supprimer mes vieilles variables MIN_ATTENUATION et MAX_ATTENUATION_PERIOD Re: mesh_radial 22/05/2007 00:21 Dimitri, Sure.  I will commit those changes when I get the R_CENTRAL_CUBE section working.  The calculation of MIN_ATTENUATION_PERIOD is CHUNK_WIDTH = <user defined> [ deg ] NEX_MAX           = <user defined> [ elements ] KM_PER_DEGREE = 111.11 [ km / deg ] POINTS_PER_WAVELENGTH = 4 GLL_POINT_SPACING = 4 MIN_VELOCITY = 2.25 [ km / sec ] S wave veloicty CHUNK_WIDTH_KM    = CHUNK_WIDTH * KM_PER_DEGREE POINT_SPACING_KM = CHUNK_WIDTH_KM / ( NEX_MAX * GLL_POINT_SPACING ) MIN_PERIOD               = (POINT_SPACING_KM * POINTS_PER_WAVELENGTH) / MIN_VELOCITY MAX_ATTENUATION_PERIOD depends on MIN_ and the number of N_SLS.  The dependence on N_SLS will also be included in the code Brian On May 21, 2007, at 5:11 PM, Dimitri Komatitsch wrote: > Brian, > This is perfect! Thank you very much.  > One important thing: could you call your routine to compute > MIN_ATTENUATION_PERIOD and MAX_ATTENUATION_PERIOD in all cases > (even for 90 degrees and even for classical NEX such as 160, 320 etc)?  > Because the current values are completely obsolete (I computed > them in 2000 by trial and error, I don't even remember how...  > calling your clean routine would be *much* better); > please don't hesitate to do it and commit the changes.  > Thanks!  > Cheers, > Dimitri.
+- (a faire par David en liaison avec Brian Savage): utiliser routines auto_ner de Brian Savage pour calculer MIN_ATTENUATION et MAX_ATTENUATION au lieu de mettre des constantes arbitraires comme actuellement: utiliser get_attenuation_model de Brian Savage pour determiner les constantes d'attenuation pour les chunks complets et non pas seulement si différent de 90 degrés. Pour cela, supprimer mes vieilles variables MIN_ATTENUATION et MAX_ATTENUATION_PERIOD Re: mesh_radial 22/05/2007 00:21 Dimitri, Sure.  I will commit those changes when I get the R_CENTRAL_CUBE section working.  The calculation of MIN_ATTENUATION_PERIOD is CHUNK_WIDTH = <user defined> [ deg ] NEX_MAX           = <user defined> [ elements ] KM_PER_DEGREE = 111.11 [ km / deg ] POINTS_PER_WAVELENGTH = 4 GLL_POINT_SPACING = 4 MIN_VELOCITY = 2.25 [ km / sec ] S wave veloicty CHUNK_WIDTH_KM    = CHUNK_WIDTH * KM_PER_DEGREE POINT_SPACING_KM = CHUNK_WIDTH_KM / ( NEX_MAX * GLL_POINT_SPACING ) MIN_PERIOD               = (POINT_SPACING_KM * POINTS_PER_WAVELENGTH) / MIN_VELOCITY MAX_ATTENUATION_PERIOD depends on MIN_ and the number of N_SLS.  The dependence on N_SLS will also be included in the code Brian On May 21, 2007, at 5:11 PM, Dimitri Komatitsch wrote: > Brian, > This is perfect! Thank you very much.  > One important thing: could you call your routine to compute > MIN_ATTENUATION_PERIOD and MAX_ATTENUATION_PERIOD in all cases > (even for 90 degrees and even for classical NEX such as 160, 320 etc)?  > Because the current values are completely obsolete (I computed > them in 2000 by trial and error, I don't even remember how...  > calling your clean routine would be *much* better); > please don't hesitate to do it and commit the changes.  > Thanks!  > Cheers, > Dimitri.
 Modifier le calcul des bornes de l'attenuation: car
     MIN_ATTENUATION_PERIOD   = 20
     MAX_ATTENUATION_PERIOD   = 1000
-est arbitraire dans read_compute_parameters.f90 actuellement, utiliser la routine plus generale de Brian Savage. Dire a Brian Savage (Washington D.C.) de faire un auto_NER a partir de PREM (choix automatique des parametres) a partir de display_prem_sampling_doubling.f90 dans DATA/util/mesh_doubling_superbrick
+est arbitraire dans read_compute_parameters.f90 actuellement, utiliser la routine plus generale de Brian Savage. Dire a Brian Savage (Washington D.C.) de faire un get_attenuation_model a partir de PREM (choix automatique des parametres) a partir de display_prem_sampling_doubling.f90 dans DATA/util/mesh_doubling_superbrick
 Subject: Re: attenuation (other idea)
 From: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr>
 Date: Sun, 21 Jan 2007 21:59:54 +0100
@@ -183,6 +171,18 @@ Brian Savage wrote:
 >> Thank you,
 >> Dimitri.
 >>
+
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
+Things to do later:
+-------------------
+
+- afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilité et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maître dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
+
+- see if this would be useful (probably NOT, according to the ParaVer analysis done in Barcelona): rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices (see routine create_central_cube_buffers.f90). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Céline.
 
 - merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90) 30/06/2007 18:19 Hi Jeroen, Leif and David, I thought about merging the mesher and the solver, there might be a hidden difficulty because of memory allocation: the solver allocates almost all the available memory on a given CPU in static arrays, and the solver allocates a similar amount dynamically with allocate() statements. Therefore combining them would roughly double the required amount of memory and will not fit because the Par_file is tuned in order for the solver to use almost all the available memory on each CPU (in the case of large runs).  On systems (such as Linux) with a "first touch" memory allocation policy things should be ok because (if I understand correctly, but I am not sure) the system will not physically allocate the static memory for the solver until it is actually called, i.e. once the mesher has finished, even if both are combined in the same program.  But on other systems I guess we could have problems and the run would not start and exit with an "out of memory" error?  I don't know how to solve this problem. (*if* it needs to be solved; if *all* modern systems use a first touch policy, then we are all set; please let me know; I don't know much about operating systems). Leif, would you have any idea about how to handle this?  If the problem turns out to be too complex, I suggest *not* doing it in v4.0 and waiting until we start working on v4.1 after the October 9-11 workshop. Dimitri.
 
