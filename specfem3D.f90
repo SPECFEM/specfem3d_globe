@@ -2556,13 +2556,15 @@
 
   if (SAVE_STRAIN) then
     allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-    allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
+
+    allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
 
     if (SIMULATION_TYPE_VAL == 3) then
       allocate(b_epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-      allocate(b_epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
       allocate(b_eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-      allocate(b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
+
+      allocate(b_epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
+      allocate(b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
     endif
   endif
 
