@@ -1171,6 +1171,8 @@
 !!!!!!!!!!! DK DK UGLY: i.e. if there is no thick crust there, some elements above the Moho
 !!!!!!!!!!! DK DK UGLY: should be anisotropic but anisotropy is currently only
 !!!!!!!!!!! DK DK UGLY: stored between d220 and MOHO to save memory? Clarify this one day.
+!!!!!!!!!!! DK DK UGLY: The Moho stretching and squishing that Jeroen added to V4.0
+!!!!!!!!!!! DK DK UGLY: should partly deal with this problem.
 
     r_top(1) = R_EARTH
     r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
