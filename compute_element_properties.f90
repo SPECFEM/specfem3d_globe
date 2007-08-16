@@ -21,10 +21,7 @@
            xstore,ystore,zstore,nspec, &
            nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-           myrank,ibathy_topo, &
-           crustal_model,mantle_model,aniso_mantle_model, &
-           aniso_inner_core_model,&
-           attenuation_model,ATTENUATION,ATTENUATION_3D, &
+           myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -42,8 +39,6 @@
   implicit none
 
   include "constants.h"
-
-  external mantle_model,crustal_model,aniso_mantle_model,aniso_inner_core_model,attenuation_model
 
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
@@ -303,9 +298,8 @@
           xelm,yelm,zelm,shape3D,ispec, &
           rmin,rmax,idoubling(ispec),rho_vp,rho_vs,nspec_stacey, &
           TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,crustal_model,mantle_model,aniso_mantle_model, &
-          aniso_inner_core_model, &
-          attenuation_model, ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
+          ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+          ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
           size(tau_e_store,2), size(tau_e_store,3), size(tau_e_store,4), size(tau_e_store,5), &
           ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
           RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&

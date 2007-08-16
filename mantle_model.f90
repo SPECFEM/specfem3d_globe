@@ -211,7 +211,7 @@
 
   do i=1,NK+1
     do j=1,NK+1
-      if(i.eq.j) then
+      if(i == j) then
         D3MM_V%qq0(j,i)=1.0d0
       else
         D3MM_V%qq0(j,i)=0.0d0
@@ -342,7 +342,7 @@
       DO 3 I=J1,I2
       B0=A0
       A0=X(I)
-      IF(DABS((A0-B0)/DMAX1(A0,B0)).LT.SMALL) GOTO 4
+      IF(DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) GOTO 4
  3    CONTINUE
  17   J1=J1-1
       J2=I2-2

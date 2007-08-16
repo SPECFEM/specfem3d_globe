@@ -26,10 +26,7 @@
     rmin,rmax,idoubling, &
     rho_vp,rho_vs,nspec_stacey, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE, &
-    CRUSTAL,ONE_CRUST, &
-    crustal_model,mantle_model,aniso_mantle_model, &
-    aniso_inner_core_model,&
-    attenuation_model,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
+    CRUSTAL,ONE_CRUST,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
     ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
     AMM_V, AM_V, M1066a_V, Mak135_V,Mref_V,D3MM_V,CM_V, AM_S, AS_V, &
@@ -41,9 +38,6 @@
   implicit none
 
   include "constants.h"
-
-  external mantle_model,crustal_model,aniso_mantle_model, &
-       aniso_inner_core_model,attenuation_model
 
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
@@ -465,13 +459,9 @@
          endif
        endif
 
+!! DK DK I think this is obsolete and should be removed, check with Brian
        if(ATTENUATION .and. ATTENUATION_3D) then
-         call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
-         call reduce(theta,phi)
-         lat=(PI/2.0d0-theta)*180.0d0/PI
-         lon=phi*180.0d0/PI
-         if(lon > 180.0d0) lon = lon - 360.0d0
-         call attenuation_model(r_prem, lat, lon, Qmu)
+         call attenuation_model_1D_PREM(r_prem, Qmu)
          call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
        endif
 

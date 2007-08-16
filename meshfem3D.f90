@@ -336,11 +336,6 @@
   type(attenuation_simplex_variables) AS_V
 ! attenuation_simplex_variables
 
-  external read_crustal_model,read_mantle_model,  &
-       read_aniso_mantle_model,read_aniso_inner_core_model, &
-       crustal_model, mantle_model,aniso_mantle_model, &
-       aniso_inner_core_model,attenuation_model
-
 ! correct number of spectral elements in each block depending on chunk type
 
   integer nspec_reg,nspec_aniso,nspec_aniso_mantle,nspec_aniso_mantle_all,npointot
@@ -1062,9 +1057,8 @@
          NSPEC2D_ETA,NSPEC1D_RADIAL(iregion_code),NGLOB1D_RADIAL(iregion_code), &
          max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo, &
-         crustal_model,mantle_model,aniso_mantle_model, &
-         aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-         attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
+         rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+         ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
          NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
          ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &

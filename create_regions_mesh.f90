@@ -29,9 +29,8 @@
            NPROC_XI,NPROC_ETA,NSPEC2D_XI, &
            NSPEC2D_ETA,NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XY, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo, &
-           crustal_model,mantle_model,aniso_mantle_model, &
-           aniso_inner_core_model,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
-           attenuation_model,ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
+           rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
+           ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            ner,ratio_sampling_array, doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D,&
@@ -59,8 +58,6 @@
   integer, dimension(NGNOD_EIGHT_CORNERS,NSPEC_DOUBLING_SUPERBRICK) :: ibool_superbrick
 
   double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick
-
-  external mantle_model,crustal_model,aniso_mantle_model,aniso_inner_core_model,attenuation_model
 
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
@@ -772,10 +769,7 @@
            xstore,ystore,zstore,nspec, &
            nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-           myrank,ibathy_topo, &
-           crustal_model,mantle_model,aniso_mantle_model, &
-           aniso_inner_core_model,&
-           attenuation_model,ATTENUATION,ATTENUATION_3D, &
+           myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -885,10 +879,7 @@
            xstore,ystore,zstore,nspec, &
            nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-           myrank,ibathy_topo, &
-           crustal_model,mantle_model,aniso_mantle_model, &
-           aniso_inner_core_model,&
-           attenuation_model,ATTENUATION,ATTENUATION_3D, &
+           myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -1029,10 +1020,7 @@
            xstore,ystore,zstore,nspec, &
            nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-           myrank,ibathy_topo, &
-           crustal_model,mantle_model,aniso_mantle_model, &
-           aniso_inner_core_model,&
-           attenuation_model,ATTENUATION,ATTENUATION_3D, &
+           myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &

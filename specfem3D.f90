@@ -2250,8 +2250,8 @@
               + scale_factor_minus_one * mul
     else
       muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
-      if(TRANSVERSE_ISOTROPY_VAL .and. idoubling_crust_mantle(ispec) == IFLAG_220_80 &
-      .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO) &
+      if(TRANSVERSE_ISOTROPY_VAL .and. (idoubling_crust_mantle(ispec) == IFLAG_220_80 &
+      .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO)) &
         muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
     endif
 

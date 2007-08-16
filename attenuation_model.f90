@@ -39,11 +39,16 @@
 !
 
 subroutine attenuation_lookup_value(i, r)
+
   implicit none
+
   include 'constants.h'
+
   integer i
   double precision r
+
   r = dble(i) / TABLE_ATTENUATION
+
 end subroutine attenuation_lookup_value
 
 ! This Subroutine is Hackish.  It could probably all be moved to an input attenuation file.
@@ -55,6 +60,7 @@ end subroutine attenuation_lookup_value
 subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM_V,M1066a_V,Mak135_V,Mref_V,AM_S,AS_V)
 
   implicit none
+
   include 'mpif.h'
   include 'constants.h'
 
@@ -218,6 +224,7 @@ end subroutine attenuation_model_setup
 subroutine attenuation_save_arrays(prname, iregion_code, AM_V)
 
   implicit none
+
   include 'mpif.h'
   include 'constants.h'
 
@@ -247,21 +254,19 @@ subroutine attenuation_save_arrays(prname, iregion_code, AM_V)
   character(len=150) prname
   integer ier
   integer myrank
-  integer, SAVE :: virgin = 1
+  integer, save :: first_time_called = 1
 
   call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
-  if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. virgin == 1) then
-     virgin = 0
-     open(unit=27,file=prname(1:len_trim(prname))//'1D_Q.bin', status='unknown', form='unformatted')
-     write(27) AM_V%QT_c_source
-     write(27) AM_V%Qtau_s
-     write(27) AM_V%Qn
-     write(27) AM_V%Qr
-     write(27) AM_V%Qmu
-     write(27) AM_V%Qtau_e
-     close(27)
-  else
-     return
+  if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
+    first_time_called = 0
+    open(unit=27,file=prname(1:len_trim(prname))//'1D_Q.bin',status='unknown',form='unformatted')
+    write(27) AM_V%QT_c_source
+    write(27) AM_V%Qtau_s
+    write(27) AM_V%Qn
+    write(27) AM_V%Qr
+    write(27) AM_V%Qmu
+    write(27) AM_V%Qtau_e
+    close(27)
   endif
 
 end subroutine attenuation_save_arrays
@@ -290,10 +295,10 @@ subroutine attenuation_storage(Qmu, tau_e, rw, AM_S)
   integer rw
 
   integer Qtmp
-  integer, SAVE :: virgin = 1
+  integer, save :: first_time_called = 1
 
-  if(virgin == 1) then
-     virgin       = 0
+  if(first_time_called == 1) then
+     first_time_called       = 0
      AM_S%Q_resolution = 10**ATTENUATION_COMP_RESOLUTION
      AM_S%Q_max        = ATTENUATION_COMP_MAXIMUM
      Qtmp         = AM_S%Q_resolution * AM_S%Q_max
@@ -301,7 +306,6 @@ subroutine attenuation_storage(Qmu, tau_e, rw, AM_S)
      allocate(AM_S%Qmu_storage(Qtmp))
      AM_S%Qmu_storage(:) = -1
   endif
-
 
   if(Qmu < 0.0d0 .OR. Qmu >= AM_S%Q_max) then
      write(IMAIN,*) 'Error'
@@ -345,14 +349,13 @@ subroutine attenuation_storage(Qmu, tau_e, rw, AM_S)
      rw = 1
   endif
 
-  return
-
 end subroutine attenuation_storage
 
 subroutine attenuation_conversion(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
 ! includes min_period, max_period, and N_SLS
 
   implicit none
+
   include 'constants.h'
 
 ! attenuation_model_variables
@@ -425,6 +428,7 @@ end subroutine attenuation_conversion
 subroutine read_attenuation_model(min, max, AM_V)
 
   implicit none
+
   include 'constants.h'
 
 ! attenuation_model_variables
@@ -453,7 +457,9 @@ subroutine read_attenuation_model(min, max, AM_V)
 
   AM_V%min_period = min * 1.0d0
   AM_V%max_period = max * 1.0d0
+
   allocate(AM_V%Qtau_s(N_SLS))
+
   call attenuation_tau_sigma(AM_V%Qtau_s, N_SLS, AM_V%min_period, AM_V%max_period)
   call attenuation_source_frequency(AM_V%QT_c_source, AM_V%min_period, AM_V%max_period)
 
@@ -462,6 +468,7 @@ end subroutine read_attenuation_model
 subroutine attenuation_memory_values(tau_s, deltat, alphaval,betaval,gammaval)
 
   implicit none
+
   include 'constants.h'
 
   double precision, dimension(N_SLS) :: tau_s, alphaval, betaval,gammaval
@@ -481,6 +488,7 @@ end subroutine attenuation_memory_values
 subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
 
   implicit none
+
   include 'constants.h'
 
   integer myrank
@@ -538,6 +546,7 @@ end subroutine attenuation_scale_factor
 subroutine attenuation_property_values(tau_s, tau_e, factor_common, one_minus_sum_beta)
 
   implicit none
+
   include 'constants.h'
 
   double precision, dimension(N_SLS) :: tau_s, tau_e, beta, factor_common
@@ -567,6 +576,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
                                     factor_common, scale_factor, vn,vx,vy,vz, AM_V)
 
   implicit none
+
   include 'mpif.h'
   include 'constants.h'
 
@@ -604,16 +614,18 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   double precision Qp1, Qpn, radius, fctmp
   double precision, dimension(:), allocatable :: Qfctmp, Qfc2tmp
 
-  integer, SAVE :: virgin = 1
+  integer, save :: first_time_called = 1
 
-  if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. virgin == 1) then
+  if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
      open(unit=27, file=prname(1:len_trim(prname))//'1D_Q.bin', status='unknown', form='unformatted')
      read(27) AM_V%QT_c_source
      read(27) tau_s
      read(27) AM_V%Qn
+
      allocate(AM_V%Qr(AM_V%Qn))
      allocate(AM_V%Qmu(AM_V%Qn))
      allocate(AM_V%Qtau_e(N_SLS,AM_V%Qn))
+
      read(27) AM_V%Qr
      read(27) AM_V%Qmu
      read(27) AM_V%Qtau_e
@@ -621,26 +633,27 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   endif
 
   ! Synch up after the Read
-  call MPI_BCAST(AM_V%QT_c_source, 1,     MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(tau_s,       N_SLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qn,          1,     MPI_INTEGER,          0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%QT_c_source, 1,     MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  if(myrank .NE. 0) then
+  call MPI_BCAST(AM_V%QT_c_source,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(tau_s,N_SLS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(AM_V%Qn,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+  if(myrank /= 0) then
      allocate(AM_V%Qr(AM_V%Qn))
      allocate(AM_V%Qmu(AM_V%Qn))
      allocate(AM_V%Qtau_e(N_SLS,AM_V%Qn))
   endif
-  call MPI_BCAST(AM_V%Qr,     AM_V%Qn,       MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qmu,    AM_V%Qn,       MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-  call MPI_BCAST(AM_V%Qtau_e, AM_V%Qn*N_SLS, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+
+  call MPI_BCAST(AM_V%Qr,AM_V%Qn,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(AM_V%Qmu,AM_V%Qn,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(AM_V%Qtau_e,AM_V%Qn*N_SLS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
 
   ! Scale the Attenuation Values
-  tau_s(:)    = tau_s(:)    / scale_t
+  tau_s(:) = tau_s(:) / scale_t
   AM_V%Qtau_e(:,:) = AM_V%Qtau_e(:,:) / scale_t
   AM_V%QT_c_source = 1000.0d0 / AM_V%QT_c_source / scale_t
-  AM_V%Qr(:)       = AM_V%Qr(:) / R_EARTH
+  AM_V%Qr(:) = AM_V%Qr(:) / R_EARTH
 
   allocate(AM_V%Qsf(AM_V%Qn))
   allocate(AM_V%Qomsb(AM_V%Qn))
@@ -692,7 +705,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
      factor_common(1,1,1,1,i)    = factor_common(1,1,1,1,rmax)
      factor_common(2,1,1,1,i)    = factor_common(2,1,1,1,rmax)
      factor_common(3,1,1,1,i)    = factor_common(3,1,1,1,rmax)
-  end do
+  enddo
 
   deallocate(AM_V%Qfc2)
   deallocate(AM_V%Qsf2)
@@ -700,10 +713,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   deallocate(AM_V%Qfc)
   deallocate(AM_V%Qsf)
   deallocate(AM_V%Qomsb)
-!  deallocate(AM_V%Qr)
-!  deallocate(AM_V%interval_Q)
   deallocate(AM_V%Qtau_e)
-!  deallocate(AM_V%Qmu)
   deallocate(Qfctmp)
   deallocate(Qfc2tmp)
 
@@ -714,6 +724,7 @@ end subroutine get_attenuation_model_1D
 subroutine set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
 
   implicit none
+
   include 'constants.h'
 
 ! attenuation_model_variables
@@ -785,6 +796,7 @@ end subroutine set_attenuation_regions_1D
 subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
 
   implicit none
+
   include 'constants.h'
 
 ! attenuation_model_variables
@@ -817,34 +829,63 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
 
   index = nint(radius * TABLE_ATTENUATION)
 
+!! DK DK this seems incorrect and is difficult to read anyway
+!! DK DK therefore let me rewrite it better
+! if(inner_core) then
+!   if(iflag >= IFLAG_INNER_CORE_NORMAL) then
+!     iregion = IREGION_ATTENUATION_INNER_CORE
+!   else if(iflag >= IFLAG_OUTER_CORE_NORMAL) then
+!     iregion = 6
+!   endif
+! else
+!   if(iflag >= IFLAG_MANTLE_NORMAL) then
+!     iregion = IREGION_ATTENUATION_CMB_670
+!   else if(iflag == IFLAG_670_220) then
+!     iregion = IREGION_ATTENUATION_670_220
+!   else if(iflag <= IFLAG_220_80) then
+!     iregion = IREGION_ATTENUATION_220_80
+!   else
+!     iregion = IREGION_ATTENUATION_80_SURFACE
+!   endif
+! endif
   if(inner_core) then
-    if(iflag >= IFLAG_INNER_CORE_NORMAL) then
+
+    if(iflag == IFLAG_INNER_CORE_NORMAL .or. iflag == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+       iflag == IFLAG_BOTTOM_CENTRAL_CUBE .or. iflag == IFLAG_TOP_CENTRAL_CUBE .or. &
+       iflag == IFLAG_IN_FICTITIOUS_CUBE) then
       iregion = IREGION_ATTENUATION_INNER_CORE
-    else if(iflag >= IFLAG_OUTER_CORE_NORMAL) then
-      iregion = 6
+    else
+! this is fictitious for the outer core, which has no Qmu attenuation since it is fluid
+      iregion = IREGION_ATTENUATION_80_SURFACE + 1
     endif
+
   else
-    if(iflag >= IFLAG_MANTLE_NORMAL) then
+
+    if(iflag == IFLAG_MANTLE_NORMAL) then
       iregion = IREGION_ATTENUATION_CMB_670
     else if(iflag == IFLAG_670_220) then
       iregion = IREGION_ATTENUATION_670_220
-    else if( iflag <= IFLAG_220_80) then
+    else if(iflag == IFLAG_220_80) then
       iregion = IREGION_ATTENUATION_220_80
-    else
+    else if(iflag == IFLAG_CRUST .or. iflag == IFLAG_80_MOHO) then
       iregion = IREGION_ATTENUATION_80_SURFACE
+    else
+! this is fictitious for the outer core, which has no Qmu attenuation since it is fluid
+      iregion = IREGION_ATTENUATION_80_SURFACE + 1
     endif
+
   endif
 
-  ! Clamp regions
+! Clamp regions
   if(index < AM_V%Qrmin(iregion)) index = AM_V%Qrmin(iregion)
   if(index > AM_V%Qrmax(iregion)) index = AM_V%Qrmax(iregion)
 
 end subroutine get_attenuation_index
 
-
 subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_common, scale_factor, tau_s, vnspec)
 
   implicit none
+
   include 'constants.h'
 
   integer myrank, vnspec
@@ -862,20 +903,11 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
   ! use the filename to determine the actual contents of the read
 
   open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin',status='old',action='read',form='unformatted')
-!   open(unit=27, file=prname(1:len_trim(prname))//'tau_s.bin',status='old',action='read',form='unformatted')
   read(27) tau_s
-!   close(27)
-!   open(unit=27, file=prname(1:len_trim(prname))//'tau_e.bin',status='old',action='read',form='unformatted')
   read(27) factor_common
-!   close(27)
-!   open(unit=27, file=prname(1:len_trim(prname))//'Q.bin',status='old',action='read',form='unformatted')
   read(27) scale_factor
-!   close(27)
-!   open(unit=27, file=prname(1:len_trim(prname))//'T_c_source.bin',status='old',action='read',form='unformatted')
   read(27) T_c_source
   close(27)
-
-
 
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
 
@@ -908,7 +940,9 @@ end subroutine get_attenuation_model_3D
 
 subroutine attenuation_source_frequency(omega_not, min_period, max_period)
   ! Determine the Source Frequency
+
   implicit none
+
   double precision omega_not
   double precision f1, f2
   double precision min_period, max_period
@@ -922,7 +956,9 @@ end subroutine attenuation_source_frequency
 
 subroutine attenuation_tau_sigma(tau_s, n, min_period, max_period)
   ! Set the Tau_sigma (tau_s) to be equally spaced in log10 frequency
+
   implicit none
+
   integer n
   double precision tau_s(n)
   double precision min_period, max_period
@@ -946,7 +982,9 @@ subroutine attenuation_tau_sigma(tau_s, n, min_period, max_period)
 end subroutine attenuation_tau_sigma
 
 subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, tau_e, AS_V)
+
   implicit none
+
   include 'mpif.h'
 
 ! attenuation_simplex_variables
@@ -980,9 +1018,7 @@ subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, ta
   double precision, allocatable, dimension(:) :: f
   double precision, parameter :: PI = 3.14159265358979d0
   integer, parameter :: nf = 100
-  double precision attenuation_eval
-  EXTERNAL attenuation_eval
-
+  double precision, external :: attenuation_eval
 
   ! Values to be passed into the simplex minimization routine
   iterations = -1
@@ -1046,10 +1082,10 @@ subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, ta
 
 end subroutine attenuation_invert_by_simplex
 
-
 subroutine attenuation_simplex_finish(AS_V)
 
   implicit none
+
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
@@ -1072,8 +1108,6 @@ subroutine attenuation_simplex_finish(AS_V)
 
 end subroutine attenuation_simplex_finish
 
-!!!!!!!
-! subroutine simplex_setup
 !   - Inserts necessary parameters into the module attenuation_simplex_variables
 !   - See module for explaination
 subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
@@ -1114,8 +1148,6 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
 end subroutine attenuation_simplex_setup
 
-!!!!!!!!
-! subroutine attenuation_maxwell
 !   - Computes the Moduli (Maxwell Solid) for a series of
 !         Standard Linear Solids
 !   - Computes M1 and M2 parameters after Dahlen and Tromp pp.203
@@ -1145,6 +1177,7 @@ end subroutine attenuation_simplex_setup
 !      Velocity dispersion due to anelasticity: implications for seismology and mantle composition
 !      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
+
   implicit none
 
   ! Input
@@ -1174,8 +1207,6 @@ subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
 
 end subroutine attenuation_maxwell
 
-!!!!!!!!
-! subroutine attenuation_eval
 !    - Computes the misfit from a set of relaxation paramters
 !          given a set of frequencies and target attenuation
 !    - Evaluates only at the given frequencies
@@ -1241,8 +1272,6 @@ double precision function attenuation_eval(Xin,AS_V)
 
 end function attenuation_eval
 
-
-!!!!!!!!!!!!!
 ! subroutine fminsearch
 !   - Computes the minimization of funk(x(n)) using the simplex method
 !   - This subroutine is copied from Matlab fminsearch.m
@@ -1272,8 +1301,8 @@ end function attenuation_eval
 !                 2 => Iterations exceeded limit
 !
 !     See Matlab fminsearch
-!
 subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
+
   implicit none
 
 ! attenuation_simplex_variables
@@ -1294,8 +1323,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
 ! attenuation_simplex_variables
 
   ! Input
-  double precision funk
-  EXTERNAL funk
+  double precision, external :: funk
 
   integer n
   double precision x(n) ! Also Output
@@ -1362,7 +1390,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
 
   do j = 1,n
      y = xin
-     if(y(j) .NE. 0.0d0) then
+     if(y(j) /= 0.0d0) then
         y(j) = (1.0d0 + usual_delta) * y(j)
      else
         y(j) = zero_term_delta
@@ -1382,11 +1410,11 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
   how = initial
   itercount = 1
   func_evals = n+1
-  if(prnt .EQ. 3) then
+  if(prnt == 3) then
      write(*,*)'Iterations   Funk Evals   Value How'
      write(*,*)itercount, func_evals, fv(1), how
   endif
-  if(prnt .EQ. 4) then
+  if(prnt == 4) then
      write(*,*)'How: ',how
      write(*,*)'V: ', v
      write(*,*)'fv: ',fv
@@ -1395,11 +1423,8 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
 
   do while (func_evals < maxfun .AND. itercount < maxiter)
 
-!     if(max(max(abs(v(:,2:n+1) - v(:,1)))) .LE. tolx .AND. &
-!          max(abs(fv(1) - fv(2:n+1))) .LE. tolf) then
-
-     if(max_size_simplex(v,n) .LE. tolx .AND. &
-          max_value(fv,n+1) .LE. tolf) then
+     if(max_size_simplex(v,n) <= tolx .AND. &
+          max_value(fv,n+1) <= tolf) then
         goto 666
      endif
      how = none
@@ -1470,7 +1495,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
                  how = shrink
               endif
            endif
-           if (how .EQ. shrink) then
+           if (how == shrink) then
               do j=2,n+1
                  v(:,j)=v(:,1)+sigma*(v(:,j) - v(:,1))
                  x(:) = v(:,j)
@@ -1514,9 +1539,6 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
 
 end subroutine fminsearch
 
-
-!!!!!!!
-! double precision function max_value
 !    - Finds the maximim value of the difference of between the first
 !          value and the remaining values of a vector
 !    Input
@@ -1549,8 +1571,6 @@ double precision function max_value(fv,n)
 
 end function max_value
 
-!!!!!!!!
-! function max_size_simplex
 !   - Determines the maximum distance between two point in a simplex
 !   Input
 !     v  = Input
@@ -1583,9 +1603,6 @@ double precision function max_size_simplex(v,n)
 
 end function max_size_simplex
 
-
-!!!!!!!
-! subroutine qsort
 !    - Implementation of a Bubble Sort Routine
 !    Input
 !      X = Input/Output
@@ -1604,7 +1621,9 @@ end function max_size_simplex
 !         I = [ 3 4 2 1 ] on Output
 !
 subroutine qsort(X,n,I)
+
   implicit none
+
   integer n
   double precision X(n)
   integer I(n)
@@ -1645,10 +1664,10 @@ end subroutine qsort
 !     and ending points of the first and last splines
 !   - A Step with a value of zero is undefined
 !   - Works with functions with steps or no steps
-
-
 subroutine psplint(xa, ya, y2a, n, x, y, steps)
+
   implicit none
+
   integer n
   double precision xa(n),ya(n),y2a(n)
   integer steps(n)
@@ -1661,26 +1680,27 @@ subroutine psplint(xa, ya, y2a, n, x, y, steps)
      if(x >= xa(steps(i)) .AND. x <= xa(steps(i+1))) then
         call pspline_piece(i,n1,n2,l,n,steps)
         call splint(xa(n1), ya(n1), y2a(n1), l, x, y)
-!        return
      endif
-  end do
-
-  return
+  enddo
 
 end subroutine psplint
 
 subroutine pspline_piece(i,n1,n2,l,n,s)
+
   implicit none
+
   integer i, n1, n2, l, n, s(n)
   n1 = s(i)+1
   if(i == 1) n1 = s(i)
   n2 = s(i+1)
   l = n2 - n1 + 1
-  return
+
 end subroutine pspline_piece
 
 subroutine pspline(x, y, n, yp1, ypn, y2, steps)
+
   implicit none
+
   integer n
   double precision x(n),y(n),y2(n)
   double precision yp1, ypn
@@ -1712,26 +1732,18 @@ subroutine pspline(x, y, n, yp1, ypn, y2, steps)
 
 end subroutine pspline
 
-subroutine attenuation_model(x, xlat, xlon,Qmu)
+subroutine attenuation_model_1D_PREM(x, Qmu)
 
 ! x in the radius from 0 to 1 where 0 is the center and 1 is the surface
-! xlat, xlon currently not used in this routine (which uses PREM).
-! The user needs to modify this routine if he wants to use
-! a particular 3D attenuation model. The current version is 1D PREM.
-!
+! This version is for 1D PREM.
 
   implicit none
+
   include 'constants.h'
 
-  double precision xlat, xlon, r, x, Qmu,RICB,RCMB, &
-      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80, ROCEAN, &
-      RMOHO, RMIDDLE_CRUST
+  double precision r, x, Qmu,RICB,RCMB, &
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80, ROCEAN, RMOHO, RMIDDLE_CRUST
   double precision Qkappa
-
-! dummy lines to suppress warning about variables not used
-  double precision xdummy
-  xdummy = xlat + xlon
-! end of dummy lines to suppress warning about variables not used
 
   r = x * R_EARTH
 
@@ -1748,7 +1760,6 @@ subroutine attenuation_model(x, xlat, xlon,Qmu)
   RCMB = 3480000.d0
   RICB = 1221000.d0
 
-
 ! PREM
 !
 !--- inner core
@@ -1762,7 +1773,7 @@ subroutine attenuation_model(x, xlat, xlon,Qmu)
   else if(r > RICB .and. r <= RCMB) then
      Qmu=0.0d0
      Qkappa=57827.0d0
-     if(RCMB - r .LT. r - RICB) then
+     if(RCMB - r < r - RICB) then
         Qmu = 312.0d0  ! CMB
      else
         Qmu = 84.6d0   ! ICB
@@ -1802,5 +1813,5 @@ subroutine attenuation_model(x, xlat, xlon,Qmu)
      Qkappa=57827.0d0
   endif
 
-end subroutine attenuation_model
+end subroutine attenuation_model_1D_PREM
 

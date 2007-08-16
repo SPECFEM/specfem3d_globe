@@ -1170,7 +1170,7 @@
 !!!!!!!!!!! DK DK UGLY: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
 !!!!!!!!!!! DK DK UGLY: i.e. if there is no thick crust there, some elements above the Moho
 !!!!!!!!!!! DK DK UGLY: should be anisotropic but anisotropy is currently only
-!!!!!!!!!!! DK DK UGLY: stored between d220 and MOHO to save memory? Clarify this on e day.
+!!!!!!!!!!! DK DK UGLY: stored between d220 and MOHO to save memory? Clarify this one day.
 
     r_top(1) = R_EARTH
     r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
