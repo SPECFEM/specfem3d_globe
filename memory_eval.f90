@@ -18,9 +18,8 @@
 
 ! compute the approximate amount of static memory needed to run the solver
 
-  subroutine memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ATTENUATION_3D,ANISOTROPIC_3D_MANTLE,&
+  subroutine memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE,&
                        TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
-                       SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,&
                        ONE_CRUST,doubling_index,this_region_has_a_doubling,&
                        ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
                        NSPEC,nglob,static_memory_size)
@@ -31,9 +30,9 @@
 
 ! input
   logical, intent(in) :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-             ROTATION,MOVIE_VOLUME,ATTENUATION_3D,ATTENUATION,SAVE_FORWARD,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS
+             ROTATION,ATTENUATION,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS
   integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob
-  integer, intent(in) :: SIMULATION_TYPE,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
@@ -106,10 +105,12 @@
   static_memory_size = 0.d0
 
 ! R_memory_crust_mantle
-  static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)* &
+    dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
 
 ! R_memory_inner_core
-  static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)* &
+    dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
 
 ! xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle
 ! etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,

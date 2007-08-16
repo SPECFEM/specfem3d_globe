@@ -141,9 +141,8 @@ enddo
   print *,'found ',ispec_aniso,' tranversely isotropic elements in the mantle'
 
 ! evaluate the amount of static memory needed by the solver
-  call memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ATTENUATION_3D,ANISOTROPIC_3D_MANTLE,&
+  call memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE,&
                    TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
-                   SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,&
                    ONE_CRUST,doubling_index,this_region_has_a_doubling,&
                    ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
                    NSPEC,nglob,static_memory_size)

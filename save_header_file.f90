@@ -385,6 +385,34 @@
   write(IOUT,*) 'integer, parameter :: NUMMSGS_FACES_VAL = ',NPROC_XI*NUM_FACES*NUM_MSG_TYPES
   write(IOUT,*) 'integer, parameter :: NCORNERSCHUNKS_VAL = ',NCORNERSCHUNKS
 
+  if(ATTENUATION) then
+     if(ATTENUATION_3D) then
+        att1     = NGLLX
+        att2     = NGLLY
+        att3     = NGLLZ
+        att4     = NSPEC(IREGION_CRUST_MANTLE)
+        att5     = NSPEC(IREGION_INNER_CORE)
+     else
+        att1     = 1
+        att2     = 1
+        att3     = 1
+        att4     = NRAD_ATTENUATION
+        att5     = NRAD_ATTENUATION
+     endif
+  else
+    att1     = 1
+    att2     = 1
+    att3     = 1
+    att4     = 1
+    att5     = 1
+  endif
+
+  write(IOUT,*) 'integer, parameter :: ATT1 = ',att1
+  write(IOUT,*) 'integer, parameter :: ATT2 = ',att2
+  write(IOUT,*) 'integer, parameter :: ATT3 = ',att3
+  write(IOUT,*) 'integer, parameter :: ATT4 = ',att4
+  write(IOUT,*) 'integer, parameter :: ATT5 = ',att5
+
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_XMIN_XMAX_CM = ',NSPEC2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM = ',NSPEC2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_CM = ',NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
