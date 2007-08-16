@@ -96,7 +96,7 @@
   write(IOUT,*) '!'
   write(IOUT,*) '! number of processors = ',NPROCTOT
   write(IOUT,*) '!'
-  write(IOUT,*) '! total points per region = ',nglob(IREGION_CRUST_MANTLE)
+  write(IOUT,*) '! maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
   write(IOUT,*) '!'
 ! use fused loops on the ES
   write(IOUT,*) '! on NEC SX and Earth Simulator, make sure "loopcnt=" parameter'

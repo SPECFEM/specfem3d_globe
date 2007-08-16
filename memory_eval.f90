@@ -56,7 +56,7 @@
 
 ! count anisotropic elements
   do ilayer = 1, NUMBER_OF_MESH_LAYERS
-      if (doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
+      if(doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
           ner_without_doubling = ner(ilayer)
           if(this_region_has_a_doubling(ilayer)) then
               ner_without_doubling = ner_without_doubling - 2

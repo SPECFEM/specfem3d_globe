@@ -124,7 +124,7 @@
 
 ! count anisotropic elements
 do ilayer = 1, NUMBER_OF_MESH_LAYERS
-    if (doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
+    if(doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
         ner_without_doubling = ner(ilayer)
         if(this_region_has_a_doubling(ilayer)) then
             ner_without_doubling = ner_without_doubling - 2
@@ -160,11 +160,20 @@ enddo
   print *
   print *,'edit file OUTPUT_FILES/values_from_mesher.h to see some statistics about the mesh'
   print *
+
+  print *,'number of processors = ',NPROCTOT
+  print *
+  print *,'maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
+  print *
+  print *,'total elements per slice = ',sum(NSPEC)
+  print *,'total points per slice = ',sum(nglob)
+  print *
+
   print *,'on NEC SX and Earth Simulator, make sure "loopcnt=" parameter'
 ! use fused loops on the ES
   print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
-
   print *
+
   print *,'approximate static memory needed by the solver:'
   print *,'----------------------------------------------'
   print *

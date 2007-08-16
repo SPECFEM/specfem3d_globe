@@ -134,7 +134,7 @@
   vercof(1)=1.
 !        vercof(16)=1.
 !        vercof(17)=1.
-!      else if(string(1:21).eq.'WDC+ANI_362_U6L8_TOPO') then
+!      else if(string(1:21) == 'WDC+ANI_362_U6L8_TOPO') then
 !        if(upper) then
 !         nspl=6
 !         splpts(1)=24.4
@@ -662,7 +662,7 @@
   dskker(i)=desckern(i)
   do j=1,ncoefhor(ihpakern(i))
     coe(j,i)=coef(j,i)
-!          if(j.eq.1) then
+!          if(j == 1) then
 !            write(6,"(e12.4)") coe(j,i)
 !          endif
   enddo

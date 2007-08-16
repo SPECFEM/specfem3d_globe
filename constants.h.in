@@ -242,7 +242,6 @@
   integer, parameter :: IFLAG_OUTER_CORE_NORMAL = 6
 
   integer, parameter :: IFLAG_INNER_CORE_NORMAL = 7
-
   integer, parameter :: IFLAG_MIDDLE_CENTRAL_CUBE = 8
   integer, parameter :: IFLAG_BOTTOM_CENTRAL_CUBE = 9
   integer, parameter :: IFLAG_TOP_CENTRAL_CUBE = 10
