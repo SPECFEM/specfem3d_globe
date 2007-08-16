@@ -95,7 +95,7 @@ libspecfem_a_OBJECTS = \
 	$O/anisotropic_mantle_model.o \
 	$O/assemble_MPI_scalar.o \
 	$O/assemble_MPI_vector.o \
-	$O/attenuation_model_v36.o \
+	$O/attenuation_model.o \
 	$O/calc_jacobian.o \
 	$O/comp_source_spectrum.o \
 	$O/comp_source_time_function.o \
@@ -119,7 +119,6 @@ libspecfem_a_OBJECTS = \
 	$O/get_MPI_cutplanes_eta.o \
 	$O/get_MPI_cutplanes_xi.o \
 	$O/get_absorb.o \
-	$O/get_attenuation_model.o \
 	$O/get_backazimuth.o \
 	$O/get_cmt.o \
 	$O/get_ellipticity.o \
@@ -568,11 +567,8 @@ $O/compute_arrays_source.o: constants.h compute_arrays_source.f90
 $O/create_central_cube_buffers.o: constants.h create_central_cube_buffers.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/create_central_cube_buffers.o ${FCFLAGS_f90} create_central_cube_buffers.f90
 
-$O/get_attenuation_model.o: constants.h get_attenuation_model.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_attenuation_model.o ${FCFLAGS_f90} get_attenuation_model.f90
-
-$O/attenuation_model_v36.o: constants.h attenuation_model_v36.f90 $O/model_ak135.o $O/model_1066a.o $O/model_ref.o
-	${MPIFCCOMPILE_CHECK} -c -o $O/attenuation_model_v36.o ${FCFLAGS_f90} attenuation_model_v36.f90
+$O/attenuation_model.o: constants.h attenuation_model.f90 $O/model_ak135.o $O/model_1066a.o $O/model_ref.o
+	${MPIFCCOMPILE_CHECK} -c -o $O/attenuation_model.o ${FCFLAGS_f90} attenuation_model.f90
 
 $O/gll_library.o: constants.h gll_library.f90
 	${FCCOMPILE_CHECK} -c -o $O/gll_library.o ${FCFLAGS_f90} gll_library.f90
