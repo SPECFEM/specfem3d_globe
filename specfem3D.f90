@@ -216,7 +216,6 @@
 ! Displacement is then: u = grad(Chi)
 ! Velocity is then: v = grad(Chi_dot)       (Chi_dot being the time derivative of Chi)
 ! and pressure is: p = - rho * Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
-! The source in an acoustic element is a pressure source.
 ! The potential in the outer core is called displ_outer_core for simplicity.
 ! Its first time derivative is called veloc_outer_core.
 ! Its second time derivative is called accel_outer_core.
