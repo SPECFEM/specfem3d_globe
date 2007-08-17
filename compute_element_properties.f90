@@ -118,7 +118,6 @@
  type (model_ref_variables) Mref_V
 ! model_ref_variables
 
-
 ! three_d_mantle_model_variables
   type three_d_mantle_model_variables
     sequence
@@ -219,7 +218,6 @@
 ! for model density and anisotropy
   integer nspec_ani
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
-! real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
@@ -227,18 +225,12 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
-! boundary locator
-!   logical, dimension(6,nspec) :: iboun
-
 ! arrays with mesh parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xixstore,xiystore,xizstore, &
     etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore
 
 ! proc numbers for MPI
   integer myrank
-
-! MPI cut-planes parameters along xi and along eta
-!   logical, dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
 
 ! Stacey, indices for Clayton-Engquist absorbing conditions
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
