@@ -25,6 +25,8 @@ suivant la valeur de ce flag
 dkomati1-ipigps014: grep -i MULTI_LEVEL_CUTHILL *.h* *90
 constants.h.in:  logical, parameter :: MULTI_LEVEL_CUTHILL = .true.
 
+- flag SUPPRESS_CRUSTAL_MESH does not work on the current version that is on the SVN server: it exits with an error message 'ispec greater than nspec in mesh creation' in the mesher: this bug should be fixed
+
 - Subject: permutation et aniso
 Date: Fri, 03 Aug 2007 13:03:51 +0200
 From: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr>
