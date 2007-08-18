@@ -264,10 +264,7 @@
   do ipoin = 1,npoin2D_xi
       diff = dmax1(dabs(xleft_xi(ipoin)-xright_xi(ipoin)), &
        dabs(yleft_xi(ipoin)-yright_xi(ipoin)),dabs(zleft_xi(ipoin)-zright_xi(ipoin)))
-      if(diff > 0.0000001d0) then
-            print *,'different: ',ipoin,iboolleft_xi(ipoin),iboolright_xi(ipoin),diff
-           ! stop 'error: different'
-      endif
+      if(diff > 0.0000001d0) print *,'different: ',ipoin,iboolleft_xi(ipoin),iboolright_xi(ipoin),diff
   enddo
 
   enddo
@@ -354,15 +351,7 @@
   do ipoin = 1,npoin2D_eta
       diff = dmax1(dabs(xleft_eta(ipoin)-xright_eta(ipoin)), &
        dabs(yleft_eta(ipoin)-yright_eta(ipoin)),dabs(zleft_eta(ipoin)-zright_eta(ipoin)))
-      if(diff > 0.0000001d0) then
-            print *,'different: ',ipoin,iboolleft_eta(ipoin),iboolright_eta(ipoin),diff
-      else
-            print *,'identique: ',ipoin,iboolleft_eta(ipoin),iboolright_eta(ipoin),diff
-
-!print *,'left x,y,z = ',xleft_eta(ipoin),yleft_eta(ipoin),zleft_eta(ipoin)
-!print *,'right x,y,z = ',xright_eta(ipoin),yright_eta(ipoin),zright_eta(ipoin)
-!            stop 'error: different'
-      endif
+      if(diff > 0.0000001d0) print *,'different: ',ipoin,iboolleft_eta(ipoin),iboolright_eta(ipoin),diff
   enddo
 
   enddo
