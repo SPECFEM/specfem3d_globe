@@ -1880,6 +1880,7 @@
     hgammar_store(irec_local,:) = hgammar(:)
   enddo
   endif
+
   endif ! nrec_local
 
 ! check that the sum of the number of receivers in each slice is nrec
@@ -4013,7 +4014,7 @@
 
 ! write the seismograms with time shift
 
-! write the seismograms only if there is at least one receiver located in this slice
+! store the seismograms only if there is at least one receiver located in this slice
   if (nrec_local > 0) then
 
   do irec_local = 1,nrec_local
@@ -4152,6 +4153,8 @@
 
     enddo
 
+  endif ! nrec_local
+
 ! write the current seismograms
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) then
     if (SIMULATION_TYPE_VAL == 1 .or. SIMULATION_TYPE_VAL == 3) then
@@ -4168,8 +4171,6 @@
         nit_written = it
     endif
   endif
-  endif ! nrec_local
-
 
 ! kernel calculations
   if (SIMULATION_TYPE_VAL == 3) then

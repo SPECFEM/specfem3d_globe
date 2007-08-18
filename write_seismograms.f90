@@ -50,7 +50,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
  character(12) ename
 
 ! variables
- integer :: iproc,sender,irec_local,irec,total_seismos,ier,receiver
+ integer :: iproc,sender,irec_local,irec,total_seismos,ier,receiver,nrec_local_received
  real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: one_seismogram
  integer msg_status(MPI_STATUS_SIZE)
  character(len=150) OUTPUT_FILES
@@ -66,13 +66,22 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
     call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
     total_seismos = 0
-    ! receive information from all the slices
+
+    ! loop on all the slices
     do iproc = 0,NPROCTOT-1
+
       ! receive except from proc 0, which is me and therefore I already have this value
       sender = iproc
-      if(iproc /= 0) call MPI_RECV(nrec_local,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-      if (nrec_local > 0) then
-        do irec_local = 1,nrec_local
+      if(iproc /= 0) then
+        call MPI_RECV(nrec_local_received,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+        if(nrec_local_received < 0) call exit_MPI(myrank,'error while receiving local number of receivers')
+      else
+        nrec_local_received = nrec_local
+      endif
+
+      if (nrec_local_received > 0) then
+        do irec_local = 1,nrec_local_received
+
           ! receive except from proc 0, which is myself and therefore I already have these values
           if(iproc == 0) then
             ! get global number of that receiver
@@ -80,9 +89,13 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
             one_seismogram(:,:) = seismograms(:,irec_local,:)
           else
             call MPI_RECV(irec,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+            if(irec < 1 .or. irec > nrec) call exit_MPI(myrank,'error while receiving global receiver number')
             call MPI_RECV(one_seismogram,NDIM*NSTEP,CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
           endif
+
           total_seismos = total_seismos + 1
+
+          ! write this seismogram
           call write_one_seismogram(one_seismogram,irec, &
                                     station_name,network_name,stlat,stlon,stele,nrec, &
                                     DT,NSTEP,hdur,it_begin,it_end, &
@@ -97,7 +110,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
     write(IMAIN,*)
     write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
     write(IMAIN,*)
-    if(total_seismos /= nrec) call exit_MPI(myrank, 'incorrect total number of receivers saved')
+    if(total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
   else  ! on the nodes, send the seismograms to the master
     receiver = 0
