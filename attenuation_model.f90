@@ -683,7 +683,9 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   call pspline(AM_V%Qr, AM_V%Qsf,   AM_V%Qn, Qp1, Qpn, AM_V%Qsf2,   AM_V%interval_Q)
   call pspline(AM_V%Qr, AM_V%Qomsb, AM_V%Qn, Qp1, Qpn, AM_V%Qomsb2, AM_V%interval_Q)
   do i = 1,N_SLS
-     call pspline(AM_V%Qr, AM_V%Qfc(i,:), AM_V%Qn, Qp1, Qpn, AM_V%Qfc2(i,:),AM_V%interval_Q)
+     Qfctmp(:) = AM_V%Qfc(i,:)
+     Qfc2tmp(:) = AM_V%Qfc2(i,:)
+     call pspline(AM_V%Qr, Qfctmp, AM_V%Qn, Qp1, Qpn, Qfc2tmp, AM_V%interval_Q)
   enddo
 
   radius = 0.0d0
