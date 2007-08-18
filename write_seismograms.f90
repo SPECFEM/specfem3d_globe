@@ -22,8 +22,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
               DT,NSTEP,hdur,it_begin,it_end, &
               yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename, &
               cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
-              NPROCTOT,FINAL, &
-              OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+              NPROCTOT,OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
               OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
 
  implicit none
@@ -49,7 +48,6 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
  double precision sec
  real mb
  character(12) ename
- logical FINAL
 
 ! variables
  integer :: iproc,sender,irec_local,irec,total_seismos,ier,receiver
@@ -95,12 +93,12 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
         enddo
       endif
     enddo
-    if (FINAL) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
-      write(IMAIN,*)
-      if(total_seismos /= nrec) call exit_MPI(myrank, 'incorrect total number of receivers saved')
-    endif
+
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
+    write(IMAIN,*)
+    if(total_seismos /= nrec) call exit_MPI(myrank, 'incorrect total number of receivers saved')
+
   else  ! on the nodes, send the seismograms to the master
     receiver = 0
     call MPI_SEND(nrec_local,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)

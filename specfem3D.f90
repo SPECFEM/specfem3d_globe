@@ -4159,7 +4159,7 @@
               network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
               yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
               elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,&
-              cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT,.false., &
+              cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
               OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
               OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
     else
@@ -4394,14 +4394,12 @@
   enddo   ! end of main time loop
 
 ! write the final seismograms
-
-
   if (SIMULATION_TYPE_VAL == 1 .or. SIMULATION_TYPE_VAL == 3) then
     call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
         network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
         yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
         elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC, &
-        cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT,.true., &
+        cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
         OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
     else
