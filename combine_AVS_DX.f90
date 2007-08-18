@@ -464,7 +464,13 @@
 ! read local points in this slice and output global AVS or DX points
   do ipoin=1,npoin
       read(10,*) numpoin,xval,yval,zval
-      if(ivalue == 2) read(12,*) numpoin2,vmin,vmax
+      if(ivalue == 2) then
+        read(12,*) numpoin2,vmin,vmax
+      else
+        numpoin2 = 0
+        vmin = 0.
+        vmax = 0.
+      endif
       if(numpoin /= ipoin) stop 'incorrect point number'
       if(ivalue == 2 .and. numpoin2 /= ipoin) stop 'incorrect point number'
 ! write to AVS or DX global file with correct offset
@@ -542,6 +548,8 @@
         read(13,*) numelem2,deltavp,deltavs
         dvp(numelem + iglobelemoffset) = deltavp
         dvs(numelem + iglobelemoffset) = deltavs
+      else
+        numelem2 = 0
       endif
   if(numelem /= ispec) stop 'incorrect element number'
   if((icolor == 5 .or. icolor == 6) .and. numelem2 /= ispec) stop 'incorrect element number'
