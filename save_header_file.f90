@@ -219,6 +219,8 @@
   write(IOUT,*) '! ----------------------------------------------'
   write(IOUT,*) '!'
   write(IOUT,*) '! size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
+  write(IOUT,*) '!   (should be below 1.5 GB on pangu at Caltech)'
+  write(IOUT,*) '!   (should be below 2 GB on Marenostrum in Barcelona)'
   write(IOUT,*) '!'
   write(IOUT,*) '! size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
   write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
