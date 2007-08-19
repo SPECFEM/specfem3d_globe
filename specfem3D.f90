@@ -213,13 +213,15 @@
 ! p. 131-141 (2004) and *NOT* a velocity potential as in Komatitsch and Tromp,
 ! Geophysical Journal International, vol. 150, p. 303-318 (2002).
 ! This permits acoustic-elastic coupling based on a non-iterative time scheme.
-! Displacement is then: u = grad(Chi)
+! Displacement if we ignore gravity is then: u = grad(Chi)
+! (In the context of the Cowling approximation displacement is
+! u = grad(rho * Chi) / Chi, *not* u = grad(Chi).)
 ! Velocity is then: v = grad(Chi_dot)       (Chi_dot being the time derivative of Chi)
 ! and pressure is: p = - rho * Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+! The source in an acoustic element is a pressure source.
 ! The potential in the outer core is called displ_outer_core for simplicity.
 ! Its first time derivative is called veloc_outer_core.
 ! Its second time derivative is called accel_outer_core.
-!
 
 ! attenuation_model_variables
   type attenuation_model_variables
