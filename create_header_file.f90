@@ -168,6 +168,8 @@ enddo
   print *,'total elements per slice = ',sum(NSPEC)
   print *,'total points per slice = ',sum(nglob)
   print *
+  print *,'number of time steps = ',NSTEP
+  print *
 
   print *,'on NEC SX and Earth Simulator, make sure "loopcnt=" parameter'
 ! use fused loops on the ES
@@ -178,6 +180,8 @@ enddo
   print *,'----------------------------------------------'
   print *
   print *,'size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
+  print *,'  (should be below 1.5 GB on pangu at Caltech)'
+  print *,'  (should be below 2 GB on Marenostrum in Barcelona)'
   print *
   print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
