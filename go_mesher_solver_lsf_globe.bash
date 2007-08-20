@@ -32,7 +32,7 @@ echo "$LSB_JOBID" > OUTPUT_FILES/jobid
 remap_lsf_machines.pl OUTPUT_FILES/lsf_machines >OUTPUT_FILES/machines
 
 # now just make the dir (cleanup should be done afterwards after collect seismo, otherwise  we clean up another runs seismos)
-shmux -M50 -Sall -c "mkdir -p $BASEMPIDIR" - < OUTPUT_FILES/machines >/dev/null
+shmux -M 50 -S all -c "mkdir -p $BASEMPIDIR" - < OUTPUT_FILES/machines >/dev/null
 
 echo starting MPI mesher on $numnodes processors
 echo " "
