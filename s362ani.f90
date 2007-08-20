@@ -613,7 +613,7 @@
   real(kind=4) xlospl(mxcoef,mxhpar)
   real(kind=4) xraspl(mxcoef,mxhpar)
 
-  character(len=80) targetfile
+  character(len=128) targetfile
 
   integer numhpa,numker,maxhpa,maxker,maxcoe
 
@@ -738,7 +738,7 @@
   real(kind=4) xlospl(mxcoef,mxhpar)
   real(kind=4) xraspl(mxcoef,mxhpar)
 
-  character(len=*) filename
+  character(len=128) filename
 
   character(len=128) string
   character(len=128) substr
