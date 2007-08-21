@@ -338,7 +338,7 @@
 
 ! correct number of spectral elements in each block depending on chunk type
 
-  integer nspec_reg,nspec_aniso,nspec_aniso_mantle,nspec_aniso_mantle_all,npointot
+  integer nspec_aniso,nspec_aniso_mantle,nspec_aniso_mantle_all,npointot
 
 ! parameters needed to store the radii of the grid points
 ! in the spherically symmetric Earth
@@ -1028,23 +1028,20 @@
   area_local_bottom = ZERO
   area_local_top = ZERO
 
-! assign theoretical number of elements
-  nspec_reg = NSPEC(iregion_code)
-
 ! compute maximum number of points
-  npointot = nspec_reg * NGLLX * NGLLY * NGLLZ
+  npointot = NSPEC(iregion_code) * NGLLX * NGLLY * NGLLZ
 
 ! use dynamic allocation to allocate memory for arrays
-  allocate(idoubling(nspec_reg))
-  allocate(ibool(NGLLX,NGLLY,NGLLZ,nspec_reg))
-  allocate(xstore(NGLLX,NGLLY,NGLLZ,nspec_reg))
-  allocate(ystore(NGLLX,NGLLY,NGLLZ,nspec_reg))
-  allocate(zstore(NGLLX,NGLLY,NGLLZ,nspec_reg))
+  allocate(idoubling(NSPEC(iregion_code)))
+  allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
+  allocate(xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
+  allocate(ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
+  allocate(zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
 
 ! create all the regions of the mesh
   call create_regions_mesh(iregion_code,ibool,idoubling, &
          xstore,ystore,zstore,rmins,rmaxs, &
-         iproc_xi,iproc_eta,ichunk,nspec_reg,nspec_aniso, &
+         iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
          volume_local,area_local_bottom,area_local_top, &
          nspl,rspl,espl,espl2, &
          nglob(iregion_code),npointot, &
@@ -1140,7 +1137,7 @@
 
   ! create chunk buffers if more than one chunk
   if(NCHUNKS > 1) then
-    call create_chunk_buffers(iregion_code,nspec_reg,ibool,idoubling,xstore,ystore,zstore, &
+    call create_chunk_buffers(iregion_code,NSPEC(iregion_code),ibool,idoubling,xstore,ystore,zstore, &
       nglob(iregion_code), &
       NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
       NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL(iregion_code), &
