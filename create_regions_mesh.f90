@@ -1474,6 +1474,11 @@
             size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS, AM_V)
 
+! compute volume, bottom and top area of that part of the slice
+  volume_local = ZERO
+  area_local_bottom = ZERO
+  area_local_top = ZERO
+
   do ispec=1,nspec
     do k=1,NGLLZ
       do j=1,NGLLY

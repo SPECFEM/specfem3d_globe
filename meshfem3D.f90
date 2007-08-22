@@ -1023,11 +1023,6 @@
     write(IMAIN,*)
   endif
 
-! volume of bottom and top area of the slice
-  volume_local = ZERO
-  area_local_bottom = ZERO
-  area_local_top = ZERO
-
 ! compute maximum number of points
   npointot = NSPEC(iregion_code) * NGLLX * NGLLY * NGLLZ
 
