@@ -114,17 +114,17 @@
 
 ! xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle
 ! etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,
-! gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,jacobian_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*10.d0*dble(CUSTOM_REAL)
+! gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*9.d0*dble(CUSTOM_REAL)
 
 ! ibool_crust_mantle
   static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_INTEGER)
 
 ! xix_outer_core,xiy_outer_core,xiz_outer_core,
 ! etax_outer_core,etay_outer_core,etaz_outer_core,
-! gammax_outer_core,gammay_outer_core,gammaz_outer_core,jacobian_outer_core
+! gammax_outer_core,gammay_outer_core,gammaz_outer_core
 ! rhostore_outer_core,kappavstore_outer_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*12.d0*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*11.d0*dble(CUSTOM_REAL)
 
 ! ibool_outer_core
   static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
@@ -161,9 +161,9 @@
 
 ! xix_inner_core,xiy_inner_core,xiz_inner_core,
 ! etax_inner_core,etay_inner_core,etaz_inner_core,
-! gammax_inner_core,gammay_inner_core,gammaz_inner_core,jacobian_inner_core,
+! gammax_inner_core,gammay_inner_core,gammaz_inner_core,
 ! rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*13.d0*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*12.d0*dble(CUSTOM_REAL)
 
 ! xstore_inner_core,ystore_inner_core,zstore_inner_core,rmass_inner_core
   static_memory_size = static_memory_size + NGLOB(IREGION_INNER_CORE)*4.d0*dble(CUSTOM_REAL)

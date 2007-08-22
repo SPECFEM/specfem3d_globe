@@ -18,7 +18,7 @@
 
   subroutine compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ,accel,xstore,ystore,zstore, &
-          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
+          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -89,7 +89,7 @@
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: xix,xiy,xiz, &
-                      etax,etay,etaz,gammax,gammay,gammaz,jacobian
+                      etax,etay,etaz,gammax,gammay,gammaz
 
 ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -211,7 +211,11 @@
           gammaxl = gammax(i,j,k,ispec)
           gammayl = gammay(i,j,k,ispec)
           gammazl = gammaz(i,j,k,ispec)
-          jacobianl = jacobian(i,j,k,ispec)
+
+! compute the jacobian
+          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
 
           duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
           duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l

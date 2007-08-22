@@ -25,7 +25,7 @@
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
+           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -227,7 +227,7 @@
 
 ! arrays with mesh parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xixstore,xiystore,xizstore, &
-    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore
+    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
 ! proc numbers for MPI
   integer myrank
@@ -331,7 +331,7 @@
 
 ! recompute coordinates and jacobian for real 3-D model
   call calc_jacobian(myrank,xixstore,xiystore,xizstore, &
-          etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
+          etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
           xstore,ystore,zstore,xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
 
   end subroutine compute_element_properties

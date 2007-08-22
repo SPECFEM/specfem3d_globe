@@ -286,7 +286,9 @@
 
 ! arrays with mesh parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: xixstore,xiystore,xizstore, &
-    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore
+    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
+
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
 
 ! proc numbers for MPI
   integer myrank
@@ -661,7 +663,6 @@
     allocate(gammaxstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
     allocate(gammaystore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
     allocate(gammazstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
-    allocate(jacobianstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
 
   else
 
@@ -676,7 +677,6 @@
     allocate(gammaxstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
     allocate(gammaystore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
     allocate(gammazstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
-    allocate(jacobianstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
 
   endif
 
@@ -802,7 +802,7 @@
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
+           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -912,7 +912,7 @@
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
+           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -1053,7 +1053,7 @@
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
+           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -1154,7 +1154,7 @@
 
     ! permutation of xstore, ystore, zstore, rhostore, kappavstore, kappahstore,
     ! muvstore, muhstore, eta_anisostore, xixstore, xiystore, xizstore, etaxstore,
-    ! etaystore, etazstore, gammaxstore, gammaystore, gammazstore, jacobianstore
+    ! etaystore, etazstore, gammaxstore, gammaystore, gammazstore
 
     allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
     if(ATTENUATION .and. ATTENUATION_3D) then
@@ -1216,7 +1216,6 @@
     call permute_elements_real(gammaxstore,temp_array_real,perm,nspec)
     call permute_elements_real(gammaystore,temp_array_real,perm,nspec)
     call permute_elements_real(gammazstore,temp_array_real,perm,nspec)
-    call permute_elements_real(jacobianstore,temp_array_real,perm,nspec)
     deallocate(temp_array_real)
 
     ! permutation of ibool
@@ -1361,13 +1360,27 @@
 ! suppress fictitious elements in central cube
   if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
-        weight=wxgll(i)*wygll(j)*wzgll(k)
-        iglobnum=ibool(i,j,k,ispec)
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
 
-        jacobianl=jacobianstore(i,j,k,ispec)
+        weight = wxgll(i)*wygll(j)*wzgll(k)
+        iglobnum = ibool(i,j,k,ispec)
+
+! compute the jacobian
+        xixl = xixstore(i,j,k,ispec)
+        xiyl = xiystore(i,j,k,ispec)
+        xizl = xizstore(i,j,k,ispec)
+        etaxl = etaxstore(i,j,k,ispec)
+        etayl = etaystore(i,j,k,ispec)
+        etazl = etazstore(i,j,k,ispec)
+        gammaxl = gammaxstore(i,j,k,ispec)
+        gammayl = gammaystore(i,j,k,ispec)
+        gammazl = gammazstore(i,j,k,ispec)
+
+        jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
 
 ! definition depends if region is fluid or solid
   if(iregion_code == IREGION_CRUST_MANTLE .or. iregion_code == IREGION_INNER_CORE) then
@@ -1493,7 +1506,7 @@
     call save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
             prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
-            gammaxstore,gammaystore,gammazstore,jacobianstore, &
+            gammaxstore,gammaystore,gammazstore, &
             xstore,ystore,zstore, rhostore, &
             kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
             nspec_ani, &
@@ -1523,13 +1536,27 @@
   area_local_bottom = ZERO
   area_local_top = ZERO
 
-  do ispec=1,nspec
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-          weight=wxgll(i)*wygll(j)*wzgll(k)
+  do ispec = 1,nspec
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
-          jacobianl=jacobianstore(i,j,k,ispec)
+          weight = wxgll(i)*wygll(j)*wzgll(k)
+
+! compute the jacobian
+          xixl = xixstore(i,j,k,ispec)
+          xiyl = xiystore(i,j,k,ispec)
+          xizl = xizstore(i,j,k,ispec)
+          etaxl = etaxstore(i,j,k,ispec)
+          etayl = etaystore(i,j,k,ispec)
+          etazl = etazstore(i,j,k,ispec)
+          gammaxl = gammaxstore(i,j,k,ispec)
+          gammayl = gammaystore(i,j,k,ispec)
+          gammazl = gammazstore(i,j,k,ispec)
+
+          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
 
           volume_local = volume_local + dble(jacobianl)*weight
 
@@ -1564,7 +1591,7 @@
 ! deallocate these arrays after each pass because they have a different size in each pass to save memory
   deallocate(xixstore,xiystore,xizstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
   deallocate(etaxstore,etaystore,etazstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
-  deallocate(gammaxstore,gammaystore,gammazstore,jacobianstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(gammaxstore,gammaystore,gammazstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
 
 ! deallocate arrays
   deallocate(rhostore,kappavstore,kappahstore)
