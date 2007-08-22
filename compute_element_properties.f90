@@ -34,7 +34,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
 
   implicit none
 
@@ -184,7 +184,7 @@
   logical ELLIPTICITY,TOPOGRAPHY
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
 
-  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS
+  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS
 
   double precision RICB,RCMB,R670,RMOHO, &
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
@@ -332,6 +332,6 @@
 ! recompute coordinates and jacobian for real 3-D model
   call calc_jacobian(myrank,xixstore,xiystore,xizstore, &
           etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore, &
-          xstore,ystore,zstore,xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec)
+          xstore,ystore,zstore,xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
 
   end subroutine compute_element_properties

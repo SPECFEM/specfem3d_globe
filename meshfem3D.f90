@@ -484,6 +484,8 @@
   character(len=80) refmdl
   character(len=40) varstr(maxker)
 
+  integer :: ipass
+
 ! ************** PROGRAM STARTS HERE **************
 
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
@@ -1034,7 +1036,9 @@
   allocate(zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
 
 ! create all the regions of the mesh
-  call create_regions_mesh(iregion_code,ibool,idoubling, &
+! perform two passes in this part to be able to save memory
+  do ipass = 1,2
+    call create_regions_mesh(iregion_code,ibool,idoubling, &
          xstore,ystore,zstore,rmins,rmaxs, &
          iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
          volume_local,area_local_bottom,area_local_top, &
@@ -1058,7 +1062,8 @@
          numker,numhpa,numcof,ihpa,lmax,nylm, &
          lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
+  enddo
 
 ! store number of anisotropic elements found in the mantle
   if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
