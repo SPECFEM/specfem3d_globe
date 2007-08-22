@@ -418,8 +418,8 @@
       if(NEX_MAX <= 160) then
         DT                       = 0.252d0
 
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
+        MIN_ATTENUATION_PERIOD   = 30
+        MAX_ATTENUATION_PERIOD   = 1500
 
         NER_CRUST                = 1
         NER_80_MOHO              = 1
@@ -458,8 +458,8 @@
       else if(NEX_MAX <= 320) then
         DT                       = 0.16d0
 
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
+        MIN_ATTENUATION_PERIOD   = 15
+        MAX_ATTENUATION_PERIOD   = 750
 
         NER_CRUST                = 1
         NER_80_MOHO              = 1
@@ -478,8 +478,8 @@
       else if(NEX_MAX <= 480) then
         DT                       = 0.12d0
 
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
+        MIN_ATTENUATION_PERIOD   = 10
+        MAX_ATTENUATION_PERIOD   = 500
 
         NER_CRUST                = 1
         NER_80_MOHO              = 2
@@ -498,8 +498,8 @@
       else if(NEX_MAX <= 512) then
         DT                       = 0.1125d0
 
-        MIN_ATTENUATION_PERIOD   = 8
-        MAX_ATTENUATION_PERIOD   = 1000
+        MIN_ATTENUATION_PERIOD   = 9
+        MAX_ATTENUATION_PERIOD   = 500
 
         NER_CRUST                = 1
         NER_80_MOHO              = 2
@@ -518,7 +518,7 @@
       else if(NEX_MAX <= 640) then
         DT                       = 0.09d0
 
-        MIN_ATTENUATION_PERIOD   = 5
+        MIN_ATTENUATION_PERIOD   = 8
         MAX_ATTENUATION_PERIOD   = 400
 
         NER_CRUST                = 2
@@ -538,8 +538,8 @@
       else if(NEX_MAX <= 864) then
         DT                       = 0.0667d0
 
-        MIN_ATTENUATION_PERIOD   = 5
-        MAX_ATTENUATION_PERIOD   = 400
+        MIN_ATTENUATION_PERIOD   = 6
+        MAX_ATTENUATION_PERIOD   = 300
 
         NER_CRUST                = 2
         NER_80_MOHO              = 4
@@ -559,7 +559,7 @@
         DT                       = 0.05d0
 
         MIN_ATTENUATION_PERIOD   = 4
-        MAX_ATTENUATION_PERIOD   = 400
+        MAX_ATTENUATION_PERIOD   = 200
 
         NER_CRUST                = 3
         NER_80_MOHO              = 6
@@ -579,7 +579,7 @@
         DT                       = 0.0462d0
 
         MIN_ATTENUATION_PERIOD   = 4
-        MAX_ATTENUATION_PERIOD   = 400
+        MAX_ATTENUATION_PERIOD   = 200
 
         NER_CRUST                = 3
         NER_80_MOHO              = 6
