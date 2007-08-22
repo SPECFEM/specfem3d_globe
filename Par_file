@@ -1,7 +1,7 @@
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1
-SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
+SIMULATION_TYPE                 = 1 
+SAVE_FORWARD                    = .true.  # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
 NCHUNKS                         = 6
@@ -14,13 +14,13 @@ CENTER_LONGITUDE_IN_DEGREES   = 10.d0
 GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
-# (must be 32 * multiple of NPROC below)
-NEX_XI                          = 256
-NEX_ETA                         = 256
+# (must be 16 * multiple of NPROC below)
+NEX_XI                          = 96  
+NEX_ETA                         = 96 
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 8
-NPROC_ETA                       = 8
+NPROC_XI                        = 3
+NPROC_ETA                       = 3
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135, 1D_ref
@@ -31,21 +31,21 @@ NPROC_ETA                       = 8
 # fully 3D models:
 # transversely_isotropic_prem_plus_3D_crust_2.0, 3D_anisotropic, 3D_attenuation,
 # s20rts, s362ani, s362wmani, s362ani_prem, s29ea
-MODEL                           = s362ani
+MODEL                           = 1D_transversely_isotropic_prem
 
 # parameters describing the Earth model
-OCEANS                          = .true.
-ELLIPTICITY                     = .true.
-TOPOGRAPHY                      = .true.
-GRAVITY                         = .true.
-ROTATION                        = .true.
-ATTENUATION                     = .true.
+OCEANS                          = .false.
+ELLIPTICITY                     = .false.
+TOPOGRAPHY                      = .false.
+GRAVITY                         = .false.
+ROTATION                        = .false.
+ATTENUATION                     = .false.
 
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        =  60.0d0
+RECORD_LENGTH_IN_MINUTES        = 1.0d0
 
 # save AVS or OpenDX movies
 MOVIE_SURFACE                   = .false.
@@ -61,7 +61,7 @@ NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
-LOCAL_PATH                      = /scratch/jtromp/DATABASES_MPI
+LOCAL_PATH                      =  /scratch/jtromp/DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
 NTSTEP_BETWEEN_OUTPUT_INFO      = 100
@@ -71,9 +71,9 @@ NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
 NTSTEP_BETWEEN_READ_ADJSRC      = 1000
 
 # output format for the seismograms (one can use either or all of the three formats)
-OUTPUT_SEISMOS_ASCII_TEXT       = .true.
+OUTPUT_SEISMOS_ASCII_TEXT       = .true.
 OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
-OUTPUT_SEISMOS_SAC_BINARY       = .false.
+OUTPUT_SEISMOS_SAC_BINARY       = .false.
 
 # rotate seismograms to Radial-Transverse-Z or use default North-East-Z reference frame
 ROTATE_SEISMOGRAMS_RT           = .false.

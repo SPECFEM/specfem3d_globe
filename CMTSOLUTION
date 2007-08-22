@@ -1,13 +1,13 @@
-PDE 1999 11 26 13 21 15.60 -16.4200  168.2100  33.0 6.4 7.3 VANUATU ISLANDS  
-event name:     112699G
+PDE 1994  6  9  0 33 16.40 -13.8300  -67.5600 637.0 6.9 6.8 NORTHERNBOLIVIA
+event name:     060994A
 time shift:      0.0000
-half duration:  18.0000
-latitude:      -16.0800
-longitude:     168.3100
-depth:          15.0000
-Mrr:       1.310000e+27
-Mtt:       1.200000e+26
-Mpp:      -1.420000e+27
-Mrt:       4.600000e+26
-Mrp:       8.200000e+26
-Mtp:      -2.000000e+26
+half duration:   0.0000
+latitude:      -13.8200
+longitude:     -67.2500
+depth:         647.1000
+Mrr:      -7.600000e+27
+Mtt:       7.700000e+27
+Mpp:      -2.000000e+26
+Mrt:      -2.500000e+28
+Mrp:       4.000000e+26
+Mtp:      -2.500000e+27
