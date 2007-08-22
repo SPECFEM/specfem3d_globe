@@ -33,12 +33,12 @@
            ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-           ner,ratio_sampling_array, doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D,&
+           ner,ratio_sampling_array,doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D, &
            AMM_V, AM_V, M1066a_V, Mak135_V, Mref_V,D3MM_V,CM_V, AM_S, AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
 
 ! create the different regions of the mesh
 
@@ -297,14 +297,11 @@
   double precision volume_local
 
 ! variables for creating array ibool (some arrays also used for AVS or DX files)
-  integer, dimension(:), allocatable :: iglob,locval
+  integer, dimension(:), allocatable :: locval
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: xp,yp,zp
 
-  integer nglob,nglob_theor
-
-  integer ieoff,ilocnum
-  integer iboolmin,iboolmax
+  integer nglob,nglob_theor,ieoff,ilocnum,ier
 
 ! mass matrix
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass
@@ -417,6 +414,11 @@
   character(len=80) kerstr
   character(len=40) varstr(maxker)
 
+! now perform two passes in this part to be able to save memory
+  integer :: ipass
+
+  logical :: ACTUALLY_STORE_ARRAYS
+
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
@@ -507,18 +509,6 @@
 ! boundary locator
   allocate(iboun(6,nspec))
 
-! arrays with mesh parameters
-  allocate(xixstore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(xiystore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(xizstore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(etaxstore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(etaystore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(etazstore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(gammaxstore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(gammaystore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(gammazstore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(jacobianstore(NGLLX,NGLLY,NGLLZ,nspec))
-
 ! boundary parameters locator
   allocate(ibelm_xmin(NSPEC2DMAX_XMIN_XMAX))
   allocate(ibelm_xmax(NSPEC2DMAX_XMIN_XMAX))
@@ -572,14 +562,6 @@
   call get_shape2D(myrank,shape2D_y,dershape2D_y,xigll,zigll,NGLLX,NGLLZ)
   call get_shape2D(myrank,shape2D_bottom,dershape2D_bottom,xigll,yigll,NGLLX,NGLLY)
   call get_shape2D(myrank,shape2D_top,dershape2D_top,xigll,yigll,NGLLX,NGLLY)
-
-! allocate memory for arrays
-  allocate(iglob(npointot))
-  allocate(locval(npointot))
-  allocate(ifseg(npointot))
-  allocate(xp(npointot))
-  allocate(yp(npointot))
-  allocate(zp(npointot))
 
 ! define models 1066a and ak135 and ref
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
@@ -650,20 +632,67 @@
     enddo
   endif
 
-! init boundaries arrays
-  iboun(:,:)=.false.
+! initialize mesh arrays
+  idoubling(:) = 0
+
+  xstore(:,:,:,:) = 0.d0
+  ystore(:,:,:,:) = 0.d0
+  zstore(:,:,:,:) = 0.d0
+
+  if(ipass == 1) ibool(:,:,:,:) = 0
+
+! initialize boundary arrays
+  iboun(:,:) = .false.
   iMPIcut_xi(:,:) = .false.
   iMPIcut_eta(:,:) = .false.
+
+! store and save the final arrays only in the second pass
+! therefore in the first pass some arrays can be allocated with a dummy size
+  if(ipass == 1) then
+
+    ACTUALLY_STORE_ARRAYS = .false.
+
+    allocate(xixstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(xiystore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(xizstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(etaxstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(etaystore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(etazstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(gammaxstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(gammaystore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(gammazstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(jacobianstore(NGLLX,NGLLY,NGLLZ,1),stat=ier); if(ier /= 0) stop 'error in allocate'
+
+  else
+
+    ACTUALLY_STORE_ARRAYS = .true.
+
+    allocate(xixstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(xiystore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(xizstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(etaxstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(etaystore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(etazstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(gammaxstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(gammaystore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(gammazstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(jacobianstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+
+  endif
 
   if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
     allocate(stretch_tab(2,ner(1)))
     call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
   endif
+
 ! generate and count all the elements in this region of the mesh
   ispec = 0
+
 ! loop on all the layers in this region of the mesh
   do ilayer_loop = ifirst_region,ilast_region
+
     ilayer = perm_layer(ilayer_loop)
+
 ! determine the radii that define the shell
   rmin = rmins(ilayer)
   rmax = rmaxs(ilayer)
@@ -782,7 +811,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
 
 ! end of loop on all the regular elements
   enddo
@@ -892,7 +921,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
 
 ! end of loops on the mesh doubling elements
           enddo
@@ -1033,7 +1062,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
       enddo
     enddo
   enddo
@@ -1044,6 +1073,24 @@
 ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
 
+! only create global addressing and the MPI buffers in the first pass
+  if(ipass == 1) then
+
+! allocate memory for arrays
+  allocate(locval(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
+  allocate(ifseg(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
+  allocate(xp(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
+  allocate(yp(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
+  allocate(zp(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
+
+  locval = 0
+  ifseg = .false.
+  xp = 0.d0
+  yp = 0.d0
+  zp = 0.d0
+
+! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
+! these arrays and therefore destroy them
   do ispec=1,nspec
   ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
   ilocnum = 0
@@ -1059,33 +1106,20 @@
   enddo
   enddo
 
-  call get_global(nspec,xp,yp,zp,iglob,locval,ifseg,nglob,npointot)
+  call get_global(nspec,xp,yp,zp,ibool,locval,ifseg,nglob,npointot)
+
+  deallocate(xp,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(yp,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(zp,stat=ier); if(ier /= 0) stop 'error in deallocate'
 
 ! check that number of points found equals theoretical value
   if(nglob /= nglob_theor) then
-    write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor = ',&
-      myrank,nglob,nglob_theor
+    write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor,ipass,iregion_code = ',&
+      myrank,nglob,nglob_theor,ipass,iregion_code
     call exit_MPI(myrank,errmsg)
   endif
 
-! put in classical format
-  do ispec=1,nspec
-  ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
-  ilocnum = 0
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
-        ilocnum = ilocnum + 1
-        ibool(i,j,k,ispec) = iglob(ilocnum+ieoff)
-      enddo
-    enddo
-  enddo
-  enddo
-
-  iboolmin = minval(ibool(:,:,:,1:nspec))
-  iboolmax = maxval(ibool(:,:,:,1:nspec))
-  if(iboolmin /= 1 .or. iboolmax /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering')
-
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering')
 
 ! ***************************************************
 ! Cuthill McKee permutation
@@ -1169,10 +1203,10 @@
     endif
     call permute_elements_real(rhostore,temp_array_real,perm,nspec)
     call permute_elements_real(kappavstore,temp_array_real,perm,nspec)
-!     call permute_elements_real(kappahstore,temp_array_real,perm,nspec)
+    call permute_elements_real(kappahstore,temp_array_real,perm,nspec)
     call permute_elements_real(muvstore,temp_array_real,perm,nspec)
-!     call permute_elements_real(muhstore,temp_array_real,perm,nspec)
-!²     call permute_elements_real(eta_anisostore,temp_array_real,perm,nspec)
+    call permute_elements_real(muhstore,temp_array_real,perm,nspec)
+    call permute_elements_real(eta_anisostore,temp_array_real,perm,nspec)
     call permute_elements_real(xixstore,temp_array_real,perm,nspec)
     call permute_elements_real(xiystore,temp_array_real,perm,nspec)
     call permute_elements_real(xizstore,temp_array_real,perm,nspec)
@@ -1229,8 +1263,9 @@
 
 ! create a new indirect addressing to reduce cache misses in memory access in the solver
 ! this is *critical* to improve performance in the solver
-  allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(mask_ibool(nglob))
+  allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
+  allocate(mask_ibool(nglob),stat=ier); if(ier /= 0) stop 'error in allocate'
+
   mask_ibool(:) = -1
   copy_ibool_ori(:,:,:,:) = ibool(:,:,:,:)
 
@@ -1252,20 +1287,75 @@
     enddo
   enddo
   enddo
-  deallocate(copy_ibool_ori)
-  deallocate(mask_ibool)
 
-  iboolmin = minval(ibool(:,:,:,1:nspec))
-  iboolmax = maxval(ibool(:,:,:,1:nspec))
-  if(iboolmin /= 1 .or. iboolmax /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering after sorting')
+  deallocate(copy_ibool_ori,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(mask_ibool,stat=ier); if(ier /= 0) stop 'error in deallocate'
+
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering after sorting')
+
+! create MPI buffers
+! arrays locval(npointot) and ifseg(npointot) used to save memory
+  call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
+                  xstore,ystore,zstore,ifseg,npointot, &
+                  NSPEC2D_ETA(iregion_code),NGLOB2DMAX_XY,nglob)
+  call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
+                  xstore,ystore,zstore,ifseg,npointot, &
+                  NSPEC2D_XI(iregion_code),NGLOB2DMAX_XY,nglob)
+  call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
+                  xstore,ystore,zstore,ifseg,npointot, &
+                  NSPEC1D_RADIAL,NGLOB1D_RADIAL,nglob)
+
+! Stacey
+  if(NCHUNKS /= 6) &
+       call get_absorb(myrank,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
+                       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
+
+! create AVS or DX mesh data for the slices
+  if(SAVE_MESH_FILES) then
+    call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
+    call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
+    call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
+              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+              RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V)
+    call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
+  endif
+
+  deallocate(locval,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(ifseg,stat=ier); if(ier /= 0) stop 'error in deallocate'
+
+! only create mass matrix and save all the final arrays in the second pass
+  else if(ipass == 2) then
+
+! copy the theoretical number of points for the second pass
+  nglob = nglob_theor
 
 ! count number of anisotropic elements in current region
 ! should be zero in all the regions except in the mantle
   nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
 
+  call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
+      dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
+      ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+      nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+              jacobian2D_xmin,jacobian2D_xmax, &
+              jacobian2D_ymin,jacobian2D_ymax, &
+              jacobian2D_bottom,jacobian2D_top, &
+              normal_xmin,normal_xmax, &
+              normal_ymin,normal_ymax, &
+              normal_bottom,normal_top, &
+              NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+
 ! creating mass matrix in this slice (will be fully assembled in the solver)
-  allocate(rmass(nglob))
+  allocate(rmass(nglob),stat=ier); if(ier /= 0) stop 'error in allocate'
+
   rmass(:) = 0._CUSTOM_REAL
+
   do ispec=1,nspec
 
 ! suppress fictitious elements in central cube
@@ -1312,54 +1402,6 @@
     enddo
   enddo
   enddo
-
-
-  call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
-      dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
-      ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-      nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-              jacobian2D_xmin,jacobian2D_xmax, &
-              jacobian2D_ymin,jacobian2D_ymax, &
-              jacobian2D_bottom,jacobian2D_top, &
-              normal_xmin,normal_xmax, &
-              normal_ymin,normal_ymax, &
-              normal_bottom,normal_top, &
-              NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
-
-
-! create MPI buffers
-! arrays locval(npointot) and ifseg(npointot) used to save memory
-  call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
-                  xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC2D_ETA(iregion_code),NGLOB2DMAX_XY,nglob)
-  call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
-                  xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC2D_XI(iregion_code),NGLOB2DMAX_XY,nglob)
-  call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
-                  xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC1D_RADIAL,NGLOB1D_RADIAL,nglob)
-
-! Stacey
-  if(NCHUNKS /= 6) &
-       call get_absorb(myrank,iboun,nspec,nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
-                       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
-
-
-! create AVS or DX mesh data for the slices
-  if(SAVE_MESH_FILES) then
-    call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
-    call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
-    call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-              ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
-              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V)
-    call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
-  endif
 
 ! save the binary files
 ! save ocean load mass matrix as well if oceans
@@ -1447,7 +1489,6 @@
 
   endif
 
-
 ! save the binary files
     call save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
             prname,iregion_code,xixstore,xiystore,xizstore, &
@@ -1472,7 +1513,10 @@
             tau_s,tau_e_store,Qmu_store,T_c_source, &
             ATTENUATION,ATTENUATION_3D, &
             size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
-            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS, AM_V)
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,AM_V)
+
+  deallocate(rmass,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate'
 
 ! compute volume, bottom and top area of that part of the slice
   volume_local = ZERO
@@ -1511,10 +1555,18 @@
       enddo
     enddo
   enddo
-! deallocate arrays
 
-  deallocate(rmass)
-  deallocate(rmass_ocean_load)
+  else
+    stop 'there cannot be more than two passes in mesh creation'
+
+  endif  ! end of test if first or second pass
+
+! deallocate these arrays after each pass because they have a different size in each pass to save memory
+  deallocate(xixstore,xiystore,xizstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(etaxstore,etaystore,etazstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  deallocate(gammaxstore,gammaystore,gammazstore,jacobianstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
+
+! deallocate arrays
   deallocate(rhostore,kappavstore,kappahstore)
   deallocate(muvstore,muhstore)
   deallocate(eta_anisostore)
@@ -1541,14 +1593,7 @@
   deallocate(c56store)
   deallocate(c66store)
 
-  deallocate(xixstore,xiystore,xizstore)
-  deallocate(etaxstore,etaystore,etazstore)
-  deallocate(gammaxstore,gammaystore,gammazstore,jacobianstore)
   deallocate(iboun)
-  deallocate(iglob)
-  deallocate(locval)
-  deallocate(ifseg)
-  deallocate(xp,yp,zp)
   deallocate(xigll,yigll,zigll)
   deallocate(wxgll,wygll,wzgll)
   deallocate(shape3D,dershape3D)
@@ -1561,11 +1606,10 @@
   deallocate(normal_xmin,normal_xmax,normal_ymin,normal_ymax)
   deallocate(normal_bottom,normal_top)
   deallocate(iMPIcut_xi,iMPIcut_eta)
-! Stacey
+
   deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
   deallocate(rho_vp,rho_vs)
 
-! attenuation
   deallocate(Qmu_store)
   deallocate(tau_e_store)
 
