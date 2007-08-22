@@ -19,7 +19,7 @@
   subroutine save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
             prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
-            gammaxstore,gammaystore,gammazstore,jacobianstore, &
+            gammaxstore,gammaystore,gammazstore, &
             xstore,ystore,zstore, rhostore, &
             kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
             nspec_ani, &
@@ -78,7 +78,7 @@
 
 ! arrays with jacobian matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,jacobianstore
+    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
 ! arrays with mesh parameters
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -178,8 +178,6 @@
   write(27) gammaxstore
   write(27) gammaystore
   write(27) gammazstore
-
-  write(27) jacobianstore
 
   write(27) rhostore
   write(27) kappavstore

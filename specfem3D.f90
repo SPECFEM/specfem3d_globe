@@ -406,7 +406,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
         xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
         etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,jacobian_crust_mantle
+        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
         xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
 
@@ -447,7 +447,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
         xix_outer_core,xiy_outer_core,xiz_outer_core,&
         etax_outer_core,etay_outer_core,etaz_outer_core, &
-        gammax_outer_core,gammay_outer_core,gammaz_outer_core,jacobian_outer_core
+        gammax_outer_core,gammay_outer_core,gammaz_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
         xstore_outer_core,ystore_outer_core,zstore_outer_core
 
@@ -475,7 +475,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
         xix_inner_core,xiy_inner_core,xiz_inner_core,&
         etax_inner_core,etay_inner_core,etaz_inner_core, &
-        gammax_inner_core,gammay_inner_core,gammaz_inner_core,jacobian_inner_core, &
+        gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
         rhostore_inner_core, kappavstore_inner_core,muvstore_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: &
         xstore_inner_core,ystore_inner_core,zstore_inner_core
@@ -1251,7 +1251,7 @@
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
             etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,jacobian_crust_mantle, &
+            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
             rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
             kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
             nspec_iso,nspec_tiso,nspec_ani, &
@@ -1280,7 +1280,7 @@
             xstore_outer_core,ystore_outer_core,zstore_outer_core, &
             xix_outer_core,xiy_outer_core,xiz_outer_core, &
             etax_outer_core,etay_outer_core,etaz_outer_core, &
-            gammax_outer_core,gammay_outer_core,gammaz_outer_core,jacobian_outer_core, &
+            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
             rhostore_outer_core,kappavstore_outer_core,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
             nspec_iso,nspec_tiso,nspec_ani, &
@@ -1313,7 +1313,7 @@
             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
             xix_inner_core,xiy_inner_core,xiz_inner_core, &
             etax_inner_core,etay_inner_core,etaz_inner_core, &
-            gammax_inner_core,gammay_inner_core,gammaz_inner_core,jacobian_inner_core, &
+            gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
             rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
             dummy_array,dummy_array,dummy_array, &
             nspec_iso,nspec_tiso,nspec_ani, &
@@ -2856,8 +2856,7 @@
          xix_outer_core,xiy_outer_core,xiz_outer_core, &
          etax_outer_core,etay_outer_core,etaz_outer_core, &
          gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-         jacobian_outer_core,hprime_xx,hprime_yy,hprime_zz, &
-         hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+         hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
          ibool_outer_core)
 
@@ -2869,8 +2868,7 @@
          xix_outer_core,xiy_outer_core,xiz_outer_core, &
          etax_outer_core,etay_outer_core,etaz_outer_core, &
          gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-         jacobian_outer_core,hprime_xx,hprime_yy,hprime_zz, &
-         hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+         hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
          ibool_outer_core)
   endif
@@ -3253,7 +3251,7 @@
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,jacobian_crust_mantle, &
+          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -3279,7 +3277,7 @@
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,jacobian_crust_mantle, &
+          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -3535,9 +3533,8 @@
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
-          gammax_inner_core,gammay_inner_core,gammaz_inner_core,jacobian_inner_core, &
-          hprime_xx,hprime_yy,hprime_zz, &
-          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core, &
@@ -3554,9 +3551,8 @@
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
-          gammax_inner_core,gammay_inner_core,gammaz_inner_core,jacobian_inner_core, &
-          hprime_xx,hprime_yy,hprime_zz, &
-          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core, &

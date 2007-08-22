@@ -18,7 +18,7 @@
 
   subroutine calc_jacobian(myrank,xixstore,xiystore,xizstore, &
      etaxstore,etaystore,etazstore, &
-     gammaxstore,gammaystore,gammazstore,jacobianstore, &
+     gammaxstore,gammaystore,gammazstore, &
      xstore,ystore,zstore, &
      xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
 
@@ -45,8 +45,7 @@
                          etazstore(NGLLX,NGLLY,NGLLZ,nspec), &
                          gammaxstore(NGLLX,NGLLY,NGLLZ,nspec), &
                          gammaystore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         gammazstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         jacobianstore(NGLLX,NGLLY,NGLLZ,nspec)
+                         gammazstore(NGLLX,NGLLY,NGLLZ,nspec)
 
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -108,11 +107,6 @@
       gammay = (xeta*zxi-xxi*zeta) / jacobian
       gammaz = (xxi*yeta-xeta*yxi) / jacobian
 
-! compute and store the jacobian for the solver
-      jacobian = 1.d0 / (xix*(etay*gammaz-etaz*gammay) &
-                        -xiy*(etax*gammaz-etaz*gammax) &
-                        +xiz*(etax*gammay-etay*gammax))
-
 ! save the derivatives and the jacobian
 ! distinguish between single and double precision for reals
       if(ACTUALLY_STORE_ARRAYS) then
@@ -126,7 +120,6 @@
           gammaxstore(i,j,k,ispec) = sngl(gammax)
           gammaystore(i,j,k,ispec) = sngl(gammay)
           gammazstore(i,j,k,ispec) = sngl(gammaz)
-          jacobianstore(i,j,k,ispec) = sngl(jacobian)
         else
           xixstore(i,j,k,ispec) = xix
           xiystore(i,j,k,ispec) = xiy
@@ -137,7 +130,6 @@
           gammaxstore(i,j,k,ispec) = gammax
           gammaystore(i,j,k,ispec) = gammay
           gammazstore(i,j,k,ispec) = gammaz
-          jacobianstore(i,j,k,ispec) = jacobian
         endif
       endif
 

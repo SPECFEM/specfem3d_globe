@@ -20,7 +20,7 @@
 
   subroutine read_arrays_solver(iregion_code,myrank, &
               rho_vp,rho_vs,xstore,ystore,zstore, &
-              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian, &
+              xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
               rhostore, kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
               nspec_iso,nspec_tiso,nspec_ani, &
               c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -50,7 +50,7 @@
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,jacobian
+    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
 ! material properties
   real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec_iso)
@@ -97,9 +97,6 @@
   read(IIN) gammax
   read(IIN) gammay
   read(IIN) gammaz
-
-! jacobian
-  read(IIN) jacobian
 
 ! model arrays
   read(IIN) rhostore
