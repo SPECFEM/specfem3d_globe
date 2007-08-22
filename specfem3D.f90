@@ -265,19 +265,19 @@
   real(kind=CUSTOM_REAL) dist_cr
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: eps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: eps_trace_over_3_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_inner_core
 
 ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:),allocatable :: b_R_memory_crust_mantle,b_R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: b_epsilondev_crust_mantle, b_epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: b_eps_trace_over_3_crust_mantle, b_eps_trace_over_3_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: b_R_memory_crust_mantle,b_R_memory_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: b_epsilondev_crust_mantle, b_epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_eps_trace_over_3_crust_mantle, b_eps_trace_over_3_inner_core
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
 
 ! for matching with central cube in inner core
@@ -2558,8 +2558,20 @@
 
   if (SAVE_STRAIN) then
     allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-
+    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
+    allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
+
+    eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+    eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
+    epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
+    if(FIX_UNDERFLOW_PROBLEM) then
+      eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
+      epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
+      eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
+      epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
+    endif
 
     if (SIMULATION_TYPE_VAL == 3) then
       allocate(b_epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
@@ -2576,18 +2588,12 @@
        call exit_MPI(myrank, 'NSPEC_CRUST_MANTLE_ATTENUAT /= NSPEC_CRUST_MANTLE, exit')
     if (NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE) &
        call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')
+
     R_memory_crust_mantle(:,:,:,:,:,:) = 0._CUSTOM_REAL
     R_memory_inner_core(:,:,:,:,:,:) = 0._CUSTOM_REAL
-
-    epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-    epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-
     if(FIX_UNDERFLOW_PROBLEM) then
       R_memory_crust_mantle(:,:,:,:,:,:) = VERYSMALLVAL
       R_memory_inner_core(:,:,:,:,:,:) = VERYSMALLVAL
-
-      epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
-      epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
     endif
 
     if (SIMULATION_TYPE_VAL == 3) then
