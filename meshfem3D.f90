@@ -707,7 +707,7 @@
     if(myrank == 0) then
 
       receiver = myrank + 1
-      call system('rm -f -r /scratch/komatits* > /dev/null')
+      call system('rm -f -r /scratch/komatits_new* > /dev/null')
       call MPI_SEND(dummy1,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
 
     else
@@ -715,7 +715,7 @@
       sender = myrank - 1
       receiver = myrank + 1
       call MPI_RECV(dummy2,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-      call system('rm -f -r /scratch/komatits* > /dev/null')
+      call system('rm -f -r /scratch/komatits_new* > /dev/null')
       if(myrank < sizeprocs - 1) call MPI_SEND(dummy1,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
 
     endif
@@ -723,16 +723,16 @@
     call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 ! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
-    LOCAL_PATH = '/scratch/komatits'
+    LOCAL_PATH = '/scratch/komatits_new'
 
-! add processor name to local /scratch/komatits path
+! add processor name to local /scratch/komatits_new path
     write(system_command,"('_proc',i4.4)") myrank
     LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
 
 ! create a local directory to store all the local files
-!!!!!!!!!!!!!    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4,' ;&
-!!!!!!!!!!!!!     mkdir /scratch/komatits_proc',i4.4)") myrank,myrank
-    write(system_command,"('mkdir /scratch/komatits_proc',i4.4)") myrank
+!!!!!!!!!!!!!    write(system_command,"('rm -r -f /scratch/komatits_new_proc',i4.4,' ;&
+!!!!!!!!!!!!!     mkdir /scratch/komatits_new_proc',i4.4)") myrank,myrank
+    write(system_command,"('mkdir /scratch/komatits_new_proc',i4.4)") myrank
     call system(system_command)
 
   endif
