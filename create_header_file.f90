@@ -180,8 +180,12 @@ enddo
   print *,'----------------------------------------------'
   print *
   print *,'size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
-  print *,'  (should be below 1.5 GB on pangu at Caltech)'
-  print *,'  (should be below 2 GB on Marenostrum in Barcelona)'
+  print *
+  print *,'   (should be below and typically equal to 80% of 1.5 GB = 1.2 GB on pangu'
+  print *,'    at Caltech, and below and typically equal to 80% of 2 GB = 1.6 GB'
+  print *,'    on Marenostrum in Barcelona)'
+  print *,'   (if significantly more, the job will not run by lack of memory)'
+  print *,'   (if significantly less, you waste a significant amount of memory)'
   print *
   print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
