@@ -970,9 +970,9 @@
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
 
 ! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
-    LOCAL_PATH = '/scratch/komatits'
+    LOCAL_PATH = '/scratch/komatits_new'
 
-! add processor name to local /scratch/komatits path
+! add processor name to local /scratch/komatits_new path
     write(system_command,"('_proc',i4.4)") myrank
     LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
 
@@ -4562,7 +4562,7 @@
     call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 ! suppress the local directory to leave space for future runs with a different rank number
-    write(system_command,"('rm -r -f /scratch/komatits_proc',i4.4)") myrank
+    write(system_command,"('rm -r -f /scratch/komatits_new_proc',i4.4)") myrank
     call system(system_command)
 
   endif
