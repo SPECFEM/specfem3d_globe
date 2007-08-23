@@ -97,6 +97,7 @@
     topo410 = -dble(topo410out) / R_EARTH_KM
     topo650 = -dble(topo650out) / R_EARTH_KM
 
+    gamma = 0.d0
     if(r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
 ! stretching between R220 and R400
       gamma = (R220/R_EARTH - r) / (R220/R_EARTH - R400/R_EARTH)
