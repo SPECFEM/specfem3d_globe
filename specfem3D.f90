@@ -2843,21 +2843,26 @@
 
       write(IOUT,*) 'Time step # ',it
       write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
+      write(IOUT,*)
       write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
       write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
+      write(IOUT,*)
 
       if (SIMULATION_TYPE_VAL == 3) then
         write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
         write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
+        write(IOUT,*)
       endif
 
       write(IOUT,*) 'Elapsed time in seconds = ',tCPU
       write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
       write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+      write(IOUT,*)
 
       write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
       write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_remain,iminutes_remain,iseconds_remain
+      write(IOUT,*)
 
       write(IOUT,*) 'Estimated total time in seconds = ',t_total
       write(IOUT,"(' Estimated total time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
