@@ -675,8 +675,11 @@
 !ADJOINT
 
 ! timer MPI
-  integer ihours,iminutes,iseconds,int_tCPU
-  double precision time_start,tCPU
+  integer :: ihours,iminutes,iseconds,int_tCPU, &
+             ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
+             ihours_total,iminutes_total,iseconds_total,int_t_total
+
+  double precision :: time_start,tCPU,t_remain,t_total
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
@@ -2790,16 +2793,6 @@
       write(IMAIN,*) 'Time step # ',it
       write(IMAIN,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
 
-! elapsed time since beginning of the simulation
-      tCPU = MPI_WTIME() - time_start
-      int_tCPU = int(tCPU)
-      ihours = int_tCPU / 3600
-      iminutes = (int_tCPU - 3600*ihours) / 60
-      iseconds = int_tCPU - 3600*ihours - 60*iminutes
-      write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
-      write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-      write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
-
 ! rescale maximum displacement to correct dimensions
       Usolidnorm_all = Usolidnorm_all * sngl(scale_displ)
       write(IMAIN,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
@@ -2812,21 +2805,67 @@
       write(IMAIN,*)
       endif
 
+! elapsed time since beginning of the simulation
+      tCPU = MPI_WTIME() - time_start
+      int_tCPU = int(tCPU)
+      ihours = int_tCPU / 3600
+      iminutes = (int_tCPU - 3600*ihours) / 60
+      iseconds = int_tCPU - 3600*ihours - 60*iminutes
+      write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
+      write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+      write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+
+! compute estimated remaining simulation time
+      t_remain = (NSTEP - it) * (tCPU/dble(it))
+      int_t_remain = int(t_remain)
+      ihours_remain = int_t_remain / 3600
+      iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
+      iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
+      write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
+      write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_remain,iminutes_remain,iseconds_remain
+
+! compute estimated total simulation time
+      t_total = t_remain + tCPU
+      int_t_total = int(t_total)
+      ihours_total = int_t_total / 3600
+      iminutes_total = (int_t_total - 3600*ihours_total) / 60
+      iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
+      write(IMAIN,*) 'Estimated total time in seconds = ',t_total
+      write(IMAIN,"(' Estimated total time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_total,iminutes_total,iseconds_total
+      write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
+
 ! write time stamp file to give information about progression of simulation
       write(outputname,"('/timestamp',i6.6)") it
+
       open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown')
+
       write(IOUT,*) 'Time step # ',it
       write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
+      write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
+      write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
+
+      if (SIMULATION_TYPE_VAL == 3) then
+        write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
+        write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
+      endif
+
       write(IOUT,*) 'Elapsed time in seconds = ',tCPU
       write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
       write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
-      write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
-      write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
-      if (SIMULATION_TYPE_VAL == 3) then
-      write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
-      write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
-      endif
+
+      write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
+      write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_remain,iminutes_remain,iseconds_remain
+
+      write(IOUT,*) 'Estimated total time in seconds = ',t_total
+      write(IOUT,"(' Estimated total time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+               ihours_total,iminutes_total,iseconds_total
+      write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
+
       close(IOUT)
+
 ! check stability of the code, exit if unstable
       if(Usolidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in solid')
       if(Ufluidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in fluid')
