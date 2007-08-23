@@ -1,0 +1,26 @@
+Benchmark normal-mode (obani-qmxd) vs. sem
+------------------------------------------
+
+Each directory corresponds to an experiement
+normal-mode vs. sem which is hopefully sufficiently defined 
+by the directory's name 
+
+The standart contents of each directory are the following:
+QMXD/	*.qmxd.bz2 : ascii unprocessed qmxd-seismograms 
+	 DATA/ : cmt and stations files 
+		and command line launching the qmxd script 
+		(available in /opt/seismo-util/bin)  
+
+SEMD/ 	*.semd.ascii.bz2 : ascii unprocessed sem-seismograms
+	DATA/ : cmt, stations and parameter files
+
+processing : processing script 
+	    (convolve, filter, write sac file and rotate)	 
+	    needs process_synt.pl and rotate.pl
+	    (in SPECFEM3D_GLOBE_V4.0/UTILS/)
+
+CMTSOLUTION :
+STATIONS    : input files for processing  
+
+
+Anne 22/08/2007
