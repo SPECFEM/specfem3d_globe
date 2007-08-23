@@ -265,13 +265,13 @@
   real(kind=CUSTOM_REAL) dist_cr
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN) :: epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN) :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: eps_trace_over_3_inner_core
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN) :: epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN) :: eps_trace_over_3_inner_core
 
 ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
@@ -2560,10 +2560,6 @@
   endif
 
   if (SAVE_STRAIN) then
-    allocate(eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-    allocate(epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-    allocate(eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
-    allocate(epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
 
     eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
