@@ -2831,8 +2831,8 @@
       ihours_total = int_t_total / 3600
       iminutes_total = (int_t_total - 3600*ihours_total) / 60
       iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
-      write(IMAIN,*) 'Estimated total time in seconds = ',t_total
-      write(IMAIN,"(' Estimated total time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+      write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
+      write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_total,iminutes_total,iseconds_total
       write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
 
@@ -2864,8 +2864,8 @@
                ihours_remain,iminutes_remain,iseconds_remain
       write(IOUT,*)
 
-      write(IOUT,*) 'Estimated total time in seconds = ',t_total
-      write(IOUT,"(' Estimated total time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+      write(IOUT,*) 'Estimated total run time in seconds = ',t_total
+      write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_total,iminutes_total,iseconds_total
       write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
 
