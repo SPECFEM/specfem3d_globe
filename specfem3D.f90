@@ -470,8 +470,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displ_outer_core, &
     veloc_outer_core,accel_outer_core
 
-! divergence of displ
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: div_displ_outer_core
+! movie_volume
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: div_s_outer_core
 
 ! ----------------- inner core ---------------------
 
@@ -515,6 +515,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displ_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: b_div_displ_outer_core
 
   real(kind=CUSTOM_REAL) :: rho_kl, beta_kl, alpha_kl
@@ -988,19 +989,28 @@
   endif
 
 ! check simulation pararmeters
-  if (SIMULATION_TYPE_VAL /= 1 .and.  SIMULATION_TYPE_VAL /= 2 .and. SIMULATION_TYPE_VAL /= 3) &
+  if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
           call exit_MPI(myrank, 'SIMULATION_TYPE could be only 1, 2, or 3')
 
-  if (SIMULATION_TYPE_VAL /= 1 .and. NSOURCES > 999999)  &
+  if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
     call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
 
-  if (SIMULATION_TYPE_VAL == 3 .and. ATTENUATION_VAL) &
+  if (SIMULATION_TYPE == 3 .and. ATTENUATION_VAL) &
     call exit_MPI(myrank, 'attenuation is not implemented for kernel simulations yet')
 
-  if (SIMULATION_TYPE_VAL == 3 .and. ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL) &
+  if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+    if(NSPEC_CRUST_MANTLE_ADJOINT /= NSPEC_CRUST_MANTLE &
+      .or. NSPEC_OUTER_CORE_ADJOINT /= NSPEC_OUTER_CORE &
+      .or. NSPEC_INNER_CORE_ADJOINT /= NSPEC_INNER_CORE &
+      .or. NGLOB_CRUST_MANTLE_ADJOINT /= NGLOB_CRUST_MANTLE &
+      .or. NGLOB_OUTER_CORE_ADJOINT /= NGLOB_OUTER_CORE &
+      .or. NGLOB_INNER_CORE_ADJOINT /= NGLOB_INNER_CORE) call exit_MPI(myrank, 'improper dimensions of adjoint arrays')
+  endif
+
+  if (SIMULATION_TYPE == 3 .and. ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL) &
      call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
-  if (ATTENUATION_VAL .or. SIMULATION_TYPE_VAL /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE_VAL /= 3)) then
+  if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     SAVE_STRAIN = .true.
   else
     SAVE_STRAIN = .false.
@@ -1077,10 +1087,6 @@
   if (ATTENUATION_3D .NEQV. ATTENUATION_3D_VAL) then
       write(IMAIN,*) ATTENUATION_3D,ATTENUATION_3D_VAL
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver 4')
-  endif
-  if (SIMULATION_TYPE /= SIMULATION_TYPE_VAL) then
-      write(IMAIN,*) SIMULATION_TYPE,SIMULATION_TYPE_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 5')
   endif
   if (NCHUNKS /= NCHUNKS_VAL) then
       write(IMAIN,*) NCHUNKS,NCHUNKS_VAL
@@ -1424,7 +1430,7 @@
   t0 = - 1.5d0*minval(t_cmt-hdur)
 
 ! --------- receivers ---------------
-  if (SIMULATION_TYPE_VAL == 1) then
+  if (SIMULATION_TYPE == 1) then
     rec_filename = 'DATA/STATIONS'
   else
     rec_filename = 'DATA/STATIONS_ADJOINT'
@@ -1441,7 +1447,7 @@
 
   if(myrank == 0) then
     write(IMAIN,*)
-    if (SIMULATION_TYPE_VAL == 1 .or. SIMULATION_TYPE_VAL == 3) then
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       write(IMAIN,*) 'Total number of receivers = ', nrec
     else
       write(IMAIN,*) 'Total number of adjoint sources = ', nrec
@@ -1567,10 +1573,10 @@
       read(27) nkmin_eta_crust_mantle
       close(27)
 
-      if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD))) then
+      if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
         allocate(absorb_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,nspec2D_xmin_crust_mantle))
         reclen_xmin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmin_crust_mantle)
-        if (SIMULATION_TYPE_VAL == 3) then
+        if (SIMULATION_TYPE == 3) then
           open(unit=51,file=trim(prname)//'absorb_xmin.bin',status='old',action='read',form='unformatted',access='direct', &
                 recl=reclen_xmin_crust_mantle+2*4)
         else
@@ -1579,10 +1585,10 @@
         endif
       endif
 
-      if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD))) then
+      if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
         allocate(absorb_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,nspec2D_xmax_crust_mantle))
         reclen_xmax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmax_crust_mantle)
-        if (SIMULATION_TYPE_VAL == 3) then
+        if (SIMULATION_TYPE == 3) then
           open(unit=52,file=trim(prname)//'absorb_xmax.bin',status='old',action='read',form='unformatted',access='direct', &
                 recl=reclen_xmax_crust_mantle+2*4)
         else
@@ -1591,10 +1597,10 @@
         endif
       endif
 
-      if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD))) then
+      if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
         allocate(absorb_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,nspec2D_ymin_crust_mantle))
         reclen_ymin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymin_crust_mantle)
-        if (SIMULATION_TYPE_VAL == 3) then
+        if (SIMULATION_TYPE == 3) then
           open(unit=53,file=trim(prname)//'absorb_ymin.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_ymin_crust_mantle+2*4)
         else
@@ -1603,10 +1609,10 @@
         endif
       endif
 
-      if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD))) then
+      if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
         allocate(absorb_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,nspec2D_ymax_crust_mantle))
         reclen_ymax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymax_crust_mantle)
-        if (SIMULATION_TYPE_VAL == 3) then
+        if (SIMULATION_TYPE == 3) then
           open(unit=54,file=trim(prname)//'absorb_ymax.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_ymax_crust_mantle+2*4)
         else
@@ -1669,10 +1675,10 @@
       read(27) nkmin_eta_outer_core
       close(27)
 
-      if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD))) then
+      if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
         allocate(absorb_xmin_outer_core(NGLLY,NGLLZ,nspec2D_xmin_outer_core))
         reclen_xmin_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmin_outer_core)
-        if (SIMULATION_TYPE_VAL == 3) then
+        if (SIMULATION_TYPE == 3) then
           open(unit=61,file=trim(prname)//'absorb_xmin.bin',status='old',action='read',form='unformatted',access='direct', &
                 recl=reclen_xmin_outer_core+2*4)
         else
@@ -1681,10 +1687,10 @@
         endif
       endif
 
-      if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD))) then
+      if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
         allocate(absorb_xmax_outer_core(NGLLY,NGLLZ,nspec2D_xmax_outer_core))
         reclen_xmax_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmax_outer_core)
-        if (SIMULATION_TYPE_VAL == 3) then
+        if (SIMULATION_TYPE == 3) then
           open(unit=62,file=trim(prname)//'absorb_xmax.bin',status='old',action='read',form='unformatted',access='direct', &
                 recl=reclen_xmax_outer_core+2*4)
         else
@@ -1693,10 +1699,10 @@
         endif
       endif
 
-      if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD))) then
+      if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
         allocate(absorb_ymin_outer_core(NGLLX,NGLLZ,nspec2D_ymin_outer_core))
         reclen_ymin_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymin_outer_core)
-        if (SIMULATION_TYPE_VAL == 3) then
+        if (SIMULATION_TYPE == 3) then
           open(unit=63,file=trim(prname)//'absorb_ymin.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_ymin_outer_core+2*4)
         else
@@ -1705,10 +1711,10 @@
         endif
       endif
 
-      if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD))) then
+      if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
         allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nspec2D_ymax_outer_core))
         reclen_ymax_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymax_outer_core)
-        if (SIMULATION_TYPE_VAL == 3) then
+        if (SIMULATION_TYPE == 3) then
           open(unit=64,file=trim(prname)//'absorb_ymax.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_ymax_outer_core+2*4)
         else
@@ -1718,10 +1724,10 @@
       endif
 
       if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. &
-         (SIMULATION_TYPE_VAL == 3 .or. (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD)))then
+         (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
         allocate(absorb_zmin_outer_core(NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
         reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
-         if (SIMULATION_TYPE_VAL == 3) then
+         if (SIMULATION_TYPE == 3) then
          open(unit=65,file=trim(prname)//'absorb_zmin.bin',status='old',action='read',form='unformatted',access='direct',&
                 recl=reclen_zmin+2*4)
         else
@@ -1757,7 +1763,7 @@
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 ! ---- source array
 
-  if (SIMULATION_TYPE_VAL == 1  .or. SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
 
   allocate(sourcearrays(NSOURCES,NDIM,NGLLX,NGLLY,NGLLZ))
   do isource = 1,NSOURCES
@@ -1780,7 +1786,7 @@
   enddo
   endif
 
-  if (SIMULATION_TYPE_VAL == 2 .or. SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     nadj_rec_local = 0
     do irec = 1,nrec
       if(myrank == islice_selected_rec(irec))then
@@ -1831,7 +1837,7 @@
 
 ! count number of receivers located in this slice
   nrec_local = 0
-  if (SIMULATION_TYPE_VAL == 1 .or. SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
     nrec_simulation = nrec
     do irec = 1,nrec
       if(myrank == islice_selected_rec(irec)) nrec_local = nrec_local + 1
@@ -1853,7 +1859,7 @@
 ! define local to global receiver numbering mapping
   allocate(number_receiver_global(nrec_local))
   irec_local = 0
-  if (SIMULATION_TYPE_VAL == 1 .or. SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
     do irec = 1,nrec
       if(myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
@@ -1870,7 +1876,7 @@
   endif
 
 ! define and store Lagrange interpolators at all the receivers
-  if (SIMULATION_TYPE_VAL == 1 .or. SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
   do irec_local = 1,nrec_local
     irec = number_receiver_global(irec_local)
     call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
@@ -2316,7 +2322,7 @@
 
 ! allocate seismogram array
   if (nrec_local > 0) then
-    if (SIMULATION_TYPE_VAL == 1 .or. SIMULATION_TYPE_VAL == 3) then
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       allocate(seismograms(NDIM,nrec_local,NSTEP))
     else
       allocate(seismograms(9,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS))
@@ -2347,7 +2353,7 @@
     displ_inner_core(:,:) = VERYSMALLVAL
   endif
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
 
     rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
@@ -2472,7 +2478,7 @@
   deltatover2 = 0.5d0*deltat
   deltatsqover2 = 0.5d0*deltat*deltat
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
     if(CUSTOM_REAL == SIZE_REAL) then
       b_deltat = - sngl(DT/scale_t)
     else
@@ -2485,7 +2491,7 @@
 ! non-dimensionalized rotation rate of the Earth times two
   if(ROTATION_VAL) then
 ! distinguish between single and double precision for reals
-    if (SIMULATION_TYPE_VAL == 1) then
+    if (SIMULATION_TYPE == 1) then
     if(CUSTOM_REAL == SIZE_REAL) then
       two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t))
     else
@@ -2500,7 +2506,7 @@
     endif
     A_array_rotation = 0.
     B_array_rotation = 0.
-    if (SIMULATION_TYPE_VAL == 3) then
+    if (SIMULATION_TYPE == 3) then
       if(CUSTOM_REAL == SIZE_REAL) then
         b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t))
       else
@@ -2509,7 +2515,7 @@
     endif
   else
     two_omega_earth = 0._CUSTOM_REAL
-    if (SIMULATION_TYPE_VAL == 3) b_two_omega_earth = 0._CUSTOM_REAL
+    if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
   endif
 
 ! precompute Runge-Kutta coefficients if attenuation
@@ -2524,7 +2530,7 @@
         betaval  = betaval_dble
         gammaval = gammaval_dble
      endif
-     if (SIMULATION_TYPE_VAL == 3) then
+     if (SIMULATION_TYPE == 3) then
        call attenuation_memory_values(tau_sigma_dble, b_deltat, alphaval_dble, betaval_dble, gammaval_dble)
        if(CUSTOM_REAL == SIZE_REAL) then
          b_alphaval = sngl(alphaval_dble)
@@ -2574,7 +2580,7 @@
 ! define correct time steps if restart files
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > 3) stop 'number of restart runs can be 1, 2 or 3'
   if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
-  if (SIMULATION_TYPE_VAL /= 1 .and. NUMBER_OF_RUNS /= 1) stop 'Only 1 run for SIMULATION_TYPE = 2/3'
+  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) stop 'Only 1 run for SIMULATION_TYPE = 2/3'
 
   if(NUMBER_OF_RUNS == 3) then
     if(NUMBER_OF_THIS_RUN == 1) then
@@ -2624,7 +2630,7 @@
     close(55)
   endif
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
     read(55) b_displ_crust_mantle
@@ -2699,7 +2705,7 @@
   enddo
 
 ! backward field
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
   do i=1,NGLOB_CRUST_MANTLE
     b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) + b_deltat*b_veloc_crust_mantle(:,i) + &
          b_deltatsqover2*b_accel_crust_mantle(:,i)
@@ -2733,7 +2739,7 @@
                           MPI_COMM_WORLD,ier)
     call MPI_REDUCE(Ufluidnorm,Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                           MPI_COMM_WORLD,ier)
-    if (SIMULATION_TYPE_VAL == 3) then
+    if (SIMULATION_TYPE == 3) then
       b_Usolidnorm = max( &
                  maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
                  b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
@@ -2759,7 +2765,7 @@
       write(IMAIN,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
       write(IMAIN,*)
-      if (SIMULATION_TYPE_VAL == 3) then
+      if (SIMULATION_TYPE == 3) then
       b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
       write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
@@ -2809,7 +2815,7 @@
       write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
       write(IOUT,*)
 
-      if (SIMULATION_TYPE_VAL == 3) then
+      if (SIMULATION_TYPE == 3) then
         write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
         write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
         write(IOUT,*)
@@ -2835,7 +2841,7 @@
 ! check stability of the code, exit if unstable
       if(Usolidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in solid')
       if(Ufluidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in fluid')
-      if (SIMULATION_TYPE_VAL == 3) then
+      if (SIMULATION_TYPE == 3) then
         if(b_Usolidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in solid for back prop.')
         if(b_Ufluidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in fluid for back prop.')
       endif
@@ -2865,7 +2871,7 @@
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
          ibool_outer_core)
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
     call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
          b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
          minus_rho_g_over_kappa_fluid,b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
@@ -2885,7 +2891,7 @@
 ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
 
-    if (SIMULATION_TYPE_VAL == 3 .and. nspec2D_xmin_outer_core > 0)  then
+    if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_outer_core > 0)  then
       read(61,rec=NSTEP-it+1) reclen1,absorb_xmin_outer_core,reclen2
       if (reclen1 /= reclen_xmin_outer_core .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmin_outer_core')
@@ -2909,9 +2915,9 @@
 
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_xmin_outer_core(j,k,ispec2D)
-          else if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             absorb_xmin_outer_core(j,k,ispec2D) = weight*sn
           endif
         enddo
@@ -2919,14 +2925,14 @@
     enddo
   endif
 
-  if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_outer_core > 0 ) &
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_outer_core > 0 ) &
      write(61,rec=it) reclen_xmin_outer_core,absorb_xmin_outer_core,reclen_xmin_outer_core
 
 !   xmax
 ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
 
-    if (SIMULATION_TYPE_VAL == 3 .and. nspec2D_xmax_outer_core > 0)  then
+    if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_outer_core > 0)  then
       read(62,rec=NSTEP-it+1) reclen1,absorb_xmax_outer_core,reclen2
       if (reclen1 /= reclen_xmax_outer_core .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax_outer_core')
@@ -2950,9 +2956,9 @@
 
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_xmax_outer_core(j,k,ispec2D)
-          else if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             absorb_xmax_outer_core(j,k,ispec2D) = weight*sn
           endif
 
@@ -2960,13 +2966,13 @@
       enddo
     enddo
 
-  if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_outer_core > 0 ) &
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_outer_core > 0 ) &
      write(62,rec=it) reclen_xmax_outer_core,absorb_xmax_outer_core,reclen_xmax_outer_core
 
   endif
 
 !   ymin
-    if (SIMULATION_TYPE_VAL == 3 .and. nspec2D_ymin_outer_core > 0)  then
+    if (SIMULATION_TYPE == 3 .and. nspec2D_ymin_outer_core > 0)  then
       read(63,rec=NSTEP-it+1) reclen1,absorb_ymin_outer_core,reclen2
       if (reclen1 /= reclen_ymin_outer_core .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin_outer_core')
@@ -2990,9 +2996,9 @@
 
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_ymin_outer_core(i,k,ispec2D)
-          else if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             absorb_ymin_outer_core(i,k,ispec2D) = weight*sn
           endif
 
@@ -3000,12 +3006,12 @@
       enddo
     enddo
 
-    if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_outer_core > 0 ) &
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_outer_core > 0 ) &
        write(63,rec=it) reclen_ymin_outer_core,absorb_ymin_outer_core,reclen_ymin_outer_core
 
 
 !   ymax
-    if (SIMULATION_TYPE_VAL == 3 .and. nspec2D_ymax_outer_core > 0)  then
+    if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_outer_core > 0)  then
       read(64,rec=NSTEP-it+1) reclen1,absorb_ymax_outer_core,reclen2
       if (reclen1 /= reclen_ymax_outer_core .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax_outer_core')
@@ -3028,9 +3034,9 @@
 
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_ymax_outer_core(i,k,ispec2D)
-          else if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             absorb_ymax_outer_core(i,k,ispec2D) = weight*sn
           endif
 
@@ -3038,12 +3044,12 @@
       enddo
     enddo
 
-    if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_outer_core > 0 ) &
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_outer_core > 0 ) &
        write(64,rec=it) reclen_ymax_outer_core,absorb_ymax_outer_core,reclen_ymax_outer_core
 
 
 ! for surface elements exactly on the ICB
-   if (SIMULATION_TYPE_VAL == 3 .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE)> 0)  then
+   if (SIMULATION_TYPE == 3 .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE)> 0)  then
       read(65,rec=NSTEP-it+1) reclen1,absorb_zmin_outer_core,reclen2
       if (reclen1 /= reclen_zmin .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_zmin_outer_core')
@@ -3063,9 +3069,9 @@
 
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_zmin_outer_core(i,j,ispec2D)
-          else if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             absorb_zmin_outer_core(i,j,ispec2D) = weight*sn
           endif
 
@@ -3073,7 +3079,7 @@
       enddo
     enddo
 
-    if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 ) &
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 ) &
        write(65,rec=it) reclen_zmin,absorb_zmin_outer_core,reclen_zmin
 
   endif ! Stacey conditions
@@ -3127,7 +3133,7 @@
 
           accel_outer_core(iglob) = accel_outer_core(iglob) + weight*displ_n
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             iglob = ibool_crust_mantle(i,j,k_corresp,ispec_selected)
             displ_x = b_displ_crust_mantle(1,iglob)
             displ_y = b_displ_crust_mantle(2,iglob)
@@ -3185,7 +3191,7 @@
 
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*displ_n
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             iglob = ibool_inner_core(i,j,k_corresp,ispec_selected)
             vx = b_displ_inner_core(1,iglob)
             vy = b_displ_inner_core(2,iglob)
@@ -3223,7 +3229,7 @@
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
   enddo
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
   call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -3275,7 +3281,7 @@
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),SAVE_STRAIN,AM_V)
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
 ! for anisotropy and gravity, x y and z contain r theta and phi
   call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
@@ -3312,7 +3318,7 @@
 ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
 
-    if (SIMULATION_TYPE_VAL == 3 .and. nspec2D_xmin_crust_mantle > 0)  then
+    if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_crust_mantle > 0)  then
       read(51,rec=NSTEP-it+1) reclen1,absorb_xmin_crust_mantle,reclen2
       if (reclen1 /= reclen_xmin_crust_mantle .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmin')
@@ -3350,9 +3356,9 @@
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_xmin_crust_mantle(:,j,k,ispec2D)
-          else if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             absorb_xmin_crust_mantle(1,j,k,ispec2D) = tx*weight
             absorb_xmin_crust_mantle(2,j,k,ispec2D) = ty*weight
             absorb_xmin_crust_mantle(3,j,k,ispec2D) = tz*weight
@@ -3363,14 +3369,14 @@
     enddo
   endif
 
-  if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) &
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) &
      write(51,rec=it) reclen_xmin_crust_mantle,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle
 
 !   xmax
 ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
 
-    if (SIMULATION_TYPE_VAL == 3 .and. nspec2D_xmax_crust_mantle > 0)  then
+    if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_crust_mantle > 0)  then
       read(52,rec=NSTEP-it+1) reclen1,absorb_xmax_crust_mantle,reclen2
       if (reclen1 /= reclen_xmax_crust_mantle .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax')
@@ -3408,9 +3414,9 @@
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_xmax_crust_mantle(:,j,k,ispec2D)
-          else if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             absorb_xmax_crust_mantle(1,j,k,ispec2D) = tx*weight
             absorb_xmax_crust_mantle(2,j,k,ispec2D) = ty*weight
             absorb_xmax_crust_mantle(3,j,k,ispec2D) = tz*weight
@@ -3421,12 +3427,12 @@
     enddo
   endif
 
-  if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) &
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) &
      write(52,rec=it) reclen_xmax_crust_mantle,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle
 
 !   ymin
 
-    if (SIMULATION_TYPE_VAL == 3 .and. nspec2D_ymin_crust_mantle > 0)  then
+    if (SIMULATION_TYPE == 3 .and. nspec2D_ymin_crust_mantle > 0)  then
       read(53,rec=NSTEP-it+1) reclen1,absorb_ymin_crust_mantle,reclen2
       if (reclen1 /= reclen_ymin_crust_mantle .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin')
@@ -3463,9 +3469,9 @@
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymin_crust_mantle(:,i,k,ispec2D)
-          else if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             absorb_ymin_crust_mantle(1,i,k,ispec2D) = tx*weight
             absorb_ymin_crust_mantle(2,i,k,ispec2D) = ty*weight
             absorb_ymin_crust_mantle(3,i,k,ispec2D) = tz*weight
@@ -3475,12 +3481,12 @@
       enddo
     enddo
 
-    if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) &
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) &
        write(53,rec=it) reclen_ymin_crust_mantle,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle
 
 !   ymax
 
-    if (SIMULATION_TYPE_VAL == 3 .and. nspec2D_ymax_crust_mantle > 0)  then
+    if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_crust_mantle > 0)  then
       read(54,rec=NSTEP-it+1) reclen1,absorb_ymax_crust_mantle,reclen2
       if (reclen1 /= reclen_ymax_crust_mantle .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax')
@@ -3517,9 +3523,9 @@
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
             b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymax_crust_mantle(:,i,k,ispec2D)
-          else if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             absorb_ymax_crust_mantle(1,i,k,ispec2D) = tx*weight
             absorb_ymax_crust_mantle(2,i,k,ispec2D) = ty*weight
             absorb_ymax_crust_mantle(3,i,k,ispec2D) = tz*weight
@@ -3528,7 +3534,7 @@
         enddo
       enddo
     enddo
-    if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) &
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) &
        write(54,rec=it) reclen_ymax_crust_mantle,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle
 
   endif ! Stacey conditions
@@ -3550,7 +3556,7 @@
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5),SAVE_STRAIN,AM_V)
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
   call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
@@ -3570,7 +3576,7 @@
   endif
 
 ! add the sources
-  if (SIMULATION_TYPE_VAL == 1) then
+  if (SIMULATION_TYPE == 1) then
   do isource = 1,NSOURCES
 
 ! add only if this proc carries the source
@@ -3600,7 +3606,7 @@
   enddo
   endif
 
-  if (SIMULATION_TYPE_VAL == 2 .or. SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
 ! figure out if we need to read in a chunk of the adjoint source at this timestep
         it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )   !chunk_number
         ibool_read_adj_arrays = (((it == it_begin) .or. (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0)) .and. (nadj_rec_local > 0))
@@ -3652,7 +3658,7 @@
 
   endif
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
   do isource = 1,NSOURCES
 
 !   add the source (only if this proc carries the source)
@@ -3736,7 +3742,7 @@
           accel_crust_mantle(2,iglob_mantle) = accel_crust_mantle(2,iglob_mantle) + weight*ny*pressure
           accel_crust_mantle(3,iglob_mantle) = accel_crust_mantle(3,iglob_mantle) + weight*nz*pressure
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
           if(GRAVITY_VAL) then
             pressure = RHO_TOP_OC * (- b_accel_outer_core(iglob) &
                + minus_g_cmb *(b_displ_crust_mantle(1,iglob_mantle)*nx &
@@ -3801,7 +3807,7 @@
           accel_inner_core(2,iglob_inner_core) = accel_inner_core(2,iglob_inner_core) - weight*ny*pressure
           accel_inner_core(3,iglob_inner_core) = accel_inner_core(3,iglob_inner_core) - weight*nz*pressure
 
-          if (SIMULATION_TYPE_VAL == 3) then
+          if (SIMULATION_TYPE == 3) then
           if(GRAVITY_VAL) then
             pressure = RHO_BOTTOM_OC * (- b_accel_outer_core(iglob) &
                + minus_g_cmb *(b_displ_inner_core(1,iglob_inner_core)*nx &
@@ -3873,7 +3879,7 @@
     accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
   enddo
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
 
 ! assemble all the contributions between slices using MPI
 
@@ -3970,7 +3976,7 @@
             accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term * ny
             accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term * nz
 
-            if (SIMULATION_TYPE_VAL == 3) then
+            if (SIMULATION_TYPE == 3) then
               b_force_normal_comp = (b_accel_crust_mantle(1,iglob)*nx + &
                  b_accel_crust_mantle(2,iglob)*ny + &
                  b_accel_crust_mantle(3,iglob)*nz) / rmass_crust_mantle(iglob)
@@ -4006,7 +4012,7 @@
     veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
   enddo
 
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
     do i=1,NGLOB_CRUST_MANTLE
       b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
     enddo
@@ -4036,7 +4042,7 @@
     uyd = ZERO
     uzd = ZERO
 
-    if (SIMULATION_TYPE_VAL == 1) then
+    if (SIMULATION_TYPE == 1) then
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
@@ -4063,7 +4069,7 @@
                    nu(:,2,irec)*uyd + nu(:,3,irec)*uzd)
       endif
 
-    else if (SIMULATION_TYPE_VAL == 2) then
+    else if (SIMULATION_TYPE == 2) then
 
       eps_trace = ZERO
       dxx = ZERO
@@ -4130,7 +4136,7 @@
                     nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd)
       endif
 
-    else  if (SIMULATION_TYPE_VAL == 3) then
+    else  if (SIMULATION_TYPE == 3) then
 
       do k = 1,NGLLZ
         do j = 1,NGLLY
@@ -4166,7 +4172,7 @@
 
 ! write the current seismograms
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) then
-    if (SIMULATION_TYPE_VAL == 1 .or. SIMULATION_TYPE_VAL == 3) then
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
         call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
               network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
               yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
@@ -4182,7 +4188,7 @@
   endif
 
 ! kernel calculations
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
 
 ! crust_mantle
     do ispec = 1, NSPEC_CRUST_MANTLE
@@ -4375,10 +4381,27 @@
     write(27) eps_trace_over_3_crust_mantle
     close(27)
 
+! we use div s = - p / kappa = rhostore_outer_core * accel_outer_core / kappavstore_outer_core
+    allocate(div_s_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
+    do ispec = 1, NSPEC_OUTER_CORE
+      do k = 1, NGLLZ
+        do j = 1, NGLLY
+          do i = 1, NGLLX
+            iglob = ibool_outer_core(i,j,k,ispec)
+            rhol = rhostore_outer_core(i,j,k,ispec)
+            kappal = kappavstore_outer_core(i,j,k,ispec)
+            div_s_outer_core(i,j,k,ispec) = rhol * accel_outer_core(iglob) / kappal
+          enddo
+        enddo
+      enddo
+    enddo
+
     write(outputname,"('proc',i6.6,'_outer_core_div_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
-    write(27)  ONE_THIRD * div_displ_outer_core
+    write(27)  div_s_outer_core
     close(27)
+
+    deallocate(div_s_outer_core)
 
     write(outputname,"('proc',i6.6,'_inner_core_div_displ_proc_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
@@ -4404,7 +4427,7 @@
   enddo   ! end of main time loop
 
 ! write the final seismograms
-  if (SIMULATION_TYPE_VAL == 1 .or. SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
     call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
         network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
         yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
@@ -4442,7 +4465,7 @@
   endif
 
 ! save last frame of the forward simulation
-  if (SIMULATION_TYPE_VAL == 1 .and. SAVE_FORWARD) then
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
     write(55) displ_crust_mantle
@@ -4468,7 +4491,7 @@
   endif
 
 ! dump kernel arrays
-  if (SIMULATION_TYPE_VAL == 3) then
+  if (SIMULATION_TYPE == 3) then
     scale_kl = scale_t/scale_displ * 1.d9
 ! crust_mantle
     do ispec = 1, NSPEC_CRUST_MANTLE

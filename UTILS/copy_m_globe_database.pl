@@ -42,13 +42,13 @@ for($i=0;$i<@slices;$i++) {
   print "$slice[$i], $node[$i]\n";
 }
 
-@files = ("AVS_DXelements","AVS_DXpoints","array_dims","$filename","ibool","x","y","z");
-@exts = ("txt","txt","txt","bin","bin","bin","bin","bin");
+@files = ("AVS_DXelements","AVS_DXpoints","array_dims","$filename","solver_data_1");
+@exts = ("txt","txt","txt","bin","bin");
 
 
 for($i=0;$i<@slices;$i++) {
   for($j=0;$j<@files;$j++){
-  $string = sprintf("scp $node[$i]:/scratch/$ENV{USER}/DATABASES_MPI/$jobid/proc%06d_reg1_$files[$j].$exts[$j] .", $slice[$i]);
+  $string = sprintf("scp $node[$i]:/scratch/$ENV{USER}/DATABASES_MPI.$jobid/proc%06d_reg1_$files[$j].$exts[$j] .", $slice[$i]);
   print "$string\n";
   system("$string");
 }}

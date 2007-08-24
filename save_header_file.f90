@@ -288,7 +288,7 @@
 
   write(IOUT,*)
 
-  if (SIMULATION_TYPE == 3) then
+  if ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT = NSPEC_CRUST_MANTLE'
     write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = NSPEC_OUTER_CORE'
     write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = NSPEC_INNER_CORE'
@@ -473,8 +473,6 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_OC = ',NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_OC = ',NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_OC = ',NSPEC2D_TOP(IREGION_OUTER_CORE)
-
-  write(IOUT,*) 'integer, parameter :: SIMULATION_TYPE_VAL = ',SIMULATION_TYPE
 
   close(IOUT)
 
