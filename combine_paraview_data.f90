@@ -31,13 +31,17 @@ program combine_paraview_data
   integer np, ne, npoint(300), nelement(300), njunk, njunk2, n1, n2, n3, n4, n5, n6, n7, n8
   integer ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: junk
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: junk2
+
   integer numpoin, iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8, iglob
   logical mask_ibool(NGLOB_CRUST_MANTLE)
+  logical READ_KAPPA_MU,READ_TISO
   real(kind=CUSTOM_REAL) data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
   real(kind=CUSTOM_REAL),dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
   real x, y, z, dat(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
   character(len=150) :: sline, arg(6), filename, indir, outdir, prname, dimension_file
-  character(len=150) :: mesh_file, local_point_file, local_element_file, local_file, local_data_file, local_ibool_file
+  character(len=150) :: mesh_file, local_point_file, local_element_file, local_data_file, local_ibool_file
   integer :: num_ibool(NGLOB_CRUST_MANTLE)
   logical :: HIGH_RESOLUTION_MESH
   integer :: ires, iregion,irs,ire,ir
@@ -176,13 +180,103 @@ program combine_paraview_data
 
     dat = data
 
-  ! ibool file
-    local_ibool_file = trim(prname) // 'ibool' // '.bin'
+    if(ANISOTROPIC_3D_MANTLE_VAL) then
+      READ_KAPPA_MU = .false.
+      READ_TISO = .false.
+    else
+      READ_KAPPA_MU = .true.
+      READ_TISO = .true.
+    endif
+
+    local_ibool_file = trim(prname) // 'solver_data_1' // '.bin'
     open(unit = 28,file = trim(local_ibool_file),status='old',action='read', iostat = ios, form='unformatted')
     if (ios /= 0) stop 'Error opening file'
 
+    read(28) junk(:,:,:,1:nspec(it))
+    read(28) junk(:,:,:,1:nspec(it))
+    read(28) junk(:,:,:,1:nspec(it))
+    read(28) junk(:,:,:,1:nspec(it))
+    read(28) junk(:,:,:,1:nspec(it))
+    read(28) junk(:,:,:,1:nspec(it))
+    read(28) junk(:,:,:,1:nspec(it))
+    read(28) junk(:,:,:,1:nspec(it))
+    read(28) junk(:,:,:,1:nspec(it))
+
+! model arrays
+    read(28) junk(:,:,:,1:nspec(it))
+    read(28) junk(:,:,:,1:nspec(it))
+
+    if(READ_KAPPA_MU) read(28) junk(:,:,:,1:nspec(it))
+
+! for anisotropy, gravity and rotation
+
+    if(TRANSVERSE_ISOTROPY_VAL .and. READ_TISO) then
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+    endif
+
+    if(ANISOTROPIC_INNER_CORE_VAL .and. ir == 3) then
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+    endif
+  
+    if(ANISOTROPIC_3D_MANTLE_VAL .and. ir == 1) then
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+      read(28) junk(:,:,:,1:nspec(it))
+    endif
+  
+  ! Stacey
+    if(NSPEC_CRUST_MANTLE_STACEY /= 1) then
+  
+      if(ir == 1) then
+        read(28) junk(:,:,:,1:nspec(it))
+        read(28) junk(:,:,:,1:nspec(it))
+      else if(ir == 2) then
+        read(28) junk(:,:,:,1:nspec(it))
+      endif
+  
+    endif
+  
     read(28) ibool(:,:,:,1:nspec(it))
+  
+    read(28) junk2(1:nspec(it))
+    
+  ! mass matrix 
+    read(28) junk2(1:nglob(it))
+      
+  ! read additional ocean load mass matrix
+    if(NGLOB_CRUST_MANTLE_OCEANS /= 1 .and. ir == 1) read(28) junk2(1:nglob(it))
+      
+! read coordinates of the mesh
+    read(28) xstore(1:nglob(it))
+    read(28) ystore(1:nglob(it))
+    read(28) zstore(1:nglob(it))
+    
     close(28)
+
     print *, trim(local_ibool_file)
 
     mask_ibool(:) = .false.
@@ -290,25 +384,6 @@ program combine_paraview_data
       if (it == 1) then
         call write_integer(npoint_all)
       endif
-
-      local_file = trim(prname)//'x.bin'
-      open(unit = 27,file = trim(prname)//'x.bin',status='old',action='read', iostat = ios,form ='unformatted')
-     if (ios /= 0) stop 'Error opening file'
-
-      read(27) xstore(1:nglob(it))
-      close(27)
-      local_file = trim(prname)//'y.bin'
-      open(unit = 27,file = trim(prname)//'y.bin',status='old',action='read', iostat = ios,form ='unformatted')
-     if (ios /= 0) stop 'Error opening file'
-
-      read(27) ystore(1:nglob(it))
-      close(27)
-      local_file = trim(prname)//'z.bin'
-      open(unit = 27,file = trim(prname)//'z.bin',status='old',action='read', iostat = ios,form ='unformatted')
-      if (ios /= 0) stop 'Error opening file'
-
-      read(27) zstore(1:nglob(it))
-      close(27)
 
       do ispec=1,nspec(it)
         do k = 1, NGLLZ
@@ -419,13 +494,6 @@ program combine_paraview_data
       if (it == 1) then
         call write_integer(nelement_all)
       endif
-
-      local_ibool_file = trim(prname) // 'ibool' // '.bin'
-      open(unit = 28,file = trim(local_ibool_file),status='old',action='read', iostat = ios, form='unformatted')
-       if (ios /= 0) stop 'Error opening file'
-
-      read(28) ibool(:,:,:,1:nspec(it))
-      close(28)
 
       numpoin = 0
       mask_ibool = .false.
