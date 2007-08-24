@@ -276,6 +276,8 @@
     write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ATTENUATION = 1'
   endif
 
+  write(IOUT,*)
+
   if(ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN = NSPEC_CRUST_MANTLE'
     write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_STRAIN = NSPEC_INNER_CORE'
@@ -283,6 +285,36 @@
     write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN = 1'
     write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_STRAIN = 1'
   endif
+
+  write(IOUT,*)
+
+  if (SIMULATION_TYPE == 3) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT = NSPEC_CRUST_MANTLE'
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = NSPEC_OUTER_CORE'
+    write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = NSPEC_INNER_CORE'
+
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT = NGLOB_CRUST_MANTLE'
+    write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_ADJOINT = NGLOB_OUTER_CORE'
+    write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE_ADJOINT = NGLOB_INNER_CORE'
+
+    if(ROTATION) then
+      write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT = NSPEC_OUTER_CORE'
+    else
+      write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT = 1'
+    endif
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT = 1'
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = 1'
+    write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = 1'
+
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT = 1'
+    write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_ADJOINT = 1'
+    write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE_ADJOINT = 1'
+
+    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT = 1'
+   endif 
+
+  write(IOUT,*)
 
 ! if absorbing conditions are off, set dummy size of arrays to one
   if(ABSORBING_CONDITIONS) then

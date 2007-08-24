@@ -275,9 +275,15 @@
 
 ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: b_R_memory_crust_mantle,b_R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: b_epsilondev_crust_mantle, b_epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_eps_trace_over_3_crust_mantle, b_eps_trace_over_3_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_R_memory_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_eps_trace_over_3_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_R_memory_inner_core
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_eps_trace_over_3_inner_core
+
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
 
 ! for matching with central cube in inner core
@@ -465,7 +471,7 @@
     veloc_outer_core,accel_outer_core
 
 ! divergence of displ
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable  :: div_displ_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: div_displ_outer_core
 
 ! ----------------- inner core ---------------------
 
@@ -502,24 +508,24 @@
 ! ADJOINT
   real(kind=CUSTOM_REAL) b_additional_term,b_force_normal_comp
   real(kind=CUSTOM_REAL) b_deltat,b_deltatover2,b_deltatsqover2
-  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable  :: b_div_displ_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: b_div_displ_outer_core
 
   real(kind=CUSTOM_REAL) :: rho_kl, beta_kl, alpha_kl
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable:: rho_kl_crust_mantle, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: rho_kl_crust_mantle, &
      beta_kl_crust_mantle, alpha_kl_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable:: rho_kl_outer_core, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core, &
      alpha_kl_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable:: rho_kl_inner_core, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: rho_kl_inner_core, &
      beta_kl_inner_core, alpha_kl_inner_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
@@ -533,7 +539,7 @@
      reclen_ymax_crust_mantle, reclen_xmin_outer_core, reclen_xmax_outer_core,&
      reclen_ymin_outer_core, reclen_ymax_outer_core, reclen_zmin, reclen1, reclen2
 
-  real(kind=CUSTOM_REAL), dimension(NDIM):: vector_accel_outer_core,b_vector_displ_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM) :: vector_accel_outer_core,b_vector_displ_outer_core
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   double precision scale_kl
@@ -669,7 +675,7 @@
 
 !ADJOINT
   real(kind=CUSTOM_REAL) b_two_omega_earth
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_A_array_rotation,b_B_array_rotation
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: b_A_array_rotation,b_B_array_rotation
   real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
 !ADJOINT
@@ -2342,31 +2348,6 @@
   endif
 
   if (SIMULATION_TYPE_VAL == 3) then
-    allocate(b_displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE))
-    allocate(b_veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE))
-    allocate(b_accel_crust_mantle(NDIM,NGLOB_CRUST_MANTLE))
-
-    allocate(b_displ_outer_core(NGLOB_OUTER_CORE))
-    allocate(b_veloc_outer_core(NGLOB_OUTER_CORE))
-    allocate(b_accel_outer_core(NGLOB_OUTER_CORE))
-
-    allocate(b_displ_inner_core(NDIM,NGLOB_INNER_CORE))
-    allocate(b_veloc_inner_core(NDIM,NGLOB_INNER_CORE))
-    allocate(b_accel_inner_core(NDIM,NGLOB_INNER_CORE))
-
-    allocate(div_displ_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
-    allocate(b_div_displ_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
-
-    allocate(rho_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-    allocate(beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-    allocate(alpha_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-
-    allocate(rho_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
-    allocate(alpha_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
-
-    allocate(rho_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
-    allocate(beta_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
-    allocate(alpha_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
 
     rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
@@ -2520,13 +2501,11 @@
     A_array_rotation = 0.
     B_array_rotation = 0.
     if (SIMULATION_TYPE_VAL == 3) then
-    if(CUSTOM_REAL == SIZE_REAL) then
-      b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t))
-    else
-      b_two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t)
-    endif
-    allocate(b_A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION))
-    allocate(b_B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION))
+      if(CUSTOM_REAL == SIZE_REAL) then
+        b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t))
+      else
+        b_two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t)
+      endif
     endif
   else
     two_omega_earth = 0._CUSTOM_REAL
@@ -2560,7 +2539,6 @@
   endif
 
   if (SAVE_STRAIN) then
-
     eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
     eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
@@ -2570,14 +2548,6 @@
       epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
       eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
       epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
-    endif
-
-    if (SIMULATION_TYPE_VAL == 3) then
-      allocate(b_epsilondev_crust_mantle(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-      allocate(b_eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
-
-      allocate(b_epsilondev_inner_core(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
-      allocate(b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
     endif
   endif
 
@@ -2593,11 +2563,6 @@
     if(FIX_UNDERFLOW_PROBLEM) then
       R_memory_crust_mantle(:,:,:,:,:,:) = VERYSMALLVAL
       R_memory_inner_core(:,:,:,:,:,:) = VERYSMALLVAL
-    endif
-
-    if (SIMULATION_TYPE_VAL == 3) then
-      allocate(b_R_memory_crust_mantle(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT))
-      allocate(b_R_memory_inner_core(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION))
     endif
 
   endif
