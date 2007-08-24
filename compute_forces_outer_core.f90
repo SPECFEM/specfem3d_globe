@@ -90,7 +90,7 @@
 
 ! set acceleration to zero
   accelfluid(:) = 0._CUSTOM_REAL
-  if (SIMULATION_TYPE_VAL == 3) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+  if (NSPEC_OUTER_CORE_ADJOINT /= 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
 
   do ispec = 1,NSPEC_OUTER_CORE
 
@@ -267,7 +267,7 @@
             endif
 
 ! divergence of displacement field with gravity on
-            if (SIMULATION_TYPE_VAL == 3) then
+            if (NSPEC_OUTER_CORE_ADJOINT /= 1) then
               div_displfluid(i,j,k,ispec) =  &
                  minus_rho_g_over_kappa_fluid(int_radius) * (dpotentialdx_with_rot * gxl + &
                  dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
