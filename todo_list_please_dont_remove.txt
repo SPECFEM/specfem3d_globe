@@ -45,6 +45,11 @@ TOPOGRAPHY                      = .false.
 GRAVITY                         = .false.
 ROTATION                        = .false.
 ATTENUATION                     = .false.
+Hi Ying, Yes, absolutely, thanks for pointing this out. This must be the problem (because in the mean time I have checked file model_1066a.f90 and compared it to model_ak135.f90 and did not notice any problem). So I guess when David comes back he can create a particular set of smaller (and therefore more expensive) values of DT in the case of 1066a. Let me add this to the todo list. Thanks for finding the problem! Dimitri.
+Ying Zhou wrote:
+> Hi Dimitri,
+>   1066A has 11 km crust, could that be a problem?
+> Ying
 
 - Subject: permutation et aniso
 Date: Fri, 03 Aug 2007 13:03:51 +0200
