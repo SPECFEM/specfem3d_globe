@@ -18,14 +18,25 @@
 
 ! save header file OUTPUT_FILES/values_from_mesher.h
 
-  subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,nspec_aniso_mantle,NPROC,NPROCTOT, &
+  subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
         ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
         static_memory_size,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-        NPROC_XI,NPROC_ETA,SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,ABSORBING_CONDITIONS,OCEANS)
+        NPROC_XI,NPROC_ETA, &
+         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
 
   implicit none
 
@@ -34,11 +45,9 @@
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC, nglob
 
   integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP
-  integer nspec_aniso_mantle,SIMULATION_TYPE
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
-          INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,OCEANS,SAVE_FORWARD,MOVIE_VOLUME
+          ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
@@ -66,6 +75,18 @@
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                                     NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX
   integer :: NPROC_XI,NPROC_ETA
+
+  integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
 ! copy number of elements and points in an include file for the solver
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
@@ -243,97 +264,45 @@
   write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE = ',nglob(IREGION_INNER_CORE)
   write(IOUT,*)
 
-  if(ANISOTROPIC_INNER_CORE) then
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_IC = ',NSPEC(IREGION_INNER_CORE)
-  else
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_IC = 1'
-  endif
-
-  if(ANISOTROPIC_3D_MANTLE) then
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_ISO_MANTLE = ',1
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_TISO_MANTLE = ',1
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_MANTLE = NSPEC_CRUST_MANTLE'
-  else
-
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_ISO_MANTLE = NSPEC_CRUST_MANTLE'
-    if(TRANSVERSE_ISOTROPY) then
-      write(IOUT,*) 'integer, parameter :: NSPECMAX_TISO_MANTLE = ',nspec_aniso_mantle
-    else
-      write(IOUT,*) 'integer, parameter :: NSPECMAX_TISO_MANTLE = ',1
-    endif
-
-    write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_MANTLE = 1'
-  endif
-
+  write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_IC = ',NSPECMAX_ANISO_IC
   write(IOUT,*)
 
-! if attenuation is off, set dummy size of arrays to one
-  if(ATTENUATION) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT = NSPEC_CRUST_MANTLE'
-    write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ATTENUATION = NSPEC_INNER_CORE'
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT = 1'
-    write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ATTENUATION = 1'
-  endif
-
+  write(IOUT,*) 'integer, parameter :: NSPECMAX_ISO_MANTLE = ',NSPECMAX_ISO_MANTLE
+  write(IOUT,*) 'integer, parameter :: NSPECMAX_TISO_MANTLE = ',NSPECMAX_TISO_MANTLE
+  write(IOUT,*) 'integer, parameter :: NSPECMAX_ANISO_MANTLE = ',NSPECMAX_ANISO_MANTLE
   write(IOUT,*)
 
-  if(ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN = NSPEC_CRUST_MANTLE'
-    write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_STRAIN = NSPEC_INNER_CORE'
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN = 1'
-    write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_STRAIN = 1'
-  endif
-
+  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT = ',NSPEC_CRUST_MANTLE_ATTENUAT
+  write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ATTENUATION = ',NSPEC_INNER_CORE_ATTENUATION
   write(IOUT,*)
 
-  if ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT = NSPEC_CRUST_MANTLE'
-    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = NSPEC_OUTER_CORE'
-    write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = NSPEC_INNER_CORE'
-
-    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT = NGLOB_CRUST_MANTLE'
-    write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_ADJOINT = NGLOB_OUTER_CORE'
-    write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE_ADJOINT = NGLOB_INNER_CORE'
-
-    if(ROTATION) then
-      write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT = NSPEC_OUTER_CORE'
-    else
-      write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT = 1'
-    endif
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT = 1'
-    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = 1'
-    write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = 1'
-
-    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT = 1'
-    write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_ADJOINT = 1'
-    write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE_ADJOINT = 1'
-
-    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT = 1'
-   endif 
-
+  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ATT = ',NSPEC_CRUST_MANTLE_STRAIN_ATT
+  write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_STRAIN_ATT = ',NSPEC_INNER_CORE_STRAIN_ATT
   write(IOUT,*)
 
-! if absorbing conditions are off, set dummy size of arrays to one
-  if(ABSORBING_CONDITIONS) then
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STACEY = NSPEC_CRUST_MANTLE'
-    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_STACEY = NSPEC_OUTER_CORE'
-  else
-    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STACEY = 1'
-    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_STACEY = 1'
-  endif
+  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY = ',NSPEC_CRUST_MANTLE_STRAIN_ONLY
+  write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY = ',NSPEC_INNER_CORE_STRAIN_ONLY
+  write(IOUT,*)
 
-! if oceans are off, set dummy size of arrays to one
-  if(OCEANS) then
-    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS = NGLOB_CRUST_MANTLE'
-  else
-    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS = 1'
-  endif
+  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT = ',NSPEC_CRUST_MANTLE_ADJOINT
+  write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ADJOINT = ',NSPEC_OUTER_CORE_ADJOINT
+  write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = ',NSPEC_INNER_CORE_ADJOINT
+
+  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_ADJOINT = ',NGLOB_CRUST_MANTLE_ADJOINT
+  write(IOUT,*) 'integer, parameter :: NGLOB_OUTER_CORE_ADJOINT = ',NGLOB_OUTER_CORE_ADJOINT
+  write(IOUT,*) 'integer, parameter :: NGLOB_INNER_CORE_ADJOINT = ',NGLOB_INNER_CORE_ADJOINT
+
+  write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT = ',NSPEC_OUTER_CORE_ROT_ADJOINT
+  write(IOUT,*)
+
+  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_STACEY = ',NSPEC_CRUST_MANTLE_STACEY
+  write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_STACEY = ',NSPEC_OUTER_CORE_STACEY
+  write(IOUT,*)
+
+  write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS = ',NGLOB_CRUST_MANTLE_OCEANS
+  write(IOUT,*)
 
 ! this to allow for code elimination by compiler in solver for performance
-  write(IOUT,*)
 
   if(TRANSVERSE_ISOTROPY) then
     write(IOUT,*) 'logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .true.'
@@ -386,13 +355,11 @@
 
   if(ROTATION) then
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .true.'
-    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = NSPEC_OUTER_CORE'
   else
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .false.'
-    write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = 1'
   endif
+  write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = ',NSPEC_OUTER_CORE_ROTATION
   write(IOUT,*)
-
 
   write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_CM = ',NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
   write(IOUT,*) 'integer, parameter :: NGLOB1D_RADIAL_OC = ',NGLOB1D_RADIAL(IREGION_OUTER_CORE)

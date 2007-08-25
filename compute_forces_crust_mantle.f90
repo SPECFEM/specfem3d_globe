@@ -125,7 +125,7 @@
         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
         c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
-  integer ispec,iglob
+  integer ispec,iglob,ispec_strain
   integer i,j,k,l
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -259,16 +259,19 @@
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
 
- if (SAVE_STRAIN) then
-
 ! compute deviatoric strain
-    epsilon_trace_over_3(i,j,k,ispec) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-    epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec)
-    epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec)
+ if (SAVE_STRAIN) then
+    if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+      ispec_strain = 1
+    else
+      ispec_strain = ispec
+    endif
+    epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+    epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
+    epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
     epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
     epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
     epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
-
   endif
 
 ! precompute terms for attenuation if needed
@@ -825,10 +828,7 @@
   endif
 
 ! save deviatoric strain for Runge-Kutta scheme
-  if (SAVE_STRAIN) then
-    epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-  endif
-
+  if(SAVE_STRAIN) epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
 
   enddo   ! spectral element loop
 

@@ -44,7 +44,7 @@
          NGLOB, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT)
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
 
 
   implicit none
@@ -85,7 +85,7 @@
   integer, external :: err_occurred
 
 ! parameters to be computed based upon parameters above read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC, &
       NSPEC2D_XI, &
@@ -1392,6 +1392,9 @@
 !!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+  ratio_divide_central_cube = maxval(ratio_sampling_array)
+  if(ratio_divide_central_cube /= 8 .and. ratio_divide_central_cube /= 16) stop 'incorrect ratio to divide the central cube'
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
 !!!!!!  1D case
@@ -1470,9 +1473,9 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
     NSPEC2D_ETA(iter_region) = tmp_sum_eta
     if (iter_region == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE) then
         NSPEC2D_XI(iter_region) = NSPEC2D_XI(iter_region) + &
-        ((NEX_PER_PROC_XI / 16)*(NEX_XI / 16))
+        ((NEX_PER_PROC_XI / ratio_divide_central_cube)*(NEX_XI / ratio_divide_central_cube))
         NSPEC2D_ETA(iter_region) = NSPEC2D_ETA(iter_region) + &
-        ((NEX_PER_PROC_ETA / 16)*(NEX_XI / 16))
+        ((NEX_PER_PROC_ETA / ratio_divide_central_cube)*(NEX_XI / ratio_divide_central_cube))
     endif
 enddo
 
@@ -1485,10 +1488,10 @@ enddo
 
 ! in the outer core with mesh doubling
   NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/4)*(NEX_ETA/4)/NPROC
-  NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/16)*(NEX_ETA/16)/NPROC
+  NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
 
 ! in the top of the inner core
-  NSPEC2D_TOP(IREGION_INNER_CORE) = (NEX_XI/16)*(NEX_ETA/16)/NPROC
+  NSPEC2D_TOP(IREGION_INNER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
   NSPEC2D_BOTTOM(IREGION_INNER_CORE) = NSPEC2D_TOP(IREGION_INNER_CORE)
 
 ! maximum number of surface elements on vertical boundaries of the slices
@@ -1542,7 +1545,9 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
 enddo
 
   if(INCLUDE_CENTRAL_CUBE) NSPEC(IREGION_INNER_CORE) = NSPEC(IREGION_INNER_CORE) + &
-         (NEX_PER_PROC_XI / 16) * (NEX_PER_PROC_ETA / 16) * (NEX_XI / 16)
+         (NEX_PER_PROC_XI / ratio_divide_central_cube) * &
+         (NEX_PER_PROC_ETA / ratio_divide_central_cube) * &
+         (NEX_XI / ratio_divide_central_cube)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -1583,12 +1588,12 @@ enddo
 
 ! in the inner core (no doubling region + eventually central cube)
   if(INCLUDE_CENTRAL_CUBE) then
-    NGLOB(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/16) &
-      *(NGLLX-1)+1)*((NEX_PER_PROC_ETA/16) &
-      *(NGLLY-1)+1)*((NER_TOP_CENTRAL_CUBE_ICB + NEX_XI / 16)*(NGLLZ-1)+1)
+    NGLOB(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/ratio_divide_central_cube) &
+      *(NGLLX-1)+1)*((NEX_PER_PROC_ETA/ratio_divide_central_cube) &
+      *(NGLLY-1)+1)*((NER_TOP_CENTRAL_CUBE_ICB + NEX_XI / ratio_divide_central_cube)*(NGLLZ-1)+1)
   else
-    NGLOB(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/16) &
-      *(NGLLX-1)+1)*((NEX_PER_PROC_ETA/16) &
+    NGLOB(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/ratio_divide_central_cube) &
+      *(NGLLX-1)+1)*((NEX_PER_PROC_ETA/ratio_divide_central_cube) &
       *(NGLLY-1)+1)*((NER_TOP_CENTRAL_CUBE_ICB)*(NGLLZ-1)+1)
   endif
 

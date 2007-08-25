@@ -5,10 +5,6 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 Dimitri:
 -------
 
-- developper un code acoustique 3D pour le crust_mantle et ajouter une condition de Dirichlet pour la surface libre en acoustique pour le code PKP
-
-- mettre modele d'aniso de Seb dans le inner core
-
 - run Sdiff calculations for Lev Vinnik (Moscow, Russia)
 
 - run 3D PKP calculations for Sebastien Chevrot (Toulouse, France)
@@ -28,6 +24,27 @@ constants.h.in:  logical, parameter :: MULTI_LEVEL_CUTHILL = .true.
 - flag SUPPRESS_CRUSTAL_MESH does not work on the current version that is on the SVN server: it exits with an error message 'ispec greater than nspec in mesh creation' in the mesher: this bug should be fixed. en particulier je crois que ca est faux dans create_regions_mesh.f90
  elseif (SUPPRESS_CRUSTAL_MESH .and. iz_elem == ner(ilayer) .and. ilayer == ifirst_region+1) then
 il faudrait le coder plutot directement avec des regions ayant ner(i) = 0 et en commencant directement par doubling_factor(i) = 2 a la surface au lieu de 1, comme moi dans le code acoustique PKP 3D.
+
+- a voir avec Qinya : I noticed a problem in Qinya's adjoint code and the
+  conversion to static memory below: arrays eps_trace_over_3_crust_mantle and eps_trace_over_3_inner_core are not needed when we use attenuation only for a forward simulation, they are only needed to save the strain in the whole mesh (when we attenuation for a forward run this calculation of eps_trace_over_3, i.e. the trace of the strain tensor, is purely local and can be stored in a scalar, not need to waste an array for it. I have therefore added two new static constants
+ integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =         
+ integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =        
+in values_from_mesher.h, used for these two arrays only. Qinya, by the way I think that you could probably get rid of these two arrays and the two new static constants above permanently in the whole package, to avoid wasting memory: since we already store the whole deviatoric strain in epsilondev(:,:,:,:,:) you should probably recompute its trace locally every time you need it instead of storing it in additional arrays. This way you would save four arrays:  eps_trace_over_3_crust_mantle, eps_trace_over_3_inner_core, b_eps_trace_over_3_crust_mantle, b_eps_trace_over_3_inner_core (unless there is a hidden problem I have not seen).
+
+- a voir avec Qinya, Ying Zhou et Anne Sieminski : I noticed that model 1066a blows up at least with the parameters below. I have no time to check, David can have a look when he comes back (I have added this to the to-do list) but has anyone ever run that model successfully with either v3.5, v3.6 or v4.0? (I had never tried before; considering that the same Par_file runs fine with ak135 or PREM, it could either be that routine model_1066a.f90 has a bug, or that the time step computed by David based upon trial and error using runs with PREM is a bit too large for 1066a if 1066a has a thinner layer somewhere i.e. smaller mesh cells that could be above the PREM stability limit.
+NEX_XI                          = 96
+NEX_ETA                         = 96
+# number of MPI processors along the two sides of the first chunk
+NPROC_XI                        = 3
+NPROC_ETA                       = 3
+MODEL                           = 1D_1066a
+# parameters describing the Earth model
+OCEANS                          = .false.
+ELLIPTICITY                     = .false.
+TOPOGRAPHY                      = .false.
+GRAVITY                         = .false.
+ROTATION                        = .false.
+ATTENUATION                     = .false.
 
 - Subject: permutation et aniso
 Date: Fri, 03 Aug 2007 13:03:51 +0200
@@ -60,17 +77,6 @@ on pourra voir ça tranquille début sept (je rentre le 6 sept), rien ne presse, e
 - cuthill mckee permutation casse les deux couches aniso, et donc il faut trouver un autre moyen de les traiter et de sauver les tableaux c11 c12 etc qui sont très couteux; ne plus mettre les deux couches aniso dans les premiers elements, mais plutôt n'importe où dans le maillage à cause de cuthill mckee. Make sure anisotropic elements created first, or use indirect addressing (inverse permutation array) and a flag to store anisotropy in the mantle to avoid having to start with that region, which breaks the Cuthill-McKee sorting; once this is done, suppress the statement in which we make this region become region number 1 in the mesh creation routine
 
 - create the mesh from bottom layer to top layer (it is created the other way around right now): this will be better for Cuthill-McKee, for graphics etc; DK DK: already done by David in Barcelona 2007 I think
-
-- convert the "allocatable" arrays (including
-2D arrays for the MPI buffers etc, because for very large
-runs they are not that small) in the solver
-from dynamic to static (easy to do: write their size
-in values_from_mesher.h in the mesher; but there are
-so many of them and so many cases (with/without attenuation,
-anisotropy, absorbing edges etc.) that we need to be careful:
-DK DK already done by David in Barcelona 2007 I think;
-DK DK if not already done, then there is no real need to do it
-because MPI buffers have a very minor impact on performance
 
 - get rid of the bottleneck in locate_sources and locate_receivers
 when one uses a huge number of sources (e.g. Vala -> 100000 sources)
@@ -294,6 +300,10 @@ pour des soucis de lisibilité.
 
 - mettre l'attenuation dans le inner core pour run PKP Seb: not needed, attenuation was already implemented in the inner core in version 3.6
 
+- developper un code acoustique 3D pour le crust_mantle et ajouter une condition de Dirichlet pour la surface libre en acoustique pour le code PKP: done by Dimitri
+
+- mettre modele d'aniso de Seb dans le inner core: done by Dimitri
+
 - maybe use VMX/Altivec instructions in compute_forces*.f90 specifically for MareNostrum with Jose Maria Cela (Barcelona) (but only if using BLAS3 calls in compute_forces*.f90 turned out to be impossible; otherwise it is better to call BLAS3, which will already be optimized by IBM for VMX/Altivec): done by Dimitri in Barcelona 2007
 
 - Dimitri va faire un code 2D serial pour etudier le modele PKP et definir le maillage avant de lancer de gros runs a Barcelone: not needed, we decided to run directly in 3D rather than first testing in 2D
@@ -303,4 +313,6 @@ pour des soucis de lisibilité.
 - remove derived types (for attenuation, for anisotropy etc) and remove -align sequence from the Makefile, because of potential portability and alignment problems on future machines; replace them with modules: not done because the current code is OK, therefore not a good idea to change it
 
 - faire un commit du script de stretching de la croûte 3D de David dans UTILS: not needed anymore, because implemented in Fortran in stretching_function.f90
+
+- convert the "allocatable" arrays in the solver from dynamic to static: done by David, Jeroen and Dimitri
 

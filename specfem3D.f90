@@ -265,13 +265,13 @@
   real(kind=CUSTOM_REAL) dist_cr
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN) :: epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN) :: eps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ATT) :: epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN) :: epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN) :: eps_trace_over_3_inner_core
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ATT) :: epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
 
 ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
@@ -544,7 +544,6 @@
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   double precision scale_kl
-! ADJOINT
 
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
   integer npoin2D_faces_outer_core(NUMFACES_SHARED)
@@ -588,8 +587,6 @@
   integer NSTEP_SUB_ADJ,it_sub_adj,iadj_block !To read input in chunks
   integer, dimension(:,:), allocatable :: iadjsrc !To read input in chunks
   integer, dimension(:), allocatable :: iadjsrc_len,iadj_vec
-!ADJOINT
-
 
 ! seismograms
   integer it_begin,it_end,nit_written
@@ -679,7 +676,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: b_A_array_rotation,b_B_array_rotation
   real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
-!ADJOINT
 
 ! timer MPI
   integer :: ihours,iminutes,iseconds,int_tCPU, &
@@ -715,7 +711,7 @@
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
   integer, external :: err_occurred
 
@@ -760,6 +756,7 @@
   character(len=400) system_command
 
   integer iregion_selected
+
 ! computed in read_compute_parameters
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
@@ -769,7 +766,7 @@
   logical :: CASE_3D
 
 ! arrays for BCAST
-  integer, dimension(34) :: bcast_integer
+  integer, dimension(35) :: bcast_integer
   double precision, dimension(24) :: bcast_double_precision
   logical, dimension(27) :: bcast_logical
 
@@ -813,7 +810,7 @@
          NGLOB_computed, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT)
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
 
     if(err_occurred() /= 0) then
           call exit_MPI(myrank,'an error occurred while reading the parameter file')
@@ -829,8 +826,8 @@
             NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
             NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
             NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
-            SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA/)
-
+            SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
@@ -851,7 +848,7 @@
 ! broadcast the information read on the master to the nodes
     call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_integer,34,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_integer,35,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(bcast_double_precision,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
@@ -920,6 +917,7 @@
     NPROCTOT = bcast_integer(32)
     NEX_PER_PROC_XI = bcast_integer(33)
     NEX_PER_PROC_ETA = bcast_integer(34)
+    ratio_divide_central_cube = bcast_integer(35)
 
     TRANSVERSE_ISOTROPY = bcast_logical(1)
     ANISOTROPIC_3D_MANTLE = bcast_logical(2)
@@ -2764,12 +2762,10 @@
       Usolidnorm_all = Usolidnorm_all * sngl(scale_displ)
       write(IMAIN,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
-      write(IMAIN,*)
       if (SIMULATION_TYPE == 3) then
       b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
       write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
-      write(IMAIN,*)
       endif
 
 ! elapsed time since beginning of the simulation
@@ -2788,6 +2784,8 @@
       ihours_remain = int_t_remain / 3600
       iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
       iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
+      write(IMAIN,*) 'Time steps done = ',it,' out of ',NSTEP
+      write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
       write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
       write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_remain,iminutes_remain,iseconds_remain
@@ -2802,6 +2800,7 @@
       write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_total,iminutes_total,iseconds_total
       write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
+      write(IMAIN,*)
 
 ! write time stamp file to give information about progression of simulation
       write(outputname,"('/timestamp',i6.6)") it
@@ -2826,6 +2825,8 @@
       write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
       write(IOUT,*)
 
+      write(IOUT,*) 'Time steps done = ',it,' out of ',NSTEP
+      write(IOUT,*) 'Time steps remaining = ',NSTEP - it
       write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
       write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_remain,iminutes_remain,iseconds_remain

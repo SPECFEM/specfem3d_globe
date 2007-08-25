@@ -26,7 +26,7 @@ case $FC in
         # Intel ifort Fortran90 for Linux
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="\$(FLAGS_NO_CHECK)"
+            FLAGS_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check all -align sequence -assume byterecl -i-dynamic -ftrapuv -fpe0 -no-ftz -traceback" # -mcmodel=medium
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
             # standard options
