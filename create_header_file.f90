@@ -52,7 +52,7 @@
   character(len=150) LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
@@ -68,11 +68,21 @@
                NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                nglob
-  integer :: ilayer, ner_without_doubling
 
-  integer ispec_aniso,NUMBER_OF_MESH_LAYERS
   double precision :: static_memory_size
   character(len=150) HEADER_FILE
+
+  integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -108,54 +118,49 @@
          NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT)
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
 
 ! count the total number of sources in the CMTSOLUTION file
   call count_number_of_sources(NSOURCES)
-
-! generate the elements in all the regions of the mesh
-  ispec_aniso = 0
-
-  if (ONE_CRUST) then
-    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
-  else
-    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
-  endif
-
-! count anisotropic elements
-do ilayer = 1, NUMBER_OF_MESH_LAYERS
-    if(doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
-        ner_without_doubling = ner(ilayer)
-        if(this_region_has_a_doubling(ilayer)) then
-            ner_without_doubling = ner_without_doubling - 2
-            ispec_aniso = ispec_aniso + &
-            (NSPEC_DOUBLING_SUPERBRICK*(NEX_PER_PROC_XI/ratio_sampling_array(ilayer)/2)* &
-            (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer)/2))
-        endif
-        ispec_aniso = ispec_aniso + &
-        ((NEX_PER_PROC_XI/ratio_sampling_array(ilayer))*(NEX_PER_PROC_ETA/ratio_sampling_array(ilayer))*ner_without_doubling)
-    endif
-enddo
-
-  print *
-  print *,'found ',ispec_aniso,' tranversely isotropic elements in the mantle'
 
 ! evaluate the amount of static memory needed by the solver
   call memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE,&
                    TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
                    ONE_CRUST,doubling_index,this_region_has_a_doubling,&
                    ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
-                   NSPEC,nglob,static_memory_size)
+                   NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
+         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,static_memory_size)
 
 ! create include file for the solver
-  call save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,ispec_aniso,NPROC,NPROCTOT, &
+  call save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
         ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
         static_memory_size,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-        NPROC_XI,NPROC_ETA,SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,ABSORBING_CONDITIONS,OCEANS)
+        NPROC_XI,NPROC_ETA, &
+         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
 
   print *
   print *,'edit file OUTPUT_FILES/values_from_mesher.h to see some statistics about the mesh'

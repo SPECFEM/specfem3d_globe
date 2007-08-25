@@ -338,7 +338,7 @@
 
 ! correct number of spectral elements in each block depending on chunk type
 
-  integer nspec_aniso,nspec_aniso_mantle,nspec_aniso_mantle_all,npointot
+  integer nspec_aniso,npointot
 
 ! parameters needed to store the radii of the grid points
 ! in the spherically symmetric Earth
@@ -412,7 +412,7 @@
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
   integer, external :: err_occurred
 
@@ -442,7 +442,7 @@
   double precision :: static_memory_size
 
 ! arrays for BCAST
-  integer, dimension(34) :: bcast_integer
+  integer, dimension(35) :: bcast_integer
   double precision, dimension(24) :: bcast_double_precision
   logical, dimension(23) :: bcast_logical
 
@@ -485,6 +485,18 @@
   character(len=40) varstr(maxker)
 
   integer :: ipass
+
+  integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -543,8 +555,7 @@
           NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
           ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-          ROTATE_SEISMOGRAMS_RT)
-
+          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
 
     if(err_occurred() /= 0) then
           call exit_MPI(myrank,'an error occurred while reading the parameter file')
@@ -560,8 +571,8 @@
             NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
             NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
             NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
-            SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA/)
-
+            SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
@@ -580,7 +591,7 @@
 ! broadcast the information read on the master to the nodes
     call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_integer,34,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_integer,35,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(bcast_double_precision,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
@@ -650,6 +661,7 @@
     NPROCTOT = bcast_integer(32)
     NEX_PER_PROC_XI = bcast_integer(33)
     NEX_PER_PROC_ETA = bcast_integer(34)
+    ratio_divide_central_cube = bcast_integer(35)
 
     TRANSVERSE_ISOTROPY = bcast_logical(1)
     ANISOTROPIC_3D_MANTLE = bcast_logical(2)
@@ -989,9 +1001,6 @@
 ! volume of the slice
   volume_total = ZERO
 
-! number of anisotropic elements in the mantle
-  nspec_aniso_mantle = 0
-
 ! make sure everybody is synchronized
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
@@ -1062,7 +1071,7 @@
          numker,numhpa,numcof,ihpa,lmax,nylm, &
          lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
+         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube)
   enddo
 
 ! store number of anisotropic elements found in the mantle
@@ -1072,7 +1081,6 @@
   if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_aniso == 0) &
     call exit_MPI(myrank,'found no anisotropic elements in the mantle')
 
-  if(iregion_code == IREGION_CRUST_MANTLE) nspec_aniso_mantle = nspec_aniso
 ! use MPI reduction to compute total area and volume
   volume_total_region = ZERO
   area_total_bottom   = ZERO
@@ -1164,9 +1172,6 @@
 ! end of loop on all the regions
   enddo
 
-! compute the maximum number of anisotropic elements found in all the slices
-  call MPI_ALLREDUCE(nspec_aniso_mantle,nspec_aniso_mantle_all,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
   if(myrank == 0) then
 ! check volume of chunk
       write(IMAIN,*)
@@ -1230,17 +1235,39 @@
                    TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
                    ONE_CRUST,doubling_index,this_region_has_a_doubling,&
                    ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
-                   NSPEC,nglob,static_memory_size)
+                   NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
+         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,static_memory_size)
 
 ! create include file for the solver
-  call save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,nspec_aniso_mantle_all,NPROC,NPROCTOT, &
+  call save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
         ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
         static_memory_size,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
         NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-        NPROC_XI,NPROC_ETA,SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME,ABSORBING_CONDITIONS,OCEANS)
+        NPROC_XI,NPROC_ETA, &
+         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
 
   endif   ! end of section executed by main process only
 

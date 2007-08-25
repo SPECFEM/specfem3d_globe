@@ -38,7 +38,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube)
 
 ! create the different regions of the mesh
 
@@ -51,7 +51,7 @@
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
 
   integer :: ignod,ner_without_doubling,ispec_superbrick,ilayer,ilayer_loop,ix_elem,iy_elem,iz_elem, &
-               ifirst_region,ilast_region
+               ifirst_region,ilast_region,ratio_divide_central_cube
   integer, dimension(:), allocatable :: perm_layer
 
 ! mesh doubling superbrick
@@ -592,7 +592,7 @@
     layer_shift = 1
   endif
 
-! define the first and last layers that define this region in read_compute_parameters.f90
+! define the first and last layers that define this region
   if(iregion_code == IREGION_CRUST_MANTLE) then
     ifirst_region = 1
     ilast_region = 10 + layer_shift
@@ -946,9 +946,9 @@
 
 ! define vertical slice in central cube on current processor
 ! we can assume that NEX_XI = NEX_ETA, otherwise central cube cannot be defined
-  nx_central_cube = NEX_PER_PROC_XI / 16
-  ny_central_cube = NEX_PER_PROC_ETA / 16
-  nz_central_cube = NEX_XI / 16
+  nx_central_cube = NEX_PER_PROC_XI / ratio_divide_central_cube
+  ny_central_cube = NEX_PER_PROC_ETA / ratio_divide_central_cube
+  nz_central_cube = NEX_XI / ratio_divide_central_cube
 
 ! size of the cube along cartesian axes before rotation
   radius_cube = (R_CENTRAL_CUBE / R_EARTH) / sqrt(3.d0)

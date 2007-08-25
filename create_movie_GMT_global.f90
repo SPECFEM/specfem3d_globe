@@ -84,7 +84,7 @@
   character(len=150) LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC, &
@@ -143,7 +143,7 @@
          NGLOB, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT)
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
 
   if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
 

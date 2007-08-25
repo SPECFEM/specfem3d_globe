@@ -223,7 +223,7 @@ program combine_paraview_data
       read(28) junk(:,:,:,1:nspec(it))
       read(28) junk(:,:,:,1:nspec(it))
     endif
-  
+
     if(ANISOTROPIC_3D_MANTLE_VAL .and. ir == 1) then
       read(28) junk(:,:,:,1:nspec(it))
       read(28) junk(:,:,:,1:nspec(it))
@@ -247,34 +247,34 @@ program combine_paraview_data
       read(28) junk(:,:,:,1:nspec(it))
       read(28) junk(:,:,:,1:nspec(it))
     endif
-  
+
   ! Stacey
     if(NSPEC_CRUST_MANTLE_STACEY /= 1) then
-  
+
       if(ir == 1) then
         read(28) junk(:,:,:,1:nspec(it))
         read(28) junk(:,:,:,1:nspec(it))
       else if(ir == 2) then
         read(28) junk(:,:,:,1:nspec(it))
       endif
-  
+
     endif
-  
+
     read(28) ibool(:,:,:,1:nspec(it))
-  
+
     read(28) junk2(1:nspec(it))
-    
-  ! mass matrix 
+
+  ! mass matrix
     read(28) junk2(1:nglob(it))
-      
+
   ! read additional ocean load mass matrix
     if(NGLOB_CRUST_MANTLE_OCEANS /= 1 .and. ir == 1) read(28) junk2(1:nglob(it))
-      
+
 ! read coordinates of the mesh
     read(28) xstore(1:nglob(it))
     read(28) ystore(1:nglob(it))
     read(28) zstore(1:nglob(it))
-    
+
     close(28)
 
     print *, trim(local_ibool_file)

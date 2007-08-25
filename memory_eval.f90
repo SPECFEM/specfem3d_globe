@@ -22,7 +22,18 @@
                        TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
                        ONE_CRUST,doubling_index,this_region_has_a_doubling,&
                        ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
-                       NSPEC,nglob,static_memory_size)
+                       NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
+         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,static_memory_size)
 
   implicit none
 
@@ -30,9 +41,9 @@
 
 ! input
   logical, intent(in) :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-             ROTATION,ATTENUATION,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS
+             ROTATION,ATTENUATION,ONE_CRUST,OCEANS,ABSORBING_CONDITIONS,MOVIE_VOLUME,SAVE_FORWARD
   integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob
-  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
@@ -41,9 +52,19 @@
   double precision, intent(out) :: static_memory_size
 
 ! variables
-  integer :: NSPEC_CRUST_MANTLE_ATTENUAT,NSPEC_INNER_CORE_ATTENUATION,NSPECMAX_ISO_MANTLE,&
-             NSPECMAX_TISO_MANTLE,NSPECMAX_ANISO_MANTLE,NSPECMAX_ANISO_IC,NSPEC_OUTER_CORE_ROTATION,&
-             ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,ispec_aniso
+  integer :: ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,ispec_aniso
+
+  integer, intent(out) :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+         NSPEC_INNER_CORE_ATTENUATION, &
+         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+         NSPEC_CRUST_MANTLE_ADJOINT, &
+         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
 ! generate the elements in all the regions of the mesh
   ispec_aniso = 0
@@ -69,6 +90,31 @@
       endif
   enddo
 
+! define static size of the arrays whose size depends on logical tests
+
+  if(ANISOTROPIC_INNER_CORE) then
+    NSPECMAX_ANISO_IC = NSPEC(IREGION_INNER_CORE)
+  else
+    NSPECMAX_ANISO_IC = 1
+  endif
+
+  if(ANISOTROPIC_3D_MANTLE) then
+    NSPECMAX_ISO_MANTLE = 1
+    NSPECMAX_TISO_MANTLE = 1
+    NSPECMAX_ANISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
+  else
+
+    NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
+    if(TRANSVERSE_ISOTROPY) then
+      NSPECMAX_TISO_MANTLE = ispec_aniso
+    else
+      NSPECMAX_TISO_MANTLE = 1
+    endif
+
+    NSPECMAX_ANISO_MANTLE = 1
+  endif
+
+! if attenuation is off, set dummy size of arrays to one
   if(ATTENUATION) then
     NSPEC_CRUST_MANTLE_ATTENUAT = NSPEC(IREGION_CRUST_MANTLE)
     NSPEC_INNER_CORE_ATTENUATION = NSPEC(IREGION_INNER_CORE)
@@ -76,24 +122,65 @@
     NSPEC_CRUST_MANTLE_ATTENUAT = 1
     NSPEC_INNER_CORE_ATTENUATION = 1
   endif
-  if(ANISOTROPIC_3D_MANTLE) then
-    NSPECMAX_ISO_MANTLE = 1
-    NSPECMAX_TISO_MANTLE = 1
-    NSPECMAX_ANISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
+
+  if(ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+    NSPEC_CRUST_MANTLE_STRAIN_ATT = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_INNER_CORE_STRAIN_ATT = NSPEC(IREGION_INNER_CORE)
   else
-    NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
-    if(TRANSVERSE_ISOTROPY) then
-      NSPECMAX_TISO_MANTLE = ispec_aniso
+    NSPEC_CRUST_MANTLE_STRAIN_ATT = 1
+    NSPEC_INNER_CORE_STRAIN_ATT = 1
+  endif
+
+  if(SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+    NSPEC_CRUST_MANTLE_STRAIN_ONLY = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_INNER_CORE_STRAIN_ONLY = NSPEC(IREGION_INNER_CORE)
+  else
+    NSPEC_CRUST_MANTLE_STRAIN_ONLY = 1
+    NSPEC_INNER_CORE_STRAIN_ONLY = 1
+  endif
+
+  if ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+    NSPEC_CRUST_MANTLE_ADJOINT = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_OUTER_CORE_ADJOINT = NSPEC(IREGION_OUTER_CORE)
+    NSPEC_INNER_CORE_ADJOINT = NSPEC(IREGION_INNER_CORE)
+
+    NGLOB_CRUST_MANTLE_ADJOINT = NGLOB(IREGION_CRUST_MANTLE)
+    NGLOB_OUTER_CORE_ADJOINT = NGLOB(IREGION_OUTER_CORE)
+    NGLOB_INNER_CORE_ADJOINT = NGLOB(IREGION_INNER_CORE)
+
+    if(ROTATION) then
+      NSPEC_OUTER_CORE_ROT_ADJOINT = NSPEC(IREGION_OUTER_CORE)
     else
-      NSPECMAX_TISO_MANTLE = 1
+      NSPEC_OUTER_CORE_ROT_ADJOINT = 1
     endif
-    NSPECMAX_ANISO_MANTLE = 1
-  endif
-  if(ANISOTROPIC_INNER_CORE) then
-    NSPECMAX_ANISO_IC = NSPEC(IREGION_INNER_CORE)
   else
-    NSPECMAX_ANISO_IC = 1
+    NSPEC_CRUST_MANTLE_ADJOINT = 1
+    NSPEC_OUTER_CORE_ADJOINT = 1
+    NSPEC_INNER_CORE_ADJOINT = 1
+
+    NGLOB_CRUST_MANTLE_ADJOINT = 1
+    NGLOB_OUTER_CORE_ADJOINT = 1
+    NGLOB_INNER_CORE_ADJOINT = 1
+
+    NSPEC_OUTER_CORE_ROT_ADJOINT = 1
+   endif
+
+! if absorbing conditions are off, set dummy size of arrays to one
+  if(ABSORBING_CONDITIONS) then
+    NSPEC_CRUST_MANTLE_STACEY = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_OUTER_CORE_STACEY = NSPEC(IREGION_OUTER_CORE)
+  else
+    NSPEC_CRUST_MANTLE_STACEY = 1
+    NSPEC_OUTER_CORE_STACEY = 1
   endif
+
+! if oceans are off, set dummy size of arrays to one
+  if(OCEANS) then
+    NGLOB_CRUST_MANTLE_OCEANS = NGLOB(IREGION_CRUST_MANTLE)
+  else
+    NGLOB_CRUST_MANTLE_OCEANS = 1
+  endif
+
   if(ROTATION) then
     NSPEC_OUTER_CORE_ROTATION = NSPEC(IREGION_OUTER_CORE)
   else
@@ -196,6 +283,52 @@
     static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
 
   endif
+
+! add arrays used to save strain for attenuation or for adjoint runs
+
+! epsilondev_crust_mantle
+  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STRAIN_ATT*dble(CUSTOM_REAL)
+
+! eps_trace_over_3_crust_mantle
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STRAIN_ATT*dble(CUSTOM_REAL)
+
+! epsilondev_inner_core
+  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STRAIN_ATT*dble(CUSTOM_REAL)
+
+! eps_trace_over_3_inner_core
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STRAIN_ATT*dble(CUSTOM_REAL)
+
+! add arrays used for adjoint runs only
+
+! b_R_memory_crust_mantle
+! b_epsilondev_crust_mantle
+! b_eps_trace_over_3_crust_mantle
+! rho_kl_crust_mantle,beta_kl_crust_mantle, alpha_kl_crust_mantle
+  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT*dble(CUSTOM_REAL)
+
+! b_div_displ_outer_core
+! rho_kl_outer_core,alpha_kl_outer_core
+  static_memory_size = static_memory_size + 3.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
+
+! b_R_memory_inner_core
+! b_epsilondev_inner_core
+! b_eps_trace_over_3_inner_core
+! rho_kl_inner_core,beta_kl_inner_core, alpha_kl_inner_core
+  static_memory_size = static_memory_size + (5.d0*dble(N_SLS) + 9.d0)* &
+      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ADJOINT*dble(CUSTOM_REAL)
+
+! b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
+  static_memory_size = static_memory_size + 3.d0*dble(NDIM)*NGLOB_CRUST_MANTLE_ADJOINT*dble(CUSTOM_REAL)
+
+! b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
+  static_memory_size = static_memory_size + 3.d0*NGLOB_OUTER_CORE_ADJOINT*dble(CUSTOM_REAL)
+
+! b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
+  static_memory_size = static_memory_size + 3.d0*dble(NDIM)*NGLOB_INNER_CORE_ADJOINT*dble(CUSTOM_REAL)
+
+! b_A_array_rotation,b_B_array_rotation
+  static_memory_size = static_memory_size + 2.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ROT_ADJOINT*dble(CUSTOM_REAL)
 
   end subroutine memory_eval
 

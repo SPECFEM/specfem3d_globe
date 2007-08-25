@@ -107,7 +107,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
     c11store,c33store,c12store,c13store,c44store
 
-  integer ispec,iglob
+  integer ispec,iglob,ispec_strain
   integer i,j,k,l
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
@@ -239,9 +239,14 @@
 
 ! compute deviatoric strain
   if (SAVE_STRAIN) then
-    epsilon_trace_over_3(i,j,k,ispec) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-    epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec)
-    epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec)
+    if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+      ispec_strain = 1
+    else
+      ispec_strain = ispec
+    endif
+    epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+    epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
+    epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
     epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
     epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
     epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl

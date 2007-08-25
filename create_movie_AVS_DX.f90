@@ -71,7 +71,7 @@
          store_val_x,store_val_y,store_val_z, &
          store_val_ux,store_val_uy,store_val_uz
 
-! parameters read from parameter file
+! parameters read from file or deduced from parameters read from file
   integer NEX_XI,NEX_ETA
   integer NSTEP,NTSTEP_BETWEEN_FRAMES,NCHUNKS
   integer NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
@@ -646,7 +646,7 @@
           ROTATE_SEISMOGRAMS_RT
 
 ! parameters deduced from parameters read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
@@ -698,7 +698,7 @@
          NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT)
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
 
   end subroutine read_AVS_DX_parameters
 
