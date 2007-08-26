@@ -64,6 +64,8 @@
 
     do j = -N_j,N_j
 
+      if(i > j .and. i-j <= nlines) then
+
       tau_j = dble(j)*dt
 
 ! convolve with a triangle
@@ -90,7 +92,7 @@
       else
 
 ! convolve with a Gaussian
-        exponent = alpha*alpha*tau_j*tau_j
+        exponent = alpha**2 * tau_j**2
         if(exponent < 50.d0) then
           source = alpha*exp(-exponent)/sqrt(PI)
         else
@@ -99,7 +101,9 @@
 
       endif
 
-      if(i > j .and. i-j <= nlines) sem_fil(i) = sem_fil(i)+sem(i-j)*source*dt
+      sem_fil(i) = sem_fil(i) + sem(i-j)*source*dt
+
+      endif
 
     enddo
   enddo
