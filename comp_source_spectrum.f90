@@ -24,7 +24,7 @@
 
   double precision om,hdur
 
-  comp_source_spectrum = dexp(-0.25d0*(om*hdur/SOURCE_DECAY_RATE)**2)
+  comp_source_spectrum = dexp(-0.25d0*(om*hdur/SOURCE_DECAY_MIMIC_TRIANGLE)**2)
 
   end function comp_source_spectrum
 
