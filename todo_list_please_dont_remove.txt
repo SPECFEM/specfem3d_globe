@@ -50,6 +50,11 @@ Ying Zhou wrote:
 > Hi Dimitri,
 >   1066A has 11 km crust, could that be a problem?
 > Ying
+Other email from Jeroen:
+Hi Dimitri & David:
+Perhaps for 1066a, since it has just an 11 km crust, we can always use the
+1crust approach?
+Jeroen 
 
 - Subject: permutation et aniso
 Date: Fri, 03 Aug 2007 13:03:51 +0200
