@@ -31,7 +31,7 @@
 
   integer nrec,ilongitude
 
-  double precision stlat,stlon,stele,stbur
+  double precision stlat,stlon
 
   character(len=MAX_LENGTH_STATION_NAME) station_name
   character(len=MAX_LENGTH_NETWORK_NAME) network_name
@@ -50,9 +50,6 @@
 
 ! select the great circle along the equator
   stlat = 0.d0
-
-  stele = 0.d0
-  stbur = 0.d0
 
   network_name = 'DK'
 
