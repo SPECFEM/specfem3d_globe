@@ -78,6 +78,25 @@ on pourra voir ça tranquille début sept (je rentre le 6 sept), rien ne presse, e
 
 - ecrire les sismogrammes (et les allouer en memoire) bout a bout les uns a la suite des autres par tranches de taille NTSTEP_BETWEEN_FRAMES (ou bien un parametre de ce genre, a ajouter dans le Par_file) pour economiser (beaucoup de) memoire pour les runs avec beaucoup de stations sur un tres grand nombre de pas de temps (idee decrite par Dominique Rodrigues fin juillet lors d'une reunion avec lui)
 
+- Hi David,
+When you come back from Rennes could you check the manual and underline
+in red on a paper copy what needs to be changed? We can then update it.
+There are also a bunch of things to add to the manual that are mentioned
+in the "Manual" section of the todo list, you can add them when you come back.
+I don't think we will have time to cut the superbrick in 2 before
+Oct 9, that would be too risky, let's leave this for v4.1. Therefore,
+let us change the table from blocks of 16 to blocks of 32.
+Dimitri.
+Jeroen Tromp wrote:
+> Hi Dimitri, Qinya & David:
+> Let's make sure the global manual is also up-to-date and available prior 
+> to the NH meeting. We may want to add a few of the benchmark figures 
+> Anne & I made, in the context of a brief paragraph describing the new 
+> EXAMPLES subdirectory. We also need to fix all the table now that we 
+> have a factor of 32 rather than 16, unless we manage to fix this before 
+> the meeting.
+> Jeroen
+
 - Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). To do this, see the old (unfinished) implementation done by Dimitri in version 3.6 on pangu in directories /home/komatits/bubu_test_central_cube_AB_antipode_54procs and /home/komatits/ok_chunk_AB_central_cube
 
 - couper la superbrick en deux au milieu dans les deux directions par MPI pour repasser de blocs de taille 32 à des blocs de taille 16; sinon voir les conséquences des blocs de 32: en coupant au milieu des superbricks, clarifier ce qui se passe : on doit toujours prendre des multiples de 32, mais on peut les couper deux fois plus; voir si la Table 3.1 du manuel est toujours valable, ou bien sinon comment il faut la modifier
