@@ -175,15 +175,11 @@
   type(attenuation_simplex_variables) AS_V
 ! attenuation_simplex_variables
 
-
   integer ispec,nspec,idoubling,iregion_code,myrank,nspec_stacey
   integer REFERENCE_1D_MODEL,THREE_D_MODEL
 
   logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
-
-!   logical iboun(6,nspec)
-!   logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
 
   double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
 
