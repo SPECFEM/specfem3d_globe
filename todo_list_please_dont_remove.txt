@@ -2,15 +2,20 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
-Dimitri:
--------
-
-- run Sdiff calculations for Lev Vinnik (Moscow, Russia)
-
-- run 3D PKP calculations for Sebastien Chevrot (Toulouse, France)
-
 David:
 -----
+
+- dans le cas où NCHUNKS = 1, le solveur se plante car il cherche a lire
+des fichiers plus gros que ceux sauvés par le mailleur. Apparemment
+ca doit etre des tableaux pour les conditions absorbantes de Stacey ou 
+quelque chose comme ça qui est spécifique à NCHUNKS < 6 qui ne doit
+pas etre sauvé à la meme taille que la taille lorsqu'on le relit,
+car quand on a 6 chunks tout marche très bien.
+dkomati1-ipigps014: mpirun -np 9 ./xspecfem3D
+PGFIO-F-219/unformatted read/unit=40/attempt to read/write past end of record.
+ File name = DATABASES_MPI/proc000003_reg1_solver_data_1.bin    unformatted,
+sequential access   record = 16
+ In source file read_arrays_solver.f90, at line number 170
 
 - le flag pour le multilevel Cuthill-McKee qui est dans constants.h.in
 n'est jamais utilisé (un grep ne le montre dans aucun fichier Fortran90),
@@ -333,6 +338,10 @@ Things to add later to the manual:
 
 DONE:
 -----
+
+- run Sdiff calculations for Lev Vinnik (Moscow, Russia): done by Dimitri in Barcelona
+
+- run 3D PKP calculations for Sebastien Chevrot (Toulouse, France): done by Dimitri in Barcelona
 
 - bug estimation mémoire NEX=1248 (marche) à NEX=1664 (plante) à résoudre: passer tout en double precision ou bien integer(kind=8): done by Dimitri
 
