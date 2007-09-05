@@ -844,7 +844,7 @@
   if(ONE_CRUST) then
     write(IMAIN,*) 'using one layer only in PREM crust'
   else
-    write(IMAIN,*) 'using real PREM crust with two layers'
+    write(IMAIN,*) 'using unmodified 1D crustal model with two layers'
   endif
 
   write(IMAIN,*)
