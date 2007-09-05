@@ -62,8 +62,12 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
   logical ROTATE_SEISMOGRAMS_RT
 
   if(myrank == 0) then ! on the master, gather all the seismograms
+
     ! get the base pathname for output files
     call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
+! create one large file instead of one small file per station to avoid file system overload
+    if(SAVE_ALL_SEISMOS_IN_ONE_FILE) open(unit=IOUT,file=trim(OUTPUT_FILES)//'all_seismograms.ascii',status='unknown')
 
     total_seismos = 0
 
@@ -110,7 +114,11 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
     write(IMAIN,*)
     write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
     write(IMAIN,*)
+
     if(total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
+
+! create one large file instead of one small file per station to avoid file system overload
+    if(SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
   else  ! on the nodes, send the seismograms to the master
     receiver = 0
@@ -232,8 +240,6 @@ end subroutine write_seismograms
   double precision backaz
   real(kind=CUSTOM_REAL) phi,cphi,sphi
 !----------------------------------------------------------------
-
-
 
   if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T LMU BS BS begin
      ior_start=3    ! starting from Z
@@ -736,7 +742,7 @@ end subroutine write_seismograms
 
   endif ! OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY
 
-  if (OUTPUT_SEISMOS_ASCII_TEXT) then
+  if(OUTPUT_SEISMOS_ASCII_TEXT) then
 
 ! save seismograms in text format with no subsampling.
 ! Because we do not subsample the output, this can result in large files
@@ -745,22 +751,27 @@ end subroutine write_seismograms
 ! the results with the source time function
 
 ! add .ascii extension to seismogram file name for ASCII seismograms
- write(sisname_2,"('/',a,'.ascii')") trim(sisname)
+    write(sisname_2,"('/',a,'.ascii')") trim(sisname)
 
-   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+! create one large file instead of one small file per station to avoid file system overload
+    if(SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+      write(IOUT,*) sisname_2(1:len_trim(sisname_2))
+    else
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+    endif
 
 ! subtract half duration of the source to make sure travel time is correct
-     do isample = it_begin,it_end
-       value = dble(seismogram_tmp(iorientation,isample))
+    do isample = it_begin,it_end
+      value = dble(seismogram_tmp(iorientation,isample))
 ! distinguish between single and double precision for reals
-       if(CUSTOM_REAL == SIZE_REAL) then
-         write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',sngl(value)
-       else
-         write(IOUT,*) dble(isample-1)*DT - hdur,' ',value
-       endif
-     enddo
+      if(CUSTOM_REAL == SIZE_REAL) then
+        write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',sngl(value)
+      else
+        write(IOUT,*) dble(isample-1)*DT - hdur,' ',value
+      endif
+    enddo
 
-     close(IOUT)
+    if(.not. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
   endif  ! OUTPUT_SEISMOS_ASCII_TEXT
 
