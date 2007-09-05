@@ -27,21 +27,19 @@
 
   include "constants.h"
 
-  character(len=100),parameter :: filename='DATA/STATIONS'
+  integer :: nrec,ilongitude
 
-  integer nrec,ilongitude
+  double precision :: stlat,stlon
 
-  double precision stlat,stlon
-
-  character(len=MAX_LENGTH_STATION_NAME) station_name
-  character(len=MAX_LENGTH_NETWORK_NAME) network_name
+  character(len=MAX_LENGTH_STATION_NAME) :: station_name
+  character(len=MAX_LENGTH_NETWORK_NAME) :: network_name
 
   print *
   print *,'generating the DATA/STATIONS file to include stations'
   print *,'every half-degree along a great circle'
   print *
 
-  open(unit=IOUT,file=trim(filename),status='unknown')
+  open(unit=IOUT,file='DATA/STATIONS',status='unknown')
 
 ! there is a station every half degree
   nrec = 720
@@ -55,14 +53,14 @@
 
   do ilongitude = 0,359
 
-! station on integer value of degree YYY is called SYYYI
+! station on integer value of degree YYY
     stlon = ilongitude
-    write(station_name,"('S',i3.3,'I')") ilongitude
+    write(station_name,"('S',i3.3,'_00')") ilongitude
     write(IOUT,*) trim(station_name),' ',trim(network_name),' ',sngl(stlat),' ',sngl(stlon),' 0 0'
 
-! station on half value of degree YYY (i.e. in degree YYY + 0.5) is called SYYYH
+! station on half value of degree YYY (i.e. in degree YYY + 0.5)
     stlon = ilongitude + 0.5d0
-    write(station_name,"('S',i3.3,'H')") ilongitude
+    write(station_name,"('S',i3.3,'_50')") ilongitude
     write(IOUT,*) trim(station_name),' ',trim(network_name),' ',sngl(stlat),' ',sngl(stlon),' 0 0'
 
   enddo

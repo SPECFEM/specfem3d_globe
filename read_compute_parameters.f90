@@ -1487,7 +1487,7 @@ enddo
                                          (NEX_ETA/ratio_sampling_array(10+layer_offset))/NPROC
 
 ! in the outer core with mesh doubling
-  NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/4)*(NEX_ETA/4)/NPROC
+  NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/(ratio_divide_central_cube/4))*(NEX_ETA/(ratio_divide_central_cube/4))/NPROC
   NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
 
 ! in the top of the inner core

@@ -607,7 +607,9 @@
   write(27,*) 'total number of stations: ',nrec
   write(27,*)
   do irec=1,nrec
-    write(27,"(a5,'.',a2,'   epicentral distance ',f8.3,' deg')") station_name(irec),network_name(irec),epidist(irec)
+    write(27,*) station_name(irec)(1:len_trim(station_name(irec))), &
+                '.',network_name(irec)(1:len_trim(network_name(irec))), &
+                ' epicentral distance ',sngl(epidist(irec)),' deg'
   enddo
   close(27)
 
