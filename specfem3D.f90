@@ -977,6 +977,9 @@
 ! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
 
+! check that we combine the seismograms in one large file to avoid GPFS overloading
+    if(.not. SAVE_ALL_SEISMOS_IN_ONE_FILE) call exit_MPI(myrank,'should use SAVE_ALL_SEISMOS_IN_ONE_FILE for GPFS in Barcelona')
+
 ! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
     LOCAL_PATH = '/scratch/komatits_new'
 

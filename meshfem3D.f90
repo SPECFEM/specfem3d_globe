@@ -717,6 +717,9 @@
 ! DK DK UGLY if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
 
+! check that we combine the seismograms in one large file to avoid GPFS overloading
+    if(.not. SAVE_ALL_SEISMOS_IN_ONE_FILE) call exit_MPI(myrank,'should use SAVE_ALL_SEISMOS_IN_ONE_FILE for GPFS in Barcelona')
+
 ! clean the local scratch space using a cascade (serial removal, one process after the other)
     if(myrank == 0) then
 
