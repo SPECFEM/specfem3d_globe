@@ -1526,7 +1526,7 @@
             tau_s,tau_e_store,Qmu_store,T_c_source, &
             ATTENUATION,ATTENUATION_3D, &
             size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
-            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,AM_V)
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,ABSORBING_CONDITIONS,AM_V)
 
   deallocate(rmass,stat=ier); if(ier /= 0) stop 'error in deallocate'
   deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate'
