@@ -152,26 +152,6 @@
 
   integer iregion_code
 
-
-  write(IMAIN,*) 'SAVE ARRAY SOLVER -->'
-  write(IMAIN,*) 'iregion_code : ',iregion_code
-  write(IMAIN,*) 'nspec : ',nspec
-  write(IMAIN,*) 'nspec_stacey: ',nspec_stacey
-  write(IMAIN,*) 'nspec_ani : ',nspec_ani
-  write(IMAIN,*) 'nglob : ',nglob
-  write(IMAIN,*) 'muvstore : ',&
-((iregion_code /= IREGION_OUTER_CORE) .and. (.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)))
-  write(IMAIN,*) 'kappahstore, muhstore, eta_anisostore : ',&
-((TRANSVERSE_ISOTROPY).and.(iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE))
-  write(IMAIN,*) 'c11 -> c44 : ',(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE)
-  write(IMAIN,*) 'c11 -> c66 : ',(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)
-  write(IMAIN,*) 'rho_vp, rho_vs : ',((NCHUNKS /= 6).and.(iregion_code == IREGION_CRUST_MANTLE))
-  write(IMAIN,*) 'rho_vp : ',((NCHUNKS /= 6).and.(iregion_code == IREGION_OUTER_CORE))
-  write(IMAIN,*) 'OCEANS .and. iregion_code == IREGION_CRUST_MANTLE : ',(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE)
-  write(IMAIN,*) '-----------------------------'
-  write(IMAIN,*) 
-
-
 ! save nspec and nglob, to be used in combine_paraview_data
   open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt',status='unknown')
   if (NCHUNKS == 6 .and. ichunk /= CHUNK_AB .and. iregion_code == IREGION_INNER_CORE) then
