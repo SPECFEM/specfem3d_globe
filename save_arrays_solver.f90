@@ -38,7 +38,7 @@
             TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
             tau_s,tau_e_store,Qmu_store,T_c_source, &
             ATTENUATION,ATTENUATION_3D,vx,vy,vz,vnspec, &
-            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS, AM_V)
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,ABSORBING_CONDITIONS,AM_V)
 
   implicit none
 
@@ -66,7 +66,7 @@
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
-  logical ATTENUATION,ATTENUATION_3D
+  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS
 
   integer NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk
 
@@ -152,6 +152,26 @@
 
   integer iregion_code
 
+
+  write(IMAIN,*) 'SAVE ARRAY SOLVER -->'
+  write(IMAIN,*) 'iregion_code : ',iregion_code
+  write(IMAIN,*) 'nspec : ',nspec
+  write(IMAIN,*) 'nspec_stacey: ',nspec_stacey
+  write(IMAIN,*) 'nspec_ani : ',nspec_ani
+  write(IMAIN,*) 'nglob : ',nglob
+  write(IMAIN,*) 'muvstore : ',&
+((iregion_code /= IREGION_OUTER_CORE) .and. (.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)))
+  write(IMAIN,*) 'kappahstore, muhstore, eta_anisostore : ',&
+((TRANSVERSE_ISOTROPY).and.(iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE))
+  write(IMAIN,*) 'c11 -> c44 : ',(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE)
+  write(IMAIN,*) 'c11 -> c66 : ',(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)
+  write(IMAIN,*) 'rho_vp, rho_vs : ',((NCHUNKS /= 6).and.(iregion_code == IREGION_CRUST_MANTLE))
+  write(IMAIN,*) 'rho_vp : ',((NCHUNKS /= 6).and.(iregion_code == IREGION_OUTER_CORE))
+  write(IMAIN,*) 'OCEANS .and. iregion_code == IREGION_CRUST_MANTLE : ',(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE)
+  write(IMAIN,*) '-----------------------------'
+  write(IMAIN,*) 
+
+
 ! save nspec and nglob, to be used in combine_paraview_data
   open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt',status='unknown')
   if (NCHUNKS == 6 .and. ichunk /= CHUNK_AB .and. iregion_code == IREGION_INNER_CORE) then
@@ -232,7 +252,7 @@
   endif
 
 ! Stacey
-  if(NCHUNKS /= 6) then
+  if(ABSORBING_CONDITIONS) then
 
     if(iregion_code == IREGION_CRUST_MANTLE) then
       write(27) rho_vp
