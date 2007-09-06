@@ -573,7 +573,7 @@ subroutine Cut_McK( root, nbnodes, nnz, xadj, adj, mask, gsize, invp, limit, nsp
 
   ENDIF
 
-  if (gsize > limit) then
+  if (MULTI_LEVEL_CUTHILL .and. gsize > limit) then
     do i = limit + 1 , nbnodes
       node=invp(i)
       if (node /=0) mask(node) = 1
