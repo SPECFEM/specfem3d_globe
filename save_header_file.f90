@@ -229,6 +229,7 @@
   write(IOUT,*) '! GLL points along a great circle = ',4*NEX_XI*(NGLLX-1)
   write(IOUT,*) '! average distance between points in degrees = ',360./real(4*NEX_XI*(NGLLX-1))
   write(IOUT,*) '! average distance between points in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI*(NGLLX-1))
+  write(IOUT,*) '! average size of a spectral element in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI)
   write(IOUT,*) '!'
   write(IOUT,*) '! number of time steps = ',NSTEP
   write(IOUT,*) '!'
