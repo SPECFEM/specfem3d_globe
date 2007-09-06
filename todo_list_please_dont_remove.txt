@@ -5,30 +5,6 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 David:
 -----
 
-- dans le cas où NCHUNKS = 1, le solveur se plante car il cherche a lire
-des fichiers plus gros que ceux sauvés par le mailleur. Apparemment
-ca doit etre des tableaux pour les conditions absorbantes de Stacey ou 
-quelque chose comme ça qui est spécifique à NCHUNKS < 6 qui ne doit
-pas etre sauvé à la meme taille que la taille lorsqu'on le relit,
-car quand on a 6 chunks tout marche très bien.
-dkomati1-ipigps014: mpirun -np 9 ./xspecfem3D
-PGFIO-F-219/unformatted read/unit=40/attempt to read/write past end of record.
- File name = DATABASES_MPI/proc000003_reg1_solver_data_1.bin    unformatted,
-sequential access   record = 16
- In source file read_arrays_solver.f90, at line number 170
-
-- le flag pour le multilevel Cuthill-McKee qui est dans constants.h.in
-n'est jamais utilisé (un grep ne le montre dans aucun fichier Fortran90),
-il semble donc que soit on ne fait jamais de multilevel
-cuthill soit on le fait toujours (et alors on ne fait jamais le cuthill
-simple niveau cuthill). Il faudra corriger cela pour faire l'un ou l'autre
-suivant la valeur de ce flag
-dkomati1-ipigps014: grep -i MULTI_LEVEL_CUTHILL *.h* *90
-constants.h.in:  logical, parameter :: MULTI_LEVEL_CUTHILL = .true.
-
-- flag SUPPRESS_CRUSTAL_MESH does not work on the current version that is on the SVN server: it exits with an error message 'ispec greater than nspec in mesh creation' in the mesher: this bug should be fixed. en particulier je crois que ca est faux dans create_regions_mesh.f90
- elseif (SUPPRESS_CRUSTAL_MESH .and. iz_elem == ner(ilayer) .and. ilayer == ifirst_region+1) then
-il faudrait le coder plutot directement avec des regions ayant ner(i) = 0 et en commencant directement par doubling_factor(i) = 2 a la surface au lieu de 1, comme moi dans le code acoustique PKP 3D.
 
 - a voir avec Qinya : I noticed a problem in Qinya's adjoint code and the
   conversion to static memory below: arrays eps_trace_over_3_crust_mantle and eps_trace_over_3_inner_core are not needed when we use attenuation only for a forward simulation, they are only needed to save the strain in the whole mesh (when we attenuation for a forward run this calculation of eps_trace_over_3, i.e. the trace of the strain tensor, is purely local and can be stored in a scalar, not need to waste an array for it. I have therefore added two new static constants
@@ -112,6 +88,53 @@ Jeroen Tromp wrote:
 
 - create the mesh from bottom layer to top layer (it is created the other way around right now): this will be better for Cuthill-McKee, for graphics etc; DK DK: already done by David in Barcelona 2007 I think
 
+<<<<<<< .mine
+<<<<<<< .mine
+- remove derived types (for attenuation, for anisotropy etc) and remove -align sequence from the Makefile, because of potential portability and alignment problems on future machines
+
+- merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
+30/06/2007 18:19
+Hi Jeroen, Leif and David,
+I thought about merging the mesher and the solver, there
+might be a hidden difficulty because of memory allocation:
+the solver allocates almost all the available memory
+on a given CPU in static arrays, and the solver
+allocates a similar amount dynamically with allocate()
+statements. Therefore combining them would roughly
+double the required amount of memory and will not
+fit because the Par_file is tuned in order for the solver
+to use almost all the available memory on each CPU
+(in the case of large runs).
+On systems (such as Linux) with a "first touch" memory allocation policy
+things should be ok because (if I understand correctly,
+but I am not sure) the system will not physically
+allocate the static memory for the solver until
+it is actually called, i.e. once the mesher has finished,
+even if both are combined in the same program.
+But on other systems I guess we could have problems and the run
+would not start and exit with an "out of memory" error?
+I don't know how to solve this problem. (*if* it needs to be
+solved; if *all* modern systems use a first touch policy, then
+we are all set; please let me know; I don't know much about
+operating systems). Leif, would you have any idea about how to handle this?
+If the problem turns out to be too complex, I suggest
+*not* doing it in v4.0 and waiting until we start
+working on v4.1 after the October 9-11 workshop.
+Dimitri.
+
+=======
+- convert the "allocatable" arrays (including
+2D arrays for the MPI buffers etc, because for very large
+runs they are not that small) in the solver
+from dynamic to static (easy to do: write their size
+in values_from_mesher.h in the mesher; but there are
+so many of them and so many cases (with/without attenuation,
+anisotropy, absorbing edges etc.) that we need to be careful:
+DK DK already done by David in Barcelona 2007 I think
+>>>>>>> .r1567
+
+=======
+>>>>>>> .r1758
 - get rid of the bottleneck in locate_sources and locate_receivers
 when one uses a huge number of sources (e.g. Vala -> 100000 sources)
 or a very large number of stations (e.g. Bernhard -> 20000 stations):
@@ -314,6 +337,20 @@ Things to add later to the manual:
 ----------------------------------
 
 - stp si tu peux répondre à ça et on mettra ta réponse dans la section "modèles 3D" du manuel Subject: SPECFEM3D - Models Date: Mon, 2 Jul 2007 17:08:01 +0200 From: Bernhard Schuberth <mail@bernhard-schuberth.de> To: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr> References: <200706041627.21859.mail@bernhard-schuberth.de> <200707020852.01968.mail@bernhard-schuberth.de> <4688C215.6070208@univ-pau.fr> Hi Dimitri, I was checking the implementation of different 3D geodynamic models in my own version of SPECFEM3D and came across some questions regarding the flags ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D (I am not completely sure about the philosophy behind those flags)
+==> HONOR_1D_SPHERICAL_MOHO : honor PREM Moho or not :
+- Doing so drastically reduces the stability condition and therefore the time
+step, resulting in expensive calculations.
+- If not, honor a fictitious Moho at the depth of 40km in order to have even
+radial sampling from the d220 to the Earth surface.
+
+==> ONE_CRUST : in order to increase stability and therefore to allow cheaper
+simulations (bigger time step), PREM models can be run with just one crust
+layer instead of two.
+
+==> CASE_3D : this flag allows the stretching of the crust's finite elements
+layers for the 3D models. The purpose of this stretching is to squeeze more
+GLL points by km in the upper part of the crust than in the lower part. 
+
 
 - add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers
 
@@ -324,6 +361,7 @@ Things to add later to the manual:
 - dire ça dans le manuel :  grep -i xstore *f90 | grep -i double, grep -i xstore *f90 | grep -i custom, doit tjrs être en double dans le mailleur, mais sauvé en CUSTOM et relu en CUSTOM dans le solver car pas besoin de cettte précision
 
 - Dire dans manuel que par défaut le mailleur tourne lentement pour optimiser par cuthill mckee et tri de ibool, mais flag dans DATA/Par_file pour le desactiver (appeler ce flag SLOWER_MESHER_FASTER_SOLVER par exemple)
+==> rajouté dans le manuel (brouillon) et dans le code
 
 - explain this in the manual: We have implemented a simple way of handling the ONE_CRUST / two crusts issue : we let the user decide. In the new version, the models in Par_file (isotropic_prem, ak135 etc) always implement the right version with two crusts. But we have added new model names: isotropic_prem_one_crust, ak135_one_crust etc., in which case the code uses ONE_CRUST. Depending on the option chosen by the user, the code automatically selects the right time step (i.e., reduces the time step in the case of two crusts and a "small" NEX, to remain stable). This way, users can decide what they want to do.
 
@@ -338,6 +376,38 @@ Things to add later to the manual:
 
 DONE:
 -----
+
+- flag SUPPRESS_CRUSTAL_MESH does not work on the current version that is on the SVN server: it exits with an error message 'ispec greater than nspec in mesh creation' in the mesher: this bug should be fixed. en particulier je crois que ca est faux dans create_regions_mesh.f90
+ elseif (SUPPRESS_CRUSTAL_MESH .and. iz_elem == ner(ilayer) .and. ilayer == ifirst_region+1) then
+il faudrait le coder plutot directement avec des regions ayant ner(i) = 0 et en commencant directement par doubling_factor(i) = 2 a la surface au lieu de 1, comme moi dans le code acoustique PKP 3D.
+
+- le flag pour le multilevel Cuthill-McKee qui est dans constants.h.in
+n'est jamais utilisé (un grep ne le montre dans aucun fichier Fortran90),
+il semble donc que soit on ne fait jamais de multilevel
+cuthill soit on le fait toujours (et alors on ne fait jamais le cuthill
+simple niveau cuthill). Il faudra corriger cela pour faire l'un ou l'autre
+suivant la valeur de ce flag
+dkomati1-ipigps014: grep -i MULTI_LEVEL_CUTHILL *.h* *90
+constants.h.in:  logical, parameter :: MULTI_LEVEL_CUTHILL = .true.
+==> ok, rajouté dans get_perm_cuthill_mckee.f90. A revoir lors de l'implémentation des courbes de peano.
+
+
+- dans le cas où NCHUNKS = 1, le solveur se plante car il cherche a lire
+des fichiers plus gros que ceux sauvés par le mailleur. Apparemment
+ca doit etre des tableaux pour les conditions absorbantes de Stacey ou 
+quelque chose comme ça qui est spécifique à NCHUNKS < 6 qui ne doit
+pas etre sauvé à la meme taille que la taille lorsqu'on le relit,
+car quand on a 6 chunks tout marche très bien.
+dkomati1-ipigps014: mpirun -np 9 ./xspecfem3D
+PGFIO-F-219/unformatted read/unit=40/attempt to read/write past end of record.
+ File name = DATABASES_MPI/proc000003_reg1_solver_data_1.bin    unformatted,
+sequential access   record = 16
+ In source file read_arrays_solver.f90, at line number 170
+==> mauvaise condition pour la création des tableaux rho_vp et rho_vs dans
+save_arrays_solver.f90 pour NCHUNK=1 : ils étaient créés, mais pas relu => pas de problèmes quant les
+tableaux étaient dumpés dans des fichiers séparés (ils n'étaient pas relus),
+mais problème avec l'aggrégation des tableaux dans un seul fichier .bin. résolu en changeant la condition.
+
 
 - run Sdiff calculations for Lev Vinnik (Moscow, Russia): done by Dimitri in Barcelona
 
@@ -419,9 +489,23 @@ pour des soucis de lisibilité.
 
 - use BLAS3 calls in compute_forces*.f90 instead of loops as in the current implementation. We should gain a huge factor if we can do this, but we will need to change the structure of the arrays: done by Dimitri in Barcelone 2007
 
+<<<<<<< .mine
+- convert *ALL* the "allocatable" arrays (including
+2D arrays for the MPI buffers etc, because for very large
+runs they are not that small) in the solver
+from dynamic to static (easy to do: write their size
+in values_from_mesher.h in the mesher; but there are
+so many of them and so many cases (with/without attenuation,
+anisotropy, absorbing edges etc.) that we need to be careful:
+DK DK already done by David in Barcelona 2007 I think
+=======
 - remove derived types (for attenuation, for anisotropy etc) and remove -align sequence from the Makefile, because of potential portability and alignment problems on future machines; replace them with modules: not done because the current code is OK, therefore not a good idea to change it
 
 - faire un commit du script de stretching de la croûte 3D de David dans UTILS: not needed anymore, because implemented in Fortran in stretching_function.f90
 
+<<<<<<< .mine
+>>>>>>> .r1567
+=======
 - convert the "allocatable" arrays in the solver from dynamic to static: done by David, Jeroen and Dimitri
 
+>>>>>>> .r1758
