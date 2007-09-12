@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -365,57 +365,15 @@
 ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
 
-  if(ANGULAR_WIDTH_XI_IN_DEGREES <= 89.9999d0 .OR. NEX_MAX > 1248) then
-
-!!!!!! DK DK
-!!!!!! DK DK  this section written by Brian Savage, commented out by Dimitri Komatitsch
-!!!!!! DK DK  because it is based on the old mesher and therefore does not work with the new
-!!!!!! DK DK  mesher. Brian will update it and put it back.
-!!!!!! DK DK
-
-    stop 'auto_ner commented out by Dimitri Komatitsch for now; Brian Savage will put it back'
-
-!   call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-!         NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
-!         NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
-!         NER_CMB_TOPDDOUBLEPRIME, NER_TOP_CENTRAL_CUBE_ICB)
-
-    ! Determine in appropriate period range for the current mesh
-    !   Note: we are using DT as a temporary variable
-    ! The Minimum attenuation period = (Grid Spacing in km) / V_min
-    !  Grid spacing in km     = Width of an element in km * spacing for GLL point * points per wavelength
-    !  Width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
-    !  degrees to km          = 111.11d0
-    !  spacing for GLL point  = 4
-    !  points per wavelength  = 4
-!   DT = (ANGULAR_WIDTH_XI_IN_DEGREES / (4.0d0 * dble(NEX_MAX)) * 111.11d0 * 4.0d0 ) / 2.25d0
-!   MIN_ATTENUATION_PERIOD = DT
-
-    ! The max attenuation period for 3 SLS is optimally
-    !   1.75 decades from the min attenuation period
-!   DT = dble(MIN_ATTENUATION_PERIOD) * 10.0d0**1.75d0
-!   MAX_ATTENUATION_PERIOD = DT
-
-    ! 0.173 is the minimum spacing between GLL points for NGLL = 5
-    ! This should be changed in the future, placed in a header file
-    ! 0.40 is the ratio of radial lengths of elements inside the
-    ! central cube to those just outside the central cube
-    ! 1221.0 is the Radius of the inncer core in km
-    ! 0.40 is the maximum stability condition
-    ! 11.02827 is Vp near the inner core boundary
-    ! See equation 48 in Komatitsch and Tromp (2002, Part I)
-!   DT = (0.40d0 * &
-!        ((ANGULAR_WIDTH_XI_IN_DEGREES * (PI/180.0d0)) * 1221.0d0) / &
-!        (dble(NEX_MAX) / 8.0d0) / 11.02827d0 ) * 0.173d0 * 0.4d0
-
-  else
+!! DK DK completely removed the crust, therefore impose a fictitious value here
+!!  ONE_CRUST = .false.
 
 !----
 !----  case prem_onecrust by default
 !----
 
      ! element width =   0.5625000      degrees =    62.54715      km
-      if(NEX_MAX <= 160) then
+      if(NEX_MAX*2 <= 160) then
         DT                       = 0.252d0
 
         MIN_ATTENUATION_PERIOD   = 30
@@ -435,7 +393,7 @@
         R_CENTRAL_CUBE = 950000.d0
 
     ! element width =   0.3515625      degrees =    39.09196      km
-      else if(NEX_MAX <= 256) then
+      else if(NEX_MAX*2 <= 256) then
         DT                       = 0.225d0
 
         MIN_ATTENUATION_PERIOD   = 20
@@ -455,7 +413,7 @@
         R_CENTRAL_CUBE = 965000.d0
 
     ! element width =   0.2812500      degrees =    31.27357      km
-      else if(NEX_MAX <= 320) then
+      else if(NEX_MAX*2 <= 320) then
         DT                       = 0.16d0
 
         MIN_ATTENUATION_PERIOD   = 15
@@ -475,7 +433,7 @@
         R_CENTRAL_CUBE = 940000.d0
 
     ! element width =   0.1875000      degrees =    20.84905      km
-      else if(NEX_MAX <= 480) then
+      else if(NEX_MAX*2 <= 480) then
         DT                       = 0.12d0
 
         MIN_ATTENUATION_PERIOD   = 10
@@ -495,7 +453,7 @@
         R_CENTRAL_CUBE = 988000.d0
 
     ! element width =   0.1757812      degrees =    19.54598      km
-      else if(NEX_MAX <= 512) then
+      else if(NEX_MAX*2 <= 512) then
         DT                       = 0.1125d0
 
         MIN_ATTENUATION_PERIOD   = 9
@@ -515,7 +473,7 @@
         R_CENTRAL_CUBE = 1010000.d0
 
     ! element width =   0.1406250      degrees =    15.63679      km
-      else if(NEX_MAX <= 640) then
+      else if(NEX_MAX*2 <= 640) then
         DT                       = 0.09d0
 
         MIN_ATTENUATION_PERIOD   = 8
@@ -535,7 +493,7 @@
         R_CENTRAL_CUBE = 1020000.d0
 
     ! element width =   0.1041667      degrees =    11.58280      km
-      else if(NEX_MAX <= 864) then
+      else if(NEX_MAX*2 <= 864) then
         DT                       = 0.0667d0
 
         MIN_ATTENUATION_PERIOD   = 6
@@ -555,7 +513,7 @@
         R_CENTRAL_CUBE = 990000.d0
 
     ! element width =   7.8125000E-02  degrees =    8.687103      km
-      else if(NEX_MAX <= 1152) then
+      else if(NEX_MAX*2 <= 1152) then
         DT                       = 0.05d0
 
         MIN_ATTENUATION_PERIOD   = 4
@@ -575,7 +533,7 @@
         R_CENTRAL_CUBE = 985000.d0
 
     ! element width =   7.2115384E-02  degrees =    8.018865      km
-      else if(NEX_MAX <= 1248) then
+      else if(NEX_MAX*2 <= 1248) then
         DT                       = 0.0462d0
 
         MIN_ATTENUATION_PERIOD   = 4
@@ -595,58 +553,41 @@
         R_CENTRAL_CUBE = 985000.d0
 
       else
-        stop 'problem with this value of NEX_MAX'
+
+!! DK DK scale with respect to 1248 if above that limit
+        DT                       = 0.0462d0 * 1248.d0 / (2.d0*NEX_MAX)
+
+        MIN_ATTENUATION_PERIOD   = 4
+        MAX_ATTENUATION_PERIOD   = 200
+
+        NER_CRUST                = nint(3 * 2.d0*NEX_MAX / 1248.d0)
+        NER_80_MOHO              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
+        NER_220_80               = nint(9 * 2.d0*NEX_MAX / 1248.d0)
+        NER_400_220              = nint(14 * 2.d0*NEX_MAX / 1248.d0)
+        NER_600_400              = nint(14 * 2.d0*NEX_MAX / 1248.d0)
+        NER_670_600              = nint(5 * 2.d0*NEX_MAX / 1248.d0)
+        NER_771_670              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
+        NER_TOPDDOUBLEPRIME_771  = nint(114 * 2.d0*NEX_MAX / 1248.d0)
+        NER_CMB_TOPDDOUBLEPRIME  = nint(8 * 2.d0*NEX_MAX / 1248.d0)
+        NER_OUTER_CORE           = nint(124 * 2.d0*NEX_MAX / 1248.d0)
+        NER_TOP_CENTRAL_CUBE_ICB = nint(13 * 2.d0*NEX_MAX / 1248.d0)
+        R_CENTRAL_CUBE = 985000.d0
+
+!! DK DK removed this limit           else
+!! DK DK removed this limit             stop 'problem with this value of NEX_MAX'
       endif
 
 !----
 !----  change some values in the case of regular PREM with two crustal layers or of 3D models
 !----
-    if (HONOR_1D_SPHERICAL_MOHO .and. .not. ONE_CRUST) then
 
 ! case of regular PREM with two crustal layers: change the time step for small meshes
 ! because of a different size of elements in the radial direction in the crust
-      if(NEX_MAX <= 160) then
+      if(NEX_MAX*2 <= 160) then
         DT = 0.20d0
-      else if(NEX_MAX <= 256) then
+      else if(NEX_MAX*2 <= 256) then
         DT = 0.20d0
       endif
-
-    else
-
-! case 3D: change the upper part of the mesh and the time step because of
-! the 3D model with faster of slower velocities in the upper mantle and crust
-      if(NEX_MAX <= 160) then
-        DT                       = 0.15d0
-        NER_CRUST                = 2
-      else if(NEX_MAX <= 256) then
-        DT                       = 0.17d0
-        NER_CRUST                = 2
-      else if(NEX_MAX <= 320) then
-        DT                       = 0.155d0
-        NER_CRUST                = 2
-      else if(NEX_MAX <= 480) then
-        NER_CRUST                = 2
-        NER_80_MOHO              = 1
-      else if(NEX_MAX <= 512) then
-        NER_CRUST                = 2
-        NER_80_MOHO              = 1
-      else if(NEX_MAX <= 640) then
-        NER_CRUST                = 3
-        NER_80_MOHO              = 2
-      else if(NEX_MAX <= 864) then
-        NER_CRUST                = 4
-        NER_80_MOHO              = 3
-      else if(NEX_MAX <= 1152) then
-        NER_CRUST                = 4
-        NER_80_MOHO              = 4
-      else if(NEX_MAX <= 1248) then
-        NER_CRUST                = 5
-        NER_80_MOHO              = 4
-      endif
-
-    endif
-
-  endif
 
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
@@ -909,10 +850,14 @@
   if(NEX_ETA < 48) stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
 
 ! check that mesh can be coarsened in depth four times (block size must be a multiple of 32)
-  if(mod(NEX_XI,32) /= 0) stop 'NEX_XI must be a multiple of 32'
-  if(mod(NEX_ETA,32) /= 0) stop 'NEX_ETA must be a multiple of 32'
-  if(mod(NEX_XI/32,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 32*NPROC_XI'
-  if(mod(NEX_ETA/32,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 32*NPROC_ETA'
+! if(mod(NEX_XI,32) /= 0) stop 'NEX_XI must be a multiple of 32'
+! if(mod(NEX_ETA,32) /= 0) stop 'NEX_ETA must be a multiple of 32'
+! if(mod(NEX_XI/32,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 32*NPROC_XI'
+! if(mod(NEX_ETA/32,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 32*NPROC_ETA'
+  if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
+  if(mod(NEX_ETA,16) /= 0) stop 'NEX_ETA must be a multiple of 16'
+  if(mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
+  if(mod(NEX_ETA/16,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 16*NPROC_ETA'
 
 ! check that topology is correct if more than two chunks
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) stop 'must have NEX_XI = NEX_ETA for more than two chunks'
@@ -997,127 +942,148 @@
 ! define all the layers of the mesh
   if (SUPPRESS_CRUSTAL_MESH) then
 
-    NER_80_MOHO = nint(NER_220_80*((R_EARTH-R80)*1.d0)/((R80-R220)*1.d0))
-    NER_CRUST = 0
-    RMOHO_FICTITIOUS_IN_MESHER = R_EARTH
-
+    ONE_CRUST = .false.
     OCEANS= .false.
     TOPOGRAPHY = .false.
     CRUSTAL = .false.
 
-    NUMBER_OF_MESH_LAYERS = 14
-    layer_offset = 0
+    NUMBER_OF_MESH_LAYERS = 15
+    layer_offset = 1
 
-    ner( 1) = NER_CRUST
-    ner( 2) = NER_80_MOHO
-    ner( 3) = NER_220_80
-    ner( 4) = NER_400_220
-    ner( 5) = NER_600_400
-    ner( 6) = NER_670_600
-    ner( 7) = NER_771_670
-    ner( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-    ner( 9) = elem_doubling_mantle
-    ner(10) = NER_CMB_TOPDDOUBLEPRIME
-    ner(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-    ner(12) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
-    ner(13) = elem_doubling_bottom_outer_core
-    ner(14) = NER_TOP_CENTRAL_CUBE_ICB
+!! DK DK 33333 UGLY YYYYY CRADE now only one region, therefore divide in three layers of the same size
+!   if(NER_CRUST + NER_80_MOHO < 3) then
+!     NER_CRUST = 1
+!     NER_80_MOHO = 2
+!   endif
+!   ner( 1) = nint((NER_CRUST + NER_80_MOHO) / 3.d0)
+!   ner( 2) = nint((NER_CRUST + NER_80_MOHO) / 3.d0)
+!   ner( 3) = (NER_CRUST + NER_80_MOHO) - 2 * nint((NER_CRUST + NER_80_MOHO) / 3.d0)
+!   if(minval(ner(1:3)) < 1) stop 'wrong mesh size detected'
+    ner( 1) = NER_CRUST + NER_80_MOHO
+    ner( 2) = 0
+    ner( 3) = 0
+
+    ner( 4) = NER_220_80
+    ner( 5) = NER_400_220
+    ner( 6) = NER_600_400
+    ner( 7) = NER_670_600
+    ner( 8) = NER_771_670
+    ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+    ner(10) = elem_doubling_mantle
+    ner(11) = NER_CMB_TOPDDOUBLEPRIME
+    ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+    ner(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
+    ner(14) = elem_doubling_bottom_outer_core
+    ner(15) = NER_TOP_CENTRAL_CUBE_ICB
 
   ! value of the doubling ratio in each radial region of the mesh
-    ratio_sampling_array(1:8) = 2
-    ratio_sampling_array(9:11) = 4
-    ratio_sampling_array(12) = 8
-    ratio_sampling_array(13:14) = 16
+    ratio_sampling_array(1:9) = 1
+    ratio_sampling_array(10:12) = 2
+    ratio_sampling_array(13) = 4
+    ratio_sampling_array(14:15) = 8
 
   ! value of the doubling index flag in each radial region of the mesh
-    doubling_index(1:2) = IFLAG_80_MOHO
-    doubling_index(3) = IFLAG_220_80
-    doubling_index(4:6) = IFLAG_670_220
-    doubling_index(7:10) = IFLAG_MANTLE_NORMAL
-    doubling_index(11:13) = IFLAG_OUTER_CORE_NORMAL
-    doubling_index(14) = IFLAG_INNER_CORE_NORMAL
+    doubling_index(1:3) = IFLAG_CRUST !!!!! IFLAG_80_MOHO
+    doubling_index(4) = IFLAG_220_80
+    doubling_index(5:7) = IFLAG_670_220
+    doubling_index(8:11) = IFLAG_MANTLE_NORMAL
+    doubling_index(12:14) = IFLAG_OUTER_CORE_NORMAL
+    doubling_index(15) = IFLAG_INNER_CORE_NORMAL
 
   ! define the three regions in which we implement a mesh doubling at the top of that region
     this_region_has_a_doubling(:)  = .false.
-    this_region_has_a_doubling(9)  = .true.
-    this_region_has_a_doubling(12) = .true.
+!!!!!!!!!!!!!!!!!!!!!!!    this_region_has_a_doubling(3)  = .true.
+    this_region_has_a_doubling(10) = .true.
     this_region_has_a_doubling(13) = .true.
+    this_region_has_a_doubling(14) = .true.
+
+  ! define the top and bottom radii of all the regions of the mesh in the radial direction
+  ! the first region is the crust at the surface of the Earth
+  ! the last region is in the inner core near the center of the Earth
 
     r_top(1) = R_EARTH
-    r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
+!!!!!!!!!!!!!    r_bottom(1) = RMIDDLE_CRUST
+    r_bottom(1) = R80
 
-    r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
-    r_bottom(2) = R80
+    r_top(2) = RMIDDLE_CRUST    !!!! now fictitious
+    r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
 
-    r_top(3) = R80
-    r_bottom(3) = R220
+    r_top(3) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
+    r_bottom(3) = R80    !!!! now fictitious
 
-    r_top(4) = R220
-    r_bottom(4) = R400
+    r_top(4) = R80
+    r_bottom(4) = R220
 
-    r_top(5) = R400
-    r_bottom(5) = R600
+    r_top(5) = R220
+    r_bottom(5) = R400
 
-    r_top(6) = R600
-    r_bottom(6) = R670
+    r_top(6) = R400
+    r_bottom(6) = R600
 
-    r_top(7) = R670
-    r_bottom(7) = R771
+    r_top(7) = R600
+    r_bottom(7) = R670
 
-    r_top(8) = R771
-    r_bottom(8) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+    r_top(8) = R670
+    r_bottom(8) = R771
 
-    r_top(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-    r_bottom(9) = RTOPDDOUBLEPRIME
+    r_top(9) = R771
+    r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
 
-    r_top(10) = RTOPDDOUBLEPRIME
-    r_bottom(10) = RCMB
+    r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+    r_bottom(10) = RTOPDDOUBLEPRIME
 
-    r_top(11) = RCMB
-    r_bottom(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+    r_top(11) = RTOPDDOUBLEPRIME
+    r_bottom(11) = RCMB
 
-    r_top(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-    r_bottom(12) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+    r_top(12) = RCMB
+    r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
 
-    r_top(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-    r_bottom(13) = RICB
+    r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+    r_bottom(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
 
-    r_top(14) = RICB
-    r_bottom(14) = R_CENTRAL_CUBE
+    r_top(14) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+    r_bottom(14) = RICB
 
-  !!! DM new definition of rmins & rmaxs in replacement of mesh_radial
+    r_top(15) = RICB
+    r_bottom(15) = R_CENTRAL_CUBE
+
+  ! new definition of rmins & rmaxs
     rmaxs(1) = ONE
-    rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+!!!!!!!!!!!!!!!    rmins(1) = RMIDDLE_CRUST / R_EARTH
+    rmins(1) = R80 / R_EARTH
 
-    rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-    rmins(2) = R80 / R_EARTH
+    rmaxs(2) = RMIDDLE_CRUST / R_EARTH    !!!! now fictitious
+    rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
 
-    rmaxs(3) = R80 / R_EARTH
-    rmins(3) = R220 / R_EARTH
+    rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
+    rmins(3) = R80 / R_EARTH    !!!! now fictitious
 
-    rmaxs(4) = R220 / R_EARTH
-    rmins(4) = R400 / R_EARTH
+    rmaxs(4) = R80 / R_EARTH
+    rmins(4) = R220 / R_EARTH
 
-    rmaxs(5) = R400 / R_EARTH
-    rmins(5) = R600 / R_EARTH
+    rmaxs(5) = R220 / R_EARTH
+    rmins(5) = R400 / R_EARTH
 
-    rmaxs(6) = R600 / R_EARTH
-    rmins(6) = R670 / R_EARTH
+    rmaxs(6) = R400 / R_EARTH
+    rmins(6) = R600 / R_EARTH
 
-    rmaxs(7) = R670 / R_EARTH
-    rmins(7) = R771 / R_EARTH
+    rmaxs(7) = R600 / R_EARTH
+    rmins(7) = R670 / R_EARTH
 
-    rmaxs(8:9) = R771 / R_EARTH
-    rmins(8:9) = RTOPDDOUBLEPRIME / R_EARTH
+    rmaxs(8) = R670 / R_EARTH
+    rmins(8) = R771 / R_EARTH
 
-    rmaxs(10) = RTOPDDOUBLEPRIME / R_EARTH
-    rmins(10) = RCMB / R_EARTH
+    rmaxs(9:10) = R771 / R_EARTH
+    rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
 
-    rmaxs(11:13) = RCMB / R_EARTH
-    rmins(11:13) = RICB / R_EARTH
+    rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
+    rmins(11) = RCMB / R_EARTH
 
-    rmaxs(14) = RICB / R_EARTH
-    rmins(14) = R_CENTRAL_CUBE / R_EARTH
+    rmaxs(12:14) = RCMB / R_EARTH
+    rmins(12:14) = RICB / R_EARTH
+
+    rmaxs(15) = RICB / R_EARTH
+    rmins(15) = R_CENTRAL_CUBE / R_EARTH
 
   elseif (ONE_CRUST) then
 
@@ -1250,6 +1216,7 @@
     rmaxs(14) = RICB / R_EARTH
     rmins(14) = R_CENTRAL_CUBE / R_EARTH
   else
+
 
     NUMBER_OF_MESH_LAYERS = 15
     layer_offset = 1

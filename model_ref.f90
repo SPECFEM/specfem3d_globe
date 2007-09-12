@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -7351,6 +7351,14 @@
  1.00000000000000 , &
  1.00000000000000 , &
  1.00000000000000 /)
+
+  if (SUPPRESS_CRUSTAL_MESH) then
+    Mref_V%density_ref(718:750) = Mref_V%density_ref(717)
+    Mref_V%vpv_ref(718:750) = Mref_V%vpv_ref(717)
+    Mref_V%vph_ref(718:750) = Mref_V%vph_ref(717)
+    Mref_V%vsv_ref(718:750) = Mref_V%vsv_ref(717)
+    Mref_V%vsh_ref(718:750) = Mref_V%vsh_ref(717)
+  endif
 
 ! strip the crust and replace it by mantle if we use an external crustal model
   if(USE_EXTERNAL_CRUSTAL_MODEL) then

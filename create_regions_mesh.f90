@@ -372,13 +372,13 @@
   double precision, dimension(:,:), allocatable :: stretch_tab
 
  ! added for Cuthill McKee permutation
-   integer, parameter :: limit=50
-   integer, dimension(:), allocatable :: perm,perm_tmp,temp_array_1D_int
-   logical, dimension(:,:), allocatable :: temp_array_2D_log
-   integer, dimension(:,:,:,:), allocatable :: temp_array_int
-   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
-   double precision, dimension(:,:,:,:), allocatable :: temp_array_dble
-   double precision, dimension(:,:,:,:,:), allocatable :: temp_array_dble_5dim
+ ! integer, parameter :: limit=50
+ ! integer, dimension(:), allocatable :: perm,perm_tmp,temp_array_1D_int
+ ! logical, dimension(:,:), allocatable :: temp_array_2D_log
+ ! integer, dimension(:,:,:,:), allocatable :: temp_array_int
+ ! real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
+ ! double precision, dimension(:,:,:,:), allocatable :: temp_array_dble
+ ! double precision, dimension(:,:,:,:,:), allocatable :: temp_array_dble_5dim
    integer :: NGLOB2DMAX_XY
    integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
@@ -611,7 +611,7 @@
   endif
 
 ! For considering anisotropic elements first and to build the mesh from the bottom to the top of the Region
-  if (SUPPRESS_CRUSTAL_MESH .or. ONE_CRUST) then
+  if (ONE_CRUST) then
     first_layer_aniso=2
     last_layer_aniso=3
     nb_layer_above_aniso = 1
@@ -739,7 +739,7 @@
      call add_missing_nodes(offset_x,offset_y,offset_z)
 
 ! compute the actual position of all the grid points of that element
-  if (ilayer == 1 .and. CASE_3D) then
+  if (ilayer == 1 .and. CASE_3D .and. .not. SUPPRESS_CRUSTAL_MESH) then
       ! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
       ! max ratio between size of upper crust elements and lower crust elements is given by the param MAX_RATIO_STRETCHING
       ! to avoid stretching, set MAX_RATIO_STRETCHING = 1.0d  in constants.h
@@ -781,8 +781,6 @@
   endif
 ! zmin & zmax
   if (iz_elem == ner(ilayer) .and. ilayer == ifirst_region) then
-      iboun(6,ispec)= .true.
-  elseif (SUPPRESS_CRUSTAL_MESH .and. iz_elem == ner(ilayer) .and. ilayer == ifirst_region+1) then
       iboun(6,ispec)= .true.
   endif
   if (iz_elem == 1 .and. ilayer == ilast_region) then    ! defined if no doubling in this layer
@@ -1120,145 +1118,6 @@
   endif
 
   if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering')
-
-! ***************************************************
-! Cuthill McKee permutation
-! ***************************************************
-
-  if(PERFORM_CUTHILL_MCKEE) then
-
-  if (iregion_code /= IREGION_INNER_CORE .or. PERMUTE_INNER_CORE) then
-    allocate(perm(nspec))
-    if(iregion_code == IREGION_CRUST_MANTLE) then
-    ! do not permute anisotropic elements
-      perm(1:FIRST_ELT_NON_ANISO-1) = (/ (i,i=1,FIRST_ELT_NON_ANISO-1) /)
-
-      ! no more connectivity between layers below and above the anisotropic layers => 2 permutations
-      ! permute the bottom of the region : below the aniso layers
-      allocate(perm_tmp(FIRST_ELT_ABOVE_ANISO-FIRST_ELT_NON_ANISO))
-      call get_perm(ibool(:,:,:,FIRST_ELT_NON_ANISO:FIRST_ELT_ABOVE_ANISO-1),perm_tmp,limit,&
-(FIRST_ELT_ABOVE_ANISO-FIRST_ELT_NON_ANISO),nglob,.true.,.false.)
-      perm(FIRST_ELT_NON_ANISO:FIRST_ELT_ABOVE_ANISO-1) = perm_tmp(:)+(FIRST_ELT_NON_ANISO-1)
-      deallocate(perm_tmp)
-
-      ! permute the top of the region : above the aniso layers
-      allocate(perm_tmp(nspec-FIRST_ELT_ABOVE_ANISO+1))
-      call get_perm(ibool(:,:,:,FIRST_ELT_ABOVE_ANISO:nspec),perm_tmp,limit,&
-(nspec-FIRST_ELT_ABOVE_ANISO+1),nglob,.true.,.false.)
-      perm(FIRST_ELT_ABOVE_ANISO:nspec) = perm_tmp(:)+(FIRST_ELT_ABOVE_ANISO-1)
-      deallocate(perm_tmp)
-    else
-      ! the last two parameters are: INVERSE,FACE
-      call get_perm(ibool,perm,limit,nspec,nglob,.true.,.false.)
-    endif
-
-    ! permutation of xstore, ystore, zstore, rhostore, kappavstore, kappahstore,
-    ! muvstore, muhstore, eta_anisostore, xixstore, xiystore, xizstore, etaxstore,
-    ! etaystore, etazstore, gammaxstore, gammaystore, gammazstore
-
-    allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec))
-    if(ATTENUATION .and. ATTENUATION_3D) then
-      call permute_elements_dble(Qmu_store,temp_array_dble,perm,nspec)
-      allocate(temp_array_dble_5dim(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
-      temp_array_dble_5dim(:,:,:,:,:) = tau_e_store(:,:,:,:,:)
-      do i = 1,nspec
-        tau_e_store(:,:,:,:,perm(i)) = temp_array_dble_5dim(:,:,:,:,i)
-      enddo
-      deallocate(temp_array_dble_5dim)
-    endif
-    call permute_elements_dble(xstore,temp_array_dble,perm,nspec)
-    call permute_elements_dble(ystore,temp_array_dble,perm,nspec)
-    call permute_elements_dble(zstore,temp_array_dble,perm,nspec)
-    deallocate(temp_array_dble)
-
-
-    allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec))
-    if(NCHUNKS /= 6) then
-      call permute_elements_real(rho_vp,temp_array_real,perm,nspec)
-      call permute_elements_real(rho_vs,temp_array_real,perm,nspec)
-    endif
-    if((ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) .or. &
-      (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
-      call permute_elements_real(c11store,temp_array_real,perm,nspec)
-      call permute_elements_real(c12store,temp_array_real,perm,nspec)
-      call permute_elements_real(c13store,temp_array_real,perm,nspec)
-      call permute_elements_real(c14store,temp_array_real,perm,nspec)
-      call permute_elements_real(c15store,temp_array_real,perm,nspec)
-      call permute_elements_real(c16store,temp_array_real,perm,nspec)
-      call permute_elements_real(c22store,temp_array_real,perm,nspec)
-      call permute_elements_real(c23store,temp_array_real,perm,nspec)
-      call permute_elements_real(c24store,temp_array_real,perm,nspec)
-      call permute_elements_real(c25store,temp_array_real,perm,nspec)
-      call permute_elements_real(c26store,temp_array_real,perm,nspec)
-      call permute_elements_real(c33store,temp_array_real,perm,nspec)
-      call permute_elements_real(c34store,temp_array_real,perm,nspec)
-      call permute_elements_real(c35store,temp_array_real,perm,nspec)
-      call permute_elements_real(c36store,temp_array_real,perm,nspec)
-      call permute_elements_real(c44store,temp_array_real,perm,nspec)
-      call permute_elements_real(c45store,temp_array_real,perm,nspec)
-      call permute_elements_real(c46store,temp_array_real,perm,nspec)
-      call permute_elements_real(c55store,temp_array_real,perm,nspec)
-      call permute_elements_real(c56store,temp_array_real,perm,nspec)
-      call permute_elements_real(c66store,temp_array_real,perm,nspec)
-    endif
-    call permute_elements_real(rhostore,temp_array_real,perm,nspec)
-    call permute_elements_real(kappavstore,temp_array_real,perm,nspec)
-    call permute_elements_real(kappahstore,temp_array_real,perm,nspec)
-    call permute_elements_real(muvstore,temp_array_real,perm,nspec)
-    call permute_elements_real(muhstore,temp_array_real,perm,nspec)
-    call permute_elements_real(eta_anisostore,temp_array_real,perm,nspec)
-    call permute_elements_real(xixstore,temp_array_real,perm,nspec)
-    call permute_elements_real(xiystore,temp_array_real,perm,nspec)
-    call permute_elements_real(xizstore,temp_array_real,perm,nspec)
-    call permute_elements_real(etaxstore,temp_array_real,perm,nspec)
-    call permute_elements_real(etaystore,temp_array_real,perm,nspec)
-    call permute_elements_real(etazstore,temp_array_real,perm,nspec)
-    call permute_elements_real(gammaxstore,temp_array_real,perm,nspec)
-    call permute_elements_real(gammaystore,temp_array_real,perm,nspec)
-    call permute_elements_real(gammazstore,temp_array_real,perm,nspec)
-    deallocate(temp_array_real)
-
-    ! permutation of ibool
-    allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec))
-    call permute_elements_integer(ibool,temp_array_int,perm,nspec)
-    deallocate(temp_array_int)
-
-    ! permutation of iMPIcut_*
-    allocate(temp_array_2D_log(2,nspec))
-    temp_array_2D_log(:,:) = iMPIcut_xi(:,:)
-    do i = 1,nspec
-      iMPIcut_xi(:,perm(i)) = temp_array_2D_log(:,i)
-    enddo
-    temp_array_2D_log(:,:) = iMPIcut_eta(:,:)
-    do i = 1,nspec
-      iMPIcut_eta(:,perm(i)) = temp_array_2D_log(:,i)
-    enddo
-    deallocate(temp_array_2D_log)
-
-    ! permutation of iboun
-    allocate(temp_array_2D_log(6,nspec))
-    temp_array_2D_log(:,:) = iboun(:,:)
-    do i = 1,nspec
-      iboun(:,perm(i)) = temp_array_2D_log(:,i)
-    enddo
-    deallocate(temp_array_2D_log)
-
-    ! permutation of idoubling
-    allocate(temp_array_1D_int(nspec))
-    temp_array_1D_int(:) = idoubling(:)
-    do i = 1,nspec
-      idoubling(perm(i)) = temp_array_1D_int(i)
-    enddo
-    deallocate(temp_array_1D_int)
-
-    deallocate(perm)
-  endif
-
-  endif
-
-! ***************************************************
-! end of Cuthill McKee permutation
-! ***************************************************
 
 ! create a new indirect addressing to reduce cache misses in memory access in the solver
 ! this is *critical* to improve performance in the solver

@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -302,8 +302,8 @@
        else
 
          if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-           call model_iasp91(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST, &
-             .true.,RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
+           call model_iasp91(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
+             ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST,zmesh)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
            call prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &

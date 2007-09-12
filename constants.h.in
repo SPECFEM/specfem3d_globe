@@ -409,16 +409,3 @@
 ! to suppress the crustal layers (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
   logical, parameter :: SUPPRESS_CRUSTAL_MESH = .false.
 
-! implement Cuthill-McKee sorting or not
-  logical, parameter :: PERFORM_CUTHILL_MCKEE = .false.
-
-! implement a multi-level Cuthill-McKee sorting routine instead of classical single-level
-  logical, parameter :: MULTI_LEVEL_CUTHILL = .true.
-
-! if we use Cuthill-McKee sorting, sort the inner core as well
-! (it is better not to do it because may be bad for the central cube MPI buffers)
-  logical, parameter :: PERMUTE_INNER_CORE = .false.
-
-! for the Cuthill McKee routines
-   integer, parameter :: NGNOD_HEXAHEDRA=8
-

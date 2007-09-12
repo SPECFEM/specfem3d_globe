@@ -324,8 +324,6 @@ Things to do later:
 
 - afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilité et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maître dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
 
-- see if this would be useful (probably NOT, according to the ParaVer analysis done in Barcelona): rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices (see routine create_central_cube_buffers.f90). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Céline.
-
 - Re: revision of shortest period estimates?  08/05/2007 14:51 Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  Jeroen Tromp wrote: > Hi Dimitri: > If we are shooting for a minimum of 5 grid points per shortest wavelength, > perhaps we should increase our estimate of an accuracy at periods of 18 s > and longer for an NEX=240 run by 20% to 22 s? And perhaps NEX=320 is > accurate down to periods of 15 s rather than 12 s?
 
 ---------------------------------------------------------------------------------
@@ -376,6 +374,8 @@ GLL points by km in the upper part of the crust than in the lower part.
 
 DONE:
 -----
+
+- see if this would be useful (probably NOT, according to the ParaVer analysis done in Barcelona): rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices (see routine create_central_cube_buffers.f90). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Céline. => not done because we would not gain anything from using non blocking communications
 
 - flag SUPPRESS_CRUSTAL_MESH does not work on the current version that is on the SVN server: it exits with an error message 'ispec greater than nspec in mesh creation' in the mesher: this bug should be fixed. en particulier je crois que ca est faux dans create_regions_mesh.f90
  elseif (SUPPRESS_CRUSTAL_MESH .and. iz_elem == ner(ilayer) .and. ilayer == ifirst_region+1) then
