@@ -31,8 +31,8 @@ echo "$LSB_JOBID" > OUTPUT_FILES/jobid
 
 remap_lsf_machines.pl OUTPUT_FILES/lsf_machines >OUTPUT_FILES/machines
 
-# now just make the dir (cleanup should be done afterwards after collect seismo, otherwise  we clean up another runs seismos)
-shmux -M 50 -S all -c "mkdir -p $BASEMPIDIR" - < OUTPUT_FILES/machines >/dev/null
+# now cleanup and make the dir (seismos are now written by the master, no more need to collect them on the nodes), this for avoiding crashes
+shmux -M 50 -S all -c "rm -r -f /scratch/$USER; mkdir -p /scratch/$USER; mkdir -p $BASEMPIDIR" - < OUTPUT_FILES/machines >/dev/null
 
 echo starting MPI mesher on $numnodes processors
 echo " "
@@ -42,4 +42,9 @@ echo " "
 #### use this on LSF
 mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/xmeshfem3D
 mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/xspecfem3D
+
+# cleanup after the run
+sleep 10
+shmux -M 50 -S all -c "rm -r -f /scratch/$USER" - < OUTPUT_FILES/machines >/dev/null
+
 
