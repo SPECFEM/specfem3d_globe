@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -171,7 +171,7 @@
     Qmu=80.0d0
     Qkappa=57827.0d0
   else
-  if(CRUSTAL) then
+  if(CRUSTAL .and. .not. SUPPRESS_CRUSTAL_MESH) then
 ! fill with PREM mantle and later add CRUST2.0
     if(r > R80) then
       drhodr=0.6924d0
@@ -190,6 +190,17 @@
       vs=2.1519d0+2.3481d0*x
       Qmu=600.0d0
       Qkappa=57827.0d0
+
+
+    else if (SUPPRESS_CRUSTAL_MESH) then
+!! DK DK extend the Moho up to the surface instead of the crust
+      drhodr=0.6924d0
+      rho = 2.6910d0+0.6924d0*(RMOHO / R_EARTH)
+      vp = 4.1875d0+3.9382d0*(RMOHO / R_EARTH)
+      vs = 2.1519d0+2.3481d0*(RMOHO / R_EARTH)
+      Qmu=600.0d0
+      Qkappa=57827.0d0
+
     else if(r > RMOHO .and. r <= RMIDDLE_CRUST) then
       drhodr=0.0d0
       rho=2.9d0

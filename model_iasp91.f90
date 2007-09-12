@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -17,7 +17,7 @@
 !=====================================================================
 
   subroutine model_iasp91(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &
-                     RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
+                     RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST,zmesh)
 
   implicit none
 
@@ -34,7 +34,7 @@
 
   logical ONE_CRUST
 
-  double precision r,scaleval
+  double precision r,scaleval,zmesh
 
   double precision x1,x2
 
@@ -123,6 +123,7 @@
     vs=8.16616-1.58206*x
     Qmu=312.0d0
     Qkappa=57827.0d0
+
 !
 !--- mantle: from top of D" to d670
 !
@@ -175,6 +176,14 @@
       if(rho < 3.30d0 .or. rho > 3.38d0) stop 'incorrect density computed for IASP91'
       Qmu=600.0d0
       Qkappa=57827.0d0
+
+  else if (SUPPRESS_CRUSTAL_MESH) then
+!! DK DK extend the Moho up to the surface instead of the crust
+          vp = 8.78541d0-0.74953d0*(RMOHO / R_EARTH)
+          vs = 6.706231d0-2.248585d0*(RMOHO / R_EARTH)
+          rho = 3.3198d0
+          Qmu=600.0d0
+          Qkappa=57827.0d0
 
   else if(r > RMOHO .and. r <= RMIDDLE_CRUST) then
       vp = 6.5d0

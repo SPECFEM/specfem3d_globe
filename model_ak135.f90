@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -717,6 +717,12 @@
   Mak135_V%vs_ak135(142) =   3.20000000000000
   Mak135_V%vs_ak135(143) =   3.20000000000000
   Mak135_V%vs_ak135(144) =   3.20000000000000
+
+  if (SUPPRESS_CRUSTAL_MESH) then
+    Mak135_V%vp_ak135(137:144) = Mak135_V%vp_ak135(136)
+    Mak135_V%vs_ak135(137:144) = Mak135_V%vs_ak135(136)
+    Mak135_V%density_ak135(137:144) = Mak135_V%density_ak135(136)
+  endif
 
   Mak135_V%Qkappa_ak135(  1) =   601.270000000000
   Mak135_V%Qkappa_ak135(  2) =   601.320000000000

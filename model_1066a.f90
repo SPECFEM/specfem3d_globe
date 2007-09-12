@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, April 2007
 !
 !    A signed non-commercial agreement is required to use this program.
 !   Please check http://www.gps.caltech.edu/research/jtromp for details.
@@ -778,6 +778,12 @@
   M1066a_V%vs_1066a(158) =   2.58060000000000
   M1066a_V%vs_1066a(159) =   2.58140000000000
   M1066a_V%vs_1066a(160) =   2.58220000000000
+
+  if (SUPPRESS_CRUSTAL_MESH) then
+    M1066a_V%vp_1066a(158:160) = M1066a_V%vp_1066a(157)
+    M1066a_V%vs_1066a(158:160) = M1066a_V%vs_1066a(157)
+    M1066a_V%density_1066a(158:160) = M1066a_V%density_1066a(157)
+  endif
 
   M1066a_V%Qkappa_1066a(  1) =   156900.000000000
   M1066a_V%Qkappa_1066a(  2) =   156900.000000000
