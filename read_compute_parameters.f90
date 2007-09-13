@@ -583,11 +583,27 @@
 
 ! case of regular PREM with two crustal layers: change the time step for small meshes
 ! because of a different size of elements in the radial direction in the crust
-      if(NEX_MAX*2 <= 160) then
-        DT = 0.20d0
-      else if(NEX_MAX*2 <= 256) then
-        DT = 0.20d0
+    if (HONOR_1D_SPHERICAL_MOHO) then
+      if (.not. ONE_CRUST) then
+        ! case 1D + two crustal layers
+        if (NER_CRUST<2) NER_CRUST=2
+        if(NEX_MAX*2 <= 160) then
+          DT = 0.20d0
+        else if(NEX_MAX*2 <= 256) then
+          DT = 0.20d0
+        endif
       endif
+    else
+      ! case 3D
+      if (NER_CRUST<2) NER_CRUST=2
+      if(NEX_MAX*2 <= 160) then
+          DT = 0.15d0
+      else if(NEX_MAX*2 <= 256) then
+          DT = 0.17d0
+      else if(NEX_MAX*2 <= 320) then
+          DT = 0.155d0
+      endif
+    endif
 
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
@@ -1221,7 +1237,6 @@
     NUMBER_OF_MESH_LAYERS = 15
     layer_offset = 1
 ! DM a revoir
-    if (NER_CRUST<2) NER_CRUST=2
     if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
       ner( 1) = ceiling (NER_CRUST / 2.d0)
       ner( 2) = floor (NER_CRUST / 2.d0)
