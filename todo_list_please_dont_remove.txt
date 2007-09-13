@@ -5,11 +5,10 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 David:
 -----
 
-
-- a voir avec Qinya : I noticed a problem in Qinya's adjoint code and the
+- va etre fait par Qinya : I noticed a problem in Qinya's adjoint code and the
   conversion to static memory below: arrays eps_trace_over_3_crust_mantle and eps_trace_over_3_inner_core are not needed when we use attenuation only for a forward simulation, they are only needed to save the strain in the whole mesh (when we attenuation for a forward run this calculation of eps_trace_over_3, i.e. the trace of the strain tensor, is purely local and can be stored in a scalar, not need to waste an array for it. I have therefore added two new static constants
- integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =         
- integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =        
+ integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =
+ integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =
 in values_from_mesher.h, used for these two arrays only. Qinya, by the way I think that you could probably get rid of these two arrays and the two new static constants above permanently in the whole package, to avoid wasting memory: since we already store the whole deviatoric strain in epsilondev(:,:,:,:,:) you should probably recompute its trace locally every time you need it instead of storing it in additional arrays. This way you would save four arrays:  eps_trace_over_3_crust_mantle, eps_trace_over_3_inner_core, b_eps_trace_over_3_crust_mantle, b_eps_trace_over_3_inner_core (unless there is a hidden problem I have not seen).
 
 - a voir avec Qinya, Ying Zhou et Anne Sieminski : I noticed that model 1066a blows up at least with the parameters below. I have no time to check, David can have a look when he comes back (I have added this to the to-do list) but has anyone ever run that model successfully with either v3.5, v3.6 or v4.0? (I had never tried before; considering that the same Par_file runs fine with ak135 or PREM, it could either be that routine model_1066a.f90 has a bug, or that the time step computed by David based upon trial and error using runs with PREM is a bit too large for 1066a if 1066a has a thinner layer somewhere i.e. smaller mesh cells that could be above the PREM stability limit.
@@ -35,23 +34,7 @@ Other email from Jeroen:
 Hi Dimitri & David:
 Perhaps for 1066a, since it has just an 11 km crust, we can always use the
 1crust approach?
-Jeroen 
-
-- Subject: permutation et aniso
-Date: Fri, 03 Aug 2007 13:03:51 +0200
-From: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr>
-Organization: University of Pau, France
-To: David Michéa <davidmichea@gmail.com>
-Salut David,
-j'ai réfléchi au coup de la permutation qui plantait et au fait que ça ne plante plus quand tu enlèves trois tableaux aniso (qui deviennent non permutés), je pense que ça ne peut pas être ça et que c'est un hasard : ça doit donner un résultat faux mais stable par hasard.  en effet, il n'est pas logique que ces tableaux ne soient pas permutés, car ce sont des propriétés de l'élément au même titre que les autres (rho, vp, vs etc) donc ils doivent être permutés pareil, sinon ils ne correspondent plus au bon élément à mon avis donc le bug est ailleurs, probablement un effet de bord caché.
-comme tu as déjà cherché partout, je pense que le mieux à la rentrée en septembre sera de remettre à plat le truc en appelant deux fois la routine de création du maillage
-au lieu d'une, comme on y avait pensé initialement :
-1/ tu appeles create_regions pour créer la liste des éléments et les xstore ystore zstore, mais rien d'autre
-2/ tu tries ça avec get_global, et tu crées la permutation en appelant get_perm
-3/ l'étape 2/ t'as donné le nouvel ordre dans lequel il faut créer les éléments, donc tu rappeles create_regions mais en bouclant sur perm(ispec) au lieu de ispec ; et cette fois-ci en créant et sauvant tous les tableaux (rhostore, vpstore vstrore etc) comme actuellement; du coup tu as la garantie que tous les tableaux sont créés et sauvés dans le bon ordre, et il n'y a plus besoin de routine de permutation des tableaux, on pourra carrément les supprimer
-on pourra voir ça tranquille début sept (je rentre le 6 sept), rien ne presse, en attendant dans SVN le Cuthill McKee est désactivé (flag à false par défaut) donc ça ne gêne aucun autre développeur donc pas de souci
-
-- si jamais les modifications ci-dessus pour faire marcher Cuthill-McKee ne fonctionnent pas, on peut décider de supprimer complètement Cuthill-McKee car on sait que cela ne nous fera pas gagner énormément; à voir à la rentrée, suivant si David arrive à faire marcher les modifications ci-dessus ou non 
+Jeroen
 
 - rendre plus claire la partie du code qui définit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D dans read_compute_parameters.f90, suite aux remarques de Bernhard Schubert (partly done by Dimitri this summer, but David can clean it even more in September)
 
@@ -70,11 +53,11 @@ let us change the table from blocks of 16 to blocks of 32.
 Dimitri.
 Jeroen Tromp wrote:
 > Hi Dimitri, Qinya & David:
-> Let's make sure the global manual is also up-to-date and available prior 
-> to the NH meeting. We may want to add a few of the benchmark figures 
-> Anne & I made, in the context of a brief paragraph describing the new 
-> EXAMPLES subdirectory. We also need to fix all the table now that we 
-> have a factor of 32 rather than 16, unless we manage to fix this before 
+> Let's make sure the global manual is also up-to-date and available prior
+> to the NH meeting. We may want to add a few of the benchmark figures
+> Anne & I made, in the context of a brief paragraph describing the new
+> EXAMPLES subdirectory. We also need to fix all the table now that we
+> have a factor of 32 rather than 16, unless we manage to fix this before
 > the meeting.
 > Jeroen
 
@@ -82,59 +65,8 @@ Jeroen Tromp wrote:
 
 - couper la superbrick en deux au milieu dans les deux directions par MPI pour repasser de blocs de taille 32 à des blocs de taille 16; sinon voir les conséquences des blocs de 32: en coupant au milieu des superbricks, clarifier ce qui se passe : on doit toujours prendre des multiples de 32, mais on peut les couper deux fois plus; voir si la Table 3.1 du manuel est toujours valable, ou bien sinon comment il faut la modifier
 
-- compare multi-level Cuthill-McKee of David to Peano space-filling curves found by Dimitri in the literature
-
-- cuthill mckee permutation casse les deux couches aniso, et donc il faut trouver un autre moyen de les traiter et de sauver les tableaux c11 c12 etc qui sont très couteux; ne plus mettre les deux couches aniso dans les premiers elements, mais plutôt n'importe où dans le maillage à cause de cuthill mckee. Make sure anisotropic elements created first, or use indirect addressing (inverse permutation array) and a flag to store anisotropy in the mantle to avoid having to start with that region, which breaks the Cuthill-McKee sorting; once this is done, suppress the statement in which we make this region become region number 1 in the mesh creation routine
-
 - create the mesh from bottom layer to top layer (it is created the other way around right now): this will be better for Cuthill-McKee, for graphics etc; DK DK: already done by David in Barcelona 2007 I think
 
-<<<<<<< .mine
-<<<<<<< .mine
-- remove derived types (for attenuation, for anisotropy etc) and remove -align sequence from the Makefile, because of potential portability and alignment problems on future machines
-
-- merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90)
-30/06/2007 18:19
-Hi Jeroen, Leif and David,
-I thought about merging the mesher and the solver, there
-might be a hidden difficulty because of memory allocation:
-the solver allocates almost all the available memory
-on a given CPU in static arrays, and the solver
-allocates a similar amount dynamically with allocate()
-statements. Therefore combining them would roughly
-double the required amount of memory and will not
-fit because the Par_file is tuned in order for the solver
-to use almost all the available memory on each CPU
-(in the case of large runs).
-On systems (such as Linux) with a "first touch" memory allocation policy
-things should be ok because (if I understand correctly,
-but I am not sure) the system will not physically
-allocate the static memory for the solver until
-it is actually called, i.e. once the mesher has finished,
-even if both are combined in the same program.
-But on other systems I guess we could have problems and the run
-would not start and exit with an "out of memory" error?
-I don't know how to solve this problem. (*if* it needs to be
-solved; if *all* modern systems use a first touch policy, then
-we are all set; please let me know; I don't know much about
-operating systems). Leif, would you have any idea about how to handle this?
-If the problem turns out to be too complex, I suggest
-*not* doing it in v4.0 and waiting until we start
-working on v4.1 after the October 9-11 workshop.
-Dimitri.
-
-=======
-- convert the "allocatable" arrays (including
-2D arrays for the MPI buffers etc, because for very large
-runs they are not that small) in the solver
-from dynamic to static (easy to do: write their size
-in values_from_mesher.h in the mesher; but there are
-so many of them and so many cases (with/without attenuation,
-anisotropy, absorbing edges etc.) that we need to be careful:
-DK DK already done by David in Barcelona 2007 I think
->>>>>>> .r1567
-
-=======
->>>>>>> .r1758
 - get rid of the bottleneck in locate_sources and locate_receivers
 when one uses a huge number of sources (e.g. Vala -> 100000 sources)
 or a very large number of stations (e.g. Bernhard -> 20000 stations):
@@ -245,7 +177,7 @@ I would say 20%, which is probably not much and as you say it is
 probably the price to pay to run on a diskless machine.
 The question is: do we keep and maintain two versions (a merged version
 and also two separate codes)? I think what we should do it keep two
-codes and ask David to write a third (very small) code (an interface) 
+codes and ask David to write a third (very small) code (an interface)
 which would call the mesher and the solver as subroutines and use memory
 instead of the disk to copy the output information of the mesher
 to the input of the solver. The mesher could still use dynamic
@@ -265,8 +197,8 @@ will become standard in the future; it is already almost standard.
 Dimitri.
 Jeroen Tromp wrote:
 > Hi Dimitri:
-> But perhaps the hit in extra memory should simply be regarded as the 
-> extra cost of doing business on a petascale machine. What is the 
+> But perhaps the hit in extra memory should simply be regarded as the
+> extra cost of doing business on a petascale machine. What is the
 > percentage increase in memory that would result from the merge?
 > Jeroen
 > Dimitri Komatitsch wrote:
@@ -278,7 +210,7 @@ Jeroen Tromp wrote:
 >> we will create a merged version in which the mesher will control
 >> memory size again, not the solver (as in v3.6).
 >> I have solved this problem in version 4.0 by using dynamic memory
->> allocation cleverly in the mesher: I call create_region_mesh twice and 
+>> allocation cleverly in the mesher: I call create_region_mesh twice and
 >> create half the (dynamic) arrays each time, therefore
 >> I need only half the memory in each call, and this is always
 >> below the memory size of all the static arrays in the solver,
@@ -301,14 +233,14 @@ Jeroen Tromp wrote:
 >> Dimitri.
 >> Jeroen Tromp wrote:
 >>> Hi Dimitri:
->>> Your ideas for reducing the memory requirements of the mesher made me 
+>>> Your ideas for reducing the memory requirements of the mesher made me
 >>> think about the problems related to merging the mesher and solver.
->>> Can you see a way of have a small serial code, like 
->>> create_header_file.f90, that one would run *before* you run either 
->>> the mesher or the solver, that determines the correct array 
->>> dimensions from the Par_file settings. This code is then used to 
->>> produce the right header file for the combined static mesher-solver. 
->>> The read_arrays_solver call in the solver is turned into a call to 
+>>> Can you see a way of have a small serial code, like
+>>> create_header_file.f90, that one would run *before* you run either
+>>> the mesher or the solver, that determines the correct array
+>>> dimensions from the Par_file settings. This code is then used to
+>>> produce the right header file for the combined static mesher-solver.
+>>> The read_arrays_solver call in the solver is turned into a call to
 >>> the mesher, which effectively becomes a subroutine.
 >>> Jeroen
 
@@ -347,7 +279,7 @@ layer instead of two.
 
 ==> CASE_3D : this flag allows the stretching of the crust's finite elements
 layers for the 3D models. The purpose of this stretching is to squeeze more
-GLL points by km in the upper part of the crust than in the lower part. 
+GLL points by km in the upper part of the crust than in the lower part.
 
 
 - add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers
@@ -391,10 +323,9 @@ dkomati1-ipigps014: grep -i MULTI_LEVEL_CUTHILL *.h* *90
 constants.h.in:  logical, parameter :: MULTI_LEVEL_CUTHILL = .true.
 ==> ok, rajouté dans get_perm_cuthill_mckee.f90. A revoir lors de l'implémentation des courbes de peano.
 
-
 - dans le cas où NCHUNKS = 1, le solveur se plante car il cherche a lire
 des fichiers plus gros que ceux sauvés par le mailleur. Apparemment
-ca doit etre des tableaux pour les conditions absorbantes de Stacey ou 
+ca doit etre des tableaux pour les conditions absorbantes de Stacey ou
 quelque chose comme ça qui est spécifique à NCHUNKS < 6 qui ne doit
 pas etre sauvé à la meme taille que la taille lorsqu'on le relit,
 car quand on a 6 chunks tout marche très bien.
@@ -489,23 +420,9 @@ pour des soucis de lisibilité.
 
 - use BLAS3 calls in compute_forces*.f90 instead of loops as in the current implementation. We should gain a huge factor if we can do this, but we will need to change the structure of the arrays: done by Dimitri in Barcelone 2007
 
-<<<<<<< .mine
-- convert *ALL* the "allocatable" arrays (including
-2D arrays for the MPI buffers etc, because for very large
-runs they are not that small) in the solver
-from dynamic to static (easy to do: write their size
-in values_from_mesher.h in the mesher; but there are
-so many of them and so many cases (with/without attenuation,
-anisotropy, absorbing edges etc.) that we need to be careful:
-DK DK already done by David in Barcelona 2007 I think
-=======
 - remove derived types (for attenuation, for anisotropy etc) and remove -align sequence from the Makefile, because of potential portability and alignment problems on future machines; replace them with modules: not done because the current code is OK, therefore not a good idea to change it
 
 - faire un commit du script de stretching de la croûte 3D de David dans UTILS: not needed anymore, because implemented in Fortran in stretching_function.f90
 
-<<<<<<< .mine
->>>>>>> .r1567
-=======
 - convert the "allocatable" arrays in the solver from dynamic to static: done by David, Jeroen and Dimitri
 
->>>>>>> .r1758
