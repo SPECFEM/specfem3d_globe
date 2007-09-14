@@ -512,6 +512,12 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
   f_0_prem = ONE / ( ONE / scale_t)
 
 !--- quantity by which to scale mu_0 to get mu
+! this formula can be found for instance in
+! Liu, H. P., Anderson, D. L. and Kanamori, H., Velocity dispersion due to
+! anelasticity: implications for seismology and mantle composition,
+! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
+! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
+! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
   factor_scale_mu0 = ONE + TWO * log(f_c_source / f_0_prem) / (PI * Q_mu)
 
 !--- compute a, b and Omega parameters, also compute one minus sum of betas
