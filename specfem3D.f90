@@ -2181,9 +2181,6 @@
       zstore_inner_core(iglob) = phival
     enddo
 
-! if attenuation is on, shift PREM to right frequency
-! rescale mu in PREM to average frequency for attenuation
-
   if(ATTENUATION_VAL) then
 
 ! get and store PREM attenuation model
@@ -2227,6 +2224,15 @@
       one_minus_sum_beta_inner_core   = omsb_inner_core_dble
       factor_common_inner_core        = factor_common_inner_core_dble
    endif
+
+! if attenuation is on, shift PREM to right frequency
+! rescale mu in PREM to average frequency for attenuation
+! the formulas to implement the scaling can be found for instance in
+! Liu, H. P., Anderson, D. L. and Kanamori, H., Velocity dispersion due to
+! anelasticity: implications for seismology and mantle composition,
+! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
+! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
+! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
 
 ! rescale in crust and mantle
 
