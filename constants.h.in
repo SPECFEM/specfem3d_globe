@@ -294,6 +294,7 @@
   integer, parameter :: IREGION_ATTENUATION_670_220 = 3
   integer, parameter :: IREGION_ATTENUATION_220_80 = 4
   integer, parameter :: IREGION_ATTENUATION_80_SURFACE = 5
+  integer, parameter :: IREGION_ATTENUATION_UNDEFINED = 6
 
 ! number of standard linear solids for attenuation
   integer, parameter :: N_SLS = 3

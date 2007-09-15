@@ -268,9 +268,6 @@
   character(len=80) kerstr
   character(len=40) varstr(maxker)
 
-  tau_s(:)   = 0.0d0
-  tau_e(:)   = 0.0d0
-  T_c_source = 0.0d0
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -455,9 +452,13 @@
          endif
        endif
 
-!! DK DK I think this is obsolete and should be removed, check with Brian
+! This is here to identify how and where to include 3D attenuation 
        if(ATTENUATION .and. ATTENUATION_3D) then
-         call attenuation_model_1D_PREM(r_prem, Qmu)
+         tau_e(:)   = 0.0d0
+         ! Get the value of Qmu (Attenuation) dependedent on 
+         ! the radius (r_prem) and idoubling flag
+         call attenuation_model_1D_PREM(r_prem, Qmu, idoubling)
+         ! Get tau_e from tau_s and Qmu
          call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
        endif
 

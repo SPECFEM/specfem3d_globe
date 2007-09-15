@@ -414,12 +414,14 @@ subroutine attenuation_conversion(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, 
 
   integer rw
 
+  ! READ
   rw = 1
   call attenuation_storage(Qmu_in, tau_e, rw, AM_S)
   if(rw > 0) return
 
   call attenuation_invert_by_simplex(AM_V%min_period, AM_V%max_period, N_SLS, Qmu_in, T_c_source, tau_s, tau_e, AS_V)
 
+  ! WRITE
   rw = -1
   call attenuation_storage(Qmu_in, tau_e, rw, AM_S)
 
@@ -623,6 +625,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   integer, save :: first_time_called = 1
 
   if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
+     first_time_called = 0
      open(unit=27, file=prname(1:len_trim(prname))//'1D_Q.bin', status='unknown', form='unformatted')
      read(27) AM_V%QT_c_source
      read(27) tau_s
@@ -871,7 +874,8 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
       iregion = IREGION_ATTENUATION_INNER_CORE
     else
 ! this is fictitious for the outer core, which has no Qmu attenuation since it is fluid
-      iregion = IREGION_ATTENUATION_80_SURFACE + 1
+!      iregion = IREGION_ATTENUATION_80_SURFACE + 1
+       iregion = IREGION_ATTENUATION_UNDEFINED
     endif
 
   else
@@ -886,7 +890,8 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
       iregion = IREGION_ATTENUATION_80_SURFACE
     else
 ! this is fictitious for the outer core, which has no Qmu attenuation since it is fluid
-      iregion = IREGION_ATTENUATION_80_SURFACE + 1
+!      iregion = IREGION_ATTENUATION_80_SURFACE + 1
+       iregion = IREGION_ATTENUATION_UNDEFINED
     endif
 
   endif
@@ -1695,6 +1700,7 @@ subroutine psplint(xa, ya, y2a, n, x, y, steps)
      if(x >= xa(steps(i)) .AND. x <= xa(steps(i+1))) then
         call pspline_piece(i,n1,n2,l,n,steps)
         call splint(xa(n1), ya(n1), y2a(n1), l, x, y)
+        return
      endif
   enddo
 
@@ -1747,7 +1753,7 @@ subroutine pspline(x, y, n, yp1, ypn, y2, steps)
 
 end subroutine pspline
 
-subroutine attenuation_model_1D_PREM(x, Qmu)
+subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
 
 ! x in the radius from 0 to 1 where 0 is the center and 1 is the surface
 ! This version is for 1D PREM.
@@ -1756,6 +1762,7 @@ subroutine attenuation_model_1D_PREM(x, Qmu)
 
   include 'constants.h'
 
+  integer iflag
   double precision r, x, Qmu,RICB,RCMB, &
       RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80, ROCEAN, RMOHO, RMIDDLE_CRUST
   double precision Qkappa
@@ -1827,6 +1834,38 @@ subroutine attenuation_model_1D_PREM(x, Qmu)
      Qmu=600.0d0
      Qkappa=57827.0d0
   endif
+
+  ! We determine the attenuation value here dependent on the doubling flag and
+  ! which region we are sitting in. The radius reported is not accurate for 
+  ! determination of which region we are actually in, whereas the idoubling flag is
+  if(iflag == IFLAG_INNER_CORE_NORMAL .or. iflag == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+       iflag == IFLAG_BOTTOM_CENTRAL_CUBE .or. iflag == IFLAG_TOP_CENTRAL_CUBE .or. &
+       iflag == IFLAG_IN_FICTITIOUS_CUBE) then
+     Qmu =  84.6d0
+     Qkappa = 1327.7d0
+  else if(iflag == IFLAG_OUTER_CORE_NORMAL) then
+     Qmu = 0.0d0
+     Qkappa = 57827.0d0
+  else if(iflag == IFLAG_MANTLE_NORMAL) then ! D'' to 670 km
+     Qmu = 312.0d0
+     Qkappa = 57827.0d0
+  else if(iflag == IFLAG_670_220) then
+     Qmu=143.0d0
+     Qkappa = 57827.0d0
+  else if(iflag == IFLAG_220_80) then
+     Qmu=80.0d0
+     Qkappa = 57827.0d0
+  else if(iflag == IFLAG_80_MOHO) then
+     Qmu=600.0d0
+     Qkappa = 57827.0d0
+  else if(iflag == IFLAG_CRUST) then
+     Qmu=600.0d0
+     Qkappa = 57827.0d0
+  else 
+     write(*,*)'iflag:',iflag
+     call exit_MPI_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
+  endif
+  
 
 end subroutine attenuation_model_1D_PREM
 
