@@ -426,6 +426,8 @@
 
 ! Attenuation
   if(ATTENUATION .and. ATTENUATION_3D) then
+    T_c_source = AM_V%QT_c_source
+    tau_s(:)   = AM_V%Qtau_s(:)
     allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec))
     allocate(tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
   else
@@ -435,8 +437,6 @@
     tau_e_store(:,1,1,1,1) = 0.0d0
   endif
 
-  T_c_source = 0.0
-  tau_s(:) = 0.0
 
 ! Gauss-Lobatto-Legendre points of integration
   allocate(xigll(NGLLX))

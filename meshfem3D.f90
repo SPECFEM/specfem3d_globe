@@ -964,9 +964,13 @@
   if(ATTENUATION .and. ATTENUATION_3D) then
     if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
-    call MPI_BCAST(AM_V%min_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-    call MPI_BCAST(AM_V%max_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-
+    if(myrank /= 0) allocate(AM_V%Qtau_s(N_SLS))
+    call MPI_BCAST(AM_V%min_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(AM_V%max_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(AM_V%QT_c_source, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(AM_V%Qtau_s(1),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(AM_V%Qtau_s(2),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(AM_V%Qtau_s(3),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   endif
   if(ATTENUATION .AND. .NOT. ATTENUATION_3D) then
      if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
