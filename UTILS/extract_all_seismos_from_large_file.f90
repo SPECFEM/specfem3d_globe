@@ -50,7 +50,7 @@
       station_name = adjustl(station_name)
     enddo
 
-    print *,'extracting station ',irec,': ',station_name(1:len_trim(station_name)),' out of ',NREC
+    print *,'extracting seismogram file ',irec,': ',station_name(1:len_trim(station_name)),' out of ',NREC
 
     open(unit=27,file=station_name(1:len_trim(station_name)),status='unknown')
 
