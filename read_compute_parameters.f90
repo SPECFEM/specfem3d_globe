@@ -115,6 +115,9 @@
   integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
               nb_lay_sb, nspec_sb, nglob_vol, nglob_surf, nglob_edge
 
+  integer :: multiplication_factor
+
+
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
@@ -371,9 +374,14 @@
 !----
 !----  case prem_onecrust by default
 !----
+      if (SUPPRESS_CRUSTAL_MESH) then
+        multiplication_factor=2
+      else
+        multiplication_factor=1
+      endif
 
      ! element width =   0.5625000      degrees =    62.54715      km
-      if(NEX_MAX*2 <= 160) then
+      if(NEX_MAX*multiplication_factor <= 160) then
         DT                       = 0.252d0
 
         MIN_ATTENUATION_PERIOD   = 30
@@ -393,7 +401,7 @@
         R_CENTRAL_CUBE = 950000.d0
 
     ! element width =   0.3515625      degrees =    39.09196      km
-      else if(NEX_MAX*2 <= 256) then
+      else if(NEX_MAX*multiplication_factor <= 256) then
         DT                       = 0.225d0
 
         MIN_ATTENUATION_PERIOD   = 20
@@ -413,7 +421,7 @@
         R_CENTRAL_CUBE = 965000.d0
 
     ! element width =   0.2812500      degrees =    31.27357      km
-      else if(NEX_MAX*2 <= 320) then
+      else if(NEX_MAX*multiplication_factor <= 320) then
         DT                       = 0.16d0
 
         MIN_ATTENUATION_PERIOD   = 15
@@ -433,7 +441,7 @@
         R_CENTRAL_CUBE = 940000.d0
 
     ! element width =   0.1875000      degrees =    20.84905      km
-      else if(NEX_MAX*2 <= 480) then
+      else if(NEX_MAX*multiplication_factor <= 480) then
         DT                       = 0.12d0
 
         MIN_ATTENUATION_PERIOD   = 10
@@ -453,7 +461,7 @@
         R_CENTRAL_CUBE = 988000.d0
 
     ! element width =   0.1757812      degrees =    19.54598      km
-      else if(NEX_MAX*2 <= 512) then
+      else if(NEX_MAX*multiplication_factor <= 512) then
         DT                       = 0.1125d0
 
         MIN_ATTENUATION_PERIOD   = 9
@@ -473,7 +481,7 @@
         R_CENTRAL_CUBE = 1010000.d0
 
     ! element width =   0.1406250      degrees =    15.63679      km
-      else if(NEX_MAX*2 <= 640) then
+      else if(NEX_MAX*multiplication_factor <= 640) then
         DT                       = 0.09d0
 
         MIN_ATTENUATION_PERIOD   = 8
@@ -493,7 +501,7 @@
         R_CENTRAL_CUBE = 1020000.d0
 
     ! element width =   0.1041667      degrees =    11.58280      km
-      else if(NEX_MAX*2 <= 864) then
+      else if(NEX_MAX*multiplication_factor <= 864) then
         DT                       = 0.0667d0
 
         MIN_ATTENUATION_PERIOD   = 6
@@ -513,7 +521,7 @@
         R_CENTRAL_CUBE = 990000.d0
 
     ! element width =   7.8125000E-02  degrees =    8.687103      km
-      else if(NEX_MAX*2 <= 1152) then
+      else if(NEX_MAX*multiplication_factor <= 1152) then
         DT                       = 0.05d0
 
         MIN_ATTENUATION_PERIOD   = 4
@@ -533,7 +541,7 @@
         R_CENTRAL_CUBE = 985000.d0
 
     ! element width =   7.2115384E-02  degrees =    8.018865      km
-      else if(NEX_MAX*2 <= 1248) then
+      else if(NEX_MAX*multiplication_factor <= 1248) then
         DT                       = 0.0462d0
 
         MIN_ATTENUATION_PERIOD   = 4
@@ -587,20 +595,20 @@
       if (.not. ONE_CRUST) then
         ! case 1D + two crustal layers
         if (NER_CRUST<2) NER_CRUST=2
-        if(NEX_MAX*2 <= 160) then
+        if(NEX_MAX*multiplication_factor <= 160) then
           DT = 0.20d0
-        else if(NEX_MAX*2 <= 256) then
+        else if(NEX_MAX*multiplication_factor <= 256) then
           DT = 0.20d0
         endif
       endif
     else
       ! case 3D
       if (NER_CRUST<2) NER_CRUST=2
-      if(NEX_MAX*2 <= 160) then
+      if(NEX_MAX*multiplication_factor <= 160) then
           DT = 0.15d0
-      else if(NEX_MAX*2 <= 256) then
+      else if(NEX_MAX*multiplication_factor <= 256) then
           DT = 0.17d0
-      else if(NEX_MAX*2 <= 320) then
+      else if(NEX_MAX*multiplication_factor <= 320) then
           DT = 0.155d0
       endif
     endif
@@ -954,7 +962,8 @@
 ! make sure that the two doublings in the outer core are found in the right order
   if(elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
                   stop 'error in location of the two doublings in the outer core'
-
+  
+  ratio_sampling_array(15) = 0
 ! define all the layers of the mesh
   if (SUPPRESS_CRUSTAL_MESH) then
 
