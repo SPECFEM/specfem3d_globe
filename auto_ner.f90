@@ -1,4 +1,116 @@
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          --------------------------------------------------
+!
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!                    and University of Pau, France
+! (c) California Institute of Technology and University of Pau, October 2007
+!
+!    A signed non-commercial agreement is required to use this program.
+!   Please check http://www.gps.caltech.edu/research/jtromp for details.
+!           Free for non-commercial academic research ONLY.
+!      This program is distributed WITHOUT ANY WARRANTY whatsoever.
+!      Do not redistribute this program without written permission.
+!
+!=====================================================================
+!
+!  This portion of the SPECFEM3D Code was written by:
+!  Brian Savage while at
+!     California Institute of Technology
+!     Department of Terrestrial Magnetism / Carnegie Institute of Washington
+!     Univeristy of Rhode Island
+!
+!  <savage@uri.edu>.
+!  <savage13@gps.caltech.edu>
+!  <savage13@dtm.ciw.edu>
+!
+!   It is based partially upon formulation in the following references:
+!
+!   Komatitsch and Tromp, 2002 Part I
+!   
+!    and
+!  
+!   The Core determineation was developed 
+!
 
+  subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
+    implicit none
+    
+    include 'constants.h'
+
+    integer NEX_MAX
+    double precision DT, WIDTH
+    double precision RADIAL_LEN_RATIO_CENTRAL_CUBE
+    double precision RADIUS_INNER_CORE
+    double precision DOUBLING_INNER_CORE
+    double precision P_VELOCITY_MAX     ! Located Near the inner Core Boundary
+    double precision MAXIMUM_STABILITY_CONDITION
+    double precision MIN_GLL_POINT_SPACING_5
+
+    RADIAL_LEN_RATIO_CENTRAL_CUBE   =     0.40d0
+    MAXIMUM_STABILITY_CONDITION     =     0.40d0
+    RADIUS_INNER_CORE               =   1221.0d0
+    DOUBLING_INNER_CORE             =      8.0d0
+    P_VELOCITY_MAX                  = 11.02827d0
+    MIN_GLL_POINT_SPACING_5         =   0.1730d0
+    
+    DT = ( RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * (PI / 180.0d0)) * RADIUS_INNER_CORE) / &
+         ( dble(NEX_MAX) / DOUBLING_INNER_CORE ) / P_VELOCITY_MAX) * &
+         MIN_GLL_POINT_SPACING_5 * MAXIMUM_STABILITY_CONDITION
+
+  end subroutine auto_time_stepping
+
+  subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+    implicit none
+    
+    include 'constants.h'
+
+    integer NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
+    double precision WIDTH, TMP
+    double precision GLL_SPACING, PTS_PER_WAVELENGTH
+    double precision S_VELOCITY_MIN, DEG2KM
+    double precision THETA(5)
+
+    GLL_SPACING        =   4.00d0
+    PTS_PER_WAVELENGTH =   4.00d0
+    S_VELOCITY_MIN     =   2.25d0 
+    DEG2KM             = 111.00d0
+    
+    ! THETA defines the width of the Attenation Range in Decades
+    !   The number defined here were determined by minimizing
+    !   the "flatness" of the absoption spectrum.  Each THETA
+    !   is defined for a particular N_SLS (constants.h) 
+    !   THETA(2) is for N_SLS = 2
+    THETA(1)           =   0.00d0
+    THETA(2)           =   0.75d0
+    THETA(3)           =   1.75d0
+    THETA(4)           =   2.25d0
+    THETA(5)           =   2.85d0
+
+    ! Compute Min Attenuation Period
+    !
+    ! The Minimum attenuation period = (Grid Spacing in km) / V_min
+    !  Grid spacing in km     = Width of an element in km * spacing for GLL point * points per wavelength
+    !  Width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
+
+    TMP = (WIDTH / ( GLL_SPACING * dble(NEX_MAX)) * DEG2KM * PTS_PER_WAVELENGTH ) / &
+         S_VELOCITY_MIN 
+    MIN_ATTENUATION_PERIOD = TMP
+
+    if(N_SLS < 2 .OR. N_SLS > 5) then
+       call exit_MPI_without_rank('N_SLS must be greater than 1 or less than 6')
+    endif
+
+    ! Compute Max Attenuation Period
+    ! 
+    ! The max attenuation period for 3 SLS is optimally
+    !   1.75 decades from the min attenuation period, see THETA above
+    TMP = TMP * 10.0d0**THETA(N_SLS)
+    MAX_ATTENUATION_PERIOD = TMP
+
+  end subroutine auto_attenuation_periods
 
   subroutine auto_ner(WIDTH, NEX_MAX, &
        NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
@@ -24,6 +136,7 @@
     double precision, dimension(NUM_REGIONS-1) :: ratio_top
     double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
     integer,          dimension(NUM_REGIONS-1) :: NER
+    double precision NEX_ETA
 
     ! This is PREM in Kilometers, well ... kinda, not really ....
     radius(1)  = 6371.00d0 ! Surface
@@ -40,8 +153,9 @@
     radius(12) = 2511.00d0 !    3860 - 3rd Mesh Doubling Interface
     radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
     radius(14) =  982.00d0 ! Top Central Cube
-
-
+    
+    call find_r_central_cube(NEX_MAX, radius(14), NEX_ETA)
+    write(*,*) radius(14), NEX_ETA
     ! Mesh Doubling
     scaling(1)     = 1  ! SURFACE TO MOHO
     scaling(2:8)   = 2  ! MOHO    TO G'' (Geochemical Mantle 1650)
@@ -72,7 +186,7 @@
     NER_CMB_TOPDDOUBLEPRIME  = NER(10)
     NER_OUTER_CORE           = NER(11) + NER(12)
     NER_TOP_CENTRAL_CUBE_ICB = NER(13)
-    R_CENTRAL_CUBE           = 950000.d0
+    R_CENTRAL_CUBE           = radius(14) * 1000.0d0
 
   end subroutine auto_ner
 
@@ -141,7 +255,7 @@
 
 
     rcubestep    = 1.0d0
-    rcube_test   = 930.0d0
+    rcube_test   =  930.0d0
     rcubemax     = 1100.0d0
     nex_eta_in   = -1
     ximin        = 1e7
