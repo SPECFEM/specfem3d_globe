@@ -155,7 +155,7 @@
     radius(14) =  982.00d0 ! Top Central Cube
     
     call find_r_central_cube(NEX_MAX, radius(14), NEX_ETA)
-    write(*,*) radius(14), NEX_ETA
+
     ! Mesh Doubling
     scaling(1)     = 1  ! SURFACE TO MOHO
     scaling(2:8)   = 2  ! MOHO    TO G'' (Geochemical Mantle 1650)
