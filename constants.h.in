@@ -309,6 +309,12 @@
   integer, parameter          :: NRAD_ATTENUATION  = 70000
   double precision, parameter :: TABLE_ATTENUATION = R_EARTH_KM * 10.0d0
 
+! for determination of the attenuation period range
+! if this is set to .true. then the hardcoded values will be used
+! otherwise they are computed automatically from the Number of elements
+! This *may* be a useful parameter for Benchmarking against older versions
+  logical, parameter           :: ATTENUATION_RANGE_PREDEFINED = .false.
+
 ! flag for the four edges of each slice and for the bottom edge
   integer, parameter :: XI_MIN  = 1
   integer, parameter :: XI_MAX  = 2
