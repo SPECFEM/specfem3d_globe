@@ -17,7 +17,7 @@
 !=====================================================================
 
   subroutine model_iasp91(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &
-                     RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST,zmesh)
+                     RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
   implicit none
 
@@ -34,7 +34,7 @@
 
   logical ONE_CRUST
 
-  double precision r,scaleval,zmesh
+  double precision r,scaleval
 
   double precision x1,x2
 
