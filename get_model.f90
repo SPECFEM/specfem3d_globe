@@ -300,7 +300,7 @@
 
          if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
            call model_iasp91(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
-             ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST,zmesh)
+             ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
            call prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
