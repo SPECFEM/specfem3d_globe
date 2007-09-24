@@ -2,7 +2,7 @@
   program create_record_section_Grace
 
 ! creates files to plot record sections with "Grace"
-! then call with " grace *.sem.recordsection "
+! then call with " xmgrace *.sem.recordsection "
 ! call this program with " xcreate_record_section_Grace < create_record_section_Grace.in "
 
 ! Authors: Jeroen Tromp and Dimitri Komatitsch, mid-2000 and September 2007
