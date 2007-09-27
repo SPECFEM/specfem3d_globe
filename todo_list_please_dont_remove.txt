@@ -5,6 +5,8 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 David:
 -----
 
+- Hi Dimitri & David: After we fix the bug associated with the oceans, we should reexamine the size of the time step, because I suspect it will be too small. Jeroen 
+
 - va etre fait par Qinya : I noticed a problem in Qinya's adjoint code and the
   conversion to static memory below: arrays eps_trace_over_3_crust_mantle and eps_trace_over_3_inner_core are not needed when we use attenuation only for a forward simulation, they are only needed to save the strain in the whole mesh (when we attenuation for a forward run this calculation of eps_trace_over_3, i.e. the trace of the strain tensor, is purely local and can be stored in a scalar, not need to waste an array for it. I have therefore added two new static constants
  integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =
@@ -40,7 +42,8 @@ Jeroen
 
 - bug movies detecte par Vala: code crashes (probably in compute_forces) when setting MOVIE_VOLUME = .true.  > Stack trace terminated abnormally.  > forrtl: severe (174): SIGSEGV, segmentation fault occurred
 
-- ecrire les sismogrammes (et les allouer en memoire) bout a bout les uns a la suite des autres par tranches de taille NTSTEP_BETWEEN_FRAMES (ou bien un parametre de ce genre, a ajouter dans le Par_file) pour economiser (beaucoup de) memoire pour les runs avec beaucoup de stations sur un tres grand nombre de pas de temps (idee decrite par Dominique Rodrigues fin juillet lors d'une reunion avec lui)
+- ecrire les sismogrammes (et les allouer en memoire) bout a bout les uns a la suite des autres par tranches de taille NTSTEP_BETWEEN_FRAMES (ou bien un parametre de ce genre, a ajouter dans le Par_file) pour economiser (beaucoup de) memoire pour les runs avec beaucoup de stations sur un tres grand nombre de pas de temps.
+Salut David, Nicolas a implémenté dans le code 2D les sismos stockés et écrits bloc par bloc, tu peux faire svn update dans le code 2D et récupérer SEM_2D_Dimitri/write_seismograms.F90 et SEM_2D_Dimitri/specfem2D.F90 et programmer la même chose à 3D ok ? (plutôt dans v4.1 après les USA pour ne pas prendre de risque de dernière minute ? à toi de voir) a+ Dimitri 
 
 - Hi David,
 When you come back from Rennes could you check the manual and underline
