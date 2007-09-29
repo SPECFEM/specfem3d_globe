@@ -179,9 +179,23 @@
 
 ! use PREM as the 1D reference model by default
   REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+
+! HONOR_1D_SPHERICAL_MOHO: honor PREM Moho or not: doing so drastically reduces
+! the stability condition and therefore the time step, resulting in expensive
+! calculations. If not, honor a fictitious Moho at the depth of 40 km
+! in order to have even radial sampling from the d220 to the Earth surface.
+
+! ONE_CRUST: in order to increase stability and therefore to allow cheaper
+! simulations (larger time step), 1D models can be run with just one average crustal
+! layer instead of two.
+
+! CASE_3D : this flag allows the stretching of the elements in the crustal
+! layers in the case of 3D models. The purpose of this stretching is to squeeze more
+! GLL points per km in the upper part of the crust than in the lower part.
   HONOR_1D_SPHERICAL_MOHO = .false.
   ONE_CRUST = .false.
   CASE_3D = .false.
+
 ! default is no 3D model
   THREE_D_MODEL = 0
 
@@ -962,7 +976,7 @@
 ! make sure that the two doublings in the outer core are found in the right order
   if(elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
                   stop 'error in location of the two doublings in the outer core'
-  
+
   ratio_sampling_array(15) = 0
 ! define all the layers of the mesh
   if (SUPPRESS_CRUSTAL_MESH) then

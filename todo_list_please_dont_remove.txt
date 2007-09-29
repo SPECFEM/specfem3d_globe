@@ -45,25 +45,6 @@ Jeroen
 - ecrire les sismogrammes (et les allouer en memoire) bout a bout les uns a la suite des autres par tranches de taille NTSTEP_BETWEEN_FRAMES (ou bien un parametre de ce genre, a ajouter dans le Par_file) pour economiser (beaucoup de) memoire pour les runs avec beaucoup de stations sur un tres grand nombre de pas de temps.
 Salut David, Nicolas a implémenté dans le code 2D les sismos stockés et écrits bloc par bloc, tu peux faire svn update dans le code 2D et récupérer SEM_2D_Dimitri/write_seismograms.F90 et SEM_2D_Dimitri/specfem2D.F90 et programmer la même chose à 3D ok ? (plutôt dans v4.1 après les USA pour ne pas prendre de risque de dernière minute ? à toi de voir) a+ Dimitri 
 
-- Hi David,
-When you come back from Rennes could you check the manual and underline
-in red on a paper copy what needs to be changed? We can then update it.
-There are also a bunch of things to add to the manual that are mentioned
-in the "Manual" section of the todo list, you can add them when you come back.
-I don't think we will have time to cut the superbrick in 2 before
-Oct 9, that would be too risky, let's leave this for v4.1. Therefore,
-let us change the table from blocks of 16 to blocks of 32.
-Dimitri.
-Jeroen Tromp wrote:
-> Hi Dimitri, Qinya & David:
-> Let's make sure the global manual is also up-to-date and available prior
-> to the NH meeting. We may want to add a few of the benchmark figures
-> Anne & I made, in the context of a brief paragraph describing the new
-> EXAMPLES subdirectory. We also need to fix all the table now that we
-> have a factor of 32 rather than 16, unless we manage to fix this before
-> the meeting.
-> Jeroen
-
 - Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). To do this, see the old (unfinished) implementation done by Dimitri in version 3.6 on pangu in directories /home/komatits/bubu_test_central_cube_AB_antipode_54procs and /home/komatits/ok_chunk_AB_central_cube
 
 - couper la superbrick en deux au milieu dans les deux directions par MPI pour repasser de blocs de taille 32 à des blocs de taille 16; sinon voir les conséquences des blocs de 32: en coupant au milieu des superbricks, clarifier ce qui se passe : on doit toujours prendre des multiples de 32, mais on peut les couper deux fois plus; voir si la Table 3.1 du manuel est toujours valable, ou bien sinon comment il faut la modifier
@@ -266,41 +247,12 @@ Things to do later:
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 
-Things to add later to the manual:
-----------------------------------
-
-- stp si tu peux répondre à ça et on mettra ta réponse dans la section "modèles 3D" du manuel Subject: SPECFEM3D - Models Date: Mon, 2 Jul 2007 17:08:01 +0200 From: Bernhard Schuberth <mail@bernhard-schuberth.de> To: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr> References: <200706041627.21859.mail@bernhard-schuberth.de> <200707020852.01968.mail@bernhard-schuberth.de> <4688C215.6070208@univ-pau.fr> Hi Dimitri, I was checking the implementation of different 3D geodynamic models in my own version of SPECFEM3D and came across some questions regarding the flags ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D (I am not completely sure about the philosophy behind those flags)
-==> HONOR_1D_SPHERICAL_MOHO : honor PREM Moho or not :
-- Doing so drastically reduces the stability condition and therefore the time
-step, resulting in expensive calculations.
-- If not, honor a fictitious Moho at the depth of 40km in order to have even
-radial sampling from the d220 to the Earth surface.
-
-==> ONE_CRUST : in order to increase stability and therefore to allow cheaper
-simulations (bigger time step), PREM models can be run with just one crust
-layer instead of two.
-
-==> CASE_3D : this flag allows the stretching of the crust's finite elements
-layers for the 3D models. The purpose of this stretching is to squeeze more
-GLL points by km in the upper part of the crust than in the lower part.
-
-
-- add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers
+Things to add to the manual:
+----------------------------
 
 - ajouter les courbes de dispersion et stabilité au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix spécial là-dessus; dire dans cet appendix que dans le outer core ce n'est bien sûr par Vs qui est représenté mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un échantillonnage un peu meilleur)
 
-- dire dans manuel que number of grid points per S wavelength (purposely) pas bon dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien dans ce cas prendre un maillage prévu pour une période beaucoup plus courte (typiquement deux fois) que la période mentionnée dans les tables, qui concerne seulement les ondes P et non pas les S dans le inner core
-
-- dire ça dans le manuel :  grep -i xstore *f90 | grep -i double, grep -i xstore *f90 | grep -i custom, doit tjrs être en double dans le mailleur, mais sauvé en CUSTOM et relu en CUSTOM dans le solver car pas besoin de cettte précision
-
-- Dire dans manuel que par défaut le mailleur tourne lentement pour optimiser par cuthill mckee et tri de ibool, mais flag dans DATA/Par_file pour le desactiver (appeler ce flag SLOWER_MESHER_FASTER_SOLVER par exemple)
-==> rajouté dans le manuel (brouillon) et dans le code
-
-- explain this in the manual: We have implemented a simple way of handling the ONE_CRUST / two crusts issue : we let the user decide. In the new version, the models in Par_file (isotropic_prem, ak135 etc) always implement the right version with two crusts. But we have added new model names: isotropic_prem_one_crust, ak135_one_crust etc., in which case the code uses ONE_CRUST. Depending on the option chosen by the user, the code automatically selects the right time step (i.e., reduces the time step in the case of two crusts and a "small" NEX, to remain stable). This way, users can decide what they want to do.
-
 - supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront été fusionnés (enlever les deux sections expliquant l'utilisation de ces routines)
-
-- add this to the manual: let us recall that in SPECFEM3D we do not use our GJI 2002 formulation, we use a displacement potential in the fluid (rather than a velocity potential as in our GJI). This leads to the fluid-solid matching condition with no iterations at the CMB and ICB introduced by Chaljub and Valette (2004).  (see also Tarje's comment about this after his eq (49) in the attached PDF). I will update the comments in the source code to mention that three years ago we switched to a displacement potential with no iterations.
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
@@ -428,4 +380,28 @@ pour des soucis de lisibilité.
 - faire un commit du script de stretching de la croûte 3D de David dans UTILS: not needed anymore, because implemented in Fortran in stretching_function.f90
 
 - convert the "allocatable" arrays in the solver from dynamic to static: done by David, Jeroen and Dimitri
+
+- Dire dans manuel que par défaut le mailleur tourne lentement pour optimiser par cuthill mckee et tri de ibool, mais flag dans DATA/Par_file pour le desactiver (appeler ce flag SLOWER_MESHER_FASTER_SOLVER par exemple) => not needed anymore because Cuthill-McKee sorting has been suppressed
+
+- add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers: Done by Sue
+
+- dire dans manuel que number of grid points per S wavelength (purposely) pas bon dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien dans ce cas prendre un maillage prévu pour une période beaucoup plus courte (typiquement deux fois) que la période mentionnée dans les tables, qui concerne seulement les ondes P et non pas les S dans le inner core: done by Dimitri
+
+- add this to the manual: let us recall that in SPECFEM3D we do not use our GJI 2002 formulation, we use a displacement potential in the fluid (rather than a velocity potential as in our GJI). This leads to the fluid-solid matching condition with no iterations at the CMB and ICB introduced by Chaljub and Valette (2004).  (see also Tarje's comment about this after his eq (49) in the attached PDF). I will update the comments in the source code to mention that three years ago we switched to a displacement potential with no iterations: done by Dimitri
+
+- explain this in the manual: We have implemented a simple way of handling the ONE_CRUST / two crusts issue : we let the user decide. In the new version, the models in Par_file (isotropic_prem, ak135 etc) always implement the right version with two crusts. But we have added new model names: isotropic_prem_one_crust, ak135_one_crust etc., in which case the code uses ONE_CRUST. Depending on the option chosen by the user, the code automatically selects the right time step (i.e., reduces the time step in the case of two crusts and a "small" NEX, to remain stable). This way, users can decide what they want to do: will be done by Caltech when they add the new list of models
+
+- stp si tu peux répondre à ça et on mettra ta réponse dans la section "modèles 3D" du manuel Subject: SPECFEM3D - Models Date: Mon, 2 Jul 2007 17:08:01 +0200 From: Bernhard Schuberth <mail@bernhard-schuberth.de> To: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr> References: <200706041627.21859.mail@bernhard-schuberth.de> <200707020852.01968.mail@bernhard-schuberth.de> <4688C215.6070208@univ-pau.fr> Hi Dimitri, I was checking the implementation of different 3D geodynamic models in my own version of SPECFEM3D and came across some questions regarding the flags ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D (I am not completely sure about the philosophy behind those flags)
+==> HONOR_1D_SPHERICAL_MOHO : honor PREM Moho or not :
+- Doing so drastically reduces the stability condition and therefore the time
+step, resulting in expensive calculations.
+- If not, honor a fictitious Moho at the depth of 40km in order to have even
+radial sampling from the d220 to the Earth surface.
+==> ONE_CRUST : in order to increase stability and therefore to allow cheaper
+simulations (bigger time step), PREM models can be run with just one crust
+layer instead of two.
+==> CASE_3D : this flag allows the stretching of the crust's finite elements
+layers for the 3D models. The purpose of this stretching is to squeeze more GLL points by km in the upper part of the crust than in the lower part: added by Dimitri as a comment in the source code instead of adding it to the manual, because these parameters do not appear in DATA/Par_file and therefore do not need to be known by regular users
+
+- dire ça dans le manuel :  grep -i xstore *f90 | grep -i double, grep -i xstore *f90 | grep -i custom, doit tjrs être en double dans le mailleur, mais sauvé en CUSTOM et relu en CUSTOM dans le solver car pas besoin de cettte précision: done by Dimitri
 
