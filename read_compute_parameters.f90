@@ -627,6 +627,58 @@
       endif
     endif
 
+    if( .not. ATTENUATION_RANGE_PREDEFINED ) then
+       call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
+            MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+    endif
+
+    if(ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .OR. &
+       ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .OR. &
+       NEX_MAX > 1248) then
+
+     call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
+          NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
+          NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
+          NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
+          R_CENTRAL_CUBE, CASE_3D) 
+
+     call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
+          MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+
+     call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
+      
+     write(*,*)'##############################################################'
+     write(*,*)
+     write(*,*)' Auto Radial Meshing Code ' 
+     write(*,*)' Consult read_compute_parameters.f90 and auto_ner.f90 '
+     write(*,*)' This should only be invoked for chunks less than 90 degrees'
+     write(*,*)' and for chunks greater than 1248 elements wide'
+     write(*,*)
+     write(*,*)'CHUNK WIDTH:              ', ANGULAR_WIDTH_XI_IN_DEGREES     
+     write(*,*)'NEX:                      ', NEX_MAX
+     write(*,*)'NER_CRUST:                ', NER_CRUST
+     write(*,*)'NER_80_MOHO:              ', NER_80_MOHO
+     write(*,*)'NER_220_80:               ', NER_220_80
+     write(*,*)'NER_400_220:              ', NER_400_220
+     write(*,*)'NER_600_400:              ', NER_600_400
+     write(*,*)'NER_670_600:              ', NER_670_600
+     write(*,*)'NER_771_670:              ', NER_771_670
+     write(*,*)'NER_TOPDDOUBLEPRIME_771:  ', NER_TOPDDOUBLEPRIME_771
+     write(*,*)'NER_CMB_TOPDDOUBLEPRIME:  ', NER_CMB_TOPDDOUBLEPRIME
+     write(*,*)'NER_OUTER_CORE:           ', NER_OUTER_CORE
+     write(*,*)'NER_TOP_CENTRAL_CUBE_ICB: ', NER_TOP_CENTRAL_CUBE_ICB
+     write(*,*)'R_CENTRAL_CUBE:           ', R_CENTRAL_CUBE
+     write(*,*)'multiplication factor:    ', multiplication_factor
+     write(*,*)
+     write(*,*)'DT:                       ',DT
+     write(*,*)'MIN_ATTENUATION_PERIOD    ',MIN_ATTENUATION_PERIOD
+     write(*,*)'MAX_ATTENUATION_PERIOD    ',MAX_ATTENUATION_PERIOD
+     write(*,*)
+     write(*,*)'##############################################################'
+     
+  endif
+     
+       
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
   DT = DT * (1.d0 - 0.05d0)
