@@ -3204,9 +3204,9 @@
 
           if (SIMULATION_TYPE == 3) then
             iglob = ibool_inner_core(i,j,k_corresp,ispec_selected)
-            vx = b_displ_inner_core(1,iglob)
-            vy = b_displ_inner_core(2,iglob)
-            vz = b_displ_inner_core(3,iglob)
+            displ_x = b_displ_inner_core(1,iglob)
+            displ_y = b_displ_inner_core(2,iglob)
+            displ_z = b_displ_inner_core(3,iglob)
             displ_n = displ_x*nx + displ_y*ny + displ_z*nz
             iglob = ibool_outer_core(i,j,k,ispec)
             b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - weight*displ_n
