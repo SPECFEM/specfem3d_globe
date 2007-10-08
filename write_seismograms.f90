@@ -19,11 +19,12 @@
 ! write seismograms to text files
 subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
               station_name,network_name,stlat,stlon,stele,nrec,nrec_local, &
-              DT,NSTEP,hdur,it_begin,it_end, &
+              DT,hdur,it_end, &
               yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename, &
               cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
               NPROCTOT,OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
+              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+              seismo_offset,seismo_current)
 
  implicit none
 
@@ -34,9 +35,12 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
  include "precision.h"
 
 ! parameters
- integer nrec,nrec_local,NSTEP,myrank,it_begin,it_end,NPROCTOT,NSOURCES
+ integer nrec,nrec_local,myrank,it_end,NPROCTOT,NSOURCES
+
+ integer :: seismo_offset, seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
  integer, dimension(nrec_local) :: number_receiver_global
- real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local,NSTEP) :: seismograms
+
+ real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismograms
  double precision hdur,DT
 
  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
@@ -51,7 +55,8 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
 
 ! variables
  integer :: iproc,sender,irec_local,irec,total_seismos,ier,receiver,nrec_local_received
- real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: one_seismogram
+
+ real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
  integer msg_status(MPI_STATUS_SIZE)
  character(len=150) OUTPUT_FILES
 
@@ -60,6 +65,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
           OUTPUT_SEISMOS_SAC_BINARY
 ! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
   logical ROTATE_SEISMOGRAMS_RT
+
 
   if(myrank == 0) then ! on the master, gather all the seismograms
 
@@ -82,10 +88,8 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
       else
         nrec_local_received = nrec_local
       endif
-
       if (nrec_local_received > 0) then
         do irec_local = 1,nrec_local_received
-
           ! receive except from proc 0, which is myself and therefore I already have these values
           if(iproc == 0) then
             ! get global number of that receiver
@@ -94,19 +98,19 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
           else
             call MPI_RECV(irec,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
             if(irec < 1 .or. irec > nrec) call exit_MPI(myrank,'error while receiving global receiver number')
-            call MPI_RECV(one_seismogram,NDIM*NSTEP,CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+            call MPI_RECV(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
           endif
 
           total_seismos = total_seismos + 1
-
           ! write this seismogram
           call write_one_seismogram(one_seismogram,irec, &
                                     station_name,network_name,stlat,stlon,stele,nrec, &
-                                    DT,NSTEP,hdur,it_begin,it_end, &
+                                    DT,hdur,it_end, &
                                     yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat, &
                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES,OUTPUT_FILES, &
                                     OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-                                    OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
+                                    OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
+                                    NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current)
         enddo
       endif
     enddo
@@ -129,7 +133,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
         irec = number_receiver_global(irec_local)
         call MPI_SEND(irec,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
         one_seismogram(:,:) = seismograms(:,irec_local,:)
-        call MPI_SEND(one_seismogram,NDIM*NSTEP,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+        call MPI_SEND(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
       enddo
     endif
   endif
@@ -139,20 +143,24 @@ end subroutine write_seismograms
 
  subroutine write_one_seismogram(one_seismogram,irec, &
               station_name,network_name,stlat,stlon,stele,nrec, &
-              DT,NSTEP,hdur,it_begin,it_end, &
+              DT,hdur,it_end, &
               yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
               OUTPUT_FILES, &
               OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
+              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
+              NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current)
 
  implicit none
 
   include "constants.h"
 
-  integer nrec,NSTEP,it_begin,it_end
+  integer nrec,it_end
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: one_seismogram
-  real(kind=CUSTOM_REAL), dimension(5,NSTEP) :: seismogram_tmp
+  integer :: seismo_offset, seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
+
+  real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
 
   double precision hdur,DT
 
@@ -169,7 +177,6 @@ end subroutine write_seismograms
 
 ! BS BS begin section added for SAC
   integer NSOURCES
-  integer write_counter
 
   double precision t_cmt,elat,elon,depth
   double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
@@ -287,20 +294,19 @@ end subroutine write_seismograms
           ! BS BS do the rotation of the components and put result in
           ! new variable seismogram_tmp
           if (iorientation == 4) then ! radial component
-             do isample = it_begin,it_end
+             do isample = 1,seismo_current
                 seismogram_tmp(iorientation,isample) = &
                    cphi * one_seismogram(1,isample) + sphi * one_seismogram(2,isample)
              enddo
           elseif (iorientation == 5) then ! transverse component
-             do isample = it_begin,it_end
+             do isample = 1,seismo_current
                 seismogram_tmp(iorientation,isample) = &
                 -1*sphi * one_seismogram(1,isample) + cphi * one_seismogram(2,isample)
              enddo
           endif
 
       else ! keep NEZ components
-
-             do isample = it_begin,it_end
+             do isample = 1,seismo_current
                 seismogram_tmp(iorientation,isample) = one_seismogram(iorientation,isample)
              enddo
 
@@ -369,7 +375,8 @@ end subroutine write_seismograms
  DEPMEN = BYSAC
  SCALE_F= 1000000000  ! factor for y-value, set to 10e9, so that values are in nm
  ODELTA = undef       ! increment from delta
- B      = sngl((it_begin -1)*DT-hdur + t_cmt) ! [REQUIRED]
+
+ B      = sngl((seismo_offset)*DT-hdur + t_cmt) ! [REQUIRED]
  E      = BYSAC       ! [REQUIRED]
  O      = undef  !###
  A      = undef  !###
@@ -434,7 +441,7 @@ end subroutine write_seismograms
 !NWVID =undef !waveform ID
 
 ! NUMBER of POINTS:
- NPTS = it_end-it_begin + 1 ! [REQUIRED]
+ NPTS = it_end-seismo_offset ! [REQUIRED]
 ! event type
  IFTYPE = 1 ! 1=ITIME, i.e. seismogram  [REQUIRED] # numbering system is
  IDEP   = 6 ! 6: displ/nm                          # quite strange, best
@@ -471,15 +478,24 @@ end subroutine write_seismograms
 
   if (OUTPUT_SEISMOS_SAC_ALPHANUM) then
 
+
 ! add .sacan (sac alphanumeric) extension to seismogram file name for SAC seismograms
- write(sisname_2,"('/',a,'.sacan')") trim(sisname)
- open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+  write(sisname_2,"('/',a,'.sacan')") trim(sisname)
+  if (seismo_offset == 0) then
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+  else
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old', position='append')
+  endif
+
 
 ! Formats of alphanumerical SAC header fields
 510 format(5G15.7,5G15.7,5G15.7,5G15.7,5G15.7)
 520 format(5I10,5I10,5I10,5I10,5I10)
 530 format(A8,A16)
 540 format(A8,A8,A8)
+
+
+    if (seismo_offset == 0) then
 !
 ! now write actual header:
 ! ------------------------
@@ -546,13 +562,12 @@ end subroutine write_seismograms
 !                                   KUSER1     KUSER2       KCMPNM
  write(IOUT,540)   KNETWK,'-12345  ','-12345  '
 !                                   KNETWK   KDATRD   KINST
+    endif
 
 ! now write data - with five values per row:
 ! ---------------
 
- write_counter = 0
-
- do isample = it_begin+5,it_end+1,5
+ do isample = 1+5,seismo_current+1,5
 
    value1 = dble(seismogram_tmp(iorientation,isample-5))
    value2 = dble(seismogram_tmp(iorientation,isample-4))
@@ -561,8 +576,6 @@ end subroutine write_seismograms
    value5 = dble(seismogram_tmp(iorientation,isample-1))
 
    write(IOUT,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
-
-   write_counter=write_counter+1
 
  enddo
 
@@ -579,158 +592,160 @@ end subroutine write_seismograms
     ! open binary file
     call open_file(trim(OUTPUT_FILES)//trim(sisname_2)//char(0))
 
-    ! write header variables
+    if (seismo_offset == 0) then
+      ! write header variables
 
-    ! write single precision header variables 1:70
-    call write_real(DELTA)         !(1)
-    call write_real(DEPMIN)        !(2)
-    call write_real(DEPMAX)        !(3)
-    call write_real(SCALE_F)       !(4)
-    call write_real(ODELTA)        !(5)
-    call write_real(B)             !(6)
-    call write_real(E)             !(7)
-    call write_real(O)             !(8)
-    call write_real(A)             !(9)
-    call write_real(INTERNAL)      !(10)
-    call write_real(undef)          !(11)T0
-    call write_real(undef)          !(12)T1
-    call write_real(undef)          !(13)T2
-    call write_real(undef)          !(14)T3
-    call write_real(undef)          !(15)T4
-    call write_real(undef)          !(16)T5
-    call write_real(undef)          !(17)T6
-    call write_real(undef)          !(18)T7
-    call write_real(undef)          !(19)T8
-    call write_real(undef)          !(20)T9
-    call write_real(undef)          !(21)F
-    call write_real(undef)          !(22)RESP0
-    call write_real(undef)          !(23)RESP1
-    call write_real(undef)          !(24)RESP2
-    call write_real(undef)          !(25)RESP3
-    call write_real(undef)          !(26)RESP4
-    call write_real(undef)          !(27)RESP5
-    call write_real(undef)          !(28)RESP6
-    call write_real(undef)          !(29)RESP7
-    call write_real(undef)          !(30)RESP8
-    call write_real(undef)          !(31)RESP9
-    call write_real(STLA)          !(32)
-    call write_real(STLO)          !(33)
-    call write_real(STEL)          !(34)
-    call write_real(STDP)          !(35)
-    call write_real(EVLA)          !(36)
-    call write_real(EVLO)          !(37)
-    call write_real(EVEL)          !(38)
-    call write_real(EVDP)          !(39)
-    call write_real(MAG)           !(40)
-    call write_real(USER0)         !(41)
-    call write_real(USER1)         !(42)
-    call write_real(USER2)         !(43)
-    call write_real(USER3)         !(44)
-    call write_real(undef)          !(45)USER4
-    call write_real(undef)          !(46)USER5
-    call write_real(undef)          !(47)USER6
-    call write_real(undef)          !(48)USER7
-    call write_real(undef)          !(49)USER8
-    call write_real(undef)          !(50)USER9
-    call write_real(DIST)          !(51)
-    call write_real(AZ)            !(52)
-    call write_real(BAZ)           !(53)
-    call write_real(GCARC)         !(54)
-    call write_real(INTERNAL)      !(55)
-    call write_real(INTERNAL)      !(56)
-    call write_real(DEPMEN)        !(57)
-    call write_real(CMPAZ)         !(58)
-    call write_real(CMPINC)        !(59)
-    call write_real(undef)          !(60)XMINIMUM
-    call write_real(undef)          !(61)XMAXIMUM
-    call write_real(undef)          !(62)YMINIMUM
-    call write_real(undef)          !(63)YMAXIMUM
-    call write_real(undef)          !(64)
-    call write_real(undef)          !(65)
-    call write_real(undef)          !(66)
-    call write_real(undef)          !(67)
-    call write_real(undef)          !(68)
-    call write_real(undef)          !(69)
-    call write_real(undef)          !(70)
+      ! write single precision header variables 1:70
+      call write_real(DELTA)         !(1)
+      call write_real(DEPMIN)        !(2)
+      call write_real(DEPMAX)        !(3)
+      call write_real(SCALE_F)       !(4)
+      call write_real(ODELTA)        !(5)
+      call write_real(B)             !(6)
+      call write_real(E)             !(7)
+      call write_real(O)             !(8)
+      call write_real(A)             !(9)
+      call write_real(INTERNAL)      !(10)
+      call write_real(undef)          !(11)T0
+      call write_real(undef)          !(12)T1
+      call write_real(undef)          !(13)T2
+      call write_real(undef)          !(14)T3
+      call write_real(undef)          !(15)T4
+      call write_real(undef)          !(16)T5
+      call write_real(undef)          !(17)T6
+      call write_real(undef)          !(18)T7
+      call write_real(undef)          !(19)T8
+      call write_real(undef)          !(20)T9
+      call write_real(undef)          !(21)F
+      call write_real(undef)          !(22)RESP0
+      call write_real(undef)          !(23)RESP1
+      call write_real(undef)          !(24)RESP2
+      call write_real(undef)          !(25)RESP3
+      call write_real(undef)          !(26)RESP4
+      call write_real(undef)          !(27)RESP5
+      call write_real(undef)          !(28)RESP6
+      call write_real(undef)          !(29)RESP7
+      call write_real(undef)          !(30)RESP8
+      call write_real(undef)          !(31)RESP9
+      call write_real(STLA)          !(32)
+      call write_real(STLO)          !(33)
+      call write_real(STEL)          !(34)
+      call write_real(STDP)          !(35)
+      call write_real(EVLA)          !(36)
+      call write_real(EVLO)          !(37)
+      call write_real(EVEL)          !(38)
+      call write_real(EVDP)          !(39)
+      call write_real(MAG)           !(40)
+      call write_real(USER0)         !(41)
+      call write_real(USER1)         !(42)
+      call write_real(USER2)         !(43)
+      call write_real(USER3)         !(44)
+      call write_real(undef)          !(45)USER4
+      call write_real(undef)          !(46)USER5
+      call write_real(undef)          !(47)USER6
+      call write_real(undef)          !(48)USER7
+      call write_real(undef)          !(49)USER8
+      call write_real(undef)          !(50)USER9
+      call write_real(DIST)          !(51)
+      call write_real(AZ)            !(52)
+      call write_real(BAZ)           !(53)
+      call write_real(GCARC)         !(54)
+      call write_real(INTERNAL)      !(55)
+      call write_real(INTERNAL)      !(56)
+      call write_real(DEPMEN)        !(57)
+      call write_real(CMPAZ)         !(58)
+      call write_real(CMPINC)        !(59)
+      call write_real(undef)          !(60)XMINIMUM
+      call write_real(undef)          !(61)XMAXIMUM
+      call write_real(undef)          !(62)YMINIMUM
+      call write_real(undef)          !(63)YMAXIMUM
+      call write_real(undef)          !(64)
+      call write_real(undef)          !(65)
+      call write_real(undef)          !(66)
+      call write_real(undef)          !(67)
+      call write_real(undef)          !(68)
+      call write_real(undef)          !(69)
+      call write_real(undef)          !(70)
+  
+      ! write integer header variables 71:105
+      call write_integer(NZYEAR)        !(71)
+      call write_integer(NZJDAY)        !(72)
+      call write_integer(NZHOUR)        !(73)
+      call write_integer(NZMIN)         !(74)
+      call write_integer(NZSEC)         !(75)
+      call write_integer(NZMSEC)        !(76)
+      call write_integer(NVHDR)         !(77)
+      call write_integer(NORID)         !(78)
+      call write_integer(NEVID)         !(79)
+      call write_integer(NPTS)          !(80)
+      call write_integer(int(undef))     !(81)UNUSED
+      call write_integer(int(undef))     !(82)NWFID
+      call write_integer(int(undef))     !(83)NXSIZE
+      call write_integer(int(undef))     !(84)NYSIZE
+      call write_integer(int(undef))     !(85)UNUSED
+      call write_integer(IFTYPE)        !(86)
+      call write_integer(IDEP)          !(87)
+      call write_integer(IZTYPE)        !(88)
+      call write_integer(int(undef))     !(89)UNUSED
+      call write_integer(int(undef))     !(90)IINST
+      call write_integer(int(undef))     !(91)ISTREG
+      call write_integer(int(undef))     !(92)IEVREG
+      call write_integer(IEVTYP)        !(93)
+      call write_integer(int(undef))     !(94)IQUAL
+      call write_integer(ISYNTH)        !(95)
+      call write_integer(IMAGTYP)       !(96)
+      call write_integer(int(undef))     !(97)IMAGSRC
+      call write_integer(int(UNUSED))   !(98)
+      call write_integer(int(UNUSED))   !(99)
+      call write_integer(int(UNUSED))   !(100)
+      call write_integer(int(UNUSED))   !(101)
+      call write_integer(int(UNUSED))   !(102)
+      call write_integer(int(UNUSED))   !(103)
+      call write_integer(int(UNUSED))   !(104)
+      call write_integer(int(UNUSED))   !(105)
+  
+      ! write logical header variables 106:110
+      call write_integer(LEVEN)         !(106)
+      call write_integer(LPSPOL)        !(107)
+      call write_integer(LOVROK)        !(108)
+      call write_integer(LCALDA)        !(109)
+      call write_integer(int(UNUSED))   !(110)
+  
+  
+      ! write character header variables 111:302
+      call write_character(KSTNM,8)         !(111:118)
+      call write_character(KEVNM,16)         !(119:134)
+      call write_character(str_undef,8)      !(135:142)KHOLE
+      call write_character(str_undef,8)      !(143:150)KO
+      call write_character(str_undef,8)      !(151:158)KA
+      call write_character(str_undef,8)      !(159:166)KT0
+      call write_character(str_undef,8)      !(167:174)KT1
+      call write_character(str_undef,8)      !(175:182)KT2
+      call write_character(str_undef,8)      !(183:190)KT3
+      call write_character(str_undef,8)      !(191:198)KT4
+      call write_character(str_undef,8)      !(199:206)KT5
+      call write_character(str_undef,8)      !(207:214)KT6
+      call write_character(str_undef,8)      !(215:222)KT7
+      call write_character(str_undef,8)      !(223:230)KT8
+      call write_character(str_undef,8)      !(231:238)KT9
+      call write_character(str_undef,8)      !(239:246)KF
+      call write_character(KUSER0,8)        !(247:254)
+      call write_character(KUSER1,8)        !(255:262)
+      call write_character(KUSER2,8)        !(263:270)
+      call write_character(KCMPNM,8)        !(271:278)
+      call write_character(KNETWK,8)        !(279:286)
+      call write_character(str_undef,8)      !(287:294)KDATRD
+      call write_character(str_undef,8)      !(295:302)KINST
 
-    ! write integer header variables 71:105
-    call write_integer(NZYEAR)        !(71)
-    call write_integer(NZJDAY)        !(72)
-    call write_integer(NZHOUR)        !(73)
-    call write_integer(NZMIN)         !(74)
-    call write_integer(NZSEC)         !(75)
-    call write_integer(NZMSEC)        !(76)
-    call write_integer(NVHDR)         !(77)
-    call write_integer(NORID)         !(78)
-    call write_integer(NEVID)         !(79)
-    call write_integer(NPTS)          !(80)
-    call write_integer(int(undef))     !(81)UNUSED
-    call write_integer(int(undef))     !(82)NWFID
-    call write_integer(int(undef))     !(83)NXSIZE
-    call write_integer(int(undef))     !(84)NYSIZE
-    call write_integer(int(undef))     !(85)UNUSED
-    call write_integer(IFTYPE)        !(86)
-    call write_integer(IDEP)          !(87)
-    call write_integer(IZTYPE)        !(88)
-    call write_integer(int(undef))     !(89)UNUSED
-    call write_integer(int(undef))     !(90)IINST
-    call write_integer(int(undef))     !(91)ISTREG
-    call write_integer(int(undef))     !(92)IEVREG
-    call write_integer(IEVTYP)        !(93)
-    call write_integer(int(undef))     !(94)IQUAL
-    call write_integer(ISYNTH)        !(95)
-    call write_integer(IMAGTYP)       !(96)
-    call write_integer(int(undef))     !(97)IMAGSRC
-    call write_integer(int(UNUSED))   !(98)
-    call write_integer(int(UNUSED))   !(99)
-    call write_integer(int(UNUSED))   !(100)
-    call write_integer(int(UNUSED))   !(101)
-    call write_integer(int(UNUSED))   !(102)
-    call write_integer(int(UNUSED))   !(103)
-    call write_integer(int(UNUSED))   !(104)
-    call write_integer(int(UNUSED))   !(105)
-
-    ! write logical header variables 106:110
-    call write_integer(LEVEN)         !(106)
-    call write_integer(LPSPOL)        !(107)
-    call write_integer(LOVROK)        !(108)
-    call write_integer(LCALDA)        !(109)
-    call write_integer(int(UNUSED))   !(110)
-
-
-    ! write character header variables 111:302
-    call write_character(KSTNM,8)         !(111:118)
-    call write_character(KEVNM,16)         !(119:134)
-    call write_character(str_undef,8)      !(135:142)KHOLE
-    call write_character(str_undef,8)      !(143:150)KO
-    call write_character(str_undef,8)      !(151:158)KA
-    call write_character(str_undef,8)      !(159:166)KT0
-    call write_character(str_undef,8)      !(167:174)KT1
-    call write_character(str_undef,8)      !(175:182)KT2
-    call write_character(str_undef,8)      !(183:190)KT3
-    call write_character(str_undef,8)      !(191:198)KT4
-    call write_character(str_undef,8)      !(199:206)KT5
-    call write_character(str_undef,8)      !(207:214)KT6
-    call write_character(str_undef,8)      !(215:222)KT7
-    call write_character(str_undef,8)      !(223:230)KT8
-    call write_character(str_undef,8)      !(231:238)KT9
-    call write_character(str_undef,8)      !(239:246)KF
-    call write_character(KUSER0,8)        !(247:254)
-    call write_character(KUSER1,8)        !(255:262)
-    call write_character(KUSER2,8)        !(263:270)
-    call write_character(KCMPNM,8)        !(271:278)
-    call write_character(KNETWK,8)        !(279:286)
-    call write_character(str_undef,8)      !(287:294)KDATRD
-    call write_character(str_undef,8)      !(295:302)KINST
-
+    endif
     ! now write SAC time series to file
     ! BS BS write whole time series at once (hope to increase I/O performance
     ! compared to using a loop on it)
 
     if (CUSTOM_REAL == SIZE_REAL) then
-          call write_n_real(seismogram_tmp(iorientation,it_begin:it_end),it_end-it_begin+1)
+          call write_n_real(seismogram_tmp(iorientation,1:seismo_current),seismo_current)
     elseif (CUSTOM_REAL == SIZE_DOUBLE) then
-          call write_n_real(real(seismogram_tmp(iorientation,it_begin:it_end)),it_end-it_begin+1)
+          call write_n_real(real(seismogram_tmp(iorientation,1:seismo_current)),seismo_current)
     endif
 
     call close_file()
@@ -757,17 +772,22 @@ end subroutine write_seismograms
     if(SAVE_ALL_SEISMOS_IN_ONE_FILE) then
       write(IOUT,*) sisname_2(1:len_trim(sisname_2))
     else
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+      if (seismo_offset==0) then
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+      else
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old',position='append')
+      endif
+
     endif
 
-! subtract half duration of the source to make sure travel time is correct
-    do isample = it_begin,it_end
+    ! subtract half duration of the source to make sure travel time is correct
+    do isample = 1,seismo_current
       value = dble(seismogram_tmp(iorientation,isample))
-! distinguish between single and double precision for reals
+      ! distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
-        write(IOUT,*) sngl(dble(isample-1)*DT - hdur),' ',sngl(value)
+        write(IOUT,*) sngl(dble(seismo_offset+isample-1)*DT - hdur),' ',sngl(value)
       else
-        write(IOUT,*) dble(isample-1)*DT - hdur,' ',value
+        write(IOUT,*) dble(seismo_offset+isample-1)*DT - hdur,' ',value
       endif
     enddo
 
