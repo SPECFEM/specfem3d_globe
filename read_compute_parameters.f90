@@ -382,9 +382,6 @@
 ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
 
-!! DK DK completely removed the crust, therefore impose a fictitious value here
-!!  ONE_CRUST = .false.
-
 !----
 !----  case prem_onecrust by default
 !----
@@ -940,14 +937,17 @@
   if(NEX_ETA < 48) stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
 
 ! check that mesh can be coarsened in depth four times (block size must be a multiple of 32)
-! if(mod(NEX_XI,32) /= 0) stop 'NEX_XI must be a multiple of 32'
-! if(mod(NEX_ETA,32) /= 0) stop 'NEX_ETA must be a multiple of 32'
-! if(mod(NEX_XI/32,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 32*NPROC_XI'
-! if(mod(NEX_ETA/32,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 32*NPROC_ETA'
-  if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
-  if(mod(NEX_ETA,16) /= 0) stop 'NEX_ETA must be a multiple of 16'
-  if(mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
-  if(mod(NEX_ETA/16,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 16*NPROC_ETA'
+  if (SUPPRESS_CRUSTAL_MESH) then
+    if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
+    if(mod(NEX_ETA,16) /= 0) stop 'NEX_ETA must be a multiple of 16'
+    if(mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
+    if(mod(NEX_ETA/16,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 16*NPROC_ETA'
+  else
+    if(mod(NEX_XI,32) /= 0) stop 'NEX_XI must be a multiple of 32'
+    if(mod(NEX_ETA,32) /= 0) stop 'NEX_ETA must be a multiple of 32'
+    if(mod(NEX_XI/32,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 32*NPROC_XI'
+    if(mod(NEX_ETA/32,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 32*NPROC_ETA'
+  endif
 
 ! check that topology is correct if more than two chunks
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) stop 'must have NEX_XI = NEX_ETA for more than two chunks'
@@ -1030,6 +1030,7 @@
                   stop 'error in location of the two doublings in the outer core'
 
   ratio_sampling_array(15) = 0
+
 ! define all the layers of the mesh
   if (SUPPRESS_CRUSTAL_MESH) then
 
