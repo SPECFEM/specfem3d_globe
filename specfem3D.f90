@@ -592,6 +592,7 @@
   integer it_begin,it_end,nit_written
   double precision uxd, uyd, uzd, eps_trace,dxx,dyy,dxy,dxz,dyz,eps_loc(NDIM,NDIM), eps_loc_new(NDIM,NDIM)
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
+  integer :: seismo_offset, seismo_current
 
 ! non-dimensionalized rotation rate of the Earth times two
   real(kind=CUSTOM_REAL) two_omega_earth
@@ -973,6 +974,9 @@
     HDUR_MOVIE = bcast_double_precision(24)
 
   endif
+
+! if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP)
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP, NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
 ! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
@@ -2331,7 +2335,7 @@
 ! allocate seismogram array
   if (nrec_local > 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      allocate(seismograms(NDIM,nrec_local,NSTEP))
+      allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS))
     else
       allocate(seismograms(9,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS))
     endif
@@ -2688,11 +2692,19 @@
 ! get MPI starting time
   time_start = MPI_WTIME()
 
+
+! initialize variables for writing seismograms
+  seismo_offset = it_begin-1
+  seismo_current = 0
+
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
   do it=it_begin,it_end
+
+! update position in seismograms
+    seismo_current = seismo_current + 1
 
 ! mantle
   do i=1,NGLOB_CRUST_MANTLE
@@ -4073,10 +4085,10 @@
 
 ! distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
-        seismograms(:,irec_local,it) = sngl(scale_displ*(nu(:,1,irec)*uxd + &
+        seismograms(:,irec_local,seismo_current) = sngl(scale_displ*(nu(:,1,irec)*uxd + &
                    nu(:,2,irec)*uyd + nu(:,3,irec)*uzd))
       else
-        seismograms(:,irec_local,it) = scale_displ*(nu(:,1,irec)*uxd + &
+        seismograms(:,irec_local,seismo_current) = scale_displ*(nu(:,1,irec)*uxd + &
                    nu(:,2,irec)*uyd + nu(:,3,irec)*uzd)
       endif
 
@@ -4168,10 +4180,10 @@
 
 ! distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then
-          seismograms(:,irec_local,it) = sngl(scale_displ*(nu(:,1,irec)*uxd + &
+          seismograms(:,irec_local,seismo_current) = sngl(scale_displ*(nu(:,1,irec)*uxd + &
              nu(:,2,irec)*uyd + nu(:,3,irec)*uzd))
         else
-          seismograms(:,irec_local,it) = scale_displ*(nu(:,1,irec)*uxd + &
+          seismograms(:,irec_local,seismo_current) = scale_displ*(nu(:,1,irec)*uxd + &
              nu(:,2,irec)*uyd + nu(:,3,irec)*uzd)
         endif
 
@@ -4182,20 +4194,23 @@
   endif ! nrec_local
 
 ! write the current seismograms
-  if(mod(it,NTSTEP_BETWEEN_OUTPUT_SEISMOS) == 0) then
+  if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
         call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-              network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
+              network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
               yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
               elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,&
               cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
               OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
+              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+              seismo_offset,seismo_current)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
         nit_written = it
     endif
+    seismo_offset = seismo_offset + seismo_current
+    seismo_current = 0
   endif
 
 ! kernel calculations
@@ -4440,12 +4455,13 @@
 ! write the final seismograms
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
     call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-        network_name,stlat,stlon,stele,nrec,nrec_local,DT,NSTEP,t0,it_begin,it_end, &
+        network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
         yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
         elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC, &
         cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-        OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT)
+        OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+        seismo_offset,seismo_current)
     else
     if (nrec_local > 0) then
       call write_adj_seismograms(seismograms,number_receiver_global, &

@@ -33,7 +33,7 @@ static int fd;
 void
 FC_FUNC_(open_file,OPEN_FILE)(char *file) {
   /*    fprintf(stderr, "Opening file: %s\n", file); */
-  fd = open(file, O_WRONLY | O_CREAT, 0644);
+  fd = open(file, O_WRONLY | O_CREAT | O_APPEND, 0644);
   if(fd == -1) {
     fprintf(stderr, "Error opening file: %s exiting\n", file);
     exit(-1);
@@ -66,4 +66,3 @@ void
 FC_FUNC_(write_character,WRITE_CHARACTER)(char *z, int *lchar) {
   write(fd, z, *lchar*sizeof(char));
 }
-

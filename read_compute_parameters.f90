@@ -172,7 +172,6 @@
   call read_value_integer(NPROC_ETA, 'mesher.NPROC_ETA')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
-
 ! define the velocity model
   call read_value_string(MODEL, 'model.name')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
@@ -909,6 +908,9 @@
   call close_parameter_file
 
 !--- check that parameters make sense
+
+  if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0))&
+  stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
 
 ! check that reals are either 4 or 8 bytes
   if(CUSTOM_REAL /= SIZE_REAL .and. CUSTOM_REAL /= SIZE_DOUBLE) stop 'wrong size of CUSTOM_REAL for reals'
