@@ -236,13 +236,15 @@ end subroutine compute_arrays_adjoint_source
 
 subroutine comp_subarrays_adjoint_src(myrank, adj_source_file, &
       xi_receiver,eta_receiver,gamma_receiver, nu,adj_sourcearray, &
-      xigll,yigll,zigll,NSTEP,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ)
+      xigll,yigll,zigll,NSTEP,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
+      NTSTEP_BETWEEN_READ_ADJSRC)
 
   implicit none
 
   include 'constants.h'
 
-! input
+! input -- notice here NSTEP is different from the NSTEP in the main program
+! instead NSTEP = iadjsrc_len(it_sub_adj), the length of this specific block
   integer myrank, NSTEP
 
   double precision xi_receiver, eta_receiver, gamma_receiver
@@ -250,11 +252,11 @@ subroutine comp_subarrays_adjoint_src(myrank, adj_source_file, &
   character(len=*) adj_source_file
 
 ! Vala added
-  integer it_sub_adj,NSTEP_SUB_ADJ
+  integer it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC
   integer, dimension(NSTEP_SUB_ADJ,2) :: iadjsrc
 
 ! output
-  real(kind=CUSTOM_REAL) :: adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLY,NGLLZ)
+  real(kind=CUSTOM_REAL) :: adj_sourcearray(NTSTEP_BETWEEN_READ_ADJSRC,NDIM,NGLLX,NGLLY,NGLLZ)
 
 ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll
@@ -309,7 +311,7 @@ subroutine comp_subarrays_adjoint_src(myrank, adj_source_file, &
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
-        adj_sourcearray(:,:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_u(:,:)
+        adj_sourcearray(1:NSTEP,:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_u(:,:)
       enddo
     enddo
   enddo
