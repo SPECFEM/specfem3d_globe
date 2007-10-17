@@ -3650,7 +3650,7 @@
                  call comp_subarrays_adjoint_src(myrank,adj_source_file, &
                       xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec), &
                       nu(:,:,irec),adj_sourcearray, xigll,yigll,zigll,iadjsrc_len(it_sub_adj), &
-                      iadjsrc,it_sub_adj,NSTEP_SUB_ADJ)
+                      iadjsrc,it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC)
                  adj_sourcearrays(irec_local,:,:,:,:,:) = adj_sourcearray(:,:,:,:,:)
               endif
            enddo
