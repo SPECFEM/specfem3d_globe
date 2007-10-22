@@ -29,7 +29,7 @@
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-           nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,&
+           nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
            AMM_V,AM_V,M1066a_V,Mak135_V, Mref_V,D3MM_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
