@@ -42,7 +42,7 @@ float Mrr, Mtt, Mpp, Mrt, Mrp, Mtp;
 
 if ( argc != 4 )  {
 printf("\nDouble Couple - Moment Tensor Converter (by Onur TAN)\n");
-printf("Usage : dc2mt Strike Dip Rake\n" );
+printf("Usage : dc2mt Strike Dip Rake (in degrees)\n" );
 printf("Output Aki&Richards1980:  Mxx  Myy  Mzz  Mxy  Mxz  Myz \n\n");
 exit(1);
 }
@@ -54,9 +54,9 @@ S  = atof ( argv[1] );
 D  = atof ( argv[2] );
 R  = atof ( argv[3] );
 
-printf("\nStrike = %9.5f\n",S);
-printf("Dip = %9.5f\n",D);
-printf("Rake/Slip = %9.5f\n",R);
+printf("\nStrike = %9.5f degrees\n",S);
+printf("Dip = %9.5f degrees\n",D);
+printf("Rake/Slip = %9.5f degrees\n",R);
 
 // convert to radians
 S *= d2r;
