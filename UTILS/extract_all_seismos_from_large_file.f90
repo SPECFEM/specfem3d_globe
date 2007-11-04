@@ -20,26 +20,29 @@
 
 ! extract all the seismograms when they are stored in a unique large file
 
-! Dimitri Komatitsch, University of Pau, France, September 2007
+! Dimitri Komatitsch, University of Pau, France, November 2007
 
   implicit none
 
 ! number of seismogram files stored in the unique large file
   integer, parameter :: N_COMPONENTS = 1
-  integer, parameter :: NREC = 720 * N_COMPONENTS
+  integer, parameter :: NREC = 451 * N_COMPONENTS
 
 ! number of time steps in each seismogram file
-  integer, parameter :: NSTEP = 41100
+  integer, parameter :: NSTEP = 61600
 
   integer :: irec,istep,irepeat
   real :: time,U_value
 
-  character(len=150) :: station_name
+  character(len=35) :: station_name
+
+! open the large unformatted seismogram file
+  open(unit=30,file='OUTPUT_FILES/all_seismos_PKP_pangu.ascii',status='old',form='unformatted',action='read')
 
 ! loop on all the seismogram files
   do irec = 1,NREC
 
-    read(*,*) station_name
+    read(30) station_name
 
 ! suppress leading white spaces, if any
     station_name = adjustl(station_name)
@@ -56,13 +59,15 @@
 
 ! loop on all the time steps in each seismogram
     do istep = 1,NSTEP
-      read(*,*) time, U_value
+      read(30) time, U_value
       write(27,*) time, U_value
     enddo
 
     close(27)
 
   enddo
+
+  close(30)
 
   end program extract_all_seismos_large_file
 
