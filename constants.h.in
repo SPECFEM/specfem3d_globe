@@ -159,6 +159,8 @@
 ! save all seismograms in one large combined file instead of one file per seismogram
 ! to avoid overloading shared non-local file systems such as GPFS for instance
   logical, parameter :: SAVE_ALL_SEISMOS_IN_ONE_FILE = .false.
+! use binary or ASCII for that large file
+  logical, parameter :: USE_BINARY_FOR_LARGE_FILE = .false.
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------

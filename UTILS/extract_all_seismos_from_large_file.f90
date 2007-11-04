@@ -24,6 +24,8 @@
 
   implicit none
 
+  include "../constants.h"
+
 ! number of seismogram files stored in the unique large file
   integer, parameter :: N_COMPONENTS = 1
   integer, parameter :: NREC = 451 * N_COMPONENTS
@@ -34,15 +36,23 @@
   integer :: irec,istep,irepeat
   real :: time,U_value
 
-  character(len=35) :: station_name
+  character(len=150) :: station_name
 
-! open the large unformatted seismogram file
-  open(unit=30,file='OUTPUT_FILES/all_seismos_PKP_pangu.ascii',status='old',form='unformatted',action='read')
+! open the large seismogram file
+  if(USE_BINARY_FOR_LARGE_FILE) then
+    open(unit=30,file='all_seismograms.bin',status='old',form='unformatted',action='read')
+  else
+    open(unit=30,file='all_seismograms.ascii',status='old',action='read')
+  endif
 
 ! loop on all the seismogram files
   do irec = 1,NREC
 
-    read(30) station_name
+    if(USE_BINARY_FOR_LARGE_FILE) then
+      read(30) station_name
+    else
+      read(30,*) station_name
+    endif
 
 ! suppress leading white spaces, if any
     station_name = adjustl(station_name)
@@ -59,7 +69,11 @@
 
 ! loop on all the time steps in each seismogram
     do istep = 1,NSTEP
-      read(30) time, U_value
+      if(USE_BINARY_FOR_LARGE_FILE) then
+        read(30) time, U_value
+      else
+        read(30,*) time, U_value
+      endif
       write(27,*) time, U_value
     enddo
 
