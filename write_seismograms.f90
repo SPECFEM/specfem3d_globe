@@ -73,7 +73,13 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
     call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
 ! create one large file instead of one small file per station to avoid file system overload
-    if(SAVE_ALL_SEISMOS_IN_ONE_FILE) open(unit=IOUT,file=trim(OUTPUT_FILES)//'all_seismograms.ascii',status='unknown')
+    if(SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+      if(USE_BINARY_FOR_LARGE_FILE) then
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//'all_seismograms.bin',status='unknown',form='unformatted')
+      else
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//'all_seismograms.ascii',status='unknown')
+      endif
+    endif
 
     total_seismos = 0
 
@@ -172,7 +178,7 @@ end subroutine write_seismograms
   double precision value
 
   character(len=4) chn
-  character(len=150) sisname
+  character(len=150) sisname,sisname_big_file
   character(len=150) OUTPUT_FILES
 
 ! BS BS begin section added for SAC
@@ -312,7 +318,6 @@ end subroutine write_seismograms
 
       endif
 
-
 ! create the name of the seismogram file for each slice
 ! file name includes the name of the station and the network
      length_station_name = len_trim(station_name(irec))
@@ -327,6 +332,10 @@ end subroutine write_seismograms
 
 ! create the name of the seismogram file using the station name and network name
      write(sisname,"('/',a,'.',a,'.',a3,'.semd')") station_name(irec)(1:length_station_name), &
+                   network_name(irec)(1:length_network_name),chn
+
+! create this name also for the text line added to the unique big seismogram file
+     write(sisname_big_file,"(a,'.',a,'.',a3,'.semd')") station_name(irec)(1:length_station_name), &
                    network_name(irec)(1:length_network_name),chn
 
   if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY) then
@@ -475,9 +484,7 @@ end subroutine write_seismograms
  KUSER2 = 'CMTDEPTH'          !  A8
 !----------------------------------
 
-
   if (OUTPUT_SEISMOS_SAC_ALPHANUM) then
-
 
 ! add .sacan (sac alphanumeric) extension to seismogram file name for SAC seismograms
   write(sisname_2,"('/',a,'.sacan')") trim(sisname)
@@ -486,7 +493,6 @@ end subroutine write_seismograms
   else
     open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old', position='append')
   endif
-
 
 ! Formats of alphanumerical SAC header fields
 510 format(5G15.7,5G15.7,5G15.7,5G15.7,5G15.7)
@@ -666,7 +672,7 @@ end subroutine write_seismograms
       call write_real(undef)          !(68)
       call write_real(undef)          !(69)
       call write_real(undef)          !(70)
-  
+
       ! write integer header variables 71:105
       call write_integer(NZYEAR)        !(71)
       call write_integer(NZJDAY)        !(72)
@@ -703,15 +709,15 @@ end subroutine write_seismograms
       call write_integer(int(UNUSED))   !(103)
       call write_integer(int(UNUSED))   !(104)
       call write_integer(int(UNUSED))   !(105)
-  
+
       ! write logical header variables 106:110
       call write_integer(LEVEN)         !(106)
       call write_integer(LPSPOL)        !(107)
       call write_integer(LOVROK)        !(108)
       call write_integer(LCALDA)        !(109)
       call write_integer(int(UNUSED))   !(110)
-  
-  
+
+
       ! write character header variables 111:302
       call write_character(KSTNM,8)         !(111:118)
       call write_character(KEVNM,16)         !(119:134)
@@ -770,7 +776,11 @@ end subroutine write_seismograms
 
 ! create one large file instead of one small file per station to avoid file system overload
     if(SAVE_ALL_SEISMOS_IN_ONE_FILE) then
-      write(IOUT,*) sisname_2(1:len_trim(sisname_2))
+      if(USE_BINARY_FOR_LARGE_FILE) then
+        write(IOUT) sisname_big_file
+      else
+        write(IOUT,*) sisname_big_file(1:len_trim(sisname_big_file))
+      endif
     else
       if (seismo_offset==0) then
         open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
@@ -783,12 +793,23 @@ end subroutine write_seismograms
     ! subtract half duration of the source to make sure travel time is correct
     do isample = 1,seismo_current
       value = dble(seismogram_tmp(iorientation,isample))
-      ! distinguish between single and double precision for reals
-      if(CUSTOM_REAL == SIZE_REAL) then
-        write(IOUT,*) sngl(dble(seismo_offset+isample-1)*DT - hdur),' ',sngl(value)
+
+      if(SAVE_ALL_SEISMOS_IN_ONE_FILE .and. USE_BINARY_FOR_LARGE_FILE) then
+        ! distinguish between single and double precision for reals
+        if(CUSTOM_REAL == SIZE_REAL) then
+          write(IOUT) sngl(dble(seismo_offset+isample-1)*DT - hdur),sngl(value)
+        else
+          write(IOUT) dble(seismo_offset+isample-1)*DT - hdur,value
+        endif
       else
-        write(IOUT,*) dble(seismo_offset+isample-1)*DT - hdur,' ',value
+        ! distinguish between single and double precision for reals
+        if(CUSTOM_REAL == SIZE_REAL) then
+          write(IOUT,*) sngl(dble(seismo_offset+isample-1)*DT - hdur),' ',sngl(value)
+        else
+          write(IOUT,*) dble(seismo_offset+isample-1)*DT - hdur,' ',value
+        endif
       endif
+
     enddo
 
     if(.not. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
