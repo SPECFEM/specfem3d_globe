@@ -672,8 +672,16 @@
      write(*,*)
      write(*,*)'##############################################################'
      
+    if (HONOR_1D_SPHERICAL_MOHO) then
+      if (.not. ONE_CRUST) then
+        ! case 1D + two crustal layers
+        if (NER_CRUST<2) NER_CRUST=2
+      endif
+    else
+      ! case 3D
+      if (NER_CRUST<2) NER_CRUST=2
+    endif
   endif
-     
        
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
