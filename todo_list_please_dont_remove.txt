@@ -7,6 +7,8 @@ David:
 
 - Hi Dimitri & David: After we fix the bug associated with the oceans, we should reexamine the size of the time step, because I suspect it will be too small. Jeroen 
 
+- Salut David, quand tu commiteras les blocs de 16 demain stp peux-tu aussi dans UTILS modifier le code generate_table*.f90 qui génère la table en LaTeX pour le manuel ? et ensuite prendre la table générée et la copier/coller dans le fichier LyX qui est dans USERS_MANUAL, modifier la légende de cette table qui mentionne actuellement 32, (éventuellement aussi le paragraphe qui se réfère à cette table), et compiler le LyX pour générer un nouveau manuel en PDF et faire un commit de tout ça ? comme ça le manuel sera à jour par rapport au code 
+
 - va etre fait par Qinya : I noticed a problem in Qinya's adjoint code and the
   conversion to static memory below: arrays eps_trace_over_3_crust_mantle and eps_trace_over_3_inner_core are not needed when we use attenuation only for a forward simulation, they are only needed to save the strain in the whole mesh (when we attenuation for a forward run this calculation of eps_trace_over_3, i.e. the trace of the strain tensor, is purely local and can be stored in a scalar, not need to waste an array for it. I have therefore added two new static constants
  integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =
