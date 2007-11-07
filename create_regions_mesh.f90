@@ -27,7 +27,7 @@
            ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            NPROC_XI,NPROC_ETA,NSPEC2D_XI, &
-           NSPEC2D_ETA,NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XY, &
+           NSPEC2D_ETA,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo, &
            rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
            ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
@@ -379,7 +379,7 @@
  ! real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
  ! double precision, dimension(:,:,:,:), allocatable :: temp_array_dble
  ! double precision, dimension(:,:,:,:,:), allocatable :: temp_array_dble_5dim
-   integer :: NGLOB2DMAX_XY
+
    integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
   integer, parameter :: maxker=200
@@ -1155,13 +1155,13 @@
 ! arrays locval(npointot) and ifseg(npointot) used to save memory
   call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
                   xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC2D_ETA(iregion_code),NGLOB2DMAX_XY,nglob)
+                  NSPEC2D_ETA(iregion_code))
   call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
                   xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC2D_XI(iregion_code),NGLOB2DMAX_XY,nglob)
+                  NSPEC2D_XI(iregion_code))
   call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
                   xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC1D_RADIAL,NGLOB1D_RADIAL,nglob)
+                  NSPEC1D_RADIAL,NGLOB1D_RADIAL)
 
 ! Stacey
   if(NCHUNKS /= 6) &
