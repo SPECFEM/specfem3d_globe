@@ -14,7 +14,7 @@ integer, dimension(NB_COLONNES) :: store_NEX_XI
 
 ! base value depends if we implement three or four doublings
 ! integer, parameter :: BASE_VALUE = 16
-  integer, parameter :: BASE_VALUE = 32
+  integer, parameter :: BASE_VALUE = 16
 
 ! output in LaTeX format or in regular ASCII format
   logical, parameter :: OUTPUT_LATEX_FORMAT = .true.
@@ -25,7 +25,7 @@ integer, dimension(NB_COLONNES) :: store_NEX_XI
 
     do c = 1,20
       NEX_XI = BASE_VALUE * c * NPROC_XI
-      if(NEX_XI >= 64 .and. compteur <= NB_COLONNES) then
+      if(NEX_XI >= 64 .and. compteur <= NB_COLONNES .and. mod(NEX_XI,32) == 0) then
         store_NEX_XI(compteur) = NEX_XI
         compteur = compteur + 1
       endif

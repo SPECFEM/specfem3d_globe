@@ -34,7 +34,7 @@
 
   integer iregion_code,myrank,NCHUNKS,ier
 
-  integer npoin2D_xi,npoin2D_eta
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi,npoin2D_eta
   integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL
   integer NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA
 
@@ -75,44 +75,44 @@
 
 ! read iboolleft_xi of this slice
   open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_xi.txt',status='old',action='read')
-  npoin2D_xi = 1
+  npoin2D_xi(1) = 1
  350  continue
-  read(IIN,*) iboolleft_xi(npoin2D_xi),xdummy,ydummy,zdummy
-  if(iboolleft_xi(npoin2D_xi) > 0) then
-      npoin2D_xi = npoin2D_xi + 1
+  read(IIN,*) iboolleft_xi(npoin2D_xi(1)),xdummy,ydummy,zdummy
+  if(iboolleft_xi(npoin2D_xi(1)) > 0) then
+      npoin2D_xi(1) = npoin2D_xi(1) + 1
       goto 350
   endif
 ! subtract the line that contains the flag after the last point
-  npoin2D_xi = npoin2D_xi - 1
+  npoin2D_xi(1) = npoin2D_xi(1) - 1
 ! read nb of points given by the mesher
   read(IIN,*) npoin2D_xi_mesher
-  if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi /= npoin2D_xi_mesher) &
+  if(npoin2D_xi(1) > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi(1) /= npoin2D_xi_mesher) &
       call exit_MPI(myrank,'incorrect iboolleft_xi read')
   close(IIN)
 
 ! read iboolright_xi of this slice
   open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='old',action='read')
-  npoin2D_xi = 1
+  npoin2D_xi(2) = 1
  360  continue
-  read(IIN,*) iboolright_xi(npoin2D_xi),xdummy,ydummy,zdummy
-  if(iboolright_xi(npoin2D_xi) > 0) then
-      npoin2D_xi = npoin2D_xi + 1
+  read(IIN,*) iboolright_xi(npoin2D_xi(2)),xdummy,ydummy,zdummy
+  if(iboolright_xi(npoin2D_xi(2)) > 0) then
+      npoin2D_xi(2) = npoin2D_xi(2) + 1
       goto 360
   endif
 ! subtract the line that contains the flag after the last point
-  npoin2D_xi = npoin2D_xi - 1
+  npoin2D_xi(2) = npoin2D_xi(2) - 1
 ! read nb of points given by the mesher
   read(IIN,*) npoin2D_xi_mesher
-  if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi /= npoin2D_xi_mesher) &
+  if(npoin2D_xi(2) > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi(2) /= npoin2D_xi_mesher) &
       call exit_MPI(myrank,'incorrect iboolright_xi read')
   close(IIN)
 
   if(myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) '# of points in MPI buffers along xi npoin2D_xi = ', &
-                                npoin2D_xi
-    write(IMAIN,*) '# of array elements transferred npoin2D_xi*NDIM = ', &
-                                npoin2D_xi*NDIM
+    write(IMAIN,*) '# max of points in MPI buffers along xi npoin2D_xi = ', &
+                                maxval(npoin2D_xi(:))
+    write(IMAIN,*) '# max of array elements transferred npoin2D_xi*NDIM = ', &
+                                maxval(npoin2D_xi(:))*NDIM
     write(IMAIN,*)
   endif
 
@@ -122,44 +122,44 @@
 
 ! read iboolleft_eta of this slice
   open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_eta.txt',status='old',action='read')
-  npoin2D_eta = 1
+  npoin2D_eta(1) = 1
  370  continue
-  read(IIN,*) iboolleft_eta(npoin2D_eta),xdummy,ydummy,zdummy
-  if(iboolleft_eta(npoin2D_eta) > 0) then
-      npoin2D_eta = npoin2D_eta + 1
+  read(IIN,*) iboolleft_eta(npoin2D_eta(1)),xdummy,ydummy,zdummy
+  if(iboolleft_eta(npoin2D_eta(1)) > 0) then
+      npoin2D_eta(1) = npoin2D_eta(1) + 1
       goto 370
   endif
 ! subtract the line that contains the flag after the last point
-  npoin2D_eta = npoin2D_eta - 1
+  npoin2D_eta(1) = npoin2D_eta(1) - 1
 ! read nb of points given by the mesher
   read(IIN,*) npoin2D_eta_mesher
-  if(npoin2D_eta > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta /= npoin2D_eta_mesher) &
+  if(npoin2D_eta(1) > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta(1) /= npoin2D_eta_mesher) &
       call exit_MPI(myrank,'incorrect iboolleft_eta read')
   close(IIN)
 
 ! read iboolright_eta of this slice
   open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='old',action='read')
-  npoin2D_eta = 1
+  npoin2D_eta(2) = 1
  380  continue
-  read(IIN,*) iboolright_eta(npoin2D_eta),xdummy,ydummy,zdummy
-  if(iboolright_eta(npoin2D_eta) > 0) then
-      npoin2D_eta = npoin2D_eta + 1
+  read(IIN,*) iboolright_eta(npoin2D_eta(2)),xdummy,ydummy,zdummy
+  if(iboolright_eta(npoin2D_eta(2)) > 0) then
+      npoin2D_eta(2) = npoin2D_eta(2) + 1
       goto 380
   endif
 ! subtract the line that contains the flag after the last point
-  npoin2D_eta = npoin2D_eta - 1
+  npoin2D_eta(2) = npoin2D_eta(2) - 1
 ! read nb of points given by the mesher
   read(IIN,*) npoin2D_eta_mesher
-  if(npoin2D_eta > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta /= npoin2D_eta_mesher) &
+  if(npoin2D_eta(2) > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta(2) /= npoin2D_eta_mesher) &
       call exit_MPI(myrank,'incorrect iboolright_eta read')
   close(IIN)
 
   if(myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) '# of points in MPI buffers along eta npoin2D_eta = ', &
-                                npoin2D_eta
-    write(IMAIN,*) '# of array elements transferred npoin2D_eta*NDIM = ', &
-                                npoin2D_eta*NDIM
+    write(IMAIN,*) '#max of points in MPI buffers along eta npoin2D_eta = ', &
+                                maxval(npoin2D_eta(:))
+    write(IMAIN,*) '#max of array elements transferred npoin2D_eta*NDIM = ', &
+                                maxval(npoin2D_eta(:))*NDIM
     write(IMAIN,*)
   endif
 

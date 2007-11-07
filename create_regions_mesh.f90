@@ -26,8 +26,8 @@
            NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
            ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-           NPROC_XI,NPROC_ETA,NSPEC2D_XI, &
-           NSPEC2D_ETA,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+           NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE, &
+           NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo, &
            rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
            ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
@@ -38,13 +38,19 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,&
+           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta)
 
 ! create the different regions of the mesh
 
   implicit none
 
   include "constants.h"
+
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
+  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  integer :: step_mult,offset_proc_xi,offset_proc_eta
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
@@ -204,7 +210,6 @@
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
 
   integer NPROC_XI,NPROC_ETA
-  integer NSPEC1D_RADIAL,NGLOB1D_RADIAL
 
   integer npointot
 
@@ -362,7 +367,6 @@
 
 ! **************
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_ETA,NSPEC2D_XI
   logical, dimension(NSPEC_DOUBLING_SUPERBRICK,6) :: iboun_sb
   logical :: USE_ONE_LAYER_SB,CASE_3D
   integer :: nspec_sb
@@ -379,7 +383,6 @@
  ! real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
  ! double precision, dimension(:,:,:,:), allocatable :: temp_array_dble
  ! double precision, dimension(:,:,:,:,:), allocatable :: temp_array_dble_5dim
-
    integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
   integer, parameter :: maxker=200
@@ -687,12 +690,11 @@
 
 ! generate and count all the elements in this region of the mesh
   ispec = 0
-
 ! loop on all the layers in this region of the mesh
   do ilayer_loop = ifirst_region,ilast_region
 
     ilayer = perm_layer(ilayer_loop)
-
+!   write(IMAIN,*) 'layer : ',ilayer
 ! determine the radii that define the shell
   rmin = rmins(ilayer)
   rmax = rmaxs(ilayer)
@@ -707,6 +709,11 @@
 !----   regular mesh elements
 !----
 ! loop on all the elements
+!   write(IMAIN,*) 'ix : 1, ',NEX_PER_PROC_XI,' , ',ratio_sampling_array(ilayer)
+!   write(IMAIN,*) 'iy : 1, ',NEX_PER_PROC_ETA,' , ',ratio_sampling_array(ilayer)
+!   write(IMAIN,*) 'doubling : ',this_region_has_a_doubling(ilayer)
+!   write(IMAIN,*) 'ner : ',ner(ilayer)
+
    do ix_elem = 1,NEX_PER_PROC_XI,ratio_sampling_array(ilayer)
    do iy_elem = 1,NEX_PER_PROC_ETA,ratio_sampling_array(ilayer)
 
@@ -818,7 +825,6 @@
 !----
 !----   mesh doubling elements
 !----
-
 ! If there is a doubling at the top of this region, let us add these elements.
 ! The superbrick implements a symmetric four-to-two doubling and therefore replaces
 ! a basic regular block of 2 x 2 = 4 elements.
@@ -830,21 +836,97 @@
         call define_superbrick_one_layer(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb)
         nspec_sb = NSPEC_SUPERBRICK_1L
         iz_elem = ner(ilayer)
+        step_mult = 2
       else
-        call define_superbrick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb)
-        nspec_sb = NSPEC_DOUBLING_SUPERBRICK
+        if(iregion_code==IREGION_OUTER_CORE .and. ilayer==ilast_region .and. (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
+          nspec_sb = NSPEC_DOUBLING_BASICBRICK
+          step_mult = 1
+        else
+          call define_superbrick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb)
+          nspec_sb = NSPEC_DOUBLING_SUPERBRICK
+          step_mult = 2
+        endif
         ! the doubling is implemented in the last two radial elements
         ! therefore we start one element before the last one
         iz_elem = ner(ilayer) - 1
       endif
 
 ! loop on all the elements in the 2 x 2 blocks
-      do ix_elem = 1,NEX_PER_PROC_XI,2*ratio_sampling_array(ilayer)
-        do iy_elem = 1,NEX_PER_PROC_ETA,2*ratio_sampling_array(ilayer)
+      do ix_elem = 1,NEX_PER_PROC_XI,step_mult*ratio_sampling_array(ilayer)
+        do iy_elem = 1,NEX_PER_PROC_ETA,step_mult*ratio_sampling_array(ilayer)
 
+! for cutting superbrick : 3 possibilities, 4 cases max / possibility
+! 3 possibilities : cut in xi & eta || cut in xi || cut in eta
+! case 1 : ximin & etamin || ximin || etamin
+! case 2 : ximin & etamax || ximax || etamax
+! case 3 : ximax & etamin
+! case 4 : ximax & etamax
+          if (step_mult == 1) then
+            if (CUT_SUPERBRICK_XI) then
+              if (CUT_SUPERBRICK_ETA) then
+                ! possibility 1
+                if (offset_proc_xi == 0) then
+                  if (offset_proc_eta == 0) then
+                    ! case 1
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,1)
+                  else
+                    ! case 2
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,2)
+                  endif
+                else
+                  if (offset_proc_eta == 0) then
+                    ! case 3
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,3)
+                  else
+                    ! case 4
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,4)
+                  endif
+                endif
+              else
+                ! possibility 2
+                if (offset_proc_xi == 0) then
+                  if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+                    ! case 1
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,1)
+                  else
+                    ! case 2
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,2)
+                  endif
+                else
+                  if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+                    ! case 3
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,3)
+                  else
+                    ! case 4
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,4)
+                  endif
+                endif
+              endif
+            else
+              if (CUT_SUPERBRICK_ETA) then
+                ! possibility 3
+                if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+                  if (offset_proc_eta == 0) then
+                    ! case 1
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,1)
+                  else
+                    ! case 2
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,2)
+                  endif
+                else
+                  if (offset_proc_eta == 0) then
+                    ! case 3
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,3)
+                  else
+                    ! case 4
+                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,4)
+                  endif
+                endif
+              endif
+            endif
+          endif
 ! loop on all the elements in the mesh doubling superbrick
           do ispec_superbrick = 1,nspec_sb
-
 ! loop on all the corner nodes of this element
             do ignod = 1,NGNOD_EIGHT_CORNERS
 
@@ -877,7 +959,7 @@
       iMPIcut_xi(1,ispec) = iboun_sb(ispec_superbrick,1)
       if (iproc_xi == 0) iboun(1,ispec)= iboun_sb(ispec_superbrick,1)
   endif
-  if (ix_elem == (NEX_PER_PROC_XI-2*ratio_sampling_array(ilayer)+1)) then
+  if (ix_elem == (NEX_PER_PROC_XI-step_mult*ratio_sampling_array(ilayer)+1)) then
       iMPIcut_xi(2,ispec) = iboun_sb(ispec_superbrick,2)
       if (iproc_xi == NPROC_XI-1) iboun(2,ispec)= iboun_sb(ispec_superbrick,2)
   endif
@@ -886,7 +968,7 @@
       iMPIcut_eta(1,ispec) = iboun_sb(ispec_superbrick,3)
       if (iproc_eta == 0) iboun(3,ispec)= iboun_sb(ispec_superbrick,3)
   endif
-  if (iy_elem == (NEX_PER_PROC_ETA-2*ratio_sampling_array(ilayer)+1)) then
+  if (iy_elem == (NEX_PER_PROC_ETA-step_mult*ratio_sampling_array(ilayer)+1)) then
       iMPIcut_eta(2,ispec) = iboun_sb(ispec_superbrick,4)
       if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= iboun_sb(ispec_superbrick,4)
   endif
@@ -1155,13 +1237,13 @@
 ! arrays locval(npointot) and ifseg(npointot) used to save memory
   call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
                   xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC2D_ETA(iregion_code))
+                  NSPEC2D_ETA_FACE,iregion_code)
   call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
                   xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC2D_XI(iregion_code))
+                  NSPEC2D_XI_FACE,iregion_code)
   call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
                   xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC1D_RADIAL,NGLOB1D_RADIAL)
+                  NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code)
 
 ! Stacey
   if(NCHUNKS /= 6) &
