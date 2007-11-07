@@ -18,7 +18,7 @@
 
   subroutine get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
                         xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC2D_ETA)
+                        NSPEC2D_ETA_FACE,iregion)
 
 ! this routine detects cut planes along xi
 ! In principle the left cut plane of the first slice
@@ -29,8 +29,8 @@
 
   include "constants.h"
 
-  integer nspec,myrank
-  integer NSPEC2D_ETA
+  integer nspec,myrank,iregion
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_ETA_FACE
 
   logical iMPIcut_xi(2,nspec)
 
@@ -56,7 +56,7 @@
 
 ! theoretical number of surface elements in the buffers
 ! cut planes along xi=constant correspond to ETA faces
-      nspec2Dtheor = NSPEC2D_ETA
+  nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,1)
 
 ! write the MPI buffers for the left and right edges of the slice
 ! and the position of the points to check that the buffers are fine
@@ -118,6 +118,7 @@
 !
 ! determine if the element falls on the right MPI cut plane
 !
+  nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
 
 ! global point number and coordinates right MPI cut-plane
   open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='unknown')

@@ -44,12 +44,14 @@
          NGLOB, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA)
 
 
   implicit none
 
   include "constants.h"
+
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
@@ -116,6 +118,12 @@
               nb_lay_sb, nspec_sb, nglob_vol, nglob_surf, nglob_edge
 
   integer :: multiplication_factor
+
+! for the cutted doublingbrick improvement
+  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  integer :: lastdoubling_layer, cutted_doubling, nglob_surf_xi, nglob_surf_eta, normal_doubling
+  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
 
 ! get the base pathname for output files
@@ -672,16 +680,8 @@
      write(*,*)
      write(*,*)'##############################################################'
      
-    if (HONOR_1D_SPHERICAL_MOHO) then
-      if (.not. ONE_CRUST) then
-        ! case 1D + two crustal layers
-        if (NER_CRUST<2) NER_CRUST=2
-      endif
-    else
-      ! case 3D
-      if (NER_CRUST<2) NER_CRUST=2
-    endif
   endif
+     
        
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
@@ -946,18 +946,25 @@
   if(NEX_XI < 48) stop 'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian'
   if(NEX_ETA < 48) stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
 
-! check that mesh can be coarsened in depth four times (block size must be a multiple of 32)
+! check that mesh can be coarsened in depth three or four times
+  CUT_SUPERBRICK_XI=.false.
+  CUT_SUPERBRICK_ETA=.false.
   if (SUPPRESS_CRUSTAL_MESH) then
     if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
     if(mod(NEX_ETA,16) /= 0) stop 'NEX_ETA must be a multiple of 16'
-    if(mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
-    if(mod(NEX_ETA/16,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 16*NPROC_ETA'
+    if(mod(NEX_XI/8,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 8*NPROC_XI'
+    if(mod(NEX_ETA/8,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 8*NPROC_ETA'
+    if(mod(NEX_XI/16,NPROC_XI) /=0) CUT_SUPERBRICK_XI = .true.
+    if(mod(NEX_ETA/16,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
   else
     if(mod(NEX_XI,32) /= 0) stop 'NEX_XI must be a multiple of 32'
     if(mod(NEX_ETA,32) /= 0) stop 'NEX_ETA must be a multiple of 32'
-    if(mod(NEX_XI/32,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 32*NPROC_XI'
-    if(mod(NEX_ETA/32,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 32*NPROC_ETA'
+    if(mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
+    if(mod(NEX_ETA/16,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 16*NPROC_ETA'
+    if(mod(NEX_XI/32,NPROC_XI) /=0) CUT_SUPERBRICK_XI = .true.
+    if(mod(NEX_ETA/32,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
   endif
+
 
 ! check that topology is correct if more than two chunks
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) stop 'must have NEX_XI = NEX_ETA for more than two chunks'
@@ -1098,7 +1105,7 @@
     this_region_has_a_doubling(10) = .true.
     this_region_has_a_doubling(13) = .true.
     this_region_has_a_doubling(14) = .true.
-
+    lastdoubling_layer = 14
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
   ! the first region is the crust at the surface of the Earth
   ! the last region is in the inner core near the center of the Earth
@@ -1230,7 +1237,7 @@
     this_region_has_a_doubling(9)  = .true.
     this_region_has_a_doubling(12) = .true.
     this_region_has_a_doubling(13) = .true.
-
+    lastdoubling_layer = 13
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
   ! the first region is the crust at the surface of the Earth
   ! the last region is in the inner core near the center of the Earth
@@ -1366,6 +1373,7 @@
     this_region_has_a_doubling(10) = .true.
     this_region_has_a_doubling(13) = .true.
     this_region_has_a_doubling(14) = .true.
+    lastdoubling_layer = 14
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
   ! the first region is the crust at the surface of the Earth
@@ -1486,6 +1494,41 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         endif
         NSPEC1D_RADIAL(iter_region) = sum(ner(ifirst_region:ilast_region))
 enddo
+! difference of radial number of element for outer core if the superbrick is cutted 
+  DIFF_NSPEC1D_RADIAL(:,:) = 0
+  if (CUT_SUPERBRICK_XI) then
+    if (CUT_SUPERBRICK_ETA) then
+      DIFF_NSPEC1D_RADIAL(2,1) = 1
+      DIFF_NSPEC1D_RADIAL(3,1) = 2
+      DIFF_NSPEC1D_RADIAL(4,1) = 1
+
+      DIFF_NSPEC1D_RADIAL(1,2) = 1
+      DIFF_NSPEC1D_RADIAL(2,2) = 2
+      DIFF_NSPEC1D_RADIAL(3,2) = 1
+
+      DIFF_NSPEC1D_RADIAL(1,3) = 1
+      DIFF_NSPEC1D_RADIAL(3,3) = 1
+      DIFF_NSPEC1D_RADIAL(4,3) = 2
+
+      DIFF_NSPEC1D_RADIAL(1,4) = 2
+      DIFF_NSPEC1D_RADIAL(2,4) = 1
+      DIFF_NSPEC1D_RADIAL(4,4) = 1
+    else
+      DIFF_NSPEC1D_RADIAL(2,1) = 1
+      DIFF_NSPEC1D_RADIAL(3,1) = 1
+
+      DIFF_NSPEC1D_RADIAL(1,2) = 1
+      DIFF_NSPEC1D_RADIAL(4,2) = 1
+    endif
+  else
+    if (CUT_SUPERBRICK_ETA) then
+      DIFF_NSPEC1D_RADIAL(3,1) = 1
+      DIFF_NSPEC1D_RADIAL(4,1) = 1
+
+      DIFF_NSPEC1D_RADIAL(1,2) = 1
+      DIFF_NSPEC1D_RADIAL(2,2) = 1
+    endif
+  endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -1531,11 +1574,11 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
 
         tmp_sum_xi = tmp_sum_xi + ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
-                doubling * ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)/2) * nspec2D_xi_sb)
+                doubling * ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)) * (nspec2D_xi_sb/2))
 
         tmp_sum_eta = tmp_sum_eta + ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
-                doubling * ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)/2) * nspec2D_eta_sb)
+                doubling * ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)) * (nspec2D_eta_sb/2))
     enddo
     NSPEC2D_XI(iter_region) = tmp_sum_xi
     NSPEC2D_ETA(iter_region) = tmp_sum_eta
@@ -1546,6 +1589,33 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         ((NEX_PER_PROC_ETA / ratio_divide_central_cube)*(NEX_XI / ratio_divide_central_cube))
     endif
 enddo
+
+! difference of number of surface elements along xi or eta for outer core if the superbrick is cutted
+  DIFF_NSPEC2D_XI(:,:) = 0
+  DIFF_NSPEC2D_ETA(:,:) = 0
+  if (CUT_SUPERBRICK_XI) then
+    if (CUT_SUPERBRICK_ETA) then
+      DIFF_NSPEC2D_XI(2,1) = 2
+      DIFF_NSPEC2D_XI(1,2) = 2
+      DIFF_NSPEC2D_XI(2,3) = 2
+      DIFF_NSPEC2D_XI(1,4) = 2
+
+      DIFF_NSPEC2D_ETA(2,1) = 1
+      DIFF_NSPEC2D_ETA(2,2) = 1
+      DIFF_NSPEC2D_ETA(1,3) = 1
+      DIFF_NSPEC2D_ETA(1,4) = 1
+    else
+      DIFF_NSPEC2D_ETA(2,1) = 1
+      DIFF_NSPEC2D_ETA(1,2) = 1
+    endif
+  else
+    if (CUT_SUPERBRICK_ETA) then
+      DIFF_NSPEC2D_XI(2,1) = 2
+      DIFF_NSPEC2D_XI(1,2) = 2
+    endif
+  endif
+  DIFF_NSPEC2D_XI(:,:) = DIFF_NSPEC2D_XI(:,:) * (NEX_PER_PROC_XI / ratio_divide_central_cube)
+  DIFF_NSPEC2D_ETA(:,:) = DIFF_NSPEC2D_ETA(:,:) * (NEX_PER_PROC_ETA / ratio_divide_central_cube)
 
 ! exact number of surface elements on the bottom and top boundaries
 
@@ -1564,7 +1634,9 @@ enddo
 
 ! maximum number of surface elements on vertical boundaries of the slices
   NSPEC2DMAX_XMIN_XMAX(:) = NSPEC2D_ETA(:)
+  NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE) = NSPEC2DMAX_XMIN_XMAX(IREGION_OUTER_CORE) + maxval(DIFF_NSPEC2D_ETA(:,:))
   NSPEC2DMAX_YMIN_YMAX(:) = NSPEC2D_XI(:)
+  NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE) = NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE) + maxval(DIFF_NSPEC2D_XI(:,:))
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1606,8 +1678,8 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         endif
         tmp_sum = tmp_sum + ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
-                doubling * ((NEX_XI / ratio_sampling_array(iter_layer)/2) * (NEX_ETA / ratio_sampling_array(iter_layer)/2) * &
-                nspec_sb)
+                doubling * ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
+                (nspec_sb/4))
     enddo
     NSPEC(iter_region) = tmp_sum / NPROC
 enddo
@@ -1678,22 +1750,41 @@ enddo
       endif
       tmp_sum = 0;
       do iter_layer = ifirst_region, ilast_region
+        nglob_surf_eta=0
+        nglob_surf_xi=0
         if (this_region_has_a_doubling(iter_layer)) then
-            if (ner(iter_layer) == 1) then
-              nb_lay_sb = 1
-              nglob_vol = 28*NGLLX**3 - 62*NGLLX**2 + 47*NGLLX - 12
-              nglob_surf = 6*NGLLX**2-8*NGLLX+3
-              nglob_edge = NGLLX
-            else
+            if (iter_region == IREGION_OUTER_CORE .and. iter_layer == lastdoubling_layer .and. &
+                                                      (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
+              doubling = 1
+              normal_doubling = 0
+              cutted_doubling = 1
               nb_lay_sb = 2
-              nglob_vol = 32*NGLLX**3 - 70*NGLLX**2 + 52*NGLLX - 13
-              nglob_surf = 8*NGLLX**2-11*NGLLX+4
-              nglob_edge = 2*NGLLX-1
+              nglob_edge = 0
+              nglob_surf = 0
+              nglob_vol = 8*NGLLX**3 - 12*NGLLX**2 + 6*NGLLX - 1 
+              nglob_surf_eta = 6*NGLLX**2 - 7*NGLLX + 2
+              nglob_surf_xi = 5*NGLLX**2 - 5*NGLLX + 1
+            else
+              if (ner(iter_layer) == 1) then
+                nb_lay_sb = 1
+                nglob_vol = 28*NGLLX**3 - 62*NGLLX**2 + 47*NGLLX - 12
+                nglob_surf = 6*NGLLX**2-8*NGLLX+3
+                nglob_edge = NGLLX
+              else
+                nb_lay_sb = 2
+                nglob_vol = 32*NGLLX**3 - 70*NGLLX**2 + 52*NGLLX - 13
+                nglob_surf = 8*NGLLX**2-11*NGLLX+4
+                nglob_edge = 2*NGLLX-1
+              endif
+              doubling = 1
+              normal_doubling = 1
+              cutted_doubling = 0
             endif
-            doubling = 1
             padding = -1
         else
             doubling = 0
+            normal_doubling = 0
+            cutted_doubling = 0
             padding = 0
             nb_lay_sb = 0
             nglob_vol = 0
@@ -1706,9 +1797,10 @@ enddo
 
         tmp_sum = tmp_sum + &
         ((nblocks_xi)*(NGLLX-1)+1) * ((nblocks_eta)*(NGLLX-1)+1) * ((ner(iter_layer) - doubling*nb_lay_sb)*(NGLLX-1)+padding)+&
-        doubling * (((nblocks_xi*nblocks_eta/4)*nglob_vol) - &
+        normal_doubling * ((((nblocks_xi*nblocks_eta)/4)*nglob_vol) - &
         (((nblocks_eta/2-1)*nblocks_xi/2+(nblocks_xi/2-1)*nblocks_eta/2)*nglob_surf) + &
-        ((nblocks_eta/2-1)*(nblocks_xi/2-1)*nglob_edge))
+        ((nblocks_eta/2-1)*(nblocks_xi/2-1)*nglob_edge)) + &
+        cutted_doubling*(nglob_vol*(nblocks_xi*nblocks_eta) - (nblocks_xi-1)*nglob_surf_xi - (nblocks_eta-1)*nglob_surf_eta)
       enddo
       NGLOB(iter_region) = tmp_sum
   enddo
@@ -1737,145 +1829,16 @@ enddo
 
 !!! for the one layer superbrick :
 !!! NGLOB = 28.NGLL^3 - 62.NGLL^2 + 47.NGLL - 12 (Volume)
-!!! NGLOB = 6.NGLL^2 - 8.NGLL + 3.NGLL (Surface)
+!!! NGLOB = 6.NGLL^2 - 8.NGLL + 3 (Surface)
 !!! NGLOB = NGLL (Edge)
 !!!
 !!! those results were obtained by using the script UTILS/doubling_brick/count_nglob_analytical.pl
 !!! with an opendx file of the superbrick's geometry
 
+!!! for the basic doubling bricks (two layers)
+!!! NGLOB = 8.NGLL^3 - 12.NGLL^2 + 6.NGLL - 1 (VOLUME)
+!!! NGLOB = 5.NGLL^2 - 5.NGLL + 1 (SURFACE 1)
+!!! NGLOB = 6.NGLL^2 - 7.NGLL + 2 (SURFACE 2)
+
   end subroutine read_compute_parameters
 
-!!!!!! DK DK
-!!!!!! DK DK  this section written by Brian Savage, commented out by Dimitri Komatitsch
-!!!!!! DK DK  because it is based on the old mesher and therefore does not work with the new
-!!!!!! DK DK  mesher. Brian should update it and put it back.
-!!!!!! DK DK
-!
-!----
-!
-!
-!  subroutine auto_ner(WIDTH, NEX_MAX, &
-!       NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
-!       NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
-!       NER_CMB_TOPDDOUBLEPRIME, NER_TOP_CENTRAL_CUBE_ICB)
-!
-!    implicit none
-!
-!    include 'constants.h'
-!
-!    double precision WIDTH
-!    integer NEX_MAX
-!    integer NER_CRUST, NER_220_MOHO, NER_400_220, NER_600_400, &
-!         NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
-!         NER_CMB_TOPDDOUBLEPRIME, NER_TOP_CENTRAL_CUBE_ICB
-!
-!    integer, parameter                         :: NUM_REGIONS = 13
-!    integer, dimension(NUM_REGIONS)            :: scaling
-!    double precision, dimension(NUM_REGIONS)   :: radius
-!    double precision, dimension(NUM_REGIONS)   :: element_width
-!    double precision, dimension(NUM_REGIONS)   :: chunk_width
-!    double precision, dimension(NUM_REGIONS-1) :: ratio_top
-!    double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
-!    integer, dimension(NUM_REGIONS-1)          :: NER
-!    integer NER_FLUID
-!
-!    ! This is PREM in Kilometers
-!    radius(1)  = 6371.00d0 ! Surface
-!    radius(2)  = 6346.60d0 ! Moho
-!    radius(3)  = 6151.00d0 ! 220
-!    radius(4)  = 5971.00d0 ! 400
-!    radius(5)  = 5771.00d0 ! 600
-!    radius(6)  = 5701.00d0 ! 670
-!    radius(7)  = 5600.00d0 ! 771
-!    radius(8)  = 3630.00d0 ! D''
-!    radius(9)  = 3480.00d0 ! CMB
-!    radius(10) =    0.00d0 ! Top Double Fluid
-!    radius(11) =    0.00d0 ! Bottom Double Fluid
-!    radius(12) = 1221.00d0 ! ICB
-!    radius(13) = 1071.00d0 ! Top Central Cube
-!
-!    ! Mesh Doubling
-!    scaling(1:1)   = 1
-!    scaling(2:5)   = 2
-!    scaling(6:11)  = 4
-!    scaling(12:13) = 8
-!
-!    ! Minimum Number of Elements a Region must have
-!    NER(:)  = 1
-!    NER(2)  = 3
-!    NER(3)  = 2
-!    NER(12) = 2
-!
-!    NER_FLUID = 6
-!
-!    ! Determine the Radius of Top and Bottom of Fluid Doubling Region
-!!!!!!!!! DK DK suppressed this    radius(10) = radius(12) + RATIO_TOP_DBL_OC    * (radius(9) - radius(12))
-!!!!!!!!! DK DK suppressed this    radius(11) = radius(12) + RATIO_BOTTOM_DBL_OC * (radius(9) - radius(12))
-!    radius(10) = 0
-!    radius(11) = 0
-!
-!    ! Horizontal Width of a Chunk
-!    chunk_width(:) = WIDTH * (PI/180.0d0) * radius(:)
-!
-!    ! Horizontal Width of the elements within the chunk
-!    element_width(:) = chunk_width(:) / (NEX_MAX / scaling(:))
-!
-!
-!    ! Find the Number of Radial Elements in a region based upon
-!    ! the aspect ratio of the elements
-!    call auto_optimal_ner(NUM_REGIONS, radius, element_width,NER, ratio_top, ratio_bottom)
-!
-!    ! Set Output arguments
-!    NER_CRUST                = NER(1)
-!    NER_220_MOHO             = NER(2)
-!    NER_400_220              = NER(3)
-!    NER_600_400              = NER(4)
-!    NER_670_600              = NER(5)
-!    NER_771_670              = NER(6)
-!    NER_TOPDDOUBLEPRIME_771  = NER(7)
-!    NER_CMB_TOPDDOUBLEPRIME  = NER(8)
-!    NER_FLUID                = NER(10)
-!    NER_TOP_CENTRAL_CUBE_ICB = NER(12)
-!
-!  end subroutine auto_ner
-!
-!!
-!!----
-!!
-!
-!  subroutine auto_optimal_ner(NUM_REGIONS, r, ew, NER, rt, rb)
-!
-!    implicit none
-!
-!    integer NUM_REGIONS
-!    integer,          dimension(NUM_REGIONS-1) :: NER ! Elements per Region
-!    double precision, dimension(NUM_REGIONS)   :: r   ! Radius
-!    double precision, dimension(NUM_REGIONS)   :: ew  ! Element Width
-!    double precision, dimension(NUM_REGIONS-1) :: rt  ! Ratio at Top
-!    double precision, dimension(NUM_REGIONS-1) :: rb  ! Ratio at Bottom
-!
-!    double precision dr, w, ratio, xi, ximin
-!    integer ner_test
-!    integer i
-!
-!    ! Find optimal elements per region
-!    do i = 1,NUM_REGIONS-1
-!       dr = r(i) - r(i+1)              ! Radial Length of Ragion
-!       w  = (ew(i) + ew(i+1)) / 2.0d0  ! Average Width of Region
-!       ner_test = NER(i)               ! Initial solution
-!       ratio = (dr / ner_test) / w     ! Aspect Ratio of Element
-!       xi = dabs(ratio - 1.0d0)        ! Aspect Ratio should be near 1.0
-!       ximin = 1e7                     ! Initial Minimum
-!
-!       do while(xi <= ximin)
-!          NER(i) = ner_test            ! Found a better solution
-!          ximin = xi                   !
-!          ner_test = ner_test + 1      ! Increment ner_test and
-!          ratio = (dr / ner_test) / w  ! look for a better
-!          xi = dabs(ratio - 1.0d0)     ! solution
-!       end do
-!       rt(i) = dr / NER(i) / ew(i)     ! Find the Ratio of Top
-!       rb(i) = dr / NER(i) / ew(i+1)   ! and Bottom for completeness
-!    end do
-!
-!  end subroutine auto_optimal_ner

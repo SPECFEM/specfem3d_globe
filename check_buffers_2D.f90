@@ -98,6 +98,10 @@
 ! processor identification
   character(len=150) prname,prname_other
 
+  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+
 ! ************** PROGRAM STARTS HERE **************
 
   print *
@@ -134,7 +138,8 @@
          NGLOB, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA)
 
 
 ! get the base pathname for output files

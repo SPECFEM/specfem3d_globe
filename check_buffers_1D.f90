@@ -92,6 +92,13 @@
 ! processor identification
   character(len=150) prname,prname_other
 
+  integer :: NGLOB1D_RADIAL_MAX
+  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
+  integer, dimension(NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_SPEC_THIS
+  integer, dimension(NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_SPEC_OTHER
 ! ************** PROGRAM STARTS HERE **************
 
   print *
@@ -127,7 +134,8 @@
          NGLOB, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA)
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -159,15 +167,21 @@
   print *,' ********* checking region ',iregion_code,' *********'
   print *
 
+  NGLOB1D_RADIAL_CORNER(iregion_code,:) = NGLOB1D_RADIAL(iregion_code)
+  NGLOB1D_RADIAL_MAX = NGLOB1D_RADIAL(iregion_code)
+  if (iregion_code == IREGION_OUTER_CORE .and. (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
+    NGLOB1D_RADIAL_MAX = NGLOB1D_RADIAL_MAX + maxval(DIFF_NSPEC1D_RADIAL(:,:))*(NGLLZ-1)
+  endif
+
 ! dynamic memory allocation for arrays
-  allocate(iboolleft(NGLOB1D_RADIAL(iregion_code)+1))
-  allocate(iboolright(NGLOB1D_RADIAL(iregion_code)+1))
-  allocate(xleft(NGLOB1D_RADIAL(iregion_code)+1))
-  allocate(yleft(NGLOB1D_RADIAL(iregion_code)+1))
-  allocate(zleft(NGLOB1D_RADIAL(iregion_code)+1))
-  allocate(xright(NGLOB1D_RADIAL(iregion_code)+1))
-  allocate(yright(NGLOB1D_RADIAL(iregion_code)+1))
-  allocate(zright(NGLOB1D_RADIAL(iregion_code)+1))
+  allocate(iboolleft(NGLOB1D_RADIAL_MAX+1))
+  allocate(iboolright(NGLOB1D_RADIAL_MAX+1))
+  allocate(xleft(NGLOB1D_RADIAL_MAX+1))
+  allocate(yleft(NGLOB1D_RADIAL_MAX+1))
+  allocate(zleft(NGLOB1D_RADIAL_MAX+1))
+  allocate(xright(NGLOB1D_RADIAL_MAX+1))
+  allocate(yright(NGLOB1D_RADIAL_MAX+1))
+  allocate(zright(NGLOB1D_RADIAL_MAX+1))
 
 ! ********************************************************
 ! ***************  check along xi
@@ -199,6 +213,74 @@
   ithisproc = addressing(ichunk,iproc_xi,iproc_eta)
   iotherproc = addressing(ichunk,iproc_xi+1,iproc_eta)
 
+  NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_CORNER(iregion_code,:)
+  if (iregion_code==IREGION_OUTER_CORE) then
+    if (CUT_SUPERBRICK_XI) then
+      if (CUT_SUPERBRICK_ETA) then
+        if (mod(iproc_xi,2) == 0) then
+          if (mod(iproc_eta,2) == 0) then
+            NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+          else
+            NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+          endif
+        else
+          if (mod(iproc_eta,2) == 0) then
+            NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,3)*(NGLLZ-1))
+          else
+            NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,4)*(NGLLZ-1))
+          endif
+        endif
+      else
+        if (mod(iproc_xi,2) == 0) then
+          NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+        else
+          NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+        endif
+      endif
+    else
+      if (CUT_SUPERBRICK_ETA) then
+        if (mod(iproc_eta,2) == 0) then
+          NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+        else
+          NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+        endif
+      endif
+    endif
+  endif
+  NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_CORNER(iregion_code,:)
+  if (iregion_code==IREGION_OUTER_CORE) then
+    if (CUT_SUPERBRICK_XI) then
+      if (CUT_SUPERBRICK_ETA) then
+        if (mod(iproc_xi+1,2) == 0) then
+          if (mod(iproc_eta,2) == 0) then
+            NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+          else
+            NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+          endif
+        else
+          if (mod(iproc_eta,2) == 0) then
+            NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,3)*(NGLLZ-1))
+          else
+            NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,4)*(NGLLZ-1))
+          endif
+        endif
+      else
+        if (mod(iproc_xi+1,2) == 0) then
+          NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+        else
+          NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+        endif
+      endif
+    else
+      if (CUT_SUPERBRICK_ETA) then
+        if (mod(iproc_eta,2) == 0) then
+          NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+        else
+          NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+        endif
+      endif
+    endif
+  endif
 ! create the name for the database of the current slide
   call create_serial_name_database(prname,ithisproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
@@ -229,7 +311,11 @@
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolright slice ',ithisproc
   read(34,*) npoin1D_mesher
-  if(npoin1D /= NGLOB1D_RADIAL(iregion_code)) stop 'incorrect iboolright read'
+  if(icorners == 1) then
+    if(npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(2)) stop 'incorrect iboolright read'
+  else
+    if(npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(3)) stop 'incorrect iboolright read'
+  endif
   close(34)
 
   if(icorners == 1) then
@@ -254,7 +340,11 @@
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolleft slice ',iotherproc
   read(34,*) npoin1D_mesher
-  if(npoin1D /= NGLOB1D_RADIAL(iregion_code)) stop 'incorrect iboolleft read'
+  if(icorners == 1) then
+    if(npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(1)) stop 'incorrect iboolleft read'
+  else
+    if(npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(4)) stop 'incorrect iboolleft read'
+  endif
   close(34)
 
 ! check the coordinates of all the points in the buffer
@@ -305,6 +395,74 @@
   ithisproc = addressing(ichunk,iproc_xi,iproc_eta)
   iotherproc = addressing(ichunk,iproc_xi,iproc_eta+1)
 
+  NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_CORNER(iregion_code,:)
+  if (iregion_code==IREGION_OUTER_CORE) then
+    if (CUT_SUPERBRICK_XI) then
+      if (CUT_SUPERBRICK_ETA) then
+        if (mod(iproc_xi,2) == 0) then
+          if (mod(iproc_eta,2) == 0) then
+            NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+          else
+            NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+          endif
+        else
+          if (mod(iproc_eta,2) == 0) then
+            NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,3)*(NGLLZ-1))
+          else
+            NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,4)*(NGLLZ-1))
+          endif
+        endif
+      else
+        if (mod(iproc_xi,2) == 0) then
+          NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+        else
+          NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+        endif
+      endif
+    else
+      if (CUT_SUPERBRICK_ETA) then
+        if (mod(iproc_eta,2) == 0) then
+          NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+        else
+          NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_SPEC_THIS(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+        endif
+      endif
+    endif
+  endif
+  NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_CORNER(iregion_code,:)
+  if (iregion_code==IREGION_OUTER_CORE) then
+    if (CUT_SUPERBRICK_XI) then
+      if (CUT_SUPERBRICK_ETA) then
+        if (mod(iproc_xi,2) == 0) then
+          if (mod(iproc_eta+1,2) == 0) then
+            NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+          else
+            NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+          endif
+        else
+          if (mod(iproc_eta+1,2) == 0) then
+            NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,3)*(NGLLZ-1))
+          else
+            NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,4)*(NGLLZ-1))
+          endif
+        endif
+      else
+        if (mod(iproc_xi,2) == 0) then
+          NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+        else
+          NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+        endif
+      endif
+    else
+      if (CUT_SUPERBRICK_ETA) then
+        if (mod(iproc_eta+1,2) == 0) then
+          NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,1)*(NGLLZ-1))
+        else
+          NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_SPEC_OTHER(:) + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
+        endif
+      endif
+    endif
+  endif
 ! create the name for the database of the current slide
   call create_serial_name_database(prname,ithisproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
@@ -335,7 +493,12 @@
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolright slice ',ithisproc
   read(34,*) npoin1D_mesher
-  if(npoin1D /= NGLOB1D_RADIAL(iregion_code)) stop 'incorrect iboolright read'
+
+  if(icorners == 1) then
+    if(npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(4)) stop 'incorrect iboolright read'
+  else
+    if(npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(3)) stop 'incorrect iboolright read'
+  endif
   close(34)
 
   if(icorners == 1) then
@@ -360,7 +523,12 @@
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolleft slice ',iotherproc
   read(34,*) npoin1D_mesher
-  if(npoin1D /= NGLOB1D_RADIAL(iregion_code)) stop 'incorrect iboolleft read'
+
+  if(icorners == 1) then
+    if(npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(1)) stop 'incorrect iboolleft read'
+  else
+    if(npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(2)) stop 'incorrect iboolleft read'
+  endif
   close(34)
 
 ! check the coordinates of all the points in the buffer

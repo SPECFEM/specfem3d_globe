@@ -18,7 +18,7 @@
 
   subroutine get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
                         idoubling,xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC1D_RADIAL,NGLOB1D_RADIAL)
+                        NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion)
 
 ! routine to create the MPI 1D chunk buffers for edges
 
@@ -26,8 +26,8 @@
 
   include "constants.h"
 
-  integer nspec,myrank
-  integer NSPEC1D_RADIAL,NGLOB1D_RADIAL
+  integer nspec,myrank,iregion
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
 
   logical iMPIcut_xi(2,nspec)
   logical iMPIcut_eta(2,nspec)
@@ -115,7 +115,7 @@
   close(10)
 
 ! compare number of edge elements detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NGLOB1D_RADIAL) &
+  if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,1) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,1)) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=left')
 
 ! determine if the element falls on the right MPI cut plane
@@ -173,7 +173,7 @@
   close(10)
 
 ! compare number of edge elements and points detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NGLOB1D_RADIAL) &
+  if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,2) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,2)) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
 
 ! *****************************************************************
@@ -235,7 +235,7 @@
   close(10)
 
 ! compare number of edge elements detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NGLOB1D_RADIAL) &
+  if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,4) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,4)) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=left')
 
 ! determine if the element falls on the right MPI cut plane
@@ -293,7 +293,7 @@
   close(10)
 
 ! compare number of edge elements and points detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL .or. npoin1D /= NGLOB1D_RADIAL) &
+  if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,3) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,3)) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
 
   end subroutine get_MPI_1D_buffers

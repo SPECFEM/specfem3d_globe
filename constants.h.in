@@ -418,3 +418,27 @@
 ! to suppress the crustal layers (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
   logical, parameter :: SUPPRESS_CRUSTAL_MESH = .false.
 
+!!! parameters for the doubling brick cut
+
+! this for cutting superbrick : 3 possibilities, 4 cases max / possibility
+! 3 possibilities : cut in xi & eta || cut in xi || cut in eta
+! case 1 : ximin & etamin || ximin || etamin
+! case 2 : ximin & etamax || ximax || etamax
+! case 3 : ximax & etamin
+! case 4 : ximax & etamax
+  integer, parameter :: NB_CUT_CASE = 4
+
+! corner 1 : ximin & etamin
+! corner 2 : ximax & etamin
+! corner 3 : ximax & etamax
+! corner 4 : ximin & etamax
+  integer, parameter :: NB_SQUARE_CORNERS = 4
+
+! 2 possibilities : xi || eta
+! face 1 : ximin || etamin
+! face 2 : ximax || etamax
+  integer, parameter :: NB_SQUARE_EDGES_ONEDIR = 2
+
+! this for the geometry of the basic doubling brick
+  integer, parameter :: NSPEC_DOUBLING_BASICBRICK = 8
+  integer, parameter :: NGLOB_DOUBLING_BASICBRICK = 27

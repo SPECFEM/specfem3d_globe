@@ -21,7 +21,7 @@
   subroutine create_chunk_buffers(iregion_code,nspec,ibool,idoubling,xstore,ystore,zstore, &
                 nglob_ori, &
                 NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-                NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL, &
+                NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
                 NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                 myrank,LOCAL_PATH, &
                 addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
@@ -34,9 +34,11 @@
   include "constants.h"
   include "precision.h"
 
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
+
   integer nglob,nglob_ori
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
-  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL
+  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_MAX,NGLOB1D_RADIAL
   integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
   integer nspec
   integer myrank,NCHUNKS
@@ -72,14 +74,14 @@
   integer, dimension(:), allocatable :: iproc_sender,iproc_receiver,npoin2D_send,npoin2D_receive
 
 ! 1D buffers to remove points belonging to corners
-  integer ibool1D_leftxi_lefteta(NGLOB1D_RADIAL)
-  integer ibool1D_rightxi_lefteta(NGLOB1D_RADIAL)
-  integer ibool1D_leftxi_righteta(NGLOB1D_RADIAL)
-  integer ibool1D_rightxi_righteta(NGLOB1D_RADIAL)
-  integer ibool1D(NGLOB1D_RADIAL)
-  double precision xread1D(NGLOB1D_RADIAL)
-  double precision yread1D(NGLOB1D_RADIAL)
-  double precision zread1D(NGLOB1D_RADIAL)
+  integer ibool1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX)
+  integer ibool1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX)
+  integer ibool1D_leftxi_righteta(NGLOB1D_RADIAL_MAX)
+  integer ibool1D_rightxi_righteta(NGLOB1D_RADIAL_MAX)
+  integer ibool1D(NGLOB1D_RADIAL_MAX)
+  double precision xread1D(NGLOB1D_RADIAL_MAX)
+  double precision yread1D(NGLOB1D_RADIAL_MAX)
+  double precision zread1D(NGLOB1D_RADIAL_MAX)
   double precision xdummy,ydummy,zdummy
   integer ipoin1D
 
@@ -476,25 +478,25 @@
 
 ! read 1D buffers to remove corner points
             open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')
-            do ipoin1D = 1,NGLOB1D_RADIAL
+            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,1)
               read(IIN,*) ibool1D_leftxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
             enddo
             close(IIN)
 
             open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='old',action='read')
-            do ipoin1D = 1,NGLOB1D_RADIAL
+            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,2)
               read(IIN,*) ibool1D_rightxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
             enddo
             close(IIN)
 
             open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='old',action='read')
-            do ipoin1D = 1,NGLOB1D_RADIAL
+            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,4)
               read(IIN,*) ibool1D_leftxi_righteta(ipoin1D),xdummy,ydummy,zdummy
             enddo
             close(IIN)
 
             open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old',action='read')
-            do ipoin1D = 1,NGLOB1D_RADIAL
+            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,3)
               read(IIN,*) ibool1D_rightxi_righteta(ipoin1D),xdummy,ydummy,zdummy
             enddo
             close(IIN)
@@ -511,13 +513,13 @@
 
 ! mark corner points to remove them if needed
               if(iproc_eta == 0) then
-                do ipoin1D = 1,NGLOB1D_RADIAL
+                do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,1)
                   mask_ibool(ibool1D_leftxi_lefteta(ipoin1D)) = .true.
                 enddo
               endif
 
               if(iproc_eta == NPROC_ETA-1) then
-                do ipoin1D = 1,NGLOB1D_RADIAL
+                do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,4)
                   mask_ibool(ibool1D_leftxi_righteta(ipoin1D)) = .true.
                 enddo
               endif
@@ -555,13 +557,13 @@
 ! mark corner points to remove them if needed
 
               if(iproc_eta == 0) then
-                do ipoin1D = 1,NGLOB1D_RADIAL
+                do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,2)
                   mask_ibool(ibool1D_rightxi_lefteta(ipoin1D)) = .true.
                 enddo
               endif
 
               if(iproc_eta == NPROC_ETA-1) then
-                do ipoin1D = 1,NGLOB1D_RADIAL
+                do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,3)
                   mask_ibool(ibool1D_rightxi_righteta(ipoin1D)) = .true.
                 enddo
               endif
@@ -599,13 +601,13 @@
 ! mark corner points to remove them if needed
 
               if(iproc_xi == 0) then
-                do ipoin1D = 1,NGLOB1D_RADIAL
+                do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,1)
                   mask_ibool(ibool1D_leftxi_lefteta(ipoin1D)) = .true.
                 enddo
               endif
 
               if(iproc_xi == NPROC_XI-1) then
-                do ipoin1D = 1,NGLOB1D_RADIAL
+                do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,2)
                   mask_ibool(ibool1D_rightxi_lefteta(ipoin1D)) = .true.
                 enddo
               endif
@@ -643,13 +645,13 @@
 ! mark corner points to remove them if needed
 
               if(iproc_xi == 0) then
-                do ipoin1D = 1,NGLOB1D_RADIAL
+                do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,4)
                   mask_ibool(ibool1D_leftxi_righteta(ipoin1D)) = .true.
                 enddo
               endif
 
               if(iproc_xi == NPROC_XI-1) then
-                do ipoin1D = 1,NGLOB1D_RADIAL
+                do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,3)
                   mask_ibool(ibool1D_rightxi_righteta(ipoin1D)) = .true.
                 enddo
               endif
@@ -881,12 +883,16 @@
 ! this scheme works fine even if NPROC_XI = NPROC_ETA = 1
   if(itypecorner(imember_corner,imsg) == ILOWERLOWER) then
     filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt'
+    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,1)
   else if(itypecorner(imember_corner,imsg) == ILOWERUPPER) then
     filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt'
+    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,4)
   else if(itypecorner(imember_corner,imsg) == IUPPERLOWER) then
     filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt'
+    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,2)
   else if(itypecorner(imember_corner,imsg) == IUPPERUPPER) then
     filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt'
+    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,3)
   else
     call exit_MPI(myrank,'incorrect corner coordinates')
   endif

@@ -643,9 +643,6 @@
 
   end subroutine define_superbrick
 
-!----
-!----
-!----
 
   subroutine define_superbrick_one_layer(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb)
 
@@ -1189,3 +1186,842 @@ iboun_sb(27,6) = .true.
 
 end subroutine define_superbrick_one_layer
 
+
+subroutine define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,case_num)
+
+  implicit none
+
+  include "constants.h"
+
+  integer, dimension(NGNOD_EIGHT_CORNERS,NSPEC_DOUBLING_SUPERBRICK) :: ibool_superbrick
+  double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick
+  logical, dimension(NSPEC_DOUBLING_SUPERBRICK,6) :: iboun_sb
+  integer :: case_num
+
+  SELECT CASE (case_num)
+      CASE (1)
+          x_superbrick(1) = 1.d0 / 2.d0
+          y_superbrick(1) = 1.d0
+          z_superbrick(1) = 2.d0
+
+          x_superbrick(2) = 1.d0 / 2.d0
+          y_superbrick(2) = 1.d0
+          z_superbrick(2) = 3.d0 / 2.d0
+
+          x_superbrick(3) = 1.d0 / 2.d0
+          y_superbrick(3) = 1.d0 / 2.d0
+          z_superbrick(3) = 3.d0 / 2.d0
+
+          x_superbrick(4) = 1.d0 / 2.d0
+          y_superbrick(4) = 1.d0 / 2.d0
+          z_superbrick(4) = 2.d0
+
+          x_superbrick(5) = 0.d0
+          y_superbrick(5) = 1.d0
+          z_superbrick(5) = 2.d0
+
+          x_superbrick(6) = 0.d0
+          y_superbrick(6) = 1.d0
+          z_superbrick(6) = 1.d0
+
+          x_superbrick(7) = 0.d0
+          y_superbrick(7) = 1.d0 / 2.d0
+          z_superbrick(7) = 1.d0
+
+          x_superbrick(8) = 0.d0
+          y_superbrick(8) = 1.d0 / 2.d0
+          z_superbrick(8) = 2.d0
+
+          x_superbrick(9) = 1.d0 / 2.d0
+          y_superbrick(9) = 0.d0
+          z_superbrick(9) = 1.d0
+
+          x_superbrick(10) = 1.d0 / 2.d0
+          y_superbrick(10) = 0.d0
+          z_superbrick(10) = 2.d0
+
+          x_superbrick(11) = 0.d0
+          y_superbrick(11) = 0.d0
+          z_superbrick(11) = 1.d0 / 2.d0
+
+          x_superbrick(12) = 0.d0
+          y_superbrick(12) = 0.d0
+          z_superbrick(12) = 2.d0
+
+          x_superbrick(13) = 1.d0
+          y_superbrick(13) = 1.d0
+          z_superbrick(13) = 1.d0
+
+          x_superbrick(14) = 1.d0
+          y_superbrick(14) = 1.d0
+          z_superbrick(14) = 1.d0 / 2.d0
+
+          x_superbrick(15) = 1.d0
+          y_superbrick(15) = 0.d0
+          z_superbrick(15) = 1.d0 / 2.d0
+
+          x_superbrick(16) = 1.d0
+          y_superbrick(16) = 0.d0
+          z_superbrick(16) = 1.d0
+
+          x_superbrick(17) = 1.d0 / 2.d0
+          y_superbrick(17) = 1.d0
+          z_superbrick(17) = 1.d0
+
+          x_superbrick(18) = 0.d0
+          y_superbrick(18) = 1.d0
+          z_superbrick(18) = 1.d0 / 2.d0
+
+          x_superbrick(19) = 1.d0
+          y_superbrick(19) = 1.d0
+          z_superbrick(19) = 3.d0 / 2.d0
+
+          x_superbrick(20) = 1.d0
+          y_superbrick(20) = 1.d0
+          z_superbrick(20) = 2.d0
+
+          x_superbrick(21) = 1.d0
+          y_superbrick(21) = 1.d0 / 2.d0
+          z_superbrick(21) = 3.d0 / 2.d0
+
+          x_superbrick(22) = 1.d0
+          y_superbrick(22) = 1.d0 / 2.d0
+          z_superbrick(22) = 2.d0
+
+          x_superbrick(23) = 1.d0
+          y_superbrick(23) = 0.d0
+          z_superbrick(23) = 2.d0
+
+          x_superbrick(24) = 1.d0
+          y_superbrick(24) = 1.d0
+          z_superbrick(24) = 0.d0
+
+          x_superbrick(25) = 0.d0
+          y_superbrick(25) = 1.d0
+          z_superbrick(25) = 0.d0
+
+          x_superbrick(26) = 0.d0
+          y_superbrick(26) = 0.d0
+          z_superbrick(26) = 0.d0
+
+          x_superbrick(27) = 1.d0
+          y_superbrick(27) = 0.d0
+          z_superbrick(27) = 0.d0
+
+          ibool_superbrick(1, 1) = 7
+          ibool_superbrick(2, 1) = 3
+          ibool_superbrick(3, 1) = 2
+          ibool_superbrick(4, 1) = 6
+          ibool_superbrick(5, 1) = 8
+          ibool_superbrick(6, 1) = 4
+          ibool_superbrick(7, 1) = 1
+          ibool_superbrick(8, 1) = 5
+
+          ibool_superbrick(1, 2) = 11
+          ibool_superbrick(2, 2) = 9
+          ibool_superbrick(3, 2) = 3
+          ibool_superbrick(4, 2) = 7
+          ibool_superbrick(5, 2) = 12
+          ibool_superbrick(6, 2) = 10
+          ibool_superbrick(7, 2) = 4
+          ibool_superbrick(8, 2) = 8
+
+          ibool_superbrick(1, 3) = 11
+          ibool_superbrick(2, 3) = 15
+          ibool_superbrick(3, 3) = 14
+          ibool_superbrick(4, 3) = 18
+          ibool_superbrick(5, 3) = 9
+          ibool_superbrick(6, 3) = 16
+          ibool_superbrick(7, 3) = 13
+          ibool_superbrick(8, 3) = 17
+
+          ibool_superbrick(1, 4) = 3
+          ibool_superbrick(2, 4) = 21
+          ibool_superbrick(3, 4) = 19
+          ibool_superbrick(4, 4) = 2
+          ibool_superbrick(5, 4) = 4
+          ibool_superbrick(6, 4) = 22
+          ibool_superbrick(7, 4) = 20
+          ibool_superbrick(8, 4) = 1
+
+          ibool_superbrick(1, 5) = 11
+          ibool_superbrick(2, 5) = 9
+          ibool_superbrick(3, 5) = 17
+          ibool_superbrick(4, 5) = 18
+          ibool_superbrick(5, 5) = 7
+          ibool_superbrick(6, 5) = 3
+          ibool_superbrick(7, 5) = 2
+          ibool_superbrick(8, 5) = 6
+
+          ibool_superbrick(1, 6) = 9
+          ibool_superbrick(2, 6) = 16
+          ibool_superbrick(3, 6) = 21
+          ibool_superbrick(4, 6) = 3
+          ibool_superbrick(5, 6) = 10
+          ibool_superbrick(6, 6) = 23
+          ibool_superbrick(7, 6) = 22
+          ibool_superbrick(8, 6) = 4
+
+          ibool_superbrick(1, 7) = 9
+          ibool_superbrick(2, 7) = 16
+          ibool_superbrick(3, 7) = 13
+          ibool_superbrick(4, 7) = 17
+          ibool_superbrick(5, 7) = 3
+          ibool_superbrick(6, 7) = 21
+          ibool_superbrick(7, 7) = 19
+          ibool_superbrick(8, 7) = 2
+
+          ibool_superbrick(1, 8) = 26
+          ibool_superbrick(2, 8) = 27
+          ibool_superbrick(3, 8) = 24
+          ibool_superbrick(4, 8) = 25
+          ibool_superbrick(5, 8) = 11
+          ibool_superbrick(6, 8) = 15
+          ibool_superbrick(7, 8) = 14
+          ibool_superbrick(8, 8) = 18
+
+          iboun_sb(:,:) = .false.
+          iboun_sb(1,1) = .true.
+          iboun_sb(1,4) = .true.
+          iboun_sb(1,6) = .true.
+          iboun_sb(2,1) = .true.
+          iboun_sb(2,3) = .true.
+          iboun_sb(2,6) = .true.
+          iboun_sb(3,2) = .true.
+          iboun_sb(3,3) = .true.
+          iboun_sb(3,4) = .true.
+          iboun_sb(4,2) = .true.
+          iboun_sb(4,4) = .true.
+          iboun_sb(4,6) = .true.
+          iboun_sb(5,1) = .true.
+          iboun_sb(5,4) = .true.
+          iboun_sb(6,2) = .true.
+          iboun_sb(6,3) = .true.
+          iboun_sb(6,6) = .true.
+          iboun_sb(7,2) = .true.
+          iboun_sb(7,4) = .true.
+          iboun_sb(8,1) = .true.
+          iboun_sb(8,2) = .true.
+          iboun_sb(8,3) = .true.
+          iboun_sb(8,4) = .true.
+          iboun_sb(8,5) = .true.
+      CASE (2)
+          x_superbrick(1) = 1.d0 / 2.d0
+          y_superbrick(1) = 0.d0
+          z_superbrick(1) = 2.d0
+
+          x_superbrick(2) = 1.d0 / 2.d0
+          y_superbrick(2) = 0.d0
+          z_superbrick(2) = 3.d0 / 2.d0
+
+          x_superbrick(3) = 1.d0 / 2.d0
+          y_superbrick(3) = 1.d0 / 2.d0
+          z_superbrick(3) = 3.d0 / 2.d0
+
+          x_superbrick(4) = 1.d0 / 2.d0
+          y_superbrick(4) = 1.d0 / 2.d0
+          z_superbrick(4) = 2.d0
+
+          x_superbrick(5) = 0.d0
+          y_superbrick(5) = 0.d0
+          z_superbrick(5) = 2.d0
+
+          x_superbrick(6) = 0.d0
+          y_superbrick(6) = 0.d0
+          z_superbrick(6) = 1.d0
+
+          x_superbrick(7) = 0.d0
+          y_superbrick(7) = 1.d0 / 2.d0
+          z_superbrick(7) = 1.d0
+
+          x_superbrick(8) = 0.d0
+          y_superbrick(8) = 1.d0 / 2.d0
+          z_superbrick(8) = 2.d0
+
+          x_superbrick(9) = 1.d0 / 2.d0
+          y_superbrick(9) = 1.d0
+          z_superbrick(9) = 1.d0
+
+          x_superbrick(10) = 1.d0 / 2.d0
+          y_superbrick(10) = 1.d0
+          z_superbrick(10) = 2.d0
+
+          x_superbrick(11) = 0.d0
+          y_superbrick(11) = 1.d0
+          z_superbrick(11) = 1.d0 / 2.d0
+
+          x_superbrick(12) = 0.d0
+          y_superbrick(12) = 1.d0
+          z_superbrick(12) = 2.d0
+
+          x_superbrick(13) = 1.d0
+          y_superbrick(13) = 0.d0
+          z_superbrick(13) = 1.d0
+
+          x_superbrick(14) = 1.d0
+          y_superbrick(14) = 0.d0
+          z_superbrick(14) = 1.d0 / 2.d0
+
+          x_superbrick(15) = 1.d0
+          y_superbrick(15) = 1.d0
+          z_superbrick(15) = 1.d0 / 2.d0
+
+          x_superbrick(16) = 1.d0
+          y_superbrick(16) = 1.d0
+          z_superbrick(16) = 1.d0
+
+          x_superbrick(17) = 1.d0 / 2.d0
+          y_superbrick(17) = 0.d0
+          z_superbrick(17) = 1.d0
+
+          x_superbrick(18) = 0.d0
+          y_superbrick(18) = 0.d0
+          z_superbrick(18) = 1.d0 / 2.d0
+
+          x_superbrick(19) = 1.d0
+          y_superbrick(19) = 0.d0
+          z_superbrick(19) = 3.d0 / 2.d0
+
+          x_superbrick(20) = 1.d0
+          y_superbrick(20) = 0.d0
+          z_superbrick(20) = 2.d0
+
+          x_superbrick(21) = 1.d0
+          y_superbrick(21) = 1.d0 / 2.d0
+          z_superbrick(21) = 3.d0 / 2.d0
+
+          x_superbrick(22) = 1.d0
+          y_superbrick(22) = 1.d0 / 2.d0
+          z_superbrick(22) = 2.d0
+
+          x_superbrick(23) = 1.d0
+          y_superbrick(23) = 1.d0
+          z_superbrick(23) = 2.d0
+
+          x_superbrick(24) = 1.d0
+          y_superbrick(24) = 0.d0
+          z_superbrick(24) = 0.d0
+
+          x_superbrick(25) = 0.d0
+          y_superbrick(25) = 0.d0
+          z_superbrick(25) = 0.d0
+
+          x_superbrick(26) = 0.d0
+          y_superbrick(26) = 1.d0
+          z_superbrick(26) = 0.d0
+
+          x_superbrick(27) = 1.d0
+          y_superbrick(27) = 1.d0
+          z_superbrick(27) = 0.d0
+
+          ibool_superbrick(1, 1) = 6
+          ibool_superbrick(2, 1) = 2
+          ibool_superbrick(3, 1) = 3
+          ibool_superbrick(4, 1) = 7
+          ibool_superbrick(5, 1) = 5
+          ibool_superbrick(6, 1) = 1
+          ibool_superbrick(7, 1) = 4
+          ibool_superbrick(8, 1) = 8
+
+          ibool_superbrick(1, 2) = 7
+          ibool_superbrick(2, 2) = 3
+          ibool_superbrick(3, 2) = 9
+          ibool_superbrick(4, 2) = 11
+          ibool_superbrick(5, 2) = 8
+          ibool_superbrick(6, 2) = 4
+          ibool_superbrick(7, 2) = 10
+          ibool_superbrick(8, 2) = 12
+
+          ibool_superbrick(1, 3) = 18
+          ibool_superbrick(2, 3) = 14
+          ibool_superbrick(3, 3) = 15
+          ibool_superbrick(4, 3) = 11
+          ibool_superbrick(5, 3) = 17
+          ibool_superbrick(6, 3) = 13
+          ibool_superbrick(7, 3) = 16
+          ibool_superbrick(8, 3) = 9
+
+          ibool_superbrick(1, 4) = 2
+          ibool_superbrick(2, 4) = 19
+          ibool_superbrick(3, 4) = 21
+          ibool_superbrick(4, 4) = 3
+          ibool_superbrick(5, 4) = 1
+          ibool_superbrick(6, 4) = 20
+          ibool_superbrick(7, 4) = 22
+          ibool_superbrick(8, 4) = 4
+
+          ibool_superbrick(1, 5) = 18
+          ibool_superbrick(2, 5) = 17
+          ibool_superbrick(3, 5) = 9
+          ibool_superbrick(4, 5) = 11
+          ibool_superbrick(5, 5) = 6
+          ibool_superbrick(6, 5) = 2
+          ibool_superbrick(7, 5) = 3
+          ibool_superbrick(8, 5) = 7
+
+          ibool_superbrick(1, 6) = 3
+          ibool_superbrick(2, 6) = 21
+          ibool_superbrick(3, 6) = 16
+          ibool_superbrick(4, 6) = 9
+          ibool_superbrick(5, 6) = 4
+          ibool_superbrick(6, 6) = 22
+          ibool_superbrick(7, 6) = 23
+          ibool_superbrick(8, 6) = 10
+
+          ibool_superbrick(1, 7) = 17
+          ibool_superbrick(2, 7) = 13
+          ibool_superbrick(3, 7) = 16
+          ibool_superbrick(4, 7) = 9
+          ibool_superbrick(5, 7) = 2
+          ibool_superbrick(6, 7) = 19
+          ibool_superbrick(7, 7) = 21
+          ibool_superbrick(8, 7) = 3
+
+          ibool_superbrick(1, 8) = 25
+          ibool_superbrick(2, 8) = 24
+          ibool_superbrick(3, 8) = 27
+          ibool_superbrick(4, 8) = 26
+          ibool_superbrick(5, 8) = 18
+          ibool_superbrick(6, 8) = 14
+          ibool_superbrick(7, 8) = 15
+          ibool_superbrick(8, 8) = 11
+
+          iboun_sb(:,:) = .false.
+          iboun_sb(1,1) = .true.
+          iboun_sb(1,3) = .true.
+          iboun_sb(1,6) = .true.
+          iboun_sb(2,1) = .true.
+          iboun_sb(2,4) = .true.
+          iboun_sb(2,6) = .true.
+          iboun_sb(3,2) = .true.
+          iboun_sb(3,3) = .true.
+          iboun_sb(3,4) = .true.
+          iboun_sb(4,2) = .true.
+          iboun_sb(4,3) = .true.
+          iboun_sb(4,6) = .true.
+          iboun_sb(5,1) = .true.
+          iboun_sb(5,3) = .true.
+          iboun_sb(6,2) = .true.
+          iboun_sb(6,4) = .true.
+          iboun_sb(6,6) = .true.
+          iboun_sb(7,2) = .true.
+          iboun_sb(7,3) = .true.
+          iboun_sb(8,1) = .true.
+          iboun_sb(8,2) = .true.
+          iboun_sb(8,3) = .true.
+          iboun_sb(8,4) = .true.
+          iboun_sb(8,5) = .true.
+      CASE (3)
+          x_superbrick(1) = 1.d0 / 2.d0
+          y_superbrick(1) = 1.d0
+          z_superbrick(1) = 2.d0
+
+          x_superbrick(2) = 1.d0 / 2.d0
+          y_superbrick(2) = 1.d0
+          z_superbrick(2) = 3.d0 / 2.d0
+
+          x_superbrick(3) = 1.d0 / 2.d0
+          y_superbrick(3) = 1.d0 / 2.d0
+          z_superbrick(3) = 3.d0 / 2.d0
+
+          x_superbrick(4) = 1.d0 / 2.d0
+          y_superbrick(4) = 1.d0 / 2.d0
+          z_superbrick(4) = 2.d0
+
+          x_superbrick(5) = 1.d0
+          y_superbrick(5) = 1.d0
+          z_superbrick(5) = 2.d0
+
+          x_superbrick(6) = 1.d0
+          y_superbrick(6) = 1.d0
+          z_superbrick(6) = 1.d0
+
+          x_superbrick(7) = 1.d0
+          y_superbrick(7) = 1.d0 / 2.d0
+          z_superbrick(7) = 1.d0
+
+          x_superbrick(8) = 1.d0
+          y_superbrick(8) = 1.d0 / 2.d0
+          z_superbrick(8) = 2.d0
+
+          x_superbrick(9) = 1.d0 / 2.d0
+          y_superbrick(9) = 0.d0
+          z_superbrick(9) = 1.d0
+
+          x_superbrick(10) = 1.d0 / 2.d0
+          y_superbrick(10) = 0.d0
+          z_superbrick(10) = 2.d0
+
+          x_superbrick(11) = 1.d0
+          y_superbrick(11) = 0.d0
+          z_superbrick(11) = 1.d0 / 2.d0
+
+          x_superbrick(12) = 1.d0
+          y_superbrick(12) = 0.d0
+          z_superbrick(12) = 2.d0
+
+          x_superbrick(13) = 0.d0
+          y_superbrick(13) = 1.d0
+          z_superbrick(13) = 1.d0
+
+          x_superbrick(14) = 0.d0
+          y_superbrick(14) = 1.d0
+          z_superbrick(14) = 1.d0 / 2.d0
+
+          x_superbrick(15) = 0.d0
+          y_superbrick(15) = 0.d0
+          z_superbrick(15) = 1.d0 / 2.d0
+
+          x_superbrick(16) = 0.d0
+          y_superbrick(16) = 0.d0
+          z_superbrick(16) = 1.d0
+
+          x_superbrick(17) = 1.d0 / 2.d0
+          y_superbrick(17) = 1.d0
+          z_superbrick(17) = 1.d0
+
+          x_superbrick(18) = 1.d0
+          y_superbrick(18) = 1.d0
+          z_superbrick(18) = 1.d0 / 2.d0
+
+          x_superbrick(19) = 0.d0
+          y_superbrick(19) = 1.d0
+          z_superbrick(19) = 3.d0 / 2.d0
+
+          x_superbrick(20) = 0.d0
+          y_superbrick(20) = 1.d0
+          z_superbrick(20) = 2.d0
+
+          x_superbrick(21) = 0.d0
+          y_superbrick(21) = 1.d0 / 2.d0
+          z_superbrick(21) = 3.d0 / 2.d0
+
+          x_superbrick(22) = 0.d0
+          y_superbrick(22) = 1.d0 / 2.d0
+          z_superbrick(22) = 2.d0
+
+          x_superbrick(23) = 0.d0
+          y_superbrick(23) = 0.d0
+          z_superbrick(23) = 2.d0
+
+          x_superbrick(24) = 0.d0
+          y_superbrick(24) = 1.d0
+          z_superbrick(24) = 0.d0
+
+          x_superbrick(25) = 1.d0
+          y_superbrick(25) = 1.d0
+          z_superbrick(25) = 0.d0
+
+          x_superbrick(26) = 1.d0
+          y_superbrick(26) = 0.d0
+          z_superbrick(26) = 0.d0
+
+          x_superbrick(27) = 0.d0
+          y_superbrick(27) = 0.d0
+          z_superbrick(27) = 0.d0
+
+          ibool_superbrick(1, 1) = 3
+          ibool_superbrick(2, 1) = 7
+          ibool_superbrick(3, 1) = 6
+          ibool_superbrick(4, 1) = 2
+          ibool_superbrick(5, 1) = 4
+          ibool_superbrick(6, 1) = 8
+          ibool_superbrick(7, 1) = 5
+          ibool_superbrick(8, 1) = 1
+
+          ibool_superbrick(1, 2) = 9
+          ibool_superbrick(2, 2) = 11
+          ibool_superbrick(3, 2) = 7
+          ibool_superbrick(4, 2) = 3
+          ibool_superbrick(5, 2) = 10
+          ibool_superbrick(6, 2) = 12
+          ibool_superbrick(7, 2) = 8
+          ibool_superbrick(8, 2) = 4
+
+          ibool_superbrick(1, 3) = 15
+          ibool_superbrick(2, 3) = 11
+          ibool_superbrick(3, 3) = 18
+          ibool_superbrick(4, 3) = 14
+          ibool_superbrick(5, 3) = 16
+          ibool_superbrick(6, 3) = 9
+          ibool_superbrick(7, 3) = 17
+          ibool_superbrick(8, 3) = 13
+
+          ibool_superbrick(1, 4) = 21
+          ibool_superbrick(2, 4) = 3
+          ibool_superbrick(3, 4) = 2
+          ibool_superbrick(4, 4) = 19
+          ibool_superbrick(5, 4) = 22
+          ibool_superbrick(6, 4) = 4
+          ibool_superbrick(7, 4) = 1
+          ibool_superbrick(8, 4) = 20
+
+          ibool_superbrick(1, 5) = 9
+          ibool_superbrick(2, 5) = 11
+          ibool_superbrick(3, 5) = 18
+          ibool_superbrick(4, 5) = 17
+          ibool_superbrick(5, 5) = 3
+          ibool_superbrick(6, 5) = 7
+          ibool_superbrick(7, 5) = 6
+          ibool_superbrick(8, 5) = 2
+
+          ibool_superbrick(1, 6) = 16
+          ibool_superbrick(2, 6) = 9
+          ibool_superbrick(3, 6) = 3
+          ibool_superbrick(4, 6) = 21
+          ibool_superbrick(5, 6) = 23
+          ibool_superbrick(6, 6) = 10
+          ibool_superbrick(7, 6) = 4
+          ibool_superbrick(8, 6) = 22
+
+          ibool_superbrick(1, 7) = 16
+          ibool_superbrick(2, 7) = 9
+          ibool_superbrick(3, 7) = 17
+          ibool_superbrick(4, 7) = 13
+          ibool_superbrick(5, 7) = 21
+          ibool_superbrick(6, 7) = 3
+          ibool_superbrick(7, 7) = 2
+          ibool_superbrick(8, 7) = 19
+
+          ibool_superbrick(1, 8) = 27
+          ibool_superbrick(2, 8) = 26
+          ibool_superbrick(3, 8) = 25
+          ibool_superbrick(4, 8) = 24
+          ibool_superbrick(5, 8) = 15
+          ibool_superbrick(6, 8) = 11
+          ibool_superbrick(7, 8) = 18
+          ibool_superbrick(8, 8) = 14
+
+          iboun_sb(:,:) = .false.
+          iboun_sb(1,2) = .true.
+          iboun_sb(1,4) = .true.
+          iboun_sb(1,6) = .true.
+          iboun_sb(2,2) = .true.
+          iboun_sb(2,3) = .true.
+          iboun_sb(2,6) = .true.
+          iboun_sb(3,1) = .true.
+          iboun_sb(3,3) = .true.
+          iboun_sb(3,4) = .true.
+          iboun_sb(4,1) = .true.
+          iboun_sb(4,4) = .true.
+          iboun_sb(4,6) = .true.
+          iboun_sb(5,2) = .true.
+          iboun_sb(5,4) = .true.
+          iboun_sb(6,1) = .true.
+          iboun_sb(6,3) = .true.
+          iboun_sb(6,6) = .true.
+          iboun_sb(7,1) = .true.
+          iboun_sb(7,4) = .true.
+          iboun_sb(8,1) = .true.
+          iboun_sb(8,2) = .true.
+          iboun_sb(8,3) = .true.
+          iboun_sb(8,4) = .true.
+          iboun_sb(8,5) = .true.
+      CASE (4)
+          x_superbrick(1) = 1.d0 / 2.d0
+          y_superbrick(1) = 0.d0
+          z_superbrick(1) = 2.d0
+
+          x_superbrick(2) = 1.d0 / 2.d0
+          y_superbrick(2) = 0.d0
+          z_superbrick(2) = 3.d0 / 2.d0
+
+          x_superbrick(3) = 1.d0 / 2.d0
+          y_superbrick(3) = 1.d0 / 2.d0
+          z_superbrick(3) = 3.d0 / 2.d0
+
+          x_superbrick(4) = 1.d0 / 2.d0
+          y_superbrick(4) = 1.d0 / 2.d0
+          z_superbrick(4) = 2.d0
+
+          x_superbrick(5) = 1.d0
+          y_superbrick(5) = 0.d0
+          z_superbrick(5) = 2.d0
+
+          x_superbrick(6) = 1.d0
+          y_superbrick(6) = 0.d0
+          z_superbrick(6) = 1.d0
+
+          x_superbrick(7) = 1.d0
+          y_superbrick(7) = 1.d0 / 2.d0
+          z_superbrick(7) = 1.d0
+
+          x_superbrick(8) = 1.d0
+          y_superbrick(8) = 1.d0 / 2.d0
+          z_superbrick(8) = 2.d0
+
+          x_superbrick(9) = 1.d0 / 2.d0
+          y_superbrick(9) = 1.d0
+          z_superbrick(9) = 1.d0
+
+          x_superbrick(10) = 1.d0 / 2.d0
+          y_superbrick(10) = 1.d0
+          z_superbrick(10) = 2.d0
+
+          x_superbrick(11) = 1.d0
+          y_superbrick(11) = 1.d0
+          z_superbrick(11) = 1.d0 / 2.d0
+
+          x_superbrick(12) = 1.d0
+          y_superbrick(12) = 1.d0
+          z_superbrick(12) = 2.d0
+
+          x_superbrick(13) = 0.d0
+          y_superbrick(13) = 0.d0
+          z_superbrick(13) = 1.d0
+
+          x_superbrick(14) = 0.d0
+          y_superbrick(14) = 0.d0
+          z_superbrick(14) = 1.d0 / 2.d0
+
+          x_superbrick(15) = 0.d0
+          y_superbrick(15) = 1.d0
+          z_superbrick(15) = 1.d0 / 2.d0
+
+          x_superbrick(16) = 0.d0
+          y_superbrick(16) = 1.d0
+          z_superbrick(16) = 1.d0
+
+          x_superbrick(17) = 1.d0 / 2.d0
+          y_superbrick(17) = 0.d0
+          z_superbrick(17) = 1.d0
+
+          x_superbrick(18) = 1.d0
+          y_superbrick(18) = 0.d0
+          z_superbrick(18) = 1.d0 / 2.d0
+
+          x_superbrick(19) = 0.d0
+          y_superbrick(19) = 0.d0
+          z_superbrick(19) = 3.d0 / 2.d0
+
+          x_superbrick(20) = 0.d0
+          y_superbrick(20) = 0.d0
+          z_superbrick(20) = 2.d0
+
+          x_superbrick(21) = 0.d0
+          y_superbrick(21) = 1.d0 / 2.d0
+          z_superbrick(21) = 3.d0 / 2.d0
+
+          x_superbrick(22) = 0.d0
+          y_superbrick(22) = 1.d0 / 2.d0
+          z_superbrick(22) = 2.d0
+
+          x_superbrick(23) = 0.d0
+          y_superbrick(23) = 1.d0
+          z_superbrick(23) = 2.d0
+
+          x_superbrick(24) = 0.d0
+          y_superbrick(24) = 0.d0
+          z_superbrick(24) = 0.d0
+
+          x_superbrick(25) = 1.d0
+          y_superbrick(25) = 0.d0
+          z_superbrick(25) = 0.d0
+
+          x_superbrick(26) = 1.d0
+          y_superbrick(26) = 1.d0
+          z_superbrick(26) = 0.d0
+
+          x_superbrick(27) = 0.d0
+          y_superbrick(27) = 1.d0
+          z_superbrick(27) = 0.d0
+
+          ibool_superbrick(1, 1) = 2
+          ibool_superbrick(2, 1) = 6
+          ibool_superbrick(3, 1) = 7
+          ibool_superbrick(4, 1) = 3
+          ibool_superbrick(5, 1) = 1
+          ibool_superbrick(6, 1) = 5
+          ibool_superbrick(7, 1) = 8
+          ibool_superbrick(8, 1) = 4
+
+          ibool_superbrick(1, 2) = 3
+          ibool_superbrick(2, 2) = 7
+          ibool_superbrick(3, 2) = 11
+          ibool_superbrick(4, 2) = 9
+          ibool_superbrick(5, 2) = 4
+          ibool_superbrick(6, 2) = 8
+          ibool_superbrick(7, 2) = 12
+          ibool_superbrick(8, 2) = 10
+
+          ibool_superbrick(1, 3) = 14
+          ibool_superbrick(2, 3) = 18
+          ibool_superbrick(3, 3) = 11
+          ibool_superbrick(4, 3) = 15
+          ibool_superbrick(5, 3) = 13
+          ibool_superbrick(6, 3) = 17
+          ibool_superbrick(7, 3) = 9
+          ibool_superbrick(8, 3) = 16
+
+          ibool_superbrick(1, 4) = 19
+          ibool_superbrick(2, 4) = 2
+          ibool_superbrick(3, 4) = 3
+          ibool_superbrick(4, 4) = 21
+          ibool_superbrick(5, 4) = 20
+          ibool_superbrick(6, 4) = 1
+          ibool_superbrick(7, 4) = 4
+          ibool_superbrick(8, 4) = 22
+
+          ibool_superbrick(1, 5) = 17
+          ibool_superbrick(2, 5) = 18
+          ibool_superbrick(3, 5) = 11
+          ibool_superbrick(4, 5) = 9
+          ibool_superbrick(5, 5) = 2
+          ibool_superbrick(6, 5) = 6
+          ibool_superbrick(7, 5) = 7
+          ibool_superbrick(8, 5) = 3
+
+          ibool_superbrick(1, 6) = 21
+          ibool_superbrick(2, 6) = 3
+          ibool_superbrick(3, 6) = 9
+          ibool_superbrick(4, 6) = 16
+          ibool_superbrick(5, 6) = 22
+          ibool_superbrick(6, 6) = 4
+          ibool_superbrick(7, 6) = 10
+          ibool_superbrick(8, 6) = 23
+
+          ibool_superbrick(1, 7) = 13
+          ibool_superbrick(2, 7) = 17
+          ibool_superbrick(3, 7) = 9
+          ibool_superbrick(4, 7) = 16
+          ibool_superbrick(5, 7) = 19
+          ibool_superbrick(6, 7) = 2
+          ibool_superbrick(7, 7) = 3
+          ibool_superbrick(8, 7) = 21
+
+          ibool_superbrick(1, 8) = 24
+          ibool_superbrick(2, 8) = 25
+          ibool_superbrick(3, 8) = 26
+          ibool_superbrick(4, 8) = 27
+          ibool_superbrick(5, 8) = 14
+          ibool_superbrick(6, 8) = 18
+          ibool_superbrick(7, 8) = 11
+          ibool_superbrick(8, 8) = 15
+
+          iboun_sb(:,:) = .false.
+          iboun_sb(1,2) = .true.
+          iboun_sb(1,3) = .true.
+          iboun_sb(1,6) = .true.
+          iboun_sb(2,2) = .true.
+          iboun_sb(2,4) = .true.
+          iboun_sb(2,6) = .true.
+          iboun_sb(3,1) = .true.
+          iboun_sb(3,3) = .true.
+          iboun_sb(3,4) = .true.
+          iboun_sb(4,1) = .true.
+          iboun_sb(4,3) = .true.
+          iboun_sb(4,6) = .true.
+          iboun_sb(5,2) = .true.
+          iboun_sb(5,3) = .true.
+          iboun_sb(6,1) = .true.
+          iboun_sb(6,4) = .true.
+          iboun_sb(6,6) = .true.
+          iboun_sb(7,1) = .true.
+          iboun_sb(7,3) = .true.
+          iboun_sb(8,1) = .true.
+          iboun_sb(8,2) = .true.
+          iboun_sb(8,3) = .true.
+          iboun_sb(8,4) = .true.
+          iboun_sb(8,5) = .true.
+  END SELECT
+end subroutine define_basic_doubling_brick

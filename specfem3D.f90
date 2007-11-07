@@ -662,9 +662,9 @@
 ! proc numbers for MPI
   integer myrank,sizeprocs,ier
 
-  integer npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
-  integer npoin2D_xi_outer_core,npoin2D_eta_outer_core
-  integer npoin2D_xi_inner_core,npoin2D_eta_inner_core
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
   integer ichunk,iproc_xi,iproc_eta,iproc,iproc_read
   integer NPROC_ONE_DIRECTION
@@ -769,7 +769,11 @@
 ! arrays for BCAST
   integer, dimension(35) :: bcast_integer
   double precision, dimension(24) :: bcast_double_precision
-  logical, dimension(27) :: bcast_logical
+  logical, dimension(29) :: bcast_logical
+
+  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -811,7 +815,8 @@
          NGLOB_computed, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube)
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA)
 
     if(err_occurred() /= 0) then
           call exit_MPI(myrank,'an error occurred while reading the parameter file')
@@ -837,7 +842,7 @@
             SAVE_MESH_FILES,ATTENUATION, &
             ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-            ROTATE_SEISMOGRAMS_RT/)
+            ROTATE_SEISMOGRAMS_RT,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA/)
 
     bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -853,7 +858,7 @@
 
     call MPI_BCAST(bcast_double_precision,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_logical,27,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_logical,29,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
@@ -881,6 +886,10 @@
     call MPI_BCAST(NGLOB2DMAX_XMIN_XMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(NGLOB2DMAX_YMIN_YMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(NGLOB_computed,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+    call MPI_BCAST(DIFF_NSPEC1D_RADIAL,NB_SQUARE_CORNERS*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   if (myrank /=0) then
 
@@ -947,6 +956,8 @@
     OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_logical(25)
     OUTPUT_SEISMOS_SAC_BINARY = bcast_logical(26)
     ROTATE_SEISMOGRAMS_RT = bcast_logical(27)
+    CUT_SUPERBRICK_XI = bcast_logical(28)
+    CUT_SUPERBRICK_ETA = bcast_logical(29)
 
     DT = bcast_double_precision(1)
     ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
@@ -2025,6 +2036,7 @@
 ! synchronize all the processes before assembling the mass matrix
 ! to make sure all the nodes have finished to read their databases
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
+    write(IMAIN,*) 'barrier done'
 
 ! the mass matrix needs to be assembled with MPI here once and for all
 
@@ -2057,7 +2069,7 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS)
-
+    write(IMAIN,*) 'assemble MPI scalar CM done'
 ! outer core
   call assemble_MPI_scalar(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2071,7 +2083,7 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS)
-
+    write(IMAIN,*) 'assemble MPI scalar OC done'
 ! inner core
   call assemble_MPI_scalar(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3861,10 +3873,10 @@
             iproc_xi,iproc_eta,ichunk,addressing, &
 !!!!!!!!!!!!!!!!!!!!!!
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
             iboolfaces_inner_core,iboolcorner_inner_core, &
 !!!!!!!!!!!!!!!!!!!!!!
             iprocfrom_faces,iprocto_faces,imsg_type, &
@@ -3916,10 +3928,10 @@
             iproc_xi,iproc_eta,ichunk,addressing, &
 !!!!!!!!!!!!!!!!!!!!!!
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
             iboolfaces_inner_core,iboolcorner_inner_core, &
 !!!!!!!!!!!!!!!!!!!!!!
             iprocfrom_faces,iprocto_faces,imsg_type, &
