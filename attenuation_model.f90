@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -1844,7 +1844,7 @@ subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
   endif
 
   ! We determine the attenuation value here dependent on the doubling flag and
-  ! which region we are sitting in. The radius reported is not accurate for 
+  ! which region we are sitting in. The radius reported is not accurate for
   ! determination of which region we are actually in, whereas the idoubling flag is
   if(iflag == IFLAG_INNER_CORE_NORMAL .or. iflag == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
        iflag == IFLAG_BOTTOM_CENTRAL_CUBE .or. iflag == IFLAG_TOP_CENTRAL_CUBE .or. &
@@ -1869,11 +1869,11 @@ subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
   else if(iflag == IFLAG_CRUST) then
      Qmu=600.0d0
      Qkappa = 57827.0d0
-  else 
+  else
      write(*,*)'iflag:',iflag
      call exit_MPI_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
   endif
-  
+
 
 end subroutine attenuation_model_1D_PREM
 

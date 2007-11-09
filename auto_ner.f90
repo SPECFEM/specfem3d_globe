@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -37,15 +37,15 @@
 !   It is based partially upon formulation in the following references:
 !
 !   Komatitsch and Tromp, 2002 Part I
-!   
+!
 !    and
-!  
-!   The Core determineation was developed 
+!
+!   The Core determineation was developed
 !
 
   subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
     implicit none
-    
+
     include 'constants.h'
 
     integer NEX_MAX
@@ -63,7 +63,7 @@
     DOUBLING_INNER_CORE             =      8.0d0
     P_VELOCITY_MAX                  = 11.02827d0
     MIN_GLL_POINT_SPACING_5         =   0.1730d0
-    
+
     DT = ( RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * (PI / 180.0d0)) * RADIUS_INNER_CORE) / &
          ( dble(NEX_MAX) / DOUBLING_INNER_CORE ) / P_VELOCITY_MAX) * &
          MIN_GLL_POINT_SPACING_5 * MAXIMUM_STABILITY_CONDITION
@@ -72,7 +72,7 @@
 
   subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
     implicit none
-    
+
     include 'constants.h'
 
     integer NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
@@ -83,13 +83,13 @@
 
     GLL_SPACING        =   4.00d0
     PTS_PER_WAVELENGTH =   4.00d0
-    S_VELOCITY_MIN     =   2.25d0 
+    S_VELOCITY_MIN     =   2.25d0
     DEG2KM             = 111.00d0
-    
+
     ! THETA defines the width of the Attenation Range in Decades
     !   The number defined here were determined by minimizing
     !   the "flatness" of the absoption spectrum.  Each THETA
-    !   is defined for a particular N_SLS (constants.h) 
+    !   is defined for a particular N_SLS (constants.h)
     !   THETA(2) is for N_SLS = 2
     THETA(1)           =   0.00d0
     THETA(2)           =   0.75d0
@@ -104,7 +104,7 @@
     !  Width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
 
     TMP = (WIDTH / ( GLL_SPACING * dble(NEX_MAX)) * DEG2KM * PTS_PER_WAVELENGTH ) / &
-         S_VELOCITY_MIN 
+         S_VELOCITY_MIN
     MIN_ATTENUATION_PERIOD = TMP
 
     if(N_SLS < 2 .OR. N_SLS > 5) then
@@ -112,7 +112,7 @@
     endif
 
     ! Compute Max Attenuation Period
-    ! 
+    !
     ! The max attenuation period for 3 SLS is optimally
     !   1.75 decades from the min attenuation period, see THETA above
     TMP = TMP * 10.0d0**THETA(N_SLS)
@@ -161,7 +161,7 @@
     radius(12) = 2511.00d0 !    3860 - 3rd Mesh Doubling Interface
     radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
     radius(14) =  982.00d0 ! Top Central Cube
-    
+
     call find_r_central_cube(NEX_MAX, radius(14), NEX_ETA)
 
     ! Mesh Doubling

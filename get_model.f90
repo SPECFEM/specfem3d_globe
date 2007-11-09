@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -460,10 +460,10 @@
          endif
        endif
 
-! This is here to identify how and where to include 3D attenuation 
+! This is here to identify how and where to include 3D attenuation
        if(ATTENUATION .and. ATTENUATION_3D) then
          tau_e(:)   = 0.0d0
-         ! Get the value of Qmu (Attenuation) dependedent on 
+         ! Get the value of Qmu (Attenuation) dependedent on
          ! the radius (r_prem) and idoubling flag
          call attenuation_model_1D_PREM(r_prem, Qmu, idoubling)
          ! Get tau_e from tau_s and Qmu
