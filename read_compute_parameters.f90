@@ -6,7 +6,7 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+! (c) California Institute of Technology and University of Pau, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -652,21 +652,21 @@
           NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
           NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
           NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
-          R_CENTRAL_CUBE, CASE_3D) 
+          R_CENTRAL_CUBE, CASE_3D)
 
      call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
           MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
      call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
-      
+
      write(*,*)'##############################################################'
      write(*,*)
-     write(*,*)' Auto Radial Meshing Code ' 
+     write(*,*)' Auto Radial Meshing Code '
      write(*,*)' Consult read_compute_parameters.f90 and auto_ner.f90 '
      write(*,*)' This should only be invoked for chunks less than 90 degrees'
      write(*,*)' and for chunks greater than 1248 elements wide'
      write(*,*)
-     write(*,*)'CHUNK WIDTH:              ', ANGULAR_WIDTH_XI_IN_DEGREES     
+     write(*,*)'CHUNK WIDTH:              ', ANGULAR_WIDTH_XI_IN_DEGREES
      write(*,*)'NEX:                      ', NEX_MAX
      write(*,*)'NER_CRUST:                ', NER_CRUST
      write(*,*)'NER_80_MOHO:              ', NER_80_MOHO
@@ -687,10 +687,10 @@
      write(*,*)'MAX_ATTENUATION_PERIOD    ',MAX_ATTENUATION_PERIOD
      write(*,*)
      write(*,*)'##############################################################'
-     
+
   endif
-     
-       
+
+
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
   DT = DT * (1.d0 - 0.05d0)
@@ -1502,7 +1502,7 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         endif
         NSPEC1D_RADIAL(iter_region) = sum(ner(ifirst_region:ilast_region))
 enddo
-! difference of radial number of element for outer core if the superbrick is cutted 
+! difference of radial number of element for outer core if the superbrick is cutted
   DIFF_NSPEC1D_RADIAL(:,:) = 0
   if (CUT_SUPERBRICK_XI) then
     if (CUT_SUPERBRICK_ETA) then
@@ -1769,7 +1769,7 @@ enddo
               nb_lay_sb = 2
               nglob_edge = 0
               nglob_surf = 0
-              nglob_vol = 8*NGLLX**3 - 12*NGLLX**2 + 6*NGLLX - 1 
+              nglob_vol = 8*NGLLX**3 - 12*NGLLX**2 + 6*NGLLX - 1
               nglob_surf_eta = 6*NGLLX**2 - 7*NGLLX + 2
               nglob_surf_xi = 5*NGLLX**2 - 5*NGLLX + 1
             else
