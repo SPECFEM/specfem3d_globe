@@ -83,9 +83,9 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
 ! create one large file instead of one small file per station to avoid file system overload
     if(SAVE_ALL_SEISMOS_IN_ONE_FILE) then
       if(USE_BINARY_FOR_LARGE_FILE) then
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//'all_seismograms.bin',status='unknown',form='unformatted')
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//'/'//'all_seismograms.bin',status='unknown',form='unformatted')
       else
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//'all_seismograms.ascii',status='unknown')
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//'/'//'all_seismograms.ascii',status='unknown')
       endif
     endif
 
