@@ -525,8 +525,9 @@
      reclen_ymax_crust_mantle, reclen_xmin_outer_core, reclen_xmax_outer_core,&
      reclen_ymin_outer_core, reclen_ymax_outer_core, reclen_zmin, reclen1, reclen2
 
-  real(kind=CUSTOM_REAL), dimension(NDIM) :: vector_accel_outer_core,b_vector_displ_outer_core
-
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE) :: vector_accel_outer_core,&
+             vector_displ_outer_core, b_vector_displ_outer_core
+             
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   double precision scale_kl
 
@@ -692,8 +693,7 @@
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-          ROTATE_SEISMOGRAMS_RT
-
+          ROTATE_SEISMOGRAMS_RT, HONOR_1D_SPHERICAL_MOHO
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
@@ -756,6 +756,21 @@
   double precision, dimension(24) :: bcast_double_precision
   logical, dimension(29) :: bcast_logical
 
+! Boundary Mesh and Kernels
+  integer k_top,k_bot,iregion_code,njunk1,njunk2,njunk3
+  integer, dimension(NSPEC2D_MOHO) :: ibelm_moho_top,ibelm_moho_bot
+  integer, dimension(NSPEC2D_400) :: ibelm_400_top,ibelm_400_bot
+  integer, dimension(NSPEC2D_670) :: ibelm_670_top,ibelm_670_bot
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO) :: normal_moho
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_400) :: normal_400
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_670) :: normal_670
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_MOHO) :: moho_kl, moho_kl_top, moho_kl_bot
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_400) :: d400_kl, d400_kl_top, d400_kl_bot
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_670) ::  d670_kl, d670_kl_top, d670_kl_bot
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_CMB) :: cmb_kl, cmb_kl_top, cmb_kl_bot
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_ICB) :: icb_kl, icb_kl_top, icb_kl_bot
+  logical :: fluid_solid_boundary
+
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
@@ -800,7 +815,7 @@
          NGLOB_computed, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
           DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA)
 
     if(err_occurred() /= 0) then
@@ -1538,6 +1553,8 @@
   read(27) nspec2D_xmax_crust_mantle
   read(27) nspec2D_ymin_crust_mantle
   read(27) nspec2D_ymax_crust_mantle
+  read(27) njunk1
+  read(27) njunk2
 
 ! boundary parameters
   read(27) ibelm_xmin_crust_mantle
@@ -1624,8 +1641,33 @@
 
   endif
 
-! read parameters to couple fluid and solid regions
+! -- Boundary Mesh for crust and mantle ---
 
+  if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
+    open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin',status='old',form='unformatted')
+    read(27) njunk1,njunk2,njunk3
+    if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
+               call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
+    read(27) ibelm_moho_top
+    read(27) ibelm_moho_bot
+    read(27) ibelm_400_top
+    read(27) ibelm_400_bot
+    read(27) ibelm_670_top
+    read(27) ibelm_670_bot
+    read(27) normal_moho
+    read(27) normal_400
+    read(27) normal_670
+    close(27)
+
+    k_top = 1
+    k_bot = NGLLZ
+
+    ! initialization
+    moho_kl = 0.; d400_kl = 0.; d670_kl = 0.; cmb_kl = 0.; icb_kl = 0.
+    
+  endif
+
+! read parameters to couple fluid and solid regions
 !
 !---- outer core
 !
@@ -1641,6 +1683,8 @@
   read(27) nspec2D_xmax_outer_core
   read(27) nspec2D_ymin_outer_core
   read(27) nspec2D_ymax_outer_core
+  read(27) njunk1
+  read(27) njunk2
 
   read(27) ibelm_xmin_outer_core
   read(27) ibelm_xmax_outer_core
@@ -1751,6 +1795,8 @@
   read(27) nspec2D_xmax_inner_core
   read(27) nspec2D_ymin_inner_core
   read(27) nspec2D_ymax_inner_core
+  read(27) njunk1
+  read(27) njunk2
 
 ! boundary parameters
   read(27) ibelm_xmin_inner_core
@@ -2943,10 +2989,11 @@
         enddo
       enddo
     enddo
-  endif
 
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_outer_core > 0 ) &
-     write(61,rec=it) reclen_xmin_outer_core,absorb_xmin_outer_core,reclen_xmin_outer_core
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_outer_core > 0 ) &
+               write(61,rec=it) reclen_xmin_outer_core,absorb_xmin_outer_core,reclen_xmin_outer_core
+
+  endif
 
 !   xmax
 ! if two chunks exclude this face for one of them
@@ -2986,8 +3033,8 @@
       enddo
     enddo
 
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_outer_core > 0 ) &
-     write(62,rec=it) reclen_xmax_outer_core,absorb_xmax_outer_core,reclen_xmax_outer_core
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_outer_core > 0 ) &
+               write(62,rec=it) reclen_xmax_outer_core,absorb_xmax_outer_core,reclen_xmax_outer_core
 
   endif
 
@@ -3074,6 +3121,7 @@
       if (reclen1 /= reclen_zmin .or. reclen1 /= reclen2)  &
          call exit_MPI(myrank,'Error reading absorbing contribution absorb_zmin_outer_core')
     endif
+
     do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
 
       ispec = ibelm_bottom_outer_core(ispec2D)
@@ -3383,14 +3431,14 @@
             absorb_xmin_crust_mantle(2,j,k,ispec2D) = ty*weight
             absorb_xmin_crust_mantle(3,j,k,ispec2D) = tz*weight
           endif
-
         enddo
       enddo
     enddo
-  endif
+ 
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) &
+               write(51,rec=it) reclen_xmin_crust_mantle,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle
 
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) &
-     write(51,rec=it) reclen_xmin_crust_mantle,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle
+  endif
 
 !   xmax
 ! if two chunks exclude this face for one of them
@@ -3445,10 +3493,11 @@
         enddo
       enddo
     enddo
-  endif
 
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) &
-     write(52,rec=it) reclen_xmax_crust_mantle,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) &
+               write(52,rec=it) reclen_xmax_crust_mantle,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle
+
+  endif
 
 !   ymin
 
@@ -3500,7 +3549,6 @@
         enddo
       enddo
     enddo
-
     if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) &
        write(53,rec=it) reclen_ymin_crust_mantle,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle
 
@@ -4132,8 +4180,8 @@
       eps_loc(3,2) = dyz
 
       eps_loc_new(:,:) = eps_loc(:,:)
-! LQY -- does not rotate eps_loc first.
-!      eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
+! LQY -- rotate to the local cartesian coordinates (e-n-z)
+      eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
 
 ! distinguish between single and double precision for reals
       if (CUSTOM_REAL == SIZE_REAL) then
@@ -4240,7 +4288,7 @@
       enddo
     enddo
 
-! outer_core
+! outer_core -- compute the actual displacement and acceleration (NDIM,NGLOBMAX_OUTER_CORE)
     do ispec = 1, NSPEC_OUTER_CORE
       do k = 1, NGLLZ
         do j = 1, NGLLY
@@ -4273,9 +4321,9 @@
               tempx3l = tempx3l +  b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
             enddo
 
-            b_vector_displ_outer_core(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-            b_vector_displ_outer_core(2) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-            b_vector_displ_outer_core(3) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+            b_vector_displ_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+            b_vector_displ_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+            b_vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
             tempx1l = 0._CUSTOM_REAL
             tempx2l = 0._CUSTOM_REAL
@@ -4293,14 +4341,32 @@
               tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
             enddo
 
-            vector_accel_outer_core(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-            vector_accel_outer_core(2) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-            vector_accel_outer_core(3) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+            vector_accel_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+            vector_accel_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+            vector_accel_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+            tempx1l = 0._CUSTOM_REAL
+            tempx2l = 0._CUSTOM_REAL
+            tempx3l = 0._CUSTOM_REAL
+
+            do l=1,NGLLX
+              tempx1l = tempx1l + displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
+            enddo
+
+            do l=1,NGLLY
+              tempx2l = tempx2l + displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
+            enddo
+
+            do l=1,NGLLZ
+              tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
+            enddo
+
+            vector_displ_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+            vector_displ_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+            vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
             rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-               + deltat * (vector_accel_outer_core(1) * b_vector_displ_outer_core(1) &
-               + vector_accel_outer_core(2) * b_vector_displ_outer_core(2) &
-               + vector_accel_outer_core(3) * b_vector_displ_outer_core(3) )
+               + deltat * dot_product(vector_accel_outer_core(:,iglob), b_vector_displ_outer_core(:,iglob)) 
 
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
             div_displ_outer_core(i,j,k,ispec) = div_displ_outer_core(i,j,k,ispec) + kappal * accel_outer_core(iglob)
@@ -4341,7 +4407,177 @@
       enddo
     enddo
 
-  endif
+
+! --- Boundary Kernels ------
+    if (SAVE_BOUNDARY_MESH) then
+      fluid_solid_boundary = .false.
+      iregion_code = IREGION_CRUST_MANTLE
+
+      ! Moho
+      if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
+      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                 k_top,ibelm_moho_top,normal_moho,moho_kl_top,fluid_solid_boundary,NSPEC2D_MOHO)
+
+      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                 k_bot,ibelm_moho_bot,normal_moho,moho_kl_bot,fluid_solid_boundary,NSPEC2D_MOHO)
+
+      moho_kl = moho_kl + (moho_kl_top - moho_kl_bot) * deltat
+      endif
+
+      ! 400
+      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                 k_top,ibelm_400_top,normal_400,d400_kl_top,fluid_solid_boundary,NSPEC2D_400)
+      
+      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                 k_bot,ibelm_400_bot,normal_400,d400_kl_bot,fluid_solid_boundary,NSPEC2D_400)
+
+      d400_kl = d400_kl + (d400_kl_top - d400_kl_bot) * deltat
+
+      ! 670
+      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                 k_top,ibelm_670_top,normal_670,d670_kl_top,fluid_solid_boundary,NSPEC2D_670)
+ 
+      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                 k_bot,ibelm_670_bot,normal_670,d670_kl_bot,fluid_solid_boundary,NSPEC2D_670)
+
+      d670_kl = d670_kl + (d670_kl_top - d670_kl_bot) * deltat
+
+      ! CMB
+      fluid_solid_boundary = .true.
+      iregion_code = IREGION_CRUST_MANTLE
+      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_crust_mantle,kappavstore_crust_mantle, muvstore_crust_mantle, &
+                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
+                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
+                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
+                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                 k_top,ibelm_bottom_crust_mantle,normal_top_outer_core,cmb_kl_top,fluid_solid_boundary,NSPEC2D_CMB)
+
+      iregion_code = IREGION_OUTER_CORE
+      call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core,nspec_outer_core, &
+                 iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,idoubling_outer_core, &
+                 xix_outer_core,xiy_outer_core,xiz_outer_core,etax_outer_core,etay_outer_core,etaz_outer_core,&
+                 gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 k_bot,ibelm_top_outer_core,normal_top_outer_core,cmb_kl_bot,fluid_solid_boundary,NSPEC2D_CMB)
+
+      cmb_kl = cmb_kl + (cmb_kl_top - cmb_kl_bot) * deltat
+
+      ! ICB
+      fluid_solid_boundary = .true.
+      call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core,nspec_outer_core, &
+                 iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,idoubling_outer_core, &
+                 xix_outer_core,xiy_outer_core,xiz_outer_core,etax_outer_core,etay_outer_core,etaz_outer_core,&
+                 gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 k_top,ibelm_bottom_outer_core,normal_bottom_outer_core,icb_kl_top,fluid_solid_boundary,NSPEC2D_ICB)
+
+      iregion_code = IREGION_INNER_CORE
+      call compute_boundary_kernel(displ_inner_core,accel_inner_core,b_displ_inner_core,nspec_inner_core,iregion_code, &
+                 ystore_inner_core,zstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+                 xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core,etaz_inner_core,&
+                 gammax_inner_core,gammay_inner_core,gammaz_inner_core,hprime_xx,hprime_yy,hprime_zz, &
+                 rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+                 dummy_array,dummy_array,dummy_array, &
+                 c11store_inner_core,c12store_inner_core,c13store_inner_core,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array,dummy_array, &
+                 c33store_inner_core,dummy_array,dummy_array, &
+                 dummy_array,c44store_inner_core,dummy_array,dummy_array, &
+                 dummy_array,dummy_array,dummy_array, &
+                 k_bot,ibelm_top_inner_core,normal_bottom_outer_core,icb_kl_bot,fluid_solid_boundary,NSPEC2D_ICB)
+      
+      icb_kl = icb_kl + (icb_kl_top - icb_kl_bot) * deltat
+
+    endif
+
+  endif ! end computing kernels
 
 
 ! save movie on surface
@@ -4600,6 +4836,29 @@
     open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted')
     write(27) beta_kl_inner_core
     close(27)
+
+! Boundary Kernel
+    if (SAVE_BOUNDARY_MESH) then
+      call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+      if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
+      open(unit=27,file=trim(prname)//'moho_kernel.bin',status='unknown',form='unformatted')
+      write(27) moho_kl
+      close(27)
+      endif
+      open(unit=27,file=trim(prname)//'d400_kernel.bin',status='unknown',form='unformatted')
+      write(27) d400_kl
+      close(27)
+      open(unit=27,file=trim(prname)//'d670_kernel.bin',status='unknown',form='unformatted')
+      write(27) d670_kl
+      close(27)
+      open(unit=27,file=trim(prname)//'CMB_kernel.bin',status='unknown',form='unformatted')
+      write(27) cmb_kl
+      close(27)
+      call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+      open(unit=27,file=trim(prname)//'ICB_kernel.bin',status='unknown',form='unformatted')
+      write(27) icb_kl
+      close(27)
+    endif
 
   endif
 

@@ -108,7 +108,7 @@
   integer imsg_type,iside,imode_comm,iedge
 
 ! boundary parameters per slice
-  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
+  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, njunk
   integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
   integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
 
@@ -470,14 +470,13 @@
 ! read boundary parameters
 
             open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin',status='old',action='read',form='unformatted')
-!             open(unit=IIN,file=prname(1:len_trim(prname))//'nspec2D.bin',status='old',action='read',form='unformatted')
             read(IIN) nspec2D_xmin
             read(IIN) nspec2D_xmax
             read(IIN) nspec2D_ymin
             read(IIN) nspec2D_ymax
-!             close(IIN)
+            read(IIN) njunk
+            read(IIN) njunk
 
-!             open(unit=IIN,file=prname(1:len_trim(prname))//'ibelm.bin',status='old',action='read',form='unformatted')
             read(IIN) ibelm_xmin
             read(IIN) ibelm_xmax
             read(IIN) ibelm_ymin

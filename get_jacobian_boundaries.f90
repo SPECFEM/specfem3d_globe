@@ -255,7 +255,6 @@
 
     call compute_jacobian_2D(myrank,ispecb4,xelm,yelm,zelm,dershape2D_y, &
                   jacobian2D_ymax,normal_ymax,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
-
   endif
 
 ! on boundary: bottom
@@ -334,7 +333,6 @@
 
     call compute_jacobian_2D(myrank,ispecb6,xelm,yelm,zelm,dershape2D_top, &
                   jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
-
   endif
 
   enddo
