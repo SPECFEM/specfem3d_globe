@@ -110,6 +110,7 @@ libspecfem_a_OBJECTS = \
 	$O/get_event_info.o \
 	$O/get_global.o \
 	$O/get_jacobian_boundaries.o \
+        $O/get_jacobian_discontinuities.o \
 	$O/get_model.o \
 	$O/get_shape2D.o \
 	$O/get_shape3D.o \
@@ -159,6 +160,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/compute_forces_crust_mantle.o \
 	$O/compute_forces_inner_core.o \
 	$O/compute_forces_outer_core.o \
+        $O/compute_boundary_kernel.o \
 	$O/read_arrays_solver.o \
 	$O/specfem3D.o \
 	$(EMPTY_MACRO)
@@ -260,10 +262,17 @@ check_buffers_corners_chunks: $O/check_buffers_corners_chunks.o $(LIBSPECFEM)
 check_buffers_faces_chunks: $O/check_buffers_faces_chunks.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o xcheck_buffers_faces_chunks $O/check_buffers_faces_chunks.o $(LIBSPECFEM)
 
-combine_paraview_data: $O/combine_paraview_data.o $O/write_c_binary.o
-	${FCCOMPILE_CHECK} -o xcombine_paraview_data  $O/combine_paraview_data.o $O/write_c_binary.o
+combine_vol_data: $O/combine_vol_data.o $O/write_c_binary.o
+	${FCCOMPILE_CHECK} -o xcombine_vol_data  $O/combine_vol_data.o $O/write_c_binary.o
+
+combine_surf_data: $O/combine_surf_data.o $O/write_c_binary.o
+	${FCCOMPILE_CHECK} -o xcombine_surf_data  $O/combine_surf_data.o $O/write_c_binary.o
+
+extract_database: UTILS/extract_database/extract_database.f90 
+	${FCCOMPILE_CHECK} -o extract_database UTILS/extract_database/extract_database.f90
+
 clean:
-	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcreate_movie_GMT_global xcombine_paraview_data PI*
+	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcreate_movie_GMT_global xcombine_vol_data xcombine_surf_data extract_database PI*
 
 
 ###
@@ -385,6 +394,9 @@ $O/make_ellipticity.o: constants.h make_ellipticity.f90
 
 $O/get_jacobian_boundaries.o: constants.h get_jacobian_boundaries.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_jacobian_boundaries.o ${FCFLAGS_f90} get_jacobian_boundaries.f90
+
+$O/get_jacobian_discontinuities.o: constants.h get_jacobian_discontinuities.f90
+	${FCCOMPILE_CHECK} -c -o $O/get_jacobian_discontinuities.o ${FCFLAGS_f90} get_jacobian_discontinuities.f90
 
 $O/program_create_movie_AVS_DX.o: constants.h program_create_movie_AVS_DX.f90
 	${FCCOMPILE_CHECK} -c -o $O/program_create_movie_AVS_DX.o ${FCFLAGS_f90} program_create_movie_AVS_DX.f90
@@ -548,6 +560,9 @@ $O/define_derivation_matrices.o: constants.h define_derivation_matrices.f90
 $O/compute_arrays_source.o: constants.h compute_arrays_source.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} compute_arrays_source.f90
 
+$O/compute_boundary_kernel.o: constants.h compute_boundary_kernel.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_boundary_kernel.o ${FCFLAGS_f90} compute_boundary_kernel.f90
+
 $O/create_central_cube_buffers.o: constants.h create_central_cube_buffers.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/create_central_cube_buffers.o ${FCFLAGS_f90} create_central_cube_buffers.f90
 
@@ -557,8 +572,11 @@ $O/attenuation_model.o: constants.h attenuation_model.f90 $O/model_ak135.o $O/mo
 $O/gll_library.o: constants.h gll_library.f90
 	${FCCOMPILE_CHECK} -c -o $O/gll_library.o ${FCFLAGS_f90} gll_library.f90
 
-$O/combine_paraview_data.o: constants.h combine_paraview_data.f90
-	${FCCOMPILE_CHECK} -c -o $O/combine_paraview_data.o ${FCFLAGS_f90} combine_paraview_data.f90
+$O/combine_vol_data.o: constants.h combine_vol_data.f90
+	${FCCOMPILE_CHECK} -c -o $O/combine_vol_data.o ${FCFLAGS_f90} combine_vol_data.f90
+
+$O/combine_surf_data.o: constants.h combine_surf_data.f90
+	${FCCOMPILE_CHECK} -c -o $O/combine_surf_data.o ${FCFLAGS_f90} combine_surf_data.f90
 
 $O/write_c_binary.o: write_c_binary.c config.h
 	$(CC) $(CFLAGS) -c -o $O/write_c_binary.o write_c_binary.c

@@ -94,7 +94,8 @@
          NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
+         NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB
 
 ! copy number of elements and points in an include file for the solver
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
@@ -449,6 +450,28 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2DMAX_YMIN_YMAX_OC = ',NSPEC2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_OC = ',NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_OC = ',NSPEC2D_TOP(IREGION_OUTER_CORE)
+
+  ! for boundary kernels
+
+  if (SAVE_BOUNDARY_MESH) then
+    NSPEC2D_MOHO = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    NSPEC2D_400 = NSPEC2D_MOHO / 4
+    NSPEC2D_670 = NSPEC2D_400
+    NSPEC2D_CMB = NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
+    NSPEC2D_ICB = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+  else
+    NSPEC2D_MOHO = 1
+    NSPEC2D_400 = 1
+    NSPEC2D_670 = 1
+    NSPEC2D_CMB = 1
+    NSPEC2D_ICB = 1
+  endif
+
+  write(IOUT,*) 'integer, parameter :: NSPEC2D_MOHO = ',NSPEC2D_MOHO
+  write(IOUT,*) 'integer, parameter :: NSPEC2D_400 = ',NSPEC2D_400
+  write(IOUT,*) 'integer, parameter :: NSPEC2D_670 = ',NSPEC2D_670
+  write(IOUT,*) 'integer, parameter :: NSPEC2D_CMB = ',NSPEC2D_CMB
+  write(IOUT,*) 'integer, parameter :: NSPEC2D_ICB = ',NSPEC2D_ICB
 
   close(IOUT)
 

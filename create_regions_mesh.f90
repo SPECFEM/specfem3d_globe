@@ -46,7 +46,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,&
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,&
            CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta)
 
 ! create the different regions of the mesh
@@ -225,7 +225,7 @@
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,OCEANS
 
   logical ATTENUATION,ATTENUATION_3D, &
-          INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS
+          INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,HONOR_1D_SPHERICAL_MOHO
 
   double precision R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
@@ -431,6 +431,18 @@
   integer :: ipass
 
   logical :: ACTUALLY_STORE_ARRAYS
+
+
+! Boundary Mesh
+  integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
+  integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
+             ibelm_670_top,ibelm_670_bot
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_moho,normal_400,normal_670
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_moho,jacobian2D_400,jacobian2D_670
+  integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
+  double precision r_moho,r_400,r_670
+  logical :: is_superbrick
+
 
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
@@ -696,6 +708,31 @@
     call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
   endif
 
+! Boundary Mesh
+  if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+    NSPEC2D_MOHO = NSPEC2D_TOP
+    NSPEC2D_400 = NSPEC2D_MOHO / 4
+    NSPEC2D_670 = NSPEC2D_400
+    allocate(ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO))
+    allocate(ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400))
+    allocate(ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670))
+    allocate(normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO))
+    allocate(normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400))
+    allocate(normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670))
+    allocate(jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO))
+    allocate(jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400))
+    allocate(jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670))
+
+    ispec2D_moho_top = 0; ispec2D_moho_bot = 0
+    ispec2D_400_top = 0; ispec2D_400_bot = 0
+    ispec2D_670_top = 0; ispec2D_670_bot = 0
+
+    nex_eta_moho = NEX_PER_PROC_ETA
+
+    r_moho = RMOHO/R_EARTH; r_400 = R400 / R_EARTH; r_670 = R670/R_EARTH
+
+  endif
+
 ! generate and count all the elements in this region of the mesh
   ispec = 0
 ! loop on all the layers in this region of the mesh
@@ -825,6 +862,20 @@
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
            coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
+
+! Boundary Mesh
+        if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+          is_superbrick=.false.
+          ispec_superbrick=0
+          call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, &
+                     xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &
+                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
+                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,r_moho,r_400,r_670, &
+                     is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick,nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
+        endif
+
 
 ! end of loop on all the regular elements
   enddo
@@ -1011,6 +1062,18 @@
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
            coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
 
+! Boundary Mesh
+     if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+       is_superbrick=.true.
+       call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, &
+                  xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &
+                  ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
+                  normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+                  ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                  NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,r_moho,r_400,r_670, &
+                  is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick,nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
+     endif
+
 ! end of loops on the mesh doubling elements
           enddo
         enddo
@@ -1160,6 +1223,7 @@
 
 ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
+  
 
 ! only create global addressing and the MPI buffers in the first pass
   if(ipass == 1) then
@@ -1479,6 +1543,39 @@
 
   deallocate(rmass,stat=ier); if(ier /= 0) stop 'error in deallocate'
   deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate'
+
+! Boundary Mesh
+  if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+    ! first check the number of surface elements are the same for Moho, 400, 670
+    if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
+      if (ispec2D_moho_top /= NSPEC2D_MOHO .or. ispec2D_moho_bot /= NSPEC2D_MOHO) &
+               call exit_mpi(myrank, 'Not the same number of Moho surface elements')
+    endif
+    if (ispec2D_400_top /= NSPEC2D_400 .or. ispec2D_400_bot /= NSPEC2D_400) &
+               call exit_mpi(myrank,'Not the same number of 400 surface elements')
+    if (ispec2D_670_top /= NSPEC2D_670 .or. ispec2D_670_bot /= NSPEC2D_670) &
+               call exit_mpi(myrank,'Not the same number of 670 surface elements')
+
+    ! writing surface topology databases
+    open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin',status='unknown',form='unformatted')
+    write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
+    write(27) ibelm_moho_top
+    write(27) ibelm_moho_bot
+    write(27) ibelm_400_top
+    write(27) ibelm_400_bot
+    write(27) ibelm_670_top
+    write(27) ibelm_670_bot
+    write(27) normal_moho
+    write(27) normal_400
+    write(27) normal_670
+    close(27)
+    
+    deallocate(ibelm_moho_top,ibelm_moho_bot)
+    deallocate(ibelm_400_top,ibelm_400_bot)
+    deallocate(ibelm_670_top,ibelm_670_bot)
+    deallocate(normal_moho,normal_400,normal_670)
+    deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
+  endif
 
 ! compute volume, bottom and top area of that part of the slice
   volume_local = ZERO

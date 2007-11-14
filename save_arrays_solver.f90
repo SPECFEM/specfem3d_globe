@@ -171,7 +171,6 @@
      nglob1 = nglob
   endif
   write(27,*) nspec1
-  write(27,*) nglob
   write(27,*) nglob1
   close(27)
 
@@ -251,16 +250,15 @@
 
   endif
 
-  write(27) ibool
-
-  write(27) idoubling
-
 ! mass matrix
   write(27) rmass
 
 ! additional ocean load mass matrix if oceans and if we are in the crust
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(27) rmass_ocean_load
 
+  close(27)
+
+  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin',status='unknown',form='unformatted')
 ! mesh arrays used in the solver to locate source and receivers
 ! and for anisotropy and gravity, save in single precision
 ! use rmass for temporary storage to perform conversion, since already saved
@@ -323,6 +321,10 @@
 
   write(27) rmass
 
+  write(27) ibool
+
+  write(27) idoubling
+
   close(27)
 
 ! boundary parameters
@@ -333,6 +335,8 @@
   write(27) nspec2D_xmax
   write(27) nspec2D_ymin
   write(27) nspec2D_ymax
+  write(27) NSPEC2D_BOTTOM
+  write(27) NSPEC2D_TOP
 
   write(27) ibelm_xmin
   write(27) ibelm_xmax
