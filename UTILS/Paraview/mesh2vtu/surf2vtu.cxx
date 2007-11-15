@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------------
-// Program:     mesh2vtu
+// Program:     surf2vtu
 // Description: Converts x, y, z, s points to VTK XML Unstructured Grid
 //              using definition of cells
-// File:        mesh2vtu.cxx
+// File:        surf2vtu.cxx
 // Author:      Nicholas Schwarz, schwarz@evl.uic.edu
 //              Electronic Visualization Laboratory
 //              University of Illinois at Chicago
@@ -11,6 +11,8 @@
 //              Brian Savage savage13@gps.caltech.edu
 //              California Institute of Technology
 //              Geologial and Planetary Sciences
+//
+//              Qinya Liu, modification from mesh2vtu
 // 
 // Input:       in binary
 //              integer    number of points

@@ -7,6 +7,7 @@ use lib '/opt/seismo-util/lib/perl';
 @ISA = ('Exporter');
 @EXPORT = ('list2files','files2list','file_in_files','files_minus',
           );
+# Qinya Liu, Caltech, May 2007
 
 # list2files
 

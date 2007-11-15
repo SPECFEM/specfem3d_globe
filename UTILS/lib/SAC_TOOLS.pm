@@ -9,6 +9,7 @@ use SACLST;
 @EXPORT = ('write_station_psxy','write_station_pstext',
 	   'match_data_and_syn','copyhdr_data_to_syn');
 
+# Qinya Liu, Caltech, May 2007
 
 sub write_station_psxy{
   my(@sacfiles) = @_;

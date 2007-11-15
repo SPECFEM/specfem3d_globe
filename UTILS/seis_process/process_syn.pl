@@ -32,6 +32,11 @@ where
 
     names of files -- name of syn files to be processed
 
+    Make sure you have sac, saclst, phtimes, asc2sac, ascii2sac.csh  
+    in PATH before execution
+
+    Qinya Liu, Caltech, May 2007
+
 END
 exit(1);
 }
@@ -95,7 +100,7 @@ foreach $file (@ARGV) {
   if ($ext or $opt_d) {system("\\cp -f $file $outfile");}
   print "Output to file $outfile\n";
 
-  if ($opt_c) { open(SAC,"|sac2000");}else {open(SAC,"|sac2000 > /dev/null");}
+  if ($opt_c) { open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
   print SAC "echo on\n";
 
   print SAC "r $outfile\n";
@@ -107,7 +112,7 @@ foreach $file (@ARGV) {
     print SAC "ch evla $elat evlo $elon evdp $edep \n wh\n";
     print SAC "w over \nquit\n";
     close(SAC);
-    if ($opt_c) {open(SAC,"|sac2000");}else {open(SAC,"|sac2000 > /dev/null");}
+    if ($opt_c) {open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
     print SAC "echo on\n r $outfile\n";}
 
     if ($opt_h and $hdur > $min_hdur) { # convolve source time function
@@ -140,10 +145,10 @@ foreach $file (@ARGV) {
 
   if ($opt_A) {print SAC "mul $opt_A\n";}
 
-  print SAC "interp delta $dt\n";
+  if ($opt_s) {print SAC "interp delta $dt\n";}
   print SAC "w over\nquit\n";
   close(SAC);
-  if ($opt_c) { open(SAC,"|sac2000");}else {open(SAC,"|sac2000 > /dev/null");}
+  if ($opt_c) { open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
   print SAC "echo on\n r $outfile\n ";
 
   if ($opt_t){ # filter record

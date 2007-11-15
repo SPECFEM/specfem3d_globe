@@ -11,7 +11,7 @@ use CMT_TOOLS;
 	   'plot_psmeca_raw','plot_pssac2','plot_pssac2_raw',
 	   'shift_xy');
 
-
+# Qinya Liu, Caltech, May 2007
 # default paper orientation : landscape
 $paper_orient = "";
 
