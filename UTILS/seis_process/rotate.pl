@@ -17,6 +17,10 @@ sub Usage {
     For iris data (with -d), the timing part of the name will be ignored
     and only the component part of the name will be changed correspondingly
 
+    Make sure you have sac, saclst in the PATH before execution
+
+    Qinya Liu, Caltech, May 2007
+
 EOF
 exit(1)
 }

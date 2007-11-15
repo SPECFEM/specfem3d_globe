@@ -5,6 +5,8 @@ use strict;
 use warnings;
 use TrimWhitespace;
 
+# Brian Savage, Caltech
+
 BEGIN {
     use Exporter();
     our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);

@@ -9,6 +9,8 @@ use SACLST;
 @ISA = ('Exporter');
 @EXPORT = ('plot_sc_faults','plot_sc_topo','plot_sc_all','plot_sc_pssac2_map');
 
+# Qinya Liu, Caltech, May 2007
+
 $datalib_dir = "/opt/seismo-util/data/datalib_SC";
 if (not -d $datalib_dir) {die("Check the datalib path\n");}
 

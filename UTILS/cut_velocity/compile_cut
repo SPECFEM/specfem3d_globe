@@ -1,1 +1,3 @@
-ifort -o ../xcut_velocity cut_velocity.f90 -fast -L../lib -lDRWFiles 
+gcc -c -o rw_ascfile_c.o rw_ascfile_c.c
+gcc -c -o rw_fortran_wrapper.o rw_fortran_wrapper.c
+ifort -O3 -o xcut_velocity cut_velocity.f90 rw_ascfile_f.f90 rw_ascfile_c.o rw_fortran_wrapper.o

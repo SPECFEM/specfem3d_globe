@@ -2,6 +2,12 @@ program cut_velocity
 
 ! this program cuts certain portion of the seismograms and convert them into 
 ! the adjoints sources for generating banana-dougnut kernels.
+!  rotation conforms with the SAC 'rotate to gcp normal' command, which says
+!    R = cos(th)*N+sin(th)*E
+!    T = -sin(th)*N+cos(th)*E
+!  where th = baz - pi
+!
+!  Qinya Liu, Caltech, May 2007
 
   implicit none
 

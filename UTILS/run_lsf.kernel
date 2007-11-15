@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# this is the launch script to run a regular forward simulation
+# this is the launch script to run a kernel simulation 
 # on CITerra with the LSF scheduler
 #  Qinya Liu, Caltech, May 2007
 
@@ -11,8 +11,12 @@ if [ $# -eq 1 ]; then
 	queue="-q $1"
 fi
 
+rm -f OUTPUT_FILES/*
+
 d=`date`
 echo "Starting compilation $d"
+# you have to make sure you set this first before compiling the mesher & solver
+change_simulation_type.pl -b
 make clean
 make meshfem3D
 make create_header_file
@@ -29,7 +33,9 @@ NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -d = -f 2`
 
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
+#rm -rf OUTPUT_FILES/*
 
 echo "Submitting job"
-bsub $queue -n $numnodes -W 600 -K < UTILS/go_mesher_solver_lsf_globe.bash
+
+bsub $queue -n $numnodes -W 48:0  < go_mesher_solver_lsf_globe.kernel
 

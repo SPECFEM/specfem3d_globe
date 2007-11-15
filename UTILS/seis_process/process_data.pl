@@ -28,6 +28,7 @@ sub Usage{
        data_sac_files --- names of the data sac files to be processed
 
  Notice:
+  0. Make sure you have sac, saclst, phtimes in PATH before execution
   1. We require that polezero files are in the same directory as the sac 
      data files which is generally satisfied. All the needed info are 
      taken from sac headers
@@ -35,6 +36,8 @@ sub Usage{
   3. The displacement outputs after -i option are in the unit of meters
   4. For BH? components, please set -s 20, otherwise interpolation to
      1 sample/second will be performed
+
+  Qinya Liu, May 2007, Caltech
 
 END
   exit(1);
@@ -74,8 +77,8 @@ foreach $file (@ARGV) {
   if ($ext or $opt_d) {system("\\cp -f $file $outfile");}
 
   # process data
-  if ($opt_c) {open(SAC,"|sac2000 ") || die("Can't open sac2000\n");}
-  else {open(SAC,"|sac2000 > /dev/null") || die("Can't open sac2000\n");}
+  if ($opt_c) {open(SAC,"|sac ") || die("Can't open sac\n");}
+  else {open(SAC,"|sac > /dev/null") || die("Can't open sac\n");}
   print SAC "echo on\n";
   print SAC "r $outfile\n";
 
@@ -92,8 +95,8 @@ foreach $file (@ARGV) {
     print SAC "ch evla $elat evlo $elon evdp $edep \n";
     print SAC "w $outfile\nquit\n";
     close(SAC);
-    if ($opt_c) {open(SAC,"|sac2000 ") || die("Can't open sac2000\n");}
-    else {open(SAC,"|sac2000 > /dev/null") || die("Can't open sac2000\n");}
+    if ($opt_c) {open(SAC,"|sac ") || die("Can't open sac\n");}
+    else {open(SAC,"|sac > /dev/null") || die("Can't open sac\n");}
     print SAC "echo on\n";
     print SAC "r $outfile\n";}
 
@@ -106,12 +109,13 @@ foreach $file (@ARGV) {
     print SAC "cut %begin% %end% \n";
     print SAC "r $outfile\n cut off\n  w over \nquit\n";
     close (SAC);
-    if ($opt_c) {open(SAC,"|sac2000 ") || die("Can't open sac2000\n");}
-    else {open(SAC,"|sac2000 > /dev/null") || die("Can't open sac2000\n");}
+    if ($opt_c) {open(SAC,"|sac ") || die("Can't open sac\n");}
+    else {open(SAC,"|sac > /dev/null") || die("Can't open sac\n");}
     print SAC "echo on\n";
     print SAC "r $outfile\n";}
 
-    print SAC "interp delta $dt\n";
+  if ($opt_s) {
+    print SAC "interp delta $dt\n";}
 
   if ($opt_t) {# filter records
     print "    Filter record at periods $tmin and $tmax\n";

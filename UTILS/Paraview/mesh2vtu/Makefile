@@ -26,4 +26,4 @@ ugrid_pts.o: ugrid_pts.cxx
 	$(CXX) $(CPPFLAGS) -c ugrid_pts.cxx -o ugrid_pts.o
 
 clean:
-	rm -f mesh2vtu ugrid ugrid_pts *.o *~ core
+	rm -f mesh2vtu cell2vtu ugrid ugrid_pts *.o *~ core

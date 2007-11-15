@@ -5,6 +5,8 @@ use Exporter;
 use Time::Local;
 use POSIX;
 
+## Qinya Liu, Caltech, May 2007
+
 @ISA = ('Exporter');
 @EXPORT = ('get_cmt','get_cmt_long','get_cmt_short','get_cmt_moment',
 	   'get_cmt_long2', 'get_cmt_evnm',

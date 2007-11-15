@@ -1,6 +1,16 @@
 #!/usr/bin/perl -w
 
-# this script collects the database files to plot OC mesh in Paraview
+# this script collects the required outer core database files to prepare mesh
+# files for Paraview
+#   array_dims.txt, solver_data_2.bin and kernel_filename/solver_data_1.bin
+#   you need to supply the actual lsf_machine_file
+#   (1 line, node name and number of procs used)
+#   so that the correct machine file can be selected for the given slices (in slice_file)
+# if you are collecting anything other than kernel files, solver_data_1.bin is
+#   collected instead
+
+# Qinya Liu, Caltech, May 2007
+
 
 use POSIX;
 
@@ -8,16 +18,11 @@ if (@ARGV != 3 and @ARGV != 4) {die("copy_oc_globe_database.pl slice_file lsf_ma
 $sfile = $ARGV[0];
 $machine = $ARGV[1];
 $filename = $ARGV[2];
-if (@ARGV == 4) {$jobid = $ARGV[3];} else {$jobid ="";}
+if (@ARGV == 4) {$jobid = ".$ARGV[3]";} else {$jobid ="";}
 
 open(FILE,"$sfile") or die("Error opening file $sfile\n");
 (@slices) = <FILE>;
 close(FILE);
-
-($nline) = split(" ",`wc $machine`);
-if ($nline != 1)
-   {die("Check if machine file is LSF machine file format: if not, modify perl script\n");}
-# LSF machine
 open(FILE,"$machine") or die("Error opening file $machine\n");
 ($machines) = <FILE>;
 close(FILE);
@@ -41,13 +46,13 @@ for($i=0;$i<@slices;$i++) {
   print "$slice[$i], $node[$i]\n";
 }
 
-@files = ("AVS_DXelements","AVS_DXpoints","array_dims","$filename","solver_data_1");
-@exts = ("txt","txt","txt","bin","bin");
+@files = ("array_dims","$filename","solver_data_2");
+@exts = ("txt","bin","bin");
 
 
 for($i=0;$i<@slices;$i++) {
   for($j=0;$j<@files;$j++){
-  $string = sprintf("scp $node[$i]:/scratch/$ENV{USER}/DATABASES_MPI.$jobid/proc%06d_reg2_$files[$j].$exts[$j] .", $slice[$i]);
+  $string = sprintf("scp $node[$i]:/scratch/$ENV{USER}/DATABASES_MPI$jobid/proc%06d_reg2_$files[$j].$exts[$j] .", $slice[$i]);
   print "$string\n";
   system("$string");
 }}

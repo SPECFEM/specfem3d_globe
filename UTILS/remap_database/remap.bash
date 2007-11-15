@@ -12,4 +12,5 @@ remap_lsf_machines.pl OUTPUT_FILES/lsf_machines >OUTPUT_FILES/machines
 
 shmux -M50 -Sall -c "mkdir -p $BASEMPIDIR" - < OUTPUT_FILES/machines >/dev/null
 
-mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/remap old_machines 150
+# you can use . to replace the jobid's if no jobid sub-directory was made on the scratch
+mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/remap old_machines 150 old_jobid new_jobid

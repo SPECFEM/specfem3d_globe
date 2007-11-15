@@ -13,7 +13,7 @@ BEGIN {
 }
 our @EXPORT_OK;
 
-# culled from Hiroos subroutines
+# culled from Hiroos subroutines -- Vala/Brian?
 sub delaz5 {
     my($thei, $alei, $thsi, $alsi, $i) = @_;
 #	This is an old Fortran subroutine to compute the
