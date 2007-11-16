@@ -693,7 +693,9 @@
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-          ROTATE_SEISMOGRAMS_RT, HONOR_1D_SPHERICAL_MOHO
+          ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
+          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
+
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 ! parameters deduced from parameters read from file
@@ -754,7 +756,7 @@
 ! arrays for BCAST
   integer, dimension(35) :: bcast_integer
   double precision, dimension(24) :: bcast_double_precision
-  logical, dimension(29) :: bcast_logical
+  logical, dimension(32) :: bcast_logical
 
 ! Boundary Mesh and Kernels
   integer k_top,k_bot,iregion_code,njunk1,njunk2,njunk3
@@ -816,7 +818,8 @@
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
-          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA)
+         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
+         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
 
     if(err_occurred() /= 0) then
           call exit_MPI(myrank,'an error occurred while reading the parameter file')
@@ -842,7 +845,8 @@
             SAVE_MESH_FILES,ATTENUATION, &
             ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-            ROTATE_SEISMOGRAMS_RT,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA/)
+            ROTATE_SEISMOGRAMS_RT,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+            WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE/)
 
     bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -858,7 +862,7 @@
 
     call MPI_BCAST(bcast_double_precision,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_logical,29,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_logical,32,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
@@ -958,7 +962,10 @@
     ROTATE_SEISMOGRAMS_RT = bcast_logical(27)
     CUT_SUPERBRICK_XI = bcast_logical(28)
     CUT_SUPERBRICK_ETA = bcast_logical(29)
-
+    WRITE_SEISMOGRAMS_BY_MASTER = bcast_logical(30)
+    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(31)
+    USE_BINARY_FOR_LARGE_FILE = bcast_logical(32)
+    
     DT = bcast_double_precision(1)
     ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
     ANGULAR_WIDTH_ETA_IN_DEGREES = bcast_double_precision(3)
@@ -987,7 +994,8 @@
   endif
 
 ! if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP)
-  NTSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP, NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+! BS BS: Do we need this? Seismograms are written anyway after the time loop
+!  NTSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP, NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
 ! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
@@ -2067,7 +2075,7 @@
 ! synchronize all the processes before assembling the mass matrix
 ! to make sure all the nodes have finished to read their databases
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
-    write(IMAIN,*) 'barrier done'
+    if(myrank==0) write(IMAIN,*) 'barrier done'
 
 ! the mass matrix needs to be assembled with MPI here once and for all
 
@@ -2100,7 +2108,7 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS)
-    write(IMAIN,*) 'assemble MPI scalar CM done'
+  if(myrank==0) write(IMAIN,*) 'assemble MPI scalar CM done'
 ! outer core
   call assemble_MPI_scalar(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2114,7 +2122,7 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS)
-    write(IMAIN,*) 'assemble MPI scalar OC done'
+  if(myrank==0) write(IMAIN,*) 'assemble MPI scalar OC done'
 ! inner core
   call assemble_MPI_scalar(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -4248,7 +4256,11 @@
               cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
               OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
               OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-              seismo_offset,seismo_current)
+              seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
+              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+    if(myrank==0) write(IMAIN,*) 
+    if(myrank==0) write(IMAIN,*) ' Total number of time steps written: ', it-it_begin 
+    if(myrank==0) write(IMAIN,*) 
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
@@ -4694,7 +4706,11 @@
         cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
         OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
         OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-        seismo_offset,seismo_current)
+        seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
+        SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+    if(myrank==0) write(IMAIN,*) 
+    if(myrank==0) write(IMAIN,*) ' Total number of time steps written: ', it-it_begin 
+    if(myrank==0) write(IMAIN,*) 
     else
     if (nrec_local > 0) then
       call write_adj_seismograms(seismograms,number_receiver_global, &

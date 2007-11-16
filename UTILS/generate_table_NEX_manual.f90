@@ -17,7 +17,7 @@ integer, dimension(NB_COLONNES) :: store_NEX_XI
   integer, parameter :: BASE_VALUE = 16
 
 ! output in LaTeX format or in regular ASCII format
-  logical, parameter :: OUTPUT_LATEX_FORMAT = .true.
+  logical, parameter :: OUTPUT_LATEX_FORMAT = .false.
 
   do NPROC_XI = 1,26
 
