@@ -32,7 +32,8 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
               cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
               NPROCTOT,OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
               OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-              seismo_offset,seismo_current)
+              seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER,&
+              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
 
  implicit none
 
@@ -44,6 +45,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
 
 ! parameters
  integer nrec,nrec_local,myrank,it_end,NPROCTOT,NSOURCES
+ character(len=256) sisname
 
  integer :: seismo_offset, seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
  integer, dimension(nrec_local) :: number_receiver_global
@@ -62,7 +64,9 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
  character(12) ename
 
 ! variables
- integer :: iproc,sender,irec_local,irec,total_seismos,ier,receiver,nrec_local_received
+ integer :: iproc,sender,irec_local,irec,ier,receiver,nrec_local_received
+ integer :: total_seismos,total_seismos_local
+ double precision :: write_time_begin,write_time
 
  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
  integer msg_status(MPI_STATUS_SIZE)
@@ -73,84 +77,180 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
           OUTPUT_SEISMOS_SAC_BINARY
 ! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
   logical ROTATE_SEISMOGRAMS_RT
+          
+! flag to decide whether seismograms are written by master proc only or
+! by all processes in parallel (doing the later may create problems on some
+! file systems). Added November 12th, 2007 BS BS
+  logical WRITE_SEISMOGRAMS_BY_MASTER
 
+! save all seismograms in one large combined file instead of one file per seismogram
+! to avoid overloading shared non-local file systems such as GPFS for instance
+  logical SAVE_ALL_SEISMOS_IN_ONE_FILE
+  logical USE_BINARY_FOR_LARGE_FILE
 
-  if(myrank == 0) then ! on the master, gather all the seismograms
+  ! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
-    ! get the base pathname for output files
-    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+! now we let all processes do the writing of seismograms
+ if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 
-! create one large file instead of one small file per station to avoid file system overload
-    if(SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+   write_time_begin= MPI_WTIME()
+
+   if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+        write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
+    
       if(USE_BINARY_FOR_LARGE_FILE) then
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//'/'//'all_seismograms.bin',status='unknown',form='unformatted')
+        if (seismo_offset==0) then
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted')
+        else
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
+               form='unformatted',position='append')
+        endif
       else
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//'/'//'all_seismograms.ascii',status='unknown')
+        if (seismo_offset==0) then
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted')
+        else
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
+               form='formatted',position='append')
+        endif
       endif
+   endif
+
+
+   total_seismos_local = 0
+
+  ! loop on all the local receivers
+   do irec_local = 1,nrec_local
+
+   ! get global number of that receiver
+   irec = number_receiver_global(irec_local)
+
+   total_seismos_local = total_seismos_local + 1
+
+   one_seismogram=seismograms(:,irec_local,:)
+    
+         ! write this seismogram
+         call write_one_seismogram(one_seismogram,irec, &
+                                   station_name,network_name,stlat,stlon,stele,nrec, &
+                                   DT,hdur,it_end, &
+                                   yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat, &
+                                   cmt_lon,cmt_depth,cmt_hdur,NSOURCES,OUTPUT_FILES, &
+                                   OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+                                   OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
+                                   NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
+                                   SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
+                                    
+   enddo
+
+   if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
+
+   write_time  = MPI_WTIME() - write_time_begin
+   
+   if(myrank==0) write(IMAIN,*)
+   if(myrank==0) write(IMAIN,*) ' Writing the seismograms in parallel took ', write_time, ' seconds'     
+   if(myrank==0) write(IMAIN,*)
+   
+! now only the master process does the writing of seismograms and
+! collects the data from all other processes
+ else ! WRITE_SEISMOGRAMS_BY_MASTER
+
+    write_time_begin= MPI_WTIME()
+
+    if(myrank == 0) then ! on the master, gather all the seismograms
+
+       ! create one large file instead of one small file per station to avoid file system overload
+       if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+           write(sisname,'(A)') '/all_seismograms'
+    
+         if(USE_BINARY_FOR_LARGE_FILE) then
+           if (seismo_offset==0) then
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted')
+           else
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
+                  form='unformatted',position='append')
+           endif
+         else
+           if (seismo_offset==0) then
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted')
+           else
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
+                  form='formatted',position='append')
+           endif
+         endif
+
+       endif
+
+       total_seismos = 0
+
+       ! loop on all the slices
+       do iproc = 0,NPROCTOT-1
+
+         ! receive except from proc 0, which is me and therefore I already have this value
+         sender = iproc
+         if(iproc /= 0) then
+           call MPI_RECV(nrec_local_received,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+           if(nrec_local_received < 0) call exit_MPI(myrank,'error while receiving local number of receivers')
+         else
+           nrec_local_received = nrec_local
+         endif
+         if (nrec_local_received > 0) then
+           do irec_local = 1,nrec_local_received
+             ! receive except from proc 0, which is myself and therefore I already have these values
+             if(iproc == 0) then
+               ! get global number of that receiver
+               irec = number_receiver_global(irec_local)
+               one_seismogram(:,:) = seismograms(:,irec_local,:)
+             else
+               call MPI_RECV(irec,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+               if(irec < 1 .or. irec > nrec) call exit_MPI(myrank,'error while receiving global receiver number')
+               call MPI_RECV(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+             endif
+
+             total_seismos = total_seismos + 1
+             ! write this seismogram
+             call write_one_seismogram(one_seismogram,irec, &
+                                       station_name,network_name,stlat,stlon,stele,nrec, &
+                                       DT,hdur,it_end, &
+                                       yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat, &
+                                       cmt_lon,cmt_depth,cmt_hdur,NSOURCES,OUTPUT_FILES, &
+                                       OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+                                       OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
+                                       NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,&
+                                       SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
+           enddo
+         endif
+       enddo
+
+       write(IMAIN,*)
+       write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
+       write(IMAIN,*)
+
+       if(total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
+
+   ! create one large file instead of one small file per station to avoid file system overload
+       if(SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
+
+    else  ! on the nodes, send the seismograms to the master
+       receiver = 0
+       call MPI_SEND(nrec_local,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+       if (nrec_local > 0) then
+         do irec_local = 1,nrec_local
+           ! get global number of that receiver
+           irec = number_receiver_global(irec_local)
+           call MPI_SEND(irec,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+           one_seismogram(:,:) = seismograms(:,irec_local,:)
+           call MPI_SEND(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+         enddo
+       endif
     endif
 
-    total_seismos = 0
-
-    ! loop on all the slices
-    do iproc = 0,NPROCTOT-1
-
-      ! receive except from proc 0, which is me and therefore I already have this value
-      sender = iproc
-      if(iproc /= 0) then
-        call MPI_RECV(nrec_local_received,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-        if(nrec_local_received < 0) call exit_MPI(myrank,'error while receiving local number of receivers')
-      else
-        nrec_local_received = nrec_local
-      endif
-      if (nrec_local_received > 0) then
-        do irec_local = 1,nrec_local_received
-          ! receive except from proc 0, which is myself and therefore I already have these values
-          if(iproc == 0) then
-            ! get global number of that receiver
-            irec = number_receiver_global(irec_local)
-            one_seismogram(:,:) = seismograms(:,irec_local,:)
-          else
-            call MPI_RECV(irec,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-            if(irec < 1 .or. irec > nrec) call exit_MPI(myrank,'error while receiving global receiver number')
-            call MPI_RECV(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-          endif
-
-          total_seismos = total_seismos + 1
-          ! write this seismogram
-          call write_one_seismogram(one_seismogram,irec, &
-                                    station_name,network_name,stlat,stlon,stele,nrec, &
-                                    DT,hdur,it_end, &
-                                    yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat, &
-                                    cmt_lon,cmt_depth,cmt_hdur,NSOURCES,OUTPUT_FILES, &
-                                    OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-                                    OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
-                                    NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current)
-        enddo
-      endif
-    enddo
-
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
-    write(IMAIN,*)
-
-    if(total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
-
-! create one large file instead of one small file per station to avoid file system overload
-    if(SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
-
-  else  ! on the nodes, send the seismograms to the master
-    receiver = 0
-    call MPI_SEND(nrec_local,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
-    if (nrec_local > 0) then
-      do irec_local = 1,nrec_local
-        ! get global number of that receiver
-        irec = number_receiver_global(irec_local)
-        call MPI_SEND(irec,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
-        one_seismogram(:,:) = seismograms(:,irec_local,:)
-        call MPI_SEND(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
-      enddo
-    endif
-  endif
+    write_time  = MPI_WTIME() - write_time_begin
+   
+    if(myrank==0) write(IMAIN,*)
+    if(myrank==0) write(IMAIN,*) ' Writing the seismograms by master proc alone took ', write_time, ' seconds'     
+    if(myrank==0) write(IMAIN,*)
+   
+ endif ! WRITE_SEISMOGRAMS_BY_MASTER
 
 end subroutine write_seismograms
 
@@ -162,7 +262,8 @@ end subroutine write_seismograms
               OUTPUT_FILES, &
               OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
               OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
-              NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current)
+              NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
+              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
 
  implicit none
 
@@ -176,6 +277,7 @@ end subroutine write_seismograms
 
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
 
+ integer myrank
   double precision hdur,DT
 
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
@@ -254,6 +356,11 @@ end subroutine write_seismograms
 ! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
   logical ROTATE_SEISMOGRAMS_RT
 
+! save all seismograms in one large combined file instead of one file per seismogram
+! to avoid overloading shared non-local file systems such as GPFS for instance
+  logical SAVE_ALL_SEISMOS_IN_ONE_FILE
+  logical USE_BINARY_FOR_LARGE_FILE
+
 ! BS BS new variables used for calculation of backazimuth and
 ! rotation of components if ROTATE_SEISMOGRAMS=.true.
 
@@ -285,7 +392,7 @@ end subroutine write_seismograms
       else if(iorientation == 5) then
         chn = 'LHT'
      else
-       stop 'incorrect channel value'
+        call exit_MPI(myrank,'incorrect channel value')
      endif
 
       if (iorientation == 4 .or. iorientation == 5) then        ! LMU BS BS
@@ -333,10 +440,10 @@ end subroutine write_seismograms
 
 ! check that length conforms to standard
      if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) &
-          stop 'wrong length of station name'
+           call exit_MPI(myrank,'wrong length of station name')
 
      if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) &
-          stop 'wrong length of network name'
+           call exit_MPI(myrank,'wrong length of network name')
 
 ! create the name of the seismogram file using the station name and network name
      write(sisname,"('/',a,'.',a,'.',a3,'.semd')") station_name(irec)(1:length_station_name), &
@@ -497,9 +604,9 @@ end subroutine write_seismograms
 ! add .sacan (sac alphanumeric) extension to seismogram file name for SAC seismograms
   write(sisname_2,"('/',a,'.sacan')") trim(sisname)
   if (seismo_offset == 0) then
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+    open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
   else
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old', position='append')
+    open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old', position='append')
   endif
 
 ! Formats of alphanumerical SAC header fields
@@ -516,65 +623,65 @@ end subroutine write_seismograms
 !
 ! real variables:
 !
- write(IOUT,510) DELTA,    DEPMIN,  DEPMAX,  SCALE_F,  ODELTA
+ write(IOUT_SAC,510) DELTA,    DEPMIN,  DEPMAX,  SCALE_F,  ODELTA
 !                                 DELTA     DEPMIN   DEPMAX   SCALE   ODELTA
- write(IOUT,510) B,        E,       O,       A,      INTERNAL
+ write(IOUT_SAC,510) B,        E,       O,       A,      INTERNAL
 !                                 B         E        O        A       INTERNAL
- write(IOUT,510) undef,    undef,   undef,   undef,  undef
+ write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
 !                                 T0        T1       T2       T3      T4
- write(IOUT,510) undef,    undef,   undef,   undef,  undef
+ write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
 !                                 T5        T6       T7       T8      T9
- write(IOUT,510) undef,    undef,   undef,   undef,  undef
+ write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
 !                                 F         RESP0    RESP1    RESP2   RESP3
- write(IOUT,510) undef,    undef,   undef,   undef,  undef
+ write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
 !                                 RESP4     RESP5    RESP6    RESP7   RESP8
- write(IOUT,510) undef,    STLA,    STLO,    STEL,   STDP
+ write(IOUT_SAC,510) undef,    STLA,    STLO,    STEL,   STDP
 !                                 RESP9     STLA     STLO     STEL    STDP
- write(IOUT,510) EVLA,     EVLO,    EVEL,    EVDP,   MAG
+ write(IOUT_SAC,510) EVLA,     EVLO,    EVEL,    EVDP,   MAG
 !                                 EVLA      EVLO     EVEL     EVDP    MAG
- write(IOUT,510) USER0,    USER1,   USER2,   USER3,  undef
+ write(IOUT_SAC,510) USER0,    USER1,   USER2,   USER3,  undef
 !                                 USER0     USER1    USER2    USER3   USER4
- write(IOUT,510) undef,    undef,   undef,   undef,  undef
+ write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
 !                                 USER5     USER6    USER7    USER8   USER9
- write(IOUT,510) DIST,     AZ,      BAZ,     GCARC,  INTERNAL
+ write(IOUT_SAC,510) DIST,     AZ,      BAZ,     GCARC,  INTERNAL
 !                                 DIST      AZ       BAZ      GCARC   INTERNAL
- write(IOUT,510) INTERNAL, DEPMEN,  CMPAZ,   CMPINC, undef
+ write(IOUT_SAC,510) INTERNAL, DEPMEN,  CMPAZ,   CMPINC, undef
 !                                 INTERNAL  DEPMEN   CMPAZ    CMPINC  XMINIMUM
- write(IOUT,510) undef,    undef,   undef,   undef,  undef
+ write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
 !                                 XMAXIMUM  YMINIMUM YMAXIMUM ADJTM   UNUSED
- write(IOUT,510) UNUSED,   UNUSED,  UNUSED,  UNUSED, UNUSED
+ write(IOUT_SAC,510) UNUSED,   UNUSED,  UNUSED,  UNUSED, UNUSED
 !
 ! integer variables:
 !
- write(IOUT,520) NZYEAR, NZJDAY, NZHOUR, NZMIN, NZSEC
- write(IOUT,520) NZMSEC, NVHDR, NORID, NEVID, NPTS
- write(IOUT,520) int(undef),int(undef),int(undef),int(undef),int(undef)
+ write(IOUT_SAC,520) NZYEAR, NZJDAY, NZHOUR, NZMIN, NZSEC
+ write(IOUT_SAC,520) NZMSEC, NVHDR, NORID, NEVID, NPTS
+ write(IOUT_SAC,520) int(undef),int(undef),int(undef),int(undef),int(undef)
 !                                 NSPTS, NWFID, NXSIZE, NYSIZE, UNUSED
- write(IOUT,520) IFTYPE, IDEP, IZTYPE, int(UNUSED), int(undef)
+ write(IOUT_SAC,520) IFTYPE, IDEP, IZTYPE, int(UNUSED), int(undef)
 !                                                                    IINST
- write(IOUT,520) int(undef),int(undef),IEVTYP, int(undef), ISYNTH
+ write(IOUT_SAC,520) int(undef),int(undef),IEVTYP, int(undef), ISYNTH
 !                                 ISTREG IEVREG IEVTYP IQUAL ISYNTH
- write(IOUT,520) IMAGTYP,int(undef),int(undef),int(undef),int(undef)
+ write(IOUT_SAC,520) IMAGTYP,int(undef),int(undef),int(undef),int(undef)
 !                                 IMAGTYP, IMAGSRC, UNUSED, UNUSED, UNUSED
- write(IOUT,520) int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED)
- write(IOUT,520) LEVEN, LPSPOL, LOVROK, LCALDA, int(UNUSED)
- write(IOUT,530) KSTNM, KEVNM
+ write(IOUT_SAC,520) int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED), int(UNUSED)
+ write(IOUT_SAC,520) LEVEN, LPSPOL, LOVROK, LCALDA, int(UNUSED)
+ write(IOUT_SAC,530) KSTNM, KEVNM
 !
 ! character variables:
 !
- write(IOUT,540) '-12345  ','-12345  ','-12345  '
+ write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
 !                                   KHOLE    KO       KA
- write(IOUT,540) '-12345  ','-12345  ','-12345  '
+ write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
 !                                   KT0      KT1      KT2
- write(IOUT,540) '-12345  ','-12345  ','-12345  '
+ write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
 !                                   KT3      KT4      KT5
- write(IOUT,540) '-12345  ','-12345  ','-12345  '
+ write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
 !                                   KT6      KT7      KT8
- write(IOUT,540) '-12345  ','-12345  ',KUSER0
+ write(IOUT_SAC,540) '-12345  ','-12345  ',KUSER0
 !                                   KT9      KF       KUSER0
- write(IOUT,540)   KUSER1, KUSER2, KCMPNM
+ write(IOUT_SAC,540)   KUSER1, KUSER2, KCMPNM
 !                                   KUSER1     KUSER2       KCMPNM
- write(IOUT,540)   KNETWK,'-12345  ','-12345  '
+ write(IOUT_SAC,540)   KNETWK,'-12345  ','-12345  '
 !                                   KNETWK   KDATRD   KINST
     endif
 
@@ -589,11 +696,11 @@ end subroutine write_seismograms
    value4 = dble(seismogram_tmp(iorientation,isample-2))
    value5 = dble(seismogram_tmp(iorientation,isample-1))
 
-   write(IOUT,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
+   write(IOUT_SAC,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
 
  enddo
 
- close(IOUT)
+ close(IOUT_SAC)
 
   endif ! OUTPUT_SEISMOS_SAC_ALPHANUM
 
@@ -604,7 +711,11 @@ end subroutine write_seismograms
  write(sisname_2,"('/',a,'.sac')") trim(sisname)
 
     ! open binary file
-    call open_file(trim(OUTPUT_FILES)//trim(sisname_2)//char(0))
+    if (seismo_offset == 0) then
+       call open_file_create(trim(OUTPUT_FILES)//trim(sisname_2)//char(0))
+    else
+       call open_file_append(trim(OUTPUT_FILES)//trim(sisname_2)//char(0))
+    endif   
 
     if (seismo_offset == 0) then
       ! write header variables

@@ -1223,7 +1223,6 @@
 
 ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
-  
 
 ! only create global addressing and the MPI buffers in the first pass
   if(ipass == 1) then
