@@ -430,7 +430,7 @@
 ! arrays for BCAST
   integer, dimension(35) :: bcast_integer
   double precision, dimension(24) :: bcast_double_precision
-  logical, dimension(25) :: bcast_logical
+  logical, dimension(26) :: bcast_logical
 
   integer, parameter :: maxker=200
   integer, parameter :: maxl=72
@@ -586,7 +586,8 @@
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
             ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D,&
-            CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA/)
+            CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,SAVE_ALL_SEISMOS_IN_ONE_FILE,WRITE_SEISMOGRAMS_BY_MASTER,&
+            USE_BINARY_FOR_LARGE_FILE/)
 
     bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -699,6 +700,7 @@
     CASE_3D = bcast_logical(23)
     CUT_SUPERBRICK_XI = bcast_logical(24)
     CUT_SUPERBRICK_ETA = bcast_logical(25)
+    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(26)
 
     DT = bcast_double_precision(1)
     ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
