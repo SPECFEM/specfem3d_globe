@@ -5,36 +5,7 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 David:
 -----
 
-- Here is another paper we should cite, on a similar topic (but acoustic only, while the other is for elastic media as well). If someone has time to add a sentence to the manual to cite both, here are the BibTeX entries to add to bibligraphy.bib
-@ARTICLE{SeOl07,
-  author = {G{\'e}za Seriani and Saulo P. Oliveira},
-  title = {Optimal blended spectral-element operators for acoustic wave
-modeling},
-  journal = geophysics,
-  year = {2007},
-  volume = {72},
-  pages = {SM95.SM106},
-  number = {5},
-  doi = {10.1190/1.2750715}
-}
-@ARTICLE{DeSe07,
-  author = {Jon{\'a}s D. {De Basabe} and Mrinal K. Sen},
-  title = {Grid dispersion and stability criteria of some common
-finite-element
-    methods for acoustic and elastic wave equations},
-  journal = geophysics,
-  year = {2007},
-  volume = {72},
-  pages = {T81.T95},
-  number = {6},
-  doi = {10.1190/1.2785046}
-}
-
-- Hi Bernhard, Yes, good idea, let us keep a flag (probably better in DATA/Par_file than in constants.h) to switch between the v4.0 implementation (all seismograms are sent to node 0 by MPI and written there one after the other) and the old v3.6 implementation (each processor writes to its local disk, which of course can in fact be a shared file system such as GPFS). David, could you please add this? Just be aware that for very large runs (2000+ procs) and many stations (2000 to 10000) one can easily crash GPFS with the   old way of using write_seismograms in v3.6; this is what we did in Barcelona on 4056 procs: we used v3.6 and crashed the whole GPFS file system and therefore the whole 4056 procs, because of semaphore overload (GPFS uses semaphores to lock disk access, which can create a huge bottleneck). Fortunately I managed to run faster than their system administrator, and therefore I am still alive ;-)))) This is why we switched to the new implementation... Anyway, if we restore the old way, let us describe the new flag in the manual and let us add (in bold font maybe) a warning saying (as above) than large runs can therefore overload the file system. Bernhard, could you please add this to the manual? (even before David puts the code back, no problem). You will also noticed that I added another option, called SEISMOS_ONE_LARGE_FILE or something like this: this is when somebody wants to write all the seismograms one after the other in the same file, called allseismos.bin, on proc 0, to reduce the number of files (many files open simultaneously can also overload some file systems). Then there is a small serial program I have added (UTILS/extract*.f90) which reconstructs all the seismogram files from the large file in postprocessing after the end of the run. David, when you add the new flag to read_compute_parameters could you please move that SEISMOS_ONE_LARGE_FILE  from constants.h to read_compute_parameters and DATA/Par_file as well, and add a sentence about it in the manual? (or maybe Bernhard can add the sentence to the manual when he adds the other sentence above) Cheers, Dimitri. Bernhard Schuberth wrote: > Hi Dimitri, > > you argued for the need of having write_seismograms.f90 in a way that only > the master proc is writing to disc, which I totally understand for the > architectures that you are using. My only question would be if there are > still some supercomputers (at least the one here in Munich is such a case) > where there exists a global file system that each processor can write to > during runtime and there is no need to collect the data afterwards form > different local disks. Would it be nice for SPECFEM3D to have a flag in > constants.h or Par_file that would allow the user to choose between either > writing the seismograms by one proc or in parallel by all procs? David said > that it is a big "waste" of parallel CPU hours if a lot of processors wait > for one to complete a task. This is particular important the more procs are > used. I think it would save some resources on the respective architectures > even with the lastest version using the "append" mode. What do you think? > > Cheers > > Bernhard
-
 - Hi Dimitri & David: After we fix the bug associated with the oceans, we should reexamine the size of the time step, because I suspect it will be too small. Jeroen 
-
-- Salut David, quand tu commiteras les blocs de 16 demain stp peux-tu aussi dans UTILS modifier le code generate_table*.f90 qui génère la table en LaTeX pour le manuel ? et ensuite prendre la table générée et la copier/coller dans le fichier LyX qui est dans USERS_MANUAL, modifier la légende de cette table qui mentionne actuellement 32, (éventuellement aussi le paragraphe qui se réfère à cette table), et compiler le LyX pour générer un nouveau manuel en PDF et faire un commit de tout ça ? comme ça le manuel sera à jour par rapport au code 
 
 - va etre fait par Qinya : I noticed a problem in Qinya's adjoint code and the
   conversion to static memory below: arrays eps_trace_over_3_crust_mantle and eps_trace_over_3_inner_core are not needed when we use attenuation only for a forward simulation, they are only needed to save the strain in the whole mesh (when we attenuation for a forward run this calculation of eps_trace_over_3, i.e. the trace of the strain tensor, is purely local and can be stored in a scalar, not need to waste an array for it. I have therefore added two new static constants
@@ -67,18 +38,11 @@ Perhaps for 1066a, since it has just an 11 km crust, we can always use the
 1crust approach?
 Jeroen
 
-- rendre plus claire la partie du code qui définit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D dans read_compute_parameters.f90, suite aux remarques de Bernhard Schubert (partly done by Dimitri this summer, but David can clean it even more in September)
+- rendre plus claire la partie du code qui dï¿½finit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D dans read_compute_parameters.f90, suite aux remarques de Bernhard Schubert (partly done by Dimitri this summer, but David can clean it even more in September)
 
 - bug movies detecte par Vala: code crashes (probably in compute_forces) when setting MOVIE_VOLUME = .true.  > Stack trace terminated abnormally.  > forrtl: severe (174): SIGSEGV, segmentation fault occurred
 
-- ecrire les sismogrammes (et les allouer en memoire) bout a bout les uns a la suite des autres par tranches de taille NTSTEP_BETWEEN_FRAMES (ou bien un parametre de ce genre, a ajouter dans le Par_file) pour economiser (beaucoup de) memoire pour les runs avec beaucoup de stations sur un tres grand nombre de pas de temps.
-Salut David, Nicolas a implémenté dans le code 2D les sismos stockés et écrits bloc par bloc, tu peux faire svn update dans le code 2D et récupérer SEM_2D_Dimitri/write_seismograms.F90 et SEM_2D_Dimitri/specfem2D.F90 et programmer la même chose à 3D ok ? (plutôt dans v4.1 après les USA pour ne pas prendre de risque de dernière minute ? à toi de voir) a+ Dimitri 
-
 - Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). To do this, see the old (unfinished) implementation done by Dimitri in version 3.6 on pangu in directories /home/komatits/bubu_test_central_cube_AB_antipode_54procs and /home/komatits/ok_chunk_AB_central_cube
-
-- couper la superbrick en deux au milieu dans les deux directions par MPI pour repasser de blocs de taille 32 à des blocs de taille 16; sinon voir les conséquences des blocs de 32: en coupant au milieu des superbricks, clarifier ce qui se passe : on doit toujours prendre des multiples de 32, mais on peut les couper deux fois plus; voir si la Table 3.1 du manuel est toujours valable, ou bien sinon comment il faut la modifier
-
-- create the mesh from bottom layer to top layer (it is created the other way around right now): this will be better for Cuthill-McKee, for graphics etc; DK DK: already done by David in Barcelona 2007 I think
 
 - get rid of the bottleneck in locate_sources and locate_receivers
 when one uses a huge number of sources (e.g. Vala -> 100000 sources)
@@ -89,9 +53,141 @@ Vala partially fixed this problem by using subsets of 1000 stations, but after
 careful analysis we have found a way of doing better and getting rid of all
 the GATHERs and *all* the extra memory (this way we won't have to limit the number of sources to a maximum of 100000, as currently done in the solver).
 
-- compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf à l'Idris afin de vérifier avant la conference aux USA mi-octobre que le code final ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de vérifier la portabilité
+- compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf ï¿½ l'Idris afin de vï¿½rifier avant la conference aux USA mi-octobre que le code final ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de vï¿½rifier la portabilitï¿½
 
-- (a faire par David en liaison avec Brian Savage): utiliser routines auto_ner de Brian Savage pour calculer MIN_ATTENUATION et MAX_ATTENUATION au lieu de mettre des constantes arbitraires comme actuellement: utiliser get_attenuation_model de Brian Savage pour determiner les constantes d'attenuation pour les chunks complets et non pas seulement si différent de 90 degrés. Pour cela, supprimer mes vieilles variables MIN_ATTENUATION et MAX_ATTENUATION_PERIOD Re: mesh_radial 22/05/2007 00:21 Dimitri, Sure.  I will commit those changes when I get the R_CENTRAL_CUBE section working.  The calculation of MIN_ATTENUATION_PERIOD is CHUNK_WIDTH = <user defined> [ deg ] NEX_MAX           = <user defined> [ elements ] KM_PER_DEGREE = 111.11 [ km / deg ] POINTS_PER_WAVELENGTH = 4 GLL_POINT_SPACING = 4 MIN_VELOCITY = 2.25 [ km / sec ] S wave veloicty CHUNK_WIDTH_KM    = CHUNK_WIDTH * KM_PER_DEGREE POINT_SPACING_KM = CHUNK_WIDTH_KM / ( NEX_MAX * GLL_POINT_SPACING ) MIN_PERIOD               = (POINT_SPACING_KM * POINTS_PER_WAVELENGTH) / MIN_VELOCITY MAX_ATTENUATION_PERIOD depends on MIN_ and the number of N_SLS.  The dependence on N_SLS will also be included in the code Brian On May 21, 2007, at 5:11 PM, Dimitri Komatitsch wrote: > Brian, > This is perfect! Thank you very much.  > One important thing: could you call your routine to compute > MIN_ATTENUATION_PERIOD and MAX_ATTENUATION_PERIOD in all cases > (even for 90 degrees and even for classical NEX such as 160, 320 etc)?  > Because the current values are completely obsolete (I computed > them in 2000 by trial and error, I don't even remember how...  > calling your clean routine would be *much* better); > please don't hesitate to do it and commit the changes.  > Thanks!  > Cheers, > Dimitri.
+- merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90) 30/06/2007 18:19 Hi Jeroen, Leif and David, I thought about merging the mesher and the solver, there might be a hidden difficulty because of memory allocation: the solver allocates almost all the available memory on a given CPU in static arrays, and the solver allocates a similar amount dynamically with allocate() statements. Therefore combining them would roughly double the required amount of memory and will not fit because the Par_file is tuned in order for the solver to use almost all the available memory on each CPU (in the case of large runs).  On systems (such as Linux) with a "first touch" memory allocation policy things should be ok because (if I understand correctly, but I am not sure) the system will not physically allocate the static memory for the solver until it is actually called, i.e. once the mesher has finished, even if both are combined in the same program.  But on other systems I guess we could have problems and the run would not start and exit with an "out of memory" error?  I don't know how to solve this problem. (*if* it needs to be solved; if *all* modern systems use a first touch policy, then we are all set; please let me know; I don't know much about operating systems). Leif, would you have any idea about how to handle this?  If the problem turns out to be too complex, I suggest *not* doing it in v4.0 and waiting until we start working on v4.1 after the October 9-11 workshop. Dimitri.
+Hi Jeroen,
+I would say 20%, which is probably not much and as you say it is
+probably the price to pay to run on a diskless machine.
+The question is: do we keep and maintain two versions (a merged version
+and also two separate codes)? I think what we should do it keep two
+codes and ask David to write a third (very small) code (an interface)
+which would call the mesher and the solver as subroutines and use memory
+instead of the disk to copy the output information of the mesher
+to the input of the solver. The mesher could still use dynamic
+allocation, the solver would remain static, and on any machine
+with a "first touch" policy in the operating system we would be all set.
+This way the code would still be portable, could run on any
+system (even systems without "first touch", using two codes
+and the local disks). The only type of system such a code
+could not run on would be a machine with no local disks
+*and* no first touch policy. But such a machine is very
+unlikely to exist (most modern operating systems
+allocate static memory when it starts to be used
+because there is no reason to do otherwise, because
+this would mean locking resources for no reason;
+therefore we can safely assume that "first touch"
+will become standard in the future; it is already almost standard.
+Dimitri.
+Jeroen Tromp wrote:
+> Hi Dimitri:
+> But perhaps the hit in extra memory should simply be regarded as the
+> extra cost of doing business on a petascale machine. What is the
+> percentage increase in memory that would result from the merge?
+> Jeroen
+> Dimitri Komatitsch wrote:
+>> Hi Jeroen,
+>> Yes, but there is a hidden problem: the current mesher needs four more
+>> (big) arrays than the solver. I can reduce this to two maybe using
+>> some clever "equivalence" statements, but not to zero; i.e.
+>> if we merge the solver and the mesher and use static memory for both
+>> we will create a merged version in which the mesher will control
+>> memory size again, not the solver (as in v3.6).
+>> I have solved this problem in version 4.0 by using dynamic memory
+>> allocation cleverly in the mesher: I call create_region_mesh twice and
+>> create half the (dynamic) arrays each time, therefore
+>> I need only half the memory in each call, and this is always
+>> below the memory size of all the static arrays in the solver,
+>> i.e. we are back to the normal situation in which it is the solver
+>> that controls memory size. But we would lose this if we merged
+>> the codes because my trick would not work anymore...
+>> (because I would not be able to deallocate the memory dynamically
+>> after the first call)
+>> Of course, we know that Linux does not allocate static arrays
+>> until they are actually used, which means that on all Linux
+>> machines we could merge the current v4.0 codes without
+>> any modification, keeping the mesher dynamic, letting it finish,
+>> and then Linux would create the static arrays of the solver
+>> only when the solver actually starts and all the arrays used
+>> by the mesher have been deallocated.
+>> Therefore the question is: will we ever run the merged code
+>> on a supercomputer that will not run Linux (or any other
+>> system with a similar "first touch" policy). Difficult to know
+>> in advance...
+>> Dimitri.
+>> Jeroen Tromp wrote:
+>>> Hi Dimitri:
+>>> Your ideas for reducing the memory requirements of the mesher made me
+>>> think about the problems related to merging the mesher and solver.
+>>> Can you see a way of have a small serial code, like
+>>> create_header_file.f90, that one would run *before* you run either
+>>> the mesher or the solver, that determines the correct array
+>>> dimensions from the Par_file settings. This code is then used to
+>>> produce the right header file for the combined static mesher-solver.
+>>> The read_arrays_solver call in the solver is turned into a call to
+>>> the mesher, which effectively becomes a subroutine.
+>>> Jeroen
+
+- peut-etre supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du serveur SVN (svn remove) une fois que le mesher et le solver auront ï¿½tï¿½ fusionnï¿½s; sauf si on decide de garder deux versions du code: une fusionnee et une non fusionnee qui utiliserait toujours le stockage sur des disques locaux. Les enlever du Makefile.in aussi. Do not store x y z in the files that contain the MPI buffers anymore, since they are used only by check_buffers*. (in the solver they are read back as xdummy, ydummy, zdummy); eventuellement supprimer aussi le fichier ecrit par le mailleur sur le disque et relu plus tard par ce meme mailleur, s'il n'est pas utilise par le solver (c'est a dire s'il est utilise seulement par les codes serial check*.f90, qui sont amenes a disparaitre)
+
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
+Things to do later:
+-------------------
+
+- afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilitï¿½ et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maï¿½tre dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
+
+- Re: revision of shortest period estimates?  08/05/2007 14:51 Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  Jeroen Tromp wrote: > Hi Dimitri: > If we are shooting for a minimum of 5 grid points per shortest wavelength, > perhaps we should increase our estimate of an accuracy at periods of 18 s > and longer for an NEX=240 run by 20% to 22 s? And perhaps NEX=320 is > accurate down to periods of 15 s rather than 12 s?
+
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
+Things to add to the manual:
+----------------------------
+
+- Here is another paper we should cite, on a similar topic (but acoustic only, while the other is for elastic media as well). If someone has time to add a sentence to the manual to cite both, here are the BibTeX entries to add to bibligraphy.bib
+@ARTICLE{SeOl07,
+  author = {G{\'e}za Seriani and Saulo P. Oliveira},
+  title = {Optimal blended spectral-element operators for acoustic wave
+modeling},
+  journal = geophysics,
+  year = {2007},
+  volume = {72},
+  pages = {SM95.SM106},
+  number = {5},
+  doi = {10.1190/1.2750715}
+}
+@ARTICLE{DeSe07,
+  author = {Jon{\'a}s D. {De Basabe} and Mrinal K. Sen},
+  title = {Grid dispersion and stability criteria of some common
+finite-element
+    methods for acoustic and elastic wave equations},
+  journal = geophysics,
+  year = {2007},
+  volume = {72},
+  pages = {T81.T95},
+  number = {6},
+  doi = {10.1190/1.2785046}
+}
+
+- ajouter les courbes de dispersion et stabilitï¿½ au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix spï¿½cial lï¿½-dessus; dire dans cet appendix que dans le outer core ce n'est bien sï¿½r par Vs qui est reprï¿½sentï¿½ mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un ï¿½chantillonnage un peu meilleur)
+
+- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront ï¿½tï¿½ fusionnï¿½s (enlever les deux sections expliquant l'utilisation de ces routines)
+
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
+DONE:
+-----
+
+- (a faire par David en liaison avec Brian Savage): utiliser routines auto_ner de Brian Savage pour calculer MIN_ATTENUATION et MAX_ATTENUATION au lieu de mettre des constantes arbitraires comme actuellement: utiliser get_attenuation_model de Brian Savage pour determiner les constantes d'attenuation pour les chunks complets et non pas seulement si diffï¿½rent de 90 degrï¿½s. Pour cela, supprimer mes vieilles variables MIN_ATTENUATION et MAX_ATTENUATION_PERIOD Re: mesh_radial 22/05/2007 00:21 Dimitri, Sure.  I will commit those changes when I get the R_CENTRAL_CUBE section working.  The calculation of MIN_ATTENUATION_PERIOD is CHUNK_WIDTH = <user defined> [ deg ] NEX_MAX           = <user defined> [ elements ] KM_PER_DEGREE = 111.11 [ km / deg ] POINTS_PER_WAVELENGTH = 4 GLL_POINT_SPACING = 4 MIN_VELOCITY = 2.25 [ km / sec ] S wave veloicty CHUNK_WIDTH_KM    = CHUNK_WIDTH * KM_PER_DEGREE POINT_SPACING_KM = CHUNK_WIDTH_KM / ( NEX_MAX * GLL_POINT_SPACING ) MIN_PERIOD               = (POINT_SPACING_KM * POINTS_PER_WAVELENGTH) / MIN_VELOCITY MAX_ATTENUATION_PERIOD depends on MIN_ and the number of N_SLS.  The dependence on N_SLS will also be included in the code Brian On May 21, 2007, at 5:11 PM, Dimitri Komatitsch wrote: > Brian, > This is perfect! Thank you very much.  > One important thing: could you call your routine to compute > MIN_ATTENUATION_PERIOD and MAX_ATTENUATION_PERIOD in all cases > (even for 90 degrees and even for classical NEX such as 160, 320 etc)?  > Because the current values are completely obsolete (I computed > them in 2000 by trial and error, I don't even remember how...  > calling your clean routine would be *much* better); > please don't hesitate to do it and commit the changes.  > Thanks!  > Cheers, > Dimitri.
 Modifier le calcul des bornes de l'attenuation: car
     MIN_ATTENUATION_PERIOD   = 20
     MAX_ATTENUATION_PERIOD   = 1000
@@ -102,7 +198,7 @@ Date: Sun, 21 Jan 2007 21:59:54 +0100
 To: Brian Savage <savage@uri.edu>
 CC: Jeroen Tromp <jtromp@gps.caltech.edu>, Qinya Liu <lqy@gps.caltech.edu>, Vala
 Hjorleifsdottir <vala@gps.caltech.edu>, Ying Zhou <yingz@gps.caltech.edu>,
-David Michéa <davidmichea@gmail.com>
+David Michï¿½a <davidmichea@gmail.com>
 Dear all,
 Following Brian's tests described in his email below,
 I think we should change the way we set the width of the
@@ -184,187 +280,92 @@ Brian Savage wrote:
 >> Dimitri.
 >>
 
-- merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90) 30/06/2007 18:19 Hi Jeroen, Leif and David, I thought about merging the mesher and the solver, there might be a hidden difficulty because of memory allocation: the solver allocates almost all the available memory on a given CPU in static arrays, and the solver allocates a similar amount dynamically with allocate() statements. Therefore combining them would roughly double the required amount of memory and will not fit because the Par_file is tuned in order for the solver to use almost all the available memory on each CPU (in the case of large runs).  On systems (such as Linux) with a "first touch" memory allocation policy things should be ok because (if I understand correctly, but I am not sure) the system will not physically allocate the static memory for the solver until it is actually called, i.e. once the mesher has finished, even if both are combined in the same program.  But on other systems I guess we could have problems and the run would not start and exit with an "out of memory" error?  I don't know how to solve this problem. (*if* it needs to be solved; if *all* modern systems use a first touch policy, then we are all set; please let me know; I don't know much about operating systems). Leif, would you have any idea about how to handle this?  If the problem turns out to be too complex, I suggest *not* doing it in v4.0 and waiting until we start working on v4.1 after the October 9-11 workshop. Dimitri.
-Hi Jeroen,
-I would say 20%, which is probably not much and as you say it is
-probably the price to pay to run on a diskless machine.
-The question is: do we keep and maintain two versions (a merged version
-and also two separate codes)? I think what we should do it keep two
-codes and ask David to write a third (very small) code (an interface)
-which would call the mesher and the solver as subroutines and use memory
-instead of the disk to copy the output information of the mesher
-to the input of the solver. The mesher could still use dynamic
-allocation, the solver would remain static, and on any machine
-with a "first touch" policy in the operating system we would be all set.
-This way the code would still be portable, could run on any
-system (even systems without "first touch", using two codes
-and the local disks). The only type of system such a code
-could not run on would be a machine with no local disks
-*and* no first touch policy. But such a machine is very
-unlikely to exist (most modern operating systems
-allocate static memory when it starts to be used
-because there is no reason to do otherwise, because
-this would mean locking resources for no reason;
-therefore we can safely assume that "first touch"
-will become standard in the future; it is already almost standard.
-Dimitri.
-Jeroen Tromp wrote:
-> Hi Dimitri:
-> But perhaps the hit in extra memory should simply be regarded as the
-> extra cost of doing business on a petascale machine. What is the
-> percentage increase in memory that would result from the merge?
-> Jeroen
-> Dimitri Komatitsch wrote:
->> Hi Jeroen,
->> Yes, but there is a hidden problem: the current mesher needs four more
->> (big) arrays than the solver. I can reduce this to two maybe using
->> some clever "equivalence" statements, but not to zero; i.e.
->> if we merge the solver and the mesher and use static memory for both
->> we will create a merged version in which the mesher will control
->> memory size again, not the solver (as in v3.6).
->> I have solved this problem in version 4.0 by using dynamic memory
->> allocation cleverly in the mesher: I call create_region_mesh twice and
->> create half the (dynamic) arrays each time, therefore
->> I need only half the memory in each call, and this is always
->> below the memory size of all the static arrays in the solver,
->> i.e. we are back to the normal situation in which it is the solver
->> that controls memory size. But we would lose this if we merged
->> the codes because my trick would not work anymore...
->> (because I would not be able to deallocate the memory dynamically
->> after the first call)
->> Of course, we know that Linux does not allocate static arrays
->> until they are actually used, which means that on all Linux
->> machines we could merge the current v4.0 codes without
->> any modification, keeping the mesher dynamic, letting it finish,
->> and then Linux would create the static arrays of the solver
->> only when the solver actually starts and all the arrays used
->> by the mesher have been deallocated.
->> Therefore the question is: will we ever run the merged code
->> on a supercomputer that will not run Linux (or any other
->> system with a similar "first touch" policy). Difficult to know
->> in advance...
->> Dimitri.
->> Jeroen Tromp wrote:
->>> Hi Dimitri:
->>> Your ideas for reducing the memory requirements of the mesher made me
->>> think about the problems related to merging the mesher and solver.
->>> Can you see a way of have a small serial code, like
->>> create_header_file.f90, that one would run *before* you run either
->>> the mesher or the solver, that determines the correct array
->>> dimensions from the Par_file settings. This code is then used to
->>> produce the right header file for the combined static mesher-solver.
->>> The read_arrays_solver call in the solver is turned into a call to
->>> the mesher, which effectively becomes a subroutine.
->>> Jeroen
+- couper la superbrick en deux au milieu dans les deux directions par MPI pour repasser de blocs de taille 32 ï¿½ des blocs de taille 16; sinon voir les consï¿½quences des blocs de 32: en coupant au milieu des superbricks, clarifier ce qui se passe : on doit toujours prendre des multiples de 32, mais on peut les couper deux fois plus; voir si la Table 3.1 du manuel est toujours valable, ou bien sinon comment il faut la modifier
 
-- peut-etre supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du serveur SVN (svn remove) une fois que le mesher et le solver auront été fusionnés; sauf si on decide de garder deux versions du code: une fusionnee et une non fusionnee qui utiliserait toujours le stockage sur des disques locaux. Les enlever du Makefile.in aussi. Do not store x y z in the files that contain the MPI buffers anymore, since they are used only by check_buffers*. (in the solver they are read back as xdummy, ydummy, zdummy); eventuellement supprimer aussi le fichier ecrit par le mailleur sur le disque et relu plus tard par ce meme mailleur, s'il n'est pas utilise par le solver (c'est a dire s'il est utilise seulement par les codes serial check*.f90, qui sont amenes a disparaitre)
+- create the mesh from bottom layer to top layer (it is created the other way around right now): this will be better for Cuthill-McKee, for graphics etc; DK DK: already done by David in Barcelona 2007 I think
 
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
+- ecrire les sismogrammes (et les allouer en memoire) bout a bout les uns a la suite des autres par tranches de taille NTSTEP_BETWEEN_FRAMES (ou bien un parametre de ce genre, a ajouter dans le Par_file) pour economiser (beaucoup de) memoire pour les runs avec beaucoup de stations sur un tres grand nombre de pas de temps.
+Salut David, Nicolas a implï¿½mentï¿½ dans le code 2D les sismos stockï¿½s et ï¿½crits bloc par bloc, tu peux faire svn update dans le code 2D et rï¿½cupï¿½rer SEM_2D_Dimitri/write_seismograms.F90 et SEM_2D_Dimitri/specfem2D.F90 et programmer la mï¿½me chose ï¿½ 3D ok ? (plutï¿½t dans v4.1 aprï¿½s les USA pour ne pas prendre de risque de derniï¿½re minute ? ï¿½ toi de voir) a+ Dimitri 
 
-Things to do later:
--------------------
 
-- afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilité et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maître dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
+- Hi Bernhard, Yes, good idea, let us keep a flag (probably better in DATA/Par_file than in constants.h) to switch between the v4.0 implementation (all seismograms are sent to node 0 by MPI and written there one after the other) and the old v3.6 implementation (each processor writes to its local disk, which of course can in fact be a shared file system such as GPFS). David, could you please add this? Just be aware that for very large runs (2000+ procs) and many stations (2000 to 10000) one can easily crash GPFS with the   old way of using write_seismograms in v3.6; this is what we did in Barcelona on 4056 procs: we used v3.6 and crashed the whole GPFS file system and therefore the whole 4056 procs, because of semaphore overload (GPFS uses semaphores to lock disk access, which can create a huge bottleneck). Fortunately I managed to run faster than their system administrator, and therefore I am still alive ;-)))) This is why we switched to the new implementation... Anyway, if we restore the old way, let us describe the new flag in the manual and let us add (in bold font maybe) a warning saying (as above) than large runs can therefore overload the file system. Bernhard, could you please add this to the manual? (even before David puts the code back, no problem). You will also noticed that I added another option, called SEISMOS_ONE_LARGE_FILE or something like this: this is when somebody wants to write all the seismograms one after the other in the same file, called allseismos.bin, on proc 0, to reduce the number of files (many files open simultaneously can also overload some file systems). Then there is a small serial program I have added (UTILS/extract*.f90) which reconstructs all the seismogram files from the large file in postprocessing after the end of the run. David, when you add the new flag to read_compute_parameters could you please move that SEISMOS_ONE_LARGE_FILE  from constants.h to read_compute_parameters and DATA/Par_file as well, and add a sentence about it in the manual? (or maybe Bernhard can add the sentence to the manual when he adds the other sentence above) Cheers, Dimitri. Bernhard Schuberth wrote: > Hi Dimitri, > > you argued for the need of having write_seismograms.f90 in a way that only > the master proc is writing to disc, which I totally understand for the > architectures that you are using. My only question would be if there are > still some supercomputers (at least the one here in Munich is such a case) > where there exists a global file system that each processor can write to > during runtime and there is no need to collect the data afterwards form > different local disks. Would it be nice for SPECFEM3D to have a flag in > constants.h or Par_file that would allow the user to choose between either > writing the seismograms by one proc or in parallel by all procs? David said > that it is a big "waste" of parallel CPU hours if a lot of processors wait > for one to complete a task. This is particular important the more procs are > used. I think it would save some resources on the respective architectures > even with the lastest version using the "append" mode. What do you think? > > Cheers > > Bernhard
 
-- Re: revision of shortest period estimates?  08/05/2007 14:51 Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  Jeroen Tromp wrote: > Hi Dimitri: > If we are shooting for a minimum of 5 grid points per shortest wavelength, > perhaps we should increase our estimate of an accuracy at periods of 18 s > and longer for an NEX=240 run by 20% to 22 s? And perhaps NEX=320 is > accurate down to periods of 15 s rather than 12 s?
+- Salut David, quand tu commiteras les blocs de 16 demain stp peux-tu aussi dans UTILS modifier le code generate_table*.f90 qui gï¿½nï¿½re la table en LaTeX pour le manuel ? et ensuite prendre la table gï¿½nï¿½rï¿½e et la copier/coller dans le fichier LyX qui est dans USERS_MANUAL, modifier la lï¿½gende de cette table qui mentionne actuellement 32, (ï¿½ventuellement aussi le paragraphe qui se rï¿½fï¿½re ï¿½ cette table), et compiler le LyX pour gï¿½nï¿½rer un nouveau manuel en PDF et faire un commit de tout ï¿½a ? comme ï¿½a le manuel sera ï¿½ jour par rapport au code 
 
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
-
-Things to add to the manual:
-----------------------------
-
-- ajouter les courbes de dispersion et stabilité au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix spécial là-dessus; dire dans cet appendix que dans le outer core ce n'est bien sûr par Vs qui est représenté mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un échantillonnage un peu meilleur)
-
-- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront été fusionnés (enlever les deux sections expliquant l'utilisation de ces routines)
-
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
-
-DONE:
------
-
-- see if this would be useful (probably NOT, according to the ParaVer analysis done in Barcelona): rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices (see routine create_central_cube_buffers.f90). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Céline. => not done because we would not gain anything from using non blocking communications
+- see if this would be useful (probably NOT, according to the ParaVer analysis done in Barcelona): rewrite communications entirely (use clean non-blocking MPI communications, use persistent communications, hide communications in calculations); see how to do this in the central cube, which is more difficult because it is in contact with many slices (see routine create_central_cube_buffers.f90). Do this using the code developed by Nicolas Le Goff for SPECFEM3D_BASIN with Cï¿½line. => not done because we would not gain anything from using non blocking communications
 
 - flag SUPPRESS_CRUSTAL_MESH does not work on the current version that is on the SVN server: it exits with an error message 'ispec greater than nspec in mesh creation' in the mesher: this bug should be fixed. en particulier je crois que ca est faux dans create_regions_mesh.f90
  elseif (SUPPRESS_CRUSTAL_MESH .and. iz_elem == ner(ilayer) .and. ilayer == ifirst_region+1) then
 il faudrait le coder plutot directement avec des regions ayant ner(i) = 0 et en commencant directement par doubling_factor(i) = 2 a la surface au lieu de 1, comme moi dans le code acoustique PKP 3D.
 
 - le flag pour le multilevel Cuthill-McKee qui est dans constants.h.in
-n'est jamais utilisé (un grep ne le montre dans aucun fichier Fortran90),
+n'est jamais utilisï¿½ (un grep ne le montre dans aucun fichier Fortran90),
 il semble donc que soit on ne fait jamais de multilevel
 cuthill soit on le fait toujours (et alors on ne fait jamais le cuthill
 simple niveau cuthill). Il faudra corriger cela pour faire l'un ou l'autre
 suivant la valeur de ce flag
 dkomati1-ipigps014: grep -i MULTI_LEVEL_CUTHILL *.h* *90
 constants.h.in:  logical, parameter :: MULTI_LEVEL_CUTHILL = .true.
-==> ok, rajouté dans get_perm_cuthill_mckee.f90. A revoir lors de l'implémentation des courbes de peano.
+==> ok, rajoutï¿½ dans get_perm_cuthill_mckee.f90. A revoir lors de l'implï¿½mentation des courbes de peano.
 
-- dans le cas où NCHUNKS = 1, le solveur se plante car il cherche a lire
-des fichiers plus gros que ceux sauvés par le mailleur. Apparemment
+- dans le cas oï¿½ NCHUNKS = 1, le solveur se plante car il cherche a lire
+des fichiers plus gros que ceux sauvï¿½s par le mailleur. Apparemment
 ca doit etre des tableaux pour les conditions absorbantes de Stacey ou
-quelque chose comme ça qui est spécifique à NCHUNKS < 6 qui ne doit
-pas etre sauvé à la meme taille que la taille lorsqu'on le relit,
-car quand on a 6 chunks tout marche très bien.
+quelque chose comme ï¿½a qui est spï¿½cifique ï¿½ NCHUNKS < 6 qui ne doit
+pas etre sauvï¿½ ï¿½ la meme taille que la taille lorsqu'on le relit,
+car quand on a 6 chunks tout marche trï¿½s bien.
 dkomati1-ipigps014: mpirun -np 9 ./xspecfem3D
 PGFIO-F-219/unformatted read/unit=40/attempt to read/write past end of record.
  File name = DATABASES_MPI/proc000003_reg1_solver_data_1.bin    unformatted,
 sequential access   record = 16
  In source file read_arrays_solver.f90, at line number 170
-==> mauvaise condition pour la création des tableaux rho_vp et rho_vs dans
-save_arrays_solver.f90 pour NCHUNK=1 : ils étaient créés, mais pas relu => pas de problèmes quant les
-tableaux étaient dumpés dans des fichiers séparés (ils n'étaient pas relus),
-mais problème avec l'aggrégation des tableaux dans un seul fichier .bin. résolu en changeant la condition.
+==> mauvaise condition pour la crï¿½ation des tableaux rho_vp et rho_vs dans
+save_arrays_solver.f90 pour NCHUNK=1 : ils ï¿½taient crï¿½ï¿½s, mais pas relu => pas de problï¿½mes quant les
+tableaux ï¿½taient dumpï¿½s dans des fichiers sï¿½parï¿½s (ils n'ï¿½taient pas relus),
+mais problï¿½me avec l'aggrï¿½gation des tableaux dans un seul fichier .bin. rï¿½solu en changeant la condition.
 
 
 - run Sdiff calculations for Lev Vinnik (Moscow, Russia): done by Dimitri in Barcelona
 
 - run 3D PKP calculations for Sebastien Chevrot (Toulouse, France): done by Dimitri in Barcelona
 
-- bug estimation mémoire NEX=1248 (marche) à NEX=1664 (plante) à résoudre: passer tout en double precision ou bien integer(kind=8): done by Dimitri
+- bug estimation mï¿½moire NEX=1248 (marche) ï¿½ NEX=1664 (plante) ï¿½ rï¿½soudre: passer tout en double precision ou bien integer(kind=8): done by Dimitri
 
-- fusionner en une seule étape le assemble_MPI de inner core et de crust_mantle merge assemble_MPI_vector for crust/mantle with assemble_MPI_vector for inner core in order to divide the number of MPI calls by 2 for the solid regions; car dans specfem3D.f90 ci-dessous à un moment on appelle deux fois la routine d'assemblage MPI, une fois pour assembler le crust + mantle et une fois pour assembler le inner core, juste après, ce qui double le nombre de messages et la latence pour rien. Donc quand on réécrira le MPI du solver bien entendu il faudra penser à fusionner les deux en un seul envoi de messages contenant crust + mantle + inner core: done by Dimitri
+- fusionner en une seule ï¿½tape le assemble_MPI de inner core et de crust_mantle merge assemble_MPI_vector for crust/mantle with assemble_MPI_vector for inner core in order to divide the number of MPI calls by 2 for the solid regions; car dans specfem3D.f90 ci-dessous ï¿½ un moment on appelle deux fois la routine d'assemblage MPI, une fois pour assembler le crust + mantle et une fois pour assembler le inner core, juste aprï¿½s, ce qui double le nombre de messages et la latence pour rien. Donc quand on rï¿½ï¿½crira le MPI du solver bien entendu il faudra penser ï¿½ fusionner les deux en un seul envoi de messages contenant crust + mantle + inner core: done by Dimitri
 
-- enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de même type (*mais* il faudra quand même laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout où il y en a, car on continue à traiter 6 blocs, même s'ils ont maintenant la même topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs -> {ok pour le mailleur, reste la différentiation dans le solveur, mais sans conséquences. A mettre à plat lors de la fusion. DM.}
+- enlever blocs AB, AC et BC partout, puisque tous les blocs sont maintenant de mï¿½me type (*mais* il faudra quand mï¿½me laisser les six noms : CHUNK_AB, CHUNK_AC, CHUNK_AB_ANTIPODE etc et garder les tests de type if(ichunk == CHUNK_AB_ANTIPODE) then partout oï¿½ il y en a, car on continue ï¿½ traiter 6 blocs, mï¿½me s'ils ont maintenant la mï¿½me topologie. Il faut donc conserver tout ce qui concerne ces six noms de blocs -> {ok pour le mailleur, reste la diffï¿½rentiation dans le solveur, mais sans consï¿½quences. A mettre ï¿½ plat lors de la fusion. DM.}
 
-- enlever les "modules" et "use" partout où il y en a (pour anisotropie etc) car ce n'est pas "thread safe" et donc ça se plantera si on utilise MPC au lieu de MPI. Remplacer par la transmission explicite des paramètres aux subroutines. Peut-être dire dans le manuel utilisateur qu'il ne faut pas utiliser de modules pour cette raison ? -> {OK. DM.}
+- enlever les "modules" et "use" partout oï¿½ il y en a (pour anisotropie etc) car ce n'est pas "thread safe" et donc ï¿½a se plantera si on utilise MPC au lieu de MPI. Remplacer par la transmission explicite des paramï¿½tres aux subroutines. Peut-ï¿½tre dire dans le manuel utilisateur qu'il ne faut pas utiliser de modules pour cette raison ? -> {OK. DM.}
 
 - modifier RMOHO_FICTITIOUS_IN_MESHER = R80 + (R_EARTH - R80) * dble(NER_80_MOHO) / dble(NER_80_MOHO + NER_CRUST) dans display_prem_sampling_doubling.f90 et dans le nouveau code de maillage de David: done by David
 
-- ajouter le nombre analytique de points de GLL (appelé NGLOB) dans le mailleur (dans le nouveau read_compute_parameters.f90) -> {OK. DM.}
+- ajouter le nombre analytique de points de GLL (appelï¿½ NGLOB) dans le mailleur (dans le nouveau read_compute_parameters.f90) -> {OK. DM.}
 
 - modifier_creation_central_cube_now_32_au_lieu_de_16 -> {ok, mais a revoir : 2**4=16. DM.}
 
-- modifier_create_header_file pour s'assurer qu'il fonctionne avec le nouveau mailleur -> {OK reste à enlever les appels à exit_mpi. DM.}
+- modifier_create_header_file pour s'assurer qu'il fonctionne avec le nouveau mailleur -> {OK reste ï¿½ enlever les appels ï¿½ exit_mpi. DM.}
 
-- dans constants.h il y a un flag IFLAG_220_MOHO qu'il faudra séparer en deux en
-créant IFLAG_220_80 et IFLAG_80_MOHO. Facile dans constants.h,
-mais partout où apparaît ensuite IFLAG_220_MOHO par exemple
+- dans constants.h il y a un flag IFLAG_220_MOHO qu'il faudra sï¿½parer en deux en
+crï¿½ant IFLAG_220_80 et IFLAG_80_MOHO. Facile dans constants.h,
+mais partout oï¿½ apparaï¿½t ensuite IFLAG_220_MOHO par exemple
 dans des if dans tous les *.f90 il faudra changer tous les
 if(machintruc == IFLAG_220_MOHO) then
 en
 if(machintruc == IFLAG_220_80 .or. machintruc == IFLAG_80_MOHO) then
-Faudra qu'on fasse ça à l'occasion ok ? par ex la semaine prochaine,
-c'est rapide à faire.
-(c'est Brian Savage, qui travaille sur l'atténuation dans le code,
+Faudra qu'on fasse ï¿½a ï¿½ l'occasion ok ? par ex la semaine prochaine,
+c'est rapide ï¿½ faire.
+(c'est Brian Savage, qui travaille sur l'attï¿½nuation dans le code,
 qui a besoin de distinguer ces deux sub-flags) -> {OK, a revoir qd meme. DM.}
 
-- modifier write_seismograms.f90 pour que tout soit écrit directement sur le home par le maître et non pas sur les disques locaux par chaque noeud. Pour cela faire des paires SEND/RECV en allouant dynamiquement un tableau de taille différente à chaque fois (de taille nrec_local, sauf si nrec_local = 0, dans ce cas on n'envoie/reçoit rien pour cette tranche qui ne contient pas de récepteur). A la fin on doit avoir exactement 3*765 = 2295 fichiers (765 stations dans DATA/STATIONS, chacune stockant les trois composantes du vecteur déplacement)
+- modifier write_seismograms.f90 pour que tout soit ï¿½crit directement sur le home par le maï¿½tre et non pas sur les disques locaux par chaque noeud. Pour cela faire des paires SEND/RECV en allouant dynamiquement un tableau de taille diffï¿½rente ï¿½ chaque fois (de taille nrec_local, sauf si nrec_local = 0, dans ce cas on n'envoie/reï¿½oit rien pour cette tranche qui ne contient pas de rï¿½cepteur). A la fin on doit avoir exactement 3*765 = 2295 fichiers (765 stations dans DATA/STATIONS, chacune stockant les trois composantes du vecteur dï¿½placement)
 
-- remplacé :
+- remplacï¿½ :
  double precision :: Qs
 par
  integer :: interval_Q
-pour des soucis de lisibilité.
+pour des soucis de lisibilitï¿½.
 
-- utiliser netCDF pour stocker du binaire partout où c'est nécessaire. voir si ça vaut le coup de stocker les gros fichiers de topographie dans DATA/topo_bathy dans ce format ou non, afin de réduire leur taille; tester l'utilisation de netCDF et nous donner les routines pour lire/ecrire du binaire à ce format depuis SPECFEM3D_BASIN. David utilisera ensuite cela depuis SPECFEM3D_GLOBE  --> remarque de Dimitri ajoutée: probablement pas vraiment utile finalement, donc je supprime cette ligne des choses à faire
+- utiliser netCDF pour stocker du binaire partout oï¿½ c'est nï¿½cessaire. voir si ï¿½a vaut le coup de stocker les gros fichiers de topographie dans DATA/topo_bathy dans ce format ou non, afin de rï¿½duire leur taille; tester l'utilisation de netCDF et nous donner les routines pour lire/ecrire du binaire ï¿½ ce format depuis SPECFEM3D_BASIN. David utilisera ensuite cela depuis SPECFEM3D_GLOBE  --> remarque de Dimitri ajoutï¿½e: probablement pas vraiment utile finalement, donc je supprime cette ligne des choses ï¿½ faire
 
 - carefully study and improve the stability condition and increase/adapt time step DT accordingly: done by David and Dimitri, by trial and error
 
@@ -374,23 +375,23 @@ pour des soucis de lisibilité.
 
 - implement better (partly inflated) central cube: done by David and Dimitri
 
-- regarder consequences de multiple de 32 au lieu de 16 dans table 3.1 du manuel, et refaire cette table en fonction de cette nouvelle contrainte. Mettre à jour la Table 3.1 avec multiples de 32 au lieu de 16 et aussi en disant qu'on peut mettre 2 ou 3 ou 6 tâches par proc et donc que le nb de procs donnés peut être divisé par 2, 3 ou 6 et donc limitation moins grande qu'on ne pourrait le croire (dire que c'est toujours divisible car NPROC = 6 N^2 donc divisible par 6); dire cela dans le texte principal du manuel et dans la légende de la table, par exemple "We should also keep in mind (and mention in the manual) that if 6 N^2 is a limitation on some machines, one can always run 2, 3 or 6 tasks per processor and therefore run on N^2, 2 N^2 or 3 N^2 processors. I will add a comment about this in the manual (probably in the caption of Table 3.1)." --> finalement pas nécessaire, car on a trouvé un moyen de refaire des blocs de 16 en coupant la superbrick en deux au milieu dans les deux directions
+- regarder consequences de multiple de 32 au lieu de 16 dans table 3.1 du manuel, et refaire cette table en fonction de cette nouvelle contrainte. Mettre ï¿½ jour la Table 3.1 avec multiples de 32 au lieu de 16 et aussi en disant qu'on peut mettre 2 ou 3 ou 6 tï¿½ches par proc et donc que le nb de procs donnï¿½s peut ï¿½tre divisï¿½ par 2, 3 ou 6 et donc limitation moins grande qu'on ne pourrait le croire (dire que c'est toujours divisible car NPROC = 6 N^2 donc divisible par 6); dire cela dans le texte principal du manuel et dans la lï¿½gende de la table, par exemple "We should also keep in mind (and mention in the manual) that if 6 N^2 is a limitation on some machines, one can always run 2, 3 or 6 tasks per processor and therefore run on N^2, 2 N^2 or 3 N^2 processors. I will add a comment about this in the manual (probably in the caption of Table 3.1)." --> finalement pas nï¿½cessaire, car on a trouvï¿½ un moyen de refaire des blocs de 16 en coupant la superbrick en deux au milieu dans les deux directions
 
 - implement classical Cuthill-McKee sorting: done in Barcelona 2007
 
-- ajouter une routine qui mette tous les gros tableaux à zéro avant le début de la boucle en temps dans le solver afin d'éviter les effets du "First Touch" de Linux : pas utile et dangereux donc finalement on ne le fait pas
+- ajouter une routine qui mette tous les gros tableaux ï¿½ zï¿½ro avant le dï¿½but de la boucle en temps dans le solver afin d'ï¿½viter les effets du "First Touch" de Linux : pas utile et dangereux donc finalement on ne le fait pas
 
 - use MPC in the code instead of MPI : on a fait des tests mais finalement on ne gagne pas donc on n'utilisera pas MPC dans le code, on reste en MPI
 
-- portage du code sur le processeur CELL, à faire avec Jesus Labarta de Barcelone: fait par Dimitri a Barcelone 2007 en reecrivant le code principal en C
+- portage du code sur le processeur CELL, ï¿½ faire avec Jesus Labarta de Barcelone: fait par Dimitri a Barcelone 2007 en reecrivant le code principal en C
 
-- envoyer nvx code après cela barcelona à levesque ORNL pour optimisation BLAS3 s'ils y arrivent : fait par Dimitri suite a Barcelone 2007
+- envoyer nvx code aprï¿½s cela barcelona ï¿½ levesque ORNL pour optimisation BLAS3 s'ils y arrivent : fait par Dimitri suite a Barcelone 2007
 
-- etudier comment lire un maillage CUBIT stocké au format natif de CUBIT (Exodus, basé sur netCDF) depuis SPECFEM3D_BASIN. On pourrait utiliser la commande "ncdump" dans CUBIT si nécessaire d'après Emanuele Casarotti. Une autre option serait d'utiliser le format de stockage ABAQUS dans CUBIT : passe dans la todo list du code de bassin, car ca ne concerne pas le code global
+- etudier comment lire un maillage CUBIT stockï¿½ au format natif de CUBIT (Exodus, basï¿½ sur netCDF) depuis SPECFEM3D_BASIN. On pourrait utiliser la commande "ncdump" dans CUBIT si nï¿½cessaire d'aprï¿½s Emanuele Casarotti. Une autre option serait d'utiliser le format de stockage ABAQUS dans CUBIT : passe dans la todo list du code de bassin, car ca ne concerne pas le code global
 
 - develop two-level Cuthill-McKee sorting for the two levels of cache with Jose Maria Cela (Barcelona): done by David and Carlos Egido in Barcelona 2007
 
-- Virer variables intermédiaires dans compute_forces dans codes 2D et 3D : fait par Dimitri a Barcelona 2007, dans le cadre de l'ecriture des 18 versions serial pour comparaison
+- Virer variables intermï¿½diaires dans compute_forces dans codes 2D et 3D : fait par Dimitri a Barcelona 2007, dans le cadre de l'ecriture des 18 versions serial pour comparaison
 
 - mettre l'attenuation dans le inner core pour run PKP Seb: not needed, attenuation was already implemented in the inner core in version 3.6
 
@@ -406,21 +407,21 @@ pour des soucis de lisibilité.
 
 - remove derived types (for attenuation, for anisotropy etc) and remove -align sequence from the Makefile, because of potential portability and alignment problems on future machines; replace them with modules: not done because the current code is OK, therefore not a good idea to change it
 
-- faire un commit du script de stretching de la croûte 3D de David dans UTILS: not needed anymore, because implemented in Fortran in stretching_function.f90
+- faire un commit du script de stretching de la croï¿½te 3D de David dans UTILS: not needed anymore, because implemented in Fortran in stretching_function.f90
 
 - convert the "allocatable" arrays in the solver from dynamic to static: done by David, Jeroen and Dimitri
 
-- Dire dans manuel que par défaut le mailleur tourne lentement pour optimiser par cuthill mckee et tri de ibool, mais flag dans DATA/Par_file pour le desactiver (appeler ce flag SLOWER_MESHER_FASTER_SOLVER par exemple) => not needed anymore because Cuthill-McKee sorting has been suppressed
+- Dire dans manuel que par dï¿½faut le mailleur tourne lentement pour optimiser par cuthill mckee et tri de ibool, mais flag dans DATA/Par_file pour le desactiver (appeler ce flag SLOWER_MESHER_FASTER_SOLVER par exemple) => not needed anymore because Cuthill-McKee sorting has been suppressed
 
 - add UPPA logo and name to frontpage of the manual, add David to the list of contributors, mention UPPA in the main text of the manual; also add UPPA to copyright info and to subroutine headers: Done by Sue
 
-- dire dans manuel que number of grid points per S wavelength (purposely) pas bon dans le inner core, donc ne pas utiliser ce code pour étudier PKJKP ou bien dans ce cas prendre un maillage prévu pour une période beaucoup plus courte (typiquement deux fois) que la période mentionnée dans les tables, qui concerne seulement les ondes P et non pas les S dans le inner core: done by Dimitri
+- dire dans manuel que number of grid points per S wavelength (purposely) pas bon dans le inner core, donc ne pas utiliser ce code pour ï¿½tudier PKJKP ou bien dans ce cas prendre un maillage prï¿½vu pour une pï¿½riode beaucoup plus courte (typiquement deux fois) que la pï¿½riode mentionnï¿½e dans les tables, qui concerne seulement les ondes P et non pas les S dans le inner core: done by Dimitri
 
 - add this to the manual: let us recall that in SPECFEM3D we do not use our GJI 2002 formulation, we use a displacement potential in the fluid (rather than a velocity potential as in our GJI). This leads to the fluid-solid matching condition with no iterations at the CMB and ICB introduced by Chaljub and Valette (2004).  (see also Tarje's comment about this after his eq (49) in the attached PDF). I will update the comments in the source code to mention that three years ago we switched to a displacement potential with no iterations: done by Dimitri
 
 - explain this in the manual: We have implemented a simple way of handling the ONE_CRUST / two crusts issue : we let the user decide. In the new version, the models in Par_file (isotropic_prem, ak135 etc) always implement the right version with two crusts. But we have added new model names: isotropic_prem_one_crust, ak135_one_crust etc., in which case the code uses ONE_CRUST. Depending on the option chosen by the user, the code automatically selects the right time step (i.e., reduces the time step in the case of two crusts and a "small" NEX, to remain stable). This way, users can decide what they want to do: will be done by Caltech when they add the new list of models
 
-- stp si tu peux répondre à ça et on mettra ta réponse dans la section "modèles 3D" du manuel Subject: SPECFEM3D - Models Date: Mon, 2 Jul 2007 17:08:01 +0200 From: Bernhard Schuberth <mail@bernhard-schuberth.de> To: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr> References: <200706041627.21859.mail@bernhard-schuberth.de> <200707020852.01968.mail@bernhard-schuberth.de> <4688C215.6070208@univ-pau.fr> Hi Dimitri, I was checking the implementation of different 3D geodynamic models in my own version of SPECFEM3D and came across some questions regarding the flags ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D (I am not completely sure about the philosophy behind those flags)
+- stp si tu peux rï¿½pondre ï¿½ ï¿½a et on mettra ta rï¿½ponse dans la section "modï¿½les 3D" du manuel Subject: SPECFEM3D - Models Date: Mon, 2 Jul 2007 17:08:01 +0200 From: Bernhard Schuberth <mail@bernhard-schuberth.de> To: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr> References: <200706041627.21859.mail@bernhard-schuberth.de> <200707020852.01968.mail@bernhard-schuberth.de> <4688C215.6070208@univ-pau.fr> Hi Dimitri, I was checking the implementation of different 3D geodynamic models in my own version of SPECFEM3D and came across some questions regarding the flags ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D (I am not completely sure about the philosophy behind those flags)
 ==> HONOR_1D_SPHERICAL_MOHO : honor PREM Moho or not :
 - Doing so drastically reduces the stability condition and therefore the time
 step, resulting in expensive calculations.
@@ -432,5 +433,5 @@ layer instead of two.
 ==> CASE_3D : this flag allows the stretching of the crust's finite elements
 layers for the 3D models. The purpose of this stretching is to squeeze more GLL points by km in the upper part of the crust than in the lower part: added by Dimitri as a comment in the source code instead of adding it to the manual, because these parameters do not appear in DATA/Par_file and therefore do not need to be known by regular users
 
-- dire ça dans le manuel :  grep -i xstore *f90 | grep -i double, grep -i xstore *f90 | grep -i custom, doit tjrs être en double dans le mailleur, mais sauvé en CUSTOM et relu en CUSTOM dans le solver car pas besoin de cettte précision: done by Dimitri
+- dire ï¿½a dans le manuel :  grep -i xstore *f90 | grep -i double, grep -i xstore *f90 | grep -i custom, doit tjrs ï¿½tre en double dans le mailleur, mais sauvï¿½ en CUSTOM et relu en CUSTOM dans le solver car pas besoin de cettte prï¿½cision: done by Dimitri
 
