@@ -150,7 +150,7 @@
 
 ! Boundary Mesh -- save Moho, 400, 670 km discontinuity topology files (in
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
-  logical, parameter :: SAVE_BOUNDARY_MESH = .true.
+  logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
 !
 !--- debugging flags
