@@ -292,7 +292,7 @@
     dcost = dcos(theta)
     p20 = 0.5d0*(3.0d0*dcost*dcost-1.0d0)
     radius = r0 - depth(isource)*1000.0d0/R_EARTH
-    call splint(rspl,espl,espl2,nspl,radius,ell)
+    call spline_evaluation(rspl,espl,espl2,nspl,radius,ell)
     r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
   endif
 

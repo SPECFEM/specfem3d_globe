@@ -301,7 +301,7 @@
         endif
         cost=cos(theta)
         p20=0.5d0*(3.0d0*cost*cost-1.0d0)
-        call splint(rspl,espl,espl2,nspl,r0,ell)
+        call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
         r0=r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
       endif
 

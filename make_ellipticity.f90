@@ -168,7 +168,7 @@
 ! spline epsilonval
   yp1=0.0d0
   ypn=(5.0d0/2.0d0)*(bom**2)/g_a-2.0d0*epsilonval(NR)
-  call spline(rspl,espl,nspl,yp1,ypn,espl2)
+  call spline_construction(rspl,espl,nspl,yp1,ypn,espl2)
 
   end subroutine make_ellipticity
 

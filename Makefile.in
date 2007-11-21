@@ -130,7 +130,7 @@ libspecfem_a_OBJECTS = \
 	$O/model_prem.o \
 	$O/model_ref.o \
 	$O/moho_stretching.o \
-	$O/numerical_recipes.o \
+	$O/spline_routines.o \
 	$O/netlib_specfun_erf.o \
 	$O/read_arrays_buffers_solver.o \
 	$O/read_compute_parameters.o \
@@ -477,8 +477,8 @@ $O/program_meshfem3D.o: constants.h program_meshfem3D.f90
 $O/meshfem3D.o: constants.h meshfem3D.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/meshfem3D.o ${FCFLAGS_f90} meshfem3D.f90
 
-$O/numerical_recipes.o: constants.h numerical_recipes.f90
-	${FCCOMPILE_CHECK} -c -o $O/numerical_recipes.o ${FCFLAGS_f90} numerical_recipes.f90
+$O/spline_routines.o: constants.h spline_routines.f90
+	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} spline_routines.f90
 
 $O/netlib_specfun_erf.o: netlib_specfun_erf.f90
 	${FCCOMPILE_CHECK} -c -o $O/netlib_specfun_erf.o ${FCFLAGS_f90} netlib_specfun_erf.f90

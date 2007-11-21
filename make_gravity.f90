@@ -149,7 +149,7 @@
   enddo
   yp1=(4.0d0/3.0d0)*rho(1)
   ypn=4.0d0*rho(NR)-2.0d0*g(NR)/r(NR)
-  call spline(rspl,gspl,nspl,yp1,ypn,gspl2)
+  call spline_construction(rspl,gspl,nspl,yp1,ypn,gspl2)
 
   end subroutine make_gravity
 

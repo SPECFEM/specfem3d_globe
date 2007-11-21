@@ -50,7 +50,7 @@
   p20=0.5d0*(3.0d0*cost*cost-1.0d0)
 
 ! get ellipticity using spline evaluation
-  call splint(rspl,espl,espl2,nspl,r,ell)
+  call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
 
   factor=ONE-(TWO/3.0d0)*ell*p20
 
