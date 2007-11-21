@@ -1711,7 +1711,7 @@ subroutine pspline_evaluation(xa, ya, y2a, n, x, y, steps)
      endif
   enddo
 
-end subroutine psplint
+end subroutine pspline_evaluation
 
 subroutine pspline_piece(i,n1,n2,l,n,s)
 
@@ -1758,7 +1758,7 @@ subroutine pspline_construction(x, y, n, yp1, ypn, y2, steps)
      call spline_construction(x(n1),y(n1),l,yp1,ypn,y2(n1))
   enddo
 
-end subroutine pspline
+end subroutine pspline_construction
 
 subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
 
