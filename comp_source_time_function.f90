@@ -32,11 +32,10 @@
 
   double precision t,hdur
 
-  double precision, external :: erf
+  double precision, external :: netlib_specfun_erf
 
 ! quasi Heaviside
-  comp_source_time_function = 0.5d0*(1.0d0+erf(t/hdur))
+  comp_source_time_function = 0.5d0*(1.0d0 + netlib_specfun_erf(t/hdur))
 
   end function comp_source_time_function
-
 
