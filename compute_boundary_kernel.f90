@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, November 2007
+!                 and University of Pau / CNRS, France
+! (c) California Institute of Technology and University of Pau / CNRS, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
   implicit none
 
   include 'constants.h'
-  
+
   real(kind=CUSTOM_REAL), dimension(NDIM,*) :: displ,accel,b_displ
   integer nspec, iregion_code
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
@@ -154,7 +154,7 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                      ystore,zstore,ibool,idoubling)
 
-          ! ---- precompute K_d for F-S boundaries ----           
+          ! ---- precompute K_d for F-S boundaries ----
           if (fluid_solid_boundary) then
             Kdvect(:,i,j,k) = dot_product( normal(:), matmul(sigma(:,:,i,j,k),normal(:)) ) * b_displl(:,i,j,k) &
                        + dot_product( normal(:), matmul(b_sigma(:,:,i,j,k),normal(:)) ) * displl(:,i,j,k)
@@ -172,7 +172,7 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
                        - dot_product( matmul(b_dsdx(:,:,i,j,k), normal(:)), matmul(sigma(:,:,i,j,k),normal(:)) ) &
                        - dot_product( matmul(dsdx(:,:,i,j,k), normal(:)), matmul(b_sigma(:,:,i,j,k),normal(:)) )
           endif
-          
+
         enddo
       enddo
     enddo
@@ -221,10 +221,10 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
 
         b_kl(:,:,ispec2D) = b_kl(:,:,ispec2D) - b_kl_2(:,:)
       endif
- 
+
     enddo
 
-  end subroutine compute_boundary_kernel 
+  end subroutine compute_boundary_kernel
 
 
 ! ==========================================================================================
@@ -236,7 +236,7 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            ystore,zstore,ibool,idoubling)
-          
+
 
   implicit none
 
@@ -254,7 +254,7 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
   real(kind=CUSTOM_REAL), dimension(*) :: ystore,zstore
   integer, dimension(NGLLX,NGLLY,NGLLZ,*) :: ibool
   integer, dimension(*) :: idoubling
-   
+
 ! --- local variables ---
   real(kind=CUSTOM_REAL) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -338,11 +338,11 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
 
      lambdalplus2mul = kappal + FOUR_THIRDS * mul
      lambdal = lambdalplus2mul - 2.*mul
-     
+
      sigma(1,1) = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
      sigma(2,2) = lambdalplus2mul*duydyl + lambdal*duxdxl_plus_duzdzl
      sigma(3,3) = lambdalplus2mul*duzdzl + lambdal*duxdxl_plus_duydyl
-     
+
      sigma(1,2) = mul*duxdyl_plus_duydxl
      sigma(1,3) = mul*duzdxl_plus_duxdzl
      sigma(2,3) = mul*duzdyl_plus_duydzl
@@ -351,7 +351,7 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
 
      kappavl = kappavstore(i,j,k,ispec)
      muvl = muvstore(i,j,k,ispec)
-     
+
      kappahl = kappahstore(i,j,k,ispec)
      muhl = muhstore(i,j,k,ispec)
 
@@ -369,7 +369,7 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
      iglob = ibool(i,j,k,ispec)
      theta = ystore(iglob)
      phi = zstore(iglob)
-     
+
      costheta = cos(theta)
      sintheta = sin(theta)
      cosphi = cos(phi)
@@ -384,47 +384,47 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
      sinthetafour = sinthetasq * sinthetasq
      cosphifour = cosphisq * cosphisq
      sinphifour = sinphisq * sinphisq
-     
+
      costwotheta = cos(2.*theta)
      sintwotheta = sin(2.*theta)
      costwophi = cos(2.*phi)
      sintwophi = sin(2.*phi)
-     
+
      cosfourtheta = cos(4.*theta)
      cosfourphi = cos(4.*phi)
-     
+
      costwothetasq = costwotheta * costwotheta
-     
+
      costwophisq = costwophi * costwophi
      sintwophisq = sintwophi * sintwophi
-     
+
      etaminone = eta_aniso - 1.
      twoetaminone = 2. * eta_aniso - 1.
-     
+
      ! precompute some products to reduce the CPU time
-     
+
      two_eta_aniso = 2.*eta_aniso
      four_eta_aniso = 4.*eta_aniso
      six_eta_aniso = 6.*eta_aniso
-     
+
      two_rhovpvsq = 2.*rhovpvsq
      two_rhovphsq = 2.*rhovphsq
      two_rhovsvsq = 2.*rhovsvsq
      two_rhovshsq = 2.*rhovshsq
-     
+
      four_rhovpvsq = 4.*rhovpvsq
      four_rhovphsq = 4.*rhovphsq
      four_rhovsvsq = 4.*rhovsvsq
      four_rhovshsq = 4.*rhovshsq
-     
+
      ! the 21 anisotropic coefficients computed using Mathematica
-     
+
      c11 = rhovphsq*sinphifour + 2.*cosphisq*sinphisq* &
                 (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
                 sinthetasq) + cosphifour* &
                 (rhovphsq*costhetafour + 2.*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
                 costhetasq*sinthetasq + rhovpvsq*sinthetafour)
-     
+
      c12 = ((rhovphsq - two_rhovshsq)*(3. + cosfourphi)*costhetasq)/4. - &
                 four_rhovshsq*cosphisq*costhetasq*sinphisq + &
                 (rhovphsq*(11. + 4.*costwotheta + cosfourtheta)*sintwophisq)/32. + &
@@ -432,7 +432,7 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
                 2.*cosphisq*costhetasq*sinphisq + sinphifour)*sinthetasq + &
                 rhovpvsq*cosphisq*sinphisq*sinthetafour - &
                 rhovsvsq*sintwophisq*sinthetafour
-     
+
      c13 = (cosphisq*(rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq - &
                 12.*eta_aniso*rhovsvsq + (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - &
                 four_eta_aniso*rhovsvsq)*cosfourtheta))/8. + &
@@ -444,7 +444,7 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
                 (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
                 four_eta_aniso*rhovsvsq)*costwotheta))/2. + &
                 (etaminone*rhovphsq + 2.*(rhovshsq - eta_aniso*rhovsvsq))*sinphisq)* sintheta
-     
+
      c15 = cosphi*costheta*((cosphisq* (-rhovphsq + rhovpvsq + &
                 (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
                 costwotheta))/2. + etaminone*(rhovphsq - two_rhovsvsq)*sinphisq)*sintheta
@@ -453,13 +453,13 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
                 (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
                 four_eta_aniso*rhovsvsq)*costwotheta) + &
                 2.*etaminone*(rhovphsq - two_rhovsvsq)*sinphisq)*sinthetasq)/2.
-     
+
      c22 = rhovphsq*cosphifour + 2.*cosphisq*sinphisq* &
                 (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
                 sinthetasq) + sinphifour* &
                 (rhovphsq*costhetafour + 2.*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
                 costhetasq*sinthetasq + rhovpvsq*sinthetafour)
-     
+
      c23 = ((rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq - 12.*eta_aniso*rhovsvsq + &
                 (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
                 cosfourtheta)*sinphisq)/8. + &
@@ -469,53 +469,53 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
      c24 = costheta*sinphi*(etaminone*(rhovphsq - two_rhovsvsq)*cosphisq + &
                 ((-rhovphsq + rhovpvsq + (twoetaminone*rhovphsq - rhovpvsq + &
                 four_rhovsvsq - four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)/2.)*sintheta
-     
+
      c25 = cosphi*costheta*((etaminone*rhovphsq + 2.*(rhovshsq - eta_aniso*rhovsvsq))* &
                 cosphisq + ((-rhovphsq + rhovpvsq + four_rhovshsq - four_rhovsvsq + &
                 (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
                 four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)/2.)*sintheta
-     
+
      c26 = (cosphi*sinphi*(2.*etaminone*(rhovphsq - two_rhovsvsq)*cosphisq + &
                 (-rhovphsq + rhovpvsq + (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
                 four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)*sinthetasq)/2.
 
      c33 = rhovpvsq*costhetafour + 2.*(eta_aniso*(rhovphsq - two_rhovsvsq) + two_rhovsvsq)* &
                 costhetasq*sinthetasq + rhovphsq*sinthetafour
-     
+
      c34 = -((rhovphsq - rhovpvsq + (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq &
                 - four_eta_aniso*rhovsvsq)*costwotheta)*sinphi*sintwotheta)/4.
-     
+
      c35 = -(cosphi*(rhovphsq - rhovpvsq + &
                 (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
                 costwotheta)*sintwotheta)/4.
-     
+
      c36 = -((rhovphsq - rhovpvsq - four_rhovshsq + four_rhovsvsq + &
                 (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
                 costwotheta)*sintwophi*sinthetasq)/4.
-     
+
      c44 = cosphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) + &
                 sinphisq*(rhovsvsq*costwothetasq + &
                 (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + four_eta_aniso*rhovsvsq)*costhetasq* sinthetasq)
-     
+
      c45 = ((rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq - two_rhovshsq - two_rhovsvsq + &
                 four_eta_aniso*rhovsvsq + (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + &
                 4.*etaminone*rhovsvsq)*costwotheta)*sintwophi*sinthetasq)/4.
-     
+
      c46 = -(cosphi*costheta*((rhovshsq - rhovsvsq)*cosphisq - &
                 ((rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq - two_rhovshsq - two_rhovsvsq + &
                 four_eta_aniso*rhovsvsq + (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + &
                 four_rhovsvsq - four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)/2.)* sintheta)
-     
+
      c55 = sinphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) + &
                 cosphisq*(rhovsvsq*costwothetasq + &
                 (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + four_eta_aniso*rhovsvsq)*costhetasq* sinthetasq)
-     
+
      c56 = costheta*sinphi*((cosphisq* &
                 (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq - two_rhovshsq - two_rhovsvsq + &
                 four_eta_aniso*rhovsvsq + (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + &
                 four_rhovsvsq - four_eta_aniso*rhovsvsq)*costwotheta))/2. + &
                 (-rhovshsq + rhovsvsq)*sinphisq)*sintheta
-     
+
      c66 = rhovshsq*costwophisq*costhetasq - &
                 2.*(rhovphsq - two_rhovshsq)*cosphisq*costhetasq*sinphisq + &
                 (rhovphsq*(11. + 4.*costwotheta + cosfourtheta)*sintwophisq)/32. - &
@@ -523,49 +523,49 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
                 cos(2.*(2.*phi + theta)))*sinthetasq)/8. + &
                 rhovpvsq*cosphisq*sinphisq*sinthetafour - &
                 (eta_aniso*(rhovphsq - two_rhovsvsq)*sintwophisq*sinthetafour)/2.
-     
+
      ! general expression of stress tensor for full Cijkl with 21 coefficients
-     
+
      sigma(1,1) = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
                 c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl
-     
+
      sigma(2,2) = c12*duxdxl + c26*duxdyl_plus_duydxl + c22*duydyl + &
                 c25*duzdxl_plus_duxdzl + c24*duzdyl_plus_duydzl + c23*duzdzl
-     
+
      sigma(3,3) = c13*duxdxl + c36*duxdyl_plus_duydxl + c23*duydyl + &
                 c35*duzdxl_plus_duxdzl + c34*duzdyl_plus_duydzl + c33*duzdzl
-     
+
      sigma(1,2) = c16*duxdxl + c66*duxdyl_plus_duydxl + c26*duydyl + &
                 c56*duzdxl_plus_duxdzl + c46*duzdyl_plus_duydzl + c36*duzdzl
-     
+
      sigma(1,3) = c15*duxdxl + c56*duxdyl_plus_duydxl + c25*duydyl + &
                 c55*duzdxl_plus_duxdzl + c45*duzdyl_plus_duydzl + c35*duzdzl
-     
+
      sigma(2,3) = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl + &
                 c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
-     
+
    endif ! end of test whether isotropic or anisotropic element for the mantle
 
 ! ------------------- outer  core --------------------------
 
  else if (iregion_code == IREGION_OUTER_CORE) then
-   
+
    kappal = kappavstore(i,j,k,ispec)
    duxdxl_plus_duydyl_plus_duzdzl = duxdxl+duydyl_plus_duzdzl
-     
+
    sigma(1,1) = kappal * duxdxl_plus_duydyl_plus_duzdzl
    sigma(2,2) = sigma(1,1)
    sigma(3,3) = sigma(1,1)
-     
+
    sigma(1,2) = 0
    sigma(1,3) = 0
    sigma(2,3) = 0
-   
+
 ! ------------------ inner core -------------------------
 
  else if (iregion_code == IREGION_INNER_CORE) then
 
-   if(ANISOTROPIC_INNER_CORE_VAL) then 
+   if(ANISOTROPIC_INNER_CORE_VAL) then
 
 ! elastic tensor for hexagonal symmetry in reduced notation:
 !
@@ -612,13 +612,13 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
      sigma(1,1) = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
      sigma(2,2) = lambdalplus2mul*duydyl + lambdal*duxdxl_plus_duzdzl
      sigma(3,3) = lambdalplus2mul*duzdzl + lambdal*duxdxl_plus_duydyl
-     
+
      sigma(1,2) = mul*duxdyl_plus_duydxl
      sigma(1,3) = mul*duzdxl_plus_duxdzl
      sigma(2,3) = mul*duzdyl_plus_duydzl
 
    endif
-   
+
  endif
 
 ! define symmetric components of sigma for gravity

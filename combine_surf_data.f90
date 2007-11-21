@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, November 2007
+!                 and University of Pau / CNRS, France
+! (c) California Institute of Technology and University of Pau / CNRS, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -61,14 +61,14 @@ program combine_surf_data
     if (i < 7 .and. trim(arg(i)) == '') then
       write(*,*) ' '
       write(*,*) ' Usage: xcombine_surf_data slice_list filename surfname input_dir output_dir high/low-resolution 2D/3D'
-      write(*,*) ' filename.bin can be either' 
+      write(*,*) ' filename.bin can be either'
       write(*,*) '   real(kind=CUSTOM_REAL) filename(NGLLX,NGLLY,NGLLZ,nspec)'
-      write(*,*) '   or ---  filename(NGLLX,NGLLY,NSPEC2D) where' 
+      write(*,*) '   or ---  filename(NGLLX,NGLLY,NSPEC2D) where'
       write(*,*) '   filename=moho_kernel, d400_kernel, d670_kernel, CMB_kernel, or ICB_kernel'
       write(*,*) ' possible surface names: Moho, 400, 670, CMB, ICB'
       write(*,*) ' files have been collected in input_dir, output mesh file goes to output_dir '
-      write(*,*) ' give 0 for low resolution and 1 for high resolution' 
-      write(*,*) ' give 0 for 2D and 1 for 3D filenames'  
+      write(*,*) ' give 0 for low resolution and 1 for high resolution'
+      write(*,*) ' give 0 for 2D and 1 for 3D filenames'
       write(*,*) ' region does not have to be specified'
       stop ' Reenter command line options'
     endif
@@ -210,7 +210,7 @@ program combine_surf_data
     write(prname,'(a,i6.6,a)') trim(indir)//'/proc',iproc,'_'
     prname2 = trim(prname)//trim(reg_name)
 
-    ! surface topology file    
+    ! surface topology file
     ibelm_surf_file = trim(prname) // trim(belm_name)
     print *, trim(ibelm_surf_file)
     open(unit = 28,file = trim(ibelm_surf_file),status='old', iostat = ios, form='unformatted')
@@ -219,7 +219,7 @@ program combine_surf_data
     endif
     if (trim(surfname) == 'Moho' .or. trim(surfname) == '400' .or. trim(surfname) == '670') then
       read(28) njunk1,njunk2,njunk3
-      if (trim(surfname) == 'Moho') then; 
+      if (trim(surfname) == 'Moho') then;
         read(28) ibelm_surf  ! moho top
       else if (trim(surfname) == '400' .or. trim(surfname) == '670') then
         read(28) njunk       ! moho top
@@ -253,7 +253,7 @@ program combine_surf_data
     endif
     close(27)
 
-    ! ibool file  
+    ! ibool file
     ibool_file = trim(prname2) // 'solver_data_2' // '.bin'
     print *, trim(ibool_file)
     open(unit = 28,file = trim(ibool_file),status='old', iostat = ios, form='unformatted')
@@ -326,7 +326,7 @@ program combine_surf_data
     enddo
 
   np = np + numpoin
-    
+
   enddo  ! all slices for points
 
   if (np /=  npoint_total) stop 'Error: Number of total points not consistent'

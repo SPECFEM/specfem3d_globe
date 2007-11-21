@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, November 2007
+!                 and University of Pau / CNRS, France
+! (c) California Institute of Technology and University of Pau / CNRS, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -1568,7 +1568,7 @@
     write(27) normal_400
     write(27) normal_670
     close(27)
-    
+
     deallocate(ibelm_moho_top,ibelm_moho_bot)
     deallocate(ibelm_400_top,ibelm_400_bot)
     deallocate(ibelm_670_top,ibelm_670_bot)

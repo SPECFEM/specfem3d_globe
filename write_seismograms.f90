@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, November 2007
+!                 and University of Pau / CNRS, France
+! (c) California Institute of Technology and University of Pau / CNRS, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -77,7 +77,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
           OUTPUT_SEISMOS_SAC_BINARY
 ! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
   logical ROTATE_SEISMOGRAMS_RT
-          
+
 ! flag to decide whether seismograms are written by master proc only or
 ! by all processes in parallel (doing the later may create problems on some
 ! file systems). Added November 12th, 2007 BS BS
@@ -98,7 +98,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
 
    if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
         write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
-    
+
       if(USE_BINARY_FOR_LARGE_FILE) then
         if (seismo_offset==0) then
           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted')
@@ -128,7 +128,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
    total_seismos_local = total_seismos_local + 1
 
    one_seismogram=seismograms(:,irec_local,:)
-    
+
          ! write this seismogram
          call write_one_seismogram(one_seismogram,irec, &
                                    station_name,network_name,stlat,stlon,stele,nrec, &
@@ -139,17 +139,17 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
                                    OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
                                    NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
                                    SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
-                                    
+
    enddo
 
    if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
    write_time  = MPI_WTIME() - write_time_begin
-   
+
    if(myrank==0) write(IMAIN,*)
-   if(myrank==0) write(IMAIN,*) ' Writing the seismograms in parallel took ', write_time, ' seconds'     
+   if(myrank==0) write(IMAIN,*) ' Writing the seismograms in parallel took ', write_time, ' seconds'
    if(myrank==0) write(IMAIN,*)
-   
+
 ! now only the master process does the writing of seismograms and
 ! collects the data from all other processes
  else ! WRITE_SEISMOGRAMS_BY_MASTER
@@ -161,7 +161,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
        ! create one large file instead of one small file per station to avoid file system overload
        if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
            write(sisname,'(A)') '/all_seismograms'
-    
+
          if(USE_BINARY_FOR_LARGE_FILE) then
            if (seismo_offset==0) then
              open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted')
@@ -245,11 +245,11 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
     endif
 
     write_time  = MPI_WTIME() - write_time_begin
-   
+
     if(myrank==0) write(IMAIN,*)
-    if(myrank==0) write(IMAIN,*) ' Writing the seismograms by master proc alone took ', write_time, ' seconds'     
+    if(myrank==0) write(IMAIN,*) ' Writing the seismograms by master proc alone took ', write_time, ' seconds'
     if(myrank==0) write(IMAIN,*)
-   
+
  endif ! WRITE_SEISMOGRAMS_BY_MASTER
 
 end subroutine write_seismograms
@@ -715,7 +715,7 @@ end subroutine write_seismograms
        call open_file_create(trim(OUTPUT_FILES)//trim(sisname_2)//char(0))
     else
        call open_file_append(trim(OUTPUT_FILES)//trim(sisname_2)//char(0))
-    endif   
+    endif
 
     if (seismo_offset == 0) then
       ! write header variables
