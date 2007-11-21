@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, November 2007
+!                 and University of Pau / CNRS, France
+! (c) California Institute of Technology and University of Pau / CNRS, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -527,7 +527,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE) :: vector_accel_outer_core,&
              vector_displ_outer_core, b_vector_displ_outer_core
-             
+
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   double precision scale_kl
 
@@ -965,7 +965,7 @@
     WRITE_SEISMOGRAMS_BY_MASTER = bcast_logical(30)
     SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(31)
     USE_BINARY_FOR_LARGE_FILE = bcast_logical(32)
-    
+
     DT = bcast_double_precision(1)
     ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
     ANGULAR_WIDTH_ETA_IN_DEGREES = bcast_double_precision(3)
@@ -1672,7 +1672,7 @@
 
     ! initialization
     moho_kl = 0.; d400_kl = 0.; d670_kl = 0.; cmb_kl = 0.; icb_kl = 0.
-    
+
   endif
 
 ! read parameters to couple fluid and solid regions
@@ -3442,7 +3442,7 @@
         enddo
       enddo
     enddo
- 
+
     if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) &
                write(51,rec=it) reclen_xmin_crust_mantle,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle
 
@@ -4258,9 +4258,9 @@
               OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
               seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
               SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
-    if(myrank==0) write(IMAIN,*) 
-    if(myrank==0) write(IMAIN,*) ' Total number of time steps written: ', it-it_begin 
-    if(myrank==0) write(IMAIN,*) 
+    if(myrank==0) write(IMAIN,*)
+    if(myrank==0) write(IMAIN,*) ' Total number of time steps written: ', it-it_begin
+    if(myrank==0) write(IMAIN,*)
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
@@ -4378,7 +4378,7 @@
             vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
             rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-               + deltat * dot_product(vector_accel_outer_core(:,iglob), b_vector_displ_outer_core(:,iglob)) 
+               + deltat * dot_product(vector_accel_outer_core(:,iglob), b_vector_displ_outer_core(:,iglob))
 
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
             div_displ_outer_core(i,j,k,ispec) = div_displ_outer_core(i,j,k,ispec) + kappal * accel_outer_core(iglob)
@@ -4472,7 +4472,7 @@
                  c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
                  c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
                  k_top,ibelm_400_top,normal_400,d400_kl_top,fluid_solid_boundary,NSPEC2D_400)
-      
+
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
@@ -4503,7 +4503,7 @@
                  c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
                  c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
                  k_top,ibelm_670_top,normal_670,d670_kl_top,fluid_solid_boundary,NSPEC2D_670)
- 
+
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
@@ -4584,7 +4584,7 @@
                  dummy_array,c44store_inner_core,dummy_array,dummy_array, &
                  dummy_array,dummy_array,dummy_array, &
                  k_bot,ibelm_top_inner_core,normal_bottom_outer_core,icb_kl_bot,fluid_solid_boundary,NSPEC2D_ICB)
-      
+
       icb_kl = icb_kl + (icb_kl_top - icb_kl_bot) * deltat
 
     endif
@@ -4708,9 +4708,9 @@
         OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
         seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
         SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
-    if(myrank==0) write(IMAIN,*) 
-    if(myrank==0) write(IMAIN,*) ' Total number of time steps written: ', it-it_begin 
-    if(myrank==0) write(IMAIN,*) 
+    if(myrank==0) write(IMAIN,*)
+    if(myrank==0) write(IMAIN,*) ' Total number of time steps written: ', it-it_begin
+    if(myrank==0) write(IMAIN,*)
     else
     if (nrec_local > 0) then
       call write_adj_seismograms(seismograms,number_receiver_global, &

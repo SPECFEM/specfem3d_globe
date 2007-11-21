@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, November 2007
+!                 and University of Pau / CNRS, France
+! (c) California Institute of Technology and University of Pau / CNRS, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 ! compute the missing nodes of a 27-node element when only the 8 corners have been given
 
 ! the topology of the nodes is described in file hex_nodes.f90 as well as in
-! DATA/util/YYYYYYYYYYYYYYYYYYYYYYYYYYY DK DK UGLY YYYYYYYYYYYYYYYYYYY
+! UTILS/chunk_notes_scanned/numbering_convention_27_nodes.*
 
   subroutine add_missing_nodes(offset_x,offset_y,offset_z)
 

@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, November 2007
+!                 and University of Pau / CNRS, France
+! (c) California Institute of Technology and University of Pau / CNRS, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, 
 
 ! radii to determine if an element is on the discontinuity or not
   target_moho_high = r_moho * (ONE + SMALLVAL)
-  target_moho_low = r_moho * (ONE - SMALLVAL)  
+  target_moho_low = r_moho * (ONE - SMALLVAL)
   target_400_high = r_400 * (ONE + SMALLVAL)
   target_400_low = r_400 * (ONE - SMALLVAL)
   target_670_high = r_670 * (ONE + SMALLVAL)
@@ -168,7 +168,7 @@ subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, 
       else
         irem_ix = map_irem_ix_12(irem_block)
       endif
-      if (mod(isub_block,2) == 0) then 
+      if (mod(isub_block,2) == 0) then
         irem_iy = map_irem_iy_even(irem_block)
       else
         irem_iy = map_irem_iy_odd(irem_block)
@@ -238,4 +238,4 @@ subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, 
 
 
 end subroutine get_jacobian_discontinuities
-    
+

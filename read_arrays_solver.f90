@@ -5,8 +5,8 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, November 2007
+!                 and University of Pau / CNRS, France
+! (c) California Institute of Technology and University of Pau / CNRS, November 2007
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -169,7 +169,7 @@
 
 ! read additional ocean load mass matrix
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
-  
+
   close(IIN)
 
 ! read coordinates of the mesh
