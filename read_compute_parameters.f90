@@ -641,6 +641,10 @@
       endif
     endif
 
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+      DT = DT*0.20d0
+    endif
+
     if( .not. ATTENUATION_RANGE_PREDEFINED ) then
        call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
             MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
@@ -690,6 +694,15 @@
      write(*,*)
      write(*,*)'##############################################################'
 
+    if (HONOR_1D_SPHERICAL_MOHO) then
+      if (.not. ONE_CRUST) then
+        ! case 1D + two crustal layers
+        if (NER_CRUST<2) NER_CRUST=2
+      endif
+    else
+      ! case 3D
+      if (NER_CRUST<2) NER_CRUST=2
+    endif
   endif
 
 
