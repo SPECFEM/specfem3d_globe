@@ -697,15 +697,15 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   enddo
 
   ! Determine the Spline Coefficients or Second Derivatives
-  call pspline(AM_V%Qr, AM_V%Qsf,   AM_V%Qn, Qp1, Qpn, AM_V%Qsf2,   AM_V%interval_Q)
-  call pspline(AM_V%Qr, AM_V%Qomsb, AM_V%Qn, Qp1, Qpn, AM_V%Qomsb2, AM_V%interval_Q)
+  call pspline_construction(AM_V%Qr, AM_V%Qsf,   AM_V%Qn, Qp1, Qpn, AM_V%Qsf2,   AM_V%interval_Q)
+  call pspline_construction(AM_V%Qr, AM_V%Qomsb, AM_V%Qn, Qp1, Qpn, AM_V%Qomsb2, AM_V%interval_Q)
   do i = 1,N_SLS
 ! copy the sub-arrays to temporary arrays to avoid a warning by some compilers
 ! about temporary arrays being created automatically when using this expression
 ! directly in the call to the subroutine
      Qfctmp(:) = AM_V%Qfc(i,:)
      Qfc2tmp(:) = AM_V%Qfc2(i,:)
-     call pspline(AM_V%Qr, Qfctmp, AM_V%Qn, Qp1, Qpn, Qfc2tmp, AM_V%interval_Q)
+     call pspline_construction(AM_V%Qr, Qfctmp, AM_V%Qn, Qp1, Qpn, Qfc2tmp, AM_V%interval_Q)
 ! copy the arrays back to the sub-arrays, since these sub-arrays are used
 ! as input and output
      AM_V%Qfc(i,:) = Qfctmp(:)
@@ -716,12 +716,12 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   rmax = nint(TABLE_ATTENUATION)
   do i = 1,rmax
      call attenuation_lookup_value(i, radius)
-     call psplint(AM_V%Qr, AM_V%Qsf,   AM_V%Qsf2,   AM_V%Qn, radius, scale_factor(1,1,1,i),       AM_V%interval_Q)
-     call psplint(AM_V%Qr, AM_V%Qomsb, AM_V%Qomsb2, AM_V%Qn, radius, one_minus_sum_beta(1,1,1,i), AM_V%interval_Q)
+     call pspline_evaluation(AM_V%Qr, AM_V%Qsf,   AM_V%Qsf2,   AM_V%Qn, radius, scale_factor(1,1,1,i),       AM_V%interval_Q)
+     call pspline_evaluation(AM_V%Qr, AM_V%Qomsb, AM_V%Qomsb2, AM_V%Qn, radius, one_minus_sum_beta(1,1,1,i), AM_V%interval_Q)
      do j = 1,N_SLS
         Qfctmp  = AM_V%Qfc(j,:)
         Qfc2tmp = AM_V%Qfc2(j,:)
-        call psplint(AM_V%Qr, Qfctmp, Qfc2tmp, AM_V%Qn, radius, fctmp, AM_V%interval_Q)
+        call pspline_evaluation(AM_V%Qr, Qfctmp, Qfc2tmp, AM_V%Qn, radius, fctmp, AM_V%interval_Q)
         factor_common(j,1,1,1,i) = fctmp
      enddo
   enddo
@@ -1681,7 +1681,6 @@ subroutine qsort(X,n,I)
 end subroutine qsort
 
 ! Piecewise Continuous Splines
-!   - Uses the Numerical Recipes for Spline interpolation
 !   - Added Steps which describes the discontinuities
 !   - Steps must be repeats in the dependent variable, X
 !   - Derivates at the steps are computed using the point
@@ -1692,7 +1691,7 @@ end subroutine qsort
 !     and ending points of the first and last splines
 !   - A Step with a value of zero is undefined
 !   - Works with functions with steps or no steps
-subroutine psplint(xa, ya, y2a, n, x, y, steps)
+subroutine pspline_evaluation(xa, ya, y2a, n, x, y, steps)
 
   implicit none
 
@@ -1707,7 +1706,7 @@ subroutine psplint(xa, ya, y2a, n, x, y, steps)
      if(steps(i+1) == 0) return
      if(x >= xa(steps(i)) .AND. x <= xa(steps(i+1))) then
         call pspline_piece(i,n1,n2,l,n,steps)
-        call splint(xa(n1), ya(n1), y2a(n1), l, x, y)
+        call spline_evaluation(xa(n1), ya(n1), y2a(n1), l, x, y)
         return
      endif
   enddo
@@ -1726,7 +1725,7 @@ subroutine pspline_piece(i,n1,n2,l,n,s)
 
 end subroutine pspline_piece
 
-subroutine pspline(x, y, n, yp1, ypn, y2, steps)
+subroutine pspline_construction(x, y, n, yp1, ypn, y2, steps)
 
   implicit none
 
@@ -1756,7 +1755,7 @@ subroutine pspline(x, y, n, yp1, ypn, y2, steps)
      ! Determine the First Derivates at Begin/End Points
      yp1 = ( y(n1+1) - y(n1) ) / ( x(n1+1) - x(n1))
      ypn = ( y(n2) - y(n2-1) ) / ( x(n2) - x(n2-1))
-     call spline(x(n1),y(n1),l,yp1,ypn,y2(n1))
+     call spline_construction(x(n1),y(n1),l,yp1,ypn,y2(n1))
   enddo
 
 end subroutine pspline
@@ -1873,7 +1872,6 @@ subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
      write(*,*)'iflag:',iflag
      call exit_MPI_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
   endif
-
 
 end subroutine attenuation_model_1D_PREM
 

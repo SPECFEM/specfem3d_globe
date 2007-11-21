@@ -2443,7 +2443,7 @@
     call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST)
     do int_radius = 1,NRAD_GRAVITY
       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
-      call splint(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g)
+      call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g)
       idoubling = 0
 
 ! use PREM density profile to calculate gravity (fine for other 1D models)
@@ -2470,10 +2470,10 @@
 
 ! compute gravity value at CMB and ICB once and for all
     radius = RCMB / R_EARTH
-    call splint(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_cmb_dble)
+    call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_cmb_dble)
 
     radius = RICB / R_EARTH
-    call splint(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_icb_dble)
+    call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_icb_dble)
 
 ! distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
