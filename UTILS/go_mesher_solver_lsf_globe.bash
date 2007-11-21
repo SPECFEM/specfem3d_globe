@@ -9,14 +9,18 @@
 #  Qinya Liu, Caltech, May 2007
 
 BASEMPIDIR=/scratch/$USER/DATABASES_MPI
+BASESCRATCHDIR=/scratch/$USER
 
 echo "$LSB_MCPU_HOSTS" > OUTPUT_FILES/lsf_machines
 echo "$LSB_JOBID" > OUTPUT_FILES/jobid
 
 remap_lsf_machines.pl OUTPUT_FILES/lsf_machines >OUTPUT_FILES/machines
 
+# clean old files that may be in the local /scratch directory
+shmux -M 50 -S all -c "rm -r -f $BASESCRATCHDIR" - < OUTPUT_FILES/machines >/dev/null
+
 # create a directory for this job
-shmux -M50 -Sall -c "mkdir -p /scratch/$USER; mkdir -p $BASEMPIDIR.$LSB_JOBID" - < OUTPUT_FILES/machines >/dev/null
+shmux -M 50 -S all -c "mkdir -p /scratch/$USER; mkdir -p $BASEMPIDIR.$LSB_JOBID" - < OUTPUT_FILES/machines >/dev/null
 
 # Set the local path in Par_file
 sed -e "s:^LOCAL_PATH .*:LOCAL_PATH                      =  $BASEMPIDIR.$LSB_JOBID:" < DATA/Par_file > DATA/Par_file.tmp
