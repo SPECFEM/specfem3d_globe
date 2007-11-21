@@ -133,6 +133,7 @@ libspecfem_a_OBJECTS = \
 	$O/model_ref.o \
 	$O/moho_stretching.o \
 	$O/numerical_recipes.o \
+	$O/netlib_specfun_erf.o \
 	$O/read_arrays_buffers_solver.o \
 	$O/read_compute_parameters.o \
 	$O/auto_ner.o \
@@ -480,6 +481,9 @@ $O/meshfem3D.o: constants.h meshfem3D.f90
 
 $O/numerical_recipes.o: constants.h numerical_recipes.f90
 	${FCCOMPILE_CHECK} -c -o $O/numerical_recipes.o ${FCFLAGS_f90} numerical_recipes.f90
+
+$O/netlib_specfun_erf.o: netlib_specfun_erf.f90
+	${FCCOMPILE_CHECK} -c -o $O/netlib_specfun_erf.o ${FCFLAGS_f90} netlib_specfun_erf.f90
 
 $O/lgndr.o: constants.h lgndr.f90
 	${FCCOMPILE_CHECK} -c -o $O/lgndr.o ${FCFLAGS_f90} lgndr.f90
