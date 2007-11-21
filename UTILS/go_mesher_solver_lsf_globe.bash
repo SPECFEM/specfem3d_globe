@@ -24,8 +24,8 @@ shmux -M 50 -S all -c "rm -r -f /scratch/$USER; mkdir -p /scratch/$USER; mkdir -
 sed -e "s:^LOCAL_PATH .*:LOCAL_PATH                      =  $BASEMPIDIR.$LSB_JOBID:" < DATA/Par_file > DATA/Par_file.tmp
 mv DATA/Par_file.tmp DATA/Par_file
 
-
 current_pwd=$PWD
 
 mpirun.lsf  --gm-no-shmem --gm-copy-env $current_pwd/xmeshfem3D
 mpirun.lsf --gm-no-shmem --gm-copy-env $current_pwd/xspecfem3D
+
