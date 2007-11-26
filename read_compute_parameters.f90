@@ -131,10 +131,10 @@
 
 ! for the cutted doublingbrick improvement
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  integer :: lastdoubling_layer, cutted_doubling, nglob_surf_xi, nglob_surf_eta, normal_doubling
+  integer :: lastdoubling_layer, cutted_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
+              normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
-
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -470,7 +470,7 @@
 
     ! element width =   0.1875000      degrees =    20.84905      km
       else if(NEX_MAX*multiplication_factor <= 480) then
-        DT                       = 0.12d0
+        DT                       = 0.11d0
 
         MIN_ATTENUATION_PERIOD   = 10
         MAX_ATTENUATION_PERIOD   = 500
@@ -1754,7 +1754,6 @@ enddo
 
 ! initialize array
   NGLOB(:) = 0
-
 ! in the inner core (no doubling region + eventually central cube)
   if(INCLUDE_CENTRAL_CUBE) then
     NGLOB(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/ratio_divide_central_cube) &
@@ -1779,8 +1778,12 @@ enddo
       endif
       tmp_sum = 0;
       do iter_layer = ifirst_region, ilast_region
-        nglob_surf_eta=0
-        nglob_surf_xi=0
+        nglob_int_surf_eta=0
+        nglob_int_surf_xi=0
+        nglob_ext_surf = 0
+        nglob_center_edge = 0
+        nglob_corner_edge = 0
+        nglob_border_edge = 0
         if (this_region_has_a_doubling(iter_layer)) then
             if (iter_region == IREGION_OUTER_CORE .and. iter_layer == lastdoubling_layer .and. &
                                                       (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
@@ -1791,8 +1794,12 @@ enddo
               nglob_edge = 0
               nglob_surf = 0
               nglob_vol = 8*NGLLX**3 - 12*NGLLX**2 + 6*NGLLX - 1
-              nglob_surf_eta = 6*NGLLX**2 - 7*NGLLX + 2
-              nglob_surf_xi = 5*NGLLX**2 - 5*NGLLX + 1
+              nglob_int_surf_eta = 6*NGLLX**2 - 7*NGLLX + 2
+              nglob_int_surf_xi = 5*NGLLX**2 - 5*NGLLX + 1
+              nglob_ext_surf = 4*NGLLX**2-4*NGLLX+1
+              nglob_center_edge = 4*(NGLLX-1)+1
+              nglob_corner_edge = 2*(NGLLX-1)+1
+              nglob_border_edge = 3*(NGLLX-1)+1
             else
               if (ner(iter_layer) == 1) then
                 nb_lay_sb = 1
@@ -1829,7 +1836,14 @@ enddo
         normal_doubling * ((((nblocks_xi*nblocks_eta)/4)*nglob_vol) - &
         (((nblocks_eta/2-1)*nblocks_xi/2+(nblocks_xi/2-1)*nblocks_eta/2)*nglob_surf) + &
         ((nblocks_eta/2-1)*(nblocks_xi/2-1)*nglob_edge)) + &
-        cutted_doubling*(nglob_vol*(nblocks_xi*nblocks_eta) - (nblocks_xi-1)*nglob_surf_xi - (nblocks_eta-1)*nglob_surf_eta)
+        cutted_doubling*(nglob_vol*(nblocks_xi*nblocks_eta) - &
+            ( nblocks_eta*(int(nblocks_xi/2)*nglob_int_surf_xi + int((nblocks_xi-1)/2)*nglob_ext_surf) + &
+              nblocks_xi*(int(nblocks_eta/2)*nglob_int_surf_eta + int((nblocks_eta-1)/2)*nglob_ext_surf)&
+            ) + &
+            ( int(nblocks_xi/2)*int(nblocks_eta/2)*nglob_center_edge + &
+              int((nblocks_xi-1)/2)*int((nblocks_eta-1)/2)*nglob_corner_edge + &
+              ((int(nblocks_eta/2)*int((nblocks_xi-1)/2))+(int((nblocks_eta-1)/2)*int(nblocks_xi/2)))*nglob_border_edge&
+            ))
       enddo
       NGLOB(iter_region) = tmp_sum
   enddo

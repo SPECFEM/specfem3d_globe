@@ -55,10 +55,12 @@
 
   include "constants.h"
 
+!this for cutting the doubling brick
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer :: step_mult,offset_proc_xi,offset_proc_eta
+  integer :: case_xi,case_eta,subblock_num
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
@@ -914,75 +916,67 @@
       do ix_elem = 1,NEX_PER_PROC_XI,step_mult*ratio_sampling_array(ilayer)
         do iy_elem = 1,NEX_PER_PROC_ETA,step_mult*ratio_sampling_array(ilayer)
 
-! for cutting superbrick : 3 possibilities, 4 cases max / possibility
-! 3 possibilities : cut in xi & eta || cut in xi || cut in eta
-! case 1 : ximin & etamin || ximin || etamin
-! case 2 : ximin & etamax || ximax || etamax
-! case 3 : ximax & etamin
-! case 4 : ximax & etamax
           if (step_mult == 1) then
-            if (CUT_SUPERBRICK_XI) then
-              if (CUT_SUPERBRICK_ETA) then
-                ! possibility 1
-                if (offset_proc_xi == 0) then
-                  if (offset_proc_eta == 0) then
-                    ! case 1
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,1)
-                  else
-                    ! case 2
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,2)
-                  endif
-                else
-                  if (offset_proc_eta == 0) then
-                    ! case 3
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,3)
-                  else
-                    ! case 4
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,4)
-                  endif
-                endif
+            ! for xi direction
+            if (.not. CUT_SUPERBRICK_XI) then
+              if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+                case_xi = 1
               else
-                ! possibility 2
-                if (offset_proc_xi == 0) then
-                  if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
-                    ! case 1
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,1)
-                  else
-                    ! case 2
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,2)
-                  endif
-                else
-                  if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
-                    ! case 3
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,3)
-                  else
-                    ! case 4
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,4)
-                  endif
-                endif
+                case_xi = 2
               endif
             else
-              if (CUT_SUPERBRICK_ETA) then
-                ! possibility 3
+              if (offset_proc_xi == 0) then
                 if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
-                  if (offset_proc_eta == 0) then
-                    ! case 1
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,1)
-                  else
-                    ! case 2
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,2)
-                  endif
+                  case_xi = 1
                 else
-                  if (offset_proc_eta == 0) then
-                    ! case 3
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,3)
-                  else
-                    ! case 4
-                    call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,4)
-                  endif
+                  case_xi = 2
+                endif
+              else
+                if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))/=0) then
+                  case_xi = 1
+                else
+                  case_xi = 2
                 endif
               endif
             endif
+            ! for eta direction
+            if (.not. CUT_SUPERBRICK_ETA) then
+              if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+                case_eta = 1
+              else
+                case_eta = 2
+              endif
+            else
+              if (offset_proc_eta == 0) then
+                if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+                  case_eta = 1
+                else
+                  case_eta = 2
+                endif
+              else
+                if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))/=0) then
+                  case_eta = 1
+                else
+                  case_eta = 2
+                endif
+              endif
+            endif
+            ! determine the current subblock
+            if (case_xi == 1) then
+              if (case_eta == 1) then
+                subblock_num = 1
+              else
+                subblock_num = 2
+              endif
+            else
+              if (case_eta == 1) then
+                subblock_num = 3
+              else
+                subblock_num = 4
+              endif
+            endif
+            ! then define the geometry for this subblock
+            call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,subblock_num)
           endif
 ! loop on all the elements in the mesh doubling superbrick
           do ispec_superbrick = 1,nspec_sb
