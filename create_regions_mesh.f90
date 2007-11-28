@@ -281,7 +281,7 @@
   integer idoubling(nspec)
 
 ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
-  double precision rmin,rmax
+  double precision rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8
 
 ! for model density and anisotropy
   integer nspec_ani
@@ -844,6 +844,17 @@
 ! define the doubling flag of this element
      idoubling(ispec) = doubling_index(ilayer)
 
+! save the radii of the nodes before modified through compute_element_properties()
+     if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+       r1=dsqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
+       r2=dsqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
+       r3=dsqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
+       r4=dsqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
+       r5=dsqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
+       r6=dsqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
+       r7=dsqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
+       r8=dsqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
+     endif
 
 ! compute several rheological and geometrical properties for this spectral element
      call compute_element_properties(ispec,iregion_code,idoubling, &
@@ -869,7 +880,7 @@
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
           is_superbrick=.false.
           ispec_superbrick=0
-          call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, &
+          call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
                      xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &
                      ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                      normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
@@ -1036,6 +1047,18 @@
 ! define the doubling flag of this element
      idoubling(ispec) = doubling_index(ilayer)
 
+! save the radii of the nodes before modified through compute_element_properties()
+     if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+       r1=dsqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
+       r2=dsqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
+       r3=dsqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
+       r4=dsqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
+       r5=dsqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
+       r6=dsqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
+       r7=dsqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
+       r8=dsqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
+     endif
+
 ! compute several rheological and geometrical properties for this spectral element
      call compute_element_properties(ispec,iregion_code,idoubling, &
            xstore,ystore,zstore,nspec, &
@@ -1059,7 +1082,7 @@
 ! Boundary Mesh
      if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
        is_superbrick=.true.
-       call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, &
+       call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
                   xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &
                   ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                   normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
