@@ -24,7 +24,7 @@
 !
 !=====================================================================
 
-subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, &
+subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
                      xstore,ystore,zstore,dershape2D_bottom, &
                      ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                      normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
@@ -58,7 +58,6 @@ subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, 
 
   ! local variables
   double precision, dimension(NGNOD2D) :: xelm2, yelm2, zelm2
-  double precision, dimension(8):: xelm, yelm, zelm
   double precision :: r1, r2, r3, r4, r5, r6, r7, r8
   double precision :: target_moho_high, target_moho_low, target_400_high, target_400_low, target_670_high, target_670_low
   integer :: nele_sub_block, ispec_list(16), map_irem_ix_12(8), map_irem_ix_34(8), map_irem_iy_odd(8), map_irem_iy_even(8)
@@ -67,40 +66,6 @@ subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, 
 
   ! ======================
 
-  ! find the coordinates of the eight corner nodes of the element
-  xelm(1)=xstore(1,1,1)
-  yelm(1)=ystore(1,1,1)
-  zelm(1)=zstore(1,1,1)
-  xelm(2)=xstore(NGLLX,1,1)
-  yelm(2)=ystore(NGLLX,1,1)
-  zelm(2)=zstore(NGLLX,1,1)
-  xelm(3)=xstore(NGLLX,NGLLY,1)
-  yelm(3)=ystore(NGLLX,NGLLY,1)
-  zelm(3)=zstore(NGLLX,NGLLY,1)
-  xelm(4)=xstore(1,NGLLY,1)
-  yelm(4)=ystore(1,NGLLY,1)
-  zelm(4)=zstore(1,NGLLY,1)
-  xelm(5)=xstore(1,1,NGLLZ)
-  yelm(5)=ystore(1,1,NGLLZ)
-  zelm(5)=zstore(1,1,NGLLZ)
-  xelm(6)=xstore(NGLLX,1,NGLLZ)
-  yelm(6)=ystore(NGLLX,1,NGLLZ)
-  zelm(6)=zstore(NGLLX,1,NGLLZ)
-  xelm(7)=xstore(NGLLX,NGLLY,NGLLZ)
-  yelm(7)=ystore(NGLLX,NGLLY,NGLLZ)
-  zelm(7)=zstore(NGLLX,NGLLY,NGLLZ)
-  xelm(8)=xstore(1,NGLLY,NGLLZ)
-  yelm(8)=ystore(1,NGLLY,NGLLZ)
-  zelm(8)=zstore(1,NGLLY,NGLLZ)
-
-  r1=dsqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
-  r2=dsqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
-  r3=dsqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
-  r4=dsqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
-  r5=dsqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
-  r6=dsqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
-  r7=dsqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
-  r8=dsqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
 
   ! find the coordinates of 9 nodes for the bottom surface element to compute the jacobian if needed
   xelm2(1)=xstore(1,1,1)
