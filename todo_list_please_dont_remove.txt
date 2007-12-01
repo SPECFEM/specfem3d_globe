@@ -2,6 +2,29 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
+Caltech:
+-------
+
+- Hi Jeroen, Perfect. I think talking to Jean-Paul Ampuero would be useful
+as well because in Utrecht last year he had told us that
+he had implemented some nice 4th-order symplectic schemes
+in his version of SEM2D. Dimitri.
+Jeroen Tromp wrote:
+> Hi Dimitri:
+> This is one of the first things Tarje and I plan to work on after he
+> arrives.
+> Jeroen
+> Dimitri Komatitsch wrote:
+>> Hi Jeroen,
+>> I think the last important thing that is missing
+>> in SPECFEM3D (and SPECFEM2D) is a fourth-order time scheme.
+>> I think both Jean-Paul Ampuero and Tarje Nissen-Meyer
+>> have worked on this, they will both be at Caltech
+>> soon therefore maybe they could take care of adding it?
+>> This would definitely increase the accuracy of very long
+>> simulations (e.g. multi-orbit surface waves).
+>> Dimitri.
+
 David:
 -----
 
