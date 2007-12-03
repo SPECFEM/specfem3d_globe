@@ -36,7 +36,8 @@ program combine_vol_data
 
   integer,parameter :: MAX_NUM_NODES = 300
   integer  iregion, ir, irs, ire, ires, pfd, efd
-  character(len=150) :: sline, arg(6), filename, indir, outdir, prname, dimension_file, command_name
+  character(len=150) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
+  character(len=150) :: prname_topo, prname_file, dimension_file, command_name
   character(len=150) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file, data_file, topo_file
   integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob, npoint, nelement
   integer iproc, num_node, i,j,k,ispec, ios, it, di, dj, dk
@@ -51,12 +52,15 @@ program combine_vol_data
   integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
 
 
-  do i = 1, 6
+  do i = 1, 7
     call getarg(i,arg(i))
-    if (i < 6 .and. trim(arg(i)) == '') then
+    if (i < 7 .and. trim(arg(i)) == '') then
       print *, ' '
-      print *, ' Usage: xcombine_vol_data slice_list filename input_dir output_dir high/low-resolution [region]'
-      print *, '   expect to have the topology and filename.bin(NGLLX,NGLLY,NGLLZ,nspec) already collected to input_dir'
+      print *, ' Usage: xcombine_vol_data slice_list filename input_topo_dir input_file_dir '
+      print *, '        output_dir high/low-resolution [region]' 
+      print *, ' ***** Notice: now allow different input dir for topo and kernel files ******** '
+      print *, '   expect to have the topology and filename.bin(NGLLX,NGLLY,NGLLZ,nspec) '
+      print *, '   already collected to input_topo_dir and input_file_dir'
       print *, '   output mesh files (filename_points.mesh, filename_elements.mesh) go to output_dir '
       print *, '   give 0 for low resolution and 1 for high resolution'
       print *, '   if region is not specified, all 3 regions will be collected, otherwise, only collect regions specified'
@@ -68,10 +72,10 @@ program combine_vol_data
              stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! get region id
-  if (trim(arg(6)) == '') then
+  if (trim(arg(7)) == '') then
     iregion  = 0
   else
-    read(arg(6),*) iregion
+    read(arg(7),*) iregion
   endif
   if (iregion > 3 .or. iregion < 0) stop 'Iregion = 0,1,2,3'
   if (iregion == 0) then
@@ -103,11 +107,12 @@ program combine_vol_data
   filename = arg(2)
 
   ! input and output dir
-  indir= arg(3)
-  outdir = arg(4)
+  in_topo_dir= arg(3)
+  in_file_dir= arg(4)
+  outdir = arg(5)
 
   ! resolution
-  read(arg(5),*) ires
+  read(arg(6),*) ires
   if (ires == 0) then
     HIGH_RESOLUTION_MESH = .false.
     di = NGLLX-1; dj = NGLLY-1; dk = NGLLZ-1
@@ -136,9 +141,11 @@ program combine_vol_data
       iproc = node_list(it)
 
       print *, 'Reading slice ', iproc
-      write(prname,'(a,i6.6,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
+      write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
+      write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
+    
 
-      dimension_file = trim(prname) //'array_dims.txt'
+      dimension_file = trim(prname_topo) //'array_dims.txt'
       open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
       if (ios /= 0) stop 'Error opening file'
       read(27,*) nspec(it)
@@ -169,10 +176,11 @@ program combine_vol_data
 
       print *, ' '
       print *, 'Reading slice ', iproc
-      write(prname,'(a,i6.6,a,i1,a)') trim(indir)//'/proc',iproc,'_reg',ir,'_'
+      write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
+      write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
 
       ! filename.bin
-      data_file = trim(prname) // trim(filename) // '.bin'
+      data_file = trim(prname_file) // trim(filename) // '.bin'
       open(unit = 27,file = trim(data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) stop 'Error opening file'
 
@@ -181,7 +189,7 @@ program combine_vol_data
       print *, trim(data_file)
 
       ! topology file
-      topo_file = trim(prname) // 'solver_data_2' // '.bin'
+      topo_file = trim(prname_topo) // 'solver_data_2' // '.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) stop 'Error opening file'
 
