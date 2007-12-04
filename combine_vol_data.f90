@@ -88,7 +88,7 @@ program combine_vol_data
 
   ! get slices id
   num_node = 0
-  open(unit = 20, file = trim(arg(1)), status = 'unknown',iostat = ios)
+  open(unit = 20, file = trim(arg(1)), status = 'old',iostat = ios)
   if (ios /= 0) stop 'Error opening file'
   do while (1 == 1)
     read(20,'(a)',iostat=ios) sline
@@ -264,7 +264,6 @@ program combine_vol_data
               call write_integer_fd(efd,n6)
               call write_integer_fd(efd,n7)
               call write_integer_fd(efd,n8)
-              write(22,'(8i7)') n1,n2,n3,n4,n5,n6,n7,n8
             enddo
           enddo
         enddo
