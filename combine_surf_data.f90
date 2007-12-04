@@ -290,7 +290,6 @@ program combine_surf_data
             endif
            call write_real_fd(pfd,dat)
 !            call write_real_fd(pfd,real(ispec_surf))
-!            write(23,*) x,y,z,ispec_surf
             mask_ibool(iglob) = .true.
             num_ibool(iglob) = numpoin
           endif
