@@ -28,6 +28,9 @@ Jeroen Tromp wrote:
 David:
 -----
 
+- Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). To do this, see the old (unfinished) implementation done by Dimitri in version 3.6 on pangu in directories /home/komatits/bubu_test_central_cube_AB_antipode_54procs and /home/komatits/ok_chunk_AB_central_cube
+-> fini, à valider.
+
 - Hi Dimitri & David: After we fix the bug associated with the oceans, we should reexamine the size of the time step, because I suspect it will be too small. Jeroen 
 
 - va etre fait par Qinya : I noticed a problem in Qinya's adjoint code and the
@@ -35,37 +38,6 @@ David:
  integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =
  integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =
 in values_from_mesher.h, used for these two arrays only. Qinya, by the way I think that you could probably get rid of these two arrays and the two new static constants above permanently in the whole package, to avoid wasting memory: since we already store the whole deviatoric strain in epsilondev(:,:,:,:,:) you should probably recompute its trace locally every time you need it instead of storing it in additional arrays. This way you would save four arrays:  eps_trace_over_3_crust_mantle, eps_trace_over_3_inner_core, b_eps_trace_over_3_crust_mantle, b_eps_trace_over_3_inner_core (unless there is a hidden problem I have not seen).
-
-- a voir avec Qinya, Ying Zhou et Anne Sieminski : I noticed that model 1066a blows up at least with the parameters below. I have no time to check, David can have a look when he comes back (I have added this to the to-do list) but has anyone ever run that model successfully with either v3.5, v3.6 or v4.0? (I had never tried before; considering that the same Par_file runs fine with ak135 or PREM, it could either be that routine model_1066a.f90 has a bug, or that the time step computed by David based upon trial and error using runs with PREM is a bit too large for 1066a if 1066a has a thinner layer somewhere i.e. smaller mesh cells that could be above the PREM stability limit.
-NEX_XI                          = 96
-NEX_ETA                         = 96
-# number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 3
-NPROC_ETA                       = 3
-MODEL                           = 1D_1066a
-# parameters describing the Earth model
-OCEANS                          = .false.
-ELLIPTICITY                     = .false.
-TOPOGRAPHY                      = .false.
-GRAVITY                         = .false.
-ROTATION                        = .false.
-ATTENUATION                     = .false.
-Hi Ying, Yes, absolutely, thanks for pointing this out. This must be the problem (because in the mean time I have checked file model_1066a.f90 and compared it to model_ak135.f90 and did not notice any problem). So I guess when David comes back he can create a particular set of smaller (and therefore more expensive) values of DT in the case of 1066a. Let me add this to the todo list. Thanks for finding the problem! Dimitri.
-Ying Zhou wrote:
-> Hi Dimitri,
->   1066A has 11 km crust, could that be a problem?
-> Ying
-Other email from Jeroen:
-Hi Dimitri & David:
-Perhaps for 1066a, since it has just an 11 km crust, we can always use the
-1crust approach?
-Jeroen
-
-- rendre plus claire la partie du code qui d�finit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D dans read_compute_parameters.f90, suite aux remarques de Bernhard Schubert (partly done by Dimitri this summer, but David can clean it even more in September)
-
-- bug movies detecte par Vala: code crashes (probably in compute_forces) when setting MOVIE_VOLUME = .true.  > Stack trace terminated abnormally.  > forrtl: severe (174): SIGSEGV, segmentation fault occurred
-
-- Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). To do this, see the old (unfinished) implementation done by Dimitri in version 3.6 on pangu in directories /home/komatits/bubu_test_central_cube_AB_antipode_54procs and /home/komatits/ok_chunk_AB_central_cube
 
 - get rid of the bottleneck in locate_sources and locate_receivers
 when one uses a huge number of sources (e.g. Vala -> 100000 sources)
@@ -209,6 +181,37 @@ finite-element
 
 DONE:
 -----
+- rendre plus claire la partie du code qui d�finit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D dans read_compute_parameters.f90, suite aux remarques de Bernhard Schubert (partly done by Dimitri this summer, but David can clean it even more in September)
+-> je pense que c'est maintenant assez clair. David.
+
+- bug movies detecte par Vala: code crashes (probably in compute_forces) when setting MOVIE_VOLUME = .true.  > Stack trace terminated abnormally.  > forrtl: severe (174): SIGSEGV, segmentation fault occurred
+-> le bug n'a plus réapparu ... 
+
+- a voir avec Qinya, Ying Zhou et Anne Sieminski : I noticed that model 1066a blows up at least with the parameters below. I have no time to check, David can have a look when he comes back (I have added this to the to-do list) but has anyone ever run that model successfully with either v3.5, v3.6 or v4.0? (I had never tried before; considering that the same Par_file runs fine with ak135 or PREM, it could either be that routine model_1066a.f90 has a bug, or that the time step computed by David based upon trial and error using runs with PREM is a bit too large for 1066a if 1066a has a thinner layer somewhere i.e. smaller mesh cells that could be above the PREM stability limit.
+NEX_XI                          = 96
+NEX_ETA                         = 96
+# number of MPI processors along the two sides of the first chunk
+NPROC_XI                        = 3
+NPROC_ETA                       = 3
+MODEL                           = 1D_1066a
+# parameters describing the Earth model
+OCEANS                          = .false.
+ELLIPTICITY                     = .false.
+TOPOGRAPHY                      = .false.
+GRAVITY                         = .false.
+ROTATION                        = .false.
+ATTENUATION                     = .false.
+Hi Ying, Yes, absolutely, thanks for pointing this out. This must be the problem (because in the mean time I have checked file model_1066a.f90 and compared it to model_ak135.f90 and did not notice any problem). So I guess when David comes back he can create a particular set of smaller (and therefore more expensive) values of DT in the case of 1066a. Let me add this to the todo list. Thanks for finding the problem! Dimitri.
+Ying Zhou wrote:
+> Hi Dimitri,
+>   1066A has 11 km crust, could that be a problem?
+> Ying
+Other email from Jeroen:
+Hi Dimitri & David:
+Perhaps for 1066a, since it has just an 11 km crust, we can always use the
+1crust approach?
+Jeroen
+-> pour ce modèle articulier, DT=DT*0.2. Rajouté ceci au manuel :  (For reason of stability, the 1D_1066a model is 5 time slower than the 1D_1066a_onecrust version, use preferentially the one_crust version if you want to save CPU time)
 
 - (a faire par David en liaison avec Brian Savage): utiliser routines auto_ner de Brian Savage pour calculer MIN_ATTENUATION et MAX_ATTENUATION au lieu de mettre des constantes arbitraires comme actuellement: utiliser get_attenuation_model de Brian Savage pour determiner les constantes d'attenuation pour les chunks complets et non pas seulement si diff�rent de 90 degr�s. Pour cela, supprimer mes vieilles variables MIN_ATTENUATION et MAX_ATTENUATION_PERIOD Re: mesh_radial 22/05/2007 00:21 Dimitri, Sure.  I will commit those changes when I get the R_CENTRAL_CUBE section working.  The calculation of MIN_ATTENUATION_PERIOD is CHUNK_WIDTH = <user defined> [ deg ] NEX_MAX           = <user defined> [ elements ] KM_PER_DEGREE = 111.11 [ km / deg ] POINTS_PER_WAVELENGTH = 4 GLL_POINT_SPACING = 4 MIN_VELOCITY = 2.25 [ km / sec ] S wave veloicty CHUNK_WIDTH_KM    = CHUNK_WIDTH * KM_PER_DEGREE POINT_SPACING_KM = CHUNK_WIDTH_KM / ( NEX_MAX * GLL_POINT_SPACING ) MIN_PERIOD               = (POINT_SPACING_KM * POINTS_PER_WAVELENGTH) / MIN_VELOCITY MAX_ATTENUATION_PERIOD depends on MIN_ and the number of N_SLS.  The dependence on N_SLS will also be included in the code Brian On May 21, 2007, at 5:11 PM, Dimitri Komatitsch wrote: > Brian, > This is perfect! Thank you very much.  > One important thing: could you call your routine to compute > MIN_ATTENUATION_PERIOD and MAX_ATTENUATION_PERIOD in all cases > (even for 90 degrees and even for classical NEX such as 160, 320 etc)?  > Because the current values are completely obsolete (I computed > them in 2000 by trial and error, I don't even remember how...  > calling your clean routine would be *much* better); > please don't hesitate to do it and commit the changes.  > Thanks!  > Cheers, > Dimitri.
 Modifier le calcul des bornes de l'attenuation: car
