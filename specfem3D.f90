@@ -4246,21 +4246,23 @@
 
   endif ! nrec_local
 
-! write the current seismograms
-  if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
+! write the current or final seismograms
+  if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-        call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-              network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
-              yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
-              elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,&
-              cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
-              OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-              seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
-              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
-    if(myrank==0) write(IMAIN,*)
-    if(myrank==0) write(IMAIN,*) ' Total number of time steps written: ', it-it_begin
-    if(myrank==0) write(IMAIN,*)
+      call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+            network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
+            yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
+            elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,&
+            cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
+            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+            OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+            seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+      if(myrank==0) then
+        write(IMAIN,*)
+        write(IMAIN,*) ' Total number of time steps written: ', it-it_begin
+        write(IMAIN,*)
+      endif
     else
       call write_adj_seismograms(seismograms,number_receiver_global, &
         nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
@@ -4696,27 +4698,6 @@
 !---- end of time iteration loop
 !
   enddo   ! end of main time loop
-
-! write the final seismograms
-  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-    call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
-        network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
-        yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
-        elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC, &
-        cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
-        OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-        OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-        seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
-        SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
-    if(myrank==0) write(IMAIN,*)
-    if(myrank==0) write(IMAIN,*) ' Total number of time steps written: ', it-it_begin
-    if(myrank==0) write(IMAIN,*)
-    else
-    if (nrec_local > 0) then
-      call write_adj_seismograms(seismograms,number_receiver_global, &
-        nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
-    endif
-  endif
 
 ! save files to local disk or MT tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
