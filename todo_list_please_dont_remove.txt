@@ -2,10 +2,14 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
-Caltech:
--------
+To do in the current version 4.0:
 
-- Hi Jeroen, Perfect. I think talking to Jean-Paul Ampuero would be useful
+- bug ScS and attenuation lookup tables: will be fixed by Brian Savage
+
+Things that could be done in a future version 4.1:
+
+- will be done by Caltech (would be useful in the 2D version of the code as well):
+Hi Jeroen, Perfect. I think talking to Jean-Paul Ampuero would be useful
 as well because in Utrecht last year he had told us that
 he had implemented some nice 4th-order symplectic schemes
 in his version of SEM2D. Dimitri.
@@ -25,21 +29,8 @@ Jeroen Tromp wrote:
 >> simulations (e.g. multi-orbit surface waves).
 >> Dimitri.
 
-David:
------
-
-- Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). To do this, see the old (unfinished) implementation done by Dimitri in version 3.6 on pangu in directories /home/komatits/bubu_test_central_cube_AB_antipode_54procs and /home/komatits/ok_chunk_AB_central_cube
--> fini, à valider.
-
-- Hi Dimitri & David: After we fix the bug associated with the oceans, we should reexamine the size of the time step, because I suspect it will be too small. Jeroen 
-
-- va etre fait par Qinya : I noticed a problem in Qinya's adjoint code and the
-  conversion to static memory below: arrays eps_trace_over_3_crust_mantle and eps_trace_over_3_inner_core are not needed when we use attenuation only for a forward simulation, they are only needed to save the strain in the whole mesh (when we attenuation for a forward run this calculation of eps_trace_over_3, i.e. the trace of the strain tensor, is purely local and can be stored in a scalar, not need to waste an array for it. I have therefore added two new static constants
- integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =
- integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =
-in values_from_mesher.h, used for these two arrays only. Qinya, by the way I think that you could probably get rid of these two arrays and the two new static constants above permanently in the whole package, to avoid wasting memory: since we already store the whole deviatoric strain in epsilondev(:,:,:,:,:) you should probably recompute its trace locally every time you need it instead of storing it in additional arrays. This way you would save four arrays:  eps_trace_over_3_crust_mantle, eps_trace_over_3_inner_core, b_eps_trace_over_3_crust_mantle, b_eps_trace_over_3_inner_core (unless there is a hidden problem I have not seen).
-
-- get rid of the bottleneck in locate_sources and locate_receivers
+- could be done by Vala:
+get rid of the bottleneck in locate_sources and locate_receivers
 when one uses a huge number of sources (e.g. Vala -> 100000 sources)
 or a very large number of stations (e.g. Bernhard -> 20000 stations):
 in such a case there is a bunch of MPI_GATHERS which waste a lot
@@ -47,8 +38,6 @@ of memory and can even use all the available memory and make the run crash.
 Vala partially fixed this problem by using subsets of 1000 stations, but after
 careful analysis we have found a way of doing better and getting rid of all
 the GATHERs and *all* the extra memory (this way we won't have to limit the number of sources to a maximum of 100000, as currently done in the solver).
-
-- compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf � l'Idris afin de v�rifier avant la conference aux USA mi-octobre que le code final ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de v�rifier la portabilit�
 
 - merge the mesher in the solver, suppress storage of large mesh files on local disks, but make sure we keep the creation of AVS/OpenDX mesh files (which should be the case since we use specific routines called write_AVS_DX_*.f90) 30/06/2007 18:19 Hi Jeroen, Leif and David, I thought about merging the mesher and the solver, there might be a hidden difficulty because of memory allocation: the solver allocates almost all the available memory on a given CPU in static arrays, and the solver allocates a similar amount dynamically with allocate() statements. Therefore combining them would roughly double the required amount of memory and will not fit because the Par_file is tuned in order for the solver to use almost all the available memory on each CPU (in the case of large runs).  On systems (such as Linux) with a "first touch" memory allocation policy things should be ok because (if I understand correctly, but I am not sure) the system will not physically allocate the static memory for the solver until it is actually called, i.e. once the mesher has finished, even if both are combined in the same program.  But on other systems I guess we could have problems and the run would not start and exit with an "out of memory" error?  I don't know how to solve this problem. (*if* it needs to be solved; if *all* modern systems use a first touch policy, then we are all set; please let me know; I don't know much about operating systems). Leif, would you have any idea about how to handle this?  If the problem turns out to be too complex, I suggest *not* doing it in v4.0 and waiting until we start working on v4.1 after the October 9-11 workshop. Dimitri.
 Hi Jeroen,
@@ -123,7 +112,7 @@ Jeroen Tromp wrote:
 >>> the mesher, which effectively becomes a subroutine.
 >>> Jeroen
 
-- peut-etre supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du serveur SVN (svn remove) une fois que le mesher et le solver auront �t� fusionn�s; sauf si on decide de garder deux versions du code: une fusionnee et une non fusionnee qui utiliserait toujours le stockage sur des disques locaux. Les enlever du Makefile.in aussi. Do not store x y z in the files that contain the MPI buffers anymore, since they are used only by check_buffers*. (in the solver they are read back as xdummy, ydummy, zdummy); eventuellement supprimer aussi le fichier ecrit par le mailleur sur le disque et relu plus tard par ce meme mailleur, s'il n'est pas utilise par le solver (c'est a dire s'il est utilise seulement par les codes serial check*.f90, qui sont amenes a disparaitre)
+- peut-etre supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du serveur SVN (svn remove) une fois que le mesher et le solver auront ete fusionnes; sauf si on decide de garder deux versions du code: une fusionnee et une non fusionnee qui utiliserait toujours le stockage sur des disques locaux. Les enlever du Makefile.in aussi. Do not store x y z in the files that contain the MPI buffers anymore, since they are used only by check_buffers*. (in the solver they are read back as xdummy, ydummy, zdummy); eventuellement supprimer aussi le fichier ecrit par le mailleur sur le disque et relu plus tard par ce meme mailleur, s'il n'est pas utilise par le solver (c'est a dire s'il est utilise seulement par les codes serial check*.f90, qui sont amenes a disparaitre)
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
@@ -133,7 +122,7 @@ Jeroen Tromp wrote:
 Things to do later:
 -------------------
 
-- afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilit� et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le ma�tre dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
+- afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilite et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maitre dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
 
 - Re: revision of shortest period estimates?  08/05/2007 14:51 Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  Jeroen Tromp wrote: > Hi Dimitri: > If we are shooting for a minimum of 5 grid points per shortest wavelength, > perhaps we should increase our estimate of an accuracy at periods of 18 s > and longer for an NEX=240 run by 20% to 22 s? And perhaps NEX=320 is > accurate down to periods of 15 s rather than 12 s?
 
@@ -145,34 +134,9 @@ Things to do later:
 Things to add to the manual:
 ----------------------------
 
-- Here is another paper we should cite, on a similar topic (but acoustic only, while the other is for elastic media as well). If someone has time to add a sentence to the manual to cite both, here are the BibTeX entries to add to bibligraphy.bib
-@ARTICLE{SeOl07,
-  author = {G{\'e}za Seriani and Saulo P. Oliveira},
-  title = {Optimal blended spectral-element operators for acoustic wave
-modeling},
-  journal = geophysics,
-  year = {2007},
-  volume = {72},
-  pages = {SM95.SM106},
-  number = {5},
-  doi = {10.1190/1.2750715}
-}
-@ARTICLE{DeSe07,
-  author = {Jon{\'a}s D. {De Basabe} and Mrinal K. Sen},
-  title = {Grid dispersion and stability criteria of some common
-finite-element
-    methods for acoustic and elastic wave equations},
-  journal = geophysics,
-  year = {2007},
-  volume = {72},
-  pages = {T81.T95},
-  number = {6},
-  doi = {10.1190/1.2785046}
-}
+- ajouter les courbes de dispersion et stabilite au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix special la-dessus; dire dans cet appendix que dans le outer core ce n'est bien sur pas Vs qui est represente mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un echantillonnage un peu meilleur)
 
-- ajouter les courbes de dispersion et stabilit� au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix sp�cial l�-dessus; dire dans cet appendix que dans le outer core ce n'est bien s�r par Vs qui est repr�sent� mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un �chantillonnage un peu meilleur)
-
-- supprimer write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront �t� fusionn�s (enlever les deux sections expliquant l'utilisation de ces routines)
+- supprimer sections qui decrivent write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront ete fusionnes
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
@@ -181,11 +145,17 @@ finite-element
 
 DONE:
 -----
-- rendre plus claire la partie du code qui d�finit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D dans read_compute_parameters.f90, suite aux remarques de Bernhard Schubert (partly done by Dimitri this summer, but David can clean it even more in September)
+
+- rendre plus claire la partie du code qui definit ONE_CRUST, HONOR_1D_SPHERICAL_MOHO and CASE_3D dans read_compute_parameters.f90, suite aux remarques de Bernhard Schubert (partly done by Dimitri this summer, but David can clean it even more in September)
 -> je pense que c'est maintenant assez clair. David.
 
-- bug movies detecte par Vala: code crashes (probably in compute_forces) when setting MOVIE_VOLUME = .true.  > Stack trace terminated abnormally.  > forrtl: severe (174): SIGSEGV, segmentation fault occurred
--> le bug n'a plus réapparu ... 
+- compiler l'ensemble du code sous gfortran, pgf90 (par ex sur ipigps014), Intel ifort (par ex sur pangu), IBM xlf a l'Idris afin de verifier que le code final ne donne aucun warning avec ces quatre compilos classiques, ce qui permet de verifier la portabilite -> done by Dimitri right before the official release of version 4.0
+
+- Hi Dimitri & David: After we fix the bug associated with the oceans, we should reexamine the size of the time step, because I suspect it will be too small. Jeroen -> no need to do it because David estimated the time steps before the OCEANS bug was introduced
+
+- Split central cube in 2 with MPI to have better load balancing there and remove bottleneck detected by ORNL in the MPI implementation of the central cube (many slices send to one processor, which creates a big bottleneck). To do this, see the old (unfinished) implementation done by Dimitri in version 3.6 on pangu in directories /home/komatits/bubu_test_central_cube_AB_antipode_54procs and /home/komatits/ok_chunk_AB_central_cube -> done and validated by David
+
+- bug movies detecte par Vala: code crashes (probably in compute_forces) when setting MOVIE_VOLUME = .true.  > Stack trace terminated abnormally.  > forrtl: severe (174): SIGSEGV, segmentation fault occurred -> the bug did not reappear
 
 - a voir avec Qinya, Ying Zhou et Anne Sieminski : I noticed that model 1066a blows up at least with the parameters below. I have no time to check, David can have a look when he comes back (I have added this to the to-do list) but has anyone ever run that model successfully with either v3.5, v3.6 or v4.0? (I had never tried before; considering that the same Par_file runs fine with ak135 or PREM, it could either be that routine model_1066a.f90 has a bug, or that the time step computed by David based upon trial and error using runs with PREM is a bit too large for 1066a if 1066a has a thinner layer somewhere i.e. smaller mesh cells that could be above the PREM stability limit.
 NEX_XI                          = 96
