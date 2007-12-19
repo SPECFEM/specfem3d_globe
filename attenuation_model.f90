@@ -1691,6 +1691,7 @@ end subroutine qsort
 !     and ending points of the first and last splines
 !   - A Step with a value of zero is undefined
 !   - Works with functions with steps or no steps
+! See the comment below about the ScS bug
 subroutine pspline_evaluation(xa, ya, y2a, n, x, y, steps)
 
   implicit none
@@ -1704,10 +1705,10 @@ subroutine pspline_evaluation(xa, ya, y2a, n, x, y, steps)
 
   do i = 1,n-1,1
      if(steps(i+1) == 0) return
-     if(x >= xa(steps(i)) .AND. x <= xa(steps(i+1))) then
+     if(x >= xa(steps(i)) .and. x <= xa(steps(i+1))) then
         call pspline_piece(i,n1,n2,l,n,steps)
         call spline_evaluation(xa(n1), ya(n1), y2a(n1), l, x, y)
-        return
+!        return <-- Commented out to fix ScS bug
      endif
   enddo
 
