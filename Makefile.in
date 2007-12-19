@@ -108,7 +108,7 @@ libspecfem_a_OBJECTS = \
 	$O/get_event_info.o \
 	$O/get_global.o \
 	$O/get_jacobian_boundaries.o \
-        $O/get_jacobian_discontinuities.o \
+  $O/get_jacobian_discontinuities.o \
 	$O/get_model.o \
 	$O/get_shape2D.o \
 	$O/get_shape3D.o \
@@ -159,7 +159,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/compute_forces_crust_mantle.o \
 	$O/compute_forces_inner_core.o \
 	$O/compute_forces_outer_core.o \
-        $O/compute_boundary_kernel.o \
+  $O/compute_boundary_kernel.o \
 	$O/read_arrays_solver.o \
 	$O/specfem3D.o \
 	$(EMPTY_MACRO)
