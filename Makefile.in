@@ -97,7 +97,6 @@ libspecfem_a_OBJECTS = \
 	$O/define_derivation_matrices.o \
 	$O/define_superbrick.o \
 	$O/euler_angles.o \
-	$O/exit_mpi.o \
 	$O/get_MPI_1D_buffers.o \
 	$O/get_MPI_cutplanes_eta.o \
 	$O/get_MPI_cutplanes_xi.o \
@@ -167,8 +166,8 @@ SOLVER_ARRAY_OBJECTS = \
 LIBSPECFEM = $(TOGGLED_OBJECTS) $O/libspecfem.a
 
 # objects for the pure Fortran version
-@COND_PYRE_FALSE@XMESHFEM_OBJECTS = $O/program_meshfem3D.o $(LIBSPECFEM)
-@COND_PYRE_FALSE@XSPECFEM_OBJECTS = $O/program_specfem3D.o $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
+@COND_PYRE_FALSE@XMESHFEM_OBJECTS = $O/program_meshfem3D.o $O/exit_mpi.o $(LIBSPECFEM)
+@COND_PYRE_FALSE@XSPECFEM_OBJECTS = $O/program_specfem3D.o $O/exit_mpi.o $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
 
 # objects for the Pyrized version
 @COND_PYRE_TRUE@XMESHFEM_OBJECTS = $(LIBSPECFEM)
