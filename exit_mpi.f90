@@ -62,7 +62,7 @@
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
 ! stop all the MPI processes, and exit
-  call MPI_ABORT(ier)
+  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
   stop 'error, program ended in exit_MPI'
 
   end subroutine exit_MPI
@@ -90,7 +90,7 @@
   write(*,*) 'Error detected, aborting MPI...'
 
 ! stop all the MPI processes, and exit
-  call MPI_ABORT(ier)
+  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
   stop 'error, program ended in exit_MPI'
 
   end subroutine exit_MPI_without_rank
