@@ -4383,8 +4383,8 @@
                + deltat * dot_product(vector_accel_outer_core(:,iglob), b_vector_displ_outer_core(:,iglob))
 
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
-            div_displ_outer_core(i,j,k,ispec) = div_displ_outer_core(i,j,k,ispec) + kappal * accel_outer_core(iglob)
-            b_div_displ_outer_core(i,j,k,ispec) = b_div_displ_outer_core(i,j,k,ispec) + kappal * b_accel_outer_core(iglob)
+            div_displ_outer_core(i,j,k,ispec) =  kappal * accel_outer_core(iglob)
+            b_div_displ_outer_core(i,j,k,ispec) =  kappal * b_accel_outer_core(iglob)
 
             alpha_kl_outer_core(i,j,k,ispec) = alpha_kl_outer_core(i,j,k,ispec) &
                + deltat * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core(i,j,k,ispec)
