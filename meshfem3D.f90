@@ -378,16 +378,18 @@
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          REFERENCE_1D_MODEL,THREE_D_MODEL
+          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP
 
   double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
+
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
@@ -428,8 +430,8 @@
   double precision :: static_memory_size
 
 ! arrays for BCAST
-  integer, dimension(35) :: bcast_integer
-  double precision, dimension(24) :: bcast_double_precision
+  integer, dimension(38) :: bcast_integer
+  double precision, dimension(30) :: bcast_double_precision
   logical, dimension(26) :: bcast_logical
 
   integer, parameter :: maxker=200
@@ -541,11 +543,12 @@
           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE,MOVIE_VOLUME_TYPE, &
+          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
           TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
           ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-          MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+          MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -578,7 +581,8 @@
             NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
             NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
             SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
-            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube/)
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
+            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
@@ -591,16 +595,17 @@
     bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
             RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-            R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE/)
+            R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+            MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH/)
 
   endif
 
 ! broadcast the information read on the master to the nodes
     call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_integer,35,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_integer,38,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_double_precision,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_double_precision,30,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(bcast_logical,25,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
@@ -673,6 +678,9 @@
     NEX_PER_PROC_XI = bcast_integer(33)
     NEX_PER_PROC_ETA = bcast_integer(34)
     ratio_divide_central_cube = bcast_integer(35)
+    MOVIE_VOLUME_TYPE = bcast_integer(36)
+    MOVIE_START = bcast_integer(37)
+    MOVIE_STOP = bcast_integer(38)
 
     TRANSVERSE_ISOTROPY = bcast_logical(1)
     ANISOTROPIC_3D_MANTLE = bcast_logical(2)
@@ -725,6 +733,12 @@
     RHO_BOTTOM_OC = bcast_double_precision(22)
     RHO_OCEANS = bcast_double_precision(23)
     HDUR_MOVIE = bcast_double_precision(24)
+    MOVIE_TOP = bcast_double_precision(25)
+    MOVIE_BOTTOM = bcast_double_precision(26)
+    MOVIE_WEST = bcast_double_precision(27)
+    MOVIE_EAST = bcast_double_precision(28)
+    MOVIE_NORTH = bcast_double_precision(29)
+    MOVIE_SOUTH = bcast_double_precision(30)
 
   endif
 
@@ -967,7 +981,6 @@
   write(IMAIN,*)
 
   endif
-
   if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
   if(ISOTROPIC_3D_MANTLE) then
@@ -1013,7 +1026,6 @@
       call exit_MPI(myrank,'3D model not defined')
     endif
   endif
-
   if(ANISOTROPIC_3D_MANTLE) then
 ! the variables read are declared and stored in module aniso_mantle_model_variables
     if(myrank == 0) call read_aniso_mantle_model(AMM_V)
@@ -1022,7 +1034,6 @@
     call MPI_BCAST(AMM_V%beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(AMM_V%pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   endif
-
   if(CRUSTAL) then
     if(myrank == 0) call read_crustal_model(CM_V)
 ! broadcast the information read on the master to the nodes
@@ -1038,7 +1049,6 @@
     if(myrank == 0) call read_aniso_inner_core_model
 !   one should add an MPI_BCAST here if one adds a read_aniso_inner_core_model subroutine
   endif
-
   if(ATTENUATION .and. ATTENUATION_3D) then
     if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 

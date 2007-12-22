@@ -289,6 +289,17 @@
       store_val_x_all,store_val_y_all,store_val_z_all, &
       store_val_ux_all,store_val_uy_all,store_val_uz_all
 
+! to save movie volume
+  integer :: npoints_3dmovie,nspecel_3dmovie
+  integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ATT) :: muvstore_crust_mantle_3dmovie
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
+  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool_3dmovie
+
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ATT) :: Iepsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: Ieps_trace_over_3_crust_mantle
+
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
 
@@ -454,9 +465,6 @@
 ! velocity potential
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displ_outer_core, &
     veloc_outer_core,accel_outer_core
-
-! movie_volume
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: div_s_outer_core
 
 ! ----------------- inner core ---------------------
 
@@ -657,6 +665,7 @@
 
 ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
+  real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,strain2_norm,strain2_norm_all
 
 !ADJOINT
   real(kind=CUSTOM_REAL) b_two_omega_earth
@@ -679,16 +688,17 @@
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,&
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          REFERENCE_1D_MODEL,THREE_D_MODEL
+          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP
 
   double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
@@ -754,9 +764,9 @@
   logical :: CASE_3D
 
 ! arrays for BCAST
-  integer, dimension(35) :: bcast_integer
-  double precision, dimension(24) :: bcast_double_precision
-  logical, dimension(32) :: bcast_logical
+  integer, dimension(38) :: bcast_integer
+  double precision, dimension(30) :: bcast_double_precision
+  logical, dimension(33) :: bcast_logical
 
 ! Boundary Mesh and Kernels
   integer k_top,k_bot,iregion_code,njunk1,njunk2,njunk3
@@ -799,11 +809,12 @@
          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-         R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+         R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE,MOVIE_VOLUME_TYPE, &
+         MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-         MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -836,11 +847,12 @@
             NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
             NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
             SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
-            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube/)
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
+            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-            TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
+            TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
             ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
@@ -851,18 +863,19 @@
     bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
             RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-            R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE/)
+            R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+            MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH/)
 
   endif
 
 ! broadcast the information read on the master to the nodes
     call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_integer,35,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_integer,38,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_double_precision,24,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_double_precision,30,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_logical,32,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_logical,33,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
@@ -932,6 +945,9 @@
     NEX_PER_PROC_XI = bcast_integer(33)
     NEX_PER_PROC_ETA = bcast_integer(34)
     ratio_divide_central_cube = bcast_integer(35)
+    MOVIE_VOLUME_TYPE = bcast_integer(36)
+    MOVIE_START = bcast_integer(37)
+    MOVIE_STOP = bcast_integer(38)
 
     TRANSVERSE_ISOTROPY = bcast_logical(1)
     ANISOTROPIC_3D_MANTLE = bcast_logical(2)
@@ -946,25 +962,26 @@
     OCEANS = bcast_logical(11)
     MOVIE_SURFACE = bcast_logical(12)
     MOVIE_VOLUME = bcast_logical(13)
-    ATTENUATION_3D = bcast_logical(14)
-    RECEIVERS_CAN_BE_BURIED = bcast_logical(15)
-    PRINT_SOURCE_TIME_FUNCTION = bcast_logical(16)
-    SAVE_MESH_FILES = bcast_logical(17)
-    ATTENUATION = bcast_logical(18)
-    ABSORBING_CONDITIONS = bcast_logical(19)
-    INCLUDE_CENTRAL_CUBE = bcast_logical(20)
-    INFLATE_CENTRAL_CUBE = bcast_logical(21)
-    SAVE_FORWARD = bcast_logical(22)
-    CASE_3D = bcast_logical(23)
-    OUTPUT_SEISMOS_ASCII_TEXT = bcast_logical(24)
-    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_logical(25)
-    OUTPUT_SEISMOS_SAC_BINARY = bcast_logical(26)
-    ROTATE_SEISMOGRAMS_RT = bcast_logical(27)
-    CUT_SUPERBRICK_XI = bcast_logical(28)
-    CUT_SUPERBRICK_ETA = bcast_logical(29)
-    WRITE_SEISMOGRAMS_BY_MASTER = bcast_logical(30)
-    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(31)
-    USE_BINARY_FOR_LARGE_FILE = bcast_logical(32)
+    MOVIE_VOLUME_COARSE = bcast_logical(14)
+    ATTENUATION_3D = bcast_logical(15)
+    RECEIVERS_CAN_BE_BURIED = bcast_logical(16)
+    PRINT_SOURCE_TIME_FUNCTION = bcast_logical(17)
+    SAVE_MESH_FILES = bcast_logical(18)
+    ATTENUATION = bcast_logical(19)
+    ABSORBING_CONDITIONS = bcast_logical(20)
+    INCLUDE_CENTRAL_CUBE = bcast_logical(21)
+    INFLATE_CENTRAL_CUBE = bcast_logical(22)
+    SAVE_FORWARD = bcast_logical(23)
+    CASE_3D = bcast_logical(24)
+    OUTPUT_SEISMOS_ASCII_TEXT = bcast_logical(25)
+    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_logical(26)
+    OUTPUT_SEISMOS_SAC_BINARY = bcast_logical(27)
+    ROTATE_SEISMOGRAMS_RT = bcast_logical(28)
+    CUT_SUPERBRICK_XI = bcast_logical(29)
+    CUT_SUPERBRICK_ETA = bcast_logical(30)
+    WRITE_SEISMOGRAMS_BY_MASTER = bcast_logical(31)
+    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(32)
+    USE_BINARY_FOR_LARGE_FILE = bcast_logical(33)
 
     DT = bcast_double_precision(1)
     ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
@@ -990,6 +1007,12 @@
     RHO_BOTTOM_OC = bcast_double_precision(22)
     RHO_OCEANS = bcast_double_precision(23)
     HDUR_MOVIE = bcast_double_precision(24)
+    MOVIE_TOP = bcast_double_precision(25)
+    MOVIE_BOTTOM = bcast_double_precision(26)
+    MOVIE_WEST = bcast_double_precision(27)
+    MOVIE_EAST = bcast_double_precision(28)
+    MOVIE_NORTH = bcast_double_precision(29)
+    MOVIE_SOUTH = bcast_double_precision(30)
 
   endif
 
@@ -2329,6 +2352,10 @@
       c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) &
               + scale_factor_minus_one * mul
     else
+      if(MOVIE_VOLUME .and. SIMULATION_TYPE==3) then
+!      store the original value of \mu to comput \mu*\eps
+       muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
+      endif
       muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
       if(TRANSVERSE_ISOTROPY_VAL .and. (idoubling_crust_mantle(ispec) == IFLAG_220_80 &
       .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO)) &
@@ -2516,6 +2543,33 @@
     allocate(store_val_uy_all(nmovie_points,0:NPROCTOT-1))
     allocate(store_val_uz_all(nmovie_points,0:NPROCTOT-1))
   endif
+! output point and element information for 3D movies
+  if(MOVIE_VOLUME) then
+  ! the following has to be true for the the array dimensions of eps to match with those of xstore etc..
+  ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
+  if (NSPEC_CRUST_MANTLE_STRAIN_ATT .ne. NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT .ne.  NSPEC_CRUST_MANTLE'
+  if (NSPEC_CRUST_MANTLE_STRAIN_ONLY .ne. NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY .ne.  NSPEC_CRUST_MANTLE'
+
+  write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
+   call count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
+              zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
+              MOVIE_VOLUME_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool_3dmovie,mask_3dmovie)
+
+   allocate(nu_3dmovie(3,3,npoints_3dmovie))
+   call write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
+                         ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
+                         mask_3dmovie,mask_ibool_3dmovie,num_ibool_3dmovie,nu_3dmovie,MOVIE_VOLUME_COARSE)
+
+     if(myrank == 0) then
+       write(IMAIN,*) 'Writing to movie3D files on local disk'
+       write(IMAIN,*) 'depth(T,B):',MOVIE_TOP,MOVIE_BOTTOM
+       write(IMAIN,*) 'lon(W,E)  :',MOVIE_WEST,MOVIE_EAST
+       write(IMAIN,*) 'lat(S,N)  :',MOVIE_SOUTH,MOVIE_NORTH
+       write(IMAIN,*) 'Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
+     endif
+
+
+  endif ! MOVIE_VOLUME
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -2608,10 +2662,15 @@
   endif
 
   if (SAVE_STRAIN) then
+    if(myrank == 0) write(IMAIN,*) 'save_strain, = .true.'
     eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
     eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
     epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
+    if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
+      Iepsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+      Ieps_trace_over_3_crust_mantle(:,:,:,:)=0._CUSTOM_REAL
+    endif
     if(FIX_UNDERFLOW_PROBLEM) then
       eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
       epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
@@ -2792,6 +2851,12 @@
   enddo
   endif
 
+! integral of strain for adjoint movie volume
+  if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
+  Iepsilondev_crust_mantle(:,:,:,:,:)    =Iepsilondev_crust_mantle(:,:,:,:,:)    +deltat*epsilondev_crust_mantle(:,:,:,:,:)
+  Ieps_trace_over_3_crust_mantle(:,:,:,:)=Ieps_trace_over_3_crust_mantle(:,:,:,:) + deltat*eps_trace_over_3_crust_mantle(:,:,:,:)
+  endif
+
 ! compute the maximum of the norm of the displacement
 ! in all the slices using an MPI reduction
 ! and output timestamp file to check that simulation is running fine
@@ -2826,6 +2891,15 @@
 
     endif
 
+    if (SAVE_STRAIN) then
+      Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
+      strain2_norm= maxval(abs(epsilondev_crust_mantle))
+      call MPI_REDUCE(Strain_norm,Strain_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
+                 MPI_COMM_WORLD,ier)
+      call MPI_REDUCE(Strain2_norm,Strain2_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
+                 MPI_COMM_WORLD,ier)
+     endif
+
     if(myrank == 0) then
 
       write(IMAIN,*) 'Time step # ',it
@@ -2839,6 +2913,10 @@
       b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
       write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
+      endif
+      if(SAVE_STRAIN) then
+      write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
+      write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
       endif
 
 ! elapsed time since beginning of the simulation
@@ -4646,54 +4724,32 @@
   endif
 
 ! save movie in full 3D mesh
-  if(MOVIE_VOLUME .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
+!  if(MOVIE_VOLUME .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
+  if(MOVIE_VOLUME .and. mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0 .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 
-! div
-    write(outputname,"('proc',i6.6,'_crust_mantle_div_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
-    write(27) eps_trace_over_3_crust_mantle
-    close(27)
+   if (MOVIE_VOLUME_TYPE == 1) then  !output strains
 
-! we use div s = - p / kappa = rhostore_outer_core * accel_outer_core / kappavstore_outer_core
-    allocate(div_s_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE))
-    do ispec = 1, NSPEC_OUTER_CORE
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            iglob = ibool_outer_core(i,j,k,ispec)
-            rhol = rhostore_outer_core(i,j,k,ispec)
-            kappal = kappavstore_outer_core(i,j,k,ispec)
-            div_s_outer_core(i,j,k,ispec) = rhol * accel_outer_core(iglob) / kappal
-          enddo
-        enddo
-      enddo
-    enddo
+       call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_VOLUME_COARSE, &
+                    it,eps_trace_over_3_crust_mantle,epsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
+                    mask_3dmovie,nu_3dmovie)
 
-    write(outputname,"('proc',i6.6,'_outer_core_div_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
-    write(27)  div_s_outer_core
-    close(27)
+   else if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then !output the Time Integral of Strain, or \mu*TIS
 
-    deallocate(div_s_outer_core)
+       call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_VOLUME_COARSE, &
+                    it,Ieps_trace_over_3_crust_mantle,Iepsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
+                    mask_3dmovie,nu_3dmovie)
 
-    write(outputname,"('proc',i6.6,'_inner_core_div_displ_proc_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
-    write(27) eps_trace_over_3_inner_core
-    close(27)
+   else if (MOVIE_VOLUME_TYPE == 4) then !output divergence and curl in whole volume
 
-! epsilondev
+       call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
+          div_displ_outer_core,eps_trace_over_3_inner_core,epsilondev_crust_mantle,&
+          epsilondev_inner_core)
+   else  
+     
+      stop 'MOVIE_VOLUME_TYPE has to be 1,2,3,4'
 
-    write(outputname,"('proc',i6.6,'_crust_mantle_epsdev_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
-    write(27) epsilondev_crust_mantle
-    close(27)
-
-    write(outputname,"('proc',i6.6,'inner_core_epsdev_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
-    write(27) epsilondev_inner_core
-    close(27)
-
-  endif
+   endif !MOVIE_VOLUME_TYPE
+  endif !MOVIE_VOLUME
 
 !---- end of time iteration loop
 !

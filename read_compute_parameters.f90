@@ -34,11 +34,12 @@
          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-         R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+         R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE,MOVIE_VOLUME_TYPE, &
+         MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-         MOVIE_VOLUME,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -70,16 +71,18 @@
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          REFERENCE_1D_MODEL,THREE_D_MODEL
+          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP
 
   double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE
+          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
+          MOVIE_TOP_KM,MOVIE_TOP,MOVIE_BOTTOM_KM,MOVIE_BOTTOM, &
+          MOVIE_EAST_DEG,MOVIE_EAST,MOVIE_WEST_DEG,MOVIE_WEST,MOVIE_NORTH_DEG,MOVIE_NORTH,MOVIE_SOUTH_DEG,MOVIE_SOUTH
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
@@ -897,13 +900,38 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(HDUR_MOVIE, 'solver.HDUR_MOVIE')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-
 ! computes a default hdur_movie that creates nice looking movies.
 ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if(HDUR_MOVIE <= TINYVAL) &
     HDUR_MOVIE = 1.1d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
 
+  call read_value_integer(MOVIE_VOLUME_TYPE, 'solver.MOVIE_VOLUME_TYPE')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_logical(MOVIE_VOLUME_COARSE,'solver.MOVIE_VOLUME_COARSE')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_double_precision(MOVIE_TOP_KM, 'solver.MOVIE_TOP_KM')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_double_precision(MOVIE_BOTTOM_KM, 'solver.MOVIE_BOTTOM_KM')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_double_precision(MOVIE_WEST_DEG, 'solver.MOVIE_WEST_DEG')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_double_precision(MOVIE_EAST_DEG, 'solver.MOVIE_EAST_DEG')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_double_precision(MOVIE_NORTH_DEG, 'solver.MOVIE_NORTH_DEG')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_double_precision(MOVIE_SOUTH_DEG, 'solver.MOVIE_SOUTH_DEG')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_integer(MOVIE_START, 'solver.MOVIE_START')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_integer(MOVIE_STOP, 'solver.MOVIE_STOP')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  MOVIE_TOP = (R_EARTH_KM-MOVIE_TOP_KM)/R_EARTH_KM
+  MOVIE_BOTTOM = (R_EARTH_KM-MOVIE_BOTTOM_KM)/R_EARTH_KM
+  MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
+  MOVIE_WEST = MOVIE_WEST_DEG * DEGREES_TO_RADIANS
+  MOVIE_NORTH = (90.0d0 - MOVIE_NORTH_DEG) * DEGREES_TO_RADIANS ! converting from latitude to colatitude
+  MOVIE_SOUTH = (90.0d0 - MOVIE_SOUTH_DEG) * DEGREES_TO_RADIANS
 
   call read_value_logical(SAVE_MESH_FILES, 'mesher.SAVE_MESH_FILES')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
@@ -943,7 +971,6 @@
 
 ! close parameter file
   call close_parameter_file
-
 !--- check that parameters make sense
 
   if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0))&
