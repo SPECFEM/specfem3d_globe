@@ -148,7 +148,7 @@ libspecfem_a_OBJECTS = \
 	$O/write_AVS_DX_global_faces_data.o \
 	$O/write_AVS_DX_surface_data.o \
 	$O/write_c_binary.o \
-	$O/write_seismograms.o \
+        $O/write_seismograms.o \
 	$(EMPTY_MACRO)
 
 # solver objects with statically allocated arrays; dependent upon
@@ -160,6 +160,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/compute_forces_outer_core.o \
   $O/compute_boundary_kernel.o \
 	$O/read_arrays_solver.o \
+	$O/write_movie_volume.o \
 	$O/specfem3D.o \
 	$(EMPTY_MACRO)
 
@@ -268,6 +269,10 @@ combine_surf_data: $O/combine_surf_data.o $O/write_c_binary.o
 
 extract_database: UTILS/extract_database/extract_database.f90 
 	${FCCOMPILE_CHECK} -o extract_database UTILS/extract_database/extract_database.f90
+
+
+combine_paraview_strain_data: $O/combine_paraview_strain_data.o $O/write_c_binary.o
+	${FCCOMPILE_CHECK} -o xcombine_paraview_strain_data  $O/combine_paraview_strain_data.o $O/write_c_binary.o
 
 clean:
 	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX xcheck_buffers_1D xcheck_buffers_2D xcheck_buffers_corners_chunks xcheck_buffers_faces_chunks xconvolve_source_timefunction xcreate_header_file xcreate_movie_AVS_DX xcreate_movie_GMT_global xcombine_vol_data xcombine_surf_data extract_database PI*
@@ -533,6 +538,9 @@ $O/add_topography_cmb.o: constants.h add_topography_cmb.f90
 $O/add_topography_icb.o: constants.h add_topography_icb.f90
 	${FCCOMPILE_CHECK} -c -o $O/add_topography_icb.o ${FCFLAGS_f90} add_topography_icb.f90
 
+$O/write_movie_volume.o: constants.h write_movie_volume.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/write_movie_volume.o ${FCFLAGS_f90} write_movie_volume.f90
+
 $O/write_seismograms.o: constants.h write_seismograms.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/write_seismograms.o ${FCFLAGS_f90} write_seismograms.f90
 
@@ -575,6 +583,9 @@ $O/gll_library.o: constants.h gll_library.f90
 
 $O/combine_vol_data.o: constants.h combine_vol_data.f90
 	${FCCOMPILE_CHECK} -c -o $O/combine_vol_data.o ${FCFLAGS_f90} combine_vol_data.f90
+
+$O/combine_paraview_strain_data.o: constants.h combine_paraview_strain_data.f90
+	${FCCOMPILE_CHECK} -c -o $O/combine_paraview_strain_data.o ${FCFLAGS_f90} combine_paraview_strain_data.f90
 
 $O/combine_surf_data.o: constants.h combine_surf_data.f90
 	${FCCOMPILE_CHECK} -c -o $O/combine_surf_data.o ${FCFLAGS_f90} combine_surf_data.f90
