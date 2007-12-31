@@ -1,31 +1,53 @@
-#!/bin/bash -v
+#!/bin/bash
 #BSUB -o OUTPUT_FILES/%J.o
 #BSUB -a mpich_gm
 #BSUB -J go_mesher_solver_lsf
 
-# this is the launch script to run a regular forward simulation
-# on CITerra with the LSF scheduler
-# assumes 'remap_lsf_machines.pl' is already in the $PATH
-#  Qinya Liu, Caltech, May 2007
+if [ -z $USER ]; then
+	echo "could not run go_mesher_solver_...bash as no USER env is set"
+	exit 2
+fi
 
 BASEMPIDIR=/scratch/$USER/DATABASES_MPI
-BASESCRATCHDIR=/scratch/$USER
 
+# script to run the mesher and the solver
+
+# read DATA/Par_file to get information about the run
+
+# compute total number of nodes needed
+NPROC_XI=`grep NPROC_XI DATA/Par_file | cut -d = -f 2 `
+NPROC_ETA=`grep NPROC_ETA DATA/Par_file | cut -d = -f 2`
+NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -d = -f 2 `
+
+# total number of nodes is the product of the values read
+numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
+
+rm -r -f OUTPUT_FILES
+mkdir OUTPUT_FILES
+
+# obtain lsf job information
 echo "$LSB_MCPU_HOSTS" > OUTPUT_FILES/lsf_machines
 echo "$LSB_JOBID" > OUTPUT_FILES/jobid
 
 remap_lsf_machines.pl OUTPUT_FILES/lsf_machines >OUTPUT_FILES/machines
 
-# clean old files that may be in the local /scratch directory
-# and create a directory for this job
-shmux -M 50 -S all -c "rm -r -f /scratch/$USER; mkdir -p /scratch/$USER; mkdir -p $BASEMPIDIR.$LSB_JOBID" - < OUTPUT_FILES/machines >/dev/null
+# now cleanup and make the dir (seismos are now written by the master, no more need to collect them on the nodes), this for avoiding crashes
+shmux -M 50 -S all -c "rm -r -f /scratch/$USER; mkdir -p /scratch/$USER; mkdir -p $BASEMPIDIR" - < OUTPUT_FILES/machines >/dev/null
 
-# Set the local path in Par_file
-sed -e "s:^LOCAL_PATH .*:LOCAL_PATH                      =  $BASEMPIDIR.$LSB_JOBID:" < DATA/Par_file > DATA/Par_file.tmp
-mv DATA/Par_file.tmp DATA/Par_file
+echo starting MPI mesher on $numnodes processors
+echo " "
+echo starting run in current directory $PWD
+echo " "
 
-current_pwd=$PWD
+# on "pangu" at Caltech, wait for 5 minutes to try to avoid slow runs
+# (let the load of the machine, and in particular the network, decrease)
+sleep 300
 
-mpirun.lsf  --gm-no-shmem --gm-copy-env $current_pwd/xmeshfem3D
-mpirun.lsf --gm-no-shmem --gm-copy-env $current_pwd/xspecfem3D
+#### use this on LSF
+mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/xmeshfem3D
+mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/xspecfem3D
+
+# cleanup after the run
+sleep 10
+shmux -M 50 -S all -c "rm -r -f /scratch/$USER" - < OUTPUT_FILES/machines >/dev/null
 
