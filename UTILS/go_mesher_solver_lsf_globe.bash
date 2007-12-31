@@ -43,8 +43,12 @@ echo " "
 # (let the load of the machine, and in particular the network, decrease)
 sleep 300
 
-#### use this on LSF
 mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/xmeshfem3D
+
+# on "pangu" at Caltech, wait for 5 minutes to try to avoid slow runs
+# (let the load of the machine, and in particular the network, decrease)
+sleep 300
+
 mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/xspecfem3D
 
 # cleanup after the run
