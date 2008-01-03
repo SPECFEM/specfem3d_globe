@@ -34,7 +34,8 @@
          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
          NSPEC_INNER_CORE_ATTENUATION, &
-         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+         NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
          NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
          NSPEC_CRUST_MANTLE_ADJOINT, &
          NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
@@ -65,7 +66,8 @@
   integer, intent(out) :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
          NSPEC_INNER_CORE_ATTENUATION, &
-         NSPEC_CRUST_MANTLE_STRAIN_ATT,NSPEC_INNER_CORE_STRAIN_ATT, &
+         NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+         NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
          NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
          NSPEC_CRUST_MANTLE_ADJOINT, &
          NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
@@ -132,12 +134,21 @@
   endif
 
   if(ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    NSPEC_CRUST_MANTLE_STRAIN_ATT = NSPEC(IREGION_CRUST_MANTLE)
-    NSPEC_INNER_CORE_STRAIN_ATT = NSPEC(IREGION_INNER_CORE)
+    NSPEC_CRUST_MANTLE_STR_OR_ATT = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_INNER_CORE_STR_OR_ATT = NSPEC(IREGION_INNER_CORE)
   else
-    NSPEC_CRUST_MANTLE_STRAIN_ATT = 1
-    NSPEC_INNER_CORE_STRAIN_ATT = 1
+    NSPEC_CRUST_MANTLE_STR_OR_ATT = 1
+    NSPEC_INNER_CORE_STR_OR_ATT = 1
   endif
+
+  if(ATTENUATION .and. SIMULATION_TYPE == 3) then
+    NSPEC_CRUST_MANTLE_STR_AND_ATT = NSPEC(IREGION_CRUST_MANTLE)
+    NSPEC_INNER_CORE_STR_AND_ATT = NSPEC(IREGION_INNER_CORE)
+  else
+    NSPEC_CRUST_MANTLE_STR_AND_ATT = 1
+    NSPEC_INNER_CORE_STR_AND_ATT = 1
+  endif
+
 
   if(SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     NSPEC_CRUST_MANTLE_STRAIN_ONLY = NSPEC(IREGION_CRUST_MANTLE)
@@ -295,18 +306,18 @@
 ! add arrays used to save strain for attenuation or for adjoint runs
 
 ! epsilondev_crust_mantle
-  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STRAIN_ATT*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
 
 ! eps_trace_over_3_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STRAIN_ATT*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_STR_OR_ATT*dble(CUSTOM_REAL)
 
 ! epsilondev_inner_core
-  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STRAIN_ATT*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + 5.d0*dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
 
 ! eps_trace_over_3_inner_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STRAIN_ATT*dble(CUSTOM_REAL)
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_STR_OR_ATT*dble(CUSTOM_REAL)
 
-! add arrays used for adjoint runs only
+! add arrays used for adjoint runs only (LQY: not very accurate)
 
 ! b_R_memory_crust_mantle
 ! b_epsilondev_crust_mantle

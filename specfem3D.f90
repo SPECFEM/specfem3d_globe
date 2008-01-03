@@ -250,22 +250,22 @@
   real(kind=CUSTOM_REAL) dist_cr
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ATT) :: epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ATT) :: epsilondev_inner_core
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: epsilondev_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
 
 ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_R_memory_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: b_R_memory_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_eps_trace_over_3_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_R_memory_inner_core
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: b_R_memory_inner_core
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_epsilondev_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_eps_trace_over_3_inner_core
 
@@ -292,12 +292,12 @@
 ! to save movie volume
   integer :: npoints_3dmovie,nspecel_3dmovie
   integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ATT) :: muvstore_crust_mantle_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: muvstore_crust_mantle_3dmovie
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
   logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool_3dmovie
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ATT) :: Iepsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: Iepsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: Ieps_trace_over_3_crust_mantle
 
 ! use integer array to store values
@@ -2559,7 +2559,7 @@
   if(MOVIE_VOLUME) then
   ! the following has to be true for the the array dimensions of eps to match with those of xstore etc..
   ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
-  if (NSPEC_CRUST_MANTLE_STRAIN_ATT .ne. NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT .ne.  NSPEC_CRUST_MANTLE'
+  if (NSPEC_CRUST_MANTLE_STR_OR_ATT .ne. NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT .ne.  NSPEC_CRUST_MANTLE'
   if (NSPEC_CRUST_MANTLE_STRAIN_ONLY .ne. NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY .ne.  NSPEC_CRUST_MANTLE'
 
   write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'

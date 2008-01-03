@@ -447,7 +447,7 @@ character(len=1) movie_prefix
     include "OUTPUT_FILES/values_from_mesher.h"
     ! div
     integer :: myrank,it,ispec,iglob,i,j,k
-    real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ATT) :: epsilondev_inner_core
+    real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: epsilondev_inner_core
     real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
     real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rhostore_outer_core, &
                             kappavstore_outer_core,ibool_outer_core
