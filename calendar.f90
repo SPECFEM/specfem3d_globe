@@ -524,10 +524,10 @@
 !     and February belong to the preceding year.
 !     Define jmonth=4 for March, =5 for April, ..., =15 for February.
   if (month <= 2) then
-  jyear  = jyear -  1
-  jmonth = month + 13
+    jyear  = jyear -  1
+    jmonth = month + 13
   else
-  jmonth = month +  1
+    jmonth = month +  1
   endif
 !
 !     Find the closest multiple of 400 years that is .le. jyear.
