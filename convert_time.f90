@@ -64,7 +64,7 @@
   if (min < 0 .or. min > 60) stop 'Error in convtime: minute out of range (0-60)'
 
 ! convert time
-!! DK DK beware here, the test for the leap year is not complete here,
+!! DK DK beware here, the test for the leap year is not complete,
 !! DK DK should check if multiple of 4 but not 100, except if multiple of 400,
 !! DK DK but works fine because this does not happen between 1980 and 2020
   if (mod(yr,4) == 0) then
@@ -150,7 +150,7 @@
   imon=0
 
 !     if leap month
-!! DK DK beware here, the test for the leap year is not complete here,
+!! DK DK beware here, the test for the leap year is not complete,
 !! DK DK should check if multiple of 4 but not 100, except if multiple of 400,
 !! DK DK but works fine because this does not happen between 1980 and 2020
   if (mod(iyr,4) /= 0) then
