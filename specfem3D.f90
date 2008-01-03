@@ -2963,7 +2963,6 @@
       write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_total,iminutes_total,iseconds_total
       write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
-      write(IMAIN,*)
 
 ! get current date
       call date_and_time(datein,timein,zone,time_values)
@@ -2995,7 +2994,7 @@
       call calndr(day,mon,year,julian_day_number)
       day_of_week = idaywk(julian_day_number)
 
-      write(IMAIN,"('The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
+      write(IMAIN,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
           weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
       write(IMAIN,*)
 
@@ -3035,7 +3034,7 @@
       write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
       write(IOUT,*)
 
-      write(IOUT,"('The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
+      write(IOUT,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
           weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
 
       close(IOUT)
