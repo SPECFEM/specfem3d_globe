@@ -2965,6 +2965,8 @@
                ihours_total,iminutes_total,iseconds_total
       write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
 
+      if(it < NSTEP) then
+
 ! get current date
       call date_and_time(datein,timein,zone,time_values)
 ! time_values(1): year
@@ -3026,6 +3028,8 @@
         write(IMAIN,*) '************************************************************'
       endif
 
+      endif
+
       write(IMAIN,*)
 
 ! write time stamp file to give information about progression of simulation
@@ -3064,6 +3068,8 @@
       write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
       write(IOUT,*)
 
+      if(it < NSTEP) then
+
       write(IOUT,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
           weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
 
@@ -3083,6 +3089,8 @@
         write(IOUT,*) '**** BEWARE: the above time estimates are not reliable'
         write(IOUT,*) '**** because fewer than 100 iterations have been performed'
         write(IOUT,*) '************************************************************'
+      endif
+
       endif
 
       close(IOUT)
