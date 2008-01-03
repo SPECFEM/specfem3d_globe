@@ -152,6 +152,15 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
+! print date and time estimate of end of run in another country,
+! in addition to local time.
+! For instance: the code runs at Caltech in California but the person
+! running the code is connected remotely from France, which has 9 hours more.
+! The time difference with that remote location can be positive or negative
+  logical, parameter :: ADD_TIME_ESTIMATE_ELSEWHERE = .false.
+  integer, parameter :: HOURS_TIME_DIFFERENCE = 9
+  integer, parameter :: MINUTES_TIME_DIFFERENCE = 0
+
 !
 !--- debugging flags
 !
