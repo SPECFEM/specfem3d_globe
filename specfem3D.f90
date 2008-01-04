@@ -3017,7 +3017,8 @@
 
         write(IMAIN,*) 'Adding (positive or negative) time difference of ',HOURS_TIME_DIFFERENCE,' hours'
         write(IMAIN,*) 'and ',MINUTES_TIME_DIFFERENCE,' minutes to get estimate at a remote location'
-        write(IMAIN,"(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
+        write(IMAIN, &
+            "(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
             weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
       endif
 
@@ -3079,7 +3080,8 @@
       if(ADD_TIME_ESTIMATE_ELSEWHERE) then
         write(IOUT,*) 'Adding (positive or negative) time difference of ',HOURS_TIME_DIFFERENCE,' hours'
         write(IOUT,*) 'and ',MINUTES_TIME_DIFFERENCE,' minutes to get estimate at a remote location'
-        write(IOUT,"(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
+        write(IOUT, &
+            "(' The run will finish approximately on (in remote time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
             weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
       endif
 
