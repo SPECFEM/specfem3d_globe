@@ -20,7 +20,7 @@
 ! You can find the Julian Day number given (day,month,year)
 ! using subroutine calndr below.
 ! Example: For the first day of the Gregorian calendar,
-! 15 October 1582, compute the Julian day number (option 3 of
+! Friday 15 October 1582, compute the Julian day number (option 3 of
 ! subroutine calndr) and compute the day of the week.
 !     call calndr (3, 15, 10, 1582, jdayno)
 !     write(*,*) jdayno, idaywk(jdayno)
@@ -362,10 +362,7 @@
 ! University of Pau, France, January 2008.
 
 ! Declare internal variables.
-  integer  jdref,  jmonth, jyear, leap, &
-           n1yr, n4yr, n100yr, n400yr, &
-           ndays, ndy400, ndy100, nyrs, &
-           yr400, yrref
+  integer jdref, jmonth, jyear, leap, n1yr, n4yr, n100yr, n400yr, ndays, ndy400, ndy100, nyrs, yr400, yrref
 !
 ! Explanation of all internal variables.
 ! jdref   Julian Day on which 1 March begins in the reference year.

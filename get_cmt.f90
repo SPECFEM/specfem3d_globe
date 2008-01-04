@@ -166,3 +166,23 @@
 
   end function lpyr
 
+! ------------------------------------------------------------------
+
+! function to determine if year is a leap year
+  logical function is_leap_year(yr)
+
+  implicit none
+
+  integer yr
+
+  integer, external :: lpyr
+
+!---- function lpyr above returns 1 if leap year
+  if(lpyr(yr) == 1) then
+    is_leap_year = .true.
+  else
+    is_leap_year = .false.
+  endif
+
+  end function is_leap_year
+
