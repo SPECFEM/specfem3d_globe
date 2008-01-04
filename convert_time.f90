@@ -5,12 +5,12 @@
 ! converted to Fortran90 by Dimitri Komatitsch,
 ! University of Pau, France, January 2008.
 ! Also converted "convtime" from a function to a subroutine.
+! Also used a more complete test to detect leap years (the original version was incomplete).
 
   subroutine convtime(timestamp,yr,mon,day,hr,min)
 
 ! Originally written by Shawn Smith (smith AT coaps.fsu.edu)
-! Updated Spring 1999 for Y2K compliance by Anthony Arguez
-! (anthony AT coaps.fsu.edu).
+! Updated Spring 1999 for Y2K compliance by Anthony Arguez (anthony AT coaps.fsu.edu).
 
 ! This subroutine will convert a given year, month, day, hour, and
 ! minutes to a minutes from 01 Jan 1980 00:00 time stamp.
@@ -24,6 +24,9 @@
   integer :: year(1980:2020),month(12),leap_mon(12)
 
   integer ::  min_day,min_hr
+
+! function to determine if year is a leap year
+  logical, external :: is_leap_year
 
   data year /0, 527040, 1052640, 1578240, 2103840, 2630880, 3156480, &
                3682080, 4207680, 4734720, 5260320, 5785920, 6311520, &
@@ -48,12 +51,12 @@
   if (mon < 1 .or. mon > 12) stop 'Error in convtime: month out of range (1-12)'
 
   if (mon == 2) then
-   if ((mod(yr,4) == 0).and.(day < 1 .or. day > 29)) then
-      stop 'Error in convtime: Feb. day out of range (1-29)'
-   elseif ((mod(yr,4) /= 0).and.(day < 1 .or. day > 28)) then
-      stop 'Error in convtime: Feb. day out of range (1-28)'
+   if (is_leap_year(yr) .and. (day < 1 .or. day > 29)) then
+      stop 'Error in convtime: February day out of range (1-29)'
+   elseif (.not. is_leap_year(yr) .and. (day < 1 .or. day > 28)) then
+      stop 'Error in convtime: February day out of range (1-28)'
    endif
-  elseif ((mon == 4) .or. (mon == 6) .or. (mon == 9) .or. (mon == 11)) then
+  elseif (mon == 4 .or. mon == 6 .or. mon == 9 .or. mon == 11) then
    if (day < 1 .or. day > 30) stop 'Error in convtime: day out of range (1-30)'
   else
    if (day < 1 .or. day > 31) stop 'Error in convtime: day out of range (1-31)'
@@ -63,11 +66,8 @@
 
   if (min < 0 .or. min > 60) stop 'Error in convtime: minute out of range (0-60)'
 
-! convert time
-!! DK DK beware here, the test for the leap year is not complete,
-!! DK DK should check if multiple of 4 but not 100, except if multiple of 400,
-!! DK DK but works fine because this does not happen between 1980 and 2020
-  if (mod(yr,4) == 0) then
+! convert time (test if leap year)
+  if (is_leap_year(yr)) then
    timestamp = year(yr)+leap_mon(mon)+((day-1)*min_day)+(hr*min_hr)+min
   else
    timestamp = year(yr)+month(mon)+((day-1)*min_day)+(hr*min_hr)+min
@@ -91,8 +91,7 @@
 ! Shyam Lakshmin (lakshmin AT coaps.fsu.edu)
 !
 ! This code returns correct results for the range of 01 Jan 1980 00:00
-! thru 31 Dec 2020 23:59. I know it does, because I tried each minute
-! of that range.
+! thru 31 Dec 2020 23:59. I know it does, because I tried each minute of that range.
 
   implicit none
 
@@ -103,6 +102,9 @@
   integer :: year(1980:2021),month(13),leap_mon(13)
 
   integer :: min_day,min_hr,itime,tmon,ttime,thour,iyr,imon,iday,ihour
+
+! function to determine if year is a leap year
+  logical, external :: is_leap_year
 
   data year /0, 527040, 1052640, 1578240, 2103840, 2630880, 3156480, &
                3682080, 4207680, 4734720, 5260320, 5785920, 6311520, &
@@ -121,18 +123,15 @@
 
   data min_day, min_hr /1440, 60/
 
-!     ok, let us invert the effects of the years -- subtract off the
-!     number of minutes per year until it goes negative
-!     iyr then gives the year that the time (in minutes) occurs...
-  if (timestamp >= year(2021)) then
-   yr=-9999
-   return
-  endif
+! ok, let us invert the effects of the years: subtract off the
+! number of minutes per year until it goes negative
+! iyr then gives the year that the time (in minutes) occurs
+  if (timestamp >= year(2021)) stop 'year too high in invtime'
 
   iyr=1979
   itime=timestamp
 
- 10   iyr=iyr+1
+ 10 iyr=iyr+1
   ttime=itime-year(iyr)
   if (ttime <= 0) then
    if (iyr == 1980) iyr=iyr+1
@@ -142,22 +141,19 @@
    goto 10
   endif
 
-!     assign the return variable
+! assign the return variable
   yr=iyr
 
-!     ok, the remaining time is less than one full year, so convert
-!     by the same method as above into months:
+! ok, the remaining time is less than one full year, so convert
+! by the same method as above into months
   imon=0
 
-!     if leap month
-!! DK DK beware here, the test for the leap year is not complete,
-!! DK DK should check if multiple of 4 but not 100, except if multiple of 400,
-!! DK DK but works fine because this does not happen between 1980 and 2020
-  if (mod(iyr,4) /= 0) then
+! if not leap year
+  if (.not. is_leap_year(iyr)) then
 
-!     increment the month, and subtract off the minutes from the
-!     remaining time for a non-leap year
- 20      imon=imon+1
+! increment the month, and subtract off the minutes from the
+! remaining time for a non-leap year
+ 20 imon=imon+1
    tmon=itime-month(imon)
    if (tmon > 0) then
       goto 20
@@ -175,10 +171,12 @@
       min=0
       return
    endif
+
+! if leap year
   else
 
-!     same thing, same code, but for a leap year
- 30      imon=imon+1
+! same thing, same code, but for a leap year
+ 30 imon=imon+1
    tmon=itime-leap_mon(imon)
    if (tmon > 0) then
       goto 30
@@ -198,40 +196,39 @@
    endif
   endif
 
-!     assign the return variable
+! assign the return variable
   mon=imon
 
-!     any remaining minutes will belong to day/hour/minutes
-!     ok, let's get those pesky days!
+! any remaining minutes will belong to day/hour/minutes
+! ok, let us get the days
   iday=0
- 40   iday=iday+1
+ 40 iday=iday+1
   ttime=itime-min_day
   if (ttime >= 0) then
    itime=ttime
    goto 40
   endif
 
-!     assign the return variable
-  if (mod(iyr,4) == 0 .and. mon > 2) then
+! assign the return variable
+  if (is_leap_year(iyr) .and. mon > 2) then
    day=iday-1
   else
    day=iday
   endif
 
-!     pick off the hours of the days...remember, hours can be 0,
-!     so we start at -1
+! pick off the hours of the days...remember, hours can be 0, so we start at -1
   ihour=-1
- 50   ihour=ihour+1
+ 50 ihour=ihour+1
   thour=itime-min_hr
   if (thour >= 0) then
    itime=thour
    goto 50
   endif
 
-!     assign the return variables
+! assign the return variables
   hr=ihour
 
-!     the remainder at this point is the minutes, so return them directly!
+! the remainder at this point is the minutes, so return them directly
   min=itime
 
   end subroutine invtime
