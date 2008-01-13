@@ -74,11 +74,12 @@
   double precision moment_tensor(6)
 
 ! for receiver location
-  integer irec
+  integer irec,ios
   double precision r_target
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   character(len=MAX_LENGTH_STATION_NAME), allocatable, dimension(:) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), allocatable, dimension(:) :: network_name
+  character(len=150) dummystring
 
   double precision, allocatable, dimension(:) :: x_target,y_target,z_target
 
@@ -1012,33 +1013,32 @@
 
 !   convert geographic latitude lat (degrees)
 !   to geocentric colatitude theta (radians)
-    theta=PI/2.0d0-atan(0.99329534d0*dtan(dble(lat)*PI/180.0d0))
+    theta=PI/2.0d0-atan(0.99329534d0*tan(dble(lat)*PI/180.0d0))
     phi=dble(long)*PI/180.0d0
     call reduce(theta,phi)
 
 !   compute Cartesian position of the source (ignore ellipticity for AVS_DX)
 !   the point for the source is put at the surface for clarity (depth ignored)
 !   even slightly above to superimpose to real surface
-
     r_target_source = 1.02d0
-    x_target_source = r_target_source*dsin(theta)*dcos(phi)
-    y_target_source = r_target_source*dsin(theta)*dsin(phi)
-    z_target_source = r_target_source*dcos(theta)
+    x_target_source = r_target_source*sin(theta)*cos(phi)
+    y_target_source = r_target_source*sin(theta)*sin(phi)
+    z_target_source = r_target_source*cos(theta)
 
 ! save triangle for AVS or DX representation of epicenter
     r_target_source = 1.05d0
     delta_trgl = 1.8 * pi / 180.
-    x_source_trgl1 = r_target_source*dsin(theta+delta_trgl)*dcos(phi-delta_trgl)
-    y_source_trgl1 = r_target_source*dsin(theta+delta_trgl)*dsin(phi-delta_trgl)
-    z_source_trgl1 = r_target_source*dcos(theta+delta_trgl)
+    x_source_trgl1 = r_target_source*sin(theta+delta_trgl)*cos(phi-delta_trgl)
+    y_source_trgl1 = r_target_source*sin(theta+delta_trgl)*sin(phi-delta_trgl)
+    z_source_trgl1 = r_target_source*cos(theta+delta_trgl)
 
-    x_source_trgl2 = r_target_source*dsin(theta+delta_trgl)*dcos(phi+delta_trgl)
-    y_source_trgl2 = r_target_source*dsin(theta+delta_trgl)*dsin(phi+delta_trgl)
-    z_source_trgl2 = r_target_source*dcos(theta+delta_trgl)
+    x_source_trgl2 = r_target_source*sin(theta+delta_trgl)*cos(phi+delta_trgl)
+    y_source_trgl2 = r_target_source*sin(theta+delta_trgl)*sin(phi+delta_trgl)
+    z_source_trgl2 = r_target_source*cos(theta+delta_trgl)
 
-    x_source_trgl3 = r_target_source*dsin(theta-delta_trgl)*dcos(phi)
-    y_source_trgl3 = r_target_source*dsin(theta-delta_trgl)*dsin(phi)
-    z_source_trgl3 = r_target_source*dcos(theta-delta_trgl)
+    x_source_trgl3 = r_target_source*sin(theta-delta_trgl)*cos(phi)
+    y_source_trgl3 = r_target_source*sin(theta-delta_trgl)*sin(phi)
+    z_source_trgl3 = r_target_source*cos(theta-delta_trgl)
 
     ntotpoinAVS_DX = 2
     ntotspecAVS_DX = 1
@@ -1047,10 +1047,14 @@
     print *,'reading position of the receivers'
 
 ! get number of stations from receiver file
-    open(unit=11,file='DATA/STATIONS',status='old',action='read')
+    open(unit=11,file='DATA/STATIONS',iostat=ios,status='old',action='read')
+    nrec = 0
+    do while(ios == 0)
+      read(11,"(a)",iostat=ios) dummystring
+      if(ios == 0) nrec = nrec + 1
+    enddo
+    close(11)
 
-! read total number of receivers
-    read(11,*) nrec
     print *,'There are ',nrec,' three-component stations'
     print *
     if(nrec < 1) stop 'incorrect number of stations read - need at least one'
@@ -1067,6 +1071,7 @@
     allocate(z_target(nrec))
 
 ! loop on all the stations
+    open(unit=11,file='DATA/STATIONS',status='old',action='read')
     do irec=1,nrec
       read(11,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
 

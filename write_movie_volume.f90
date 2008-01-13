@@ -13,15 +13,15 @@
 !           Free for non-commercial academic research ONLY.
 !      This program is distributed WITHOUT ANY WARRANTY whatsoever.
 !      Do not redistribute this program without written permission.
-! 
+!
 !=====================================================================
-  
+
 ! create file OUTPUT_FILES/values_from_mesher.h based upon DATA/Par_file
 ! in order to compile the solver with the right array sizes
 
 
 !---------------------------------------------------------------------------------
-! this subroutine counts the number of points and elements within the movie volume 
+! this subroutine counts the number of points and elements within the movie volume
 ! in this processor slice, and returns arrays that keep track of them, both in global and local indexing schemes
 
   subroutine count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
@@ -50,9 +50,9 @@
 ! variables
   integer :: ipoints_3dmovie,ispecel_3dmovie,ispec,iglob,i,j,k,NIT
   real(kind=custom_real) :: rval,thetaval,phival
-  
+
   if(MOVIE_VOLUME_COARSE) then
-    NIT = NGLLX-1 
+    NIT = NGLLX-1
   else
     NIT = 1
   endif
@@ -63,7 +63,7 @@
   mask_3dmovie(:,:,:,:)=.false.
   ! create name of database
   open(unit=IOUT,file=trim(prname)//'movie3D_info.txt',status='unknown')
-  
+
   !find and count points within given region for storing movie
       do ispec = 1,NSPEC_CRUST_MANTLE
         !output element if center of element is in the given region
@@ -101,7 +101,7 @@
   end subroutine count_points_movie_volume
 
 ! -----------------------------------------------------------------
-! writes meshfiles to merge with solver snapshots for 3D volume movies.  Also computes and outputs 
+! writes meshfiles to merge with solver snapshots for 3D volume movies.  Also computes and outputs
 ! the rotation matrix nu_3dmovie required to transfer to a geographic coordinate system
 
   subroutine write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
@@ -133,7 +133,7 @@
   integer :: n1,n2,n3,n4,n5,n6,n7,n8,NIT
   real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval,st,ct,sp,cp
   real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_x,store_val3D_y, store_val3D_z
-  
+
   if(MOVIE_VOLUME_COARSE) then
     NIT = NGLLX-1
   else
@@ -207,7 +207,7 @@
       iglob=ibool_crust_mantle(1,1,1,ispec)
     else
       iglob=ibool_crust_mantle(3,3,3,ispec)
-    endif 
+    endif
     if(mask_ibool_3dmovie(iglob)) then  !this element is in the region
      ispecele  = ispecele+1
      do k=1,NGLLZ-1,NIT
@@ -388,7 +388,7 @@ character(len=150) outputname
 character(len=1) movie_prefix
 
  if(MOVIE_VOLUME_TYPE == 5) then
-      movie_prefix='D' ! displacement 
+      movie_prefix='D' ! displacement
  else if(MOVIE_VOLUME_TYPE == 2) then
       movie_prefix='V' ! velocity
  endif
@@ -442,7 +442,7 @@ character(len=1) movie_prefix
  subroutine write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
           accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
           eps_trace_over_3_inner_core,epsilondev_crust_mantle,&
-          epsilondev_inner_core) 
+          epsilondev_inner_core)
     include "constants.h"
     include "OUTPUT_FILES/values_from_mesher.h"
     ! div
@@ -456,7 +456,7 @@ character(len=1) movie_prefix
     real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev_crust_mantle
     real(kind=CUSTOM_REAL) :: rhol,kappal
     real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: div_s_outer_core
- 
+
     character(len=150) LOCAL_PATH,outputname
 
 

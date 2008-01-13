@@ -560,13 +560,11 @@
   double precision t0
 
 ! receiver information
-  integer nrec,nrec_local,nrec_tot_found
-  integer irec_local
+  integer nrec,nrec_local,nrec_tot_found,irec_local,ios
   integer, dimension(:), allocatable :: islice_selected_rec,ispec_selected_rec,number_receiver_global
   double precision, dimension(:), allocatable :: xi_receiver,eta_receiver,gamma_receiver
   double precision hlagrange
-  character(len=150) STATIONS
-  character(len=150) :: rec_filename
+  character(len=150) :: STATIONS,rec_filename,dummystring
   double precision, dimension(:,:,:), allocatable :: nu
   double precision, allocatable, dimension(:) :: stlat,stlon,stele
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
@@ -1496,10 +1494,14 @@
     rec_filename = 'DATA/STATIONS_ADJOINT'
   endif
   call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-
+! get total number of receivers
   if(myrank == 0) then
-    open(unit=IIN,file=STATIONS,status='old',action='read')
-    read(IIN,*) nrec
+    open(unit=IIN,file=STATIONS,iostat=ios,status='old',action='read')
+    nrec = 0
+    do while(ios == 0)
+      read(IIN,"(a)",iostat=ios) dummystring
+      if(ios == 0) nrec = nrec + 1
+    enddo
     close(IIN)
   endif
 ! broadcast the information read on the master to the nodes

@@ -199,23 +199,14 @@
 
 ! read that STATIONS file on the master
   if(myrank == 0) then
-
     call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-
     open(unit=1,file=STATIONS,status='old',action='read')
-
-! get number of stations from receiver file
-    read(1,*) nrec_dummy
-    if(nrec_dummy /= nrec) call exit_MPI(myrank,'problem with number of receivers')
-
 ! loop on all the stations to read station information
-    do irec=1,nrec
+    do irec = 1,nrec
       read(1,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
     enddo
-
 ! close receiver file
     close(1)
-
   endif
 
 ! broadcast the information read on the master to the nodes

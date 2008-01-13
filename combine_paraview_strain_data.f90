@@ -35,11 +35,11 @@ program combine_paraview_movie_data
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: SEEstore,SNNstore,SZZstore,SNEstore,SNZstore,SEZstore
   real(kind=CUSTOM_REAL) :: x, y, z, dat
   character(len=150) :: arg(7), prname, dimension_file
-  character(len=150) :: mesh_file, local_element_file, local_data_file 
+  character(len=150) :: mesh_file, local_element_file, local_data_file
   character(len=3) :: comp
   logical :: MOVIE_VOLUME_COARSE
 
-  do i = 1,6 
+  do i = 1,6
     call getarg(i,arg(i))
     if (i < 7 .and. trim(arg(i)) == '') then
       print *, ' '
@@ -50,12 +50,12 @@ program combine_paraview_movie_data
       stop ' Reenter command line options'
     endif
   enddo
-  
+
 
   read(arg(1),*) num_node
   read(arg(2),*) dit_movie
   read(arg(3),*) itstart
-  read(arg(4),*) itstop 
+  read(arg(4),*) itstop
   read(arg(5),*) comp
   read(arg(6),*) MOVIE_VOLUME_COARSE
 
@@ -74,7 +74,7 @@ program combine_paraview_movie_data
     write(prname,'(a,i6.6,a)') 'proc',iproc-1,'_'
 
     dimension_file = trim(prname) //'movie3D_info.txt'
-!   print *, 'reading: ',trim(dimension_file) 
+!   print *, 'reading: ',trim(dimension_file)
    open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
     if (ios /= 0) stop 'Error opening file'
 
@@ -134,9 +134,9 @@ program combine_paraview_movie_data
       read(27) zstore(1:npoint(iproc))
     endif
     close(27)
-    
-    if( (comp .ne. 'SI1') .and. (comp .ne. 'SI2')) then 
-!comp == 'SEE' .or. comp == 'SNN' .or. comp == 'SZZ' .or. comp == 'SEZ' .or. comp == 'SNZ' .or. comp == 'SNE') then 
+
+    if( (comp .ne. 'SI1') .and. (comp .ne. 'SI2')) then
+!comp == 'SEE' .or. comp == 'SNN' .or. comp == 'SZZ' .or. comp == 'SEZ' .or. comp == 'SNZ' .or. comp == 'SNE') then
      write(local_data_file,'(a,a,i6.6,a)') 'movie3D_',comp,it,'.bin'
 
      !print *,'reading comp:',trim(prname)//trim(local_data_file)
@@ -262,7 +262,7 @@ program combine_paraview_movie_data
         nelement_local = nelement(iproc)
       else
         nelement_local = nelement(iproc)*64
-      endif 
+      endif
       do i = 1, nelement_local
         read(27) n1, n2, n3, n4, n5, n6, n7, n8
         n1 = n1+np

@@ -57,7 +57,7 @@ program combine_vol_data
     if (i < 7 .and. trim(arg(i)) == '') then
       print *, ' '
       print *, ' Usage: xcombine_vol_data slice_list filename input_topo_dir input_file_dir '
-      print *, '        output_dir high/low-resolution [region]' 
+      print *, '        output_dir high/low-resolution [region]'
       print *, ' ***** Notice: now allow different input dir for topo and kernel files ******** '
       print *, '   expect to have the topology and filename.bin(NGLLX,NGLLY,NGLLZ,nspec) '
       print *, '   already collected to input_topo_dir and input_file_dir'
@@ -143,7 +143,7 @@ program combine_vol_data
       print *, 'Reading slice ', iproc
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
-    
+
 
       dimension_file = trim(prname_topo) //'array_dims.txt'
       open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
