@@ -19,7 +19,7 @@ $lat0 = $ARGV[3];
 ($elat,$elon) = get_cmt_location($cmt);
 
 # obtain station location
-($slat,$slon) = split(" ",`awk 'NR == 2 {print \$3, \$4}' $sta`);
+($slat,$slon) = split(" ",`awk 'NR == 1 {print \$3, \$4}' $sta`);
 
 print "event = ($elat,$elon);  station = ($slat,$slon) \n";
 
