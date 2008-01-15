@@ -75,7 +75,6 @@
 
   integer iorientation
   integer iprocloop
-  integer nrec_dummy
   double precision stazi,stdip
 
   double precision, allocatable, dimension(:) :: x_target,y_target,z_target
