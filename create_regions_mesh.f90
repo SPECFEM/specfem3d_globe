@@ -445,6 +445,9 @@
   double precision r_moho,r_400,r_670
   logical :: is_superbrick
 
+! the heigth the central cube is cutted
+  integer :: nz_inf_limit
+
 
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
@@ -1199,18 +1202,34 @@
   endif
 
 ! define the doubling flag of this element
-! only one active central cube, the 5 others are fictitious
-        if(ichunk == CHUNK_AB) then
-          if(iz == 0) then
-            idoubling(ispec) = IFLAG_BOTTOM_CENTRAL_CUBE
-          else if(iz == 2*nz_central_cube-2) then
-            idoubling(ispec) = IFLAG_TOP_CENTRAL_CUBE
-          else
-            idoubling(ispec) = IFLAG_MIDDLE_CENTRAL_CUBE
-          endif
-        else
-          idoubling(ispec) = IFLAG_IN_FICTITIOUS_CUBE
-        endif
+! only two active central cube, the 4 others are fictitious
+
+! determine where we cut the central cube to share it between CHUNK_AB & CHUNK_AB_ANTIPODE
+! in the case of mod(NPROC_XI,2)/=0, the cut is asymetric and the bigger part is for CHUNK_AB
+  if (mod(NPROC_XI,2)/=0) then
+    if (ichunk == CHUNK_AB) then
+      nz_inf_limit = ((nz_central_cube*2)/NPROC_XI)*floor(NPROC_XI/2.d0)
+    elseif (ichunk == CHUNK_AB_ANTIPODE) then
+      nz_inf_limit = ((nz_central_cube*2)/NPROC_XI)*ceiling(NPROC_XI/2.d0)
+    endif
+  else
+    nz_inf_limit = nz_central_cube
+  endif
+
+  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+    if(iz == nz_inf_limit) then
+      idoubling(ispec) = IFLAG_BOTTOM_CENTRAL_CUBE
+    else if(iz == 2*nz_central_cube-2) then
+      idoubling(ispec) = IFLAG_TOP_CENTRAL_CUBE
+    else if (iz > nz_inf_limit .and. iz < 2*nz_central_cube-2) then
+      idoubling(ispec) = IFLAG_MIDDLE_CENTRAL_CUBE
+    else
+      idoubling(ispec) = IFLAG_IN_FICTITIOUS_CUBE
+    endif
+  else
+    idoubling(ispec) = IFLAG_IN_FICTITIOUS_CUBE
+  endif
+
 
 ! compute several rheological and geometrical properties for this spectral element
      call compute_element_properties(ispec,iregion_code,idoubling, &
