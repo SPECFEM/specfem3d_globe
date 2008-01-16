@@ -265,6 +265,16 @@
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_REF
 
+  else if(MODEL == '1D_ref_iso') then
+    TRANSVERSE_ISOTROPY = .false.
+    ISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_INNER_CORE = .false.
+    CRUSTAL = .false.
+    ATTENUATION_3D = .false.
+    HONOR_1D_SPHERICAL_MOHO = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_REF
+
   else if(MODEL == '1D_isotropic_prem_onecrust') then
     TRANSVERSE_ISOTROPY = .false.
     ISOTROPIC_3D_MANTLE = .false.
@@ -328,6 +338,18 @@
 
   else if(MODEL == 's362ani') then
     TRANSVERSE_ISOTROPY = .true.
+    ISOTROPIC_3D_MANTLE = .true.
+    ANISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_INNER_CORE = .false.
+    CRUSTAL = .true.
+    ATTENUATION_3D = .false.
+    ONE_CRUST = .true.
+    CASE_3D = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_REF
+    THREE_D_MODEL = THREE_D_MODEL_S362ANI
+
+  else if(MODEL == 's362iso') then
+    TRANSVERSE_ISOTROPY = .false.
     ISOTROPIC_3D_MANTLE = .true.
     ANISOTROPIC_3D_MANTLE = .false.
     ANISOTROPIC_INNER_CORE = .false.
