@@ -301,9 +301,18 @@
 
 !      get the anisotropic PREM parameters
        if(TRANSVERSE_ISOTROPY) then
+         if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
            call prem_aniso(myrank,r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
            Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+         else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
+           call model_ref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,Mref_V)
+
+         else
+           stop 'unknown 1D transversely isotropic reference Earth model in get_model'
+         endif
+
        else
 
          if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
@@ -323,16 +332,22 @@
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
            call model_ref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,Mref_V)
-
+           if(.not. ISOTROPIC_3D_MANTLE) then 
+             vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+             vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+           endif
          else
            stop 'unknown 1D reference Earth model in get_model'
          endif
 
-         vpv = vp
-         vph = vp
-         vsv = vs
-         vsh = vs
-         eta_aniso = 1.d0
+         ! in the case of s362iso we want to save the anisotropic constants for the Voight average
+         if(.not. (REFERENCE_1D_MODEL == REFERENCE_MODEL_REF .and. ISOTROPIC_3D_MANTLE)) then
+          vpv = vp
+          vph = vp
+          vsv = vs
+          vsh = vs
+          eta_aniso = 1.d0
+         endif
        endif
 
 !      get the 3-D model parameters
@@ -366,10 +381,23 @@
                           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
                           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
                           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
-             vpv=vpv*(1.0d0+dble(dvpv))
-             vph=vph*(1.0d0+dble(dvph))
-             vsv=vsv*(1.0d0+dble(dvsv))
-             vsh=vsh*(1.0d0+dble(dvsh))
+             if(TRANSVERSE_ISOTROPY) then 
+               vpv=vpv*(1.0d0+dble(dvpv))
+               vph=vph*(1.0d0+dble(dvph))
+               vsv=vsv*(1.0d0+dble(dvsv))
+               vsh=vsh*(1.0d0+dble(dvsh))
+             else
+               vpv=vpv+dvpv
+               vph=vph+dvph
+               vsv=vsv+dvsv
+               vsh=vsh+dvsh
+               vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+               vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+               vpv=vp
+               vph=vp
+               vsv=vs
+               vsh=vs
+             endif
            else
              stop 'unknown 3D Earth model in get_model'
            endif
@@ -405,11 +433,24 @@
                           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
                           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
                           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
-             vpv=vpv*(1.0d0+dble(dvpv))
-             vph=vph*(1.0d0+dble(dvph))
-             vsv=vsv*(1.0d0+dble(dvsv))
-             vsh=vsh*(1.0d0+dble(dvsh))
-           else
+             if(TRANSVERSE_ISOTROPY) then 
+               vpv=vpv*(1.0d0+dble(dvpv))
+               vph=vph*(1.0d0+dble(dvph))
+               vsv=vsv*(1.0d0+dble(dvsv))
+               vsh=vsh*(1.0d0+dble(dvsh))
+             else
+               vpv=vpv+dvpv
+               vph=vph+dvph
+               vsv=vsv+dvsv
+               vsh=vsh+dvsh
+               vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+               vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+               vpv=vp
+               vph=vp
+               vsv=vs
+               vsh=vs
+             endif
+  else
              stop 'unknown 3D Earth model in get_model'
            endif
 
