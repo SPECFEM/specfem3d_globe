@@ -2,10 +2,6 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
-To do in the current version 4.0:
-
-- bug ScS and attenuation lookup tables: will be fixed by Brian Savage
-
 Things that could be done in a future version 4.1:
 
 - will be done by Caltech (would be useful in the 2D version of the code as well):
