@@ -1065,7 +1065,7 @@
       .or. NGLOB_INNER_CORE_ADJOINT /= NGLOB_INNER_CORE) call exit_MPI(myrank, 'improper dimensions of adjoint arrays')
   endif
 
-  if (SIMULATION_TYPE == 3 .and. ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL) &
+  if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
      call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
   if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
