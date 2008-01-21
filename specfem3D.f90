@@ -511,9 +511,13 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: b_div_displ_outer_core
 
   real(kind=CUSTOM_REAL) :: rho_kl, beta_kl, alpha_kl
+! For anisotropic kernels
+  real(kind=CUSTOM_REAL),dimension(21) :: prod, cijkl_kl_local
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: rho_kl_crust_mantle, &
      beta_kl_crust_mantle, alpha_kl_crust_mantle
+! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
+  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: cijkl_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core, &
      alpha_kl_outer_core
@@ -537,6 +541,8 @@
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   double precision scale_kl
+! For anisotropic kernels
+  double precision scale_kl_ani,scale_kl_rho
 
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
   integer npoin2D_faces_outer_core(NUMFACES_SHARED)
@@ -2458,6 +2464,8 @@
     rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     alpha_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+! For anisotropic kernels (in crust_mantle only)
+    cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
 
     rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
     alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
@@ -4455,14 +4463,27 @@
 
             epsilondev_loc(:) = epsilondev_crust_mantle(:,i,j,k,ispec)
             b_epsilondev_loc(:) = b_epsilondev_crust_mantle(:,i,j,k,ispec)
-            beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
-               + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-                + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
-                epsilondev_loc(5)*b_epsilondev_loc(5)) )
 
-            alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
+! For anisotropic kernels
+            if (ANISOTROPIC_KL) then
+
+              call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_loc, &
+                   b_eps_trace_over_3_crust_mantle(i,j,k,ispec),b_epsilondev_loc)
+              cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_crust_mantle(:,i,j,k,ispec) + deltat * prod(:)
+
+            else
+
+              beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
+                 + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
+                 + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
+                 + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
+                  epsilondev_loc(5)*b_epsilondev_loc(5)) )
+
+              alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
+                 + deltat * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
+
+            endif
+
           enddo
         enddo
       enddo
@@ -4893,35 +4914,74 @@
 ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
     scale_kl = scale_t/scale_displ * 1.d9
+! For anisotropic kernels 
+! final unit : [s km^(-3) GPa^(-1)]
+    scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
+! final unit : [s km^(-3) (kg/m^3)^(-1)]
+    scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9  
+
 ! crust_mantle
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
         do j = 1, NGLLY
           do i = 1, NGLLX
-            rhol = rhostore_crust_mantle(i,j,k,ispec)
-            mul = muvstore_crust_mantle(i,j,k,ispec)
-            kappal = kappavstore_crust_mantle(i,j,k,ispec)
-            rho_kl = - rhol * rho_kl_crust_mantle(i,j,k,ispec)
-            alpha_kl = - kappal * alpha_kl_crust_mantle(i,j,k,ispec)
-            beta_kl =  - 2 * mul * beta_kl_crust_mantle(i,j,k,ispec)
-            rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
-            beta_kl_crust_mantle(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
-            alpha_kl_crust_mantle(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
+
+! For anisotropic kernels
+            iglob = ibool_crust_mantle(i,j,k,ispec)
+
+            if (ANISOTROPIC_KL) then
+
+! The cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
+! ystore and zstore are thetaval and phival (line 2252) -- dangerous
+              call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local, &
+                   ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
+              cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_local * scale_kl_ani
+              rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho 
+
+            else
+
+              rhol = rhostore_crust_mantle(i,j,k,ispec)
+              mul = muvstore_crust_mantle(i,j,k,ispec)
+              kappal = kappavstore_crust_mantle(i,j,k,ispec)
+              rho_kl = - rhol * rho_kl_crust_mantle(i,j,k,ispec)
+              alpha_kl = - kappal * alpha_kl_crust_mantle(i,j,k,ispec)
+              beta_kl =  - 2 * mul * beta_kl_crust_mantle(i,j,k,ispec)
+              rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
+              beta_kl_crust_mantle(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+              alpha_kl_crust_mantle(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
+
+            endif
+
           enddo
         enddo
       enddo
     enddo
 
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
-    write(27) rho_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted')
-    write(27) alpha_kl_crust_mantle
-    close(27)
-    open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted')
-    write(27) beta_kl_crust_mantle
-    close(27)
+
+! For anisotropic kernels
+    if (ANISOTROPIC_KL) then
+
+      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
+      write(27) -rho_kl_crust_mantle
+      close(27)
+      open(unit=27,file=trim(prname)//'cijkl_kernel.bin',status='unknown',form='unformatted')
+      write(27) -cijkl_kl_crust_mantle
+      close(27)
+
+    else
+
+      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
+      write(27) rho_kl_crust_mantle
+      close(27)
+      open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted')
+      write(27) alpha_kl_crust_mantle
+      close(27)
+      open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted')
+      write(27) beta_kl_crust_mantle
+      close(27)
+
+    endif
 
 ! outer_core
     do ispec = 1, NSPEC_OUTER_CORE

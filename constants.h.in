@@ -152,6 +152,11 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
+! this parameter must be set to .true. to compute anisotropic kernels
+! in crust and mantle (related to the 21 Cij in geographical coordinates)
+! default is .false. to compute isotropic kernels (related to alpha and beta)
+  logical, parameter :: ANISOTROPIC_KL = .false.
+
 ! print date and time estimate of end of run in another country,
 ! in addition to local time.
 ! For instance: the code runs at Caltech in California but the person
