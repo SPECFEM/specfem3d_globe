@@ -86,6 +86,7 @@ libspecfem_a_OBJECTS = \
 	$O/compute_arrays_source.o \
 	$O/compute_coordinates_grid.o \
 	$O/compute_element_properties.o \
+	$O/compute_kernels.o \
 	$O/convert_time.o \
 	$O/count_number_of_sources.o \
 	$O/create_central_cube_buffers.o \
@@ -341,6 +342,9 @@ $O/create_header_file.o: create_header_file.f90
 
 $O/comp_source_time_function.o: comp_source_time_function.f90
 	${FCCOMPILE_CHECK} -c -o $O/comp_source_time_function.o ${FCFLAGS_f90} comp_source_time_function.f90
+
+$O/compute_kernels.o: constants.h compute_kernels.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_kernels.o ${FCFLAGS_f90} compute_kernels.f90
 
 $O/combine_AVS_DX.o: constants.h combine_AVS_DX.f90
 	${FCCOMPILE_CHECK} -c -o $O/combine_AVS_DX.o ${FCFLAGS_f90} combine_AVS_DX.f90
