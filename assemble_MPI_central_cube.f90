@@ -31,7 +31,7 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
 
   implicit none
 
- ! standard include of the MPI library
+! standard include of the MPI library
   include 'mpif.h'
   include 'constants.h'
 
@@ -65,8 +65,6 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
 ! mask
   logical, dimension(NGLOB_INNER_CORE) :: mask
 
-
-
 !---
 !---  now use buffers to assemble mass matrix with central cube once and for all
 !---
@@ -87,7 +85,6 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
 
     enddo
   endif
-
 
 ! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
@@ -188,17 +185,17 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
           enddo
         endif
       enddo
-  
+
 ! assemble contributions
       vector_assemble(idimension,:) = vector_assemble(idimension,:) + array_central_cube(:)
-  
+
 ! copy sum back
       do imsg = 1,nb_msgs_theor_in_cube-1
         do ipoin = 1,npoin2D_cube_from_slices
           buffer_all_cube_from_slices(imsg,ipoin,idimension) = vector_assemble(idimension,ibool_central_cube(imsg,ipoin))
         enddo
       enddo
-  
+
     enddo
 
   endif

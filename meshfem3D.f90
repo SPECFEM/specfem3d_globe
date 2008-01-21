@@ -274,7 +274,6 @@
   type (model_ref_variables) Mref_V
 ! model_ref_variables
 
-
   type (three_d_mantle_model_variables) D3MM_V
 ! three_d_mantle_model_variables
 
@@ -487,8 +486,7 @@
          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
-
-! this for the different corners of the slice (which are different if the superbrick is cutted)
+! this for the different corners of the slice (which are different if the superbrick is cut)
 ! 1 : xi_min, eta_min
 ! 2 : xi_max, eta_min
 ! 3 : xi_max, eta_max
@@ -501,8 +499,6 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-
-
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -533,7 +529,7 @@
   endif
 
   if (myrank==0) then
-  ! read the parameter file and compute additional parameters
+! read the parameter file and compute additional parameters
     call read_compute_parameters(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
@@ -569,7 +565,6 @@
     if(err_occurred() /= 0) then
           call exit_MPI(myrank,'an error occurred while reading the parameter file')
     endif
-
 
 ! count the total number of sources in the CMTSOLUTION file
     call count_number_of_sources(NSOURCES)
@@ -776,8 +771,6 @@
     LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
 
 ! create a local directory to store all the local files
-!!!!!!!!!!!!!    write(system_command,"('rm -r -f /scratch/komatits_new_proc',i4.4,' ;&
-!!!!!!!!!!!!!     mkdir /scratch/komatits_new_proc',i4.4)") myrank,myrank
     write(system_command,"('mkdir /scratch/komatits_new_proc',i4.4)") myrank
     call system(system_command)
 
@@ -817,7 +810,7 @@
   enddo
   if(myrank == 0) close(IOUT)
 
-! this for the different counters (which are now different if the superbrick is cutted in the outer core)
+! this for the different counters (which are now different if the superbrick is cut in the outer core)
   do iregion=1,MAX_NUM_REGIONS
     NSPEC1D_RADIAL_CORNER(iregion,:) = NSPEC1D_RADIAL(iregion)
     NSPEC2D_XI_FACE(iregion,:) = NSPEC2D_XI(iregion)
@@ -1070,7 +1063,6 @@
     call attenuation_model_setup(REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80,AM_V,M1066a_V,Mak135_V,Mref_V,AM_S,AS_V)
   endif
 
-
 ! read topography and bathymetry file
   if(TOPOGRAPHY .or. OCEANS) then
     if(myrank == 0) call read_topo_bathy_file(ibathy_topo)
@@ -1139,7 +1131,6 @@
   allocate(xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
   allocate(ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
   allocate(zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
-
 
 ! create all the regions of the mesh
 ! perform two passes in this part to be able to save memory

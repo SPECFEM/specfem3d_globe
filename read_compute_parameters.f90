@@ -62,7 +62,6 @@
 
   include "constants.h"
 
-
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -132,9 +131,9 @@
 
   integer :: multiplication_factor
 
-! for the cutted doublingbrick improvement
+! for the cut doublingbrick improvement
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  integer :: lastdoubling_layer, cutted_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
+  integer :: lastdoubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
               normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
@@ -615,7 +614,7 @@
 
       else
 
-!! DK DK scale with respect to 1248 if above that limit
+! scale with respect to 1248 if above that limit
         DT                       = 0.0462d0 * 1248.d0 / (2.d0*NEX_MAX)
 
         MIN_ATTENUATION_PERIOD   = 4
@@ -634,8 +633,8 @@
         NER_TOP_CENTRAL_CUBE_ICB = nint(13 * 2.d0*NEX_MAX / 1248.d0)
         R_CENTRAL_CUBE = 985000.d0
 
-!! DK DK removed this limit           else
-!! DK DK removed this limit             stop 'problem with this value of NEX_MAX'
+!! removed this limit           else
+!! removed this limit             stop 'problem with this value of NEX_MAX'
       endif
 
 !----
@@ -675,8 +674,8 @@
             MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
     endif
 
-    if(ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .OR. &
-       ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .OR. &
+    if(ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .or. &
+       ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .or. &
        NEX_MAX > 1248) then
 
      call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
@@ -803,8 +802,8 @@
 
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
 
-!! DK DK UGLY our implementation of AK135 has not been checked carefully yet
-!! DK DK UGLY therefore let us doublecheck it carefully one day before using it
+! our implementation of AK135 has not been checked carefully yet
+! therefore let us doublecheck it carefully one day
 
 ! values below corrected by Ying Zhou <yingz@gps.caltech.edu>
 
@@ -902,12 +901,6 @@
     RMOHO_FICTITIOUS_IN_MESHER = (R80 + R_EARTH) / 2
   endif
 
-! non-dimensionalized size of central cube in the inner core
-! This is where the central cube in the inner core and the rest of the mesh
-! are matched (150 km below the ICB is optimal)
-!  R_CENTRAL_CUBE = RICB - 150000.d0
-!  R_CENTRAL_CUBE = 965000.d0
-
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
@@ -922,6 +915,7 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(HDUR_MOVIE, 'solver.HDUR_MOVIE')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+
 ! computes a default hdur_movie that creates nice looking movies.
 ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if(HDUR_MOVIE <= TINYVAL) &
@@ -1043,7 +1037,6 @@
     if(mod(NEX_ETA/32,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
   endif
 
-
 ! check that topology is correct if more than two chunks
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) stop 'must have NEX_XI = NEX_ETA for more than two chunks'
   if(NCHUNKS > 2 .and. NPROC_XI /= NPROC_ETA) stop 'must have NPROC_XI = NPROC_ETA for more than two chunks'
@@ -1137,15 +1130,7 @@
     NUMBER_OF_MESH_LAYERS = 15
     layer_offset = 1
 
-!! DK DK 33333 UGLY YYYYY CRADE now only one region, therefore divide in three layers of the same size
-!   if(NER_CRUST + NER_80_MOHO < 3) then
-!     NER_CRUST = 1
-!     NER_80_MOHO = 2
-!   endif
-!   ner( 1) = nint((NER_CRUST + NER_80_MOHO) / 3.d0)
-!   ner( 2) = nint((NER_CRUST + NER_80_MOHO) / 3.d0)
-!   ner( 3) = (NER_CRUST + NER_80_MOHO) - 2 * nint((NER_CRUST + NER_80_MOHO) / 3.d0)
-!   if(minval(ner(1:3)) < 1) stop 'wrong mesh size detected'
+! now only one region
     ner( 1) = NER_CRUST + NER_80_MOHO
     ner( 2) = 0
     ner( 3) = 0
@@ -1163,13 +1148,13 @@
     ner(14) = elem_doubling_bottom_outer_core
     ner(15) = NER_TOP_CENTRAL_CUBE_ICB
 
-  ! value of the doubling ratio in each radial region of the mesh
+! value of the doubling ratio in each radial region of the mesh
     ratio_sampling_array(1:9) = 1
     ratio_sampling_array(10:12) = 2
     ratio_sampling_array(13) = 4
     ratio_sampling_array(14:15) = 8
 
-  ! value of the doubling index flag in each radial region of the mesh
+! value of the doubling index flag in each radial region of the mesh
     doubling_index(1:3) = IFLAG_CRUST !!!!! IFLAG_80_MOHO
     doubling_index(4) = IFLAG_220_80
     doubling_index(5:7) = IFLAG_670_220
@@ -1177,19 +1162,18 @@
     doubling_index(12:14) = IFLAG_OUTER_CORE_NORMAL
     doubling_index(15) = IFLAG_INNER_CORE_NORMAL
 
-  ! define the three regions in which we implement a mesh doubling at the top of that region
+! define the three regions in which we implement a mesh doubling at the top of that region
     this_region_has_a_doubling(:)  = .false.
-!!!!!!!!!!!!!!!!!!!!!!!    this_region_has_a_doubling(3)  = .true.
     this_region_has_a_doubling(10) = .true.
     this_region_has_a_doubling(13) = .true.
     this_region_has_a_doubling(14) = .true.
     lastdoubling_layer = 14
-  ! define the top and bottom radii of all the regions of the mesh in the radial direction
-  ! the first region is the crust at the surface of the Earth
-  ! the last region is in the inner core near the center of the Earth
+
+! define the top and bottom radii of all the regions of the mesh in the radial direction
+! the first region is the crust at the surface of the Earth
+! the last region is in the inner core near the center of the Earth
 
     r_top(1) = R_EARTH
-!!!!!!!!!!!!!    r_bottom(1) = RMIDDLE_CRUST
     r_bottom(1) = R80
 
     r_top(2) = RMIDDLE_CRUST    !!!! now fictitious
@@ -1234,9 +1218,8 @@
     r_top(15) = RICB
     r_bottom(15) = R_CENTRAL_CUBE
 
-  ! new definition of rmins & rmaxs
+! new definition of rmins & rmaxs
     rmaxs(1) = ONE
-!!!!!!!!!!!!!!!    rmins(1) = RMIDDLE_CRUST / R_EARTH
     rmins(1) = R80 / R_EARTH
 
     rmaxs(2) = RMIDDLE_CRUST / R_EARTH    !!!! now fictitious
@@ -1274,7 +1257,6 @@
 
   elseif (ONE_CRUST) then
 
-
     NUMBER_OF_MESH_LAYERS = 14
     layer_offset = 0
 
@@ -1293,14 +1275,14 @@
     ner(13) = elem_doubling_bottom_outer_core
     ner(14) = NER_TOP_CENTRAL_CUBE_ICB
 
-  ! value of the doubling ratio in each radial region of the mesh
+! value of the doubling ratio in each radial region of the mesh
     ratio_sampling_array(1) = 1
     ratio_sampling_array(2:8) = 2
     ratio_sampling_array(9:11) = 4
     ratio_sampling_array(12) = 8
     ratio_sampling_array(13:14) = 16
 
-  ! value of the doubling index flag in each radial region of the mesh
+! value of the doubling index flag in each radial region of the mesh
     doubling_index(1) = IFLAG_CRUST
     doubling_index(2) = IFLAG_80_MOHO
     doubling_index(3) = IFLAG_220_80
@@ -1309,16 +1291,17 @@
     doubling_index(11:13) = IFLAG_OUTER_CORE_NORMAL
     doubling_index(14) = IFLAG_INNER_CORE_NORMAL
 
-  ! define the three regions in which we implement a mesh doubling at the top of that region
+! define the three regions in which we implement a mesh doubling at the top of that region
     this_region_has_a_doubling(:)  = .false.
     this_region_has_a_doubling(2)  = .true.
     this_region_has_a_doubling(9)  = .true.
     this_region_has_a_doubling(12) = .true.
     this_region_has_a_doubling(13) = .true.
     lastdoubling_layer = 13
-  ! define the top and bottom radii of all the regions of the mesh in the radial direction
-  ! the first region is the crust at the surface of the Earth
-  ! the last region is in the inner core near the center of the Earth
+
+! define the top and bottom radii of all the regions of the mesh in the radial direction
+! the first region is the crust at the surface of the Earth
+! the last region is in the inner core near the center of the Earth
 
 !!!!!!!!!!! DK DK UGLY: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
 !!!!!!!!!!! DK DK UGLY: i.e. if there is no thick crust there, some elements above the Moho
@@ -1369,7 +1352,7 @@
     r_top(14) = RICB
     r_bottom(14) = R_CENTRAL_CUBE
 
-  ! new definition of rmins & rmaxs
+! new definition of rmins & rmaxs
     rmaxs(1) = ONE
     rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
 
@@ -1402,12 +1385,12 @@
 
     rmaxs(14) = RICB / R_EARTH
     rmins(14) = R_CENTRAL_CUBE / R_EARTH
-  else
 
+  else
 
     NUMBER_OF_MESH_LAYERS = 15
     layer_offset = 1
-! DM a revoir
+! David Michea: check this more carefully one day
     if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
       ner( 1) = ceiling (NER_CRUST / 2.d0)
       ner( 2) = floor (NER_CRUST / 2.d0)
@@ -1429,14 +1412,14 @@
     ner(14) = elem_doubling_bottom_outer_core
     ner(15) = NER_TOP_CENTRAL_CUBE_ICB
 
-  ! value of the doubling ratio in each radial region of the mesh
+! value of the doubling ratio in each radial region of the mesh
     ratio_sampling_array(1:2) = 1
     ratio_sampling_array(3:9) = 2
     ratio_sampling_array(10:12) = 4
     ratio_sampling_array(13) = 8
     ratio_sampling_array(14:15) = 16
 
-  ! value of the doubling index flag in each radial region of the mesh
+! value of the doubling index flag in each radial region of the mesh
     doubling_index(1:2) = IFLAG_CRUST
     doubling_index(3) = IFLAG_80_MOHO
     doubling_index(4) = IFLAG_220_80
@@ -1445,7 +1428,7 @@
     doubling_index(12:14) = IFLAG_OUTER_CORE_NORMAL
     doubling_index(15) = IFLAG_INNER_CORE_NORMAL
 
-  ! define the three regions in which we implement a mesh doubling at the top of that region
+! define the three regions in which we implement a mesh doubling at the top of that region
     this_region_has_a_doubling(:)  = .false.
     this_region_has_a_doubling(3)  = .true.
     this_region_has_a_doubling(10) = .true.
@@ -1453,9 +1436,9 @@
     this_region_has_a_doubling(14) = .true.
     lastdoubling_layer = 14
 
-  ! define the top and bottom radii of all the regions of the mesh in the radial direction
-  ! the first region is the crust at the surface of the Earth
-  ! the last region is in the inner core near the center of the Earth
+! define the top and bottom radii of all the regions of the mesh in the radial direction
+! the first region is the crust at the surface of the Earth
+! the last region is in the inner core near the center of the Earth
 
     r_top(1) = R_EARTH
     r_bottom(1) = RMIDDLE_CRUST
@@ -1502,7 +1485,7 @@
     r_top(15) = RICB
     r_bottom(15) = R_CENTRAL_CUBE
 
-  ! new definition of rmins & rmaxs
+! new definition of rmins & rmaxs
     rmaxs(1) = ONE
     rmins(1) = RMIDDLE_CRUST / R_EARTH
 
@@ -1572,7 +1555,8 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         endif
         NSPEC1D_RADIAL(iter_region) = sum(ner(ifirst_region:ilast_region))
 enddo
-! difference of radial number of element for outer core if the superbrick is cutted
+
+! difference of radial number of element for outer core if the superbrick is cut
   DIFF_NSPEC1D_RADIAL(:,:) = 0
   if (CUT_SUPERBRICK_XI) then
     if (CUT_SUPERBRICK_ETA) then
@@ -1668,7 +1652,7 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
     endif
 enddo
 
-! difference of number of surface elements along xi or eta for outer core if the superbrick is cutted
+! difference of number of surface elements along xi or eta for outer core if the superbrick is cut
   DIFF_NSPEC2D_XI(:,:) = 0
   DIFF_NSPEC2D_ETA(:,:) = 0
   if (CUT_SUPERBRICK_XI) then
@@ -1803,6 +1787,7 @@ enddo
 
 ! initialize array
   NGLOB(:) = 0
+
 ! in the inner core (no doubling region + eventually central cube)
   if(INCLUDE_CENTRAL_CUBE) then
     NGLOB(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/ratio_divide_central_cube) &
@@ -1835,10 +1820,10 @@ enddo
         nglob_border_edge = 0
         if (this_region_has_a_doubling(iter_layer)) then
             if (iter_region == IREGION_OUTER_CORE .and. iter_layer == lastdoubling_layer .and. &
-                                                      (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
+               (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
               doubling = 1
               normal_doubling = 0
-              cutted_doubling = 1
+              cut_doubling = 1
               nb_lay_sb = 2
               nglob_edge = 0
               nglob_surf = 0
@@ -1863,13 +1848,13 @@ enddo
               endif
               doubling = 1
               normal_doubling = 1
-              cutted_doubling = 0
+              cut_doubling = 0
             endif
             padding = -1
         else
             doubling = 0
             normal_doubling = 0
-            cutted_doubling = 0
+            cut_doubling = 0
             padding = 0
             nb_lay_sb = 0
             nglob_vol = 0
@@ -1885,7 +1870,7 @@ enddo
         normal_doubling * ((((nblocks_xi*nblocks_eta)/4)*nglob_vol) - &
         (((nblocks_eta/2-1)*nblocks_xi/2+(nblocks_xi/2-1)*nblocks_eta/2)*nglob_surf) + &
         ((nblocks_eta/2-1)*(nblocks_xi/2-1)*nglob_edge)) + &
-        cutted_doubling*(nglob_vol*(nblocks_xi*nblocks_eta) - &
+        cut_doubling*(nglob_vol*(nblocks_xi*nblocks_eta) - &
             ( nblocks_eta*(int(nblocks_xi/2)*nglob_int_surf_xi + int((nblocks_xi-1)/2)*nglob_ext_surf) + &
               nblocks_xi*(int(nblocks_eta/2)*nglob_int_surf_eta + int((nblocks_eta-1)/2)*nglob_ext_surf)&
             ) + &
