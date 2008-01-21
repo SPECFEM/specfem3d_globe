@@ -15,12 +15,12 @@ GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 32 and 16 * multiple of NPROC below)
-NEX_XI                          = 96
+NEX_XI                          = 96 
 NEX_ETA                         = 96
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 3
-NPROC_ETA                       = 3
+NPROC_XI                        = 6
+NPROC_ETA                       = 6
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135, 1D_ref, 1D_ref_iso
@@ -45,7 +45,7 @@ ATTENUATION                     = .false.
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 2.0d0
+RECORD_LENGTH_IN_MINUTES        = 75.0d0
 
 # save AVS or OpenDX movies
 MOVIE_SURFACE                   = .false.
@@ -79,13 +79,13 @@ NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
-LOCAL_PATH                      = /scratch/bernhard/TEST_SPECFEM3D
+LOCAL_PATH                      = /scratch/
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 100
+NTSTEP_BETWEEN_OUTPUT_INFO      = 1000
 
 # interval in time steps for temporary writing of seismograms
-NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 1000
+NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
 NTSTEP_BETWEEN_READ_ADJSRC      = 1000
 
 # output format for the seismograms (one can use either or all of the three formats)
@@ -97,7 +97,7 @@ OUTPUT_SEISMOS_SAC_BINARY       = .false.
 ROTATE_SEISMOGRAMS_RT           = .false.
 
 # decide wheter master process writes all the seismograms or if all processes do it in parallel
-WRITE_SEISMOGRAMS_BY_MASTER     = .true.
+WRITE_SEISMOGRAMS_BY_MASTER     = .false.
 
 # save all seismograms in one large combined file instead of one file per seismogram
 # to avoid overloading shared non-local file systems such as GPFS for instance
@@ -105,7 +105,7 @@ SAVE_ALL_SEISMOS_IN_ONE_FILE    = .false.
 USE_BINARY_FOR_LARGE_FILE       = .false.
 
 # flag to impose receivers at the surface or allow them to be buried
-RECEIVERS_CAN_BE_BURIED         = .false.
+RECEIVERS_CAN_BE_BURIED         = .true.
 
 # print source time function
 PRINT_SOURCE_TIME_FUNCTION      = .false.
