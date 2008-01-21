@@ -223,7 +223,7 @@
   endif
 
 
-! on chunk AB & AB ANTIPODE, receive all (except bottom) the messages from slices 
+! on chunk AB & AB ANTIPODE, receive all (except bottom) the messages from slices
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     do imsg = 1,nb_msgs_theor_in_cube-1

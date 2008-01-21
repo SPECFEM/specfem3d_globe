@@ -55,7 +55,7 @@
 
   include "constants.h"
 
-!this for cutting the doubling brick
+! this to cut the doubling brick
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
@@ -152,7 +152,6 @@
 
  type (model_ref_variables) Mref_V
 ! model_ref_variables
-
 
 ! three_d_mantle_model_variables
   type three_d_mantle_model_variables
@@ -381,19 +380,10 @@
   logical :: USE_ONE_LAYER_SB,CASE_3D
   integer :: nspec_sb
 
-
   integer NUMBER_OF_MESH_LAYERS,layer_shift,cpt,first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
   double precision, dimension(:,:), allocatable :: stretch_tab
 
- ! added for Cuthill McKee permutation
- ! integer, parameter :: limit=50
- ! integer, dimension(:), allocatable :: perm,perm_tmp,temp_array_1D_int
- ! logical, dimension(:,:), allocatable :: temp_array_2D_log
- ! integer, dimension(:,:,:,:), allocatable :: temp_array_int
- ! real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
- ! double precision, dimension(:,:,:,:), allocatable :: temp_array_dble
- ! double precision, dimension(:,:,:,:,:), allocatable :: temp_array_dble_5dim
-   integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
+  integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
   integer, parameter :: maxker=200
   integer, parameter :: maxl=72
@@ -434,7 +424,6 @@
 
   logical :: ACTUALLY_STORE_ARRAYS
 
-
 ! Boundary Mesh
   integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
   integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
@@ -445,9 +434,8 @@
   double precision r_moho,r_400,r_670
   logical :: is_superbrick
 
-! the heigth the central cube is cutted
+! the height at which the central cube is cut
   integer :: nz_inf_limit
-
 
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
@@ -464,7 +452,6 @@
     Qmu_store(1,1,1,1) = 0.0d0
     tau_e_store(:,1,1,1,1) = 0.0d0
   endif
-
 
 ! Gauss-Lobatto-Legendre points of integration
   allocate(xigll(NGLLX))
@@ -638,7 +625,7 @@
 
   endif
 
-! For considering anisotropic elements first and to build the mesh from the bottom to the top of the Region
+! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   if (ONE_CRUST) then
     first_layer_aniso=2
     last_layer_aniso=3
@@ -713,7 +700,7 @@
     call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
   endif
 
-! Boundary Mesh
+! boundary mesh
   if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
     NSPEC2D_MOHO = NSPEC2D_TOP
     NSPEC2D_400 = NSPEC2D_MOHO / 4
@@ -740,11 +727,12 @@
 
 ! generate and count all the elements in this region of the mesh
   ispec = 0
+
 ! loop on all the layers in this region of the mesh
   do ilayer_loop = ifirst_region,ilast_region
 
     ilayer = perm_layer(ilayer_loop)
-!   write(IMAIN,*) 'layer : ',ilayer
+
 ! determine the radii that define the shell
   rmin = rmins(ilayer)
   rmax = rmaxs(ilayer)
@@ -755,15 +743,12 @@
   if(iregion_code == IREGION_CRUST_MANTLE .and. ilayer_loop==(ilast_region-nb_layer_above_aniso+1)) then
     FIRST_ELT_ABOVE_ANISO = ispec+1
   endif
+
 !----
 !----   regular mesh elements
 !----
-! loop on all the elements
-!   write(IMAIN,*) 'ix : 1, ',NEX_PER_PROC_XI,' , ',ratio_sampling_array(ilayer)
-!   write(IMAIN,*) 'iy : 1, ',NEX_PER_PROC_ETA,' , ',ratio_sampling_array(ilayer)
-!   write(IMAIN,*) 'doubling : ',this_region_has_a_doubling(ilayer)
-!   write(IMAIN,*) 'ner : ',ner(ilayer)
 
+! loop on all the elements
    do ix_elem = 1,NEX_PER_PROC_XI,ratio_sampling_array(ilayer)
    do iy_elem = 1,NEX_PER_PROC_ETA,ratio_sampling_array(ilayer)
 
@@ -797,9 +782,9 @@
 
 ! compute the actual position of all the grid points of that element
   if (ilayer == 1 .and. CASE_3D .and. .not. SUPPRESS_CRUSTAL_MESH) then
-      ! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
-      ! max ratio between size of upper crust elements and lower crust elements is given by the param MAX_RATIO_STRETCHING
-      ! to avoid stretching, set MAX_RATIO_STRETCHING = 1.0d  in constants.h
+! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
+! max ratio between size of upper crust elements and lower crust elements is given by the param MAX_RATIO_STRETCHING
+! to avoid stretching, set MAX_RATIO_STRETCHING = 1.0d  in constants.h
     call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
                ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -849,14 +834,14 @@
 
 ! save the radii of the nodes before modified through compute_element_properties()
      if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-       r1=dsqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
-       r2=dsqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
-       r3=dsqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
-       r4=dsqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
-       r5=dsqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
-       r6=dsqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
-       r7=dsqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
-       r8=dsqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
+       r1=sqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
+       r2=sqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
+       r3=sqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
+       r4=sqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
+       r5=sqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
+       r6=sqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
+       r7=sqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
+       r8=sqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
      endif
 
 ! compute several rheological and geometrical properties for this spectral element
@@ -879,7 +864,7 @@
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
            coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
 
-! Boundary Mesh
+! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
           is_superbrick=.false.
           ispec_superbrick=0
@@ -891,7 +876,6 @@
                      NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,r_moho,r_400,r_670, &
                      is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick,nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
         endif
-
 
 ! end of loop on all the regular elements
   enddo
@@ -921,8 +905,8 @@
           nspec_sb = NSPEC_DOUBLING_SUPERBRICK
           step_mult = 2
         endif
-        ! the doubling is implemented in the last two radial elements
-        ! therefore we start one element before the last one
+! the doubling is implemented in the last two radial elements
+! therefore we start one element before the last one
         iz_elem = ner(ilayer) - 1
       endif
 
@@ -931,7 +915,7 @@
         do iy_elem = 1,NEX_PER_PROC_ETA,step_mult*ratio_sampling_array(ilayer)
 
           if (step_mult == 1) then
-            ! for xi direction
+! for xi direction
             if (.not. CUT_SUPERBRICK_XI) then
               if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
                 case_xi = 1
@@ -953,7 +937,7 @@
                 endif
               endif
             endif
-            ! for eta direction
+! for eta direction
             if (.not. CUT_SUPERBRICK_ETA) then
               if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
                 case_eta = 1
@@ -975,7 +959,7 @@
                 endif
               endif
             endif
-            ! determine the current subblock
+! determine the current sub-block
             if (case_xi == 1) then
               if (case_eta == 1) then
                 subblock_num = 1
@@ -989,7 +973,7 @@
                 subblock_num = 4
               endif
             endif
-            ! then define the geometry for this subblock
+! then define the geometry for this sub-block
             call define_basic_doubling_brick(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb,subblock_num)
           endif
 ! loop on all the elements in the mesh doubling superbrick
@@ -1052,14 +1036,14 @@
 
 ! save the radii of the nodes before modified through compute_element_properties()
      if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-       r1=dsqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
-       r2=dsqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
-       r3=dsqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
-       r4=dsqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
-       r5=dsqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
-       r6=dsqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
-       r7=dsqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
-       r8=dsqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
+       r1=sqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
+       r2=sqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
+       r3=sqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
+       r4=sqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
+       r5=sqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
+       r6=sqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
+       r7=sqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
+       r8=sqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
      endif
 
 ! compute several rheological and geometrical properties for this spectral element
@@ -1082,7 +1066,7 @@
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
            coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
 
-! Boundary Mesh
+! boundary mesh
      if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
        is_superbrick=.true.
        call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
@@ -1255,6 +1239,7 @@
   enddo
 
   endif    ! end of definition of central cube in inner core
+
 !---
 
 ! check total number of spectral elements created
@@ -1579,9 +1564,9 @@
   deallocate(rmass,stat=ier); if(ier /= 0) stop 'error in deallocate'
   deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate'
 
-! Boundary Mesh
+! boundary mesh
   if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-    ! first check the number of surface elements are the same for Moho, 400, 670
+! first check the number of surface elements are the same for Moho, 400, 670
     if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
       if (ispec2D_moho_top /= NSPEC2D_MOHO .or. ispec2D_moho_bot /= NSPEC2D_MOHO) &
                call exit_mpi(myrank, 'Not the same number of Moho surface elements')
@@ -1591,7 +1576,7 @@
     if (ispec2D_670_top /= NSPEC2D_670 .or. ispec2D_670_bot /= NSPEC2D_670) &
                call exit_mpi(myrank,'Not the same number of 670 surface elements')
 
-    ! writing surface topology databases
+! writing surface topology databases
     open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin',status='unknown',form='unformatted')
     write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
     write(27) ibelm_moho_top

@@ -371,7 +371,6 @@
 ! for absorbing conditions
   real(kind=CUSTOM_REAL) :: vx,vy,vz,vn
 
-
 ! for ellipticity
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
@@ -576,8 +575,8 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: adj_sourcearrays
   integer nrec_simulation, nadj_rec_local
   logical ibool_read_adj_arrays
-  integer NSTEP_SUB_ADJ,it_sub_adj,iadj_block !To read input in chunks
-  integer, dimension(:,:), allocatable :: iadjsrc !To read input in chunks
+  integer NSTEP_SUB_ADJ,it_sub_adj,iadj_block ! to read input in chunks
+  integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
   integer, dimension(:), allocatable :: iadjsrc_len,iadj_vec
 
 ! seismograms
@@ -1026,10 +1025,6 @@
     MOVIE_SOUTH = bcast_double_precision(30)
 
   endif
-
-! if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP)
-! BS BS: Do we need this? Seismograms are written anyway after the time loop
-!  NTSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP, NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
 ! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
@@ -1909,9 +1904,9 @@
 
      do it=1,NSTEP
 
-       it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) ) !block number
+       it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) ) ! block number
 
-       if(mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then !we are at the edge of a block
+       if(mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then ! we are at the edge of a block
          iadjsrc(iadj_block,1) = NSTEP-it_sub_adj*NTSTEP_BETWEEN_READ_ADJSRC+1
          iadjsrc(iadj_block,2) = NSTEP-(it_sub_adj-1)*NTSTEP_BETWEEN_READ_ADJSRC
          if(iadjsrc(iadj_block,1) < 0) iadjsrc(iadj_block,1) = 1         ! final adj src array
@@ -2288,7 +2283,7 @@
         call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
         call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
              factor_common_inner_core_dble, factor_scale_inner_core_dble, tau_sigma_dble, NSPEC_INNER_CORE)
-     else ! ATTENUATION = .true. .AND. ATTENUATION_3D = .false.
+     else ! ATTENUATION = .true. .and. ATTENUATION_3D = .false.
         call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
         call get_attenuation_model_1D(myrank, prname, IREGION_CRUST_MANTLE, tau_sigma_dble, &
              omsb_crust_mantle_dble, factor_common_crust_mantle_dble,  &
@@ -2540,7 +2535,6 @@
 
    endif
 
-
 ! allocate files to save movies
   if(MOVIE_SURFACE) then
     nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
@@ -2582,7 +2576,6 @@
        write(IMAIN,*) 'lat(S,N)  :',MOVIE_SOUTH,MOVIE_NORTH
        write(IMAIN,*) 'Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
      endif
-
 
   endif ! MOVIE_VOLUME
 
@@ -2826,7 +2819,7 @@
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-  do it=it_begin,it_end
+  do it = it_begin,it_end
 
 ! update position in seismograms
     seismo_current = seismo_current + 1
@@ -3899,8 +3892,8 @@
         endif
 
     irec_local = 0
+
     do irec = 1,nrec
-!
 
 !   add the source (only if this proc carries the source)
       if(myrank == islice_selected_rec(irec)) then
@@ -3950,8 +3943,6 @@
 
   enddo
   endif
-
-
 
 ! ****************************************************
 ! **********  add matching with fluid part  **********
@@ -4094,31 +4085,25 @@
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
   call assemble_MPI_vector(myrank, &
-!!!!!!!!!!!!!!!!!!!!!!
             accel_crust_mantle,NGLOB_CRUST_MANTLE, &
             accel_inner_core,NGLOB_INNER_CORE, &
-!!!!!!!!!!!!!!!!!!!!!!
             iproc_xi,iproc_eta,ichunk,addressing, &
-!!!!!!!!!!!!!!!!!!!!!!
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-!!!!!!!!!!!!!!!!!!!!!!
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA, &
-!!!!!!!!!!!!!!!!!!!!!!
             NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-!!!!!!!!!!!!!!!!!!!!!!
             NGLOB2DMAX_XY,NCHUNKS)
 
 !---
@@ -4149,31 +4134,25 @@
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
   call assemble_MPI_vector(myrank, &
-!!!!!!!!!!!!!!!!!!!!!!
             b_accel_crust_mantle,NGLOB_CRUST_MANTLE, &
             b_accel_inner_core,NGLOB_INNER_CORE, &
-!!!!!!!!!!!!!!!!!!!!!!
             iproc_xi,iproc_eta,ichunk,addressing, &
-!!!!!!!!!!!!!!!!!!!!!!
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-!!!!!!!!!!!!!!!!!!!!!!
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA, &
-!!!!!!!!!!!!!!!!!!!!!!
             NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-!!!!!!!!!!!!!!!!!!!!!!
             NGLOB2DMAX_XY,NCHUNKS)
 
 !---
@@ -4251,7 +4230,7 @@
               b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) + b_additional_term * nz
             endif
 
-!           done with this point
+! done with this point
             updated_dof_ocean_load(iglob) = .true.
 
           endif
@@ -4375,7 +4354,7 @@
       eps_loc(3,2) = dyz
 
       eps_loc_new(:,:) = eps_loc(:,:)
-! LQY -- rotate to the local cartesian coordinates (e-n-z)
+! rotate to the local cartesian coordinates (e-n-z)
       eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
 
 ! distinguish between single and double precision for reals
@@ -4609,12 +4588,12 @@
     enddo
 
 
-! --- Boundary Kernels ------
+! --- boundary kernels ------
     if (SAVE_BOUNDARY_MESH) then
       fluid_solid_boundary = .false.
       iregion_code = IREGION_CRUST_MANTLE
 
-      ! Moho
+! Moho
       if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
@@ -4647,7 +4626,7 @@
       moho_kl = moho_kl + (moho_kl_top - moho_kl_bot) * deltat
       endif
 
-      ! 400
+! 400
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
@@ -4678,7 +4657,7 @@
 
       d400_kl = d400_kl + (d400_kl_top - d400_kl_bot) * deltat
 
-      ! 670
+! 670
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
                  ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
@@ -4709,7 +4688,7 @@
 
       d670_kl = d670_kl + (d670_kl_top - d670_kl_bot) * deltat
 
-      ! CMB
+! CMB
       fluid_solid_boundary = .true.
       iregion_code = IREGION_CRUST_MANTLE
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
@@ -4743,7 +4722,7 @@
 
       cmb_kl = cmb_kl + (cmb_kl_top - cmb_kl_bot) * deltat
 
-      ! ICB
+! ICB
       fluid_solid_boundary = .true.
       call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core,nspec_outer_core, &
                  iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,idoubling_outer_core, &
@@ -4833,22 +4812,21 @@
   endif
 
 ! save movie in full 3D mesh
-!  if(MOVIE_VOLUME .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
   if(MOVIE_VOLUME .and. mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0 .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 
-   if (MOVIE_VOLUME_TYPE == 1) then  !output strains
+   if (MOVIE_VOLUME_TYPE == 1) then  ! output strains
 
        call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_VOLUME_COARSE, &
                     it,eps_trace_over_3_crust_mantle,epsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
-   else if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then !output the Time Integral of Strain, or \mu*TIS
+   else if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then ! output the Time Integral of Strain, or \mu*TIS
 
        call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_VOLUME_COARSE, &
                     it,Ieps_trace_over_3_crust_mantle,Iepsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
-   else if (MOVIE_VOLUME_TYPE == 4) then !output divergence and curl in whole volume
+   else if (MOVIE_VOLUME_TYPE == 4) then ! output divergence and curl in whole volume
 
        call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
           div_displ_outer_core,eps_trace_over_3_inner_core,epsilondev_crust_mantle,&
@@ -4857,14 +4835,14 @@
 
       stop 'MOVIE_VOLUME_TYPE has to be 1,2,3,4'
 
-   endif !MOVIE_VOLUME_TYPE
-  endif !MOVIE_VOLUME
+   endif ! MOVIE_VOLUME_TYPE
+  endif ! MOVIE_VOLUME
 
 !---- end of time iteration loop
 !
   enddo   ! end of main time loop
 
-! save files to local disk or MT tape system if restart file
+! save files to local disk or tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
     write(outputname,"('dump_all_arrays',i6.6)") myrank
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
@@ -4999,7 +4977,7 @@
     write(27) beta_kl_inner_core
     close(27)
 
-! Boundary Kernel
+! boundary kernel
     if (SAVE_BOUNDARY_MESH) then
       call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
       if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then

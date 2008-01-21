@@ -31,31 +31,25 @@
 !----
 
   subroutine assemble_MPI_vector(myrank, &
-!!!!!!!!!!!!!!!!!!!!!!
             accel_crust_mantle,NGLOB_CRUST_MANTLE, &
             accel_inner_core,NGLOB_INNER_CORE, &
-!!!!!!!!!!!!!!!!!!!!!!
             iproc_xi,iproc_eta,ichunk,addressing, &
-!!!!!!!!!!!!!!!!!!!!!!
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-!!!!!!!!!!!!!!!!!!!!!!
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_vector,buffer_received_faces_vector, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA, &
-!!!!!!!!!!!!!!!!!!!!!!
             NGLOB1D_RADIAL_crust_mantle, &
             NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM, &
             NGLOB1D_RADIAL_inner_core, &
             NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC, &
-!!!!!!!!!!!!!!!!!!!!!!
             NGLOB2DMAX_XY,NCHUNKS)
 
   implicit none

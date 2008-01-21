@@ -332,7 +332,7 @@
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
            call model_ref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,Mref_V)
-           if(.not. ISOTROPIC_3D_MANTLE) then 
+           if(.not. ISOTROPIC_3D_MANTLE) then
              vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
              vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
            endif
@@ -381,7 +381,7 @@
                           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
                           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
                           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
-             if(TRANSVERSE_ISOTROPY) then 
+             if(TRANSVERSE_ISOTROPY) then
                vpv=vpv*(1.0d0+dble(dvpv))
                vph=vph*(1.0d0+dble(dvph))
                vsv=vsv*(1.0d0+dble(dvsv))
@@ -433,7 +433,7 @@
                           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
                           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
                           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
-             if(TRANSVERSE_ISOTROPY) then 
+             if(TRANSVERSE_ISOTROPY) then
                vpv=vpv*(1.0d0+dble(dvpv))
                vph=vph*(1.0d0+dble(dvph))
                vsv=vsv*(1.0d0+dble(dvsv))
