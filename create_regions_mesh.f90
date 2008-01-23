@@ -599,6 +599,7 @@
   iaddy(:) = iaddy(:) / 2
   iaddz(:) = iaddz(:) / 2
 
+! DM DM : ugly, should raise these parameters from read_compute_parameters()
   if (ONE_CRUST) then
     NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
     layer_shift = 0
@@ -606,6 +607,11 @@
     NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
     layer_shift = 1
   endif
+  if (SUPPRESS_4TH_DOUBLING) then
+    NUMBER_OF_MESH_LAYERS = NUMBER_OF_MESH_LAYERS - 1
+  endif
+! DM DM
+
 
 ! define the first and last layers that define this region
   if(iregion_code == IREGION_CRUST_MANTLE) then
@@ -744,18 +750,11 @@
     FIRST_ELT_ABOVE_ANISO = ispec+1
   endif
 
-!----
-!----   regular mesh elements
-!----
-
-! loop on all the elements
-   do ix_elem = 1,NEX_PER_PROC_XI,ratio_sampling_array(ilayer)
-   do iy_elem = 1,NEX_PER_PROC_ETA,ratio_sampling_array(ilayer)
-
     ner_without_doubling = ner(ilayer)
 
 ! if there is a doubling at the top of this region, we implement it in the last two layers of elements
 ! and therefore we suppress two layers of regular elements here
+    USE_ONE_LAYER_SB = .false.
     if(this_region_has_a_doubling(ilayer)) then
       if (ner(ilayer) == 1) then
         ner_without_doubling = ner_without_doubling - 1
@@ -766,6 +765,13 @@
       endif
     endif
 
+!----
+!----   regular mesh elements
+!----
+
+! loop on all the elements
+   do ix_elem = 1,NEX_PER_PROC_XI,ratio_sampling_array(ilayer)
+   do iy_elem = 1,NEX_PER_PROC_ETA,ratio_sampling_array(ilayer)
    do iz_elem = 1,ner_without_doubling
 ! loop on all the corner nodes of this element
    do ignod = 1,NGNOD_EIGHT_CORNERS
