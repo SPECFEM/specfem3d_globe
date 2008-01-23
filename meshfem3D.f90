@@ -42,7 +42,7 @@
 !  This is accomplished based upon a mapping of the face of a cube    !
 !  to a portion of the sphere (Ronchi et al., The Cubed Sphere).      !
 !  Grid density is decreased by a factor of two                       !
-!  four times in the radial direction.                                !
+!  three times in the radial direction.                               !
 !                                                                     !
 !=====================================================================!
 !
@@ -152,9 +152,10 @@
 !
 ! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, November 2007:
 !      new doubling brick in the mesh, new perfectly load-balanced mesh,
-!      more flexible routines for mesh design, one more doubling level
-!      at the bottom of the outer core, new inflated central cube
-!      with optimized shape, far fewer mesh files saved by the mesher.
+!      more flexible routines for mesh design, new inflated central cube
+!      with optimized shape, far fewer mesh files saved by the mesher,
+!      global arrays sorted to speed up the simulation, seismos can be 
+!      written by the master
 ! v. 3.6 Many people, many affiliations, September 2006:
 !      adjoint and kernel calculations, fixed IASP91 model,
 !      added AK135 and 1066a, fixed topography/bathymetry routine,

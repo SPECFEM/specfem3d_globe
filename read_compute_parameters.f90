@@ -669,6 +669,7 @@
       DT = DT*0.20d0
     endif
 
+
     if( .not. ATTENUATION_RANGE_PREDEFINED ) then
        call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
             MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
@@ -733,7 +734,7 @@
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
   DT = DT * (1.d0 - 0.05d0)
-
+    
   call read_value_logical(OCEANS, 'model.OCEANS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(ELLIPTICITY, 'model.ELLIPTICITY')
@@ -1021,7 +1022,15 @@
 ! check that mesh can be coarsened in depth three or four times
   CUT_SUPERBRICK_XI=.false.
   CUT_SUPERBRICK_ETA=.false.
-  if (SUPPRESS_CRUSTAL_MESH) then
+
+  if (SUPPRESS_CRUSTAL_MESH .and. SUPPRESS_4TH_DOUBLING) then
+    if(mod(NEX_XI,8) /= 0) stop 'NEX_XI must be a multiple of 8'
+    if(mod(NEX_ETA,8) /= 0) stop 'NEX_ETA must be a multiple of 8'
+    if(mod(NEX_XI/4,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 4*NPROC_XI'
+    if(mod(NEX_ETA/4,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 4*NPROC_ETA'
+    if(mod(NEX_XI/8,NPROC_XI) /=0) CUT_SUPERBRICK_XI = .true.
+    if(mod(NEX_ETA/8,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
+  elseif (SUPPRESS_CRUSTAL_MESH .or. SUPPRESS_4TH_DOUBLING) then
     if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
     if(mod(NEX_ETA,16) /= 0) stop 'NEX_ETA must be a multiple of 16'
     if(mod(NEX_XI/8,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 8*NPROC_XI'
@@ -1098,429 +1107,818 @@
     endif
   enddo
 
+  if (.not. SUPPRESS_4TH_DOUBLING) then
 ! find element below top of which we should implement the fourth doubling in the middle of the outer core
 ! locate element closest to optimal value
-  distance_min = HUGEVAL
+    distance_min = HUGEVAL
 ! end two elements before the top because we need at least two elements above for the third doubling
 ! implemented in the middle of the outer core
-  do ielem = 2,NER_OUTER_CORE-2
-    zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
-    distance = abs(zval - (R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL))
-    if(distance < distance_min) then
-      elem_doubling_bottom_outer_core = ielem
-      distance_min = distance
-      DEPTH_FOURTH_DOUBLING_REAL = R_EARTH - zval
-    endif
-  enddo
-
+    do ielem = 2,NER_OUTER_CORE-2
+      zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
+      distance = abs(zval - (R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL))
+      if(distance < distance_min) then
+        elem_doubling_bottom_outer_core = ielem
+        distance_min = distance
+        DEPTH_FOURTH_DOUBLING_REAL = R_EARTH - zval
+      endif
+    enddo
 ! make sure that the two doublings in the outer core are found in the right order
-  if(elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
-                  stop 'error in location of the two doublings in the outer core'
+    if(elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
+                    stop 'error in location of the two doublings in the outer core'
+  endif
 
   ratio_sampling_array(15) = 0
 
 ! define all the layers of the mesh
-  if (SUPPRESS_CRUSTAL_MESH) then
-
-    ONE_CRUST = .false.
-    OCEANS= .false.
-    TOPOGRAPHY = .false.
-    CRUSTAL = .false.
-
-    NUMBER_OF_MESH_LAYERS = 15
-    layer_offset = 1
-
-! now only one region
-    ner( 1) = NER_CRUST + NER_80_MOHO
-    ner( 2) = 0
-    ner( 3) = 0
-
-    ner( 4) = NER_220_80
-    ner( 5) = NER_400_220
-    ner( 6) = NER_600_400
-    ner( 7) = NER_670_600
-    ner( 8) = NER_771_670
-    ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-    ner(10) = elem_doubling_mantle
-    ner(11) = NER_CMB_TOPDDOUBLEPRIME
-    ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-    ner(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
-    ner(14) = elem_doubling_bottom_outer_core
-    ner(15) = NER_TOP_CENTRAL_CUBE_ICB
-
-! value of the doubling ratio in each radial region of the mesh
-    ratio_sampling_array(1:9) = 1
-    ratio_sampling_array(10:12) = 2
-    ratio_sampling_array(13) = 4
-    ratio_sampling_array(14:15) = 8
-
-! value of the doubling index flag in each radial region of the mesh
-    doubling_index(1:3) = IFLAG_CRUST !!!!! IFLAG_80_MOHO
-    doubling_index(4) = IFLAG_220_80
-    doubling_index(5:7) = IFLAG_670_220
-    doubling_index(8:11) = IFLAG_MANTLE_NORMAL
-    doubling_index(12:14) = IFLAG_OUTER_CORE_NORMAL
-    doubling_index(15) = IFLAG_INNER_CORE_NORMAL
-
-! define the three regions in which we implement a mesh doubling at the top of that region
-    this_region_has_a_doubling(:)  = .false.
-    this_region_has_a_doubling(10) = .true.
-    this_region_has_a_doubling(13) = .true.
-    this_region_has_a_doubling(14) = .true.
-    lastdoubling_layer = 14
-
-! define the top and bottom radii of all the regions of the mesh in the radial direction
-! the first region is the crust at the surface of the Earth
-! the last region is in the inner core near the center of the Earth
-
-    r_top(1) = R_EARTH
-    r_bottom(1) = R80
-
-    r_top(2) = RMIDDLE_CRUST    !!!! now fictitious
-    r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
-
-    r_top(3) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
-    r_bottom(3) = R80    !!!! now fictitious
-
-    r_top(4) = R80
-    r_bottom(4) = R220
-
-    r_top(5) = R220
-    r_bottom(5) = R400
-
-    r_top(6) = R400
-    r_bottom(6) = R600
-
-    r_top(7) = R600
-    r_bottom(7) = R670
-
-    r_top(8) = R670
-    r_bottom(8) = R771
-
-    r_top(9) = R771
-    r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-
-    r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-    r_bottom(10) = RTOPDDOUBLEPRIME
-
-    r_top(11) = RTOPDDOUBLEPRIME
-    r_bottom(11) = RCMB
-
-    r_top(12) = RCMB
-    r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-
-    r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-    r_bottom(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-
-    r_top(14) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-    r_bottom(14) = RICB
-
-    r_top(15) = RICB
-    r_bottom(15) = R_CENTRAL_CUBE
-
-! new definition of rmins & rmaxs
-    rmaxs(1) = ONE
-    rmins(1) = R80 / R_EARTH
-
-    rmaxs(2) = RMIDDLE_CRUST / R_EARTH    !!!! now fictitious
-    rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
-
-    rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
-    rmins(3) = R80 / R_EARTH    !!!! now fictitious
-
-    rmaxs(4) = R80 / R_EARTH
-    rmins(4) = R220 / R_EARTH
-
-    rmaxs(5) = R220 / R_EARTH
-    rmins(5) = R400 / R_EARTH
-
-    rmaxs(6) = R400 / R_EARTH
-    rmins(6) = R600 / R_EARTH
-
-    rmaxs(7) = R600 / R_EARTH
-    rmins(7) = R670 / R_EARTH
-
-    rmaxs(8) = R670 / R_EARTH
-    rmins(8) = R771 / R_EARTH
-
-    rmaxs(9:10) = R771 / R_EARTH
-    rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
-
-    rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
-    rmins(11) = RCMB / R_EARTH
-
-    rmaxs(12:14) = RCMB / R_EARTH
-    rmins(12:14) = RICB / R_EARTH
-
-    rmaxs(15) = RICB / R_EARTH
-    rmins(15) = R_CENTRAL_CUBE / R_EARTH
-
-  elseif (ONE_CRUST) then
-
-    NUMBER_OF_MESH_LAYERS = 14
-    layer_offset = 0
-
-    ner( 1) = NER_CRUST
-    ner( 2) = NER_80_MOHO
-    ner( 3) = NER_220_80
-    ner( 4) = NER_400_220
-    ner( 5) = NER_600_400
-    ner( 6) = NER_670_600
-    ner( 7) = NER_771_670
-    ner( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-    ner( 9) = elem_doubling_mantle
-    ner(10) = NER_CMB_TOPDDOUBLEPRIME
-    ner(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-    ner(12) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
-    ner(13) = elem_doubling_bottom_outer_core
-    ner(14) = NER_TOP_CENTRAL_CUBE_ICB
-
-! value of the doubling ratio in each radial region of the mesh
-    ratio_sampling_array(1) = 1
-    ratio_sampling_array(2:8) = 2
-    ratio_sampling_array(9:11) = 4
-    ratio_sampling_array(12) = 8
-    ratio_sampling_array(13:14) = 16
-
-! value of the doubling index flag in each radial region of the mesh
-    doubling_index(1) = IFLAG_CRUST
-    doubling_index(2) = IFLAG_80_MOHO
-    doubling_index(3) = IFLAG_220_80
-    doubling_index(4:6) = IFLAG_670_220
-    doubling_index(7:10) = IFLAG_MANTLE_NORMAL
-    doubling_index(11:13) = IFLAG_OUTER_CORE_NORMAL
-    doubling_index(14) = IFLAG_INNER_CORE_NORMAL
-
-! define the three regions in which we implement a mesh doubling at the top of that region
-    this_region_has_a_doubling(:)  = .false.
-    this_region_has_a_doubling(2)  = .true.
-    this_region_has_a_doubling(9)  = .true.
-    this_region_has_a_doubling(12) = .true.
-    this_region_has_a_doubling(13) = .true.
-    lastdoubling_layer = 13
-
-! define the top and bottom radii of all the regions of the mesh in the radial direction
-! the first region is the crust at the surface of the Earth
-! the last region is in the inner core near the center of the Earth
-
-!!!!!!!!!!! DK DK UGLY: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
-!!!!!!!!!!! DK DK UGLY: i.e. if there is no thick crust there, some elements above the Moho
-!!!!!!!!!!! DK DK UGLY: should be anisotropic but anisotropy is currently only
-!!!!!!!!!!! DK DK UGLY: stored between d220 and MOHO to save memory? Clarify this one day.
-!!!!!!!!!!! DK DK UGLY: The Moho stretching and squishing that Jeroen added to V4.0
-!!!!!!!!!!! DK DK UGLY: should partly deal with this problem.
-
-    r_top(1) = R_EARTH
-    r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
-
-    r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
-    r_bottom(2) = R80
-
-    r_top(3) = R80
-    r_bottom(3) = R220
-
-    r_top(4) = R220
-    r_bottom(4) = R400
-
-    r_top(5) = R400
-    r_bottom(5) = R600
-
-    r_top(6) = R600
-    r_bottom(6) = R670
-
-    r_top(7) = R670
-    r_bottom(7) = R771
-
-    r_top(8) = R771
-    r_bottom(8) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-
-    r_top(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-    r_bottom(9) = RTOPDDOUBLEPRIME
-
-    r_top(10) = RTOPDDOUBLEPRIME
-    r_bottom(10) = RCMB
-
-    r_top(11) = RCMB
-    r_bottom(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-
-    r_top(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-    r_bottom(12) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-
-    r_top(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-    r_bottom(13) = RICB
-
-    r_top(14) = RICB
-    r_bottom(14) = R_CENTRAL_CUBE
-
-! new definition of rmins & rmaxs
-    rmaxs(1) = ONE
-    rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-
-    rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-    rmins(2) = R80 / R_EARTH
-
-    rmaxs(3) = R80 / R_EARTH
-    rmins(3) = R220 / R_EARTH
-
-    rmaxs(4) = R220 / R_EARTH
-    rmins(4) = R400 / R_EARTH
-
-    rmaxs(5) = R400 / R_EARTH
-    rmins(5) = R600 / R_EARTH
-
-    rmaxs(6) = R600 / R_EARTH
-    rmins(6) = R670 / R_EARTH
-
-    rmaxs(7) = R670 / R_EARTH
-    rmins(7) = R771 / R_EARTH
-
-    rmaxs(8:9) = R771 / R_EARTH
-    rmins(8:9) = RTOPDDOUBLEPRIME / R_EARTH
-
-    rmaxs(10) = RTOPDDOUBLEPRIME / R_EARTH
-    rmins(10) = RCMB / R_EARTH
-
-    rmaxs(11:13) = RCMB / R_EARTH
-    rmins(11:13) = RICB / R_EARTH
-
-    rmaxs(14) = RICB / R_EARTH
-    rmins(14) = R_CENTRAL_CUBE / R_EARTH
-
-  else
-
-    NUMBER_OF_MESH_LAYERS = 15
-    layer_offset = 1
-! David Michea: check this more carefully one day
-    if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
-      ner( 1) = ceiling (NER_CRUST / 2.d0)
-      ner( 2) = floor (NER_CRUST / 2.d0)
+  if (SUPPRESS_4TH_DOUBLING) then
+
+    if (SUPPRESS_CRUSTAL_MESH) then
+  
+      ONE_CRUST = .false.
+      OCEANS= .false.
+      TOPOGRAPHY = .false.
+      CRUSTAL = .false.
+  
+      NUMBER_OF_MESH_LAYERS = 14
+      layer_offset = 1
+  
+  ! now only one region
+      ner( 1) = NER_CRUST + NER_80_MOHO
+      ner( 2) = 0
+      ner( 3) = 0
+  
+      ner( 4) = NER_220_80
+      ner( 5) = NER_400_220
+      ner( 6) = NER_600_400
+      ner( 7) = NER_670_600
+      ner( 8) = NER_771_670
+      ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner(10) = elem_doubling_mantle
+      ner(11) = NER_CMB_TOPDDOUBLEPRIME
+      ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner(13) = elem_doubling_middle_outer_core
+      ner(14) = NER_TOP_CENTRAL_CUBE_ICB
+  
+  ! value of the doubling ratio in each radial region of the mesh
+      ratio_sampling_array(1:9) = 1
+      ratio_sampling_array(10:12) = 2
+      ratio_sampling_array(13:14) = 4
+  
+  ! value of the doubling index flag in each radial region of the mesh
+      doubling_index(1:3) = IFLAG_CRUST !!!!! IFLAG_80_MOHO
+      doubling_index(4) = IFLAG_220_80
+      doubling_index(5:7) = IFLAG_670_220
+      doubling_index(8:11) = IFLAG_MANTLE_NORMAL
+      doubling_index(12:13) = IFLAG_OUTER_CORE_NORMAL
+      doubling_index(14) = IFLAG_INNER_CORE_NORMAL
+  
+  ! define the three regions in which we implement a mesh doubling at the top of that region
+      this_region_has_a_doubling(:)  = .false.
+      this_region_has_a_doubling(10) = .true.
+      this_region_has_a_doubling(13) = .true.
+      lastdoubling_layer = 13
+  
+  ! define the top and bottom radii of all the regions of the mesh in the radial direction
+  ! the first region is the crust at the surface of the Earth
+  ! the last region is in the inner core near the center of the Earth
+  
+      r_top(1) = R_EARTH
+      r_bottom(1) = R80
+  
+      r_top(2) = RMIDDLE_CRUST    !!!! now fictitious
+      r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
+  
+      r_top(3) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
+      r_bottom(3) = R80    !!!! now fictitious
+  
+      r_top(4) = R80
+      r_bottom(4) = R220
+  
+      r_top(5) = R220
+      r_bottom(5) = R400
+  
+      r_top(6) = R400
+      r_bottom(6) = R600
+  
+      r_top(7) = R600
+      r_bottom(7) = R670
+  
+      r_top(8) = R670
+      r_bottom(8) = R771
+  
+      r_top(9) = R771
+      r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+  
+      r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(10) = RTOPDDOUBLEPRIME
+  
+      r_top(11) = RTOPDDOUBLEPRIME
+      r_bottom(11) = RCMB
+  
+      r_top(12) = RCMB
+      r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+  
+      r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(13) = RICB
+  
+      r_top(15) = RICB
+      r_bottom(15) = R_CENTRAL_CUBE
+  
+  ! new definition of rmins & rmaxs
+      rmaxs(1) = ONE
+      rmins(1) = R80 / R_EARTH
+  
+      rmaxs(2) = RMIDDLE_CRUST / R_EARTH    !!!! now fictitious
+      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
+  
+      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
+      rmins(3) = R80 / R_EARTH    !!!! now fictitious
+  
+      rmaxs(4) = R80 / R_EARTH
+      rmins(4) = R220 / R_EARTH
+  
+      rmaxs(5) = R220 / R_EARTH
+      rmins(5) = R400 / R_EARTH
+  
+      rmaxs(6) = R400 / R_EARTH
+      rmins(6) = R600 / R_EARTH
+  
+      rmaxs(7) = R600 / R_EARTH
+      rmins(7) = R670 / R_EARTH
+  
+      rmaxs(8) = R670 / R_EARTH
+      rmins(8) = R771 / R_EARTH
+  
+      rmaxs(9:10) = R771 / R_EARTH
+      rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
+  
+      rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
+      rmins(11) = RCMB / R_EARTH
+  
+      rmaxs(12:13) = RCMB / R_EARTH
+      rmins(12:13) = RICB / R_EARTH
+  
+      rmaxs(14) = RICB / R_EARTH
+      rmins(14) = R_CENTRAL_CUBE / R_EARTH
+  
+    elseif (ONE_CRUST) then
+  
+      NUMBER_OF_MESH_LAYERS = 13
+      layer_offset = 0
+  
+      ner( 1) = NER_CRUST
+      ner( 2) = NER_80_MOHO
+      ner( 3) = NER_220_80
+      ner( 4) = NER_400_220
+      ner( 5) = NER_600_400
+      ner( 6) = NER_670_600
+      ner( 7) = NER_771_670
+      ner( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner( 9) = elem_doubling_mantle
+      ner(10) = NER_CMB_TOPDDOUBLEPRIME
+      ner(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner(12) = elem_doubling_middle_outer_core
+      ner(13) = NER_TOP_CENTRAL_CUBE_ICB
+  
+  ! value of the doubling ratio in each radial region of the mesh
+      ratio_sampling_array(1) = 1
+      ratio_sampling_array(2:8) = 2
+      ratio_sampling_array(9:11) = 4
+      ratio_sampling_array(12:13) = 8
+  
+  ! value of the doubling index flag in each radial region of the mesh
+      doubling_index(1) = IFLAG_CRUST
+      doubling_index(2) = IFLAG_80_MOHO
+      doubling_index(3) = IFLAG_220_80
+      doubling_index(4:6) = IFLAG_670_220
+      doubling_index(7:10) = IFLAG_MANTLE_NORMAL
+      doubling_index(11:12) = IFLAG_OUTER_CORE_NORMAL
+      doubling_index(13) = IFLAG_INNER_CORE_NORMAL
+  
+  ! define the three regions in which we implement a mesh doubling at the top of that region
+      this_region_has_a_doubling(:)  = .false.
+      this_region_has_a_doubling(2)  = .true.
+      this_region_has_a_doubling(9)  = .true.
+      this_region_has_a_doubling(12) = .true.
+      lastdoubling_layer = 12
+  
+  ! define the top and bottom radii of all the regions of the mesh in the radial direction
+  ! the first region is the crust at the surface of the Earth
+  ! the last region is in the inner core near the center of the Earth
+  
+  !!!!!!!!!!! DK DK UGLY: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
+  !!!!!!!!!!! DK DK UGLY: i.e. if there is no thick crust there, some elements above the Moho
+  !!!!!!!!!!! DK DK UGLY: should be anisotropic but anisotropy is currently only
+  !!!!!!!!!!! DK DK UGLY: stored between d220 and MOHO to save memory? Clarify this one day.
+  !!!!!!!!!!! DK DK UGLY: The Moho stretching and squishing that Jeroen added to V4.0
+  !!!!!!!!!!! DK DK UGLY: should partly deal with this problem.
+  
+      r_top(1) = R_EARTH
+      r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
+  
+      r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
+      r_bottom(2) = R80
+  
+      r_top(3) = R80
+      r_bottom(3) = R220
+  
+      r_top(4) = R220
+      r_bottom(4) = R400
+  
+      r_top(5) = R400
+      r_bottom(5) = R600
+  
+      r_top(6) = R600
+      r_bottom(6) = R670
+  
+      r_top(7) = R670
+      r_bottom(7) = R771
+  
+      r_top(8) = R771
+      r_bottom(8) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+  
+      r_top(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(9) = RTOPDDOUBLEPRIME
+  
+      r_top(10) = RTOPDDOUBLEPRIME
+      r_bottom(10) = RCMB
+  
+      r_top(11) = RCMB
+      r_bottom(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+  
+      r_top(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(12) = RICB
+  
+      r_top(13) = RICB
+      r_bottom(13) = R_CENTRAL_CUBE
+  
+  ! new definition of rmins & rmaxs
+      rmaxs(1) = ONE
+      rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+  
+      rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+      rmins(2) = R80 / R_EARTH
+  
+      rmaxs(3) = R80 / R_EARTH
+      rmins(3) = R220 / R_EARTH
+  
+      rmaxs(4) = R220 / R_EARTH
+      rmins(4) = R400 / R_EARTH
+  
+      rmaxs(5) = R400 / R_EARTH
+      rmins(5) = R600 / R_EARTH
+  
+      rmaxs(6) = R600 / R_EARTH
+      rmins(6) = R670 / R_EARTH
+  
+      rmaxs(7) = R670 / R_EARTH
+      rmins(7) = R771 / R_EARTH
+  
+      rmaxs(8:9) = R771 / R_EARTH
+      rmins(8:9) = RTOPDDOUBLEPRIME / R_EARTH
+  
+      rmaxs(10) = RTOPDDOUBLEPRIME / R_EARTH
+      rmins(10) = RCMB / R_EARTH
+  
+      rmaxs(11:12) = RCMB / R_EARTH
+      rmins(11:12) = RICB / R_EARTH
+  
+      rmaxs(13) = RICB / R_EARTH
+      rmins(13) = R_CENTRAL_CUBE / R_EARTH
+  
     else
-      ner( 1) = floor (NER_CRUST / 2.d0)
-      ner( 2) = ceiling (NER_CRUST / 2.d0)
+
+      NUMBER_OF_MESH_LAYERS = 14
+      layer_offset = 1
+      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
+        ner( 1) = ceiling (NER_CRUST / 2.d0)
+        ner( 2) = floor (NER_CRUST / 2.d0)
+      else
+        ner( 1) = floor (NER_CRUST / 2.d0)
+        ner( 2) = ceiling (NER_CRUST / 2.d0)
+      endif
+      ner( 3) = NER_80_MOHO
+      ner( 4) = NER_220_80
+      ner( 5) = NER_400_220
+      ner( 6) = NER_600_400
+      ner( 7) = NER_670_600
+      ner( 8) = NER_771_670
+      ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner(10) = elem_doubling_mantle
+      ner(11) = NER_CMB_TOPDDOUBLEPRIME
+      ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner(13) = elem_doubling_middle_outer_core
+      ner(14) = NER_TOP_CENTRAL_CUBE_ICB
+  
+  ! value of the doubling ratio in each radial region of the mesh
+      ratio_sampling_array(1:2) = 1
+      ratio_sampling_array(3:9) = 2
+      ratio_sampling_array(10:12) = 4
+      ratio_sampling_array(13:14) = 8
+  
+  ! value of the doubling index flag in each radial region of the mesh
+      doubling_index(1:2) = IFLAG_CRUST
+      doubling_index(3) = IFLAG_80_MOHO
+      doubling_index(4) = IFLAG_220_80
+      doubling_index(5:7) = IFLAG_670_220
+      doubling_index(8:11) = IFLAG_MANTLE_NORMAL
+      doubling_index(12:13) = IFLAG_OUTER_CORE_NORMAL
+      doubling_index(14) = IFLAG_INNER_CORE_NORMAL
+  
+  ! define the three regions in which we implement a mesh doubling at the top of that region
+      this_region_has_a_doubling(:)  = .false.
+      this_region_has_a_doubling(3)  = .true.
+      this_region_has_a_doubling(10) = .true.
+      this_region_has_a_doubling(13) = .true.
+      this_region_has_a_doubling(14) = .false.
+      lastdoubling_layer = 13
+  
+  ! define the top and bottom radii of all the regions of the mesh in the radial direction
+  ! the first region is the crust at the surface of the Earth
+  ! the last region is in the inner core near the center of the Earth
+  
+      r_top(1) = R_EARTH
+      r_bottom(1) = RMIDDLE_CRUST
+  
+      r_top(2) = RMIDDLE_CRUST
+      r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER
+  
+      r_top(3) = RMOHO_FICTITIOUS_IN_MESHER
+      r_bottom(3) = R80
+  
+      r_top(4) = R80
+      r_bottom(4) = R220
+  
+      r_top(5) = R220
+      r_bottom(5) = R400
+  
+      r_top(6) = R400
+      r_bottom(6) = R600
+  
+      r_top(7) = R600
+      r_bottom(7) = R670
+  
+      r_top(8) = R670
+      r_bottom(8) = R771
+  
+      r_top(9) = R771
+      r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+  
+      r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(10) = RTOPDDOUBLEPRIME
+  
+      r_top(11) = RTOPDDOUBLEPRIME
+      r_bottom(11) = RCMB
+  
+      r_top(12) = RCMB
+      r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+  
+      r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(13) = RICB
+  
+      r_top(14) = RICB
+      r_bottom(14) = R_CENTRAL_CUBE
+  
+  ! new definition of rmins & rmaxs
+      rmaxs(1) = ONE
+      rmins(1) = RMIDDLE_CRUST / R_EARTH
+  
+      rmaxs(2) = RMIDDLE_CRUST / R_EARTH
+      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+  
+      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+      rmins(3) = R80 / R_EARTH
+  
+      rmaxs(4) = R80 / R_EARTH
+      rmins(4) = R220 / R_EARTH
+  
+      rmaxs(5) = R220 / R_EARTH
+      rmins(5) = R400 / R_EARTH
+  
+      rmaxs(6) = R400 / R_EARTH
+      rmins(6) = R600 / R_EARTH
+  
+      rmaxs(7) = R600 / R_EARTH
+      rmins(7) = R670 / R_EARTH
+  
+      rmaxs(8) = R670 / R_EARTH
+      rmins(8) = R771 / R_EARTH
+  
+      rmaxs(9:10) = R771 / R_EARTH
+      rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
+  
+      rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
+      rmins(11) = RCMB / R_EARTH
+  
+      rmaxs(12:13) = RCMB / R_EARTH
+      rmins(12:13) = RICB / R_EARTH
+
+      rmaxs(14) = RICB / R_EARTH
+      rmins(14) = R_CENTRAL_CUBE / R_EARTH
+
     endif
-    ner( 3) = NER_80_MOHO
-    ner( 4) = NER_220_80
-    ner( 5) = NER_400_220
-    ner( 6) = NER_600_400
-    ner( 7) = NER_670_600
-    ner( 8) = NER_771_670
-    ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
-    ner(10) = elem_doubling_mantle
-    ner(11) = NER_CMB_TOPDDOUBLEPRIME
-    ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
-    ner(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
-    ner(14) = elem_doubling_bottom_outer_core
-    ner(15) = NER_TOP_CENTRAL_CUBE_ICB
-
-! value of the doubling ratio in each radial region of the mesh
-    ratio_sampling_array(1:2) = 1
-    ratio_sampling_array(3:9) = 2
-    ratio_sampling_array(10:12) = 4
-    ratio_sampling_array(13) = 8
-    ratio_sampling_array(14:15) = 16
-
-! value of the doubling index flag in each radial region of the mesh
-    doubling_index(1:2) = IFLAG_CRUST
-    doubling_index(3) = IFLAG_80_MOHO
-    doubling_index(4) = IFLAG_220_80
-    doubling_index(5:7) = IFLAG_670_220
-    doubling_index(8:11) = IFLAG_MANTLE_NORMAL
-    doubling_index(12:14) = IFLAG_OUTER_CORE_NORMAL
-    doubling_index(15) = IFLAG_INNER_CORE_NORMAL
-
-! define the three regions in which we implement a mesh doubling at the top of that region
-    this_region_has_a_doubling(:)  = .false.
-    this_region_has_a_doubling(3)  = .true.
-    this_region_has_a_doubling(10) = .true.
-    this_region_has_a_doubling(13) = .true.
-    this_region_has_a_doubling(14) = .true.
-    lastdoubling_layer = 14
-
-! define the top and bottom radii of all the regions of the mesh in the radial direction
-! the first region is the crust at the surface of the Earth
-! the last region is in the inner core near the center of the Earth
-
-    r_top(1) = R_EARTH
-    r_bottom(1) = RMIDDLE_CRUST
-
-    r_top(2) = RMIDDLE_CRUST
-    r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER
-
-    r_top(3) = RMOHO_FICTITIOUS_IN_MESHER
-    r_bottom(3) = R80
-
-    r_top(4) = R80
-    r_bottom(4) = R220
-
-    r_top(5) = R220
-    r_bottom(5) = R400
-
-    r_top(6) = R400
-    r_bottom(6) = R600
-
-    r_top(7) = R600
-    r_bottom(7) = R670
-
-    r_top(8) = R670
-    r_bottom(8) = R771
-
-    r_top(9) = R771
-    r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-
-    r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
-    r_bottom(10) = RTOPDDOUBLEPRIME
-
-    r_top(11) = RTOPDDOUBLEPRIME
-    r_bottom(11) = RCMB
-
-    r_top(12) = RCMB
-    r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-
-    r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
-    r_bottom(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-
-    r_top(14) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
-    r_bottom(14) = RICB
-
-    r_top(15) = RICB
-    r_bottom(15) = R_CENTRAL_CUBE
-
-! new definition of rmins & rmaxs
-    rmaxs(1) = ONE
-    rmins(1) = RMIDDLE_CRUST / R_EARTH
-
-    rmaxs(2) = RMIDDLE_CRUST / R_EARTH
-    rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-
-    rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-    rmins(3) = R80 / R_EARTH
-
-    rmaxs(4) = R80 / R_EARTH
-    rmins(4) = R220 / R_EARTH
-
-    rmaxs(5) = R220 / R_EARTH
-    rmins(5) = R400 / R_EARTH
-
-    rmaxs(6) = R400 / R_EARTH
-    rmins(6) = R600 / R_EARTH
-
-    rmaxs(7) = R600 / R_EARTH
-    rmins(7) = R670 / R_EARTH
-
-    rmaxs(8) = R670 / R_EARTH
-    rmins(8) = R771 / R_EARTH
-
-    rmaxs(9:10) = R771 / R_EARTH
-    rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
-
-    rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
-    rmins(11) = RCMB / R_EARTH
-
-    rmaxs(12:14) = RCMB / R_EARTH
-    rmins(12:14) = RICB / R_EARTH
-
-    rmaxs(15) = RICB / R_EARTH
-    rmins(15) = R_CENTRAL_CUBE / R_EARTH
+  else
+    if (SUPPRESS_CRUSTAL_MESH) then
+  
+      ONE_CRUST = .false.
+      OCEANS= .false.
+      TOPOGRAPHY = .false.
+      CRUSTAL = .false.
+  
+      NUMBER_OF_MESH_LAYERS = 15
+      layer_offset = 1
+  
+  ! now only one region
+      ner( 1) = NER_CRUST + NER_80_MOHO
+      ner( 2) = 0
+      ner( 3) = 0
+  
+      ner( 4) = NER_220_80
+      ner( 5) = NER_400_220
+      ner( 6) = NER_600_400
+      ner( 7) = NER_670_600
+      ner( 8) = NER_771_670
+      ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner(10) = elem_doubling_mantle
+      ner(11) = NER_CMB_TOPDDOUBLEPRIME
+      ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
+      ner(14) = elem_doubling_bottom_outer_core
+      ner(15) = NER_TOP_CENTRAL_CUBE_ICB
+  
+  ! value of the doubling ratio in each radial region of the mesh
+      ratio_sampling_array(1:9) = 1
+      ratio_sampling_array(10:12) = 2
+      ratio_sampling_array(13) = 4
+      ratio_sampling_array(14:15) = 8
+  
+  ! value of the doubling index flag in each radial region of the mesh
+      doubling_index(1:3) = IFLAG_CRUST !!!!! IFLAG_80_MOHO
+      doubling_index(4) = IFLAG_220_80
+      doubling_index(5:7) = IFLAG_670_220
+      doubling_index(8:11) = IFLAG_MANTLE_NORMAL
+      doubling_index(12:14) = IFLAG_OUTER_CORE_NORMAL
+      doubling_index(15) = IFLAG_INNER_CORE_NORMAL
+  
+  ! define the three regions in which we implement a mesh doubling at the top of that region
+      this_region_has_a_doubling(:)  = .false.
+      this_region_has_a_doubling(10) = .true.
+      this_region_has_a_doubling(13) = .true.
+      this_region_has_a_doubling(14) = .true.
+      lastdoubling_layer = 14
+  
+  ! define the top and bottom radii of all the regions of the mesh in the radial direction
+  ! the first region is the crust at the surface of the Earth
+  ! the last region is in the inner core near the center of the Earth
+  
+      r_top(1) = R_EARTH
+      r_bottom(1) = R80
+  
+      r_top(2) = RMIDDLE_CRUST    !!!! now fictitious
+      r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
+  
+      r_top(3) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
+      r_bottom(3) = R80    !!!! now fictitious
+  
+      r_top(4) = R80
+      r_bottom(4) = R220
+  
+      r_top(5) = R220
+      r_bottom(5) = R400
+  
+      r_top(6) = R400
+      r_bottom(6) = R600
+  
+      r_top(7) = R600
+      r_bottom(7) = R670
+  
+      r_top(8) = R670
+      r_bottom(8) = R771
+  
+      r_top(9) = R771
+      r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+  
+      r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(10) = RTOPDDOUBLEPRIME
+  
+      r_top(11) = RTOPDDOUBLEPRIME
+      r_bottom(11) = RCMB
+  
+      r_top(12) = RCMB
+      r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+  
+      r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+  
+      r_top(14) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+      r_bottom(14) = RICB
+  
+      r_top(15) = RICB
+      r_bottom(15) = R_CENTRAL_CUBE
+  
+  ! new definition of rmins & rmaxs
+      rmaxs(1) = ONE
+      rmins(1) = R80 / R_EARTH
+  
+      rmaxs(2) = RMIDDLE_CRUST / R_EARTH    !!!! now fictitious
+      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
+  
+      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
+      rmins(3) = R80 / R_EARTH    !!!! now fictitious
+  
+      rmaxs(4) = R80 / R_EARTH
+      rmins(4) = R220 / R_EARTH
+  
+      rmaxs(5) = R220 / R_EARTH
+      rmins(5) = R400 / R_EARTH
+  
+      rmaxs(6) = R400 / R_EARTH
+      rmins(6) = R600 / R_EARTH
+  
+      rmaxs(7) = R600 / R_EARTH
+      rmins(7) = R670 / R_EARTH
+  
+      rmaxs(8) = R670 / R_EARTH
+      rmins(8) = R771 / R_EARTH
+  
+      rmaxs(9:10) = R771 / R_EARTH
+      rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
+  
+      rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
+      rmins(11) = RCMB / R_EARTH
+  
+      rmaxs(12:14) = RCMB / R_EARTH
+      rmins(12:14) = RICB / R_EARTH
+  
+      rmaxs(15) = RICB / R_EARTH
+      rmins(15) = R_CENTRAL_CUBE / R_EARTH
+  
+    elseif (ONE_CRUST) then
+  
+      NUMBER_OF_MESH_LAYERS = 14
+      layer_offset = 0
+  
+      ner( 1) = NER_CRUST
+      ner( 2) = NER_80_MOHO
+      ner( 3) = NER_220_80
+      ner( 4) = NER_400_220
+      ner( 5) = NER_600_400
+      ner( 6) = NER_670_600
+      ner( 7) = NER_771_670
+      ner( 8) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner( 9) = elem_doubling_mantle
+      ner(10) = NER_CMB_TOPDDOUBLEPRIME
+      ner(11) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner(12) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
+      ner(13) = elem_doubling_bottom_outer_core
+      ner(14) = NER_TOP_CENTRAL_CUBE_ICB
+  
+  ! value of the doubling ratio in each radial region of the mesh
+      ratio_sampling_array(1) = 1
+      ratio_sampling_array(2:8) = 2
+      ratio_sampling_array(9:11) = 4
+      ratio_sampling_array(12) = 8
+      ratio_sampling_array(13:14) = 16
+  
+  ! value of the doubling index flag in each radial region of the mesh
+      doubling_index(1) = IFLAG_CRUST
+      doubling_index(2) = IFLAG_80_MOHO
+      doubling_index(3) = IFLAG_220_80
+      doubling_index(4:6) = IFLAG_670_220
+      doubling_index(7:10) = IFLAG_MANTLE_NORMAL
+      doubling_index(11:13) = IFLAG_OUTER_CORE_NORMAL
+      doubling_index(14) = IFLAG_INNER_CORE_NORMAL
+  
+  ! define the three regions in which we implement a mesh doubling at the top of that region
+      this_region_has_a_doubling(:)  = .false.
+      this_region_has_a_doubling(2)  = .true.
+      this_region_has_a_doubling(9)  = .true.
+      this_region_has_a_doubling(12) = .true.
+      this_region_has_a_doubling(13) = .true.
+      lastdoubling_layer = 13
+  
+  ! define the top and bottom radii of all the regions of the mesh in the radial direction
+  ! the first region is the crust at the surface of the Earth
+  ! the last region is in the inner core near the center of the Earth
+  
+  !!!!!!!!!!! DK DK UGLY: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
+  !!!!!!!!!!! DK DK UGLY: i.e. if there is no thick crust there, some elements above the Moho
+  !!!!!!!!!!! DK DK UGLY: should be anisotropic but anisotropy is currently only
+  !!!!!!!!!!! DK DK UGLY: stored between d220 and MOHO to save memory? Clarify this one day.
+  !!!!!!!!!!! DK DK UGLY: The Moho stretching and squishing that Jeroen added to V4.0
+  !!!!!!!!!!! DK DK UGLY: should partly deal with this problem.
+  
+      r_top(1) = R_EARTH
+      r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
+  
+      r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
+      r_bottom(2) = R80
+  
+      r_top(3) = R80
+      r_bottom(3) = R220
+  
+      r_top(4) = R220
+      r_bottom(4) = R400
+  
+      r_top(5) = R400
+      r_bottom(5) = R600
+  
+      r_top(6) = R600
+      r_bottom(6) = R670
+  
+      r_top(7) = R670
+      r_bottom(7) = R771
+  
+      r_top(8) = R771
+      r_bottom(8) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+  
+      r_top(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(9) = RTOPDDOUBLEPRIME
+  
+      r_top(10) = RTOPDDOUBLEPRIME
+      r_bottom(10) = RCMB
+  
+      r_top(11) = RCMB
+      r_bottom(11) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+  
+      r_top(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(12) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+  
+      r_top(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+      r_bottom(13) = RICB
+  
+      r_top(14) = RICB
+      r_bottom(14) = R_CENTRAL_CUBE
+  
+  ! new definition of rmins & rmaxs
+      rmaxs(1) = ONE
+      rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+  
+      rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+      rmins(2) = R80 / R_EARTH
+  
+      rmaxs(3) = R80 / R_EARTH
+      rmins(3) = R220 / R_EARTH
+  
+      rmaxs(4) = R220 / R_EARTH
+      rmins(4) = R400 / R_EARTH
+  
+      rmaxs(5) = R400 / R_EARTH
+      rmins(5) = R600 / R_EARTH
+  
+      rmaxs(6) = R600 / R_EARTH
+      rmins(6) = R670 / R_EARTH
+  
+      rmaxs(7) = R670 / R_EARTH
+      rmins(7) = R771 / R_EARTH
+  
+      rmaxs(8:9) = R771 / R_EARTH
+      rmins(8:9) = RTOPDDOUBLEPRIME / R_EARTH
+  
+      rmaxs(10) = RTOPDDOUBLEPRIME / R_EARTH
+      rmins(10) = RCMB / R_EARTH
+  
+      rmaxs(11:13) = RCMB / R_EARTH
+      rmins(11:13) = RICB / R_EARTH
+  
+      rmaxs(14) = RICB / R_EARTH
+      rmins(14) = R_CENTRAL_CUBE / R_EARTH
+  
+    else
+  
+      NUMBER_OF_MESH_LAYERS = 15
+      layer_offset = 1
+      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
+        ner( 1) = ceiling (NER_CRUST / 2.d0)
+        ner( 2) = floor (NER_CRUST / 2.d0)
+      else
+        ner( 1) = floor (NER_CRUST / 2.d0)
+        ner( 2) = ceiling (NER_CRUST / 2.d0)
+      endif
+      ner( 3) = NER_80_MOHO
+      ner( 4) = NER_220_80
+      ner( 5) = NER_400_220
+      ner( 6) = NER_600_400
+      ner( 7) = NER_670_600
+      ner( 8) = NER_771_670
+      ner( 9) = NER_TOPDDOUBLEPRIME_771 - elem_doubling_mantle
+      ner(10) = elem_doubling_mantle
+      ner(11) = NER_CMB_TOPDDOUBLEPRIME
+      ner(12) = NER_OUTER_CORE - elem_doubling_middle_outer_core
+      ner(13) = elem_doubling_middle_outer_core - elem_doubling_bottom_outer_core
+      ner(14) = elem_doubling_bottom_outer_core
+      ner(15) = NER_TOP_CENTRAL_CUBE_ICB
+  
+  ! value of the doubling ratio in each radial region of the mesh
+      ratio_sampling_array(1:2) = 1
+      ratio_sampling_array(3:9) = 2
+      ratio_sampling_array(10:12) = 4
+      ratio_sampling_array(13) = 8
+      ratio_sampling_array(14:15) = 16
+  
+  ! value of the doubling index flag in each radial region of the mesh
+      doubling_index(1:2) = IFLAG_CRUST
+      doubling_index(3) = IFLAG_80_MOHO
+      doubling_index(4) = IFLAG_220_80
+      doubling_index(5:7) = IFLAG_670_220
+      doubling_index(8:11) = IFLAG_MANTLE_NORMAL
+      doubling_index(12:14) = IFLAG_OUTER_CORE_NORMAL
+      doubling_index(15) = IFLAG_INNER_CORE_NORMAL
+  
+  ! define the three regions in which we implement a mesh doubling at the top of that region
+      this_region_has_a_doubling(:)  = .false.
+      this_region_has_a_doubling(3)  = .true.
+      this_region_has_a_doubling(10) = .true.
+      this_region_has_a_doubling(13) = .true.
+      this_region_has_a_doubling(14) = .true.
+      lastdoubling_layer = 14
+  
+  ! define the top and bottom radii of all the regions of the mesh in the radial direction
+  ! the first region is the crust at the surface of the Earth
+  ! the last region is in the inner core near the center of the Earth
+  
+      r_top(1) = R_EARTH
+      r_bottom(1) = RMIDDLE_CRUST
+  
+      r_top(2) = RMIDDLE_CRUST
+      r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER
+  
+      r_top(3) = RMOHO_FICTITIOUS_IN_MESHER
+      r_bottom(3) = R80
+  
+      r_top(4) = R80
+      r_bottom(4) = R220
+  
+      r_top(5) = R220
+      r_bottom(5) = R400
+  
+      r_top(6) = R400
+      r_bottom(6) = R600
+  
+      r_top(7) = R600
+      r_bottom(7) = R670
+  
+      r_top(8) = R670
+      r_bottom(8) = R771
+  
+      r_top(9) = R771
+      r_bottom(9) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+  
+      r_top(10) = R_EARTH - DEPTH_SECOND_DOUBLING_REAL
+      r_bottom(10) = RTOPDDOUBLEPRIME
+  
+      r_top(11) = RTOPDDOUBLEPRIME
+      r_bottom(11) = RCMB
+  
+      r_top(12) = RCMB
+      r_bottom(12) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+  
+      r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
+      r_bottom(13) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+  
+      r_top(14) = R_EARTH - DEPTH_FOURTH_DOUBLING_REAL
+      r_bottom(14) = RICB
+  
+      r_top(15) = RICB
+      r_bottom(15) = R_CENTRAL_CUBE
+  
+  ! new definition of rmins & rmaxs
+      rmaxs(1) = ONE
+      rmins(1) = RMIDDLE_CRUST / R_EARTH
+  
+      rmaxs(2) = RMIDDLE_CRUST / R_EARTH
+      rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+  
+      rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+      rmins(3) = R80 / R_EARTH
+  
+      rmaxs(4) = R80 / R_EARTH
+      rmins(4) = R220 / R_EARTH
+  
+      rmaxs(5) = R220 / R_EARTH
+      rmins(5) = R400 / R_EARTH
+  
+      rmaxs(6) = R400 / R_EARTH
+      rmins(6) = R600 / R_EARTH
+  
+      rmaxs(7) = R600 / R_EARTH
+      rmins(7) = R670 / R_EARTH
+  
+      rmaxs(8) = R670 / R_EARTH
+      rmins(8) = R771 / R_EARTH
+  
+      rmaxs(9:10) = R771 / R_EARTH
+      rmins(9:10) = RTOPDDOUBLEPRIME / R_EARTH
+  
+      rmaxs(11) = RTOPDDOUBLEPRIME / R_EARTH
+      rmins(11) = RCMB / R_EARTH
+  
+      rmaxs(12:14) = RCMB / R_EARTH
+      rmins(12:14) = RICB / R_EARTH
+  
+      rmaxs(15) = RICB / R_EARTH
+      rmins(15) = R_CENTRAL_CUBE / R_EARTH
+    endif
   endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1687,9 +2085,14 @@ enddo
                                          (NEX_ETA/ratio_sampling_array(10+layer_offset))/NPROC
 
 ! in the outer core with mesh doubling
-  NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/(ratio_divide_central_cube/4))*(NEX_ETA/(ratio_divide_central_cube/4))/NPROC
-  NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
-
+  if (SUPPRESS_4TH_DOUBLING) then
+    NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/(ratio_divide_central_cube/2))*(NEX_ETA/(ratio_divide_central_cube/2))/NPROC
+    NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
+  else
+    NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/(ratio_divide_central_cube/4))*(NEX_ETA/(ratio_divide_central_cube/4))/NPROC
+    NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
+  endif
+  
 ! in the top of the inner core
   NSPEC2D_TOP(IREGION_INNER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
   NSPEC2D_BOTTOM(IREGION_INNER_CORE) = NSPEC2D_TOP(IREGION_INNER_CORE)
@@ -1918,4 +2321,3 @@ enddo
 !!! NGLOB = 6.NGLL^2 - 7.NGLL + 2 (SURFACE 2)
 
   end subroutine read_compute_parameters
-
