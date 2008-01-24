@@ -607,7 +607,7 @@
     NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
     layer_shift = 1
   endif
-  if (SUPPRESS_4TH_DOUBLING) then
+  if (.not. ADD_4TH_DOUBLING) then
     NUMBER_OF_MESH_LAYERS = NUMBER_OF_MESH_LAYERS - 1
   endif
 ! DM DM
