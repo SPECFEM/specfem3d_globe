@@ -1023,14 +1023,14 @@
   CUT_SUPERBRICK_XI=.false.
   CUT_SUPERBRICK_ETA=.false.
 
-  if (SUPPRESS_CRUSTAL_MESH .and. SUPPRESS_4TH_DOUBLING) then
+  if (SUPPRESS_CRUSTAL_MESH .and. .not. ADD_4TH_DOUBLING) then
     if(mod(NEX_XI,8) /= 0) stop 'NEX_XI must be a multiple of 8'
     if(mod(NEX_ETA,8) /= 0) stop 'NEX_ETA must be a multiple of 8'
     if(mod(NEX_XI/4,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 4*NPROC_XI'
     if(mod(NEX_ETA/4,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 4*NPROC_ETA'
     if(mod(NEX_XI/8,NPROC_XI) /=0) CUT_SUPERBRICK_XI = .true.
     if(mod(NEX_ETA/8,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
-  elseif (SUPPRESS_CRUSTAL_MESH .or. SUPPRESS_4TH_DOUBLING) then
+  elseif (SUPPRESS_CRUSTAL_MESH .or. .not. ADD_4TH_DOUBLING) then
     if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
     if(mod(NEX_ETA,16) /= 0) stop 'NEX_ETA must be a multiple of 16'
     if(mod(NEX_XI/8,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 8*NPROC_XI'
@@ -1107,7 +1107,7 @@
     endif
   enddo
 
-  if (.not. SUPPRESS_4TH_DOUBLING) then
+  if (ADD_4TH_DOUBLING) then
 ! find element below top of which we should implement the fourth doubling in the middle of the outer core
 ! locate element closest to optimal value
     distance_min = HUGEVAL
@@ -1130,7 +1130,7 @@
   ratio_sampling_array(15) = 0
 
 ! define all the layers of the mesh
-  if (SUPPRESS_4TH_DOUBLING) then
+  if (.not. ADD_4TH_DOUBLING) then
 
     if (SUPPRESS_CRUSTAL_MESH) then
   
@@ -2085,11 +2085,11 @@ enddo
                                          (NEX_ETA/ratio_sampling_array(10+layer_offset))/NPROC
 
 ! in the outer core with mesh doubling
-  if (SUPPRESS_4TH_DOUBLING) then
-    NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/(ratio_divide_central_cube/2))*(NEX_ETA/(ratio_divide_central_cube/2))/NPROC
+  if (ADD_4TH_DOUBLING) then
+    NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/(ratio_divide_central_cube/4))*(NEX_ETA/(ratio_divide_central_cube/4))/NPROC
     NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
   else
-    NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/(ratio_divide_central_cube/4))*(NEX_ETA/(ratio_divide_central_cube/4))/NPROC
+    NSPEC2D_TOP(IREGION_OUTER_CORE) = (NEX_XI/(ratio_divide_central_cube/2))*(NEX_ETA/(ratio_divide_central_cube/2))/NPROC
     NSPEC2D_BOTTOM(IREGION_OUTER_CORE) = (NEX_XI/ratio_divide_central_cube)*(NEX_ETA/ratio_divide_central_cube)/NPROC
   endif
   

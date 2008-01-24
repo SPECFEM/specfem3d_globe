@@ -438,8 +438,8 @@
 ! to suppress the crustal layers (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
   logical, parameter :: SUPPRESS_CRUSTAL_MESH = .false.
 
-! for suppressing the fourth doubling (default is .true.)
-  logical, parameter :: SUPPRESS_4TH_DOUBLING = .true.
+! to add a fourth doubling at the bottom of the outer core
+  logical, parameter :: ADD_4TH_DOUBLING = .false.
 
 !!! parameters for the doubling brick cut
 
