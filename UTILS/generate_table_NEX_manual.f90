@@ -12,45 +12,39 @@ integer NPROC_XI,c,NEX_XI,compteur
 integer, parameter :: NB_COLONNES = 5
 integer, dimension(NB_COLONNES) :: store_NEX_XI
 
-! base value depends if we implement three or four doublings
-! integer, parameter :: BASE_VALUE = 16
+! base value depends if we implement three or four doublings (default is three)
+  integer, parameter :: NB_DOUBLING = 3
   integer :: BASE_VALUE
-  integer :: NB_DOUBLING
 
 ! output in LaTeX format or in regular ASCII format
-  logical, parameter :: OUTPUT_LATEX_FORMAT = .true.
+  logical, parameter :: OUTPUT_LATEX_FORMAT = .false.
 
-  do NB_DOUBLING = 3,4
-    write(*,"(a,i1,a)") '***** values for ',NB_DOUBLING,' doubling layers *****'
-    write(*,*)
-    BASE_VALUE = 2**NB_DOUBLING
-    do NPROC_XI = 1,26
-  
-      compteur = 1
-  
-      do c = 1,20
-        NEX_XI = BASE_VALUE * c * NPROC_XI
-        if(NEX_XI >= 64 .and. compteur <= NB_COLONNES .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
-          store_NEX_XI(compteur) = NEX_XI
-          compteur = compteur + 1
-        endif
-      enddo
-  
-      if(OUTPUT_LATEX_FORMAT) then
-        write(*,"(i6,' &')") NPROC_XI
-        write(*,"(i6,' &')") 6*NPROC_XI**2
-        do compteur = 1,NB_COLONNES-1
-          write(*,"(i6,' &')") store_NEX_XI(compteur)
-        enddo
-        write(*,*) store_NEX_XI(NB_COLONNES),' ',achar(92),'tabularnewline'
-      else
-        write(*,"(i6,' | ',i6,' | ',i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)") &
-          NPROC_XI, 6*NPROC_XI**2,(store_NEX_XI(compteur), compteur = 1,NB_COLONNES)
+  write(*,"(a,i1,a)") '***** values for ',NB_DOUBLING,' doubling layers *****'
+  write(*,*)
+  BASE_VALUE = 2**NB_DOUBLING
+  do NPROC_XI = 1,26
+
+    compteur = 1
+
+    do c = 1,20
+      NEX_XI = BASE_VALUE * c * NPROC_XI
+      if(NEX_XI >= 64 .and. compteur <= NB_COLONNES .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
+        store_NEX_XI(compteur) = NEX_XI
+        compteur = compteur + 1
       endif
-  
     enddo
-    write(*,*)
-    write(*,*)
+
+    if(OUTPUT_LATEX_FORMAT) then
+      write(*,"(i6,' &')") NPROC_XI
+      write(*,"(i6,' &')") 6*NPROC_XI**2
+      do compteur = 1,NB_COLONNES-1
+        write(*,"(i6,' &')") store_NEX_XI(compteur)
+      enddo
+      write(*,*) store_NEX_XI(NB_COLONNES),' ',achar(92),'tabularnewline'
+    else
+      write(*,"(i6,' | ',i6,' | ',i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)") &
+        NPROC_XI, 6*NPROC_XI**2,(store_NEX_XI(compteur), compteur = 1,NB_COLONNES)
+    endif
   enddo
 
   end program generate_table_NEX_manual
