@@ -1928,7 +1928,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ratio_divide_central_cube = maxval(ratio_sampling_array)
-  if(ratio_divide_central_cube /= 8 .and. ratio_divide_central_cube /= 16) stop 'incorrect ratio to divide the central cube'
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
