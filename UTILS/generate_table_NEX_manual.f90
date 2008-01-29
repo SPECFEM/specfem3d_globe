@@ -29,10 +29,12 @@
   do NPROC_XI = 1,int(sqrt(MAX_NUMBER_OF_PROCS / 6.d0))
 
     compteur = 1
+    c = 0
 
-    do c = 1,100
+    do while (compteur <= NB_COLONNES)
+      c = c + 1
       NEX_XI = BASE_VALUE * c * NPROC_XI
-      if(NEX_XI >= 64 .and. compteur <= NB_COLONNES .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
+      if(NEX_XI >= 64 .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
         store_NEX_XI(compteur) = NEX_XI
         compteur = compteur + 1
       endif
