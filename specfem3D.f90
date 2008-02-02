@@ -200,7 +200,7 @@
 ! This permits acoustic-elastic coupling based on a non-iterative time scheme.
 ! Displacement if we ignore gravity is then: u = grad(Chi)
 ! (In the context of the Cowling approximation displacement is
-! u = grad(rho * Chi) / Chi, *not* u = grad(Chi).)
+! u = grad(rho * Chi) / rho, *not* u = grad(Chi).)
 ! Velocity is then: v = grad(Chi_dot)       (Chi_dot being the time derivative of Chi)
 ! and pressure is: p = - rho * Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 ! The source in an acoustic element is a pressure source.
