@@ -3006,7 +3006,7 @@
 ! print date and time estimate of end of run in another country.
 ! For instance: the code runs at Caltech in California but the person
 ! running the code is connected remotely from France, which has 9 hours more
-      if(ADD_TIME_ESTIMATE_ELSEWHERE) then
+      if(ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
 
 ! add time difference with that remote location (can be negative)
         timestamp_remote = timestamp + HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE
@@ -3018,8 +3018,12 @@
         call calndr(day_remote,mon_remote,year_remote,julian_day_number)
         day_of_week_remote = idaywk(julian_day_number)
 
-        write(IMAIN,*) 'Adding (positive or negative) time difference of ',HOURS_TIME_DIFFERENCE,' hours'
-        write(IMAIN,*) 'and ',MINUTES_TIME_DIFFERENCE,' minutes to get estimate at a remote location'
+        if(HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
+          write(IMAIN,*) 'Adding positive time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
+        else
+          write(IMAIN,*) 'Adding negative time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
+        endif
+        write(IMAIN,*) 'and ',abs(MINUTES_TIME_DIFFERENCE),' minutes to get estimate at a remote location'
         write(IMAIN, &
             "(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
             weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
@@ -3080,9 +3084,13 @@
 ! print date and time estimate of end of run in another country.
 ! For instance: the code runs at Caltech in California but the person
 ! running the code is connected remotely from France, which has 9 hours more
-      if(ADD_TIME_ESTIMATE_ELSEWHERE) then
-        write(IOUT,*) 'Adding (positive or negative) time difference of ',HOURS_TIME_DIFFERENCE,' hours'
-        write(IOUT,*) 'and ',MINUTES_TIME_DIFFERENCE,' minutes to get estimate at a remote location'
+      if(ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
+        if(HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
+          write(IOUT,*) 'Adding positive time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
+        else
+          write(IOUT,*) 'Adding negative time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
+        endif
+        write(IOUT,*) 'and ',abs(MINUTES_TIME_DIFFERENCE),' minutes to get estimate at a remote location'
         write(IOUT, &
             "(' The run will finish approximately on (in remote time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
             weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
