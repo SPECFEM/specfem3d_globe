@@ -3109,11 +3109,17 @@
       close(IOUT)
 
 ! check stability of the code, exit if unstable
-      if(Usolidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in solid')
-      if(Ufluidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in fluid')
-      if (SIMULATION_TYPE == 3) then
-        if(b_Usolidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in solid for back prop.')
-        if(b_Ufluidnorm_all > STABILITY_THRESHOLD) call exit_MPI(myrank,'code became unstable and blew up in fluid for back prop.')
+! negative values can occur with some compilers when the unstable value is greater
+! than the greatest possible floating-point number of the machine
+      if(Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0) &
+        call exit_MPI(myrank,'forward simulation became unstable and blew up in the solid')
+      if(Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0) &
+        call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
+      if(SIMULATION_TYPE == 3) then
+        if(b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
+          call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
+        if(b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
+          call exit_MPI(myrank,'backward simulation became unstable and blew up in the fluid')
       endif
     endif
   endif
