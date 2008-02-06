@@ -107,7 +107,7 @@
   double precision dgamma
 
   double precision final_distance_source(NSOURCES)
-  double precision final_distance_source_sub(NSOURCES_SUB)
+  double precision, dimension(:), allocatable :: final_distance_source_subset
 
   double precision x_target_source,y_target_source,z_target_source
   double precision r_target_source
@@ -117,19 +117,19 @@
 ! timer MPI
   double precision time_start,tCPU
 
-  integer isources_read,itsource
+  integer isources_already_done,isource_in_this_subset
   integer ispec_selected_source(NSOURCES)
-  integer ispec_selected_source_sub(NSOURCES_SUB)
+  integer, dimension(:), allocatable :: ispec_selected_source_subset
 
-  integer, dimension(NSOURCES_SUB,0:NPROCTOT-1) :: ispec_selected_source_all
-  double precision, dimension(NSOURCES_SUB,0:NPROCTOT-1) :: xi_source_all,eta_source_all,gamma_source_all, &
+  integer, dimension(:,:), allocatable :: ispec_selected_source_all
+  double precision, dimension(:,:), allocatable :: xi_source_all,eta_source_all,gamma_source_all, &
      final_distance_source_all,x_found_source_all,y_found_source_all,z_found_source_all
 
   double precision hdur(NSOURCES)
 
   double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
-  double precision, dimension(NSOURCES_SUB) :: xi_source_sub,eta_source_sub,gamma_source_sub
+  double precision, dimension(:), allocatable :: xi_source_subset,eta_source_subset,gamma_source_subset
 
   double precision, dimension(NSOURCES) :: lat,long,depth
   double precision scalar_moment
@@ -138,14 +138,14 @@
 
   character(len=150) OUTPUT_FILES,plot_file
 
-  double precision, dimension(NSOURCES_SUB) :: x_found_source,y_found_source,z_found_source
+  double precision, dimension(:), allocatable :: x_found_source,y_found_source,z_found_source
   double precision r_found_source
   double precision st,ct,sp,cp
   double precision Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
   double precision colat_source
   double precision distmin
 
-  integer ix_initial_guess_source,iy_initial_guess_source,iz_initial_guess_source
+  integer :: ix_initial_guess_source,iy_initial_guess_source,iz_initial_guess_source,NSOURCES_SUBSET_current_size
 
   logical located_target
 
@@ -164,7 +164,7 @@
 
 ! make sure we clean the arrays before the gather
   ispec_selected_source(:) = 0
-  ispec_selected_source_sub(:) = 0
+  ispec_selected_source_subset(:) = 0
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -200,12 +200,45 @@
   t0 = - 1.5d0*minval(t_cmt-hdur)
 
 ! loop on all the sources
-! gather source information in chunks to reduce memory requirements
-! loop over chunks of sources
-  do isources_read = 0,NSOURCES,NSOURCES_SUB
-! loop over sources within chunks
-  do itsource = 1,min(NSOURCES_SUB,NSOURCES-isources_read)
-  isource = itsource+isources_read
+! gather source information in subsets to reduce memory requirements
+
+! loop over subsets of sources
+  do isources_already_done = 0, NSOURCES, NSOURCES_SUBSET_MAX
+
+! the size of the subset can be the maximum size, or less (if we are in the last subset,
+! or if there are fewer sources than the maximum size of a subset)
+  NSOURCES_SUBSET_current_size = min(NSOURCES_SUBSET_MAX, NSOURCES - isources_already_done)
+
+! allocate arrays specific to each subset
+  allocate(final_distance_source_subset(NSOURCES_SUBSET_current_size))
+
+  allocate(ispec_selected_source_subset(NSOURCES_SUBSET_current_size))
+
+  allocate(ispec_selected_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
+
+  allocate(xi_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
+  allocate(eta_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
+  allocate(gamma_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
+
+  allocate(final_distance_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
+
+  allocate(x_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
+  allocate(y_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
+  allocate(z_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
+
+  allocate(xi_source_subset(NSOURCES_SUBSET_current_size))
+  allocate(eta_source_subset(NSOURCES_SUBSET_current_size))
+  allocate(gamma_source_subset(NSOURCES_SUBSET_current_size))
+
+  allocate(x_found_source(NSOURCES_SUBSET_current_size))
+  allocate(y_found_source(NSOURCES_SUBSET_current_size))
+  allocate(z_found_source(NSOURCES_SUBSET_current_size))
+
+! loop over sources within this subset
+  do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
+
+! mapping from source number in current subset to real source number in all the subsets
+  isource = isource_in_this_subset + isources_already_done
 
 ! convert geographic latitude lat (degrees)
 ! to geocentric colatitude theta (radians)
@@ -239,19 +272,18 @@
   Myz(isource)=st*ct*sp*Mrr-st*ct*sp*Mtt &
       +(ct*ct-st*st)*sp*Mrt+ct*cp*Mrp-st*cp*Mtp
 
-
 ! record three components for each station
   do iorientation = 1,3
 
-!     North
+!   North
     if(iorientation == 1) then
       stazi = 0.d0
       stdip = 0.d0
-!     East
+!   East
     else if(iorientation == 2) then
       stazi = 90.d0
       stdip = 0.d0
-!     Vertical
+!   Vertical
     else if(iorientation == 3) then
       stazi = 0.d0
       stdip = - 90.d0
@@ -259,27 +291,25 @@
       call exit_MPI(myrank,'incorrect orientation')
     endif
 
-!     get the orientation of the seismometer
+!   get the orientation of the seismometer
     thetan=(90.0d0+stdip)*PI/180.0d0
     phin=stazi*PI/180.0d0
 
 ! we use the same convention as in Harvard normal modes for the orientation
 
-!     vertical component
+!   vertical component
     n(1) = dcos(thetan)
-!     N-S component
+!   N-S component
     n(2) = - dsin(thetan)*dcos(phin)
-!     E-W component
+!   E-W component
     n(3) = dsin(thetan)*dsin(phin)
 
-!     get the Cartesian components of n in the model: nu
-
+!   get the Cartesian components of n in the model: nu
     nu_source(iorientation,1,isource) = n(1)*st*cp+n(2)*ct*cp-n(3)*sp
     nu_source(iorientation,2,isource) = n(1)*st*sp+n(2)*ct*sp+n(3)*cp
     nu_source(iorientation,3,isource) = n(1)*ct-n(2)*st
 
   enddo
-
 
 ! normalized source radius
   r0 = R_UNIT_SPHERE
@@ -340,7 +370,7 @@
                     +(z_target_source - dble(zstore(iglob)))**2)
         if(dist < distmin) then
           distmin = dist
-          ispec_selected_source_sub(itsource) = ispec
+          ispec_selected_source_subset(isource_in_this_subset) = ispec
           ix_initial_guess_source = i
           iy_initial_guess_source = j
           iz_initial_guess_source = k
@@ -360,7 +390,7 @@
 ! if we have not located a target element, the source is not in this slice
 ! therefore use first element only for fictitious iterative search
   if(.not. located_target) then
-    ispec_selected_source_sub(itsource)=1
+    ispec_selected_source_subset(isource_in_this_subset)=1
     ix_initial_guess_source = 2
     iy_initial_guess_source = 2
     iz_initial_guess_source = 2
@@ -405,7 +435,7 @@
       call exit_MPI(myrank,'incorrect value of iaddr')
     endif
 
-    iglob = ibool(iax,iay,iaz,ispec_selected_source_sub(itsource))
+    iglob = ibool(iax,iay,iaz,ispec_selected_source_subset(isource_in_this_subset))
     xelm(ia) = dble(xstore(iglob))
     yelm(ia) = dble(ystore(iglob))
     zelm(ia) = dble(zstore(iglob))
@@ -416,8 +446,7 @@
   do iter_loop = 1,NUM_ITER
 
 ! recompute jacobian for the new point
-    call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+    call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
 ! compute distance to target location
   dx = - (x - x_target_source)
@@ -446,65 +475,68 @@
   enddo
 
 ! compute final coordinates of point found
-  call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+  call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
 ! store xi,eta,gamma and x,y,z of point found
-  xi_source_sub(itsource) = xi
-  eta_source_sub(itsource) = eta
-  gamma_source_sub(itsource) = gamma
-  x_found_source(itsource) = x
-  y_found_source(itsource) = y
-  z_found_source(itsource) = z
+  xi_source_subset(isource_in_this_subset) = xi
+  eta_source_subset(isource_in_this_subset) = eta
+  gamma_source_subset(isource_in_this_subset) = gamma
+  x_found_source(isource_in_this_subset) = x
+  y_found_source(isource_in_this_subset) = y
+  z_found_source(isource_in_this_subset) = z
 
 ! compute final distance between asked and found (converted to km)
-  final_distance_source_sub(itsource) = dsqrt((x_target_source-x_found_source(itsource))**2 + &
-    (y_target_source-y_found_source(itsource))**2 + (z_target_source-z_found_source(itsource))**2)*R_EARTH/1000.d0
+  final_distance_source_subset(isource_in_this_subset) = dsqrt((x_target_source-x_found_source(isource_in_this_subset))**2 + &
+    (y_target_source-y_found_source(isource_in_this_subset))**2 + (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
 
 ! end of loop on all the sources
   enddo
 
 ! now gather information from all the nodes
+! use -1 as a flag to detect if gather fails for some reason
   ispec_selected_source_all(:,:) = -1
-  call MPI_GATHER(ispec_selected_source_sub,NSOURCES_SUB,MPI_INTEGER, &
-                  ispec_selected_source_all,NSOURCES_SUB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(xi_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
-                  xi_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(eta_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
-                  eta_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(gamma_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
-                  gamma_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(final_distance_source_sub,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
-    final_distance_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(x_found_source,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
-    x_found_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(y_found_source,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
-    y_found_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(z_found_source,NSOURCES_SUB,MPI_DOUBLE_PRECISION, &
-    z_found_source_all,NSOURCES_SUB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(ispec_selected_source_subset,NSOURCES_SUBSET_current_size,MPI_INTEGER, &
+                  ispec_selected_source_all,NSOURCES_SUBSET_current_size,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(xi_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
+                  xi_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(eta_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
+                  eta_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(gamma_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
+                  gamma_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(final_distance_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
+    final_distance_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(x_found_source,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
+    x_found_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(y_found_source,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
+    y_found_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(z_found_source,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
+    z_found_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
 ! this is executed by main process only
   if(myrank == 0) then
 
 ! check that the gather operation went well
-  if(any(ispec_selected_source_all(:,:) == -1)) call exit_MPI(myrank,'gather operation failed for source')
+  if(minval(ispec_selected_source_all) <= 0) call exit_MPI(myrank,'gather operation failed for source')
 
-! loop on all the sources within chunk
-  do itsource = 1,min(NSOURCES_SUB,NSOURCES-isources_read)
-     isource = isources_read+itsource
+! loop on all the sources within subsets
+  do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
+
+! mapping from source number in current subset to real source number in all the subsets
+     isource = isources_already_done + isource_in_this_subset
+
 ! loop on all the results to determine the best slice
   distmin = HUGEVAL
   do iprocloop = 0,NPROCTOT-1
-    if(final_distance_source_all(itsource,iprocloop) < distmin) then
-      distmin = final_distance_source_all(itsource,iprocloop)
+    if(final_distance_source_all(isource_in_this_subset,iprocloop) < distmin) then
+      distmin = final_distance_source_all(isource_in_this_subset,iprocloop)
       islice_selected_source(isource) = iprocloop
-      ispec_selected_source(isource) = ispec_selected_source_all(itsource,iprocloop)
-      xi_source(isource) = xi_source_all(itsource,iprocloop)
-      eta_source(isource) = eta_source_all(itsource,iprocloop)
-      gamma_source(isource) = gamma_source_all(itsource,iprocloop)
-      x_found_source(itsource) = x_found_source_all(itsource,iprocloop)
-      y_found_source(itsource) = y_found_source_all(itsource,iprocloop)
-      z_found_source(itsource) = z_found_source_all(itsource,iprocloop)
+      ispec_selected_source(isource) = ispec_selected_source_all(isource_in_this_subset,iprocloop)
+      xi_source(isource) = xi_source_all(isource_in_this_subset,iprocloop)
+      eta_source(isource) = eta_source_all(isource_in_this_subset,iprocloop)
+      gamma_source(isource) = gamma_source_all(isource_in_this_subset,iprocloop)
+      x_found_source(isource_in_this_subset) = x_found_source_all(isource_in_this_subset,iprocloop)
+      y_found_source(isource_in_this_subset) = y_found_source_all(isource_in_this_subset,iprocloop)
+      z_found_source(isource_in_this_subset) = z_found_source_all(isource_in_this_subset,iprocloop)
     endif
   enddo
   final_distance_source(isource) = distmin
@@ -514,8 +546,8 @@
     write(IMAIN,*) ' locating source ',isource
     write(IMAIN,*) '*************************************'
     write(IMAIN,*)
-    write(IMAIN,*) 'source located in slice ',islice_selected_source(itsource)
-    write(IMAIN,*) '               in element ',ispec_selected_source(itsource)
+    write(IMAIN,*) 'source located in slice ',islice_selected_source(isource_in_this_subset)
+    write(IMAIN,*) '               in element ',ispec_selected_source(isource_in_this_subset)
     write(IMAIN,*)
     write(IMAIN,*) '   xi coordinate of source in that element: ',xi_source(isource)
     write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
@@ -533,12 +565,12 @@
     write(IMAIN,*) '    time shift: ',t_cmt(isource),' seconds'
 
 ! get latitude, longitude and depth of the source that will be used
-    call xyz_2_rthetaphi_dble(x_found_source(itsource),y_found_source(itsource),z_found_source(itsource), &
+    call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset),y_found_source(isource_in_this_subset),z_found_source(isource_in_this_subset), &
            r_found_source,theta_source(isource),phi_source(isource))
     call reduce(theta_source(isource),phi_source(isource))
 
 ! convert geocentric to geographic colatitude
-    colat_source=PI/2.0d0-datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
+    colat_source = PI/2.0d0-datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
     if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
     write(IMAIN,*)
@@ -628,11 +660,20 @@
 
   endif
 
-! end of loop on all the sources within source chunk
-  enddo
-  endif     ! end of section executed by main process only
-! end of loop over all source chunks
-  enddo
+  enddo ! end of loop on all the sources within current source subset
+
+  endif ! end of section executed by main process only
+
+! deallocate arrays specific to each subset
+  deallocate(final_distance_source_subset)
+  deallocate(ispec_selected_source_subset)
+  deallocate(ispec_selected_source_all)
+  deallocate(xi_source_all,eta_source_all,gamma_source_all,final_distance_source_all,x_found_source_all,y_found_source_all,z_found_source_all)
+  deallocate(xi_source_subset,eta_source_subset,gamma_source_subset)
+  deallocate(x_found_source,y_found_source,z_found_source)
+
+  enddo ! end of loop over all source subsets
+
 ! display maximum error in location estimate
   if(myrank == 0) then
     write(IMAIN,*)

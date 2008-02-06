@@ -132,8 +132,8 @@
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
-! number of sources to locate simultaneously
-  integer, parameter :: NSOURCES_SUB = 1000
+! maximum number of sources to locate simultaneously
+  integer, parameter :: NSOURCES_SUBSET_MAX = 1000
 
 ! distance threshold (in km) above which we consider that a receiver
 ! is located outside the mesh and therefore excluded from the station list

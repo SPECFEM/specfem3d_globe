@@ -154,7 +154,7 @@
 !      new doubling brick in the mesh, new perfectly load-balanced mesh,
 !      more flexible routines for mesh design, new inflated central cube
 !      with optimized shape, far fewer mesh files saved by the mesher,
-!      global arrays sorted to speed up the simulation, seismos can be 
+!      global arrays sorted to speed up the simulation, seismos can be
 !      written by the master
 ! v. 3.6 Many people, many affiliations, September 2006:
 !      adjoint and kernel calculations, fixed IASP91 model,
