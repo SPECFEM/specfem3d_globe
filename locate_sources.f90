@@ -487,7 +487,8 @@
 
 ! compute final distance between asked and found (converted to km)
   final_distance_source_subset(isource_in_this_subset) = dsqrt((x_target_source-x_found_source(isource_in_this_subset))**2 + &
-    (y_target_source-y_found_source(isource_in_this_subset))**2 + (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
+    (y_target_source-y_found_source(isource_in_this_subset))**2 + &
+    (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
 
 ! end of loop on all the sources
   enddo
@@ -565,8 +566,8 @@
     write(IMAIN,*) '    time shift: ',t_cmt(isource),' seconds'
 
 ! get latitude, longitude and depth of the source that will be used
-    call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset),y_found_source(isource_in_this_subset),z_found_source(isource_in_this_subset), &
-           r_found_source,theta_source(isource),phi_source(isource))
+    call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset),y_found_source(isource_in_this_subset), &
+           z_found_source(isource_in_this_subset),r_found_source,theta_source(isource),phi_source(isource))
     call reduce(theta_source(isource),phi_source(isource))
 
 ! convert geocentric to geographic colatitude
@@ -668,7 +669,8 @@
   deallocate(final_distance_source_subset)
   deallocate(ispec_selected_source_subset)
   deallocate(ispec_selected_source_all)
-  deallocate(xi_source_all,eta_source_all,gamma_source_all,final_distance_source_all,x_found_source_all,y_found_source_all,z_found_source_all)
+  deallocate(xi_source_all,eta_source_all,gamma_source_all,final_distance_source_all)
+  deallocate(x_found_source_all,y_found_source_all,z_found_source_all)
   deallocate(xi_source_subset,eta_source_subset,gamma_source_subset)
   deallocate(x_found_source,y_found_source,z_found_source)
 
