@@ -162,9 +162,8 @@
 
 ! **************
 
-! make sure we clean the arrays before the gather
+! make sure we clean the future final array
   ispec_selected_source(:) = 0
-  ispec_selected_source_subset(:) = 0
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -233,6 +232,9 @@
   allocate(x_found_source(NSOURCES_SUBSET_current_size))
   allocate(y_found_source(NSOURCES_SUBSET_current_size))
   allocate(z_found_source(NSOURCES_SUBSET_current_size))
+
+! make sure we clean the subset array before the gather
+  ispec_selected_source_subset(:) = 0
 
 ! loop over sources within this subset
   do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
