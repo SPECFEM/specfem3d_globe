@@ -363,9 +363,8 @@ character(len=1) movie_prefix
  end subroutine write_movie_volume_strains
 
 ! ---------------------------------------------
-!this routine has not been tested, and should be used with caution..
- subroutine write_movie_volume_vector(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
-                    MOVIE_VOLUME_COARSE,vector_crust_mantle,scalingval,it,mask_3dmovie,nu_3dmovie)
+ subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
+                    MOVIE_VOLUME_COARSE,vector_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
   implicit none
 
   include "constants.h"
@@ -373,9 +372,9 @@ character(len=1) movie_prefix
 
 ! input
 integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
-real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: vector_crust_mantle
+real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: vector_crust_mantle,vector_scaled
 real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
-real(kind=CUSTOM_REAL) :: scalingval
+double precision :: scalingval
 real(kind=CUSTOM_REAL), dimension(3) :: vector_local,vector_local_new
 logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
 logical :: MOVIE_VOLUME_COARSE
@@ -387,9 +386,14 @@ real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_N,store_val3d_E,s
 character(len=150) outputname
 character(len=1) movie_prefix
 
+
+allocate(store_val3d_N(npoints_3dmovie))
+allocate(store_val3d_E(npoints_3dmovie))
+allocate(store_val3d_Z(npoints_3dmovie))
+
  if(MOVIE_VOLUME_TYPE == 5) then
       movie_prefix='D' ! displacement
- else if(MOVIE_VOLUME_TYPE == 2) then
+ else if(MOVIE_VOLUME_TYPE == 6) then
       movie_prefix='V' ! velocity
  endif
  if(MOVIE_VOLUME_COARSE) then
@@ -397,6 +401,12 @@ character(len=1) movie_prefix
  else
    NIT = 1
  endif
+    if(CUSTOM_REAL == SIZE_REAL) then
+      vector_scaled = vector_crust_mantle*sngl(scalingval)
+    else
+      vector_scaled = vector_crust_mantle*scalingval
+    endif
+
     ipoints_3dmovie=0
     do ispec=1,NSPEC_CRUST_MANTLE
      do k=1,NGLLZ,NIT
@@ -404,7 +414,7 @@ character(len=1) movie_prefix
        do i=1,NGLLX,NIT
         if(mask_3dmovie(i,j,k,ispec)) then
          ipoints_3dmovie=ipoints_3dmovie+1
-         vector_local(:) = vector_crust_mantle(:,i,j,k,ispec)
+         vector_local(:) = vector_scaled(:,i,j,k,ispec)
 ! rotate eps_loc to spherical coordinates
          vector_local_new(:) = matmul(nu_3dmovie(:,:,ipoints_3dmovie), vector_local(:))
          store_val3d_N(ipoints_3dmovie)=vector_local_new(1)
@@ -420,21 +430,20 @@ character(len=1) movie_prefix
 
     write(outputname,"('proc',i6.6,'_movie3D_',a,'N',i6.6,'.bin')") myrank,movie_prefix,it
     open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_N(1:npoints_3dmovie)*scalingval
+    write(27) store_val3d_N(1:npoints_3dmovie)
     close(27)
 
     write(outputname,"('proc',i6.6,'_movie3D_',a,'E',i6.6,'.bin')") myrank,movie_prefix,it
     open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_E(1:npoints_3dmovie)*scalingval
+    write(27) store_val3d_E(1:npoints_3dmovie)
     close(27)
 
     write(outputname,"('proc',i6.6,'_movie3D_',a,'Z',i6.6,'.bin')") myrank,movie_prefix,it
     open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_Z(1:npoints_3dmovie)*scalingval
+    write(27) store_val3d_Z(1:npoints_3dmovie)
     close(27)
 
 
-  !this would be the ideal place to add a routine that outputs displacement/velocity or divergence and curl or something like that..
  end subroutine write_movie_volume_vector
 
 !--------------------

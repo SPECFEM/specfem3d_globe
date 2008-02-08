@@ -292,6 +292,7 @@
 ! to save movie volume
   integer :: npoints_3dmovie,nspecel_3dmovie
   integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
+  double precision :: scalingval
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: muvstore_crust_mantle_3dmovie
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
@@ -4866,6 +4867,17 @@
        call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
           div_displ_outer_core,eps_trace_over_3_inner_core,epsilondev_crust_mantle,&
           epsilondev_inner_core)
+
+   else if (MOVIE_VOLUME_TYPE == 5) then !output displacement
+            scalingval = scale_displ
+       call write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
+                MOVIE_VOLUME_COARSE,displ_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
+
+   else if (MOVIE_VOLUME_TYPE == 6) then !output velocity
+            scalingval = scale_veloc
+       call write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
+                MOVIE_VOLUME_COARSE,veloc_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
+
    else
 
       stop 'MOVIE_VOLUME_TYPE has to be 1,2,3,4'
