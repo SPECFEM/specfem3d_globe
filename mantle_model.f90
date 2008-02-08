@@ -78,7 +78,7 @@
   close(10)
 
 ! set up the splines used as radial basis functions by Ritsema
-  call splhsetup(D3MM_V)!!!!!!!!!!!!!!(spknt,qq0,qq)
+  call splhsetup(D3MM_V)
 
   end subroutine read_mantle_model
 
