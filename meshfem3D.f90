@@ -1021,14 +1021,16 @@
       call exit_MPI(myrank,'3D model not defined')
     endif
   endif
+
   if(ANISOTROPIC_3D_MANTLE) then
-! the variables read are declared and stored in module aniso_mantle_model_variables
+! the variables read are declared and stored in structure AMM_V
     if(myrank == 0) call read_aniso_mantle_model(AMM_V)
 ! broadcast the information read on the master to the nodes
     call MPI_BCAST(AMM_V%npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(AMM_V%beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(AMM_V%pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   endif
+
   if(CRUSTAL) then
     if(myrank == 0) call read_crustal_model(CM_V)
 ! broadcast the information read on the master to the nodes
@@ -1044,6 +1046,7 @@
     if(myrank == 0) call read_aniso_inner_core_model
 !   one should add an MPI_BCAST here if one adds a read_aniso_inner_core_model subroutine
   endif
+
   if(ATTENUATION .and. ATTENUATION_3D) then
     if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
@@ -1055,7 +1058,8 @@
     call MPI_BCAST(AM_V%Qtau_s(2),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%Qtau_s(3),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
   endif
-  if(ATTENUATION .AND. .NOT. ATTENUATION_3D) then
+
+  if(ATTENUATION .and. .not. ATTENUATION_3D) then
      if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
     call MPI_BCAST(AM_V%min_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)

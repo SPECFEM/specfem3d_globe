@@ -29,7 +29,7 @@
 ! based on software routines provided with the crust2.0 model by Bassin et al.
 !
 
-  subroutine crustal_model(xlat,xlon,x,vp,vs,rho,moho,found_crust,CM_V)
+  subroutine crustal_model(lat,lon,x,vp,vs,rho,moho,found_crust,CM_V)
 
   implicit none
   include "constants.h"
@@ -48,14 +48,14 @@
   type (crustal_model_variables) CM_V
 ! crustal_model_variables
 
-  double precision xlat,xlon,x,vp,vs,rho,moho
+  double precision lat,lon,x,vp,vs,rho,moho
   logical found_crust
 
   double precision h_sed,h_uc
   double precision x3,x4,x5,x6,x7,scaleval
   double precision vps(NLAYERS_CRUST),vss(NLAYERS_CRUST),rhos(NLAYERS_CRUST),thicks(NLAYERS_CRUST)
 
-  call crust(xlat,xlon,vps,vss,rhos,thicks,CM_V%abbreviation,CM_V%code,CM_V%thlr,CM_V%velocp,CM_V%velocs,CM_V%dens)
+  call crust(lat,lon,vps,vss,rhos,thicks,CM_V%abbreviation,CM_V%code,CM_V%thlr,CM_V%velocp,CM_V%velocs,CM_V%dens)
 
  x3 = (R_EARTH-thicks(3)*1000.0d0)/R_EARTH
  h_sed = thicks(3) + thicks(4)
