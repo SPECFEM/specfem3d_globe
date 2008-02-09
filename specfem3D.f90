@@ -274,7 +274,7 @@
 ! for matching with central cube in inner core
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
   integer, dimension(:,:), allocatable :: ibool_central_cube
-  double precision, dimension(:,:), allocatable :: buffer_slices
+  double precision, dimension(:,:), allocatable :: buffer_slices,buffer_slices2
   double precision, dimension(:,:,:), allocatable :: buffer_all_cube_from_slices
   integer nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,receiver_cube_from_slices
 
@@ -1996,8 +1996,7 @@
   endif ! nrec_local
 
 ! check that the sum of the number of receivers in each slice is nrec
-  call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0, &
-                          MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'found a total of ',nrec_tot_found,' receivers in all the slices'
@@ -2115,7 +2114,6 @@
 ! synchronize all the processes before assembling the mass matrix
 ! to make sure all the nodes have finished to read their databases
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
-    if(myrank==0) write(IMAIN,*) 'barrier done'
 
 ! the mass matrix needs to be assembled with MPI here once and for all
 
@@ -2148,7 +2146,7 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS)
-  if(myrank==0) write(IMAIN,*) 'assemble MPI scalar CM done'
+
 ! outer core
   call assemble_MPI_scalar(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2162,7 +2160,7 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS)
-  if(myrank==0) write(IMAIN,*) 'assemble MPI scalar OC done'
+
 ! inner core
   call assemble_MPI_scalar(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2201,6 +2199,7 @@
     allocate(sender_from_slices_to_cube(non_zero_nb_msgs_theor_in_cube))
     allocate(buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM))
     allocate(buffer_slices(npoin2D_cube_from_slices,NDIM))
+    allocate(buffer_slices2(npoin2D_cube_from_slices,NDIM))
     allocate(ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices))
 
 ! create buffers to assemble with the central cube
@@ -2213,7 +2212,8 @@
        nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
        ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
        nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
-       receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube,buffer_slices,buffer_all_cube_from_slices)
+       receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
+       buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
     if(myrank == 0) write(IMAIN,*) 'done including central cube'
 
@@ -2222,7 +2222,7 @@
 
 ! use these buffers to assemble the inner core mass matrix with the central cube
     call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-     npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, ibool_central_cube, &
+     npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
      receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
      ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,rmass_inner_core,ndim_assemble)
 
@@ -2679,12 +2679,11 @@
   endif
 
   if (SAVE_STRAIN) then
-    if(myrank == 0) write(IMAIN,*) 'save_strain, = .true.'
     eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
     eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
     epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-    if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
+    if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
       Iepsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
       Ieps_trace_over_3_crust_mantle(:,:,:,:)=0._CUSTOM_REAL
     endif
@@ -4136,7 +4135,7 @@
   if(INCLUDE_CENTRAL_CUBE) then
 
    call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-     npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, ibool_central_cube, &
+     npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
      receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
      ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,accel_inner_core,NDIM)
 
@@ -4185,7 +4184,7 @@
   if(INCLUDE_CENTRAL_CUBE) then
 
    call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-     npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, ibool_central_cube, &
+     npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
      receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
      ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,b_accel_inner_core,NDIM)
 
@@ -4449,7 +4448,7 @@
             SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
       if(myrank==0) then
         write(IMAIN,*)
-        write(IMAIN,*) ' Total number of time steps written: ', it-it_begin
+        write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
         write(IMAIN,*)
       endif
     else

@@ -24,16 +24,16 @@
 !
 !=====================================================================
 
-! write seismograms to text files
-subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
-              station_name,network_name,stlat,stlon,stele,nrec,nrec_local, &
-              DT,hdur,it_end, &
-              yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename, &
-              cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
-              NPROCTOT,OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-              seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER,&
-              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+! write seismograms to files
+  subroutine write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+            network_name,stlat,stlon,stele,nrec,nrec_local,DT,hdur,it_end, &
+            yr,jda,ho,mi,sec,t_cmt, &
+            elat,elon,depth,mb,ename,cmt_lat,cmt_lon, &
+            cmt_depth,cmt_hdur,NSOURCES,NPROCTOT, &
+            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+            OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+            seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER,&
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
 
  implicit none
 
@@ -64,7 +64,7 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
  character(12) ename
 
 ! variables
- integer :: iproc,sender,irec_local,irec,ier,receiver,nrec_local_received
+ integer :: iproc,sender,irec_local,irec,ier,receiver,nrec_local_received,nrec_tot_found
  integer :: total_seismos,total_seismos_local
  double precision :: write_time_begin,write_time
 
@@ -88,13 +88,18 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
   logical SAVE_ALL_SEISMOS_IN_ONE_FILE
   logical USE_BINARY_FOR_LARGE_FILE
 
-  ! get the base pathname for output files
+! check that the sum of the number of receivers in each slice is nrec
+  call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  if(myrank == 0 .and. nrec_tot_found /= nrec) &
+      call exit_MPI(myrank,'total number of receivers is incorrect')
+
+! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
-! now we let all processes do the writing of seismograms
+! all the processes write their local seismograms themselves
  if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 
-   write_time_begin= MPI_WTIME()
+   write_time_begin = MPI_WTIME()
 
    if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
         write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
@@ -116,45 +121,46 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
       endif
    endif
 
-
    total_seismos_local = 0
 
-  ! loop on all the local receivers
+! loop on all the local receivers
    do irec_local = 1,nrec_local
 
-   ! get global number of that receiver
+! get global number of that receiver
    irec = number_receiver_global(irec_local)
 
    total_seismos_local = total_seismos_local + 1
 
-   one_seismogram=seismograms(:,irec_local,:)
+   one_seismogram = seismograms(:,irec_local,:)
 
-         ! write this seismogram
-         call write_one_seismogram(one_seismogram,irec, &
-                                   station_name,network_name,stlat,stlon,stele,nrec, &
-                                   DT,hdur,it_end, &
-                                   yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat, &
-                                   cmt_lon,cmt_depth,cmt_hdur,NSOURCES,OUTPUT_FILES, &
-                                   OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
-                                   OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
-                                   NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
-                                   SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
+! write this seismogram
+   call write_one_seismogram(one_seismogram,irec, &
+                             station_name,network_name,stlat,stlon,stele,nrec, &
+                             DT,hdur,it_end, &
+                             yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat, &
+                             cmt_lon,cmt_depth,cmt_hdur,NSOURCES,OUTPUT_FILES, &
+                             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+                             OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
+                             NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
+                             SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
 
    enddo
 
    if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
-   write_time  = MPI_WTIME() - write_time_begin
+   write_time = MPI_WTIME() - write_time_begin
 
-   if(myrank==0) write(IMAIN,*)
-   if(myrank==0) write(IMAIN,*) ' Writing the seismograms in parallel took ', write_time, ' seconds'
-   if(myrank==0) write(IMAIN,*)
+   if(myrank == 0) then
+     write(IMAIN,*)
+     write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
+     write(IMAIN,*)
+   endif
 
 ! now only the master process does the writing of seismograms and
 ! collects the data from all other processes
  else ! WRITE_SEISMOGRAMS_BY_MASTER
 
-    write_time_begin= MPI_WTIME()
+    write_time_begin = MPI_WTIME()
 
     if(myrank == 0) then ! on the master, gather all the seismograms
 
@@ -246,9 +252,11 @@ subroutine write_seismograms(myrank,seismograms,number_receiver_global, &
 
     write_time  = MPI_WTIME() - write_time_begin
 
-    if(myrank==0) write(IMAIN,*)
-    if(myrank==0) write(IMAIN,*) ' Writing the seismograms by master proc alone took ', write_time, ' seconds'
-    if(myrank==0) write(IMAIN,*)
+    if(myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'Writing the seismograms by master proc alone took ',write_time,' seconds'
+      write(IMAIN,*)
+    endif
 
  endif ! WRITE_SEISMOGRAMS_BY_MASTER
 
@@ -291,7 +299,7 @@ end subroutine write_seismograms
   character(len=150) sisname,sisname_big_file
   character(len=150) OUTPUT_FILES
 
-! BS BS begin section added for SAC
+! section added for SAC
   integer NSOURCES
 
   double precision t_cmt,elat,elon,depth
@@ -348,9 +356,9 @@ end subroutine write_seismograms
   real undef    ! undefined values
   real INTERNAL ! SAC internal variables, always leave undefined
   real BYSAC
-! end BS BS SAC header variables
+! end SAC header variables
 
-! new flags to decide on seismogram type BS BS 06/2007
+! flags to determine seismogram type
   logical OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
           OUTPUT_SEISMOS_SAC_BINARY
 ! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
@@ -361,7 +369,7 @@ end subroutine write_seismograms
   logical SAVE_ALL_SEISMOS_IN_ONE_FILE
   logical USE_BINARY_FOR_LARGE_FILE
 
-! BS BS new variables used for calculation of backazimuth and
+! variables used for calculation of backazimuth and
 ! rotation of components if ROTATE_SEISMOGRAMS=.true.
 
   integer ior_start,ior_end
@@ -369,7 +377,7 @@ end subroutine write_seismograms
   real(kind=CUSTOM_REAL) phi,cphi,sphi
 !----------------------------------------------------------------
 
-  if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T LMU BS BS begin
+  if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T
      ior_start=3    ! starting from Z
      ior_end  =5    ! ending with T => ZRT
   else

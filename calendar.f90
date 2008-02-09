@@ -638,8 +638,8 @@
       leap = 1
    endif
    if ((ioptn > 0)               .and. &
-         ((jyear/100)*100 == jyear) .and. &
-         ((jyear/400)*400 /= jyear)      ) then
+      ((jyear/100)*100 == jyear) .and. &
+      ((jyear/400)*400 /= jyear)      ) then
          leap = 0
    endif
 !
