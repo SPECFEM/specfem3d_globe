@@ -990,12 +990,16 @@
   call close_parameter_file
 !--- check that parameters make sense
 
-  if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0))&
-  stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
+  if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0)) &
+    stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
 
 ! subsets used to save seismograms must not be larger than the whole time series,
 ! otherwise we waste memory
-  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) then
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+    if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0)) &
+      stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then modified NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5'
+  endif
 
 ! check that reals are either 4 or 8 bytes
   if(CUSTOM_REAL /= SIZE_REAL .and. CUSTOM_REAL /= SIZE_DOUBLE) stop 'wrong size of CUSTOM_REAL for reals'
