@@ -982,6 +982,7 @@
   if(ISOTROPIC_3D_MANTLE) then
     if(THREE_D_MODEL /= 0) call read_smooth_moho
     if(THREE_D_MODEL == THREE_D_MODEL_S20RTS) then
+! the variables read are declared and stored in structure D3MM_V
       if(myrank == 0) call read_mantle_model(D3MM_V)
 ! broadcast the information read on the master to the nodes
       call MPI_BCAST(D3MM_V%dvs_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -1033,6 +1034,7 @@
   endif
 
   if(CRUSTAL) then
+! the variables read are declared and stored in structure CM_V
     if(myrank == 0) call read_crustal_model(CM_V)
 ! broadcast the information read on the master to the nodes
     call MPI_BCAST(CM_V%thlr,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
