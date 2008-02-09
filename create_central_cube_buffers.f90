@@ -36,7 +36,8 @@
        nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
        ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
        nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
-       receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube,buffer_slices,buffer_all_cube_from_slices)
+       receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
+       buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
   implicit none
 
@@ -73,7 +74,7 @@
 
   integer, dimension(non_zero_nb_msgs_theor_in_cube), intent(out) :: sender_from_slices_to_cube
   integer, dimension(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices), intent(out) :: ibool_central_cube
-  double precision, dimension(npoin2D_cube_from_slices,NDIM), intent(out) :: buffer_slices
+  double precision, dimension(npoin2D_cube_from_slices,NDIM), intent(out) :: buffer_slices,buffer_slices2
   double precision, dimension(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), intent(out) :: &
         buffer_all_cube_from_slices
 
@@ -290,9 +291,13 @@
     if (ipoin /= npoin2D_cube_from_slices) call exit_MPI("wrong number of points found for bottom CC AB or !AB")
 
     sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
+
     call MPI_SENDRECV(buffer_slices,NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
-        itag,buffer_all_cube_from_slices(nb_msgs_theor_in_cube,:,:),NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
+        itag,buffer_slices2,NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
         itag,MPI_COMM_WORLD,msg_status,ier)
+
+    buffer_all_cube_from_slices(nb_msgs_theor_in_cube,:,:) = buffer_slices2(:,:)
+
   endif
 
 !--- now we need to find the points received and create indirect addressing

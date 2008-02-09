@@ -25,7 +25,7 @@
 !=====================================================================
 
 subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-  npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, ibool_central_cube, &
+  npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
   receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
   ibelm_bottom_inner_core, NSPEC2D_BOTTOM_INNER_CORE,NGLOB_INNER_CORE,vector_assemble,ndim_assemble)
 
@@ -38,7 +38,7 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
 ! for matching with central cube in inner core
   integer ichunk, nb_msgs_theor_in_cube, npoin2D_cube_from_slices
   integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
-  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices
+  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices,buffer_slices2
   double precision, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM) :: buffer_all_cube_from_slices
   integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
   integer receiver_cube_from_slices
@@ -130,12 +130,14 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
     enddo
 
     sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
+
     call MPI_SENDRECV(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
-        itag,buffer_all_cube_from_slices(nb_msgs_theor_in_cube,:,1:ndim_assemble),ndim_assemble*npoin2D_cube_from_slices,&
+        itag,buffer_slices2,ndim_assemble*npoin2D_cube_from_slices,&
         MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,msg_status,ier)
 
-  endif
+   buffer_all_cube_from_slices(nb_msgs_theor_in_cube,:,1:ndim_assemble) = buffer_slices2(:,1:ndim_assemble)
 
+  endif
 
 !--- now we need to assemble the contributions
 

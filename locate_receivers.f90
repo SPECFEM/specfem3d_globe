@@ -353,15 +353,31 @@
     open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS',status='unknown')
     nsamp = nint(dble(NSTEP-1)*DT)
     do irec = 1,nrec
-      write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-        station_name(irec),'LHN',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-        0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-      write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-        station_name(irec),'LHE',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-        90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-      write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-        station_name(irec),'LHZ',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-        0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
+
+      if(stele(irec) >= -999.9999) then
+        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
+          station_name(irec),'LHN',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
+          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
+          station_name(irec),'LHE',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
+          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
+          station_name(irec),'LHZ',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
+          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
+      else
+! very deep ocean-bottom stations such as H2O are not compatible
+! with the standard RECORDHEADERS format because of the f6.1 format
+! therefore suppress decimals for depth in that case
+        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
+          station_name(irec),'LHN',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
+          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
+          station_name(irec),'LHE',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
+          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
+          station_name(irec),'LHZ',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
+          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
+      endif
     enddo
     close(1)
 
