@@ -4,7 +4,17 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 
 Things that could be done in a future version 4.1:
 
-- will be done by Caltech (would be useful in the 2D version of the code as well):
+- Cuthill-McKee sorting to reduce cache misses
+
+- maybe partial ALTIVEC support (if useful)
+
+- use a potential of (rho * u) instead of u in the fluid, in case of
+  fluid-fluid discontinuities
+
+- compatible with helioseismology / general Cowling formulation (will be done
+  with Tarje Nissen-Meyer)
+
+- symplectic time scheme (will be done by Tarje Nissen-Meyer and/or Jean-Paul Ampuero) (would be useful in the 2D version of the code as well):
 Hi Jeroen, Perfect. I think talking to Jean-Paul Ampuero would be useful
 as well because in Utrecht last year he had told us that
 he had implemented some nice 4th-order symplectic schemes
@@ -26,6 +36,14 @@ Jeroen Tromp wrote:
 >> Dimitri.
 
 - could be done by Vala:
+we could use heuristic rules to make source and receiver detection much
+faster and make these routines use far less memory. For instance using the
+latitude, longitude and depth of each source or receiver we can quickly
+determine if there is no chance for this source or receiver
+to be located in the current slice; then that processor would immediately
+switch to the next source or receiver; this could speedup the whole process by
+a factor of 10 to 100 I guess when many sources are used (e.g. Vala uses
+50,000) and/or many stations (Bernhard uses 20,000). We would
 get rid of the bottleneck in locate_sources and locate_receivers
 when one uses a huge number of sources (e.g. Vala -> 100000 sources)
 or a very large number of stations (e.g. Bernhard -> 20000 stations):
@@ -119,8 +137,6 @@ Things to do later:
 -------------------
 
 - afficher le modele PREM,les courbes de nombre de points par longueur d'onde et de stabilite et les worst elements (stability et nb pts per lambda) en OpenDX en serial sur le maitre dans le nouveau mesher, en copiant/collant ce qu'il faut depuis display_prem_sampling_doubling.f90 sur le master seulement (rank == 0)
-
-- Re: revision of shortest period estimates?  08/05/2007 14:51 Hi Jeroen, Yes, we need to check that. The code in UTILS/doubling_brick automatically computes the minimum period for 4 points per wavelength for each classical NEX, therefore we can just cut and paste the result in the manual. If we want 5 points per wavelength we can multiply the periods by 5/4. However we need to doublecheck because I don't remember if my code uses 4 points or 4 intervals (i.e. 5 points), therefore the current values are maybe already fine (if I used 4 intervals). I will doublecheck.  In any case, the sampling curves I sent you for v3.6 and v4.0 are valid anyway (they are computed using non-dimensional values, and then multiplied by 4, and would therefore be identical if I decided to multiply by 5 instead).  Dimitri.  Jeroen Tromp wrote: > Hi Dimitri: > If we are shooting for a minimum of 5 grid points per shortest wavelength, > perhaps we should increase our estimate of an accuracy at periods of 18 s > and longer for an NEX=240 run by 20% to 22 s? And perhaps NEX=320 is > accurate down to periods of 15 s rather than 12 s?
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
