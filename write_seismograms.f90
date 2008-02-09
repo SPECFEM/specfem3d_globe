@@ -68,8 +68,10 @@
  integer :: total_seismos,total_seismos_local
  double precision :: write_time_begin,write_time
 
- real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
+ real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram
+
  integer msg_status(MPI_STATUS_SIZE)
+
  character(len=150) OUTPUT_FILES
 
 ! new flags to decide on seismogram type BS BS 06/2007
@@ -87,6 +89,8 @@
 ! to avoid overloading shared non-local file systems such as GPFS for instance
   logical SAVE_ALL_SEISMOS_IN_ONE_FILE
   logical USE_BINARY_FOR_LARGE_FILE
+
+  allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS))
 
 ! check that the sum of the number of receivers in each slice is nrec
   call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
@@ -260,10 +264,15 @@
 
  endif ! WRITE_SEISMOGRAMS_BY_MASTER
 
-end subroutine write_seismograms
+  deallocate(one_seismogram)
 
+  end subroutine write_seismograms
 
- subroutine write_one_seismogram(one_seismogram,irec, &
+!
+!----
+!
+
+  subroutine write_one_seismogram(one_seismogram,irec, &
               station_name,network_name,stlat,stlon,stele,nrec, &
               DT,hdur,it_end, &
               yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
