@@ -14,7 +14,7 @@ CENTER_LONGITUDE_IN_DEGREES   = 10.d0
 GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
-# (must be multiple of 32 and 16 * multiple of NPROC below)
+# (must be multiple of 16 and 8 * multiple of NPROC below)
 NEX_XI                          = 96 
 NEX_ETA                         = 96
 
