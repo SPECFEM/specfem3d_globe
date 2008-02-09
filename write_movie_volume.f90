@@ -384,7 +384,7 @@ character(len=150) LOCAL_PATH
 integer :: ipoints_3dmovie,i,j,k,ispec,NIT
 real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_N,store_val3d_E,store_val3d_Z
 character(len=150) outputname
-character(len=1) movie_prefix
+character(len=2) movie_prefix
 
 
 allocate(store_val3d_N(npoints_3dmovie))
@@ -392,9 +392,9 @@ allocate(store_val3d_E(npoints_3dmovie))
 allocate(store_val3d_Z(npoints_3dmovie))
 
  if(MOVIE_VOLUME_TYPE == 5) then
-      movie_prefix='D' ! displacement
+      movie_prefix='DI' ! displacement
  else if(MOVIE_VOLUME_TYPE == 6) then
-      movie_prefix='V' ! velocity
+      movie_prefix='VE' ! velocity
  endif
  if(MOVIE_VOLUME_COARSE) then
    NIT = NGLLX-1
