@@ -80,9 +80,9 @@
 ! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
   logical ROTATE_SEISMOGRAMS_RT
 
-! flag to decide whether seismograms are written by master proc only or
+! flag to decide if seismograms are written by master proc only or
 ! by all processes in parallel (doing the later may create problems on some
-! file systems). Added November 12th, 2007 BS BS
+! file systems)
   logical WRITE_SEISMOGRAMS_BY_MASTER
 
 ! save all seismograms in one large combined file instead of one file per seismogram
@@ -90,7 +90,8 @@
   logical SAVE_ALL_SEISMOS_IN_ONE_FILE
   logical USE_BINARY_FOR_LARGE_FILE
 
-  allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS))
+  allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+  if(ier /= 0) stop 'error while allocating one temporary seismogram'
 
 ! check that the sum of the number of receivers in each slice is nrec
   call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
