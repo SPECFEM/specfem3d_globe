@@ -2430,9 +2430,11 @@
 ! allocate seismogram array
   if (nrec_local > 0) then
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-      allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS))
+      allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      if(ier /= 0) stop 'error while allocating seismograms'
     else
-      allocate(seismograms(9,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS))
+      allocate(seismograms(9,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      if(ier /= 0) stop 'error while allocating seismograms'
     endif
 ! initialize seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
