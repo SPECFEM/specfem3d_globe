@@ -96,8 +96,8 @@ OUTPUT_SEISMOS_SAC_BINARY       = .false.
 # rotate seismograms to Radial-Transverse-Z or use default North-East-Z reference frame
 ROTATE_SEISMOGRAMS_RT           = .false.
 
-# decide wheter master process writes all the seismograms or if all processes do it in parallel
-WRITE_SEISMOGRAMS_BY_MASTER     = .false.
+# decide if master process writes all the seismograms or if all processes do it in parallel
+WRITE_SEISMOGRAMS_BY_MASTER     = .true.
 
 # save all seismograms in one large combined file instead of one file per seismogram
 # to avoid overloading shared non-local file systems such as GPFS for instance
