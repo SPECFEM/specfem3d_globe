@@ -29,6 +29,10 @@ NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -d = -f 2`
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
+#rm -r -f OUTPUT_FILES/*
+
 echo "Submitting job"
-bsub $queue -n $numnodes -W 600 -K < go_mesher_solver_lsf_globe.bash
+
+# time below is given in hh:mm
+bsub $queue -n $numnodes -W 48:00 < go_mesher_solver_lsf_globe.bash
 
