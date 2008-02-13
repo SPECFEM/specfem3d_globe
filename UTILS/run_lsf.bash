@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # this is the launch script to run a regular forward simulation
-# on CITerra with the LSF scheduler
-#  Qinya Liu, Caltech, May 2007
+# on CITerra at Caltech with the LSF scheduler
+# Qinya Liu, Caltech, May 2007
 
 # use the normal queue unless otherwise directed
 queue="-q normal"
@@ -22,14 +22,13 @@ d=`date`
 echo "Finished compilation $d"
 
 # compute total number of nodes needed
-NPROC_XI=`grep NPROC_XI DATA/Par_file | cut -d = -f 2 `
+NPROC_XI=`grep NPROC_XI DATA/Par_file | cut -d = -f 2`
 NPROC_ETA=`grep NPROC_ETA DATA/Par_file | cut -d = -f 2`
 NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -d = -f 2`
-
 
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
 echo "Submitting job"
-bsub $queue -n $numnodes -W 600 -K < UTILS/go_mesher_solver_lsf_globe.bash
+bsub $queue -n $numnodes -W 600 -K < go_mesher_solver_lsf_globe.bash
 

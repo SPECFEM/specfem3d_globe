@@ -26,5 +26,4 @@ cd $OUTDIR
 cp ../DATA/CMTSOLUTION .
 cp ../DATA/STATIONS .
 cp ../DATA/Par_file .
-collect_seismos < ../collect_seismos.in
 
