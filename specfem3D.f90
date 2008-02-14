@@ -5,8 +5,9 @@
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                 and University of Pau / CNRS, France
-! (c) California Institute of Technology and University of Pau / CNRS, November 2007
+!             and University of Pau / CNRS / INRIA, France
+! (c) California Institute of Technology and University of Pau / CNRS / INRIA
+!                            February 2008
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -150,7 +151,7 @@
 ! Evolution of the code:
 ! ---------------------
 !
-! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, November 2007:
+! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
 !      new doubling brick in the mesh, new perfectly load-balanced mesh,
 !      more flexible routines for mesh design, one more doubling level
 !      at the bottom of the outer core, new inflated central cube
