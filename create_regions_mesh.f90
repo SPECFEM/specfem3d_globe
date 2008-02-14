@@ -600,7 +600,6 @@
   iaddy(:) = iaddy(:) / 2
   iaddz(:) = iaddz(:) / 2
 
-! DM DM : ugly, should raise these parameters from read_compute_parameters()
   if (ONE_CRUST) then
     NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
     layer_shift = 0
@@ -608,11 +607,8 @@
     NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
     layer_shift = 1
   endif
-  if (.not. ADD_4TH_DOUBLING) then
-    NUMBER_OF_MESH_LAYERS = NUMBER_OF_MESH_LAYERS - 1
-  endif
-! DM DM
 
+  if (.not. ADD_4TH_DOUBLING) NUMBER_OF_MESH_LAYERS = NUMBER_OF_MESH_LAYERS - 1
 
 ! define the first and last layers that define this region
   if(iregion_code == IREGION_CRUST_MANTLE) then
