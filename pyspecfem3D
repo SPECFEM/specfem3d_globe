@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+
+
+from pyre.applications import Script
+from os.path import dirname, exists, isdir, join
+import os, sys, shutil
+
+
+SPECFEM3D_GLOBE = dirname(__file__)
+
+
+class Specfem3DGlobe(Script):
+
+
+    name = "Specfem3DGlobe"
+
+
+    import pyre.inventory
+    import pyre.schedulers
+    import pyre.launchers
+    
+    parFile        = pyre.inventory.str("par-file")
+    cmtSolution    = pyre.inventory.str("cmt-solution")
+    stations       = pyre.inventory.str("stations")
+
+    scratchDir     = pyre.inventory.str("scratch-dir", default="/scratch")
+
+    nodes          = pyre.inventory.int("nodes", default=1)
+    scheduler      = pyre.schedulers.scheduler("scheduler", default="none")
+    job            = pyre.schedulers.job("job")
+    launchCommand  = pyre.inventory.str("launch-command", default="mpirun -np %(nodes)s")
+    context        = pyre.inventory.str(
+        name="context", default="login", validator=pyre.inventory.choice(["login", "launcher", "compute"]))
+
+
+    def main(self, *args, **kwds):
+        context = self.context
+        if context == "login":
+            self.onLoginNode(*args, **kwds)
+        elif context == "launcher":
+            self.onLauncherNode(*args, **kwds)
+        elif context == "compute":
+            self.onComputeNodes(*args, **kwds)
+        return
+
+
+    def onLoginNode(self, *args, **kwds):
+
+        self.prepareFiles()
+        
+        argv = self.getArgv(*args, **kwds)
+        
+        # initialize the job
+        job = self.job
+        job.nodes = self.nodes
+        job.executable = sys.executable
+        job.arguments = [__file__] + argv + ["--context=launcher", "--nodes=%d" % self.nodes]
+
+        # schedule
+        self.scheduler.schedule(job)
+        
+        return
+
+
+    def onLauncherNode(self, *args, **kwds):
+        
+        launchCommand = self.launchCommand % {'nodes': self.nodes}
+        launchCommand = launchCommand.split()
+
+        # launch the mesher
+        argv = launchCommand + [join(SPECFEM3D_GLOBE, "xmeshfem3D")]
+        status = os.spawnvp(os.P_WAIT, argv[0], argv)
+        if status != 0:
+            sys.exit("%s: exit %d" % (argv[0], status))
+
+        # launch the solver
+        argv = launchCommand + [join(SPECFEM3D_GLOBE, "xspecfem3D")]
+        status = os.spawnvp(os.P_WAIT, argv[0], argv)
+        if status != 0:
+            sys.exit("%s: exit %d" % (argv[0], status))
+
+        return
+
+
+    def onComputeNodes(self, *args, **kwds):
+        assert False, "not reached"
+
+
+    def prepareFiles(self):
+        
+        if not isdir("DATA"):
+            os.mkdir("DATA")
+        if not isdir("OUTPUT_FILES"):
+            os.mkdir("OUTPUT_FILES")
+        
+        self.readAndCopyParFile()
+
+        shutil.copyfile(self.cmtSolution, "DATA/CMTSOLUTION")
+        shutil.copyfile(self.stations, "DATA/STATIONS")
+
+        dataSrc = join(SPECFEM3D_GLOBE, "DATA")
+        for name in os.listdir(dataSrc):
+            src = join(dataSrc, name)
+            dest = join("DATA", name)
+            if exists(dest):
+                continue
+            os.symlink(src, dest)
+        
+        return
+
+
+    def readAndCopyParFile(self):
+        s = open(self.parFile, "r")
+        d = open("DATA/Par_file", "w")
+        for line in s:
+            tokens = line.split()
+            if len(tokens) >= 3:
+                var = tokens[0]
+                if var == "NCHUNKS":
+                    NCHUNKS = int(tokens[2])
+                elif var == "NPROC_XI":
+                    NPROC_XI = int(tokens[2])
+                elif var == "NPROC_ETA":
+                    NPROC_ETA = int(tokens[2])
+                elif var == "LOCAL_PATH":
+                    print >>d, "LOCAL_PATH =", self.scratchDir
+                    continue
+            print >>d, line,
+        self.nodes = NCHUNKS * NPROC_XI * NPROC_ETA
+        return
+
+
+if __name__ == "__main__":
+    script = Specfem3DGlobe()
+    script.run()
+
+
+# end of file
