@@ -27,7 +27,7 @@
 !
 ! United States Government Sponsorship Acknowledged.
 
-  subroutine meshfem3D
+  program xmeshfem3D
 
   implicit none
 
@@ -504,6 +504,9 @@
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
 
 ! ************** PROGRAM STARTS HERE **************
+
+! initialize the MPI communicator and start the NPROCTOT MPI processes.
+  call MPI_INIT(ier)
 
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
 ! myrank is the rank of each process, between 0 and NPROCTOT-1.
@@ -1399,5 +1402,8 @@
 ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
-  end subroutine meshfem3D
+! stop all the MPI processes, and exit
+  call MPI_FINALIZE(ier)
+
+  end program xmeshfem3D
 
