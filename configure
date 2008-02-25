@@ -2203,7 +2203,7 @@ FFLAGS="$FCFLAGS"
 
 
 
-flags_guess="$SHELL flags.guess"
+flags_guess="$SHELL $srcdir/flags.guess"
 { echo "$as_me:$LINENO: running $flags_guess" >&5
 echo "$as_me: running $flags_guess" >&6;}
 flags=`$flags_guess` ||

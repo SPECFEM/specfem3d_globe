@@ -28,7 +28,7 @@
 ! create file OUTPUT_FILES/values_from_mesher.h based upon DATA/Par_file
 ! in order to compile the solver with the right array sizes
 
-  subroutine create_header_file
+  program xcreate_header_file
 
   implicit none
 
@@ -234,5 +234,5 @@
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
   print *
 
-  end subroutine create_header_file
+  end program xcreate_header_file
 

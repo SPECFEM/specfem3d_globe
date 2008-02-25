@@ -27,7 +27,7 @@
 !
 ! United States Government Sponsorship Acknowledged.
 
-  subroutine specfem3D
+  program xspecfem3D
 
   implicit none
 
@@ -806,6 +806,9 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
 ! ************** PROGRAM STARTS HERE **************
+
+! initialize the MPI communicator and start the NPROCTOT MPI processes.
+  call MPI_INIT(ier)
 
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
 ! myrank is the rank of each process, between 0 and sizeprocs-1.
@@ -5113,5 +5116,8 @@
 ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
-  end subroutine specfem3D
+! stop all the MPI processes, and exit
+  call MPI_FINALIZE(ier)
+
+  end program xspecfem3D
 

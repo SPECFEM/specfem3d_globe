@@ -52,7 +52,7 @@ FFLAGS="$FCFLAGS"
 AC_PROVIDE([AC_PROG_F77])
 AC_SUBST([FCENV])
 
-flags_guess="$SHELL flags.guess"
+flags_guess="$SHELL $srcdir/flags.guess"
 AC_MSG_NOTICE([running $flags_guess])
 flags=`$flags_guess` ||
     AC_MSG_ERROR([$flags_guess failed])
