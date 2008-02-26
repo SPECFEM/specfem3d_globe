@@ -22,6 +22,7 @@ class Specfem3DGlobe(Script):
     parFile        = pyre.inventory.str("par-file")
     cmtSolution    = pyre.inventory.str("cmt-solution")
     stations       = pyre.inventory.str("stations")
+    configureArgs  = pyre.inventory.str("configure-args", default="FC=mpif90")
 
     scratchDir     = pyre.inventory.str("scratch-dir", default="/scratch")
 
@@ -45,20 +46,9 @@ class Specfem3DGlobe(Script):
 
 
     def onLoginNode(self, *args, **kwds):
-
         self.prepareFiles()
-        
-        argv = self.getArgv(*args, **kwds)
-        
-        # initialize the job
-        job = self.job
-        job.nodes = self.nodes
-        job.executable = sys.executable
-        job.arguments = [__file__] + argv + ["--context=launcher", "--nodes=%d" % self.nodes]
-
-        # schedule
-        self.scheduler.schedule(job)
-        
+        self.build()
+        self.schedule(*args, **kwds)
         return
 
 
@@ -67,14 +57,16 @@ class Specfem3DGlobe(Script):
         launchCommand = self.launchCommand % {'nodes': self.nodes}
         launchCommand = launchCommand.split()
 
+        wd = os.getcwd()
+
         # launch the mesher
-        argv = launchCommand + [join(SPECFEM3D_GLOBE, "xmeshfem3D")]
+        argv = launchCommand + [join(wd, "xmeshfem3D")]
         status = os.spawnvp(os.P_WAIT, argv[0], argv)
         if status != 0:
             sys.exit("%s: exit %d" % (argv[0], status))
 
         # launch the solver
-        argv = launchCommand + [join(SPECFEM3D_GLOBE, "xspecfem3D")]
+        argv = launchCommand + [join(wd, "xspecfem3D")]
         status = os.spawnvp(os.P_WAIT, argv[0], argv)
         if status != 0:
             sys.exit("%s: exit %d" % (argv[0], status))
@@ -88,10 +80,8 @@ class Specfem3DGlobe(Script):
 
     def prepareFiles(self):
         
-        if not isdir("DATA"):
-            os.mkdir("DATA")
-        if not isdir("OUTPUT_FILES"):
-            os.mkdir("OUTPUT_FILES")
+        self.mkdir("DATA")
+        self.mkdir("OUTPUT_FILES")
         
         self.readAndCopyParFile()
 
@@ -127,6 +117,49 @@ class Specfem3DGlobe(Script):
                     continue
             print >>d, line,
         self.nodes = NCHUNKS * NPROC_XI * NPROC_ETA
+        return
+
+
+    def build(self):
+        
+        # configure
+        configure = join(SPECFEM3D_GLOBE, "configure")
+        configureArgs = self.configureArgs.split()
+        argv = [configure] + configureArgs
+        print ' '.join(argv)
+        status = os.spawnvp(os.P_WAIT, argv[0], argv)
+        if status != 0:
+            sys.exit("%s: exit %d" % (argv[0], status))
+
+        # make
+        self.mkdir("obj")
+        argv = ['make']
+        print ' '.join(argv)
+        status = os.spawnvp(os.P_WAIT, argv[0], argv)
+        if status != 0:
+            sys.exit("%s: exit %d" % (argv[0], status))
+
+        return
+
+
+    def schedule(self, *args, **kwds):
+        argv = self.getArgv(*args, **kwds)
+        
+        # initialize the job
+        job = self.job
+        job.nodes = self.nodes
+        job.executable = sys.executable
+        job.arguments = [__file__] + argv + ["--context=launcher", "--nodes=%d" % self.nodes]
+
+        # schedule
+        self.scheduler.schedule(job)
+
+        return
+
+
+    def mkdir(self, name):
+        if not isdir(name):
+            os.mkdir(name)
         return
 
 
