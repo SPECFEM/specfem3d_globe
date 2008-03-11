@@ -5070,6 +5070,14 @@
 
 ! boundary kernel
     if (SAVE_BOUNDARY_MESH) then
+! scale the boundary kernels properly: *scale_kl gives s/km^3 and 1.d3 gives
+! the relative boundary kernels (for every 1 km) in s/km^2
+      moho_kl = moho_kl * scale_kl * 1.d3
+      d400_kl = d400_kl * scale_kl * 1.d3
+      d670_kl = d670_kl * scale_kl * 1.d3
+      cmb_kl = cmb_kl * scale_kl * 1.d3
+      icb_kl = icb_kl * scale_kl * 1.d3
+
       call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
       if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
       open(unit=27,file=trim(prname)//'moho_kernel.bin',status='unknown',form='unformatted')
