@@ -289,7 +289,7 @@
         enddo
       endif
     enddo
-    if (ipoin /= npoin2D_cube_from_slices) call exit_MPI("wrong number of points found for bottom CC AB or !AB")
+    if (ipoin /= npoin2D_cube_from_slices) call exit_MPI(myrank,'wrong number of points found for bottom CC AB or !AB')
 
     sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
 
