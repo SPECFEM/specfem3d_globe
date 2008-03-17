@@ -109,12 +109,16 @@ libspecfem_a_OBJECTS = \
 	$O/make_ellipticity.o \
 	$O/make_gravity.o \
 	$O/mantle_model.o \
+	$O/jp3d1994_model.o \
+	$O/sea99_s_model.o \
 	$O/memory_eval.o \
 	$O/model_1066a.o \
 	$O/model_ak135.o \
 	$O/model_iasp91.o \
 	$O/model_prem.o \
 	$O/model_ref.o \
+	$O/model_jp1d.o \
+	$O/model_sea1d.o \
 	$O/moho_stretching.o \
 	$O/spline_routines.o \
 	$O/netlib_specfun_erf.o \
@@ -428,6 +432,12 @@ $O/intgrl.o: constants.h $S/intgrl.f90
 $O/mantle_model.o: constants.h $S/mantle_model.f90
 	${FCCOMPILE_CHECK} -c -o $O/mantle_model.o ${FCFLAGS_f90} $S/mantle_model.f90
 
+$O/jp3d1994_model.o: constants.h $S/jp3d1994_model.f90
+	${FCCOMPILE_CHECK} -c -o $O/jp3d1994_model.o ${FCFLAGS_f90} $S/jp3d1994_model.f90
+
+$O/sea99_s_model.o: constants.h $S/sea99_s_model.f90
+	${FCCOMPILE_CHECK} -c -o $O/sea99_s_model.o ${FCFLAGS_f90} $S/sea99_s_model.f90
+
 $O/get_absorb.o: constants.h $S/get_absorb.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_absorb.o ${FCFLAGS_f90} $S/get_absorb.f90
 
@@ -461,6 +471,12 @@ $O/model_ak135.o: constants.h $S/model_ak135.f90
 
 $O/model_ref.o: constants.h $S/model_ref.f90
 	${FCCOMPILE_CHECK} -c -o $O/model_ref.o ${FCFLAGS_f90} $S/model_ref.f90
+
+$O/model_jp1d.o: constants.h $S/model_jp1d.f90
+	${FCCOMPILE_CHECK} -c -o $O/model_jp1d.o ${FCFLAGS_f90} $S/model_jp1d.f90
+
+$O/model_sea1d.o: constants.h $S/model_sea1d.f90
+	${FCCOMPILE_CHECK} -c -o $O/model_sea1d.o ${FCFLAGS_f90} $S/model_sea1d.f90
 
 $O/anisotropic_mantle_model.o: constants.h $S/anisotropic_mantle_model.f90
 	${FCCOMPILE_CHECK} -c -o $O/anisotropic_mantle_model.o ${FCFLAGS_f90} $S/anisotropic_mantle_model.f90

@@ -237,13 +237,19 @@
     ATTENUATION_3D = .false.
     HONOR_1D_SPHERICAL_MOHO = .true.
 
-  else if(MODEL == '1D_iasp91' .or. MODEL == '1D_1066a' .or. MODEL == '1D_ak135') then
+  else if(MODEL == '1D_iasp91' .or. MODEL == '1D_1066a' .or. &
+          MODEL == '1D_ak135' .or. MODEL == '1D_jp3d' .or. &
+          MODEL == '1D_sea99') then
     if(MODEL == '1D_iasp91') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
     else if(MODEL == '1D_1066a') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
     else if(MODEL == '1D_ak135') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135
+   else if(MODEL == '1D_jp3d') then
+      REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
+   else if(MODEL == '1D_sea99') then
+      REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     else
       stop 'reference 1D Earth model unknown'
     endif
@@ -335,6 +341,43 @@
     CASE_3D = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
     THREE_D_MODEL = THREE_D_MODEL_S20RTS
+
+  else if(MODEL == 'sea99_jp3d1994') then
+    TRANSVERSE_ISOTROPY = .false.
+    ISOTROPIC_3D_MANTLE = .true.
+    ANISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_INNER_CORE = .false.
+    CRUSTAL = .true.
+    ATTENUATION_3D = .false.
+    ONE_CRUST = .true.
+    CASE_3D = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
+    THREE_D_MODEL = THREE_D_MODEL_SEA99_JP3D
+
+  else if(MODEL == 'sea99') then
+    TRANSVERSE_ISOTROPY = .false.
+    ISOTROPIC_3D_MANTLE = .true.
+    ANISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_INNER_CORE = .false.
+    CRUSTAL = .true.
+    ATTENUATION_3D = .false.
+    ONE_CRUST = .true.
+    CASE_3D = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
+    THREE_D_MODEL = THREE_D_MODEL_SEA99
+
+
+  else if(MODEL == 'jp3d1994') then
+    TRANSVERSE_ISOTROPY = .false.
+    ISOTROPIC_3D_MANTLE = .true.
+    ANISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_INNER_CORE = .false.
+    CRUSTAL = .true.
+    ATTENUATION_3D = .false.
+    ONE_CRUST = .true.
+    CASE_3D = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
+    THREE_D_MODEL = THREE_D_MODEL_JP3D
 
   else if(MODEL == 's362ani') then
     TRANSVERSE_ISOTROPY = .true.
@@ -874,6 +917,47 @@
     RHO_TOP_OC = 9903.48 / RHOAV
     RHO_BOTTOM_OC = 12166.35 / RHOAV
 
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
+
+! values below corrected by Min Chen <mchen@gps.caltech.edu>
+
+! jp1d
+    ROCEAN = 6371000.d0
+    RMIDDLE_CRUST = 6359000.d0
+    RMOHO = 6345000.d0
+    R80 = 6291000.d0
+    R220 = 6161000.d0
+    R400 = 5949000.d0
+    R600 = 5781000.d0
+    R670 = 5711000.d0
+    R771 = 5611000.d0
+    RTOPDDOUBLEPRIME = 3631000.d0
+    RCMB = 3482000.d0
+    RICB = 1217000.d0
+    RHO_TOP_OC = 9900.2379 / RHOAV
+    RHO_BOTTOM_OC = 12168.6383 / RHOAV
+
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+
+! SEA1D without the 2 km of mud layer or the 3km water layer   
+   ROCEAN = 6371000.d0
+   RMIDDLE_CRUST = 6361000.d0
+   RMOHO  = 6346000.d0
+   R80    = 6291000.d0
+   R220   = 6161000.d0
+   R400   = 5961000.d0
+   R670   = 5711000.d0
+   RTOPDDOUBLEPRIME = 3631000.d0
+   RCMB   = 3485700.d0
+   RICB   = 1217100.d0
+
+! values for SEA1D that are not discontinuities
+   R600 = 5771000.d0
+   R771 = 5611000.d0
+
+   RHO_TOP_OC = 9903.4384 / RHOAV
+   RHO_BOTTOM_OC = 12166.5885 / RHOAV
+
   else
 
 ! PREM
@@ -1059,11 +1143,13 @@
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) stop 'must have NEX_XI = NEX_ETA for more than two chunks'
   if(NCHUNKS > 2 .and. NPROC_XI /= NPROC_ETA) stop 'must have NPROC_XI = NPROC_ETA for more than two chunks'
 
-! check that IASP91, AK135, or 1066A is isotropic
+! check that IASP91, AK135, 1066A, JP1D or SEA1D is isotropic
   if((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135 .or. &
-      REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) .and. TRANSVERSE_ISOTROPY) &
-        stop 'models IASP91, AK135 and 1066A are currently isotropic'
+      REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A .or. &
+      REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D .or. &
+      REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
+        stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
   ELEMENT_WIDTH = ANGULAR_WIDTH_XI_IN_DEGREES/dble(NEX_MAX) * DEGREES_TO_RADIANS
 

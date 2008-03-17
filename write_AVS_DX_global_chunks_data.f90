@@ -32,7 +32,7 @@
         npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
         ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
         RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-        RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V)
+        RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V,SEA1DM_V)
 
   implicit none
 
@@ -125,6 +125,20 @@
 
  type (model_ref_variables) Mref_V
 ! model_ref_variables
+
+! sea1d_model_variables
+  type sea1d_model_variables
+    sequence
+     double precision, dimension(NR_SEA1D) :: radius_sea1d
+     double precision, dimension(NR_SEA1D) :: density_sea1d
+     double precision, dimension(NR_SEA1D) :: vp_sea1d
+     double precision, dimension(NR_SEA1D) :: vs_sea1d
+     double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
+     double precision, dimension(NR_SEA1D) :: Qmu_sea1d
+  end type sea1d_model_variables
+
+  type (sea1d_model_variables) SEA1DM_V
+! sea1d_model_variables
 
 ! writing points
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='unknown')
@@ -618,6 +632,12 @@
               call model_ref(r,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling(ispec),Mref_V)
               vp = vpv
               vs = vsv
+            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
+              call model_jp1d(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &
+              .true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+               R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
+            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+              call model_sea1d(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),SEA1DM_V)
             else
               call exit_MPI(myrank,'unknown 1D reference Earth model in writing of AVS/DX data')
             endif
