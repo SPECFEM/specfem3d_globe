@@ -43,7 +43,7 @@
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            ner,ratio_sampling_array,doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D, &
-           AMM_V, AM_V, M1066a_V, Mak135_V, Mref_V,D3MM_V,CM_V, AM_S, AS_V, &
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -154,6 +154,20 @@
  type (model_ref_variables) Mref_V
 ! model_ref_variables
 
+! sea1d_model_variables
+  type sea1d_model_variables
+    sequence
+     double precision, dimension(NR_SEA1D) :: radius_sea1d
+     double precision, dimension(NR_SEA1D) :: density_sea1d
+     double precision, dimension(NR_SEA1D) :: vp_sea1d
+     double precision, dimension(NR_SEA1D) :: vs_sea1d
+     double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
+     double precision, dimension(NR_SEA1D) :: Qmu_sea1d
+  end type sea1d_model_variables
+
+  type (sea1d_model_variables) SEA1DM_V
+! sea1d_model_variables
+
 ! three_d_mantle_model_variables
   type three_d_mantle_model_variables
     sequence
@@ -168,6 +182,92 @@
 
   type (three_d_mantle_model_variables) D3MM_V
 ! three_d_mantle_model_variables
+
+! jp3d_model_variables
+  type jp3d_model_variables
+    sequence
+! vmod3d
+  integer :: NPA
+  integer :: NRA
+  integer :: NHA
+  integer :: NPB
+  integer :: NRB
+  integer :: NHB
+  double precision :: PNA(MPA)
+  double precision :: RNA(MRA)
+  double precision :: HNA(MHA)
+  double precision :: PNB(MPB)
+  double precision :: RNB(MRB)
+  double precision :: HNB(MHB)
+  double precision :: VELAP(MPA,MRA,MHA)
+  double precision :: VELBP(MPB,MRB,MHB)
+! discon
+  double precision :: PN(51)
+  double precision :: RRN(63)
+  double precision :: DEPA(51,63)
+  double precision :: DEPB(51,63)
+  double precision :: DEPC(51,63)
+! locate
+  integer :: IPLOCA(MKA)
+  integer :: IRLOCA(MKA)
+  integer :: IHLOCA(MKA)
+  integer :: IPLOCB(MKB)
+  integer :: IRLOCB(MKB)
+  integer :: IHLOCB(MKB)
+  double precision :: PLA
+  double precision :: RLA
+  double precision :: HLA
+  double precision :: PLB
+  double precision :: RLB
+  double precision :: HLB
+! weight
+  integer :: IP
+  integer :: JP
+  integer :: KP
+  integer :: IP1
+  integer :: JP1
+  integer :: KP1
+  double precision :: WV(8)
+! prhfd
+  double precision :: P
+  double precision :: R
+  double precision :: H
+  double precision :: PF
+  double precision :: RF
+  double precision :: HF
+  double precision :: PF1
+  double precision :: RF1
+  double precision :: HF1
+  double precision :: PD
+  double precision :: RD
+  double precision :: HD
+! jpmodv
+  double precision :: VP(29)
+  double precision :: VS(29)
+  double precision :: RA(29)
+  double precision :: DEPJ(29)
+  end type jp3d_model_variables
+
+  type (jp3d_model_variables) JP3DM_V
+! jp3d_model_variables
+
+! sea99_s_model_variables
+  type sea99_s_model_variables
+    sequence
+    integer :: sea99_ndep
+    integer :: sea99_nlat
+    integer :: sea99_nlon    
+    double precision :: sea99_ddeg
+    double precision :: alatmin
+    double precision :: alatmax
+    double precision :: alonmin
+    double precision :: alonmax
+    double precision :: sea99_vs(100,100,100)
+    double precision :: sea99_depth(100)
+ end type sea99_s_model_variables
+
+ type (sea99_s_model_variables) SEA99M_V
+! sea99_s_model_variables
 
 ! crustal_model_variables
   type crustal_model_variables
@@ -588,6 +688,8 @@
     call define_model_ak135(CRUSTAL, Mak135_V)
   elseif(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
     call define_model_ref(CRUSTAL, Mref_V)
+  elseif(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+    call define_model_sea1d(CRUSTAL, SEA1DM_V)
   endif
 
 !------------------------------------------------------------------------
@@ -861,7 +963,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V, &
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1063,7 +1165,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V, &
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1232,7 +1334,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,D3MM_V,CM_V,AM_S,AS_V, &
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1355,7 +1457,7 @@
               rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
               ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
               RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V)
+              RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V,SEA1DM_V)
     call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
   endif

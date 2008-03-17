@@ -66,7 +66,7 @@ end subroutine attenuation_lookup_value
 !
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epslion ( or tau_mu) )
-subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM_V,M1066a_V,Mak135_V,Mref_V,AM_S,AS_V)
+subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,AM_S,AS_V)
 
   implicit none
 
@@ -140,6 +140,20 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
  type (model_ref_variables) Mref_V
 ! model_ref_variables
 
+! sea1d_model_variables
+  type sea1d_model_variables
+    sequence
+     double precision, dimension(NR_SEA1D) :: radius_sea1d
+     double precision, dimension(NR_SEA1D) :: density_sea1d
+     double precision, dimension(NR_SEA1D) :: vp_sea1d
+     double precision, dimension(NR_SEA1D) :: vs_sea1d
+     double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
+     double precision, dimension(NR_SEA1D) :: Qmu_sea1d
+  end type sea1d_model_variables
+
+  type (sea1d_model_variables) SEA1DM_V
+! sea1d_model_variables
+
 ! attenuation_model_storage
   type attenuation_model_storage
     sequence
@@ -197,6 +211,11 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
      call define_model_ref(.FALSE., Mref_V)
      AM_V%Qn = NR_REF
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
+     AM_V%Qn = 12
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+     call define_model_sea1d(.FALSE., SEA1DM_V)
+     AM_V%Qn = NR_SEA1D
   else
      call exit_MPI(myrank, 'Reference 1D Model Not recognized')
   endif
@@ -221,6 +240,12 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_ref) then
      AM_V%Qr(:)     = Mref_V%radius_ref(:)
      AM_V%Qmu(:)    = Mref_V%Qmu_ref(:)
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
+     AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
+     AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /) 
+  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+     AM_V%Qr(:)     = SEA1DM_V%radius_sea1d(:)
+     AM_V%Qmu(:)    = SEA1DM_V%Qmu_sea1d(:)
   end if
 
   do i = 1, AM_V%Qn
