@@ -4,9 +4,7 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 
 Things that could be done in a future version 4.1:
 
-- Cuthill-McKee sorting to reduce cache misses
-
-- maybe partial ALTIVEC support (if useful)
+- partial ALTIVEC support (will be done by Nicolas Le Goff)
 
 - use a potential of (rho * u) instead of u in the fluid, in case of
   fluid-fluid discontinuities
@@ -149,4 +147,14 @@ Things to add to the manual:
 - ajouter les courbes de dispersion et stabilite au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix special la-dessus; dire dans cet appendix que dans le outer core ce n'est bien sur pas Vs qui est represente mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un echantillonnage un peu meilleur)
 
 - supprimer sections qui decrivent write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront ete fusionnes
+
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+
+Done:
+-----
+
+- Cuthill-McKee sorting to reduce cache misses: finished by David Michea in March 2008
 

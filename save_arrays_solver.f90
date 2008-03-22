@@ -42,7 +42,7 @@
             jacobian2D_xmin,jacobian2D_xmax, &
             jacobian2D_ymin,jacobian2D_ymax, &
             jacobian2D_bottom,jacobian2D_top, &
-            iMPIcut_xi,iMPIcut_eta,nspec,nglob, &
+            nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
             TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
             tau_s,tau_e_store,Qmu_store,T_c_source, &
@@ -143,9 +143,6 @@
 
 ! number of elements on the boundaries
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
-
-! MPI cut-planes parameters along xi and along eta
-  logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
 
   integer i,j,k,ispec,iglob,nspec1, nglob1
 
@@ -360,15 +357,6 @@
   write(27) jacobian2D_bottom
   write(27) jacobian2D_top
 
-  close(27)
-
-! MPI cut-planes parameters along xi and along eta
-  open(unit=27,file=prname(1:len_trim(prname))//'iMPIcut_xi.bin',status='unknown',form='unformatted')
-  write(27) iMPIcut_xi
-  close(27)
-
-  open(unit=27,file=prname(1:len_trim(prname))//'iMPIcut_eta.bin',status='unknown',form='unformatted')
-  write(27) iMPIcut_eta
   close(27)
 
   if(ATTENUATION .and. ATTENUATION_3D) then

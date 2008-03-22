@@ -366,7 +366,7 @@
     sequence
     integer :: sea99_ndep
     integer :: sea99_nlat
-    integer :: sea99_nlon    
+    integer :: sea99_nlon
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
@@ -1098,7 +1098,7 @@
       call MPI_BCAST(D3MM_V%qq,3*(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
    elseif(THREE_D_MODEL == THREE_D_MODEL_SEA99_JP3D) then
 ! the variables read are declared and stored in structure SEA99M_V and JP3DM_V
-      if(myrank == 0) then 
+      if(myrank == 0) then
          call read_sea99_s_model(SEA99M_V)
          call read_iso3d_dpzhao_model(JP3DM_V)
       endif
@@ -1406,6 +1406,7 @@
          ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE, &
          NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+         max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo, &
          rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &

@@ -490,3 +490,9 @@
   integer, parameter :: NSPEC_DOUBLING_BASICBRICK = 8
   integer, parameter :: NGLOB_DOUBLING_BASICBRICK = 27
 
+! for Cuthill McKee permutation
+  logical, parameter :: PERFORM_CUTHILL_MCKEE = .true.
+  logical, parameter :: PERMUTE_INNER_CORE = .false.
+  integer, parameter :: NGNOD_HEXAHEDRA = 8
+  logical, parameter :: CMcK_MULTI = .true.
+  integer, parameter :: LIMIT_MULTI_CUTHILL=50
