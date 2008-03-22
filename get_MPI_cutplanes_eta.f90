@@ -6,7 +6,8 @@
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !             and University of Pau / CNRS / INRIA, France
-! (c) California Institute of Technology and University of Pau, April 2007
+! (c) California Institute of Technology and University of Pau / CNRS / INRIA
+!                            February 2008
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -26,7 +27,7 @@
 
   subroutine get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
                         xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC2D_XI_FACE,iregion)
+                        NSPEC2D_XI_FACE,iregion,NGLOB2DMAX_XY,nglob_ori)
 
 ! this routine detects cut planes along eta
 ! In principle the left cut plane of the first slice
@@ -37,8 +38,9 @@
 
   include "constants.h"
 
-  integer nspec,myrank,iregion
+  integer nspec,myrank,nglob_ori,nglob,ipoin2D,NGLOB2DMAX_XY,iregion
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE
+
 
   logical iMPIcut_eta(2,nspec)
 
@@ -62,9 +64,31 @@
 ! processor identification
   character(len=150) prname
 
+! arrays for sorting routine
+  integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
+  logical, dimension(:), allocatable :: ifseg
+  double precision, dimension(:), allocatable :: work
+  integer, dimension(:), allocatable :: ibool_selected
+  double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
+
+
+! allocate arrays for message buffers with maximum size
+! define maximum size for message buffers
+  allocate(ibool_selected(NGLOB2DMAX_XY))
+  allocate(xstore_selected(NGLOB2DMAX_XY))
+  allocate(ystore_selected(NGLOB2DMAX_XY))
+  allocate(zstore_selected(NGLOB2DMAX_XY))
+  allocate(ind(NGLOB2DMAX_XY))
+  allocate(ninseg(NGLOB2DMAX_XY))
+  allocate(iglob(NGLOB2DMAX_XY))
+  allocate(locval(NGLOB2DMAX_XY))
+  allocate(ifseg(NGLOB2DMAX_XY))
+  allocate(iwork(NGLOB2DMAX_XY))
+  allocate(work(NGLOB2DMAX_XY))
+
 ! theoretical number of surface elements in the buffers
 ! cut planes along eta=constant correspond to XI faces
-  nspec2Dtheor = NSPEC2D_XI_FACE(iregion,1)
+      nspec2Dtheor = NSPEC2D_XI_FACE(iregion,1)
 
 ! write the MPI buffers for the left and right edges of the slice
 ! and the position of the points to check that the buffers are fine
@@ -86,28 +110,33 @@
   ispecc1=0
 
   do ispec=1,nspec
-  if(iMPIcut_eta(1,ispec)) then
-
-    ispecc1=ispecc1+1
-
-! loop on all the points in that 2-D element, including edges
-  iy = 1
-  do ix=1,NGLLX
-      do iz=1,NGLLZ
-
-! select point, if not already selected
-  if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-      mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-      npoin2D_eta = npoin2D_eta + 1
-
-      write(10,*) ibool(ix,iy,iz,ispec),xstore(ix,iy,iz,ispec), &
-              ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-  endif
-
+    if(iMPIcut_eta(1,ispec)) then
+      ispecc1=ispecc1+1
+      ! loop on all the points in that 2-D element, including edges
+      iy = 1
+      do ix=1,NGLLX
+          do iz=1,NGLLZ
+            ! select point, if not already selected
+            if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+                mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+                npoin2D_eta = npoin2D_eta + 1
+                ibool_selected(npoin2D_eta) = ibool(ix,iy,iz,ispec)
+                xstore_selected(npoin2D_eta) = xstore(ix,iy,iz,ispec)
+                ystore_selected(npoin2D_eta) = ystore(ix,iy,iz,ispec)
+                zstore_selected(npoin2D_eta) = zstore(ix,iy,iz,ispec)
+            endif
+          enddo
       enddo
+    endif
   enddo
 
-  endif
+  nglob=nglob_ori
+  call sort_array_coordinates(npoin2D_eta,xstore_selected,ystore_selected,zstore_selected, &
+          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+
+  do ipoin2D=1,npoin2D_eta
+      write(10,*) ibool_selected(ipoin2D), xstore_selected(ipoin2D), &
+                  ystore_selected(ipoin2D),zstore_selected(ipoin2D)
   enddo
 
 ! put flag to indicate end of the list of points
@@ -124,7 +153,7 @@
 !
 ! determine if the element falls on the right MPI cut plane
 !
-  nspec2Dtheor = NSPEC2D_XI_FACE(iregion,2)
+      nspec2Dtheor = NSPEC2D_XI_FACE(iregion,2)
 
 ! global point number and coordinates right MPI cut-plane
   open(unit=10,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='unknown')
@@ -139,28 +168,33 @@
   ispecc2=0
 
   do ispec=1,nspec
-  if(iMPIcut_eta(2,ispec)) then
-
-    ispecc2=ispecc2+1
-
-! loop on all the points in that 2-D element, including edges
-  iy = NGLLY
-  do ix=1,NGLLX
-      do iz=1,NGLLZ
-
-! select point, if not already selected
-  if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
-      mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-      npoin2D_eta = npoin2D_eta + 1
-
-      write(10,*) ibool(ix,iy,iz,ispec),xstore(ix,iy,iz,ispec), &
-              ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-  endif
-
+    if(iMPIcut_eta(2,ispec)) then
+      ispecc2=ispecc2+1
+      ! loop on all the points in that 2-D element, including edges
+      iy = NGLLY
+      do ix=1,NGLLX
+          do iz=1,NGLLZ
+          ! select point, if not already selected
+          if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+              mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
+              npoin2D_eta = npoin2D_eta + 1
+              ibool_selected(npoin2D_eta) = ibool(ix,iy,iz,ispec)
+              xstore_selected(npoin2D_eta) = xstore(ix,iy,iz,ispec)
+              ystore_selected(npoin2D_eta) = ystore(ix,iy,iz,ispec)
+              zstore_selected(npoin2D_eta) = zstore(ix,iy,iz,ispec)
+          endif
+        enddo
       enddo
+    endif
   enddo
 
-  endif
+  nglob=nglob_ori
+  call sort_array_coordinates(npoin2D_eta,xstore_selected,ystore_selected,zstore_selected, &
+          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+
+  do ipoin2D=1,npoin2D_eta
+      write(10,*) ibool_selected(ipoin2D), xstore_selected(ipoin2D), &
+                  ystore_selected(ipoin2D),zstore_selected(ipoin2D)
   enddo
 
 ! put flag to indicate end of the list of points
@@ -173,6 +207,18 @@
 
 ! compare number of surface elements detected to analytical value
   if(ispecc2 /= nspec2Dtheor) call exit_MPI(myrank,'error MPI cut-planes detection in eta=right')
+
+  deallocate(ibool_selected)
+  deallocate(xstore_selected)
+  deallocate(ystore_selected)
+  deallocate(zstore_selected)
+  deallocate(ind)
+  deallocate(ninseg)
+  deallocate(iglob)
+  deallocate(locval)
+  deallocate(ifseg)
+  deallocate(iwork)
+  deallocate(work)
 
   end subroutine get_MPI_cutplanes_eta
 

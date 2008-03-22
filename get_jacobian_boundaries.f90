@@ -42,7 +42,7 @@
 
   include "constants.h"
 
-  integer nspec,myrank
+  integer nspec,myrank,dummy_var,ispec_tmp
   integer NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
 
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
@@ -82,6 +82,12 @@
   integer ispecb1,ispecb2,ispecb3,ispecb4,ispecb5,ispecb6
 
   double precision xelm(NGNOD2D),yelm(NGNOD2D),zelm(NGNOD2D)
+
+! arrays for sorting routine
+  integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
+  logical, dimension(:), allocatable :: ifseg
+  double precision, dimension(:), allocatable :: work
+  double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
 
 ! check that the parameter file is correct
   if(NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')
@@ -136,6 +142,38 @@
 
     call compute_jacobian_2D(myrank,ispecb1,xelm,yelm,zelm,dershape2D_x, &
                   jacobian2D_xmin,normal_xmin,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+
+  allocate (xstore_selected(ispecb1))
+  allocate (ystore_selected(ispecb1))
+  allocate (zstore_selected(ispecb1))
+  allocate(ind(ispecb1))
+  allocate(ninseg(ispecb1))
+  allocate(iglob(ispecb1))
+  allocate(locval(ispecb1))
+  allocate(ifseg(ispecb1))
+  allocate(iwork(ispecb1))
+  allocate(work(ispecb1))
+
+  do ispec_tmp=1,ispecb1
+    xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_xmin(ispec_tmp))
+    ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_xmin(ispec_tmp))
+    zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_xmin(ispec_tmp))
+  enddo
+
+  call sort_array_coordinates_gjb(ispecb1,xstore_selected,ystore_selected,zstore_selected, &
+          ibelm_xmin,iglob,normal_xmin,jacobian2D_xmin,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLY,NGLLZ)
+
+  deallocate (xstore_selected)
+  deallocate (ystore_selected)
+  deallocate (zstore_selected)
+  deallocate(ind)
+  deallocate(ninseg)
+  deallocate(iglob)
+  deallocate(locval)
+  deallocate(ifseg)
+  deallocate(iwork)
+  deallocate(work)
+
   endif
 
 ! on boundary: xmax
@@ -176,6 +214,38 @@
 
     call compute_jacobian_2D(myrank,ispecb2,xelm,yelm,zelm,dershape2D_x, &
                   jacobian2D_xmax,normal_xmax,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+
+  allocate (xstore_selected(ispecb2))
+  allocate (ystore_selected(ispecb2))
+  allocate (zstore_selected(ispecb2))
+  allocate(ind(ispecb2))
+  allocate(ninseg(ispecb2))
+  allocate(iglob(ispecb2))
+  allocate(locval(ispecb2))
+  allocate(ifseg(ispecb2))
+  allocate(iwork(ispecb2))
+  allocate(work(ispecb2))
+
+  do ispec_tmp=1,ispecb2
+    xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_xmax(ispec_tmp))
+    ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_xmax(ispec_tmp))
+    zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_xmax(ispec_tmp))
+  enddo
+
+  call sort_array_coordinates_gjb(ispecb2,xstore_selected,ystore_selected,zstore_selected, &
+          ibelm_xmax,iglob,normal_xmax,jacobian2D_xmax,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLY,NGLLZ)
+
+  deallocate (xstore_selected)
+  deallocate (ystore_selected)
+  deallocate (zstore_selected)
+  deallocate(ind)
+  deallocate(ninseg)
+  deallocate(iglob)
+  deallocate(locval)
+  deallocate(ifseg)
+  deallocate(iwork)
+  deallocate(work)
+
   endif
 
 ! on boundary: ymin
@@ -216,6 +286,38 @@
 
     call compute_jacobian_2D(myrank,ispecb3,xelm,yelm,zelm,dershape2D_y, &
                   jacobian2D_ymin,normal_ymin,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+
+  allocate (xstore_selected(ispecb3))
+  allocate (ystore_selected(ispecb3))
+  allocate (zstore_selected(ispecb3))
+  allocate(ind(ispecb3))
+  allocate(ninseg(ispecb3))
+  allocate(iglob(ispecb3))
+  allocate(locval(ispecb3))
+  allocate(ifseg(ispecb3))
+  allocate(iwork(ispecb3))
+  allocate(work(ispecb3))
+
+  do ispec_tmp=1,ispecb3
+    xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_ymin(ispec_tmp))
+    ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_ymin(ispec_tmp))
+    zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_ymin(ispec_tmp))
+  enddo
+
+  call sort_array_coordinates_gjb(ispecb3,xstore_selected,ystore_selected,zstore_selected, &
+          ibelm_ymin,iglob,normal_ymin,jacobian2D_ymin,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLX,NGLLZ)
+
+  deallocate (xstore_selected)
+  deallocate (ystore_selected)
+  deallocate (zstore_selected)
+  deallocate(ind)
+  deallocate(ninseg)
+  deallocate(iglob)
+  deallocate(locval)
+  deallocate(ifseg)
+  deallocate(iwork)
+  deallocate(work)
+
   endif
 
 ! on boundary: ymax
@@ -256,6 +358,38 @@
 
     call compute_jacobian_2D(myrank,ispecb4,xelm,yelm,zelm,dershape2D_y, &
                   jacobian2D_ymax,normal_ymax,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+
+  allocate (xstore_selected(ispecb4))
+  allocate (ystore_selected(ispecb4))
+  allocate (zstore_selected(ispecb4))
+  allocate(ind(ispecb4))
+  allocate(ninseg(ispecb4))
+  allocate(iglob(ispecb4))
+  allocate(locval(ispecb4))
+  allocate(ifseg(ispecb4))
+  allocate(iwork(ispecb4))
+  allocate(work(ispecb4))
+
+  do ispec_tmp=1,ispecb4
+    xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_ymax(ispec_tmp))
+    ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_ymax(ispec_tmp))
+    zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_ymax(ispec_tmp))
+  enddo
+
+  call sort_array_coordinates_gjb(ispecb4,xstore_selected,ystore_selected,zstore_selected, &
+          ibelm_ymax,iglob,normal_ymax,jacobian2D_ymax,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLX,NGLLZ)
+
+  deallocate (xstore_selected)
+  deallocate (ystore_selected)
+  deallocate (zstore_selected)
+  deallocate(ind)
+  deallocate(ninseg)
+  deallocate(iglob)
+  deallocate(locval)
+  deallocate(ifseg)
+  deallocate(iwork)
+  deallocate(work)
+
   endif
 
 ! on boundary: bottom
@@ -295,6 +429,38 @@
 
     call compute_jacobian_2D(myrank,ispecb5,xelm,yelm,zelm,dershape2D_bottom, &
                   jacobian2D_bottom,normal_bottom,NGLLX,NGLLY,NSPEC2D_BOTTOM)
+
+  allocate (xstore_selected(ispecb5))
+  allocate (ystore_selected(ispecb5))
+  allocate (zstore_selected(ispecb5))
+  allocate(ind(ispecb5))
+  allocate(ninseg(ispecb5))
+  allocate(iglob(ispecb5))
+  allocate(locval(ispecb5))
+  allocate(ifseg(ispecb5))
+  allocate(iwork(ispecb5))
+  allocate(work(ispecb5))
+
+  do ispec_tmp=1,ispecb5
+    xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_bottom(ispec_tmp))
+    ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_bottom(ispec_tmp))
+    zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_bottom(ispec_tmp))
+  enddo
+
+  call sort_array_coordinates_gjb(ispecb5,xstore_selected,ystore_selected,zstore_selected, &
+          ibelm_bottom,iglob,normal_bottom,jacobian2D_bottom,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLX,NGLLY)
+
+  deallocate (xstore_selected)
+  deallocate (ystore_selected)
+  deallocate (zstore_selected)
+  deallocate(ind)
+  deallocate(ninseg)
+  deallocate(iglob)
+  deallocate(locval)
+  deallocate(ifseg)
+  deallocate(iwork)
+  deallocate(work)
+
   endif
 
 ! on boundary: top
@@ -334,9 +500,41 @@
 
     call compute_jacobian_2D(myrank,ispecb6,xelm,yelm,zelm,dershape2D_top, &
                   jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
+
+  allocate (xstore_selected(ispecb6))
+  allocate (ystore_selected(ispecb6))
+  allocate (zstore_selected(ispecb6))
+  allocate(ind(ispecb6))
+  allocate(ninseg(ispecb6))
+  allocate(iglob(ispecb6))
+  allocate(locval(ispecb6))
+  allocate(ifseg(ispecb6))
+  allocate(iwork(ispecb6))
+  allocate(work(ispecb6))
+
+  do ispec_tmp=1,ispecb6
+    xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_top(ispec_tmp))
+    ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_top(ispec_tmp))
+    zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_top(ispec_tmp))
+  enddo
+
+  call sort_array_coordinates_gjb(ispecb6,xstore_selected,ystore_selected,zstore_selected, &
+          ibelm_top,iglob,normal_top,jacobian2D_top,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLX,NGLLY)
+
+  deallocate (xstore_selected)
+  deallocate (ystore_selected)
+  deallocate (zstore_selected)
+  deallocate(ind)
+  deallocate(ninseg)
+  deallocate(iglob)
+  deallocate(locval)
+  deallocate(ifseg)
+  deallocate(iwork)
+  deallocate(work)
   endif
 
   enddo
+
 
 ! check theoretical value of elements at the bottom
   if(ispecb5 /= NSPEC2D_BOTTOM) then

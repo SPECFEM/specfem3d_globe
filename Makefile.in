@@ -83,7 +83,6 @@ libspecfem_a_OBJECTS = \
 	$O/define_derivation_matrices.o \
 	$O/define_superbrick.o \
 	$O/euler_angles.o \
-	$O/exit_mpi.o \
 	$O/get_MPI_1D_buffers.o \
 	$O/get_MPI_cutplanes_eta.o \
 	$O/get_MPI_cutplanes_xi.o \
@@ -96,6 +95,7 @@ libspecfem_a_OBJECTS = \
 	$O/get_jacobian_boundaries.o \
 	$O/get_jacobian_discontinuities.o \
 	$O/get_model.o \
+	$O/get_perm_cuthill_mckee.o \
 	$O/get_shape2D.o \
 	$O/get_shape3D.o \
 	$O/get_value_parameters.o \
@@ -193,13 +193,13 @@ bak: backup
 ####
 
 # rules for the main programs
-XMESHFEM_OBJECTS = $O/meshfem3D.o $(LIBSPECFEM)
+XMESHFEM_OBJECTS = $O/meshfem3D.o $O/exit_mpi.o $(LIBSPECFEM)
 xmeshfem3D: $(XMESHFEM_OBJECTS)
 ## use MPI here
 	${MPIFCCOMPILE_CHECK} -o xmeshfem3D $(XMESHFEM_OBJECTS) $(MPILIBS)
 
 # solver also depends on values from mesher
-XSPECFEM_OBJECTS = $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
+XSPECFEM_OBJECTS = $(SOLVER_ARRAY_OBJECTS) $O/exit_mpi.o $(LIBSPECFEM)
 xspecfem3D: $(XSPECFEM_OBJECTS)
 ## use MPI here
 	${MPIFCCOMPILE_NO_CHECK} -o xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
@@ -537,6 +537,9 @@ $O/create_name_database.o: constants.h $S/create_name_database.f90
 
 $O/create_serial_name_database.o: constants.h $S/create_serial_name_database.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_serial_name_database.o ${FCFLAGS_f90} $S/create_serial_name_database.f90
+
+$O/get_perm_cuthill_mckee.o: constants.h $S/get_perm_cuthill_mckee.f90
+	${FCCOMPILE_CHECK} -c -o $O/get_perm_cuthill_mckee.o ${FCFLAGS_f90} $S/get_perm_cuthill_mckee.f90
 
 ## use MPI here
 $O/read_arrays_buffers_solver.o: constants.h $S/read_arrays_buffers_solver.f90
