@@ -423,7 +423,7 @@
 ! number of layers in DATA/s362ani/REF
   integer, parameter :: NR_REF = 750
 
-! number of layers in DATA/Lebedev_sea99 1D model 
+! number of layers in DATA/Lebedev_sea99 1D model
   integer, parameter :: NR_SEA1D = 163
 
 ! three_d_mantle_model_constants
@@ -465,25 +465,25 @@
 ! to add a fourth doubling at the bottom of the outer core
   logical, parameter :: ADD_4TH_DOUBLING = .false.
 
-!!! parameters for the doubling brick cut
+! parameters to cut the doubling brick
 
-! this for cutting superbrick : 3 possibilities, 4 cases max / possibility
-! 3 possibilities : cut in xi & eta || cut in xi || cut in eta
-! case 1 : ximin & etamin || ximin || etamin
-! case 2 : ximin & etamax || ximax || etamax
-! case 3 : ximax & etamin
-! case 4 : ximax & etamax
+! this to cut the superbrick: 3 possibilities, 4 cases max / possibility
+! three possibilities: (cut in xi and eta) or (cut in xi) or (cut in eta)
+! case 1: (ximin and etamin) or ximin or etamin
+! case 2: (ximin and etamax) or ximax or etamax
+! case 3: ximax and etamin
+! case 4: ximax and etamax
   integer, parameter :: NB_CUT_CASE = 4
 
-! corner 1 : ximin & etamin
-! corner 2 : ximax & etamin
-! corner 3 : ximax & etamax
-! corner 4 : ximin & etamax
+! corner 1: ximin and etamin
+! corner 2: ximax and etamin
+! corner 3: ximax and etamax
+! corner 4: ximin and etamax
   integer, parameter :: NB_SQUARE_CORNERS = 4
 
-! 2 possibilities : xi || eta
-! face 1 : ximin || etamin
-! face 2 : ximax || etamax
+! two possibilities: xi or eta
+! face 1: ximin or etamin
+! face 2: ximax or etamax
   integer, parameter :: NB_SQUARE_EDGES_ONEDIR = 2
 
 ! this for the geometry of the basic doubling brick
@@ -496,3 +496,4 @@
   integer, parameter :: NGNOD_HEXAHEDRA = 8
   logical, parameter :: CMcK_MULTI = .true.
   integer, parameter :: LIMIT_MULTI_CUTHILL=50
+
