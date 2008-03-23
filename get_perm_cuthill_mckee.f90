@@ -25,19 +25,23 @@
 !
 !=====================================================================
 
-  subroutine get_perm (ibool,perm,limit,nspec,nglob,INVERSE,FACE)
+! implement reverse Cuthill-McKee (1969) ordering, introduced in
+! E. Cuthill and J. McKee. Reducing the bandwidth of sparse symmetric matrices.
+! In Proceedings of the 1969 24th national conference, pages 157-172,
+! New-York, New-York, USA, 1969. ACM Press.
+! see for instance http://en.wikipedia.org/wiki/Cuthill%E2%80%93McKee_algorithm
+
+  subroutine get_perm(ibool,perm,limit,nspec,nglob,INVERSE,FACE)
 
   implicit none
 
   include "constants.h"
-! include values created by the mesher
-! done for performance only using static allocation to allow for loop unrolling
-!   include "OUTPUT_FILES/values_from_mesher.h"
 
   logical :: INVERSE,FACE
 
 ! input
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+
 ! output
   integer, dimension(nspec) :: perm
 
@@ -71,6 +75,7 @@
 !-----------------------------------------------------------------------
 !
   if(PERFORM_CUTHILL_MCKEE) then
+
   ! total number of points in the mesh
     nglob_GLL_full = nglob
 
@@ -132,22 +137,19 @@
 
   end subroutine get_perm
 
-!
-!----------------------------------------------------
-!
-
 !=======================================================================
 !
 !  Charbel Farhat's FEM topology routines
 !
-!  Dimitri Komatitsch, February 1996 - Code based on Farhat's original version from 1987
+!  Dimitri Komatitsch, February 1996 - Code based on Farhat's original version
+!  described in his technical report from 1987
 !
 !  modified and adapted by Dimitri Komatitsch, May 2006
 !
 !=======================================================================
 
-  subroutine form_elt_connectivity_foelco(mn,mp,nspec,global_corner_number,&
-nglob_GLL_full,ibool,nglob_eight_corners_only)
+  subroutine form_elt_connectivity_foelco(mn,mp,nspec,global_corner_number, &
+                      nglob_GLL_full,ibool,nglob_eight_corners_only)
 
 !-----------------------------------------------------------------------
 !
@@ -237,8 +239,8 @@ nglob_GLL_full,ibool,nglob_eight_corners_only)
 !----------------------------------------------------
 !
 
-  subroutine form_node_connectivity_fonoco(mn,mp,ne,np,nglob_eight_corners_only,&
-nspec,count_only,total_size_ne)
+  subroutine form_node_connectivity_fonoco(mn,mp,ne,np,nglob_eight_corners_only, &
+                                nspec,count_only,total_size_ne)
 
 !-----------------------------------------------------------------------
 !
@@ -306,8 +308,8 @@ nspec,count_only,total_size_ne)
 !----------------------------------------------------
 !
 
-  subroutine create_adjacency_table_adjncy(mn,mp,ne,np,adj,xadj,maskel,nspec,nglob_eight_corners_only,&
-                                           count_only,total_size_ne,total_size_adj,face)
+  subroutine create_adjacency_table_adjncy(mn,mp,ne,np,adj,xadj,maskel,nspec, &
+              nglob_eight_corners_only,count_only,total_size_ne,total_size_adj,face)
 
 !-----------------------------------------------------------------------
 !
@@ -398,6 +400,10 @@ nspec,count_only,total_size_ne)
 
   end subroutine create_adjacency_table_adjncy
 
+!
+!----------------------------------------------------
+!
+
   subroutine cuthill_mckee(adj,xadj,mask,invperm_all,nspec,total_size_adj,limit,INVERSE)
 
   implicit none
@@ -407,11 +413,9 @@ nspec,count_only,total_size_ne)
   integer, intent(in) :: adj(total_size_adj),xadj(nspec+1)
 
   integer, intent(out), dimension(nspec) :: mask,invperm_all
-!   integer, dimension(limit) :: invperm_sub
   integer, dimension(nspec) :: invperm_sub
   logical :: INVERSE
   integer ispec,gsize,counter,nspec_sub,root,total_ordered_elts, next_root
-
 
 ! fill the mask with ones
   mask(:) = 1
@@ -422,7 +426,7 @@ nspec,count_only,total_size_ne)
   total_ordered_elts = 0
 
   do while(total_ordered_elts < nspec)
-    ! création of a sublist of sorted elements which fit in the cache (the criterion of size is limit)
+    ! creation of a sublist of sorted elements which fit in the cache (the criterion of size is limit)
     ! limit = nb of element that can fit in the L2 cache
     call Cut_McK( root, nspec, total_size_adj, xadj, adj, mask, gsize, invperm_sub, limit, nspec_sub, next_root)
       ! add the sublist in the main permutation list
@@ -432,7 +436,6 @@ nspec,count_only,total_size_ne)
     if (next_root > 0) then
       root = next_root
     else
-!       if (total_ordered_elts /= nspec) call find_next_root(next_root,xadj,adj,nspec,total_size_adj,mask)
       if (total_ordered_elts /= nspec) &
         call find_next_root(next_root,xadj,adj,total_size_adj,mask,invperm_all,total_ordered_elts,nspec)
       root = next_root
@@ -451,7 +454,7 @@ nspec,count_only,total_size_ne)
 
 
 !*******************************************************************************
-! Objective: Cuthill McKee ordering
+! Objective: Cuthill-McKee ordering
 !    The algorithm is:
 !
 !    X(1) = ROOT.
@@ -471,9 +474,10 @@ nspec,count_only,total_size_ne)
 !    invp       Inverse invputation (from new order to old order)
 !*******************************************************************************
 
-
 subroutine find_next_root(next_root,xadj,adj,total_size_adj,mask,invperm_all,total_ordered_elts,nspec)
+
   implicit none
+
   include "constants.h"
 
 ! input
@@ -499,7 +503,7 @@ subroutine find_next_root(next_root,xadj,adj,total_size_adj,mask,invperm_all,tot
 end subroutine find_next_root
 
 !*******************************************************************************
-! Objective: Cuthill McKee ordering
+! Objective: Cuthill-McKee ordering
 !    The algorithm is:
 !
 !    X(1) = ROOT.
@@ -520,8 +524,11 @@ end subroutine find_next_root
 !*******************************************************************************
 
 subroutine Cut_McK( root, nbnodes, nnz, xadj, adj, mask, gsize, invp, limit, nspec_sub, next_root)
+
   implicit none
+
   include "constants.h"
+
 !--------------------------------------------------------------- Input Variables
   integer root, nnz, nbnodes, limit, nspec_sub, next_root
 
@@ -535,7 +542,6 @@ subroutine Cut_McK( root, nbnodes, nnz, xadj, adj, mask, gsize, invp, limit, nsp
   integer i, j, k, l, lbegin, lnbr, linvp, lvlend, nbr, node, fnbr
   integer deg(nbnodes)
 
-!------------------------------------------------------------------------- BEGIN
 ! Find the degrees of the nodes in the subgraph specified by mask and root
 ! Here invp is used to store a levelization of the subgraph
   invp(:)=0
@@ -611,7 +617,6 @@ subroutine Cut_McK( root, nbnodes, nnz, xadj, adj, mask, gsize, invp, limit, nsp
     nspec_sub = gsize
   endif
 
-!--------------------------------------------------------------------------- END
 END subroutine Cut_McK
 
 
@@ -632,7 +637,9 @@ END subroutine Cut_McK
 !*******************************************************************************
 
 subroutine degree( root, nbnodes, nnz, xadj, adj, mask, gsize, deg, level )
+
   implicit none
+
 !--------------------------------------------------------------- Input Variables
   integer root, nbnodes, nnz
   integer xadj(nbnodes+1), adj(nnz), mask(nbnodes)
@@ -644,7 +651,6 @@ subroutine degree( root, nbnodes, nnz, xadj, adj, mask, gsize, deg, level )
 !--------------------------------------------------------------- Local Variables
   integer i, j, ideg, lbegin, lvlend, lvsize, nxt, nbr, node
 
-!------------------------------------------------------------------------- BEGIN
 ! The sign of xadj(I) is used to indicate if node i has been considered
   xadj(root) = -xadj(root)
   level(1)   = root
@@ -689,9 +695,12 @@ subroutine degree( root, nbnodes, nnz, xadj, adj, mask, gsize, deg, level )
   enddo
 
   gsize = nxt
-!--------------------------------------------------------------------------- END
+
 END subroutine degree
 
+!
+!-----------------------------------------------------------------------
+!
 
   subroutine permute_elements_real(array_to_permute,temp_array,perm,nspec)
 
@@ -771,3 +780,4 @@ END subroutine degree
   enddo
 
   end subroutine permute_elements_dble
+
