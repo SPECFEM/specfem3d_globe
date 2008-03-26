@@ -230,7 +230,7 @@
     sequence
     integer :: sea99_ndep
     integer :: sea99_nlat
-    integer :: sea99_nlon    
+    integer :: sea99_nlon
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
@@ -508,7 +508,7 @@
                 endif
              endif
            elseif(THREE_D_MODEL == THREE_D_MODEL_SEA99) then
-! sea99 
+! sea99
              dvs = ZERO
              dvp = ZERO
              drho = ZERO
@@ -525,7 +525,7 @@
              drho = ZERO
              if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
                   .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
-                if(r_prem > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then             
+                if(r_prem > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
                    call iso3d_dpzhao_model(r,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3DM_V)
                    vpv=vpv*(1.0d0+dvp)
                    vph=vph*(1.0d0+dvp)
@@ -606,7 +606,7 @@
                 vsh=vsh*(1.0d0+dvs)
              endif
            elseif(THREE_D_MODEL == THREE_D_MODEL_SEA99) then
-! sea99 
+! sea99
              dvs = ZERO
              dvp = ZERO
              drho = ZERO
@@ -731,7 +731,7 @@
              if(THREE_D_MODEL == THREE_D_MODEL_SEA99_JP3D .or. THREE_D_MODEL == THREE_D_MODEL_JP3D) then
                 if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
                      .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
-                   if(r > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then             
+                   if(r > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
                       call iso3d_dpzhao_model(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust,JP3DM_V)
                       if(found_crust) then
                          vpv=vpc

@@ -7,10 +7,10 @@
 
   implicit none
 
-  integer NPROC_XI,c,NEX_XI,compteur
+  integer NPROC_XI,c,NEX_XI,counter
 
-  integer, parameter :: NB_COLONNES = 10
-  integer, dimension(NB_COLONNES) :: store_NEX_XI
+  integer, parameter :: NB_COLUMNS_TABLE = 10
+  integer, dimension(NB_COLUMNS_TABLE) :: store_NEX_XI
 
 ! maximum total number of processors we want to see in the table
   integer, parameter :: MAX_NUMBER_OF_PROCS = 100000
@@ -28,28 +28,28 @@
 ! total number of processors is 6 * NPROC_XI^2
   do NPROC_XI = 1,int(sqrt(MAX_NUMBER_OF_PROCS / 6.d0))
 
-    compteur = 1
+    counter = 1
     c = 0
 
-    do while (compteur <= NB_COLONNES)
+    do while (counter <= NB_COLUMNS_TABLE)
       c = c + 1
       NEX_XI = BASE_VALUE * c * NPROC_XI
       if(NEX_XI >= 64 .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
-        store_NEX_XI(compteur) = NEX_XI
-        compteur = compteur + 1
+        store_NEX_XI(counter) = NEX_XI
+        counter = counter + 1
       endif
     enddo
 
     if(OUTPUT_LATEX_FORMAT) then
       write(*,"(i6,' &')") NPROC_XI
       write(*,"(i6,' &')") 6*NPROC_XI**2
-      do compteur = 1,NB_COLONNES-1
-        write(*,"(i6,' &')") store_NEX_XI(compteur)
+      do counter = 1,NB_COLUMNS_TABLE-1
+        write(*,"(i6,' &')") store_NEX_XI(counter)
       enddo
-      write(*,*) store_NEX_XI(NB_COLONNES),' ',achar(92),'tabularnewline'
+      write(*,*) store_NEX_XI(NB_COLUMNS_TABLE),' ',achar(92),'tabularnewline'
     else
       write(*,"(i6,' | ',i6,' | ',i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6,1x,i6)") &
-        NPROC_XI, 6*NPROC_XI**2,(store_NEX_XI(compteur), compteur = 1,NB_COLONNES)
+        NPROC_XI, 6*NPROC_XI**2,(store_NEX_XI(counter), counter = 1,NB_COLUMNS_TABLE)
     endif
   enddo
 

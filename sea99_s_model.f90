@@ -36,7 +36,7 @@ subroutine read_sea99_s_model(SEA99M_V)
     sequence
     integer :: sea99_ndep
     integer :: sea99_nlat
-    integer :: sea99_nlon    
+    integer :: sea99_nlon
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
@@ -54,7 +54,7 @@ subroutine read_sea99_s_model(SEA99M_V)
 !----------------------- choose input file:  ------------------
 ! relative anomaly
 
-  
+
   open(1,file='DATA/Lebedev_sea99/sea99_dvsvs')
 
 !----------------------- read input file:  ------------------
@@ -75,18 +75,18 @@ subroutine read_sea99_s_model(SEA99M_V)
      stop 'alonmin,alonmax,sea99_nlon'
   endif
   read(1,*)
-  do j = 1, SEA99M_V%sea99_ndep 
-     do ia = 1, SEA99M_V%sea99_nlat 
+  do j = 1, SEA99M_V%sea99_ndep
+     do ia = 1, SEA99M_V%sea99_nlat
         read (1,*) (SEA99M_V%sea99_vs(ia,io,j), io = 1, SEA99M_V%sea99_nlon)
      enddo
   enddo
-  
+
 end subroutine read_sea99_s_model
 
 subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
-  
+
   implicit none
-  
+
   include "constants.h"
 
 ! sea99_s_model_variables
@@ -94,7 +94,7 @@ subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
      sequence
      integer :: sea99_ndep
      integer :: sea99_nlat
-     integer :: sea99_nlon    
+     integer :: sea99_nlon
      double precision :: sea99_ddeg
      double precision :: alatmin
      double precision :: alatmax
@@ -108,7 +108,7 @@ subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
 ! sea99_s_model_variables
 
   integer :: id1,i,ilat,ilon
-  double precision :: alat1,alon1,radius,theta,phi,dvs  
+  double precision :: alat1,alon1,radius,theta,phi,dvs
   double precision :: xxx,yyy,dep,pla,plo,xd1,dd1,dd2,ddd(2)
  !----------------------- depth in the model ------------------
   dep=R_EARTH_KM*(R_UNIT_SPHERE - radius)
@@ -138,7 +138,7 @@ subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
   ilon = int((plo - SEA99M_V%alonmin)/SEA99M_V%sea99_ddeg) + 1
   alat1 = SEA99M_V%alatmin + (ilat-1)*SEA99M_V%sea99_ddeg
   alon1 = SEA99M_V%alonmin + (ilon-1)*SEA99M_V%sea99_ddeg
-  
+
   do i = 1, 2
      xxx = (pla-alat1)/SEA99M_V%sea99_ddeg
      yyy = SEA99M_V%sea99_vs(ilat+1,ilon,id1+i-1)-SEA99M_V%sea99_vs(ilat,ilon,id1+i-1)
@@ -151,7 +151,7 @@ subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
   enddo
   dvs = ddd(1) + (ddd(2)-ddd(1)) * xd1
   if(dvs>1.d0) dvs=0.0d0
-  
+
 end subroutine sea99_s_model
- 
+
 

@@ -45,13 +45,13 @@
 !        longitude: 130-145 E
 !        depth    : 0  - 500 km
 !
-!                            Dapeng Zhao 
+!                            Dapeng Zhao
 !                            Dept. of Earth & Planet. Sci
 !                            Washington University
 !                            St. Louis, MO 63130
 !                            U.S.A.
 !                            dapeng@izu.wustl.edu
-!=========================================================================     
+!=========================================================================
 subroutine read_iso3d_dpzhao_model(JP3DM_V)
 
   implicit none
@@ -136,7 +136,7 @@ end subroutine read_iso3d_dpzhao_model
 !==========================================================================
 subroutine iso3d_dpzhao_model(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3DM_V)
   implicit none
- 
+
   include "constants.h"
 
 ! jp3d_model_variables
@@ -212,9 +212,9 @@ subroutine iso3d_dpzhao_model(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3
   double precision :: PE,RE,HE,H1,H2,H3,scaleval
   integer :: LAY
 
-  
+
   found_crust = .false.
-       
+
   PE = theta
   RE = phi
   HE = (ONE - radius)*R_EARTH_KM
@@ -245,7 +245,7 @@ subroutine iso3d_dpzhao_model(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3
   dvp = 0.01d0*dvp
   dvs = 1.5d0*dvp
   vp = vp*(1.0d0+dvp)
-  vs = vs*(1.0d0+dvs) 
+  vs = vs*(1.0d0+dvs)
 
 ! determine rho
   if(LAY .eq. 1) then
@@ -575,7 +575,7 @@ END subroutine iso3d_dpzhao_model
 
       SUBROUTINE VEL3(PE,RE,HE,V,LAY,JP3DM_V)
         implicit none
-        
+
         include "constants.h"
 ! jp3d_model_variables
   type jp3d_model_variables
@@ -644,11 +644,11 @@ END subroutine iso3d_dpzhao_model
 
   type (jp3d_model_variables) JP3DM_V
 ! jp3d_model_variables
- 
+
        double precision :: PE,RE,HE,V
-       
+
        integer :: LAY
-        
+
         JP3DM_V%P     = 90.0-PE/DEGREES_TO_RADIANS
         JP3DM_V%R     = RE/DEGREES_TO_RADIANS
         JP3DM_V%H     = HE
@@ -675,7 +675,7 @@ END subroutine iso3d_dpzhao_model
            CALL VABPS(MPB,MRB,MHB,JP3DM_V%VELBP,V,JP3DM_V)
         ELSE
         END IF
-      
+
         RETURN
       END SUBROUTINE VEL3
 
@@ -1071,7 +1071,7 @@ END subroutine iso3d_dpzhao_model
         IF(HE.LT.HM)    THEN
           CALL JPMODEL(IPS,HM,VM,JP3DM_V)
           V  = VM-(HM-HE)*0.003
-        ELSE 
+        ELSE
           CALL JPMODEL(IPS,HE,V,JP3DM_V)
         END IF
       ELSE
@@ -1160,7 +1160,7 @@ END subroutine iso3d_dpzhao_model
                5.227,5.463,5.670,5.850,6.125,6.295,6.395, &
                6.483,6.564,6.637,6.706,6.770,6.833,6.893, &
                6.953,7.012,7.074,7.137,7.199,7.258,7.314,7.304/
-      DATA RA1/1.00,0.99,0.98,0.97,0.96,0.95,0.94,0.93, & 
+      DATA RA1/1.00,0.99,0.98,0.97,0.96,0.95,0.94,0.93, &
                0.92,0.91,0.90,0.88,0.86,0.84,0.82,0.80, &
                0.78,0.76,0.74,0.72,0.70,0.68,0.66,0.64, &
                0.62,0.60,0.58,0.56,0.55/

@@ -242,7 +242,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
      AM_V%Qmu(:)    = Mref_V%Qmu_ref(:)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
-     AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /) 
+     AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
      AM_V%Qr(:)     = SEA1DM_V%radius_sea1d(:)
      AM_V%Qmu(:)    = SEA1DM_V%Qmu_sea1d(:)

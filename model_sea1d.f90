@@ -144,7 +144,7 @@
   integer i
 
 ! define all the values in the model
-  
+
   SEA1DM_V%radius_sea1d(1)= 0.0000000000
   SEA1DM_V%radius_sea1d(2)= 101425.0000000000
   SEA1DM_V%radius_sea1d(3)= 202850.0000000000
@@ -152,7 +152,7 @@
   SEA1DM_V%radius_sea1d(5)= 405700.0000000000
   SEA1DM_V%radius_sea1d(6)= 507125.0000000000
   SEA1DM_V%radius_sea1d(7)= 608550.0000000000
-  SEA1DM_V%radius_sea1d(8)= 709975.0000000000  
+  SEA1DM_V%radius_sea1d(8)= 709975.0000000000
   SEA1DM_V%radius_sea1d(9)= 811400.0000000000
   SEA1DM_V%radius_sea1d(10)= 912825.0000000000
   SEA1DM_V%radius_sea1d(11)= 1014250.0000000000

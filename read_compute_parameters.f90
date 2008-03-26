@@ -56,7 +56,7 @@
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY)
 
 
   implicit none
@@ -71,7 +71,8 @@
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP
+          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
+          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read
 
   double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -88,7 +89,7 @@
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
+          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
@@ -184,14 +185,25 @@
   endif
 
 ! number of elements at the surface along the two sides of the first chunk
-  call read_value_integer(NEX_XI, 'mesher.NEX_XI')
+  call read_value_integer(NEX_XI_read, 'mesher.NEX_XI')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_integer(NEX_ETA, 'mesher.NEX_ETA')
+  call read_value_integer(NEX_ETA_read, 'mesher.NEX_ETA')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_integer(NPROC_XI, 'mesher.NPROC_XI')
+  call read_value_integer(NPROC_XI_read, 'mesher.NPROC_XI')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_integer(NPROC_ETA, 'mesher.NPROC_ETA')
+  call read_value_integer(NPROC_ETA_read, 'mesher.NPROC_ETA')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+
+  if(.not. EMULATE_ONLY) then
+    NEX_XI = NEX_XI_read
+    NEX_ETA = NEX_ETA_read
+    NPROC_XI = NPROC_XI_read
+    NPROC_ETA = NPROC_ETA_read
+  else
+! this is used in UTILS/estimate_best_values_runs.f90 only, to estimate memory use
+    NEX_ETA = NEX_XI
+    NPROC_ETA = NPROC_XI
+  endif
 
 ! define the velocity model
   call read_value_string(MODEL, 'model.name')
@@ -734,34 +746,35 @@
 
      call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
 
-     write(*,*)'##############################################################'
-     write(*,*)
-     write(*,*)' Auto Radial Meshing Code '
-     write(*,*)' Consult read_compute_parameters.f90 and auto_ner.f90 '
-     write(*,*)' This should only be invoked for chunks less than 90 degrees'
-     write(*,*)' and for chunks greater than 1248 elements wide'
-     write(*,*)
-     write(*,*)'CHUNK WIDTH:              ', ANGULAR_WIDTH_XI_IN_DEGREES
-     write(*,*)'NEX:                      ', NEX_MAX
-     write(*,*)'NER_CRUST:                ', NER_CRUST
-     write(*,*)'NER_80_MOHO:              ', NER_80_MOHO
-     write(*,*)'NER_220_80:               ', NER_220_80
-     write(*,*)'NER_400_220:              ', NER_400_220
-     write(*,*)'NER_600_400:              ', NER_600_400
-     write(*,*)'NER_670_600:              ', NER_670_600
-     write(*,*)'NER_771_670:              ', NER_771_670
-     write(*,*)'NER_TOPDDOUBLEPRIME_771:  ', NER_TOPDDOUBLEPRIME_771
-     write(*,*)'NER_CMB_TOPDDOUBLEPRIME:  ', NER_CMB_TOPDDOUBLEPRIME
-     write(*,*)'NER_OUTER_CORE:           ', NER_OUTER_CORE
-     write(*,*)'NER_TOP_CENTRAL_CUBE_ICB: ', NER_TOP_CENTRAL_CUBE_ICB
-     write(*,*)'R_CENTRAL_CUBE:           ', R_CENTRAL_CUBE
-     write(*,*)'multiplication factor:    ', multiplication_factor
-     write(*,*)
-     write(*,*)'DT:                       ',DT
-     write(*,*)'MIN_ATTENUATION_PERIOD    ',MIN_ATTENUATION_PERIOD
-     write(*,*)'MAX_ATTENUATION_PERIOD    ',MAX_ATTENUATION_PERIOD
-     write(*,*)
-     write(*,*)'##############################################################'
+!! DK DK suppressed because this routine should not write anything to the screen
+!    write(*,*)'##############################################################'
+!    write(*,*)
+!    write(*,*)' Auto Radial Meshing Code '
+!    write(*,*)' Consult read_compute_parameters.f90 and auto_ner.f90 '
+!    write(*,*)' This should only be invoked for chunks less than 90 degrees'
+!    write(*,*)' and for chunks greater than 1248 elements wide'
+!    write(*,*)
+!    write(*,*)'CHUNK WIDTH:              ', ANGULAR_WIDTH_XI_IN_DEGREES
+!    write(*,*)'NEX:                      ', NEX_MAX
+!    write(*,*)'NER_CRUST:                ', NER_CRUST
+!    write(*,*)'NER_80_MOHO:              ', NER_80_MOHO
+!    write(*,*)'NER_220_80:               ', NER_220_80
+!    write(*,*)'NER_400_220:              ', NER_400_220
+!    write(*,*)'NER_600_400:              ', NER_600_400
+!    write(*,*)'NER_670_600:              ', NER_670_600
+!    write(*,*)'NER_771_670:              ', NER_771_670
+!    write(*,*)'NER_TOPDDOUBLEPRIME_771:  ', NER_TOPDDOUBLEPRIME_771
+!    write(*,*)'NER_CMB_TOPDDOUBLEPRIME:  ', NER_CMB_TOPDDOUBLEPRIME
+!    write(*,*)'NER_OUTER_CORE:           ', NER_OUTER_CORE
+!    write(*,*)'NER_TOP_CENTRAL_CUBE_ICB: ', NER_TOP_CENTRAL_CUBE_ICB
+!    write(*,*)'R_CENTRAL_CUBE:           ', R_CENTRAL_CUBE
+!    write(*,*)'multiplication factor:    ', multiplication_factor
+!    write(*,*)
+!    write(*,*)'DT:                       ',DT
+!    write(*,*)'MIN_ATTENUATION_PERIOD    ',MIN_ATTENUATION_PERIOD
+!    write(*,*)'MAX_ATTENUATION_PERIOD    ',MAX_ATTENUATION_PERIOD
+!    write(*,*)
+!    write(*,*)'##############################################################'
 
     if (HONOR_1D_SPHERICAL_MOHO) then
       if (.not. ONE_CRUST) then
@@ -939,7 +952,7 @@
 
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
 
-! SEA1D without the 2 km of mud layer or the 3km water layer   
+! SEA1D without the 2 km of mud layer or the 3km water layer
    ROCEAN = 6371000.d0
    RMIDDLE_CRUST = 6361000.d0
    RMOHO  = 6346000.d0
