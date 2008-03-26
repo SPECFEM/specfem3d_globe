@@ -229,7 +229,7 @@
     sequence
     integer :: sea99_ndep
     integer :: sea99_nlat
-    integer :: sea99_nlon    
+    integer :: sea99_nlon
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax

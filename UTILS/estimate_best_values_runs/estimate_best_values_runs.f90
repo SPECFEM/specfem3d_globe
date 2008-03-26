@@ -25,14 +25,35 @@
 !
 !=====================================================================
 
-! create file OUTPUT_FILES/values_from_mesher.h based upon DATA/Par_file
-! in order to compile the solver with the right array sizes
+! output a table with the best parameters to use for large runs on a given machine
+! in order to use the total amount of memory available in the best possible way
 
-  subroutine create_header_file
+  program estimate_best_values_runs
 
   implicit none
 
-  include "constants.h"
+  include "../../constants.h"
+
+  integer, parameter :: NB_COLUMNS_TABLE = 10
+
+! maximum total number of processors we want to see in the table
+! integer, parameter :: MAX_NUMBER_OF_PROCS = 100000
+! integer, parameter :: MAX_NUMBER_OF_PROCS =  4000  ! current maximum on pangu at Caltech
+! integer, parameter :: MAX_NUMBER_OF_PROCS = 10240  ! current maximum on MareNostrum in Barcelona
+  integer, parameter :: MAX_NUMBER_OF_PROCS = 62976  ! current maximum on Ranger in Texas
+! integer, parameter :: MAX_NUMBER_OF_PROCS = 212992 ! current maximum on BlueGene at LLNL
+
+! minimum total number of processors we want to see in the table
+! integer, parameter :: MIN_NUMBER_OF_PROCS =  100
+  integer, parameter :: MIN_NUMBER_OF_PROCS = 1000
+
+! amount of memory installed per processor core on the system (in gigabytes)
+! double precision, parameter :: MAX_MEMORY_PER_CORE = 1.5d0 ! pangu at Caltech
+  double precision, parameter :: MAX_MEMORY_PER_CORE = 2.0d0 ! Ranger in Texas, MareNostrum in Barcelona
+
+! base value depends if we implement three or four doublings (default is three)
+  integer, parameter :: NB_DOUBLING = 3
+  integer :: BASE_VALUE
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
@@ -71,18 +92,13 @@
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
 ! this for all the regions
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC, &
-               NSPEC2D_XI, &
-               NSPEC2D_ETA, &
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-               NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-               nglob
+               NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,nglob
 
   double precision :: static_memory_size
-  character(len=150) HEADER_FILE
-
   integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
          NSPEC_INNER_CORE_ATTENUATION, &
@@ -96,37 +112,15 @@
          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
-  integer :: iregion
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,EMULATE_ONLY
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
-  integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
 
-  integer :: c,compteur
+  integer :: c,counter,offset
 
   double precision :: mem_per_core,percent
 
-  integer, parameter :: NB_COLONNES = 10
-  integer, dimension(NB_COLONNES) :: store_NEX_XI
-
-! maximum total number of processors we want to see in the table
-  integer, parameter :: MAX_NUMBER_OF_PROCS = 62976 !! Ranger !! 100000
-! integer, parameter :: MAX_NUMBER_OF_PROCS = 212992 ! current maximum on BlueGene at LLNL
-
-! amount of memory installed per processor core on the system (in gigabytes)
-  double precision, parameter :: MAX_MEMORY_PER_CORE = 2.d0 !! Ranger
-
-! base value depends if we implement three or four doublings (default is three)
-  integer, parameter :: NB_DOUBLING = 3
-  integer :: BASE_VALUE
-
-! output in LaTeX format or in regular ASCII format
-  logical, parameter :: OUTPUT_LATEX_FORMAT = .false.
-
 ! ************** PROGRAM STARTS HERE **************
-
-  call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
 
 ! count the total number of sources in the CMTSOLUTION file
   NSOURCES = 1
@@ -136,30 +130,35 @@
   first_time = .true.
 
   print *
-  print *,'Number of GB of memory per core on the machine: ',MAX_MEMORY_PER_CORE
+  print *,'Number of GB of memory per core installed in the machine: ',MAX_MEMORY_PER_CORE
   print *
 
-  print *,'total_proc, % of Ranger, NPROC_XI, NEX_XI, memory used per core, percentage:'
+  print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, memory used per core, percentage:'
   print *
 
-! total number of processors is 6 * NPROC_XI^2
-!!!!  do NPROC_XI = 1,int(sqrt(MAX_NUMBER_OF_PROCS / 6.d0))
-!! start after 1000 processors
-  do NPROC_XI = 13,int(sqrt(MAX_NUMBER_OF_PROCS / 6.d0))
+! make sure we do not start below the lower limit
+  if(6 * int(sqrt(MIN_NUMBER_OF_PROCS / 6.d0))**2 == MIN_NUMBER_OF_PROCS) then
+    offset = 0
+  else
+    offset = 1
+  endif
 
-    compteur = 1
+! the total number of processors is 6 * NPROC_XI^2
+  do NPROC_XI = int(sqrt(MIN_NUMBER_OF_PROCS / 6.d0)) + offset,int(sqrt(MAX_NUMBER_OF_PROCS / 6.d0))
+
+    counter = 1
     c = 0
 
-    do while (compteur <= NB_COLONNES)
+    do while (counter <= NB_COLUMNS_TABLE)
       c = c + 1
       NEX_XI = BASE_VALUE * c * NPROC_XI
 
       if(NEX_XI >= 64 .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
 
-        store_NEX_XI(compteur) = NEX_XI
-        compteur = compteur + 1
+        counter = counter + 1
 
 ! read the parameter file and compute additional parameters
+  EMULATE_ONLY = .true.
   call read_compute_parameters(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
@@ -190,16 +189,7 @@
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
-
-  do iregion=1,MAX_NUM_REGIONS
-    NGLOB1D_RADIAL_CORNER(iregion,:) = NGLOB1D_RADIAL(iregion)
-  enddo
-
-  if (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA) then
-    NGLOB1D_RADIAL_CORNER(IREGION_OUTER_CORE,:) = NGLOB1D_RADIAL_CORNER(IREGION_OUTER_CORE,:) + &
-                                                maxval(DIFF_NSPEC1D_RADIAL(:,:))*(NGLLZ-1)
-  endif
+         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY)
 
   if(first_time) then
     first_time = .false.
@@ -250,6 +240,7 @@
   else if(percent >= 85.d0) then
     write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'% **excellent**')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
+    goto 777
 
   else if(percent >= 80.d0) then
     write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'% **very good**')") &
@@ -269,5 +260,19 @@
 
   enddo
 
-  end subroutine create_header_file
+  end program estimate_best_values_runs
+
+!
+!----  include subroutines from the main code
+!
+
+  include "../../read_compute_parameters.f90"
+
+  include "../../memory_eval.f90"
+
+  include "../../read_value_parameters.f90"
+
+  include "../../get_value_parameters.f90"
+
+  include "../../auto_ner.f90"
 
