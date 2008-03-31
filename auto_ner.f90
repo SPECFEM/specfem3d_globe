@@ -35,13 +35,19 @@
 !  <savage13@gps.caltech.edu>
 !  <savage13@dtm.ciw.edu>
 !
-!   It is based partially upon formulation in the following references:
+!  It is based partially upon formulation in:
 !
-!   Komatitsch and Tromp, 2002 Part I
+! @ARTICLE{KoTr02a,
+! author={D. Komatitsch and J. Tromp},
+! year=2002,
+! title={Spectral-Element Simulations of Global Seismic Wave Propagation{-I. V}alidation},
+! journal={Geophys. J. Int.},
+! volume=149,
+! number=2,
+! pages={390-412},
+! doi={10.1046/j.1365-246X.2002.01653.x}}
 !
-!    and
-!
-!   The Core determineation was developed
+!  and the core determination was developed.
 !
 
   subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
@@ -145,7 +151,7 @@
     double precision, dimension(NUM_REGIONS-1) :: ratio_top
     double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
     integer,          dimension(NUM_REGIONS-1) :: NER
-    double precision NEX_ETA
+    integer NEX_ETA
 
     ! This is PREM in Kilometers, well ... kinda, not really ....
     radius(1)  = 6371.00d0 ! Surface
