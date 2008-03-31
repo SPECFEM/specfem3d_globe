@@ -256,7 +256,8 @@
     write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'% **possible**')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
 
-  else
+! uncomment line below to completely suppress cases that give an occupancy below 50%
+  else ! if(percent >= 50.d0) then
     write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'%')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
   endif
