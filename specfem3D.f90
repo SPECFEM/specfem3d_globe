@@ -731,7 +731,7 @@
 
   integer, external :: err_occurred
 
-  logical SAVE_STRAIN
+  logical COMPUTE_AND_STORE_STRAIN
 
 ! for SAC headers for seismograms
   integer NSOURCES_SAC,yr_SAC,jda_SAC,ho_SAC,mi_SAC
@@ -1075,9 +1075,9 @@
      call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
   if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    SAVE_STRAIN = .true.
+    COMPUTE_AND_STORE_STRAIN = .true.
   else
-    SAVE_STRAIN = .false.
+    COMPUTE_AND_STORE_STRAIN = .false.
   endif
 
 ! get the base pathname for output files
@@ -2684,7 +2684,7 @@
      endif
   endif
 
-  if (SAVE_STRAIN) then
+  if (COMPUTE_AND_STORE_STRAIN) then
     eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
     eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
@@ -2913,7 +2913,7 @@
 
     endif
 
-    if (SAVE_STRAIN) then
+    if (COMPUTE_AND_STORE_STRAIN) then
       Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
       strain2_norm= maxval(abs(epsilondev_crust_mantle))
       call MPI_REDUCE(Strain_norm,Strain_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
@@ -2936,7 +2936,7 @@
       write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
       endif
-      if(SAVE_STRAIN) then
+      if(COMPUTE_AND_STORE_STRAIN) then
       write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
       write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
       endif
@@ -3563,7 +3563,7 @@
           R_memory_crust_mantle,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),SAVE_STRAIN,AM_V)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
 
   if (SIMULATION_TYPE == 3) then
 ! for anisotropy and gravity, x y and z contain r theta and phi
@@ -3589,7 +3589,7 @@
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),SAVE_STRAIN,AM_V)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
   endif
 
 
@@ -3838,7 +3838,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),SAVE_STRAIN,AM_V)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
 
   if (SIMULATION_TYPE == 3) then
   call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -3856,7 +3856,7 @@
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),SAVE_STRAIN,AM_V)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
   endif
 
 ! add the sources

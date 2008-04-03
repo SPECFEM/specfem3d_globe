@@ -34,7 +34,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
           one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec,SAVE_STRAIN, AM_V)
+          vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN, AM_V)
 
   implicit none
 
@@ -67,7 +67,7 @@
 ! attenuation_model_variables
 
 ! for forward or backward simulations
-  logical SAVE_STRAIN
+  logical COMPUTE_AND_STORE_STRAIN
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ,accel
@@ -247,7 +247,7 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
 ! compute deviatoric strain
-  if (SAVE_STRAIN) then
+  if (COMPUTE_AND_STORE_STRAIN) then
     if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
       ispec_strain = 1
     else
@@ -265,8 +265,7 @@
      if(ATTENUATION_3D_VAL) then
         minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
      else
-        iglob     = ibool(i,j,k,ispec)
-        radius_cr = xstore(iglob)
+        radius_cr = xstore(ibool(i,j,k,ispec))
         call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
         minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
      endif ! ATTENUATION_3D_VAL
@@ -584,7 +583,7 @@
 
      endif
 
-     if (SAVE_STRAIN) then
+     if (COMPUTE_AND_STORE_STRAIN) then
 ! save deviatoric strain for Runge-Kutta scheme
        epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
      endif
