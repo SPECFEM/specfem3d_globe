@@ -491,12 +491,12 @@
   integer, parameter :: NGLOB_DOUBLING_BASICBRICK = 27
 
 ! for Cuthill-McKee (1969) permutation
-  logical, parameter :: PERFORM_CUTHILL_MCKEE = .true.
+  logical, parameter :: PERFORM_CUTHILL_MCKEE = .false.
 ! do not implement ordering in the inner core because it is small
   logical, parameter :: PERMUTE_INNER_CORE = .false.
   integer, parameter :: NGNOD_HEXAHEDRA = 8
 ! perform classical or multi-level Cuthill-McKee ordering
-  logical, parameter :: CMcK_MULTI = .true.
+  logical, parameter :: CMcK_MULTI = .false.
 ! maximum size if multi-level Cuthill-McKee ordering
   integer, parameter :: LIMIT_MULTI_CUTHILL = 50
 
