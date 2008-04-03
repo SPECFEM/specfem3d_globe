@@ -36,7 +36,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,SAVE_STRAIN, AM_V)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN, AM_V)
 
   implicit none
 
@@ -69,7 +69,7 @@
 ! attenuation_model_variables
 
 ! for forward or backward simulations
-  logical SAVE_STRAIN
+  logical COMPUTE_AND_STORE_STRAIN
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling
@@ -269,7 +269,7 @@
           duzdyl_plus_duydzl = duzdyl + duydzl
 
 ! compute deviatoric strain
- if (SAVE_STRAIN) then
+ if (COMPUTE_AND_STORE_STRAIN) then
     if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
       ispec_strain = 1
     else
@@ -288,7 +288,7 @@
     if(ATTENUATION_3D_VAL) then
       one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
     else
-      radius_cr = xstore(iglob)
+      radius_cr = xstore(ibool(i,j,k,ispec))
       call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
       one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
     endif
@@ -837,7 +837,7 @@
   endif
 
 ! save deviatoric strain for Runge-Kutta scheme
-  if(SAVE_STRAIN) epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+  if(COMPUTE_AND_STORE_STRAIN) epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
 
   enddo   ! spectral element loop
 
