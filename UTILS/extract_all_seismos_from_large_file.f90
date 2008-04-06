@@ -34,12 +34,16 @@
 
   include "../constants.h"
 
+! binary or ASCII storage format (see its value in DATA/Par_file instead)
+  logical, parameter :: USE_BINARY_FOR_LARGE_FILE = .true.
+
 ! number of seismogram files stored in the unique large file
-  integer, parameter :: N_COMPONENTS = 1
-  integer, parameter :: NREC = 451 * N_COMPONENTS
+  integer, parameter :: N_STATIONS = 647 ! see number of lines in DATA/STATIONS
+  integer, parameter :: N_COMPONENTS = 3
+  integer, parameter :: NREC = N_STATIONS * N_COMPONENTS
 
 ! number of time steps in each seismogram file
-  integer, parameter :: NSTEP = 61600
+  integer, parameter :: NSTEP = 37200 ! see its value in OUTPUT_FILES/values_from_mesher.h
 
   integer :: irec,istep,irepeat
   real :: time,U_value
