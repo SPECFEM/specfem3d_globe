@@ -18,7 +18,7 @@ case $FC in
             FLAGS_CHECK="-fast -Mnobounds -Mneginfo -Mdclchk -Knoieee" # -mcmodel=medium
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-fast -Mnobounds -Mneginfo -Mdclchk -Knoieee -Minline" # -mcmodel=medium
+            FLAGS_NO_CHECK="-fast -Mnobounds -Mneginfo -Mdclchk -Knoieee -Ktrap=none -Minline" # -mcmodel=medium
         fi
         ;;
     ifort|*/ifort)
@@ -26,11 +26,11 @@ case $FC in
         # Intel ifort Fortran90 for Linux
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check all -align sequence -assume byterecl -i-dynamic -ftrapuv -fpe0 -no-ftz -traceback" # -mcmodel=medium
+            FLAGS_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -ftrapuv -fpe0 -no-ftz -traceback" # -mcmodel=medium
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
             # standard options
-            FLAGS_NO_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic" # -mcmodel=medium
+            FLAGS_NO_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe3 -no-ftz" # -mcmodel=medium
             # Pangu at Caltech
             #FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O2 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
             # debug with range checking
@@ -43,11 +43,10 @@ case $FC in
         # GNU gfortran
         #
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow" # -mcmodel=medium
+            FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow -fno-trapping-math" # -mcmodel=medium
         fi
         if test x"$FLAGS_CHECK" = x; then
-##############            FLAGS_CHECK="\$(FLAGS_NO_CHECK) -fbounds-check"
-            FLAGS_CHECK="\$(FLAGS_NO_CHECK)"
+            FLAGS_CHECK="\$(FLAGS_NO_CHECK)" # -fbounds-check
         fi
         ;;
     g95|*/g95)
