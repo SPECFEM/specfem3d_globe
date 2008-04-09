@@ -54,7 +54,7 @@
   double precision DT
 
 ! use integer array to store values
-  integer ibathy_topo(NX_BATHY,NY_BATHY)
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
 ! for ellipticity
   integer nspl

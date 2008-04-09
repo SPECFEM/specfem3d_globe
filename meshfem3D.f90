@@ -454,7 +454,7 @@
   double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
 ! use integer array to store values
-  integer ibathy_topo(NX_BATHY,NY_BATHY)
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
 ! for ellipticity
   integer nspl

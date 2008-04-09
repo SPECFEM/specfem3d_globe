@@ -36,7 +36,7 @@
   include "constants.h"
 
 ! use integer array to store values
-  integer ibathy_topo(NX_BATHY,NY_BATHY)
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   double precision xlat,xlon,value
 
@@ -76,7 +76,7 @@
   character(len=150) topo_bathy_file
 
 ! use integer array to store values
-  integer ibathy_topo(NX_BATHY,NY_BATHY)
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   integer itopo_x,itopo_y
 

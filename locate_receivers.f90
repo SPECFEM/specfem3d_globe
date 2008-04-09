@@ -70,7 +70,7 @@
   character(len=*)  rec_filename
 
 ! use integer array to store values
-  integer ibathy_topo(NX_BATHY,NY_BATHY)
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   integer, allocatable, dimension(:) :: ix_initial_guess,iy_initial_guess,iz_initial_guess
 
