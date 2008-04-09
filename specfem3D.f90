@@ -303,7 +303,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: Ieps_trace_over_3_crust_mantle
 
 ! use integer array to store values
-  integer ibathy_topo(NX_BATHY,NY_BATHY)
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
 ! for crust/oceans coupling
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle

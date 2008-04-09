@@ -299,7 +299,7 @@
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
 
 ! use integer array to store values
-  integer ibathy_topo(NX_BATHY,NY_BATHY)
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
 ! arrays with the mesh in double precision
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
