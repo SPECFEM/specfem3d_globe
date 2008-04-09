@@ -697,7 +697,7 @@
   elseif(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
     call define_model_ak135(CRUSTAL, Mak135_V)
   elseif(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
-    call define_model_ref(CRUSTAL, Mref_V)
+    call define_model_ref(Mref_V)
   elseif(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
     call define_model_sea1d(CRUSTAL, SEA1DM_V)
   endif
