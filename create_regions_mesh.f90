@@ -1301,7 +1301,7 @@
   endif
 
 ! define the doubling flag of this element
-! only two active central cube, the 4 others are fictitious
+! only two active central cubes, the four others are fictitious
 
 ! determine where we cut the central cube to share it between CHUNK_AB & CHUNK_AB_ANTIPODE
 ! in the case of mod(NPROC_XI,2)/=0, the cut is asymetric and the bigger part is for CHUNK_AB
