@@ -3,7 +3,7 @@
 
 from pyre.applications import Script
 from os.path import dirname, exists, isdir, join
-import os, sys, shutil
+import os, sys, stat, shutil
 
 
 SPECFEM3D_GLOBE = dirname(__file__)
@@ -46,6 +46,13 @@ class Specfem3DGlobe(Script):
 
 
     def onLoginNode(self, *args, **kwds):
+        # Redirect all output -- our journal output, and the output of
+        # our children -- to a file.
+        fd = os.open("output_build.txt", os.O_CREAT | os.O_WRONLY, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        os.dup2(fd, 1)
+        os.dup2(fd, 2)
+        os.close(fd)
+
         self.prepareFiles()
         self.build()
         self.schedule(*args, **kwds)
