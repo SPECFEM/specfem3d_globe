@@ -26,7 +26,7 @@
 !=====================================================================
 
 
-  subroutine model_ref(x,rho,vpv,vph,vsv,vsh,eta,Qkappa,Qmu,iregion_code,Mref_V)
+  subroutine model_ref(x,rho,vpv,vph,vsv,vsh,eta,Qkappa,Qmu,iregion_code,CRUSTAL,Mref_V)
 
   implicit none
 
@@ -69,6 +69,7 @@
   integer i
 
   double precision r,frac,scaleval
+  logical CRUSTAL
 
 ! compute real physical radius in meters
   r = x * R_EARTH
@@ -85,6 +86,8 @@
   if(iregion_code == IREGION_OUTER_CORE .and. i > 358) i = 358
 
   if(iregion_code == IREGION_CRUST_MANTLE .and. i < 360) i = 360
+  if(CRUSTAL .and. i > 717) i = 717
+
 
   if(i == 1) then
     rho = Mref_V%density_ref(i)
@@ -133,7 +136,7 @@
 
 !-------------------
 
-  subroutine define_model_ref(USE_EXTERNAL_CRUSTAL_MODEL,Mref_V)
+  subroutine define_model_ref(Mref_V)
 
   implicit none
   include "constants.h"
@@ -155,9 +158,6 @@
   type (model_ref_variables) Mref_V
 ! model_ref_variables
 
-  logical USE_EXTERNAL_CRUSTAL_MODEL
-
-  integer i
 
 ! define the 1D REF model of Kustowski et al. (2007)
 
@@ -7369,19 +7369,6 @@
     Mref_V%vsh_ref(718:750) = Mref_V%vsh_ref(717)
   endif
 
-! strip the crust and replace it by mantle if we use an external crustal model
-  if(USE_EXTERNAL_CRUSTAL_MODEL) then
-    do i=NR_REF-10,NR_REF
-      Mref_V%density_ref(i) = Mref_V%density_ref(NR_REF-11)
-      Mref_V%vpv_ref(i) = Mref_V%vpv_ref(NR_REF-11)
-      Mref_V%vph_ref(i) = Mref_V%vph_ref(NR_REF-11)
-      Mref_V%vsv_ref(i) = Mref_V%vsv_ref(NR_REF-11)
-      Mref_V%vsh_ref(i) = Mref_V%vsh_ref(NR_REF-11)
-      Mref_V%eta_ref(i) = Mref_V%eta_ref(NR_REF-11)
-      Mref_V%Qkappa_ref(i) = Mref_V%Qkappa_ref(NR_REF-11)
-      Mref_V%Qmu_ref(i) = Mref_V%Qmu_ref(NR_REF-11)
-    enddo
-  endif
 
   end subroutine define_model_ref
 
