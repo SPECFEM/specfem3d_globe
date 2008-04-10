@@ -27,7 +27,7 @@
 
   subroutine get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
                         idoubling,xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion,nglob_ori)
+                        NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion)
 
 ! routine to create the MPI 1D chunk buffers for edges
 
@@ -35,7 +35,7 @@
 
   include "constants.h"
 
-  integer nspec,myrank,nglob_ori,nglob,ipoin1D,iregion
+  integer nspec,myrank,nglob,ipoin1D,iregion
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
 
   logical iMPIcut_xi(2,nspec)
@@ -71,17 +71,19 @@
 
 ! allocate arrays for message buffers with maximum size
 ! define maximum size for message buffers
-  allocate(ibool_selected(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(xstore_selected(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(ystore_selected(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(zstore_selected(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(ind(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(ninseg(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(iglob(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(locval(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(ifseg(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(iwork(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
-  allocate(work(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+  if (PERFORM_CUTHILL_MCKEE) then
+    allocate(ibool_selected(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(xstore_selected(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(ystore_selected(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(zstore_selected(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(ind(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(ninseg(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(iglob(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(locval(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(ifseg(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(iwork(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+    allocate(work(maxval(NGLOB1D_RADIAL_CORNER(iregion,:))))
+  endif
 
 ! write the MPI buffers for the left and right edges of the slice
 ! and the position of the points to check that the buffers are fine
@@ -121,24 +123,29 @@
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin1D = npoin1D + 1
-            ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
-            xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
-            ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
-            zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+            if (PERFORM_CUTHILL_MCKEE) then
+              ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
+              xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
+              ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
+              zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+            else
+              write(10,*) ibool(ispec), xstore(ispec), &
+                    ystore(ispec),zstore(ispec)
+            endif
         endif
       enddo
     endif
   enddo
 
-  nglob=nglob_ori
-  call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
-          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-
-  do ipoin1D=1,npoin1D
-      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
-                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
-  enddo
-
+  if (PERFORM_CUTHILL_MCKEE) then
+    call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
+            ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+  
+    do ipoin1D=1,npoin1D
+        write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+                    ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+    enddo
+  endif
 ! put flag to indicate end of the list of points
   write(10,*) '0  0  0.  0.  0.'
 
@@ -181,23 +188,29 @@
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin1D = npoin1D + 1
-            ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
-            xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
-            ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
-            zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+            if (PERFORM_CUTHILL_MCKEE) then
+              ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
+              xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
+              ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
+              zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+            else
+              write(10,*) ibool(ispec), xstore(ispec), &
+                    ystore(ispec),zstore(ispec)
+            endif
         endif
       enddo
     endif
   enddo
 
-  nglob=nglob_ori
-  call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
-          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-
-  do ipoin1D=1,npoin1D
-      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
-                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
-  enddo
+  if (PERFORM_CUTHILL_MCKEE) then
+    call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
+            ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+  
+    do ipoin1D=1,npoin1D
+        write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+                    ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+    enddo
+  endif
 
 ! put flag to indicate end of the list of points
   write(10,*) '0  0  0.  0.  0.'
@@ -251,23 +264,29 @@
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin1D = npoin1D + 1
-            ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
-            xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
-            ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
-            zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+            if (PERFORM_CUTHILL_MCKEE) then
+              ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
+              xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
+              ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
+              zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+            else
+              write(10,*) ibool(ispec), xstore(ispec), &
+                    ystore(ispec),zstore(ispec)
+            endif
         endif
       enddo
     endif
   enddo
 
-  nglob=nglob_ori
-  call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
-          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-
-  do ipoin1D=1,npoin1D
-      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
-                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
-  enddo
+  if (PERFORM_CUTHILL_MCKEE) then
+    call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
+            ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+  
+    do ipoin1D=1,npoin1D
+        write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+                    ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+    enddo
+  endif
 
 ! put flag to indicate end of the list of points
   write(10,*) '0  0  0.  0.  0.'
@@ -317,23 +336,29 @@
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin1D = npoin1D + 1
-            ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
-            xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
-            ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
-            zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+            if (PERFORM_CUTHILL_MCKEE) then
+              ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
+              xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
+              ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
+              zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
+            else
+              write(10,*) ibool(ispec), xstore(ispec), &
+                    ystore(ispec),zstore(ispec)
+            endif
         endif
       enddo
     endif
   enddo
 
-  nglob=nglob_ori
-  call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
-          ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-
-  do ipoin1D=1,npoin1D
-      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
-                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
-  enddo
+  if (PERFORM_CUTHILL_MCKEE) then
+    call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
+            ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
+  
+    do ipoin1D=1,npoin1D
+        write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+                    ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+    enddo
+  endif
 
 ! put flag to indicate end of the list of points
   write(10,*) '0  0  0.  0.  0.'
@@ -347,17 +372,19 @@
   if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,3) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,3)) &
     call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
 
-  deallocate(ibool_selected)
-  deallocate(xstore_selected)
-  deallocate(ystore_selected)
-  deallocate(zstore_selected)
-  deallocate(ind)
-  deallocate(ninseg)
-  deallocate(iglob)
-  deallocate(locval)
-  deallocate(ifseg)
-  deallocate(iwork)
-  deallocate(work)
+  if (PERFORM_CUTHILL_MCKEE) then
+    deallocate(ibool_selected)
+    deallocate(xstore_selected)
+    deallocate(ystore_selected)
+    deallocate(zstore_selected)
+    deallocate(ind)
+    deallocate(ninseg)
+    deallocate(iglob)
+    deallocate(locval)
+    deallocate(ifseg)
+    deallocate(iwork)
+    deallocate(work)
+  endif
 
   end subroutine get_MPI_1D_buffers
 
