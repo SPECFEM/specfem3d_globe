@@ -128,8 +128,8 @@
                   ystore_selected(npoin2D_eta) = ystore(ix,iy,iz,ispec)
                   zstore_selected(npoin2D_eta) = zstore(ix,iy,iz,ispec)
                 else
-                  write(10,*) ibool(ispec), xstore(ispec), &
-                        ystore(ispec),zstore(ispec)
+                  write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
                 endif
             endif
           enddo
@@ -192,8 +192,8 @@
                 ystore_selected(npoin2D_eta) = ystore(ix,iy,iz,ispec)
                 zstore_selected(npoin2D_eta) = zstore(ix,iy,iz,ispec)
               else
-                write(10,*) ibool(ispec), xstore(ispec), &
-                      ystore(ispec),zstore(ispec)
+                write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                      ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
               endif
           endif
         enddo
