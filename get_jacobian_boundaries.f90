@@ -42,7 +42,7 @@
 
   include "constants.h"
 
-  integer nspec,myrank,dummy_var,ispec_tmp
+  integer nspec,myrank
   integer NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
 
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
@@ -82,12 +82,6 @@
   integer ispecb1,ispecb2,ispecb3,ispecb4,ispecb5,ispecb6
 
   double precision xelm(NGNOD2D),yelm(NGNOD2D),zelm(NGNOD2D)
-
-! arrays for sorting routine
-  integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
-  logical, dimension(:), allocatable :: ifseg
-  double precision, dimension(:), allocatable :: work
-  double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
 
 ! check that the parameter file is correct
   if(NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')
@@ -144,36 +138,8 @@
                   jacobian2D_xmin,normal_xmin,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
 
     if (PERFORM_CUTHILL_MCKEE) then
-      allocate (xstore_selected(ispecb1))
-      allocate (ystore_selected(ispecb1))
-      allocate (zstore_selected(ispecb1))
-      allocate(ind(ispecb1))
-      allocate(ninseg(ispecb1))
-      allocate(iglob(ispecb1))
-      allocate(locval(ispecb1))
-      allocate(ifseg(ispecb1))
-      allocate(iwork(ispecb1))
-      allocate(work(ispecb1))
-    
-      do ispec_tmp=1,ispecb1
-        xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_xmin(ispec_tmp))
-        ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_xmin(ispec_tmp))
-        zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_xmin(ispec_tmp))
-      enddo
-    
-      call sort_array_coordinates_gjb(ispecb1,xstore_selected,ystore_selected,zstore_selected, &
-              ibelm_xmin,iglob,normal_xmin,jacobian2D_xmin,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLY,NGLLZ)
-    
-      deallocate (xstore_selected)
-      deallocate (ystore_selected)
-      deallocate (zstore_selected)
-      deallocate(ind)
-      deallocate(ninseg)
-      deallocate(iglob)
-      deallocate(locval)
-      deallocate(ifseg)
-      deallocate(iwork)
-      deallocate(work)
+      call sort_arrays_for_cuthill (ispecb1,xstore,ystore,zstore,ibelm_xmin,normal_xmin,&
+                                    jacobian2D_xmin,NSPEC2DMAX_XMIN_XMAX,NGLLY,NGLLZ,nspec)
     endif
   endif
 
@@ -217,36 +183,8 @@
                   jacobian2D_xmax,normal_xmax,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
 
     if (PERFORM_CUTHILL_MCKEE) then
-      allocate (xstore_selected(ispecb2))
-      allocate (ystore_selected(ispecb2))
-      allocate (zstore_selected(ispecb2))
-      allocate(ind(ispecb2))
-      allocate(ninseg(ispecb2))
-      allocate(iglob(ispecb2))
-      allocate(locval(ispecb2))
-      allocate(ifseg(ispecb2))
-      allocate(iwork(ispecb2))
-      allocate(work(ispecb2))
-    
-      do ispec_tmp=1,ispecb2
-        xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_xmax(ispec_tmp))
-        ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_xmax(ispec_tmp))
-        zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_xmax(ispec_tmp))
-      enddo
-    
-      call sort_array_coordinates_gjb(ispecb2,xstore_selected,ystore_selected,zstore_selected, &
-              ibelm_xmax,iglob,normal_xmax,jacobian2D_xmax,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLY,NGLLZ)
-    
-      deallocate (xstore_selected)
-      deallocate (ystore_selected)
-      deallocate (zstore_selected)
-      deallocate(ind)
-      deallocate(ninseg)
-      deallocate(iglob)
-      deallocate(locval)
-      deallocate(ifseg)
-      deallocate(iwork)
-      deallocate(work)
+      call sort_arrays_for_cuthill (ispecb2,xstore,ystore,zstore,ibelm_xmax,normal_xmax,&
+                                    jacobian2D_xmax,NSPEC2DMAX_XMIN_XMAX,NGLLY,NGLLZ,nspec)
     endif
   endif
 
@@ -290,36 +228,8 @@
                   jacobian2D_ymin,normal_ymin,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
     if (PERFORM_CUTHILL_MCKEE) then
-      allocate (xstore_selected(ispecb3))
-      allocate (ystore_selected(ispecb3))
-      allocate (zstore_selected(ispecb3))
-      allocate(ind(ispecb3))
-      allocate(ninseg(ispecb3))
-      allocate(iglob(ispecb3))
-      allocate(locval(ispecb3))
-      allocate(ifseg(ispecb3))
-      allocate(iwork(ispecb3))
-      allocate(work(ispecb3))
-    
-      do ispec_tmp=1,ispecb3
-        xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_ymin(ispec_tmp))
-        ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_ymin(ispec_tmp))
-        zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_ymin(ispec_tmp))
-      enddo
-    
-      call sort_array_coordinates_gjb(ispecb3,xstore_selected,ystore_selected,zstore_selected, &
-              ibelm_ymin,iglob,normal_ymin,jacobian2D_ymin,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLX,NGLLZ)
-    
-      deallocate (xstore_selected)
-      deallocate (ystore_selected)
-      deallocate (zstore_selected)
-      deallocate(ind)
-      deallocate(ninseg)
-      deallocate(iglob)
-      deallocate(locval)
-      deallocate(ifseg)
-      deallocate(iwork)
-      deallocate(work)
+      call sort_arrays_for_cuthill (ispecb3,xstore,ystore,zstore,ibelm_ymin,normal_ymin,&
+                                    jacobian2D_ymin,NSPEC2DMAX_YMIN_YMAX,NGLLX,NGLLZ,nspec)
     endif
   endif
 
@@ -363,36 +273,8 @@
                   jacobian2D_ymax,normal_ymax,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
     if (PERFORM_CUTHILL_MCKEE) then
-      allocate (xstore_selected(ispecb4))
-      allocate (ystore_selected(ispecb4))
-      allocate (zstore_selected(ispecb4))
-      allocate(ind(ispecb4))
-      allocate(ninseg(ispecb4))
-      allocate(iglob(ispecb4))
-      allocate(locval(ispecb4))
-      allocate(ifseg(ispecb4))
-      allocate(iwork(ispecb4))
-      allocate(work(ispecb4))
-    
-      do ispec_tmp=1,ispecb4
-        xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_ymax(ispec_tmp))
-        ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_ymax(ispec_tmp))
-        zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_ymax(ispec_tmp))
-      enddo
-    
-      call sort_array_coordinates_gjb(ispecb4,xstore_selected,ystore_selected,zstore_selected, &
-              ibelm_ymax,iglob,normal_ymax,jacobian2D_ymax,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLX,NGLLZ)
-    
-      deallocate (xstore_selected)
-      deallocate (ystore_selected)
-      deallocate (zstore_selected)
-      deallocate(ind)
-      deallocate(ninseg)
-      deallocate(iglob)
-      deallocate(locval)
-      deallocate(ifseg)
-      deallocate(iwork)
-      deallocate(work)
+      call sort_arrays_for_cuthill (ispecb4,xstore,ystore,zstore,ibelm_ymax,normal_ymax,&
+                                    jacobian2D_ymax,NSPEC2DMAX_YMIN_YMAX,NGLLX,NGLLZ,nspec)
     endif
   endif
 
@@ -435,36 +317,8 @@
                   jacobian2D_bottom,normal_bottom,NGLLX,NGLLY,NSPEC2D_BOTTOM)
 
     if (PERFORM_CUTHILL_MCKEE) then
-      allocate (xstore_selected(ispecb5))
-      allocate (ystore_selected(ispecb5))
-      allocate (zstore_selected(ispecb5))
-      allocate(ind(ispecb5))
-      allocate(ninseg(ispecb5))
-      allocate(iglob(ispecb5))
-      allocate(locval(ispecb5))
-      allocate(ifseg(ispecb5))
-      allocate(iwork(ispecb5))
-      allocate(work(ispecb5))
-    
-      do ispec_tmp=1,ispecb5
-        xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_bottom(ispec_tmp))
-        ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_bottom(ispec_tmp))
-        zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_bottom(ispec_tmp))
-      enddo
-    
-      call sort_array_coordinates_gjb(ispecb5,xstore_selected,ystore_selected,zstore_selected, &
-              ibelm_bottom,iglob,normal_bottom,jacobian2D_bottom,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLX,NGLLY)
-    
-      deallocate (xstore_selected)
-      deallocate (ystore_selected)
-      deallocate (zstore_selected)
-      deallocate(ind)
-      deallocate(ninseg)
-      deallocate(iglob)
-      deallocate(locval)
-      deallocate(ifseg)
-      deallocate(iwork)
-      deallocate(work)
+      call sort_arrays_for_cuthill (ispecb5,xstore,ystore,zstore,ibelm_bottom,normal_bottom,&
+                                    jacobian2D_bottom,NSPEC2D_BOTTOM,NGLLX,NGLLY,nspec)
     endif
   endif
 
@@ -507,36 +361,8 @@
                   jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
 
     if (PERFORM_CUTHILL_MCKEE) then
-      allocate (xstore_selected(ispecb6))
-      allocate (ystore_selected(ispecb6))
-      allocate (zstore_selected(ispecb6))
-      allocate(ind(ispecb6))
-      allocate(ninseg(ispecb6))
-      allocate(iglob(ispecb6))
-      allocate(locval(ispecb6))
-      allocate(ifseg(ispecb6))
-      allocate(iwork(ispecb6))
-      allocate(work(ispecb6))
-    
-      do ispec_tmp=1,ispecb6
-        xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm_top(ispec_tmp))
-        ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm_top(ispec_tmp))
-        zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm_top(ispec_tmp))
-      enddo
-    
-      call sort_array_coordinates_gjb(ispecb6,xstore_selected,ystore_selected,zstore_selected, &
-              ibelm_top,iglob,normal_top,jacobian2D_top,locval,ifseg,dummy_var,ind,ninseg,iwork,work,NGLLX,NGLLY)
-    
-      deallocate (xstore_selected)
-      deallocate (ystore_selected)
-      deallocate (zstore_selected)
-      deallocate(ind)
-      deallocate(ninseg)
-      deallocate(iglob)
-      deallocate(locval)
-      deallocate(ifseg)
-      deallocate(iwork)
-      deallocate(work)
+      call sort_arrays_for_cuthill (ispecb6,xstore,ystore,zstore,ibelm_top,normal_top,&
+                                    jacobian2D_top,NSPEC2D_TOP,NGLLX,NGLLY,nspec)
     endif
   endif
 
@@ -625,3 +451,91 @@
 
   end subroutine compute_jacobian_2D
 
+
+
+subroutine sort_arrays_for_cuthill (ispecb,xstore,ystore,zstore,ibelm,normal,jacobian2D,nspec2D,NGLL1,NGLL2,nspec)
+
+  implicit none
+
+  include "constants.h"
+
+  integer :: ispecb,nspec2D,NGLL1,NGLL2,nspec,ispec_tmp,dummy_var,i
+
+  integer ibelm(nspec2D)
+  real(kind=CUSTOM_REAL) jacobian2D(NGLL1,NGLL2,NSPEC2D)
+  real(kind=CUSTOM_REAL) normal(NDIM,NGLL1,NGLL2,NSPEC2D)
+
+  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+
+! arrays for sorting routine
+  integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
+  logical, dimension(:), allocatable :: ifseg
+  double precision, dimension(:), allocatable :: work
+  double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
+  integer, dimension(:), allocatable :: perm
+  integer, dimension(:), allocatable :: ibelm_tmp
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_tmp
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_tmp
+
+! get permutation
+  allocate (xstore_selected(ispecb))
+  allocate (ystore_selected(ispecb))
+  allocate (zstore_selected(ispecb))
+  allocate(ind(ispecb))
+  allocate(ninseg(ispecb))
+  allocate(iglob(ispecb))
+  allocate(locval(ispecb))
+  allocate(ifseg(ispecb))
+  allocate(iwork(ispecb))
+  allocate(work(ispecb))
+  allocate(perm(ispecb))
+
+  do ispec_tmp=1,ispecb
+    xstore_selected(ispec_tmp) = xstore(1,1,1,ibelm(ispec_tmp))
+    ystore_selected(ispec_tmp) = ystore(1,1,1,ibelm(ispec_tmp))
+    zstore_selected(ispec_tmp) = zstore(1,1,1,ibelm(ispec_tmp))
+    perm(ispec_tmp) = ispec_tmp
+  enddo
+
+  call sort_array_coordinates(ispecb,xstore_selected,ystore_selected,zstore_selected, &
+          perm,iglob,locval,ifseg,dummy_var,ind,ninseg,iwork,work)
+
+  deallocate (xstore_selected)
+  deallocate (ystore_selected)
+  deallocate (zstore_selected)
+  deallocate(ind)
+  deallocate(ninseg)
+  deallocate(iglob)
+  deallocate(locval)
+  deallocate(ifseg)
+  deallocate(iwork)
+  deallocate(work)
+
+! permutation of ibelm
+  allocate(ibelm_tmp(ispecb))
+  ibelm_tmp = ibelm
+  do i = 1,ispecb
+    ibelm(perm(i)) = ibelm_tmp(i)
+  enddo
+  deallocate(ibelm_tmp)
+
+! permutation of normal
+  allocate(normal_tmp(NDIM,NGLL1,NGLL2,ispecb))
+  normal_tmp = normal
+  do i = 1,ispecb
+    normal(:,:,:,perm(i)) = normal_tmp(:,:,:,i)
+  enddo
+  deallocate(normal_tmp)
+
+! permutation of jacobian2D
+  allocate(jacobian2D_tmp(NGLL1,NGLL2,ispecb))
+  jacobian2D_tmp = jacobian2D
+  do i = 1,ispecb
+    jacobian2D(:,:,perm(i)) = jacobian2D_tmp(:,:,i)
+  enddo
+  deallocate(jacobian2D_tmp)
+  deallocate(perm)
+
+end subroutine sort_arrays_for_cuthill
