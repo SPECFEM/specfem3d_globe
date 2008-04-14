@@ -1489,7 +1489,6 @@
 ! Cuthill McKee permutation
 ! ***************************************************
   if (PERFORM_CUTHILL_MCKEE) then
-    if (iregion_code /= IREGION_INNER_CORE .or. PERMUTE_INNER_CORE) then
       allocate(perm(nspec))
       if(iregion_code == IREGION_CRUST_MANTLE) then
       ! do not permute anisotropic elements
@@ -1614,7 +1613,6 @@
       deallocate(temp_array_1D_int)
   
       deallocate(perm)
-    endif
   endif
 
 ! ***************************************************
