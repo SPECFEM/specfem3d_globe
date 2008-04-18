@@ -15,7 +15,7 @@ GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 96 
+NEX_XI                          = 96
 NEX_ETA                         = 96
 
 # number of MPI processors along the two sides of the first chunk
@@ -48,8 +48,11 @@ ABSORBING_CONDITIONS            = .false.
 RECORD_LENGTH_IN_MINUTES        = 75.0d0
 
 # save AVS or OpenDX movies
+#MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME) 
+#MOVIE_COARSE does not work with create_movie_AVS_DX
 MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
+MOVIE_COARSE                    = .false.
 NTSTEP_BETWEEN_FRAMES           = 100
 HDUR_MOVIE                      = 0.d0
 
@@ -59,9 +62,7 @@ HDUR_MOVIE                      = 0.d0
 # start/stop: frames will be stored at MOVIE_START + i*NSTEP_BETWEEN_FRAMES, where i=(0,1,2..) and iNSTEP_BETWEEN_FRAMES <= MOVIE_STOP
 # movie_volume_type: 1=strain, 2=time integral of strain, 3=\mu*time integral of strain
 # type 4 saves the trace and deviatoric stress in the whole volume, 5=displacement, 6=velocity
-#MOVIE_VOLUME_COARSE saves movie only at corners of elements
 MOVIE_VOLUME_TYPE               = 2
-MOVIE_VOLUME_COARSE             = .true.
 MOVIE_TOP_KM                    = -100.0
 MOVIE_BOTTOM_KM                 = 1000.0
 MOVIE_WEST_DEG                  = -90.0
