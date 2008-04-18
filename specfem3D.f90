@@ -284,7 +284,7 @@
   integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core,ndim_assemble
 
 ! to save movie frames
-  integer nmovie_points,ipoin
+  integer nmovie_points,ipoin,NIT
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
       store_val_x,store_val_y,store_val_z, &
       store_val_ux,store_val_uy,store_val_uz
@@ -718,7 +718,7 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
@@ -837,7 +837,7 @@
          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-         MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -875,7 +875,7 @@
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-            TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
+            TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
             ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
@@ -985,7 +985,7 @@
     OCEANS = bcast_logical(11)
     MOVIE_SURFACE = bcast_logical(12)
     MOVIE_VOLUME = bcast_logical(13)
-    MOVIE_VOLUME_COARSE = bcast_logical(14)
+    MOVIE_COARSE = bcast_logical(14)
     ATTENUATION_3D = bcast_logical(15)
     RECEIVERS_CAN_BE_BURIED = bcast_logical(16)
     PRINT_SOURCE_TIME_FUNCTION = bcast_logical(17)
@@ -2554,7 +2554,14 @@
 
 ! allocate files to save movies
   if(MOVIE_SURFACE) then
-    nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    if(MOVIE_COARSE) then  !only output corners
+       nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+       if(NGLLX .ne. NGLLY) call MPI_exit(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
+       NIT = NGLLX - 1
+    else
+       nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+       NIT = 1
+    endif
     allocate(store_val_x(nmovie_points))
     allocate(store_val_y(nmovie_points))
     allocate(store_val_z(nmovie_points))
@@ -2579,12 +2586,12 @@
   write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
    call count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
               zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-              MOVIE_VOLUME_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool_3dmovie,mask_3dmovie)
+              MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool_3dmovie,mask_3dmovie)
 
    allocate(nu_3dmovie(3,3,npoints_3dmovie))
    call write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
                          ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
-                         mask_3dmovie,mask_ibool_3dmovie,num_ibool_3dmovie,nu_3dmovie,MOVIE_VOLUME_COARSE)
+                         mask_3dmovie,mask_ibool_3dmovie,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
 
      if(myrank == 0) then
        write(IMAIN,*) 'Writing to movie3D files on local disk'
@@ -4815,8 +4822,8 @@
       k = NGLLZ
 
 ! loop on all the points inside the element
-      do j = 1,NGLLY
-        do i = 1,NGLLX
+      do j = 1,NGLLY,NIT
+        do i = 1,NGLLX,NIT
           ipoin = ipoin + 1
           iglob = ibool_crust_mantle(i,j,k,ispec)
           store_val_x(ipoin) = xstore_crust_mantle(iglob)
@@ -4859,13 +4866,13 @@
 
    if (MOVIE_VOLUME_TYPE == 1) then  ! output strains
 
-       call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_VOLUME_COARSE, &
+       call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                     it,eps_trace_over_3_crust_mantle,epsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
    else if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then ! output the Time Integral of Strain, or \mu*TIS
 
-       call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_VOLUME_COARSE, &
+       call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                     it,Ieps_trace_over_3_crust_mantle,Iepsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
@@ -4878,12 +4885,12 @@
    else if (MOVIE_VOLUME_TYPE == 5) then !output displacement
             scalingval = scale_displ
        call write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
-                MOVIE_VOLUME_COARSE,displ_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
+                MOVIE_COARSE,displ_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
 
    else if (MOVIE_VOLUME_TYPE == 6) then !output velocity
             scalingval = scale_veloc
        call write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
-                MOVIE_VOLUME_COARSE,veloc_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
+                MOVIE_COARSE,veloc_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
 
    else
 

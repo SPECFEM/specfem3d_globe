@@ -37,16 +37,16 @@ program combine_paraview_movie_data
   character(len=150) :: arg(7), prname, dimension_file
   character(len=150) :: mesh_file, local_element_file, local_data_file
   character(len=3) :: comp
-  logical :: MOVIE_VOLUME_COARSE
+  logical :: MOVIE_COARSE
 
   do i = 1,6
     call getarg(i,arg(i))
     if (i < 7 .and. trim(arg(i)) == '') then
       print *, ' '
-      print *, ' Usage: xcombine_data nnodes dt_movie itstart itstop comp MOVIE_VOLUME_COARSE'
+      print *, ' Usage: xcombine_data nnodes dt_movie itstart itstop comp MOVIE_COARSE'
       print *, '   component can be SEE, SNE,SEZ,SNN,SNZ,SZZ,I1 or I2'
       print *, '   stored in the local directory as real(kind=CUSTOM_REAL) filename(NGLLX,NGLLY,NGLLZ,nspec)  '
-      print *, 'MOVIE_VOLUME_COARSE = 0 or 1 '
+      print *, 'MOVIE_COARSE = 0 or 1 '
       stop ' Reenter command line options'
     endif
   enddo
@@ -57,7 +57,7 @@ program combine_paraview_movie_data
   read(arg(3),*) itstart
   read(arg(4),*) itstop
   read(arg(5),*) comp
-  read(arg(6),*) MOVIE_VOLUME_COARSE
+  read(arg(6),*) MOVIE_COARSE
 
   if(num_node>1000) stop 'change array sizes for num_node > 1000 and recompile xcombine_paraview_movie_data'
 
@@ -251,14 +251,14 @@ program combine_paraview_movie_data
     !  print *, trim(local_element_file)
 
       if (iproc == 1) then
-        if(MOVIE_VOLUME_COARSE) then
+        if(MOVIE_COARSE) then
          call write_integer_fd(fid,nelement_all)
         else
          call write_integer_fd(fid,nelement_all*64)
         endif
       endif
 
-      if(MOVIE_VOLUME_COARSE) then
+      if(MOVIE_COARSE) then
         nelement_local = nelement(iproc)
       else
         nelement_local = nelement(iproc)*64

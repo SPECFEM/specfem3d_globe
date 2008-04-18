@@ -40,14 +40,14 @@
   integer ispec
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: x,y,z,displn
-  real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord,rval,thetaval,phival,lat,long
+  real(kind=CUSTOM_REAL) xcoord,ycoord,zcoord,rval,thetaval,phival
   real(kind=CUSTOM_REAL) RRval,rhoval
   real(kind=CUSTOM_REAL) displx,disply,displz
   real(kind=CUSTOM_REAL) normal_x,normal_y,normal_z
   real(kind=CUSTOM_REAL) thetahat_x,thetahat_y,thetahat_z
   real(kind=CUSTOM_REAL) phihat_x,phihat_y
   double precision min_field_current,max_field_current,max_absol
-  real disp
+  real disp,lat,long
   integer nframes,iframe,USE_COMPONENT
 
   character(len=150) outputname
@@ -55,7 +55,7 @@
   integer iproc,ipoin
 
 ! for sorting routine
-  integer npointot,ilocnum,ielm,ieoff,ispecloc
+  integer npointot,ilocnum,ielm,ieoff,ispecloc,NIT
   double precision, dimension(:), allocatable :: xp,yp,zp,field_display
 
 ! for dynamic memory allocation
@@ -84,7 +84,7 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
@@ -113,7 +113,7 @@
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
-  logical :: CASE_3D
+  logical :: CASE_3D,OUTPUT_BINARY
 
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
@@ -123,7 +123,7 @@
 
   print *
   print *,'Recombining all movie frames to create a movie'
-  print *
+  print *,'Run this program from the directory containing directories DATA and OUTPUT_FILES'
 
   print *
   print *,'reading parameter file'
@@ -145,7 +145,7 @@
          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-         MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -168,9 +168,13 @@
   print *
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *
-
-  ilocnum = NGLLX*NGLLY*NEX_PER_PROC_XI*NEX_PER_PROC_ETA
-
+  if(MOVIE_COARSE) then
+    ilocnum = 2 * 2 * NEX_PER_PROC_XI*NEX_PER_PROC_ETA
+    NIT =NGLLX-1
+  else
+    ilocnum = NGLLX*NGLLY*NEX_PER_PROC_XI*NEX_PER_PROC_ETA
+    NIT = 1
+  endif
   print *
   print *,'Allocating arrays for reading data of size ',ilocnum*NPROCTOT,'=',6*ilocnum*NPROCTOT*CUSTOM_REAL/1000000,'MB'
   print *
@@ -219,6 +223,9 @@
   print *,'enter component (e.g. 1=Z, 2=N, 3=E)'
   read(5,*) USE_COMPONENT
 
+  print *,'enter output ascii (0) or binary (1)'
+  read(5,*) OUTPUT_BINARY
+
   print *
   print *,'looping from ',it1,' to ',it2,' every ',NTSTEP_BETWEEN_FRAMES,' time steps'
 
@@ -232,7 +239,11 @@
   if(nframes == 0) stop 'null number of frames'
 
 ! maximum theoretical number of points at the surface
-  npointot = NCHUNKS * NEX_XI * NEX_ETA * (NGLLX-1) * (NGLLY-1)
+  if(MOVIE_COARSE) then
+    npointot = NCHUNKS * NEX_XI * NEX_ETA
+  else
+    npointot = NCHUNKS * NEX_XI * NEX_ETA * (NGLLX-1) * (NGLLY-1)
+  endif
 
   print *
   print *,'there are a total of ',npointot,' points on the surface.'
@@ -264,14 +275,13 @@
 
 ! loop on all the time steps in the range entered
   do it = it1,it2
-
      ! check if time step corresponds to a movie frame
      if(mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
         iframe = iframe + 1
 
         ! read all the elements from the same file
-        write(outputname,"('moviedata',i6.6)") it
+        write(outputname,"('OUTPUT_FILES/moviedata',i6.6)") it
         open(unit=IOUT,file=outputname,status='old',form='unformatted')
 
         print *
@@ -292,17 +302,12 @@
         ! read points for all the slices
         print *,'Converting to geo-coordinates'
         do iproc = 0,NPROCTOT-1
-
            ! reset point number
            ipoin = 0
-
            do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
-
-              do j = 1,NGLLY
-                 do i = 1,NGLLX
-
+              do j = 1,NGLLY,NIT
+                 do i = 1,NGLLX,NIT
                     ipoin = ipoin + 1
-
                     xcoord = store_val_x(ipoin,iproc)
                     ycoord = store_val_y(ipoin,iproc)
                     zcoord = store_val_z(ipoin,iproc)
@@ -323,7 +328,6 @@
                     z(i,j) = zcoord
 
                     if(USE_COMPONENT == 1) then
-
                        ! compute unit normal vector to the surface
                        RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
                        normal_x = xcoord / RRval
@@ -351,24 +355,32 @@
 
                        displn(i,j) = displx*phihat_x   + disply*phihat_y
                     endif
-                 enddo
-              enddo
+                 enddo !i
+              enddo  !j
 
               ispec = ispec + 1
-              ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
-              do j = 1,NGLLY-1
-                 do i = 1,NGLLX-1
-                    ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))
+              if(MOVIE_COARSE) then
+                ielm = ispec-1
+              else
+                ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
+              endif
+              do j = 1,NGLLY-NIT
+                 do i = 1,NGLLX-NIT
+                    if(MOVIE_COARSE) then
+                      ieoff = ielm+1
+                    else
+                      ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))+1
+                    endif
                     xp(ieoff) = dble(x(i,j))
                     yp(ieoff) = dble(y(i,j))
                     zp(ieoff) = dble(z(i,j))
                     field_display(ieoff) = dble(displn(i,j))
-                 enddo
-              enddo
+                 enddo !i
+              enddo  !j
 
-           enddo
+           enddo !ispec
 
-        enddo
+        enddo !nproc
 
         ! compute min and max of data value to normalize
         min_field_current = minval(field_display(:))
@@ -391,10 +403,22 @@
 
         print *
         print *,'initial number of points (with multiples) was ',npointot
+        print *,'final number of points is                     ',ieoff
 
         !--- ****** create GMT file ******
 
         ! create file name and open file
+      if(OUTPUT_BINARY) then
+        if(USE_COMPONENT == 1) then
+           write(outputname,"('bin_movie_',i6.6,'.d')") it
+        elseif(USE_COMPONENT == 2) then
+           write(outputname,"('bin_movie_',i6.6,'.N')") it
+        elseif(USE_COMPONENT == 3) then
+           write(outputname,"('bin_movie_',i6.6,'.E')") it
+        endif
+        open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted')
+        if(iframe == 1) open(unit=12,file='OUTPUT_FILES/bin_movie.xy',status='unknown',form='unformatted')
+       else
         if(USE_COMPONENT == 1) then
            write(outputname,"('ascii_movie_',i6.6,'.d')") it
         elseif(USE_COMPONENT == 2) then
@@ -402,12 +426,14 @@
         elseif(USE_COMPONENT == 3) then
            write(outputname,"('ascii_movie_',i6.6,'.E')") it
         endif
-
+        open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown')
+        if(iframe == 1) open(unit=12,file='OUTPUT_FILES/ascii_movie.xy',status='unknown')
+       endif
         ! clear number of elements kept
         ispec = 0
 
         ! read points for all the slices
-        print *,'Writing output'
+        print *,'Writing output',outputname
         do iproc = 0,NPROCTOT-1
 
            ! reset point number
@@ -415,10 +441,18 @@
 
            do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
               ispec = ispec + 1
-              ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
-              do j = 1,NGLLY-1
-                 do i = 1,NGLLX-1
-                    ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))
+              if(MOVIE_COARSE) then
+                ielm = ispec - 1
+              else
+                ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
+              endif
+                do j = 1,NGLLY-NIT
+                 do i = 1,NGLLX-NIT
+                    if(MOVIE_COARSE) then
+                     ieoff = ielm + 1
+                    else
+                     ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))+1
+                    endif
                     xcoord = sngl(xp(ieoff))
                     ycoord = sngl(yp(ieoff))
                     zcoord = sngl(zp(ieoff))
@@ -427,11 +461,19 @@
                     long = sngl(phival*180.0/PI)
                     disp = sngl(field_display(ieoff))
                    if(long > 180.0) long = long-360.0
-                    write(11,*) long, lat, disp
-                 enddo
-              enddo
-           enddo
-        enddo
+                    if(OUTPUT_BINARY) then
+                     write(11) disp
+                    if(iframe == 1) write(12) long,lat
+                    else
+                     write(11,*) disp
+                     if(iframe == 1) write(12,*) long,lat
+                    endif
+                 enddo !i
+              enddo !j
+           enddo !ispecloc
+        enddo !iproc
+        close(11)
+        if(iframe == 1) close(12)
 
 
 ! end of loop and test on all the time steps for all the movie images
@@ -439,8 +481,8 @@
   enddo
 
   print *,'done creating movie'
-  print *,'GMT files are stored in ascii_files_*.{xy,d,E,N}'
-
+  print *,'GMT ascii files are stored in ascii_movie_*.{xy,d,E,N}'
+  print *,'binary files are stored in bin_movie_*.{xy,d,E,N}'
 end program create_movie_GMT_global
 
 
