@@ -40,7 +40,7 @@
          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-         MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -83,7 +83,7 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
@@ -1010,6 +1010,8 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(MOVIE_VOLUME, 'solver.MOVIE_VOLUME')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_logical(MOVIE_COARSE,'solver.MOVIE_COARSE')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_FRAMES, 'solver.NTSTEP_BETWEEN_FRAMES')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(HDUR_MOVIE, 'solver.HDUR_MOVIE')
@@ -1018,12 +1020,10 @@
 ! computes a default hdur_movie that creates nice looking movies.
 ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if(HDUR_MOVIE <= TINYVAL) &
-    HDUR_MOVIE = 1.1d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
+    HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
 
   call read_value_integer(MOVIE_VOLUME_TYPE, 'solver.MOVIE_VOLUME_TYPE')
-  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_logical(MOVIE_VOLUME_COARSE,'solver.MOVIE_VOLUME_COARSE')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(MOVIE_TOP_KM, 'solver.MOVIE_TOP_KM')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
