@@ -80,7 +80,6 @@
     nglob_GLL_full = nglob
 
   !---- call Charbel Farhat's routines
-    write(IMAIN,*) 'form_elt_connectivity_foelco'
     call form_elt_connectivity_foelco(mn,mp,nspec,global_corner_number,nglob_GLL_full,ibool,nglob_eight_corners_only)
     do i=1,nspec
         istart = mp(i)
@@ -90,13 +89,11 @@
     allocate(np(nglob_eight_corners_only+1))
     count_only = .true.
     total_size_ne = 1
-    write(IMAIN,*) 'form_node_connectivity_fonoco 1'
     allocate(ne(total_size_ne))
     call form_node_connectivity_fonoco(mn,mp,ne,np,nglob_eight_corners_only,nspec,count_only,total_size_ne)
     deallocate(ne)
     allocate(ne(total_size_ne))
     count_only = .false.
-    write(IMAIN,*) 'form_node_connectivity_fonoco 2'
     call form_node_connectivity_fonoco(mn,mp,ne,np,nglob_eight_corners_only,nspec,count_only,total_size_ne)
     do i=1,nglob_eight_corners_only
         istart = np(i)
@@ -105,14 +102,12 @@
 
     count_only = .true.
     total_size_adj = 1
-    write(IMAIN,*) 'create_adjacency_table_adjncy 1'
     allocate(adj(total_size_adj))
     call create_adjacency_table_adjncy(mn,mp,ne,np,adj,xadj,maskel,nspec,nglob_eight_corners_only,&
     count_only,total_size_ne,total_size_adj,FACE)
     deallocate(adj)
     allocate(adj(total_size_adj))
     count_only = .false.
-    write(IMAIN,*) 'create_adjacency_table_adjncy 2'
     call create_adjacency_table_adjncy(mn,mp,ne,np,adj,xadj,maskel,nspec,nglob_eight_corners_only,&
     count_only,total_size_ne,total_size_adj,FACE)
     do i=1,nspec
@@ -124,10 +119,8 @@
     deallocate(ne,np)
 
 ! call the Cuthill-McKee sorting algorithm
-    write(IMAIN,*) 'launch cuthill_mckee'
     call cuthill_mckee(adj,xadj,perm,invperm,nspec,total_size_adj,limit,INVERSE)
     deallocate(adj)
-    write(IMAIN,*) 'permutation achieved'
   else
 ! create identity permutation in order to do nothing
     do i=1,nspec

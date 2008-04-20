@@ -142,7 +142,7 @@
   real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval,st,ct,sp,cp
   real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_x,store_val3D_y, store_val3D_z
 
-  if(NDIM .ne. 3) stop 'movie volume output requires NDIM = 3'
+  if(NDIM /= 3) stop 'movie volume output requires NDIM = 3'
 
   if(MOVIE_COARSE) then
     NIT = NGLLX-1
@@ -291,7 +291,7 @@ character(len=1) movie_prefix
  allocate(store_val3d_NZ(npoints_3dmovie))
  allocate(store_val3d_EZ(npoints_3dmovie))
 
- if(NDIM .ne. 3) call exit_MPI(myrank, 'write_movie_volume requires NDIM = 3')
+ if(NDIM /= 3) call exit_MPI(myrank, 'write_movie_volume requires NDIM = 3')
 
  if(MOVIE_VOLUME_TYPE == 1) then
       movie_prefix='E' ! strain
@@ -399,7 +399,7 @@ real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_N,store_val3d_E,s
 character(len=150) outputname
 character(len=2) movie_prefix
 
-if(NDIM .ne. 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
+if(NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
 
 allocate(store_val3d_N(npoints_3dmovie))
 allocate(store_val3d_E(npoints_3dmovie))
