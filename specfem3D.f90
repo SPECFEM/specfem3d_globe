@@ -2556,7 +2556,7 @@
   if(MOVIE_SURFACE) then
     if(MOVIE_COARSE) then  !only output corners
        nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-       if(NGLLX .ne. NGLLY) call MPI_exit(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
+       if(NGLLX /= NGLLY) call MPI_exit(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
        NIT = NGLLX - 1
     else
        nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
@@ -2580,8 +2580,8 @@
   if(MOVIE_VOLUME) then
   ! the following has to be true for the the array dimensions of eps to match with those of xstore etc..
   ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
-  if (NSPEC_CRUST_MANTLE_STR_OR_ATT .ne. NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT .ne.  NSPEC_CRUST_MANTLE'
-  if (NSPEC_CRUST_MANTLE_STRAIN_ONLY .ne. NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY .ne.  NSPEC_CRUST_MANTLE'
+  if (NSPEC_CRUST_MANTLE_STR_OR_ATT /= NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE'
+  if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE'
 
   write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
    call count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &

@@ -135,7 +135,7 @@ program combine_paraview_movie_data
     endif
     close(27)
 
-    if( (comp .ne. 'SI1') .and. (comp .ne. 'SI2')) then
+    if( (comp /= 'SI1') .and. (comp /= 'SI2')) then
 !comp == 'SEE' .or. comp == 'SNN' .or. comp == 'SZZ' .or. comp == 'SEZ' .or. comp == 'SNZ' .or. comp == 'SNE') then
      write(local_data_file,'(a,a,i6.6,a)') 'movie3D_',comp,it,'.bin'
 
