@@ -499,7 +499,7 @@
 
 ! Newmark time scheme parameters and non-dimensionalization
   real(kind=CUSTOM_REAL) time,deltat,deltatover2,deltatsqover2
-  double precision scale_t,scale_displ,scale_veloc
+  double precision scale_t,scale_displ,scale_veloc,scale_mass
 
 ! ADJOINT
   real(kind=CUSTOM_REAL) b_additional_term,b_force_normal_comp
@@ -588,6 +588,12 @@
   integer NSTEP_SUB_ADJ,it_sub_adj,iadj_block ! to read input in chunks
   integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
   integer, dimension(:), allocatable :: iadjsrc_len,iadj_vec
+! source frechet derivatives
+  real(kind=CUSTOM_REAL) :: displ_s(NDIM,NGLLX,NGLLY,NGLLZ), eps_s(NDIM,NDIM), eps_m_s(NDIM), stf_deltat
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: moment_der
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: sloc_der
+  double precision, dimension(:,:), allocatable :: hpxir_store,hpetar_store,hpgammar_store
+
 
 ! seismograms
   integer it_begin,it_end,nit_written
@@ -1988,6 +1994,9 @@
     hgammar_store(irec_local,:) = hgammar(:)
   enddo
   else
+    allocate(hpxir_store(nrec_local,NGLLX))
+    allocate(hpetar_store(nrec_local,NGLLY))
+    allocate(hpgammar_store(nrec_local,NGLLZ))
   do irec_local = 1,nrec_local
     irec = number_receiver_global(irec_local)
     call lagrange_any(xi_source(irec),NGLLX,xigll,hxir,hpxir)
@@ -1996,6 +2005,9 @@
     hxir_store(irec_local,:) = hxir(:)
     hetar_store(irec_local,:) = hetar(:)
     hgammar_store(irec_local,:) = hgammar(:)
+    hpxir_store(irec_local,:) = hpxir(:)
+    hpetar_store(irec_local,:) = hpetar(:)
+    hpgammar_store(irec_local,:) = hpgammar(:)
   enddo
   endif
 
@@ -2439,8 +2451,12 @@
       allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
       if(ier /= 0) stop 'error while allocating seismograms'
     else
-      allocate(seismograms(9,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
       if(ier /= 0) stop 'error while allocating seismograms'
+      ! allocate Frechet derivatives array
+      allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local))
+      moment_der = 0._CUSTOM_REAL
+      sloc_der = 0._CUSTOM_REAL
     endif
 ! initialize seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
@@ -4375,6 +4391,8 @@
             dxy = dxy + dble(epsilondev_crust_mantle(3,i,j,k,ispec_selected_source(irec)))*hlagrange
             dxz = dxz + dble(epsilondev_crust_mantle(4,i,j,k,ispec_selected_source(irec)))*hlagrange
             dyz = dyz + dble(epsilondev_crust_mantle(5,i,j,k,ispec_selected_source(irec)))*hlagrange
+            
+            displ_s(:,i,j,k) = displ_crust_mantle(:,iglob)
 
           enddo
         enddo
@@ -4391,7 +4409,7 @@
       eps_loc(3,2) = dyz
 
       eps_loc_new(:,:) = eps_loc(:,:)
-! rotate to the local cartesian coordinates (e-n-z)
+! rotate to the local cartesian coordinates (e-n-z):  eps_new=P*eps*P'
       eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
 
 ! distinguish between single and double precision for reals
@@ -4414,6 +4432,22 @@
         seismograms(7:9,irec_local,it-nit_written) = scale_displ*(nu_source(:,1,irec)*uxd + &
                     nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd)
       endif
+
+! frechet derviatives of the source
+      ispec = ispec_selected_source(irec)
+
+      call compute_adj_source_frechet(displ_s,Mxx(irec),Myy(irec),Mzz(irec),Mxy(irec),Mxz(irec),Myz(irec),eps_s,eps_m_s, &
+                 hxir_store(irec_local,:),hetar_store(irec_local,:),hgammar_store(irec_local,:), &
+                 hpxir_store(irec_local,:),hpetar_store(irec_local,:),hpgammar_store(irec_local,:),hprime_xx,hprime_yy,hprime_zz, &
+                 xix_crust_mantle(:,:,:,ispec),xiy_crust_mantle(:,:,:,ispec),xiz_crust_mantle(:,:,:,ispec), &
+                 etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
+                 gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec))
+      
+      stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-t_cmt(irec),hdur_gaussian(irec))
+      stf_deltat = stf * deltat
+      moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
+      sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_s(:) * stf_deltat
+
 
     else  if (SIMULATION_TYPE == 3) then
 
@@ -5109,6 +5143,43 @@
     endif
 
   endif
+
+! save source derivatives for adjoint simulations
+  if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
+    scale_mass = RHOAV * (R_EARTH**3) 
+
+    do irec_local = 1, nrec_local
+! rotate and scale the location derivatives to correspond to dn,de,dz
+      sloc_der(:,irec_local) = matmul(nu_source(:,:,irec),sloc_der(:,irec_local)) * scale_displ * scale_t
+! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
+      moment_der(:,:,irec_local) = matmul(matmul(nu_source(:,:,irec),moment_der(:,:,irec_local)),&
+                 transpose(nu_source(:,:,irec))) * scale_t ** 3 / scale_mass
+      
+      write(outputname,'(a,i5.5)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
+      open(unit=27,file=trim(outputname),status='unknown')
+!
+! r -> z, theta -> -n, phi -> e, plus factor 2 for Mrt,Mrp,Mtp, and 1e-7 to dyne.cm
+!  Mrr =  Mzz
+!  Mtt =  Mnn
+!  Mpp =  Mee
+!  Mrt = -Mzn
+!  Mrp =  Mze
+!  Mtp = -Mne
+! minus sign for sloc_der(3,irec_local) to get derivative for depth instead of radius
+
+      write(27,'(g16.5)') moment_der(3,3,irec_local) * 1e-7
+      write(27,'(g16.5)') moment_der(1,1,irec_local) * 1e-7
+      write(27,'(g16.5)') moment_der(2,2,irec_local) * 1e-7
+      write(27,'(g16.5)') -2*moment_der(1,3,irec_local) * 1e-7
+      write(27,'(g16.5)') 2*moment_der(2,3,irec_local) * 1e-7
+      write(27,'(g16.5)') -2*moment_der(1,2,irec_local) * 1e-7
+      write(27,'(g16.5)') sloc_der(2,irec_local)
+      write(27,'(g16.5)') sloc_der(1,irec_local)
+      write(27,'(g16.5)') -sloc_der(3,irec_local)
+      close(27)
+    enddo
+  endif
+
 
 ! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
