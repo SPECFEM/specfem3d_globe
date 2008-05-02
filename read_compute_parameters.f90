@@ -1329,8 +1329,8 @@
       r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
       r_bottom(13) = RICB
 
-      r_top(15) = RICB
-      r_bottom(15) = R_CENTRAL_CUBE
+      r_top(14) = RICB
+      r_bottom(14) = R_CENTRAL_CUBE
 
   ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
