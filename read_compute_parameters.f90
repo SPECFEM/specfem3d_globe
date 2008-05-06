@@ -2248,12 +2248,12 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
             nb_lay_sb = 0
             nspec_sb = 0
         endif
-        tmp_sum = tmp_sum + ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
+        tmp_sum = tmp_sum + (((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
                 doubling * ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
-                (nspec_sb/4))
+                (nspec_sb/4))) / NPROC
     enddo
-    NSPEC(iter_region) = tmp_sum / NPROC
+    NSPEC(iter_region) = tmp_sum
 enddo
 
   if(INCLUDE_CENTRAL_CUBE) NSPEC(IREGION_INNER_CORE) = NSPEC(IREGION_INNER_CORE) + &
