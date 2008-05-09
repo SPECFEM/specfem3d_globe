@@ -27,7 +27,8 @@
 !
 ! United States Government Sponsorship Acknowledged.
 
-  program xspecfem3D
+!! DK DK for the merged version
+  include 'call2.f90'
 
   implicit none
 
@@ -153,11 +154,9 @@
 !
 ! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
 !      new doubling brick in the mesh, new perfectly load-balanced mesh,
-!      more flexible routines for mesh design, new inflated central cube
-!      with optimized shape, far fewer mesh files saved by the mesher,
-!      global arrays sorted to speed up the simulation, seismos can be
-!      written by the master, one more doubling level at the bottom
-!      of the outer core if needed (off by default)
+!      more flexible routines for mesh design, one more doubling level
+!      at the bottom of the outer core, new inflated central cube
+!      with optimized shape, far fewer mesh files saved by the mesher.
 ! v. 3.6 Many people, many affiliations, September 2006:
 !      adjoint and kernel calculations, fixed IASP91 model,
 !      added AK135 and 1066a, fixed topography/bathymetry routine,
@@ -240,7 +239,7 @@
   real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT4) :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
   real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT5) :: one_minus_sum_beta_inner_core, factor_scale_inner_core
 
-  real(kind=CUSTOM_REAL) mul, kappal, rhol
+  real(kind=CUSTOM_REAL) mul
 
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval, betaval, gammaval
@@ -254,25 +253,9 @@
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
-
-! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: b_alphaval, b_betaval, b_gammaval
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: b_R_memory_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_epsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: b_eps_trace_over_3_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: b_R_memory_inner_core
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_epsilondev_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: b_eps_trace_over_3_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
 
 ! for matching with central cube in inner core
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
@@ -283,85 +266,24 @@
 
   integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core,ndim_assemble
 
-! to save movie frames
-  integer nmovie_points,ipoin,NIT
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-      store_val_x,store_val_y,store_val_z, &
-      store_val_ux,store_val_uy,store_val_uz
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-      store_val_x_all,store_val_y_all,store_val_z_all, &
-      store_val_ux_all,store_val_uy_all,store_val_uz_all
-
-! to save movie volume
-  integer :: npoints_3dmovie,nspecel_3dmovie
-  integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
-  double precision :: scalingval
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: muvstore_crust_mantle_3dmovie
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
-  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool_3dmovie
-
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: Iepsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: Ieps_trace_over_3_crust_mantle
-
 ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
 ! for crust/oceans coupling
-  integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
-  integer, dimension(NSPEC2DMAX_YMIN_YMAX_CM) :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
 ! additional mass matrix for ocean load
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
 
-! flag to mask ocean-bottom degrees of freedom for ocean load
-  logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
-
-  real(kind=CUSTOM_REAL) additional_term,force_normal_comp
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: jacobian2D_bottom_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: jacobian2D_top_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: jacobian2D_xmin_crust_mantle,&
-  jacobian2D_xmax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_CM) :: jacobian2D_ymin_crust_mantle,&
-  jacobian2D_ymax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: &
-  normal_xmin_crust_mantle,normal_xmax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2DMAX_YMIN_YMAX_CM) :: &
-  normal_ymin_crust_mantle,normal_ymax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: normal_bottom_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
-
-! Stacey
-  real(kind=CUSTOM_REAL) sn,tx,ty,tz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: rho_vp_crust_mantle,rho_vs_crust_mantle
-  integer nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
-  integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_CM) :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
-  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_CM) :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY) :: vp_outer_core
-  integer nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
-  integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_OC) :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
-  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_OC) :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
-
 ! arrays to couple with the fluid regions by pointwise matching
-  integer, dimension(NSPEC2DMAX_XMIN_XMAX_OC) :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
-  integer, dimension(NSPEC2DMAX_YMIN_YMAX_OC) :: ibelm_ymin_outer_core,ibelm_ymax_outer_core
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
   integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: normal_xmin_outer_core,normal_xmax_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: normal_ymin_outer_core,normal_ymax_outer_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
-
 
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_IC) :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
   integer, dimension(NSPEC2DMAX_YMIN_YMAX_IC) :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
@@ -371,9 +293,6 @@
 ! for matching between fluid and solid regions
   integer :: ispec2D,k_corresp,ispec_selected
   real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,nx,ny,nz,displ_n,weight,pressure
-
-! for absorbing conditions
-  real(kind=CUSTOM_REAL) :: vx,vy,vz,vn
 
 ! for ellipticity
   integer nspl
@@ -397,9 +316,10 @@
       iboolfaces_outer_core,iboolfaces_inner_core
 
 ! buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY_VAL) :: buffer_send_faces_scalar,buffer_received_faces_scalar
-! size of buffers is multiplied by 2 because we handle two regions in the same MPI call
-  real(kind=CUSTOM_REAL), dimension(NDIM,2*NGLOB2DMAX_XY_VAL) :: buffer_send_faces_vector,buffer_received_faces_vector
+! we use the same buffers to assemble scalars and vectors because vectors are
+! always three times bigger and therefore scalars can use the first part
+! of the vector buffer in memory even if it has an additional index here
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_faces,buffer_received_faces
 
 ! -------- arrays specific to each region here -----------
 
@@ -417,7 +337,7 @@
 
 ! arrays for isotropic elements stored only where needed to save space
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
-        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
+        kappavstore_crust_mantle,muvstore_crust_mantle
 
 ! arrays for anisotropic elements stored only where needed to save space
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
@@ -427,12 +347,8 @@
   integer nspec_iso,nspec_tiso,nspec_ani
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
         c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-        c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-        c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-        c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-        c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-        c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-        c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
+        c22store_crust_mantle,c23store_crust_mantle,c33store_crust_mantle, &
+        c44store_crust_mantle,c55store_crust_mantle,c66store_crust_mantle
 
 ! local to global mapping
   integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
@@ -456,12 +372,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
         xstore_outer_core,ystore_outer_core,zstore_outer_core
 
- real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
-        rhostore_outer_core,kappavstore_outer_core
-
-! local to global mapping
-  integer, dimension(NSPEC_OUTER_CORE) :: idoubling_outer_core
-
 ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
 
@@ -478,7 +388,7 @@
         xix_inner_core,xiy_inner_core,xiz_inner_core,&
         etax_inner_core,etay_inner_core,etaz_inner_core, &
         gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-        rhostore_inner_core, kappavstore_inner_core,muvstore_inner_core
+        kappavstore_inner_core,muvstore_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: &
         xstore_inner_core,ystore_inner_core,zstore_inner_core
 
@@ -499,54 +409,7 @@
 
 ! Newmark time scheme parameters and non-dimensionalization
   real(kind=CUSTOM_REAL) time,deltat,deltatover2,deltatsqover2
-  double precision scale_t,scale_displ,scale_veloc,scale_mass
-
-! ADJOINT
-  real(kind=CUSTOM_REAL) b_additional_term,b_force_normal_comp
-  real(kind=CUSTOM_REAL) b_deltat,b_deltatover2,b_deltatsqover2
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
-    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
-    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displ_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: b_div_displ_outer_core
-
-  real(kind=CUSTOM_REAL) :: rho_kl, beta_kl, alpha_kl
-! For anisotropic kernels
-  real(kind=CUSTOM_REAL),dimension(21) :: prod, cijkl_kl_local
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: rho_kl_crust_mantle, &
-     beta_kl_crust_mantle, alpha_kl_crust_mantle
-! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
-  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: cijkl_kl_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core, &
-     alpha_kl_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: rho_kl_inner_core, &
-     beta_kl_inner_core, alpha_kl_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
-     absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_xmin_outer_core, &
-     absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, &
-     absorb_zmin_outer_core
-
-  integer reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, reclen_ymin_crust_mantle, &
-     reclen_ymax_crust_mantle, reclen_xmin_outer_core, reclen_xmax_outer_core,&
-     reclen_ymin_outer_core, reclen_ymax_outer_core, reclen_zmin, reclen1, reclen2
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE) :: vector_accel_outer_core,&
-             vector_displ_outer_core, b_vector_displ_outer_core
-
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
-  double precision scale_kl
-! For anisotropic kernels
-  double precision scale_kl_ani,scale_kl_rho
+  double precision scale_t,scale_displ,scale_veloc
 
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
   integer npoin2D_faces_outer_core(NUMFACES_SHARED)
@@ -579,36 +442,13 @@
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
 
-!ADJOINT
-  character(len=150) adj_source_file
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearray
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: adj_sourcearrays
-  integer nrec_simulation, nadj_rec_local
-  logical ibool_read_adj_arrays
-  integer NSTEP_SUB_ADJ,it_sub_adj,iadj_block ! to read input in chunks
-  integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
-  integer, dimension(:), allocatable :: iadjsrc_len,iadj_vec
-! source frechet derivatives
-  real(kind=CUSTOM_REAL) :: displ_s(NDIM,NGLLX,NGLLY,NGLLZ), eps_s(NDIM,NDIM), eps_m_s(NDIM), stf_deltat
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: moment_der
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: sloc_der
-  double precision, dimension(:,:), allocatable :: hpxir_store,hpetar_store,hpgammar_store
-
-
 ! seismograms
   integer it_begin,it_end,nit_written
-  double precision uxd, uyd, uzd, eps_trace,dxx,dyy,dxy,dxz,dyz,eps_loc(NDIM,NDIM), eps_loc_new(NDIM,NDIM)
+  double precision uxd, uyd, uzd
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
   integer :: seismo_offset, seismo_current
 
-! non-dimensionalized rotation rate of the Earth times two
-  real(kind=CUSTOM_REAL) two_omega_earth
-
-! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
-    A_array_rotation,B_array_rotation
-
-  integer i,j,k,l,ispec,irec,iglob,iglob_mantle,iglob_inner_core
+  integer i,j,k,ispec,irec,iglob,iglob_mantle,iglob_inner_core
 
 ! number of faces between chunks
   integer NUM_FACES,NUMMSGS_FACES
@@ -673,18 +513,14 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
-  integer ichunk,iproc_xi,iproc_eta,iproc,iproc_read
+!! DK DK added this to reduce the size of the buffers
+  integer :: npoin2D_max_all
+
+  integer ichunk,iproc_xi,iproc_eta !!!!!!!!!!!!!!!!!!!!!!,iproc,iproc_read
   integer NPROC_ONE_DIRECTION
 
 ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
-  real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,strain2_norm,strain2_norm_all
-
-!ADJOINT
-  real(kind=CUSTOM_REAL) b_two_omega_earth
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: b_A_array_rotation,b_B_array_rotation
-  real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
-  real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
 
 ! timer MPI
   integer :: ihours,iminutes,iseconds,int_tCPU, &
@@ -692,19 +528,6 @@
              ihours_total,iminutes_total,iseconds_total,int_t_total
 
   double precision :: time_start,tCPU,t_remain,t_total
-
-! to determine date and time at which the run will finish
-  character(len=8) datein
-  character(len=10) timein
-  character(len=5)  :: zone
-  integer, dimension(8) :: time_values
-  character(len=3), dimension(12) :: month_name
-  character(len=3), dimension(0:6) :: weekday_name
-  data month_name /'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'/
-  data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
-  integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week, &
-             timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
-  integer, external :: idaywk
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
@@ -724,7 +547,7 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
@@ -759,19 +582,12 @@
   character(len=150) prname
 
 ! lookup table every km for gravity
-  integer int_radius,nspl_gravity,idoubling
-  real(kind=CUSTOM_REAL) minus_g_cmb,minus_g_icb
-  double precision radius,radius_km,g,dg,rho,drhodr,vp,vs,Qkappa,Qmu
-  double precision g_cmb_dble,g_icb_dble
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table, &
-    minus_deriv_gravity_table,density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
-  double precision rspl_gravity(NR),gspl(NR),gspl2(NR)
+  integer int_radius,idoubling
+  double precision radius,rho,drhodr,vp,vs,Qkappa,Qmu
+  double precision, dimension(NRAD_GRAVITY) :: d_ln_density_dr_table
 
 ! flags to read kappa and mu and anisotropy arrays in regions where needed
   logical READ_KAPPA_MU,READ_TISO
-
-! dummy array that does not need to be actually read
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
 
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
@@ -794,21 +610,6 @@
   double precision, dimension(30) :: bcast_double_precision
   logical, dimension(33) :: bcast_logical
 
-! Boundary Mesh and Kernels
-  integer k_top,k_bot,iregion_code,njunk1,njunk2,njunk3
-  integer, dimension(NSPEC2D_MOHO) :: ibelm_moho_top,ibelm_moho_bot
-  integer, dimension(NSPEC2D_400) :: ibelm_400_top,ibelm_400_bot
-  integer, dimension(NSPEC2D_670) :: ibelm_670_top,ibelm_670_bot
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO) :: normal_moho
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_400) :: normal_400
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_670) :: normal_670
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_MOHO) :: moho_kl, moho_kl_top, moho_kl_bot
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_400) :: d400_kl, d400_kl_top, d400_kl_bot
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_670) ::  d670_kl, d670_kl_top, d670_kl_bot
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_CMB) :: cmb_kl, cmb_kl_top, cmb_kl_bot
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_ICB) :: icb_kl, icb_kl_top, icb_kl_bot
-  logical :: fluid_solid_boundary
-
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
@@ -816,14 +617,25 @@
 ! ************** PROGRAM STARTS HERE **************
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.
-  call MPI_INIT(ier)
+!! DK DK suppressed for merged version  call MPI_INIT(ier)
 
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
 ! myrank is the rank of each process, between 0 and sizeprocs-1.
 ! as usual in MPI, process 0 is in charge of coordinating everything
 ! and also takes care of the main output
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+!! DK DK suppressed for merged version  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
+!! DK DK suppressed for merged version  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+
+!! DK DK added this for merged version
+! synchronize all the processes to make sure everybody has finished
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
+!! DK DK added this to reduce the size of the buffers
+! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
+  npoin2D_max_all = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
+                        maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
+  allocate(buffer_send_faces(NDIM,npoin2D_max_all))
+  allocate(buffer_received_faces(NDIM,npoin2D_max_all))
 
   if (myrank == 0) then
 
@@ -843,7 +655,7 @@
          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-         MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -881,7 +693,7 @@
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-            TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
+            TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
             ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
@@ -991,7 +803,7 @@
     OCEANS = bcast_logical(11)
     MOVIE_SURFACE = bcast_logical(12)
     MOVIE_VOLUME = bcast_logical(13)
-    MOVIE_COARSE = bcast_logical(14)
+    MOVIE_VOLUME_COARSE = bcast_logical(14)
     ATTENUATION_3D = bcast_logical(15)
     RECEIVERS_CAN_BE_BURIED = bcast_logical(16)
     PRINT_SOURCE_TIME_FUNCTION = bcast_logical(17)
@@ -1067,21 +879,6 @@
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
     call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
 
-  if (SIMULATION_TYPE == 3 .and. ATTENUATION_VAL) &
-    call exit_MPI(myrank, 'attenuation is not implemented for kernel simulations yet')
-
-  if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
-    if(NSPEC_CRUST_MANTLE_ADJOINT /= NSPEC_CRUST_MANTLE &
-      .or. NSPEC_OUTER_CORE_ADJOINT /= NSPEC_OUTER_CORE &
-      .or. NSPEC_INNER_CORE_ADJOINT /= NSPEC_INNER_CORE &
-      .or. NGLOB_CRUST_MANTLE_ADJOINT /= NGLOB_CRUST_MANTLE &
-      .or. NGLOB_OUTER_CORE_ADJOINT /= NGLOB_OUTER_CORE &
-      .or. NGLOB_INNER_CORE_ADJOINT /= NGLOB_INNER_CORE) call exit_MPI(myrank, 'improper dimensions of adjoint arrays')
-  endif
-
-  if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
-     call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
-
   if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     COMPUTE_AND_STORE_STRAIN = .true.
   else
@@ -1142,6 +939,9 @@
 
 ! check that the code is running with the requested nb of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
+
+!! DK DK added this
+  if(OCEANS) call exit_MPI(myrank,'DK DK je crois que j ai enleve les oceans par erreur, les remettre')
 
 ! check that the code has been compiled with the right values
   if (NSPEC_computed(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE) then
@@ -1204,76 +1004,6 @@
       write(IMAIN,*) ANISOTROPIC_INNER_CORE,ANISOTROPIC_INNER_CORE_VAL
        call exit_MPI(myrank,'error in compiled parameters, please recompile solver 16')
   endif
-! open file with global slice number addressing
-  if(myrank == 0) then
-    open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read')
-    do iproc = 0,NPROCTOT-1
-      read(IIN,*) iproc_read,ichunk,iproc_xi,iproc_eta
-      if(iproc_read /= iproc) call exit_MPI(myrank,'incorrect slice number read')
-      addressing(ichunk,iproc_xi,iproc_eta) = iproc
-      ichunk_slice(iproc) = ichunk
-      iproc_xi_slice(iproc) = iproc_xi
-      iproc_eta_slice(iproc) = iproc_eta
-    enddo
-    close(IIN)
-  endif
-
-! broadcast the information read on the master to the nodes
-  call MPI_BCAST(addressing,NCHUNKS*NPROC_XI*NPROC_ETA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ichunk_slice,NPROCTOT,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_xi_slice,NPROCTOT,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_eta_slice,NPROCTOT,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-! output a topology map of slices - fix 20x by nproc
-  if (myrank == 0 .and. NCHUNKS == 6) then
-    write(IMAIN,*) 'Spatial distribution of the slices'
-    do iproc_xi = NPROC_XI-1, 0, -1
-      write(IMAIN,'(20x)',advance='no')
-      do iproc_eta = NPROC_ETA -1, 0, -1
-        ichunk = CHUNK_AB
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-      enddo
-      write(IMAIN,'(1x)',advance='yes')
-    enddo
-    write(IMAIN, *) ' '
-    do iproc_xi = NPROC_XI-1, 0, -1
-      write(IMAIN,'(1x)',advance='no')
-      do iproc_eta = NPROC_ETA -1, 0, -1
-        ichunk = CHUNK_BC
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-      enddo
-      write(IMAIN,'(3x)',advance='no')
-      do iproc_eta = NPROC_ETA -1, 0, -1
-        ichunk = CHUNK_AC
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-      enddo
-      write(IMAIN,'(3x)',advance='no')
-      do iproc_eta = NPROC_ETA -1, 0, -1
-        ichunk = CHUNK_BC_ANTIPODE
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-      enddo
-      write(IMAIN,'(1x)',advance='yes')
-    enddo
-    write(IMAIN, *) ' '
-    do iproc_xi = NPROC_XI-1, 0, -1
-      write(IMAIN,'(20x)',advance='no')
-      do iproc_eta = NPROC_ETA -1, 0, -1
-        ichunk = CHUNK_AB_ANTIPODE
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-      enddo
-      write(IMAIN,'(1x)',advance='yes')
-    enddo
-    write(IMAIN, *) ' '
-    do iproc_xi = NPROC_XI-1, 0, -1
-      write(IMAIN,'(20x)',advance='no')
-      do iproc_eta = NPROC_ETA -1, 0, -1
-        ichunk = CHUNK_AC_ANTIPODE
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
-      enddo
-      write(IMAIN,'(1x)',advance='yes')
-    enddo
-    write(IMAIN, *) ' '
-  endif
 
 ! determine chunk number and local slice coordinates using addressing
   ichunk = ichunk_slice(myrank)
@@ -1333,26 +1063,6 @@
     READ_KAPPA_MU = .true.
     READ_TISO = .true.
   endif
-  call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
-            rho_vp_crust_mantle,rho_vs_crust_mantle, &
-            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-            xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-            etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-            rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-            kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-            nspec_iso,nspec_tiso,nspec_ani, &
-            c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-            c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-            c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-            c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-            c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-            c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-            c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-            ibool_crust_mantle,idoubling_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
-            NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-            READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
 ! outer core (no anisotropy nor S velocity)
 ! rmass_ocean_load is not used in this routine because it is meaningless in the outer core
@@ -1361,27 +1071,6 @@
   nspec_iso = NSPEC_OUTER_CORE
   nspec_tiso = 1
   nspec_ani = 1
-
-  call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
-            vp_outer_core,dummy_array, &
-            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-            xix_outer_core,xiy_outer_core,xiz_outer_core, &
-            etax_outer_core,etay_outer_core,etaz_outer_core, &
-            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-            rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            nspec_iso,nspec_tiso,nspec_ani, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            ibool_outer_core,idoubling_outer_core,rmass_outer_core,rmass_ocean_load, &
-            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-            READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
 ! inner core (no anisotropy)
 ! rmass_ocean_load is not used in this routine because it is meaningless in the inner core
@@ -1394,27 +1083,6 @@
   else
     nspec_ani = 1
   endif
-
-  call read_arrays_solver(IREGION_INNER_CORE,myrank, &
-            dummy_array,dummy_array, &
-            xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-            xix_inner_core,xiy_inner_core,xiz_inner_core, &
-            etax_inner_core,etay_inner_core,etaz_inner_core, &
-            gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-            rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-            dummy_array,dummy_array,dummy_array, &
-            nspec_iso,nspec_tiso,nspec_ani, &
-            c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            dummy_array,dummy_array,c33store_inner_core, &
-            dummy_array,dummy_array,dummy_array, &
-            c44store_inner_core,dummy_array,dummy_array, &
-            dummy_array,dummy_array,dummy_array, &
-            ibool_inner_core,idoubling_inner_core,rmass_inner_core,rmass_ocean_load, &
-            NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-            READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-            ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
 ! check that the number of points in this slice is correct
 
@@ -1437,11 +1105,6 @@
          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
 
-! read topography and bathymetry file
-  if(myrank == 0 .and. (TOPOGRAPHY .or. OCEANS)) call read_topo_bathy_file(ibathy_topo)
-! broadcast the information read on the master to the nodes
-  call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
 ! allocate arrays for source
   allocate(islice_selected_source(NSOURCES))
   allocate(ispec_selected_source(NSOURCES))
@@ -1461,19 +1124,6 @@
   allocate(phi_source(NSOURCES))
   allocate(nu_source(NDIM,NDIM,NSOURCES))
 
-! BS BS moved open statement and writing of first lines into sr.vtk before the
-! call to locate_sources, where further write statements to that file follow
-  if(myrank == 0) then
-! write source and receiver VTK files for Paraview
-    open(IOVTK,file=trim(OUTPUT_FILES)//'/sr.vtk',status='unknown')
-    write(IOVTK,'(a)') '# vtk DataFile Version 2.0'
-    write(IOVTK,'(a)') 'Source and Receiver VTK file'
-    write(IOVTK,'(a)') 'ASCII'
-    write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-!  LQY -- won't be able to know NSOURCES+nrec at this point...
-    write(IOVTK, '(a,i6,a)') 'POINTS ', 2, ' float'
-  endif
-
 ! locate sources in the mesh
   call locate_sources(NSOURCES,myrank,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -1486,15 +1136,6 @@
 
   if(minval(t_cmt) /= 0.) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
 
-! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
-  if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
-     hdur = sqrt(hdur**2 + HDUR_MOVIE**2)
-     if(myrank == 0) then
-        write(IMAIN,*)
-        write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',HDUR_MOVIE
-        write(IMAIN,*)
-     endif
-  endif
 ! convert the half duration for triangle STF to the one for gaussian STF
   hdur_gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
 
@@ -1502,11 +1143,7 @@
   t0 = - 1.5d0*minval(t_cmt-hdur)
 
 ! --------- receivers ---------------
-  if (SIMULATION_TYPE == 1) then
     rec_filename = 'DATA/STATIONS'
-  else
-    rec_filename = 'DATA/STATIONS_ADJOINT'
-  endif
   call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
 ! get total number of receivers
   if(myrank == 0) then
@@ -1523,11 +1160,7 @@
 
   if(myrank == 0) then
     write(IMAIN,*)
-    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       write(IMAIN,*) 'Total number of receivers = ', nrec
-    else
-      write(IMAIN,*) 'Total number of adjoint sources = ', nrec
-    endif
     write(IMAIN,*)
   endif
 
@@ -1556,321 +1189,8 @@
             NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
             theta_source(1),phi_source(1),rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS)
 
-! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-! read 2-D addressing for summation between slices with MPI
-
-! mantle and crust
-  call read_arrays_buffers_solver(IREGION_CRUST_MANTLE,myrank,iboolleft_xi_crust_mantle, &
-     iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-     npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-     iprocfrom_faces,iprocto_faces,imsg_type, &
-     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-     iboolfaces_crust_mantle,npoin2D_faces_crust_mantle, &
-     iboolcorner_crust_mantle, &
-     NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE), &
-     NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
-
-! outer core
-  call read_arrays_buffers_solver(IREGION_OUTER_CORE,myrank, &
-     iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-     npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-     iprocfrom_faces,iprocto_faces,imsg_type, &
-     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-     iboolfaces_outer_core,npoin2D_faces_outer_core, &
-     iboolcorner_outer_core, &
-     NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE), &
-     NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
-
-! inner core
-  call read_arrays_buffers_solver(IREGION_INNER_CORE,myrank, &
-     iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-     npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-     iprocfrom_faces,iprocto_faces,imsg_type, &
-     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-     iboolfaces_inner_core,npoin2D_faces_inner_core, &
-     iboolcorner_inner_core, &
-     NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE), &
-     NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
-
-! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-! to couple mantle with outer core
-
-!
-!---- crust and mantle
-!
-
-! create name of database
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-
-! Stacey put back
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted')
-  read(27) nspec2D_xmin_crust_mantle
-  read(27) nspec2D_xmax_crust_mantle
-  read(27) nspec2D_ymin_crust_mantle
-  read(27) nspec2D_ymax_crust_mantle
-  read(27) njunk1
-  read(27) njunk2
-
-! boundary parameters
-  read(27) ibelm_xmin_crust_mantle
-  read(27) ibelm_xmax_crust_mantle
-  read(27) ibelm_ymin_crust_mantle
-  read(27) ibelm_ymax_crust_mantle
-  read(27) ibelm_bottom_crust_mantle
-  read(27) ibelm_top_crust_mantle
-
-  read(27) normal_xmin_crust_mantle
-  read(27) normal_xmax_crust_mantle
-  read(27) normal_ymin_crust_mantle
-  read(27) normal_ymax_crust_mantle
-  read(27) normal_bottom_crust_mantle
-  read(27) normal_top_crust_mantle
-
-  read(27) jacobian2D_xmin_crust_mantle
-  read(27) jacobian2D_xmax_crust_mantle
-  read(27) jacobian2D_ymin_crust_mantle
-  read(27) jacobian2D_ymax_crust_mantle
-  read(27) jacobian2D_bottom_crust_mantle
-  read(27) jacobian2D_top_crust_mantle
-  close(27)
-
-! read arrays for Stacey conditions
-
-  if(ABSORBING_CONDITIONS) then
-      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted')
-      read(27) nimin_crust_mantle
-      read(27) nimax_crust_mantle
-      read(27) njmin_crust_mantle
-      read(27) njmax_crust_mantle
-      read(27) nkmin_xi_crust_mantle
-      read(27) nkmin_eta_crust_mantle
-      close(27)
-
-      if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-        allocate(absorb_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,nspec2D_xmin_crust_mantle))
-        reclen_xmin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmin_crust_mantle)
-        if (SIMULATION_TYPE == 3) then
-          open(unit=51,file=trim(prname)//'absorb_xmin.bin',status='old',action='read',form='unformatted',access='direct', &
-                recl=reclen_xmin_crust_mantle+2*4)
-        else
-          open(unit=51,file=trim(prname)//'absorb_xmin.bin',status='unknown',form='unformatted',access='direct',&
-                recl=reclen_xmin_crust_mantle+2*4)
-        endif
-      endif
-
-      if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-        allocate(absorb_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,nspec2D_xmax_crust_mantle))
-        reclen_xmax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmax_crust_mantle)
-        if (SIMULATION_TYPE == 3) then
-          open(unit=52,file=trim(prname)//'absorb_xmax.bin',status='old',action='read',form='unformatted',access='direct', &
-                recl=reclen_xmax_crust_mantle+2*4)
-        else
-          open(unit=52,file=trim(prname)//'absorb_xmax.bin',status='unknown',form='unformatted',access='direct', &
-                recl=reclen_xmax_crust_mantle+2*4)
-        endif
-      endif
-
-      if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-        allocate(absorb_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,nspec2D_ymin_crust_mantle))
-        reclen_ymin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymin_crust_mantle)
-        if (SIMULATION_TYPE == 3) then
-          open(unit=53,file=trim(prname)//'absorb_ymin.bin',status='old',action='read',form='unformatted',access='direct',&
-                recl=reclen_ymin_crust_mantle+2*4)
-        else
-          open(unit=53,file=trim(prname)//'absorb_ymin.bin',status='unknown',form='unformatted',access='direct',&
-                recl=reclen_ymin_crust_mantle+2*4)
-        endif
-      endif
-
-      if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-        allocate(absorb_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,nspec2D_ymax_crust_mantle))
-        reclen_ymax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymax_crust_mantle)
-        if (SIMULATION_TYPE == 3) then
-          open(unit=54,file=trim(prname)//'absorb_ymax.bin',status='old',action='read',form='unformatted',access='direct',&
-                recl=reclen_ymax_crust_mantle+2*4)
-        else
-          open(unit=54,file=trim(prname)//'absorb_ymax.bin',status='unknown',form='unformatted',access='direct',&
-                recl=reclen_ymax_crust_mantle+2*4)
-        endif
-      endif
-
-  endif
-
-! -- Boundary Mesh for crust and mantle ---
-
-  if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
-    open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin',status='old',form='unformatted')
-    read(27) njunk1,njunk2,njunk3
-    if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
-               call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
-    read(27) ibelm_moho_top
-    read(27) ibelm_moho_bot
-    read(27) ibelm_400_top
-    read(27) ibelm_400_bot
-    read(27) ibelm_670_top
-    read(27) ibelm_670_bot
-    read(27) normal_moho
-    read(27) normal_400
-    read(27) normal_670
-    close(27)
-
-    k_top = 1
-    k_bot = NGLLZ
-
-    ! initialization
-    moho_kl = 0.; d400_kl = 0.; d670_kl = 0.; cmb_kl = 0.; icb_kl = 0.
-
-  endif
-
-! read parameters to couple fluid and solid regions
-!
-!---- outer core
-!
-
-! create name of database
-  call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-
-! boundary parameters
-
-! Stacey put back
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted')
-  read(27) nspec2D_xmin_outer_core
-  read(27) nspec2D_xmax_outer_core
-  read(27) nspec2D_ymin_outer_core
-  read(27) nspec2D_ymax_outer_core
-  read(27) njunk1
-  read(27) njunk2
-
-  read(27) ibelm_xmin_outer_core
-  read(27) ibelm_xmax_outer_core
-  read(27) ibelm_ymin_outer_core
-  read(27) ibelm_ymax_outer_core
-  read(27) ibelm_bottom_outer_core
-  read(27) ibelm_top_outer_core
-
-  read(27) normal_xmin_outer_core
-  read(27) normal_xmax_outer_core
-  read(27) normal_ymin_outer_core
-  read(27) normal_ymax_outer_core
-  read(27) normal_bottom_outer_core
-  read(27) normal_top_outer_core
-
-  read(27) jacobian2D_xmin_outer_core
-  read(27) jacobian2D_xmax_outer_core
-  read(27) jacobian2D_ymin_outer_core
-  read(27) jacobian2D_ymax_outer_core
-  read(27) jacobian2D_bottom_outer_core
-  read(27) jacobian2D_top_outer_core
-  close(27)
-
-! read arrays for Stacey conditions
-
-  if(ABSORBING_CONDITIONS) then
-      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted')
-      read(27) nimin_outer_core
-      read(27) nimax_outer_core
-      read(27) njmin_outer_core
-      read(27) njmax_outer_core
-      read(27) nkmin_xi_outer_core
-      read(27) nkmin_eta_outer_core
-      close(27)
-
-      if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-        allocate(absorb_xmin_outer_core(NGLLY,NGLLZ,nspec2D_xmin_outer_core))
-        reclen_xmin_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmin_outer_core)
-        if (SIMULATION_TYPE == 3) then
-          open(unit=61,file=trim(prname)//'absorb_xmin.bin',status='old',action='read',form='unformatted',access='direct', &
-                recl=reclen_xmin_outer_core+2*4)
-        else
-          open(unit=61,file=trim(prname)//'absorb_xmin.bin',status='unknown',form='unformatted',access='direct',&
-                recl=reclen_xmin_outer_core+2*4)
-        endif
-      endif
-
-      if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-        allocate(absorb_xmax_outer_core(NGLLY,NGLLZ,nspec2D_xmax_outer_core))
-        reclen_xmax_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmax_outer_core)
-        if (SIMULATION_TYPE == 3) then
-          open(unit=62,file=trim(prname)//'absorb_xmax.bin',status='old',action='read',form='unformatted',access='direct', &
-                recl=reclen_xmax_outer_core+2*4)
-        else
-          open(unit=62,file=trim(prname)//'absorb_xmax.bin',status='unknown',form='unformatted',access='direct', &
-                recl=reclen_xmax_outer_core+2*4)
-        endif
-      endif
-
-      if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-        allocate(absorb_ymin_outer_core(NGLLX,NGLLZ,nspec2D_ymin_outer_core))
-        reclen_ymin_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymin_outer_core)
-        if (SIMULATION_TYPE == 3) then
-          open(unit=63,file=trim(prname)//'absorb_ymin.bin',status='old',action='read',form='unformatted',access='direct',&
-                recl=reclen_ymin_outer_core+2*4)
-        else
-          open(unit=63,file=trim(prname)//'absorb_ymin.bin',status='unknown',form='unformatted',access='direct',&
-                recl=reclen_ymin_outer_core+2*4)
-        endif
-      endif
-
-      if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-        allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nspec2D_ymax_outer_core))
-        reclen_ymax_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymax_outer_core)
-        if (SIMULATION_TYPE == 3) then
-          open(unit=64,file=trim(prname)//'absorb_ymax.bin',status='old',action='read',form='unformatted',access='direct',&
-                recl=reclen_ymax_outer_core+2*4)
-        else
-          open(unit=64,file=trim(prname)//'absorb_ymax.bin',status='unknown',form='unformatted',access='direct',&
-                recl=reclen_ymax_outer_core+2*4)
-        endif
-      endif
-
-      if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. &
-         (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
-        allocate(absorb_zmin_outer_core(NGLLX,NGLLY,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)))
-        reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
-         if (SIMULATION_TYPE == 3) then
-         open(unit=65,file=trim(prname)//'absorb_zmin.bin',status='old',action='read',form='unformatted',access='direct',&
-                recl=reclen_zmin+2*4)
-        else
-          open(unit=65,file=trim(prname)//'absorb_zmin.bin',status='unknown',form='unformatted',access='direct',&
-                recl=reclen_zmin+2*4)
-        endif
-      endif
-  endif
-
-!
-!---- inner core
-!
-
-! create name of database
-  call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
-
-! read info for vertical edges for central cube matching in inner core
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='old',action='read',form='unformatted')
-  read(27) nspec2D_xmin_inner_core
-  read(27) nspec2D_xmax_inner_core
-  read(27) nspec2D_ymin_inner_core
-  read(27) nspec2D_ymax_inner_core
-  read(27) njunk1
-  read(27) njunk2
-
-! boundary parameters
-  read(27) ibelm_xmin_inner_core
-  read(27) ibelm_xmax_inner_core
-  read(27) ibelm_ymin_inner_core
-  read(27) ibelm_ymax_inner_core
-  read(27) ibelm_bottom_inner_core
-  read(27) ibelm_top_inner_core
-  close(27)
-
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 ! ---- source array
-
-  if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
 
   allocate(sourcearrays(NSOURCES,NDIM,NGLLX,NGLLY,NGLLZ))
   do isource = 1,NSOURCES
@@ -1891,70 +1211,14 @@
       sourcearrays(isource,:,:,:,:) = sourcearray(:,:,:,:)
     endif
   enddo
-  endif
-
-  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-    nadj_rec_local = 0
-    do irec = 1,nrec
-      if(myrank == islice_selected_rec(irec))then
-        if(islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT-1) &
-          call exit_MPI(myrank,'something is wrong with the source slice number in adjoint simulation')
-        nadj_rec_local = nadj_rec_local + 1
-      endif
-    enddo
-
-    NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
-    allocate(iadj_vec(NSTEP))
-    iadj_block = 1  !counts blocks
-    do it=1,NSTEP
-       iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record
-    enddo
-
-    if(nadj_rec_local > 0) then
-     ! allocate adjoint source arrays
-     allocate(adj_sourcearray(NTSTEP_BETWEEN_READ_ADJSRC,NDIM,NGLLX,NGLLY,NGLLZ))
-     allocate(adj_sourcearrays(nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC,NDIM,NGLLX,NGLLY,NGLLZ))
-
-     ! allocate and initialize indexing arrays
-     allocate(iadjsrc(NSTEP_SUB_ADJ,2))
-     allocate(iadjsrc_len(NSTEP_SUB_ADJ))
-     iadjsrc(:,:) = 0
-     iadjsrc_len(:) = 0
-
-     do it=1,NSTEP
-
-       it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) ) ! block number
-
-       if(mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then ! we are at the edge of a block
-         iadjsrc(iadj_block,1) = NSTEP-it_sub_adj*NTSTEP_BETWEEN_READ_ADJSRC+1
-         iadjsrc(iadj_block,2) = NSTEP-(it_sub_adj-1)*NTSTEP_BETWEEN_READ_ADJSRC
-         if(iadjsrc(iadj_block,1) < 0) iadjsrc(iadj_block,1) = 1         ! final adj src array
-         iadjsrc_len(iadj_block) = iadjsrc(iadj_block,2)-iadjsrc(iadj_block,1)+1
-         iadj_block = iadj_block+1
-       endif
-
-       iadj_vec(it) = iadjsrc_len(it_sub_adj) - mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC)
-     enddo
-
-    endif
-
-  endif
 
 !--- select local receivers
 
 ! count number of receivers located in this slice
   nrec_local = 0
-  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-    nrec_simulation = nrec
     do irec = 1,nrec
       if(myrank == islice_selected_rec(irec)) nrec_local = nrec_local + 1
     enddo
-  else
-    nrec_simulation = NSOURCES
-    do isource = 1, NSOURCES
-      if(myrank == islice_selected_source(isource)) nrec_local = nrec_local + 1
-    enddo
-  endif
 
   if (nrec_local > 0) then
 
@@ -1966,24 +1230,14 @@
 ! define local to global receiver numbering mapping
   allocate(number_receiver_global(nrec_local))
   irec_local = 0
-  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
     do irec = 1,nrec
       if(myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
         number_receiver_global(irec_local) = irec
       endif
     enddo
-  else
-    do isource = 1,NSOURCES
-      if(myrank == islice_selected_source(isource)) then
-        irec_local = irec_local + 1
-        number_receiver_global(irec_local) = isource
-      endif
-    enddo
-  endif
 
 ! define and store Lagrange interpolators at all the receivers
-  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
   do irec_local = 1,nrec_local
     irec = number_receiver_global(irec_local)
     call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
@@ -1993,23 +1247,6 @@
     hetar_store(irec_local,:) = hetar(:)
     hgammar_store(irec_local,:) = hgammar(:)
   enddo
-  else
-    allocate(hpxir_store(nrec_local,NGLLX))
-    allocate(hpetar_store(nrec_local,NGLLY))
-    allocate(hpgammar_store(nrec_local,NGLLZ))
-  do irec_local = 1,nrec_local
-    irec = number_receiver_global(irec_local)
-    call lagrange_any(xi_source(irec),NGLLX,xigll,hxir,hpxir)
-    call lagrange_any(eta_source(irec),NGLLY,yigll,hetar,hpetar)
-    call lagrange_any(gamma_source(irec),NGLLZ,zigll,hgammar,hpgammar)
-    hxir_store(irec_local,:) = hxir(:)
-    hetar_store(irec_local,:) = hetar(:)
-    hgammar_store(irec_local,:) = hgammar(:)
-    hpxir_store(irec_local,:) = hpxir(:)
-    hpetar_store(irec_local,:) = hpetar(:)
-    hpgammar_store(irec_local,:) = hpgammar(:)
-  enddo
-  endif
 
   endif ! nrec_local
 
@@ -2018,7 +1255,7 @@
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'found a total of ',nrec_tot_found,' receivers in all the slices'
-    if(nrec_tot_found /= nrec_simulation) then
+    if(nrec_tot_found /= nrec) then
       call exit_MPI(myrank,'problem when dispatching the receivers')
     else
       write(IMAIN,*) 'this total is okay'
@@ -2026,8 +1263,6 @@
   endif
 
   if(myrank == 0) then
-
-  close(IOVTK)
 
   write(IMAIN,*)
   write(IMAIN,*) 'Total number of samples for seismograms = ',NSTEP
@@ -2144,7 +1379,7 @@
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
@@ -2159,7 +1394,7 @@
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
@@ -2173,7 +1408,7 @@
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
@@ -2187,7 +1422,7 @@
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
@@ -2298,17 +1533,6 @@
 
 ! get and store PREM attenuation model
 
-! ATTENUATION_3D get values from mesher
-     if(ATTENUATION_3D_VAL) then
-        ! CRUST_MANTLE ATTENUATION
-        call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-        call get_attenuation_model_3D(myrank, prname, omsb_crust_mantle_dble, &
-             factor_common_crust_mantle_dble, factor_scale_crust_mantle_dble, tau_sigma_dble, NSPEC_CRUST_MANTLE)
-        ! INNER_CORE ATTENUATION
-        call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
-        call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
-             factor_common_inner_core_dble, factor_scale_inner_core_dble, tau_sigma_dble, NSPEC_INNER_CORE)
-     else ! ATTENUATION = .true. .and. ATTENUATION_3D = .false.
         call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
         call get_attenuation_model_1D(myrank, prname, IREGION_CRUST_MANTLE, tau_sigma_dble, &
              omsb_crust_mantle_dble, factor_common_crust_mantle_dble,  &
@@ -2318,7 +1542,6 @@
         factor_common_inner_core_dble(:,:,:,:,1:min(ATT4,ATT5)) = factor_common_crust_mantle_dble(:,:,:,:,1:min(ATT4,ATT5))
         ! Tell the Attenuation Code about the IDOUBLING regions within the Mesh
         call set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
-     endif ! ATTENUATION_3D
 
    if(CUSTOM_REAL == SIZE_REAL) then
       factor_scale_crust_mantle       = sngl(factor_scale_crust_mantle_dble)
@@ -2387,10 +1610,6 @@
       c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) &
               + scale_factor_minus_one * mul
     else
-      if(MOVIE_VOLUME .and. SIMULATION_TYPE==3) then
-!      store the original value of \mu to comput \mu*\eps
-       muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
-      endif
       muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
       if(TRANSVERSE_ISOTROPY_VAL .and. (idoubling_crust_mantle(ispec) == IFLAG_220_80 &
       .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO)) &
@@ -2447,17 +1666,8 @@
 
 ! allocate seismogram array
   if (nrec_local > 0) then
-    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
       if(ier /= 0) stop 'error while allocating seismograms'
-    else
-      allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-      if(ier /= 0) stop 'error while allocating seismograms'
-      ! allocate Frechet derivatives array
-      allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local))
-      moment_der = 0._CUSTOM_REAL
-      sloc_der = 0._CUSTOM_REAL
-    endif
 ! initialize seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
     nit_written = 0
@@ -2484,77 +1694,11 @@
     displ_inner_core(:,:) = VERYSMALLVAL
   endif
 
-  if (SIMULATION_TYPE == 3) then
-
-    rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-    beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-    alpha_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-! For anisotropic kernels (in crust_mantle only)
-    cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-
-    rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-    alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-
-    rho_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-    beta_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-    alpha_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
-
-    div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-    b_div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-
-  endif
-
 ! store g, rho and dg/dr=dg using normalized radius in lookup table every 100 m
 ! get density and velocity from PREM model using dummy doubling flag
 ! this assumes that the gravity perturbations are small and smooth
 ! and that we can neglect the 3D model and use PREM every 100 m in all cases
 ! this is probably a rather reasonable assumption
-  if(GRAVITY_VAL) then
-    call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST)
-    do int_radius = 1,NRAD_GRAVITY
-      radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
-      call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g)
-      idoubling = 0
-
-! use PREM density profile to calculate gravity (fine for other 1D models)
-      call prem_iso(myrank,radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
-          ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-          R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-
-      dg = 4.0d0*rho - 2.0d0*g/radius
-      minus_gravity_table(int_radius) = - g
-      minus_deriv_gravity_table(int_radius) = - dg
-      density_table(int_radius) = rho
-      minus_rho_g_over_kappa_fluid(int_radius) = - g / vp**2
-    enddo
-
-! make sure fluid array is only assigned in outer core between 1222 and 3478 km
-! lookup table is defined every 100 m
-    do int_radius = 1,NRAD_GRAVITY
-      radius_km = dble(int_radius) / 10.d0
-      if(radius_km > RCMB/1000.d0 - 3.d0) &
-        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(nint((RCMB/1000.d0 - 3.d0)*10.d0))
-      if(radius_km < RICB/1000.d0 + 3.d0) &
-        minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(nint((RICB/1000.d0 + 3.d0)*10.d0))
-    enddo
-
-! compute gravity value at CMB and ICB once and for all
-    radius = RCMB / R_EARTH
-    call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_cmb_dble)
-
-    radius = RICB / R_EARTH
-    call spline_evaluation(rspl_gravity,gspl,gspl2,nspl_gravity,radius,g_icb_dble)
-
-! distinguish between single and double precision for reals
-    if(CUSTOM_REAL == SIZE_REAL) then
-      minus_g_cmb = sngl(- g_cmb_dble)
-      minus_g_icb = sngl(- g_icb_dble)
-    else
-      minus_g_cmb = - g_cmb_dble
-      minus_g_icb = - g_icb_dble
-    endif
-
-   else
 
  ! tabulate d ln(rho)/dr needed for the no gravity fluid potential
      do int_radius = 1,NRAD_GRAVITY
@@ -2565,59 +1709,6 @@
            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
        d_ln_density_dr_table(int_radius) = drhodr/rho
      enddo
-
-   endif
-
-! allocate files to save movies
-  if(MOVIE_SURFACE) then
-    if(MOVIE_COARSE) then  !only output corners
-       nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-       if(NGLLX /= NGLLY) call MPI_exit(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
-       NIT = NGLLX - 1
-    else
-       nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-       NIT = 1
-    endif
-    allocate(store_val_x(nmovie_points))
-    allocate(store_val_y(nmovie_points))
-    allocate(store_val_z(nmovie_points))
-    allocate(store_val_ux(nmovie_points))
-    allocate(store_val_uy(nmovie_points))
-    allocate(store_val_uz(nmovie_points))
-
-    allocate(store_val_x_all(nmovie_points,0:NPROCTOT-1))
-    allocate(store_val_y_all(nmovie_points,0:NPROCTOT-1))
-    allocate(store_val_z_all(nmovie_points,0:NPROCTOT-1))
-    allocate(store_val_ux_all(nmovie_points,0:NPROCTOT-1))
-    allocate(store_val_uy_all(nmovie_points,0:NPROCTOT-1))
-    allocate(store_val_uz_all(nmovie_points,0:NPROCTOT-1))
-  endif
-! output point and element information for 3D movies
-  if(MOVIE_VOLUME) then
-  ! the following has to be true for the the array dimensions of eps to match with those of xstore etc..
-  ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
-  if (NSPEC_CRUST_MANTLE_STR_OR_ATT /= NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE'
-  if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE'
-
-  write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
-   call count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
-              zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-              MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool_3dmovie,mask_3dmovie)
-
-   allocate(nu_3dmovie(3,3,npoints_3dmovie))
-   call write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
-                         ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
-                         mask_3dmovie,mask_ibool_3dmovie,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
-
-     if(myrank == 0) then
-       write(IMAIN,*) 'Writing to movie3D files on local disk'
-       write(IMAIN,*) 'depth(T,B):',MOVIE_TOP,MOVIE_BOTTOM
-       write(IMAIN,*) 'lon(W,E)  :',MOVIE_WEST,MOVIE_EAST
-       write(IMAIN,*) 'lat(S,N)  :',MOVIE_SOUTH,MOVIE_NORTH
-       write(IMAIN,*) 'Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
-     endif
-
-  endif ! MOVIE_VOLUME
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -2643,46 +1734,6 @@
   deltatover2 = 0.5d0*deltat
   deltatsqover2 = 0.5d0*deltat*deltat
 
-  if (SIMULATION_TYPE == 3) then
-    if(CUSTOM_REAL == SIZE_REAL) then
-      b_deltat = - sngl(DT/scale_t)
-    else
-      b_deltat = - DT/scale_t
-    endif
-    b_deltatover2 = 0.5d0*b_deltat
-    b_deltatsqover2 = 0.5d0*b_deltat*b_deltat
-  endif
-
-! non-dimensionalized rotation rate of the Earth times two
-  if(ROTATION_VAL) then
-! distinguish between single and double precision for reals
-    if (SIMULATION_TYPE == 1) then
-    if(CUSTOM_REAL == SIZE_REAL) then
-      two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t))
-    else
-      two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t)
-    endif
-    else
-    if(CUSTOM_REAL == SIZE_REAL) then
-      two_omega_earth = - sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t))
-    else
-      two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t)
-    endif
-    endif
-    A_array_rotation = 0.
-    B_array_rotation = 0.
-    if (SIMULATION_TYPE == 3) then
-      if(CUSTOM_REAL == SIZE_REAL) then
-        b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t))
-      else
-        b_two_omega_earth = 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 / scale_t)
-      endif
-    endif
-  else
-    two_omega_earth = 0._CUSTOM_REAL
-    if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
-  endif
-
 ! precompute Runge-Kutta coefficients if attenuation
   if(ATTENUATION_VAL) then
      call attenuation_memory_values(tau_sigma_dble, deltat, alphaval_dble, betaval_dble, gammaval_dble)
@@ -2695,33 +1746,13 @@
         betaval  = betaval_dble
         gammaval = gammaval_dble
      endif
-     if (SIMULATION_TYPE == 3) then
-       call attenuation_memory_values(tau_sigma_dble, b_deltat, alphaval_dble, betaval_dble, gammaval_dble)
-       if(CUSTOM_REAL == SIZE_REAL) then
-         b_alphaval = sngl(alphaval_dble)
-         b_betaval  = sngl(betaval_dble)
-         b_gammaval = sngl(gammaval_dble)
-       else
-         b_alphaval = alphaval_dble
-         b_betaval  = betaval_dble
-         b_gammaval = gammaval_dble
-       endif
-     endif
   endif
 
   if (COMPUTE_AND_STORE_STRAIN) then
-    eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-    eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
     epsilondev_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
-    if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
-      Iepsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
-      Ieps_trace_over_3_crust_mantle(:,:,:,:)=0._CUSTOM_REAL
-    endif
     if(FIX_UNDERFLOW_PROBLEM) then
-      eps_trace_over_3_crust_mantle(:,:,:,:) = VERYSMALLVAL
       epsilondev_crust_mantle(:,:,:,:,:) = VERYSMALLVAL
-      eps_trace_over_3_inner_core(:,:,:,:) = VERYSMALLVAL
       epsilondev_inner_core(:,:,:,:,:) = VERYSMALLVAL
     endif
   endif
@@ -2751,79 +1782,8 @@
   if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
   if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) stop 'Only 1 run for SIMULATION_TYPE = 2/3'
 
-  if(NUMBER_OF_RUNS == 3) then
-    if(NUMBER_OF_THIS_RUN == 1) then
-      it_begin = 1
-      it_end = NSTEP/3
-    else if(NUMBER_OF_THIS_RUN == 2) then
-      it_begin = NSTEP/3 + 1
-      it_end = 2*(NSTEP/3)
-    else
-      it_begin = 2*(NSTEP/3) + 1
-      it_end = NSTEP
-    endif
-
-  else if(NUMBER_OF_RUNS == 2) then
-    if(NUMBER_OF_THIS_RUN == 1) then
-      it_begin = 1
-      it_end = NSTEP/2
-    else
-      it_begin = NSTEP/2 + 1
-      it_end = NSTEP
-    endif
-
-  else
     it_begin = 1
     it_end = NSTEP
-  endif
-
-! read files back from local disk or MT tape system if restart file
-  if(NUMBER_OF_THIS_RUN > 1) then
-    write(outputname,"('dump_all_arrays',i6.6)") myrank
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
-    read(55) displ_crust_mantle
-    read(55) veloc_crust_mantle
-    read(55) accel_crust_mantle
-    read(55) displ_inner_core
-    read(55) veloc_inner_core
-    read(55) accel_inner_core
-    read(55) displ_outer_core
-    read(55) veloc_outer_core
-    read(55) accel_outer_core
-    read(55) R_memory_crust_mantle
-    read(55) R_memory_inner_core
-    read(55) epsilondev_crust_mantle
-    read(55) epsilondev_inner_core
-    read(55) A_array_rotation
-    read(55) B_array_rotation
-    close(55)
-  endif
-
-  if (SIMULATION_TYPE == 3) then
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
-    read(55) b_displ_crust_mantle
-    read(55) b_veloc_crust_mantle
-    read(55) b_accel_crust_mantle
-    read(55) b_displ_inner_core
-    read(55) b_veloc_inner_core
-    read(55) b_accel_inner_core
-    read(55) b_displ_outer_core
-    read(55) b_veloc_outer_core
-    read(55) b_accel_outer_core
-    if (ATTENUATION_VAL) then
-      read(55) b_R_memory_crust_mantle
-      read(55) b_R_memory_inner_core
-    endif
-    read(55) b_epsilondev_crust_mantle
-    read(55) b_epsilondev_inner_core
-    if (ROTATION_VAL) then
-      read(55) b_A_array_rotation
-      read(55) b_B_array_rotation
-    endif
-    close(55)
-
-  endif
 
 !
 !   s t a r t   t i m e   i t e r a t i o n s
@@ -2849,7 +1809,6 @@
 ! get MPI starting time
   time_start = MPI_WTIME()
 
-
 ! initialize variables for writing seismograms
   seismo_offset = it_begin-1
   seismo_current = 0
@@ -2857,6 +1816,14 @@
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
+
+!! DK DK merged version: may set to 1 for timing
+! displ_crust_mantle = 1
+! veloc_crust_mantle = 1
+! displ_outer_core = 1
+! veloc_outer_core = 1
+! displ_inner_core = 1
+! veloc_inner_core = 1
 
   do it = it_begin,it_end
 
@@ -2881,29 +1848,6 @@
     veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
   enddo
 
-! backward field
-  if (SIMULATION_TYPE == 3) then
-  do i=1,NGLOB_CRUST_MANTLE
-    b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) + b_deltat*b_veloc_crust_mantle(:,i) + &
-         b_deltatsqover2*b_accel_crust_mantle(:,i)
-    b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-  enddo
-  do i=1,NGLOB_OUTER_CORE
-    b_displ_outer_core(i) = b_displ_outer_core(i) + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
-    b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
-  enddo
-  do i=1,NGLOB_INNER_CORE
-    b_displ_inner_core(:,i) = b_displ_inner_core(:,i) + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
-    b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
-  enddo
-  endif
-
-! integral of strain for adjoint movie volume
-  if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
-  Iepsilondev_crust_mantle(:,:,:,:,:)    =Iepsilondev_crust_mantle(:,:,:,:,:)    +deltat*epsilondev_crust_mantle(:,:,:,:,:)
-  Ieps_trace_over_3_crust_mantle(:,:,:,:)=Ieps_trace_over_3_crust_mantle(:,:,:,:) + deltat*eps_trace_over_3_crust_mantle(:,:,:,:)
-  endif
-
 ! compute the maximum of the norm of the displacement
 ! in all the slices using an MPI reduction
 ! and output timestamp file to check that simulation is running fine
@@ -2922,30 +1866,6 @@
                           MPI_COMM_WORLD,ier)
     call MPI_REDUCE(Ufluidnorm,Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                           MPI_COMM_WORLD,ier)
-    if (SIMULATION_TYPE == 3) then
-      b_Usolidnorm = max( &
-                 maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
-                 b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
-                 maxval(sqrt(b_displ_inner_core(1,:)**2 + b_displ_inner_core(2,:)**2 + b_displ_inner_core(3,:)**2)))
-
-      b_Ufluidnorm = maxval(abs(b_displ_outer_core))
-
-! compute the maximum of the maxima for all the slices using an MPI reduction
-      call MPI_REDUCE(b_Usolidnorm,b_Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-                 MPI_COMM_WORLD,ier)
-      call MPI_REDUCE(b_Ufluidnorm,b_Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-                 MPI_COMM_WORLD,ier)
-
-    endif
-
-    if (COMPUTE_AND_STORE_STRAIN) then
-      Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
-      strain2_norm= maxval(abs(epsilondev_crust_mantle))
-      call MPI_REDUCE(Strain_norm,Strain_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-                 MPI_COMM_WORLD,ier)
-      call MPI_REDUCE(Strain2_norm,Strain2_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
-                 MPI_COMM_WORLD,ier)
-     endif
 
     if(myrank == 0) then
 
@@ -2956,15 +1876,6 @@
       Usolidnorm_all = Usolidnorm_all * sngl(scale_displ)
       write(IMAIN,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
-      if (SIMULATION_TYPE == 3) then
-      b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
-      write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
-      write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
-      endif
-      if(COMPUTE_AND_STORE_STRAIN) then
-      write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
-      write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
-      endif
 
 ! elapsed time since beginning of the simulation
       tCPU = MPI_WTIME() - time_start
@@ -2999,74 +1910,11 @@
                ihours_total,iminutes_total,iseconds_total
       write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
 
-      if(it < NSTEP) then
-
-! get current date
-      call date_and_time(datein,timein,zone,time_values)
-! time_values(1): year
-! time_values(2): month of the year
-! time_values(3): day of the month
-! time_values(5): hour of the day
-! time_values(6): minutes of the hour
-
-! compute date at which the run should finish; for simplicity only minutes
-! are considered, seconds are ignored; in any case the prediction is not
-! accurate down to seconds because of system and network fluctuations
-      year = time_values(1)
-      mon = time_values(2)
-      day = time_values(3)
-      hr = time_values(5)
-      minutes = time_values(6)
-
-! get timestamp in minutes of current date and time
-      call convtime(timestamp,year,mon,day,hr,minutes)
-
-! add remaining minutes
-      timestamp = timestamp + nint(t_remain / 60.d0)
-
-! get date and time of that future timestamp in minutes
-      call invtime(timestamp,year,mon,day,hr,minutes)
-
-! convert to Julian day to get day of the week
-      call calndr(day,mon,year,julian_day_number)
-      day_of_week = idaywk(julian_day_number)
-
-      write(IMAIN,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
-          weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
-
-! print date and time estimate of end of run in another country.
-! For instance: the code runs at Caltech in California but the person
-! running the code is connected remotely from France, which has 9 hours more
-      if(ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
-
-! add time difference with that remote location (can be negative)
-        timestamp_remote = timestamp + HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE
-
-! get date and time of that future timestamp in minutes
-        call invtime(timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote)
-
-! convert to Julian day to get day of the week
-        call calndr(day_remote,mon_remote,year_remote,julian_day_number)
-        day_of_week_remote = idaywk(julian_day_number)
-
-        if(HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
-          write(IMAIN,*) 'Adding positive time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
-        else
-          write(IMAIN,*) 'Adding negative time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
-        endif
-        write(IMAIN,*) 'and ',abs(MINUTES_TIME_DIFFERENCE),' minutes to get estimate at a remote location'
-        write(IMAIN, &
-            "(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
-            weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
-      endif
-
       if(it < 100) then
         write(IMAIN,*) '************************************************************'
         write(IMAIN,*) '**** BEWARE: the above time estimates are not reliable'
         write(IMAIN,*) '**** because fewer than 100 iterations have been performed'
         write(IMAIN,*) '************************************************************'
-      endif
-
       endif
 
       write(IMAIN,*)
@@ -3082,12 +1930,6 @@
       write(IOUT,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
       write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
       write(IOUT,*)
-
-      if (SIMULATION_TYPE == 3) then
-        write(IOUT,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
-        write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
-        write(IOUT,*)
-      endif
 
       write(IOUT,*) 'Elapsed time in seconds = ',tCPU
       write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
@@ -3107,34 +1949,12 @@
       write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
       write(IOUT,*)
 
-      if(it < NSTEP) then
-
-      write(IOUT,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
-          weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
-
-! print date and time estimate of end of run in another country.
-! For instance: the code runs at Caltech in California but the person
-! running the code is connected remotely from France, which has 9 hours more
-      if(ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
-        if(HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
-          write(IOUT,*) 'Adding positive time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
-        else
-          write(IOUT,*) 'Adding negative time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
-        endif
-        write(IOUT,*) 'and ',abs(MINUTES_TIME_DIFFERENCE),' minutes to get estimate at a remote location'
-        write(IOUT, &
-            "(' The run will finish approximately on (in remote time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
-            weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
-      endif
-
       if(it < 100) then
         write(IOUT,*)
         write(IOUT,*) '************************************************************'
         write(IOUT,*) '**** BEWARE: the above time estimates are not reliable'
         write(IOUT,*) '**** because fewer than 100 iterations have been performed'
         write(IOUT,*) '************************************************************'
-      endif
-
       endif
 
       close(IOUT)
@@ -3146,12 +1966,6 @@
         call exit_MPI(myrank,'forward simulation became unstable and blew up in the solid')
       if(Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0) &
         call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
-      if(SIMULATION_TYPE == 3) then
-        if(b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
-          call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
-        if(b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
-          call exit_MPI(myrank,'backward simulation became unstable and blew up in the fluid')
-      endif
     endif
   endif
 
@@ -3167,232 +1981,13 @@
   endif
 
 ! accel_outer_core, div_displ_outer_core are initialized to zero in the following subroutine.
-  call compute_forces_outer_core(time,deltat,two_omega_earth, &
-         A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
-         minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
-         xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+  call compute_forces_outer_core(d_ln_density_dr_table, &
+         displ_outer_core,accel_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
          xix_outer_core,xiy_outer_core,xiz_outer_core, &
          etax_outer_core,etay_outer_core,etaz_outer_core, &
          gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-         ibool_outer_core)
-
-  if (SIMULATION_TYPE == 3) then
-    call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
-         b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
-         minus_rho_g_over_kappa_fluid,b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
-         xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-         xix_outer_core,xiy_outer_core,xiz_outer_core, &
-         etax_outer_core,etay_outer_core,etaz_outer_core, &
-         gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-         hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-         ibool_outer_core)
-  endif
-
-! Stacey
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-
-!   xmin
-! if two chunks exclude this face for one of them
-  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
-
-    if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_outer_core > 0)  then
-      read(61,rec=NSTEP-it+1) reclen1,absorb_xmin_outer_core,reclen2
-      if (reclen1 /= reclen_xmin_outer_core .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmin_outer_core')
-    endif
-
-    do ispec2D=1,nspec2D_xmin_outer_core
-
-      ispec=ibelm_xmin_outer_core(ispec2D)
-
-! exclude elements that are not on absorbing edges
-      if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
-
-      i=1
-      do k=nkmin_xi_outer_core(1,ispec2D),NGLLZ
-        do j=njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
-          iglob=ibool_outer_core(i,j,k,ispec)
-
-          sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
-
-          weight = jacobian2D_xmin_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
-
-          accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
-
-          if (SIMULATION_TYPE == 3) then
-            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_xmin_outer_core(j,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-            absorb_xmin_outer_core(j,k,ispec2D) = weight*sn
-          endif
-        enddo
-      enddo
-    enddo
-
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_outer_core > 0 ) &
-               write(61,rec=it) reclen_xmin_outer_core,absorb_xmin_outer_core,reclen_xmin_outer_core
-
-  endif
-
-!   xmax
-! if two chunks exclude this face for one of them
-  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
-
-    if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_outer_core > 0)  then
-      read(62,rec=NSTEP-it+1) reclen1,absorb_xmax_outer_core,reclen2
-      if (reclen1 /= reclen_xmax_outer_core .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax_outer_core')
-    endif
-
-    do ispec2D=1,nspec2D_xmax_outer_core
-
-      ispec=ibelm_xmax_outer_core(ispec2D)
-
-! exclude elements that are not on absorbing edges
-      if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
-
-      i=NGLLX
-      do k=nkmin_xi_outer_core(2,ispec2D),NGLLZ
-        do j=njmin_outer_core(2,ispec2D),njmax_outer_core(2,ispec2D)
-          iglob=ibool_outer_core(i,j,k,ispec)
-
-          sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
-
-          weight = jacobian2D_xmax_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
-
-          accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
-
-          if (SIMULATION_TYPE == 3) then
-            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_xmax_outer_core(j,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-            absorb_xmax_outer_core(j,k,ispec2D) = weight*sn
-          endif
-
-        enddo
-      enddo
-    enddo
-
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_outer_core > 0 ) &
-               write(62,rec=it) reclen_xmax_outer_core,absorb_xmax_outer_core,reclen_xmax_outer_core
-
-  endif
-
-!   ymin
-    if (SIMULATION_TYPE == 3 .and. nspec2D_ymin_outer_core > 0)  then
-      read(63,rec=NSTEP-it+1) reclen1,absorb_ymin_outer_core,reclen2
-      if (reclen1 /= reclen_ymin_outer_core .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin_outer_core')
-    endif
-
-    do ispec2D=1,nspec2D_ymin_outer_core
-
-      ispec=ibelm_ymin_outer_core(ispec2D)
-
-! exclude elements that are not on absorbing edges
-      if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
-
-      j=1
-      do k=nkmin_eta_outer_core(1,ispec2D),NGLLZ
-        do i=nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
-          iglob=ibool_outer_core(i,j,k,ispec)
-
-          sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
-
-          weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
-
-          accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
-
-          if (SIMULATION_TYPE == 3) then
-            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_ymin_outer_core(i,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-            absorb_ymin_outer_core(i,k,ispec2D) = weight*sn
-          endif
-
-        enddo
-      enddo
-    enddo
-
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_outer_core > 0 ) &
-       write(63,rec=it) reclen_ymin_outer_core,absorb_ymin_outer_core,reclen_ymin_outer_core
-
-
-!   ymax
-    if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_outer_core > 0)  then
-      read(64,rec=NSTEP-it+1) reclen1,absorb_ymax_outer_core,reclen2
-      if (reclen1 /= reclen_ymax_outer_core .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax_outer_core')
-    endif
-    do ispec2D=1,nspec2D_ymax_outer_core
-
-      ispec=ibelm_ymax_outer_core(ispec2D)
-
-! exclude elements that are not on absorbing edges
-      if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
-
-      j=NGLLY
-      do k=nkmin_eta_outer_core(2,ispec2D),NGLLZ
-        do i=nimin_outer_core(2,ispec2D),nimax_outer_core(2,ispec2D)
-          iglob=ibool_outer_core(i,j,k,ispec)
-
-          sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
-
-          weight=jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
-
-          accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
-
-          if (SIMULATION_TYPE == 3) then
-            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_ymax_outer_core(i,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-            absorb_ymax_outer_core(i,k,ispec2D) = weight*sn
-          endif
-
-        enddo
-      enddo
-    enddo
-
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_outer_core > 0 ) &
-       write(64,rec=it) reclen_ymax_outer_core,absorb_ymax_outer_core,reclen_ymax_outer_core
-
-
-! for surface elements exactly on the ICB
-   if (SIMULATION_TYPE == 3 .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE)> 0)  then
-      read(65,rec=NSTEP-it+1) reclen1,absorb_zmin_outer_core,reclen2
-      if (reclen1 /= reclen_zmin .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_zmin_outer_core')
-    endif
-
-    do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
-
-      ispec = ibelm_bottom_outer_core(ispec2D)
-
-      k = 1
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool_outer_core(i,j,k,ispec)
-
-          sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
-
-          weight = jacobian2D_bottom_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
-
-          accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
-
-          if (SIMULATION_TYPE == 3) then
-            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_zmin_outer_core(i,j,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-            absorb_zmin_outer_core(i,j,ispec2D) = weight*sn
-          endif
-
-        enddo
-      enddo
-    enddo
-
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 ) &
-       write(65,rec=it) reclen_zmin,absorb_zmin_outer_core,reclen_zmin
-
-  endif ! Stacey conditions
-
+         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool_outer_core)
 
 ! ****************************************************
 ! **********  add matching with solid part  **********
@@ -3442,16 +2037,6 @@
 
           accel_outer_core(iglob) = accel_outer_core(iglob) + weight*displ_n
 
-          if (SIMULATION_TYPE == 3) then
-            iglob = ibool_crust_mantle(i,j,k_corresp,ispec_selected)
-            displ_x = b_displ_crust_mantle(1,iglob)
-            displ_y = b_displ_crust_mantle(2,iglob)
-            displ_z = b_displ_crust_mantle(3,iglob)
-            displ_n = displ_x*nx + displ_y*ny + displ_z*nz
-            iglob = ibool_outer_core(i,j,k,ispec)
-            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) + weight*displ_n
-          endif
-
         enddo
       enddo
     enddo
@@ -3500,16 +2085,6 @@
 
           accel_outer_core(iglob) = accel_outer_core(iglob) - weight*displ_n
 
-          if (SIMULATION_TYPE == 3) then
-            iglob = ibool_inner_core(i,j,k_corresp,ispec_selected)
-            displ_x = b_displ_inner_core(1,iglob)
-            displ_y = b_displ_inner_core(2,iglob)
-            displ_z = b_displ_inner_core(3,iglob)
-            displ_n = displ_x*nx + displ_y*ny + displ_z*nz
-            iglob = ibool_outer_core(i,j,k,ispec)
-            b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - weight*displ_n
-          endif
-
         enddo
       enddo
     enddo
@@ -3526,7 +2101,7 @@
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
@@ -3538,26 +2113,6 @@
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
   enddo
 
-  if (SIMULATION_TYPE == 3) then
-  call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-            iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar, &
-            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS)
-
-  do i=1,NGLOB_OUTER_CORE
-    b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
-    b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
-  enddo
-  endif
-
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
@@ -3566,326 +2121,36 @@
 
 ! for anisotropy and gravity, x y and z contain r theta and phi
 
-  call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ_crust_mantle,accel_crust_mantle, &
+  call compute_forces_crust_mantle(displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
           kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
           muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-          c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-          c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-          c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-          c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-          c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-          c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-          c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,idoubling_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
 
-  if (SIMULATION_TYPE == 3) then
-! for anisotropy and gravity, x y and z contain r theta and phi
-  call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          b_displ_crust_mantle,b_accel_crust_mantle, &
-          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-          etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-          hprime_xx,hprime_yy,hprime_zz, &
-          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
-          muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-          c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-          c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-          c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-          c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-          c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-          c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-          c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
-          b_R_memory_crust_mantle,b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
-          b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
-  endif
-
-
-! Stacey
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-
-! crust & mantle
-
-!   xmin
-! if two chunks exclude this face for one of them
-  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
-
-    if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_crust_mantle > 0)  then
-      read(51,rec=NSTEP-it+1) reclen1,absorb_xmin_crust_mantle,reclen2
-      if (reclen1 /= reclen_xmin_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmin')
-    endif
-
-    do ispec2D=1,nspec2D_xmin_crust_mantle
-
-      ispec=ibelm_xmin_crust_mantle(ispec2D)
-
-! exclude elements that are not on absorbing edges
-      if(nkmin_xi_crust_mantle(1,ispec2D) == 0 .or. njmin_crust_mantle(1,ispec2D) == 0) cycle
-
-      i=1
-      do k=nkmin_xi_crust_mantle(1,ispec2D),NGLLZ
-        do j=njmin_crust_mantle(1,ispec2D),njmax_crust_mantle(1,ispec2D)
-          iglob=ibool_crust_mantle(i,j,k,ispec)
-
-          vx=veloc_crust_mantle(1,iglob)
-          vy=veloc_crust_mantle(2,iglob)
-          vz=veloc_crust_mantle(3,iglob)
-
-          nx=normal_xmin_crust_mantle(1,j,k,ispec2D)
-          ny=normal_xmin_crust_mantle(2,j,k,ispec2D)
-          nz=normal_xmin_crust_mantle(3,j,k,ispec2D)
-
-          vn=vx*nx+vy*ny+vz*nz
-
-          tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
-          ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
-          tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
-
-          weight=jacobian2D_xmin_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
-
-          accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
-          accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
-          accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
-
-          if (SIMULATION_TYPE == 3) then
-            b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_xmin_crust_mantle(:,j,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-            absorb_xmin_crust_mantle(1,j,k,ispec2D) = tx*weight
-            absorb_xmin_crust_mantle(2,j,k,ispec2D) = ty*weight
-            absorb_xmin_crust_mantle(3,j,k,ispec2D) = tz*weight
-          endif
-        enddo
-      enddo
-    enddo
-
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) &
-               write(51,rec=it) reclen_xmin_crust_mantle,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle
-
-  endif
-
-!   xmax
-! if two chunks exclude this face for one of them
-  if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
-
-    if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_crust_mantle > 0)  then
-      read(52,rec=NSTEP-it+1) reclen1,absorb_xmax_crust_mantle,reclen2
-      if (reclen1 /= reclen_xmax_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax')
-    endif
-
-    do ispec2D=1,nspec2D_xmax_crust_mantle
-
-      ispec=ibelm_xmax_crust_mantle(ispec2D)
-
-! exclude elements that are not on absorbing edges
-      if(nkmin_xi_crust_mantle(2,ispec2D) == 0 .or. njmin_crust_mantle(2,ispec2D) == 0) cycle
-
-      i=NGLLX
-      do k=nkmin_xi_crust_mantle(2,ispec2D),NGLLZ
-        do j=njmin_crust_mantle(2,ispec2D),njmax_crust_mantle(2,ispec2D)
-          iglob=ibool_crust_mantle(i,j,k,ispec)
-
-          vx=veloc_crust_mantle(1,iglob)
-          vy=veloc_crust_mantle(2,iglob)
-          vz=veloc_crust_mantle(3,iglob)
-
-          nx=normal_xmax_crust_mantle(1,j,k,ispec2D)
-          ny=normal_xmax_crust_mantle(2,j,k,ispec2D)
-          nz=normal_xmax_crust_mantle(3,j,k,ispec2D)
-
-          vn=vx*nx+vy*ny+vz*nz
-
-          tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
-          ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
-          tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
-
-          weight=jacobian2D_xmax_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
-
-          accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
-          accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
-          accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
-
-          if (SIMULATION_TYPE == 3) then
-            b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_xmax_crust_mantle(:,j,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-            absorb_xmax_crust_mantle(1,j,k,ispec2D) = tx*weight
-            absorb_xmax_crust_mantle(2,j,k,ispec2D) = ty*weight
-            absorb_xmax_crust_mantle(3,j,k,ispec2D) = tz*weight
-          endif
-
-        enddo
-      enddo
-    enddo
-
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) &
-               write(52,rec=it) reclen_xmax_crust_mantle,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle
-
-  endif
-
-!   ymin
-
-    if (SIMULATION_TYPE == 3 .and. nspec2D_ymin_crust_mantle > 0)  then
-      read(53,rec=NSTEP-it+1) reclen1,absorb_ymin_crust_mantle,reclen2
-      if (reclen1 /= reclen_ymin_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin')
-    endif
-    do ispec2D=1,nspec2D_ymin_crust_mantle
-
-      ispec=ibelm_ymin_crust_mantle(ispec2D)
-
-! exclude elements that are not on absorbing edges
-      if(nkmin_eta_crust_mantle(1,ispec2D) == 0 .or. nimin_crust_mantle(1,ispec2D) == 0) cycle
-
-      j=1
-      do k=nkmin_eta_crust_mantle(1,ispec2D),NGLLZ
-        do i=nimin_crust_mantle(1,ispec2D),nimax_crust_mantle(1,ispec2D)
-          iglob=ibool_crust_mantle(i,j,k,ispec)
-
-          vx=veloc_crust_mantle(1,iglob)
-          vy=veloc_crust_mantle(2,iglob)
-          vz=veloc_crust_mantle(3,iglob)
-
-          nx=normal_ymin_crust_mantle(1,i,k,ispec2D)
-          ny=normal_ymin_crust_mantle(2,i,k,ispec2D)
-          nz=normal_ymin_crust_mantle(3,i,k,ispec2D)
-
-          vn=vx*nx+vy*ny+vz*nz
-
-          tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
-          ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
-          tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
-
-          weight=jacobian2D_ymin_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
-
-          accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
-          accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
-          accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
-
-          if (SIMULATION_TYPE == 3) then
-            b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymin_crust_mantle(:,i,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-            absorb_ymin_crust_mantle(1,i,k,ispec2D) = tx*weight
-            absorb_ymin_crust_mantle(2,i,k,ispec2D) = ty*weight
-            absorb_ymin_crust_mantle(3,i,k,ispec2D) = tz*weight
-          endif
-
-        enddo
-      enddo
-    enddo
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) &
-       write(53,rec=it) reclen_ymin_crust_mantle,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle
-
-!   ymax
-
-    if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_crust_mantle > 0)  then
-      read(54,rec=NSTEP-it+1) reclen1,absorb_ymax_crust_mantle,reclen2
-      if (reclen1 /= reclen_ymax_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax')
-    endif
-    do ispec2D=1,nspec2D_ymax_crust_mantle
-
-      ispec=ibelm_ymax_crust_mantle(ispec2D)
-
-! exclude elements that are not on absorbing edges
-      if(nkmin_eta_crust_mantle(2,ispec2D) == 0 .or. nimin_crust_mantle(2,ispec2D) == 0) cycle
-
-      j=NGLLY
-      do k=nkmin_eta_crust_mantle(2,ispec2D),NGLLZ
-        do i=nimin_crust_mantle(2,ispec2D),nimax_crust_mantle(2,ispec2D)
-          iglob=ibool_crust_mantle(i,j,k,ispec)
-
-          vx=veloc_crust_mantle(1,iglob)
-          vy=veloc_crust_mantle(2,iglob)
-          vz=veloc_crust_mantle(3,iglob)
-
-          nx=normal_ymax_crust_mantle(1,i,k,ispec2D)
-          ny=normal_ymax_crust_mantle(2,i,k,ispec2D)
-          nz=normal_ymax_crust_mantle(3,i,k,ispec2D)
-
-          vn=vx*nx+vy*ny+vz*nz
-
-          tx=rho_vp_crust_mantle(i,j,k,ispec)*vn*nx+rho_vs_crust_mantle(i,j,k,ispec)*(vx-vn*nx)
-          ty=rho_vp_crust_mantle(i,j,k,ispec)*vn*ny+rho_vs_crust_mantle(i,j,k,ispec)*(vy-vn*ny)
-          tz=rho_vp_crust_mantle(i,j,k,ispec)*vn*nz+rho_vs_crust_mantle(i,j,k,ispec)*(vz-vn*nz)
-
-          weight=jacobian2D_ymax_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
-
-          accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
-          accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
-          accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
-
-          if (SIMULATION_TYPE == 3) then
-            b_accel_crust_mantle(:,iglob)=b_accel_crust_mantle(:,iglob) - absorb_ymax_crust_mantle(:,i,k,ispec2D)
-          else if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-            absorb_ymax_crust_mantle(1,i,k,ispec2D) = tx*weight
-            absorb_ymax_crust_mantle(2,i,k,ispec2D) = ty*weight
-            absorb_ymax_crust_mantle(3,i,k,ispec2D) = tz*weight
-          endif
-
-        enddo
-      enddo
-    enddo
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) &
-       write(54,rec=it) reclen_ymax_crust_mantle,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle
-
-  endif ! Stacey conditions
-
-  call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ_inner_core,accel_inner_core, &
-          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+  call compute_forces_inner_core(displ_inner_core,accel_inner_core,xstore_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
           hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
-          c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
+          R_memory_inner_core,epsilondev_inner_core,one_minus_sum_beta_inner_core, &
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
 
-  if (SIMULATION_TYPE == 3) then
-  call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          b_displ_inner_core,b_accel_inner_core, &
-          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-          xix_inner_core,xiy_inner_core,xiz_inner_core, &
-          etax_inner_core,etay_inner_core,etaz_inner_core, &
-          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
-          c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
-          b_alphaval,b_betaval,b_gammaval, &
-          factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
-  endif
-
 ! add the sources
-  if (SIMULATION_TYPE == 1) then
   do isource = 1,NSOURCES
 
 ! add only if this proc carries the source
@@ -3913,89 +2178,6 @@
     endif
 
   enddo
-  endif
-
-  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-! figure out if we need to read in a chunk of the adjoint source at this timestep
-        it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )   !chunk_number
-        ibool_read_adj_arrays = (((it == it_begin) .or. (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0)) .and. (nadj_rec_local > 0))
-
-        if(ibool_read_adj_arrays) then
-           irec_local = 0
-           do irec = 1, nrec
-! check that the source slice number is okay
-              if(islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT-1) then
-                 if(islice_selected_rec(irec) < 0) call exit_MPI(myrank,'islice < 0')
-                 if(islice_selected_rec(irec) > NPROCTOT-1) call exit_MPI(myrank,'islice > NPROCTOT-1')
-                 call exit_MPI(myrank,'now: something is wrong with the source slice number in adjoint simulation')
-              endif
-! compute source arrays
-              if(myrank == islice_selected_rec(irec)) then
-                 irec_local = irec_local + 1
-                 adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
-                 call comp_subarrays_adjoint_src(myrank,adj_source_file, &
-                      xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec), &
-                      nu(:,:,irec),adj_sourcearray, xigll,yigll,zigll,iadjsrc_len(it_sub_adj), &
-                      iadjsrc,it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC)
-                 adj_sourcearrays(irec_local,:,:,:,:,:) = adj_sourcearray(:,:,:,:,:)
-              endif
-           enddo
-           if(irec_local /= nadj_rec_local) &
-                call exit_MPI(myrank,'irec_local /= nadj_rec_local in adjoint simulation')
-        endif
-
-    irec_local = 0
-
-    do irec = 1,nrec
-
-!   add the source (only if this proc carries the source)
-      if(myrank == islice_selected_rec(irec)) then
-        irec_local = irec_local + 1
-
-!     add source array
-        do k=1,NGLLZ
-          do j=1,NGLLY
-            do i=1,NGLLX
-              iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
-              accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) + adj_sourcearrays(irec_local,iadj_vec(it),:,i,j,k)
-            enddo
-          enddo
-        enddo
-      endif
-
-    enddo
-
-  endif
-
-  if (SIMULATION_TYPE == 3) then
-  do isource = 1,NSOURCES
-
-!   add the source (only if this proc carries the source)
-    if(myrank == islice_selected_source(isource)) then
-
-      stf = comp_source_time_function(dble(NSTEP-it+1)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
-
-!     distinguish between single and double precision for reals
-      if(CUSTOM_REAL == SIZE_REAL) then
-        stf_used = sngl(stf)
-      else
-        stf_used = stf
-      endif
-
-!     add source array
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
-            iglob = ibool_crust_mantle(i,j,k,ispec_selected_source(isource))
-            b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) + sourcearrays(isource,:,i,j,k)*stf_used
-          enddo
-        enddo
-      enddo
-
-    endif
-
-  enddo
-  endif
 
 ! ****************************************************
 ! **********  add matching with fluid part  **********
@@ -4034,13 +2216,7 @@
           iglob_mantle = ibool_crust_mantle(i,j,k,ispec)
 
 ! compute pressure, taking gravity into account
-          if(GRAVITY_VAL) then
-            pressure = RHO_TOP_OC * (- accel_outer_core(iglob) &
-               + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
-               + displ_crust_mantle(2,iglob_mantle)*ny + displ_crust_mantle(3,iglob_mantle)*nz))
-          else
             pressure = - RHO_TOP_OC * accel_outer_core(iglob)
-          endif
 
 ! formulation with generalized potential
           weight = jacobian2D_top_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
@@ -4048,19 +2224,6 @@
           accel_crust_mantle(1,iglob_mantle) = accel_crust_mantle(1,iglob_mantle) + weight*nx*pressure
           accel_crust_mantle(2,iglob_mantle) = accel_crust_mantle(2,iglob_mantle) + weight*ny*pressure
           accel_crust_mantle(3,iglob_mantle) = accel_crust_mantle(3,iglob_mantle) + weight*nz*pressure
-
-          if (SIMULATION_TYPE == 3) then
-          if(GRAVITY_VAL) then
-            pressure = RHO_TOP_OC * (- b_accel_outer_core(iglob) &
-               + minus_g_cmb *(b_displ_crust_mantle(1,iglob_mantle)*nx &
-               + b_displ_crust_mantle(2,iglob_mantle)*ny + b_displ_crust_mantle(3,iglob_mantle)*nz))
-          else
-            pressure = - RHO_TOP_OC * b_accel_outer_core(iglob)
-          endif
-          b_accel_crust_mantle(1,iglob_mantle) = b_accel_crust_mantle(1,iglob_mantle) + weight*nx*pressure
-          b_accel_crust_mantle(2,iglob_mantle) = b_accel_crust_mantle(2,iglob_mantle) + weight*ny*pressure
-          b_accel_crust_mantle(3,iglob_mantle) = b_accel_crust_mantle(3,iglob_mantle) + weight*nz*pressure
-          endif
 
         enddo
       enddo
@@ -4099,13 +2262,7 @@
           iglob_inner_core = ibool_inner_core(i,j,k,ispec)
 
 ! compute pressure, taking gravity into account
-          if(GRAVITY_VAL) then
-            pressure = RHO_BOTTOM_OC * (- accel_outer_core(iglob) &
-               + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
-               + displ_inner_core(2,iglob_inner_core)*ny + displ_inner_core(3,iglob_inner_core)*nz))
-          else
             pressure = - RHO_BOTTOM_OC * accel_outer_core(iglob)
-          endif
 
 ! formulation with generalized potential
           weight = jacobian2D_bottom_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
@@ -4113,19 +2270,6 @@
           accel_inner_core(1,iglob_inner_core) = accel_inner_core(1,iglob_inner_core) - weight*nx*pressure
           accel_inner_core(2,iglob_inner_core) = accel_inner_core(2,iglob_inner_core) - weight*ny*pressure
           accel_inner_core(3,iglob_inner_core) = accel_inner_core(3,iglob_inner_core) - weight*nz*pressure
-
-          if (SIMULATION_TYPE == 3) then
-          if(GRAVITY_VAL) then
-            pressure = RHO_BOTTOM_OC * (- b_accel_outer_core(iglob) &
-               + minus_g_cmb *(b_displ_inner_core(1,iglob_inner_core)*nx &
-               + b_displ_inner_core(2,iglob_inner_core)*ny + b_displ_inner_core(3,iglob_inner_core)*nz))
-          else
-            pressure = - RHO_BOTTOM_OC * b_accel_outer_core(iglob)
-          endif
-          b_accel_inner_core(1,iglob_inner_core) = b_accel_inner_core(1,iglob_inner_core) - weight*nx*pressure
-          b_accel_inner_core(2,iglob_inner_core) = b_accel_inner_core(2,iglob_inner_core) - weight*ny*pressure
-          b_accel_inner_core(3,iglob_inner_core) = b_accel_inner_core(3,iglob_inner_core) - weight*nz*pressure
-          endif
 
         enddo
       enddo
@@ -4149,7 +2293,7 @@
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_vector,buffer_received_faces_vector, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA, &
@@ -4173,154 +2317,22 @@
   endif   ! end of assembling forces with the central cube
 
   do i=1,NGLOB_CRUST_MANTLE
-    accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
-               + two_omega_earth*veloc_crust_mantle(2,i)
-    accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
-               - two_omega_earth*veloc_crust_mantle(1,i)
+    accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i)
+    accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i)
     accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
   enddo
-
-  if (SIMULATION_TYPE == 3) then
-
-! assemble all the contributions between slices using MPI
-
-! crust/mantle and inner core handled in the same call
-! in order to reduce the number of MPI messages by 2
-  call assemble_MPI_vector(myrank, &
-            b_accel_crust_mantle,NGLOB_CRUST_MANTLE, &
-            b_accel_inner_core,NGLOB_INNER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_vector,buffer_received_faces_vector, &
-            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA, &
-            NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XY,NCHUNKS)
-
-!---
-!---  use buffers to assemble forces with the central cube
-!---
-
-  if(INCLUDE_CENTRAL_CUBE) then
-
-   call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-     npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
-     receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
-     ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,b_accel_inner_core,NDIM)
-
-  endif   ! end of assembling forces with the central cube
-
-  do i=1,NGLOB_CRUST_MANTLE
-    b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
-               + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-    b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
-               - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-    b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-  enddo
-
-  endif
-
-  if(OCEANS) then
-
-!   initialize the updates
-    updated_dof_ocean_load(:) = .false.
-
-! for surface elements exactly at the top of the crust (ocean bottom)
-    do ispec2D = 1,NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-
-      ispec = ibelm_top_crust_mantle(ispec2D)
-
-! only for DOFs exactly at the top of the crust (ocean bottom)
-      k = NGLLZ
-
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-
-! get global point number
-          iglob = ibool_crust_mantle(i,j,k,ispec)
-
-! only update once
-          if(.not. updated_dof_ocean_load(iglob)) then
-
-! get normal
-            nx = normal_top_crust_mantle(1,i,j,ispec2D)
-            ny = normal_top_crust_mantle(2,i,j,ispec2D)
-            nz = normal_top_crust_mantle(3,i,j,ispec2D)
-
-! make updated component of right-hand side
-! we divide by rmass_crust_mantle() which is 1 / M
-! we use the total force which includes the Coriolis term above
-            force_normal_comp = (accel_crust_mantle(1,iglob)*nx + &
-                 accel_crust_mantle(2,iglob)*ny + &
-                 accel_crust_mantle(3,iglob)*nz) / rmass_crust_mantle(iglob)
-
-            additional_term = (rmass_ocean_load(iglob) - rmass_crust_mantle(iglob)) * force_normal_comp
-
-            accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + additional_term * nx
-            accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term * ny
-            accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term * nz
-
-            if (SIMULATION_TYPE == 3) then
-              b_force_normal_comp = (b_accel_crust_mantle(1,iglob)*nx + &
-                 b_accel_crust_mantle(2,iglob)*ny + &
-                 b_accel_crust_mantle(3,iglob)*nz) / rmass_crust_mantle(iglob)
-
-              b_additional_term = (rmass_ocean_load(iglob) - rmass_crust_mantle(iglob)) * b_force_normal_comp
-
-              b_accel_crust_mantle(1,iglob) = b_accel_crust_mantle(1,iglob) + b_additional_term * nx
-              b_accel_crust_mantle(2,iglob) = b_accel_crust_mantle(2,iglob) + b_additional_term * ny
-              b_accel_crust_mantle(3,iglob) = b_accel_crust_mantle(3,iglob) + b_additional_term * nz
-            endif
-
-! done with this point
-            updated_dof_ocean_load(iglob) = .true.
-
-          endif
-
-        enddo
-      enddo
-    enddo
-  endif
 
   do i=1,NGLOB_CRUST_MANTLE
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
   enddo
 
   do i=1,NGLOB_INNER_CORE
-    accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-             + two_omega_earth*veloc_inner_core(2,i)
-    accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-             - two_omega_earth*veloc_inner_core(1,i)
+    accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i)
+    accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i)
     accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
 
     veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
   enddo
-
-  if (SIMULATION_TYPE == 3) then
-    do i=1,NGLOB_CRUST_MANTLE
-      b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-    enddo
-    do i=1,NGLOB_INNER_CORE
-      b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
-         + b_two_omega_earth*b_veloc_inner_core(2,i)
-      b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
-         - b_two_omega_earth*b_veloc_inner_core(1,i)
-      b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
-
-      b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
-    enddo
-  endif
 
 ! write the seismograms with time shift
 
@@ -4337,7 +2349,6 @@
     uyd = ZERO
     uzd = ZERO
 
-    if (SIMULATION_TYPE == 1) then
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
@@ -4364,128 +2375,12 @@
                    nu(:,2,irec)*uyd + nu(:,3,irec)*uzd)
       endif
 
-    else if (SIMULATION_TYPE == 2) then
-
-      eps_trace = ZERO
-      dxx = ZERO
-      dyy = ZERO
-      dxy = ZERO
-      dxz = ZERO
-      dyz = ZERO
-
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-
-            iglob = ibool_crust_mantle(i,j,k,ispec_selected_source(irec))
-
-            hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
-
-            uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
-            uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
-            uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
-
-            eps_trace = eps_trace + dble(eps_trace_over_3_crust_mantle(i,j,k,ispec_selected_source(irec)))*hlagrange
-            dxx = dxx + dble(epsilondev_crust_mantle(1,i,j,k,ispec_selected_source(irec)))*hlagrange
-            dyy = dyy + dble(epsilondev_crust_mantle(2,i,j,k,ispec_selected_source(irec)))*hlagrange
-            dxy = dxy + dble(epsilondev_crust_mantle(3,i,j,k,ispec_selected_source(irec)))*hlagrange
-            dxz = dxz + dble(epsilondev_crust_mantle(4,i,j,k,ispec_selected_source(irec)))*hlagrange
-            dyz = dyz + dble(epsilondev_crust_mantle(5,i,j,k,ispec_selected_source(irec)))*hlagrange
-            
-            displ_s(:,i,j,k) = displ_crust_mantle(:,iglob)
-
-          enddo
-        enddo
-      enddo
-
-      eps_loc(1,1) = eps_trace + dxx
-      eps_loc(2,2) = eps_trace + dyy
-      eps_loc(3,3) = eps_trace - dxx - dyy
-      eps_loc(1,2) = dxy
-      eps_loc(1,3) = dxz
-      eps_loc(2,3) = dyz
-      eps_loc(2,1) = dxy
-      eps_loc(3,1) = dxz
-      eps_loc(3,2) = dyz
-
-      eps_loc_new(:,:) = eps_loc(:,:)
-! rotate to the local cartesian coordinates (e-n-z):  eps_new=P*eps*P'
-      eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
-
-! distinguish between single and double precision for reals
-      if (CUSTOM_REAL == SIZE_REAL) then
-        seismograms(1,irec_local,it-nit_written) = sngl(eps_loc_new(1,1))
-        seismograms(2,irec_local,it-nit_written) = sngl(eps_loc_new(2,2))
-        seismograms(3,irec_local,it-nit_written) = sngl(eps_loc_new(3,3))
-        seismograms(4,irec_local,it-nit_written) = sngl(eps_loc_new(1,2))
-        seismograms(5,irec_local,it-nit_written) = sngl(eps_loc_new(1,3))
-        seismograms(6,irec_local,it-nit_written) = sngl(eps_loc_new(2,3))
-        seismograms(7:9,irec_local,it-nit_written) = sngl(scale_displ*(nu_source(:,1,irec)*uxd + &
-                    nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd))
-     else
-        seismograms(1,irec_local,it-nit_written) = eps_loc_new(1,1)
-        seismograms(2,irec_local,it-nit_written) = eps_loc_new(2,2)
-        seismograms(3,irec_local,it-nit_written) = eps_loc_new(3,3)
-        seismograms(4,irec_local,it-nit_written) = eps_loc_new(1,2)
-        seismograms(5,irec_local,it-nit_written) = eps_loc_new(1,3)
-        seismograms(6,irec_local,it-nit_written) = eps_loc_new(2,3)
-        seismograms(7:9,irec_local,it-nit_written) = scale_displ*(nu_source(:,1,irec)*uxd + &
-                    nu_source(:,2,irec)*uyd + nu_source(:,3,irec)*uzd)
-      endif
-
-! frechet derviatives of the source
-      ispec = ispec_selected_source(irec)
-
-      call compute_adj_source_frechet(displ_s,Mxx(irec),Myy(irec),Mzz(irec),Mxy(irec),Mxz(irec),Myz(irec),eps_s,eps_m_s, &
-                 hxir_store(irec_local,:),hetar_store(irec_local,:),hgammar_store(irec_local,:), &
-                 hpxir_store(irec_local,:),hpetar_store(irec_local,:),hpgammar_store(irec_local,:),hprime_xx,hprime_yy,hprime_zz, &
-                 xix_crust_mantle(:,:,:,ispec),xiy_crust_mantle(:,:,:,ispec),xiz_crust_mantle(:,:,:,ispec), &
-                 etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
-                 gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec))
-      
-      stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-t_cmt(irec),hdur_gaussian(irec))
-      stf_deltat = stf * deltat
-      moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
-      sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_s(:) * stf_deltat
-
-
-    else  if (SIMULATION_TYPE == 3) then
-
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-
-            iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
-
-            hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
-
-            uxd = uxd + dble(b_displ_crust_mantle(1,iglob))*hlagrange
-            uyd = uyd + dble(b_displ_crust_mantle(2,iglob))*hlagrange
-            uzd = uzd + dble(b_displ_crust_mantle(3,iglob))*hlagrange
-
-          enddo
-        enddo
-        enddo
-! store North, East and Vertical components
-
-! distinguish between single and double precision for reals
-        if(CUSTOM_REAL == SIZE_REAL) then
-          seismograms(:,irec_local,seismo_current) = sngl(scale_displ*(nu(:,1,irec)*uxd + &
-             nu(:,2,irec)*uyd + nu(:,3,irec)*uzd))
-        else
-          seismograms(:,irec_local,seismo_current) = scale_displ*(nu(:,1,irec)*uxd + &
-             nu(:,2,irec)*uyd + nu(:,3,irec)*uzd)
-        endif
-
-      endif
-
     enddo
 
   endif ! nrec_local
 
 ! write the current or final seismograms
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
-    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
             yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
@@ -4500,686 +2395,13 @@
         write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
         write(IMAIN,*)
       endif
-    else
-      call write_adj_seismograms(seismograms,number_receiver_global, &
-        nrec_local,it,nit_written,DT,NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
-        nit_written = it
-    endif
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
   endif
 
-! kernel calculations
-  if (SIMULATION_TYPE == 3) then
-
-! crust_mantle
-    do ispec = 1, NSPEC_CRUST_MANTLE
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            iglob = ibool_crust_mantle(i,j,k,ispec)
-
-            rho_kl_crust_mantle(i,j,k,ispec) =  rho_kl_crust_mantle(i,j,k,ispec) &
-               + deltat * (accel_crust_mantle(1,iglob) * b_displ_crust_mantle(1,iglob) &
-               + accel_crust_mantle(2,iglob) * b_displ_crust_mantle(2,iglob) &
-               + accel_crust_mantle(3,iglob) * b_displ_crust_mantle(3,iglob) )
-
-            epsilondev_loc(:) = epsilondev_crust_mantle(:,i,j,k,ispec)
-            b_epsilondev_loc(:) = b_epsilondev_crust_mantle(:,i,j,k,ispec)
-
-! For anisotropic kernels
-            if (ANISOTROPIC_KL) then
-
-              call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_loc, &
-                   b_eps_trace_over_3_crust_mantle(i,j,k,ispec),b_epsilondev_loc)
-              cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_crust_mantle(:,i,j,k,ispec) + deltat * prod(:)
-
-            else
-
-              beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
-                 + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
-                 + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-                 + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
-                  epsilondev_loc(5)*b_epsilondev_loc(5)) )
-
-              alpha_kl_crust_mantle(i,j,k,ispec) = alpha_kl_crust_mantle(i,j,k,ispec) &
-                 + deltat * (9 * eps_trace_over_3_crust_mantle(i,j,k,ispec) * b_eps_trace_over_3_crust_mantle(i,j,k,ispec))
-
-            endif
-
-          enddo
-        enddo
-      enddo
-    enddo
-
-! outer_core -- compute the actual displacement and acceleration (NDIM,NGLOBMAX_OUTER_CORE)
-    do ispec = 1, NSPEC_OUTER_CORE
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            iglob = ibool_outer_core(i,j,k,ispec)
-
-            xixl = xix_outer_core(i,j,k,ispec)
-            xiyl = xiy_outer_core(i,j,k,ispec)
-            xizl = xiz_outer_core(i,j,k,ispec)
-            etaxl = etax_outer_core(i,j,k,ispec)
-            etayl = etay_outer_core(i,j,k,ispec)
-            etazl = etaz_outer_core(i,j,k,ispec)
-            gammaxl = gammax_outer_core(i,j,k,ispec)
-            gammayl = gammay_outer_core(i,j,k,ispec)
-            gammazl = gammaz_outer_core(i,j,k,ispec)
-
-            tempx1l = 0._CUSTOM_REAL
-            tempx2l = 0._CUSTOM_REAL
-            tempx3l = 0._CUSTOM_REAL
-
-            do l=1,NGLLX
-              tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-            enddo
-
-            do l=1,NGLLY
-              tempx2l = tempx2l + b_displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-            enddo
-
-            do l=1,NGLLZ
-              tempx3l = tempx3l +  b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-            enddo
-
-            b_vector_displ_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-            b_vector_displ_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-            b_vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
-
-            tempx1l = 0._CUSTOM_REAL
-            tempx2l = 0._CUSTOM_REAL
-            tempx3l = 0._CUSTOM_REAL
-
-            do l=1,NGLLX
-              tempx1l = tempx1l + accel_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-            enddo
-
-            do l=1,NGLLY
-              tempx2l = tempx2l + accel_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-            enddo
-
-            do l=1,NGLLZ
-              tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-            enddo
-
-            vector_accel_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-            vector_accel_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-            vector_accel_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
-
-            tempx1l = 0._CUSTOM_REAL
-            tempx2l = 0._CUSTOM_REAL
-            tempx3l = 0._CUSTOM_REAL
-
-            do l=1,NGLLX
-              tempx1l = tempx1l + displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
-            enddo
-
-            do l=1,NGLLY
-              tempx2l = tempx2l + displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
-            enddo
-
-            do l=1,NGLLZ
-              tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
-            enddo
-
-            vector_displ_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-            vector_displ_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-            vector_displ_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
-
-            rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-               + deltat * dot_product(vector_accel_outer_core(:,iglob), b_vector_displ_outer_core(:,iglob))
-
-            kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
-            div_displ_outer_core(i,j,k,ispec) =  kappal * accel_outer_core(iglob)
-            b_div_displ_outer_core(i,j,k,ispec) =  kappal * b_accel_outer_core(iglob)
-
-            alpha_kl_outer_core(i,j,k,ispec) = alpha_kl_outer_core(i,j,k,ispec) &
-               + deltat * div_displ_outer_core(i,j,k,ispec) * b_div_displ_outer_core(i,j,k,ispec)
-
-          enddo
-        enddo
-      enddo
-    enddo
-
-! inner_core
-    do ispec = 1, NSPEC_INNER_CORE
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            iglob = ibool_inner_core(i,j,k,ispec)
-
-            rho_kl_inner_core(i,j,k,ispec) =  rho_kl_inner_core(i,j,k,ispec) &
-               + deltat * (accel_inner_core(1,iglob) * b_displ_inner_core(1,iglob) &
-               + accel_inner_core(2,iglob) * b_displ_inner_core(2,iglob) &
-               + accel_inner_core(3,iglob) * b_displ_inner_core(3,iglob) )
-
-            epsilondev_loc(:) = epsilondev_inner_core(:,i,j,k,ispec)
-            b_epsilondev_loc(:) = b_epsilondev_inner_core(:,i,j,k,ispec)
-            beta_kl_inner_core(i,j,k,ispec) =  beta_kl_inner_core(i,j,k,ispec) &
-               + deltat * (epsilondev_loc(1)*b_epsilondev_loc(1) + epsilondev_loc(2)*b_epsilondev_loc(2) &
-                  + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
-                  + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) &
-                  + epsilondev_loc(5)*b_epsilondev_loc(5)) )
-
-            alpha_kl_inner_core(i,j,k,ispec) = alpha_kl_inner_core(i,j,k,ispec) &
-               + deltat * (9 * eps_trace_over_3_inner_core(i,j,k,ispec) * b_eps_trace_over_3_inner_core(i,j,k,ispec))
-          enddo
-        enddo
-      enddo
-    enddo
-
-
-! --- boundary kernels ------
-    if (SAVE_BOUNDARY_MESH) then
-      fluid_solid_boundary = .false.
-      iregion_code = IREGION_CRUST_MANTLE
-
-! Moho
-      if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
-      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
-                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                 k_top,ibelm_moho_top,normal_moho,moho_kl_top,fluid_solid_boundary,NSPEC2D_MOHO)
-
-      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
-                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                 k_bot,ibelm_moho_bot,normal_moho,moho_kl_bot,fluid_solid_boundary,NSPEC2D_MOHO)
-
-      moho_kl = moho_kl + (moho_kl_top - moho_kl_bot) * deltat
-      endif
-
-! 400
-      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
-                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                 k_top,ibelm_400_top,normal_400,d400_kl_top,fluid_solid_boundary,NSPEC2D_400)
-
-      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
-                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                 k_bot,ibelm_400_bot,normal_400,d400_kl_bot,fluid_solid_boundary,NSPEC2D_400)
-
-      d400_kl = d400_kl + (d400_kl_top - d400_kl_bot) * deltat
-
-! 670
-      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
-                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                 k_top,ibelm_670_top,normal_670,d670_kl_top,fluid_solid_boundary,NSPEC2D_670)
-
-      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
-                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                 k_bot,ibelm_670_bot,normal_670,d670_kl_bot,fluid_solid_boundary,NSPEC2D_670)
-
-      d670_kl = d670_kl + (d670_kl_top - d670_kl_bot) * deltat
-
-! CMB
-      fluid_solid_boundary = .true.
-      iregion_code = IREGION_CRUST_MANTLE
-      call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
-                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
-                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_crust_mantle,kappavstore_crust_mantle, muvstore_crust_mantle, &
-                 kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-                 c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
-                 c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
-                 c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
-                 c33store_crust_mantle,c34store_crust_mantle,c35store_crust_mantle, &
-                 c36store_crust_mantle,c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                 c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                 k_top,ibelm_bottom_crust_mantle,normal_top_outer_core,cmb_kl_top,fluid_solid_boundary,NSPEC2D_CMB)
-
-      iregion_code = IREGION_OUTER_CORE
-      call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core,nspec_outer_core, &
-                 iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,idoubling_outer_core, &
-                 xix_outer_core,xiy_outer_core,xiz_outer_core,etax_outer_core,etay_outer_core,etaz_outer_core,&
-                 gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 k_bot,ibelm_top_outer_core,normal_top_outer_core,cmb_kl_bot,fluid_solid_boundary,NSPEC2D_CMB)
-
-      cmb_kl = cmb_kl + (cmb_kl_top - cmb_kl_bot) * deltat
-
-! ICB
-      fluid_solid_boundary = .true.
-      call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core,nspec_outer_core, &
-                 iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,idoubling_outer_core, &
-                 xix_outer_core,xiy_outer_core,xiz_outer_core,etax_outer_core,etay_outer_core,etaz_outer_core,&
-                 gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 k_top,ibelm_bottom_outer_core,normal_bottom_outer_core,icb_kl_top,fluid_solid_boundary,NSPEC2D_ICB)
-
-      iregion_code = IREGION_INNER_CORE
-      call compute_boundary_kernel(displ_inner_core,accel_inner_core,b_displ_inner_core,nspec_inner_core,iregion_code, &
-                 ystore_inner_core,zstore_inner_core,ibool_inner_core,idoubling_inner_core, &
-                 xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core,etaz_inner_core,&
-                 gammax_inner_core,gammay_inner_core,gammaz_inner_core,hprime_xx,hprime_yy,hprime_zz, &
-                 rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-                 dummy_array,dummy_array,dummy_array, &
-                 c11store_inner_core,c12store_inner_core,c13store_inner_core,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array,dummy_array, &
-                 c33store_inner_core,dummy_array,dummy_array, &
-                 dummy_array,c44store_inner_core,dummy_array,dummy_array, &
-                 dummy_array,dummy_array,dummy_array, &
-                 k_bot,ibelm_top_inner_core,normal_bottom_outer_core,icb_kl_bot,fluid_solid_boundary,NSPEC2D_ICB)
-
-      icb_kl = icb_kl + (icb_kl_top - icb_kl_bot) * deltat
-
-    endif
-
-  endif ! end computing kernels
-
-
-! save movie on surface
-  if(MOVIE_SURFACE .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
-
-! save velocity here to avoid static offset on displacement for movies
-
-! get coordinates of surface mesh and surface displacement
-    ipoin = 0
-    do ispec2D = 1,NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-      ispec = ibelm_top_crust_mantle(ispec2D)
-      k = NGLLZ
-
-! loop on all the points inside the element
-      do j = 1,NGLLY,NIT
-        do i = 1,NGLLX,NIT
-          ipoin = ipoin + 1
-          iglob = ibool_crust_mantle(i,j,k,ispec)
-          store_val_x(ipoin) = xstore_crust_mantle(iglob)
-          store_val_y(ipoin) = ystore_crust_mantle(iglob)
-          store_val_z(ipoin) = zstore_crust_mantle(iglob)
-          store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
-          store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
-          store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
-        enddo
-      enddo
-
-    enddo
-
-! gather info on master proc
-    ispec = nmovie_points
-    call MPI_GATHER(store_val_x,ispec,CUSTOM_MPI_TYPE,store_val_x_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(store_val_y,ispec,CUSTOM_MPI_TYPE,store_val_y_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(store_val_z,ispec,CUSTOM_MPI_TYPE,store_val_z_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(store_val_ux,ispec,CUSTOM_MPI_TYPE,store_val_ux_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(store_val_uy,ispec,CUSTOM_MPI_TYPE,store_val_uy_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-    call MPI_GATHER(store_val_uz,ispec,CUSTOM_MPI_TYPE,store_val_uz_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
-
-! save movie data to disk in home directory
-    if(myrank == 0) then
-      write(outputname,"('/moviedata',i6.6)") it
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted')
-      write(IOUT) store_val_x_all
-      write(IOUT) store_val_y_all
-      write(IOUT) store_val_z_all
-      write(IOUT) store_val_ux_all
-      write(IOUT) store_val_uy_all
-      write(IOUT) store_val_uz_all
-      close(IOUT)
-    endif
-
-  endif
-
-! save movie in full 3D mesh
-  if(MOVIE_VOLUME .and. mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0 .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
-
-   if (MOVIE_VOLUME_TYPE == 1) then  ! output strains
-
-       call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                    it,eps_trace_over_3_crust_mantle,epsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
-                    mask_3dmovie,nu_3dmovie)
-
-   else if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then ! output the Time Integral of Strain, or \mu*TIS
-
-       call  write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                    it,Ieps_trace_over_3_crust_mantle,Iepsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
-                    mask_3dmovie,nu_3dmovie)
-
-   else if (MOVIE_VOLUME_TYPE == 4) then ! output divergence and curl in whole volume
-
-       call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
-          div_displ_outer_core,eps_trace_over_3_inner_core,epsilondev_crust_mantle,&
-          epsilondev_inner_core)
-
-   else if (MOVIE_VOLUME_TYPE == 5) then !output displacement
-            scalingval = scale_displ
-       call write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
-                MOVIE_COARSE,displ_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
-
-   else if (MOVIE_VOLUME_TYPE == 6) then !output velocity
-            scalingval = scale_veloc
-       call write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
-                MOVIE_COARSE,veloc_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
-
-   else
-
-      stop 'MOVIE_VOLUME_TYPE has to be 1,2,3,4'
-
-   endif ! MOVIE_VOLUME_TYPE
-  endif ! MOVIE_VOLUME
-
 !---- end of time iteration loop
 !
   enddo   ! end of main time loop
-
-! save files to local disk or tape system if restart file
-  if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
-    write(outputname,"('dump_all_arrays',i6.6)") myrank
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-    write(55) displ_crust_mantle
-    write(55) veloc_crust_mantle
-    write(55) accel_crust_mantle
-    write(55) displ_inner_core
-    write(55) veloc_inner_core
-    write(55) accel_inner_core
-    write(55) displ_outer_core
-    write(55) veloc_outer_core
-    write(55) accel_outer_core
-    write(55) R_memory_crust_mantle
-    write(55) R_memory_inner_core
-    write(55) epsilondev_crust_mantle
-    write(55) epsilondev_inner_core
-    write(55) A_array_rotation
-    write(55) B_array_rotation
-    close(55)
-  endif
-
-! save last frame of the forward simulation
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
-    write(55) displ_crust_mantle
-    write(55) veloc_crust_mantle
-    write(55) accel_crust_mantle
-    write(55) displ_inner_core
-    write(55) veloc_inner_core
-    write(55) accel_inner_core
-    write(55) displ_outer_core
-    write(55) veloc_outer_core
-    write(55) accel_outer_core
-    if (ATTENUATION_VAL) then
-      write(55) R_memory_crust_mantle
-      write(55) R_memory_inner_core
-    endif
-    write(55) epsilondev_crust_mantle
-    write(55) epsilondev_inner_core
-    if (ROTATION_VAL) then
-      write(55) A_array_rotation
-      write(55) B_array_rotation
-    endif
-    close(55)
-  endif
-
-! dump kernel arrays
-  if (SIMULATION_TYPE == 3) then
-    scale_kl = scale_t/scale_displ * 1.d9
-! For anisotropic kernels
-! final unit : [s km^(-3) GPa^(-1)]
-    scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
-! final unit : [s km^(-3) (kg/m^3)^(-1)]
-    scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9
-
-! crust_mantle
-    do ispec = 1, NSPEC_CRUST_MANTLE
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-
-! For anisotropic kernels
-            iglob = ibool_crust_mantle(i,j,k,ispec)
-
-            if (ANISOTROPIC_KL) then
-
-! The cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
-! ystore and zstore are thetaval and phival (line 2252) -- dangerous
-              call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local, &
-                   ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
-              cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_local * scale_kl_ani
-              rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
-
-            else
-
-              rhol = rhostore_crust_mantle(i,j,k,ispec)
-              mul = muvstore_crust_mantle(i,j,k,ispec)
-              kappal = kappavstore_crust_mantle(i,j,k,ispec)
-              rho_kl = - rhol * rho_kl_crust_mantle(i,j,k,ispec)
-              alpha_kl = - kappal * alpha_kl_crust_mantle(i,j,k,ispec)
-              beta_kl =  - 2 * mul * beta_kl_crust_mantle(i,j,k,ispec)
-              rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
-              beta_kl_crust_mantle(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
-              alpha_kl_crust_mantle(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
-
-            endif
-
-          enddo
-        enddo
-      enddo
-    enddo
-
-    call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-
-! For anisotropic kernels
-    if (ANISOTROPIC_KL) then
-
-      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
-      write(27) -rho_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'cijkl_kernel.bin',status='unknown',form='unformatted')
-      write(27) -cijkl_kl_crust_mantle
-      close(27)
-
-    else
-
-      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
-      write(27) rho_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted')
-      write(27) alpha_kl_crust_mantle
-      close(27)
-      open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted')
-      write(27) beta_kl_crust_mantle
-      close(27)
-
-    endif
-
-! outer_core
-    do ispec = 1, NSPEC_OUTER_CORE
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            rhol = rhostore_outer_core(i,j,k,ispec)
-            kappal = kappavstore_outer_core(i,j,k,ispec)
-            rho_kl = - rhol * rho_kl_outer_core(i,j,k,ispec)
-            alpha_kl = - kappal * alpha_kl_outer_core(i,j,k,ispec)
-            rho_kl_outer_core(i,j,k,ispec) = (rho_kl + alpha_kl) * scale_kl
-            alpha_kl_outer_core(i,j,k,ispec) = 2 * alpha_kl * scale_kl
-          enddo
-        enddo
-      enddo
-    enddo
-
-    call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
-    write(27) rho_kl_outer_core
-    close(27)
-    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted')
-    write(27) alpha_kl_outer_core
-    close(27)
-
-! inner_core
-   do ispec = 1, NSPEC_INNER_CORE
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            rhol = rhostore_inner_core(i,j,k,ispec)
-            mul = muvstore_inner_core(i,j,k,ispec)
-            kappal = kappavstore_inner_core(i,j,k,ispec)
-            rho_kl = -rhol * rho_kl_inner_core(i,j,k,ispec)
-            alpha_kl = -kappal * alpha_kl_inner_core(i,j,k,ispec)
-            beta_kl =  - 2 * mul * beta_kl_inner_core(i,j,k,ispec)
-            rho_kl_inner_core(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
-            beta_kl_inner_core(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
-            alpha_kl_inner_core(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
-          enddo
-        enddo
-      enddo
-    enddo
-
-    call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
-    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
-    write(27) rho_kl_inner_core
-    close(27)
-    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted')
-    write(27) alpha_kl_inner_core
-    close(27)
-    open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted')
-    write(27) beta_kl_inner_core
-    close(27)
-
-! boundary kernel
-    if (SAVE_BOUNDARY_MESH) then
-! scale the boundary kernels properly: *scale_kl gives s/km^3 and 1.d3 gives
-! the relative boundary kernels (for every 1 km) in s/km^2
-      moho_kl = moho_kl * scale_kl * 1.d3
-      d400_kl = d400_kl * scale_kl * 1.d3
-      d670_kl = d670_kl * scale_kl * 1.d3
-      cmb_kl = cmb_kl * scale_kl * 1.d3
-      icb_kl = icb_kl * scale_kl * 1.d3
-
-      call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-      if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
-      open(unit=27,file=trim(prname)//'moho_kernel.bin',status='unknown',form='unformatted')
-      write(27) moho_kl
-      close(27)
-      endif
-      open(unit=27,file=trim(prname)//'d400_kernel.bin',status='unknown',form='unformatted')
-      write(27) d400_kl
-      close(27)
-      open(unit=27,file=trim(prname)//'d670_kernel.bin',status='unknown',form='unformatted')
-      write(27) d670_kl
-      close(27)
-      open(unit=27,file=trim(prname)//'CMB_kernel.bin',status='unknown',form='unformatted')
-      write(27) cmb_kl
-      close(27)
-      call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-      open(unit=27,file=trim(prname)//'ICB_kernel.bin',status='unknown',form='unformatted')
-      write(27) icb_kl
-      close(27)
-    endif
-
-  endif
-
-! save source derivatives for adjoint simulations
-  if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
-    scale_mass = RHOAV * (R_EARTH**3) 
-
-    do irec_local = 1, nrec_local
-! rotate and scale the location derivatives to correspond to dn,de,dz
-      sloc_der(:,irec_local) = matmul(nu_source(:,:,irec),sloc_der(:,irec_local)) * scale_displ * scale_t
-! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
-      moment_der(:,:,irec_local) = matmul(matmul(nu_source(:,:,irec),moment_der(:,:,irec_local)),&
-                 transpose(nu_source(:,:,irec))) * scale_t ** 3 / scale_mass
-      
-      write(outputname,'(a,i5.5)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
-      open(unit=27,file=trim(outputname),status='unknown')
-!
-! r -> z, theta -> -n, phi -> e, plus factor 2 for Mrt,Mrp,Mtp, and 1e-7 to dyne.cm
-!  Mrr =  Mzz
-!  Mtt =  Mnn
-!  Mpp =  Mee
-!  Mrt = -Mzn
-!  Mrp =  Mze
-!  Mtp = -Mne
-! minus sign for sloc_der(3,irec_local) to get derivative for depth instead of radius
-
-      write(27,'(g16.5)') moment_der(3,3,irec_local) * 1e-7
-      write(27,'(g16.5)') moment_der(1,1,irec_local) * 1e-7
-      write(27,'(g16.5)') moment_der(2,2,irec_local) * 1e-7
-      write(27,'(g16.5)') -2*moment_der(1,3,irec_local) * 1e-7
-      write(27,'(g16.5)') 2*moment_der(2,3,irec_local) * 1e-7
-      write(27,'(g16.5)') -2*moment_der(1,2,irec_local) * 1e-7
-      write(27,'(g16.5)') sloc_der(2,irec_local)
-      write(27,'(g16.5)') sloc_der(1,irec_local)
-      write(27,'(g16.5)') -sloc_der(3,irec_local)
-      close(27)
-    enddo
-  endif
-
 
 ! if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
@@ -5205,7 +2427,8 @@
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 ! stop all the MPI processes, and exit
-  call MPI_FINALIZE(ier)
+!! DK DK suppressed this for the merged version
+! call MPI_FINALIZE(ier)
 
-  end program xspecfem3D
+  end subroutine specfem3D
 

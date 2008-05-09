@@ -26,7 +26,9 @@
 !=====================================================================
 
   subroutine get_model(myrank,iregion_code,nspec, &
-    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rhostore, &
+    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rhostore_local, &
+!! DK DK added this for the merged version
+    kappavstore_local, &
     nspec_ani, &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
@@ -47,6 +49,10 @@
   implicit none
 
   include "constants.h"
+
+!! DK DK for the merged version
+! include values created by the mesher
+  include "OUTPUT_FILES/values_from_mesher.h"
 
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
@@ -307,9 +313,13 @@
   real(kind=CUSTOM_REAL) muhstore(NGLLX,NGLLY,NGLLZ,nspec)
   real(kind=CUSTOM_REAL) eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec)
 
-  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey),rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
+!! DK DK added this for the merged version
+  real(kind=CUSTOM_REAL) kappavstore_local(NGLLX,NGLLY,NGLLZ)
 
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
+!! DK DK changed this for merged version
+  real(kind=CUSTOM_REAL) rhostore_local(NGLLX,NGLLY,NGLLZ)
+
+  real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey),rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
 
   integer nspec_ani
 
@@ -847,12 +857,21 @@
 ! distinguish between single and double precision for reals
        if(CUSTOM_REAL == SIZE_REAL) then
 
-         rhostore(i,j,k,ispec) = sngl(rho)
-         kappavstore(i,j,k,ispec) = sngl(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0))
-         kappahstore(i,j,k,ispec) = sngl(rho*(vph*vph - 4.d0*vsh*vsh/3.d0))
-         muvstore(i,j,k,ispec) = sngl(rho*vsv*vsv)
-         muhstore(i,j,k,ispec) = sngl(rho*vsh*vsh)
-         eta_anisostore(i,j,k,ispec) = sngl(eta_aniso)
+!! DK DK changed this for merged version
+         rhostore_local(i,j,k) = sngl(rho)
+
+!! DK DK added this for merged version
+         if(iregion_code /= IREGION_OUTER_CORE) then
+           kappavstore(i,j,k,ispec) = sngl(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0))
+           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) &
+             kappahstore(i,j,k,ispec) = sngl(rho*(vph*vph - 4.d0*vsh*vsh/3.d0))
+           muvstore(i,j,k,ispec) = sngl(rho*vsv*vsv)
+           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) muhstore(i,j,k,ispec) = sngl(rho*vsh*vsh)
+           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) eta_anisostore(i,j,k,ispec) = sngl(eta_aniso)
+         else
+!! DK DK added this for merged version
+           kappavstore_local(i,j,k) = sngl(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0))
+         endif
 
          if(ABSORBING_CONDITIONS) then
 
@@ -904,13 +923,21 @@
 
        else
 
+!! DK DK changed this for merged version
+         rhostore_local(i,j,k) = rho
 
-         rhostore(i,j,k,ispec) = rho
-         kappavstore(i,j,k,ispec) = rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0)
-         kappahstore(i,j,k,ispec) = rho*(vph*vph - 4.d0*vsh*vsh/3.d0)
-         muvstore(i,j,k,ispec) = rho*vsv*vsv
-         muhstore(i,j,k,ispec) = rho*vsh*vsh
-         eta_anisostore(i,j,k,ispec) = eta_aniso
+!! DK DK added this for merged version
+         if(iregion_code /= IREGION_OUTER_CORE) then
+           kappavstore(i,j,k,ispec) = rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0)
+           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) &
+             kappahstore(i,j,k,ispec) = rho*(vph*vph - 4.d0*vsh*vsh/3.d0)
+           muvstore(i,j,k,ispec) = rho*vsv*vsv
+           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) muhstore(i,j,k,ispec) = rho*vsh*vsh
+           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) eta_anisostore(i,j,k,ispec) = eta_aniso
+         else
+!! DK DK added this for merged version
+           kappavstore_local(i,j,k) = rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0)
+         endif
 
          if(ABSORBING_CONDITIONS) then
            if(iregion_code == IREGION_OUTER_CORE) then

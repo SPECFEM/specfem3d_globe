@@ -25,9 +25,9 @@
 !
 !=====================================================================
 
-  subroutine get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
-                        xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC2D_ETA_FACE,iregion,NGLOB2DMAX_XY)
+  subroutine get_MPI_cutplanes_xi(myrank,nspec,iMPIcut_xi,ibool, &
+               xstore,ystore,zstore,mask_ibool,npointot, &
+               NSPEC2D_ETA_FACE,iregion,NGLOB2DMAX_XY,nglob_ori,iboolleft_xi,iboolright_xi,NGLOB2DMAX_XMIN_XMAX,npoin2D_xi)
 
 ! this routine detects cut planes along xi
 ! In principle the left cut plane of the first slice
@@ -38,7 +38,10 @@
 
   include "constants.h"
 
-  integer nspec,myrank,nglob,ipoin2D,iregion
+  integer :: NGLOB2DMAX_XMIN_XMAX
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
+
+  integer nspec,myrank,nglob_ori,nglob,ipoin2D,iregion
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_ETA_FACE
 
   logical iMPIcut_xi(2,nspec)
@@ -60,8 +63,7 @@
   integer ispecc1,ispecc2,npoin2D_xi,ix,iy,iz
   integer nspec2Dtheor
 
-! processor identification
-  character(len=150) prname,errmsg
+  character(len=150) errmsg
 
 ! arrays for sorting routine
   integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
@@ -99,7 +101,7 @@
 !
 
 ! global point number and coordinates left MPI cut-plane
-  open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt',status='unknown')
+!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -121,14 +123,18 @@
             if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
                 mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
                 npoin2D_xi = npoin2D_xi + 1
+!! DK DK added this for merged
+                if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX) stop 'DK DK error points merged'
                 if (PERFORM_CUTHILL_MCKEE) then
                   ibool_selected(npoin2D_xi) = ibool(ix,iy,iz,ispec)
                   xstore_selected(npoin2D_xi) = xstore(ix,iy,iz,ispec)
                   ystore_selected(npoin2D_xi) = ystore(ix,iy,iz,ispec)
                   zstore_selected(npoin2D_xi) = zstore(ix,iy,iz,ispec)
                 else
-                  write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK suppressed merged                  write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+!! DK DK suppressed merged                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK added this for merged
+                  iboolleft_xi(npoin2D_xi) = ibool(ix,iy,iz,ispec)
                 endif
             endif
           enddo
@@ -136,23 +142,31 @@
     endif
   enddo
 
+  nglob=nglob_ori
   if (PERFORM_CUTHILL_MCKEE) then
     call sort_array_coordinates(npoin2D_xi,xstore_selected,ystore_selected,zstore_selected, &
             ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-  
+
+!! DK DK added this for merged
+    if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX) stop 'DK DK error points merged'
+
     do ipoin2D=1,npoin2D_xi
-        write(10,*) ibool_selected(ipoin2D), xstore_selected(ipoin2D), &
-                    ystore_selected(ipoin2D),zstore_selected(ipoin2D)
+!! DK DK suppressed merged      write(10,*) ibool_selected(ipoin2D), xstore_selected(ipoin2D), &
+!! DK DK suppressed merged                  ystore_selected(ipoin2D),zstore_selected(ipoin2D)
+!! DK DK added this for merged
+!! DK DK merged   ces deux tableaux sont les memes donc on pourrait n'en declarer qu'un seul
+!! DK DK merged   mais en fait non car on le reutilise ci-dessous pour ibool_right
+      iboolleft_xi(ipoin2D) = ibool_selected(ipoin2D)
     enddo
   endif
 
 ! put flag to indicate end of the list of points
-  write(10,*) '0 0  0.  0.  0.'
+!! DK DK suppressed merged  write(10,*) '0 0  0.  0.  0.'
 
 ! write total number of points
-  write(10,*) npoin2D_xi
+!! DK DK suppressed merged  write(10,*) npoin2D_xi
 
-  close(10)
+!! DK DK suppressed merged  close(10)
 
 ! compare number of surface elements detected to analytical value
   if(ispecc1 /= nspec2Dtheor) then
@@ -165,7 +179,7 @@
       nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
 
 ! global point number and coordinates right MPI cut-plane
-  open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='unknown')
+!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -187,14 +201,17 @@
           if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
               mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
               npoin2D_xi = npoin2D_xi + 1
+!! DK DK added this for merged
+              if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX) stop 'DK DK error points merged'
               if (PERFORM_CUTHILL_MCKEE) then
                 ibool_selected(npoin2D_xi) = ibool(ix,iy,iz,ispec)
                 xstore_selected(npoin2D_xi) = xstore(ix,iy,iz,ispec)
                 ystore_selected(npoin2D_xi) = ystore(ix,iy,iz,ispec)
                 zstore_selected(npoin2D_xi) = zstore(ix,iy,iz,ispec)
               else
-                write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                      ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK suppressed merged                write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+!! DK DK suppressed merged                      ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+                iboolright_xi(npoin2D_xi) = ibool(ix,iy,iz,ispec)
               endif
           endif
         enddo
@@ -202,24 +219,28 @@
     endif
   enddo
 
+  nglob=nglob_ori
   if (PERFORM_CUTHILL_MCKEE) then
     call sort_array_coordinates(npoin2D_xi,xstore_selected,ystore_selected,zstore_selected, &
             ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-  
+
+!! DK DK added this for merged
+    if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX) stop 'DK DK error points merged'
+
     do ipoin2D=1,npoin2D_xi
-        write(10,*) ibool_selected(ipoin2D), xstore_selected(ipoin2D), &
-                    ystore_selected(ipoin2D),zstore_selected(ipoin2D)
+!! DK DK suppressed merged      write(10,*) ibool_selected(ipoin2D), xstore_selected(ipoin2D), &
+!! DK DK suppressed merged                  ystore_selected(ipoin2D),zstore_selected(ipoin2D)
+      iboolright_xi(ipoin2D) = ibool_selected(ipoin2D)
     enddo
   endif
 
-
 ! put flag to indicate end of the list of points
-  write(10,*) '0 0  0.  0.  0.'
+!! DK DK suppressed merged  write(10,*) '0 0  0.  0.  0.'
 
 ! write total number of points
-  write(10,*) npoin2D_xi
+!! DK DK suppressed merged  write(10,*) npoin2D_xi
 
-  close(10)
+!! DK DK suppressed merged  close(10)
 
 ! compare number of surface elements detected to analytical value
   if(ispecc2 /= nspec2Dtheor) then

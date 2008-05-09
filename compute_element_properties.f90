@@ -33,7 +33,9 @@
            myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore_local,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+!! DK DK added this for the merged version
+           kappavstore_local, &
            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
@@ -43,7 +45,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
   implicit none
 
@@ -293,7 +295,7 @@
   logical ELLIPTICITY,TOPOGRAPHY
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
 
-  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS
+  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS
 
   double precision RICB,RCMB,R670,RMOHO, &
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
@@ -326,7 +328,11 @@
 
 ! for model density and anisotropy
   integer nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
+!! DK DK added this for the merged version
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: kappavstore_local
+!! DK DK changed this for merged version
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: rhostore_local
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
@@ -334,9 +340,12 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
-! arrays with mesh parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xixstore,xiystore,xizstore, &
-    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
+!! DK DK added this for merged version
+  integer :: value_idoubling_to_send
+
+!! DK DK changed this for merged version: made it local
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: xixstore,xiystore,xizstore, &
+        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
 ! proc numbers for MPI
   integer myrank
@@ -387,17 +396,29 @@
 ! **************
 ! add topography on the Moho *before* adding the 3D crustal model so that the streched
 ! mesh gets assigned the right model values
-  if(THREE_D_MODEL/=0 .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
-     .or. idoubling(ispec)==IFLAG_80_MOHO)) call moho_stretching(myrank,xelm,yelm,zelm,RMOHO,R220)
+!! DK DK added this for merged version because array idoubling is not allocated in outer core
+  if(iregion_code /= IREGION_OUTER_CORE) then
+    if(THREE_D_MODEL/=0 .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
+       .or. idoubling(ispec)==IFLAG_80_MOHO)) call moho_stretching(myrank,xelm,yelm,zelm,RMOHO,R220)
+  endif
 
 ! compute values for the Earth model
+!! DK DK added this for merged version because array idoubling is not allocated in outer core
+  if(iregion_code /= IREGION_OUTER_CORE) then
+    value_idoubling_to_send = idoubling(ispec)
+  else
+    value_idoubling_to_send = IFLAG_OUTER_CORE_NORMAL
+  endif
   call get_model(myrank,iregion_code,nspec, &
-          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rhostore,nspec_ani, &
+          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rhostore_local, &
+!! DK DK added this for the merged version
+          kappavstore_local, &
+          nspec_ani, &
           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           xelm,yelm,zelm,shape3D,ispec, &
-          rmin,rmax,idoubling(ispec),rho_vp,rho_vs,nspec_stacey, &
+          rmin,rmax,value_idoubling_to_send,rho_vp,rho_vs,nspec_stacey, &
           TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
           ATTENUATION, ATTENUATION_3D, tau_s, tau_e_store, Qmu_store, T_c_source, &
@@ -411,8 +432,11 @@
           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
 
 ! add topography without the crustal model
-  if(TOPOGRAPHY .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
-     .or. idoubling(ispec)==IFLAG_80_MOHO)) call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
+!! DK DK added this for merged version because array idoubling is not allocated in outer core
+  if(iregion_code /= IREGION_OUTER_CORE) then
+    if(TOPOGRAPHY .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
+       .or. idoubling(ispec)==IFLAG_80_MOHO)) call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
+  endif
 
 ! add topography on 410 km and 650 km discontinuity in model S362ANI
   if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
@@ -424,11 +448,13 @@
                                       coe,ylmcof,wk1,wk2,wk3,varstr)
 
 ! CMB topography
+!! DK DK merged version: this will not work anymore because idoubling not allocated in outer core
 !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
 !     .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
 !           call add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
 
 ! ICB topography
+!! DK DK merged version: this will not work anymore because idoubling not allocated in outer core
 !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
 !     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
 !     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
@@ -441,6 +467,7 @@
 ! recompute coordinates and jacobian for real 3-D model
   call calc_jacobian(myrank,xixstore,xiystore,xizstore, &
           etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-          xstore,ystore,zstore,xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
+          xstore,ystore,zstore,xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec)
 
   end subroutine compute_element_properties
+

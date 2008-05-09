@@ -304,8 +304,6 @@
       y_target(irec) = r0*sin(theta)*sin(phi)
       z_target(irec) = r0*cos(theta)
 
-      if (myrank == 0) write(IOVTK,*) x_target(irec), y_target(irec), z_target(irec)
-
 ! examine top of the elements only (receivers always at the surface)
 !      k = NGLLZ
 

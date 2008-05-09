@@ -40,7 +40,7 @@
          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-         MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -83,7 +83,7 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
@@ -1010,8 +1010,6 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(MOVIE_VOLUME, 'solver.MOVIE_VOLUME')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_logical(MOVIE_COARSE,'solver.MOVIE_COARSE')
-  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_FRAMES, 'solver.NTSTEP_BETWEEN_FRAMES')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(HDUR_MOVIE, 'solver.HDUR_MOVIE')
@@ -1020,10 +1018,12 @@
 ! computes a default hdur_movie that creates nice looking movies.
 ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if(HDUR_MOVIE <= TINYVAL) &
-    HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
+    HDUR_MOVIE = 1.1d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
 
   call read_value_integer(MOVIE_VOLUME_TYPE, 'solver.MOVIE_VOLUME_TYPE')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_logical(MOVIE_VOLUME_COARSE,'solver.MOVIE_VOLUME_COARSE')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(MOVIE_TOP_KM, 'solver.MOVIE_TOP_KM')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
@@ -1143,6 +1143,12 @@
     if(mod(NEX_ETA/8,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 8*NPROC_ETA'
     if(mod(NEX_XI/16,NPROC_XI) /=0) CUT_SUPERBRICK_XI = .true.
     if(mod(NEX_ETA/16,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
+!! DK DK added this because of temporary bug in David's code
+    if(mod(NEX_XI/16,NPROC_XI) /=0) &
+      stop 'NEX_XI multiple of 8*NPROC_XI but not of 16*NPROC_XI is currently unsafe'
+    if(mod(NEX_ETA/16,NPROC_ETA) /=0) &
+      stop 'NEX_ETA multiple of 8*NPROC_ETA but not of 16*NPROC_ETA is currently unsafe'
+!! DK DK added this because of temporary bug in David's code
   else
     if(mod(NEX_XI,32) /= 0) stop 'NEX_XI must be a multiple of 32'
     if(mod(NEX_ETA,32) /= 0) stop 'NEX_ETA must be a multiple of 32'
@@ -1329,8 +1335,8 @@
       r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
       r_bottom(13) = RICB
 
-      r_top(14) = RICB
-      r_bottom(14) = R_CENTRAL_CUBE
+      r_top(15) = RICB
+      r_bottom(15) = R_CENTRAL_CUBE
 
   ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
@@ -2248,12 +2254,12 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
             nb_lay_sb = 0
             nspec_sb = 0
         endif
-        tmp_sum = tmp_sum + (((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
+        tmp_sum = tmp_sum + ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
                 doubling * ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
-                (nspec_sb/4))) / NPROC
+                (nspec_sb/4))
     enddo
-    NSPEC(iter_region) = tmp_sum
+    NSPEC(iter_region) = tmp_sum / NPROC
 enddo
 
   if(INCLUDE_CENTRAL_CUBE) NSPEC(IREGION_INNER_CORE) = NSPEC(IREGION_INNER_CORE) + &

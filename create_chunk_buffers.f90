@@ -33,7 +33,16 @@
                 NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
                 NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                 myrank,LOCAL_PATH, &
-                addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
+                addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+                ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+                ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+      nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+  ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax, &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
+  iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iboolfaces,npoin2D_faces,iboolcorner,NGLOB1D_RADIAL)
 
   implicit none
 
@@ -43,11 +52,32 @@
   include "constants.h"
   include "precision.h"
 
+!! DK DK for the merged version
+! include values created by the mesher
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+!! DK DK added this for the merged version
+  integer :: NGLOB1D_RADIAL
+  integer :: imsg2,icount_faces,icount_corners
+  integer, dimension(NUMFACES_SHARED) :: npoin2D_faces
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces
+  integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
+
+!! DK DK added this for the merged version
+!---- arrays to assemble between chunks
+
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
 
   integer nglob,nglob_ori
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
-  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_MAX,NGLOB1D_RADIAL
+  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_MAX,NGLOB1D_RADIAL_my_corner
   integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
   integer nspec
   integer myrank,NCHUNKS
@@ -88,11 +118,15 @@
   integer ibool1D_leftxi_righteta(NGLOB1D_RADIAL_MAX)
   integer ibool1D_rightxi_righteta(NGLOB1D_RADIAL_MAX)
   integer ibool1D(NGLOB1D_RADIAL_MAX)
-  double precision xread1D(NGLOB1D_RADIAL_MAX)
-  double precision yread1D(NGLOB1D_RADIAL_MAX)
-  double precision zread1D(NGLOB1D_RADIAL_MAX)
-  double precision xdummy,ydummy,zdummy
   integer ipoin1D
+
+!! DK DK changed this for merged version
+  double precision, dimension(NGLOB1D_RADIAL_MAX) :: &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta
+
+  double precision, dimension(NGLOB1D_RADIAL_MAX) :: xread1D,yread1D,zread1D
 
 ! arrays to assemble the corners (3 processors for each corner)
   integer, dimension(:,:), allocatable :: iprocscorners,itypecorner
@@ -109,7 +143,7 @@
   integer imsg_type,iside,imode_comm,iedge
 
 ! boundary parameters per slice
-  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, njunk
+  integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
   integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
   integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
 
@@ -121,7 +155,7 @@
   integer imsg
 
 ! names of the data files for all the processors in MPI
-  character(len=150) prname,filename_in,filename_out
+  character(len=150) prname
 
 ! for addressing of the slices
   integer ichunk,iproc_xi,iproc_eta,iproc
@@ -239,9 +273,17 @@
     call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
 ! file to store the list of processors for each message for faces
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='unknown')
+!!! DK DK for merged    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='unknown')
 
   endif
+
+!!!!!!!!!! DK DK for merged version: beginning of "faces" section here
+!!!!!!!!!! DK DK for merged version: beginning of "faces" section here
+!!!!!!!!!! DK DK for merged version: beginning of "faces" section here
+!!!!!!!!!! DK DK for merged version: beginning of "faces" section here
+!!!!!!!!!! DK DK for merged version: beginning of "faces" section here
+!!!!!!!!!! DK DK for merged version: beginning of "faces" section here
+!!!!!!!!!! DK DK for merged version: beginning of "faces" section here
 
 ! create theoretical communication pattern
   do imsg_type = 1,NUM_MSG_TYPES
@@ -425,7 +467,7 @@
         if(iproc_sender(imsg) > iproc_receiver(imsg)) call exit_MPI(myrank,'incorrect order in sender/receiver pair')
 
 ! save message type and pair of processors in list of messages
-        if(myrank == 0) write(IOUT,*) imsg_type,iproc_sender(imsg),iproc_receiver(imsg)
+!!! DK DK for merged        if(myrank == 0) write(IOUT,*) imsg_type,iproc_sender(imsg),iproc_receiver(imsg)
 
 ! loop on sender/receiver (1=sender 2=receiver)
         do imode_comm=1,2
@@ -433,11 +475,15 @@
           if(imode_comm == 1) then
             iproc = iproc_sender(imsg)
             iedge = iproc_edge_send
-            write(filename_out,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
+!! DK DK commented this out for the merged version
+!           write(filename_out,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
+
           else if(imode_comm == 2) then
             iproc = iproc_receiver(imsg)
             iedge = iproc_edge_receive
-            write(filename_out,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
+!! DK DK commented this out for the merged version
+!           write(filename_out,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
+
           else
             call exit_MPI(myrank,'incorrect communication mode')
           endif
@@ -445,11 +491,33 @@
 ! only do this if current processor is the right one for MPI version
           if(iproc == myrank) then
 
+!---------------------------------------------------------------------
+
+!! DK DK added this for the merged version, modified from the old read_arrays_buffers_solver.f90
+!! DK DK the goal here is to determine the right value of icount_faces
+
+!---- read indirect addressing for each message for faces of the chunks
+!---- a given slice can belong to at most two faces
+! check that we have found the right correspondance
+  if(imode_comm == 1 .and. myrank /= iprocfrom_faces(imsg)) call exit_MPI(myrank,'this message should be for a sender')
+  if(imode_comm == 2 .and. myrank /= iprocto_faces(imsg)) call exit_MPI(myrank,'this message should be for a receiver')
+  icount_faces = 0
+  do imsg2 = 1,imsg
+  if(myrank == iprocfrom_faces(imsg2) .or. myrank == iprocto_faces(imsg2)) then
+    icount_faces = icount_faces + 1
+    if(icount_faces>NUMFACES_SHARED) call exit_MPI(myrank,'more than NUMFACES_SHARED faces for this slice')
+    if(icount_faces>2 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) call exit_MPI(myrank,'more than two faces for this slice')
+  endif
+  enddo
+
+!---------------------------------------------------------------------
+
 ! create the name of the database for each slice
             call create_name_database(prname,iproc,iregion_code,LOCAL_PATH)
 
 ! open file for 2D buffer
-            open(unit=IOUT_BUFFERS,file=prname(1:len_trim(prname))//filename_out,status='unknown')
+!! DK DK suppressed in the merged version
+!  open(unit=IOUT_BUFFERS,file=prname(1:len_trim(prname))//filename_out,status='unknown')
 
 ! determine chunk number and local slice coordinates using addressing
             ichunk = ichunk_slice(iproc)
@@ -469,45 +537,49 @@
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 ! read boundary parameters
-
-            open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin',status='old',action='read',form='unformatted')
-            read(IIN) nspec2D_xmin
-            read(IIN) nspec2D_xmax
-            read(IIN) nspec2D_ymin
-            read(IIN) nspec2D_ymax
-            read(IIN) njunk
-            read(IIN) njunk
-
-            read(IIN) ibelm_xmin
-            read(IIN) ibelm_xmax
-            read(IIN) ibelm_ymin
-            read(IIN) ibelm_ymax
-            close(IIN)
+!! DK DK suppressed in the merged version
+! open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin',status='old',action='read',form='unformatted')
+!! DK DK suppressed in the merged version            read(IIN) nspec2D_xmin
+!! DK DK suppressed in the merged version            read(IIN) nspec2D_xmax
+!! DK DK suppressed in the merged version            read(IIN) nspec2D_ymin
+!! DK DK suppressed in the merged version            read(IIN) nspec2D_ymax
+!! DK DK suppressed in the merged version            read(IIN) njunk
+!! DK DK suppressed in the merged version            read(IIN) njunk
+!! DK DK suppressed in the merged version
+!! DK DK suppressed in the merged version            read(IIN) ibelm_xmin
+!! DK DK suppressed in the merged version            read(IIN) ibelm_xmax
+!! DK DK suppressed in the merged version            read(IIN) ibelm_ymin
+!! DK DK suppressed in the merged version            read(IIN) ibelm_ymax
+!! DK DK suppressed in the merged version            close(IIN)
 
 ! read 1D buffers to remove corner points
-            open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')
-            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,1)
-              read(IIN,*) ibool1D_leftxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
-            enddo
-            close(IIN)
+!! DK DK suppressed in the merged version
+!  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')
+!! DK DK suppressed in the merged version            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,1)
+!! DK DK suppressed in the merged version              read(IIN,*) ibool1D_leftxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
+!! DK DK suppressed in the merged version            enddo
+!! DK DK suppressed in the merged version            close(IIN)
 
-            open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='old',action='read')
-            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,2)
-              read(IIN,*) ibool1D_rightxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
-            enddo
-            close(IIN)
+!! DK DK suppressed in the merged version
+!  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='old',action='read')
+!! DK DK suppressed in the merged version            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,2)
+!! DK DK suppressed in the merged version              read(IIN,*) ibool1D_rightxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
+!! DK DK suppressed in the merged version            enddo
+!! DK DK suppressed in the merged version            close(IIN)
 
-            open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='old',action='read')
-            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,4)
-              read(IIN,*) ibool1D_leftxi_righteta(ipoin1D),xdummy,ydummy,zdummy
-            enddo
-            close(IIN)
+!! DK DK suppressed in the merged version
+!   open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='old',action='read')
+!! DK DK suppressed in the merged version            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,4)
+!! DK DK suppressed in the merged version              read(IIN,*) ibool1D_leftxi_righteta(ipoin1D),xdummy,ydummy,zdummy
+!! DK DK suppressed in the merged version            enddo
+!! DK DK suppressed in the merged version            close(IIN)
 
-            open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old',action='read')
-            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,3)
-              read(IIN,*) ibool1D_rightxi_righteta(ipoin1D),xdummy,ydummy,zdummy
-            enddo
-            close(IIN)
+!! DK DK suppressed in the merged version
+!  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old',action='read')
+!! DK DK suppressed in the merged version            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,3)
+!! DK DK suppressed in the merged version              read(IIN,*) ibool1D_rightxi_righteta(ipoin1D),xdummy,ydummy,zdummy
+!! DK DK suppressed in the merged version            enddo
+!! DK DK suppressed in the merged version            close(IIN)
 
 ! erase logical mask
             mask_ibool(:) = .false.
@@ -536,10 +608,12 @@
                 ispec=ibelm_xmin(ispec2D)
 
 ! remove central cube for chunk buffers
-                if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+                if(iregion_code == IREGION_INNER_CORE) then
+                  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+                endif
 
                 i=1
                 do k=1,NGLLZ
@@ -580,10 +654,12 @@
                 ispec=ibelm_xmax(ispec2D)
 
 ! remove central cube for chunk buffers
-                if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+                if(iregion_code == IREGION_INNER_CORE) then
+                  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+                endif
 
                 i=NGLLX
                 do k=1,NGLLZ
@@ -624,10 +700,12 @@
                 ispec=ibelm_ymin(ispec2D)
 
 ! remove central cube for chunk buffers
-                if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+                if(iregion_code == IREGION_INNER_CORE) then
+                  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+                endif
 
                 j=1
                 do k=1,NGLLZ
@@ -668,10 +746,12 @@
                 ispec=ibelm_ymax(ispec2D)
 
 ! remove central cube for chunk buffers
-                if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-                  idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+                if(iregion_code == IREGION_INNER_CORE) then
+                  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+                    idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+                endif
 
                 j=NGLLY
                 do k=1,NGLLZ
@@ -698,7 +778,6 @@
 
 ! sort buffer obtained to be conforming with neighbor in other chunk
 ! sort on x, y and z, the other arrays will be swapped as well
-
             call sort_array_coordinates(npoin2D,xstore_selected,ystore_selected,zstore_selected, &
               ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
 
@@ -706,13 +785,24 @@
             if(nglob /= npoin2D) call exit_MPI(myrank,'duplicates detected in buffer')
 
 ! write list of selected points to output buffer
-            write(IOUT_BUFFERS,*) npoin2D
-            do ipoin2D = 1,npoin2D
-                write(IOUT_BUFFERS,*) ibool_selected(ipoin2D), &
-                  xstore_selected(ipoin2D),ystore_selected(ipoin2D),zstore_selected(ipoin2D)
-            enddo
+!! DK DK suppressed in the merged version            write(IOUT_BUFFERS,*) npoin2D
 
-            close(IOUT_BUFFERS)
+!! DK DK added this for the merged version
+            npoin2D_faces(icount_faces) = npoin2D
+
+!! DK DK suppressed in the merged version            do ipoin2D = 1,npoin2D
+            do ipoin2D = 1,npoin2D
+!! DK DK suppressed in the merged version                write(IOUT_BUFFERS,*) ibool_selected(ipoin2D), &
+!! DK DK suppressed in the merged version
+! xstore_selected(ipoin2D),ystore_selected(ipoin2D),zstore_selected(ipoin2D)
+
+!! DK DK added this for the merged version
+              iboolfaces(ipoin2D,icount_faces) = ibool_selected(ipoin2D)
+
+            enddo
+!! DK DK suppressed in the merged version            enddo
+
+!! DK DK suppressed in the merged version            close(IOUT_BUFFERS)
 
 ! store result to compare number of points for sender and for receiver
             if(imode_comm == 1) then
@@ -732,7 +822,7 @@
     enddo
   enddo
 
-  if(myrank == 0) close(IOUT)
+!!! DK DK for merged  if(myrank == 0) close(IOUT)
 
 ! check that total number of messages is correct
   if(imsg /= NUMMSGS_FACES) call exit_MPI(myrank,'incorrect total number of messages')
@@ -769,6 +859,14 @@
     write(IMAIN,*) 'all the messages for chunk faces have the right size'
     write(IMAIN,*)
   endif
+
+!!!!!!!!!! DK DK for merged version: beginning of "corner" section here
+!!!!!!!!!! DK DK for merged version: beginning of "corner" section here
+!!!!!!!!!! DK DK for merged version: beginning of "corner" section here
+!!!!!!!!!! DK DK for merged version: beginning of "corner" section here
+!!!!!!!!!! DK DK for merged version: beginning of "corner" section here
+!!!!!!!!!! DK DK for merged version: beginning of "corner" section here
+!!!!!!!!!! DK DK for merged version: beginning of "corner" section here
 
 !
 !---- generate the 8 message patterns sharing a corner of valence 3
@@ -862,7 +960,7 @@
   endif
 
 ! file to store the list of processors for each message for corners
-  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
+!!! DK DK for merged  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
 
 ! loop over all the messages to create the addressing
   do imsg = 1,NCORNERSCHUNKS
@@ -870,65 +968,127 @@
   if(myrank == 0) write(IMAIN,*) 'Generating message ',imsg,' for corners out of ',NCORNERSCHUNKS
 
 ! save triplet of processors in list of messages
-  if(myrank == 0) write(IOUT,*) iprocscorners(1,imsg),iprocscorners(2,imsg),iprocscorners(3,imsg)
+!!! DK DK for merged  if(myrank == 0) write(IOUT,*) iprocscorners(1,imsg),iprocscorners(2,imsg),iprocscorners(3,imsg)
 
 ! loop on the three processors of a given corner
   do imember_corner = 1,3
 
     if(imember_corner == 1) then
-      write(filename_out,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
+!     write(filename_out,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
     else if(imember_corner == 2) then
-      write(filename_out,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
+!     write(filename_out,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
     else
-      write(filename_out,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
+!     write(filename_out,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
     endif
 
 ! only do this if current processor is the right one for MPI version
 ! this line is ok even for NCHUNKS = 2
   if(iprocscorners(imember_corner,imsg) == myrank) then
 
+!---------------------------------------------------------------------
+
+!! DK DK added this for the merged version, modified from the old read_arrays_buffers_solver.f90
+!! DK DK the goal here is to determine the right value of icount_corners
+
+!---- read indirect addressing for each message for corners of the chunks
+!---- a given slice can belong to at most one corner
+! check that we have found the right correspondance
+  if(imember_corner == 1 .and. myrank /= iproc_master_corners(imsg)) call exit_MPI(myrank,'this message should be for a master')
+  if(imember_corner == 2 .and. myrank /= iproc_worker1_corners(imsg)) call exit_MPI(myrank,'this message should be for a worker1')
+  if(imember_corner == 3 .and. myrank /= iproc_worker2_corners(imsg)) call exit_MPI(myrank,'this message should be for a worker2')
+  icount_corners = 0
+  do imsg2 = 1,imsg
+  if(myrank == iproc_master_corners(imsg2) .or. &
+     myrank == iproc_worker1_corners(imsg2) .or. &
+     myrank == iproc_worker2_corners(imsg2)) then
+    icount_corners = icount_corners + 1
+    if(icount_corners>1 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) &
+      call exit_MPI(myrank,'more than one corner for this slice')
+    if(icount_corners>4) call exit_MPI(myrank,'more than four corners for this slice')
+  endif
+  enddo
+
+!---- read indirect addressing for each message for faces of the chunks
+!---- a given slice can belong to at most two faces
+  if(imode_comm == 1 .and. myrank /= iprocfrom_faces(imsg)) call exit_MPI(myrank,'this message should be for a sender')
+  if(imode_comm == 2 .and. myrank /= iprocto_faces(imsg)) call exit_MPI(myrank,'this message should be for a receiver')
+
+!---------------------------------------------------------------------
+
 ! pick the correct 1D buffer
 ! this scheme works fine even if NPROC_XI = NPROC_ETA = 1
   if(itypecorner(imember_corner,imsg) == ILOWERLOWER) then
-    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt'
-    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,1)
+!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt'
+    NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,1)
   else if(itypecorner(imember_corner,imsg) == ILOWERUPPER) then
-    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt'
-    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,4)
+!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt'
+    NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,4)
   else if(itypecorner(imember_corner,imsg) == IUPPERLOWER) then
-    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt'
-    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,2)
+!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt'
+    NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,2)
   else if(itypecorner(imember_corner,imsg) == IUPPERUPPER) then
-    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt'
-    NGLOB1D_RADIAL = NGLOB1D_RADIAL_CORNER(iregion_code,3)
+!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt'
+    NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,3)
   else
     call exit_MPI(myrank,'incorrect corner coordinates')
   endif
 
 ! read 1D buffer for corner
-    open(unit=IIN,file=filename_in,status='old',action='read')
-    do ipoin1D = 1,NGLOB1D_RADIAL
-      read(IIN,*) ibool1D(ipoin1D), &
-              xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
+!! DK DK suppressed in the merged version    open(unit=IIN,file=filename_in,status='old',action='read')
+    do ipoin1D = 1,NGLOB1D_RADIAL_my_corner
+!! DK DK suppressed in the merged version      read(IIN,*) ibool1D(ipoin1D), &
+!! DK DK suppressed in the merged version              xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
+
+!! DK DK added this for merged
+! pick the correct 1D buffer
+! this scheme works fine even if NPROC_XI = NPROC_ETA = 1
+  if(itypecorner(imember_corner,imsg) == ILOWERLOWER) then
+    ibool1D(ipoin1D) = ibool1D_leftxi_lefteta(ipoin1D)
+    xread1D(ipoin1D) = xread1D_leftxi_lefteta(ipoin1D)
+    yread1D(ipoin1D) = yread1D_leftxi_lefteta(ipoin1D)
+    zread1D(ipoin1D) = zread1D_leftxi_lefteta(ipoin1D)
+  else if(itypecorner(imember_corner,imsg) == ILOWERUPPER) then
+    ibool1D(ipoin1D) = ibool1D_leftxi_righteta(ipoin1D)
+    xread1D(ipoin1D) = xread1D_leftxi_righteta(ipoin1D)
+    yread1D(ipoin1D) = yread1D_leftxi_righteta(ipoin1D)
+    zread1D(ipoin1D) = zread1D_leftxi_righteta(ipoin1D)
+  else if(itypecorner(imember_corner,imsg) == IUPPERLOWER) then
+    ibool1D(ipoin1D) = ibool1D_rightxi_lefteta(ipoin1D)
+    xread1D(ipoin1D) = xread1D_rightxi_lefteta(ipoin1D)
+    yread1D(ipoin1D) = yread1D_rightxi_lefteta(ipoin1D)
+    zread1D(ipoin1D) = zread1D_rightxi_lefteta(ipoin1D)
+  else if(itypecorner(imember_corner,imsg) == IUPPERUPPER) then
+    ibool1D(ipoin1D) = ibool1D_rightxi_righteta(ipoin1D)
+    xread1D(ipoin1D) = xread1D_rightxi_righteta(ipoin1D)
+    yread1D(ipoin1D) = yread1D_rightxi_righteta(ipoin1D)
+    zread1D(ipoin1D) = zread1D_rightxi_righteta(ipoin1D)
+  else
+    call exit_MPI(myrank,'incorrect corner coordinates')
+  endif
+
     enddo
-    close(IIN)
+!! DK DK suppressed in the merged version    close(IIN)
 
 ! sort array read based upon the coordinates of the points
 ! to ensure conforming matching with other buffers from neighbors
-    call sort_array_coordinates(NGLOB1D_RADIAL,xread1D,yread1D,zread1D, &
+    call sort_array_coordinates(NGLOB1D_RADIAL_my_corner,xread1D,yread1D,zread1D, &
             ibool1D,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
 
 ! check that no duplicates have been found
-    if(nglob /= NGLOB1D_RADIAL) call exit_MPI(myrank,'duplicates found for corners')
+    if(nglob /= NGLOB1D_RADIAL_my_corner) call exit_MPI(myrank,'duplicates found for corners')
 
 ! write file with 1D buffer for corner
-    open(unit=IOUT_BUFFERS,file=prname(1:len_trim(prname))//filename_out,status='unknown')
-    write(IOUT_BUFFERS,*) NGLOB1D_RADIAL
-    do ipoin1D = 1,NGLOB1D_RADIAL
-      write(IOUT_BUFFERS,*) ibool1D(ipoin1D), &
-              xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
+!! DK DK suppressed in the merged version    open(unit=IOUT_BUFFERS,file=prname(1:len_trim(prname))//filename_out,status='unknown')
+!! DK DK suppressed in the merged version    write(IOUT_BUFFERS,*) NGLOB1D_RADIAL_my_corner
+    do ipoin1D = 1,NGLOB1D_RADIAL_my_corner
+!! DK DK suppressed in the merged version      write(IOUT_BUFFERS,*) ibool1D(ipoin1D), &
+!! DK DK suppressed in the merged version              xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
+
+!! DK DK added this for merged version
+      iboolcorner(ipoin1D,icount_corners) = ibool1D(ipoin1D)
+
     enddo
-    close(IOUT_BUFFERS)
+!! DK DK suppressed in the merged version    close(IOUT_BUFFERS)
 
 ! end of section done only if right processor for MPI
   endif
@@ -937,7 +1097,7 @@
 
   enddo
 
-  if(myrank == 0) close(IOUT)
+!!! DK DK for merged  if(myrank == 0) close(IOUT)
 
 ! deallocate arrays
   deallocate(iproc_sender)

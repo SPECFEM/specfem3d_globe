@@ -68,10 +68,10 @@ subroutine read_sea99_s_model(SEA99M_V)
   read(1,*) SEA99M_V%alatmin, SEA99M_V%alatmax
   read(1,*) SEA99M_V%alonmin, SEA99M_V%alonmax
   read(1,*) SEA99M_V%sea99_ddeg,SEA99M_V%sea99_nlat,SEA99M_V%sea99_nlon
-  if (SEA99M_V%sea99_nlat /= nint((SEA99M_V%alatmax-SEA99M_V%alatmin)/SEA99M_V%sea99_ddeg)+1) then
+  if (SEA99M_V%sea99_nlat .ne. nint((SEA99M_V%alatmax-SEA99M_V%alatmin)/SEA99M_V%sea99_ddeg)+1) then
      stop 'alatmin,alatmax,sea99_nlat'
   endif
-  if (SEA99M_V%sea99_nlon /= nint((SEA99M_V%alonmax-SEA99M_V%alonmin)/SEA99M_V%sea99_ddeg)+1) then
+  if (SEA99M_V%sea99_nlon .ne. nint((SEA99M_V%alonmax-SEA99M_V%alonmin)/SEA99M_V%sea99_ddeg)+1) then
      stop 'alonmin,alonmax,sea99_nlon'
   endif
   read(1,*)

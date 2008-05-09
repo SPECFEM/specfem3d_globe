@@ -29,15 +29,13 @@
      etaxstore,etaystore,etazstore, &
      gammaxstore,gammaystore,gammazstore, &
      xstore,ystore,zstore, &
-     xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
+     xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec)
 
   implicit none
 
   include "constants.h"
 
   integer ispec,nspec,myrank
-
-  logical ACTUALLY_STORE_ARRAYS
 
   double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
   double precision dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ)
@@ -46,15 +44,9 @@
   double precision yelm(NGNOD)
   double precision zelm(NGNOD)
 
-  real(kind=CUSTOM_REAL) xixstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         xiystore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         xizstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         etaxstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         etaystore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         etazstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         gammaxstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         gammaystore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         gammazstore(NGLLX,NGLLY,NGLLZ,nspec)
+!! DK DK changed this for merged version: made it local
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: xixstore,xiystore,xizstore, &
+        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -118,28 +110,26 @@
 
 ! save the derivatives and the jacobian
 ! distinguish between single and double precision for reals
-      if(ACTUALLY_STORE_ARRAYS) then
-        if(CUSTOM_REAL == SIZE_REAL) then
-          xixstore(i,j,k,ispec) = sngl(xix)
-          xiystore(i,j,k,ispec) = sngl(xiy)
-          xizstore(i,j,k,ispec) = sngl(xiz)
-          etaxstore(i,j,k,ispec) = sngl(etax)
-          etaystore(i,j,k,ispec) = sngl(etay)
-          etazstore(i,j,k,ispec) = sngl(etaz)
-          gammaxstore(i,j,k,ispec) = sngl(gammax)
-          gammaystore(i,j,k,ispec) = sngl(gammay)
-          gammazstore(i,j,k,ispec) = sngl(gammaz)
-        else
-          xixstore(i,j,k,ispec) = xix
-          xiystore(i,j,k,ispec) = xiy
-          xizstore(i,j,k,ispec) = xiz
-          etaxstore(i,j,k,ispec) = etax
-          etaystore(i,j,k,ispec) = etay
-          etazstore(i,j,k,ispec) = etaz
-          gammaxstore(i,j,k,ispec) = gammax
-          gammaystore(i,j,k,ispec) = gammay
-          gammazstore(i,j,k,ispec) = gammaz
-        endif
+      if(CUSTOM_REAL == SIZE_REAL) then
+        xixstore(i,j,k) = sngl(xix)
+        xiystore(i,j,k) = sngl(xiy)
+        xizstore(i,j,k) = sngl(xiz)
+        etaxstore(i,j,k) = sngl(etax)
+        etaystore(i,j,k) = sngl(etay)
+        etazstore(i,j,k) = sngl(etaz)
+        gammaxstore(i,j,k) = sngl(gammax)
+        gammaystore(i,j,k) = sngl(gammay)
+        gammazstore(i,j,k) = sngl(gammaz)
+      else
+        xixstore(i,j,k) = xix
+        xiystore(i,j,k) = xiy
+        xizstore(i,j,k) = xiz
+        etaxstore(i,j,k) = etax
+        etaystore(i,j,k) = etay
+        etazstore(i,j,k) = etaz
+        gammaxstore(i,j,k) = gammax
+        gammaystore(i,j,k) = gammay
+        gammazstore(i,j,k) = gammaz
       endif
 
 ! store mesh coordinates

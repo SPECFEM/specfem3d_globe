@@ -25,17 +25,13 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ,accel,xstore,ystore,zstore, &
+  subroutine compute_forces_crust_mantle(displ,accel,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
           kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-          ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
+          ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
           alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN, AM_V)
 
   implicit none
@@ -97,10 +93,8 @@
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
-  real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
@@ -128,13 +122,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
         kappahstore,muhstore,eta_anisostore
 
-! arrays for full anisotropy only when needed
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
-        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-        c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
-  integer ispec,iglob,ispec_strain
+  integer ispec,iglob
   integer i,j,k,l
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
@@ -170,18 +158,7 @@
   real(kind=CUSTOM_REAL) tempz1l,tempz2l,tempz3l
 
 ! for gravity
-  integer int_radius
-  real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
   real(kind=CUSTOM_REAL) radius_cr
-  double precision radius,rho,minus_g,minus_dg
-  double precision minus_g_over_radius,minus_dg_plus_g_over_radius
-  double precision cos_theta,sin_theta,cos_phi,sin_phi
-  double precision cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq
-  double precision factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
-  double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -270,14 +247,8 @@
 
 ! compute deviatoric strain
  if (COMPUTE_AND_STORE_STRAIN) then
-    if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-      ispec_strain = 1
-    else
-      ispec_strain = ispec
-    endif
-    epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-    epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
-    epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
+    epsilondev_loc(1,i,j,k) = duxdxl - ONE_THIRD * (duxdxl + duydyl + duzdzl)
+    epsilondev_loc(2,i,j,k) = duydyl - ONE_THIRD * (duxdxl + duydyl + duzdzl)
     epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
     epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
     epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
@@ -285,13 +256,9 @@
 
 ! precompute terms for attenuation if needed
   if(ATTENUATION_VAL) then
-    if(ATTENUATION_3D_VAL) then
-      one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-    else
       radius_cr = xstore(ibool(i,j,k,ispec))
       call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
       one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
-    endif
     minus_sum_beta =  one_minus_sum_beta_use - 1.0
   endif
 
@@ -300,59 +267,6 @@
 !
 
   if(ANISOTROPIC_3D_MANTLE_VAL) then
-
-    c11 = c11store(i,j,k,ispec)
-    c12 = c12store(i,j,k,ispec)
-    c13 = c13store(i,j,k,ispec)
-    c14 = c14store(i,j,k,ispec)
-    c15 = c15store(i,j,k,ispec)
-    c16 = c16store(i,j,k,ispec)
-    c22 = c22store(i,j,k,ispec)
-    c23 = c23store(i,j,k,ispec)
-    c24 = c24store(i,j,k,ispec)
-    c25 = c25store(i,j,k,ispec)
-    c26 = c26store(i,j,k,ispec)
-    c33 = c33store(i,j,k,ispec)
-    c34 = c34store(i,j,k,ispec)
-    c35 = c35store(i,j,k,ispec)
-    c36 = c36store(i,j,k,ispec)
-    c44 = c44store(i,j,k,ispec)
-    c45 = c45store(i,j,k,ispec)
-    c46 = c46store(i,j,k,ispec)
-    c55 = c55store(i,j,k,ispec)
-    c56 = c56store(i,j,k,ispec)
-    c66 = c66store(i,j,k,ispec)
-
-    if(ATTENUATION_VAL) then
-      mul = c44
-      c11 = c11 + FOUR_THIRDS * minus_sum_beta * mul
-      c12 = c12 - TWO_THIRDS * minus_sum_beta * mul
-      c13 = c13 - TWO_THIRDS * minus_sum_beta * mul
-      c22 = c22 + FOUR_THIRDS * minus_sum_beta * mul
-      c23 = c23 - TWO_THIRDS * minus_sum_beta * mul
-      c33 = c33 + FOUR_THIRDS * minus_sum_beta * mul
-      c44 = c44 + minus_sum_beta * mul
-      c55 = c55 + minus_sum_beta * mul
-      c66 = c66 + minus_sum_beta * mul
-    endif
-
-     sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
-               c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl
-
-     sigma_yy = c12*duxdxl + c26*duxdyl_plus_duydxl + c22*duydyl + &
-               c25*duzdxl_plus_duxdzl + c24*duzdyl_plus_duydzl + c23*duzdzl
-
-     sigma_zz = c13*duxdxl + c36*duxdyl_plus_duydxl + c23*duydyl + &
-               c35*duzdxl_plus_duxdzl + c34*duzdyl_plus_duydzl + c33*duzdzl
-
-     sigma_xy = c16*duxdxl + c66*duxdyl_plus_duydxl + c26*duydyl + &
-               c56*duzdxl_plus_duxdzl + c46*duzdyl_plus_duydzl + c36*duzdzl
-
-     sigma_xz = c15*duxdxl + c56*duxdyl_plus_duydxl + c25*duydyl + &
-               c55*duzdxl_plus_duxdzl + c45*duzdyl_plus_duydzl + c35*duzdzl
-
-     sigma_yz = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl + &
-               c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
   else
 
@@ -602,130 +516,17 @@
     enddo
   endif
 
-! define symmetric components of sigma for gravity
-  sigma_yx = sigma_xy
-  sigma_zx = sigma_xz
-  sigma_zy = sigma_yz
-
-! compute non-symmetric terms for gravity
-  if(GRAVITY_VAL) then
-
-! use mesh coordinates to get theta and phi
-! x y and z contain r theta and phi
-
-  iglob = ibool(i,j,k,ispec)
-  radius = dble(xstore(iglob))
-  theta = ystore(iglob)
-  phi = zstore(iglob)
-
-  cos_theta = dcos(dble(theta))
-  sin_theta = dsin(dble(theta))
-  cos_phi = dcos(dble(phi))
-  sin_phi = dsin(dble(phi))
-
-! get g, rho and dg/dr=dg
-! spherical components of the gravitational acceleration
-! for efficiency replace with lookup table every 100 m in radial direction
-  int_radius = nint(radius * R_EARTH_KM * 10.d0)
-  minus_g = minus_gravity_table(int_radius)
-  minus_dg = minus_deriv_gravity_table(int_radius)
-  rho = density_table(int_radius)
-
-! Cartesian components of the gravitational acceleration
-  gxl = minus_g*sin_theta*cos_phi
-  gyl = minus_g*sin_theta*sin_phi
-  gzl = minus_g*cos_theta
-
-! Cartesian components of gradient of gravitational acceleration
-! obtained from spherical components
-
-  minus_g_over_radius = minus_g / radius
-  minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
-
-  cos_theta_sq = cos_theta**2
-  sin_theta_sq = sin_theta**2
-  cos_phi_sq = cos_phi**2
-  sin_phi_sq = sin_phi**2
-
-  Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
-  Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
-  Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
-  Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
-  Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
-  Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
-
-  iglob = ibool(i,j,k,ispec)
-
-! distinguish between single and double precision for reals
-  if(CUSTOM_REAL == SIZE_REAL) then
-
-! get displacement and multiply by density to compute G tensor
-    sx_l = rho * dble(displ(1,iglob))
-    sy_l = rho * dble(displ(2,iglob))
-    sz_l = rho * dble(displ(3,iglob))
-
-! compute G tensor from s . g and add to sigma (not symmetric)
-    sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
-    sigma_yy = sigma_yy + sngl(sx_l*gxl + sz_l*gzl)
-    sigma_zz = sigma_zz + sngl(sx_l*gxl + sy_l*gyl)
-
-    sigma_xy = sigma_xy - sngl(sx_l * gyl)
-    sigma_yx = sigma_yx - sngl(sy_l * gxl)
-
-    sigma_xz = sigma_xz - sngl(sx_l * gzl)
-    sigma_zx = sigma_zx - sngl(sz_l * gxl)
-
-    sigma_yz = sigma_yz - sngl(sy_l * gzl)
-    sigma_zy = sigma_zy - sngl(sz_l * gyl)
-
-! precompute vector
-    factor = dble(jacobianl) * wgll_cube(i,j,k)
-    rho_s_H(1,i,j,k) = sngl(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl))
-    rho_s_H(2,i,j,k) = sngl(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl))
-    rho_s_H(3,i,j,k) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
-
-  else
-
-! get displacement and multiply by density to compute G tensor
-    sx_l = rho * displ(1,iglob)
-    sy_l = rho * displ(2,iglob)
-    sz_l = rho * displ(3,iglob)
-
-! compute G tensor from s . g and add to sigma (not symmetric)
-    sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
-    sigma_yy = sigma_yy + sx_l*gxl + sz_l*gzl
-    sigma_zz = sigma_zz + sx_l*gxl + sy_l*gyl
-
-    sigma_xy = sigma_xy - sx_l * gyl
-    sigma_yx = sigma_yx - sy_l * gxl
-
-    sigma_xz = sigma_xz - sx_l * gzl
-    sigma_zx = sigma_zx - sz_l * gxl
-
-    sigma_yz = sigma_yz - sy_l * gzl
-    sigma_zy = sigma_zy - sz_l * gyl
-
-! precompute vector
-    factor = jacobianl * wgll_cube(i,j,k)
-    rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
-    rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
-    rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
-
-  endif
-
-  endif  ! end of section with gravity terms
-
-! form dot product with test vector, non-symmetric form
-      tempx1(i,j,k) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl)
-      tempy1(i,j,k) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl)
+! form dot product with test vector, symmetric form
+      tempx1(i,j,k) = jacobianl * (sigma_xx*xixl + sigma_xy*xiyl + sigma_xz*xizl)
+      tempy1(i,j,k) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_yz*xizl)
       tempz1(i,j,k) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl)
 
-      tempx2(i,j,k) = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl)
-      tempy2(i,j,k) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl)
+      tempx2(i,j,k) = jacobianl * (sigma_xx*etaxl + sigma_xy*etayl + sigma_xz*etazl)
+      tempy2(i,j,k) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_yz*etazl)
       tempz2(i,j,k) = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl)
 
-      tempx3(i,j,k) = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl)
-      tempy3(i,j,k) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl)
+      tempx3(i,j,k) = jacobianl * (sigma_xx*gammaxl + sigma_xy*gammayl + sigma_xz*gammazl)
+      tempy3(i,j,k) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_yz*gammazl)
       tempz3(i,j,k) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl)
 
           enddo
@@ -777,8 +578,6 @@
           sum_terms(2,i,j,k) = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l)
           sum_terms(3,i,j,k) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
 
-     if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
-
         enddo
       enddo
     enddo
@@ -803,12 +602,6 @@
 ! term in xz = 4
 ! term in yz = 5
 ! term in zz not computed since zero trace
-! This is because we only implement Q_\mu attenuation and not Q_\kappa.
-! Note that this does *NOT* imply that there is no attenuation for P waves
-! because for Q_\kappa = infinity one gets (see for instance Dahlen and Tromp (1998)
-! equation (9.59) page 350): Q_\alpha = Q_\mu * 3 * (V_p/V_s)^2 / 4
-! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
-! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
   if(ATTENUATION_VAL) then
 
@@ -820,21 +613,9 @@
 ! IMPROVE we use mu_v here even if there is some anisotropy
 ! IMPROVE we should probably use an average value instead
 
-! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-     if(ATTENUATION_3D_VAL) then
-        factor_common_c44_muv = factor_common(i_sls,:,:,:,ispec)
-     else
-        factor_common_c44_muv(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
-     endif
-     if(ANISOTROPIC_3D_MANTLE_VAL) then
-        factor_common_c44_muv = factor_common_c44_muv * c44store(:,:,:,ispec)
-     else
-        factor_common_c44_muv = factor_common_c44_muv * muvstore(:,:,:,ispec)
-     endif
-
      R_memory(i_memory,i_sls,:,:,:,ispec) = alphaval(i_sls) * &
                 R_memory(i_memory,i_sls,:,:,:,ispec) + &
-                factor_common_c44_muv * &
+                factor_common(i_sls,1,1,1,iregion_selected) * muvstore(:,:,:,ispec) * &
                 (betaval(i_sls) * epsilondev(i_memory,:,:,:,ispec) + &
                 gammaval(i_sls) * epsilondev_loc(i_memory,:,:,:))
      enddo

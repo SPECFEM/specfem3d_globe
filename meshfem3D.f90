@@ -37,6 +37,10 @@
   include "constants.h"
   include "precision.h"
 
+!! DK DK for the merged version
+! include values created by the mesher
+  include "OUTPUT_FILES/values_from_mesher.h"
+
 !=====================================================================!
 !                                                                     !
 !  meshfem3D produces a spectral element grid for the Earth.          !
@@ -147,6 +151,43 @@
 ! To report bugs or suggest improvements to the code, please send an email
 ! to Jeroen Tromp <jtromp AT caltech.edu> and/or use our online
 ! bug tracking system at http://www.geodynamics.org/roundup .
+!
+! Evolution of the code:
+! ---------------------
+!
+! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
+!      new doubling brick in the mesh, new perfectly load-balanced mesh,
+!      more flexible routines for mesh design, new inflated central cube
+!      with optimized shape, far fewer mesh files saved by the mesher,
+!      global arrays sorted to speed up the simulation, seismos can be
+!      written by the master
+! v. 3.6 Many people, many affiliations, September 2006:
+!      adjoint and kernel calculations, fixed IASP91 model,
+!      added AK135 and 1066a, fixed topography/bathymetry routine,
+!      new attenuation routines, faster and better I/Os on very large
+!      systems, many small improvements and bug fixes, new "configure"
+!      script, new Pyre version, new user's manual etc.
+! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
+!      any size of chunk, 3D attenuation, case of two chunks,
+!      more precise topography/bathymetry model, new Par_file structure
+! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
+!      merged global and regional codes, no iterations in fluid, better movies
+! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
+!      flexible mesh doubling in outer core, inlined code, OpenDX support
+! v. 3.2 Jeroen Tromp, Caltech, July 2002:
+!      multiple sources and flexible PREM reading
+! v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
+!      vectorized loops in solver and merged central cube
+! v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
+!   ported to SGI and Compaq, double precision solver, more general anisotropy
+! v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
+!                       gravity, rotation, oceans and 3-D models
+! v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, March 2001:
+!                       final MPI package
+! v. 2.0 Dimitri Komatitsch, Harvard, January 2000: MPI code for the globe
+! v. 1.0 Dimitri Komatitsch, Mexico, June 1999: first MPI code for a chunk
+! Jeroen Tromp, Harvard, July 1998: first chunk solver using OpenMP on Sun
+! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
 !
 
 ! aniso_mantle_model_variables
@@ -391,14 +432,15 @@
 
 ! parameters needed to store the radii of the grid points
 ! in the spherically symmetric Earth
-  integer, dimension(:), allocatable :: idoubling
-  integer, dimension(:,:,:,:), allocatable :: ibool
+!! DK DK suppressed this for merged version
+! integer, dimension(:), allocatable :: idoubling
+! integer, dimension(:,:,:,:), allocatable :: ibool
 
 ! arrays with the mesh in double precision
   double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
 
 ! proc numbers for MPI
-  integer myrank,sizeprocs,ier
+  integer myrank,sizeprocs,ier,errorcode
 
 ! check area and volume of the final mesh
   double precision area_local_bottom,area_total_bottom
@@ -410,6 +452,16 @@
 ! for loop on all the slices
   integer iregion_code,iregion
   integer iproc_xi,iproc_eta,ichunk
+
+!! DK DK for the merged version
+  integer, dimension(:), allocatable :: ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+             ibool1D_leftxi_righteta,ibool1D_rightxi_righteta
+  double precision, dimension(:), allocatable :: xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
+             xread1D_leftxi_righteta,xread1D_rightxi_righteta
+  double precision, dimension(:), allocatable :: yread1D_leftxi_lefteta,yread1D_rightxi_lefteta, &
+             yread1D_leftxi_righteta,yread1D_rightxi_righteta
+  double precision, dimension(:), allocatable :: zread1D_leftxi_lefteta,zread1D_rightxi_lefteta, &
+             zread1D_leftxi_righteta,zread1D_rightxi_righteta
 
 ! rotation matrix from Euler angles
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
@@ -453,7 +505,7 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
@@ -491,7 +543,7 @@
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
 ! memory size of all the static arrays
-  double precision :: static_memory_size
+! double precision :: static_memory_size
 
 ! arrays for BCAST
   integer, dimension(38) :: bcast_integer
@@ -538,18 +590,19 @@
 
   integer :: ipass
 
-  integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
-         NSPEC_INNER_CORE_ATTENUATION, &
-         NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-         NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-         NSPEC_CRUST_MANTLE_ADJOINT, &
-         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
+!! DK DK suppressed this for the merged version
+! integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+!        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+!        NSPEC_INNER_CORE_ATTENUATION, &
+!        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+!        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+!        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+!        NSPEC_CRUST_MANTLE_ADJOINT, &
+!        NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+!        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+!        NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+!        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+!        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
 ! this for the different corners of the slice (which are different if the superbrick is cut)
 ! 1 : xi_min, eta_min
@@ -564,7 +617,23 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
+! integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
+
+!! DK DK for the merged version
+  include 'declar.f90'
+
+!! DK DK added this for the merged version
+!---- arrays to assemble between chunks
+
+  integer :: imsg
+
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+  logical :: not_done_yet
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -614,7 +683,7 @@
           TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
           ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
           ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-          MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+          MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
           INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -849,10 +918,26 @@
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
 
 ! dynamic allocation of mesh arrays
-  allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1))
-  allocate(ichunk_slice(0:NPROCTOT-1))
-  allocate(iproc_xi_slice(0:NPROCTOT-1))
-  allocate(iproc_eta_slice(0:NPROCTOT-1))
+  allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(ichunk_slice(0:NPROCTOT-1),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(iproc_xi_slice(0:NPROCTOT-1),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(iproc_eta_slice(0:NPROCTOT-1),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
 
   addressing(:,:,:) = 0
   ichunk_slice(:) = 0
@@ -861,7 +946,8 @@
 
 ! loop on all the chunks to create global slice addressing for solver
   if(myrank == 0) then
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/addressing.txt',status='unknown')
+!! DK DK suppressed this for merged
+!! DK DK suppressed this for merged    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/addressing.txt',status='unknown')
     write(IMAIN,*) 'creating global slice addressing'
     write(IMAIN,*)
   endif
@@ -873,11 +959,16 @@
         ichunk_slice(iprocnum) = ichunk
         iproc_xi_slice(iprocnum) = iproc_xi
         iproc_eta_slice(iprocnum) = iproc_eta
-        if(myrank == 0) write(IOUT,*) iprocnum,ichunk,iproc_xi,iproc_eta
+!! DK DK suppressed this for merged
+!! DK DK suppressed this for merged        if(myrank == 0) write(IOUT,*) iprocnum,ichunk,iproc_xi,iproc_eta
       enddo
     enddo
   enddo
-  if(myrank == 0) close(IOUT)
+!! DK DK suppressed this for merged
+!! DK DK suppressed this for merged  if(myrank == 0) close(IOUT)
+
+!! DK DK added this for the merged version
+  not_done_yet = .true.
 
 ! this for the different counters (which are now different if the superbrick is cut in the outer core)
   do iregion=1,MAX_NUM_REGIONS
@@ -1266,7 +1357,13 @@
   if(ATTENUATION .and. ATTENUATION_3D) then
     if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
-    if(myrank /= 0) allocate(AM_V%Qtau_s(N_SLS))
+    if(myrank /= 0) then
+      allocate(AM_V%Qtau_s(N_SLS),STAT=ier)
+      if (ier /= 0) then
+        print *,"ABORTING can not allocate in meshfem3D ier=",ier
+        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+      endif
+    endif
     call MPI_BCAST(AM_V%min_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%max_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%QT_c_source, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
@@ -1317,6 +1414,94 @@
 !----  loop on all the regions of the mesh
 !----
 
+!! DK DK for the merged version
+  include 'allocate_before.f90'
+
+!! DK DK for the merged version
+  allocate(ibool1D_leftxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(ibool1D_rightxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(ibool1D_leftxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(ibool1D_rightxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(xread1D_leftxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(xread1D_rightxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(xread1D_leftxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(xread1D_rightxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(yread1D_leftxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(yread1D_rightxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(yread1D_leftxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(yread1D_rightxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(zread1D_leftxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(zread1D_rightxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(zread1D_leftxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(zread1D_rightxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
 ! number of regions in full Earth
   do iregion_code = 1,MAX_NUM_REGIONS
 
@@ -1347,42 +1532,162 @@
   npointot = NSPEC(iregion_code) * NGLLX * NGLLY * NGLLZ
 
 ! use dynamic allocation to allocate memory for arrays
-  allocate(idoubling(NSPEC(iregion_code)))
-  allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
-  allocate(xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
-  allocate(ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
-  allocate(zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
+!! DK DK suppressed this for merged version
+! allocate(idoubling(NSPEC(iregion_code)),STAT=ier)
+! allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)),STAT=ier)
+  allocate(xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+  allocate(zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)),STAT=ier)
+  if (ier /= 0) then
+    print *,"ABORTING can not allocate in meshfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
 
 ! create all the regions of the mesh
 ! perform two passes in this part to be able to save memory
   do ipass = 1,2
-    call create_regions_mesh(iregion_code,ibool,idoubling, &
-         xstore,ystore,zstore,rmins,rmaxs, &
-         iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
+
+!! DK DK for merged version
+  if(iregion_code == IREGION_CRUST_MANTLE) then
+! crust_mantle
+    call create_regions_mesh(iregion_code,ibool_crust_mantle,idoubling_crust_mantle, &
+         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
          volume_local,area_local_bottom,area_local_top, &
-         nspl,rspl,espl,espl2, &
-         nglob(iregion_code),npointot, &
+         nspl,rspl,espl,espl2,nglob(iregion_code),npointot, &
          NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-         NSPEC2DMAX_XMIN_XMAX(iregion_code), &
-         NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
+         NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
+         NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
          ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-         NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE, &
-         NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+         NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
          max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
-         myrank,LOCAL_PATH,OCEANS,ibathy_topo, &
-         rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-         ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
+         myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+         ATTENUATION,ATTENUATION_3D, &
          NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
          ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
-         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
          numker,numhpa,numcof,ihpa,lmax,nylm, &
          lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO, &
-         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2))
-  enddo
+         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,&
+         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
+  iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+  NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM, &
+         ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+         ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
+         nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+  ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle,ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+  ibelm_bottom_crust_mantle, ibelm_top_crust_mantle, &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
+  jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
+  jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle,jacobian2D_bottom_crust_mantle,jacobian2D_top_crust_mantle, &
+  normal_xmin_crust_mantle,normal_xmax_crust_mantle,normal_ymin_crust_mantle, &
+  normal_ymax_crust_mantle,normal_bottom_crust_mantle,normal_top_crust_mantle, &
+  kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+  rmass_crust_mantle,xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
+!! DK DK this will have to change to fully support David's code to cut the superbrick
+  npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1),perm,invperm)
+
+  else if(iregion_code == IREGION_OUTER_CORE) then
+! outer_core
+    call create_regions_mesh(iregion_code,ibool_outer_core,idoubling_outer_core, &
+         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
+         volume_local,area_local_bottom,area_local_top, &
+         nspl,rspl,espl,espl2,nglob(iregion_code),npointot, &
+         NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code), &
+         NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
+         ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+         ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+         NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+         max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
+         myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+         ATTENUATION,ATTENUATION_3D, &
+         NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
+         R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
+         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
+         numker,numhpa,numcof,ihpa,lmax,nylm, &
+         lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+         nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,&
+         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
+  iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+  NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC, &
+         ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+         ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
+         nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
+  ibelm_xmin_outer_core,ibelm_xmax_outer_core,ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
+  ibelm_bottom_outer_core, ibelm_top_outer_core, &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
+  jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
+  jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
+  normal_xmin_outer_core,normal_xmax_outer_core,normal_ymin_outer_core, &
+  normal_ymax_outer_core,normal_bottom_outer_core,normal_top_outer_core, &
+  kappavstore_outer_core,kappahstore_outer_core,muvstore_outer_core,muhstore_outer_core,eta_anisostore_outer_core, &
+  rmass_outer_core,xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
+!! DK DK this will have to change to fully support David's code to cut the superbrick
+  npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1),perm,invperm)
+
+  else if(iregion_code == IREGION_INNER_CORE) then
+! inner_core
+    call create_regions_mesh(iregion_code,ibool_inner_core,idoubling_inner_core, &
+         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
+         volume_local,area_local_bottom,area_local_top, &
+         nspl,rspl,espl,espl2,nglob(iregion_code),npointot, &
+         NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code), &
+         NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
+         ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+         ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+         NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+         max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
+         myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+         ATTENUATION,ATTENUATION_3D, &
+         NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
+         R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
+         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
+         numker,numhpa,numcof,ihpa,lmax,nylm, &
+         lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+         nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,&
+         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
+  iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+  NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC, &
+         ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+         ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
+         nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+  ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core, &
+  ibelm_bottom_inner_core, ibelm_top_inner_core, &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
+  jacobian2D_xmin_inner_core,jacobian2D_xmax_inner_core, &
+  jacobian2D_ymin_inner_core,jacobian2D_ymax_inner_core,jacobian2D_bottom_inner_core,jacobian2D_top_inner_core, &
+  normal_xmin_inner_core,normal_xmax_inner_core,normal_ymin_inner_core, &
+  normal_ymax_inner_core,normal_bottom_inner_core,normal_top_inner_core, &
+  kappavstore_inner_core,kappahstore_inner_core,muvstore_inner_core,muhstore_inner_core,eta_anisostore_inner_core, &
+  rmass_inner_core,xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core, &
+!! DK DK this will have to change to fully support David's code to cut the superbrick
+  npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1),perm,invperm)
+
+  else
+    stop 'DK DK incorrect region in merged code'
+  endif
+
+  enddo ! of loop on ipass = 1,2
 
 ! store number of anisotropic elements found in the mantle
   if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
@@ -1453,14 +1758,136 @@
 
   endif
 
+!! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+!! DK DK added this for merged version
+
+! create the list of messages in files to assemble between chunks if more than one chunk
+! create it only once (and for all) therefore for first region only, because stored in disk files
+!! DK DK this could probably be simplified or merged with create_chunk_buffers, but no time to do it for now
+  if(NCHUNKS > 1 .and. iregion_code == IREGION_CRUST_MANTLE) &
+! crust_mantle
+    call create_list_files_chunks(iregion_code, &
+      nglob(iregion_code),NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_CORNER, &
+      NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
+      myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
+
+!! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+!! DK DK added this for merged version
+
+! read chunk messages only if more than one chunk
+  if(NCHUNKS_VAL /= 1 .and. myrank == 0 .and. not_done_yet) then
+
+! do this only once in the mesher, because these arrays do not change
+    not_done_yet  = .false.
+
+! read messages to assemble between chunks with MPI
+
+! file with the list of processors for each message for faces
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old',action='read')
+  do imsg = 1,NUMMSGS_FACES_VAL
+  read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
+  if      (iprocfrom_faces(imsg) < 0 &
+      .or. iprocto_faces(imsg) < 0 &
+      .or. iprocfrom_faces(imsg) > NPROCTOT-1 &
+      .or. iprocto_faces(imsg) > NPROCTOT-1) &
+    call exit_MPI(myrank,'incorrect chunk faces numbering')
+  if (imsg_type(imsg) < 1 .or. imsg_type(imsg) > 3) &
+    call exit_MPI(myrank,'incorrect message type labeling')
+  enddo
+  close(IIN)
+
+! file with the list of processors for each message for corners
+  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
+  do imsg = 1,NCORNERSCHUNKS_VAL
+  read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
+                          iproc_worker2_corners(imsg)
+  if    (iproc_master_corners(imsg) < 0 &
+    .or. iproc_worker1_corners(imsg) < 0 &
+    .or. iproc_worker2_corners(imsg) < 0 &
+    .or. iproc_master_corners(imsg) > NPROCTOT-1 &
+    .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
+    .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
+      call exit_MPI(myrank,'incorrect chunk corner numbering')
+  enddo
+  close(IIN)
+
+  endif
+
+! broadcast the information read on the master to the nodes
+  if(NCHUNKS_VAL /= 1) then
+    call MPI_BCAST(imsg_type,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iprocfrom_faces,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iprocto_faces,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+    call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iproc_worker1_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iproc_worker2_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  endif
+
+!! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
   ! create chunk buffers if more than one chunk
   if(NCHUNKS > 1) then
-    call create_chunk_buffers(iregion_code,NSPEC(iregion_code),ibool,idoubling,xstore,ystore,zstore, &
+
+!! DK DK added this for merged version
+  if(iregion_code == IREGION_CRUST_MANTLE) then
+! crust_mantle
+    call create_chunk_buffers(iregion_code,NSPEC(iregion_code),ibool_crust_mantle,idoubling_crust_mantle,xstore,ystore,zstore, &
       nglob(iregion_code), &
       NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
       NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
       NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
-      myrank,LOCAL_PATH,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
+      myrank,LOCAL_PATH,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+      ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+      ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+      nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+  ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle,ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
+  iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iboolfaces_crust_mantle,npoin2D_faces_crust_mantle,iboolcorner_crust_mantle,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE))
+
+  else if(iregion_code == IREGION_OUTER_CORE) then
+! outer_core
+    call create_chunk_buffers(iregion_code,NSPEC(iregion_code),ibool_outer_core,idoubling_outer_core,xstore,ystore,zstore, &
+       nglob(iregion_code), &
+       NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
+       NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
+       NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
+       myrank,LOCAL_PATH,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+       ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+       ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+       nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
+  ibelm_xmin_outer_core,ibelm_xmax_outer_core,ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
+  iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iboolfaces_outer_core,npoin2D_faces_outer_core,iboolcorner_outer_core,NGLOB1D_RADIAL(IREGION_OUTER_CORE))
+
+  else if(iregion_code == IREGION_INNER_CORE) then
+! inner_core
+    call create_chunk_buffers(iregion_code,NSPEC(iregion_code),ibool_inner_core,idoubling_inner_core,xstore,ystore,zstore, &
+       nglob(iregion_code), &
+       NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
+       NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
+       NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
+       myrank,LOCAL_PATH,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+       ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+       ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+       nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+  ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core, &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
+  iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iboolfaces_inner_core,npoin2D_faces_inner_core,iboolcorner_inner_core,NGLOB1D_RADIAL(IREGION_INNER_CORE))
+
+  else
+    stop 'DK DK incorrect region in merged code'
+  endif
+
   else
     if(myrank == 0) then
 
@@ -1471,8 +1898,9 @@
   endif
 
 ! deallocate arrays used for that region
-  deallocate(idoubling)
-  deallocate(ibool)
+!! DK DK suppressed this for merged version
+! deallocate(idoubling)
+! deallocate(ibool)
   deallocate(xstore)
   deallocate(ystore)
   deallocate(zstore)
@@ -1482,6 +1910,27 @@
 
 ! end of loop on all the regions
   enddo
+
+!! DK DK for the merged version
+  deallocate(ibool1D_leftxi_lefteta)
+  deallocate(ibool1D_rightxi_lefteta)
+  deallocate(ibool1D_leftxi_righteta)
+  deallocate(ibool1D_rightxi_righteta)
+
+  deallocate(xread1D_leftxi_lefteta)
+  deallocate(xread1D_rightxi_lefteta)
+  deallocate(xread1D_leftxi_righteta)
+  deallocate(xread1D_rightxi_righteta)
+
+  deallocate(yread1D_leftxi_lefteta)
+  deallocate(yread1D_rightxi_lefteta)
+  deallocate(yread1D_leftxi_righteta)
+  deallocate(yread1D_rightxi_righteta)
+
+  deallocate(zread1D_leftxi_lefteta)
+  deallocate(zread1D_rightxi_lefteta)
+  deallocate(zread1D_leftxi_righteta)
+  deallocate(zread1D_rightxi_righteta)
 
   if(myrank == 0) then
 ! check volume of chunk
@@ -1546,57 +1995,61 @@
   write(IMAIN,*)
 
 ! evaluate the amount of static memory needed by the solver
-  call memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE,&
-                   TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
-                   ONE_CRUST,doubling_index,this_region_has_a_doubling,&
-                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
-                   NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
-         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
-         NSPEC_INNER_CORE_ATTENUATION, &
-         NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-         NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-         NSPEC_CRUST_MANTLE_ADJOINT, &
-         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,static_memory_size)
+!! DK DK suppressed in the merged version because useless
+! call memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE,&
+!                  TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
+!                  ONE_CRUST,doubling_index,this_region_has_a_doubling,&
+!                  ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
+!                  NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
+!        NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+!        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+!        NSPEC_INNER_CORE_ATTENUATION, &
+!        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+!        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+!        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+!        NSPEC_CRUST_MANTLE_ADJOINT, &
+!        NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+!        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+!        NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+!        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+!        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,static_memory_size)
 
-  NGLOB1D_RADIAL_TEMP(:) = &
-  (/maxval(NGLOB1D_RADIAL_CORNER(1,:)),maxval(NGLOB1D_RADIAL_CORNER(2,:)),maxval(NGLOB1D_RADIAL_CORNER(3,:))/)
+!! DK DK suppressed in the merged version because useless
+! NGLOB1D_RADIAL_TEMP(:) = &
+! (/maxval(NGLOB1D_RADIAL_CORNER(1,:)),maxval(NGLOB1D_RADIAL_CORNER(2,:)),maxval(NGLOB1D_RADIAL_CORNER(3,:))/)
 
 ! create include file for the solver
-  call save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
-        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
-        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
-        INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP, &
-        static_memory_size,NGLOB1D_RADIAL_TEMP, &
-        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-        NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-        NPROC_XI,NPROC_ETA, &
-         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
-         NSPEC_INNER_CORE_ATTENUATION, &
-         NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-         NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-         NSPEC_CRUST_MANTLE_ADJOINT, &
-         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
+!! DK DK suppressed in the merged version because useless
+! call save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
+!       TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+!       ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
+!       ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
+!       INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP, &
+!       static_memory_size,NGLOB1D_RADIAL_TEMP, &
+!       NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+!       NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
+!       NPROC_XI,NPROC_ETA, &
+!        NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+!        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+!        NSPEC_INNER_CORE_ATTENUATION, &
+!        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+!        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+!        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+!        NSPEC_CRUST_MANTLE_ADJOINT, &
+!        NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+!        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+!        NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+!        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+!        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
 
   endif   ! end of section executed by main process only
 
 ! deallocate arrays used for mesh generation
-  deallocate(addressing)
-  deallocate(ichunk_slice)
-  deallocate(iproc_xi_slice)
-  deallocate(iproc_eta_slice)
+!! DK DK suppressed in the merged version because these arrays will be transmitted to the solver
+! deallocate(addressing)
+! deallocate(ichunk_slice)
+! deallocate(iproc_xi_slice)
+! deallocate(iproc_eta_slice)
 
 ! elapsed time since beginning of mesh generation
   if(myrank == 0) then
@@ -1608,6 +2061,82 @@
 ! close main output file
     close(IMAIN)
   endif
+
+! synchronize all the processes to make sure everybody has finished
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
+!!!!!!!! DK DK solver inserted here
+!!!!!!!! DK DK solver inserted here
+!!!!!!!! DK DK solver inserted here
+
+!! DK DK for merged version, temporary patch for David's code to cut the superbrick
+!! DK DK which I have not fully ported to the merged version yet: I do not
+!! DK DK yet distinguish the two values of each array, therefore let me set them
+!! DK DK equal here
+  npoin2D_xi_crust_mantle(2) = npoin2D_xi_crust_mantle(1)
+  npoin2D_eta_crust_mantle(2) = npoin2D_eta_crust_mantle(1)
+
+  npoin2D_xi_outer_core(2) = npoin2D_xi_outer_core(1)
+  npoin2D_eta_outer_core(2) = npoin2D_eta_outer_core(1)
+
+  npoin2D_xi_inner_core(2) = npoin2D_xi_inner_core(1)
+  npoin2D_eta_inner_core(2) = npoin2D_eta_inner_core(1)
+
+!! DK DK for the merged version
+  include 'allocate_after_1.f90'
+
+!! DK DK recompute arrays here for merged version
+  call recompute_missing_arrays(myrank, &
+     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+     xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
+     ibool_crust_mantle,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE)
+
+  call recompute_missing_arrays(myrank, &
+     xix_outer_core,xiy_outer_core,xiz_outer_core, &
+     etax_outer_core,etay_outer_core,etaz_outer_core, &
+     gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+     xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+     xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
+     ibool_outer_core,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE)
+
+  call recompute_missing_arrays(myrank, &
+     xix_inner_core,xiy_inner_core,xiz_inner_core, &
+     etax_inner_core,etay_inner_core,etaz_inner_core, &
+     gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+     xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+     xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core, &
+     ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE)
+
+!! DK DK for merged version, deallocate arrays that have become useless
+  deallocate(xelm_store_crust_mantle)
+  deallocate(yelm_store_crust_mantle)
+  deallocate(zelm_store_crust_mantle)
+
+  deallocate(xelm_store_outer_core)
+  deallocate(yelm_store_outer_core)
+  deallocate(zelm_store_outer_core)
+
+  deallocate(xelm_store_inner_core)
+  deallocate(yelm_store_inner_core)
+  deallocate(zelm_store_inner_core)
+
+!! DK DK for the merged version
+  include 'allocate_after_2.f90'
+
+!! DK DK for the merged version
+  include 'call1.f90'
+!! DK DK for now use variables just to make sure we don't get warning about unused variables
+! include 'oldstuff/dummy_use_variables.f90'
+
+!! DK DK for the merged version
+  include 'deallocate.f90'
+
+!!!!!!!! DK DK solver inserted here
+!!!!!!!! DK DK solver inserted here
+!!!!!!!! DK DK solver inserted here
 
 ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)

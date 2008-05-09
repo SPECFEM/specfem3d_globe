@@ -722,6 +722,34 @@ END subroutine degree
 !-----------------------------------------------------------------------
 !
 
+!! DK DK added this for merged version
+  subroutine permute_elements_xelm_yelm_zelm(array_to_permute,temp_array,perm,nspec)
+
+  implicit none
+
+  include "constants.h"
+
+  integer, intent(in) :: nspec
+  integer, intent(in), dimension(nspec) :: perm
+
+  real(kind=CUSTOM_REAL), intent(inout), dimension(NGNOD,nspec) :: array_to_permute,temp_array
+
+  integer old_ispec,new_ispec
+
+! copy the original array
+  temp_array(:,:) = array_to_permute(:,:)
+
+  do old_ispec = 1,nspec
+    new_ispec = perm(old_ispec)
+    array_to_permute(:,new_ispec) = temp_array(:,old_ispec)
+  enddo
+
+  end subroutine permute_elements_xelm_yelm_zelm
+
+!
+!-----------------------------------------------------------------------
+!
+
 ! implement permutation of elements for arrays of integer type
   subroutine permute_elements_integer(array_to_permute,temp_array,perm,nspec)
 

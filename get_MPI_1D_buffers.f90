@@ -25,9 +25,15 @@
 !
 !=====================================================================
 
-  subroutine get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
+  subroutine get_MPI_1D_buffers(myrank,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
                         idoubling,xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion)
+                        NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion,nglob_ori, &
+                  ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+                  ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,NGLOB1D_RADIAL_MAX, &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
+  iregion_code)
 
 ! routine to create the MPI 1D chunk buffers for edges
 
@@ -35,7 +41,20 @@
 
   include "constants.h"
 
-  integer nspec,myrank,nglob,ipoin1D,iregion
+  integer :: NGLOB1D_RADIAL_MAX
+  integer ibool1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX)
+  integer ibool1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX)
+  integer ibool1D_leftxi_righteta(NGLOB1D_RADIAL_MAX)
+  integer ibool1D_rightxi_righteta(NGLOB1D_RADIAL_MAX)
+
+!! DK DK added this for merged version
+  integer :: iregion_code
+  double precision, dimension(NGLOB1D_RADIAL_MAX) :: &
+  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
+  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
+  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta
+
+  integer nspec,myrank,nglob_ori,nglob,ipoin1D,iregion
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
 
   logical iMPIcut_xi(2,nspec)
@@ -58,9 +77,6 @@
 
 ! MPI 1D buffer element numbering
   integer ispeccount,npoin1D,ix,iy,iz
-
-! processor identification
-  character(len=150) prname
 
 ! arrays for sorting routine
   integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
@@ -95,7 +111,7 @@
 ! determine if the element falls on the left MPI cut plane
 
 ! global point number and coordinates left MPI 1D buffer
-  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='unknown')
+!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -108,10 +124,13 @@
 
   do ispec=1,nspec
     ! remove central cube for chunk buffers
-    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-      idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-      idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-      idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+!! DK DK added this for merged version because array idoubling is not allocated in outer core
+    if(iregion_code == IREGION_INNER_CORE) then
+      if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    endif
   ! corner detection here
     if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(1,ispec)) then
       ispeccount=ispeccount+1
@@ -123,36 +142,53 @@
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin1D = npoin1D + 1
+!! DK DK added this for merged version
+            if(npoin1D > NGLOB1D_RADIAL_MAX) stop 'DK DK error merged NGLOB1D_RADIAL_MAX'
             if (PERFORM_CUTHILL_MCKEE) then
               ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
               xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
               ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
               zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
             else
-              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK suppressed merged              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+!! DK DK suppressed merged                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK added this for merged
+              ibool1D_leftxi_lefteta(npoin1D) = ibool(ix,iy,iz,ispec)
+              xread1D_leftxi_lefteta(npoin1D) = xstore(ix,iy,iz,ispec)
+              yread1D_leftxi_lefteta(npoin1D) = ystore(ix,iy,iz,ispec)
+              zread1D_leftxi_lefteta(npoin1D) = zstore(ix,iy,iz,ispec)
             endif
         endif
       enddo
     endif
   enddo
 
+  nglob=nglob_ori
   if (PERFORM_CUTHILL_MCKEE) then
     call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
             ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-  
+
+!! DK DK added this for merged version
+    if(npoin1D > NGLOB1D_RADIAL_MAX) stop 'DK DK error merged NGLOB1D_RADIAL_MAX'
+
     do ipoin1D=1,npoin1D
-        write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
-                    ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+!! DK DK suppressed merged      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+!! DK DK suppressed merged                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+!! DK DK added this for merged
+      ibool1D_leftxi_lefteta(ipoin1D) = ibool_selected(ipoin1D)
+      xread1D_leftxi_lefteta(ipoin1D) = xstore_selected(ipoin1D)
+      yread1D_leftxi_lefteta(ipoin1D) = ystore_selected(ipoin1D)
+      zread1D_leftxi_lefteta(ipoin1D) = zstore_selected(ipoin1D)
     enddo
   endif
+
 ! put flag to indicate end of the list of points
-  write(10,*) '0  0  0.  0.  0.'
+!! DK DK suppressed merged  write(10,*) '0  0  0.  0.  0.'
 
 ! write total number of points
-  write(10,*) npoin1D
+!! DK DK suppressed merged  write(10,*) npoin1D
 
-  close(10)
+!! DK DK suppressed merged  close(10)
 
 ! compare number of edge elements detected to analytical value
   if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,1) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,1)) &
@@ -161,7 +197,7 @@
 ! determine if the element falls on the right MPI cut plane
 
 ! global point number and coordinates right MPI 1D buffer
-  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='unknown')
+!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -173,10 +209,13 @@
   ispeccount=0
   do ispec=1,nspec
     ! remove central cube for chunk buffers
-    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-      idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-      idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-      idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+!! DK DK added this for merged version because array idoubling is not allocated in outer core
+    if(iregion_code == IREGION_INNER_CORE) then
+      if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    endif
   ! corner detection here
     if(iMPIcut_xi(2,ispec) .and. iMPIcut_eta(1,ispec)) then
       ispeccount=ispeccount+1
@@ -188,37 +227,53 @@
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin1D = npoin1D + 1
+!! DK DK added this for merged version
+            if(npoin1D > NGLOB1D_RADIAL_MAX) stop 'DK DK error merged NGLOB1D_RADIAL_MAX'
             if (PERFORM_CUTHILL_MCKEE) then
               ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
               xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
               ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
               zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
             else
-              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK suppressed merged              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+!! DK DK suppressed merged                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK added this for merged
+              ibool1D_rightxi_lefteta(npoin1D) = ibool(ix,iy,iz,ispec)
+              xread1D_rightxi_lefteta(npoin1D) = xstore(ix,iy,iz,ispec)
+              yread1D_rightxi_lefteta(npoin1D) = ystore(ix,iy,iz,ispec)
+              zread1D_rightxi_lefteta(npoin1D) = zstore(ix,iy,iz,ispec)
             endif
         endif
       enddo
     endif
   enddo
 
+  nglob=nglob_ori
   if (PERFORM_CUTHILL_MCKEE) then
     call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
             ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-  
+
+!! DK DK added this for merged version
+    if(npoin1D > NGLOB1D_RADIAL_MAX) stop 'DK DK error merged NGLOB1D_RADIAL_MAX'
+
     do ipoin1D=1,npoin1D
-        write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
-                    ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+!! DK DK suppressed merged      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+!! DK DK suppressed merged                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+!! DK DK added this for merged
+      ibool1D_rightxi_lefteta(ipoin1D) = ibool_selected(ipoin1D)
+      xread1D_rightxi_lefteta(ipoin1D) = xstore_selected(ipoin1D)
+      yread1D_rightxi_lefteta(ipoin1D) = ystore_selected(ipoin1D)
+      zread1D_rightxi_lefteta(ipoin1D) = zstore_selected(ipoin1D)
     enddo
   endif
 
 ! put flag to indicate end of the list of points
-  write(10,*) '0  0  0.  0.  0.'
+!! DK DK suppressed merged  write(10,*) '0  0  0.  0.  0.'
 
 ! write total number of points
-  write(10,*) npoin1D
+!! DK DK suppressed merged  write(10,*) npoin1D
 
-  close(10)
+!! DK DK suppressed merged  close(10)
 
 ! compare number of edge elements and points detected to analytical value
   if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,2) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,2)) &
@@ -231,7 +286,7 @@
 ! determine if the element falls on the left MPI cut plane
 
 ! global point number and coordinates left MPI 1D buffer
-  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='unknown')
+!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -245,10 +300,13 @@
   do ispec=1,nspec
 
 ! remove central cube for chunk buffers
-  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+!! DK DK added this for merged version because array idoubling is not allocated in outer core
+    if(iregion_code == IREGION_INNER_CORE) then
+      if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    endif
 
 ! corner detection here
   if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(2,ispec)) then
@@ -264,37 +322,53 @@
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin1D = npoin1D + 1
+!! DK DK added this for merged version
+            if(npoin1D > NGLOB1D_RADIAL_MAX) stop 'DK DK error merged NGLOB1D_RADIAL_MAX'
             if (PERFORM_CUTHILL_MCKEE) then
               ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
               xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
               ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
               zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
             else
-              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK suppressed merged              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+!! DK DK suppressed merged                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK added this for merged
+              ibool1D_leftxi_righteta(npoin1D) = ibool(ix,iy,iz,ispec)
+              xread1D_leftxi_righteta(npoin1D) = xstore(ix,iy,iz,ispec)
+              yread1D_leftxi_righteta(npoin1D) = ystore(ix,iy,iz,ispec)
+              zread1D_leftxi_righteta(npoin1D) = zstore(ix,iy,iz,ispec)
             endif
         endif
       enddo
     endif
   enddo
 
+  nglob=nglob_ori
   if (PERFORM_CUTHILL_MCKEE) then
     call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
             ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-  
+
+!! DK DK added this for merged version
+    if(npoin1D > NGLOB1D_RADIAL_MAX) stop 'DK DK error merged NGLOB1D_RADIAL_MAX'
+
     do ipoin1D=1,npoin1D
-        write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
-                    ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+!! DK DK suppressed merged      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+!! DK DK suppressed merged                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+!! DK DK added this for merged
+      ibool1D_leftxi_righteta(ipoin1D) = ibool_selected(ipoin1D)
+      xread1D_leftxi_righteta(ipoin1D) = xstore_selected(ipoin1D)
+      yread1D_leftxi_righteta(ipoin1D) = ystore_selected(ipoin1D)
+      zread1D_leftxi_righteta(ipoin1D) = zstore_selected(ipoin1D)
     enddo
   endif
 
 ! put flag to indicate end of the list of points
-  write(10,*) '0  0  0.  0.  0.'
+!! DK DK suppressed merged  write(10,*) '0  0  0.  0.  0.'
 
 ! write total number of points
-  write(10,*) npoin1D
+!! DK DK suppressed merged  write(10,*) npoin1D
 
-  close(10)
+!! DK DK suppressed merged  close(10)
 
 ! compare number of edge elements detected to analytical value
   if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,4) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,4)) &
@@ -303,7 +377,7 @@
 ! determine if the element falls on the right MPI cut plane
 
 ! global point number and coordinates right MPI 1D buffer
-  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='unknown')
+!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -317,10 +391,13 @@
   do ispec=1,nspec
 
 ! remove central cube for chunk buffers
-  if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
-     idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+!! DK DK added this for merged version because array idoubling is not allocated in outer core
+    if(iregion_code == IREGION_INNER_CORE) then
+      if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
+         idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    endif
 
 ! corner detection here
   if(iMPIcut_xi(2,ispec) .and. iMPIcut_eta(2,ispec)) then
@@ -336,37 +413,52 @@
         if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin1D = npoin1D + 1
+!! DK DK added this for merged version
+            if(npoin1D > NGLOB1D_RADIAL_MAX) stop 'DK DK error merged NGLOB1D_RADIAL_MAX'
             if (PERFORM_CUTHILL_MCKEE) then
               ibool_selected(npoin1D) = ibool(ix,iy,iz,ispec)
               xstore_selected(npoin1D) = xstore(ix,iy,iz,ispec)
               ystore_selected(npoin1D) = ystore(ix,iy,iz,ispec)
               zstore_selected(npoin1D) = zstore(ix,iy,iz,ispec)
             else
-              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+!! DK DK suppressed merged              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+!! DK DK suppressed merged                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+              ibool1D_rightxi_righteta(npoin1D) = ibool(ix,iy,iz,ispec)
+              xread1D_rightxi_righteta(npoin1D) = xstore(ix,iy,iz,ispec)
+              yread1D_rightxi_righteta(npoin1D) = ystore(ix,iy,iz,ispec)
+              zread1D_rightxi_righteta(npoin1D) = zstore(ix,iy,iz,ispec)
             endif
         endif
       enddo
     endif
   enddo
 
+  nglob=nglob_ori
   if (PERFORM_CUTHILL_MCKEE) then
     call sort_array_coordinates(npoin1D,xstore_selected,ystore_selected,zstore_selected, &
             ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-  
+
+!! DK DK added this for merged version
+    if(npoin1D > NGLOB1D_RADIAL_MAX) stop 'DK DK error merged NGLOB1D_RADIAL_MAX'
+
     do ipoin1D=1,npoin1D
-        write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
-                    ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+!! DK DK suppressed merged      write(10,*) ibool_selected(ipoin1D), xstore_selected(ipoin1D), &
+!! DK DK suppressed merged                  ystore_selected(ipoin1D),zstore_selected(ipoin1D)
+!! DK DK added this for merged
+      ibool1D_rightxi_righteta(ipoin1D) = ibool_selected(ipoin1D)
+      xread1D_rightxi_righteta(ipoin1D) = xstore_selected(ipoin1D)
+      yread1D_rightxi_righteta(ipoin1D) = ystore_selected(ipoin1D)
+      zread1D_rightxi_righteta(ipoin1D) = zstore_selected(ipoin1D)
     enddo
   endif
 
 ! put flag to indicate end of the list of points
-  write(10,*) '0  0  0.  0.  0.'
+!! DK DK suppressed merged  write(10,*) '0  0  0.  0.  0.'
 
 ! write total number of points
-  write(10,*) npoin1D
+!! DK DK suppressed merged  write(10,*) npoin1D
 
-  close(10)
+!! DK DK suppressed merged  close(10)
 
 ! compare number of edge elements and points detected to analytical value
   if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,3) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,3)) &

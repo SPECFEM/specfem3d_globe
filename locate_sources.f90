@@ -335,8 +335,6 @@
   y_target_source = r_target_source*dsin(theta)*dsin(phi)
   z_target_source = r_target_source*dcos(theta)
 
-  if(myrank == 0) write(IOVTK,*) x_target_source,y_target_source,z_target_source
-
 ! set distance to huge initial value
   distmin = HUGEVAL
 

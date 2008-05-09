@@ -43,7 +43,7 @@
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_vector,buffer_received_faces_vector, &
+            buffer_send_faces_vector,buffer_received_faces_vector,npoin2D_max_all, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA, &
@@ -92,9 +92,9 @@
   integer, dimension(NGLOB1D_RADIAL_inner_core,NUMCORNERS_SHARED) :: iboolcorner_inner_core
   integer icount_corners
 
+  integer :: npoin2D_max_all
   integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces_crust_mantle,iboolfaces_inner_core
-! size of buffers is multiplied by 2 because we handle two regions in the same MPI call
-  real(kind=CUSTOM_REAL), dimension(NDIM,2*NGLOB2DMAX_XY) :: buffer_send_faces_vector,buffer_received_faces_vector
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all) :: buffer_send_faces_vector,buffer_received_faces_vector
 
 ! buffers for send and receive between corners of the chunks
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call

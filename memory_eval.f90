@@ -230,8 +230,8 @@
 ! xix_outer_core,xiy_outer_core,xiz_outer_core,
 ! etax_outer_core,etay_outer_core,etaz_outer_core,
 ! gammax_outer_core,gammay_outer_core,gammaz_outer_core
-! rhostore_outer_core,kappavstore_outer_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*11.d0*dble(CUSTOM_REAL)
+! kappavstore_outer_core
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*10.d0*dble(CUSTOM_REAL)
 
 ! ibool_outer_core
   static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
@@ -242,8 +242,8 @@
 ! xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,rmass_crust_mantle
   static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*4.d0*dble(CUSTOM_REAL)
 
-! rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ISO_MANTLE*3.d0*dble(CUSTOM_REAL)
+! kappavstore_crust_mantle,muvstore_crust_mantle
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_ISO_MANTLE*2.d0*dble(CUSTOM_REAL)
 
 ! kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
   static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPECMAX_TISO_MANTLE*3.d0*dble(CUSTOM_REAL)
@@ -269,8 +269,8 @@
 ! xix_inner_core,xiy_inner_core,xiz_inner_core,
 ! etax_inner_core,etay_inner_core,etaz_inner_core,
 ! gammax_inner_core,gammay_inner_core,gammaz_inner_core,
-! rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
-  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*12.d0*dble(CUSTOM_REAL)
+! kappavstore_inner_core,muvstore_inner_core
+  static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*11.d0*dble(CUSTOM_REAL)
 
 ! xstore_inner_core,ystore_inner_core,zstore_inner_core,rmass_inner_core
   static_memory_size = static_memory_size + NGLOB(IREGION_INNER_CORE)*4.d0*dble(CUSTOM_REAL)
@@ -298,9 +298,6 @@
 
 ! rmass_ocean_load
     static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
-
-! updated_dof_ocean_load
-    static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
 
   endif
 

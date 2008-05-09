@@ -25,17 +25,12 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_outer_core(time,deltat,two_omega_earth, &
-          A_array_rotation,B_array_rotation, &
-          d_ln_density_dr_table, &
-          minus_rho_g_over_kappa_fluid,displfluid,accelfluid, &
-          div_displfluid, &
-          xstore,ystore,zstore, &
+  subroutine compute_forces_outer_core(d_ln_density_dr_table, &
+          displfluid,accelfluid,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          ibool)
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool)
 
   implicit none
 
@@ -47,9 +42,6 @@
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: displfluid,accelfluid
-
-! divergence of displacement
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: div_displfluid
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: ibool
@@ -63,34 +55,22 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
 
 ! for gravity
   integer int_radius
-  double precision radius,theta,phi,gxl,gyl,gzl
+  double precision radius,theta,phi
   double precision cos_theta,sin_theta,cos_phi,sin_phi
-  double precision, dimension(NRAD_GRAVITY) :: minus_rho_g_over_kappa_fluid
   double precision, dimension(NRAD_GRAVITY) :: d_ln_density_dr_table
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: gravity_term
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: xstore,ystore,zstore
-
-! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL) time,deltat,two_omega_earth
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
-    A_array_rotation,B_array_rotation
-
-  real(kind=CUSTOM_REAL) two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rotation,B_rotation, &
-       ux_rotation,uy_rotation,dpotentialdx_with_rot,dpotentialdy_with_rot
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: source_euler_A,source_euler_B
 
   integer ispec,iglob
   integer i,j,k,l
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) dpotentialdxl,dpotentialdyl,dpotentialdzl
-  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l,sum_terms
+  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
 
   double precision grad_x_ln_rho,grad_y_ln_rho,grad_z_ln_rho
 ! ****************************************************
@@ -99,7 +79,6 @@
 
 ! set acceleration to zero
   accelfluid(:) = 0._CUSTOM_REAL
-  if (NSPEC_OUTER_CORE_ADJOINT /= 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
 
   do ispec = 1,NSPEC_OUTER_CORE
 
@@ -146,38 +125,7 @@
           dpotentialdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
           dpotentialdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
-! compute contribution of rotation and add to gradient of potential
-! this term has no Z component
-    if(ROTATION_VAL) then
-
-! store the source for the Euler scheme for A_rotation and B_rotation
-      two_omega_deltat = deltat * two_omega_earth
-
-      cos_two_omega_t = cos(two_omega_earth*time)
-      sin_two_omega_t = sin(two_omega_earth*time)
-
-! time step deltat of Euler scheme is included in the source
-      source_euler_A(i,j,k) = two_omega_deltat * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl)
-      source_euler_B(i,j,k) = two_omega_deltat * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl)
-
-      A_rotation = A_array_rotation(i,j,k,ispec)
-      B_rotation = B_array_rotation(i,j,k,ispec)
-
-      ux_rotation =   A_rotation*cos_two_omega_t + B_rotation*sin_two_omega_t
-      uy_rotation = - A_rotation*sin_two_omega_t + B_rotation*cos_two_omega_t
-
-      dpotentialdx_with_rot = dpotentialdxl + ux_rotation
-      dpotentialdy_with_rot = dpotentialdyl + uy_rotation
-
-    else
-
-      dpotentialdx_with_rot = dpotentialdxl
-      dpotentialdy_with_rot = dpotentialdyl
-
-    endif  ! end of section with rotation
-
 ! add (chi/rho)grad(rho) term in no gravity case
-   if(.not. GRAVITY_VAL) then
 
 ! With regards to the non-gravitating case: we cannot set N^2 = 0 *and* let g = 0.
 ! We can *either* assume N^2 = 0 but keep gravity g, *or* we can assume that gravity
@@ -229,64 +177,13 @@
       grad_z_ln_rho = cos_theta * d_ln_density_dr_table(int_radius)
 
 ! adding (chi/rho)grad(rho)
-      dpotentialdx_with_rot = dpotentialdxl + displfluid(iglob) * grad_x_ln_rho
-      dpotentialdy_with_rot = dpotentialdyl + displfluid(iglob) * grad_y_ln_rho
+      dpotentialdxl = dpotentialdxl + displfluid(iglob) * grad_x_ln_rho
+      dpotentialdyl = dpotentialdyl + displfluid(iglob) * grad_y_ln_rho
       dpotentialdzl = dpotentialdzl + displfluid(iglob) * grad_z_ln_rho
 
-
-   else  ! if gravity is turned on
-
-! compute divergence of displacment
-! precompute and store gravity term
-
-! use mesh coordinates to get theta and phi
-! x y z contain r theta phi
-
-            radius = dble(xstore(iglob))
-            theta = dble(ystore(iglob))
-            phi = dble(zstore(iglob))
-
-            cos_theta = dcos(theta)
-            sin_theta = dsin(theta)
-            cos_phi = dcos(phi)
-            sin_phi = dsin(phi)
-
-! get g, rho and dg/dr=dg
-! spherical components of the gravitational acceleration
-! for efficiency replace with lookup table every 100 m in radial direction
-            int_radius = nint(radius * R_EARTH_KM * 10.d0)
-
-! Cartesian components of the gravitational acceleration
-! integrate and multiply by rho / Kappa
-            gxl = sin_theta*cos_phi
-            gyl = sin_theta*sin_phi
-            gzl = cos_theta
-
-! distinguish between single and double precision for reals
-            if(CUSTOM_REAL == SIZE_REAL) then
-              gravity_term(i,j,k) = &
-                sngl(minus_rho_g_over_kappa_fluid(int_radius) * &
-                dble(jacobianl) * wgll_cube(i,j,k) * &
-               (dble(dpotentialdx_with_rot) * gxl + &
-                dble(dpotentialdy_with_rot) * gyl + dble(dpotentialdzl) * gzl))
-            else
-              gravity_term(i,j,k) = minus_rho_g_over_kappa_fluid(int_radius) * &
-                 jacobianl * wgll_cube(i,j,k) * (dpotentialdx_with_rot * gxl + &
-                 dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
-            endif
-
-! divergence of displacement field with gravity on
-            if (NSPEC_OUTER_CORE_ADJOINT /= 1) then
-              div_displfluid(i,j,k,ispec) =  &
-                 minus_rho_g_over_kappa_fluid(int_radius) * (dpotentialdx_with_rot * gxl + &
-                 dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
-            endif
-
-          endif
-
-          tempx1(i,j,k) = jacobianl*(xixl*dpotentialdx_with_rot + xiyl*dpotentialdy_with_rot + xizl*dpotentialdzl)
-          tempx2(i,j,k) = jacobianl*(etaxl*dpotentialdx_with_rot + etayl*dpotentialdy_with_rot + etazl*dpotentialdzl)
-          tempx3(i,j,k) = jacobianl*(gammaxl*dpotentialdx_with_rot + gammayl*dpotentialdy_with_rot + gammazl*dpotentialdzl)
+          tempx1(i,j,k) = jacobianl*(xixl*dpotentialdxl + xiyl*dpotentialdyl + xizl*dpotentialdzl)
+          tempx2(i,j,k) = jacobianl*(etaxl*dpotentialdxl + etayl*dpotentialdyl + etazl*dpotentialdzl)
+          tempx3(i,j,k) = jacobianl*(gammaxl*dpotentialdxl + gammayl*dpotentialdyl + gammazl*dpotentialdzl)
 
           enddo
         enddo
@@ -315,22 +212,11 @@
 ! sum contributions from each element to the global mesh and add gravity term
 
           iglob = ibool(i,j,k,ispec)
-          sum_terms = - (wgllwgll_yz(j,k)*tempx1l + wgllwgll_xz(i,k)*tempx2l + wgllwgll_xy(i,j)*tempx3l)
-          if(GRAVITY_VAL) sum_terms = sum_terms + gravity_term(i,j,k)
-          accelfluid(iglob) = accelfluid(iglob) + sum_terms
+          accelfluid(iglob) = accelfluid(iglob) - (wgllwgll_yz(j,k)*tempx1l + wgllwgll_xz(i,k)*tempx2l + wgllwgll_xy(i,j)*tempx3l)
 
         enddo
       enddo
     enddo
-
-! update rotation term with Euler scheme
-    if(ROTATION_VAL) then
-
-! use the source saved above
-      A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + source_euler_A(:,:,:)
-      B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + source_euler_B(:,:,:)
-
-    endif
 
   enddo   ! spectral element loop
 
