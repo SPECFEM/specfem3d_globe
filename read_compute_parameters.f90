@@ -40,7 +40,7 @@
          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
-         MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
+         MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -83,7 +83,7 @@
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_COARSE,ATTENUATION_3D, &
+          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
           ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD, &
@@ -139,6 +139,8 @@
               normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+
+  integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -1010,6 +1012,8 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(MOVIE_VOLUME, 'solver.MOVIE_VOLUME')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+  call read_value_logical(MOVIE_COARSE,'solver.MOVIE_COARSE')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_FRAMES, 'solver.NTSTEP_BETWEEN_FRAMES')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(HDUR_MOVIE, 'solver.HDUR_MOVIE')
@@ -1018,12 +1022,10 @@
 ! computes a default hdur_movie that creates nice looking movies.
 ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if(HDUR_MOVIE <= TINYVAL) &
-    HDUR_MOVIE = 1.1d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
+    HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
 
   call read_value_integer(MOVIE_VOLUME_TYPE, 'solver.MOVIE_VOLUME_TYPE')
-  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_logical(MOVIE_VOLUME_COARSE,'solver.MOVIE_VOLUME_COARSE')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_double_precision(MOVIE_TOP_KM, 'solver.MOVIE_TOP_KM')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
@@ -1335,8 +1337,8 @@
       r_top(13) = R_EARTH - DEPTH_THIRD_DOUBLING_REAL
       r_bottom(13) = RICB
 
-      r_top(15) = RICB
-      r_bottom(15) = R_CENTRAL_CUBE
+      r_top(14) = RICB
+      r_bottom(14) = R_CENTRAL_CUBE
 
   ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
@@ -2126,19 +2128,48 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
     endif
     tmp_sum_xi = 0
     tmp_sum_eta = 0
+    tmp_sum_nglob2D_xi = 0
+    tmp_sum_nglob2D_eta = 0
     do iter_layer = ifirst_region, ilast_region
         if (this_region_has_a_doubling(iter_layer)) then
-            if (ner(iter_layer) == 1) then
-              nb_lay_sb = 1
-              nspec2D_xi_sb = NSPEC2D_XI_SUPERBRICK_1L
-              nspec2D_eta_sb = NSPEC2D_ETA_SUPERBRICK_1L
-            else
+            if (iter_region == IREGION_OUTER_CORE .and. iter_layer == lastdoubling_layer) then
+              ! simple brick
+              divider = 1
+              nglob_surf = 6*NGLLX**2 - 7*NGLLX + 2
+              nglob_edges_h = 2*(NGLLX-1)+1 + NGLLX
+              ! minimum value to be safe
+              nglob_edge_v = NGLLX-2
               nb_lay_sb = 2
               nspec2D_xi_sb = NSPEC2D_XI_SUPERBRICK
               nspec2D_eta_sb = NSPEC2D_ETA_SUPERBRICK
+            else
+              ! double brick
+              divider = 2
+              if (ner(iter_layer) == 1) then
+                nglob_surf = 6*NGLLX**2 - 8*NGLLX + 3
+                nglob_edges_h = 4*(NGLLX-1)+1 + 2*(NGLLX-1)+1
+                nglob_edge_v = NGLLX-2
+                nb_lay_sb = 1
+                nspec2D_xi_sb = NSPEC2D_XI_SUPERBRICK_1L
+                nspec2D_eta_sb = NSPEC2D_ETA_SUPERBRICK_1L
+              else
+                nglob_surf = 8*NGLLX**2 - 11*NGLLX + 4
+                nglob_edges_h = 4*(NGLLX-1)+1 + 2*(NGLLX-1)+1
+                nglob_edge_v = 2*(NGLLX-1)+1 -2
+                nb_lay_sb = 2
+                nspec2D_xi_sb = NSPEC2D_XI_SUPERBRICK
+                nspec2D_eta_sb = NSPEC2D_ETA_SUPERBRICK
+                divider = 2
+              endif
             endif
             doubling = 1
+            to_remove = 1
         else
+            if (iter_layer /= ifirst_region) then
+              to_remove = 0
+            else
+              to_remove = 1
+            endif
             doubling = 0
             nb_lay_sb = 0
             nspec2D_xi_sb = 0
@@ -2152,14 +2183,40 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         tmp_sum_eta = tmp_sum_eta + ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
                 doubling * ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)) * (nspec2D_eta_sb/2))
+
+        tmp_sum_nglob2D_xi = tmp_sum_nglob2D_xi + (((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)) * &
+                (ner(iter_layer) - doubling*nb_lay_sb))*NGLLX*NGLLX) - &
+                ((((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - doubling*nb_lay_sb)) + &
+                ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))*(ner(iter_layer) - to_remove - doubling*nb_lay_sb))*NGLLX) + &
+                (((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - to_remove - doubling*nb_lay_sb)) + &
+                doubling * (((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))/divider) * (nglob_surf-nglob_edges_h) - &
+                ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))/divider -1) * nglob_edge_v)
+
+        tmp_sum_nglob2D_eta = tmp_sum_nglob2D_eta + (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)) * &
+                (ner(iter_layer) - doubling*nb_lay_sb))*NGLLX*NGLLX) - &
+                ((((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - doubling*nb_lay_sb)) + &
+                ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))*(ner(iter_layer) - to_remove - doubling*nb_lay_sb))*NGLLX) + &
+                (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - to_remove - doubling*nb_lay_sb)) + &
+                doubling * (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))/divider) * (nglob_surf-nglob_edges_h) - &
+                ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))/divider -1) * nglob_edge_v)
     enddo
     NSPEC2D_XI(iter_region) = tmp_sum_xi
     NSPEC2D_ETA(iter_region) = tmp_sum_eta
+
+    NGLOB2DMAX_YMIN_YMAX(iter_region) = tmp_sum_nglob2D_xi
+    NGLOB2DMAX_XMIN_XMAX(iter_region) = tmp_sum_nglob2D_eta
+
     if (iter_region == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE) then
         NSPEC2D_XI(iter_region) = NSPEC2D_XI(iter_region) + &
         ((NEX_PER_PROC_XI / ratio_divide_central_cube)*(NEX_XI / ratio_divide_central_cube))
         NSPEC2D_ETA(iter_region) = NSPEC2D_ETA(iter_region) + &
         ((NEX_PER_PROC_ETA / ratio_divide_central_cube)*(NEX_XI / ratio_divide_central_cube))
+
+        NGLOB2DMAX_YMIN_YMAX(iter_region) = NGLOB2DMAX_YMIN_YMAX(iter_region) + &
+        (((NEX_PER_PROC_XI / ratio_divide_central_cube)*(NGLLX-1)+1)*((NEX_XI / ratio_divide_central_cube)*(NGLLX-1)+1))
+
+        NGLOB2DMAX_XMIN_XMAX(iter_region) = NGLOB2DMAX_XMIN_XMAX(iter_region) + &
+        (((NEX_PER_PROC_ETA / ratio_divide_central_cube)*(NGLLX-1)+1)*((NEX_XI / ratio_divide_central_cube)*(NGLLX-1)+1))
     endif
 enddo
 
@@ -2254,12 +2311,12 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
             nb_lay_sb = 0
             nspec_sb = 0
         endif
-        tmp_sum = tmp_sum + ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
+        tmp_sum = tmp_sum + (((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
                 doubling * ((NEX_XI / ratio_sampling_array(iter_layer)) * (NEX_ETA / ratio_sampling_array(iter_layer)) * &
-                (nspec_sb/4))
+                (nspec_sb/4))) / NPROC
     enddo
-    NSPEC(iter_region) = tmp_sum / NPROC
+    NSPEC(iter_region) = tmp_sum
 enddo
 
   if(INCLUDE_CENTRAL_CUBE) NSPEC(IREGION_INNER_CORE) = NSPEC(IREGION_INNER_CORE) + &
@@ -2267,9 +2324,7 @@ enddo
          (NEX_PER_PROC_ETA / ratio_divide_central_cube) * &
          (NEX_XI / ratio_divide_central_cube)
 
-!! DK DK temporary check because at very high resolution there is a bug somewhere
-!! DK DK (maybe in auto_ner)
-  if(minval(NSPEC) < 0) stop 'negative NSPEC, there is a bug somewhere, maybe in auto_ner'
+  if(minval(NSPEC) <= 0) stop 'negative NSPEC, there is a problem somewhere'
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -2294,8 +2349,8 @@ enddo
 
 ! 2-D addressing and buffers for summation between slices
 ! we add one to number of points because of the flag after the last point
-  NGLOB2DMAX_XMIN_XMAX(:) = NSPEC2DMAX_XMIN_XMAX(:)*NGLLY*NGLLZ + 1
-  NGLOB2DMAX_YMIN_YMAX(:) = NSPEC2DMAX_YMIN_YMAX(:)*NGLLX*NGLLZ + 1
+  NGLOB2DMAX_XMIN_XMAX(:) = NGLOB2DMAX_XMIN_XMAX(:) + 1
+  NGLOB2DMAX_YMIN_YMAX(:) = NGLOB2DMAX_YMIN_YMAX(:) + 1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!

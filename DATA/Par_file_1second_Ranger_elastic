@@ -50,6 +50,7 @@ RECORD_LENGTH_IN_MINUTES        = 25.0d0
 # save AVS or OpenDX movies
 MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
+MOVIE_COARSE                    = .true.
 NTSTEP_BETWEEN_FRAMES           = 100
 HDUR_MOVIE                      = 0.d0
 
@@ -59,9 +60,8 @@ HDUR_MOVIE                      = 0.d0
 # start/stop: frames will be stored at MOVIE_START + i*NSTEP_BETWEEN_FRAMES, where i=(0,1,2..) and iNSTEP_BETWEEN_FRAMES <= MOVIE_STOP
 # movie_volume_type: 1=strain, 2=time integral of strain, 3=\mu*time integral of strain
 # type 4 saves the trace and deviatoric stress in the whole volume, 5=displacement, 6=velocity
-#MOVIE_VOLUME_COARSE saves movie only at corners of elements
+#MOVIE_COARSE saves movie only at corners of elements
 MOVIE_VOLUME_TYPE               = 2
-MOVIE_VOLUME_COARSE             = .true.
 MOVIE_TOP_KM                    = -100.0
 MOVIE_BOTTOM_KM                 = 1000.0
 MOVIE_WEST_DEG                  = -90.0
