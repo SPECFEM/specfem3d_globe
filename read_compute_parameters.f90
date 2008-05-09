@@ -2261,9 +2261,7 @@ enddo
          (NEX_PER_PROC_ETA / ratio_divide_central_cube) * &
          (NEX_XI / ratio_divide_central_cube)
 
-!! DK DK temporary check because at very high resolution there is a bug somewhere
-!! DK DK (maybe in auto_ner)
-  if(minval(NSPEC) < 0) stop 'negative NSPEC, there is a bug somewhere, maybe in auto_ner'
+  if(minval(NSPEC) <= 0) stop 'negative NSPEC, there is a problem somewhere'
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
