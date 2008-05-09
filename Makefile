@@ -27,26 +27,34 @@
 
 # Makefile.  Generated from Makefile.in by configure.
 
- FC = ifort
-#FC = /usr/bin/gfortran
-#FC = pgf90
-#FC = /opt/intel/fc/9.1.040/bin/ifort
-FCFLAGS = #-g
-MPIFC = mpif90
-#MPIFC = /home/r/geophy/dkomati1/bin/mpich2-1.0.7/bin/mpif90
-#MPIFC = /opt/mpich2_ifort/bin/mpif90
-MPILIBS =
-#FLAGS_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -ftrapuv -fpe0 -no-ftz -traceback
-FLAGS_CHECK = $(FLAGS_NO_CHECK)
-FLAGS_NO_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe3 -no-ftz
+#
+# Intel ifort
+#
+#FC = ifort
+#MPIFC = /home/r/geophy/dkomati1/bin/mpich2-1.0.7_ifort/bin/mpif90
+#FLAGS_NO_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe3 -no-ftz
+#FLAGS_NO_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn declarations -std95 -check all -align sequence -assume byterecl -warn unused
 
-#FLAGS_NO_CHECK = -std=gnu -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+#
+# GNU gfortran
+#
+FC = /usr/bin/gfortran
+MPIFC = /home/r/geophy/dkomati1/bin/mpich2-1.0.7/bin/mpif90
+FLAGS_NO_CHECK = -std=gnu -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+
+#
+# Portland pgf90
+#
+#FC = pgf90
+#MPIFC = mpif90
 #FLAGS_NO_CHECK = -fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mstandard -fastsse -tp amd64e
 
-#FLAGS_NO_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn declarations -std95 -check all -align sequence -assume byterecl -warn unused
+FLAGS_CHECK = $(FLAGS_NO_CHECK)
 #FLAGS_NO_CHECK2 = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn declarations -std95 -CB -align sequence -assume byterecl # -warn unused
 FLAGS_NO_CHECK2 = $(FLAGS_NO_CHECK)
 FCFLAGS_f90 =
+MPILIBS =
+FCFLAGS = #-g
 
 FCCOMPILE_CHECK = ${FC} ${FCFLAGS} $(FLAGS_CHECK)
 FCCOMPILE_NO_CHECK = ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK)

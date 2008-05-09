@@ -32,7 +32,6 @@
 
   subroutine create_list_files_chunks(iregion_code, &
                 nglob_ori,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_CORNER, &
-                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                 myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
 
   implicit none
@@ -51,13 +50,9 @@
 
   integer nglob,nglob_ori
   integer NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_my_corner
-  integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
   integer myrank,NCHUNKS
 
   character(len=150) OUTPUT_FILES
-
-! array to store points selected for the chunk face buffer
-  integer NGLOB2DMAX_XY
 
 ! pairs generated theoretically
 ! four sides for each of the three types of messages
@@ -157,9 +152,6 @@
     write(IMAIN,*) 'There is a total of ',NUMMSGS_FACES,' messages to assemble faces between chunks'
     write(IMAIN,*)
   endif
-
-! define maximum size for message buffers
-  NGLOB2DMAX_XY = max(NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
 
   imsg = 0
 

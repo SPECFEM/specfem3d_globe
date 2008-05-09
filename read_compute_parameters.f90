@@ -2195,7 +2195,8 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         tmp_sum_nglob2D_eta = tmp_sum_nglob2D_eta + (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb))*NGLLX*NGLLX) - &
                 ((((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - doubling*nb_lay_sb)) + &
-                ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))*(ner(iter_layer) - to_remove - doubling*nb_lay_sb))*NGLLX) + &
+                ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))* &
+                   (ner(iter_layer) - to_remove - doubling*nb_lay_sb))*NGLLX) + &
                 (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - to_remove - doubling*nb_lay_sb)) + &
                 doubling * (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))/divider) * (nglob_surf-nglob_edges_h) - &
                 ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))/divider -1) * nglob_edge_v)

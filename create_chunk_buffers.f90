@@ -42,7 +42,7 @@
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
   iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-  iboolfaces,npoin2D_faces,iboolcorner,NGLOB1D_RADIAL)
+  iboolfaces,npoin2D_faces,iboolcorner,NGLOB1D_RADIAL,NGLOB2DMAX_XY)
 
   implicit none
 
@@ -60,7 +60,8 @@
   integer :: NGLOB1D_RADIAL
   integer :: imsg2,icount_faces,icount_corners
   integer, dimension(NUMFACES_SHARED) :: npoin2D_faces
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces
+  integer :: NGLOB2DMAX_XY
+  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
   integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
 
 !! DK DK added this for the merged version
@@ -98,7 +99,6 @@
   logical, dimension(:), allocatable ::  mask_ibool
 
 ! array to store points selected for the chunk face buffer
-  integer NGLOB2DMAX_XY
   integer, dimension(:), allocatable :: ibool_selected
 
   double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
@@ -244,9 +244,6 @@
     write(IMAIN,*) 'There is a total of ',NUMMSGS_FACES,' messages to assemble faces between chunks'
     write(IMAIN,*)
   endif
-
-! define maximum size for message buffers
-  NGLOB2DMAX_XY = max(NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
 
 ! allocate arrays for message buffers with maximum size
   allocate(ibool_selected(NGLOB2DMAX_XY))

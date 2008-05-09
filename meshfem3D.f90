@@ -1768,7 +1768,6 @@
 ! crust_mantle
     call create_list_files_chunks(iregion_code, &
       nglob(iregion_code),NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_CORNER, &
-      NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
       myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
 
 !! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -1846,7 +1845,8 @@
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
   iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-  iboolfaces_crust_mantle,npoin2D_faces_crust_mantle,iboolcorner_crust_mantle,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE))
+  iboolfaces_crust_mantle,npoin2D_faces_crust_mantle,iboolcorner_crust_mantle,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+  NGLOB2DMAX_XY_VAL_CM)
 
   else if(iregion_code == IREGION_OUTER_CORE) then
 ! outer_core
@@ -1864,7 +1864,8 @@
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
   iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-  iboolfaces_outer_core,npoin2D_faces_outer_core,iboolcorner_outer_core,NGLOB1D_RADIAL(IREGION_OUTER_CORE))
+  iboolfaces_outer_core,npoin2D_faces_outer_core,iboolcorner_outer_core,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+  NGLOB2DMAX_XY_VAL_OC)
 
   else if(iregion_code == IREGION_INNER_CORE) then
 ! inner_core
@@ -1882,7 +1883,8 @@
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
   iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-  iboolfaces_inner_core,npoin2D_faces_inner_core,iboolcorner_inner_core,NGLOB1D_RADIAL(IREGION_INNER_CORE))
+  iboolfaces_inner_core,npoin2D_faces_inner_core,iboolcorner_inner_core,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+  NGLOB2DMAX_XY_VAL_IC)
 
   else
     stop 'DK DK incorrect region in merged code'

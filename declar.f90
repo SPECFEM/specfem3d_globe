@@ -123,11 +123,9 @@
   integer, dimension(NSPEC2D_BOTTOM_IC) :: ibelm_bottom_inner_core
   integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
 
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle,iboolfaces_outer_core,iboolfaces_inner_core
-
-!!!!  real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY_VAL) :: buffer_send_faces_scalar,buffer_received_faces_scalar
-
-!!!!  real(kind=CUSTOM_REAL), dimension(NDIM,2*NGLOB2DMAX_XY_VAL) :: buffer_send_faces_vector,buffer_received_faces_vector
+  integer, dimension(NGLOB2DMAX_XY_VAL_CM,NUMFACES_SHARED) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_VAL_OC,NUMFACES_SHARED) :: iboolfaces_outer_core
+  integer, dimension(NGLOB2DMAX_XY_VAL_IC,NUMFACES_SHARED) :: iboolfaces_inner_core
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
