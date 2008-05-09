@@ -140,6 +140,9 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
+!! DM !!
+  integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
+
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
@@ -2120,19 +2123,48 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
     endif
     tmp_sum_xi = 0
     tmp_sum_eta = 0
+    tmp_sum_nglob2D_xi = 0
+    tmp_sum_nglob2D_eta = 0
     do iter_layer = ifirst_region, ilast_region
         if (this_region_has_a_doubling(iter_layer)) then
-            if (ner(iter_layer) == 1) then
-              nb_lay_sb = 1
-              nspec2D_xi_sb = NSPEC2D_XI_SUPERBRICK_1L
-              nspec2D_eta_sb = NSPEC2D_ETA_SUPERBRICK_1L
-            else
+            if (iter_region == IREGION_OUTER_CORE .and. iter_layer == lastdoubling_layer) then
+              ! simple brick
+              divider = 1
+              nglob_surf = 6*NGLLX**2 - 7*NGLLX + 2
+              nglob_edges_h = 2*(NGLLX-1)+1 + NGLLX
+              ! minimum value to be safe
+              nglob_edge_v = NGLLX-2
               nb_lay_sb = 2
               nspec2D_xi_sb = NSPEC2D_XI_SUPERBRICK
               nspec2D_eta_sb = NSPEC2D_ETA_SUPERBRICK
+            else
+              ! double brick
+              divider = 2
+              if (ner(iter_layer) == 1) then
+                nglob_surf = 6*NGLLX**2 - 8*NGLLX + 3
+                nglob_edges_h = 4*(NGLLX-1)+1 + 2*(NGLLX-1)+1
+                nglob_edge_v = NGLLX-2
+                nb_lay_sb = 1
+                nspec2D_xi_sb = NSPEC2D_XI_SUPERBRICK_1L
+                nspec2D_eta_sb = NSPEC2D_ETA_SUPERBRICK_1L
+              else
+                nglob_surf = 8*NGLLX**2 - 11*NGLLX + 4
+                nglob_edges_h = 4*(NGLLX-1)+1 + 2*(NGLLX-1)+1
+                nglob_edge_v = 2*(NGLLX-1)+1 -2
+                nb_lay_sb = 2
+                nspec2D_xi_sb = NSPEC2D_XI_SUPERBRICK
+                nspec2D_eta_sb = NSPEC2D_ETA_SUPERBRICK
+                divider = 2
+              endif
             endif
             doubling = 1
+            to_remove = 1
         else
+            if (iter_layer /= ifirst_region) then
+              to_remove = 0
+            else
+              to_remove = 1
+            endif
             doubling = 0
             nb_lay_sb = 0
             nspec2D_xi_sb = 0
@@ -2146,14 +2178,40 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
         tmp_sum_eta = tmp_sum_eta + ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)) * &
                 (ner(iter_layer) - doubling*nb_lay_sb)) + &
                 doubling * ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)) * (nspec2D_eta_sb/2))
+
+        tmp_sum_nglob2D_xi = tmp_sum_nglob2D_xi + (((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)) * &
+                (ner(iter_layer) - doubling*nb_lay_sb))*NGLLX*NGLLX) - &
+                ((((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - doubling*nb_lay_sb)) + &
+                ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))*(ner(iter_layer) - to_remove - doubling*nb_lay_sb))*NGLLX) + &
+                (((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - to_remove - doubling*nb_lay_sb)) + &
+                doubling * (((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))/divider) * (nglob_surf-nglob_edges_h) - &
+                ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer))/divider -1) * nglob_edge_v)
+
+        tmp_sum_nglob2D_eta = tmp_sum_nglob2D_eta + (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer)) * &
+                (ner(iter_layer) - doubling*nb_lay_sb))*NGLLX*NGLLX) - &
+                ((((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - doubling*nb_lay_sb)) + &
+                ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))*(ner(iter_layer) - to_remove - doubling*nb_lay_sb))*NGLLX) + &
+                (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - to_remove - doubling*nb_lay_sb)) + &
+                doubling * (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))/divider) * (nglob_surf-nglob_edges_h) - &
+                ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))/divider -1) * nglob_edge_v)
     enddo
     NSPEC2D_XI(iter_region) = tmp_sum_xi
     NSPEC2D_ETA(iter_region) = tmp_sum_eta
+
+    NGLOB2DMAX_YMIN_YMAX(iter_region) = tmp_sum_nglob2D_xi
+    NGLOB2DMAX_XMIN_XMAX(iter_region) = tmp_sum_nglob2D_eta
+
     if (iter_region == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE) then
         NSPEC2D_XI(iter_region) = NSPEC2D_XI(iter_region) + &
         ((NEX_PER_PROC_XI / ratio_divide_central_cube)*(NEX_XI / ratio_divide_central_cube))
         NSPEC2D_ETA(iter_region) = NSPEC2D_ETA(iter_region) + &
         ((NEX_PER_PROC_ETA / ratio_divide_central_cube)*(NEX_XI / ratio_divide_central_cube))
+
+        NGLOB2DMAX_YMIN_YMAX(iter_region) = NGLOB2DMAX_YMIN_YMAX(iter_region) + &
+        (((NEX_PER_PROC_XI / ratio_divide_central_cube)*(NGLLX-1)+1)*((NEX_XI / ratio_divide_central_cube)*(NGLLX-1)+1))
+
+        NGLOB2DMAX_XMIN_XMAX(iter_region) = NGLOB2DMAX_XMIN_XMAX(iter_region) + &
+        (((NEX_PER_PROC_ETA / ratio_divide_central_cube)*(NGLLX-1)+1)*((NEX_XI / ratio_divide_central_cube)*(NGLLX-1)+1))
     endif
 enddo
 
@@ -2286,8 +2344,8 @@ enddo
 
 ! 2-D addressing and buffers for summation between slices
 ! we add one to number of points because of the flag after the last point
-  NGLOB2DMAX_XMIN_XMAX(:) = NSPEC2DMAX_XMIN_XMAX(:)*NGLLY*NGLLZ + 1
-  NGLOB2DMAX_YMIN_YMAX(:) = NSPEC2DMAX_YMIN_YMAX(:)*NGLLX*NGLLZ + 1
+  NGLOB2DMAX_XMIN_XMAX(:) = NGLOB2DMAX_XMIN_XMAX(:) + 1
+  NGLOB2DMAX_YMIN_YMAX(:) = NGLOB2DMAX_YMIN_YMAX(:) + 1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
