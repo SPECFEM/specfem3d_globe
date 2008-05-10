@@ -514,7 +514,7 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
 !! DK DK added this to reduce the size of the buffers
-  integer :: npoin2D_max_all
+  integer :: npoin2D_max_all,NDIM_smaller_buffers
 
   integer ichunk,iproc_xi,iproc_eta !!!!!!!!!!!!!!!!!!!!!!,iproc,iproc_read
   integer NPROC_ONE_DIRECTION
@@ -634,8 +634,13 @@
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
   npoin2D_max_all = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
                         maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
-  allocate(buffer_send_faces(NDIM,npoin2D_max_all))
-  allocate(buffer_received_faces(NDIM,npoin2D_max_all))
+  if(FEWER_MESSAGES_LARGER_BUFFERS) then
+    NDIM_smaller_buffers = NDIM
+  else
+    NDIM_smaller_buffers = 1
+  endif
+  allocate(buffer_send_faces(NDIM_smaller_buffers,npoin2D_max_all))
+  allocate(buffer_received_faces(NDIM_smaller_buffers,npoin2D_max_all))
 
   if (myrank == 0) then
 
@@ -2291,7 +2296,7 @@
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS)
+            NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS,NDIM_smaller_buffers)
 
 !---
 !---  use buffers to assemble forces with the central cube

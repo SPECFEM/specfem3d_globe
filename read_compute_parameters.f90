@@ -1164,6 +1164,11 @@
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) stop 'must have NEX_XI = NEX_ETA for more than two chunks'
   if(NCHUNKS > 2 .and. NPROC_XI /= NPROC_ETA) stop 'must have NPROC_XI = NPROC_ETA for more than two chunks'
 
+! check that option to run one slice only per chunk has been activated
+! (it is deactivated by default because MPI buffers use more memory when it is on)
+  if((NPROC_XI == 1 .or. NPROC_ETA == 1) .and. (NUMFACES_SHARED /= 4 .or. NUMCORNERS_SHARED /= 4)) &
+    stop 'option to run one slice only per chunk is deactivated, edit constants.h and recompile'
+
 ! check that IASP91, AK135, 1066A, JP1D or SEA1D is isotropic
   if((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135 .or. &

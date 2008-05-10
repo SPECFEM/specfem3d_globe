@@ -131,8 +131,8 @@
   write(IOUT,*) '!'
   write(IOUT,*) '! maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
   write(IOUT,*) '!'
-! use fused loops on the ES
-  write(IOUT,*) '! on NEC SX and Earth Simulator, make sure "loopcnt=" parameter'
+! use fused loops on NEC SX
+  write(IOUT,*) '! on NEC SX, make sure "loopcnt=" parameter'
   write(IOUT,*) '! in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
   write(IOUT,*) '!'
 

@@ -214,8 +214,8 @@
   print *,'number of time steps = ',NSTEP
   print *
 
-  print *,'on NEC SX and Earth Simulator, make sure "loopcnt=" parameter'
-! use fused loops on the ES
+  print *,'on NEC SX, make sure "loopcnt=" parameter'
+! use fused loops on NEC SX
   print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
   print *
 

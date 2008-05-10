@@ -31,6 +31,10 @@
 !--- user can modify parameters below
 !
 
+! deccrease the number of MPI messages by 3 but increase the size
+! of several MPI buffers by 3 but in order to do that
+  logical, parameter :: FEWER_MESSAGES_LARGER_BUFFERS = .true.
+
 !
 ! solver in single or double precision depending on the machine (4 or 8 bytes)
 !
@@ -45,15 +49,6 @@
 ! set to SIZE_REAL to run in single precision
 ! set to SIZE_DOUBLE to run in double precision (increases memory size by 2)
   integer, parameter :: CUSTOM_REAL = SIZE_REAL
-
-! if files on a local path on each node are also seen as global with same path
-! set to .true. typically on a shared-memory machine with a common file system
-! set to .false. typically on a cluster of nodes with local disks
-! if running on a cluster of nodes with local disks, also customize global path
-! to local files in create_serial_name_database.f90 ("20 format ...")
-! Flag is used only when one checks the mesh with the serial codes
-! ("xcheck_buffers_1D" etc.), ignore it if you do not plan to use them
-  logical, parameter :: LOCAL_PATH_IS_ALSO_GLOBAL = .false.
 
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
@@ -365,9 +360,6 @@
 ! this is at most 1, except when there is only once slice per chunk
 ! in which case it is 4
   integer, parameter :: NUMCORNERS_SHARED = 1 !!!!!!  DK DK removed support for one slice only    4
-
-! number of slaves per corner
-  integer, parameter :: NUMSLAVES = 2
 
 ! number of layers in PREM
   integer, parameter :: NR = 640

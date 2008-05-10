@@ -1,4 +1,4 @@
-
+ 
  !
  ! this is the parameter file for static compilation of the solver
  !
@@ -43,7 +43,7 @@
  !
  ! number of seismic sources =            1
  !
-
+ 
  ! approximate static memory needed by the solver:
  ! ----------------------------------------------
  !
@@ -58,36 +58,36 @@
  ! size of static arrays for all slices =    1151.40130090714       GB
  !                                      =    1.12441533291712       TB
  !
-
+ 
  integer, parameter :: NEX_XI_VAL =          864
  integer, parameter :: NEX_ETA_VAL =          864
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE =        57456
  integer, parameter :: NSPEC_OUTER_CORE =         7308
  integer, parameter :: NSPEC_INNER_CORE =         4212
-
+ 
  integer, parameter :: NGLOB_CRUST_MANTLE =      3776989
  integer, parameter :: NGLOB_OUTER_CORE =       493569
  integer, parameter :: NGLOB_INNER_CORE =       293125
-
+ 
  integer, parameter :: NSPECMAX_ANISO_IC =            1
-
+ 
  integer, parameter :: NSPECMAX_ISO_MANTLE =        57456
  integer, parameter :: NSPECMAX_TISO_MANTLE =            1
  integer, parameter :: NSPECMAX_ANISO_MANTLE =            1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT =            1
  integer, parameter :: NSPEC_INNER_CORE_ATTENUATION =            1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_STR_OR_ATT =            1
  integer, parameter :: NSPEC_INNER_CORE_STR_OR_ATT =            1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_STR_AND_ATT =            1
  integer, parameter :: NSPEC_INNER_CORE_STR_AND_ATT =            1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =            1
  integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =            1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT =            1
  integer, parameter :: NSPEC_OUTER_CORE_ADJOINT =            1
  integer, parameter :: NSPEC_INNER_CORE_ADJOINT =            1
@@ -95,29 +95,29 @@
  integer, parameter :: NGLOB_OUTER_CORE_ADJOINT =            1
  integer, parameter :: NGLOB_INNER_CORE_ADJOINT =            1
  integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT =            1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_STACEY =            1
  integer, parameter :: NSPEC_OUTER_CORE_STACEY =            1
-
+ 
  integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS =            1
-
+ 
  logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .false.
-
+ 
  logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .false.
-
+ 
  logical, parameter :: ANISOTROPIC_INNER_CORE_VAL = .false.
-
+ 
  logical, parameter :: ATTENUATION_VAL = .false.
-
+ 
  logical, parameter :: ATTENUATION_3D_VAL = .false.
-
+ 
  logical, parameter :: ELLIPTICITY_VAL = .false.
-
+ 
  logical, parameter :: GRAVITY_VAL = .false.
-
+ 
  logical, parameter :: ROTATION_VAL = .false.
  integer, parameter :: NSPEC_OUTER_CORE_ROTATION =            1
-
+ 
  integer, parameter :: NGLOB1D_RADIAL_CM =          493
  integer, parameter :: NGLOB1D_RADIAL_OC =          345
  integer, parameter :: NGLOB1D_RADIAL_IC =           37
