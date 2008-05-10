@@ -38,5 +38,5 @@ numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 echo "Submitting job"
 
 # time below is given in hh:mm
-bsub $queue -n $numnodes -W 48:00  < go_mesher_solver_lsf_globe.kernel
+bsub $queue -n $numnodes -W 48:00 -C 0 < go_mesher_solver_lsf_globe.kernel
 
