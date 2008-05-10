@@ -8,8 +8,6 @@ if [ -z $USER ]; then
 	exit 2
 fi
 
-BASEMPIDIR=/scratch/$USER/DATABASES_MPI
-
 # script to run the mesher and the solver
 
 # read DATA/Par_file to get information about the run
@@ -25,24 +23,18 @@ numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 rm -r -f OUTPUT_FILES
 mkdir OUTPUT_FILES
 
-#rm -r -f DATABASES_MPI
-#mkdir DATABASES_MPI
-
 # obtain lsf job information
 echo "$LSB_MCPU_HOSTS" > OUTPUT_FILES/lsf_machines
 echo "$LSB_JOBID" > OUTPUT_FILES/jobid
 
 ./remap_lsf_machines.pl OUTPUT_FILES/lsf_machines >OUTPUT_FILES/machines
 
-shmux -M 50 -S all -c "rm -r -f /scratch/$USER ; mkdir -p /scratch/$USER ; mkdir -p $BASEMPIDIR" - < OUTPUT_FILES/machines >/dev/null
-
 echo starting MPI mesher on $numnodes processors
 echo " "
 echo starting run in current directory $PWD
 echo " "
 
-# wait for 10 minutes to try to avoid slow runs (let the load of the machine decrease)
-sleep 20
+sleep 2
 
 #### use this on LSF
 mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/xmeshfem3D

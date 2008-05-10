@@ -31,7 +31,7 @@
 # Intel ifort
 #
 FC = ifort
-MPIFC = /home/r/geophy/dkomati1/bin/mpich2-1.0.7_ifort/bin/mpif90
+MPIFC = mpif90
 FLAGS_NO_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe3 -no-ftz
 #FLAGS_NO_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn declarations -std95 -check all -align sequence -assume byterecl -warn unused
 
