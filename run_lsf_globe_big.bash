@@ -16,6 +16,6 @@ NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -d = -f 2`
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
 echo "Submitting job"
-bsub $queue -n $numnodes -W 14:00 < go_mesher_solver_lsf_globe.bash
-#bsub $queue -n $numnodes -W 144:00 < go_mesher_solver_lsf_globe.bash
+bsub $queue -n $numnodes -W 14:00 -C 0 < go_mesher_solver_lsf_globe.bash
+#bsub $queue -n $numnodes -W 144:00 -C 0 < go_mesher_solver_lsf_globe.bash
 
