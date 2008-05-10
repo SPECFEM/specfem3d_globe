@@ -2175,6 +2175,8 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
             else
               to_remove = 1
             endif
+            ! dummy value
+            divider = 1
             doubling = 0
             nb_lay_sb = 0
             nspec2D_xi_sb = 0
