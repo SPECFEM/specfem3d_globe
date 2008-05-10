@@ -517,7 +517,7 @@ subroutine sort_arrays_for_cuthill (ispecb,xstore,ystore,zstore,ibelm,normal,jac
   allocate(ibelm_tmp(ispecb))
   ibelm_tmp(1:ispecb) = ibelm(1:ispecb)
   do i = 1,ispecb
-    ibelm(perm(i)) = ibelm_tmp(i)
+    ibelm(i) = ibelm_tmp(perm(i))
   enddo
   deallocate(ibelm_tmp)
 
@@ -525,7 +525,7 @@ subroutine sort_arrays_for_cuthill (ispecb,xstore,ystore,zstore,ibelm,normal,jac
   allocate(normal_tmp(NDIM,NGLL1,NGLL2,ispecb))
   normal_tmp(:,:,:,1:ispecb) = normal(:,:,:,1:ispecb)
   do i = 1,ispecb
-    normal(:,:,:,perm(i)) = normal_tmp(:,:,:,i)
+    normal(:,:,:,i) = normal_tmp(:,:,:,perm(i))
   enddo
   deallocate(normal_tmp)
 
@@ -533,7 +533,7 @@ subroutine sort_arrays_for_cuthill (ispecb,xstore,ystore,zstore,ibelm,normal,jac
   allocate(jacobian2D_tmp(NGLL1,NGLL2,ispecb))
   jacobian2D_tmp(:,:,1:ispecb) = jacobian2D(:,:,1:ispecb)
   do i = 1,ispecb
-    jacobian2D(:,:,perm(i)) = jacobian2D_tmp(:,:,i)
+    jacobian2D(:,:,i) = jacobian2D_tmp(:,:,perm(i))
   enddo
   deallocate(jacobian2D_tmp)
   deallocate(perm)

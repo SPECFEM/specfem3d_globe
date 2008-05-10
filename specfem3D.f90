@@ -4142,10 +4142,10 @@
             accel_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
@@ -4191,10 +4191,10 @@
             b_accel_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
