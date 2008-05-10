@@ -2175,12 +2175,15 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
             else
               to_remove = 1
             endif
-            ! dummy value
-            divider = 1
+! dummy values to avoid a warning
+            nglob_surf = 0
+            nglob_edges_h = 0
+            nglob_edge_v = 0
             doubling = 0
             nb_lay_sb = 0
             nspec2D_xi_sb = 0
             nspec2D_eta_sb = 0
+            divider = 1
         endif
 
         tmp_sum_xi = tmp_sum_xi + ((NEX_PER_PROC_XI / ratio_sampling_array(iter_layer)) * &
