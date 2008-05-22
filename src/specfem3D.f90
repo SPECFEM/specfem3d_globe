@@ -507,7 +507,7 @@
   integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
 
 ! proc numbers for MPI
-  integer myrank,sizeprocs,ier
+  integer myrank,sizeprocs,ier,errorcode
 
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
@@ -639,8 +639,17 @@
   else
     NDIM_smaller_buffers = 1
   endif
-  allocate(buffer_send_faces(NDIM_smaller_buffers,npoin2D_max_all))
-  allocate(buffer_received_faces(NDIM_smaller_buffers,npoin2D_max_all))
+  allocate(buffer_send_faces(NDIM_smaller_buffers,npoin2D_max_all),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(buffer_received_faces(NDIM_smaller_buffers,npoin2D_max_all),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
 
   if (myrank == 0) then
 
@@ -1107,23 +1116,107 @@
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
 
 ! allocate arrays for source
-  allocate(islice_selected_source(NSOURCES))
-  allocate(ispec_selected_source(NSOURCES))
-  allocate(Mxx(NSOURCES))
-  allocate(Myy(NSOURCES))
-  allocate(Mzz(NSOURCES))
-  allocate(Mxy(NSOURCES))
-  allocate(Mxz(NSOURCES))
-  allocate(Myz(NSOURCES))
-  allocate(xi_source(NSOURCES))
-  allocate(eta_source(NSOURCES))
-  allocate(gamma_source(NSOURCES))
-  allocate(t_cmt(NSOURCES))
-  allocate(hdur(NSOURCES))
-  allocate(hdur_gaussian(NSOURCES))
-  allocate(theta_source(NSOURCES))
-  allocate(phi_source(NSOURCES))
-  allocate(nu_source(NDIM,NDIM,NSOURCES))
+  allocate(islice_selected_source(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(ispec_selected_source(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(Mxx(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(Myy(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(Mzz(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(Mxy(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(Mxz(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(Myz(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(xi_source(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(eta_source(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(gamma_source(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(t_cmt(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(hdur(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(hdur_gaussian(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(theta_source(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(phi_source(NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(nu_source(NDIM,NDIM,NSOURCES),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
 
 ! locate sources in the mesh
   call locate_sources(NSOURCES,myrank,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
@@ -1168,17 +1261,71 @@
   if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
 
 ! allocate memory for receiver arrays
-  allocate(islice_selected_rec(nrec))
-  allocate(ispec_selected_rec(nrec))
-  allocate(xi_receiver(nrec))
-  allocate(eta_receiver(nrec))
-  allocate(gamma_receiver(nrec))
-  allocate(station_name(nrec))
-  allocate(network_name(nrec))
-  allocate(stlat(nrec))
-  allocate(stlon(nrec))
-  allocate(stele(nrec))
-  allocate(nu(NDIM,NDIM,nrec))
+  allocate(islice_selected_rec(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(ispec_selected_rec(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(xi_receiver(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(eta_receiver(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(gamma_receiver(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(station_name(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(network_name(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(stlat(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(stlon(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(stele(nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(nu(NDIM,NDIM,nrec),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
 
 ! locate receivers in the crust in the mesh
   call locate_receivers(myrank,DT,NSTEP,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
@@ -1193,7 +1340,12 @@
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 ! ---- source array
 
-  allocate(sourcearrays(NSOURCES,NDIM,NGLLX,NGLLY,NGLLZ))
+  allocate(sourcearrays(NSOURCES,NDIM,NGLLX,NGLLY,NGLLZ),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
   do isource = 1,NSOURCES
 
 !   check that the source slice number is okay
@@ -1224,12 +1376,31 @@
   if (nrec_local > 0) then
 
 ! allocate Lagrange interpolators for receivers
-  allocate(hxir_store(nrec_local,NGLLX))
-  allocate(hetar_store(nrec_local,NGLLY))
-  allocate(hgammar_store(nrec_local,NGLLZ))
+  allocate(hxir_store(nrec_local,NGLLX),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(hetar_store(nrec_local,NGLLY),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
+  allocate(hgammar_store(nrec_local,NGLLZ),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
 
 ! define local to global receiver numbering mapping
-  allocate(number_receiver_global(nrec_local))
+  allocate(number_receiver_global(nrec_local),STAT=ier)
+  if (ier /= 0 ) then
+    print *,"ABORTING can not allocate in specfem3D ier=",ier
+    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+  endif
+
   irec_local = 0
     do irec = 1,nrec
       if(myrank == islice_selected_rec(irec)) then
@@ -1450,11 +1621,35 @@
     endif
 
 ! allocate buffers for cube and slices
-    allocate(sender_from_slices_to_cube(non_zero_nb_msgs_theor_in_cube))
-    allocate(buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM))
-    allocate(buffer_slices(npoin2D_cube_from_slices,NDIM))
-    allocate(buffer_slices2(npoin2D_cube_from_slices,NDIM))
-    allocate(ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices))
+    allocate(sender_from_slices_to_cube(non_zero_nb_msgs_theor_in_cube),STAT=ier)
+    if (ier /= 0 ) then
+      print *,"ABORTING can not allocate in specfem3D ier=",ier
+      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+    endif
+
+    allocate(buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM),STAT=ier)
+    if (ier /= 0 ) then
+      print *,"ABORTING can not allocate in specfem3D ier=",ier
+      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+    endif
+
+    allocate(buffer_slices(npoin2D_cube_from_slices,NDIM),STAT=ier)
+    if (ier /= 0 ) then
+      print *,"ABORTING can not allocate in specfem3D ier=",ier
+      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+    endif
+
+    allocate(buffer_slices2(npoin2D_cube_from_slices,NDIM),STAT=ier)
+    if (ier /= 0 ) then
+      print *,"ABORTING can not allocate in specfem3D ier=",ier
+      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+    endif
+
+    allocate(ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices),STAT=ier)
+    if (ier /= 0 ) then
+      print *,"ABORTING can not allocate in specfem3D ier=",ier
+      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+    endif
 
 ! create buffers to assemble with the central cube
     call create_central_cube_buffers(myrank,iproc_xi,iproc_eta,ichunk, &
@@ -1668,7 +1863,10 @@
 ! allocate seismogram array
   if (nrec_local > 0) then
       allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-      if(ier /= 0) stop 'error while allocating seismograms'
+      if (ier /= 0 ) then
+        print *,"ABORTING can not allocate in specfem3D while allocating seismograms ier=",ier
+        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+      endif
 ! initialize seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
     nit_written = 0

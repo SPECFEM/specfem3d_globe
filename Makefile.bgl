@@ -27,37 +27,26 @@
 
 # Makefile.  Generated from Makefile.in by configure.
 
-#
-# Intel ifort
-#
-FC = ifort
-MPIFC = mpif90
-FLAGS_NO_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe3 -no-ftz
-#FLAGS_NO_CHECK = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn declarations -std95 -check all -align sequence -assume byterecl -warn unused
-
-#
-# GNU gfortran
-#
-#FC = /usr/bin/gfortran
-#MPIFC = /home/r/geophy/dkomati1/bin/mpich2-1.0.7/bin/mpif90
-#FLAGS_NO_CHECK = -std=gnu -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
-
-#
-# Portland pgf90
-#
-#FC = pgf90
-#MPIFC = mpif90
-#FLAGS_NO_CHECK = -fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mstandard -fastsse -tp amd64e
-
-FLAGS_CHECK = $(FLAGS_NO_CHECK)
-#FLAGS_NO_CHECK2 = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn declarations -std95 -CB -align sequence -assume byterecl # -warn unused
-FLAGS_NO_CHECK2 = $(FLAGS_NO_CHECK)
-FCFLAGS_f90 =
-MPILIBS =
+FC = mpxlf90 -qmaxmem=-1 -qxflag=stacksize 
 FCFLAGS = #-g
+MPIFC = mpxlf90 -qmaxmem=-1 -qxflag=stacksize 
+MPILIBS = 
+FLAGS_NO_CHECK =   -O3 -qsave -qstrict -qarch=440 -qtune=440  -qfree=f90 -Q -qsuffix=f=f90 
+FLAGS_CHECK =    $(FLAGS_NO_CHECK)
+FCFLAGS_f90 = 
 
-SPECINC=setup/
-BIN=bin
+CC = mpcc -I$(SPECINC) 
+CFLAGS = -g
+CPPFLAGS =  -g -O3 -qarch=440 -qtune=440
+
+AR = ar
+ARFLAGS = -c -r -u ## -elf64-x86-64
+RANLIB = ranlib
+
+FLAGS_NO_CHECK2 = $(FLAGS_NO_CHECK)
+
+SPECINC = setup/
+BIN = bin
 
 FCCOMPILE_CHECK = ${FC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC)
 FCCOMPILE_NO_CHECK = ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC)
@@ -65,13 +54,6 @@ MPIFCCOMPILE_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC)
 MPIFCCOMPILE_NO_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC)
 MPIFCCOMPILE_NO_CHECK2 = ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK2) -I$(SPECINC)
 
-CC = gcc
-CFLAGS = -g -O2
-CPPFLAGS = -I. 
-
-AR = ar
-ARFLAGS = cru
-RANLIB = ranlib
 
 O = obj
 S = src
@@ -174,7 +156,6 @@ LIBSPECFEM = $O/libspecfem.a
 
 # default targets
 DEFAULT = \
-	xcreate_header_file \
   OUTPUT_FILES/values_from_mesher.h \
 	xmeshfem3D \
 	$(EMPTY_MACRO)
@@ -203,7 +184,7 @@ xmeshfem3D: $(XMESHFEM_OBJECTS)
 XSPECFEM_OBJECTS = $(SOLVER_ARRAY_OBJECTS) $O/exit_mpi.o $(LIBSPECFEM)
 
 xconvolve_source_timefunction: $O/convolve_source_timefunction.o
-	${FCCOMPILE_CHECK} -o $(BIN)/xconvolve_source_timefunction $O/convolve_source_timefunction.o
+	${FCCOMPILE_CHECK} -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
 xcreate_header_file: $O/create_header_file.o $O/exit_mpi.o $O/get_value_parameters.o $O/read_compute_parameters.o $O/memory_eval.o $O/save_header_file.o $O/count_number_of_sources.o $O/read_value_parameters.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o $O/auto_ner.o
 	${MPIFCCOMPILE_CHECK} -o $(BIN)/xcreate_header_file $O/create_header_file.o $O/exit_mpi.o $O/get_value_parameters.o $O/read_compute_parameters.o $O/memory_eval.o $O/save_header_file.o $O/count_number_of_sources.o $O/read_value_parameters.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o $O/auto_ner.o
@@ -496,6 +477,6 @@ $O/s362ani.o: $(SPECINC)/constants.h $S/s362ani.f90
 ### rule for the header file
 ###
 
-OUTPUT_FILES/values_from_mesher.h: $(BIN)/xcreate_header_file
+OUTPUT_FILES/values_from_mesher.h: create_header_file/$(BIN)/xcreate_header_file
 	mkdir -p OUTPUT_FILES
-	$(BIN)/xcreate_header_file
+	create_header_file/$(BIN)/xcreate_header_file
