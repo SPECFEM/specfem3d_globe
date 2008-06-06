@@ -33,7 +33,7 @@
 
   include "constants.h"
 
-! given a normalized radius x, gives the non-dimesionalized density rho,
+! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
   logical CRUSTAL,ONE_CRUST,check_doubling_flag
@@ -270,7 +270,7 @@
 
   include "constants.h"
 
-! given a normalized radius x, gives the non-dimesionalized density rho,
+! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
   logical CRUSTAL,ONE_CRUST
@@ -524,7 +524,7 @@
 
   include "constants.h"
 
-! given a normalized radius x, gives the non-dimesionalized density rho,
+! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
   integer idoubling,myrank

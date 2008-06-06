@@ -33,7 +33,7 @@ subroutine model_jp1d(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling, &
 
   include "constants.h"
 
-  ! given a normalized radius x, gives the non-dimesionalized density rho,
+  ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
   logical check_doubling_flag
