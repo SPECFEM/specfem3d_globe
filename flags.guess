@@ -30,7 +30,7 @@ case $FC in
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
             # standard options
-            FLAGS_NO_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe3 -no-ftz" # -mcmodel=medium
+            FLAGS_NO_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz" # -mcmodel=medium
             # Pangu at Caltech
             #FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O2 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
             # debug with range checking
