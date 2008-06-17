@@ -723,7 +723,7 @@
           MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
+          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
@@ -792,7 +792,7 @@
 ! arrays for BCAST
   integer, dimension(38) :: bcast_integer
   double precision, dimension(30) :: bcast_double_precision
-  logical, dimension(33) :: bcast_logical
+  logical, dimension(34) :: bcast_logical
 
 ! Boundary Mesh and Kernels
   integer k_top,k_bot,iregion_code,njunk1,njunk2,njunk3
@@ -842,7 +842,7 @@
          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
          TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
-         ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
+         ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
          MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
@@ -880,7 +880,7 @@
             MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-            CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
+            CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
             TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
@@ -987,30 +987,31 @@
     ONE_CRUST = bcast_logical(7)
     ROTATION = bcast_logical(8)
     ISOTROPIC_3D_MANTLE = bcast_logical(9)
-    TOPOGRAPHY = bcast_logical(10)
-    OCEANS = bcast_logical(11)
-    MOVIE_SURFACE = bcast_logical(12)
-    MOVIE_VOLUME = bcast_logical(13)
-    MOVIE_COARSE = bcast_logical(14)
-    ATTENUATION_3D = bcast_logical(15)
-    RECEIVERS_CAN_BE_BURIED = bcast_logical(16)
-    PRINT_SOURCE_TIME_FUNCTION = bcast_logical(17)
-    SAVE_MESH_FILES = bcast_logical(18)
-    ATTENUATION = bcast_logical(19)
-    ABSORBING_CONDITIONS = bcast_logical(20)
-    INCLUDE_CENTRAL_CUBE = bcast_logical(21)
-    INFLATE_CENTRAL_CUBE = bcast_logical(22)
-    SAVE_FORWARD = bcast_logical(23)
-    CASE_3D = bcast_logical(24)
-    OUTPUT_SEISMOS_ASCII_TEXT = bcast_logical(25)
-    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_logical(26)
-    OUTPUT_SEISMOS_SAC_BINARY = bcast_logical(27)
-    ROTATE_SEISMOGRAMS_RT = bcast_logical(28)
-    CUT_SUPERBRICK_XI = bcast_logical(29)
-    CUT_SUPERBRICK_ETA = bcast_logical(30)
-    WRITE_SEISMOGRAMS_BY_MASTER = bcast_logical(31)
-    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(32)
-    USE_BINARY_FOR_LARGE_FILE = bcast_logical(33)
+    HETEROGEN_3D_MANTLE = bcast_logical(10)
+    TOPOGRAPHY = bcast_logical(11)
+    OCEANS = bcast_logical(12)
+    MOVIE_SURFACE = bcast_logical(13)
+    MOVIE_VOLUME = bcast_logical(14)
+    MOVIE_COARSE = bcast_logical(15)
+    ATTENUATION_3D = bcast_logical(16)
+    RECEIVERS_CAN_BE_BURIED = bcast_logical(17)
+    PRINT_SOURCE_TIME_FUNCTION = bcast_logical(18)
+    SAVE_MESH_FILES = bcast_logical(19)
+    ATTENUATION = bcast_logical(20)
+    ABSORBING_CONDITIONS = bcast_logical(21)
+    INCLUDE_CENTRAL_CUBE = bcast_logical(22)
+    INFLATE_CENTRAL_CUBE = bcast_logical(23)
+    SAVE_FORWARD = bcast_logical(24)
+    CASE_3D = bcast_logical(25)
+    OUTPUT_SEISMOS_ASCII_TEXT = bcast_logical(26)
+    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_logical(27)
+    OUTPUT_SEISMOS_SAC_BINARY = bcast_logical(28)
+    ROTATE_SEISMOGRAMS_RT = bcast_logical(29)
+    CUT_SUPERBRICK_XI = bcast_logical(30)
+    CUT_SUPERBRICK_ETA = bcast_logical(31)
+    WRITE_SEISMOGRAMS_BY_MASTER = bcast_logical(32)
+    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(33)
+    USE_BINARY_FOR_LARGE_FILE = bcast_logical(34)
 
     DT = bcast_double_precision(1)
     ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
@@ -2058,6 +2059,13 @@
     write(IMAIN,*) 'incorporating 3-D lateral variations'
   else
     write(IMAIN,*) 'no 3-D lateral variations'
+  endif
+
+  write(IMAIN,*)
+  if(HETEROGEN_3D_MANTLE) then
+    write(IMAIN,*) 'incorporating heterogeneities in the mantle'
+  else
+    write(IMAIN,*) 'no heterogeneities in the mantle'
   endif
 
   write(IMAIN,*)

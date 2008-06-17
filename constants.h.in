@@ -429,6 +429,9 @@
 ! three_d_mantle_model_constants
   integer, parameter :: NK = 20,NS = 20,ND = 1
 
+! heterogen_mantle_model_constants
+  integer, parameter :: N_R = 256,N_THETA = 256,N_PHI = 256
+
 ! Japan 3D model (Zhao, 1994) constants
   integer, parameter :: MPA=42,MRA=48,MHA=21,MPB=42,MRB=48,MHB=18
   integer, parameter :: MKA=2101,MKB=2101

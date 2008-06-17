@@ -27,18 +27,18 @@
 
   subroutine get_model(myrank,iregion_code,nspec, &
     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rhostore, &
-    nspec_ani, &
+    dvpstore,nspec_ani, &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
     xelm,yelm,zelm,shape3D,ispec, &
     rmin,rmax,idoubling, &
     rho_vp,rho_vs,nspec_stacey, &
-    TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE, &
+    TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
     CRUSTAL,ONE_CRUST,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
     ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
-    AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+    AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
     numker,numhpa,numcof,ihpa,lmax,nylm, &
     lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
     nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -140,7 +140,14 @@
   type (sea1d_model_variables) SEA1DM_V
 ! sea1d_model_variables
 
-! three_d_mantle_model_variables
+! heterogen_mod_variables
+  type heterogen_mod_variables
+    sequence
+    double precision rho_in(N_R*N_THETA*N_PHI)
+  end type heterogen_mod_variables
+
+  type (heterogen_mod_variables) HMM
+! heterogen_mod_variables
 
 ! three_d_mantle_model_variables
   type three_d_mantle_model_variables
@@ -290,7 +297,8 @@
   integer REFERENCE_1D_MODEL,THREE_D_MODEL
 
   logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST
 
   double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
 
@@ -310,6 +318,7 @@
   real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey),rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
 
   real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL) dvpstore(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer nspec_ani
 
@@ -670,6 +679,21 @@
          endif
        endif
 
+! heterogen model
+      if(HETEROGEN_3D_MANTLE) then
+         call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_prem,theta,phi)
+         call reduce(theta,phi)
+         dvs = ZERO
+         dvp = ZERO
+         drho = ZERO
+         call heterogen_mantle_model(r_prem,theta,phi,dvs,dvp,drho,HMM)
+         vpv=vpv*(1.0d0+dvp)
+         vph=vpv*(1.0d0+dvp)
+         vsv=vsv*(1.0d0+dvs)
+         vsh=vsh*(1.0d0+dvs)
+         rho=rho*(1.0d0+drho)
+       endif
+
        if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) &
            call aniso_inner_core_model(r_prem,c11,c33,c12,c13,c44,REFERENCE_1D_MODEL)
 
@@ -854,6 +878,10 @@
          muhstore(i,j,k,ispec) = sngl(rho*vsh*vsh)
          eta_anisostore(i,j,k,ispec) = sngl(eta_aniso)
 
+         if (HETEROGEN_3D_MANTLE) then
+            dvpstore(i,j,k,ispec) = sngl(dvp)
+         endif
+
          if(ABSORBING_CONDITIONS) then
 
            if(iregion_code == IREGION_OUTER_CORE) then
@@ -911,6 +939,10 @@
          muvstore(i,j,k,ispec) = rho*vsv*vsv
          muhstore(i,j,k,ispec) = rho*vsh*vsh
          eta_anisostore(i,j,k,ispec) = eta_aniso
+
+         if (HETEROGEN_3D_MANTLE) then
+            dvpstore(i,j,k,ispec) = dvp
+         endif
 
          if(ABSORBING_CONDITIONS) then
            if(iregion_code == IREGION_OUTER_CORE) then

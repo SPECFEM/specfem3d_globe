@@ -100,6 +100,7 @@ libspecfem_a_OBJECTS = \
 	$O/get_shape3D.o \
 	$O/get_value_parameters.o \
 	$O/gll_library.o \
+	$O/heterogen_mantle_model.o \
 	$O/hex_nodes.o \
 	$O/intgrl.o \
 	$O/lagrange_poly.o \
@@ -422,6 +423,9 @@ $O/get_shape3D.o: constants.h $S/get_shape3D.f90
 
 $O/get_shape2D.o: constants.h $S/get_shape2D.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_shape2D.o ${FCFLAGS_f90} $S/get_shape2D.f90
+
+$O/heterogen_mantle_model.o: constants.h $S/heterogen_mantle_model.f90
+	${FCCOMPILE_CHECK} -c -o $O/heterogen_mantle_model.o ${FCFLAGS_f90} $S/heterogen_mantle_model.f90
 
 $O/hex_nodes.o: constants.h $S/hex_nodes.f90
 	${FCCOMPILE_CHECK} -c -o $O/hex_nodes.o ${FCFLAGS_f90} $S/hex_nodes.f90

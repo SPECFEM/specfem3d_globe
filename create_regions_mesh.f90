@@ -34,7 +34,7 @@
            NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
            NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
            ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
-           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE, &
            NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,NGLOB2DMAX_XY, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo, &
@@ -43,7 +43,7 @@
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            ner,ratio_sampling_array,doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D, &
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -182,6 +182,15 @@
 
   type (three_d_mantle_model_variables) D3MM_V
 ! three_d_mantle_model_variables
+
+! heterogen_mod_variables
+  type heterogen_mod_variables
+    sequence
+    double precision rho_in(N_R*N_THETA*N_PHI)
+  end type heterogen_mod_variables
+
+  type (heterogen_mod_variables) HMM
+! heterogen_mod_variables
 
 ! jp3d_model_variables
   type jp3d_model_variables
@@ -324,7 +333,8 @@
   integer npointot
 
   logical ELLIPTICITY,TOPOGRAPHY,SAVE_MESH_FILES
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,OCEANS
+  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+    ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST,OCEANS
 
   logical ATTENUATION,ATTENUATION_3D, &
           INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,HONOR_1D_SPHERICAL_MOHO
@@ -385,7 +395,8 @@
 
 ! for model density and anisotropy
   integer nspec_ani
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore,dvpstore, &
+    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -590,6 +601,7 @@
 
 ! array with model density
   allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec))
+  allocate(dvpstore(NGLLX,NGLLY,NGLLZ,nspec))
 
 ! for anisotropy
   allocate(kappavstore(NGLLX,NGLLY,NGLLZ,nspec))
@@ -963,17 +975,17 @@
      call compute_element_properties(ispec,iregion_code,idoubling, &
            xstore,ystore,zstore,nspec, &
            nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
-           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1165,17 +1177,17 @@
      call compute_element_properties(ispec,iregion_code,idoubling, &
            xstore,ystore,zstore,nspec, &
            nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
-           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1334,17 +1346,17 @@
      call compute_element_properties(ispec,iregion_code,idoubling, &
            xstore,ystore,zstore,nspec, &
            nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
-           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+           xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1464,7 +1476,7 @@
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
     call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              rhostore,dvpstore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
               ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
               RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
               RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V,SEA1DM_V)
@@ -1789,7 +1801,7 @@
             prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore, &
-            xstore,ystore,zstore, rhostore, &
+            xstore,ystore,zstore,rhostore,dvpstore, &
             kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
             nspec_ani, &
             c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -1804,7 +1816,7 @@
             jacobian2D_bottom,jacobian2D_top, &
             nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-            TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
+            TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
             tau_s,tau_e_store,Qmu_store,T_c_source, &
             ATTENUATION,ATTENUATION_3D, &
             size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
@@ -1909,7 +1921,7 @@
   deallocate(gammaxstore,gammaystore,gammazstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
 
 ! deallocate arrays
-  deallocate(rhostore,kappavstore,kappahstore)
+  deallocate(rhostore,dvpstore,kappavstore,kappahstore)
   deallocate(muvstore,muhstore)
   deallocate(eta_anisostore)
 
