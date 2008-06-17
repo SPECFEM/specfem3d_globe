@@ -222,6 +222,15 @@
     double precision qq(3,NK+1,NK+1)
   end type three_d_mantle_model_variables
 
+! heterogen_mod_variables
+  type heterogen_mod_variables
+    sequence
+    double precision rho_in(N_R*N_THETA*N_PHI)
+  end type heterogen_mod_variables
+
+  type (heterogen_mod_variables) HMM
+! heterogen_mod_variables
+
 ! model_ref_variables
   type model_ref_variables
     sequence
@@ -452,7 +461,7 @@
 
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
+          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
           TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ATTENUATION, &
@@ -496,7 +505,7 @@
 ! arrays for BCAST
   integer, dimension(38) :: bcast_integer
   double precision, dimension(30) :: bcast_double_precision
-  logical, dimension(26) :: bcast_logical
+  logical, dimension(27) :: bcast_logical
 
   integer, parameter :: maxker=200
   integer, parameter :: maxl=72
@@ -613,7 +622,7 @@
           MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,MOVIE_START,MOVIE_STOP, &
           TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
           ANISOTROPIC_INNER_CORE,CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST, &
-          ROTATION,ISOTROPIC_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
+          ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,TOPOGRAPHY,OCEANS,MOVIE_SURFACE, &
           MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
@@ -650,7 +659,7 @@
             MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-            CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
+            CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
             TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
@@ -672,7 +681,7 @@
 
     call MPI_BCAST(bcast_double_precision,30,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_logical,25,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_logical,27,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
@@ -756,23 +765,24 @@
     ONE_CRUST = bcast_logical(7)
     ROTATION = bcast_logical(8)
     ISOTROPIC_3D_MANTLE = bcast_logical(9)
-    TOPOGRAPHY = bcast_logical(10)
-    OCEANS = bcast_logical(11)
-    MOVIE_SURFACE = bcast_logical(12)
-    MOVIE_VOLUME = bcast_logical(13)
-    ATTENUATION_3D = bcast_logical(14)
-    RECEIVERS_CAN_BE_BURIED = bcast_logical(15)
-    PRINT_SOURCE_TIME_FUNCTION = bcast_logical(16)
-    SAVE_MESH_FILES = bcast_logical(17)
-    ATTENUATION = bcast_logical(18)
-    ABSORBING_CONDITIONS = bcast_logical(19)
-    INCLUDE_CENTRAL_CUBE = bcast_logical(20)
-    INFLATE_CENTRAL_CUBE = bcast_logical(21)
-    SAVE_FORWARD = bcast_logical(22)
-    CASE_3D = bcast_logical(23)
-    CUT_SUPERBRICK_XI = bcast_logical(24)
-    CUT_SUPERBRICK_ETA = bcast_logical(25)
-    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(26)
+    HETEROGEN_3D_MANTLE = bcast_logical(10)
+    TOPOGRAPHY = bcast_logical(11)
+    OCEANS = bcast_logical(12)
+    MOVIE_SURFACE = bcast_logical(13)
+    MOVIE_VOLUME = bcast_logical(14)
+    ATTENUATION_3D = bcast_logical(15)
+    RECEIVERS_CAN_BE_BURIED = bcast_logical(16)
+    PRINT_SOURCE_TIME_FUNCTION = bcast_logical(17)
+    SAVE_MESH_FILES = bcast_logical(18)
+    ATTENUATION = bcast_logical(19)
+    ABSORBING_CONDITIONS = bcast_logical(20)
+    INCLUDE_CENTRAL_CUBE = bcast_logical(21)
+    INFLATE_CENTRAL_CUBE = bcast_logical(22)
+    SAVE_FORWARD = bcast_logical(23)
+    CASE_3D = bcast_logical(24)
+    CUT_SUPERBRICK_XI = bcast_logical(25)
+    CUT_SUPERBRICK_ETA = bcast_logical(26)
+    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(27)
 
     DT = bcast_double_precision(1)
     ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
@@ -989,6 +999,13 @@
     write(IMAIN,*) 'incorporating 3-D lateral variations'
   else
     write(IMAIN,*) 'no 3-D lateral variations'
+  endif
+
+  write(IMAIN,*)
+  if(HETEROGEN_3D_MANTLE) then
+    write(IMAIN,*) 'incorporating heterogeneities in the mantle'
+  else
+    write(IMAIN,*) 'no heterogeneities in the mantle'
   endif
 
   write(IMAIN,*)
@@ -1237,6 +1254,21 @@
     endif
   endif
 
+  if(HETEROGEN_3D_MANTLE) then
+    if(myrank == 0) then
+       write(IMAIN,*) 'Reading in heterogen_mantle_model.'
+       call read_heterogen_mantle_model(HMM)
+       write(IMAIN,*) 'Heterogen_mantle_model is read in.'
+    endif
+    ! broadcast the information read on the master to the nodes
+    call MPI_BCAST(HMM%rho_in,N_R*N_THETA*N_PHI,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    if(myrank == 0) then
+       write(IMAIN,*) 'Heterogen_mantle_model is broadcast.'
+       write(IMAIN,*) 'First value in HMM:',HMM%rho_in(1)
+       write(IMAIN,*) 'Last value in HMM:',HMM%rho_in(N_R*N_THETA*N_PHI)
+    endif
+  endif
+
   if(ANISOTROPIC_3D_MANTLE) then
 ! the variables read are declared and stored in structure AMM_V
     if(myrank == 0) call read_aniso_mantle_model(AMM_V)
@@ -1366,7 +1398,7 @@
          NSPEC2DMAX_XMIN_XMAX(iregion_code), &
          NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
          ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-         ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
+         ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE, &
          NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
          max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
@@ -1376,7 +1408,7 @@
          NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
          ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
-         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
          numker,numhpa,numcof,ihpa,lmax,nylm, &
          lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &

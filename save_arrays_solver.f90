@@ -29,7 +29,7 @@
             prname,iregion_code,xixstore,xiystore,xizstore, &
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore, &
-            xstore,ystore,zstore, rhostore, &
+            xstore,ystore,zstore,rhostore,dvpstore, &
             kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
             nspec_ani, &
             c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -44,7 +44,7 @@
             jacobian2D_bottom,jacobian2D_top, &
             nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-            TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
+            TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
             tau_s,tau_e_store,Qmu_store,T_c_source, &
             ATTENUATION,ATTENUATION_3D,vx,vy,vz,vnspec, &
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,ABSORBING_CONDITIONS,AM_V)
@@ -83,7 +83,7 @@
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
   integer npointot_oceans
 
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
+  logical TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
 
 ! arrays with jacobian matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
@@ -96,7 +96,7 @@
 
 ! for anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    rhostore, kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
+    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
   integer nspec_ani
 
@@ -186,6 +186,13 @@
 
   write(27) rhostore
   write(27) kappavstore
+
+  if(HETEROGEN_3D_MANTLE) then
+     open(unit=29,file=prname(1:len_trim(prname))//'dvp.bin'&
+         ,status='unknown',form='unformatted')
+     write(29) dvpstore
+     close(29)
+  endif
 
 ! other terms needed in the solid regions only
   if(iregion_code /= IREGION_OUTER_CORE) then
