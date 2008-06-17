@@ -2,6 +2,9 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch and David Michea
 ----------------------------------------------------------------------
 
+- Add this to Cuthill-McKee sorting, to detect non adjacent graphs as done in the 2D code:
+"plutôt que de s'arrêter par un stop, on peut ressortir de la routine sans la finir et mettre un flag "cuthill_failed" et alors générer à la place une permutation identité ; ceci revient à dire que si l'on voit que Cuthill ne va pas marcher, plutôt que d'arrêter le code on peut tout simplement désactiver Cuthill, afficher à l'écran le fait qu'on l'a désactivé, et continuer le run sans Cuthill"
+
 Things that could be done in a future version 4.1:
 
 - partial ALTIVEC support (will be done by Nicolas Le Goff)
