@@ -214,7 +214,11 @@
   print *
   print *,'number of time steps = ',NSTEP
   print *
-
+  if(MOVIE_SURFACE .or. MOVIE_VOLUME) then
+    print *,'MOVIE_VOLUME:',MOVIE_VOLUME
+    print *,'MOVIE_SURFACE:',MOVIE_SURFACE
+    print *,'Saving movie frames every',NTSTEP_BETWEEN_FRAMES
+  endif
   print *,'on NEC SX, make sure "loopcnt=" parameter'
 ! use fused loops on NEC SX
   print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM

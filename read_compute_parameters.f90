@@ -736,7 +736,9 @@
     else
       ! case 3D
       if (NER_CRUST<2) NER_CRUST=2
-      if(NEX_MAX*multiplication_factor <= 160) then
+      if(NEX_MAX*multiplication_factor <= 80) then
+          DT = 0.125d0
+      else if(NEX_MAX*multiplication_factor <= 160) then
           DT = 0.15d0
       else if(NEX_MAX*multiplication_factor <= 256) then
           DT = 0.17d0
