@@ -838,6 +838,7 @@
                    vsv=vsc
                    vsh=vsc
                    rho=rhoc
+                   eta_aniso=1.0d0
                    if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
                       c11 = rho*vpv*vpv
                       c12 = rho*(vpv*vpv-2.*vsv*vsv)

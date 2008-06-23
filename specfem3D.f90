@@ -4927,12 +4927,12 @@
    else if (MOVIE_VOLUME_TYPE == 5) then !output displacement
             scalingval = scale_displ
        call write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
-                MOVIE_COARSE,displ_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
+                MOVIE_COARSE,ibool_crust_mantle,displ_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
 
    else if (MOVIE_VOLUME_TYPE == 6) then !output velocity
             scalingval = scale_veloc
        call write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
-                MOVIE_COARSE,veloc_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
+                MOVIE_COARSE,ibool_crust_mantle,veloc_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
 
    else
 
