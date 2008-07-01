@@ -616,31 +616,8 @@ LIBS
 build_alias
 host_alias
 target_alias
-COND_PYRE_TRUE
-COND_PYRE_FALSE
 CUSTOM_REAL
 CUSTOM_MPI_TYPE
-PYTHON
-PYTHON_VERSION
-PYTHON_PREFIX
-PYTHON_EXEC_PREFIX
-PYTHON_PLATFORM
-pythondir
-pkgpythondir
-pyexecdir
-pkgpyexecdir
-PYTHON_INCDIR
-PYTHON_BLDLIBRARY
-PYTHON_LDFLAGS
-PYTHON_LDLAST
-PYTHON_LDLIBRARY
-PYTHON_LIBDIR
-PYTHON_LIBP
-PYTHON_LIBPL
-PYTHON_LIBS
-PYTHON_LINKFORSHARED
-PYTHON_MODLIBS
-PYTHON_SYSLIBS
 FC
 FCFLAGS
 LDFLAGS
@@ -656,14 +633,9 @@ ac_ct_CC
 FCFLAGS_f90
 MPIFC
 MPILIBS
-MPICC
 FLAGS_CHECK
 FLAGS_NO_CHECK
 LOCAL_PATH_IS_ALSO_GLOBAL
-PYTHONPATH
-PYTHON_EGG_CFLAGS
-PYTHON_EGG_CPPFLAGS
-PYTHON_EGG_LDFLAGS
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -679,12 +651,9 @@ CFLAGS
 CPPFLAGS
 MPIFC
 MPILIBS
-MPICC
 FLAGS_CHECK
 FLAGS_NO_CHECK
-LOCAL_PATH_IS_ALSO_GLOBAL
-PYTHON
-PYTHONPATH'
+LOCAL_PATH_IS_ALSO_GLOBAL'
 
 
 # Initialize some variables set by options.
@@ -1258,11 +1227,6 @@ Optional Features:
   --enable-double-precision
                           solver in double precision [default=no]
 
-Optional Packages:
-  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
-  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-pyre             build Pyrized version [default=no]
-
 Some influential environment variables:
   FC          Fortran compiler command
   FCFLAGS     Fortran compiler flags
@@ -1275,7 +1239,6 @@ Some influential environment variables:
               you have headers in a nonstandard directory <include dir>
   MPIFC       MPI Fortran compiler command
   MPILIBS     extra libraries for linking MPI programs
-  MPICC       MPI C compiler command
   FLAGS_CHECK Fortran compiler flags for non-critical subroutines
   FLAGS_NO_CHECK
               Fortran compiler flags for creating fast, production-run code
@@ -1283,8 +1246,6 @@ Some influential environment variables:
   LOCAL_PATH_IS_ALSO_GLOBAL
               files on a local path on each node are also seen as global with
               same path [default=false]
-  PYTHON      Python interpreter
-  PYTHONPATH  Python module search path
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -1725,25 +1686,6 @@ ac_config_headers="$ac_config_headers config.h"
 
 # 'configure' options
 
-
-# Check whether --with-pyre was given.
-if test "${with_pyre+set}" = set; then
-  withval=$with_pyre; want_pyre="$withval"
-else
-  want_pyre=no
-fi
-
-
-
-if test "$want_pyre" = yes; then
-  COND_PYRE_TRUE=
-  COND_PYRE_FALSE='#'
-else
-  COND_PYRE_TRUE='#'
-  COND_PYRE_FALSE=
-fi
-
-
 # Check whether --enable-double-precision was given.
 if test "${enable_double_precision+set}" = set; then
   enableval=$enable_double_precision; want_double_precision="$enableval"
@@ -1763,297 +1705,6 @@ fi
 
 
 # Checks for programs.
-
-if test "$want_pyre" = yes; then
-
-
-
-
-        if test -n "$PYTHON"; then
-      # If the user set $PYTHON, use it and don't search something else.
-      { echo "$as_me:$LINENO: checking whether $PYTHON version >= 2.3" >&5
-echo $ECHO_N "checking whether $PYTHON version >= 2.3... $ECHO_C" >&6; }
-      prog="import sys, string
-# split strings by '.' and convert to numeric.  Append some zeros
-# because we need at least 4 digits for the hex conversion.
-minver = map(int, string.split('2.3', '.')) + [0, 0, 0]
-minverhex = 0
-for i in xrange(0, 4): minverhex = (minverhex << 8) + minver[i]
-sys.exit(sys.hexversion < minverhex)"
-  if { echo "$as_me:$LINENO: $PYTHON -c "$prog"" >&5
-   ($PYTHON -c "$prog") >&5 2>&5
-   ac_status=$?
-   echo "$as_me:$LINENO: \$? = $ac_status" >&5
-   (exit $ac_status); }; then
-  { echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6; }
-else
-  { { echo "$as_me:$LINENO: error: too old" >&5
-echo "$as_me: error: too old" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-      am_display_PYTHON=$PYTHON
-    else
-      # Otherwise, try each interpreter until we find one that satisfies
-      # VERSION.
-      { echo "$as_me:$LINENO: checking for a Python interpreter with version >= 2.3" >&5
-echo $ECHO_N "checking for a Python interpreter with version >= 2.3... $ECHO_C" >&6; }
-if test "${am_cv_pathless_PYTHON+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-
-	for am_cv_pathless_PYTHON in python python2 python2.5 python2.4 python2.3 python2.2 python2.1 python2.0 python1.6 python1.5 none; do
-	  test "$am_cv_pathless_PYTHON" = none && break
-	  prog="import sys, string
-# split strings by '.' and convert to numeric.  Append some zeros
-# because we need at least 4 digits for the hex conversion.
-minver = map(int, string.split('2.3', '.')) + [0, 0, 0]
-minverhex = 0
-for i in xrange(0, 4): minverhex = (minverhex << 8) + minver[i]
-sys.exit(sys.hexversion < minverhex)"
-  if { echo "$as_me:$LINENO: $am_cv_pathless_PYTHON -c "$prog"" >&5
-   ($am_cv_pathless_PYTHON -c "$prog") >&5 2>&5
-   ac_status=$?
-   echo "$as_me:$LINENO: \$? = $ac_status" >&5
-   (exit $ac_status); }; then
-  break
-fi
-
-	done
-fi
-{ echo "$as_me:$LINENO: result: $am_cv_pathless_PYTHON" >&5
-echo "${ECHO_T}$am_cv_pathless_PYTHON" >&6; }
-      # Set $PYTHON to the absolute path of $am_cv_pathless_PYTHON.
-      if test "$am_cv_pathless_PYTHON" = none; then
-	PYTHON=:
-      else
-        # Extract the first word of "$am_cv_pathless_PYTHON", so it can be a program name with args.
-set dummy $am_cv_pathless_PYTHON; ac_word=$2
-{ echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
-if test "${ac_cv_path_PYTHON+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $PYTHON in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-PYTHON=$ac_cv_path_PYTHON
-if test -n "$PYTHON"; then
-  { echo "$as_me:$LINENO: result: $PYTHON" >&5
-echo "${ECHO_T}$PYTHON" >&6; }
-else
-  { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
-fi
-
-
-      fi
-      am_display_PYTHON=$am_cv_pathless_PYTHON
-    fi
-
-
-  if test "$PYTHON" = :; then
-      { { echo "$as_me:$LINENO: error: no suitable Python interpreter found" >&5
-echo "$as_me: error: no suitable Python interpreter found" >&2;}
-   { (exit 1); exit 1; }; }
-  else
-
-
-  { echo "$as_me:$LINENO: checking for $am_display_PYTHON version" >&5
-echo $ECHO_N "checking for $am_display_PYTHON version... $ECHO_C" >&6; }
-if test "${am_cv_python_version+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  am_cv_python_version=`$PYTHON -c "import sys; print sys.version[:3]"`
-fi
-{ echo "$as_me:$LINENO: result: $am_cv_python_version" >&5
-echo "${ECHO_T}$am_cv_python_version" >&6; }
-  PYTHON_VERSION=$am_cv_python_version
-
-
-
-  PYTHON_PREFIX='${prefix}'
-
-  PYTHON_EXEC_PREFIX='${exec_prefix}'
-
-
-
-  { echo "$as_me:$LINENO: checking for $am_display_PYTHON platform" >&5
-echo $ECHO_N "checking for $am_display_PYTHON platform... $ECHO_C" >&6; }
-if test "${am_cv_python_platform+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  am_cv_python_platform=`$PYTHON -c "import sys; print sys.platform"`
-fi
-{ echo "$as_me:$LINENO: result: $am_cv_python_platform" >&5
-echo "${ECHO_T}$am_cv_python_platform" >&6; }
-  PYTHON_PLATFORM=$am_cv_python_platform
-
-
-
-
-                { echo "$as_me:$LINENO: checking for $am_display_PYTHON script directory" >&5
-echo $ECHO_N "checking for $am_display_PYTHON script directory... $ECHO_C" >&6; }
-if test "${am_cv_python_pythondir+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  am_cv_python_pythondir=`$PYTHON -c "from distutils import sysconfig; print sysconfig.get_python_lib(0,0,prefix='$PYTHON_PREFIX')" 2>/dev/null ||
-     echo "$PYTHON_PREFIX/lib/python$PYTHON_VERSION/site-packages"`
-fi
-{ echo "$as_me:$LINENO: result: $am_cv_python_pythondir" >&5
-echo "${ECHO_T}$am_cv_python_pythondir" >&6; }
-  pythondir=$am_cv_python_pythondir
-
-
-
-  pkgpythondir=\${pythondir}/$PACKAGE
-
-
-            { echo "$as_me:$LINENO: checking for $am_display_PYTHON extension module directory" >&5
-echo $ECHO_N "checking for $am_display_PYTHON extension module directory... $ECHO_C" >&6; }
-if test "${am_cv_python_pyexecdir+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  am_cv_python_pyexecdir=`$PYTHON -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='$PYTHON_EXEC_PREFIX')" 2>/dev/null ||
-     echo "${PYTHON_EXEC_PREFIX}/lib/python${PYTHON_VERSION}/site-packages"`
-fi
-{ echo "$as_me:$LINENO: result: $am_cv_python_pyexecdir" >&5
-echo "${ECHO_T}$am_cv_python_pyexecdir" >&6; }
-  pyexecdir=$am_cv_python_pyexecdir
-
-
-
-  pkgpyexecdir=\${pyexecdir}/$PACKAGE
-
-
-
-  fi
-
-
-
-# $Id: cit_python.m4 6876 2007-05-14 23:03:20Z leif $
-
-{ echo "$as_me:$LINENO: checking $am_display_PYTHON sysconfig" >&5
-echo $ECHO_N "checking $am_display_PYTHON sysconfig... $ECHO_C" >&6; }
-cat >sysconfig.py <<END_OF_PYTHON
-import os, sys
-from distutils import sysconfig
-def cygpath(wpath):
-    s = os.popen('cygpath -u "%s"' % wpath)
-    path = s.read().strip()
-    s.close()
-    return path
-incdir = sysconfig.get_python_inc()
-keys = (
-    'BLDLIBRARY',
-    'LDFLAGS',
-    'LDLAST',
-    'LDLIBRARY',
-    'LIBDIR',
-    'LIBP',
-    'LIBPL',
-    'LIBS',
-    'LINKFORSHARED',
-    'MODLIBS',
-    'SYSLIBS',
-)
-if os.name == "nt":
-    # We are running under Python for Windows (the real one...
-    # not Cygwin Python, under which 'os.name' is 'posix').
-    # We assume that we are still in the Cygwin POSIX environment,
-    # however (this is 'configure', after all); so we convert
-    # all Windows pathnames to POSIX pathnames using 'cygpath'.
-    incdir = cygpath(incdir)
-    vars = {}
-    libs = os.path.join(sys.prefix, "libs")
-    libs = cygpath(libs)
-    version = sysconfig.get_python_version()
-    version = version.replace('.', '')
-    vars['BLDLIBRARY'] = "-L%s -lpython%s" % (libs, version)
-else:
-    vars = sysconfig.get_config_vars()
-    # transform AIX's python.exp
-    vars['LINKFORSHARED'] = vars['LINKFORSHARED'].replace('Modules',vars['LIBPL'])
-    if vars['LDLIBRARY'] == vars['LIBRARY']:
-        # "On systems without shared libraries, LDLIBRARY is the same as LIBRARY"
-        vars['BLDLIBRARY'] = "-L%(LIBPL)s -lpython%(VERSION)s" % vars
-    elif vars['BLDLIBRARY']:
-        # LIBDIR is usually enough... except on Cygwin, where libpython is
-        # nested inside Python's 'config' directory (Issue39).
-        vars['BLDLIBRARY'] = "-L%(LIBDIR)s -L%(LIBPL)s -lpython%(VERSION)s" % vars
-    else:
-        # "On Mac OS X frameworks, BLDLIBRARY is blank"
-        # See also Issue39.
-        framework = "%(PYTHONFRAMEWORKDIR)s/Versions/%(VERSION)s/%(PYTHONFRAMEWORK)s" % vars
-        vars['LINKFORSHARED'] = vars['LINKFORSHARED'].replace(framework, "-framework " + vars.get('PYTHONFRAMEWORK', 'Python'))
-print 'PYTHON_INCDIR="%s"' % incdir
-for key in keys:
-    print 'PYTHON_%s="%s"' % (key, vars.get(key, ''))
-
-END_OF_PYTHON
-eval `$PYTHON sysconfig.py 2>/dev/null`
-if test -n "$PYTHON_INCDIR"; then
-    { echo "$as_me:$LINENO: result: ok" >&5
-echo "${ECHO_T}ok" >&6; }
-else
-    { { echo "$as_me:$LINENO: error: \"failed
-
-Run '$PYTHON sysconfig.py' to see what wrong.
-\"" >&5
-echo "$as_me: error: \"failed
-
-Run '$PYTHON sysconfig.py' to see what wrong.
-\"" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-rm -f sysconfig.py
-PYTHON_INCDIR=$PYTHON_INCDIR
-
-PYTHON_BLDLIBRARY=$PYTHON_BLDLIBRARY
-
-PYTHON_LDFLAGS=$PYTHON_LDFLAGS
-
-PYTHON_LDLAST=$PYTHON_LDLAST
-
-PYTHON_LDLIBRARY=$PYTHON_LDLIBRARY
-
-PYTHON_LIBDIR=$PYTHON_LIBDIR
-
-PYTHON_LIBP=$PYTHON_LIBP
-
-PYTHON_LIBPL=$PYTHON_LIBPL
-
-PYTHON_LIBS=$PYTHON_LIBS
-
-PYTHON_LINKFORSHARED=$PYTHON_LINKFORSHARED
-
-PYTHON_MODLIBS=$PYTHON_MODLIBS
-
-PYTHON_SYSLIBS=$PYTHON_SYSLIBS
-
-
-fi
 
 # a courtesy to the installed base of users
 if test x"$FC" = x && test x"$F90" != x; then
@@ -2552,7 +2203,7 @@ FFLAGS="$FCFLAGS"
 
 
 
-flags_guess="$SHELL flags.guess"
+flags_guess="$SHELL $srcdir/flags.guess"
 { echo "$as_me:$LINENO: running $flags_guess" >&5
 echo "$as_me: running $flags_guess" >&6;}
 flags=`$flags_guess` ||
@@ -4979,12 +4630,8 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
-
 if test x"$MPIFC" = x; then
     MPIFC=mpif90
-fi
-if test x"$MPICC" = x; then
-    MPICC=mpicc
 fi
 
 
@@ -4992,99 +4639,6 @@ if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then
     LOCAL_PATH_IS_ALSO_GLOBAL=false
 fi
 
-
-
-
-
-
-# Checks for Python modules and packages.
-
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-if test "$want_pyre" = yes; then
-    builddir=`pwd`
-    save_PYTHONPATH="$PYTHONPATH"
-    PYTHONPATH="$builddir/python:$PYTHONPATH"; export PYTHONPATH
-    # Cheap work-around for the inability of merlin/setuptools to control #! line.
-    rm -f pyspecfem3D
-    $as_ln_s $PYTHON pyspecfem3D
-    pyspecfem3D="$builddir/pyspecfem3D"
-    cd $srcdir
-
-    { echo "$as_me:$LINENO: downloading missing Python dependencies" >&5
-echo "$as_me: downloading missing Python dependencies" >&6;}
-    if { ac_try='$pyspecfem3D setup.py install_deps -zmxd $builddir/deps >&5 2>&5'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  :
-else
-  { { echo "$as_me:$LINENO: error: cannot download missing Python dependencies
-See \`config.log' for more details." >&5
-echo "$as_me: error: cannot download missing Python dependencies
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-    { echo "$as_me:$LINENO: building Python dependencies" >&5
-echo "$as_me: building Python dependencies" >&6;}
-    if { ac_try='$pyspecfem3D setup.py develop -H None -f $builddir/deps -s $builddir -d $builddir/python >&5 2>&5'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  :
-else
-  { { echo "$as_me:$LINENO: error: building Python dependencies
-See \`config.log' for more details." >&5
-echo "$as_me: error: building Python dependencies
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-    { echo "$as_me:$LINENO: checking for egg-related flags" >&5
-echo $ECHO_N "checking for egg-related flags... $ECHO_C" >&6; }
-    if { ac_try='$pyspecfem3D setup.py egg_flags >&5 2>&5'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  { echo "$as_me:$LINENO: result: ok" >&5
-echo "${ECHO_T}ok" >&6; }
-           . egg-flags.sh
-           rm -f egg-flags.sh
-
-else
-  { echo "$as_me:$LINENO: result: failed" >&5
-echo "${ECHO_T}failed" >&6; }
-          { { echo "$as_me:$LINENO: error: cannot scan Python eggs for flags
-See \`config.log' for more details." >&5
-echo "$as_me: error: cannot scan Python eggs for flags
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-    cd $builddir
-    rm -f pyspecfem3D
-    PYTHONPATH="$save_PYTHONPATH"
-    PYTHONPATH="${pythondir}:${pyexecdir}${save_PYTHONPATH:+:${save_PYTHONPATH}}"
-
-
-
-
-
-fi
 
 
 # Checks for libraries.
@@ -5241,157 +4795,15 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 FC=$cit_fc_save_fc
 FCFLAGS=$cit_fc_save_fcflags
 
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
 
 # Checks for typedefs, structures, and compiler characteristics.
-
-if test "$want_pyre" = yes; then
-    ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-{ echo "$as_me:$LINENO: checking for alternate main to link with Fortran libraries" >&5
-echo $ECHO_N "checking for alternate main to link with Fortran libraries... $ECHO_C" >&6; }
-if test "${ac_cv_fc_main+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_fc_m_save_LIBS=$LIBS
- LIBS="cfortran_test.$ac_objext $LIBS"
- ac_fortran_dm_var=FC_DUMMY_MAIN
- ac_cv_fortran_main="main" # default entry point name
- for ac_func in MAIN__ MAIN_ __main MAIN _MAIN __MAIN main_ main__ _main; do
-   ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-   cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#ifdef FC_DUMMY_MAIN_EQ_F77
-#  undef F77_DUMMY_MAIN
-#  undef FC_DUMMY_MAIN
-#else
-#  undef $ac_fortran_dm_var
-#endif
-#define main $ac_func
-#ifdef FC_DUMMY_MAIN
-#ifndef FC_DUMMY_MAIN_EQ_F77
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int FC_DUMMY_MAIN() { return 1; }
-#endif
-#endif
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  mv conftest.$ac_objext cfortran_test.$ac_objext
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	{ { echo "$as_me:$LINENO: error: cannot compile a simple C program
-See \`config.log' for more details." >&5
-echo "$as_me: error: cannot compile a simple C program
-See \`config.log' for more details." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-   ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-   cat >conftest.$ac_ext <<_ACEOF
-      subroutine foobar()
-      return
-      end
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_fc_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_fortran_main=$ac_func; break
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-   rm -f cfortran_test* conftest*
- done
- ac_cv_fc_main=$ac_cv_fortran_main
- rm -f cfortran_test* conftest*
- LIBS=$ac_fc_m_save_LIBS
-
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_fc_main" >&5
-echo "${ECHO_T}$ac_cv_fc_main" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define FC_MAIN $ac_cv_fc_main
-_ACEOF
-
-
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-fi
 
 
 # Checks for library functions.
@@ -5495,13 +4907,6 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
-if test -z "${COND_PYRE_TRUE}" && test -z "${COND_PYRE_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"COND_PYRE\" was never defined.
-Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"COND_PYRE\" was never defined.
-Usually this means the macro was only invoked conditionally." >&2;}
-   { (exit 1); exit 1; }; }
-fi
 
 : ${CONFIG_STATUS=./config.status}
 ac_clean_files_save=$ac_clean_files
@@ -6060,31 +5465,8 @@ LIBS!$LIBS$ac_delim
 build_alias!$build_alias$ac_delim
 host_alias!$host_alias$ac_delim
 target_alias!$target_alias$ac_delim
-COND_PYRE_TRUE!$COND_PYRE_TRUE$ac_delim
-COND_PYRE_FALSE!$COND_PYRE_FALSE$ac_delim
 CUSTOM_REAL!$CUSTOM_REAL$ac_delim
 CUSTOM_MPI_TYPE!$CUSTOM_MPI_TYPE$ac_delim
-PYTHON!$PYTHON$ac_delim
-PYTHON_VERSION!$PYTHON_VERSION$ac_delim
-PYTHON_PREFIX!$PYTHON_PREFIX$ac_delim
-PYTHON_EXEC_PREFIX!$PYTHON_EXEC_PREFIX$ac_delim
-PYTHON_PLATFORM!$PYTHON_PLATFORM$ac_delim
-pythondir!$pythondir$ac_delim
-pkgpythondir!$pkgpythondir$ac_delim
-pyexecdir!$pyexecdir$ac_delim
-pkgpyexecdir!$pkgpyexecdir$ac_delim
-PYTHON_INCDIR!$PYTHON_INCDIR$ac_delim
-PYTHON_BLDLIBRARY!$PYTHON_BLDLIBRARY$ac_delim
-PYTHON_LDFLAGS!$PYTHON_LDFLAGS$ac_delim
-PYTHON_LDLAST!$PYTHON_LDLAST$ac_delim
-PYTHON_LDLIBRARY!$PYTHON_LDLIBRARY$ac_delim
-PYTHON_LIBDIR!$PYTHON_LIBDIR$ac_delim
-PYTHON_LIBP!$PYTHON_LIBP$ac_delim
-PYTHON_LIBPL!$PYTHON_LIBPL$ac_delim
-PYTHON_LIBS!$PYTHON_LIBS$ac_delim
-PYTHON_LINKFORSHARED!$PYTHON_LINKFORSHARED$ac_delim
-PYTHON_MODLIBS!$PYTHON_MODLIBS$ac_delim
-PYTHON_SYSLIBS!$PYTHON_SYSLIBS$ac_delim
 FC!$FC$ac_delim
 FCFLAGS!$FCFLAGS$ac_delim
 LDFLAGS!$LDFLAGS$ac_delim
@@ -6100,19 +5482,14 @@ ac_ct_CC!$ac_ct_CC$ac_delim
 FCFLAGS_f90!$FCFLAGS_f90$ac_delim
 MPIFC!$MPIFC$ac_delim
 MPILIBS!$MPILIBS$ac_delim
-MPICC!$MPICC$ac_delim
 FLAGS_CHECK!$FLAGS_CHECK$ac_delim
 FLAGS_NO_CHECK!$FLAGS_NO_CHECK$ac_delim
 LOCAL_PATH_IS_ALSO_GLOBAL!$LOCAL_PATH_IS_ALSO_GLOBAL$ac_delim
-PYTHONPATH!$PYTHONPATH$ac_delim
-PYTHON_EGG_CFLAGS!$PYTHON_EGG_CFLAGS$ac_delim
-PYTHON_EGG_CPPFLAGS!$PYTHON_EGG_CPPFLAGS$ac_delim
-PYTHON_EGG_LDFLAGS!$PYTHON_EGG_LDFLAGS$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 87; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 59; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

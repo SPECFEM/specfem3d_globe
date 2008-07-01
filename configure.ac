@@ -18,13 +18,6 @@ AC_CONFIG_MACRO_DIR([m4])
 
 # 'configure' options
 
-AC_ARG_WITH([pyre],
-    [AC_HELP_STRING([--with-pyre],
-        [build Pyrized version @<:@default=no@:>@])],
-    [want_pyre="$withval"],
-    [want_pyre=no])
-AM_CONDITIONAL([COND_PYRE], [test "$want_pyre" = yes])
-
 AC_ARG_ENABLE([double-precision],
     [AC_HELP_STRING([--enable-double-precision],
         [solver in double precision @<:@default=no@:>@])],
@@ -43,11 +36,6 @@ AC_SUBST([CUSTOM_MPI_TYPE])
 
 # Checks for programs.
 
-if test "$want_pyre" = yes; then
-    AM_PATH_PYTHON([2.3])
-    CIT_PYTHON_SYSCONFIG
-fi
-
 # a courtesy to the installed base of users
 if test x"$FC" = x && test x"$F90" != x; then
     FC="$F90"
@@ -64,7 +52,7 @@ FFLAGS="$FCFLAGS"
 AC_PROVIDE([AC_PROG_F77])
 AC_SUBST([FCENV])
 
-flags_guess="$SHELL flags.guess"
+flags_guess="$SHELL $srcdir/flags.guess"
 AC_MSG_NOTICE([running $flags_guess])
 flags=`$flags_guess` ||
     AC_MSG_ERROR([$flags_guess failed])
@@ -83,14 +71,10 @@ AC_PROG_CC
 
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
-AC_ARG_VAR(MPICC, [MPI C compiler command])
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
 AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
 if test x"$MPIFC" = x; then
     MPIFC=mpif90
-fi
-if test x"$MPICC" = x; then
-    MPICC=mpicc
 fi
 
 AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are also seen as global with same path @<:@default=false@:>@])
@@ -98,53 +82,6 @@ if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then
     LOCAL_PATH_IS_ALSO_GLOBAL=false
 fi
 
-AC_ARG_VAR(PYTHON, [Python interpreter])
-AC_ARG_VAR(PYTHONPATH, [Python module search path])
-
-
-
-# Checks for Python modules and packages.
-
-AC_LANG(C)
-if test "$want_pyre" = yes; then
-    builddir=`pwd`
-    save_PYTHONPATH="$PYTHONPATH"
-    PYTHONPATH="$builddir/python:$PYTHONPATH"; export PYTHONPATH
-    # Cheap work-around for the inability of merlin/setuptools to control #! line.
-    rm -f pyspecfem3D
-    $as_ln_s $PYTHON pyspecfem3D
-    pyspecfem3D="$builddir/pyspecfem3D"
-    cd $srcdir
-
-    AC_MSG_NOTICE([downloading missing Python dependencies])
-    AS_IF([AC_TRY_COMMAND([$pyspecfem3D setup.py install_deps -zmxd $builddir/deps >&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD])],
-          [],
-          [AC_MSG_FAILURE([cannot download missing Python dependencies])])
-
-    AC_MSG_NOTICE([building Python dependencies])
-    AS_IF([AC_TRY_COMMAND([$pyspecfem3D setup.py develop -H None -f $builddir/deps -s $builddir -d $builddir/python >&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD])],
-          [],
-          [AC_MSG_FAILURE([building Python dependencies])])
-
-    AC_MSG_CHECKING([for egg-related flags])
-    AS_IF([AC_TRY_COMMAND([$pyspecfem3D setup.py egg_flags >&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD])],
-          [AC_MSG_RESULT(ok)
-           . egg-flags.sh
-           rm -f egg-flags.sh
-          ],
-          [AC_MSG_RESULT(failed)
-          AC_MSG_FAILURE([cannot scan Python eggs for flags])])
-
-    cd $builddir
-    rm -f pyspecfem3D
-    PYTHONPATH="$save_PYTHONPATH"
-    PYTHONPATH="${pythondir}:${pyexecdir}${save_PYTHONPATH:+:${save_PYTHONPATH}}"
-
-    AC_SUBST(PYTHONPATH)
-    AC_SUBST(PYTHON_EGG_CFLAGS)
-    AC_SUBST(PYTHON_EGG_CPPFLAGS)
-    AC_SUBST(PYTHON_EGG_LDFLAGS)
-fi
 
 
 # Checks for libraries.
@@ -156,10 +93,6 @@ CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 
 
 # Checks for typedefs, structures, and compiler characteristics.
-
-if test "$want_pyre" = yes; then
-    CIT_FC_MAIN
-fi
 
 
 # Checks for library functions.

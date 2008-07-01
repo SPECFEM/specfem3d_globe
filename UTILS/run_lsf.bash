@@ -14,10 +14,10 @@ fi
 d=`date`
 echo "Starting compilation $d"
 make clean
-make meshfem3D
-make create_header_file
+make xmeshfem3D
+make xcreate_header_file
 xcreate_header_file
-make specfem3D
+make xspecfem3D
 d=`date`
 echo "Finished compilation $d"
 
