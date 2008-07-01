@@ -195,7 +195,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
      call define_model_1066a(.FALSE., M1066a_V)
      AM_V%Qn = NR_1066A
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
-     call define_model_ref(.FALSE., Mref_V)
+     call define_model_ref(Mref_V)
      AM_V%Qn = NR_REF
   else
      call exit_MPI(myrank, 'Reference 1D Model Not recognized')

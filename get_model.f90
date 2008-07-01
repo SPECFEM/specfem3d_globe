@@ -308,7 +308,7 @@
            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
-           call model_ref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,Mref_V)
+           call model_ref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL,Mref_V)
 
          else
            stop 'unknown 1D transversely isotropic reference Earth model in get_model'
@@ -332,7 +332,7 @@
            call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code,Mak135_V)
 
          else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
-           call model_ref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,Mref_V)
+           call model_ref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL,Mref_V)
            if(.not. ISOTROPIC_3D_MANTLE) then
              vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
              vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
@@ -398,6 +398,7 @@
                vph=vp
                vsv=vs
                vsh=vs
+               eta_aniso=1.0d0
              endif
            else
              stop 'unknown 3D Earth model in get_model'
@@ -450,6 +451,7 @@
                vph=vp
                vsv=vs
                vsh=vs
+               eta_aniso=1.0d0
              endif
   else
              stop 'unknown 3D Earth model in get_model'
@@ -528,6 +530,7 @@
              vsv=vsc
              vsh=vsc
              rho=rhoc
+             eta_aniso=1.0d0
              if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
                c11 = rho*vpv*vpv
                c12 = rho*(vpv*vpv-2.*vsv*vsv)
