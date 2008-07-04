@@ -114,7 +114,8 @@
         istart = xadj(i)
         istop = xadj(i+1) - 1
         number_of_neighbors = istop-istart+1
-        if(number_of_neighbors < 1 .or. number_of_neighbors > MAX_NUMBER_OF_NEIGHBORS) stop 'incorrect number of neighbors'
+        if(number_of_neighbors < 1) stop 'error: your mesh seems to have at least one element not connected to any other'
+        if(number_of_neighbors > MAX_NUMBER_OF_NEIGHBORS) stop 'error: your mesh seems to have an unlikely high valence'
     enddo
     deallocate(ne,np)
 
@@ -643,6 +644,18 @@ subroutine degree( root, nbnodes, nnz, xadj, adj, mask, gsize, deg, level )
 
 !--------------------------------------------------------------- Local Variables
   integer i, j, ideg, lbegin, lvlend, lvsize, nxt, nbr, node
+
+!! DK DK added a test to detect disconnected subsets in the mesh
+!! DK DK (in which case Cuthill-McKee fails and should be turned off)
+  if(root > nbnodes+1) stop 'error: root > nbnodes+1 in Cuthill-McKee'
+  if(root < 1) then
+    print *,'error: root < 1 in Cuthill-McKee; you probably have a mesh composed of'
+    print *,'two disconnected subsets of elements, in which case Cuthill-McKee fails and should be turned off.'
+    print *,'please set PERFORM_CUTHILL_MCKEE = .false. in constants.h and recompile.'
+    print *,'please also doublecheck that you indeed want to run two separate meshes simultaneously,'
+    print *,'which is extremely unusual (but formally not incorrect).'
+    stop 'fatal error in Cuthill-McKee'
+  endif
 
 ! The sign of xadj(I) is used to indicate if node i has been considered
   xadj(root) = -xadj(root)
