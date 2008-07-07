@@ -465,7 +465,7 @@
 !    mask       only those nodes with nonzero mask are considered
 !
 !    gsize      the number of the connected component
-!    invp       Inverse invputation (from new order to old order)
+!    invp       Inverse permutation (from new order to old order)
 !*******************************************************************************
 
 subroutine find_next_root(next_root,xadj,adj,total_size_adj,mask,invperm_all,total_ordered_elts,nspec)
@@ -514,7 +514,7 @@ end subroutine find_next_root
 !    mask       only those nodes with nonzero mask are considered
 !
 !    gsize      the number of the connected component
-!    invp       Inverse invputation (from new order to old order)
+!    invp       Inverse permutation (from new order to old order)
 !*******************************************************************************
 
 subroutine Cut_McK( root, nbnodes, nnz, xadj, adj, mask, gsize, invp, limit, nspec_sub, next_root)
