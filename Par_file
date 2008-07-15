@@ -30,7 +30,8 @@ NPROC_ETA                       = 6
 #
 # fully 3D models:
 # transversely_isotropic_prem_plus_3D_crust_2.0, 3D_anisotropic, 3D_attenuation,
-# s20rts, s362ani, s362iso, s362wmani, s362ani_prem, s29ea, s29ea,sea99_jp3d1994,sea99,jp3d1994,heterogen
+# s20rts, s362ani, s362iso, s362wmani, s362ani_prem, s362ani_3DQ, s362iso_3DQ,
+# s29ea, s29ea,sea99_jp3d1994,sea99,jp3d1994,heterogen
 MODEL                           = 1D_isotropic_prem
 
 # parameters describing the Earth model
