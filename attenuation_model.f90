@@ -461,7 +461,7 @@ subroutine attenuation_conversion(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, 
 
 end subroutine attenuation_conversion
 
-subroutine read_attenuation_model(min, max, AM_V)
+subroutine read_attenuation_model(min_att_period, max_att_period, AM_V)
 
   implicit none
 
@@ -489,10 +489,10 @@ subroutine read_attenuation_model(min, max, AM_V)
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
-  integer min, max
+  integer min_att_period, max_att_period
 
-  AM_V%min_period = min * 1.0d0
-  AM_V%max_period = max * 1.0d0
+  AM_V%min_period = min_att_period * 1.0d0
+  AM_V%max_period = max_att_period * 1.0d0
 
   allocate(AM_V%Qtau_s(N_SLS))
 
@@ -576,7 +576,7 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
   scale_factor = factor_scale_mu * factor_scale_mu0
 
 !--- check that the correction factor is close to one
-  if(scale_factor < 0.9 .or. scale_factor > 1.1) then
+  if(scale_factor < 0.8 .or. scale_factor > 1.2) then
      write(*,*)'scale factor: ', scale_factor
      call exit_MPI(myrank,'incorrect correction factor in attenuation model')
   endif
@@ -1454,7 +1454,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
      fv(j+1) = funk(x,AS_V)
   enddo
 
-  call qsort(fv,n+1,place)
+  call qsort_local(fv,n+1,place)
 
   do i = 1,n+1
      vtmp(:,i) = v(:,place(i))
@@ -1560,7 +1560,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
         endif
      endif
 
-     call qsort(fv,n+1,place)
+     call qsort_local(fv,n+1,place)
      do i = 1,n+1
         vtmp(:,i) = v(:,place(i))
      enddo
@@ -1674,7 +1674,7 @@ end function max_size_simplex
 !         X = [ 1 2 3 4 ] on Output
 !         I = [ 3 4 2 1 ] on Output
 !
-subroutine qsort(X,n,I)
+subroutine qsort_local(X,n,I)
 
   implicit none
 
@@ -1704,7 +1704,7 @@ subroutine qsort(X,n,I)
      enddo
   enddo
 
-end subroutine qsort
+end subroutine qsort_local
 
 ! Piecewise Continuous Splines
 !   - Added Steps which describes the discontinuities

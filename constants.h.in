@@ -436,6 +436,10 @@
   integer, parameter :: MPA=42,MRA=48,MHA=21,MPB=42,MRB=48,MHB=18
   integer, parameter :: MKA=2101,MKB=2101
 
+!QRFSI12 constants
+  integer,parameter :: NKQ=8,MAXL_Q=12
+  integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ=913
+
 ! The meaningful range of Zhao et al.'s model (1994) is as follows:
 !        latitude : 32 - 45 N
 !        longitude: 130-145 E
