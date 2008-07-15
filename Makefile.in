@@ -62,6 +62,7 @@ libspecfem_a_OBJECTS = \
 	$O/assemble_MPI_scalar.o \
 	$O/assemble_MPI_vector.o \
 	$O/attenuation_model.o \
+	$O/attenuation_model_QRFSI12.o \
 	$O/calc_jacobian.o \
 	$O/calendar.o \
 	$O/comp_source_spectrum.o \
@@ -563,6 +564,9 @@ $O/create_central_cube_buffers.o: constants.h $S/create_central_cube_buffers.f90
 
 $O/attenuation_model.o: constants.h $S/attenuation_model.f90 $O/model_ak135.o $O/model_1066a.o $O/model_ref.o
 	${MPIFCCOMPILE_CHECK} -c -o $O/attenuation_model.o ${FCFLAGS_f90} $S/attenuation_model.f90
+
+$O/attenuation_model_QRFSI12.o: constants.h $S/attenuation_model_QRFSI12.f90 
+	${FCCOMPILE_CHECK} -c -o $O/attenuation_model_QRFSI12.o ${FCFLAGS_f90} $S/attenuation_model_QRFSI12.f90
 
 $O/gll_library.o: constants.h $S/gll_library.f90
 	${FCCOMPILE_CHECK} -c -o $O/gll_library.o ${FCFLAGS_f90} $S/gll_library.f90

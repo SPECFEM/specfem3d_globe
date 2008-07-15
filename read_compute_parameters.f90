@@ -448,6 +448,30 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
     THREE_D_MODEL = THREE_D_MODEL_S362ANI_PREM
 
+  else if(MODEL == 's362ani_3DQ') then
+    TRANSVERSE_ISOTROPY = .true.
+    ISOTROPIC_3D_MANTLE = .true.
+    ANISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_INNER_CORE = .false.
+    CRUSTAL = .true.
+    ATTENUATION_3D = .true.
+    ONE_CRUST = .true.
+    CASE_3D = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_REF
+    THREE_D_MODEL = THREE_D_MODEL_S362ANI
+
+ else if(MODEL == 's362iso_3DQ') then
+    TRANSVERSE_ISOTROPY = .false.
+    ISOTROPIC_3D_MANTLE = .true.
+    ANISOTROPIC_3D_MANTLE = .false.
+    ANISOTROPIC_INNER_CORE = .false.
+    CRUSTAL = .true.
+    ATTENUATION_3D = .true.
+    ONE_CRUST = .true.
+    CASE_3D = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_REF
+    THREE_D_MODEL = THREE_D_MODEL_S362ANI
+
   else if(MODEL == 's29ea') then
     TRANSVERSE_ISOTROPY = .true.
     ISOTROPIC_3D_MANTLE = .true.

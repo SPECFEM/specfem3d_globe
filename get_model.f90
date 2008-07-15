@@ -38,7 +38,7 @@
     CRUSTAL,ONE_CRUST,ATTENUATION,ATTENUATION_3D,tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
     ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
     RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,&
-    AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+    AMM_V,AM_V,QRFSI12_Q,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
     numker,numhpa,numcof,ihpa,lmax,nylm, &
     lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
     nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -80,6 +80,18 @@
 
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
+
+! atten_model_QRFSI12_variables
+  type atten_model_QRFSI12_variables
+    sequence
+    double precision dqmu(NKQ,NSQ)
+    double precision spknt(NKQ)
+    double precision refdepth(NDEPTHS_REFQ)
+    double precision refqmu(NDEPTHS_REFQ)
+  end type atten_model_QRFSI12_variables
+
+  type (atten_model_QRFSI12_variables) QRFSI12_Q
+! atten_model_QRFSI12_variables
 
 ! model_1066a_variables
   type model_1066a_variables
@@ -341,7 +353,7 @@
   double precision xstore(NGLLX,NGLLY,NGLLZ)
   double precision ystore(NGLLX,NGLLY,NGLLZ)
   double precision zstore(NGLLX,NGLLY,NGLLZ)
-  double precision r,r_prem,r_moho,r_dummy,theta,phi
+  double precision r,r_prem,r_moho,r_dummy,theta,phi,theta_degrees,phi_degrees
   double precision lat,lon
   double precision vpc,vsc,rhoc,moho
 
@@ -740,11 +752,16 @@
 
 ! This is here to identify how and where to include 3D attenuation
        if(ATTENUATION .and. ATTENUATION_3D) then
+         call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
+         call reduce(theta,phi)
+         theta_degrees = theta / DEGREES_TO_RADIANS
+         phi_degrees = phi / DEGREES_TO_RADIANS
          tau_e(:)   = 0.0d0
          ! Get the value of Qmu (Attenuation) dependedent on
          ! the radius (r_prem) and idoubling flag
-         call attenuation_model_1D_PREM(r_prem, Qmu, idoubling)
-         ! Get tau_e from tau_s and Qmu
+         !call attenuation_model_1D_PREM(r_prem, Qmu, idoubling)
+          call attenuation_model_3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,QRFSI12_Q,idoubling)
+          ! Get tau_e from tau_s and Qmu
          call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
        endif
 

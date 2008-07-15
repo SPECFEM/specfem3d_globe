@@ -182,6 +182,18 @@
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
+! atten_model_QRFSI12_variables
+  type atten_model_QRFSI12_variables
+    sequence
+    double precision dqmu(NKQ,NSQ)
+    double precision spknt(NKQ)
+    double precision refdepth(NDEPTHS_REFQ)
+    double precision refqmu(NDEPTHS_REFQ)
+  end type atten_model_QRFSI12_variables
+
+  type (atten_model_QRFSI12_variables) QRFSI12_Q
+! atten_model_QRFSI12_variables
+
 ! model_1066a_variables
   type model_1066a_variables
     sequence
@@ -1305,6 +1317,12 @@
     call MPI_BCAST(AM_V%Qtau_s(1),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%Qtau_s(2),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%Qtau_s(3),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    if(myrank == 0) call read_atten_model_3D_QRFSI12(QRFSI12_Q) 
+    call MPI_BCAST(QRFSI12_Q%dqmu,          NKQ*NSQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(QRFSI12_Q%spknt,             NKQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(QRFSI12_Q%refdepth, NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    call MPI_BCAST(QRFSI12_Q%refqmu,   NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    if(myrank == 0) write(IMAIN,*) 'read 3D attenuation model'
   endif
 
   if(ATTENUATION .and. .not. ATTENUATION_3D) then
@@ -1408,7 +1426,7 @@
          NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
          ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
-         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+         AMM_V,AM_V,QRFSI12_Q,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
          numker,numhpa,numcof,ihpa,lmax,nylm, &
          lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &

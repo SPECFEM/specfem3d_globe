@@ -43,7 +43,7 @@
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            ner,ratio_sampling_array,doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D, &
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
+           AMM_V,AM_V,QRFSI12_Q,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -108,6 +108,18 @@
 
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
+
+! atten_model_QRFSI12_variables
+  type atten_model_QRFSI12_variables
+    sequence
+    double precision dqmu(NKQ,NSQ)
+    double precision spknt(NKQ)
+    double precision refdepth(NDEPTHS_REFQ)
+    double precision refqmu(NDEPTHS_REFQ)
+  end type atten_model_QRFSI12_variables
+
+  type (atten_model_QRFSI12_variables) QRFSI12_Q
+! atten_model_QRFSI12_variables
 
 ! model_1066a_variables
   type model_1066a_variables
@@ -985,7 +997,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+           AMM_V,AM_V,QRFSI12_Q,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1187,7 +1199,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+           AMM_V,AM_V,QRFSI12_Q,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1356,7 +1368,7 @@
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
            nspec_ani,nspec_stacey,Qmu_store,tau_e_store,tau_s,T_c_source,rho_vp,rho_vs,&
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+           AMM_V,AM_V,QRFSI12_Q,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
