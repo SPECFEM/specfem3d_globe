@@ -5,7 +5,7 @@ This program writes profiles of material properties for the model chosen in Par_
 To update the program:
 First models that have been recently added need to be read at the top, and the appropriate variables need to be declared.  Most of the
 code is from get_model.f90 and is marked with comments.  Copy paste the corresponding part from the most recent get_model.f90 and paste it
-into write_profile.f90.  Updated calls to subroutines may be necessary, in particular to read_compute_parameters which often changes.  Copy write_profile.f90 to the trunk directory.  Add the following lines to the Makefile:
+into write_profile.f90.  Remove calls to xyz_to_rthetaphi, since theta and phi are defined in write_profile.f.  Updated calls to subroutines may be necessary, in particular to read_compute_parameters which often changes.  Copy write_profile.f90 to the trunk directory.  Add the following lines to the Makefile:
 
 write_profile: $O/write_profile.o $O/exit_mpi.o $(LIBSPECFEM)
 	${MPIFCCOMPILE_CHECK} -o xwrite_profile $O/exit_mpi.o $O/write_profile.o $(LIBSPECFEM) $(MPILIBS)
