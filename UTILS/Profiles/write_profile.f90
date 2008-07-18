@@ -438,7 +438,7 @@
   double precision vpv,vph,vsv,vsh,eta_aniso
   double precision dvp,dvs,drho
   real(kind=4) xcolat,xlon,xrad,dvpv,dvph,dvsv,dvsh
-  double precision r,r_prem,r_moho,theta,phi,theta_degrees,phi_degrees
+  double precision r,r_prem,r_moho,theta,phi,theta_deg,phi_deg,theta_degrees,phi_degrees
   double precision lat,lon,elevation
   double precision vpc,vsc,rhoc,moho
   integer NUMBER_OF_MESH_LAYERS
@@ -666,9 +666,9 @@ print *,'defining models'
   endif
 !!!!!!
  do i=0,89
-!  do i=0,1
+!  do i=10,10
   theta_degrees = 1.0d0 + i*2.0d0
-!   do j=0,1
+!   do j=18,18
   do j=0,179
    phi_degrees = 1.0d0 + j*2.0d0
 !  theta_degrees = 90.0d0
@@ -891,7 +891,7 @@ print *,'defining models'
              dvsh = 0.
              xcolat = sngl(theta*180.0d0/PI)
              xlon = sngl(phi*180.0d0/PI)
-             xrad = sngl(r*R_EARTH_KM)
+             xrad = sngl(r_prem*R_EARTH_KM)
              call subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
                           numker,numhpa,numcof,ihpa,lmax,nylm, &
                           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
@@ -1076,13 +1076,13 @@ print *,'defining models'
              
 ! This is here to identify how and where to include 3D attenuation
        if(ATTENUATION .and. ATTENUATION_3D) then
-         theta_degrees = theta / DEGREES_TO_RADIANS
-         phi_degrees = phi / DEGREES_TO_RADIANS
+         theta_deg = theta / DEGREES_TO_RADIANS
+         phi_deg = phi / DEGREES_TO_RADIANS
          tau_e(:)   = 0.0d0
          ! Get the value of Qmu (Attenuation) dependedent on
          ! the radius (r_prem) and idoubling flag
          !call attenuation_model_1D_PREM(r_prem, Qmu, idoubling)
-          call attenuation_model_3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,QRFSI12_Q,idoubling)
+          call attenuation_model_3D_QRFSI12(r_prem*R_EARTH_KM,theta_deg,phi_deg,Qmu,QRFSI12_Q,idoubling)
           ! Get tau_e from tau_s and Qmu
          call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
        endif
@@ -1132,7 +1132,7 @@ print *,'defining models'
                    lat=(PI/2.0d0-theta)*180.0d0/PI
                    lon=phi*180.0d0/PI
                    if(lon>180.0d0) lon=lon-360.0d0
-                   call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V)
+                   call crustal_model(lat,lon,r_prem,vpc,vsc,rhoc,moho,found_crust,CM_V)
                    if (found_crust) then
                       vpv=vpc
                       vph=vpc
@@ -1169,7 +1169,7 @@ print *,'defining models'
                 lat=(PI/2.0d0-theta)*180.0d0/PI
                 lon=phi*180.0d0/PI
                 if(lon>180.0d0) lon=lon-360.0d0
-                call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V)
+                call crustal_model(lat,lon,r_prem,vpc,vsc,rhoc,moho,found_crust,CM_V)
                 if (found_crust) then
                    vpv=vpc
                    vph=vpc
@@ -1224,7 +1224,7 @@ print *,'defining models'
 !            iline,sngl(rmin*R_EARTH_KM),sngl(rmax*R_EARTH_KM),sngl(r_prem*R_EARTH_KM),sngl(r*R_EARTH_KM), &
 !            sngl(vpv),sngl(vph),sngl(vsv),sngl(vsh),sngl(rho),sngl(eta_aniso),sngl(Qmu)
        write(57,'(F8.0,7F9.2,F9.5)') &
-            sngl(r_prem*R_EARTH),sngl(rho*1000.d0),sngl(vpv*1000.d0),sngl(vsv*1000.d0), &
+           sngl(r_prem*R_EARTH),sngl(rho*1000.d0),sngl(vpv*1000.d0),sngl(vsv*1000.d0), &
             sngl(Qkappa),sngl(Qmu),sngl(vph*1000.d0),sngl(vsh*1000.d0),sngl(eta_aniso)
     enddo !islice
    endif !rmin == rmax_last
@@ -1241,9 +1241,9 @@ print *,'defining models'
      write(57,'(F8.0,7F9.2,F9.5)') &
        sngl(1.0d0*R_EARTH),1.02,1450.,0.0,57822.5,0.0,1450.,0.0,1.0
      iline = iline+1
-     write(57,*) iline,iline_icb,iline_cmb,iline_moho,iline_ocean
+     write(57,'(5i5)') iline,iline_icb,iline_cmb,iline_moho,iline_ocean
   else
-     write(57,*) iline,iline_icb,iline_cmb,iline_moho
+     write(57,'(5i5)') iline,iline_icb,iline_cmb,iline_moho
   endif
   enddo !sum over phi
   enddo !sum over theta

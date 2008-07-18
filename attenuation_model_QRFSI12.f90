@@ -167,7 +167,13 @@
       enddo
       smallq = smallq_ref + dqmu
     endif
+ ! if smallq is small and negative (due to numerical error), Qmu is very large:
+    if(smallq < 0.0d0) smallq = 1.0d0/ATTENUATION_COMP_MAXIMUM
     Qmu = 1/smallq
+ ! Qmu is larger than MAX_ATTENUATION_VALUE, set it to ATTENUATION_COMP_MAXIMUM.  This assumes that this
+ ! value is high enough that at this point there is almost no attenuation at all.
+    if(Qmu >= ATTENUATION_COMP_MAXIMUM) Qmu = 0.99d0*ATTENUATION_COMP_MAXIMUM
+
   endif
   
   end subroutine attenuation_model_3D_QRFSI12
