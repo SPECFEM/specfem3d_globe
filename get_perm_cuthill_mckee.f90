@@ -645,8 +645,8 @@ subroutine degree( root, nbnodes, nnz, xadj, adj, mask, gsize, deg, level )
 !--------------------------------------------------------------- Local Variables
   integer i, j, ideg, lbegin, lvlend, lvsize, nxt, nbr, node
 
-!! DK DK added a test to detect disconnected subsets in the mesh
-!! DK DK (in which case Cuthill-McKee fails and should be turned off)
+! added a test to detect disconnected subsets in the mesh
+! (in which case Cuthill-McKee fails and should be turned off)
   if(root > nbnodes+1) stop 'error: root > nbnodes+1 in Cuthill-McKee'
   if(root < 1) then
     print *,'error: root < 1 in Cuthill-McKee; you probably have a mesh composed of'
