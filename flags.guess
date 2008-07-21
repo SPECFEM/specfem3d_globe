@@ -32,7 +32,7 @@ case $FC in
             # standard options
             FLAGS_NO_CHECK="-O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz" # -mcmodel=medium
             # Pangu at Caltech
-            #FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O2 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
+            #FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O3 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
             # debug with range checking
             #FLAGS_NO_CHECK = -O0 -static -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
         fi
@@ -43,7 +43,7 @@ case $FC in
         # GNU gfortran
         #
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math" # -mcmodel=medium
+            FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math" # -mcmodel=medium
 # older gfortran syntax
 #           FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow -fno-trapping-math" # -mcmodel=medium
         fi
@@ -70,7 +70,7 @@ case $FC in
                 # AbSoft
                 #
                 if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="-s -O2 -cpu:p7 -v -YDEALLOC=ALL"
+                    FLAGS_CHECK="-s -O3 -cpu:p7 -v -YDEALLOC=ALL"
                 fi
                 if test x"$FLAGS_NO_CHECK" = x; then
                     FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
@@ -146,12 +146,12 @@ case $FC in
         # on IBM with xlf one should also set
         #
         # CC = xlc_r
-        # CFLAGS = -O2 -q64
+        # CFLAGS = -O3 -q64
         #
         # or
         #
         # CC = gcc
-        # CFLAGS = -O2 -m64
+        # CFLAGS = -O3 -m64
         #
         # for the C compiler when using -q64 for the Fortran compiler
         #
