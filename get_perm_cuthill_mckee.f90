@@ -48,7 +48,7 @@
 ! local variables
   integer nspec,nglob_GLL_full
 
-! a neighbor of a hexahedral node is a hexahedra which share a face whith it -> max degre of a node = 6
+! maximum number of neighbors of a spectral element (in principle, it could be any value)
   integer, parameter :: MAX_NUMBER_OF_NEIGHBORS = 100
 
 ! global corner numbers that need to be created
