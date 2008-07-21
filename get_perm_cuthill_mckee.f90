@@ -303,7 +303,7 @@
 !
 
   subroutine create_adjacency_table_adjncy(mn,mp,ne,np,adj,xadj,maskel,nspec, &
-              nglob_eight_corners_only,count_only,total_size_ne,total_size_adj,face)
+              nglob_eight_corners_only,count_only,total_size_ne,total_size_adj,FACE)
 
 !-----------------------------------------------------------------------
 !
@@ -329,7 +329,7 @@
   include "constants.h"
 
 ! only count the total size of the array that will be created, or actually create it
-  logical count_only,face
+  logical count_only,FACE
   integer total_size_ne,total_size_adj
 
   integer nglob_eight_corners_only
@@ -353,7 +353,7 @@
 
 ! mask current element
   maskel(ispec) = .true.
-  if (face) countel(:) = 0
+  if (FACE) countel(:) = 0
 
   istart = mp(ispec)
   istop = mp(ispec+1) - 1
@@ -364,7 +364,7 @@
         do 120 jel=jstart,jstop
             nelem = ne(jel)
             if(maskel(nelem)) goto 120
-            if (face) then
+            if (FACE) then
               ! if 2 elements share at least 3 corners, therefore they share a face
               countel(nelem) = countel(nelem) + 1
               if (countel(nelem)>=3) then
