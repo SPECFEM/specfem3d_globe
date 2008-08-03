@@ -639,6 +639,7 @@
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.
   call MPI_INIT(ier)
+  if(ier /= 0) stop 'error: cannot start MPI!!!'
 
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
 ! myrank is the rank of each process, between 0 and NPROCTOT-1.

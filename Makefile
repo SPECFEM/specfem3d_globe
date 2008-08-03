@@ -32,7 +32,9 @@
 #
 FC = ifort
 MPIFC = mpif90
-FLAGS_NO_CHECK = -O3 -xP -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz
+FLAGS_NO_CHECK = -O1 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check all -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz
+#FLAGS_NO_CHECK = -O0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz
+#FLAGS_NO_CHECK = -O3 -xP -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz
 
 #
 # GNU gfortran
@@ -110,6 +112,7 @@ libspecfem_a_OBJECTS = \
 	$O/get_event_info.o \
 	$O/get_global.o \
 	$O/get_jacobian_boundaries.o \
+	$O/get_jacobian_discontinuities.o \
 	$O/get_model.o \
 	$O/get_perm_cuthill_mckee.o \
 	$O/get_shape2D.o \
@@ -307,6 +310,9 @@ $O/make_ellipticity.o: $(SPECINC)/constants.h $S/make_ellipticity.f90
 $O/get_jacobian_boundaries.o: $(SPECINC)/constants.h $S/get_jacobian_boundaries.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_jacobian_boundaries.o ${FCFLAGS_f90} $S/get_jacobian_boundaries.f90
 
+$O/get_jacobian_discontinuities.o: $(SPECINC)/constants.h $S/get_jacobian_discontinuities.f90
+	${FCCOMPILE_CHECK} -c -o $O/get_jacobian_discontinuities.o ${FCFLAGS_f90} $S/get_jacobian_discontinuities.f90
+
 $O/get_MPI_cutplanes_xi.o: $(SPECINC)/constants.h $S/get_MPI_cutplanes_xi.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_MPI_cutplanes_xi.o ${FCFLAGS_f90} $S/get_MPI_cutplanes_xi.f90
 
@@ -369,7 +375,7 @@ $O/spline_routines.o: $(SPECINC)/constants.h $S/spline_routines.f90
 	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} $S/spline_routines.f90
 
 $O/create_list_files_chunks.o: $(SPECINC)/constants.h $S/create_list_files_chunks.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_list_files_chunks.o ${FCFLAGS_f90} $S/create_list_files_chunks.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/create_list_files_chunks.o ${FCFLAGS_f90} $S/create_list_files_chunks.f90
 
 $O/recompute_missing_arrays.o: $(SPECINC)/constants.h $S/recompute_missing_arrays.f90
 	${FCCOMPILE_CHECK} -c -o $O/recompute_missing_arrays.o ${FCFLAGS_f90} $S/recompute_missing_arrays.f90
@@ -441,7 +447,7 @@ $O/recompute_jacobian.o: $(SPECINC)/constants.h $S/recompute_jacobian.f90
 	${FCCOMPILE_CHECK} -c -o $O/recompute_jacobian.o ${FCFLAGS_f90} $S/recompute_jacobian.f90
 
 $O/create_regions_mesh.o: $(SPECINC)/constants.h $S/create_regions_mesh.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_regions_mesh.o ${FCFLAGS_f90} $S/create_regions_mesh.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/create_regions_mesh.o ${FCFLAGS_f90} $S/create_regions_mesh.f90
 
 $O/create_name_database.o: $(SPECINC)/constants.h $S/create_name_database.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} $S/create_name_database.f90
