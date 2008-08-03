@@ -147,12 +147,21 @@
 
     counter = 1
     c = 0
+    NEX_XI = 0
     already_printed = .false.
 
+! loop on the columns of the table
     do while (counter <= NB_COLUMNS_TABLE)
+
       c = c + 1
       NEX_XI = BASE_VALUE * c * NPROC_XI
 
+! impose an upper limit on current "reasonably large" values to avoid an infinite loop
+! these values should be okay for the next few years (i.e., on machines around 1 petaflops)
+! (this written in August 2008)
+      if(c > 15 .or. NEX_XI > 6000) exit
+
+! also exclude very coarse meshes below NEX_XI = 64
       if(NEX_XI >= 64 .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
 
         counter = counter + 1
