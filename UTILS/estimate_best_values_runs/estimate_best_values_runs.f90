@@ -207,7 +207,6 @@
     else
       print *,'ATTENUATION = .false.'
     endif
-    print *
   endif
 
 !! compute memory usage per processor core
@@ -237,51 +236,72 @@
   if(percent > 100.d0) goto 777
 
   if(percent < 0.d0) then
-    if(.not. already_printed) print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    if(.not. already_printed) then
+      print *
+      print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    endif
     already_printed = .true.
-    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'% **mesher fails/bug**')") &
+    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'GB  ',f6.2,'% **mesher fails/bug**')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
   else if(percent >= 93.d0) then
-    if(.not. already_printed) print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    if(.not. already_printed) then
+      print *
+      print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    endif
     already_printed = .true.
-    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'% **too high**')") &
+    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'GB  ',f6.2,'% **too high**')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
   else if(percent >= 85.d0) then
-    if(.not. already_printed) print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    if(.not. already_printed) then
+      print *
+      print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    endif
     already_printed = .true.
-    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'% **excellent**')") &
+    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'GB  ',f6.2,'% **excellent**')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
   else if(percent >= 80.d0) then
-    if(.not. already_printed) print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    if(.not. already_printed) then
+      print *
+      print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    endif
     already_printed = .true.
-    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'% **very good**')") &
+    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'GB  ',f6.2,'% **very good**')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
   else if(percent >= 70.d0) then
-    if(.not. already_printed) print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    if(.not. already_printed) then
+      print *
+      print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    endif
     already_printed = .true.
-    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'% **not bad**')") &
+    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'GB  ',f6.2,'% **not bad**')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
   else if(percent >= 60.d0) then
-    if(.not. already_printed) print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    if(.not. already_printed) then
+      print *
+      print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    endif
     already_printed = .true.
-    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'% **possible**')") &
+    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'GB  ',f6.2,'% **possible**')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
 
 ! uncomment line below to completely suppress cases that give an occupancy below 50%
   else ! if(percent >= 50.d0) then
-    if(.not. already_printed) print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    if(.not. already_printed) then
+      print *
+      print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem usage/core:'
+    endif
     already_printed = .true.
-    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'  ',f6.2,'%')") &
+    write(*,"(' ',i5,'  ',f6.2,'% ',i3,'  ',i4,'  ',f6.2,'GB  ',f6.2,'%')") &
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
   endif
 
@@ -290,9 +310,9 @@
 
  777 continue
 
-    print *
-
   enddo
+
+  print *
 
   end program estimate_best_values_runs
 
