@@ -26,11 +26,11 @@ case $FC in
         # Intel ifort Fortran90 for Linux
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-O3 -xP -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -ftrapuv -fpe0 -no-ftz -traceback" # -mcmodel=medium
+            FLAGS_CHECK="-O3 -xP -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -ftrapuv -fpe0 -no-ftz -traceback" # -mcmodel=medium
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
             # standard options
-            FLAGS_NO_CHECK="-O3 -xP -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz" # -mcmodel=medium
+            FLAGS_NO_CHECK="-O3 -xP -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -fpe0 -no-ftz" # -mcmodel=medium
             # Pangu at Caltech
             #FLAGS_NO_CHECK = $(IFORT_PROF) -vec_report0 -O3 -static -ip -xP -Wl,--allow-multiple-definition -L $$IFORT_ROOT/lib -limf -lirc
             # debug with range checking
