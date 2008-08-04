@@ -32,9 +32,9 @@
 #
 FC = ifort
 MPIFC = mpif90
-FLAGS_NO_CHECK = -O1 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check all -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz
-#FLAGS_NO_CHECK = -O0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz
-#FLAGS_NO_CHECK = -O3 -xP -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -i-dynamic -fpe0 -no-ftz
+FLAGS_NO_CHECK = -O1 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check all -align sequence -assume byterecl -fpe0 -no-ftz
+#FLAGS_NO_CHECK = -O0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -fpe0 -no-ftz
+#FLAGS_NO_CHECK = -O3 -xP -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -fpe0 -no-ftz
 
 #
 # GNU gfortran
