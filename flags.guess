@@ -70,7 +70,7 @@ case $FC in
                 # AbSoft
                 #
                 if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="-s -O3 -cpu:p7 -v -YDEALLOC=ALL"
+                    FLAGS_CHECK="-W132 -s -O3 -cpu:p7 -v -YDEALLOC=ALL"
                 fi
                 if test x"$FLAGS_NO_CHECK" = x; then
                     FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
