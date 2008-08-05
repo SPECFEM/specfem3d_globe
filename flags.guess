@@ -107,7 +107,7 @@ case $FC in
                 fi
                 ;;
             SX-*:SUPER-UX | ES:ESOS)
-                ################## Earth Simulator and NEC SX-5 ##################
+                ################## NEC SX ##################
                 if test x"$MPIFC" = x; then
                     MPIFC=$FC
                 fi
