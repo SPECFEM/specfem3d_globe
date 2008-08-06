@@ -1034,12 +1034,11 @@
     last_layer_aniso=4
     nb_layer_above_aniso = 2
   endif
-  allocate (perm_layer(ifirst_region:ilast_region),STAT=ier )
+  allocate(perm_layer(ifirst_region:ilast_region),STAT=ier)
   if (ier /= 0) then
     print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
     call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
   endif
-
   perm_layer = (/ (i, i=ilast_region,ifirst_region,-1) /)
   if(iregion_code == IREGION_CRUST_MANTLE) then
     cpt=3
@@ -1530,7 +1529,7 @@
     endif
 
   endif
-  deallocate (perm_layer,STAT=ier )
+  deallocate(perm_layer,STAT=ier )
   if (ier /= 0) then
     print *,"ERROR can not deallocate perm_layer in create_regions_mesh ier=",ier
   endif
