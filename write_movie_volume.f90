@@ -430,7 +430,7 @@ allocate(store_val3d_Z(npoints_3dmovie))
          ipoints_3dmovie=ipoints_3dmovie+1
          iglob = ibool_crust_mantle(i,j,k,ispec)
          vector_local(:) = vector_scaled(:,iglob)
-     
+
 ! rotate eps_loc to spherical coordinates
          vector_local_new(:) = matmul(nu_3dmovie(:,:,ipoints_3dmovie), vector_local(:))
          store_val3d_N(ipoints_3dmovie)=vector_local_new(1)

@@ -137,10 +137,6 @@
     call compute_jacobian_2D(myrank,ispecb1,xelm,yelm,zelm,dershape2D_x, &
                   jacobian2D_xmin,normal_xmin,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
 
-    if (PERFORM_CUTHILL_MCKEE) then
-      call sort_arrays_for_cuthill (ispecb1,xstore,ystore,zstore,ibelm_xmin,normal_xmin,&
-                                    jacobian2D_xmin,NSPEC2DMAX_XMIN_XMAX,NGLLY,NGLLZ,nspec)
-    endif
   endif
 
 ! on boundary: xmax
@@ -182,10 +178,6 @@
     call compute_jacobian_2D(myrank,ispecb2,xelm,yelm,zelm,dershape2D_x, &
                   jacobian2D_xmax,normal_xmax,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
 
-    if (PERFORM_CUTHILL_MCKEE) then
-      call sort_arrays_for_cuthill (ispecb2,xstore,ystore,zstore,ibelm_xmax,normal_xmax,&
-                                    jacobian2D_xmax,NSPEC2DMAX_XMIN_XMAX,NGLLY,NGLLZ,nspec)
-    endif
   endif
 
 ! on boundary: ymin
@@ -227,10 +219,6 @@
     call compute_jacobian_2D(myrank,ispecb3,xelm,yelm,zelm,dershape2D_y, &
                   jacobian2D_ymin,normal_ymin,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
-    if (PERFORM_CUTHILL_MCKEE) then
-      call sort_arrays_for_cuthill (ispecb3,xstore,ystore,zstore,ibelm_ymin,normal_ymin,&
-                                    jacobian2D_ymin,NSPEC2DMAX_YMIN_YMAX,NGLLX,NGLLZ,nspec)
-    endif
   endif
 
 ! on boundary: ymax
@@ -272,10 +260,6 @@
     call compute_jacobian_2D(myrank,ispecb4,xelm,yelm,zelm,dershape2D_y, &
                   jacobian2D_ymax,normal_ymax,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
-    if (PERFORM_CUTHILL_MCKEE) then
-      call sort_arrays_for_cuthill (ispecb4,xstore,ystore,zstore,ibelm_ymax,normal_ymax,&
-                                    jacobian2D_ymax,NSPEC2DMAX_YMIN_YMAX,NGLLX,NGLLZ,nspec)
-    endif
   endif
 
 ! on boundary: bottom
@@ -316,10 +300,6 @@
     call compute_jacobian_2D(myrank,ispecb5,xelm,yelm,zelm,dershape2D_bottom, &
                   jacobian2D_bottom,normal_bottom,NGLLX,NGLLY,NSPEC2D_BOTTOM)
 
-    if (PERFORM_CUTHILL_MCKEE) then
-      call sort_arrays_for_cuthill (ispecb5,xstore,ystore,zstore,ibelm_bottom,normal_bottom,&
-                                    jacobian2D_bottom,NSPEC2D_BOTTOM,NGLLX,NGLLY,nspec)
-    endif
   endif
 
 ! on boundary: top
@@ -360,14 +340,9 @@
     call compute_jacobian_2D(myrank,ispecb6,xelm,yelm,zelm,dershape2D_top, &
                   jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
 
-    if (PERFORM_CUTHILL_MCKEE) then
-      call sort_arrays_for_cuthill (ispecb6,xstore,ystore,zstore,ibelm_top,normal_top,&
-                                    jacobian2D_top,NSPEC2D_TOP,NGLLX,NGLLY,nspec)
-    endif
   endif
 
   enddo
-
 
 ! check theoretical value of elements at the bottom
   if(ispecb5 /= NSPEC2D_BOTTOM) then
