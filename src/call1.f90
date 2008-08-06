@@ -6,8 +6,6 @@
   omsb_crust_mantle_dble,factor_scale_crust_mantle_dble, omsb_inner_core_dble,factor_scale_inner_core_dble, &
   one_minus_sum_beta_crust_mantle,factor_scale_crust_mantle, one_minus_sum_beta_inner_core,factor_scale_inner_core, &
   factor_common_crust_mantle,factor_common_inner_core,factor_common_crust_mantle_dble, factor_common_inner_core_dble, &
-!! DK DK to do later, for oceans only
-  rmass_ocean_load, &
 !! DK DK already computed
   myrank,sizeprocs,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,ibathy_topo, &
   ibool_crust_mantle, ibool_outer_core, ibool_inner_core, idoubling_crust_mantle,idoubling_inner_core, &
@@ -37,9 +35,6 @@ etaz_outer_core,gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
   xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core, &
   etaz_inner_core,gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
 !! DK DK do not need to be initialized
-  displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-  displ_outer_core,veloc_outer_core,accel_outer_core,displ_inner_core,veloc_inner_core,accel_inner_core, &
   buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-  buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-R_memory_crust_mantle, epsilondev_crust_mantle, R_memory_inner_core, epsilondev_inner_core)
+  buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector)
 

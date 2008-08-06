@@ -2112,9 +2112,6 @@
   deallocate(zelm_store_inner_core)
 
 !! DK DK for the merged version
-  include 'allocate_after_2.f90'
-
-!! DK DK for the merged version
   include 'call1.f90'
 !! DK DK for now use variables just to make sure we don't get warning about unused variables
 ! include 'oldstuff/dummy_use_variables.f90'
