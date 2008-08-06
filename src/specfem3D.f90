@@ -614,7 +614,52 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
+!! DK DK added this for merged version
+!! DK DK stored in single precision for merged version, check if it precise enough (probably yes)
+  real(kind=CUSTOM_REAL), dimension(NGNOD,NSPEC_CRUST_MANTLE) :: xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGNOD,NSPEC_OUTER_CORE) :: xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGNOD,NSPEC_INNER_CORE) :: xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core
+
 ! ************** PROGRAM STARTS HERE **************
+
+!! DK DK recompute arrays here for merged version
+  call recompute_missing_arrays(myrank, &
+     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+     xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
+     ibool_crust_mantle,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE)
+
+  call recompute_missing_arrays(myrank, &
+     xix_outer_core,xiy_outer_core,xiz_outer_core, &
+     etax_outer_core,etay_outer_core,etaz_outer_core, &
+     gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+     xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+     xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
+     ibool_outer_core,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE)
+
+  call recompute_missing_arrays(myrank, &
+     xix_inner_core,xiy_inner_core,xiz_inner_core, &
+     etax_inner_core,etay_inner_core,etaz_inner_core, &
+     gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+     xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+     xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core, &
+     ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE)
+
+!! DK DK for merged version, deallocate arrays that have become useless
+!! DK DK attention je ne peux plus desallouer ici pour l'instant
+!! DK DK impossible YYYYYYYYYYYYY  deallocate(xelm_store_crust_mantle)
+!! DK DK impossible YYYYYYYYYYYYY  deallocate(yelm_store_crust_mantle)
+!! DK DK impossible YYYYYYYYYYYYY  deallocate(zelm_store_crust_mantle)
+
+!! DK DK impossible YYYYYYYYYYYYY  deallocate(xelm_store_outer_core)
+!! DK DK impossible YYYYYYYYYYYYY  deallocate(yelm_store_outer_core)
+!! DK DK impossible YYYYYYYYYYYYY  deallocate(zelm_store_outer_core)
+
+!! DK DK impossible YYYYYYYYYYYYY  deallocate(xelm_store_inner_core)
+!! DK DK impossible YYYYYYYYYYYYY  deallocate(yelm_store_inner_core)
+!! DK DK impossible YYYYYYYYYYYYY  deallocate(zelm_store_inner_core)
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.
 !! DK DK suppressed for merged version  call MPI_INIT(ier)

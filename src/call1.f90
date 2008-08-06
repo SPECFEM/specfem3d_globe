@@ -25,15 +25,9 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
   npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-!! DK DK recomputed after the end of the mesher and before the beginning of the solver
-  xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle, &
-  etaz_crust_mantle,gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-xix_outer_core,xiy_outer_core,xiz_outer_core,etax_outer_core,etay_outer_core, &
-etaz_outer_core,gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-  xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core, &
-  etaz_inner_core,gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+  xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
+  xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
+  xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core, &
 !! DK DK do not need to be initialized
   buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
   buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector)
