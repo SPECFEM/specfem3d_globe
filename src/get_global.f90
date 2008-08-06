@@ -50,14 +50,9 @@
   integer ispec,i,j
   integer ieoff,ilocnum,nseg,ioff,iseg,ig
 
-  integer, dimension(:), allocatable :: ind,ninseg,iwork
-  double precision, dimension(:), allocatable :: work
-
-! dynamically allocate arrays
-  allocate(ind(npointot))
-  allocate(ninseg(npointot))
-  allocate(iwork(npointot))
-  allocate(work(npointot))
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+  integer, dimension(npointot) :: ind,ninseg,iwork
+  double precision, dimension(npointot) :: work
 
 ! establish initial pointers
   do ispec=1,nspec
@@ -125,12 +120,6 @@ enddo
   enddo
 
   nglob=ig
-
-! deallocate arrays
-  deallocate(ind)
-  deallocate(ninseg)
-  deallocate(iwork)
-  deallocate(work)
 
   end subroutine get_global
 
