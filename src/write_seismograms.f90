@@ -34,7 +34,7 @@
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
             OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
             seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER,&
-            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,one_seismogram)
 
  implicit none
 
@@ -69,7 +69,6 @@
  integer :: total_seismos,total_seismos_local
  double precision :: write_time_begin,write_time
 
-! allocate this automatic array in the memory stack to avoid memory fragmentation with "allocate()"
  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
 
  integer msg_status(MPI_STATUS_SIZE)

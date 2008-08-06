@@ -623,6 +623,9 @@
   real(kind=CUSTOM_REAL), dimension(NGNOD,NSPEC_OUTER_CORE) :: xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core
   real(kind=CUSTOM_REAL), dimension(NGNOD,NSPEC_INNER_CORE) :: xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core
 
+! allocate this automatic array in the memory stack to avoid memory fragmentation with "allocate()"
+ real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
+
 ! ************** PROGRAM STARTS HERE **************
 
 !! DK DK added this for merged version
@@ -2495,7 +2498,7 @@
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
             OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
             seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
-            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,one_seismogram)
       if(myrank==0) then
         write(IMAIN,*)
         write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1

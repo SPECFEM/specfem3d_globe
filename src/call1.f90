@@ -8,7 +8,7 @@
   factor_common_crust_mantle,factor_common_inner_core,factor_common_crust_mantle_dble, factor_common_inner_core_dble, &
 !! DK DK already computed
   myrank,sizeprocs,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,ibathy_topo,NSOURCES,npoin2D_max_all,NDIM_smaller_buffers, &
-  ibool_crust_mantle, ibool_outer_core, ibool_inner_core, idoubling_crust_mantle,idoubling_inner_core, &
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS,ibool_crust_mantle, ibool_outer_core, ibool_inner_core, idoubling_crust_mantle,idoubling_inner_core, &
 ibelm_bottom_crust_mantle, ibelm_bottom_outer_core, ibelm_top_outer_core, &
 ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
 ibelm_top_inner_core,iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, iboolleft_eta_crust_mantle, &
