@@ -108,7 +108,6 @@
   double precision dgamma
 
   double precision final_distance_source(NSOURCES)
-  double precision, dimension(:), allocatable :: final_distance_source_subset
 
   double precision x_target_source,y_target_source,z_target_source
   double precision r_target_source
@@ -120,17 +119,11 @@
 
   integer isources_already_done,isource_in_this_subset
   integer ispec_selected_source(NSOURCES)
-  integer, dimension(:), allocatable :: ispec_selected_source_subset
-
-  integer, dimension(:,:), allocatable :: ispec_selected_source_all
-  double precision, dimension(:,:), allocatable :: xi_source_all,eta_source_all,gamma_source_all, &
-     final_distance_source_all,x_found_source_all,y_found_source_all,z_found_source_all
 
   double precision hdur(NSOURCES)
 
   double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
-  double precision, dimension(:), allocatable :: xi_source_subset,eta_source_subset,gamma_source_subset
 
   double precision, dimension(NSOURCES) :: lat,long,depth
   double precision scalar_moment
@@ -139,7 +132,6 @@
 
   character(len=150) OUTPUT_FILES,plot_file
 
-  double precision, dimension(:), allocatable :: x_found_source,y_found_source,z_found_source
   double precision r_found_source
   double precision st,ct,sp,cp
   double precision Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
@@ -160,6 +152,20 @@
 
   integer iorientation
   double precision stazi,stdip,thetan,phin,n(3)
+
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+  double precision, dimension(NSOURCES_SUBSET_MAX) :: final_distance_source_subset
+
+  integer, dimension(NSOURCES_SUBSET_MAX) :: ispec_selected_source_subset
+
+  integer, dimension(NSOURCES_SUBSET_MAX,0:NPROCTOT-1) :: ispec_selected_source_all
+
+  double precision, dimension(NSOURCES_SUBSET_MAX,0:NPROCTOT-1) :: xi_source_all,eta_source_all,gamma_source_all, &
+     final_distance_source_all,x_found_source_all,y_found_source_all,z_found_source_all
+
+  double precision, dimension(NSOURCES_SUBSET_MAX) :: xi_source_subset,eta_source_subset,gamma_source_subset
+
+  double precision, dimension(NSOURCES_SUBSET_MAX) :: x_found_source,y_found_source,z_found_source
 
 ! **************
 
@@ -208,31 +214,6 @@
 ! the size of the subset can be the maximum size, or less (if we are in the last subset,
 ! or if there are fewer sources than the maximum size of a subset)
   NSOURCES_SUBSET_current_size = min(NSOURCES_SUBSET_MAX, NSOURCES - isources_already_done)
-
-! allocate arrays specific to each subset
-  allocate(final_distance_source_subset(NSOURCES_SUBSET_current_size))
-
-  allocate(ispec_selected_source_subset(NSOURCES_SUBSET_current_size))
-
-  allocate(ispec_selected_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-
-  allocate(xi_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-  allocate(eta_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-  allocate(gamma_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-
-  allocate(final_distance_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-
-  allocate(x_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-  allocate(y_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-  allocate(z_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-
-  allocate(xi_source_subset(NSOURCES_SUBSET_current_size))
-  allocate(eta_source_subset(NSOURCES_SUBSET_current_size))
-  allocate(gamma_source_subset(NSOURCES_SUBSET_current_size))
-
-  allocate(x_found_source(NSOURCES_SUBSET_current_size))
-  allocate(y_found_source(NSOURCES_SUBSET_current_size))
-  allocate(z_found_source(NSOURCES_SUBSET_current_size))
 
 ! make sure we clean the subset array before the gather
   ispec_selected_source_subset(:) = 0
@@ -665,15 +646,6 @@
   enddo ! end of loop on all the sources within current source subset
 
   endif ! end of section executed by main process only
-
-! deallocate arrays specific to each subset
-  deallocate(final_distance_source_subset)
-  deallocate(ispec_selected_source_subset)
-  deallocate(ispec_selected_source_all)
-  deallocate(xi_source_all,eta_source_all,gamma_source_all,final_distance_source_all)
-  deallocate(x_found_source_all,y_found_source_all,z_found_source_all)
-  deallocate(xi_source_subset,eta_source_subset,gamma_source_subset)
-  deallocate(x_found_source,y_found_source,z_found_source)
 
   enddo ! end of loop over all source subsets
 
