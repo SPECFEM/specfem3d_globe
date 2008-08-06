@@ -69,7 +69,8 @@
  integer :: total_seismos,total_seismos_local
  double precision :: write_time_begin,write_time
 
- real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram
+! allocate this automatic array in the memory stack to avoid memory fragmentation with "allocate()"
+ real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
 
  integer msg_status(MPI_STATUS_SIZE)
 
@@ -90,9 +91,6 @@
 ! to avoid overloading shared non-local file systems such as GPFS for instance
   logical SAVE_ALL_SEISMOS_IN_ONE_FILE
   logical USE_BINARY_FOR_LARGE_FILE
-
-  allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-  if(ier /= 0) stop 'error while allocating one temporary seismogram'
 
 ! check that the sum of the number of receivers in each slice is nrec
   call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
@@ -265,8 +263,6 @@
     endif
 
  endif ! WRITE_SEISMOGRAMS_BY_MASTER
-
-  deallocate(one_seismogram)
 
   end subroutine write_seismograms
 
