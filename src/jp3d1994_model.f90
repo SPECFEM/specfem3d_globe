@@ -125,12 +125,12 @@ subroutine read_iso3d_dpzhao_model(JP3DM_V)
   type (jp3d_model_variables) JP3DM_V
 ! jp3d_model_variables
 
-      OPEN(2,FILE="DATA/Zhao_JP_model/m3d1341")
-      OPEN(3,FILE="DATA/Zhao_JP_model/datadis")
+      open(unit=2,FILE="DATA/Zhao_JP_model/m3d1341",status='old',action='read')
+      open(unit=3,FILE="DATA/Zhao_JP_model/datadis",status='old',action='read')
 
-      CALL INPUTJP(JP3DM_V)
-      CALL INPUT1(JP3DM_V)
-      CALL INPUT2(JP3DM_V)
+      call INPUTJP(JP3DM_V)
+      call INPUT1(JP3DM_V)
+      call INPUT2(JP3DM_V)
 
 end subroutine read_iso3d_dpzhao_model
 !==========================================================================
@@ -220,9 +220,9 @@ subroutine iso3d_dpzhao_model(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3
   HE = (ONE - radius)*R_EARTH_KM
 !  calculate depths of the Conrad, the Moho and
 !  the plate boundary beneath the location (PHI,RAM)
-  CALL HLAY(PE,RE,H1,1,JP3DM_V)
-  CALL HLAY(PE,RE,H2,2,JP3DM_V)
-  CALL HLAY(PE,RE,H3,3,JP3DM_V)
+  call HLAY(PE,RE,H1,1,JP3DM_V)
+  call HLAY(PE,RE,H2,2,JP3DM_V)
+  call HLAY(PE,RE,H3,3,JP3DM_V)
 !   when LAY = 1, the focus is in the upper crust;
 !   when LAY = 2, the focus is in the lower crust;
 !   when LAY = 3, the focus is in the mantle wedge;
@@ -238,10 +238,10 @@ subroutine iso3d_dpzhao_model(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3
   ELSE
      LAY = 4
   END IF
-  CALL VEL1D(HE,vp,LAY,1,JP3DM_V)
-  CALL VEL1D(HE,vs,LAY,2,JP3DM_V)
+  call VEL1D(HE,vp,LAY,1,JP3DM_V)
+  call VEL1D(HE,vs,LAY,2,JP3DM_V)
 
-  CALL VEL3(PE,RE,HE,dvp,LAY,JP3DM_V)
+  call VEL3(PE,RE,HE,dvp,LAY,JP3DM_V)
   dvp = 0.01d0*dvp
   dvs = 1.5d0*dvp
   vp = vp*(1.0d0+dvp)
@@ -341,10 +341,10 @@ END subroutine iso3d_dpzhao_model
 
 100     FORMAT(3I3)
       READ(2,100)  JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA
-      CALL PUT1(JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA,JP3DM_V%PNA,JP3DM_V%RNA,JP3DM_V%HNA,JP3DM_V%VELAP)
+      call PUT1(JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA,JP3DM_V%PNA,JP3DM_V%RNA,JP3DM_V%HNA,JP3DM_V%VELAP)
       READ(2,100)  JP3DM_V%NPB,JP3DM_V%NRB,JP3DM_V%NHB
-      CALL PUT1(JP3DM_V%NPB,JP3DM_V%NRB,JP3DM_V%NHB,JP3DM_V%PNB,JP3DM_V%RNB,JP3DM_V%HNB,JP3DM_V%VELBP)
-      CALL BLDMAP(JP3DM_V)
+      call PUT1(JP3DM_V%NPB,JP3DM_V%NRB,JP3DM_V%NHB,JP3DM_V%PNB,JP3DM_V%RNB,JP3DM_V%HNB,JP3DM_V%VELBP)
+      call BLDMAP(JP3DM_V)
       RETURN
     END SUBROUTINE INPUT1
 
@@ -530,9 +530,9 @@ END subroutine iso3d_dpzhao_model
   type (jp3d_model_variables) JP3DM_V
 ! jp3d_model_variables
 
-      CALL LOCX(JP3DM_V%PNA,JP3DM_V%RNA,JP3DM_V%HNA,JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA,MKA, &
+      call LOCX(JP3DM_V%PNA,JP3DM_V%RNA,JP3DM_V%HNA,JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA,MKA, &
            JP3DM_V%PLA,JP3DM_V%RLA,JP3DM_V%HLA,JP3DM_V%IPLOCA,JP3DM_V%IRLOCA,JP3DM_V%IHLOCA)
-      CALL LOCX(JP3DM_V%PNB,JP3DM_V%RNB,JP3DM_V%HNB,JP3DM_V%NPB,JP3DM_V%NRB,JP3DM_V%NHB,MKB, &
+      call LOCX(JP3DM_V%PNB,JP3DM_V%RNB,JP3DM_V%HNB,JP3DM_V%NPB,JP3DM_V%NRB,JP3DM_V%NHB,MKB, &
            JP3DM_V%PLB,JP3DM_V%RLB,JP3DM_V%HLB,JP3DM_V%IPLOCB,JP3DM_V%IRLOCB,JP3DM_V%IHLOCB)
       RETURN
       END
@@ -653,10 +653,10 @@ END subroutine iso3d_dpzhao_model
         JP3DM_V%R     = RE/DEGREES_TO_RADIANS
         JP3DM_V%H     = HE
         IF(LAY.LE.3)       THEN
-           CALL PRHF(JP3DM_V%IPLOCA,JP3DM_V%IRLOCA,JP3DM_V%IHLOCA,JP3DM_V%PLA,JP3DM_V%RLA,JP3DM_V%HLA, &
+           call PRHF(JP3DM_V%IPLOCA,JP3DM_V%IRLOCA,JP3DM_V%IHLOCA,JP3DM_V%PLA,JP3DM_V%RLA,JP3DM_V%HLA, &
                 JP3DM_V%PNA,JP3DM_V%RNA,JP3DM_V%HNA,MPA,MRA,MHA,MKA,JP3DM_V)
         ELSE IF(LAY.EQ.4)  THEN
-           CALL PRHF(JP3DM_V%IPLOCB,JP3DM_V%IRLOCB,JP3DM_V%IHLOCB,JP3DM_V%PLB,JP3DM_V%RLB,JP3DM_V%HLB, &
+           call PRHF(JP3DM_V%IPLOCB,JP3DM_V%IRLOCB,JP3DM_V%IHLOCB,JP3DM_V%PLB,JP3DM_V%RLB,JP3DM_V%HLB, &
                 JP3DM_V%PNB,JP3DM_V%RNB,JP3DM_V%HNB,MPB,MRB,MHB,MKB,JP3DM_V)
         ELSE
         END IF
@@ -670,9 +670,9 @@ END subroutine iso3d_dpzhao_model
         JP3DM_V%WV(8) = JP3DM_V%PF*JP3DM_V%RF*JP3DM_V%HF
         !   calculate velocity
         IF(LAY.LE.3)      THEN
-           CALL VABPS(MPA,MRA,MHA,JP3DM_V%VELAP,V,JP3DM_V)
+           call VABPS(MPA,MRA,MHA,JP3DM_V%VELAP,V,JP3DM_V)
         ELSE IF(LAY.EQ.4) THEN
-           CALL VABPS(MPB,MRB,MHB,JP3DM_V%VELBP,V,JP3DM_V)
+           call VABPS(MPB,MRB,MHB,JP3DM_V%VELBP,V,JP3DM_V)
         ELSE
         END IF
 
@@ -848,12 +848,12 @@ END subroutine iso3d_dpzhao_model
         integer ::  IPLOCX(MKX),IRLOCX(MKX),IHLOCX(MKX)
         double precision :: PNX(MPX),RNX(MRX),HNX(MHX)
         double precision :: PLX,RLX,HLX
-      CALL LIMIT(PNX(1),PNX(MPX),JP3DM_V%P)
-      CALL LIMIT(RNX(1),RNX(MRX),JP3DM_V%R)
-      CALL LIMIT(HNX(1),HNX(MHX),JP3DM_V%H)
-      CALL INTMAP(JP3DM_V%P*100.0,IPLOCX,MKX,PLX,JP3DM_V%IP)
-      CALL INTMAP(JP3DM_V%R*100.0,IRLOCX,MKX,RLX,JP3DM_V%JP)
-      CALL INTMAP(JP3DM_V%H,IHLOCX,MKX,HLX,JP3DM_V%KP)
+      call LIMIT(PNX(1),PNX(MPX),JP3DM_V%P)
+      call LIMIT(RNX(1),RNX(MRX),JP3DM_V%R)
+      call LIMIT(HNX(1),HNX(MHX),JP3DM_V%H)
+      call INTMAP(JP3DM_V%P*100.0,IPLOCX,MKX,PLX,JP3DM_V%IP)
+      call INTMAP(JP3DM_V%R*100.0,IRLOCX,MKX,RLX,JP3DM_V%JP)
+      call INTMAP(JP3DM_V%H,IHLOCX,MKX,HLX,JP3DM_V%KP)
       JP3DM_V%IP1   = JP3DM_V%IP+1
       JP3DM_V%JP1   = JP3DM_V%JP+1
       JP3DM_V%KP1   = JP3DM_V%KP+1
@@ -944,8 +944,8 @@ END subroutine iso3d_dpzhao_model
         integer :: IJK,J,J1,I,I1
         P = 90.0-PE/DEGREES_TO_RADIANS
         R = RE/DEGREES_TO_RADIANS
-        CALL LIMIT(JP3DM_V%PN(1),JP3DM_V%PN(51),P)
-        CALL LIMIT(JP3DM_V%RRN(1),JP3DM_V%RRN(63),R)
+        call LIMIT(JP3DM_V%PN(1),JP3DM_V%PN(51),P)
+        call LIMIT(JP3DM_V%RRN(1),JP3DM_V%RRN(63),R)
         DO 1 I = 1,50
            I1     = I+1
            IF(P.GE.JP3DM_V%PN(I).AND.P.LT.JP3DM_V%PN(I1)) GO TO 11
@@ -1069,10 +1069,10 @@ END subroutine iso3d_dpzhao_model
       ELSE IF(LAY.GE.3) THEN
         HM   = 40.0
         IF(HE.LT.HM)    THEN
-          CALL JPMODEL(IPS,HM,VM,JP3DM_V)
+          call JPMODEL(IPS,HM,VM,JP3DM_V)
           V  = VM-(HM-HE)*0.003
         ELSE
-          CALL JPMODEL(IPS,HE,V,JP3DM_V)
+          call JPMODEL(IPS,HE,V,JP3DM_V)
         END IF
       ELSE
       END IF

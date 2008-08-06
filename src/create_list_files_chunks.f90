@@ -161,7 +161,7 @@
     call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
 ! file to store the list of processors for each message for faces
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='unknown')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='unknown',action='write')
 
   endif
 
@@ -510,7 +510,7 @@
   endif
 
 ! file to store the list of processors for each message for corners
-  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
+  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown',action='write')
 
 ! loop over all the messages to create the addressing
   do imsg = 1,NCORNERSCHUNKS

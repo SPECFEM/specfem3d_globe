@@ -293,7 +293,7 @@ subroutine attenuation_save_arrays(prname, iregion_code, AM_V)
   call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
   if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
     first_time_called = 0
-    open(unit=27,file=prname(1:len_trim(prname))//'1D_Q.bin',status='unknown',form='unformatted')
+    open(unit=27,file=prname(1:len_trim(prname))//'1D_Q.bin',status='unknown',form='unformatted',action='write')
     write(27) AM_V%QT_c_source
     write(27) AM_V%Qtau_s
     write(27) AM_V%Qn
@@ -660,7 +660,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
 
   if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
      first_time_called = 0
-     open(unit=27, file=prname(1:len_trim(prname))//'1D_Q.bin', status='unknown', form='unformatted')
+     open(unit=27, file=prname(1:len_trim(prname))//'1D_Q.bin', status='unknown', form='unformatted',action='read')
      read(27) AM_V%QT_c_source
      read(27) tau_s
      read(27) AM_V%Qn

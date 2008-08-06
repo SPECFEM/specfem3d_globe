@@ -112,17 +112,17 @@
 
       if(USE_BINARY_FOR_LARGE_FILE) then
         if (seismo_offset==0) then
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted')
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
         else
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
-               form='unformatted',position='append')
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin', &
+                   status='old',form='unformatted',position='append',action='write')
         endif
       else
         if (seismo_offset==0) then
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted')
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
         else
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
-               form='formatted',position='append')
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii', &
+                   status='old',form='formatted',position='append',action='write')
         endif
       endif
    endif
@@ -176,17 +176,17 @@
 
          if(USE_BINARY_FOR_LARGE_FILE) then
            if (seismo_offset==0) then
-             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted')
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
            else
-             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
-                  form='unformatted',position='append')
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin', &
+                   status='old',form='unformatted',position='append',action='write')
            endif
          else
            if (seismo_offset==0) then
-             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted')
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
            else
-             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
-                  form='formatted',position='append')
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii', &
+                   status='old',form='formatted',position='append',action='write')
            endif
          endif
 
@@ -649,9 +649,9 @@
       endif
     else
       if (seismo_offset==0) then
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown',action='write')
       else
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old',position='append')
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old',position='append',action='write')
       endif
 
     endif

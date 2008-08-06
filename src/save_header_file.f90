@@ -102,7 +102,7 @@
 
 ! copy number of elements and points in an include file for the solver
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
-  open(unit=IOUT,file=HEADER_FILE,status='unknown')
+  open(unit=IOUT,file=HEADER_FILE,status='unknown',action='write')
   write(IOUT,*)
 
   write(IOUT,*) '!'

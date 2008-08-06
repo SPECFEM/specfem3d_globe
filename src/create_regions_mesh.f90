@@ -2354,7 +2354,7 @@
                call exit_mpi(myrank,'Not the same number of 670 surface elements')
 
 ! writing surface topology databases
-    open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin',status='unknown',form='unformatted')
+    open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin',status='unknown',form='unformatted',action='write')
     write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
     write(27) ibelm_moho_top
     write(27) ibelm_moho_bot

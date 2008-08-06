@@ -904,7 +904,7 @@
 
 ! open main output file, only written to by process 0
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) &
-    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown')
+    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write')
 
   if(myrank == 0) then
 
@@ -2000,7 +2000,7 @@
 
 ! create an empty file to monitor the start of the simulation
   if(myrank == 0) then
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown',action='write')
     write(IOUT,*) 'hello, starting time loop'
     close(IOUT)
   endif
@@ -2121,7 +2121,7 @@
 ! write time stamp file to give information about progression of simulation
       write(outputname,"('/timestamp',i6.6)") it
 
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown')
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
 
       write(IOUT,*) 'Time step # ',it
       write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'

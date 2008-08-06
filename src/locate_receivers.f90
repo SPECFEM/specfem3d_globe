@@ -349,7 +349,7 @@
 ! Harvard format does not support the network name
 ! therefore only the station name is included below
 ! compute total number of samples for normal modes with 1 sample per second
-    open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS',status='unknown')
+    open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS',status='unknown',action='write')
     nsamp = nint(dble(NSTEP-1)*DT)
     do irec = 1,nrec
 
@@ -615,7 +615,7 @@
     epidist(1:nrec) = epidist_found(1:nrec)
 
 ! write the list of stations and associated epicentral distance
-  open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt',status='unknown')
+  open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt',status='unknown',action='write')
   write(27,*)
   write(27,*) 'total number of stations: ',nrec
   write(27,*)

@@ -54,8 +54,7 @@ subroutine read_sea99_s_model(SEA99M_V)
 !----------------------- choose input file:  ------------------
 ! relative anomaly
 
-
-  open(1,file='DATA/Lebedev_sea99/sea99_dvsvs')
+  open(unit=1,file='DATA/Lebedev_sea99/sea99_dvsvs',status='old',action='read')
 
 !----------------------- read input file:  ------------------
 

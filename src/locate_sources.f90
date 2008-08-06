@@ -611,6 +611,12 @@
   write(IMAIN,*)
   write(IMAIN,*) 'printing the source-time function'
 
+  scalar_moment = 0.
+  do i = 1,6
+    scalar_moment = scalar_moment + moment_tensor(i,isource)**2
+  enddo
+  scalar_moment = dsqrt(scalar_moment/2.)
+
 ! print the source-time function
   if(NSOURCES == 1) then
     plot_file = '/plot_source_time_function.txt'
@@ -623,14 +629,8 @@
       write(plot_file,"('/plot_source_time_function',i3,'.txt')") isource
     endif
   endif
-  open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown')
 
-  scalar_moment = 0.
-  do i = 1,6
-    scalar_moment = scalar_moment + moment_tensor(i,isource)**2
-  enddo
-  scalar_moment = dsqrt(scalar_moment/2.)
-
+  open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown',action='write')
   do it=1,NSTEP
     time_source = dble(it-1)*DT-t0-t_cmt(isource)
     write(27,*) sngl(dble(it-1)*DT-t0),sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
@@ -652,8 +652,8 @@
       write(plot_file,"('/plot_source_spectrum',i3,'.txt')") isource
     endif
   endif
-  open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown')
 
+  open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown',action='write')
   do iom=1,NSAMP_PLOT_SOURCE
     om=TWO_PI*(1.0d0/8.0d0)*(iom-1)/dble(NSAMP_PLOT_SOURCE-1)
     write(27,*) sngl(om/TWO_PI),sngl(scalar_moment*om*comp_source_spectrum(om,hdur(isource)))

@@ -747,7 +747,7 @@
 
   integer :: ncoef,i,ihor,ifst,ilst,ifst1,ios,lstr,nmodkern,idummy,nhorpar,lmax
 
-  open(lu,file=filename,iostat=ios)
+  open(unit=lu,file=filename,iostat=ios,status='old',action='read')
   if(ios /= 0) then
   stop 'error opening 3-d model'
   endif
