@@ -62,7 +62,7 @@
  integer yr,jda,ho,mi
  double precision sec
  real mb
- character(12) ename
+ character(len=12) ename
 
 ! variables
  integer :: iproc,sender,irec_local,irec,ier,receiver,nrec_local_received,nrec_tot_found
@@ -325,7 +325,7 @@
   integer yr,jda,ho,mi
   double precision sec
   real mb
-  character(12) ename
+  character(len=12) ename
 
   real DELTA
   real DEPMIN
@@ -356,12 +356,12 @@
   integer LOVROK
   integer LCALDA
 
-  character(8) KSTNM
-  character(16) KEVNM
-  character(8) KCMPNM
-  character(8) KNETWK
-  character(8) KUSER0,KUSER1,KUSER2
-  character(8), parameter :: str_undef='-12345  '
+  character(len=8) KSTNM
+  character(len=16) KEVNM
+  character(len=8) KCMPNM
+  character(len=8) KNETWK
+  character(len=8) KUSER0,KUSER1,KUSER2
+  character(len=8), parameter :: str_undef='-12345  '
 
   real UNUSED   ! header fields unused by SAC
   real undef    ! undefined values
@@ -601,7 +601,7 @@
 ! ------------------end format 5I10---------
 !
 !----------------------------------
- KSTNM  = station_name(irec) ! A8
+ KSTNM  = station_name(irec)(1:8) ! A8
 
  if (NSOURCES == 1) then
    KEVNM  = ename(1:len_trim(ename))//'_syn'! A16
