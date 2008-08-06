@@ -43,9 +43,8 @@
 
   integer :: i
 
-  double precision, dimension(:), allocatable :: temporary_array
-
-  allocate(temporary_array(npoint))
+! allocate this automatic array in the memory stack to avoid memory fragmentation with "allocate()"
+  double precision, dimension(npoint) :: temporary_array
 
   spline_coefficients(1) = - 1.d0 / 2.d0
 
@@ -70,8 +69,6 @@
   do i = npoint-1,1,-1
     spline_coefficients(i) = spline_coefficients(i)*spline_coefficients(i+1) + temporary_array(i)
   enddo
-
-  deallocate(temporary_array)
 
   end subroutine spline_construction
 
