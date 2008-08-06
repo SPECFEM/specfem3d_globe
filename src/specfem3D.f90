@@ -319,7 +319,8 @@
 ! we use the same buffers to assemble scalars and vectors because vectors are
 ! always three times bigger and therefore scalars can use the first part
 ! of the vector buffer in memory even if it has an additional index here
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_faces,buffer_received_faces
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+  real(kind=CUSTOM_REAL), dimension(NDIM_smaller_buffers,npoin2D_max_all) :: buffer_send_faces,buffer_received_faces
 
 ! -------- arrays specific to each region here -----------
 
@@ -685,27 +686,6 @@
 ! and also takes care of the main output
 !! DK DK suppressed for merged version  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
 !! DK DK suppressed for merged version  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-
-!! DK DK added this to reduce the size of the buffers
-! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-  npoin2D_max_all = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
-                        maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
-  if(FEWER_MESSAGES_LARGER_BUFFERS) then
-    NDIM_smaller_buffers = NDIM
-  else
-    NDIM_smaller_buffers = 1
-  endif
-  allocate(buffer_send_faces(NDIM_smaller_buffers,npoin2D_max_all),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(buffer_received_faces(NDIM_smaller_buffers,npoin2D_max_all),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
 
   if (myrank == 0) then
 

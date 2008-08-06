@@ -635,6 +635,8 @@
 
   logical :: not_done_yet
 
+  integer :: npoin2D_max_all,NDIM_smaller_buffers
+
 ! ************** PROGRAM STARTS HERE **************
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.
@@ -2047,6 +2049,16 @@
 
   npoin2D_xi_inner_core(2) = npoin2D_xi_inner_core(1)
   npoin2D_eta_inner_core(2) = npoin2D_eta_inner_core(1)
+
+!! DK DK added this to reduce the size of the buffers
+! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
+  npoin2D_max_all = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
+                        maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
+  if(FEWER_MESSAGES_LARGER_BUFFERS) then
+    NDIM_smaller_buffers = NDIM
+  else
+    NDIM_smaller_buffers = 1
+  endif
 
 !! DK DK for the merged version
   include 'call1.f90'
