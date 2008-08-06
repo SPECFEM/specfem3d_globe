@@ -32,15 +32,14 @@
 #
 FC = ifort
 MPIFC = mpif90
-FLAGS_NO_CHECK = -O1 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check all -align sequence -assume byterecl -fpe0 -no-ftz
-#FLAGS_NO_CHECK = -O0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -fpe0 -no-ftz
-#FLAGS_NO_CHECK = -O3 -xP -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -fpe0 -no-ftz
+FLAGS_NO_CHECK = -O1 -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -ftrapuv -fpe0 -ftz -traceback
+#FLAGS_NO_CHECK = -O3 -xP -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -fpe3 -ftz
 
 #
 # GNU gfortran
 #
 #FC = gfortran
-#MPIFC = /home/r/geophy/dkomati1/bin/mpich2-1.0.7/bin/mpif90
+#MPIFC = /opt/mpich2_gfortran/bin/mpif90
 #FLAGS_NO_CHECK = -std=gnu -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math
 
 #
