@@ -417,19 +417,21 @@
 
 ! parameters for the source
   integer it,isource
-  integer, dimension(:), allocatable :: islice_selected_source,ispec_selected_source
   integer yr,jda,ho,mi
   real(kind=CUSTOM_REAL) stf_used
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearrays
-  double precision, dimension(:,:,:) ,allocatable:: nu_source
   double precision sec,stf
-  double precision, dimension(:), allocatable :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
-  double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
-  double precision, dimension(:), allocatable :: t_cmt,hdur,hdur_gaussian
-  double precision, dimension(:), allocatable :: theta_source,phi_source
-  double precision, external :: comp_source_time_function
   double precision t0
+  double precision, external :: comp_source_time_function
+
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+  integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrays
+  double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
+  double precision, dimension(NSOURCES) :: t_cmt,hdur,hdur_gaussian
+  double precision, dimension(NSOURCES) :: theta_source,phi_source
+  double precision, dimension(NDIM,NDIM,NSOURCES) :: nu_source
 
 ! receiver information
   integer nrec,nrec_local,nrec_tot_found,irec_local,ios
@@ -741,12 +743,7 @@
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.)
 
-    if(err_occurred() /= 0) then
-          call exit_MPI(myrank,'an error occurred while reading the parameter file')
-    endif
-
-! count the total number of sources in the CMTSOLUTION file
-    call count_number_of_sources(NSOURCES)
+    if(err_occurred() /= 0) call exit_MPI(myrank,'an error occurred while reading the parameter file')
 
     bcast_integer = (/MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
             NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -778,8 +775,6 @@
   endif
 
 ! broadcast the information read on the master to the nodes
-    call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
     call MPI_BCAST(bcast_integer,38,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(bcast_double_precision,30,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -1163,109 +1158,6 @@
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-! allocate arrays for source
-  allocate(islice_selected_source(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(ispec_selected_source(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(Mxx(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(Myy(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(Mzz(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(Mxy(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(Mxz(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(Myz(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(xi_source(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(eta_source(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(gamma_source(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(t_cmt(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(hdur(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(hdur_gaussian(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(theta_source(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(phi_source(NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(nu_source(NDIM,NDIM,NSOURCES),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
 ! locate sources in the mesh
   call locate_sources(NSOURCES,myrank,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -1386,13 +1278,6 @@
             theta_source(1),phi_source(1),rspl,espl,espl2,nspl,ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS)
 
 !$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-! ---- source array
-
-  allocate(sourcearrays(NSOURCES,NDIM,NGLLX,NGLLY,NGLLZ),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
 
   do isource = 1,NSOURCES
 

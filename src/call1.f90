@@ -7,7 +7,7 @@
   one_minus_sum_beta_crust_mantle,factor_scale_crust_mantle, one_minus_sum_beta_inner_core,factor_scale_inner_core, &
   factor_common_crust_mantle,factor_common_inner_core,factor_common_crust_mantle_dble, factor_common_inner_core_dble, &
 !! DK DK already computed
-  myrank,sizeprocs,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,ibathy_topo, &
+  myrank,sizeprocs,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,ibathy_topo,NSOURCES, &
   ibool_crust_mantle, ibool_outer_core, ibool_inner_core, idoubling_crust_mantle,idoubling_inner_core, &
 ibelm_bottom_crust_mantle, ibelm_bottom_outer_core, ibelm_top_outer_core, &
 ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
