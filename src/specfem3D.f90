@@ -622,6 +622,16 @@
 
 ! ************** PROGRAM STARTS HERE **************
 
+!! DK DK added this for merged version
+! synchronize all the processes to make sure everybody has finished
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
+! set up GLL points, weights and derivation matrices
+  call define_derivation_matrices(xigll,yigll,zigll,wxgll,wygll,wzgll, &
+         hprime_xx,hprime_yy,hprime_zz, &
+         hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
+
 !! DK DK recompute arrays here for merged version
   call recompute_missing_arrays(myrank, &
      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -629,7 +639,8 @@
      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
      xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
-     ibool_crust_mantle,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE)
+     ibool_crust_mantle,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+     xigll,yigll,zigll)
 
   call recompute_missing_arrays(myrank, &
      xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -637,7 +648,8 @@
      gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
      xstore_outer_core,ystore_outer_core,zstore_outer_core, &
      xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
-     ibool_outer_core,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE)
+     ibool_outer_core,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
+     xigll,yigll,zigll)
 
   call recompute_missing_arrays(myrank, &
      xix_inner_core,xiy_inner_core,xiz_inner_core, &
@@ -645,7 +657,8 @@
      gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
      xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core, &
-     ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE)
+     ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+     xigll,yigll,zigll)
 
 !! DK DK for merged version, deallocate arrays that have become useless
 !! DK DK attention je ne peux plus desallouer ici pour l'instant
@@ -670,10 +683,6 @@
 ! and also takes care of the main output
 !! DK DK suppressed for merged version  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
 !! DK DK suppressed for merged version  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-
-!! DK DK added this for merged version
-! synchronize all the processes to make sure everybody has finished
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 !! DK DK added this to reduce the size of the buffers
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
@@ -1153,12 +1162,6 @@
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-! set up GLL points, weights and derivation matrices
-  call define_derivation_matrices(xigll,yigll,zigll,wxgll,wygll,wzgll, &
-         hprime_xx,hprime_yy,hprime_zz, &
-         hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
 
 ! allocate arrays for source
   allocate(islice_selected_source(NSOURCES),STAT=ier)

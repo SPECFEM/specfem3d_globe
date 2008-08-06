@@ -31,7 +31,8 @@
      etaxstore,etaystore,etazstore, &
      gammaxstore,gammaystore,gammazstore, &
      xstore,ystore,zstore, &
-     xelm_store,yelm_store,zelm_store,ibool,nspec,nglob)
+     xelm_store,yelm_store,zelm_store,ibool,nspec,nglob, &
+     xigll,yigll,zigll)
 
   implicit none
 
@@ -55,36 +56,15 @@
   double precision xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
   double precision jacobian
 
-! Gauss-Lobatto-Legendre points and weights of integration
-  double precision, dimension(:), allocatable :: xigll,yigll,zigll,wxgll,wygll,wzgll
-
-! 3D shape functions and their derivatives
-  double precision, dimension(:,:,:,:), allocatable :: shape3D
-  double precision, dimension(:,:,:,:,:), allocatable :: dershape3D
-
 ! Gauss-Lobatto-Legendre points of integration
-  allocate(xigll(NGLLX))
-  allocate(yigll(NGLLY))
-  allocate(zigll(NGLLZ))
+  double precision, dimension(NGLLX) :: xigll
+  double precision, dimension(NGLLY) :: yigll
+  double precision, dimension(NGLLZ) :: zigll
 
-! Gauss-Lobatto-Legendre weights of integration
-  allocate(wxgll(NGLLX))
-  allocate(wygll(NGLLY))
-  allocate(wzgll(NGLLZ))
-
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
 ! 3D shape functions and their derivatives
-  allocate(shape3D(NGNOD,NGLLX,NGLLY,NGLLZ))
-  allocate(dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ))
-
-! set up coordinates of the Gauss-Lobatto-Legendre points
-  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-
-! if number of points is odd, the middle abscissa is exactly zero
-  if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
-  if(mod(NGLLY,2) /= 0) yigll((NGLLY-1)/2+1) = ZERO
-  if(mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = ZERO
+  double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
+  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
 
 ! get the 3-D shape functions
   call get_shape3D(myrank,shape3D,dershape3D,xigll,yigll,zigll)
@@ -193,10 +173,6 @@
   enddo
 
   enddo
-
-  deallocate(xigll,yigll,zigll)
-  deallocate(wxgll,wygll,wzgll)
-  deallocate(shape3D,dershape3D)
 
   end subroutine recompute_missing_arrays
 
