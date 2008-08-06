@@ -29,7 +29,7 @@
   subroutine compute_element_properties(ispec,iregion_code,idoubling, &
            xstore,ystore,zstore,nspec, &
            nspl,rspl,espl,espl2,ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY, &
-           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE, & 
+           ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE, &
            HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &

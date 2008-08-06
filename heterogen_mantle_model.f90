@@ -29,7 +29,7 @@
 !
 
   subroutine read_heterogen_mantle_model(HMM)
-  
+
   implicit none
 
   include "constants.h"
@@ -51,7 +51,7 @@
        form='formatted',recl=20,status='old',action='read')
 
   j = N_R*N_THETA*N_PHI
- 
+
   do i = 1,j
     read(10,rec=i,fmt='(F20.15)') HMM%rho_in(i)
   end do
@@ -93,18 +93,18 @@
 
   radius = radius*R_EARTH
   r_inner = 3.500d6  !lower bound for heterogeneity zone
-! NOTE: r_outer NEEDS TO BE (just) SMALLER THAN R_EARTH!!!!!!!! 
+! NOTE: r_outer NEEDS TO BE (just) SMALLER THAN R_EARTH!!!!!!!!
   r_outer = R_EARTH-1.0d1  !6.300d6  !upper bound for heterogeneity zone (lower mantle: e.g. 4.500d6)
 
   delta = 2.*R_EARTH/(real(N_R-1))
-  delta2 = 2.*R_EARTH/(real(N_R-2)) 
-  !delta2 = 2.*R_EARTH/(real(N_R)) 
+  delta2 = 2.*R_EARTH/(real(N_R-2))
+  !delta2 = 2.*R_EARTH/(real(N_R))
 
   if ((radius >= r_inner) .and. (radius <= r_outer)) then
     ! convert spherical point to cartesian point, move origin to corner
     x = R_EARTH + radius*sin(theta)*cos(phi)
     y = R_EARTH + radius*sin(theta)*sin(phi)
-    z = R_EARTH + radius*cos(theta)    
+    z = R_EARTH + radius*cos(theta)
 
     ! determine which points to search for in heterogen.dat
     ! find x_low,y_low,z_low etc.

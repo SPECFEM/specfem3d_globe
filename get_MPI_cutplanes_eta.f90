@@ -27,7 +27,7 @@
 
   subroutine get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
                         xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC2D_XI_FACE,iregion,NGLOB2DMAX_XY)
+                        NSPEC2D_XI_FACE,iregion)
 
 ! this routine detects cut planes along eta
 ! In principle the left cut plane of the first slice
@@ -38,7 +38,7 @@
 
   include "constants.h"
 
-  integer nspec,myrank,nglob,ipoin2D,NGLOB2DMAX_XY,iregion
+  integer nspec,myrank,iregion
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE
 
 
@@ -63,30 +63,6 @@
 
 ! processor identification
   character(len=150) prname
-
-! arrays for sorting routine
-  integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
-  logical, dimension(:), allocatable :: ifseg
-  double precision, dimension(:), allocatable :: work
-  integer, dimension(:), allocatable :: ibool_selected
-  double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
-
-
-! allocate arrays for message buffers with maximum size
-! define maximum size for message buffers
-  if (PERFORM_CUTHILL_MCKEE) then
-    allocate(ibool_selected(NGLOB2DMAX_XY))
-    allocate(xstore_selected(NGLOB2DMAX_XY))
-    allocate(ystore_selected(NGLOB2DMAX_XY))
-    allocate(zstore_selected(NGLOB2DMAX_XY))
-    allocate(ind(NGLOB2DMAX_XY))
-    allocate(ninseg(NGLOB2DMAX_XY))
-    allocate(iglob(NGLOB2DMAX_XY))
-    allocate(locval(NGLOB2DMAX_XY))
-    allocate(ifseg(NGLOB2DMAX_XY))
-    allocate(iwork(NGLOB2DMAX_XY))
-    allocate(work(NGLOB2DMAX_XY))
-  endif
 
 ! theoretical number of surface elements in the buffers
 ! cut planes along eta=constant correspond to XI faces
@@ -122,30 +98,13 @@
             if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
                 mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
                 npoin2D_eta = npoin2D_eta + 1
-                if (PERFORM_CUTHILL_MCKEE) then
-                  ibool_selected(npoin2D_eta) = ibool(ix,iy,iz,ispec)
-                  xstore_selected(npoin2D_eta) = xstore(ix,iy,iz,ispec)
-                  ystore_selected(npoin2D_eta) = ystore(ix,iy,iz,ispec)
-                  zstore_selected(npoin2D_eta) = zstore(ix,iy,iz,ispec)
-                else
-                  write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-                endif
+                write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                      ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
             endif
           enddo
       enddo
     endif
   enddo
-
-  if (PERFORM_CUTHILL_MCKEE) then
-    call sort_array_coordinates(npoin2D_eta,xstore_selected,ystore_selected,zstore_selected, &
-            ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-  
-    do ipoin2D=1,npoin2D_eta
-        write(10,*) ibool_selected(ipoin2D), xstore_selected(ipoin2D), &
-                    ystore_selected(ipoin2D),zstore_selected(ipoin2D)
-    enddo
-  endif
 
 ! put flag to indicate end of the list of points
   write(10,*) '0 0  0.  0.  0.'
@@ -186,30 +145,13 @@
           if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
               mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
               npoin2D_eta = npoin2D_eta + 1
-              if (PERFORM_CUTHILL_MCKEE) then
-                ibool_selected(npoin2D_eta) = ibool(ix,iy,iz,ispec)
-                xstore_selected(npoin2D_eta) = xstore(ix,iy,iz,ispec)
-                ystore_selected(npoin2D_eta) = ystore(ix,iy,iz,ispec)
-                zstore_selected(npoin2D_eta) = zstore(ix,iy,iz,ispec)
-              else
-                write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                      ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-              endif
+              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                    ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
         enddo
       enddo
     endif
   enddo
-
-  if (PERFORM_CUTHILL_MCKEE) then
-    call sort_array_coordinates(npoin2D_eta,xstore_selected,ystore_selected,zstore_selected, &
-            ibool_selected,iglob,locval,ifseg,nglob,ind,ninseg,iwork,work)
-  
-    do ipoin2D=1,npoin2D_eta
-        write(10,*) ibool_selected(ipoin2D), xstore_selected(ipoin2D), &
-                    ystore_selected(ipoin2D),zstore_selected(ipoin2D)
-    enddo
-  endif
 
 ! put flag to indicate end of the list of points
   write(10,*) '0 0  0.  0.  0.'
@@ -221,20 +163,6 @@
 
 ! compare number of surface elements detected to analytical value
   if(ispecc2 /= nspec2Dtheor) call exit_MPI(myrank,'error MPI cut-planes detection in eta=right')
-
-  if (PERFORM_CUTHILL_MCKEE) then
-    deallocate(ibool_selected)
-    deallocate(xstore_selected)
-    deallocate(ystore_selected)
-    deallocate(zstore_selected)
-    deallocate(ind)
-    deallocate(ninseg)
-    deallocate(iglob)
-    deallocate(locval)
-    deallocate(ifseg)
-    deallocate(iwork)
-    deallocate(work)
-  endif
 
   end subroutine get_MPI_cutplanes_eta
 

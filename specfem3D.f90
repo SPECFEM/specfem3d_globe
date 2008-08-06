@@ -4399,7 +4399,7 @@
             dxy = dxy + dble(epsilondev_crust_mantle(3,i,j,k,ispec_selected_source(irec)))*hlagrange
             dxz = dxz + dble(epsilondev_crust_mantle(4,i,j,k,ispec_selected_source(irec)))*hlagrange
             dyz = dyz + dble(epsilondev_crust_mantle(5,i,j,k,ispec_selected_source(irec)))*hlagrange
-            
+
             displ_s(:,i,j,k) = displ_crust_mantle(:,iglob)
 
           enddo
@@ -4450,7 +4450,7 @@
                  xix_crust_mantle(:,:,:,ispec),xiy_crust_mantle(:,:,:,ispec),xiz_crust_mantle(:,:,:,ispec), &
                  etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
                  gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec))
-      
+
       stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-t_cmt(irec),hdur_gaussian(irec))
       stf_deltat = stf * deltat
       moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
@@ -5154,7 +5154,7 @@
 
 ! save source derivatives for adjoint simulations
   if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
-    scale_mass = RHOAV * (R_EARTH**3) 
+    scale_mass = RHOAV * (R_EARTH**3)
 
     do irec_local = 1, nrec_local
 ! rotate and scale the location derivatives to correspond to dn,de,dz
@@ -5162,7 +5162,7 @@
 ! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
       moment_der(:,:,irec_local) = matmul(matmul(nu_source(:,:,irec),moment_der(:,:,irec_local)),&
                  transpose(nu_source(:,:,irec))) * scale_t ** 3 / scale_mass
-      
+
       write(outputname,'(a,i5.5)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
       open(unit=27,file=trim(outputname),status='unknown')
 !

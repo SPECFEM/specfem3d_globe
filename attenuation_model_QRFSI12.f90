@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!   This file contains subroutines to read in and get values for 
+!   This file contains subroutines to read in and get values for
 !   3-D attenuation model QRFSI12 (Dalton, Ekstrom, & Dziewonski, 2008)
 !
 !   Last edit: Colleen Dalton, March 25, 2008
@@ -35,10 +35,10 @@
   character(len=150) QRFSI12,QRFSI12_ref
 
 ! read in QRFSI12
-! hard-wire for now   
+! hard-wire for now
   QRFSI12='DATA/QRFSI12/QRFSI12.dat'
   QRFSI12_ref='DATA/QRFSI12/ref_QRFSI12'
-  
+
 ! get the dq model coefficients
   open(unit=10,file=QRFSI12,status='old',action='read')
   do k=1,NKQ
@@ -61,8 +61,8 @@
     enddo
   enddo
   close(10)
-  
-! get the depths (km) of the spline knots  
+
+! get the depths (km) of the spline knots
   QRFSI12_Q%spknt(1) = 24.4
   QRFSI12_Q%spknt(2) = 75.0
   QRFSI12_Q%spknt(3) = 150.0
@@ -71,25 +71,25 @@
   QRFSI12_Q%spknt(6) = 410.0
   QRFSI12_Q%spknt(7) = 530.0
   QRFSI12_Q%spknt(8) = 650.0
-  
+
 ! get the depths and 1/Q values of the reference model
   open(11,file=QRFSI12_ref,status='old',action='read')
   do j=1,NDEPTHS_REFQ
     read(11,*)QRFSI12_Q%refdepth(j),QRFSI12_Q%refqmu(j)
   enddo
   close(11)
-  
-  
+
+
   end subroutine read_atten_model_3D_QRFSI12
 
 !----------------------------------
 !----------------------------------
-  
+
   subroutine attenuation_model_3D_QRFSI12(radius,theta,phi,Qmu,QRFSI12_Q,idoubling)
 
   implicit none
 
-  include "constants.h"  
+  include "constants.h"
 
 ! atten_model_QRFSI12_variables
   type atten_model_QRFSI12_variables
@@ -112,16 +112,16 @@
   real(kind=4) xlmvec(NSQ),wk1(NSQ),wk2(NSQ),wk3(NSQ)
   double precision, parameter :: rmoho = 6371.0-24.4
   double precision, parameter :: rcmb = 3480.0
-  
- !in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude 
- !to agree with the rest of specfem 
+
+ !in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
+ !to agree with the rest of specfem
 !  print *,'entering QRFSI12 subroutine'
 
   ylat=90.0d0-theta
-  xlon=phi  
+  xlon=phi
 
   if(idoubling == IFLAG_CRUST .or. radius >= rmoho) then
-     Qmu = 600.0d0 
+     Qmu = 600.0d0
   !   print *,'QRFSI12: we are in the crust'
   else if(idoubling == IFLAG_INNER_CORE_NORMAL .or. idoubling == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
        idoubling == IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling == IFLAG_TOP_CENTRAL_CUBE .or. &
@@ -143,7 +143,7 @@
     if(ifnd == 0)then
       write(6,"('problem finding reference Q value at depth: ',f8.3)") depth
       stop
-    endif 
+    endif
     smallq_ref=QRFSI12_Q%refqmu(ifnd)
     smallq = smallq_ref
 
@@ -175,12 +175,12 @@
     if(Qmu >= ATTENUATION_COMP_MAXIMUM) Qmu = 0.99d0*ATTENUATION_COMP_MAXIMUM
 
   endif
-  
+
   end subroutine attenuation_model_3D_QRFSI12
 
 !----------------------------------
 !----------------------------------
-  
+
 !!$  subroutine vbspl(x,np,xarr,splcon,splcond)
 !!$!
 !!$!---- this subroutine returns the spline contributions at a particular value of x
@@ -584,7 +584,7 @@
 !!$  end subroutine ylm
 
 !!$      subroutine legndr(THETA,L,M,X,XP,XCOSEC)
-!!$      implicit none 
+!!$      implicit none
 !!$
 !!$      integer :: L,M,i,k,LP1,MP1
 !!$      real(kind=4) :: THETA,X,XP,XCOSEC,SFL3
@@ -658,4 +658,4 @@
 !!$      enddo
 !!$      RETURN
 !!$      end subroutine legndr
- 
+
