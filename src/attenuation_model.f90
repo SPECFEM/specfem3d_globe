@@ -78,7 +78,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
     sequence
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
@@ -269,7 +269,7 @@ subroutine attenuation_save_arrays(prname, iregion_code, AM_V)
     sequence
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
@@ -399,7 +399,7 @@ subroutine attenuation_conversion(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, 
     sequence
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
@@ -474,7 +474,7 @@ subroutine read_attenuation_model(min, max, AM_V)
     sequence
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
@@ -495,8 +495,6 @@ subroutine read_attenuation_model(min, max, AM_V)
 
   AM_V%min_period = min * 1.0d0
   AM_V%max_period = max * 1.0d0
-
-  allocate(AM_V%Qtau_s(N_SLS))
 
   call attenuation_tau_sigma(AM_V%Qtau_s, N_SLS, AM_V%min_period, AM_V%max_period)
   call attenuation_source_frequency(AM_V%QT_c_source, AM_V%min_period, AM_V%max_period)
@@ -629,7 +627,7 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
     sequence
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
@@ -786,7 +784,7 @@ subroutine set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
     sequence
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
@@ -858,7 +856,7 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
     sequence
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     integer, dimension(:), pointer            :: interval_Q                 ! Steps

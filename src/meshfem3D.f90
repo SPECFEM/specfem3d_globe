@@ -206,7 +206,7 @@
     sequence
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     integer, dimension(:), pointer            :: Qs                 ! Steps
@@ -1358,13 +1358,6 @@
   if(ATTENUATION .and. ATTENUATION_3D) then
     if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
-    if(myrank /= 0) then
-      allocate(AM_V%Qtau_s(N_SLS),STAT=ier)
-      if (ier /= 0) then
-        print *,"ABORTING can not allocate in meshfem3D ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-      endif
-    endif
     call MPI_BCAST(AM_V%min_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%max_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%QT_c_source, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
@@ -1533,9 +1526,6 @@
   npointot = NSPEC(iregion_code) * NGLLX * NGLLY * NGLLZ
 
 ! use dynamic allocation to allocate memory for arrays
-!! DK DK suppressed this for merged version
-! allocate(idoubling(NSPEC(iregion_code)),STAT=ier)
-! allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)),STAT=ier)
   allocate(xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)),STAT=ier)
   if (ier /= 0) then
     print *,"ABORTING can not allocate in meshfem3D ier=",ier
@@ -1886,9 +1876,6 @@
   endif
 
 ! deallocate arrays used for that region
-!! DK DK suppressed this for merged version
-! deallocate(idoubling)
-! deallocate(ibool)
   deallocate(xstore)
   deallocate(ystore)
   deallocate(zstore)
@@ -2031,13 +2018,6 @@
 !        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
 
   endif   ! end of section executed by main process only
-
-! deallocate arrays used for mesh generation
-!! DK DK suppressed in the merged version because these arrays will be transmitted to the solver
-! deallocate(addressing)
-! deallocate(ichunk_slice)
-! deallocate(iproc_xi_slice)
-! deallocate(iproc_eta_slice)
 
 ! elapsed time since beginning of mesh generation
   if(myrank == 0) then

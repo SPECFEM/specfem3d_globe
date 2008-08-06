@@ -143,7 +143,7 @@
     sequence
     double precision min_period, max_period
     double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
