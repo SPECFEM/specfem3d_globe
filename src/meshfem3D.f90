@@ -1566,7 +1566,6 @@
          NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code),ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-         max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
@@ -1593,7 +1592,7 @@
   kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
   rmass_crust_mantle,xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
 !! DK DK this will have to change to fully support David's code to cut the superbrick
-  npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1),perm,invperm)
+  npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1))
 
   else if(iregion_code == IREGION_OUTER_CORE) then
 ! outer_core
@@ -1605,7 +1604,6 @@
          ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-         max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
@@ -1632,7 +1630,7 @@
   kappavstore_outer_core,kappahstore_outer_core,muvstore_outer_core,muhstore_outer_core,eta_anisostore_outer_core, &
   rmass_outer_core,xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
 !! DK DK this will have to change to fully support David's code to cut the superbrick
-  npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1),perm,invperm)
+  npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1))
 
   else if(iregion_code == IREGION_INNER_CORE) then
 ! inner_core
@@ -1644,7 +1642,6 @@
          ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-         max(NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code)), &
          myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
@@ -1670,7 +1667,7 @@
   kappavstore_inner_core,kappahstore_inner_core,muvstore_inner_core,muhstore_inner_core,eta_anisostore_inner_core, &
   rmass_inner_core,xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core, &
 !! DK DK this will have to change to fully support David's code to cut the superbrick
-  npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1),perm,invperm)
+  npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1))
 
   else
     stop 'DK DK incorrect region in merged code'

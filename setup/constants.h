@@ -479,11 +479,3 @@
   integer, parameter :: NSPEC_DOUBLING_BASICBRICK = 8
   integer, parameter :: NGLOB_DOUBLING_BASICBRICK = 27
 
-! for Cuthill-McKee (1969) permutation
-  logical, parameter :: PERFORM_CUTHILL_MCKEE = .false.
-  integer, parameter :: NGNOD_HEXAHEDRA = 8
-! perform classical or multi-level Cuthill-McKee ordering
-  logical, parameter :: CMcK_MULTI = .false.
-! maximum size if multi-level Cuthill-McKee ordering
-  integer, parameter :: LIMIT_MULTI_CUTHILL = 50
-

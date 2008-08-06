@@ -18,13 +18,7 @@
 
         weight = wxgll(i)*wygll(j)*wzgll(k)
 
-!! DK DK changed this for merged version
-!       if(PERFORM_CUTHILL_MCKEE) then
-!         iglobnum = ibool(i,j,k,invperm(ispec))
-!         iglobnum = ibool(i,j,k,perm(ispec))
-!       else
-          iglobnum = ibool(i,j,k,ispec)
-!       endif
+        iglobnum = ibool(i,j,k,ispec)
 
 ! compute the jacobian
         xixl = xixstore(i,j,k)

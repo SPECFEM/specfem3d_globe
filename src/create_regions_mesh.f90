@@ -34,7 +34,6 @@
            ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
            ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-           NGLOB2DMAX_XY, &
            myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
            ATTENUATION,ATTENUATION_3D, &
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
@@ -60,7 +59,7 @@
   normal_xmin,normal_xmax,normal_ymin, &
   normal_ymax,normal_bottom,normal_top, &
   kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rmass,xelm_store,yelm_store,zelm_store, &
-  npoin2D_xi,npoin2D_eta,perm,invperm)
+  npoin2D_xi,npoin2D_eta)
 
 ! create the different regions of the mesh
 
@@ -526,8 +525,6 @@
   integer NUMBER_OF_MESH_LAYERS,layer_shift,cpt,first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
   double precision, dimension(:,:), allocatable :: stretch_tab
 
-  integer :: NGLOB2DMAX_XY
-
   integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
   integer, parameter :: maxker=200
@@ -576,20 +573,6 @@
   integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
   double precision r_moho,r_400,r_670
   logical :: is_superbrick
-
-! added for Cuthill McKee permutation
-! integer, dimension(:), allocatable :: perm,perm_tmp,temp_array_1D_int
-!! DK DK added this for merged version, as a quick patch
-  integer, dimension(nspec) :: perm,invperm
-  integer, dimension(:), allocatable :: perm_tmp,temp_array_1D_int
-  logical, dimension(:,:), allocatable :: temp_array_2D_log
-  integer, dimension(:,:,:,:), allocatable :: temp_array_int
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_array_real
-  double precision, dimension(:,:,:,:), allocatable :: temp_array_dble
-  double precision, dimension(:,:,:,:,:), allocatable :: temp_array_dble_5dim
-!! DK DK added this for merged version
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: temp_array_xelm_yelm_zelm
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: temp_rmass
 
 ! the height at which the central cube is cut
   integer :: nz_inf_limit
@@ -1851,11 +1834,11 @@
   ! create MPI buffers
   ! arrays locval(npointot) and ifseg(npointot) used to save memory
     call get_MPI_cutplanes_xi(myrank,nspec,iMPIcut_xi,ibool, &
-                  xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC2D_ETA_FACE,iregion_code,NGLOB2DMAX_XY,nglob,iboolleft_xi,iboolright_xi,NGLOB2DMAX_XMIN_XMAX,npoin2D_xi)
+                  ifseg,npointot, &
+                  NSPEC2D_ETA_FACE,iregion_code,nglob,iboolleft_xi,iboolright_xi,NGLOB2DMAX_XMIN_XMAX,npoin2D_xi)
     call get_MPI_cutplanes_eta(myrank,nspec,iMPIcut_eta,ibool, &
-                  xstore,ystore,zstore,ifseg,npointot, &
-                  NSPEC2D_XI_FACE,iregion_code,NGLOB2DMAX_XY,nglob,iboolleft_eta,iboolright_eta,NGLOB2DMAX_YMIN_YMAX,npoin2D_eta)
+                  ifseg,npointot, &
+                  NSPEC2D_XI_FACE,iregion_code,nglob,iboolleft_eta,iboolright_eta,NGLOB2DMAX_YMIN_YMAX,npoin2D_eta)
     call get_MPI_1D_buffers(myrank,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
                   xstore,ystore,zstore,ifseg,npointot, &
                   NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code,nglob, &
@@ -1876,63 +1859,6 @@
       print *,"ERROR can not deallocate ifseg in create_regions_mesh ier=",ier
     endif
 
-!! DK DK for merged code, copied here to be able to create mass matrix in right order
-  if (PERFORM_CUTHILL_MCKEE) then
-!!!!!!!!!!!!!!!!!!!!      allocate(perm(nspec))
-      if(iregion_code == IREGION_CRUST_MANTLE) then
-      ! do not permute anisotropic elements
-        perm(1:FIRST_ELT_NON_ANISO-1) = (/ (i,i=1,FIRST_ELT_NON_ANISO-1) /)
-
-        ! no more connectivity between layers below and above the anisotropic layers => 2 permutations
-        ! permute the bottom of the region : below the aniso layers
-        allocate(perm_tmp(FIRST_ELT_ABOVE_ANISO-FIRST_ELT_NON_ANISO),STAT=ier )
-        if (ier /= 0) then
-          print *,"ABORTING can not allocate perm_tmp in create_regions_mesh ier=",ier
-          call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-        endif
-        call get_perm(ibool(:,:,:,FIRST_ELT_NON_ANISO:FIRST_ELT_ABOVE_ANISO-1),perm_tmp,LIMIT_MULTI_CUTHILL,&
-  (FIRST_ELT_ABOVE_ANISO-FIRST_ELT_NON_ANISO),nglob,.true.,.false.)
-        perm(FIRST_ELT_NON_ANISO:FIRST_ELT_ABOVE_ANISO-1) = perm_tmp(:)+(FIRST_ELT_NON_ANISO-1)
-        deallocate(perm_tmp,STAT=ier )
-        if (ier /= 0) then
-          print *,"ERROR can not deallocate perm_tmp in create_regions_mesh ier=",ier
-        endif
-
-        ! permute the top of the region : above the aniso layers
-        allocate(perm_tmp(nspec-FIRST_ELT_ABOVE_ANISO+1),STAT=ier )
-        if (ier /= 0) then
-          print *,"ABORTING can not allocate perm_tmp in create_regions_mesh ier=",ier
-          call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-        endif
-
-        call get_perm(ibool(:,:,:,FIRST_ELT_ABOVE_ANISO:nspec),perm_tmp,LIMIT_MULTI_CUTHILL,&
-  (nspec-FIRST_ELT_ABOVE_ANISO+1),nglob,.true.,.false.)
-        perm(FIRST_ELT_ABOVE_ANISO:nspec) = perm_tmp(:)+(FIRST_ELT_ABOVE_ANISO-1)
-        deallocate(perm_tmp,STAT=ier )
-        if (ier /= 0) then
-          print *,"ERROR can not deallocate perm_tmp in create_regions_mesh ier=",ier
-        endif
-      else
-        ! the 3 last parameters are : PERFORM_CUTHILL_MCKEE,INVERSE,FACE
-        call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,nglob,.true.,.false.)
-      endif
-!!!!!!!!!!!!!!!!!!!!      deallocate(perm)
-!! DK DK create inverse permutation
-   if(minval(perm) /= 1) stop 'minval of perm must be 1'
-   if(maxval(perm) /= nspec) stop 'maxval of perm must be nspec'
-   invperm(:) = -1
-   do ispec=1,nspec
-     if(invperm(perm(ispec)) == -1) then
-       invperm(perm(ispec)) = ispec
-     else
-       stop 'value already found, permutation is not bijective'
-     endif
-   enddo
-   if(minval(invperm) /= 1) stop 'minval of invperm must be 1'
-   if(maxval(invperm) /= nspec) stop 'maxval of invperm must be nspec'
-   endif
-!! DK DK for merged code, copied here to be able to create mass matrix in right order
-
 ! only create mass matrix and save all the final arrays in the second pass
   else if(ipass == 2) then
 
@@ -1946,266 +1872,6 @@
   else
     nspec_tiso = 0
   endif
-
-! ***************************************************
-! Cuthill McKee permutation
-! ***************************************************
-  if (PERFORM_CUTHILL_MCKEE) then
-!!!!!!!!!!!!!!!!!!!      allocate(perm(nspec))
-!     if(iregion_code == IREGION_CRUST_MANTLE) then
-!     ! do not permute anisotropic elements
-!       perm(1:FIRST_ELT_NON_ANISO-1) = (/ (i,i=1,FIRST_ELT_NON_ANISO-1) /)
-
-!       ! no more connectivity between layers below and above the anisotropic layers => 2 permutations
-!       ! permute the bottom of the region : below the aniso layers
-!       allocate(perm_tmp(FIRST_ELT_ABOVE_ANISO-FIRST_ELT_NON_ANISO))
-!       call get_perm(ibool(:,:,:,FIRST_ELT_NON_ANISO:FIRST_ELT_ABOVE_ANISO-1),perm_tmp,LIMIT_MULTI_CUTHILL,&
-! (FIRST_ELT_ABOVE_ANISO-FIRST_ELT_NON_ANISO),nglob,.true.,.false.)
-!       perm(FIRST_ELT_NON_ANISO:FIRST_ELT_ABOVE_ANISO-1) = perm_tmp(:)+(FIRST_ELT_NON_ANISO-1)
-!       deallocate(perm_tmp)
-
-!       ! permute the top of the region : above the aniso layers
-!       allocate(perm_tmp(nspec-FIRST_ELT_ABOVE_ANISO+1))
-!       call get_perm(ibool(:,:,:,FIRST_ELT_ABOVE_ANISO:nspec),perm_tmp,LIMIT_MULTI_CUTHILL,&
-! (nspec-FIRST_ELT_ABOVE_ANISO+1),nglob,.true.,.false.)
-!       perm(FIRST_ELT_ABOVE_ANISO:nspec) = perm_tmp(:)+(FIRST_ELT_ABOVE_ANISO-1)
-!       deallocate(perm_tmp)
-!     else
-!       ! the 3 last parameters are : PERFORM_CUTHILL_MCKEE,INVERSE,FACE
-!       call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,nglob,.true.,.false.)
-!     endif
-
-      ! permutation of xstore, ystore, zstore, rhostore, kappavstore, kappahstore,
-      ! muvstore, muhstore, eta_anisostore
-
-      allocate(temp_array_dble(NGLLX,NGLLY,NGLLZ,nspec),STAT=ier )
-      if (ier /= 0) then
-        print *,"ABORTING can not allocate temp_array_dble in create_regions_mesh ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-      endif
-
-      if(ATTENUATION .and. ATTENUATION_3D) then
-        call permute_elements_dble(Qmu_store,temp_array_dble,perm,nspec)
-        allocate(temp_array_dble_5dim(N_SLS,NGLLX,NGLLY,NGLLZ,nspec),STAT=ier )
-        if (ier /= 0) then
-          print *,"ABORTING can not allocate permute_elements_dble in create_regions_mesh ier=",ier
-          call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-        endif
-
-        temp_array_dble_5dim(:,:,:,:,:) = tau_e_store(:,:,:,:,:)
-        do i = 1,nspec
-          tau_e_store(:,:,:,:,perm(i)) = temp_array_dble_5dim(:,:,:,:,i)
-        enddo
-        deallocate(temp_array_dble_5dim,STAT=ier )
-        if (ier /= 0) then
-          print *,"ERROR can not deallocate temp_array_dble_5dim in create_regions_mesh ier=",ier
-        endif
-
-      endif
-      call permute_elements_dble(xstore,temp_array_dble,perm,nspec)
-      call permute_elements_dble(ystore,temp_array_dble,perm,nspec)
-      call permute_elements_dble(zstore,temp_array_dble,perm,nspec)
-      deallocate(temp_array_dble,STAT=ier )
-      if (ier /= 0) then
-        print *,"ERROR can not deallocate temp_array_dble in create_regions_mesh ier=",ier
-      endif
-
-!! DK DK added this for merged code
-      allocate(temp_array_xelm_yelm_zelm(NGNOD,nspec),STAT=ier )
-      if (ier /= 0) then
-        print *,"ABORTING can not allocate temp_array_xelm_yelm_zelm in create_regions_mesh ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-      endif
-
-      call permute_elements_xelm_yelm_zelm(xelm_store,temp_array_xelm_yelm_zelm,perm,nspec)
-      call permute_elements_xelm_yelm_zelm(yelm_store,temp_array_xelm_yelm_zelm,perm,nspec)
-      call permute_elements_xelm_yelm_zelm(zelm_store,temp_array_xelm_yelm_zelm,perm,nspec)
-
-      deallocate(temp_array_xelm_yelm_zelm,STAT=ier )
-      if (ier /= 0) then
-        print *,"ERROR can not deallocate temp_array_xelm_yelm_zelm in create_regions_mesh ier=",ier
-      endif
-
-      allocate(temp_array_real(NGLLX,NGLLY,NGLLZ,nspec),STAT=ier )
-      if (ier /= 0) then
-        print *,"ABORTING can not allocate temp_array_real in create_regions_mesh ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-      endif
-
-      if(ABSORBING_CONDITIONS .and. NCHUNKS /= 6) then
-        call permute_elements_real(rho_vp,temp_array_real,perm,nspec)
-        call permute_elements_real(rho_vs,temp_array_real,perm,nspec)
-      endif
-      if((ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) .or. &
-        (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
-        call permute_elements_real(c11store,temp_array_real,perm,nspec)
-        call permute_elements_real(c12store,temp_array_real,perm,nspec)
-        call permute_elements_real(c13store,temp_array_real,perm,nspec)
-        call permute_elements_real(c14store,temp_array_real,perm,nspec)
-        call permute_elements_real(c15store,temp_array_real,perm,nspec)
-        call permute_elements_real(c16store,temp_array_real,perm,nspec)
-        call permute_elements_real(c22store,temp_array_real,perm,nspec)
-        call permute_elements_real(c23store,temp_array_real,perm,nspec)
-        call permute_elements_real(c24store,temp_array_real,perm,nspec)
-        call permute_elements_real(c25store,temp_array_real,perm,nspec)
-        call permute_elements_real(c26store,temp_array_real,perm,nspec)
-        call permute_elements_real(c33store,temp_array_real,perm,nspec)
-        call permute_elements_real(c34store,temp_array_real,perm,nspec)
-        call permute_elements_real(c35store,temp_array_real,perm,nspec)
-        call permute_elements_real(c36store,temp_array_real,perm,nspec)
-        call permute_elements_real(c44store,temp_array_real,perm,nspec)
-        call permute_elements_real(c45store,temp_array_real,perm,nspec)
-        call permute_elements_real(c46store,temp_array_real,perm,nspec)
-        call permute_elements_real(c55store,temp_array_real,perm,nspec)
-        call permute_elements_real(c56store,temp_array_real,perm,nspec)
-        call permute_elements_real(c66store,temp_array_real,perm,nspec)
-      endif
-!! DK DK added this for merged version
-      if(iregion_code /= IREGION_OUTER_CORE) then
-        call permute_elements_real(kappavstore,temp_array_real,perm,nspec)
-        call permute_elements_real(muvstore,temp_array_real,perm,nspec)
-        if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) then
-          if(minval(perm(1:NSPECMAX_TISO_MANTLE)) /= 1) stop 'minval perm for aniso should be 1'
-          if(maxval(perm(1:NSPECMAX_TISO_MANTLE)) /= NSPECMAX_TISO_MANTLE) &
-            stop 'maxval perm for aniso should be NSPECMAX_TISO_MANTLE'
-          call permute_elements_real(kappahstore,temp_array_real,perm,NSPECMAX_TISO_MANTLE)
-          call permute_elements_real(muhstore,temp_array_real,perm,NSPECMAX_TISO_MANTLE)
-          call permute_elements_real(eta_anisostore,temp_array_real,perm,NSPECMAX_TISO_MANTLE)
-        endif
-      endif
-
-!! DK DK added this for merged version: attempt to permute mass matrix
-! 333333333333333
-      allocate(temp_rmass(NGLLX,NGLLY,NGLLZ,nspec),STAT=ier )
-      if (ier /= 0) then
-        print *,"ABORTING can not allocate temp_rmass in create_regions_mesh ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-      endif
-
-!     allocate(temp_rmass(nglob))
-      do ispec = 1,nspec
-        do k = 1,NGLLZ
-          do j = 1,NGLLY
-            do i = 1,NGLLX
-!              temp_rmass(ibool(i,j,k,perm(ispec))) = rmass(ibool(i,j,k,ispec))
-               temp_rmass(i,j,k,ispec) = rmass(ibool(i,j,k,ispec))
-            enddo
-          enddo
-        enddo
-      enddo
-!     rmass(:) = temp_rmass(:)
-      call permute_elements_real(temp_rmass,temp_array_real,perm,nspec)
-!     do ispec = 1,nspec
-!       do k = 1,NGLLZ
-!         do j = 1,NGLLY
-!           do i = 1,NGLLX
-!              rmass(ibool(i,j,k,ispec)) = temp_rmass(i,j,k,ispec)
-!           enddo
-!         enddo
-!       enddo
-!     enddo
-!     deallocate(temp_rmass)
-
-      deallocate(temp_array_real,STAT=ier )
-      if (ier /= 0) then
-        print *,"ERROR can not deallocate temp_array_real in create_regions_mesh ier=",ier
-      endif
-
-      ! permutation of ibool
-      allocate(temp_array_int(NGLLX,NGLLY,NGLLZ,nspec),STAT=ier )
-      if (ier /= 0) then
-        print *,"ABORTING can not allocate temp_array_int in create_regions_mesh ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-      endif
-
-      call permute_elements_integer(ibool,temp_array_int,perm,nspec)
-      deallocate(temp_array_int,STAT=ier )
-      if (ier /= 0) then
-        print *,"ERROR can not deallocate temp_array_int in create_regions_mesh ier=",ier
-      endif
-
-!! DK DK added this for merged version: attempt to permute mass matrix
-! 333333333333333
-      do ispec = 1,nspec
-        do k = 1,NGLLZ
-          do j = 1,NGLLY
-            do i = 1,NGLLX
-               rmass(ibool(i,j,k,ispec)) = temp_rmass(i,j,k,ispec)
-            enddo
-          enddo
-        enddo
-      enddo
-      deallocate(temp_rmass,STAT=ier )
-      if (ier /= 0) then
-        print *,"ERROR can not deallocate temp_rmass in create_regions_mesh ier=",ier
-      endif
-
-!     deallocate(temp_array_real)
-
-      ! permutation of iMPIcut_*
-      allocate(temp_array_2D_log(2,nspec),STAT=ier )
-      if (ier /= 0) then
-        print *,"ABORTING can not allocate temp_array_2D_log in create_regions_mesh ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-      endif
-
-      temp_array_2D_log(:,:) = iMPIcut_xi(:,:)
-      do i = 1,nspec
-        iMPIcut_xi(:,perm(i)) = temp_array_2D_log(:,i)
-      enddo
-      temp_array_2D_log(:,:) = iMPIcut_eta(:,:)
-      do i = 1,nspec
-        iMPIcut_eta(:,perm(i)) = temp_array_2D_log(:,i)
-      enddo
-
-      deallocate(temp_array_2D_log,STAT=ier )
-      if (ier /= 0) then
-        print *,"ERROR can not deallocate temp_array_2D_log in create_regions_mesh ier=",ier
-      endif
-
-      ! permutation of iboun
-      allocate(temp_array_2D_log(6,nspec),STAT=ier )
-      if (ier /= 0) then
-        print *,"ABORTING can not allocate temp_array_2D_log in create_regions_mesh ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-      endif
-
-      temp_array_2D_log(:,:) = iboun(:,:)
-      do i = 1,nspec
-        iboun(:,perm(i)) = temp_array_2D_log(:,i)
-      enddo
-
-      deallocate(temp_array_2D_log,STAT=ier )
-      if (ier /= 0) then
-        print *,"ERROR can not deallocate temp_array_2D_log in create_regions_mesh ier=",ier
-      endif
-
-
-      ! permutation of idoubling
-!! DK DK added this for merged version because array not allocated in the outer core
-      if(iregion_code /= IREGION_OUTER_CORE) then
-        allocate(temp_array_1D_int(nspec),STAT=ier )
-        if (ier /= 0) then
-          print *,"ABORTING can not allocate temp_array_1D_int in create_regions_mesh ier=",ier
-          call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-        endif
-
-        temp_array_1D_int(:) = idoubling(:)
-        do i = 1,nspec
-          idoubling(perm(i)) = temp_array_1D_int(i)
-        enddo
-        deallocate(temp_array_1D_int,STAT=ier )
-        if (ier /= 0) then
-          print *,"ERROR can not deallocate temp_array_1D_int in create_regions_mesh ier=",ier
-        endif
-      endif
-
-!!!!!!!!!!!!!!!!!!!      deallocate(perm)
-  endif
-
-! ***************************************************
-! end of Cuthill McKee permutation
-! ***************************************************
 
   call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
       dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &

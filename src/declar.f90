@@ -1,9 +1,4 @@
 
-!! DK DK added this temporarily
-!!!!!!!!!!!!!  integer, dimension(NSPEC_CRUST_MANTLE) :: perm,invperm
-!! DK DK suppressed for now because useless when CUTHILL-MCKEE is off
-  integer, dimension(1) :: perm,invperm
-
 !! DK DK added this for merged version
 !! DK DK stored in single precision for merged version, check if it precise enough (probably yes)
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &

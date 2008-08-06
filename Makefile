@@ -114,7 +114,6 @@ libspecfem_a_OBJECTS = \
 	$O/get_jacobian_boundaries.o \
 	$O/get_jacobian_discontinuities.o \
 	$O/get_model.o \
-	$O/get_perm_cuthill_mckee.o \
 	$O/get_shape2D.o \
 	$O/get_shape3D.o \
 	$O/get_value_parameters.o \
@@ -178,7 +177,7 @@ LIBSPECFEM = $O/libspecfem.a
 DEFAULT = \
 	xcreate_header_file \
   $(OUTPUT_FILES_INC)/values_from_mesher.h \
-	xmeshfem3D \
+	xspecfem3D \
 	$(EMPTY_MACRO)
 
 default: $(DEFAULT)
@@ -197,9 +196,9 @@ bak: backup
 
 # rules for the main programs
 XMESHFEM_OBJECTS = $O/meshfem3D.o $O/exit_mpi.o $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
-xmeshfem3D: $(XMESHFEM_OBJECTS)
+xspecfem3D: $(XMESHFEM_OBJECTS)
 ## use MPI here
-	${MPIFCCOMPILE_CHECK} -o $(BIN)/xmeshfem3D $(XMESHFEM_OBJECTS) $(MPILIBS)
+	${MPIFCCOMPILE_CHECK} -o $(BIN)/xspecfem3D $(XMESHFEM_OBJECTS) $(MPILIBS)
 
 # solver also depends on values from mesher
 XSPECFEM_OBJECTS = $(SOLVER_ARRAY_OBJECTS) $O/exit_mpi.o $(LIBSPECFEM)
@@ -211,7 +210,7 @@ xcreate_header_file: $O/create_header_file.o $O/exit_mpi.o $O/get_value_paramete
 	${MPIFCCOMPILE_CHECK} -o $(BIN)/xcreate_header_file $O/create_header_file.o $O/exit_mpi.o $O/get_value_parameters.o $O/read_compute_parameters.o $O/memory_eval.o $O/save_header_file.o $O/count_number_of_sources.o $O/read_value_parameters.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o $O/auto_ner.o
 
 clean:
-	rm -f $O/* *.o work.pc* *.mod $(BIN)/xmeshfem3D $(BIN)/xconvolve_source_timefunction $(BIN)/xcreate_header_file PI*
+	rm -f $O/* *.o work.pc* *.mod $(BIN)/xspecfem3D $(BIN)/xconvolve_source_timefunction $(BIN)/xcreate_header_file PI*
 
 
 ###
@@ -451,9 +450,6 @@ $O/create_regions_mesh.o: $(SPECINC)/constants.h $S/create_regions_mesh.f90
 
 $O/create_name_database.o: $(SPECINC)/constants.h $S/create_name_database.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} $S/create_name_database.f90
-
-$O/get_perm_cuthill_mckee.o: $(SPECINC)/constants.h $S/get_perm_cuthill_mckee.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_perm_cuthill_mckee.o ${FCFLAGS_f90} $S/get_perm_cuthill_mckee.f90
 
 $O/define_derivation_matrices.o: $(SPECINC)/constants.h $S/define_derivation_matrices.f90
 	${FCCOMPILE_CHECK} -c -o $O/define_derivation_matrices.o ${FCFLAGS_f90} $S/define_derivation_matrices.f90
