@@ -220,6 +220,8 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
      call exit_MPI(myrank, 'Reference 1D Model Not recognized')
   endif
 
+!! DK DK could allocate these automatic arrays here and in the rest of this file
+!! DK DK in the memory stack to avoid memory fragmentation with "allocate()"
   allocate(AM_V%Qr(AM_V%Qn))
   allocate(AM_V%Qmu(AM_V%Qn))
   allocate(AM_V%interval_Q(AM_V%Qn))
