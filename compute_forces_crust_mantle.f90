@@ -288,7 +288,7 @@
     if(ATTENUATION_3D_VAL) then
       one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
     else
-      radius_cr = xstore(iglob)
+      radius_cr = xstore(ibool(i,j,k,ispec))
       call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
       one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
     endif

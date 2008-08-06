@@ -145,7 +145,7 @@
     double precision, dimension(NUM_REGIONS-1) :: ratio_top
     double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
     integer,          dimension(NUM_REGIONS-1) :: NER
-    double precision NEX_ETA
+    integer NEX_ETA
 
     ! This is PREM in Kilometers, well ... kinda, not really ....
     radius(1)  = 6371.00d0 ! Surface
