@@ -72,16 +72,9 @@
 ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-  integer, allocatable, dimension(:) :: ix_initial_guess,iy_initial_guess,iz_initial_guess
-
   integer iorientation
   integer iprocloop
   double precision stazi,stdip
-
-  double precision, allocatable, dimension(:) :: x_target,y_target,z_target
-  double precision, allocatable, dimension(:) :: epidist
-  double precision, allocatable, dimension(:) :: x_found,y_found,z_found
-  double precision, allocatable, dimension(:,:) :: x_found_all,y_found_all,z_found_all
 
   integer irec
   integer i,j,k,ispec,iglob
@@ -116,9 +109,6 @@
 ! timer MPI
   double precision time_start,tCPU
 
-! use dynamic allocation
-  double precision, dimension(:), allocatable :: final_distance
-  double precision, dimension(:,:), allocatable :: final_distance_all
   double precision distmin,final_distance_max
 
 ! receiver information
@@ -139,10 +129,22 @@
   double precision, dimension(nrec) :: stlat_found,stlon_found,stele_found, epidist_found
   character(len=150) STATIONS
 
-  integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
   double precision, dimension(nrec) :: stlat,stlon,stele
-  double precision, allocatable, dimension(:) :: stbur
-  double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
+
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+  integer, dimension(nrec) :: ix_initial_guess,iy_initial_guess,iz_initial_guess
+
+  double precision, dimension(nrec) :: x_target,y_target,z_target
+  double precision, dimension(nrec) :: epidist
+  double precision, dimension(nrec) :: x_found,y_found,z_found
+  double precision, dimension(nrec,0:NPROCTOT-1) :: x_found_all,y_found_all,z_found_all
+
+  double precision, dimension(nrec) :: final_distance
+  double precision, dimension(nrec,0:NPROCTOT-1) :: final_distance_all
+ 
+  integer, dimension(nrec,0:NPROCTOT-1) :: ispec_selected_rec_all
+  double precision, dimension(nrec) :: stbur
+  double precision, dimension(nrec,0:NPROCTOT-1) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
 
   character(len=150) OUTPUT_FILES
 
@@ -172,30 +174,6 @@
     write(IMAIN,*) '****************************'
     write(IMAIN,*)
   endif
-
-! allocate memory for arrays using number of stations
-  allocate(stbur(nrec))
-  allocate(epidist(nrec))
-
-  allocate(ix_initial_guess(nrec))
-  allocate(iy_initial_guess(nrec))
-  allocate(iz_initial_guess(nrec))
-  allocate(x_target(nrec))
-  allocate(y_target(nrec))
-  allocate(z_target(nrec))
-  allocate(x_found(nrec))
-  allocate(y_found(nrec))
-  allocate(z_found(nrec))
-  allocate(final_distance(nrec))
-
-  allocate(ispec_selected_rec_all(nrec,0:NPROCTOT-1))
-  allocate(xi_receiver_all(nrec,0:NPROCTOT-1))
-  allocate(eta_receiver_all(nrec,0:NPROCTOT-1))
-  allocate(gamma_receiver_all(nrec,0:NPROCTOT-1))
-  allocate(x_found_all(nrec,0:NPROCTOT-1))
-  allocate(y_found_all(nrec,0:NPROCTOT-1))
-  allocate(z_found_all(nrec,0:NPROCTOT-1))
-  allocate(final_distance_all(nrec,0:NPROCTOT-1))
 
 ! read that STATIONS file on the master
   if(myrank == 0) then
@@ -653,28 +631,6 @@
   call MPI_BCAST(stlon,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(nu,nrec*3*3,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
-! deallocate arrays
-  deallocate(stbur)
-  deallocate(epidist)
-  deallocate(ix_initial_guess)
-  deallocate(iy_initial_guess)
-  deallocate(iz_initial_guess)
-  deallocate(x_target)
-  deallocate(y_target)
-  deallocate(z_target)
-  deallocate(x_found)
-  deallocate(y_found)
-  deallocate(z_found)
-  deallocate(final_distance)
-  deallocate(ispec_selected_rec_all)
-  deallocate(xi_receiver_all)
-  deallocate(eta_receiver_all)
-  deallocate(gamma_receiver_all)
-  deallocate(x_found_all)
-  deallocate(y_found_all)
-  deallocate(z_found_all)
-  deallocate(final_distance_all)
 
   end subroutine locate_receivers
 
