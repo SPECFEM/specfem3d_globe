@@ -1094,7 +1094,7 @@
 
 ! open main output file, only written to by process 0
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) &
-    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown')
+    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write')
 
   if(myrank == 0) then
 
@@ -1609,7 +1609,7 @@
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
 ! Stacey put back
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted',action='read')
   read(27) nspec2D_xmin_crust_mantle
   read(27) nspec2D_xmax_crust_mantle
   read(27) nspec2D_ymin_crust_mantle
@@ -1643,7 +1643,7 @@
 ! read arrays for Stacey conditions
 
   if(ABSORBING_CONDITIONS) then
-      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted')
+      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted',action='read')
       read(27) nimin_crust_mantle
       read(27) nimax_crust_mantle
       read(27) njmin_crust_mantle
@@ -1739,7 +1739,7 @@
 ! boundary parameters
 
 ! Stacey put back
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted',action='read')
   read(27) nspec2D_xmin_outer_core
   read(27) nspec2D_xmax_outer_core
   read(27) nspec2D_ymin_outer_core
@@ -1772,7 +1772,7 @@
 ! read arrays for Stacey conditions
 
   if(ABSORBING_CONDITIONS) then
-      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted')
+      open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin',status='unknown',form='unformatted',action='read')
       read(27) nimin_outer_core
       read(27) nimax_outer_core
       read(27) njmin_outer_core
@@ -2849,7 +2849,7 @@
 
 ! create an empty file to monitor the start of the simulation
   if(myrank == 0) then
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown',action='write')
     write(IOUT,*) 'hello, starting time loop'
     close(IOUT)
   endif
@@ -3082,7 +3082,7 @@
 ! write time stamp file to give information about progression of simulation
       write(outputname,"('/timestamp',i6.6)") it
 
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown')
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
 
       write(IOUT,*) 'Time step # ',it
       write(IOUT,*) 'Time: ',sngl(((it-1)*DT-t0)/60.d0),' minutes'
@@ -4891,7 +4891,7 @@
 ! save movie data to disk in home directory
     if(myrank == 0) then
       write(outputname,"('/moviedata',i6.6)") it
-      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted')
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',action='write')
       write(IOUT) store_val_x_all
       write(IOUT) store_val_y_all
       write(IOUT) store_val_z_all
@@ -4948,7 +4948,7 @@
 ! save files to local disk or tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
     write(outputname,"('dump_all_arrays',i6.6)") myrank
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
+    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write')
     write(55) displ_crust_mantle
     write(55) veloc_crust_mantle
     write(55) accel_crust_mantle
@@ -4970,7 +4970,7 @@
 ! save last frame of the forward simulation
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted')
+    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write')
     write(55) displ_crust_mantle
     write(55) veloc_crust_mantle
     write(55) accel_crust_mantle
@@ -5044,22 +5044,22 @@
 ! For anisotropic kernels
     if (ANISOTROPIC_KL) then
 
-      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) -rho_kl_crust_mantle
       close(27)
-      open(unit=27,file=trim(prname)//'cijkl_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'cijkl_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) -cijkl_kl_crust_mantle
       close(27)
 
     else
 
-      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) rho_kl_crust_mantle
       close(27)
-      open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) alpha_kl_crust_mantle
       close(27)
-      open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) beta_kl_crust_mantle
       close(27)
 
@@ -5082,10 +5082,10 @@
     enddo
 
     call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
+    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
     write(27) rho_kl_outer_core
     close(27)
-    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted')
+    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
     write(27) alpha_kl_outer_core
     close(27)
 
@@ -5109,13 +5109,13 @@
     enddo
 
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
-    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted')
+    open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
     write(27) rho_kl_inner_core
     close(27)
-    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted')
+    open(unit=27,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
     write(27) alpha_kl_inner_core
     close(27)
-    open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted')
+    open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
     write(27) beta_kl_inner_core
     close(27)
 
@@ -5131,21 +5131,21 @@
 
       call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
       if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
-      open(unit=27,file=trim(prname)//'moho_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'moho_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) moho_kl
       close(27)
       endif
-      open(unit=27,file=trim(prname)//'d400_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'d400_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) d400_kl
       close(27)
-      open(unit=27,file=trim(prname)//'d670_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'d670_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) d670_kl
       close(27)
-      open(unit=27,file=trim(prname)//'CMB_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'CMB_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) cmb_kl
       close(27)
       call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-      open(unit=27,file=trim(prname)//'ICB_kernel.bin',status='unknown',form='unformatted')
+      open(unit=27,file=trim(prname)//'ICB_kernel.bin',status='unknown',form='unformatted',action='write')
       write(27) icb_kl
       close(27)
     endif
@@ -5164,7 +5164,7 @@
                  transpose(nu_source(:,:,irec))) * scale_t ** 3 / scale_mass
 
       write(outputname,'(a,i5.5)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
-      open(unit=27,file=trim(outputname),status='unknown')
+      open(unit=27,file=trim(outputname),status='unknown',action='write')
 !
 ! r -> z, theta -> -n, phi -> e, plus factor 2 for Mrt,Mrp,Mtp, and 1e-7 to dyne.cm
 !  Mrr =  Mzz

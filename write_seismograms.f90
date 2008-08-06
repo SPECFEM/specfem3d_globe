@@ -112,17 +112,17 @@
 
       if(USE_BINARY_FOR_LARGE_FILE) then
         if (seismo_offset==0) then
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted')
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
         else
           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
-               form='unformatted',position='append')
+               form='unformatted',position='append',action='write')
         endif
       else
         if (seismo_offset==0) then
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted')
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
         else
           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
-               form='formatted',position='append')
+               form='formatted',position='append',action='write')
         endif
       endif
    endif
@@ -176,17 +176,17 @@
 
          if(USE_BINARY_FOR_LARGE_FILE) then
            if (seismo_offset==0) then
-             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted')
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
            else
              open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
-                  form='unformatted',position='append')
+                  form='unformatted',position='append',action='write')
            endif
          else
            if (seismo_offset==0) then
-             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted')
+             open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
            else
              open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
-                  form='formatted',position='append')
+                  form='formatted',position='append',action='write')
            endif
          endif
 
@@ -623,9 +623,9 @@
 ! add .sacan (sac alphanumeric) extension to seismogram file name for SAC seismograms
   write(sisname_2,"('/',a,'.sacan')") trim(sisname)
   if (seismo_offset == 0) then
-    open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+    open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown',action='write')
   else
-    open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old', position='append')
+    open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old', position='append',action='write')
   endif
 
 ! Formats of alphanumerical SAC header fields
@@ -921,9 +921,9 @@
       endif
     else
       if (seismo_offset==0) then
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown')
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown',action='write')
       else
-        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old',position='append')
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old',position='append',action='write')
       endif
 
     endif
@@ -1027,11 +1027,11 @@
    if(it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
       !open new file
       open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
-           status='unknown')
+           status='unknown',action='write')
    else if(it > NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
       !append to existing file
       open(unit=IOUT,file=final_LOCAL_PATH(1:len_trim(final_LOCAL_PATH))//sisname(1:len_trim(sisname)),&
-           status='old',position='append')
+           status='old',position='append',action='write')
    endif
 ! make sure we never write more than the maximum number of time steps
 ! subtract half duration of the source to make sure travel time is correct

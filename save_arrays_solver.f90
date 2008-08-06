@@ -159,7 +159,7 @@
   integer iregion_code
 
 ! save nspec and nglob, to be used in combine_paraview_data
-  open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt',status='unknown')
+  open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt',status='unknown',action='write')
   if (NCHUNKS == 6 .and. ichunk /= CHUNK_AB .and. iregion_code == IREGION_INNER_CORE) then
      nspec1 = nspec - (NEX_PER_PROC_XI/16) * (NEX_PER_PROC_ETA/16) * (NEX_XI/16)
      nglob1 = nglob -   ((NEX_PER_PROC_XI/16)*(NGLLX-1)+1) * ((NEX_PER_PROC_ETA/16)*(NGLLY-1)+1) &
@@ -172,7 +172,7 @@
   write(27,*) nglob1
   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_1.bin',status='unknown',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_1.bin',status='unknown',form='unformatted',action='write')
 
   write(27) xixstore
   write(27) xiystore
@@ -188,8 +188,7 @@
   write(27) kappavstore
 
   if(HETEROGEN_3D_MANTLE) then
-     open(unit=29,file=prname(1:len_trim(prname))//'dvp.bin'&
-         ,status='unknown',form='unformatted')
+     open(unit=29,file=prname(1:len_trim(prname))//'dvp.bin',status='unknown',form='unformatted',action='write')
      write(29) dvpstore
      close(29)
   endif
@@ -263,7 +262,7 @@
 
   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin',status='unknown',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin',status='unknown',form='unformatted',action='write')
 ! mesh arrays used in the solver to locate source and receivers
 ! and for anisotropy and gravity, save in single precision
 ! use rmass for temporary storage to perform conversion, since already saved
@@ -333,8 +332,7 @@
   close(27)
 
 ! boundary parameters
-
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted')
+  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted',action='write')
 
   write(27) nspec2D_xmin
   write(27) nspec2D_xmax
@@ -367,7 +365,7 @@
   close(27)
 
   if(ATTENUATION .and. ATTENUATION_3D) then
-     open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin', status='unknown', form='unformatted')
+     open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin', status='unknown', form='unformatted',action='write')
      write(27) tau_s
      write(27) tau_e_store
      write(27) Qmu_store
