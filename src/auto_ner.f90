@@ -268,7 +268,6 @@
 
     nex_xi = nex_xi_in / 16
 
-
     rcubestep    = 1.0d0
     rcube_test   =  930.0d0
     rcubemax     = 1100.0d0
@@ -282,7 +281,8 @@
        max_aspect_ratio = 0.0d0
        call compute_nex(nex_xi, rcube_test, alpha, nex_eta)
        npts = (4 * nex_xi * nex_eta * NBNODE) + (nex_xi * nex_xi * NBNODE)
-       allocate(points(npts, 2))
+!! DK DK could allocate this automatic array in the memory stack to avoid memory fragmentation with "allocate()"
+       allocate(points(npts,2))
        call compute_IC_mesh(rcube_test, points, npts, nspec_cube, nspec_chunks, nex_xi, nex_eta)
        nspec = nspec_cube + nspec_chunks
        do ispec = 1,nspec
@@ -294,8 +294,6 @@
           max_aspect_ratio = MAX(max_aspect_ratio, aspect_ratio)
        end do
        xi = (max_edgemax / min_edgemin)
-!       xi = abs(rcube_test - 981.0d0) / 45.0d0
-!       write(*,'(a,5(f14.4,2x))')'rcube, xi, ximin:-',rcube_test, xi, min_edgemin,max_edgemax,max_aspect_ratio
        deallocate(points)
        if(xi < ximin) then
           ximin      = xi
