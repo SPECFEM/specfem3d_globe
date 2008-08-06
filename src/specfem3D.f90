@@ -39,7 +39,7 @@
   include "precision.h"
 
 ! include values created by the mesher
-  include "OUTPUT_FILES/values_from_mesher.h"
+  include "values_from_mesher.h"
 
 !=======================================================================!
 !                                                                       !

@@ -52,7 +52,7 @@
 
 !! DK DK for the merged version
 ! include values created by the mesher
-  include "OUTPUT_FILES/values_from_mesher.h"
+  include "values_from_mesher.h"
 
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables

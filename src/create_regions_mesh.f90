@@ -71,7 +71,7 @@
 
 !! DK DK for the merged version
 ! include values created by the mesher
-  include "OUTPUT_FILES/values_from_mesher.h"
+  include "values_from_mesher.h"
 
 !! DK DK added this for merged version
   integer :: npoin2D_xi,npoin2D_eta

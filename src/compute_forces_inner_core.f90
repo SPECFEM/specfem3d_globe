@@ -41,7 +41,7 @@
 
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
+  include "values_from_mesher.h"
 
 ! attenuation_model_variables
   type attenuation_model_variables

@@ -56,14 +56,15 @@ FCFLAGS_f90 =
 MPILIBS =
 FCFLAGS = #-g
 
-SPECINC=setup/
-BIN=bin
+SPECINC = setup/
+OUTPUT_FILES_INC = OUTPUT_FILES/
+BIN = bin
 
-FCCOMPILE_CHECK = ${FC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC)
-FCCOMPILE_NO_CHECK = ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC)
-MPIFCCOMPILE_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC)
-MPIFCCOMPILE_NO_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC)
-MPIFCCOMPILE_NO_CHECK2 = ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK2) -I$(SPECINC)
+FCCOMPILE_CHECK = ${FC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
+FCCOMPILE_NO_CHECK = ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
+MPIFCCOMPILE_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
+MPIFCCOMPILE_NO_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
+MPIFCCOMPILE_NO_CHECK2 = ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK2) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
 
 CC = gcc
 CFLAGS = -g -O2
@@ -176,7 +177,7 @@ LIBSPECFEM = $O/libspecfem.a
 # default targets
 DEFAULT = \
 	xcreate_header_file \
-  OUTPUT_FILES/values_from_mesher.h \
+  $(OUTPUT_FILES_INC)/values_from_mesher.h \
 	xmeshfem3D \
 	$(EMPTY_MACRO)
 
@@ -230,16 +231,16 @@ $O/libspecfem.a: $(libspecfem_a_OBJECTS)
 ### optimized flags and dependence on values from mesher here
 ###
 
-$O/specfem3D.o: $(SPECINC)/constants.h OUTPUT_FILES/values_from_mesher.h $S/specfem3D.f90
+$O/specfem3D.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/specfem3D.f90
 	${MPIFCCOMPILE_NO_CHECK2} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.f90
 
-$O/compute_forces_crust_mantle.o: $(SPECINC)/constants.h OUTPUT_FILES/values_from_mesher.h $S/compute_forces_crust_mantle.f90
+$O/compute_forces_crust_mantle.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_crust_mantle.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_crust_mantle.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle.f90
 
-$O/compute_forces_outer_core.o: $(SPECINC)/constants.h OUTPUT_FILES/values_from_mesher.h $S/compute_forces_outer_core.f90
+$O/compute_forces_outer_core.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_outer_core.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_outer_core.o ${FCFLAGS_f90} $S/compute_forces_outer_core.f90
 
-$O/compute_forces_inner_core.o: $(SPECINC)/constants.h OUTPUT_FILES/values_from_mesher.h $S/compute_forces_inner_core.f90
+$O/compute_forces_inner_core.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_inner_core.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_inner_core.o ${FCFLAGS_f90} $S/compute_forces_inner_core.f90
 
 ### use MPI here
@@ -250,7 +251,7 @@ $O/assemble_MPI_vector.o: $(SPECINC)/constants.h $S/assemble_MPI_vector.f90
 $O/assemble_MPI_scalar.o: $(SPECINC)/constants.h $S/assemble_MPI_scalar.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar.o ${FCFLAGS_f90} $S/assemble_MPI_scalar.f90
 
-$O/assemble_MPI_central_cube.o: $(SPECINC)/constants.h OUTPUT_FILES/values_from_mesher.h $S/assemble_MPI_central_cube.f90
+$O/assemble_MPI_central_cube.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/assemble_MPI_central_cube.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube.f90
 
 ###
@@ -500,6 +501,6 @@ $O/s362ani.o: $(SPECINC)/constants.h $S/s362ani.f90
 ### rule for the header file
 ###
 
-OUTPUT_FILES/values_from_mesher.h: $(BIN)/xcreate_header_file
-	mkdir -p OUTPUT_FILES
+$(OUTPUT_FILES_INC)/values_from_mesher.h: $(BIN)/xcreate_header_file
+	mkdir -p $(OUTPUT_FILES_INC)
 	$(BIN)/xcreate_header_file

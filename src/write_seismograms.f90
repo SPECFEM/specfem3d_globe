@@ -599,7 +599,7 @@
 ! ------------------end format 5I10---------
 !
 !----------------------------------
- KSTNM  = station_name(irec) ! A8
+ KSTNM  = station_name(irec)(1:8) ! A8
 
  if (NSOURCES == 1) then
    KEVNM  = ename(1:len_trim(ename))//'_syn'! A16

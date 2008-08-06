@@ -44,7 +44,7 @@
 
 !! DK DK for the merged version
 ! include values created by the mesher
-  include "OUTPUT_FILES/values_from_mesher.h"
+  include "values_from_mesher.h"
 
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
 
