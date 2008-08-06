@@ -1672,8 +1672,7 @@
             etaxstore,etaystore,etazstore, &
             gammaxstore,gammaystore,gammazstore, &
             xstore,ystore,zstore,rhostore,dvpstore, &
-            kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-            nspec_ani, &
+            kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,nspec_ani, &
             c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
             c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
             c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -1681,14 +1680,11 @@
             ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
             nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
             normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
-            jacobian2D_xmin,jacobian2D_xmax, &
-            jacobian2D_ymin,jacobian2D_ymax, &
-            jacobian2D_bottom,jacobian2D_top, &
-            nspec,nglob, &
+            jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
+            jacobian2D_bottom,jacobian2D_top,nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
             TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
-            tau_s,tau_e_store,Qmu_store,T_c_source, &
-            ATTENUATION,ATTENUATION_3D, &
+            tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,ATTENUATION_3D, &
             size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,ABSORBING_CONDITIONS,AM_V)
 
