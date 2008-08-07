@@ -29,6 +29,7 @@
 
 !! DK DK for merged version: the code below was merged from several routines
 !! DK DK from the old mesher; it could therefore probably be cleaned and simplified
+!! DK DK or even probably be merged with create_chunk_buffers.f90
 
   subroutine create_list_files_chunks(iregion_code, &
       nglob_ori,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_CORNER, &

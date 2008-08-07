@@ -41,7 +41,7 @@
   xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
-  iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
   iboolfaces,npoin2D_faces,iboolcorner,NGLOB1D_RADIAL,NGLOB2DMAX_XY)
 
   implicit none
@@ -68,11 +68,10 @@
 !---- arrays to assemble between chunks
 
 ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
+  integer, dimension(NUMMSGS_FACES_VAL) :: imsg_type,iprocfrom_faces,iprocto_faces
 
 ! communication pattern for corners between chunks
   integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
-
 
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
 
@@ -95,22 +94,24 @@
 
   integer idoubling(nspec)
 
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+
 ! mask for ibool to mark points already found
-  logical, dimension(:), allocatable ::  mask_ibool
+  logical, dimension(nglob_ori) ::  mask_ibool
 
 ! array to store points selected for the chunk face buffer
-  integer, dimension(:), allocatable :: ibool_selected
+  integer, dimension(NGLOB2DMAX_XY) :: ibool_selected
 
-  double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
+  double precision, dimension(NGLOB2DMAX_XY) :: xstore_selected,ystore_selected,zstore_selected
 
 ! arrays for sorting routine
-  integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
-  logical, dimension(:), allocatable :: ifseg
-  double precision, dimension(:), allocatable :: work
+  integer, dimension(NGLOB2DMAX_XY) :: ind,ninseg,iglob,locval,iwork
+  logical, dimension(NGLOB2DMAX_XY) :: ifseg
+  double precision, dimension(NGLOB2DMAX_XY) :: work
 
 ! pairs generated theoretically
 ! four sides for each of the three types of messages
-  integer, dimension(:), allocatable :: iproc_sender,iproc_receiver,npoin2D_send,npoin2D_receive
+  integer, dimension(:), allocatable :: npoin2D_send,npoin2D_receive
 
 ! 1D buffers to remove points belonging to corners
   integer ibool1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX)
@@ -140,7 +141,7 @@
   integer iregion_code
 
   integer iproc_edge_send,iproc_edge_receive
-  integer imsg_type,iside,imode_comm,iedge
+  integer imsg_type_loop,iside,imode_comm,iedge
 
 ! boundary parameters per slice
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
@@ -219,19 +220,9 @@
 ! same number of GLL points in each direction for several chunks
   if(NGLLY /= NGLLX) call exit_MPI(myrank,'must have NGLLY = NGLLX for several chunks')
 
-! allocate arrays for faces
-  allocate(iproc_sender(NUMMSGS_FACES))
-  allocate(iproc_receiver(NUMMSGS_FACES))
-  allocate(npoin2D_send(NUMMSGS_FACES))
-  allocate(npoin2D_receive(NUMMSGS_FACES))
-
-! allocate array for corners
-  allocate(iprocscorners(3,NCORNERSCHUNKS))
-  allocate(itypecorner(3,NCORNERSCHUNKS))
-
-! clear arrays allocated
-  iproc_sender(:) = 0
-  iproc_receiver(:) = 0
+! clear arrays
+  iprocfrom_faces(:) = 0
+  iprocto_faces(:) = 0
   npoin2D_send(:) = 0
   npoin2D_receive(:) = 0
   iprocscorners(:,:) = 0
@@ -241,23 +232,6 @@
     write(IMAIN,*) 'There is a total of ',NUMMSGS_FACES,' messages to assemble faces between chunks'
     write(IMAIN,*)
   endif
-
-! allocate arrays for message buffers with maximum size
-  allocate(ibool_selected(NGLOB2DMAX_XY))
-  allocate(xstore_selected(NGLOB2DMAX_XY))
-  allocate(ystore_selected(NGLOB2DMAX_XY))
-  allocate(zstore_selected(NGLOB2DMAX_XY))
-  allocate(ind(NGLOB2DMAX_XY))
-  allocate(ninseg(NGLOB2DMAX_XY))
-  allocate(iglob(NGLOB2DMAX_XY))
-  allocate(locval(NGLOB2DMAX_XY))
-  allocate(ifseg(NGLOB2DMAX_XY))
-  allocate(iwork(NGLOB2DMAX_XY))
-  allocate(work(NGLOB2DMAX_XY))
-
-
-! allocate mask for ibool
-  allocate(mask_ibool(nglob_ori))
 
   imsg = 0
 
@@ -270,7 +244,7 @@
 !!!!!!!!!! DK DK for merged version: beginning of "faces" section here
 
 ! create theoretical communication pattern
-  do imsg_type = 1,NUM_MSG_TYPES
+  do imsg_type_loop = 1,NUM_MSG_TYPES
     do iside = 1,NUM_FACES
       do iproc_loop = 0,NPROC_ONE_DIRECTION-1
 
@@ -296,7 +270,7 @@
 ! define the 12 different messages
 
 ! message type M1
-        if(imsg_type == 1) then
+        if(imsg_type_loop == 1) then
 
           if(iside == 1) then
             ichunk_send = CHUNK_AB
@@ -345,7 +319,7 @@
         endif
 
 ! message type M2
-        if(imsg_type == 2) then
+        if(imsg_type_loop == 2) then
 
           if(iside == 1) then
             ichunk_send = CHUNK_AB
@@ -394,7 +368,7 @@
         endif
 
 ! message type M3
-        if(imsg_type == 3) then
+        if(imsg_type_loop == 3) then
 
           if(iside == 1) then
             ichunk_send = CHUNK_AC
@@ -444,26 +418,27 @@
 
 
 ! store addressing generated
-        iproc_sender(imsg) = addressing(ichunk_send,iproc_xi_send,iproc_eta_send)
-        iproc_receiver(imsg) = addressing(ichunk_receive,iproc_xi_receive,iproc_eta_receive)
+        iprocfrom_faces(imsg) = addressing(ichunk_send,iproc_xi_send,iproc_eta_send)
+        iprocto_faces(imsg) = addressing(ichunk_receive,iproc_xi_receive,iproc_eta_receive)
+        imsg_type(imsg) = imsg_type_loop
 
 ! check that sender/receiver pair is ordered
-        if(iproc_sender(imsg) > iproc_receiver(imsg)) call exit_MPI(myrank,'incorrect order in sender/receiver pair')
+        if(iprocfrom_faces(imsg) > iprocto_faces(imsg)) call exit_MPI(myrank,'incorrect order in sender/receiver pair')
 
 ! save message type and pair of processors in list of messages
-!!! DK DK for merged        if(myrank == 0) write(IOUT,*) imsg_type,iproc_sender(imsg),iproc_receiver(imsg)
+!!! DK DK for merged        if(myrank == 0) write(IOUT,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
 
 ! loop on sender/receiver (1=sender 2=receiver)
         do imode_comm=1,2
 
           if(imode_comm == 1) then
-            iproc = iproc_sender(imsg)
+            iproc = iprocfrom_faces(imsg)
             iedge = iproc_edge_send
 !! DK DK commented this out for the merged version
 !           write(filename_out,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
 
           else if(imode_comm == 2) then
-            iproc = iproc_receiver(imsg)
+            iproc = iprocto_faces(imsg)
             iedge = iproc_edge_receive
 !! DK DK commented this out for the merged version
 !           write(filename_out,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
@@ -771,13 +746,13 @@
 
 !     gather number of points for sender
       npoin2D_send_local = npoin2D_send(imsg)
-      call MPI_BCAST(npoin2D_send_local,1,MPI_INTEGER,iproc_sender(imsg),MPI_COMM_WORLD,ier)
-      if(myrank /= iproc_sender(imsg)) npoin2D_send(imsg) = npoin2D_send_local
+      call MPI_BCAST(npoin2D_send_local,1,MPI_INTEGER,iprocfrom_faces(imsg),MPI_COMM_WORLD,ier)
+      if(myrank /= iprocfrom_faces(imsg)) npoin2D_send(imsg) = npoin2D_send_local
 
 !     gather number of points for receiver
       npoin2D_receive_local = npoin2D_receive(imsg)
-      call MPI_BCAST(npoin2D_receive_local,1,MPI_INTEGER,iproc_receiver(imsg),MPI_COMM_WORLD,ier)
-      if(myrank /= iproc_receiver(imsg)) npoin2D_receive(imsg) = npoin2D_receive_local
+      call MPI_BCAST(npoin2D_receive_local,1,MPI_INTEGER,iprocto_faces(imsg),MPI_COMM_WORLD,ier)
+      if(myrank /= iprocto_faces(imsg)) npoin2D_receive(imsg) = npoin2D_receive_local
 
   enddo
 
@@ -902,13 +877,13 @@
 ! loop on the three processors of a given corner
   do imember_corner = 1,3
 
-    if(imember_corner == 1) then
+!   if(imember_corner == 1) then
 !     write(filename_out,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
-    else if(imember_corner == 2) then
+!   else if(imember_corner == 2) then
 !     write(filename_out,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
-    else
+!   else
 !     write(filename_out,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
-    endif
+!   endif
 
 ! only do this if current processor is the right one for MPI version
 ! this line is ok even for NCHUNKS = 2
@@ -922,14 +897,14 @@
 !---- read indirect addressing for each message for corners of the chunks
 !---- a given slice can belong to at most one corner
 ! check that we have found the right correspondance
-  if(imember_corner == 1 .and. myrank /= iproc_master_corners(imsg)) call exit_MPI(myrank,'this message should be for a master')
-  if(imember_corner == 2 .and. myrank /= iproc_worker1_corners(imsg)) call exit_MPI(myrank,'this message should be for a worker1')
-  if(imember_corner == 3 .and. myrank /= iproc_worker2_corners(imsg)) call exit_MPI(myrank,'this message should be for a worker2')
+  if(imember_corner == 1 .and. myrank /= iprocscorners(1,imsg)) call exit_MPI(myrank,'this message should be for a master')
+  if(imember_corner == 2 .and. myrank /= iprocscorners(2,imsg)) call exit_MPI(myrank,'this message should be for a worker1')
+  if(imember_corner == 3 .and. myrank /= iprocscorners(3,imsg)) call exit_MPI(myrank,'this message should be for a worker2')
   icount_corners = 0
   do imsg2 = 1,imsg
-  if(myrank == iproc_master_corners(imsg2) .or. &
-     myrank == iproc_worker1_corners(imsg2) .or. &
-     myrank == iproc_worker2_corners(imsg2)) then
+  if(myrank == iprocscorners(1,imsg2) .or. &
+     myrank == iprocscorners(2,imsg2) .or. &
+     myrank == iprocscorners(3,imsg2)) then
     icount_corners = icount_corners + 1
     if(icount_corners>1 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) &
       call exit_MPI(myrank,'more than one corner for this slice')
@@ -1012,28 +987,10 @@
 
   enddo
 
-! deallocate arrays
-  deallocate(iproc_sender)
-  deallocate(iproc_receiver)
-  deallocate(npoin2D_send)
-  deallocate(npoin2D_receive)
-
-  deallocate(iprocscorners)
-  deallocate(itypecorner)
-
-  deallocate(ibool_selected)
-  deallocate(xstore_selected)
-  deallocate(ystore_selected)
-  deallocate(zstore_selected)
-  deallocate(ind)
-  deallocate(ninseg)
-  deallocate(iglob)
-  deallocate(locval)
-  deallocate(ifseg)
-  deallocate(iwork)
-  deallocate(work)
-
-  deallocate(mask_ibool)
+! save arrays in a slightly different format for historical reasons
+  iproc_master_corners(:) = iprocscorners(1,:)
+  iproc_worker1_corners(:) = iprocscorners(2,:)
+  iproc_worker2_corners(:) = iprocscorners(3,:)
 
   end subroutine create_chunk_buffers
 

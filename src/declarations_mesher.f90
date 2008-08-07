@@ -147,3 +147,12 @@
   integer :: nrec,ios
   character(len=150) :: STATIONS,rec_filename,dummystring
 
+!! DK DK added this for the merged version
+!---- arrays to assemble between chunks
+
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: imsg_type,iprocfrom_faces,iprocto_faces
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+

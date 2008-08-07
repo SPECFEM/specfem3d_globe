@@ -622,17 +622,6 @@
 !! DK DK for the merged version
   include 'declarations_mesher.f90'
 
-!! DK DK added this for the merged version
-!---- arrays to assemble between chunks
-
-  integer :: imsg
-
-! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
-
-! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
-
 ! ************** PROGRAM STARTS HERE **************
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.
@@ -1728,54 +1717,6 @@
   endif
 
 !! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-!! DK DK added this for merged version
-
-! create the list of messages in files to assemble between chunks if more than one chunk
-! create it only once (and for all) therefore for first region only, because constant
-  if(NCHUNKS > 1 .and. iregion_code == IREGION_CRUST_MANTLE) then
-    call create_list_files_chunks(iregion_code, &
-      nglob(iregion_code),NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_CORNER, &
-      myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
-      imsg_type,iprocfrom_faces,iprocto_faces, &
-      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
-
-    call MPI_BCAST(imsg_type,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iprocfrom_faces,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iprocto_faces,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iproc_worker1_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iproc_worker2_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  endif
-
-! check chunk messages only if more than one chunk
-  if(NCHUNKS_VAL /= 1) then
-
-! check messages to assemble between chunks with MPI
-  do imsg = 1,NUMMSGS_FACES_VAL
-  if      (iprocfrom_faces(imsg) < 0 &
-      .or. iprocto_faces(imsg) < 0 &
-      .or. iprocfrom_faces(imsg) > NPROCTOT-1 &
-      .or. iprocto_faces(imsg) > NPROCTOT-1) &
-    call exit_MPI(myrank,'incorrect chunk faces numbering')
-  if (imsg_type(imsg) < 1 .or. imsg_type(imsg) > 3) &
-    call exit_MPI(myrank,'incorrect message type labeling')
-  enddo
-
-! check the list of processors for each message for corners
-  do imsg = 1,NCORNERSCHUNKS_VAL
-  if    (iproc_master_corners(imsg) < 0 &
-    .or. iproc_worker1_corners(imsg) < 0 &
-    .or. iproc_worker2_corners(imsg) < 0 &
-    .or. iproc_master_corners(imsg) > NPROCTOT-1 &
-    .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
-    .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
-      call exit_MPI(myrank,'incorrect chunk corner numbering')
-  enddo
-
-  endif
-
-!! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
   ! create chunk buffers if more than one chunk
   if(NCHUNKS > 1) then
@@ -1796,7 +1737,7 @@
   xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
-  iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
   iboolfaces_crust_mantle,npoin2D_faces_crust_mantle,iboolcorner_crust_mantle,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
   NGLOB2DMAX_XY_VAL_CM)
 
@@ -1815,7 +1756,7 @@
   xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
-  iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
   iboolfaces_outer_core,npoin2D_faces_outer_core,iboolcorner_outer_core,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
   NGLOB2DMAX_XY_VAL_OC)
 
@@ -1834,7 +1775,7 @@
   xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
-  iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
   iboolfaces_inner_core,npoin2D_faces_inner_core,iboolcorner_inner_core,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
   NGLOB2DMAX_XY_VAL_IC)
 
