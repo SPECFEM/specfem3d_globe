@@ -32,7 +32,8 @@
 #
 FC = ifort
 MPIFC = mpif90
-FLAGS_NO_CHECK = -O1 -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -ftrapuv -fpe0 -ftz -traceback
+#FLAGS_NO_CHECK = -O1 -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -ftrapuv -fpe0 -ftz -traceback
+FLAGS_NO_CHECK = -O1 -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn declarations -std95 -check nobounds -align sequence -assume byterecl -ftrapuv -fpe0 -ftz -traceback
 #FLAGS_NO_CHECK = -O3 -xP -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -fpe3 -ftz
 
 #
@@ -98,7 +99,6 @@ libspecfem_a_OBJECTS = \
 	$O/create_central_cube_buffers.o \
 	$O/create_chunk_buffers.o \
 	$O/create_header_file.o \
-	$O/create_name_database.o \
 	$O/create_regions_mesh.o \
 	$O/crustal_model.o \
 	$O/define_derivation_matrices.o \
@@ -443,9 +443,6 @@ $O/recompute_jacobian.o: $(SPECINC)/constants.h $S/recompute_jacobian.f90
 
 $O/create_regions_mesh.o: $(SPECINC)/constants.h $S/create_regions_mesh.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/create_regions_mesh.o ${FCFLAGS_f90} $S/create_regions_mesh.f90
-
-$O/create_name_database.o: $(SPECINC)/constants.h $S/create_name_database.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} $S/create_name_database.f90
 
 $O/define_derivation_matrices.o: $(SPECINC)/constants.h $S/define_derivation_matrices.f90
 	${FCCOMPILE_CHECK} -c -o $O/define_derivation_matrices.o ${FCFLAGS_f90} $S/define_derivation_matrices.f90

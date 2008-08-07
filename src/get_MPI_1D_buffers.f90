@@ -88,7 +88,6 @@
 ! determine if the element falls on the left MPI cut plane
 
 ! global point number and coordinates left MPI 1D buffer
-!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -150,7 +149,6 @@
 ! determine if the element falls on the right MPI cut plane
 
 ! global point number and coordinates right MPI 1D buffer
-!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -215,7 +213,6 @@
 ! determine if the element falls on the left MPI cut plane
 
 ! global point number and coordinates left MPI 1D buffer
-!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -282,7 +279,6 @@
 ! determine if the element falls on the right MPI cut plane
 
 ! global point number and coordinates right MPI 1D buffer
-!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.

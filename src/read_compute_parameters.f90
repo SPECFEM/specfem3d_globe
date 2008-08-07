@@ -43,7 +43,7 @@
          MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
-         INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
+         INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
          NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
          NSPEC, &
          NSPEC2D_XI, &
@@ -91,7 +91,7 @@
           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,MODEL
 
 ! local variables
   integer NEX_MAX
@@ -1059,8 +1059,6 @@
   call read_value_integer(NUMBER_OF_RUNS, 'solver.NUMBER_OF_RUNS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NUMBER_OF_THIS_RUN, 'solver.NUMBER_OF_THIS_RUN')
-  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_string(LOCAL_PATH, 'LOCAL_PATH')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'

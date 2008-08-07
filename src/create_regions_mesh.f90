@@ -34,7 +34,7 @@
            ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
            ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-           myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
+           myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
            ATTENUATION,ATTENUATION_3D, &
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
@@ -383,7 +383,7 @@
   double precision R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
 
-  character(len=150) LOCAL_PATH,errmsg
+  character(len=150) errmsg
 
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
@@ -496,9 +496,6 @@
   integer, dimension(:,:), allocatable :: nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
 
-! name of the database file
-  character(len=150) prname
-
 ! number of elements on the boundaries
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
 
@@ -592,9 +589,6 @@
   real(kind=CUSTOM_REAL) :: normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
   real(kind=CUSTOM_REAL) :: normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM)
   real(kind=CUSTOM_REAL) :: normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP)
-
-! create the name for the database of the current slide and region
-  call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
 ! Attenuation
   if(ATTENUATION .and. ATTENUATION_3D) then
@@ -1979,33 +1973,6 @@
 
   endif
 
-! save the binary files
-!! DK DK MERGED UGLY this is the only thing we are going to have to save
-!   call save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
-!           prname,iregion_code,xixstore,xiystore,xizstore, &
-!           etaxstore,etaystore,etazstore, &
-!           gammaxstore,gammaystore,gammazstore, &
-!           xstore,ystore,zstore, rhostore, &
-!           kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-!           nspec_ani, &
-!           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-!           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-!           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-!           ibool,idoubling,rmass,rmass_ocean_load,nglob_oceans, &
-!           ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-!           nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-!           normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
-!           jacobian2D_xmin,jacobian2D_xmax, &
-!           jacobian2D_ymin,jacobian2D_ymax, &
-!           jacobian2D_bottom,jacobian2D_top, &
-!           nspec,nglob, &
-!           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-!           TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
-!           tau_s,tau_e_store,Qmu_store,T_c_source, &
-!           ATTENUATION,ATTENUATION_3D, &
-!           size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
-!           NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,ABSORBING_CONDITIONS,AM_V)
-
 ! boundary mesh
   if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
 ! first check the number of surface elements are the same for Moho, 400, 670
@@ -2019,7 +1986,8 @@
                call exit_mpi(myrank,'Not the same number of 670 surface elements')
 
 ! writing surface topology databases
-    open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin',status='unknown',form='unformatted',action='write')
+    stop 'DK DK should do this in MPI instead of writing to a disk file'
+    open(unit=27,file='OUTPUT_FILES/boundary_disc.bin',status='unknown',form='unformatted',action='write')
     write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
     write(27) ibelm_moho_top
     write(27) ibelm_moho_bot

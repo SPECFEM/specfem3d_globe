@@ -78,9 +78,6 @@ SAVE_MESH_FILES                 = .false.
 NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
-# path to store the local database files on each node
-LOCAL_PATH                      = not_used_any_more_ignored
-
 # interval at which we output time step info and max of norm of displacement
 NTSTEP_BETWEEN_OUTPUT_INFO      = 1000
 

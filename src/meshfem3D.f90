@@ -365,7 +365,7 @@
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
@@ -454,20 +454,6 @@
 !! DK DK for the merged version
   include 'declarations_mesher.f90'
 
-! ************** PROGRAM STARTS HERE **************
-
-! initialize the MPI communicator and start the NPROCTOT MPI processes.
-  call MPI_INIT(ier)
-  if(ier /= 0) stop 'error: cannot start MPI!!!'
-
-! sizeprocs returns number of processes started (should be equal to NPROCTOT).
-! myrank is the rank of each process, between 0 and NPROCTOT-1.
-! as usual in MPI, process 0 is in charge of coordinating everything
-! and also takes care of the main output
-! do not create anything for the inner core here, will be done in solver
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
@@ -506,7 +492,7 @@
           MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
           PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
           ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
-          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
+          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
           NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
           NSPEC, &
           NSPEC2D_XI, &
@@ -561,7 +547,6 @@
 
     call MPI_BCAST(bcast_logical,25,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(ner,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -906,6 +891,7 @@
   write(IMAIN,*)
 
   endif
+
   if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
   if(ISOTROPIC_3D_MANTLE) then
@@ -1171,9 +1157,6 @@
 ! volume of the slice
   volume_total = ZERO
 
-! make sure everybody is synchronized
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
 !----
 !----  loop on all the regions of the mesh
 !----
@@ -1326,7 +1309,7 @@
          NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code),ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-         myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+         myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
          ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
@@ -1364,7 +1347,7 @@
          ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-         myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+         myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
          ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
@@ -1402,7 +1385,7 @@
          ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
          ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-         myrank,LOCAL_PATH,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
+         myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
          ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
@@ -1585,9 +1568,6 @@
   deallocate(ystore)
   deallocate(zstore)
 
-! make sure everybody is synchronized
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
 ! end of loop on all the regions
   enddo
 
@@ -1686,61 +1666,6 @@
 ! close main output file
     close(IMAIN)
   endif
-
-! synchronize all the processes to make sure everybody has finished
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
-!! DK DK for merged version, temporary patch for David's code to cut the superbrick
-!! DK DK which I have not fully ported to the merged version yet: I do not
-!! DK DK yet distinguish the two values of each array, therefore let me set them
-!! DK DK equal here
-  npoin2D_xi_crust_mantle(2) = npoin2D_xi_crust_mantle(1)
-  npoin2D_eta_crust_mantle(2) = npoin2D_eta_crust_mantle(1)
-
-  npoin2D_xi_outer_core(2) = npoin2D_xi_outer_core(1)
-  npoin2D_eta_outer_core(2) = npoin2D_eta_outer_core(1)
-
-  npoin2D_xi_inner_core(2) = npoin2D_xi_inner_core(1)
-  npoin2D_eta_inner_core(2) = npoin2D_eta_inner_core(1)
-
-!! DK DK added this to reduce the size of the buffers
-! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-  npoin2D_max_all = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
-                        maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
-  if(FEWER_MESSAGES_LARGER_BUFFERS) then
-    NDIM_smaller_buffers = NDIM
-  else
-    NDIM_smaller_buffers = 1
-  endif
-
-! --------- receivers ---------------
-
-  rec_filename = 'DATA/STATIONS'
-  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-
-! get total number of receivers
-  if(myrank == 0) then
-    open(unit=IIN,file=STATIONS,iostat=ios,status='old',action='read')
-    nrec = 0
-    do while(ios == 0)
-      read(IIN,"(a)",iostat=ios) dummystring
-      if(ios == 0) nrec = nrec + 1
-    enddo
-    close(IIN)
-  endif
-! broadcast the information read on the master to the nodes
-  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-  if(myrank == 0) then
-    write(IMAIN,*)
-      write(IMAIN,*) 'Total number of receivers = ', nrec
-    write(IMAIN,*)
-  endif
-
-  if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
-
-! synchronize all the processes to make sure everybody has finished
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
   end subroutine meshfem3D
 

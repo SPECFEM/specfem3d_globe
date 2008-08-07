@@ -738,9 +738,6 @@
 !---- check that number of points detected is the same for sender and receiver
 !
 
-! synchronize all the processes to make sure all the buffers are ready
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
 ! gather information about all the messages on all processes
   do imsg = 1,NUMMSGS_FACES
 

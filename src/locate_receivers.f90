@@ -616,7 +616,6 @@
 
 ! main process broadcasts the results to all the slices
   call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(islice_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ispec_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)

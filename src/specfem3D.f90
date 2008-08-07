@@ -356,7 +356,7 @@
 !! DK DK added this to reduce the size of the buffers
   integer :: npoin2D_max_all,NDIM_smaller_buffers
 
-  integer ichunk,iproc_xi,iproc_eta !!!!!!!!!!!!!!!!!!!!!!,iproc,iproc_read
+  integer ichunk,iproc_xi,iproc_eta
   integer NPROC_ONE_DIRECTION
 
 ! maximum of the norm of the displacement and of the potential in the fluid
@@ -395,7 +395,7 @@
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,MODEL
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
@@ -418,8 +418,6 @@
                NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                NGLOB_computed
-
-  character(len=150) prname
 
 ! lookup table every km for gravity
   integer int_radius,idoubling
@@ -461,10 +459,6 @@
  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
 
 ! ************** PROGRAM STARTS HERE **************
-
-!! DK DK added this for merged version
-! synchronize all the processes to make sure everybody has finished
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 ! set up GLL points, weights and derivation matrices
   call define_derivation_matrices(xigll,yigll,zigll,wxgll,wygll,wzgll, &
@@ -514,16 +508,6 @@
 !! DK DK impossible YYYYYYYYYYYYY  deallocate(yelm_store_inner_core)
 !! DK DK impossible YYYYYYYYYYYYY  deallocate(zelm_store_inner_core)
 
-! initialize the MPI communicator and start the NPROCTOT MPI processes.
-!! DK DK suppressed for merged version  call MPI_INIT(ier)
-
-! sizeprocs returns number of processes started (should be equal to NPROCTOT).
-! myrank is the rank of each process, between 0 and sizeprocs-1.
-! as usual in MPI, process 0 is in charge of coordinating everything
-! and also takes care of the main output
-!! DK DK suppressed for merged version  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
-!! DK DK suppressed for merged version  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-
   if (myrank == 0) then
 
 ! read the parameter file and compute additional parameters
@@ -545,7 +529,7 @@
          MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D,RECEIVERS_CAN_BE_BURIED, &
          PRINT_SOURCE_TIME_FUNCTION,SAVE_MESH_FILES, &
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
-         INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
+         INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
          NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
          NSPEC_computed, &
          NSPEC2D_XI, &
@@ -598,7 +582,6 @@
 
     call MPI_BCAST(bcast_logical,33,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(LOCAL_PATH,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(ner,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -1185,10 +1168,6 @@
 
   endif
 
-! synchronize all the processes before assembling the mass matrix
-! to make sure all the nodes have finished to read their databases
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
 ! the mass matrix needs to be assembled with MPI here once and for all
 
 ! ocean load
@@ -1378,8 +1357,7 @@
 
 ! get and store PREM attenuation model
 
-        call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-        call get_attenuation_model_1D(myrank, prname, IREGION_CRUST_MANTLE, tau_sigma_dble, &
+        call get_attenuation_model_1D(myrank, IREGION_CRUST_MANTLE, tau_sigma_dble, &
              omsb_crust_mantle_dble, factor_common_crust_mantle_dble,  &
              factor_scale_crust_mantle_dble, NRAD_ATTENUATION,1,1,1, AM_V)
         omsb_inner_core_dble(:,:,:,1:min(ATT4,ATT5)) = omsb_crust_mantle_dble(:,:,:,1:min(ATT4,ATT5))
@@ -1664,14 +1642,6 @@
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
-
-!! DK DK merged version: may set to 1 for timing
-! displ_crust_mantle = 1
-! veloc_crust_mantle = 1
-! displ_outer_core = 1
-! veloc_outer_core = 1
-! displ_inner_core = 1
-! veloc_inner_core = 1
 
   do it = it_begin,it_end
 
@@ -2252,13 +2222,6 @@
     write(IMAIN,*)
     close(IMAIN)
   endif
-
-! synchronize all the processes to make sure everybody has finished
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
-! stop all the MPI processes, and exit
-!! DK DK suppressed this for the merged version
-! call MPI_FINALIZE(ier)
 
   end subroutine specfem3D
 

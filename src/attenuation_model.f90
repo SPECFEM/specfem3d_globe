@@ -254,7 +254,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
 
 end subroutine attenuation_model_setup
 
-subroutine attenuation_save_arrays(prname, iregion_code, AM_V)
+subroutine attenuation_save_arrays(iregion_code, AM_V)
 
   implicit none
 
@@ -284,15 +284,16 @@ subroutine attenuation_save_arrays(prname, iregion_code, AM_V)
 ! attenuation_model_variables
 
   integer iregion_code
-  character(len=150) prname
   integer ier
   integer myrank
   integer, save :: first_time_called = 1
 
+  stop 'DK DK should do this in MPI instead of writing to a local file'
+
   call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
   if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
     first_time_called = 0
-    open(unit=27,file=prname(1:len_trim(prname))//'1D_Q.bin',status='unknown',form='unformatted',action='write')
+    open(unit=27,file='OUTPUT_FILES/1D_Q.bin',status='unknown',form='unformatted',action='write')
     write(27) AM_V%QT_c_source
     write(27) AM_V%Qtau_s
     write(27) AM_V%Qn
@@ -611,7 +612,7 @@ end subroutine attenuation_property_values
 !---
 !---
 
-subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_minus_sum_beta, &
+subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_beta, &
                                     factor_common, scale_factor, vn,vx,vy,vz, AM_V)
 
   implicit none
@@ -642,7 +643,6 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
 ! attenuation_model_variables
 
   integer myrank, iregion_code
-  character(len=150) prname
   integer vn, vx,vy,vz
   double precision, dimension(N_SLS)              :: tau_s
   double precision, dimension(vx,vy,vz,vn)        :: scale_factor, one_minus_sum_beta
@@ -655,9 +655,11 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
 
   integer, save :: first_time_called = 1
 
+  stop 'DK DK should do this in MPI instead of writing to a file'
+
   if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
      first_time_called = 0
-     open(unit=27, file=prname(1:len_trim(prname))//'1D_Q.bin', status='unknown', form='unformatted',action='read')
+     open(unit=27, file='OUTPUT_FILES/1D_Q.bin', status='unknown', form='unformatted',action='read')
      read(27) AM_V%QT_c_source
      read(27) tau_s
      read(27) AM_V%Qn
@@ -765,8 +767,6 @@ subroutine get_attenuation_model_1D(myrank, prname, iregion_code, tau_s, one_min
   deallocate(AM_V%Qtau_e)
   deallocate(Qfctmp)
   deallocate(Qfc2tmp)
-
-  call MPI_BARRIER(MPI_COMM_WORLD, ier)
 
 end subroutine get_attenuation_model_1D
 
@@ -933,14 +933,13 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
 
 end subroutine get_attenuation_index
 
-subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_common, scale_factor, tau_s, vnspec)
+subroutine get_attenuation_model_3D(myrank, one_minus_sum_beta, factor_common, scale_factor, tau_s, vnspec)
 
   implicit none
 
   include 'constants.h'
 
   integer myrank, vnspec
-  character(len=150) prname
   double precision, dimension(NGLLX,NGLLY,NGLLZ,vnspec)       :: one_minus_sum_beta, scale_factor
   double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,vnspec) :: factor_common
   double precision, dimension(N_SLS)                          :: tau_s
@@ -953,7 +952,9 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
 
-  open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin',status='old',action='read',form='unformatted')
+  stop 'DK DK should do this in MPI instead of writing to a disk file'
+
+  open(unit=27, file='OUTPUT_FILES/attenuation3D.bin',status='old',action='read',form='unformatted')
   read(27) tau_s
   read(27) factor_common
   read(27) scale_factor

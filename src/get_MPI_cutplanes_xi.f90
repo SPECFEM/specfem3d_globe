@@ -72,7 +72,6 @@
 !
 
 ! global point number and coordinates left MPI cut-plane
-!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -127,7 +126,6 @@
       nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
 
 ! global point number and coordinates right MPI cut-plane
-!! DK DK suppressed merged  open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.

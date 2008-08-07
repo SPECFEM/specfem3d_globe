@@ -27,8 +27,5 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
   xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
   xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
-  xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core, &
-!! DK DK do not need to be initialized
-  buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-  buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector)
+  xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core)
 
