@@ -32,7 +32,7 @@
                 NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                 NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
                 NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                myrank,LOCAL_PATH, &
+                myrank, &
                 addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
                 ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
                 ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
@@ -88,7 +88,7 @@
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,ERR_MSG
+  character(len=150) ERR_MSG
 
 ! array with the local to global mapping per slice
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
@@ -153,9 +153,6 @@
 
 ! current message number
   integer imsg
-
-! names of the data files for all the processors in MPI
-  character(len=150) prname
 
 ! for addressing of the slices
   integer ichunk,iproc_xi,iproc_eta,iproc
@@ -263,16 +260,6 @@
   allocate(mask_ibool(nglob_ori))
 
   imsg = 0
-
-  if(myrank == 0) then
-
-! get the base pathname for output files
-    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
-
-! file to store the list of processors for each message for faces
-!!! DK DK for merged    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='unknown')
-
-  endif
 
 !!!!!!!!!! DK DK for merged version: beginning of "faces" section here
 !!!!!!!!!! DK DK for merged version: beginning of "faces" section here
@@ -509,13 +496,6 @@
 
 !---------------------------------------------------------------------
 
-! create the name of the database for each slice
-            call create_name_database(prname,iproc,iregion_code,LOCAL_PATH)
-
-! open file for 2D buffer
-!! DK DK suppressed in the merged version
-!  open(unit=IOUT_BUFFERS,file=prname(1:len_trim(prname))//filename_out,status='unknown')
-
 ! determine chunk number and local slice coordinates using addressing
             ichunk = ichunk_slice(iproc)
             iproc_xi = iproc_xi_slice(iproc)
@@ -532,51 +512,6 @@
               call exit_MPI(myrank,ERR_MSG)
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-! read boundary parameters
-!! DK DK suppressed in the merged version
-! open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin',status='old',action='read',form='unformatted')
-!! DK DK suppressed in the merged version            read(IIN) nspec2D_xmin
-!! DK DK suppressed in the merged version            read(IIN) nspec2D_xmax
-!! DK DK suppressed in the merged version            read(IIN) nspec2D_ymin
-!! DK DK suppressed in the merged version            read(IIN) nspec2D_ymax
-!! DK DK suppressed in the merged version            read(IIN) njunk
-!! DK DK suppressed in the merged version            read(IIN) njunk
-!! DK DK suppressed in the merged version
-!! DK DK suppressed in the merged version            read(IIN) ibelm_xmin
-!! DK DK suppressed in the merged version            read(IIN) ibelm_xmax
-!! DK DK suppressed in the merged version            read(IIN) ibelm_ymin
-!! DK DK suppressed in the merged version            read(IIN) ibelm_ymax
-!! DK DK suppressed in the merged version            close(IIN)
-
-! read 1D buffers to remove corner points
-!! DK DK suppressed in the merged version
-!  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')
-!! DK DK suppressed in the merged version            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,1)
-!! DK DK suppressed in the merged version              read(IIN,*) ibool1D_leftxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
-!! DK DK suppressed in the merged version            enddo
-!! DK DK suppressed in the merged version            close(IIN)
-
-!! DK DK suppressed in the merged version
-!  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='old',action='read')
-!! DK DK suppressed in the merged version            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,2)
-!! DK DK suppressed in the merged version              read(IIN,*) ibool1D_rightxi_lefteta(ipoin1D),xdummy,ydummy,zdummy
-!! DK DK suppressed in the merged version            enddo
-!! DK DK suppressed in the merged version            close(IIN)
-
-!! DK DK suppressed in the merged version
-!   open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='old',action='read')
-!! DK DK suppressed in the merged version            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,4)
-!! DK DK suppressed in the merged version              read(IIN,*) ibool1D_leftxi_righteta(ipoin1D),xdummy,ydummy,zdummy
-!! DK DK suppressed in the merged version            enddo
-!! DK DK suppressed in the merged version            close(IIN)
-
-!! DK DK suppressed in the merged version
-!  open(unit=IIN,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old',action='read')
-!! DK DK suppressed in the merged version            do ipoin1D = 1,NGLOB1D_RADIAL_CORNER(iregion_code,3)
-!! DK DK suppressed in the merged version              read(IIN,*) ibool1D_rightxi_righteta(ipoin1D),xdummy,ydummy,zdummy
-!! DK DK suppressed in the merged version            enddo
-!! DK DK suppressed in the merged version            close(IIN)
 
 ! erase logical mask
             mask_ibool(:) = .false.
@@ -956,9 +891,6 @@
 
   endif
 
-! file to store the list of processors for each message for corners
-!!! DK DK for merged  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown')
-
 ! loop over all the messages to create the addressing
   do imsg = 1,NCORNERSCHUNKS
 
@@ -1015,26 +947,19 @@
 ! pick the correct 1D buffer
 ! this scheme works fine even if NPROC_XI = NPROC_ETA = 1
   if(itypecorner(imember_corner,imsg) == ILOWERLOWER) then
-!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt'
     NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,1)
   else if(itypecorner(imember_corner,imsg) == ILOWERUPPER) then
-!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt'
     NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,4)
   else if(itypecorner(imember_corner,imsg) == IUPPERLOWER) then
-!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt'
     NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,2)
   else if(itypecorner(imember_corner,imsg) == IUPPERUPPER) then
-!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt'
     NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,3)
   else
     call exit_MPI(myrank,'incorrect corner coordinates')
   endif
 
-! read 1D buffer for corner
-!! DK DK suppressed in the merged version    open(unit=IIN,file=filename_in,status='old',action='read')
+! 1D buffer for corner
     do ipoin1D = 1,NGLOB1D_RADIAL_my_corner
-!! DK DK suppressed in the merged version      read(IIN,*) ibool1D(ipoin1D), &
-!! DK DK suppressed in the merged version              xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
 
 !! DK DK added this for merged
 ! pick the correct 1D buffer
@@ -1074,18 +999,11 @@
 ! check that no duplicates have been found
     if(nglob /= NGLOB1D_RADIAL_my_corner) call exit_MPI(myrank,'duplicates found for corners')
 
-! write file with 1D buffer for corner
-!! DK DK suppressed in the merged version    open(unit=IOUT_BUFFERS,file=prname(1:len_trim(prname))//filename_out,status='unknown')
-!! DK DK suppressed in the merged version    write(IOUT_BUFFERS,*) NGLOB1D_RADIAL_my_corner
+! 1D buffer for corner
     do ipoin1D = 1,NGLOB1D_RADIAL_my_corner
-!! DK DK suppressed in the merged version      write(IOUT_BUFFERS,*) ibool1D(ipoin1D), &
-!! DK DK suppressed in the merged version              xread1D(ipoin1D),yread1D(ipoin1D),zread1D(ipoin1D)
-
 !! DK DK added this for merged version
       iboolcorner(ipoin1D,icount_corners) = ibool1D(ipoin1D)
-
     enddo
-!! DK DK suppressed in the merged version    close(IOUT_BUFFERS)
 
 ! end of section done only if right processor for MPI
   endif
@@ -1093,8 +1011,6 @@
   enddo
 
   enddo
-
-!!! DK DK for merged  if(myrank == 0) close(IOUT)
 
 ! deallocate arrays
   deallocate(iproc_sender)

@@ -27,12 +27,14 @@
 
 ! subroutine to create the list of messages to assemble between chunks in files if more than one chunk
 
-!! DK DK for merged version: a lot of useless code / useless lines car probably be suppressed
-!! DK DK in this new routine below
+!! DK DK for merged version: the code below was merged from several routines
+!! DK DK from the old mesher; it could therefore probably be cleaned and simplified
 
   subroutine create_list_files_chunks(iregion_code, &
-                nglob_ori,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_CORNER, &
-                myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
+      nglob_ori,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_CORNER, &
+      myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+      imsg_type,iprocfrom_faces,iprocto_faces, &
+      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
 
   implicit none
 
@@ -52,14 +54,13 @@
   integer NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_my_corner
   integer myrank,NCHUNKS
 
-  character(len=150) OUTPUT_FILES
-
 ! pairs generated theoretically
 ! four sides for each of the three types of messages
-  integer, dimension(:), allocatable :: iproc_sender,iproc_receiver,npoin2D_send,npoin2D_receive
+  integer, dimension(NUMMSGS_FACES_VAL) :: imsg_type,iprocfrom_faces,iprocto_faces,npoin2D_send,npoin2D_receive
 
 ! arrays to assemble the corners (3 processors for each corner)
-  integer, dimension(:,:), allocatable :: iprocscorners,itypecorner
+  integer, dimension(3,NCORNERSCHUNKS_VAL) :: iprocscorners,itypecorner
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
   integer ichunk_send,iproc_xi_send,iproc_eta_send
   integer ichunk_receive,iproc_xi_receive,iproc_eta_receive
@@ -70,7 +71,7 @@
   integer iregion_code
 
   integer iproc_edge_send,iproc_edge_receive
-  integer imsg_type,iside,imode_comm,iedge
+  integer iside,imode_comm,iedge,imsg_type_loop
 
   integer ier
 
@@ -130,19 +131,9 @@
 ! same number of GLL points in each direction for several chunks
   if(NGLLY /= NGLLX) call exit_MPI(myrank,'must have NGLLY = NGLLX for several chunks')
 
-! allocate arrays for faces
-  allocate(iproc_sender(NUMMSGS_FACES))
-  allocate(iproc_receiver(NUMMSGS_FACES))
-  allocate(npoin2D_send(NUMMSGS_FACES))
-  allocate(npoin2D_receive(NUMMSGS_FACES))
-
-! allocate array for corners
-  allocate(iprocscorners(3,NCORNERSCHUNKS))
-  allocate(itypecorner(3,NCORNERSCHUNKS))
-
-! clear arrays allocated
-  iproc_sender(:) = 0
-  iproc_receiver(:) = 0
+! clear arrays
+  iprocfrom_faces(:) = 0
+  iprocto_faces(:) = 0
   npoin2D_send(:) = 0
   npoin2D_receive(:) = 0
   iprocscorners(:,:) = 0
@@ -155,16 +146,6 @@
 
   imsg = 0
 
-  if(myrank == 0) then
-
-! get the base pathname for output files
-    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
-
-! file to store the list of processors for each message for faces
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='unknown',action='write')
-
-  endif
-
 !!!!!!!!!! DK DK for merged version: beginning of "faces" section here
 !!!!!!!!!! DK DK for merged version: beginning of "faces" section here
 !!!!!!!!!! DK DK for merged version: beginning of "faces" section here
@@ -174,7 +155,7 @@
 !!!!!!!!!! DK DK for merged version: beginning of "faces" section here
 
 ! create theoretical communication pattern
-  do imsg_type = 1,NUM_MSG_TYPES
+  do imsg_type_loop = 1,NUM_MSG_TYPES
     do iside = 1,NUM_FACES
       do iproc_loop = 0,NPROC_ONE_DIRECTION-1
 
@@ -200,7 +181,7 @@
 ! define the 12 different messages
 
 ! message type M1
-        if(imsg_type == 1) then
+        if(imsg_type_loop == 1) then
 
           if(iside == 1) then
             ichunk_send = CHUNK_AB
@@ -249,7 +230,7 @@
         endif
 
 ! message type M2
-        if(imsg_type == 2) then
+        if(imsg_type_loop == 2) then
 
           if(iside == 1) then
             ichunk_send = CHUNK_AB
@@ -298,7 +279,7 @@
         endif
 
 ! message type M3
-        if(imsg_type == 3) then
+        if(imsg_type_loop == 3) then
 
           if(iside == 1) then
             ichunk_send = CHUNK_AC
@@ -346,26 +327,26 @@
 
         endif
 
-
 ! store addressing generated
-        iproc_sender(imsg) = addressing(ichunk_send,iproc_xi_send,iproc_eta_send)
-        iproc_receiver(imsg) = addressing(ichunk_receive,iproc_xi_receive,iproc_eta_receive)
+        iprocfrom_faces(imsg) = addressing(ichunk_send,iproc_xi_send,iproc_eta_send)
+        iprocto_faces(imsg) = addressing(ichunk_receive,iproc_xi_receive,iproc_eta_receive)
+        imsg_type(imsg) = imsg_type_loop
 
 ! check that sender/receiver pair is ordered
-        if(iproc_sender(imsg) > iproc_receiver(imsg)) call exit_MPI(myrank,'incorrect order in sender/receiver pair')
+        if(iprocfrom_faces(imsg) > iprocto_faces(imsg)) call exit_MPI(myrank,'incorrect order in sender/receiver pair')
 
 ! save message type and pair of processors in list of messages
-        if(myrank == 0) write(IOUT,*) imsg_type,iproc_sender(imsg),iproc_receiver(imsg)
+!!!!!!!! DK DK merged version        if(myrank == 0) write(IOUT,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
 
 ! loop on sender/receiver (1=sender 2=receiver)
         do imode_comm=1,2
 
           if(imode_comm == 1) then
-            iproc = iproc_sender(imsg)
+            iproc = iprocfrom_faces(imsg)
             iedge = iproc_edge_send
 
           else if(imode_comm == 2) then
-            iproc = iproc_receiver(imsg)
+            iproc = iprocto_faces(imsg)
             iedge = iproc_edge_receive
 
           else
@@ -397,8 +378,6 @@
       enddo
     enddo
   enddo
-
-  if(myrank == 0) close(IOUT)
 
 ! check that total number of messages is correct
   if(imsg /= NUMMSGS_FACES) call exit_MPI(myrank,'incorrect total number of messages')
@@ -509,16 +488,17 @@
 
   endif
 
-! file to store the list of processors for each message for corners
-  if(myrank == 0) open(unit=IOUT,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='unknown',action='write')
-
 ! loop over all the messages to create the addressing
   do imsg = 1,NCORNERSCHUNKS
 
   if(myrank == 0) write(IMAIN,*) 'Generating message ',imsg,' for corners out of ',NCORNERSCHUNKS
 
 ! save triplet of processors in list of messages
-  if(myrank == 0) write(IOUT,*) iprocscorners(1,imsg),iprocscorners(2,imsg),iprocscorners(3,imsg)
+!!!!!!!! DK DK merged version        if(myrank == 0) write(IOUT,*) iprocscorners(1,imsg),iprocscorners(2,imsg),iprocscorners(3,imsg)
+!!!!!!!! DK DK merged version
+    iproc_master_corners(imsg) = iprocscorners(1,imsg)
+    iproc_worker1_corners(imsg) = iprocscorners(2,imsg)
+    iproc_worker2_corners(imsg) = iprocscorners(3,imsg)
 
 ! loop on the three processors of a given corner
   do imember_corner = 1,3
@@ -530,16 +510,12 @@
 ! pick the correct 1D buffer
 ! this scheme works fine even if NPROC_XI = NPROC_ETA = 1
   if(itypecorner(imember_corner,imsg) == ILOWERLOWER) then
-!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt'
     NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,1)
   else if(itypecorner(imember_corner,imsg) == ILOWERUPPER) then
-!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt'
     NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,4)
   else if(itypecorner(imember_corner,imsg) == IUPPERLOWER) then
-!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt'
     NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,2)
   else if(itypecorner(imember_corner,imsg) == IUPPERUPPER) then
-!! DK DK suppressed for merged    filename_in = prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt'
     NGLOB1D_RADIAL_my_corner = NGLOB1D_RADIAL_CORNER(iregion_code,3)
   else
     call exit_MPI(myrank,'incorrect corner coordinates')
@@ -551,8 +527,6 @@
   enddo
 
   enddo
-
-  if(myrank == 0) close(IOUT)
 
   end subroutine create_list_files_chunks
 

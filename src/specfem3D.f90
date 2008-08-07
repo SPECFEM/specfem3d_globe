@@ -435,15 +435,18 @@
   double precision, dimension(NDIM,NDIM,NSOURCES) :: nu_source
 
 ! receiver information
-  integer nrec,nrec_local,nrec_tot_found,irec_local,ios
-  integer, dimension(:), allocatable :: islice_selected_rec,ispec_selected_rec,number_receiver_global
-  double precision, dimension(:), allocatable :: xi_receiver,eta_receiver,gamma_receiver
-  double precision hlagrange
-  character(len=150) :: STATIONS,rec_filename,dummystring
-  double precision, dimension(:,:,:), allocatable :: nu
-  double precision, allocatable, dimension(:) :: stlat,stlon,stele
-  character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
-  character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
+  integer :: nrec,nrec_local,nrec_tot_found,irec_local
+  double precision :: hlagrange
+  integer, dimension(:), allocatable :: number_receiver_global
+  character(len=150) :: STATIONS,rec_filename
+
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+  integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
+  double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
+  double precision, dimension(NDIM,NDIM,nrec) :: nu
+  double precision, dimension(nrec) :: stlat,stlon,stele
+  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
+  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
 ! seismograms
   integer it_begin,it_end,nit_written
@@ -1160,95 +1163,9 @@
   t0 = - 1.5d0*minval(t_cmt-hdur)
 
 ! --------- receivers ---------------
-    rec_filename = 'DATA/STATIONS'
+
+  rec_filename = 'DATA/STATIONS'
   call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-! get total number of receivers
-  if(myrank == 0) then
-    open(unit=IIN,file=STATIONS,iostat=ios,status='old',action='read')
-    nrec = 0
-    do while(ios == 0)
-      read(IIN,"(a)",iostat=ios) dummystring
-      if(ios == 0) nrec = nrec + 1
-    enddo
-    close(IIN)
-  endif
-! broadcast the information read on the master to the nodes
-  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-  if(myrank == 0) then
-    write(IMAIN,*)
-      write(IMAIN,*) 'Total number of receivers = ', nrec
-    write(IMAIN,*)
-  endif
-
-  if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
-
-! allocate memory for receiver arrays
-  allocate(islice_selected_rec(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(ispec_selected_rec(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(xi_receiver(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(eta_receiver(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(gamma_receiver(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(station_name(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(network_name(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(stlat(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(stlon(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(stele(nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(nu(NDIM,NDIM,nrec),STAT=ier)
-  if (ier /= 0 ) then
-    print *,"ABORTING can not allocate in specfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
 
 ! locate receivers in the crust in the mesh
   call locate_receivers(myrank,DT,NSTEP,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &

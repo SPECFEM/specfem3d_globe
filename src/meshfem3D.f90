@@ -620,7 +620,7 @@
 ! integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
 
 !! DK DK for the merged version
-  include 'declar.f90'
+  include 'declarations_mesher.f90'
 
 !! DK DK added this for the merged version
 !---- arrays to assemble between chunks
@@ -632,10 +632,6 @@
 
 ! communication pattern for corners between chunks
   integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
-
-  logical :: not_done_yet
-
-  integer :: npoin2D_max_all,NDIM_smaller_buffers
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -967,9 +963,6 @@
   enddo
 !! DK DK suppressed this for merged
 !! DK DK suppressed this for merged  if(myrank == 0) close(IOUT)
-
-!! DK DK added this for the merged version
-  not_done_yet = .true.
 
 ! this for the different counters (which are now different if the superbrick is cut in the outer core)
   do iregion=1,MAX_NUM_REGIONS
@@ -1738,29 +1731,28 @@
 !! DK DK added this for merged version
 
 ! create the list of messages in files to assemble between chunks if more than one chunk
-! create it only once (and for all) therefore for first region only, because stored in disk files
-!! DK DK this could probably be simplified or merged with create_chunk_buffers, but no time to do it for now
-  if(NCHUNKS > 1 .and. iregion_code == IREGION_CRUST_MANTLE) &
-! crust_mantle
+! create it only once (and for all) therefore for first region only, because constant
+  if(NCHUNKS > 1 .and. iregion_code == IREGION_CRUST_MANTLE) then
     call create_list_files_chunks(iregion_code, &
       nglob(iregion_code),NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_CORNER, &
-      myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
+      myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+      imsg_type,iprocfrom_faces,iprocto_faces, &
+      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
 
-!! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-!! DK DK added this for merged version
+    call MPI_BCAST(imsg_type,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iprocfrom_faces,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iprocto_faces,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-! read chunk messages only if more than one chunk
-  if(NCHUNKS_VAL /= 1 .and. myrank == 0 .and. not_done_yet) then
+    call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iproc_worker1_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iproc_worker2_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  endif
 
-! do this only once in the mesher, because these arrays do not change
-    not_done_yet  = .false.
+! check chunk messages only if more than one chunk
+  if(NCHUNKS_VAL /= 1) then
 
-! read messages to assemble between chunks with MPI
-
-! file with the list of processors for each message for faces
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old',action='read')
+! check messages to assemble between chunks with MPI
   do imsg = 1,NUMMSGS_FACES_VAL
-  read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
   if      (iprocfrom_faces(imsg) < 0 &
       .or. iprocto_faces(imsg) < 0 &
       .or. iprocfrom_faces(imsg) > NPROCTOT-1 &
@@ -1769,13 +1761,9 @@
   if (imsg_type(imsg) < 1 .or. imsg_type(imsg) > 3) &
     call exit_MPI(myrank,'incorrect message type labeling')
   enddo
-  close(IIN)
 
-! file with the list of processors for each message for corners
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
+! check the list of processors for each message for corners
   do imsg = 1,NCORNERSCHUNKS_VAL
-  read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
-                          iproc_worker2_corners(imsg)
   if    (iproc_master_corners(imsg) < 0 &
     .or. iproc_worker1_corners(imsg) < 0 &
     .or. iproc_worker2_corners(imsg) < 0 &
@@ -1784,19 +1772,7 @@
     .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
       call exit_MPI(myrank,'incorrect chunk corner numbering')
   enddo
-  close(IIN)
 
-  endif
-
-! broadcast the information read on the master to the nodes
-  if(NCHUNKS_VAL /= 1) then
-    call MPI_BCAST(imsg_type,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iprocfrom_faces,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iprocto_faces,NUMMSGS_FACES_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iproc_worker1_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(iproc_worker2_corners,NCORNERSCHUNKS_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   endif
 
 !! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -1812,7 +1788,7 @@
       NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
       NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
       NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
-      myrank,LOCAL_PATH,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+      myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
       ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
       ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
       nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
@@ -1831,7 +1807,7 @@
        NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
        NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
        NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
-       myrank,LOCAL_PATH,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+       myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
        ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
        ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
        nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
@@ -1850,7 +1826,7 @@
        NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
        NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
        NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
-       myrank,LOCAL_PATH,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
+       myrank,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS, &
        ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
        ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
        nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
@@ -2059,6 +2035,32 @@
   else
     NDIM_smaller_buffers = 1
   endif
+
+! --------- receivers ---------------
+
+  rec_filename = 'DATA/STATIONS'
+  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
+
+! get total number of receivers
+  if(myrank == 0) then
+    open(unit=IIN,file=STATIONS,iostat=ios,status='old',action='read')
+    nrec = 0
+    do while(ios == 0)
+      read(IIN,"(a)",iostat=ios) dummystring
+      if(ios == 0) nrec = nrec + 1
+    enddo
+    close(IIN)
+  endif
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+  if(myrank == 0) then
+    write(IMAIN,*)
+      write(IMAIN,*) 'Total number of receivers = ', nrec
+    write(IMAIN,*)
+  endif
+
+  if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
 
 !! DK DK for the merged version
   include 'call1.f90'

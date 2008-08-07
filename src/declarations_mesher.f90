@@ -141,3 +141,9 @@
 
   double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core_dble
 
+  integer :: npoin2D_max_all,NDIM_smaller_buffers
+
+! receiver information
+  integer :: nrec,ios
+  character(len=150) :: STATIONS,rec_filename,dummystring
+
