@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2008
+!                            August 2008
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -24,10 +24,17 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
-!
-! United States and French Government Sponsorship Acknowledged.
 
-  program xmeshfem3D
+!=====================================================================!
+!  meshfem3D produces a spectral element grid for the Earth.          !
+!  This is accomplished based upon a mapping of the face of a cube    !
+!  to a portion of the sphere (Ronchi et al., The Cubed Sphere).      !
+!  Grid density is decreased by a factor of two                       !
+!  three times in the radial direction.                               !
+!=====================================================================!
+
+!! DK DK for the merged version
+  include 'call_meshfem2.f90'
 
   implicit none
 
@@ -40,155 +47,6 @@
 !! DK DK for the merged version
 ! include values created by the mesher
   include "values_from_mesher.h"
-
-!=====================================================================!
-!                                                                     !
-!  meshfem3D produces a spectral element grid for the Earth.          !
-!  This is accomplished based upon a mapping of the face of a cube    !
-!  to a portion of the sphere (Ronchi et al., The Cubed Sphere).      !
-!  Grid density is decreased by a factor of two                       !
-!  three times in the radial direction.                               !
-!                                                                     !
-!=====================================================================!
-!
-! If you use this code for your own research, please cite some of these articles:
-!
-! @ARTICLE{KoRiTr02,
-! author={D. Komatitsch and J. Ritsema and J. Tromp},
-! year=2002,
-! title={The Spectral-Element Method, {B}eowulf Computing, and Global Seismology},
-! journal={Science},
-! volume=298,
-! number=5599,
-! pages={1737-1742},
-! doi={10.1126/science.1076024}}
-!
-! @ARTICLE{KoTr02a,
-! author={D. Komatitsch and J. Tromp},
-! year=2002,
-! title={Spectral-Element Simulations of Global Seismic Wave Propagation{-I. V}alidation},
-! journal={Geophys. J. Int.},
-! volume=149,
-! number=2,
-! pages={390-412},
-! doi={10.1046/j.1365-246X.2002.01653.x}}
-!
-! @ARTICLE{KoTr02b,
-! author={D. Komatitsch and J. Tromp},
-! year=2002,
-! title={Spectral-Element Simulations of Global Seismic Wave Propagation{-II. 3-D} Models, Oceans, Rotation, and Self-Gravitation},
-! journal={Geophys. J. Int.},
-! volume=150,
-! pages={303-318},
-! number=1,
-! doi={10.1046/j.1365-246X.2002.01716.x}}
-!
-! @ARTICLE{KoTr99,
-! author={D. Komatitsch and J. Tromp},
-! year=1999,
-! title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
-! journal={Geophys. J. Int.},
-! volume=139,
-! number=3,
-! pages={806-822},
-! doi={10.1046/j.1365-246x.1999.00967.x}}
-!
-! @ARTICLE{KoVi98,
-! author={D. Komatitsch and J. P. Vilotte},
-! title={The spectral-element method: an efficient tool to simulate the seismic response of 2{D} and 3{D} geological structures},
-! journal={Bull. Seismol. Soc. Am.},
-! year=1998,
-! volume=88,
-! number=2,
-! pages={368-392}}
-!
-! If you use the kernel capabilities of the code, please cite
-!
-! @ARTICLE{LiTr06,
-! author={Qinya Liu and Jeroen Tromp},
-! title={Finite-frequency kernels based on adjoint methods},
-! journal={Bull. Seismol. Soc. Am.},
-! year=2006,
-! volume=96,
-! number=6,
-! pages={2383-2397},
-! doi={10.1785/0120060041}}
-!
-! If you use 3-D model S20RTS, please cite
-!
-! @ARTICLE{RiVa00,
-! author={J. Ritsema and H. J. {Van Heijst}},
-! year=2000,
-! title={Seismic imaging of structural heterogeneity in {E}arth's mantle: Evidence for large-scale mantle flow},
-! journal={Science Progress},
-! volume=83,
-! pages={243-259}}
-!
-! Reference frame - convention:
-! ----------------------------
-!
-! The code uses the following convention for the reference frame:
-!
-!  - X axis is East
-!  - Y axis is North
-!  - Z axis is up
-!
-! Note that this convention is different from both the Aki-Richards convention
-! and the Harvard CMT convention.
-!
-! Let us recall that the Aki-Richards convention is:
-!
-!  - X axis is North
-!  - Y axis is East
-!  - Z axis is down
-!
-! and that the Harvard CMT convention is:
-!
-!  - X axis is South
-!  - Y axis is East
-!  - Z axis is up
-!
-! To report bugs or suggest improvements to the code, please send an email
-! to Jeroen Tromp <jtromp AT caltech.edu> and/or use our online
-! bug tracking system at http://www.geodynamics.org/roundup .
-!
-! Evolution of the code:
-! ---------------------
-!
-! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
-!      new doubling brick in the mesh, new perfectly load-balanced mesh,
-!      more flexible routines for mesh design, new inflated central cube
-!      with optimized shape, far fewer mesh files saved by the mesher,
-!      global arrays sorted to speed up the simulation, seismos can be
-!      written by the master
-! v. 3.6 Many people, many affiliations, September 2006:
-!      adjoint and kernel calculations, fixed IASP91 model,
-!      added AK135 and 1066a, fixed topography/bathymetry routine,
-!      new attenuation routines, faster and better I/Os on very large
-!      systems, many small improvements and bug fixes, new "configure"
-!      script, new Pyre version, new user's manual etc.
-! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
-!      any size of chunk, 3D attenuation, case of two chunks,
-!      more precise topography/bathymetry model, new Par_file structure
-! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
-!      merged global and regional codes, no iterations in fluid, better movies
-! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
-!      flexible mesh doubling in outer core, inlined code, OpenDX support
-! v. 3.2 Jeroen Tromp, Caltech, July 2002:
-!      multiple sources and flexible PREM reading
-! v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
-!      vectorized loops in solver and merged central cube
-! v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
-!   ported to SGI and Compaq, double precision solver, more general anisotropy
-! v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
-!                       gravity, rotation, oceans and 3-D models
-! v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, March 2001:
-!                       final MPI package
-! v. 2.0 Dimitri Komatitsch, Harvard, January 2000: MPI code for the globe
-! v. 1.0 Dimitri Komatitsch, Mexico, June 1999: first MPI code for a chunk
-! Jeroen Tromp, Harvard, July 1998: first chunk solver using OpenMP on Sun
-! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
-!
 
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
@@ -430,12 +288,6 @@
 
   integer nspec_aniso,npointot
 
-! parameters needed to store the radii of the grid points
-! in the spherically symmetric Earth
-!! DK DK suppressed this for merged version
-! integer, dimension(:), allocatable :: idoubling
-! integer, dimension(:,:,:,:), allocatable :: ibool
-
 ! arrays with the mesh in double precision
   double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
 
@@ -585,20 +437,6 @@
 
   integer :: ipass
 
-!! DK DK suppressed this for the merged version
-! integer :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-!        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
-!        NSPEC_INNER_CORE_ATTENUATION, &
-!        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-!        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-!        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-!        NSPEC_CRUST_MANTLE_ADJOINT, &
-!        NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-!        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-!        NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-!        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-!        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
-
 ! this for the different corners of the slice (which are different if the superbrick is cut)
 ! 1 : xi_min, eta_min
 ! 2 : xi_max, eta_min
@@ -612,7 +450,6 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-! integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
 
 !! DK DK for the merged version
   include 'declarations_mesher.f90'
@@ -889,8 +726,6 @@
 
 ! loop on all the chunks to create global slice addressing for solver
   if(myrank == 0) then
-!! DK DK suppressed this for merged
-!! DK DK suppressed this for merged    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/addressing.txt',status='unknown')
     write(IMAIN,*) 'creating global slice addressing'
     write(IMAIN,*)
   endif
@@ -902,13 +737,9 @@
         ichunk_slice(iprocnum) = ichunk
         iproc_xi_slice(iprocnum) = iproc_xi
         iproc_eta_slice(iprocnum) = iproc_eta
-!! DK DK suppressed this for merged
-!! DK DK suppressed this for merged        if(myrank == 0) write(IOUT,*) iprocnum,ichunk,iproc_xi,iproc_eta
       enddo
     enddo
   enddo
-!! DK DK suppressed this for merged
-!! DK DK suppressed this for merged  if(myrank == 0) close(IOUT)
 
 ! this for the different counters (which are now different if the superbrick is cut in the outer core)
   do iregion=1,MAX_NUM_REGIONS
@@ -1843,54 +1674,6 @@
   write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
   write(IMAIN,*)
 
-! evaluate the amount of static memory needed by the solver
-!! DK DK suppressed in the merged version because useless
-! call memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE,&
-!                  TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
-!                  ONE_CRUST,doubling_index,this_region_has_a_doubling,&
-!                  ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
-!                  NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
-!        NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-!        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
-!        NSPEC_INNER_CORE_ATTENUATION, &
-!        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-!        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-!        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-!        NSPEC_CRUST_MANTLE_ADJOINT, &
-!        NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-!        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-!        NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-!        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-!        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,static_memory_size)
-
-!! DK DK suppressed in the merged version because useless
-! NGLOB1D_RADIAL_TEMP(:) = &
-! (/maxval(NGLOB1D_RADIAL_CORNER(1,:)),maxval(NGLOB1D_RADIAL_CORNER(2,:)),maxval(NGLOB1D_RADIAL_CORNER(3,:))/)
-
-! create include file for the solver
-!! DK DK suppressed in the merged version because useless
-! call save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
-!       TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-!       ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
-!       ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
-!       INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP, &
-!       static_memory_size,NGLOB1D_RADIAL_TEMP, &
-!       NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-!       NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-!       NPROC_XI,NPROC_ETA, &
-!        NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-!        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
-!        NSPEC_INNER_CORE_ATTENUATION, &
-!        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-!        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-!        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-!        NSPEC_CRUST_MANTLE_ADJOINT, &
-!        NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-!        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-!        NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-!        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-!        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
-
   endif   ! end of section executed by main process only
 
 ! elapsed time since beginning of mesh generation
@@ -1906,10 +1689,6 @@
 
 ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
-!!!!!!!! DK DK solver inserted here
-!!!!!!!! DK DK solver inserted here
-!!!!!!!! DK DK solver inserted here
 
 !! DK DK for merged version, temporary patch for David's code to cut the superbrick
 !! DK DK which I have not fully ported to the merged version yet: I do not
@@ -1960,20 +1739,8 @@
 
   if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
 
-!! DK DK for the merged version
-  include 'call_specfem1.f90'
-!! DK DK for now use variables just to make sure we don't get warning about unused variables
-! include 'oldstuff/dummy_use_variables.f90'
-
-!!!!!!!! DK DK solver inserted here
-!!!!!!!! DK DK solver inserted here
-!!!!!!!! DK DK solver inserted here
-
 ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
-! stop all the MPI processes, and exit
-  call MPI_FINALIZE(ier)
-
-  end program xmeshfem3D
+  end subroutine meshfem3D
 

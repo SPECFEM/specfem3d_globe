@@ -1,7 +1,7 @@
 
 !! DK DK created this for merged version
 
-  call specfem3D( &
+  call meshfem3D( &
 !! DK DK to do later, for attenuation only; not done yet by lack of time
   omsb_crust_mantle_dble,factor_scale_crust_mantle_dble, omsb_inner_core_dble,factor_scale_inner_core_dble, &
   one_minus_sum_beta_crust_mantle,factor_scale_crust_mantle, one_minus_sum_beta_inner_core,factor_scale_inner_core, &

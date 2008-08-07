@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2008
+!                            August 2008
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 
 ! compute the missing nodes of a 27-node element when only the 8 corners have been given
 
-! the topology of the nodes is described in file hex_nodes.f90 as well as in
+! the topology of the nodes is described in file hex_nodes.f90 and is shown in
 ! UTILS/chunk_notes_scanned/numbering_convention_27_nodes.*
 
   subroutine add_missing_nodes(offset_x,offset_y,offset_z)
@@ -46,8 +46,6 @@
   integer :: iedge,iface,ignod
 
 ! list of corners defining the edges
-! the edge number is sorted according to the numbering convention defined in file hex_nodes.f90
-! as well as in DATA/util/YYYYYYYYYYYYYYYYYYYYYYYYYYY DK DK UGLY YYYYYYYYYYYYYYYYYYY
 
   list_corners_edge( 1,1) = 1
   list_corners_edge( 1,2) = 2
@@ -86,8 +84,6 @@
   list_corners_edge(12,2) = 5
 
 ! list of corners defining the faces
-! the face number is sorted according to the numbering convention defined in file hex_nodes.f90
-! as well as in DATA/util/YYYYYYYYYYYYYYYYYYYYYYYYYYY DK DK UGLY YYYYYYYYYYYYYYYYYYY
 
   list_corners_face(1,1) = 1
   list_corners_face(1,2) = 2

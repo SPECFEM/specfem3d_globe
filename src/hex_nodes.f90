@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2008
+!                            August 2008
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -35,8 +35,7 @@
   integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
 
 ! define the topology of the hexahedral elements
-
-! the topology of the nodes is described in UTILS/chunk_notes_scanned/numbering_convention_27_nodes.tif
+! the topology of the nodes is shown in UTILS/chunk_notes_scanned/numbering_convention_27_nodes.*
 
   if(NGNOD /= 27) stop 'elements should have 27 control nodes'
 
