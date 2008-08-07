@@ -209,7 +209,7 @@
 
 ! support for only one slice per chunk has been discontinued when there is more than one chunk
 ! because it induces topological problems, and we are not interested in using small meshes
-  if(NCHUNKS == 1 .and. (NPROC_XI == 1 .or. NPROC_ETA == 1)) stop 'support for only one slice per chunk has been discontinued'
+  if(NCHUNKS > 1 .and. (NPROC_XI == 1 .or. NPROC_ETA == 1)) stop 'support for only one slice per chunk has been discontinued'
 
 ! define the velocity model
   call read_value_string(MODEL, 'model.name')
