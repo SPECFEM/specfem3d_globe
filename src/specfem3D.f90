@@ -598,9 +598,6 @@
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
 
-! if running on MareNostrum in Barcelona
-  character(len=400) system_command
-
   integer iregion_selected
 
 ! computed in read_compute_parameters
@@ -903,21 +900,6 @@
     MOVIE_EAST = bcast_double_precision(28)
     MOVIE_NORTH = bcast_double_precision(29)
     MOVIE_SOUTH = bcast_double_precision(30)
-
-  endif
-
-! if running on MareNostrum in Barcelona
-  if(RUN_ON_MARENOSTRUM_BARCELONA) then
-
-! check that we combine the seismograms in one large file to avoid GPFS overloading
-    if(.not. SAVE_ALL_SEISMOS_IN_ONE_FILE) call exit_MPI(myrank,'should use SAVE_ALL_SEISMOS_IN_ONE_FILE for GPFS in Barcelona')
-
-! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
-    LOCAL_PATH = '/scratch/komatits_new'
-
-! add processor name to local /scratch/komatits_new path
-    write(system_command,"('_proc',i4.4)") myrank
-    LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
 
   endif
 
@@ -2428,18 +2410,6 @@
 !---- end of time iteration loop
 !
   enddo   ! end of main time loop
-
-! if running on MareNostrum in Barcelona
-  if(RUN_ON_MARENOSTRUM_BARCELONA) then
-
-! synchronize all the processes to make sure everybody has finished
-    call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
-! suppress the local directory to leave space for future runs with a different rank number
-    write(system_command,"('rm -r -f /scratch/komatits_new_proc',i4.4)") myrank
-    call system(system_command)
-
-  endif
 
 ! close the main output file
   if(myrank == 0) then

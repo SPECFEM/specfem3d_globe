@@ -171,10 +171,6 @@
   logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
   logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
 
-!! DK DK UGLY added this in case we are running on MareNostrum in Barcelona
-!! DK DK UGLY because we then need some calls to the system to use GPFS
-  logical, parameter :: RUN_ON_MARENOSTRUM_BARCELONA = .false.
-
 !------------------------------------------------------
 !----------- do not modify anything below -------------
 !------------------------------------------------------
