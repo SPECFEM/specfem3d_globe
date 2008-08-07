@@ -290,11 +290,13 @@
 
   integer nspec_aniso,npointot
 
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+! use the size of the largest region (crust_mantle) and therefore largest possible array
 ! arrays with the mesh in double precision
-  double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: xstore,ystore,zstore
 
 ! proc numbers for MPI
-  integer myrank,sizeprocs,ier,errorcode
+  integer myrank,sizeprocs,ier
 
 ! check area and volume of the final mesh
   double precision area_local_bottom,area_total_bottom
@@ -308,13 +310,17 @@
   integer iproc_xi,iproc_eta,ichunk
 
 !! DK DK for the merged version
-  integer, dimension(:), allocatable :: ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+! use the size of the largest region (crust_mantle) and therefore largest possible array
+  integer, dimension(NGLOB1D_RADIAL_CM) :: ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
              ibool1D_leftxi_righteta,ibool1D_rightxi_righteta
-  double precision, dimension(:), allocatable :: xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
-             xread1D_leftxi_righteta,xread1D_rightxi_righteta
-  double precision, dimension(:), allocatable :: yread1D_leftxi_lefteta,yread1D_rightxi_lefteta, &
-             yread1D_leftxi_righteta,yread1D_rightxi_righteta
-  double precision, dimension(:), allocatable :: zread1D_leftxi_lefteta,zread1D_rightxi_lefteta, &
+
+  double precision, dimension(NGLOB1D_RADIAL_CM) :: &
+             xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
+             xread1D_leftxi_righteta,xread1D_rightxi_righteta, &
+             yread1D_leftxi_lefteta,yread1D_rightxi_lefteta, &
+             yread1D_leftxi_righteta,yread1D_rightxi_righteta, &
+             zread1D_leftxi_lefteta,zread1D_rightxi_lefteta, &
              zread1D_leftxi_righteta,zread1D_rightxi_righteta
 
 ! rotation matrix from Euler angles
@@ -1136,91 +1142,6 @@
   volume_total = ZERO
 
 !! DK DK for the merged version
-  allocate(ibool1D_leftxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(ibool1D_rightxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(ibool1D_leftxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(ibool1D_rightxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(xread1D_leftxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(xread1D_rightxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(xread1D_leftxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(xread1D_rightxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(yread1D_leftxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(yread1D_rightxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(yread1D_leftxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(yread1D_rightxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(zread1D_leftxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(zread1D_rightxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(zread1D_leftxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(zread1D_rightxi_righteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-!! DK DK for the merged version
   include 'allocate_before.f90'
 
 !----
@@ -1255,23 +1176,6 @@
 
 ! compute maximum number of points
   npointot = NSPEC(iregion_code) * NGLLX * NGLLY * NGLLZ
-
-! use dynamic allocation to allocate memory for arrays
-  allocate(xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
 
 ! create all the regions of the mesh
 ! perform two passes in this part to be able to save memory
@@ -1542,34 +1446,8 @@
     endif
   endif
 
-! deallocate arrays used for that region
-  deallocate(xstore)
-  deallocate(ystore)
-  deallocate(zstore)
-
 ! end of loop on all the regions
   enddo
-
-!! DK DK for the merged version
-  deallocate(ibool1D_leftxi_lefteta)
-  deallocate(ibool1D_rightxi_lefteta)
-  deallocate(ibool1D_leftxi_righteta)
-  deallocate(ibool1D_rightxi_righteta)
-
-  deallocate(xread1D_leftxi_lefteta)
-  deallocate(xread1D_rightxi_lefteta)
-  deallocate(xread1D_leftxi_righteta)
-  deallocate(xread1D_rightxi_righteta)
-
-  deallocate(yread1D_leftxi_lefteta)
-  deallocate(yread1D_rightxi_lefteta)
-  deallocate(yread1D_leftxi_righteta)
-  deallocate(yread1D_rightxi_righteta)
-
-  deallocate(zread1D_leftxi_lefteta)
-  deallocate(zread1D_rightxi_lefteta)
-  deallocate(zread1D_leftxi_righteta)
-  deallocate(zread1D_rightxi_righteta)
 
   if(myrank == 0) then
 ! check volume of chunk
