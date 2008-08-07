@@ -141,7 +141,7 @@
 
   double precision, dimension(nrec) :: final_distance
   double precision, dimension(nrec,0:NPROCTOT-1) :: final_distance_all
- 
+
   integer, dimension(nrec,0:NPROCTOT-1) :: ispec_selected_rec_all
   double precision, dimension(nrec) :: stbur
   double precision, dimension(nrec,0:NPROCTOT-1) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all

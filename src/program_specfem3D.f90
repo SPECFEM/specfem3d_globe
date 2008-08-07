@@ -2004,7 +2004,7 @@
   if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
 
 !! DK DK for the merged version
-  include 'call1.f90'
+  include 'call_specfem1.f90'
 !! DK DK for now use variables just to make sure we don't get warning about unused variables
 ! include 'oldstuff/dummy_use_variables.f90'
 

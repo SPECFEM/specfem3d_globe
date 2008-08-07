@@ -25,10 +25,10 @@
 !
 !=====================================================================
 !
-! United States Government Sponsorship Acknowledged.
+! United States and French Government Sponsorship Acknowledged.
 
 !! DK DK for the merged version
-  include 'call2.f90'
+  include 'call_specfem2.f90'
 
   implicit none
 
