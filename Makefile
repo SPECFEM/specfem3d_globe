@@ -139,7 +139,6 @@ libspecfem_a_OBJECTS = \
 	$O/model_sea1d.o \
 	$O/moho_stretching.o \
 	$O/spline_routines.o \
-	$O/create_list_files_chunks.o \
 	$O/recompute_missing_arrays.o \
 	$O/netlib_specfun_erf.o \
 	$O/read_compute_parameters.o \
@@ -372,9 +371,6 @@ $O/meshfem3D.o: $(SPECINC)/constants.h $S/meshfem3D.f90
 
 $O/spline_routines.o: $(SPECINC)/constants.h $S/spline_routines.f90
 	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} $S/spline_routines.f90
-
-$O/create_list_files_chunks.o: $(SPECINC)/constants.h $S/create_list_files_chunks.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/create_list_files_chunks.o ${FCFLAGS_f90} $S/create_list_files_chunks.f90
 
 $O/recompute_missing_arrays.o: $(SPECINC)/constants.h $S/recompute_missing_arrays.f90
 	${FCCOMPILE_CHECK} -c -o $O/recompute_missing_arrays.o ${FCFLAGS_f90} $S/recompute_missing_arrays.f90
