@@ -25,7 +25,7 @@
 !
 !=====================================================================
 !
-! United States Government Sponsorship Acknowledged.
+! United States and French Government Sponsorship Acknowledged.
 
   program xspecfem3D
 
