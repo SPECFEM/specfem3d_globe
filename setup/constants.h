@@ -56,9 +56,9 @@
 ! local file unit for output of buffers
   integer, parameter :: IOUT_BUFFERS = 35
 ! uncomment this to write messages to a text file
-  integer, parameter :: IMAIN = 42
+! integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
-! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+  integer, parameter :: IMAIN = ISTANDARD_OUTPUT
 
 ! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
@@ -125,8 +125,8 @@
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
-! maximum number of sources to locate simultaneously
-  integer, parameter :: NSOURCES_SUBSET_MAX = 1000
+! maximum number of sources to locate simultaneously (do not set it too high otherwise you will use a lot of memory)
+  integer, parameter :: NSOURCES_SUBSET_MAX = 100
 
 ! distance threshold (in km) above which we consider that a receiver
 ! is located outside the mesh and therefore excluded from the station list

@@ -36,12 +36,14 @@
 !! DK DK for the merged version
   include 'call_meshfem2.f90'
 
+  use dyn_array
+
   implicit none
 
 ! standard include of the MPI library
   include 'mpif.h'
 
-  include "constants.h"
+!!!!!!!!!!! DK DK now in module dyn_array  include "constants.h"
   include "precision.h"
 
 !! DK DK for the merged version
@@ -335,8 +337,8 @@
   double precision time_start,tCPU
 
 ! addressing for all the slices
-  integer, dimension(:), allocatable :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
-  integer, dimension(:,:,:), allocatable :: addressing
+  integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
+  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
@@ -506,9 +508,7 @@
           DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
           WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.)
 
-    if(err_occurred() /= 0) then
-          call exit_MPI(myrank,'an error occurred while reading the parameter file')
-    endif
+    if(err_occurred() /= 0) call exit_MPI(myrank,'an error occurred while reading the parameter file')
 
 ! count the total number of sources in the CMTSOLUTION file
     call count_number_of_sources(NSOURCES)
@@ -681,28 +681,6 @@
 
 ! check that the code is running with the requested number of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
-
-! dynamic allocation of mesh arrays
-  allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(ichunk_slice(0:NPROCTOT-1),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(iproc_xi_slice(0:NPROCTOT-1),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  allocate(iproc_eta_slice(0:NPROCTOT-1),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in meshfem3D ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
 
   addressing(:,:,:) = 0
   ichunk_slice(:) = 0
@@ -1157,13 +1135,6 @@
 ! volume of the slice
   volume_total = ZERO
 
-!----
-!----  loop on all the regions of the mesh
-!----
-
-!! DK DK for the merged version
-  include 'allocate_before.f90'
-
 !! DK DK for the merged version
   allocate(ibool1D_leftxi_lefteta(maxval(NGLOB1D_RADIAL_CORNER)),STAT=ier)
   if (ier /= 0) then
@@ -1248,6 +1219,13 @@
     print *,"ABORTING can not allocate in meshfem3D ier=",ier
     call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
   endif
+
+!! DK DK for the merged version
+  include 'allocate_before.f90'
+
+!----
+!----  loop on all the regions of the mesh
+!----
 
 ! number of regions in full Earth
   do iregion_code = 1,MAX_NUM_REGIONS
@@ -1426,6 +1404,7 @@
     call exit_MPI(myrank,'found no anisotropic elements in the mantle')
 
 ! use MPI reduction to compute total area and volume
+!! DK DK suppressed for now in the merged version, for simplicity
   volume_total_region = ZERO
   area_total_bottom   = ZERO
   area_total_top   = ZERO

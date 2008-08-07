@@ -198,7 +198,7 @@
          NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,DT)
 
   print *
   print *,'edit file OUTPUT_FILES/values_from_mesher.h to see some statistics about the mesh'
@@ -212,6 +212,7 @@
   print *,'total points per slice = ',sum(nglob)
   print *
   print *,'number of time steps = ',NSTEP
+  print *,'value of a time step DT = ',DT
   print *
 
   print *,'on NEC SX, make sure "loopcnt=" parameter'

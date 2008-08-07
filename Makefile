@@ -25,7 +25,11 @@
 #
 #=====================================================================
 
-# Makefile.  Generated from Makefile.in by configure.
+# Makefile
+
+# you need to add "ulimit -S -s unlimited" to your ~/.bash_profile
+# or "limit stacksize unlimited" to your ~/.cshrc before running the code,
+# because it makes extensive use of the memory stack to store arrays
 
 #
 # Intel ifort
@@ -33,7 +37,7 @@
 FC = ifort
 MPIFC = mpif90
 #FLAGS_NO_CHECK = -O1 -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -ftrapuv -fpe0 -ftz -traceback
-FLAGS_NO_CHECK = -O1 -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn declarations -std95 -check nobounds -align sequence -assume byterecl -ftrapuv -fpe0 -ftz -traceback
+FLAGS_NO_CHECK = -O1 -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check all -align sequence -assume byterecl -ftrapuv -fpe0 -ftz -traceback
 #FLAGS_NO_CHECK = -O3 -xP -vec-report0 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds -align sequence -assume byterecl -fpe3 -ftz
 
 #
@@ -41,7 +45,7 @@ FLAGS_NO_CHECK = -O1 -vec-report0 -e95 -implicitnone -warn truncated_source -war
 #
 #FC = gfortran
 #MPIFC = /opt/mpich2_gfortran/bin/mpif90
-#FLAGS_NO_CHECK = -std=gnu -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math
+#FLAGS_NO_CHECK = -std=gnu -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math  -fbounds-check
 
 #
 # Portland pgf90
@@ -98,12 +102,12 @@ libspecfem_a_OBJECTS = \
 	$O/count_number_of_sources.o \
 	$O/create_central_cube_buffers.o \
 	$O/create_chunk_buffers.o \
-	$O/create_header_file.o \
 	$O/create_regions_mesh.o \
 	$O/crustal_model.o \
 	$O/define_derivation_matrices.o \
 	$O/define_superbrick.o \
 	$O/euler_angles.o \
+	$O/meshfem3D.o \
 	$O/get_MPI_1D_buffers.o \
 	$O/get_MPI_cutplanes_eta.o \
 	$O/get_MPI_cutplanes_xi.o \
@@ -194,7 +198,7 @@ bak: backup
 ####
 
 # rules for the main programs
-XMESHFEM_OBJECTS = $O/meshfem3D.o $O/exit_mpi.o $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
+XMESHFEM_OBJECTS = $O/main_program.o $O/exit_mpi.o $(SOLVER_ARRAY_OBJECTS) $(LIBSPECFEM)
 xspecfem3D: $(XMESHFEM_OBJECTS)
 ## use MPI here
 	${MPIFCCOMPILE_CHECK} -o $(BIN)/xspecfem3D $(XMESHFEM_OBJECTS) $(MPILIBS)
@@ -366,6 +370,10 @@ $O/euler_angles.o: $(SPECINC)/constants.h $S/euler_angles.f90
 	${FCCOMPILE_CHECK} -c -o $O/euler_angles.o ${FCFLAGS_f90} $S/euler_angles.f90
 
 ## use MPI here
+$O/main_program.o: $(SPECINC)/constants.h $S/main_program.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/main_program.o ${FCFLAGS_f90} $S/main_program.f90
+
+## use MPI here
 $O/meshfem3D.o: $(SPECINC)/constants.h $S/meshfem3D.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/meshfem3D.o ${FCFLAGS_f90} $S/meshfem3D.f90
 
@@ -493,3 +501,4 @@ $O/s362ani.o: $(SPECINC)/constants.h $S/s362ani.f90
 $(OUTPUT_FILES_INC)/values_from_mesher.h: $(BIN)/xcreate_header_file
 	mkdir -p $(OUTPUT_FILES_INC)
 	$(BIN)/xcreate_header_file
+

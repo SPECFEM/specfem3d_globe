@@ -46,7 +46,7 @@
          NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
          NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
          NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
+         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,DT)
 
   implicit none
 
@@ -59,7 +59,7 @@
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
 
-  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
+  double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
   double precision :: subtract_central_cube_elems,subtract_central_cube_points
@@ -244,6 +244,7 @@
   write(IOUT,*) '! average size of a spectral element in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI)
   write(IOUT,*) '!'
   write(IOUT,*) '! number of time steps = ',NSTEP
+  write(IOUT,*) '! value of a time step DT = ',DT
   write(IOUT,*) '!'
   write(IOUT,*) '! number of seismic sources = ',NSOURCES
   write(IOUT,*) '!'

@@ -158,9 +158,9 @@
 
   integer, dimension(NSOURCES_SUBSET_MAX) :: ispec_selected_source_subset
 
-  integer, dimension(NSOURCES_SUBSET_MAX,0:NPROCTOT-1) :: ispec_selected_source_all
+  integer, dimension(0:NPROCTOT-1,NSOURCES_SUBSET_MAX) :: ispec_selected_source_all
 
-  double precision, dimension(NSOURCES_SUBSET_MAX,0:NPROCTOT-1) :: xi_source_all,eta_source_all,gamma_source_all, &
+  double precision, dimension(0:NPROCTOT-1,NSOURCES_SUBSET_MAX) :: xi_source_all,eta_source_all,gamma_source_all, &
      final_distance_source_all,x_found_source_all,y_found_source_all,z_found_source_all
 
   double precision, dimension(NSOURCES_SUBSET_MAX) :: xi_source_subset,eta_source_subset,gamma_source_subset
@@ -477,7 +477,9 @@
 
 ! now gather information from all the nodes
 ! use -1 as a flag to detect if gather fails for some reason
-  ispec_selected_source_all(:,:) = -1
+  ispec_selected_source_all(:,:) = 0
+  ispec_selected_source_all(:,1:NSOURCES_SUBSET_current_size) = -1
+
   call MPI_GATHER(ispec_selected_source_subset,NSOURCES_SUBSET_current_size,MPI_INTEGER, &
                   ispec_selected_source_all,NSOURCES_SUBSET_current_size,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(xi_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
@@ -499,7 +501,7 @@
   if(myrank == 0) then
 
 ! check that the gather operation went well
-  if(minval(ispec_selected_source_all) <= 0) call exit_MPI(myrank,'gather operation failed for source')
+  if(minval(ispec_selected_source_all) < 0) call exit_MPI(myrank,'gather operation failed for source')
 
 ! loop on all the sources within subsets
   do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
@@ -510,16 +512,16 @@
 ! loop on all the results to determine the best slice
   distmin = HUGEVAL
   do iprocloop = 0,NPROCTOT-1
-    if(final_distance_source_all(isource_in_this_subset,iprocloop) < distmin) then
-      distmin = final_distance_source_all(isource_in_this_subset,iprocloop)
+    if(final_distance_source_all(iprocloop,isource_in_this_subset) < distmin) then
+      distmin = final_distance_source_all(iprocloop,isource_in_this_subset)
       islice_selected_source(isource) = iprocloop
-      ispec_selected_source(isource) = ispec_selected_source_all(isource_in_this_subset,iprocloop)
-      xi_source(isource) = xi_source_all(isource_in_this_subset,iprocloop)
-      eta_source(isource) = eta_source_all(isource_in_this_subset,iprocloop)
-      gamma_source(isource) = gamma_source_all(isource_in_this_subset,iprocloop)
-      x_found_source(isource_in_this_subset) = x_found_source_all(isource_in_this_subset,iprocloop)
-      y_found_source(isource_in_this_subset) = y_found_source_all(isource_in_this_subset,iprocloop)
-      z_found_source(isource_in_this_subset) = z_found_source_all(isource_in_this_subset,iprocloop)
+      ispec_selected_source(isource) = ispec_selected_source_all(iprocloop,isource_in_this_subset)
+      xi_source(isource) = xi_source_all(iprocloop,isource_in_this_subset)
+      eta_source(isource) = eta_source_all(iprocloop,isource_in_this_subset)
+      gamma_source(isource) = gamma_source_all(iprocloop,isource_in_this_subset)
+      x_found_source(isource_in_this_subset) = x_found_source_all(iprocloop,isource_in_this_subset)
+      y_found_source(isource_in_this_subset) = y_found_source_all(iprocloop,isource_in_this_subset)
+      z_found_source(isource_in_this_subset) = z_found_source_all(iprocloop,isource_in_this_subset)
     endif
   enddo
   final_distance_source(isource) = distmin

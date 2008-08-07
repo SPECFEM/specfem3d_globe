@@ -1,11 +1,4 @@
 
-!! DK DK added this for merged version
-!! DK DK stored in single precision for merged version, check if it precise enough (probably yes)
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-          xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
-          xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
-          xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core
-
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
@@ -23,8 +16,6 @@
              npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
 ! number of elements on the boundaries
-  integer :: nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
-  integer :: nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
@@ -40,50 +31,17 @@
 
 !! DK DK added this for the merged version
 !! DK DK these arrays are useless in the solver and will therefore be allocated with a dummy size of 1
-  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: kappahstore_inner_core,muhstore_inner_core,eta_anisostore_inner_core
-  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: kappavstore_outer_core,muvstore_outer_core
-  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: kappahstore_outer_core,muhstore_outer_core,eta_anisostore_outer_core
 
 ! 2-D jacobians and normals
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_IC) :: jacobian2D_xmin_inner_core,jacobian2D_xmax_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_IC) :: jacobian2D_ymin_inner_core,jacobian2D_ymax_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_IC) :: jacobian2D_bottom_inner_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_IC) :: jacobian2D_top_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_IC) :: normal_xmin_inner_core,normal_xmax_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_IC) :: normal_ymin_inner_core,normal_ymax_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_IC) :: normal_bottom_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_IC) :: normal_top_inner_core
-
-  integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
-  integer, dimension(NSPEC2DMAX_YMIN_YMAX_CM) :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: &
-    jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_CM) :: &
-    jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: jacobian2D_bottom_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: jacobian2D_top_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: normal_xmin_crust_mantle,normal_xmax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2DMAX_YMIN_YMAX_CM) :: normal_ymin_crust_mantle,normal_ymax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: normal_bottom_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
-
-  integer, dimension(NSPEC2DMAX_XMIN_XMAX_OC) :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
-  integer, dimension(NSPEC2DMAX_YMIN_YMAX_OC) :: ibelm_ymin_outer_core,ibelm_ymax_outer_core
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
   integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: normal_xmin_outer_core,normal_xmax_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: normal_ymin_outer_core,normal_ymax_outer_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
 
@@ -99,9 +57,6 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
   integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
-
-!! DK DK this array is useless in the solver and is therefore allocated with a dummy size of 1
-  integer, dimension(1) :: idoubling_outer_core
 
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
 

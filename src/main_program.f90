@@ -200,6 +200,22 @@
 !      first 3-D solver for the Connection Machine CM-5 (by Thinking Machines)
 !
 
+!! DK DK added this for merged version
+!! DK DK stored in single precision for merged version, check if it precise enough (probably yes)
+!! DK DK now defined as pointers, in order to be able to deallocate them
+!! DK DK see for instance http://www.pcc.qub.ac.uk/tec/courses/f77tof90/stu-notes/f90studentMIF_6.html
+!! DK DK Section 5.6 about this
+  module dyn_array
+!---------------------------------------------------------------------
+!  Module containing definitions needed to dynamically allocate the values of an array 
+!---------------------------------------------------------------------
+  include "constants.h"
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+          xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
+          xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
+          xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core
+  end module dyn_array
+
   program main_program
 
   implicit none
@@ -214,409 +230,22 @@
 ! include values created by the mesher
   include "values_from_mesher.h"
 
-! aniso_mantle_model_variables
-  type aniso_mantle_model_variables
-    sequence
-    double precision beta(14,34,37,73)
-    double precision pro(47)
-    integer npar1
-  end type aniso_mantle_model_variables
-
-  type (aniso_mantle_model_variables) AMM_V
-! aniso_mantle_model_variables
-
-! attenuation_model_variables
-  type attenuation_model_variables
-    sequence
-    double precision min_period, max_period
-    double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-    double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: Qs                 ! Steps
-    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-    integer                                   :: Qn                 ! Number of points
-  end type attenuation_model_variables
-
-  type (attenuation_model_variables) AM_V
-! attenuation_model_variables
-
-! model_1066a_variables
-  type model_1066a_variables
-    sequence
-      double precision, dimension(NR_1066A) :: radius_1066a
-      double precision, dimension(NR_1066A) :: density_1066a
-      double precision, dimension(NR_1066A) :: vp_1066a
-      double precision, dimension(NR_1066A) :: vs_1066a
-      double precision, dimension(NR_1066A) :: Qkappa_1066a
-      double precision, dimension(NR_1066A) :: Qmu_1066a
-  end type model_1066a_variables
-
-  type (model_1066a_variables) M1066a_V
-! model_1066a_variables
-
-! model_ak135_variables
-  type model_ak135_variables
-    sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
-  end type model_ak135_variables
-
- type (model_ak135_variables) Mak135_V
-! model_ak135_variables
-
-! three_d_mantle_model_variables
-  type three_d_mantle_model_variables
-    sequence
-    double precision dvs_a(0:NK,0:NS,0:NS)
-    double precision dvs_b(0:NK,0:NS,0:NS)
-    double precision dvp_a(0:NK,0:NS,0:NS)
-    double precision dvp_b(0:NK,0:NS,0:NS)
-    double precision spknt(NK+1)
-    double precision qq0(NK+1,NK+1)
-    double precision qq(3,NK+1,NK+1)
-  end type three_d_mantle_model_variables
-
-! model_ref_variables
-  type model_ref_variables
-    sequence
-    double precision, dimension(NR_REF) :: radius_ref
-    double precision, dimension(NR_REF) :: density_ref
-    double precision, dimension(NR_REF) :: vpv_ref
-    double precision, dimension(NR_REF) :: vph_ref
-    double precision, dimension(NR_REF) :: vsv_ref
-    double precision, dimension(NR_REF) :: vsh_ref
-    double precision, dimension(NR_REF) :: eta_ref
-    double precision, dimension(NR_REF) :: Qkappa_ref
-    double precision, dimension(NR_REF) :: Qmu_ref
-  end type model_ref_variables
-
-  type (model_ref_variables) Mref_V
-! model_ref_variables
-
-  type (three_d_mantle_model_variables) D3MM_V
-! three_d_mantle_model_variables
-
-! sea1d_model_variables
-  type sea1d_model_variables
-    sequence
-     double precision, dimension(NR_SEA1D) :: radius_sea1d
-     double precision, dimension(NR_SEA1D) :: density_sea1d
-     double precision, dimension(NR_SEA1D) :: vp_sea1d
-     double precision, dimension(NR_SEA1D) :: vs_sea1d
-     double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
-     double precision, dimension(NR_SEA1D) :: Qmu_sea1d
-  end type sea1d_model_variables
-
-  type (sea1d_model_variables) SEA1DM_V
-! sea1d_model_variables
-
-! jp3d_model_variables
-  type jp3d_model_variables
-    sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
-  end type jp3d_model_variables
-
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
-
-! sea99_s_model_variables
-  type sea99_s_model_variables
-    sequence
-    integer :: sea99_ndep
-    integer :: sea99_nlat
-    integer :: sea99_nlon
-    double precision :: sea99_ddeg
-    double precision :: alatmin
-    double precision :: alatmax
-    double precision :: alonmin
-    double precision :: alonmax
-    double precision :: sea99_vs(100,100,100)
-    double precision :: sea99_depth(100)
- end type sea99_s_model_variables
-
- type (sea99_s_model_variables) SEA99M_V
-! sea99_s_model_variables
-
-! crustal_model_variables
-  type crustal_model_variables
-    sequence
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
-    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-    character(len=2) code(NKEYS_CRUST)
-  end type crustal_model_variables
-
-  type (crustal_model_variables) CM_V
-! crustal_model_variables
-
-! attenuation_model_storage
-  type attenuation_model_storage
-    sequence
-    integer Q_resolution
-    integer Q_max
-    double precision, dimension(:,:), pointer :: tau_e_storage
-    double precision, dimension(:), pointer :: Qmu_storage
-  end type attenuation_model_storage
-
-  type (attenuation_model_storage) AM_S
-! attenuation_model_storage
-
-! attenuation_simplex_variables
-  type attenuation_simplex_variables
-    sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
-    double precision Q  ! Q     = Desired Value of Attenuation or Q
-    double precision iQ ! iQ    = 1/Q
-    double precision, dimension(:), pointer ::  f
-    ! f = Frequencies at which to evaluate the solution
-    double precision, dimension(:), pointer :: tau_s
-    ! tau_s = Tau_sigma defined by the frequency range and
-    !             number of standard linear solids
-  end type attenuation_simplex_variables
-
-  type(attenuation_simplex_variables) AS_V
-! attenuation_simplex_variables
-
-! correct number of spectral elements in each block depending on chunk type
-
-  integer nspec_aniso,npointot
-
-! arrays with the mesh in double precision
-  double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
-
 ! proc numbers for MPI
-  integer myrank,sizeprocs,ier,errorcode
-
-! check area and volume of the final mesh
-  double precision area_local_bottom,area_total_bottom
-  double precision area_local_top,area_total_top
-  double precision volume_local,volume_total,volume_total_region
-
-  integer iprocnum
-
-! for loop on all the slices
-  integer iregion_code,iregion
-  integer iproc_xi,iproc_eta,ichunk
-
-!! DK DK for the merged version
-  integer, dimension(:), allocatable :: ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-             ibool1D_leftxi_righteta,ibool1D_rightxi_righteta
-  double precision, dimension(:), allocatable :: xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
-             xread1D_leftxi_righteta,xread1D_rightxi_righteta
-  double precision, dimension(:), allocatable :: yread1D_leftxi_lefteta,yread1D_rightxi_lefteta, &
-             yread1D_leftxi_righteta,yread1D_rightxi_righteta
-  double precision, dimension(:), allocatable :: zread1D_leftxi_lefteta,zread1D_rightxi_lefteta, &
-             zread1D_leftxi_righteta,zread1D_rightxi_righteta
-
-! rotation matrix from Euler angles
-  double precision, dimension(NDIM,NDIM) :: rotation_matrix
-
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  integer myrank,sizeprocs,ier
 
 ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-! for some statistics for the mesh
-  integer numelem_crust_mantle,numelem_outer_core,numelem_inner_core
-  integer numelem_total
-
-! timer MPI
-  double precision time_start,tCPU
-
 ! addressing for all the slices
-  integer, dimension(:), allocatable :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
-  integer, dimension(:,:,:), allocatable :: addressing
+  integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
+  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
 
-! parameters read from parameter file
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
-          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP
-
-  double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
-
-
-  logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-          TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
-          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ATTENUATION, &
-          ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
-          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-          ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
-
-  character(len=150) OUTPUT_FILES,MODEL
-
-! parameters deduced from parameters read from file
-  integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
+  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSOURCES
 
   integer, external :: err_occurred
 
-! this for all the regions
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC, &
-               NSPEC2D_XI, &
-               NSPEC2D_ETA, &
-               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-               NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-               NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-               nglob
-
-! computed in read_compute_parameters
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
-
-! arrays for BCAST
-  integer, dimension(38) :: bcast_integer
-  double precision, dimension(30) :: bcast_double_precision
-  logical, dimension(26) :: bcast_logical
-
-  integer, parameter :: maxker=200
-  integer, parameter :: maxl=72
-  integer, parameter :: maxcoe=2000
-  integer, parameter :: maxver=1000
-  integer, parameter :: maxhpa=2
-
-  integer numker
-  integer numhpa,numcof
-  integer ihpa,lmax,nylm
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-  integer itpspl(maxcoe,maxhpa)
-
-  integer nconpt(maxhpa),iver
-  integer iconpt(maxver,maxhpa)
-  real(kind=4) conpt(maxver,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-  character(len=80) hsplfl(maxhpa)
-  character(len=40) dskker(maxker)
-  real(kind=4) vercof(maxker)
-  real(kind=4) vercofd(maxker)
-
-  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
-  real(kind=4) wk1(maxl+1)
-  real(kind=4) wk2(maxl+1)
-  real(kind=4) wk3(maxl+1)
-
-  character(len=80) kerstr
-  character(len=80) refmdl
-  character(len=40) varstr(maxker)
-
-  integer :: ipass
-
-! this for the different corners of the slice (which are different if the superbrick is cut)
-! 1 : xi_min, eta_min
-! 2 : xi_max, eta_min
-! 3 : xi_max, eta_max
-! 4 : xi_min, eta_max
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
-
-! 1 -> min, 2 -> max
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
-
-  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-! integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
-
 !! DK DK for the merged version
-  include 'declarations_mesher.f90'
+  include 'declarations_main.f90'
 
 ! ************** PROGRAM STARTS HERE **************
 

@@ -111,7 +111,7 @@
 
 ! pairs generated theoretically
 ! four sides for each of the three types of messages
-  integer, dimension(:), allocatable :: npoin2D_send,npoin2D_receive
+  integer, dimension(NUMMSGS_FACES_VAL) :: npoin2D_send,npoin2D_receive
 
 ! 1D buffers to remove points belonging to corners
   integer ibool1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX)
@@ -130,7 +130,7 @@
   double precision, dimension(NGLOB1D_RADIAL_MAX) :: xread1D,yread1D,zread1D
 
 ! arrays to assemble the corners (3 processors for each corner)
-  integer, dimension(:,:), allocatable :: iprocscorners,itypecorner
+  integer, dimension(3,NCORNERSCHUNKS_VAL) :: iprocscorners,itypecorner
 
   integer ichunk_send,iproc_xi_send,iproc_eta_send
   integer ichunk_receive,iproc_xi_receive,iproc_eta_receive

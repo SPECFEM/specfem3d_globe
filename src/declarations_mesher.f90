@@ -1,11 +1,4 @@
 
-!! DK DK added this for merged version
-!! DK DK stored in single precision for merged version, check if it precise enough (probably yes)
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-          xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
-          xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
-          xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core
-
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
@@ -119,28 +112,6 @@
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
   integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
-
-  double precision, dimension(ATT1,ATT2,ATT3,ATT4) :: omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
-
-  double precision, dimension(ATT1,ATT2,ATT3,ATT5) :: omsb_inner_core_dble, factor_scale_inner_core_dble
-
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT4) :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT5) :: one_minus_sum_beta_inner_core, factor_scale_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core
-
-  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle_dble
-
-  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core_dble
-
-  integer :: npoin2D_max_all,NDIM_smaller_buffers
-
-! receiver information
-  integer :: nrec,ios
-  character(len=150) :: STATIONS,rec_filename,dummystring
 
 !! DK DK added this for the merged version
 !---- arrays to assemble between chunks

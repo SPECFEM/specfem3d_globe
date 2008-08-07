@@ -6,11 +6,11 @@
  ! ---------------
  !
  !
- ! number of chunks =            1
+ ! number of chunks =            3
  !
  ! these statistics do not include the central cube
  !
- ! number of processors =            4
+ ! number of processors =           12
  !
  ! maximum number of points per region =       576013
  !
@@ -67,6 +67,7 @@
  ! average size of a spectral element in km =    156.3679    
  !
  ! number of time steps =         7900
+ ! value of a time step DT =   0.190000000000000     
  !
  ! number of seismic sources =            1
  !
@@ -82,8 +83,8 @@
  !   (if significantly more, the job will not run by lack of memory)
  !   (if significantly less, you waste a significant amount of memory)
  !
- ! size of static arrays for all slices =   0.325386047363281       GB
- !                                      =   3.177598118782043E-004  TB
+ ! size of static arrays for all slices =   0.976158142089844       GB
+ !                                      =   9.532794356346130E-004  TB
  !
  
  integer, parameter :: NEX_XI_VAL =           64
@@ -156,12 +157,12 @@
  integer, parameter :: NGLOB2DMAX_YMIN_YMAX_IC =          178
  integer, parameter :: NPROC_XI_VAL =            2
  integer, parameter :: NPROC_ETA_VAL =            2
- integer, parameter :: NCHUNKS_VAL =            1
- integer, parameter :: NPROCTOT_VAL =            4
+ integer, parameter :: NCHUNKS_VAL =            3
+ integer, parameter :: NPROCTOT_VAL =           12
  integer, parameter :: NGLOB2DMAX_XY_VAL_CM =         8574
  integer, parameter :: NGLOB2DMAX_XY_VAL_OC =         2134
  integer, parameter :: NGLOB2DMAX_XY_VAL_IC =          178
- integer, parameter :: NUMMSGS_FACES_VAL =            2
+ integer, parameter :: NUMMSGS_FACES_VAL =            6
  integer, parameter :: NCORNERSCHUNKS_VAL =            1
  integer, parameter :: ATT1 =            1
  integer, parameter :: ATT2 =            1

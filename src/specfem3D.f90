@@ -33,12 +33,14 @@
 !! DK DK for the merged version
   include 'call_specfem2.f90'
 
+  use dyn_array
+
   implicit none
 
 ! standard include of the MPI library
   include 'mpif.h'
 
-  include "constants.h"
+!!!!!!!!!!! DK DK now in module dyn_array  include "constants.h"
   include "precision.h"
 
 ! include values created by the mesher
@@ -449,12 +451,6 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
-!! DK DK added this for merged version
-!! DK DK stored in single precision for merged version, check if it precise enough (probably yes)
-  real(kind=CUSTOM_REAL), dimension(NGNOD,NSPEC_CRUST_MANTLE) :: xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGNOD,NSPEC_OUTER_CORE) :: xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGNOD,NSPEC_INNER_CORE) :: xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core
-
 ! allocate this automatic array in the memory stack to avoid memory fragmentation with "allocate()"
  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
 
@@ -494,19 +490,21 @@
      ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
      xigll,yigll,zigll)
 
+!print *,yelm_store_inner_core
+!print *,etay_inner_core
+
 !! DK DK for merged version, deallocate arrays that have become useless
-!! DK DK attention je ne peux plus desallouer ici pour l'instant
-!! DK DK impossible YYYYYYYYYYYYY  deallocate(xelm_store_crust_mantle)
-!! DK DK impossible YYYYYYYYYYYYY  deallocate(yelm_store_crust_mantle)
-!! DK DK impossible YYYYYYYYYYYYY  deallocate(zelm_store_crust_mantle)
+  deallocate(xelm_store_crust_mantle)
+  deallocate(yelm_store_crust_mantle)
+  deallocate(zelm_store_crust_mantle)
 
-!! DK DK impossible YYYYYYYYYYYYY  deallocate(xelm_store_outer_core)
-!! DK DK impossible YYYYYYYYYYYYY  deallocate(yelm_store_outer_core)
-!! DK DK impossible YYYYYYYYYYYYY  deallocate(zelm_store_outer_core)
+  deallocate(xelm_store_outer_core)
+  deallocate(yelm_store_outer_core)
+  deallocate(zelm_store_outer_core)
 
-!! DK DK impossible YYYYYYYYYYYYY  deallocate(xelm_store_inner_core)
-!! DK DK impossible YYYYYYYYYYYYY  deallocate(yelm_store_inner_core)
-!! DK DK impossible YYYYYYYYYYYYY  deallocate(zelm_store_inner_core)
+  deallocate(xelm_store_inner_core)
+  deallocate(yelm_store_inner_core)
+  deallocate(zelm_store_inner_core)
 
   if (myrank == 0) then
 
