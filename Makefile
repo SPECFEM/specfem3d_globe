@@ -1,13 +1,13 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 1
 #          --------------------------------------------------
 #
 #          Main authors: Dimitri Komatitsch and Jeroen Tromp
 #    Seismological Laboratory, California Institute of Technology, USA
 #             and University of Pau / CNRS / INRIA, France
 # (c) California Institute of Technology and University of Pau / CNRS / INRIA
-#                            February 2008
+#                            August 2008
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,8 +54,6 @@ FLAGS_NO_CHECK = -O1 -vec-report0 -e03 -std03 -implicitnone -warn truncated_sour
 #FLAGS_NO_CHECK = -fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mstandard -fastsse -tp amd64e
 
 FLAGS_CHECK = $(FLAGS_NO_CHECK)
-#FLAGS_NO_CHECK2 = -O3 -e95 -implicitnone -warn truncated_source -warn argument_checking -warn declarations -std95 -CB -align sequence -assume byterecl # -warn unused
-FLAGS_NO_CHECK2 = $(FLAGS_NO_CHECK)
 FCFLAGS_f90 =
 MPILIBS =
 FCFLAGS = #-g
@@ -68,7 +66,6 @@ FCCOMPILE_CHECK = ${FC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_
 FCCOMPILE_NO_CHECK = ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
 MPIFCCOMPILE_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
 MPIFCCOMPILE_NO_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
-MPIFCCOMPILE_NO_CHECK2 = ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK2) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
 
 CC = gcc
 CFLAGS = -g -O2
@@ -233,7 +230,7 @@ $O/libspecfem.a: $(libspecfem_a_OBJECTS)
 ###
 
 $O/specfem3D.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/specfem3D.f90
-	${MPIFCCOMPILE_NO_CHECK2} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.f90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.f90
 
 $O/compute_forces_crust_mantle.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_crust_mantle.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_crust_mantle.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle.f90
