@@ -924,17 +924,22 @@
   endif
 
 ! check that the number of points in this slice is correct
-
-  if(minval(ibool_crust_mantle(:,:,:,:)) /= 1 .or. &
-    maxval(ibool_crust_mantle(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
+  if(minval(ibool_crust_mantle) /= 1 .or. maxval(ibool_crust_mantle) /= NGLOB_CRUST_MANTLE) &
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
 
-  if(minval(ibool_outer_core(:,:,:,:)) /= 1 .or. &
-     maxval(ibool_outer_core(:,:,:,:)) /= NGLOB_OUTER_CORE) &
+  if(minval(ibool_outer_core) /= 1 .or. maxval(ibool_outer_core) /= NGLOB_OUTER_CORE) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
 
-  if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
+  if(minval(ibool_inner_core) /= 1 .or. maxval(ibool_inner_core) /= NGLOB_INNER_CORE) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
+
+! check that there is at least one receiver
+  if(myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of receivers = ', nrec
+    write(IMAIN,*)
+  endif
+  if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 

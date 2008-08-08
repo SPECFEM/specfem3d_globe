@@ -313,14 +313,6 @@
 ! broadcast the information read on the master to the nodes
   call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-  if(myrank == 0) then
-    write(IMAIN,*)
-      write(IMAIN,*) 'Total number of receivers = ', nrec
-    write(IMAIN,*)
-  endif
-
-  if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
-
 !! DK DK for the merged version
 !!!!!!!! DK DK solver inserted here
 !!!!!!!! DK DK solver inserted here
