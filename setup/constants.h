@@ -56,9 +56,9 @@
 ! local file unit for output of buffers
   integer, parameter :: IOUT_BUFFERS = 35
 ! uncomment this to write messages to a text file
-! integer, parameter :: IMAIN = 42
+  integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
-  integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
 
 ! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
