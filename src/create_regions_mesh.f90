@@ -43,7 +43,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube, &
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ratio_divide_central_cube, &
            CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
   iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
   NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
@@ -576,7 +576,7 @@
   character(len=80) kerstr
   character(len=40) varstr(maxker)
 
-! now perform two passes in this part to be able to save memory
+! to perform two passes of the whole routine to be able to save memory
   integer :: ipass
 
 ! the height at which the central cube is cut
@@ -598,7 +598,10 @@
   real(kind=CUSTOM_REAL) :: normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM)
   real(kind=CUSTOM_REAL) :: normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP)
 
-! Attenuation
+! perform two passes of the whole routine to be able to save memory
+  do ipass = 1,2
+
+! attenuation
   if(ATTENUATION .and. ATTENUATION_3D) then
     T_c_source = AM_V%QT_c_source
     tau_s(:)   = AM_V%Qtau_s(:)
@@ -1487,6 +1490,8 @@
     stop 'there cannot be more than two passes in mesh creation'
 
   endif  ! end of test if first or second pass
+
+  enddo ! of loop on ipass = 1,2
 
   end subroutine create_regions_mesh
 
