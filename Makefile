@@ -44,7 +44,7 @@ FLAGS_NO_CHECK = -O1 -vec-report0 -e03 -std03 -implicitnone -warn truncated_sour
 #
 #FC = gfortran
 #MPIFC = /opt/mpich2_gfortran/bin/mpif90
-#FLAGS_NO_CHECK = -std=f2003 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -fbounds-check
+#FLAGS_NO_CHECK = -std=f2003 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math -fbounds-check
 
 #
 # Portland pgf90
@@ -112,7 +112,6 @@ libspecfem_a_OBJECTS = \
 	$O/get_event_info.o \
 	$O/get_global.o \
 	$O/get_jacobian_boundaries.o \
-	$O/get_jacobian_discontinuities.o \
 	$O/get_model.o \
 	$O/get_shape2D.o \
 	$O/get_shape3D.o \
@@ -307,9 +306,6 @@ $O/make_ellipticity.o: $(SPECINC)/constants.h $S/make_ellipticity.f90
 
 $O/get_jacobian_boundaries.o: $(SPECINC)/constants.h $S/get_jacobian_boundaries.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_jacobian_boundaries.o ${FCFLAGS_f90} $S/get_jacobian_boundaries.f90
-
-$O/get_jacobian_discontinuities.o: $(SPECINC)/constants.h $S/get_jacobian_discontinuities.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_jacobian_discontinuities.o ${FCFLAGS_f90} $S/get_jacobian_discontinuities.f90
 
 $O/get_MPI_cutplanes_xi.o: $(SPECINC)/constants.h $S/get_MPI_cutplanes_xi.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_MPI_cutplanes_xi.o ${FCFLAGS_f90} $S/get_MPI_cutplanes_xi.f90

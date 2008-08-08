@@ -75,7 +75,7 @@
  ! approximate static memory needed by the solver:
  ! ----------------------------------------------
  !
- ! size of static arrays per slice =   7.561429217457771E-002  GB
+ ! size of static arrays per slice =   7.239703834056854E-002  GB
  !
  !   (should be below and typically equal to 80% of 1.5 GB = 1.2 GB on pangu
  !    at Caltech, and below and typically equal to 85% of 2 GB = 1.7 GB
@@ -83,8 +83,8 @@
  !   (if significantly more, the job will not run by lack of memory)
  !   (if significantly less, you waste a significant amount of memory)
  !
- ! size of static arrays for all slices =   0.302457168698311       GB
- !                                      =   2.953683288069442E-004  TB
+ ! size of static arrays for all slices =   0.289588153362274       GB
+ !                                      =   2.828009310178459E-004  TB
  !
  
  integer, parameter :: NEX_XI_VAL =           64
@@ -101,7 +101,7 @@
  integer, parameter :: NSPECMAX_ANISO_IC =            1
  
  integer, parameter :: NSPECMAX_ISO_MANTLE =         7616
- integer, parameter :: NSPECMAX_TISO_MANTLE =         2304
+ integer, parameter :: NSPECMAX_TISO_MANTLE =            1
  integer, parameter :: NSPECMAX_ANISO_MANTLE =            1
  
  integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT =            1
@@ -129,7 +129,7 @@
  
  integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS =            1
  
- logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .true.
+ logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .false.
  
  logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .false.
  

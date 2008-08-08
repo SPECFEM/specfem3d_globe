@@ -1225,7 +1225,7 @@
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
   rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
-  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670, jacobian2D_moho, jacobian2D_400, jacobian2D_670)
+  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670)
 
   else if(iregion_code == IREGION_OUTER_CORE) then
 ! outer_core
@@ -1271,7 +1271,7 @@
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
   rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
-  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670, jacobian2D_moho, jacobian2D_400, jacobian2D_670)
+  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670)
 
   else if(iregion_code == IREGION_INNER_CORE) then
 ! inner_core
@@ -1316,7 +1316,7 @@
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
   rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
-  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670, jacobian2D_moho, jacobian2D_400, jacobian2D_670)
+  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670)
 
   else
     stop 'DK DK incorrect region in merged code'

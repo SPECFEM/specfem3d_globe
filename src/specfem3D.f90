@@ -181,7 +181,6 @@
         kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
 
 ! arrays for full anisotropy only when needed
-  integer nspec_iso,nspec_tiso,nspec_ani
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
         c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
         c22store_crust_mantle,c23store_crust_mantle,c33store_crust_mantle, &
@@ -425,9 +424,6 @@
   integer int_radius,idoubling
   double precision radius,rho,drhodr,vp,vs,Qkappa,Qmu
   double precision, dimension(NRAD_GRAVITY) :: d_ln_density_dr_table
-
-! flags to read kappa and mu and anisotropy arrays in regions where needed
-  logical READ_KAPPA_MU,READ_TISO
 
 ! names of the data files for all the processors in MPI
   character(len=150) outputname
@@ -878,50 +874,6 @@
 
 ! total number of messages corresponding to these common faces
   NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
-
-! start reading the databases
-
-! read arrays created by the mesher
-
-! crust and mantle
-
-  if(ANISOTROPIC_3D_MANTLE_VAL) then
-    READ_KAPPA_MU = .false.
-    READ_TISO = .false.
-    nspec_iso = 1
-    nspec_tiso = 1
-    nspec_ani = NSPEC_CRUST_MANTLE
-  else
-    nspec_iso = NSPEC_CRUST_MANTLE
-    if(TRANSVERSE_ISOTROPY_VAL) then
-      nspec_tiso = NSPECMAX_TISO_MANTLE
-    else
-      nspec_tiso = 1
-    endif
-    nspec_ani = 1
-    READ_KAPPA_MU = .true.
-    READ_TISO = .true.
-  endif
-
-! outer core (no anisotropy nor S velocity)
-! rmass_ocean_load is not used in this routine because it is meaningless in the outer core
-  READ_KAPPA_MU = .false.
-  READ_TISO = .false.
-  nspec_iso = NSPEC_OUTER_CORE
-  nspec_tiso = 1
-  nspec_ani = 1
-
-! inner core (no anisotropy)
-! rmass_ocean_load is not used in this routine because it is meaningless in the inner core
-  READ_KAPPA_MU = .true.
-  READ_TISO = .false.
-  nspec_iso = NSPEC_INNER_CORE
-  nspec_tiso = 1
-  if(ANISOTROPIC_INNER_CORE_VAL) then
-    nspec_ani = NSPEC_INNER_CORE
-  else
-    nspec_ani = 1
-  endif
 
 ! check that the number of points in this slice is correct
   if(minval(ibool_crust_mantle) /= 1 .or. maxval(ibool_crust_mantle) /= NGLOB_CRUST_MANTLE) &

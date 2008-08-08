@@ -67,7 +67,7 @@
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
   rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
-  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670, jacobian2D_moho, jacobian2D_400, jacobian2D_670)
+  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670)
 
 ! create the different regions of the mesh
 
@@ -596,11 +596,6 @@
   real(kind=CUSTOM_REAL) normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO)
   real(kind=CUSTOM_REAL) normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400)
   real(kind=CUSTOM_REAL) normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670)
-  real(kind=CUSTOM_REAL) jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
-  real(kind=CUSTOM_REAL) jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
-  real(kind=CUSTOM_REAL) jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
-
-  logical :: is_superbrick
 
 ! the height at which the central cube is cut
   integer :: nz_inf_limit
@@ -918,26 +913,15 @@
     include "comp_mass_matrix_one_element.f90"
     include "store_xelm_yelm_zelm.f90"
 
-! boundary mesh
-        if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-          is_superbrick=.false.
-          ispec_superbrick=0
-          call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
-                     xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &
-                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
-                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,r_moho,r_400,r_670, &
-                     is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick,nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
-        endif
-
 ! end of loop on all the regular elements
   enddo
   enddo
   enddo
+
 !----
 !----   mesh doubling elements
 !----
+
 ! If there is a doubling at the top of this region, let us add these elements.
 ! The superbrick implements a symmetric four-to-two doubling and therefore replaces
 ! a basic regular block of 2 x 2 = 4 elements.
@@ -1124,18 +1108,6 @@
 !! DK DK added this for merged version
     include "comp_mass_matrix_one_element.f90"
     include "store_xelm_yelm_zelm.f90"
-
-! boundary mesh
-     if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-       is_superbrick=.true.
-       call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
-                  xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &
-                  ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
-                  normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                  ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                  NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,r_moho,r_400,r_670, &
-                  is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick,nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
-     endif
 
 ! end of loops on the mesh doubling elements
           enddo

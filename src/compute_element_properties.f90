@@ -329,6 +329,7 @@
 ! for model density and anisotropy
   integer nspec_ani
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
+
 !! DK DK added this for the merged version
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: kappavstore_local
 !! DK DK changed this for merged version
