@@ -563,10 +563,7 @@
    1.00196657023780,1.0015515913133,1.0012554932754,1.0010368069141, &
    1.00087070107920,1.0007415648034 /
 
-  if(kmax > 13)then
-   write(*,"(' kmax exceeds the limit in chebyfun')")
-   stop
-  endif
+  if(kmax > 13) stop 'kmax exceeds the limit in chebyfun'
 
   f(0)=1.0
   f(1)=u

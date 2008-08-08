@@ -141,8 +141,6 @@ subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r
       endif
       map_ix(ispec_list(i)) = (map_isub_ix(isub_block) - 1) * 2 + irem_ix
       map_iy(ispec_list(i)) = (map_isub_iy(isub_block) - 1) * 2 + irem_iy
-!      if (ispec_superbrick == 1 .and. myrank == 0) &
-!                 write(*,'(10i4)') i, ispec_list(i), map_ix(ispec_list(i)), map_iy(ispec_list(i))
     enddo
   endif
 
@@ -197,11 +195,9 @@ subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r
       ix_top = (ix_elem - 1)  + ix
       iy_top = (iy_elem - 1)  + iy
       ispec2D_moho_bot_map = (ix_top - 1) * nex_eta_moho + iy_top
-!      if (myrank == 0) write(*,'(10i6)') ix_elem, iy_elem, ispec_superbrick, ix, iy, ix_top, iy_top, ispec2D_moho_bot_map
       ibelm_moho_bot(ispec2D_moho_bot_map) = ispec
     endif
   endif
-
 
 end subroutine get_jacobian_discontinuities
 

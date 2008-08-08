@@ -490,9 +490,6 @@
      ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
      xigll,yigll,zigll)
 
-!print *,yelm_store_inner_core
-!print *,etay_inner_core
-
 !! DK DK for merged version, deallocate arrays that have become useless
   deallocate(xelm_store_crust_mantle)
   deallocate(yelm_store_crust_mantle)

@@ -38,11 +38,11 @@
   double precision xi,eta,gamma,jacobian
 
 ! coordinates of the control points of the surface element
-  double precision xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
+  double precision, dimension(NGNOD) :: xelm,yelm,zelm
 
 ! 3D shape functions and their derivatives at receiver
-  double precision shape3D(NGNOD)
-  double precision dershape3D(NDIM,NGNOD)
+  double precision, dimension(NGNOD) :: shape3D
+  double precision, dimension(NDIM,NGNOD) :: dershape3D
 
   double precision l1xi,l2xi,l3xi
   double precision l1eta,l2eta,l3eta

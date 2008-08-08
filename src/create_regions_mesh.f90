@@ -59,7 +59,15 @@
   normal_xmin,normal_xmax,normal_ymin, &
   normal_ymax,normal_bottom,normal_top, &
   kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rmass,xelm_store,yelm_store,zelm_store, &
-  npoin2D_xi,npoin2D_eta)
+  npoin2D_xi,npoin2D_eta, &
+  xigll,wxgll, yigll,wygll, zigll,wzgll, shape3D, dershape3D, shape2D_x, shape2D_y, shape2D_bottom, shape2D_top, &
+  dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top, rhostore_local,kappavstore_local, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+  iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
+  rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
+  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670, jacobian2D_moho, jacobian2D_400, jacobian2D_670)
 
 ! create the different regions of the mesh
 
@@ -119,8 +127,10 @@
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
 
   integer :: ignod,ner_without_doubling,ispec_superbrick,ilayer,ilayer_loop,ix_elem,iy_elem,iz_elem, &
-               ifirst_region,ilast_region,ratio_divide_central_cube
-  integer, dimension(:), allocatable :: perm_layer
+               ifirst_layer,ilast_layer,ratio_divide_central_cube
+
+! allocate this automatic array in the memory stack to avoid memory fragmentation with "allocate()"
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: permutation_layer
 
 ! mesh doubling superbrick
   integer, dimension(NGNOD_EIGHT_CORNERS,NSPEC_DOUBLING_SUPERBRICK) :: ibool_superbrick
@@ -412,16 +422,25 @@
 ! code for the four regions of the mesh
   integer iregion_code
 
-! Gauss-Lobatto-Legendre points and weights of integration
-  double precision, dimension(:), allocatable :: xigll,yigll,zigll,wxgll,wygll,wzgll
+! Gauss-Lobatto-Legendre points of integration and weights
+  double precision, dimension(NGLLX) :: xigll,wxgll
+  double precision, dimension(NGLLY) :: yigll,wygll
+  double precision, dimension(NGLLZ) :: zigll,wzgll
 
 ! 3D shape functions and their derivatives
-  double precision, dimension(:,:,:,:), allocatable :: shape3D
-  double precision, dimension(:,:,:,:,:), allocatable :: dershape3D
+  double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
+  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
 
 ! 2D shape functions and their derivatives
-  double precision, dimension(:,:,:), allocatable :: shape2D_x,shape2D_y,shape2D_bottom,shape2D_top
-  double precision, dimension(:,:,:,:), allocatable :: dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top
+  double precision shape2D_x(NGNOD2D,NGLLY,NGLLZ)
+  double precision shape2D_y(NGNOD2D,NGLLX,NGLLZ)
+  double precision shape2D_bottom(NGNOD2D,NGLLX,NGLLY)
+  double precision shape2D_top(NGNOD2D,NGLLX,NGLLY)
+
+  double precision dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ)
+  double precision dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ)
+  double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
+  double precision dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY)
 
 ! for ellipticity
   integer nspl
@@ -440,19 +459,21 @@
 
 ! for model density and anisotropy
   integer nspec_ani
+
 !! DK DK changed this for the merged version
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhostore_local,kappavstore_local
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: rhostore_local,kappavstore_local
+
 !! DK DK added this for merged version
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
 ! boundary locator
-  logical, dimension(:,:), allocatable :: iboun
+  logical, dimension(6,nspec) :: iboun
 
 ! proc numbers for MPI
   integer myrank
@@ -463,9 +484,9 @@
   double precision volume_local
 
 ! variables for creating array ibool (some arrays also used for AVS or DX files)
-  integer, dimension(:), allocatable :: locval
-  logical, dimension(:), allocatable :: ifseg
-  double precision, dimension(:), allocatable :: xp,yp,zp
+  integer, dimension(npointot) :: locval
+  logical, dimension(npointot) :: ifseg
+  double precision, dimension(npointot) :: xp,yp,zp
 
   integer nglob,nglob_theor,ieoff,ilocnum,ier,errorcode
 
@@ -476,12 +497,12 @@
   double precision xval,yval,zval,rval,thetaval,phival
   double precision lat,lon,colat
   double precision elevation,height_oceans
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_ocean_load
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
 
 ! mask to sort ibool
-  integer, dimension(:), allocatable :: mask_ibool
-  integer, dimension(:,:,:,:), allocatable :: copy_ibool_ori
   integer :: inumber
+  integer, dimension(nglob_theor) :: mask_ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: copy_ibool_ori
 
 ! boundary parameters locator
   integer, dimension(NSPEC2DMAX_XMIN_XMAX) :: ibelm_xmin,ibelm_xmax
@@ -490,11 +511,10 @@
   integer, dimension(NSPEC2D_TOP) :: ibelm_top
 
 ! MPI cut-planes parameters along xi and along eta
-  logical, dimension(:,:), allocatable :: iMPIcut_xi,iMPIcut_eta
+  logical, dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
 
-! Stacey, indices for Clayton-Engquist absorbing conditions
-  integer, dimension(:,:), allocatable :: nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
+! Stacey indices for Clayton-Engquist absorbing conditions
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: rho_vp,rho_vs
 
 ! number of elements on the boundaries
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
@@ -508,9 +528,9 @@
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
 
 ! attenuation
-  double precision, dimension(:,:,:,:),   allocatable :: Qmu_store
-  double precision, dimension(:,:,:,:,:), allocatable :: tau_e_store
-  double precision, dimension(N_SLS)                  :: tau_s
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: Qmu_store
+  double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: tau_e_store
+  double precision, dimension(N_SLS) :: tau_s
   double precision  T_c_source
 
 ! **************
@@ -561,14 +581,25 @@
 ! now perform two passes in this part to be able to save memory
   integer :: ipass
 
-! Boundary Mesh
+! boundary mesh
   integer nex_eta_moho
-  integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
-             ibelm_670_top,ibelm_670_bot
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_moho,normal_400,normal_670
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_moho,jacobian2D_400,jacobian2D_670
   integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
   double precision r_moho,r_400,r_670
+
+  integer ibelm_moho_top(NSPEC2D_MOHO)
+  integer ibelm_moho_bot(NSPEC2D_MOHO)
+  integer ibelm_400_top(NSPEC2D_400)
+  integer ibelm_400_bot(NSPEC2D_400)
+  integer ibelm_670_top(NSPEC2D_670)
+  integer ibelm_670_bot(NSPEC2D_670)
+
+  real(kind=CUSTOM_REAL) normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO)
+  real(kind=CUSTOM_REAL) normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400)
+  real(kind=CUSTOM_REAL) normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670)
+  real(kind=CUSTOM_REAL) jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
+  real(kind=CUSTOM_REAL) jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
+  real(kind=CUSTOM_REAL) jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
+
   logical :: is_superbrick
 
 ! the height at which the central cube is cut
@@ -594,151 +625,10 @@
   if(ATTENUATION .and. ATTENUATION_3D) then
     T_c_source = AM_V%QT_c_source
     tau_s(:)   = AM_V%Qtau_s(:)
-    allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
   else
-    allocate(Qmu_store(1,1,1,1),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(tau_e_store(N_SLS,1,1,1,1),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
     Qmu_store(1,1,1,1) = 0.0d0
     tau_e_store(:,1,1,1,1) = 0.0d0
   endif
-
-! Gauss-Lobatto-Legendre points of integration
-  allocate(xigll(NGLLX),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(yigll(NGLLY),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(zigll(NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-! Gauss-Lobatto-Legendre weights of integration
-  allocate(wxgll(NGLLX),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(wygll(NGLLY),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(wzgll(NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-! 3D shape functions and their derivatives
-  allocate(shape3D(NGNOD,NGLLX,NGLLY,NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-
-! 2D shape functions and their derivatives
-  allocate(shape2D_x(NGNOD2D,NGLLY,NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(shape2D_y(NGNOD2D,NGLLX,NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(shape2D_bottom(NGNOD2D,NGLLX,NGLLY),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(shape2D_top(NGNOD2D,NGLLX,NGLLY),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-
-! array with model density
-!! DK DK changed this for the merged version
-  allocate(rhostore_local(NGLLX,NGLLY,NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-!! DK DK added this for the merged version
-  allocate(kappavstore_local(NGLLX,NGLLY,NGLLZ),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
 
 ! Stacey
   if(NCHUNKS /= 6) then
@@ -746,209 +636,11 @@
   else
     nspec_stacey = 1
   endif
-  allocate(rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
 
-  allocate(rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-
+! anisotropy
   nspec_ani = 1
   if((ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) .or. &
      (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) nspec_ani = nspec
-
-  allocate(c11store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c12store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c13store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c14store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c15store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c16store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c22store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c23store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c24store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c25store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c26store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c33store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c34store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c35store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c36store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c44store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c45store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c46store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c55store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c56store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(c66store(NGLLX,NGLLY,NGLLZ,nspec_ani),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-
-! boundary locator
-  allocate(iboun(6,nspec),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-
-! Stacey
-  allocate(nimin(2,NSPEC2DMAX_YMIN_YMAX),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(nimax(2,NSPEC2DMAX_YMIN_YMAX),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(njmin(2,NSPEC2DMAX_XMIN_XMAX),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(njmax(2,NSPEC2DMAX_XMIN_XMAX),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-
-! MPI cut-planes parameters along xi and along eta
-  allocate(iMPIcut_xi(2,nspec),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
-  allocate(iMPIcut_eta(2,nspec),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-
 
 ! set up coordinates of the Gauss-Lobatto-Legendre points
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
@@ -1002,16 +694,16 @@
 
 ! define the first and last layers that define this region
   if(iregion_code == IREGION_CRUST_MANTLE) then
-    ifirst_region = 1
-    ilast_region = 10 + layer_shift
+    ifirst_layer = 1
+    ilast_layer = 10 + layer_shift
 
   else if(iregion_code == IREGION_OUTER_CORE) then
-    ifirst_region = 11 + layer_shift
-    ilast_region = NUMBER_OF_MESH_LAYERS - 1
+    ifirst_layer = 11 + layer_shift
+    ilast_layer = NUMBER_OF_MESH_LAYERS - 1
 
   else if(iregion_code == IREGION_INNER_CORE) then
-    ifirst_region = NUMBER_OF_MESH_LAYERS
-    ilast_region = NUMBER_OF_MESH_LAYERS
+    ifirst_layer = NUMBER_OF_MESH_LAYERS
+    ilast_layer = NUMBER_OF_MESH_LAYERS
 
   else
     call exit_MPI(myrank,'incorrect region code detected')
@@ -1028,19 +720,14 @@
     last_layer_aniso=4
     nb_layer_above_aniso = 2
   endif
-  allocate(perm_layer(ifirst_region:ilast_region),STAT=ier)
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
-  perm_layer = (/ (i, i=ilast_region,ifirst_region,-1) /)
+  permutation_layer(ifirst_layer:ilast_layer) = (/ (i, i=ilast_layer,ifirst_layer,-1) /)
   if(iregion_code == IREGION_CRUST_MANTLE) then
     cpt=3
-    perm_layer(1)=first_layer_aniso
-    perm_layer(2)=last_layer_aniso
-    do i = ilast_region,ifirst_region,-1
+    permutation_layer(1)=first_layer_aniso
+    permutation_layer(2)=last_layer_aniso
+    do i = ilast_layer,ifirst_layer,-1
       if (i/=first_layer_aniso .and. i/=last_layer_aniso) then
-        perm_layer(cpt) = i
+        permutation_layer(cpt) = i
         cpt=cpt+1
       endif
     enddo
@@ -1077,61 +764,6 @@
 
 ! boundary mesh
   if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-    allocate(ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-
     ispec2D_moho_top = 0; ispec2D_moho_bot = 0
     ispec2D_400_top = 0; ispec2D_400_bot = 0
     ispec2D_670_top = 0; ispec2D_670_bot = 0
@@ -1139,16 +771,15 @@
     nex_eta_moho = NEX_PER_PROC_ETA
 
     r_moho = RMOHO/R_EARTH; r_400 = R400 / R_EARTH; r_670 = R670/R_EARTH
-
   endif
 
 ! generate and count all the elements in this region of the mesh
   ispec = 0
 
 ! loop on all the layers in this region of the mesh
-  do ilayer_loop = ifirst_region,ilast_region
+  do ilayer_loop = ifirst_layer,ilast_layer
 
-    ilayer = perm_layer(ilayer_loop)
+    ilayer = permutation_layer(ilayer_loop)
 
 ! determine the radii that define the shell
   rmin = rmins(ilayer)
@@ -1157,7 +788,7 @@
   if(iregion_code == IREGION_CRUST_MANTLE .and. ilayer_loop==3) then
     FIRST_ELT_NON_ANISO = ispec+1
   endif
-  if(iregion_code == IREGION_CRUST_MANTLE .and. ilayer_loop==(ilast_region-nb_layer_above_aniso+1)) then
+  if(iregion_code == IREGION_CRUST_MANTLE .and. ilayer_loop==(ilast_layer-nb_layer_above_aniso+1)) then
     FIRST_ELT_ABOVE_ANISO = ispec+1
   endif
 
@@ -1239,10 +870,10 @@
       if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= .true.
   endif
 ! zmin & zmax
-  if (iz_elem == ner(ilayer) .and. ilayer == ifirst_region) then
+  if (iz_elem == ner(ilayer) .and. ilayer == ifirst_layer) then
       iboun(6,ispec)= .true.
   endif
-  if (iz_elem == 1 .and. ilayer == ilast_region) then    ! defined if no doubling in this layer
+  if (iz_elem == 1 .and. ilayer == ilast_layer) then    ! defined if no doubling in this layer
       iboun(5,ispec)= .true.
   endif
 
@@ -1320,7 +951,7 @@
         iz_elem = ner(ilayer)
         step_mult = 2
       else
-        if(iregion_code==IREGION_OUTER_CORE .and. ilayer==ilast_region .and. (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
+        if(iregion_code==IREGION_OUTER_CORE .and. ilayer==ilast_layer .and. (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
           nspec_sb = NSPEC_DOUBLING_BASICBRICK
           step_mult = 1
         else
@@ -1428,7 +1059,8 @@
      if(ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
 
 ! new get_flag_boundaries
-! xmin & xmax
+
+! xmin and xmax
   if (ix_elem == 1) then
       iMPIcut_xi(1,ispec) = iboun_sb(ispec_superbrick,1)
       if (iproc_xi == 0) iboun(1,ispec)= iboun_sb(ispec_superbrick,1)
@@ -1437,7 +1069,8 @@
       iMPIcut_xi(2,ispec) = iboun_sb(ispec_superbrick,2)
       if (iproc_xi == NPROC_XI-1) iboun(2,ispec)= iboun_sb(ispec_superbrick,2)
   endif
-!! ymin & ymax
+
+! ymin and ymax
   if (iy_elem == 1) then
       iMPIcut_eta(1,ispec) = iboun_sb(ispec_superbrick,3)
       if (iproc_eta == 0) iboun(3,ispec)= iboun_sb(ispec_superbrick,3)
@@ -1446,13 +1079,10 @@
       iMPIcut_eta(2,ispec) = iboun_sb(ispec_superbrick,4)
       if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= iboun_sb(ispec_superbrick,4)
   endif
+
 ! zmax only
-  if (ilayer==ifirst_region) then
-    iboun(6,ispec)= iboun_sb(ispec_superbrick,6)
-  endif
-  if (ilayer==ilast_region .and. iz_elem==1) then
-    iboun(5,ispec)= iboun_sb(ispec_superbrick,5)
-  endif
+  if (ilayer==ifirst_layer) iboun(6,ispec)= iboun_sb(ispec_superbrick,6)
+  if (ilayer==ilast_layer .and. iz_elem==1) iboun(5,ispec)= iboun_sb(ispec_superbrick,5)
 
 ! define the doubling flag of this element
      if(iregion_code /= IREGION_OUTER_CORE) idoubling(ispec) = doubling_index(ilayer)
@@ -1520,12 +1150,8 @@
     deallocate(stretch_tab,STAT=ier )
     if (ier /= 0) then
       print *,"ERROR can not deallocate stretch_tab in create_regions_mesh ier=",ier
+      stop 'error in deallocate'
     endif
-
-  endif
-  deallocate(perm_layer,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate perm_layer in create_regions_mesh ier=",ier
   endif
 
 !---
@@ -1693,37 +1319,6 @@
 ! only create global addressing and the MPI buffers in the first pass
   if(ipass == 1) then
 
-  ! allocate memory for arrays
-    allocate(locval(npointot),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(ifseg(npointot),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(xp(npointot),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(yp(npointot),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(zp(npointot),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
     locval = 0
     ifseg = .false.
     xp = 0.d0
@@ -1749,22 +1344,6 @@
 
     call get_global(nspec,xp,yp,zp,ibool,locval,ifseg,nglob,npointot)
 
-    deallocate(xp,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate xp in create_regions_mesh ier=",ier
-    endif
-
-    deallocate(yp,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate yp in create_regions_mesh ier=",ier
-    endif
-
-    deallocate(zp,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate zp in create_regions_mesh ier=",ier
-    endif
-
-
   ! check that number of points found equals theoretical value
     if(nglob /= nglob_theor) then
       write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor,ipass,iregion_code = ',&
@@ -1774,21 +1353,8 @@
 
     if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering')
 
-  ! create a new indirect addressing to reduce cache misses in memory access in the solver
-  ! this is *critical* to improve performance in the solver
-    allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate copy_ibool_ori in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-    allocate(mask_ibool(nglob),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate mask_ibool in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
-
-
+! create a new indirect addressing to reduce cache misses in memory access in the solver
+! this is *critical* to improve performance in the solver
     mask_ibool(:) = -1
     copy_ibool_ori(:,:,:,:) = ibool(:,:,:,:)
 
@@ -1811,17 +1377,6 @@
     enddo
     enddo
 
-    deallocate(copy_ibool_ori,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate copy_ibool_ori in create_regions_mesh ier=",ier
-    endif
-
-    deallocate(mask_ibool,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate mask_ibool in create_regions_mesh ier=",ier
-    endif
-
-
     if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering after sorting')
 
   ! create MPI buffers
@@ -1841,16 +1396,6 @@
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
   iregion_code)
-
-    deallocate(locval,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate locval in create_regions_mesh ier=",ier
-    endif
-
-    deallocate(ifseg,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate ifseg in create_regions_mesh ier=",ier
-    endif
 
 ! only create mass matrix and save all the final arrays in the second pass
   else if(ipass == 2) then
@@ -1885,11 +1430,6 @@
 
 ! adding ocean load mass matrix at the top of the crust for oceans
   nglob_oceans = nglob
-  allocate(rmass_ocean_load(nglob_oceans),STAT=ier )
-  if (ier /= 0) then
-    print *,"ABORTING can not allocate rmass_ocean_load in create_regions_mesh ier=",ier
-    call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-  endif
 
 ! create ocean load mass matrix for degrees of freedom at ocean bottom
   rmass_ocean_load(:) = 0._CUSTOM_REAL
@@ -1965,11 +1505,6 @@
 
 ! allocate dummy array if no oceans
     nglob_oceans = 1
-    allocate(rmass_ocean_load(nglob_oceans),STAT=ier )
-    if (ier /= 0) then
-      print *,"ABORTING can not allocate rmass_ocean_load in create_regions_mesh ier=",ier
-      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-    endif
 
   endif
 
@@ -2000,31 +1535,6 @@
     write(27) normal_670
     close(27)
 
-    deallocate(ibelm_moho_top,ibelm_moho_bot,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate ibelm_moho_top in create_regions_mesh ier=",ier
-    endif
-
-    deallocate(ibelm_400_top,ibelm_400_bot,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate ibelm_400_top in create_regions_mesh ier=",ier
-    endif
-
-    deallocate(ibelm_670_top,ibelm_670_bot,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate ibelm_670_top,ibelm_670_bot in create_regions_mesh ier=",ier
-    endif
-
-    deallocate(normal_moho,normal_400,normal_670,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate normal_moho,normal_400,normal_670 in create_regions_mesh ier=",ier
-    endif
-
-    deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate jacobian2D_moho,jacobian2D_400,jacobian2D_670 in create_regions_mesh ier=",ier
-    endif
-
   endif
 
 ! compute volume, bottom and top area of that part of the slice
@@ -2040,7 +1550,7 @@
           weight = wxgll(i)*wygll(j)*wzgll(k)
 
 ! compute the jacobian
-!! DK DK for merged version the jacobian is not stored anymore and therefore not valid anymore
+!! DK DK in merged version the jacobian is not stored anymore and therefore not valid anymore
   goto 777
           xixl = xixstore(i,j,k)
           xiyl = xiystore(i,j,k)
@@ -2057,7 +1567,7 @@
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
 
           volume_local = volume_local + dble(jacobianl)*weight
-!! DK DK for merged version the jacobian is not stored anymore and therefore not valid anymore
+!! DK DK in merged version the jacobian is not stored anymore and therefore not valid anymore
   777 continue
 
         enddo
@@ -2087,191 +1597,6 @@
     stop 'there cannot be more than two passes in mesh creation'
 
   endif  ! end of test if first or second pass
-
-! deallocate arrays
-  deallocate(rhostore_local,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate rhostore_local in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(kappavstore_local,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate kappavstore_local in create_regions_mesh ier=",ier
-  endif
-
-
-  deallocate(c11store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c11store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c12store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c12store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c13store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c13store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c14store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c14store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c15store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c15store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c16store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c16store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c22store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c22store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c23store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c23store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c24store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c24store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c25store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c25store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c26store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c26store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c33store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c33store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c34store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c34store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c35store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c35store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c36store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c36store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c44store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c44store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c45store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c45store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c46store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c46store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c55store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c55store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c56store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c56store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(c66store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate c66store in create_regions_mesh ier=",ier
-  endif
-
-
-  deallocate(iboun,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate iboun in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(xigll,yigll,zigll,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate xigll,yigll,zigll in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(wxgll,wygll,wzgll,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate wxgll,wygll,wzgll in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(shape3D,dershape3D,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate shape3D,dershape3D in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(shape2D_x,shape2D_y,shape2D_bottom,shape2D_top,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate shape2D_x,shape2D_y,shape2D_bottom,shape2D_top in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top" &
-    ," in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(iMPIcut_xi,iMPIcut_eta,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate iMPIcut_xi,iMPIcut_eta in create_regions_mesh ier=",ier
-  endif
-
-
-  deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta ",&
-    "in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(rho_vp,rho_vs,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate rho_vp,rho_vs in create_regions_mesh ier=",ier
-  endif
-
-
-  deallocate(Qmu_store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate Qmu_store in create_regions_mesh ier=",ier
-  endif
-
-  deallocate(tau_e_store,STAT=ier )
-  if (ier /= 0) then
-    print *,"ERROR can not deallocate tau_e_store in create_regions_mesh ier=",ier
-  endif
-
-  if (allocated(rmass_ocean_load) ) then
-    deallocate(rmass_ocean_load,STAT=ier )
-    if (ier /= 0) then
-      print *,"ERROR can not deallocate rmass_ocean_load in create_regions_mesh ier=",ier
-    endif
-  endif
-
 
   end subroutine create_regions_mesh
 

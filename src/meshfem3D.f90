@@ -1217,7 +1217,15 @@
   kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
   rmass_crust_mantle,xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
 !! DK DK this will have to change to fully support David's code to cut the superbrick
-  npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1))
+  npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+  xigll,wxgll, yigll,wygll, zigll,wzgll, shape3D, dershape3D, shape2D_x, shape2D_y, shape2D_bottom, shape2D_top, &
+  dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top, rhostore_local,kappavstore_local, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+  iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
+  rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
+  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670, jacobian2D_moho, jacobian2D_400, jacobian2D_670)
 
   else if(iregion_code == IREGION_OUTER_CORE) then
 ! outer_core
@@ -1255,7 +1263,15 @@
   kappavstore_outer_core,kappahstore_outer_core,muvstore_outer_core,muhstore_outer_core,eta_anisostore_outer_core, &
   rmass_outer_core,xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
 !! DK DK this will have to change to fully support David's code to cut the superbrick
-  npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1))
+  npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1), &
+  xigll,wxgll, yigll,wygll, zigll,wzgll, shape3D, dershape3D, shape2D_x, shape2D_y, shape2D_bottom, shape2D_top, &
+  dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top, rhostore_local,kappavstore_local, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+  iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
+  rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
+  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670, jacobian2D_moho, jacobian2D_400, jacobian2D_670)
 
   else if(iregion_code == IREGION_INNER_CORE) then
 ! inner_core
@@ -1292,7 +1308,15 @@
   kappavstore_inner_core,kappahstore_inner_core,muvstore_inner_core,muhstore_inner_core,eta_anisostore_inner_core, &
   rmass_inner_core,xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core, &
 !! DK DK this will have to change to fully support David's code to cut the superbrick
-  npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1))
+  npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+  xigll,wxgll, yigll,wygll, zigll,wzgll, shape3D, dershape3D, shape2D_x, shape2D_y, shape2D_bottom, shape2D_top, &
+  dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top, rhostore_local,kappavstore_local, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+  iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
+  rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
+  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670, jacobian2D_moho, jacobian2D_400, jacobian2D_670)
 
   else
     stop 'DK DK incorrect region in merged code'

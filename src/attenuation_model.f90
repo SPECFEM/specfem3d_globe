@@ -245,12 +245,12 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
   else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
      AM_V%Qr(:)     = SEA1DM_V%radius_sea1d(:)
      AM_V%Qmu(:)    = SEA1DM_V%Qmu_sea1d(:)
-  end if
+  endif
 
   do i = 1, AM_V%Qn
      call attenuation_conversion(AM_V%Qmu(i), AM_V%QT_c_source, AM_V%Qtau_s, tau_e, AM_V, AM_S,AS_V)
      AM_V%Qtau_e(:,i) = tau_e(:)
-  end do
+  enddo
 
 end subroutine attenuation_model_setup
 
@@ -1119,7 +1119,7 @@ subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, ta
   enddo
 
   ! Run a simplex search to determine the optimum values of tau_e
-  call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err,AS_V)
+  call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, err,AS_V)
   if(err > 0) then
      write(*,*)'Search did not converge for an attenuation of ', Q_real
      write(*,*)'    Iterations: ', iterations
@@ -1249,12 +1249,10 @@ subroutine attenuation_maxwell(nf,nsls,f,tau_s,tau_e,B,A)
   do i = 1,nf
      w = 2.0d0 * PI * 10**f(i)
      do j = 1,nsls
-!        write(*,*)j,tau_s(j),tau_e(j)
         demon = 1.0d0 + w**2 * tau_s(j)**2
         A(i) = A(i) + ((1.0d0 + (w**2 * tau_e(j) * tau_s(j)))/ demon)
         B(i) = B(i) + ((w * (tau_e(j) - tau_s(j))) / demon)
-     end do
-!     write(*,*)A(i),B(i),10**f(i)
+     enddo
   enddo
 
 end subroutine attenuation_maxwell
@@ -1326,8 +1324,8 @@ end function attenuation_eval
 
 ! subroutine fminsearch
 !   - Computes the minimization of funk(x(n)) using the simplex method
-!   - This subroutine is copied from Matlab fminsearch.m
-!         and modified to suit my nefarious needs
+!   - This subroutine is similar to Matlab's fminsearch.m
+!         and modified to suit our needs
 !   Input
 !     funk = double precision function with one input parameter
 !                double precision function the_funk(x)
@@ -1344,16 +1342,12 @@ end function attenuation_eval
 !     tolf      = Input/Output
 !                 Input:  minimium tolerance of the function funk(x)
 !                 Output: minimium value of funk(x)(i.e. "a" solution)
-!     prnt      = Input
-!                 3 => report every iteration
-!                 4 => report every iteration, total simplex
 !     err       = Output
 !                 0 => Normal exeecution, converged within desired range
 !                 1 => Function Evaluation exceeded limit
 !                 2 => Iterations exceeded limit
 !
-!     See Matlab fminsearch
-subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
+subroutine fminsearch(funk, x, n, itercount, tolf, err, AS_V)
 
   implicit none
 
@@ -1379,7 +1373,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
 
   integer n
   double precision x(n) ! Also Output
-  integer itercount, prnt, err
+  integer itercount, err
   double precision tolf
 
   !Internal
@@ -1462,22 +1456,12 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
   how = initial
   itercount = 1
   func_evals = n+1
-  if(prnt == 3) then
-     write(*,*)'Iterations   Funk Evals   Value How'
-     write(*,*)itercount, func_evals, fv(1), how
-  endif
-  if(prnt == 4) then
-     write(*,*)'How: ',how
-     write(*,*)'V: ', v
-     write(*,*)'fv: ',fv
-     write(*,*)'evals: ',func_evals
-  endif
 
   do while (func_evals < maxfun .AND. itercount < maxiter)
 
      if(max_size_simplex(v,n) <= tolx .AND. &
           max_value(fv,n+1) <= tolf) then
-        goto 666
+        goto 888
      endif
      how = none
 
@@ -1565,27 +1549,18 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
      v = vtmp
 
      itercount = itercount + 1
-     if (prnt == 3) then
-        write(*,*)itercount, func_evals, fv(1), how
-     elseif (prnt == 4) then
-        write(*,*)
-        write(*,*)'How: ',how
-        write(*,*)'v: ',v
-        write(*,*)'fv: ',fv
-        write(*,*)'evals: ',func_evals
-     endif
   enddo
 
   if(func_evals > maxfun) then
      write(*,*)'function evaluations exceeded prescribed limit', maxfun
-     err = 1
+     stop 'err = 1'
   endif
   if(itercount > maxiter) then
      write(*,*)'iterations exceeded prescribed limit', maxiter
-     err = 2
+     stop 'err = 2'
   endif
 
-666 continue
+888 continue
   x = v(:,1)
   tolf = fv(1)
 
@@ -1771,7 +1746,7 @@ subroutine pspline_construction(x, y, n, yp1, ypn, y2, steps)
         steps(r) = i-1
         r = r + 1
      endif
-  end do
+  enddo
   steps(r) = n
 
   ! Run spline for each piece
@@ -1894,7 +1869,6 @@ subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
      Qmu=600.0d0
      Qkappa = 57827.0d0
   else
-     write(*,*)'iflag:',iflag
      call exit_MPI_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
   endif
 

@@ -1,4 +1,66 @@
 
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+
+! Gauss-Lobatto-Legendre points of integration and weights
+  double precision, dimension(NGLLX) :: xigll,wxgll
+  double precision, dimension(NGLLY) :: yigll,wygll
+  double precision, dimension(NGLLZ) :: zigll,wzgll
+
+! 3D shape functions and their derivatives
+  double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
+  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
+
+! 2D shape functions and their derivatives
+  double precision shape2D_x(NGNOD2D,NGLLY,NGLLZ)
+  double precision shape2D_y(NGNOD2D,NGLLX,NGLLZ)
+  double precision shape2D_bottom(NGNOD2D,NGLLX,NGLLY)
+  double precision shape2D_top(NGNOD2D,NGLLX,NGLLY)
+
+  double precision dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ)
+  double precision dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ)
+  double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
+  double precision dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY)
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: rhostore_local,kappavstore_local
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store
+
+  logical, dimension(6,NSPEC_CRUST_MANTLE) :: iboun
+
+! very large arrays used for the sorting routine
+  integer, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: locval
+  logical, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: ifseg
+  double precision, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: xp,yp,zp
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
+
+  integer, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: copy_ibool_ori
+
+  logical, dimension(2,NSPEC_CRUST_MANTLE) :: iMPIcut_xi,iMPIcut_eta
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: rho_vp,rho_vs
+
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: Qmu_store
+  double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: tau_e_store
+
+  integer ibelm_moho_top(NSPEC2D_MOHO)
+  integer ibelm_moho_bot(NSPEC2D_MOHO)
+  integer ibelm_400_top(NSPEC2D_400)
+  integer ibelm_400_bot(NSPEC2D_400)
+  integer ibelm_670_top(NSPEC2D_670)
+  integer ibelm_670_bot(NSPEC2D_670)
+
+  real(kind=CUSTOM_REAL) normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO)
+  real(kind=CUSTOM_REAL) normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400)
+  real(kind=CUSTOM_REAL) normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670)
+  real(kind=CUSTOM_REAL) jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
+  real(kind=CUSTOM_REAL) jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
+  real(kind=CUSTOM_REAL) jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
+
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
