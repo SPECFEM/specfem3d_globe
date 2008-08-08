@@ -47,17 +47,6 @@
   double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: Qmu_store
   double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: tau_e_store
 
-  integer ibelm_moho_top(NSPEC2D_MOHO)
-  integer ibelm_moho_bot(NSPEC2D_MOHO)
-  integer ibelm_400_top(NSPEC2D_400)
-  integer ibelm_400_bot(NSPEC2D_400)
-  integer ibelm_670_top(NSPEC2D_670)
-  integer ibelm_670_bot(NSPEC2D_670)
-
-  real(kind=CUSTOM_REAL) normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO)
-  real(kind=CUSTOM_REAL) normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400)
-  real(kind=CUSTOM_REAL) normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670)
-
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
 !!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead

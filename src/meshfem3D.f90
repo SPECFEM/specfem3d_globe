@@ -1198,7 +1198,7 @@
          AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
          numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,&
+         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube, &
          CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
   iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
   NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM, &
@@ -1224,8 +1224,7 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
-  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670)
+  rho_vp,rho_vs, Qmu_store, tau_e_store)
 
   else if(iregion_code == IREGION_OUTER_CORE) then
 ! outer_core
@@ -1244,7 +1243,7 @@
          AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
          numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,&
+         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube, &
          CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
   iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
   NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC, &
@@ -1270,8 +1269,7 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
-  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670)
+  rho_vp,rho_vs, Qmu_store, tau_e_store)
 
   else if(iregion_code == IREGION_INNER_CORE) then
 ! inner_core
@@ -1290,7 +1288,7 @@
          AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
          numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,&
+         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube, &
          CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
   iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
   NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC,ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
@@ -1315,8 +1313,7 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
-  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670)
+  rho_vp,rho_vs, Qmu_store, tau_e_store)
 
   else
     stop 'DK DK incorrect region in merged code'

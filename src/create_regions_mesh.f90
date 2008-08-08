@@ -43,7 +43,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,&
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass,ratio_divide_central_cube, &
            CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
   iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
   NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
@@ -66,8 +66,7 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store, ibelm_moho_top, ibelm_moho_bot, ibelm_400_top, ibelm_400_bot, &
-  ibelm_670_top, ibelm_670_bot, normal_moho, normal_400, normal_670)
+  rho_vp,rho_vs, Qmu_store, tau_e_store)
 
 ! create the different regions of the mesh
 
@@ -387,8 +386,7 @@
   logical ELLIPTICITY,TOPOGRAPHY
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,OCEANS
 
-  logical ATTENUATION,ATTENUATION_3D, &
-          INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,HONOR_1D_SPHERICAL_MOHO
+  logical ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS
 
   double precision R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
@@ -455,7 +453,7 @@
   integer idoubling(nspec)
 
 ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
-  double precision rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8
+  double precision :: rmin,rmax
 
 ! for model density and anisotropy
   integer nspec_ani
@@ -580,22 +578,6 @@
 
 ! now perform two passes in this part to be able to save memory
   integer :: ipass
-
-! boundary mesh
-  integer nex_eta_moho
-  integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
-  double precision r_moho,r_400,r_670
-
-  integer ibelm_moho_top(NSPEC2D_MOHO)
-  integer ibelm_moho_bot(NSPEC2D_MOHO)
-  integer ibelm_400_top(NSPEC2D_400)
-  integer ibelm_400_bot(NSPEC2D_400)
-  integer ibelm_670_top(NSPEC2D_670)
-  integer ibelm_670_bot(NSPEC2D_670)
-
-  real(kind=CUSTOM_REAL) normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO)
-  real(kind=CUSTOM_REAL) normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400)
-  real(kind=CUSTOM_REAL) normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670)
 
 ! the height at which the central cube is cut
   integer :: nz_inf_limit
@@ -757,17 +739,6 @@
     call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
   endif
 
-! boundary mesh
-  if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-    ispec2D_moho_top = 0; ispec2D_moho_bot = 0
-    ispec2D_400_top = 0; ispec2D_400_bot = 0
-    ispec2D_670_top = 0; ispec2D_670_bot = 0
-
-    nex_eta_moho = NEX_PER_PROC_ETA
-
-    r_moho = RMOHO/R_EARTH; r_400 = R400 / R_EARTH; r_670 = R670/R_EARTH
-  endif
-
 ! generate and count all the elements in this region of the mesh
   ispec = 0
 
@@ -874,18 +845,6 @@
 
 ! define the doubling flag of this element
      if(iregion_code /= IREGION_OUTER_CORE) idoubling(ispec) = doubling_index(ilayer)
-
-! save the radii of the nodes before modified through compute_element_properties()
-     if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-       r1=sqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
-       r2=sqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
-       r3=sqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
-       r4=sqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
-       r5=sqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
-       r6=sqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
-       r7=sqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
-       r8=sqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
-     endif
 
 ! compute several rheological and geometrical properties for this spectral element
      call compute_element_properties(ispec,iregion_code,idoubling, &
@@ -1070,18 +1029,6 @@
 
 ! define the doubling flag of this element
      if(iregion_code /= IREGION_OUTER_CORE) idoubling(ispec) = doubling_index(ilayer)
-
-! save the radii of the nodes before modified through compute_element_properties()
-     if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-       r1=sqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
-       r2=sqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
-       r3=sqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
-       r4=sqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
-       r5=sqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
-       r6=sqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
-       r7=sqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
-       r8=sqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
-     endif
 
 ! compute several rheological and geometrical properties for this spectral element
      call compute_element_properties(ispec,iregion_code,idoubling, &
@@ -1477,35 +1424,6 @@
 
 ! allocate dummy array if no oceans
     nglob_oceans = 1
-
-  endif
-
-! boundary mesh
-  if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-! first check the number of surface elements are the same for Moho, 400, 670
-    if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
-      if (ispec2D_moho_top /= NSPEC2D_MOHO .or. ispec2D_moho_bot /= NSPEC2D_MOHO) &
-               call exit_mpi(myrank, 'Not the same number of Moho surface elements')
-    endif
-    if (ispec2D_400_top /= NSPEC2D_400 .or. ispec2D_400_bot /= NSPEC2D_400) &
-               call exit_mpi(myrank,'Not the same number of 400 surface elements')
-    if (ispec2D_670_top /= NSPEC2D_670 .or. ispec2D_670_bot /= NSPEC2D_670) &
-               call exit_mpi(myrank,'Not the same number of 670 surface elements')
-
-! writing surface topology databases
-    stop 'DK DK should do this in MPI instead of writing to a disk file'
-    open(unit=27,file='OUTPUT_FILES/boundary_disc.bin',status='unknown',form='unformatted',action='write')
-    write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
-    write(27) ibelm_moho_top
-    write(27) ibelm_moho_bot
-    write(27) ibelm_400_top
-    write(27) ibelm_400_bot
-    write(27) ibelm_670_top
-    write(27) ibelm_670_bot
-    write(27) normal_moho
-    write(27) normal_400
-    write(27) normal_670
-    close(27)
 
   endif
 
