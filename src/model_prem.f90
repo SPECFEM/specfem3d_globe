@@ -418,7 +418,7 @@
     Qkappa=57827.0d0
   else if(r > R220 .and. r <= R80) then
 
-! anisotropy in PREM only above 220 km
+! anisotropy in PREM only between 220 km and the Moho (bottom of the crust)
 
     rho=2.6910d0+0.6924d0*x
     vpv=0.8317d0+7.2180d0*x
@@ -446,7 +446,7 @@
 ! use PREM crust
     if(r > R80 .and. r <= RMOHO) then
 
-! anisotropy in PREM only above 220 km
+! anisotropy in PREM only between 220 km and the Moho (bottom of the crust)
 
       rho=2.6910d0+0.6924d0*x
       vpv=0.8317d0+7.2180d0*x

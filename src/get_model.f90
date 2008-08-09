@@ -860,16 +860,25 @@
 !! DK DK changed this for merged version
          rhostore_local(i,j,k) = sngl(rho)
 
-!! DK DK added this for merged version
+! store this for the solid regions: crust_mantle or inner_core
          if(iregion_code /= IREGION_OUTER_CORE) then
+
            kappavstore(i,j,k,ispec) = sngl(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0))
-           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) &
-             kappahstore(i,j,k,ispec) = sngl(rho*(vph*vph - 4.d0*vsh*vsh/3.d0))
            muvstore(i,j,k,ispec) = sngl(rho*vsv*vsv)
-           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) muhstore(i,j,k,ispec) = sngl(rho*vsh*vsh)
-           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) eta_anisostore(i,j,k,ispec) = sngl(eta_aniso)
+
+! store this as well for anisotropic elements in the mantle
+           if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) then
+! only store the anisotropic layers, because these arrays have purposely been 
+! declared with a reduced size to save memory
+             if(ispec <= NSPECMAX_TISO_MANTLE) then
+               kappahstore(i,j,k,ispec) = sngl(rho*(vph*vph - 4.d0*vsh*vsh/3.d0))
+               muhstore(i,j,k,ispec) = sngl(rho*vsh*vsh)
+               eta_anisostore(i,j,k,ispec) = sngl(eta_aniso)
+             endif
+           endif
+
          else
-!! DK DK added this for merged version
+! store only this in the fluid outer core
            kappavstore_local(i,j,k) = sngl(rho*(vpv*vpv - 4.d0*vsv*vsv/3.d0))
          endif
 

@@ -29,7 +29,7 @@
 
   subroutine memory_eval(OCEANS,ABSORBING_CONDITIONS,ATTENUATION,ANISOTROPIC_3D_MANTLE,&
                        TRANSVERSE_ISOTROPY,ANISOTROPIC_INNER_CORE,ROTATION,&
-                       ONE_CRUST,doubling_index,this_region_has_a_doubling,&
+                       ONE_CRUST,doubling_index,this_layer_has_a_doubling,&
                        ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_sampling_array,&
                        NSPEC,nglob,SIMULATION_TYPE,MOVIE_VOLUME,SAVE_FORWARD, &
          NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
@@ -55,7 +55,7 @@
   integer, dimension(MAX_NUM_REGIONS), intent(in) :: NSPEC, nglob
   integer, intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA,SIMULATION_TYPE
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: doubling_index
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_region_has_a_doubling
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: this_layer_has_a_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS), intent(in) :: ner,ratio_sampling_array
 
 ! output
@@ -90,7 +90,7 @@
   do ilayer = 1, NUMBER_OF_MESH_LAYERS
       if(doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
           ner_without_doubling = ner(ilayer)
-          if(this_region_has_a_doubling(ilayer)) then
+          if(this_layer_has_a_doubling(ilayer)) then
               ner_without_doubling = ner_without_doubling - 2
               ispec_aniso = ispec_aniso + &
               (NSPEC_DOUBLING_SUPERBRICK*(NEX_PER_PROC_XI/ratio_sampling_array(ilayer)/2)* &

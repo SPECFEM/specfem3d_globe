@@ -38,7 +38,7 @@
            ATTENUATION,ATTENUATION_3D, &
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
            R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-           ner,ratio_sampling_array,doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D, &
+           ner,ratio_sampling_array,doubling_index,r_bottom,r_top,this_layer_has_a_doubling,CASE_3D, &
            AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
@@ -66,7 +66,7 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store)
+  rho_vp,rho_vs, Qmu_store, tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
 
 ! create the different regions of the mesh
 
@@ -123,7 +123,7 @@
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_layer_has_a_doubling
 
   integer :: ignod,ner_without_doubling,ispec_superbrick,ilayer,ilayer_loop,ix_elem,iy_elem,iz_elem, &
                ifirst_layer,ilast_layer,ratio_divide_central_cube
@@ -537,10 +537,8 @@
   logical :: USE_ONE_LAYER_SB,CASE_3D
   integer :: nspec_sb
 
-  integer NUMBER_OF_MESH_LAYERS,layer_shift,cpt,first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
+  integer NUMBER_OF_MESH_LAYERS,layer_shift,ifirst_layer_aniso,ilast_layer_aniso
   double precision, dimension(:,:), allocatable :: stretch_tab
-
-  integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
   integer, parameter :: maxker=200
   integer, parameter :: maxl=72
@@ -690,27 +688,31 @@
 
   endif
 
-! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
-  if (ONE_CRUST) then
-    first_layer_aniso=2
-    last_layer_aniso=3
-    nb_layer_above_aniso = 1
-  else
-    first_layer_aniso=3
-    last_layer_aniso=4
-    nb_layer_above_aniso = 2
-  endif
-  permutation_layer(ifirst_layer:ilast_layer) = (/ (i, i=ilast_layer,ifirst_layer,-1) /)
   if(iregion_code == IREGION_CRUST_MANTLE) then
-    cpt=3
-    permutation_layer(1)=first_layer_aniso
-    permutation_layer(2)=last_layer_aniso
-    do i = ilast_layer,ifirst_layer,-1
-      if (i/=first_layer_aniso .and. i/=last_layer_aniso) then
-        permutation_layer(cpt) = i
-        cpt=cpt+1
+
+! create anisotropic (transversely isotropic) layers first to save memory when
+! storing the anisotropic arrays
+    ilayer = 0
+    do ilayer_loop = ifirst_layer_aniso,ilast_layer_aniso
+      ilayer = ilayer + 1
+      permutation_layer(ilayer) = ilayer_loop
+    enddo
+
+! and then create all the isotropic layers
+    do ilayer_loop = ifirst_layer,ilast_layer
+      if(ilayer_loop < ifirst_layer_aniso .or. ilayer_loop > ilast_layer_aniso) then
+        ilayer = ilayer + 1
+        permutation_layer(ilayer) = ilayer_loop
       endif
     enddo
+
+  else
+
+! use identity permutation for regions that do not have transversely isotropic layer
+    do ilayer_loop = ifirst_layer,ilast_layer
+      permutation_layer(ilayer_loop) = ilayer_loop
+    enddo
+
   endif
 
 ! initialize mesh arrays
@@ -754,19 +756,12 @@
   rmin = rmins(ilayer)
   rmax = rmaxs(ilayer)
 
-  if(iregion_code == IREGION_CRUST_MANTLE .and. ilayer_loop==3) then
-    FIRST_ELT_NON_ANISO = ispec+1
-  endif
-  if(iregion_code == IREGION_CRUST_MANTLE .and. ilayer_loop==(ilast_layer-nb_layer_above_aniso+1)) then
-    FIRST_ELT_ABOVE_ANISO = ispec+1
-  endif
-
     ner_without_doubling = ner(ilayer)
 
 ! if there is a doubling at the top of this region, we implement it in the last two layers of elements
 ! and therefore we suppress two layers of regular elements here
     USE_ONE_LAYER_SB = .false.
-    if(this_region_has_a_doubling(ilayer)) then
+    if(this_layer_has_a_doubling(ilayer)) then
       if (ner(ilayer) == 1) then
         ner_without_doubling = ner_without_doubling - 1
         USE_ONE_LAYER_SB = .true.
@@ -890,7 +885,7 @@
 ! We have imposed that NEX be a multiple of 16 therefore we know that we can always create
 ! these 2 x 2 blocks because NEX_PER_PROC_XI / ratio_sampling_array(ilayer) and
 ! NEX_PER_PROC_ETA / ratio_sampling_array(ilayer) are always divisible by 2.
-    if(this_region_has_a_doubling(ilayer)) then
+    if(this_layer_has_a_doubling(ilayer)) then
       if (USE_ONE_LAYER_SB) then
         call define_superbrick_one_layer(x_superbrick,y_superbrick,z_superbrick,ibool_superbrick,iboun_sb)
         nspec_sb = NSPEC_SUPERBRICK_1L

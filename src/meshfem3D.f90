@@ -288,7 +288,7 @@
 
 ! correct number of spectral elements in each block depending on chunk type
 
-  integer nspec_aniso,npointot
+  integer nspec_tiso,npointot
 
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
 ! use the size of the largest region (crust_mantle) and therefore largest possible array
@@ -354,7 +354,8 @@
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
-          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP
+          REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
+          ifirst_layer_aniso,ilast_layer_aniso
 
   double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -394,14 +395,14 @@
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_layer_has_a_doubling
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
 ! memory size of all the static arrays
 ! double precision :: static_memory_size
 
 ! arrays for BCAST
-  integer, dimension(38) :: bcast_integer
+  integer, dimension(40) :: bcast_integer
   double precision, dimension(30) :: bcast_double_precision
   logical, dimension(26) :: bcast_logical
 
@@ -506,11 +507,12 @@
           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
           NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
           NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
-          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
+          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_layer_has_a_doubling,rmins,rmaxs,CASE_3D, &
           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
           ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
           DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.)
+          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
+          USE_BINARY_FOR_LARGE_FILE,ifirst_layer_aniso,ilast_layer_aniso,.false.)
 
     if(err_occurred() /= 0) call exit_MPI(myrank,'an error occurred while reading the parameter file')
 
@@ -526,7 +528,7 @@
             NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
             SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
-            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP/)
+            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,ifirst_layer_aniso,ilast_layer_aniso/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
@@ -545,7 +547,7 @@
   endif
 
 ! broadcast the information read on the master to the nodes
-    call MPI_BCAST(bcast_integer,38,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_integer,40,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(bcast_double_precision,30,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
@@ -563,7 +565,7 @@
     call MPI_BCAST(rmaxs,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(rmaxs,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(this_region_has_a_doubling,MAX_NUMBER_OF_MESH_LAYERS,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(this_layer_has_a_doubling,MAX_NUMBER_OF_MESH_LAYERS,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(NSPEC,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(NSPEC2D_XI,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -622,6 +624,8 @@
     MOVIE_VOLUME_TYPE = bcast_integer(36)
     MOVIE_START = bcast_integer(37)
     MOVIE_STOP = bcast_integer(38)
+    ifirst_layer_aniso = bcast_integer(39)
+    ilast_layer_aniso = bcast_integer(40)
 
     TRANSVERSE_ISOTROPY = bcast_logical(1)
     ANISOTROPIC_3D_MANTLE = bcast_logical(2)
@@ -1181,7 +1185,7 @@
   if(iregion_code == IREGION_CRUST_MANTLE) then
 ! crust_mantle
     call create_regions_mesh(iregion_code,ibool_crust_mantle,idoubling_crust_mantle, &
-         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
+         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
          volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2,nglob(iregion_code),npointot, &
          NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
          NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code),ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
@@ -1190,7 +1194,7 @@
          myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
+         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_layer_has_a_doubling,CASE_3D, &
          AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
          numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1220,12 +1224,12 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store)
+  rho_vp,rho_vs, Qmu_store, tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
 
   else if(iregion_code == IREGION_OUTER_CORE) then
 ! outer_core
     call create_regions_mesh(iregion_code,ibool_outer_core,idoubling_outer_core, &
-         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
+         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
          volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2,nglob(iregion_code),npointot, &
          NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code), &
          NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
@@ -1235,7 +1239,7 @@
          myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
+         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_layer_has_a_doubling,CASE_3D, &
          AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
          numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1265,12 +1269,12 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store)
+  rho_vp,rho_vs, Qmu_store, tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
 
   else if(iregion_code == IREGION_INNER_CORE) then
 ! inner_core
     call create_regions_mesh(iregion_code,ibool_inner_core,idoubling_inner_core, &
-         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
+         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
          volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2,nglob(iregion_code),npointot, &
          NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code), &
          NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
@@ -1280,7 +1284,7 @@
          myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
          ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
          R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_region_has_a_doubling,CASE_3D, &
+         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_layer_has_a_doubling,CASE_3D, &
          AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
          numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
          nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1309,18 +1313,18 @@
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
   iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store)
+  rho_vp,rho_vs, Qmu_store, tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
 
   else
     stop 'DK DK incorrect region in merged code'
   endif
 
 ! store number of anisotropic elements found in the mantle
-  if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
-    call exit_MPI(myrank,'found anisotropic elements outside of the mantle')
+  if(nspec_tiso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
+    call exit_MPI(myrank,'found transversely isotropic elements outside of the mantle')
 
-  if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_aniso == 0) &
-    call exit_MPI(myrank,'found no anisotropic elements in the mantle')
+  if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_tiso == 0) &
+    call exit_MPI(myrank,'found no transversely isotropic elements in the mantle')
 
 ! use MPI reduction to compute total area and volume
 !! DK DK suppressed for now in the merged version, for simplicity

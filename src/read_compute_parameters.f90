@@ -52,12 +52,12 @@
          NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
          NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
          NGLOB, &
-         ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
+         ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_layer_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,EMULATE_ONLY)
-
+         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
+         USE_BINARY_FOR_LARGE_FILE,ifirst_layer_aniso,ilast_layer_aniso,EMULATE_ONLY)
 
   implicit none
 
@@ -72,7 +72,7 @@
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
           REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read
+          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,ifirst_layer_aniso,ilast_layer_aniso
 
   double precision DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -115,7 +115,7 @@
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_layer_has_a_doubling
 
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
@@ -1251,6 +1251,10 @@
       ner(13) = elem_doubling_middle_outer_core
       ner(14) = NER_TOP_CENTRAL_CUBE_ICB
 
+! anisotropy in PREM only between 220 km and the Moho (bottom of the crust)
+      ifirst_layer_aniso = 1
+      ilast_layer_aniso = 4
+
   ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:9) = 1
       ratio_sampling_array(10:12) = 2
@@ -1265,9 +1269,9 @@
       doubling_index(14) = IFLAG_INNER_CORE_NORMAL
 
   ! define the three regions in which we implement a mesh doubling at the top of that region
-      this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(10) = .true.
-      this_region_has_a_doubling(13) = .true.
+      this_layer_has_a_doubling(:)  = .false.
+      this_layer_has_a_doubling(10) = .true.
+      this_layer_has_a_doubling(13) = .true.
       lastdoubling_layer = 13
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
@@ -1372,6 +1376,10 @@
       ner(12) = elem_doubling_middle_outer_core
       ner(13) = NER_TOP_CENTRAL_CUBE_ICB
 
+! anisotropy in PREM only between 220 km and the Moho (bottom of the crust)
+      ifirst_layer_aniso = 2
+      ilast_layer_aniso = 3
+
   ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1) = 1
       ratio_sampling_array(2:8) = 2
@@ -1388,10 +1396,10 @@
       doubling_index(13) = IFLAG_INNER_CORE_NORMAL
 
   ! define the three regions in which we implement a mesh doubling at the top of that region
-      this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(2)  = .true.
-      this_region_has_a_doubling(9)  = .true.
-      this_region_has_a_doubling(12) = .true.
+      this_layer_has_a_doubling(:)  = .false.
+      this_layer_has_a_doubling(2)  = .true.
+      this_layer_has_a_doubling(9)  = .true.
+      this_layer_has_a_doubling(12) = .true.
       lastdoubling_layer = 12
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
@@ -1502,6 +1510,10 @@
       ner(13) = elem_doubling_middle_outer_core
       ner(14) = NER_TOP_CENTRAL_CUBE_ICB
 
+! anisotropy in PREM only between 220 km and the Moho (bottom of the crust)
+      ifirst_layer_aniso = 3
+      ilast_layer_aniso = 4
+
   ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:2) = 1
       ratio_sampling_array(3:9) = 2
@@ -1518,11 +1530,11 @@
       doubling_index(14) = IFLAG_INNER_CORE_NORMAL
 
   ! define the three regions in which we implement a mesh doubling at the top of that region
-      this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(3)  = .true.
-      this_region_has_a_doubling(10) = .true.
-      this_region_has_a_doubling(13) = .true.
-      this_region_has_a_doubling(14) = .false.
+      this_layer_has_a_doubling(:)  = .false.
+      this_layer_has_a_doubling(3)  = .true.
+      this_layer_has_a_doubling(10) = .true.
+      this_layer_has_a_doubling(13) = .true.
+      this_layer_has_a_doubling(14) = .false.
       lastdoubling_layer = 13
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
@@ -1638,6 +1650,10 @@
       ner(14) = elem_doubling_bottom_outer_core
       ner(15) = NER_TOP_CENTRAL_CUBE_ICB
 
+! anisotropy in PREM only between 220 km and the Moho (bottom of the crust)
+      ifirst_layer_aniso = 1
+      ilast_layer_aniso = 4
+
   ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:9) = 1
       ratio_sampling_array(10:12) = 2
@@ -1653,10 +1669,10 @@
       doubling_index(15) = IFLAG_INNER_CORE_NORMAL
 
   ! define the three regions in which we implement a mesh doubling at the top of that region
-      this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(10) = .true.
-      this_region_has_a_doubling(13) = .true.
-      this_region_has_a_doubling(14) = .true.
+      this_layer_has_a_doubling(:)  = .false.
+      this_layer_has_a_doubling(10) = .true.
+      this_layer_has_a_doubling(13) = .true.
+      this_layer_has_a_doubling(14) = .true.
       lastdoubling_layer = 14
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
@@ -1765,6 +1781,10 @@
       ner(13) = elem_doubling_bottom_outer_core
       ner(14) = NER_TOP_CENTRAL_CUBE_ICB
 
+! anisotropy in PREM only between 220 km and the Moho (bottom of the crust)
+      ifirst_layer_aniso = 2
+      ilast_layer_aniso = 3
+
   ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1) = 1
       ratio_sampling_array(2:8) = 2
@@ -1782,11 +1802,11 @@
       doubling_index(14) = IFLAG_INNER_CORE_NORMAL
 
   ! define the three regions in which we implement a mesh doubling at the top of that region
-      this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(2)  = .true.
-      this_region_has_a_doubling(9)  = .true.
-      this_region_has_a_doubling(12) = .true.
-      this_region_has_a_doubling(13) = .true.
+      this_layer_has_a_doubling(:)  = .false.
+      this_layer_has_a_doubling(2)  = .true.
+      this_layer_has_a_doubling(9)  = .true.
+      this_layer_has_a_doubling(12) = .true.
+      this_layer_has_a_doubling(13) = .true.
       lastdoubling_layer = 13
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
@@ -1901,6 +1921,10 @@
       ner(14) = elem_doubling_bottom_outer_core
       ner(15) = NER_TOP_CENTRAL_CUBE_ICB
 
+! anisotropy in PREM only between 220 km and the Moho (bottom of the crust)
+      ifirst_layer_aniso = 3
+      ilast_layer_aniso = 4
+
   ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:2) = 1
       ratio_sampling_array(3:9) = 2
@@ -1918,11 +1942,11 @@
       doubling_index(15) = IFLAG_INNER_CORE_NORMAL
 
   ! define the three regions in which we implement a mesh doubling at the top of that region
-      this_region_has_a_doubling(:)  = .false.
-      this_region_has_a_doubling(3)  = .true.
-      this_region_has_a_doubling(10) = .true.
-      this_region_has_a_doubling(13) = .true.
-      this_region_has_a_doubling(14) = .true.
+      this_layer_has_a_doubling(:)  = .false.
+      this_layer_has_a_doubling(3)  = .true.
+      this_layer_has_a_doubling(10) = .true.
+      this_layer_has_a_doubling(13) = .true.
+      this_layer_has_a_doubling(14) = .true.
       lastdoubling_layer = 14
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
@@ -2107,7 +2131,7 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
     tmp_sum_nglob2D_xi = 0
     tmp_sum_nglob2D_eta = 0
     do iter_layer = ifirst_region, ilast_region
-        if (this_region_has_a_doubling(iter_layer)) then
+        if (this_layer_has_a_doubling(iter_layer)) then
             if (iter_region == IREGION_OUTER_CORE .and. iter_layer == lastdoubling_layer) then
               ! simple brick
               divider = 1
@@ -2279,7 +2303,7 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
     endif
     tmp_sum = 0;
     do iter_layer = ifirst_region, ilast_region
-        if (this_region_has_a_doubling(iter_layer)) then
+        if (this_layer_has_a_doubling(iter_layer)) then
             if (ner(iter_layer) == 1) then
               nb_lay_sb = 1
               nspec_sb = NSPEC_SUPERBRICK_1L
@@ -2375,7 +2399,7 @@ enddo
         nglob_center_edge = 0
         nglob_corner_edge = 0
         nglob_border_edge = 0
-        if (this_region_has_a_doubling(iter_layer)) then
+        if (this_layer_has_a_doubling(iter_layer)) then
             if (iter_region == IREGION_OUTER_CORE .and. iter_layer == lastdoubling_layer .and. &
                (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
               doubling = 1
