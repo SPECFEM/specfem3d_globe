@@ -288,7 +288,7 @@ subroutine attenuation_save_arrays(iregion_code, AM_V)
   integer myrank
   integer, save :: first_time_called = 1
 
-  stop 'DK DK should do this in MPI instead of writing to a local file'
+  print *,'DK DK we should do this in MPI instead of writing to a local file'
 
   call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
   if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
@@ -655,7 +655,7 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
 
   integer, save :: first_time_called = 1
 
-  stop 'DK DK should do this in MPI instead of writing to a file'
+  print *,'DK DK we should do this in MPI instead of writing to a local file'
 
   if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
      first_time_called = 0
@@ -952,7 +952,7 @@ subroutine get_attenuation_model_3D(myrank, one_minus_sum_beta, factor_common, s
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
 
-  stop 'DK DK should do this in MPI instead of writing to a disk file'
+  print *,'DK DK we should do this in MPI instead of writing to a local file'
 
   open(unit=27, file='OUTPUT_FILES/attenuation3D.bin',status='old',action='read',form='unformatted')
   read(27) tau_s

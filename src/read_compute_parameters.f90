@@ -797,6 +797,8 @@
 
   if(ROTATION) stop 'ROTATION not implemented in the reduced merged version yet because useless at high frequency'
 
+  if(ABSORBING_CONDITIONS) stop 'ABSORBING_CONDITIONS not implemented in the reduced merged version yet'
+
 ! radii in PREM or IASP91
 ! and normalized density at fluid-solid interface on fluid size for coupling
 ! ROCEAN: radius of the ocean (m)

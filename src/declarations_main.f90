@@ -1,11 +1,5 @@
 
-!!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
-!!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
-!!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
-!!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
-!!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
-!!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
-!!!!!!!!!!!!!!!! DK DK for merged version, all the arrays below are allocated statically instead
+!! DK DK for merged version, all the arrays below are allocated statically instead
 
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
   integer npoin2D_faces_outer_core(NUMFACES_SHARED)
@@ -33,11 +27,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore_inner_core,muvstore_inner_core
 
-!! DK DK added this for the merged version
-!! DK DK these arrays are useless in the solver and will therefore be allocated with a dummy size of 1
-
 ! 2-D jacobians and normals
-
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
 
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
@@ -79,29 +69,12 @@
   integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
 
-  double precision, dimension(ATT1,ATT2,ATT3,ATT4) :: omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
-
-  double precision, dimension(ATT1,ATT2,ATT3,ATT5) :: omsb_inner_core_dble, factor_scale_inner_core_dble
-
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT4) :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT5) :: one_minus_sum_beta_inner_core, factor_scale_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core
-
-  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle_dble
-
-  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core_dble
-
   integer :: npoin2D_max_all,NDIM_smaller_buffers
 
 ! receiver information
   integer :: nrec,ios
   character(len=150) :: STATIONS,rec_filename,dummystring
 
-!! DK DK added this for the merged version
 !---- arrays to assemble between chunks
 
 ! communication pattern for faces between chunks
@@ -109,4 +82,26 @@
 
 ! communication pattern for corners between chunks
   integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+! attenuation_model_variables
+  type attenuation_model_variables
+    sequence
+    double precision min_period, max_period
+    double precision                          :: QT_c_source        ! Source Frequency
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: Qr                 ! Radius
+    integer, dimension(:), pointer            :: Qs                 ! Steps
+    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer                                   :: Qn                 ! Number of points
+  end type attenuation_model_variables
+
+  type (attenuation_model_variables) AM_V
+! attenuation_model_variables
 

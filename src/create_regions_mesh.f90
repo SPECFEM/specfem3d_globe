@@ -1426,6 +1426,11 @@
 
   endif
 
+!! DK DK save Brian's attenuation files to a shared disk
+!! DK DK obviously we should do this with MPI or with subroutine arguments
+!! DK DK shared by the mesher and the solver subroutines at some point
+  call attenuation_save_arrays(iregion_code, AM_V)
+
 ! compute volume, bottom and top area of that part of the slice
   volume_local = ZERO
   area_local_bottom = ZERO
