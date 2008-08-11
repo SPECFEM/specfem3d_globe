@@ -15,6 +15,10 @@
              npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
              npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
+  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
+
 ! number of elements on the boundaries
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
 

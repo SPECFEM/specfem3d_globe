@@ -36,6 +36,8 @@
   double precision, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: xp,yp,zp
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
+  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
   integer, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: copy_ibool_ori
@@ -99,7 +101,6 @@
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
   integer, dimension(NSPEC2DMAX_YMIN_YMAX_CM) :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: &
     jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle
@@ -111,7 +112,6 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: normal_xmin_crust_mantle,normal_xmax_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2DMAX_YMIN_YMAX_CM) :: normal_ymin_crust_mantle,normal_ymax_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: normal_bottom_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
 
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_OC) :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
   integer, dimension(NSPEC2DMAX_YMIN_YMAX_OC) :: ibelm_ymin_outer_core,ibelm_ymax_outer_core

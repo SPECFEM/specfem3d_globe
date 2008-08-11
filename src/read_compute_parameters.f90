@@ -152,6 +152,10 @@
   call read_value_logical(SAVE_FORWARD, 'solver.SAVE_FORWARD')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
+  if(SIMULATION_TYPE > 1) stop 'SIMULATION_TYPE > 1 not implemented in the reduced merged version yet'
+
+  if(SAVE_FORWARD) stop 'SAVE_FORWARD not implemented in the reduced merged version yet'
+
   call read_value_integer(NCHUNKS, 'mesher.NCHUNKS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   if(NCHUNKS /= 1 .and. NCHUNKS /= 2 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) &
@@ -765,7 +769,7 @@
 
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
-  DT = DT * (1.d0 - 0.05d0)
+!!!!!!!!!!!!!!!!!!  DT = DT * (1.d0 - 0.05d0)
 
   call read_value_logical(OCEANS, 'model.OCEANS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
@@ -788,6 +792,10 @@
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 3) stop 'absorbing conditions not supported for three chunks yet'
 
   if(ATTENUATION_3D .and. .not. ATTENUATION) stop 'need ATTENUATION to use ATTENUATION_3D'
+
+  if(GRAVITY) stop 'GRAVITY not implemented in the reduced merged version yet because useless at high frequency'
+
+  if(ROTATION) stop 'ROTATION not implemented in the reduced merged version yet because useless at high frequency'
 
 ! radii in PREM or IASP91
 ! and normalized density at fluid-solid interface on fluid size for coupling

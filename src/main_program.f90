@@ -207,7 +207,7 @@
 !! DK DK Section 5.6 about this
   module dyn_array
 !---------------------------------------------------------------------
-!  Module containing definitions needed to dynamically allocate the values of an array 
+!  Module containing definitions needed to dynamically allocate the values of an array
 !---------------------------------------------------------------------
   include "constants.h"
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &

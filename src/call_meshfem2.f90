@@ -19,5 +19,6 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   iboolcorner_crust_mantle,iboolcorner_outer_core,iboolcorner_inner_core, &
   npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
   npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-  npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core)
+  npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core,rmass_ocean_load, &
+  normal_top_crust_mantle,ibelm_top_crust_mantle)
 

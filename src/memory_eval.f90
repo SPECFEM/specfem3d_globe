@@ -299,6 +299,9 @@
 ! rmass_ocean_load
     static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
+! updated_dof_ocean_load
+    static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
+
   endif
 
 ! add arrays used to save strain for attenuation or for adjoint runs

@@ -868,7 +868,7 @@
 
 ! store this as well for anisotropic elements in the mantle
            if(iregion_code == IREGION_CRUST_MANTLE .and. NSPECMAX_TISO_MANTLE > 1) then
-! only store the anisotropic layers, because these arrays have purposely been 
+! only store the anisotropic layers, because these arrays have purposely been
 ! declared with a reduced size to save memory
              if(ispec <= NSPECMAX_TISO_MANTLE) then
                kappahstore(i,j,k,ispec) = sngl(rho*(vph*vph - 4.d0*vsh*vsh/3.d0))

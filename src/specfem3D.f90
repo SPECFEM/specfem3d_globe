@@ -110,6 +110,13 @@
 
 ! additional mass matrix for ocean load
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
+  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
+
+! flag to mask ocean-bottom degrees of freedom for ocean load
+  logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
+
+  real(kind=CUSTOM_REAL) additional_term,force_normal_comp
 
 ! arrays to couple with the fluid regions by pointwise matching
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
@@ -782,9 +789,6 @@
 
 ! check that the code is running with the requested nb of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
-
-!! DK DK added this
-  if(OCEANS) call exit_MPI(myrank,'DK DK je crois que j ai enleve les oceans par erreur, les remettre')
 
 ! check that the code has been compiled with the right values
   if (NSPEC_computed(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE) then
@@ -2089,6 +2093,56 @@
     accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i)
     accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
   enddo
+
+  if(OCEANS) then
+
+!   initialize the updates
+    updated_dof_ocean_load(:) = .false.
+
+! for surface elements exactly at the top of the crust (ocean bottom)
+    do ispec2D = 1,NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+
+      ispec = ibelm_top_crust_mantle(ispec2D)
+
+! only for DOFs exactly at the top of the crust (ocean bottom)
+      k = NGLLZ
+
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+
+! get global point number
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+
+! only update once
+          if(.not. updated_dof_ocean_load(iglob)) then
+
+! get normal
+            nx = normal_top_crust_mantle(1,i,j,ispec2D)
+            ny = normal_top_crust_mantle(2,i,j,ispec2D)
+            nz = normal_top_crust_mantle(3,i,j,ispec2D)
+
+! make updated component of right-hand side
+! we divide by rmass_crust_mantle() which is 1 / M
+! we use the total force which includes the Coriolis term above
+            force_normal_comp = (accel_crust_mantle(1,iglob)*nx + &
+                 accel_crust_mantle(2,iglob)*ny + &
+                 accel_crust_mantle(3,iglob)*nz) / rmass_crust_mantle(iglob)
+
+            additional_term = (rmass_ocean_load(iglob) - rmass_crust_mantle(iglob)) * force_normal_comp
+
+            accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + additional_term * nx
+            accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term * ny
+            accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term * nz
+
+! done with this point
+            updated_dof_ocean_load(iglob) = .true.
+
+          endif
+
+        enddo
+      enddo
+    enddo
+  endif
 
   do i=1,NGLOB_CRUST_MANTLE
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
