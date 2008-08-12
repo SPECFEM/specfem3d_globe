@@ -39,10 +39,14 @@
  implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
  include 'mpif.h'
+#endif
 
  include "constants.h"
+#ifdef USE_MPI
  include "precision.h"
+#endif
 
 ! parameters
  integer nrec,nrec_local,myrank,it_end,NPROCTOT,NSOURCES
@@ -65,13 +69,19 @@
  character(12) ename
 
 ! variables
- integer :: iproc,sender,irec_local,irec,ier,receiver,nrec_local_received,nrec_tot_found
+ integer :: iproc,sender,irec_local,irec,receiver,nrec_local_received,nrec_tot_found
  integer :: total_seismos,total_seismos_local
  double precision :: write_time_begin,write_time
 
+#ifdef USE_MPI
+  integer :: ier
+#endif
+
  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
 
- integer msg_status(MPI_STATUS_SIZE)
+#ifdef USE_MPI
+  integer, dimension(MPI_STATUS_SIZE) :: msg_status
+#endif
 
  character(len=150) OUTPUT_FILES
 
@@ -92,7 +102,11 @@
   logical USE_BINARY_FOR_LARGE_FILE
 
 ! check that the sum of the number of receivers in each slice is nrec
+#ifdef USE_MPI
   call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+#else
+  nrec_tot_found = nrec_local
+#endif
   if(myrank == 0 .and. nrec_tot_found /= nrec) &
       call exit_MPI(myrank,'total number of receivers is incorrect')
 
@@ -102,7 +116,11 @@
 ! all the processes write their local seismograms themselves
  if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 
+#ifdef USE_MPI
    write_time_begin = MPI_WTIME()
+#else
+   write_time_begin = 0
+#endif
 
    if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
         write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
@@ -151,7 +169,11 @@
 
    if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
+#ifdef USE_MPI
    write_time = MPI_WTIME() - write_time_begin
+#else
+   write_time = 0
+#endif
 
    if(myrank == 0) then
      write(IMAIN,*)
@@ -163,7 +185,11 @@
 ! collects the data from all other processes
  else ! WRITE_SEISMOGRAMS_BY_MASTER
 
+#ifdef USE_MPI
     write_time_begin = MPI_WTIME()
+#else
+    write_time_begin = 0
+#endif
 
     if(myrank == 0) then ! on the master, gather all the seismograms
 
@@ -197,7 +223,9 @@
          ! receive except from proc 0, which is me and therefore I already have this value
          sender = iproc
          if(iproc /= 0) then
+#ifdef USE_MPI
            call MPI_RECV(nrec_local_received,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+#endif
            if(nrec_local_received < 0) call exit_MPI(myrank,'error while receiving local number of receivers')
          else
            nrec_local_received = nrec_local
@@ -210,9 +238,13 @@
                irec = number_receiver_global(irec_local)
                one_seismogram(:,:) = seismograms(:,irec_local,:)
              else
+#ifdef USE_MPI
                call MPI_RECV(irec,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+#endif
                if(irec < 1 .or. irec > nrec) call exit_MPI(myrank,'error while receiving global receiver number')
+#ifdef USE_MPI
                call MPI_RECV(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+#endif
              endif
 
              total_seismos = total_seismos + 1
@@ -241,19 +273,29 @@
 
     else  ! on the nodes, send the seismograms to the master
        receiver = 0
+#ifdef USE_MPI
        call MPI_SEND(nrec_local,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+#endif
        if (nrec_local > 0) then
          do irec_local = 1,nrec_local
            ! get global number of that receiver
            irec = number_receiver_global(irec_local)
+#ifdef USE_MPI
            call MPI_SEND(irec,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+#endif
            one_seismogram(:,:) = seismograms(:,irec_local,:)
+#ifdef USE_MPI
            call MPI_SEND(one_seismogram,NDIM*seismo_current,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+#endif
          enddo
        endif
     endif
 
+#ifdef USE_MPI
     write_time  = MPI_WTIME() - write_time_begin
+#else
+    write_time  = 0
+#endif
 
     if(myrank == 0) then
       write(IMAIN,*)

@@ -31,17 +31,41 @@
 !=======================================================================!
 
 !! DK DK for the merged version
-  include 'call_specfem2.f90'
+  subroutine specfem3D(myrank,sizeprocs,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NSOURCES, &
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS,ibool_crust_mantle,ibool_outer_core,ibool_inner_core, &
+  idoubling_crust_mantle,idoubling_inner_core,ibelm_bottom_crust_mantle, ibelm_bottom_outer_core, ibelm_top_outer_core, &
+ibelm_top_inner_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
+  normal_bottom_outer_core, normal_top_outer_core,kappavstore_crust_mantle,muvstore_crust_mantle, &
+  kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle,kappavstore_inner_core,muvstore_inner_core, &
+  rmass_crust_mantle,rmass_outer_core,rmass_inner_core,rmass_ocean_load, &
+#ifdef USE_MPI
+  NDIM_smaller_buffers,npoin2D_max_all,nrec,addressing,ibathy_topo, &
+  ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+  iboolleft_xi_inner_core,iboolright_xi_inner_core, iboolleft_eta_inner_core,iboolright_eta_inner_core,&
+  nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iboolfaces_crust_mantle,iboolfaces_outer_core,iboolfaces_inner_core, &
+  iboolcorner_crust_mantle,iboolcorner_outer_core,iboolcorner_inner_core, &
+  npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+  npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+  npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+  normal_top_crust_mantle,ibelm_top_crust_mantle, &
+#endif
+  AM_V)
 
   use dyn_array
 
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
 
 !!!!!!!!!!! DK DK now in module dyn_array  include "constants.h"
   include "precision.h"
+#endif
 
 ! include values created by the mesher
   include "values_from_mesher.h"
@@ -94,6 +118,7 @@
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: epsilondev_inner_core
 
 ! for matching with central cube in inner core
+#ifdef USE_MPI
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
   integer, dimension(:,:), allocatable :: ibool_central_cube
   double precision, dimension(:,:), allocatable :: buffer_slices,buffer_slices2
@@ -101,15 +126,17 @@
   integer nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,receiver_cube_from_slices
 
   integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core,ndim_assemble
-
-! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+#endif
 
 ! for crust/oceans coupling
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
 
-! additional mass matrix for ocean load
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
+#ifdef USE_MPI
+! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+
+! additional mass matrix for ocean load
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
@@ -117,6 +144,7 @@
   logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
 
   real(kind=CUSTOM_REAL) additional_term,force_normal_comp
+#endif
 
 ! arrays to couple with the fluid regions by pointwise matching
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
@@ -128,9 +156,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
 
+#ifdef USE_MPI
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_IC) :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
   integer, dimension(NSPEC2DMAX_YMIN_YMAX_IC) :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
   integer, dimension(NSPEC2D_BOTTOM_IC) :: ibelm_bottom_inner_core
+#endif
   integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
 
 ! for matching between fluid and solid regions
@@ -145,6 +175,8 @@
   real(kind=CUSTOM_REAL) rval,thetaval,phival
 
 ! ---- arrays to assemble between chunks
+
+#ifdef USE_MPI
 
 ! communication pattern for faces between chunks
   integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
@@ -163,7 +195,10 @@
 ! always three times bigger and therefore scalars can use the first part
 ! of the vector buffer in memory even if it has an additional index here
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+  integer :: npoin2D_max_all,NDIM_smaller_buffers
   real(kind=CUSTOM_REAL), dimension(NDIM_smaller_buffers,npoin2D_max_all) :: buffer_send_faces,buffer_received_faces
+
+#endif
 
 ! -------- arrays specific to each region here -----------
 
@@ -254,19 +289,26 @@
   real(kind=CUSTOM_REAL) time,deltat,deltatover2,deltatsqover2
   double precision scale_t,scale_displ,scale_veloc
 
+#ifdef USE_MPI
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
   integer npoin2D_faces_outer_core(NUMFACES_SHARED)
   integer npoin2D_faces_inner_core(NUMFACES_SHARED)
+#endif
 
 ! parameters for the source
-  integer it,isource
-  integer yr,jda,ho,mi
+  integer :: it
+#ifdef USE_MPI
+  integer :: isource
+  integer :: yr,jda,ho,mi
+  double precision :: sec
+#endif
   real(kind=CUSTOM_REAL) stf_used
-  double precision sec,stf
-  double precision t0
+  double precision :: stf
+  double precision :: t0
   double precision, external :: comp_source_time_function
 
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+#ifdef USE_MPI
   integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrays
@@ -275,28 +317,39 @@
   double precision, dimension(NSOURCES) :: t_cmt,hdur,hdur_gaussian
   double precision, dimension(NSOURCES) :: theta_source,phi_source
   double precision, dimension(NDIM,NDIM,NSOURCES) :: nu_source
+#endif
 
 ! receiver information
+#ifdef USE_MPI
   integer :: nrec,nrec_local,nrec_tot_found,irec_local
   double precision :: hlagrange
   integer, dimension(:), allocatable :: number_receiver_global
   character(len=150) :: STATIONS,rec_filename
+#endif
 
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+#ifdef USE_MPI
   integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
   double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
   double precision, dimension(NDIM,NDIM,nrec) :: nu
   double precision, dimension(nrec) :: stlat,stlon,stele
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
+#endif
 
 ! seismograms
-  integer it_begin,it_end,nit_written
-  double precision uxd, uyd, uzd
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
+  integer :: it_begin,it_end
   integer :: seismo_offset, seismo_current
+#ifdef USE_MPI
+  integer :: nit_written
+  double precision :: uxd, uyd, uzd
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
+#endif
 
-  integer i,j,k,ispec,irec,iglob,iglob_mantle,iglob_inner_core
+  integer :: i,j,k,ispec,iglob,iglob_mantle,iglob_inner_core
+#ifdef USE_MPI
+  integer :: irec
+#endif
 
 ! number of faces between chunks
   integer NUM_FACES,NUMMSGS_FACES
@@ -308,15 +361,19 @@
   integer NUM_MSG_TYPES
 
 ! indirect addressing for each corner of the chunks
+#ifdef USE_MPI
   integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
   integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
   integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
+#endif
 
 ! buffers for send and receive between corners of the chunks
+#ifdef USE_MPI
   real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_CM) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
      buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
+#endif
 
 ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll,wxgll
@@ -335,12 +392,15 @@
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
 
 ! Lagrange interpolators at receivers
+#ifdef USE_MPI
   double precision, dimension(NGLLX) :: hxir,hpxir
   double precision, dimension(NGLLY) :: hpetar,hetar
   double precision, dimension(NGLLZ) :: hgammar,hpgammar
   double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
+#endif
 
 ! 2-D addressing and buffers for summation between slices
+#ifdef USE_MPI
   integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
 
@@ -349,20 +409,25 @@
 
   integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
+#endif
 
 ! for addressing of the slices
+#ifdef USE_MPI
   integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
+#endif
   integer, dimension(0:NPROCTOT_VAL-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
 
 ! proc numbers for MPI
-  integer myrank,sizeprocs,ier,errorcode
+  integer :: myrank,sizeprocs
+#ifdef USE_MPI
+  integer :: ier,errorcode
+#endif
 
+#ifdef USE_MPI
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
-
-!! DK DK added this to reduce the size of the buffers
-  integer :: npoin2D_max_all,NDIM_smaller_buffers
+#endif
 
   integer ichunk,iproc_xi,iproc_eta
   integer NPROC_ONE_DIRECTION
@@ -378,6 +443,7 @@
   double precision :: time_start,tCPU,t_remain,t_total
 
 ! to determine date and time at which the run will finish
+#ifdef USE_MPI
   character(len=8) datein
   character(len=10) timein
   character(len=5)  :: zone
@@ -389,6 +455,7 @@
   integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week, &
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer, external :: idaywk
+#endif
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
@@ -469,7 +536,9 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
 ! allocate this automatic array in the memory stack to avoid memory fragmentation with "allocate()"
+#ifdef USE_MPI
  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
+#endif
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -589,6 +658,7 @@
   endif
 
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
     call MPI_BCAST(bcast_integer,40,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(bcast_double_precision,30,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -624,6 +694,7 @@
     call MPI_BCAST(DIFF_NSPEC1D_RADIAL,NB_SQUARE_CORNERS*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#endif
 
   if (myrank /=0) then
 
@@ -906,6 +977,10 @@
   if(minval(ibool_inner_core) /= 1 .or. maxval(ibool_inner_core) /= NGLOB_INNER_CORE) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
 
+!! DK DK completely suppress sources and receivers for serial tests: a fictitious
+!! DK DK source will be used instead, and seismograms will not be recorded
+#ifdef USE_MPI
+
 ! check that there is at least one receiver
   if(myrank == 0) then
     write(IMAIN,*)
@@ -1039,6 +1114,11 @@
     endif
   endif
 
+!! DK DK end of section with sources and receivers excluded in the serial case
+#else
+  t0 = 0.03d0
+#endif
+
   if(myrank == 0) then
 
   write(IMAIN,*)
@@ -1141,7 +1221,9 @@
 
   endif
 
-! the mass matrix needs to be assembled with MPI here once and for all
+#ifdef USE_MPI
+
+! the mass matrices need to be assembled with MPI here once and for all
 
 ! ocean load
   if (OCEANS) then
@@ -1201,7 +1283,7 @@
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY_VAL_IC,NCHUNKS)
 
-  if(myrank == 0) write(IMAIN,*) 'end assembling MPI mass matrix'
+  if(myrank == 0) write(IMAIN,*) 'end assembling MPI mass matrices'
 
 !
 !--- handle the communications with the central cube if it was included in the mesh
@@ -1232,6 +1314,7 @@
     if (ier /= 0 ) then
       print *,"ABORTING can not allocate in specfem3D ier=",ier
       call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+      stop 'fatal error'
     endif
 
     allocate(buffer_slices(npoin2D_cube_from_slices,NDIM),STAT=ier)
@@ -1281,6 +1364,8 @@
     where(rmass_inner_core(:) <= 0.) rmass_inner_core = 1.
 
   endif   ! end of handling the communications with the central cube
+
+#endif
 
 ! check that all the mass matrices are positive
   if(minval(rmass_crust_mantle) <= 0. .or. minval(rmass_inner_core) <= 0. .or. minval(rmass_outer_core) <= 0.) &
@@ -1460,6 +1545,7 @@
 
   endif ! END IF(ATTENUATION)
 
+#ifdef USE_MPI
 ! allocate seismogram array
   if (nrec_local > 0) then
       allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
@@ -1471,6 +1557,7 @@
     seismograms(:,:,:) = 0._CUSTOM_REAL
     nit_written = 0
   endif
+#endif
 
 ! initialize arrays to zero
 
@@ -1589,24 +1676,30 @@
 !
 
 ! synchronize all processes to make sure everybody is ready to start time loop
+#ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
-  if(myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
+  if(myrank == 0) write(IMAIN,*) 'All processes are synchronized before the time loop'
+#endif
 
   if(myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Starting time iteration loop...'
+    write(IMAIN,*) 'Starting the time iteration loop...'
     write(IMAIN,*)
   endif
 
 ! create an empty file to monitor the start of the simulation
   if(myrank == 0) then
     open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown',action='write')
-    write(IOUT,*) 'hello, starting time loop'
+    write(IOUT,*) 'hello, starting the time loop'
     close(IOUT)
   endif
 
 ! get MPI starting time
+#ifdef USE_MPI
   time_start = MPI_WTIME()
+#else
+  time_start = 0
+#endif
 
 ! initialize variables for writing seismograms
   seismo_offset = it_begin-1
@@ -1653,10 +1746,15 @@
     Ufluidnorm = maxval(abs(displ_outer_core))
 
 ! compute the maximum of the maxima for all the slices using an MPI reduction
+#ifdef USE_MPI
     call MPI_REDUCE(Usolidnorm,Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                           MPI_COMM_WORLD,ier)
     call MPI_REDUCE(Ufluidnorm,Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                           MPI_COMM_WORLD,ier)
+#else
+    Usolidnorm_all = Usolidnorm
+    Ufluidnorm_all = Ufluidnorm
+#endif
 
     if(myrank == 0) then
 
@@ -1669,14 +1767,20 @@
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
 
 ! elapsed time since beginning of the simulation
+#ifdef USE_MPI
       tCPU = MPI_WTIME() - time_start
+#else
+      tCPU = 0
+#endif
       int_tCPU = int(tCPU)
       ihours = int_tCPU / 3600
       iminutes = (int_tCPU - 3600*ihours) / 60
       iseconds = int_tCPU - 3600*ihours - 60*iminutes
+#ifdef USE_MPI
       write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
       write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
       write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+#endif
 
 ! compute estimated remaining simulation time
       t_remain = (NSTEP - it) * (tCPU/dble(it))
@@ -1686,9 +1790,11 @@
       iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
       write(IMAIN,*) 'Time steps done = ',it,' out of ',NSTEP
       write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
+#ifdef USE_MPI
       write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
       write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_remain,iminutes_remain,iseconds_remain
+#endif
 
 ! compute estimated total simulation time
       t_total = t_remain + tCPU
@@ -1696,11 +1802,14 @@
       ihours_total = int_t_total / 3600
       iminutes_total = (int_t_total - 3600*ihours_total) / 60
       iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
+#ifdef USE_MPI
       write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
       write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_total,iminutes_total,iseconds_total
+#endif
       write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
 
+#ifdef USE_MPI
       if(it < 100) then
         write(IMAIN,*) '************************************************************'
         write(IMAIN,*) '**** BEWARE: the above time estimates are not reliable'
@@ -1777,6 +1886,7 @@
       endif
 
       endif
+#endif
 
       write(IMAIN,*)
 
@@ -1792,13 +1902,16 @@
       write(IOUT,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
       write(IOUT,*)
 
+#ifdef USE_MPI
       write(IOUT,*) 'Elapsed time in seconds = ',tCPU
       write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
       write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
       write(IOUT,*)
+#endif
 
       write(IOUT,*) 'Time steps done = ',it,' out of ',NSTEP
       write(IOUT,*) 'Time steps remaining = ',NSTEP - it
+#ifdef USE_MPI
       write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
       write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_remain,iminutes_remain,iseconds_remain
@@ -1807,9 +1920,11 @@
       write(IOUT,*) 'Estimated total run time in seconds = ',t_total
       write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_total,iminutes_total,iseconds_total
+#endif
       write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
       write(IOUT,*)
 
+#ifdef USE_MPI
       if(it < NSTEP) then
 
       write(IOUT,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
@@ -1839,6 +1954,7 @@
       endif
 
       endif
+#endif
 
       close(IOUT)
 
@@ -1977,6 +2093,7 @@
 ! assemble all the contributions between slices using MPI
 
 ! outer core
+#ifdef USE_MPI
   call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -1989,6 +2106,7 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY_VAL_OC,NCHUNKS)
+#endif
 
 ! multiply by the inverse of the mass matrix and update velocity
   do i=1,NGLOB_OUTER_CORE
@@ -2033,6 +2151,8 @@
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
 
+#ifdef USE_MPI
+
 ! add the sources
   do isource = 1,NSOURCES
 
@@ -2061,6 +2181,19 @@
     endif
 
   enddo
+
+#else
+!! DK DK use a fictitious source instead
+  stf = 1.d-6 * comp_source_time_function(dble(it-1)*DT-t0,10.d0)
+! distinguish between single and double precision for reals
+  if(CUSTOM_REAL == SIZE_REAL) then
+    stf_used = sngl(stf)
+  else
+    stf_used = stf
+  endif
+   iglob = ibool_crust_mantle(2,2,2,2)
+   accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + stf_used
+#endif
 
 ! ****************************************************
 ! **********  add matching with fluid part  **********
@@ -2164,6 +2297,7 @@
 
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
+#ifdef USE_MPI
   call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
@@ -2179,19 +2313,20 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS,NDIM_smaller_buffers)
+#endif
 
 !---
 !---  use buffers to assemble forces with the central cube
 !---
 
+#ifdef USE_MPI
   if(INCLUDE_CENTRAL_CUBE) then
-
    call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
      npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
      receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
      ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,accel_inner_core,NDIM)
-
   endif   ! end of assembling forces with the central cube
+#endif
 
   do i=1,NGLOB_CRUST_MANTLE
     accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i)
@@ -2199,6 +2334,8 @@
     accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
   enddo
 
+#ifdef USE_MPI
+!! DK DK turn off the oceans in the serial case because instabilities could arise
   if(OCEANS) then
 
 !   initialize the updates
@@ -2248,6 +2385,9 @@
       enddo
     enddo
   endif
+#else
+  if(mod(it,100) == 0) write(IMAIN,*) 'suppressing OCEANS from the serial test because they can be unstable on a small surface'
+#endif
 
   do i=1,NGLOB_CRUST_MANTLE
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
@@ -2264,6 +2404,7 @@
 ! write the seismograms with time shift
 
 ! store the seismograms only if there is at least one receiver located in this slice
+#ifdef USE_MPI
   if (nrec_local > 0) then
 
   do irec_local = 1,nrec_local
@@ -2325,6 +2466,7 @@
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
   endif
+#endif
 
 !---- end of time iteration loop
 !
@@ -2335,7 +2477,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'End of the simulation'
     write(IMAIN,*)
-    close(IMAIN)
+    if(IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
   endif
 
   end subroutine specfem3D

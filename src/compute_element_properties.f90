@@ -229,9 +229,6 @@
 ! sea99_s_model_variables
   type sea99_s_model_variables
     sequence
-    integer :: sea99_ndep
-    integer :: sea99_nlat
-    integer :: sea99_nlon
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
@@ -239,6 +236,9 @@
     double precision :: alonmax
     double precision :: sea99_vs(100,100,100)
     double precision :: sea99_depth(100)
+    integer :: sea99_ndep
+    integer :: sea99_nlat
+    integer :: sea99_nlon
  end type sea99_s_model_variables
 
  type (sea99_s_model_variables) SEA99M_V

@@ -47,10 +47,14 @@
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
 
   include "constants.h"
+#ifdef USE_MPI
   include "precision.h"
+#endif
 
 !! DK DK for the merged version
 ! include values created by the mesher
@@ -150,7 +154,11 @@
 
   integer npoin2D,npoin2D_send_local,npoin2D_receive_local
 
-  integer i,j,k,ispec,ispec2D,ipoin2D,ier
+  integer i,j,k,ispec,ispec2D,ipoin2D
+
+#ifdef USE_MPI
+  integer :: ier
+#endif
 
 ! current message number
   integer imsg
@@ -743,12 +751,16 @@
 
 !     gather number of points for sender
       npoin2D_send_local = npoin2D_send(imsg)
+#ifdef USE_MPI
       call MPI_BCAST(npoin2D_send_local,1,MPI_INTEGER,iprocfrom_faces(imsg),MPI_COMM_WORLD,ier)
+#endif
       if(myrank /= iprocfrom_faces(imsg)) npoin2D_send(imsg) = npoin2D_send_local
 
 !     gather number of points for receiver
       npoin2D_receive_local = npoin2D_receive(imsg)
+#ifdef USE_MPI
       call MPI_BCAST(npoin2D_receive_local,1,MPI_INTEGER,iprocto_faces(imsg),MPI_COMM_WORLD,ier)
+#endif
       if(myrank /= iprocto_faces(imsg)) npoin2D_receive(imsg) = npoin2D_receive_local
 
   enddo

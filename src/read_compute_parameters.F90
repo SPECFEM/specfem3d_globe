@@ -190,6 +190,11 @@
     INFLATE_CENTRAL_CUBE = .true.
   endif
 
+#ifndef USE_MPI
+!! DK DK always suppress the central cube if one runs a serial test in one slice
+  INCLUDE_CENTRAL_CUBE = .false.
+#endif
+
 ! number of elements at the surface along the two sides of the first chunk
   call read_value_integer(NEX_XI_read, 'mesher.NEX_XI')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'

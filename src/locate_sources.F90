@@ -41,10 +41,14 @@
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
 
   include "constants.h"
+#ifdef USE_MPI
   include "precision.h"
+#endif
 
   integer NPROCTOT
   integer NSTEP,NSOURCES,NEX_XI
@@ -81,7 +85,10 @@
   integer iprocloop
 
   integer i,j,k,ispec,iglob
-  integer ier
+
+#ifdef USE_MPI
+  integer :: ier
+#endif
 
   double precision ell
   double precision elevation
@@ -178,6 +185,7 @@
 ! read all the sources
   if(myrank == 0) call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor,DT,NSOURCES)
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
   call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -192,12 +200,17 @@
   call MPI_BCAST(depth,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(moment_tensor,6*NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
 
 ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
 
 ! get MPI starting time for all sources
+#ifdef USE_MPI
   time_start = MPI_WTIME()
+#else
+  time_start = 0
+#endif
 
 ! convert the half duration for triangle STF to the one for gaussian STF
   hdur_gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
@@ -480,6 +493,7 @@
   ispec_selected_source_all(:,:) = 0
   ispec_selected_source_all(:,1:NSOURCES_SUBSET_current_size) = -1
 
+#ifdef USE_MPI
   call MPI_GATHER(ispec_selected_source_subset,NSOURCES_SUBSET_current_size,MPI_INTEGER, &
                   ispec_selected_source_all,NSOURCES_SUBSET_current_size,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(xi_source_subset,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
@@ -496,6 +510,7 @@
     y_found_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(z_found_source,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION, &
     z_found_source_all,NSOURCES_SUBSET_current_size,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
 
 ! this is executed by main process only
   if(myrank == 0) then
@@ -660,15 +675,21 @@
 
 
 ! main process broadcasts the results to all the slices
+#ifdef USE_MPI
   call MPI_BCAST(islice_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ispec_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(xi_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(eta_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(gamma_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
 
 ! elapsed time since beginning of source detection
   if(myrank == 0) then
+#ifdef USE_MPI
     tCPU = MPI_WTIME() - time_start
+#else
+    tCPU = 0
+#endif
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for detection of sources in seconds = ',tCPU
     write(IMAIN,*)

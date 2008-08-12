@@ -40,10 +40,14 @@
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
 
   include "constants.h"
+#ifdef USE_MPI
   include "precision.h"
+#endif
 
   integer NPROCTOT,NCHUNKS
 
@@ -78,7 +82,10 @@
 
   integer irec
   integer i,j,k,ispec,iglob
-  integer ier
+
+#ifdef USE_MPI
+  integer :: ier
+#endif
 
   double precision ell
   double precision elevation
@@ -154,7 +161,11 @@
   ispec_selected_rec(:) = 0
 
 ! get MPI starting time
+#ifdef USE_MPI
   time_start = MPI_WTIME()
+#else
+  time_start = 0
+#endif
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -188,6 +199,7 @@
   endif
 
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
   call MPI_BCAST(station_name,nrec*MAX_LENGTH_STATION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(network_name,nrec*MAX_LENGTH_NETWORK_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
@@ -195,6 +207,7 @@
   call MPI_BCAST(stlon,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(stbur,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
 
 ! loop on all the stations to locate them in the mesh
   do irec=1,nrec
@@ -479,6 +492,7 @@
 
 ! for MPI version, gather information from all the nodes
   ispec_selected_rec_all(:,:) = -1
+#ifdef USE_MPI
   call MPI_GATHER(ispec_selected_rec,nrec,MPI_INTEGER,ispec_selected_rec_all,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   call MPI_GATHER(xi_receiver,nrec,MPI_DOUBLE_PRECISION,xi_receiver_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -488,6 +502,7 @@
   call MPI_GATHER(x_found,nrec,MPI_DOUBLE_PRECISION,x_found_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(y_found,nrec,MPI_DOUBLE_PRECISION,y_found_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(z_found,nrec,MPI_DOUBLE_PRECISION,z_found_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
 
 ! this is executed by main process only
   if(myrank == 0) then
@@ -605,7 +620,11 @@
   close(27)
 
 ! elapsed time since beginning of mesh generation
+#ifdef USE_MPI
   tCPU = MPI_WTIME() - time_start
+#else
+  tCPU = 0
+#endif
   write(IMAIN,*)
   write(IMAIN,*) 'Elapsed time for receiver detection in seconds = ',tCPU
   write(IMAIN,*)
@@ -615,6 +634,7 @@
   endif    ! end of section executed by main process only
 
 ! main process broadcasts the results to all the slices
+#ifdef USE_MPI
   call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(islice_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -630,6 +650,7 @@
   call MPI_BCAST(stlon,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(nu,nrec*3*3,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
 
   end subroutine locate_receivers
 

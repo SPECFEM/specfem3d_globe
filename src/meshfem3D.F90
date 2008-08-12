@@ -34,17 +34,39 @@
 !=====================================================================!
 
 !! DK DK for the merged version
-  include 'call_meshfem2.f90'
+  subroutine meshfem3D(myrank,sizeprocs,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,ibathy_topo,NSOURCES, &
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS,ibool_crust_mantle,ibool_outer_core,ibool_inner_core, &
+  idoubling_crust_mantle,idoubling_inner_core,ibelm_bottom_crust_mantle, ibelm_bottom_outer_core, ibelm_top_outer_core, &
+  ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+  ibelm_top_inner_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
+  normal_bottom_outer_core, normal_top_outer_core,kappavstore_crust_mantle,muvstore_crust_mantle, &
+  kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle,kappavstore_inner_core,muvstore_inner_core, &
+  rmass_crust_mantle, rmass_outer_core, rmass_inner_core, &
+  nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+#ifdef USE_MPI
+  iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+  iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+  iboolleft_xi_inner_core,iboolright_xi_inner_core, iboolleft_eta_inner_core,iboolright_eta_inner_core,&
+  iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iboolfaces_crust_mantle,iboolfaces_outer_core,iboolfaces_inner_core, &
+  iboolcorner_crust_mantle,iboolcorner_outer_core,iboolcorner_inner_core, &
+  npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+  npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+  npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+#endif
+  rmass_ocean_load,normal_top_crust_mantle,ibelm_top_crust_mantle,AM_V)
 
   use dyn_array
 
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
 
 !!!!!!!!!!! DK DK now in module dyn_array  include "constants.h"
   include "precision.h"
+#endif
 
 !! DK DK for the merged version
 ! include values created by the mesher
@@ -228,9 +250,6 @@
 ! sea99_s_model_variables
   type sea99_s_model_variables
     sequence
-    integer :: sea99_ndep
-    integer :: sea99_nlat
-    integer :: sea99_nlon
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
@@ -238,6 +257,9 @@
     double precision :: alonmax
     double precision :: sea99_vs(100,100,100)
     double precision :: sea99_depth(100)
+    integer :: sea99_ndep
+    integer :: sea99_nlat
+    integer :: sea99_nlon
  end type sea99_s_model_variables
 
  type (sea99_s_model_variables) SEA99M_V
@@ -312,6 +334,8 @@
 !! DK DK for the merged version
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
 ! use the size of the largest region (crust_mantle) and therefore largest possible array
+
+#ifdef USE_MPI
   integer, dimension(NGLOB1D_RADIAL_CM) :: ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
              ibool1D_leftxi_righteta,ibool1D_rightxi_righteta
 
@@ -322,6 +346,7 @@
              yread1D_leftxi_righteta,yread1D_rightxi_righteta, &
              zread1D_leftxi_lefteta,zread1D_rightxi_lefteta, &
              zread1D_leftxi_righteta,zread1D_rightxi_righteta
+#endif
 
 ! rotation matrix from Euler angles
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
@@ -398,9 +423,6 @@
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_layer_has_a_doubling
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
-! memory size of all the static arrays
-! double precision :: static_memory_size
-
 ! arrays for BCAST
   integer, dimension(40) :: bcast_integer
   double precision, dimension(30) :: bcast_double_precision
@@ -458,8 +480,174 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
 
-!! DK DK for the merged version
-  include 'declarations_mesher.f90'
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+
+! Gauss-Lobatto-Legendre points of integration and weights
+  double precision, dimension(NGLLX) :: xigll,wxgll
+  double precision, dimension(NGLLY) :: yigll,wygll
+  double precision, dimension(NGLLZ) :: zigll,wzgll
+
+! 3D shape functions and their derivatives
+  double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
+  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
+
+! 2D shape functions and their derivatives
+  double precision shape2D_x(NGNOD2D,NGLLY,NGLLZ)
+  double precision shape2D_y(NGNOD2D,NGLLX,NGLLZ)
+  double precision shape2D_bottom(NGNOD2D,NGLLX,NGLLY)
+  double precision shape2D_top(NGNOD2D,NGLLX,NGLLY)
+
+  double precision dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ)
+  double precision dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ)
+  double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
+  double precision dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY)
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: rhostore_local,kappavstore_local
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store
+
+  logical, dimension(6,NSPEC_CRUST_MANTLE) :: iboun
+
+! very large arrays used for the sorting routine
+  integer, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: locval
+  logical, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: ifseg
+  double precision, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: xp,yp,zp
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
+  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
+
+  integer, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: copy_ibool_ori
+
+  logical, dimension(2,NSPEC_CRUST_MANTLE) :: iMPIcut_xi,iMPIcut_eta
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: rho_vp,rho_vs
+
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: Qmu_store
+  double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: tau_e_store
+
+!!!!! DK DK for merged version, all the arrays below are allocated statically instead
+
+#ifdef USE_MPI
+  integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
+  integer npoin2D_faces_outer_core(NUMFACES_SHARED)
+  integer npoin2D_faces_inner_core(NUMFACES_SHARED)
+
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+             npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+             npoin2D_xi_inner_core,npoin2D_eta_inner_core
+#endif
+
+! number of elements on the boundaries
+  integer :: nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
+  integer :: nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
+  integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: kappavstore_crust_mantle,muvstore_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
+    kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore_inner_core,muvstore_inner_core
+
+!! DK DK these arrays are useless in the solver and will therefore be allocated with a dummy size of 1
+  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: kappahstore_inner_core,muhstore_inner_core,eta_anisostore_inner_core
+  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: kappavstore_outer_core,muvstore_outer_core
+  real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: kappahstore_outer_core,muhstore_outer_core,eta_anisostore_outer_core
+
+! 2-D jacobians and normals
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_IC) :: jacobian2D_xmin_inner_core,jacobian2D_xmax_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_IC) :: jacobian2D_ymin_inner_core,jacobian2D_ymax_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_IC) :: jacobian2D_bottom_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_IC) :: jacobian2D_top_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_IC) :: normal_xmin_inner_core,normal_xmax_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_IC) :: normal_ymin_inner_core,normal_ymax_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_IC) :: normal_bottom_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_IC) :: normal_top_inner_core
+
+  integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
+  integer, dimension(NSPEC2DMAX_YMIN_YMAX_CM) :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
+  integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: &
+    jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_CM) :: &
+    jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: jacobian2D_bottom_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: jacobian2D_top_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: normal_xmin_crust_mantle,normal_xmax_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2DMAX_YMIN_YMAX_CM) :: normal_ymin_crust_mantle,normal_ymax_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: normal_bottom_crust_mantle
+
+  integer, dimension(NSPEC2DMAX_XMIN_XMAX_OC) :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
+  integer, dimension(NSPEC2DMAX_YMIN_YMAX_OC) :: ibelm_ymin_outer_core,ibelm_ymax_outer_core
+  integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
+  integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: normal_xmin_outer_core,normal_xmax_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: normal_ymin_outer_core,normal_ymax_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
+
+  integer, dimension(NSPEC2DMAX_XMIN_XMAX_IC) :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
+  integer, dimension(NSPEC2DMAX_YMIN_YMAX_IC) :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
+  integer, dimension(NSPEC2D_BOTTOM_IC) :: ibelm_bottom_inner_core
+  integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
+
+#ifdef USE_MPI
+  integer, dimension(NGLOB2DMAX_XY_VAL_CM,NUMFACES_SHARED) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_VAL_OC,NUMFACES_SHARED) :: iboolfaces_outer_core
+  integer, dimension(NGLOB2DMAX_XY_VAL_IC,NUMFACES_SHARED) :: iboolfaces_inner_core
+#endif
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+
+  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+
+!! DK DK this array is useless in the solver and is therefore allocated with a dummy size of 1
+  integer, dimension(1) :: idoubling_outer_core
+
+  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+
+#ifdef USE_MPI
+  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
+  integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
+  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_OC) :: iboolleft_xi_outer_core,iboolright_xi_outer_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
+
+!---- arrays to assemble between chunks
+
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: imsg_type,iprocfrom_faces,iprocto_faces
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+#endif
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -469,7 +657,18 @@
     open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_mesher.txt',status='unknown',action='write')
 
 ! get MPI starting time
+#ifdef USE_MPI
   time_start = MPI_WTIME()
+#else
+  time_start = 0
+  write(IMAIN,*)
+  write(IMAIN,*) '******************************************************************'
+  write(IMAIN,*) '*** This is a serial test run (MPI turned off)'
+  write(IMAIN,*) '*** that will not compute seismograms'
+  write(IMAIN,*) '*** but that will test the stability of the code in one mesh slice'
+  write(IMAIN,*) '******************************************************************'
+  write(IMAIN,*)
+#endif
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -547,6 +746,7 @@
   endif
 
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
     call MPI_BCAST(bcast_integer,40,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(bcast_double_precision,30,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -583,6 +783,7 @@
     call MPI_BCAST(DIFF_NSPEC1D_RADIAL,NB_SQUARE_CORNERS*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#endif
 
   if (myrank /=0) then
 
@@ -886,6 +1087,7 @@
 ! the variables read are declared and stored in structure D3MM_V
       if(myrank == 0) call read_mantle_model(D3MM_V)
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
       call MPI_BCAST(D3MM_V%dvs_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(D3MM_V%dvs_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(D3MM_V%dvp_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -893,6 +1095,7 @@
       call MPI_BCAST(D3MM_V%spknt,NK+1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(D3MM_V%qq0,(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(D3MM_V%qq,3*(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
    elseif(THREE_D_MODEL == THREE_D_MODEL_SEA99_JP3D) then
 ! the variables read are declared and stored in structure SEA99M_V and JP3DM_V
       if(myrank == 0) then
@@ -901,6 +1104,7 @@
       endif
 ! broadcast the information read on the master to the nodes
 ! SEA99M_V
+#ifdef USE_MPI
       call MPI_BCAST(SEA99M_V%sea99_ndep,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(SEA99M_V%sea99_nlat,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(SEA99M_V%sea99_nlon,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -966,11 +1170,14 @@
       call MPI_BCAST(JP3DM_V%VS,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(JP3DM_V%RA,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(JP3DM_V%DEPJ,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
+
    elseif(THREE_D_MODEL == THREE_D_MODEL_SEA99) then
 ! the variables read are declared and stored in structure SEA99M_V
       if(myrank == 0) call read_sea99_s_model(SEA99M_V)
 ! broadcast the information read on the master to the nodes
 ! SEA99M_V
+#ifdef USE_MPI
       call MPI_BCAST(SEA99M_V%sea99_ndep,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(SEA99M_V%sea99_nlat,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(SEA99M_V%sea99_nlon,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -981,10 +1188,13 @@
       call MPI_BCAST(SEA99M_V%alonmax,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(SEA99M_V%sea99_vs,100*100*100,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(SEA99M_V%sea99_depth,100,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
+
    elseif(THREE_D_MODEL == THREE_D_MODEL_JP3D) then
 ! the variables read are declared and stored in structure JP3DM_V
       if(myrank == 0) call read_iso3d_dpzhao_model(JP3DM_V)
 ! JP3DM_V
+#ifdef USE_MPI
       call MPI_BCAST(JP3DM_V%NPA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(JP3DM_V%NRA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(JP3DM_V%NHA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -1039,12 +1249,15 @@
       call MPI_BCAST(JP3DM_V%VS,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(JP3DM_V%RA,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(JP3DM_V%DEPJ,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
+
    elseif(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
            .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
       if(myrank == 0) call read_model_s362ani(THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
                               THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
                               numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
                               xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
+#ifdef USE_MPI
   call MPI_BCAST(numker,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(numhpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ihpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -1065,6 +1278,7 @@
   call MPI_BCAST(kerstr,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(refmdl,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(varstr,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+#endif
 
     else
       call exit_MPI(myrank,'3D model not defined')
@@ -1075,21 +1289,25 @@
 ! the variables read are declared and stored in structure AMM_V
     if(myrank == 0) call read_aniso_mantle_model(AMM_V)
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
     call MPI_BCAST(AMM_V%npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(AMM_V%beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(AMM_V%pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
   endif
 
   if(CRUSTAL) then
 ! the variables read are declared and stored in structure CM_V
     if(myrank == 0) call read_crustal_model(CM_V)
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
     call MPI_BCAST(CM_V%thlr,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(CM_V%velocp,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(CM_V%velocs,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(CM_V%dens,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(CM_V%abbreviation,NCAP_CRUST*NCAP_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
     call MPI_BCAST(CM_V%code,2*NKEYS_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+#endif
   endif
 
   if(ANISOTROPIC_INNER_CORE) then
@@ -1099,21 +1317,22 @@
 
   if(ATTENUATION .and. ATTENUATION_3D) then
     if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
-
+#ifdef USE_MPI
     call MPI_BCAST(AM_V%min_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%max_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%QT_c_source, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%Qtau_s(1),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%Qtau_s(2),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%Qtau_s(3),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+#endif
   endif
 
   if(ATTENUATION .and. .not. ATTENUATION_3D) then
      if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
-
+#ifdef USE_MPI
     call MPI_BCAST(AM_V%min_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%max_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-
+#endif
     call attenuation_model_setup(REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,AM_S,AS_V)
   endif
 
@@ -1121,7 +1340,9 @@
   if(TOPOGRAPHY .or. OCEANS) then
     if(myrank == 0) call read_topo_bathy_file(ibathy_topo)
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
     call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#endif
   endif
 
 ! get addressing for this process
@@ -1144,7 +1365,26 @@
   volume_total = ZERO
 
 !! DK DK for the merged version
-  include 'allocate_before.f90'
+  allocate(xelm_store_crust_mantle(NGNOD,NSPEC_CRUST_MANTLE),stat=ier)
+  if(ier /= 0) stop 'error memory allocation merged version'
+  allocate(yelm_store_crust_mantle(NGNOD,NSPEC_CRUST_MANTLE),stat=ier)
+  if(ier /= 0) stop 'error memory allocation merged version'
+  allocate(zelm_store_crust_mantle(NGNOD,NSPEC_CRUST_MANTLE),stat=ier)
+  if(ier /= 0) stop 'error memory allocation merged version'
+
+  allocate(xelm_store_outer_core(NGNOD,NSPEC_OUTER_CORE),stat=ier)
+  if(ier /= 0) stop 'error memory allocation merged version'
+  allocate(yelm_store_outer_core(NGNOD,NSPEC_OUTER_CORE),stat=ier)
+  if(ier /= 0) stop 'error memory allocation merged version'
+  allocate(zelm_store_outer_core(NGNOD,NSPEC_OUTER_CORE),stat=ier)
+  if(ier /= 0) stop 'error memory allocation merged version'
+
+  allocate(xelm_store_inner_core(NGNOD,NSPEC_INNER_CORE),stat=ier)
+  if(ier /= 0) stop 'error memory allocation merged version'
+  allocate(yelm_store_inner_core(NGNOD,NSPEC_INNER_CORE),stat=ier)
+  if(ier /= 0) stop 'error memory allocation merged version'
+  allocate(zelm_store_inner_core(NGNOD,NSPEC_INNER_CORE),stat=ier)
+  if(ier /= 0) stop 'error memory allocation merged version'
 
 !----
 !----  loop on all the regions of the mesh
@@ -1184,136 +1424,108 @@
 !! DK DK for merged version
   if(iregion_code == IREGION_CRUST_MANTLE) then
 ! crust_mantle
-    call create_regions_mesh(iregion_code,ibool_crust_mantle,idoubling_crust_mantle, &
-         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
-         volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2,nglob(iregion_code),npointot, &
-         NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
-         NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code),ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-         ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-         NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-         myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-         ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-         R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_layer_has_a_doubling,CASE_3D, &
-         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
-         numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-         nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ratio_divide_central_cube, &
-         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
-  iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-  NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM, &
-         ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-         ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
-         nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle,nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
-  ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle,ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
-  ibelm_bottom_crust_mantle, ibelm_top_crust_mantle, &
-  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
-  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
-  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
-  jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
-  jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle,jacobian2D_bottom_crust_mantle,jacobian2D_top_crust_mantle, &
-  normal_xmin_crust_mantle,normal_xmax_crust_mantle,normal_ymin_crust_mantle, &
-  normal_ymax_crust_mantle,normal_bottom_crust_mantle,normal_top_crust_mantle, &
-  kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-  rmass_crust_mantle,xelm_store_crust_mantle,yelm_store_crust_mantle,zelm_store_crust_mantle, &
-!! DK DK this will have to change to fully support David's code to cut the superbrick
-  npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
-  xigll,wxgll, yigll,wygll, zigll,wzgll, shape3D, dershape3D, shape2D_x, shape2D_y, shape2D_bottom, shape2D_top, &
-  dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top, rhostore_local,kappavstore_local, &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-  iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
+    call create_regions_mesh(iregion_code,ibool_crust_mantle,idoubling_crust_mantle,xstore,ystore,zstore,rmins,rmaxs,iproc_xi, &
+  iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso,volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2, &
+  nglob(iregion_code),npointot,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code), &
+  NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code),ELLIPTICITY,TOPOGRAPHY, &
+  TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,NPROC_XI,NPROC_ETA, &
+  myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,ATTENUATION,ATTENUATION_3D,NCHUNKS, &
+  INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL,R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
+  RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
+  this_layer_has_a_doubling,CASE_3D,AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+  numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+  coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
+  mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2),nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+  nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle,ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle,ibelm_ymin_crust_mantle, &
+  ibelm_ymax_crust_mantle,ibelm_bottom_crust_mantle,ibelm_top_crust_mantle,jacobian2D_xmin_crust_mantle, &
+  jacobian2D_xmax_crust_mantle,jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle,jacobian2D_bottom_crust_mantle, &
+  jacobian2D_top_crust_mantle,normal_xmin_crust_mantle,normal_xmax_crust_mantle,normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+  normal_bottom_crust_mantle,normal_top_crust_mantle,kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
+  muhstore_crust_mantle,eta_anisostore_crust_mantle,rmass_crust_mantle,xelm_store_crust_mantle,yelm_store_crust_mantle, &
+  zelm_store_crust_mantle,xigll,wxgll,yigll,wygll,zigll,wzgll,shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
+  dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top,rhostore_local,kappavstore_local,c11store,c12store,c13store,c14store, &
+  c15store,c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store,c36store,c44store,c45store,c46store, &
+  c55store,c56store,c66store,iboun,locval,ifseg,xp,yp,zp,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
+#ifdef USE_MPI
+  maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)),NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+!! DK DK this below with index (1) will have to change to fully support David's code to cut the superbrick
+  NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1),iboolleft_xi_crust_mantle,&
+  iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle,ibool1D_leftxi_lefteta, &
+  ibool1D_rightxi_lefteta,ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
+  xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
+  yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
+#endif
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
 
   else if(iregion_code == IREGION_OUTER_CORE) then
 ! outer_core
-    call create_regions_mesh(iregion_code,ibool_outer_core,idoubling_outer_core, &
-         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
-         volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2,nglob(iregion_code),npointot, &
-         NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code), &
-         NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
-         ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-         ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-         NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-         myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-         ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-         R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_layer_has_a_doubling,CASE_3D, &
-         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
-         numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-         nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ratio_divide_central_cube, &
-         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
-  iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-  NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC, &
-         ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-         ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
-         nspec2D_xmin_outer_core,nspec2D_xmax_outer_core,nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
-  ibelm_xmin_outer_core,ibelm_xmax_outer_core,ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
-  ibelm_bottom_outer_core, ibelm_top_outer_core, &
-  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
-  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
-  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
-  jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
-  jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
-  normal_xmin_outer_core,normal_xmax_outer_core,normal_ymin_outer_core, &
-  normal_ymax_outer_core,normal_bottom_outer_core,normal_top_outer_core, &
-  kappavstore_outer_core,kappahstore_outer_core,muvstore_outer_core,muhstore_outer_core,eta_anisostore_outer_core, &
-  rmass_outer_core,xelm_store_outer_core,yelm_store_outer_core,zelm_store_outer_core, &
-!! DK DK this will have to change to fully support David's code to cut the superbrick
-  npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1), &
-  xigll,wxgll, yigll,wygll, zigll,wzgll, shape3D, dershape3D, shape2D_x, shape2D_y, shape2D_bottom, shape2D_top, &
-  dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top, rhostore_local,kappavstore_local, &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-  iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
+    call create_regions_mesh(iregion_code,ibool_outer_core,idoubling_outer_core,xstore,ystore,zstore,rmins,rmaxs,iproc_xi, &
+  iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso,volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2, &
+  nglob(iregion_code),npointot,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code), &
+  NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code),ELLIPTICITY,TOPOGRAPHY, &
+  TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,NPROC_XI,NPROC_ETA, &
+  myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,ATTENUATION,ATTENUATION_3D,NCHUNKS, &
+  INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL,R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
+  RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
+  this_layer_has_a_doubling,CASE_3D,AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+  numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+  coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
+  mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2),nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
+  nspec2D_ymin_outer_core,nspec2D_ymax_outer_core,ibelm_xmin_outer_core,ibelm_xmax_outer_core,ibelm_ymin_outer_core, &
+  ibelm_ymax_outer_core,ibelm_bottom_outer_core,ibelm_top_outer_core,jacobian2D_xmin_outer_core, &
+  jacobian2D_xmax_outer_core,jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core,jacobian2D_bottom_outer_core, &
+  jacobian2D_top_outer_core,normal_xmin_outer_core,normal_xmax_outer_core,normal_ymin_outer_core,normal_ymax_outer_core, &
+  normal_bottom_outer_core,normal_top_outer_core,kappavstore_outer_core,kappahstore_outer_core,muvstore_outer_core, &
+  muhstore_outer_core,eta_anisostore_outer_core,rmass_outer_core,xelm_store_outer_core,yelm_store_outer_core, &
+  zelm_store_outer_core,xigll,wxgll,yigll,wygll,zigll,wzgll,shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
+  dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top,rhostore_local,kappavstore_local,c11store,c12store,c13store,c14store, &
+  c15store,c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store,c36store,c44store,c45store,c46store, &
+  c55store,c56store,c66store,iboun,locval,ifseg,xp,yp,zp,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
+#ifdef USE_MPI
+  maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)),NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+!! DK DK this below with index (1) will have to change to fully support David's code to cut the superbrick
+  NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1),iboolleft_xi_outer_core, &
+  iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core,ibool1D_leftxi_lefteta, &
+  ibool1D_rightxi_lefteta,ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
+  xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
+  yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
+#endif
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
 
   else if(iregion_code == IREGION_INNER_CORE) then
 ! inner_core
-    call create_regions_mesh(iregion_code,ibool_inner_core,idoubling_inner_core, &
-         xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
-         volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2,nglob(iregion_code),npointot, &
-         NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code), &
-         NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
-         ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-         ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-         NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-         myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
-         ATTENUATION,ATTENUATION_3D,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-         R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-         ner,ratio_sampling_array,doubling_index,r_bottom, r_top,this_layer_has_a_doubling,CASE_3D, &
-         AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
-         numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-         nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-         coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ratio_divide_central_cube, &
-         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
-  iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-  NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC,ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-         ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
-         nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
-  ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core, &
-  ibelm_bottom_inner_core, ibelm_top_inner_core, &
-  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
-  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
-  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
-  jacobian2D_xmin_inner_core,jacobian2D_xmax_inner_core, &
-  jacobian2D_ymin_inner_core,jacobian2D_ymax_inner_core,jacobian2D_bottom_inner_core,jacobian2D_top_inner_core, &
-  normal_xmin_inner_core,normal_xmax_inner_core,normal_ymin_inner_core, &
-  normal_ymax_inner_core,normal_bottom_inner_core,normal_top_inner_core, &
-  kappavstore_inner_core,kappahstore_inner_core,muvstore_inner_core,muhstore_inner_core,eta_anisostore_inner_core, &
-  rmass_inner_core,xelm_store_inner_core,yelm_store_inner_core,zelm_store_inner_core, &
-!! DK DK this will have to change to fully support David's code to cut the superbrick
-  npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
-  xigll,wxgll, yigll,wygll, zigll,wzgll, shape3D, dershape3D, shape2D_x, shape2D_y, shape2D_bottom, shape2D_top, &
-  dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top, rhostore_local,kappavstore_local, &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-  iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
+    call create_regions_mesh(iregion_code,ibool_inner_core,idoubling_inner_core,xstore,ystore,zstore,rmins,rmaxs,iproc_xi, &
+  iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso,volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2, &
+  nglob(iregion_code),npointot,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX(iregion_code), &
+  NSPEC2DMAX_YMIN_YMAX(iregion_code),NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code),ELLIPTICITY,TOPOGRAPHY, &
+  TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,NPROC_XI,NPROC_ETA, &
+  myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,ATTENUATION,ATTENUATION_3D,NCHUNKS, &
+  INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL,R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
+  RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
+  this_layer_has_a_doubling,CASE_3D,AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+  numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+  coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
+  mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2),nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
+  nspec2D_ymin_inner_core,nspec2D_ymax_inner_core,ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core, &
+  ibelm_ymax_inner_core,ibelm_bottom_inner_core,ibelm_top_inner_core,jacobian2D_xmin_inner_core, &
+  jacobian2D_xmax_inner_core,jacobian2D_ymin_inner_core,jacobian2D_ymax_inner_core,jacobian2D_bottom_inner_core, &
+  jacobian2D_top_inner_core,normal_xmin_inner_core,normal_xmax_inner_core,normal_ymin_inner_core,normal_ymax_inner_core, &
+  normal_bottom_inner_core,normal_top_inner_core,kappavstore_inner_core,kappahstore_inner_core,muvstore_inner_core, &
+  muhstore_inner_core,eta_anisostore_inner_core,rmass_inner_core,xelm_store_inner_core,yelm_store_inner_core, &
+  zelm_store_inner_core,xigll,wxgll,yigll,wygll,zigll,wzgll,shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
+  dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top,rhostore_local,kappavstore_local,c11store,c12store,c13store,c14store, &
+  c15store,c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store,c36store,c44store,c45store,c46store, &
+  c55store,c56store,c66store,iboun,locval,ifseg,xp,yp,zp,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
+#ifdef USE_MPI
+  maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)),NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+!! DK DK this below with index (1) will have to change to fully support David's code to cut the superbrick
+  NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1),iboolleft_xi_inner_core, &
+  iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core,ibool1D_leftxi_lefteta, &
+  ibool1D_rightxi_lefteta,ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
+  xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
+  yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
+#endif
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
 
   else
     stop 'DK DK incorrect region in merged code'
@@ -1331,12 +1543,18 @@
   volume_total_region = ZERO
   area_total_bottom   = ZERO
   area_total_top   = ZERO
+#ifdef USE_MPI
   call MPI_REDUCE(area_local_bottom,area_total_bottom,1,MPI_DOUBLE_PRECISION,MPI_SUM,0, &
                           MPI_COMM_WORLD,ier)
   call MPI_REDUCE(area_local_top,area_total_top,1,MPI_DOUBLE_PRECISION,MPI_SUM,0, &
                           MPI_COMM_WORLD,ier)
   call MPI_REDUCE(volume_local,volume_total_region,1,MPI_DOUBLE_PRECISION,MPI_SUM,0, &
                           MPI_COMM_WORLD,ier)
+#else
+  area_total_bottom = area_local_bottom
+  area_total_top = area_local_top
+  volume_total_region = volume_local
+#endif
 
   if(myrank == 0) then
 !   sum volume over all the regions
@@ -1391,7 +1609,9 @@
 
 !! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-  ! create chunk buffers if more than one chunk
+#ifdef USE_MPI
+
+! create chunk buffers if more than one chunk
   if(NCHUNKS > 1) then
 
 !! DK DK added this for merged version
@@ -1458,12 +1678,13 @@
 
   else
     if(myrank == 0) then
-
       write(IMAIN,*)
       write(IMAIN,*) 'only one chunk, no need to create chunk buffers'
       write(IMAIN,*)
     endif
   endif
+
+#endif
 
 ! end of loop on all the regions
   enddo
@@ -1509,15 +1730,12 @@
   write(IMAIN,*)
 
 ! load balancing
-  write(IMAIN,*) 'Load balancing = 100 % by definition'
+  write(IMAIN,*) 'Load balancing of the mesh = 100 % by definition'
   write(IMAIN,*)
 
   write(IMAIN,*)
   write(IMAIN,*) 'total number of time steps in the solver will be: ',NSTEP
-  write(IMAIN,*)
-
-  write(IMAIN,*)
-  write(IMAIN,*) 'time-stepping of the solver will be: ',DT
+  write(IMAIN,*) 'value of a time step in the solver will be: ',DT
   write(IMAIN,*)
 
 ! write information about precision used for floating-point operations
@@ -1534,13 +1752,17 @@
 
 ! elapsed time since beginning of mesh generation
   if(myrank == 0) then
+#ifdef USE_MPI
     tCPU = MPI_WTIME() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for mesh generation and buffer creation in seconds = ',tCPU
     write(IMAIN,*) 'End of mesh generation'
     write(IMAIN,*)
+#else
+    tCPU = 0
+#endif
 ! close main output file
-    close(IMAIN)
+    if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
   endif
 
   end subroutine meshfem3D

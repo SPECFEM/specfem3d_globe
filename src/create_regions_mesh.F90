@@ -25,54 +25,40 @@
 !
 !=====================================================================
 
-  subroutine create_regions_mesh(iregion_code,ibool,idoubling, &
-           xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,nspec,nspec_tiso, &
-           volume_local,area_local_bottom,area_local_top, &
-           nspl,rspl,espl,espl2,nglob_theor,npointot, &
-           NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-           ELLIPTICITY,TOPOGRAPHY,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
-           ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST, &
-           NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-           myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
-           ATTENUATION,ATTENUATION_3D, &
-           NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-           ner,ratio_sampling_array,doubling_index,r_bottom,r_top,this_layer_has_a_doubling,CASE_3D, &
-           AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
-           numker,numhpa,numcof,ihpa,lmax,nylm, &
-           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
-           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ratio_divide_central_cube, &
-           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
-  iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
-  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                  ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
-                  ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,NGLOB1D_RADIAL_MAX, &
-  nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
-  ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-  xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
-  yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
-  zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
-  jacobian2D_xmin,jacobian2D_xmax, &
-  jacobian2D_ymin,jacobian2D_ymax,jacobian2D_bottom,jacobian2D_top, &
-  normal_xmin,normal_xmax,normal_ymin, &
-  normal_ymax,normal_bottom,normal_top, &
-  kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,rmass,xelm_store,yelm_store,zelm_store, &
-  npoin2D_xi,npoin2D_eta, &
-  xigll,wxgll, yigll,wygll, zigll,wzgll, shape3D, dershape3D, shape2D_x, shape2D_y, shape2D_bottom, shape2D_top, &
-  dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top, rhostore_local,kappavstore_local, &
-    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-  iboun, locval, ifseg, xp,yp,zp, rmass_ocean_load, mask_ibool, copy_ibool_ori, iMPIcut_xi,iMPIcut_eta, &
-  rho_vp,rho_vs, Qmu_store, tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
+  subroutine create_regions_mesh(iregion_code,ibool,idoubling,xstore,ystore,zstore,rmins,rmaxs,iproc_xi,iproc_eta,ichunk,nspec, &
+  nspec_tiso,volume_local,area_local_bottom,area_local_top,nspl,rspl,espl,espl2,nglob_theor,npointot,NEX_XI,NEX_PER_PROC_XI, &
+  NEX_PER_PROC_ETA,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP,ELLIPTICITY,TOPOGRAPHY, &
+  TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,NPROC_XI,NPROC_ETA, &
+  myrank,OCEANS,ibathy_topo,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,ATTENUATION,ATTENUATION_3D,NCHUNKS, &
+  INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL,R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
+  RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN,ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
+  this_layer_has_a_doubling,CASE_3D,AMM_V,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,JP3DM_V,SEA99M_V,CM_V,AM_S,AS_V, &
+  numker,numhpa,numcof,ihpa,lmax,nylm,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+  coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
+  offset_proc_xi,offset_proc_eta,nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax,ibelm_xmin,ibelm_xmax,ibelm_ymin, &
+  ibelm_ymax,ibelm_bottom,ibelm_top,jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax,jacobian2D_bottom, &
+  jacobian2D_top,normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top,kappavstore,kappahstore,muvstore, &
+  muhstore,eta_anisostore,rmass,xelm_store,yelm_store,zelm_store,xigll,wxgll,yigll,wygll,zigll,wzgll,shape3D,dershape3D, &
+  shape2D_x,shape2D_y,shape2D_bottom,shape2D_top,dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top,rhostore_local, &
+  kappavstore_local,c11store,c12store,c13store,c14store,c15store,c16store,c22store,c23store,c24store,c25store,c26store, &
+  c33store,c34store,c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store,iboun,locval,ifseg,xp,yp,zp, &
+  rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
+#ifdef USE_MPI
+  NGLOB1D_RADIAL_MAX,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,NGLOB2DMAX_XMIN_XMAX, &
+  NGLOB2DMAX_YMIN_YMAX,npoin2D_xi,npoin2D_eta,iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta,ibool1D_leftxi_lefteta, &
+  ibool1D_rightxi_lefteta,ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
+  xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
+  yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
+#endif
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
 
 ! create the different regions of the mesh
 
   implicit none
 
+#ifdef USE_MPI
   include "mpif.h"
+#endif
   include "constants.h"
 
 !! DK DK for the merged version
@@ -80,7 +66,9 @@
   include "values_from_mesher.h"
 
 !! DK DK added this for merged version
+#ifdef USE_MPI
   integer :: npoin2D_xi,npoin2D_eta
+#endif
 
 ! mass matrix
   real(kind=CUSTOM_REAL), dimension(nglob_theor) :: rmass
@@ -97,18 +85,19 @@
 !! DK DK added this for merged version
   logical :: add_contrib_this_element
 
+#ifdef USE_MPI
 !! DK DK for merged version
   integer :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
   integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
   integer, dimension(NGLOB2DMAX_YMIN_YMAX) :: iboolleft_eta,iboolright_eta
 
 !! DK DK added this for merged version
+  integer :: NGLOB1D_RADIAL_MAX
   double precision, dimension(NGLOB1D_RADIAL_MAX) :: &
   xread1D_leftxi_lefteta, xread1D_rightxi_lefteta, xread1D_leftxi_righteta, xread1D_rightxi_righteta, &
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta
 
-  integer :: NGLOB1D_RADIAL_MAX
   integer ibool1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX)
   integer ibool1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX)
   integer ibool1D_leftxi_righteta(NGLOB1D_RADIAL_MAX)
@@ -117,6 +106,7 @@
 ! this to cut the doubling brick
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
+#endif
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer :: step_mult,offset_proc_xi,offset_proc_eta
   integer :: case_xi,case_eta,subblock_num
@@ -314,9 +304,6 @@
 ! sea99_s_model_variables
   type sea99_s_model_variables
     sequence
-    integer :: sea99_ndep
-    integer :: sea99_nlat
-    integer :: sea99_nlon
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
@@ -324,6 +311,9 @@
     double precision :: alonmax
     double precision :: sea99_vs(100,100,100)
     double precision :: sea99_depth(100)
+    integer :: sea99_ndep
+    integer :: sea99_nlat
+    integer :: sea99_nlon
  end type sea99_s_model_variables
 
  type (sea99_s_model_variables) SEA99M_V
@@ -486,7 +476,10 @@
   logical, dimension(npointot) :: ifseg
   double precision, dimension(npointot) :: xp,yp,zp
 
-  integer nglob,nglob_theor,ieoff,ilocnum,ier,errorcode
+  integer :: nglob,nglob_theor,ieoff,ilocnum,ier
+#ifdef USE_MPI
+  integer :: errorcode
+#endif
 
 ! mass matrix and bathymetry for ocean load
   integer ix_oceans,iy_oceans,iz_oceans,ispec_oceans
@@ -738,7 +731,11 @@
     allocate(stretch_tab(2,ner(1)),STAT=ier )
     if (ier /= 0) then
       print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
+#ifdef USE_MPI
       call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+#else
+      stop 'fatal error'
+#endif
     endif
 
     call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
@@ -1296,14 +1293,17 @@
 
     if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering after sorting')
 
-  ! create MPI buffers
-  ! arrays locval(npointot) and ifseg(npointot) used to save memory
+! create MPI buffers
+! arrays locval(npointot) and ifseg(npointot) used to save memory
+#ifdef USE_MPI
     call get_MPI_cutplanes_xi(myrank,nspec,iMPIcut_xi,ibool, &
                   ifseg,npointot, &
                   NSPEC2D_ETA_FACE,iregion_code,nglob,iboolleft_xi,iboolright_xi,NGLOB2DMAX_XMIN_XMAX,npoin2D_xi)
+
     call get_MPI_cutplanes_eta(myrank,nspec,iMPIcut_eta,ibool, &
                   ifseg,npointot, &
                   NSPEC2D_XI_FACE,iregion_code,nglob,iboolleft_eta,iboolright_eta,NGLOB2DMAX_YMIN_YMAX,npoin2D_eta)
+
     call get_MPI_1D_buffers(myrank,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
                   xstore,ystore,zstore,ifseg,npointot, &
                   NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code,nglob, &
@@ -1313,6 +1313,7 @@
   yread1D_leftxi_lefteta, yread1D_rightxi_lefteta, yread1D_leftxi_righteta, yread1D_rightxi_righteta, &
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
   iregion_code)
+#endif
 
 ! only create mass matrix and save all the final arrays in the second pass
   else if(ipass == 2) then

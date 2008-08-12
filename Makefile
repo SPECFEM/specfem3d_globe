@@ -36,34 +36,43 @@
 #
 FC = ifort
 MPIFC = mpif90
-FLAGS_NO_CHECK = -O1 -vec-report0 -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check all -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv
-#FLAGS_NO_CHECK = -O3 -xP -vec-report0 -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
+MPIFLAGS = -DUSE_MPI # -lmpi
+#FLAGS_NO_CHECK = -O1 -vec-report0 -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv
+FLAGS_NO_CHECK = -O3 -xP -vec-report0 -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
 
 #
 # GNU gfortran
 #
 #FC = gfortran
 #MPIFC = /opt/mpich2_gfortran/bin/mpif90
-#FLAGS_NO_CHECK = -std=f2003 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math -fbounds-check
+#MPIFLAGS = -DUSE_MPI
+#FLAGS_NO_CHECK = -std=f2003 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -fbounds-check
 
 #
 # Portland pgf90
 #
 #FC = pgf90
 #MPIFC = mpif90
-#FLAGS_NO_CHECK = -fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mstandard -fastsse -tp amd64e
+#MPIFLAGS = -DUSE_MPI
+#FLAGS_NO_CHECK = -fast -Mnobounds -Minline -Mdclchk -Knoieee -fastsse -tp amd64e -Minform=warn
 
 #
 # IBM xlf
 #
 #FC = xlf_r
 #MPIFC = mpxlf90
-#FLAGS_NO_CHECK = -O3 -qnosave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qlanglvl=2003pure -qnoflttrap
+#MPIFLAGS = -WF,-DUSE_MPI
+#FLAGS_NO_CHECK = -O3 -qstrict -q64 -qnosave -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w
+#
 # One can also use -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap -qinitauto=7FBFFFFF to trap errors
 # on MareNostrum at the Barcelona SuperComputing Center (Spain) use
-# -qtune=ppc970 -qarch=ppc64v -qsave -qstrict instead of -qnosave -qstrict -qtune=auto -qarch=auto
+# -qsave -qtune=ppc970 -qarch=ppc64v instead of -qnosave -qtune=auto -qarch=auto
 # otherwise the IBM compiler allocates the arrays in the stack and the code crashes
 # if the stack size is too small (it is limited to 1GB on MareNostrum)
+
+#######
+####### no need to change anything below this
+#######
 
 FLAGS_CHECK = $(FLAGS_NO_CHECK)
 FCFLAGS_f90 =
@@ -72,12 +81,13 @@ FCFLAGS = #-g
 
 SPECINC = setup/
 OUTPUT_FILES_INC = OUTPUT_FILES/
+CURRENT_INC = src/
 BIN = bin
 
-FCCOMPILE_CHECK = ${FC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
-FCCOMPILE_NO_CHECK = ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
-MPIFCCOMPILE_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
-MPIFCCOMPILE_NO_CHECK = ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
+FCCOMPILE_CHECK = ${FC} ${FCFLAGS} $(FLAGS_CHECK) -I$(CURRENT_INC) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
+FCCOMPILE_NO_CHECK = ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK) -I$(CURRENT_INC) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
+MPIFCCOMPILE_CHECK = ${MPIFC} ${FCFLAGS} $(MPIFLAGS) $(FLAGS_CHECK) -I$(CURRENT_INC) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
+MPIFCCOMPILE_NO_CHECK = ${MPIFC} ${FCFLAGS} $(MPIFLAGS) $(FLAGS_NO_CHECK) -I$(CURRENT_INC) -I$(SPECINC) -I$(OUTPUT_FILES_INC)
 
 CC = gcc
 CFLAGS = -g -O2
@@ -102,6 +112,8 @@ libspecfem_a_OBJECTS = \
 	$O/assemble_MPI_vector.o \
 	$O/attenuation_model.o \
 	$O/calc_jacobian.o \
+	$O/convert_time.o \
+	$O/calendar.o \
 	$O/comp_source_spectrum.o \
 	$O/comp_source_time_function.o \
 	$O/compute_arrays_source.o \
@@ -240,8 +252,8 @@ $O/libspecfem.a: $(libspecfem_a_OBJECTS)
 ### optimized flags and dependence on values from mesher here
 ###
 
-$O/specfem3D.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/specfem3D.f90
-	${MPIFCCOMPILE_NO_CHECK} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.f90
+$O/specfem3D.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/specfem3D.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.F90
 
 $O/compute_forces_crust_mantle.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_crust_mantle.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_crust_mantle.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle.f90
@@ -253,15 +265,15 @@ $O/compute_forces_inner_core.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/value
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_inner_core.o ${FCFLAGS_f90} $S/compute_forces_inner_core.f90
 
 ### use MPI here
-$O/assemble_MPI_vector.o: $(SPECINC)/constants.h $S/assemble_MPI_vector.f90
-	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_vector.o ${FCFLAGS_f90} $S/assemble_MPI_vector.f90
+$O/assemble_MPI_vector.o: $(SPECINC)/constants.h $S/assemble_MPI_vector.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_vector.o ${FCFLAGS_f90} $S/assemble_MPI_vector.F90
 
 ### use MPI here
-$O/assemble_MPI_scalar.o: $(SPECINC)/constants.h $S/assemble_MPI_scalar.f90
-	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar.o ${FCFLAGS_f90} $S/assemble_MPI_scalar.f90
+$O/assemble_MPI_scalar.o: $(SPECINC)/constants.h $S/assemble_MPI_scalar.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar.o ${FCFLAGS_f90} $S/assemble_MPI_scalar.F90
 
-$O/assemble_MPI_central_cube.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/assemble_MPI_central_cube.f90
-	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube.f90
+$O/assemble_MPI_central_cube.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/assemble_MPI_central_cube.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube.F90
 
 ###
 ### regular compilation options here
@@ -277,23 +289,23 @@ $O/comp_source_time_function.o: $S/comp_source_time_function.f90
 	${FCCOMPILE_CHECK} -c -o $O/comp_source_time_function.o ${FCFLAGS_f90} $S/comp_source_time_function.f90
 
 ## use MPI here
-$O/create_chunk_buffers.o: $(SPECINC)/constants.h $S/create_chunk_buffers.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/create_chunk_buffers.o ${FCFLAGS_f90} $S/create_chunk_buffers.f90
+$O/create_chunk_buffers.o: $(SPECINC)/constants.h $S/create_chunk_buffers.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/create_chunk_buffers.o ${FCFLAGS_f90} $S/create_chunk_buffers.F90
 
 $O/sort_array_coordinates.o: $(SPECINC)/constants.h $S/sort_array_coordinates.f90
 	${FCCOMPILE_CHECK} -c -o $O/sort_array_coordinates.o ${FCFLAGS_f90} $S/sort_array_coordinates.f90
 
 ### use MPI here
-$O/locate_sources.o: $(SPECINC)/constants.h $S/locate_sources.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/locate_sources.o ${FCFLAGS_f90} $S/locate_sources.f90
+$O/locate_sources.o: $(SPECINC)/constants.h $S/locate_sources.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/locate_sources.o ${FCFLAGS_f90} $S/locate_sources.F90
 
 ### use MPI here
-$O/locate_receivers.o: $(SPECINC)/constants.h $S/locate_receivers.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/locate_receivers.o ${FCFLAGS_f90} $S/locate_receivers.f90
+$O/locate_receivers.o: $(SPECINC)/constants.h $S/locate_receivers.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/locate_receivers.o ${FCFLAGS_f90} $S/locate_receivers.F90
 
 ## use MPI here
-$O/exit_mpi.o: $(SPECINC)/constants.h $S/exit_mpi.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/exit_mpi.o ${FCFLAGS_f90} $S/exit_mpi.f90
+$O/exit_mpi.o: $(SPECINC)/constants.h $S/exit_mpi.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/exit_mpi.o ${FCFLAGS_f90} $S/exit_mpi.F90
 
 $O/count_number_of_sources.o: $(SPECINC)/constants.h $S/count_number_of_sources.f90
 	${FCCOMPILE_CHECK} -c -o $O/count_number_of_sources.o ${FCFLAGS_f90} $S/count_number_of_sources.f90
@@ -309,6 +321,12 @@ $O/topo_bathy.o: $(SPECINC)/constants.h $S/topo_bathy.f90
 
 $O/calc_jacobian.o: $(SPECINC)/constants.h $S/calc_jacobian.f90
 	${FCCOMPILE_CHECK} -c -o $O/calc_jacobian.o ${FCFLAGS_f90} $S/calc_jacobian.f90
+
+$O/convert_time.o: $(SPECINC)/constants.h $S/convert_time.f90
+	${FCCOMPILE_CHECK} -c -o $O/convert_time.o ${FCFLAGS_f90} $S/convert_time.f90
+
+$O/calendar.o: $(SPECINC)/constants.h $S/calendar.f90
+	${FCCOMPILE_CHECK} -c -o $O/calendar.o ${FCFLAGS_f90} $S/calendar.f90
 
 $O/crustal_model.o: $(SPECINC)/constants.h $S/crustal_model.f90
 	${FCCOMPILE_CHECK} -c -o $O/crustal_model.o ${FCFLAGS_f90} $S/crustal_model.f90
@@ -331,8 +349,8 @@ $O/get_MPI_1D_buffers.o: $(SPECINC)/constants.h $S/get_MPI_1D_buffers.f90
 $O/get_cmt.o: $(SPECINC)/constants.h $S/get_cmt.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_cmt.o ${FCFLAGS_f90} $S/get_cmt.f90
 
-$O/get_event_info.o: $(SPECINC)/constants.h $S/get_event_info.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/get_event_info.o ${FCFLAGS_f90} $S/get_event_info.f90
+$O/get_event_info.o: $(SPECINC)/constants.h $S/get_event_info.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/get_event_info.o ${FCFLAGS_f90} $S/get_event_info.F90
 
 $O/get_ellipticity.o: $(SPECINC)/constants.h $S/get_ellipticity.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_ellipticity.o ${FCFLAGS_f90} $S/get_ellipticity.f90
@@ -374,12 +392,12 @@ $O/euler_angles.o: $(SPECINC)/constants.h $S/euler_angles.f90
 	${FCCOMPILE_CHECK} -c -o $O/euler_angles.o ${FCFLAGS_f90} $S/euler_angles.f90
 
 ## use MPI here
-$O/main_program.o: $(SPECINC)/constants.h $S/main_program.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/main_program.o ${FCFLAGS_f90} $S/main_program.f90
+$O/main_program.o: $(SPECINC)/constants.h $S/main_program.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/main_program.o ${FCFLAGS_f90} $S/main_program.F90
 
 ## use MPI here
-$O/meshfem3D.o: $(SPECINC)/constants.h $S/meshfem3D.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/meshfem3D.o ${FCFLAGS_f90} $S/meshfem3D.f90
+$O/meshfem3D.o: $(SPECINC)/constants.h $S/meshfem3D.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/meshfem3D.o ${FCFLAGS_f90} $S/meshfem3D.F90
 
 $O/spline_routines.o: $(SPECINC)/constants.h $S/spline_routines.f90
 	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} $S/spline_routines.f90
@@ -444,8 +462,8 @@ $O/add_topography_cmb.o: $(SPECINC)/constants.h $S/add_topography_cmb.f90
 $O/add_topography_icb.o: $(SPECINC)/constants.h $S/add_topography_icb.f90
 	${FCCOMPILE_CHECK} -c -o $O/add_topography_icb.o ${FCFLAGS_f90} $S/add_topography_icb.f90
 
-$O/write_seismograms.o: $(SPECINC)/constants.h $S/write_seismograms.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/write_seismograms.o ${FCFLAGS_f90} $S/write_seismograms.f90
+$O/write_seismograms.o: $(SPECINC)/constants.h $S/write_seismograms.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/write_seismograms.o ${FCFLAGS_f90} $S/write_seismograms.F90
 
 $O/lagrange_poly.o: $(SPECINC)/constants.h $S/lagrange_poly.f90
 	${FCCOMPILE_CHECK} -c -o $O/lagrange_poly.o ${FCFLAGS_f90} $S/lagrange_poly.f90
@@ -453,8 +471,8 @@ $O/lagrange_poly.o: $(SPECINC)/constants.h $S/lagrange_poly.f90
 $O/recompute_jacobian.o: $(SPECINC)/constants.h $S/recompute_jacobian.f90
 	${FCCOMPILE_CHECK} -c -o $O/recompute_jacobian.o ${FCFLAGS_f90} $S/recompute_jacobian.f90
 
-$O/create_regions_mesh.o: $(SPECINC)/constants.h $S/create_regions_mesh.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/create_regions_mesh.o ${FCFLAGS_f90} $S/create_regions_mesh.f90
+$O/create_regions_mesh.o: $(SPECINC)/constants.h $S/create_regions_mesh.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/create_regions_mesh.o ${FCFLAGS_f90} $S/create_regions_mesh.F90
 
 $O/define_derivation_matrices.o: $(SPECINC)/constants.h $S/define_derivation_matrices.f90
 	${FCCOMPILE_CHECK} -c -o $O/define_derivation_matrices.o ${FCFLAGS_f90} $S/define_derivation_matrices.f90
@@ -462,11 +480,11 @@ $O/define_derivation_matrices.o: $(SPECINC)/constants.h $S/define_derivation_mat
 $O/compute_arrays_source.o: $(SPECINC)/constants.h $S/compute_arrays_source.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} $S/compute_arrays_source.f90
 
-$O/create_central_cube_buffers.o: $(SPECINC)/constants.h $S/create_central_cube_buffers.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/create_central_cube_buffers.o ${FCFLAGS_f90} $S/create_central_cube_buffers.f90
+$O/create_central_cube_buffers.o: $(SPECINC)/constants.h $S/create_central_cube_buffers.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/create_central_cube_buffers.o ${FCFLAGS_f90} $S/create_central_cube_buffers.F90
 
-$O/attenuation_model.o: $(SPECINC)/constants.h $S/attenuation_model.f90 $O/model_ak135.o $O/model_1066a.o $O/model_ref.o
-	${MPIFCCOMPILE_CHECK} -c -o $O/attenuation_model.o ${FCFLAGS_f90} $S/attenuation_model.f90
+$O/attenuation_model.o: $(SPECINC)/constants.h $S/attenuation_model.F90 $O/model_ak135.o $O/model_1066a.o $O/model_ref.o
+	${MPIFCCOMPILE_CHECK} -c -o $O/attenuation_model.o ${FCFLAGS_f90} $S/attenuation_model.F90
 
 $O/gll_library.o: $(SPECINC)/constants.h $S/gll_library.f90
 	${FCCOMPILE_CHECK} -c -o $O/gll_library.o ${FCFLAGS_f90} $S/gll_library.f90
@@ -486,8 +504,8 @@ $O/define_superbrick.o: $(SPECINC)/constants.h $S/define_superbrick.f90
 $O/stretching_function.o: $(SPECINC)/constants.h $S/stretching_function.f90
 	${FCCOMPILE_CHECK} -c -o $O/stretching_function.o ${FCFLAGS_f90} $S/stretching_function.f90
 
-$O/read_compute_parameters.o: $(SPECINC)/constants.h $S/read_compute_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} $S/read_compute_parameters.f90
+$O/read_compute_parameters.o: $(SPECINC)/constants.h $S/read_compute_parameters.F90
+	${MPIFCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} $S/read_compute_parameters.F90
 
 $O/auto_ner.o: $(SPECINC)/constants.h $S/auto_ner.f90
 	${FCCOMPILE_CHECK} -c -o $O/auto_ner.o ${FCFLAGS_f90} $S/auto_ner.f90

@@ -43,7 +43,9 @@
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
 
   include "constants.h"
 
@@ -80,14 +82,19 @@
         buffer_all_cube_from_slices
 
 ! local variables below
-  integer i,j,k,ispec,ispec2D,iglob,ier
+  integer i,j,k,ispec,ispec2D,iglob
+#ifdef USE_MPI
+  integer :: ier
+#endif
   integer sender,receiver,imsg,ipoin,iproc_xi_loop
 
   double precision x_target,y_target,z_target
   double precision x_current,y_current,z_current
 
 ! MPI status of messages to be received
-  integer msg_status(MPI_STATUS_SIZE)
+#ifdef USE_MPI
+  integer, dimension(MPI_STATUS_SIZE) :: msg_status
+#endif
 
 !--- processor to send information to in cube from slices
 
@@ -232,9 +239,11 @@
 
 ! receive buffers from slices
     sender = sender_from_slices_to_cube(imsg)
+#ifdef USE_MPI
     call MPI_RECV(buffer_slices, &
               NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
               itag,MPI_COMM_WORLD,msg_status,ier)
+#endif
 
 ! copy buffer in 2D array for each slice
     buffer_all_cube_from_slices(imsg,:,:) = buffer_slices(:,:)
@@ -266,8 +275,10 @@
 
 ! send buffer to central cube
     receiver = receiver_cube_from_slices
+#ifdef USE_MPI
     call MPI_SEND(buffer_slices,NDIM*npoin2D_cube_from_slices, &
               MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
+#endif
 
  endif  ! end sending info to central cube
 
@@ -293,9 +304,14 @@
 
     sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
 
+#ifdef USE_MPI
     call MPI_SENDRECV(buffer_slices,NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
         itag,buffer_slices2,NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
         itag,MPI_COMM_WORLD,msg_status,ier)
+#else
+!! DK DK dummy statement to avoid a warning in the serial case
+    buffer_slices2 = 0
+#endif
 
     buffer_all_cube_from_slices(nb_msgs_theor_in_cube,:,:) = buffer_slices2(:,:)
 

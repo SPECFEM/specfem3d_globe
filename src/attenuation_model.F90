@@ -67,7 +67,9 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
 
   implicit none
 
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
   include 'constants.h'
 
 ! attenuation_model_variables
@@ -185,14 +187,22 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
   double precision RICB, RCMB, R670, R220, R80
   double precision tau_e(N_SLS)
 
-  integer i,ier
+  integer i
+#ifdef USE_MPI
+  integer :: ier
+#endif
   double precision Qb
   double precision R120
 
   Qb = 57287.0d0
   R120 = 6251.d3
 
+#ifdef USE_MPI
   call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+#else
+  myrank = 0
+#endif
+
   if(myrank > 0) return
 
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
@@ -258,7 +268,9 @@ subroutine attenuation_save_arrays(iregion_code, AM_V)
 
   implicit none
 
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
   include 'constants.h'
 
 ! attenuation_model_variables
@@ -284,15 +296,25 @@ subroutine attenuation_save_arrays(iregion_code, AM_V)
 ! attenuation_model_variables
 
   integer iregion_code
-  integer ier
+#ifdef USE_MPI
+  integer :: ier
+#endif
   integer myrank
+
+!! DK DK we should remove this "save" statement at some point
   integer, save :: first_time_called = 1
 
-  print *,'DK DK we should do this in MPI instead of writing to a local file'
-
+#ifdef USE_MPI
   call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+#else
+  myrank = 0
+#endif
+
   if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
     first_time_called = 0
+
+    print *,'DK DK we should do this in MPI instead of writing to a local file and using a "save" statement'
+
     open(unit=27,file='OUTPUT_FILES/1D_Q.bin',status='unknown',form='unformatted',action='write')
     write(27) AM_V%QT_c_source
     write(27) AM_V%Qtau_s
@@ -308,7 +330,10 @@ end subroutine attenuation_save_arrays
 subroutine attenuation_storage(Qmu, tau_e, rw, AM_S)
 
   implicit none
+
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
   include 'constants.h'
 
 ! attenuation_model_storage
@@ -323,12 +348,17 @@ subroutine attenuation_storage(Qmu, tau_e, rw, AM_S)
   type (attenuation_model_storage) AM_S
 ! attenuation_model_storage
 
-  integer myrank, ier
+  integer myrank
+#ifdef USE_MPI
+  integer :: ier
+#endif
   double precision Qmu, Qmu_new
   double precision, dimension(N_SLS) :: tau_e
   integer rw
 
   integer Qtmp
+
+!! DK DK we should remove this "save" statement at some point
   integer, save :: first_time_called = 1
 
   if(first_time_called == 1) then
@@ -346,7 +376,11 @@ subroutine attenuation_storage(Qmu, tau_e, rw, AM_S)
      write(IMAIN,*) 'attenuation_conversion/storage()'
      write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
      write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
+#ifdef USE_MPI
      call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+#else
+     myrank = 0
+#endif
      call exit_MPI(myrank, 'Attenuation Value out of Range')
   endif
 
@@ -617,7 +651,9 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
 
   implicit none
 
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
   include 'constants.h'
 
 ! attenuation_model_variables
@@ -648,17 +684,22 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
   double precision, dimension(vx,vy,vz,vn)        :: scale_factor, one_minus_sum_beta
   double precision, dimension(N_SLS, vx,vy,vz,vn) :: factor_common
 
-  integer i,j,ier,rmax
+  integer i,j,rmax
+#ifdef USE_MPI
+  integer :: ier
+#endif
   double precision scale_t
   double precision Qp1, Qpn, radius, fctmp
   double precision, dimension(:), allocatable :: Qfctmp, Qfc2tmp
 
+!! DK DK we should remove this "save" statement at some point
   integer, save :: first_time_called = 1
-
-  print *,'DK DK we should do this in MPI instead of writing to a local file'
 
   if(myrank == 0 .AND. iregion_code == IREGION_CRUST_MANTLE .AND. first_time_called == 1) then
      first_time_called = 0
+
+     print *,'DK DK we should do this in MPI instead of reading from a local file and using a "save" statement'
+
      open(unit=27, file='OUTPUT_FILES/1D_Q.bin', status='unknown', form='unformatted',action='read')
      read(27) AM_V%QT_c_source
      read(27) tau_s
@@ -675,9 +716,11 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
   endif
 
   ! Synch up after the Read
+#ifdef USE_MPI
   call MPI_BCAST(AM_V%QT_c_source,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(tau_s,N_SLS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(AM_V%Qn,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#endif
 
   if(myrank /= 0) then
      allocate(AM_V%Qr(AM_V%Qn))
@@ -685,9 +728,11 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
      allocate(AM_V%Qtau_e(N_SLS,AM_V%Qn))
   endif
 
+#ifdef USE_MPI
   call MPI_BCAST(AM_V%Qr,AM_V%Qn,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(AM_V%Qmu,AM_V%Qn,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(AM_V%Qtau_e,AM_V%Qn*N_SLS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
 
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
 
@@ -952,7 +997,9 @@ subroutine get_attenuation_model_3D(myrank, one_minus_sum_beta, factor_common, s
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
 
-  print *,'DK DK we should do this in MPI instead of writing to a local file'
+  print *,'DK DK we should do this in MPI instead of reading from a local file'
+
+  stop 'DK DK code to create OUTPUT_FILES/attenuation3D.bin not included yet in this merged version'
 
   open(unit=27, file='OUTPUT_FILES/attenuation3D.bin',status='old',action='read',form='unformatted')
   read(27) tau_s
@@ -1037,7 +1084,9 @@ subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, ta
 
   implicit none
 
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
 
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
@@ -1057,7 +1106,10 @@ subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, ta
 ! attenuation_simplex_variables
 
   ! Input / Output
-  integer myrank, ier
+  integer myrank
+#ifdef USE_MPI
+  integer :: ier
+#endif
   double precision  t1, t2
   double precision  Q_real
   double precision  omega_not
@@ -1088,7 +1140,11 @@ subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, ta
   exp2 = log10(f2)
 
   if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
+#ifdef USE_MPI
      call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+#else
+     myrank = 0
+#endif
      call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
 
@@ -1125,7 +1181,11 @@ subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, ta
      write(*,*)'    Iterations: ', iterations
      write(*,*)'    Min Value:  ', min_value
      write(*,*)'    Aborting program'
+#ifdef USE_MPI
      call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ier)
+#else
+     myrank = 0
+#endif
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
   endif
   deallocate(f)
@@ -1869,7 +1929,7 @@ subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
      Qmu=600.0d0
      Qkappa = 57827.0d0
   else
-     call exit_MPI_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
+     call exit_mpi_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
   endif
 
 end subroutine attenuation_model_1D_PREM

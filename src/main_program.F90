@@ -221,10 +221,14 @@
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
 
   include "constants.h"
+#ifdef USE_MPI
   include "precision.h"
+#endif
 
 !! DK DK for the merged version
 ! include values created by the mesher
@@ -244,13 +248,127 @@
 
   integer, external :: err_occurred
 
-!! DK DK for the merged version
-  include 'declarations_main.f90'
+!!!! DK DK for merged version, all the arrays below are allocated statically instead
+
+#ifdef USE_MPI
+  integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
+  integer npoin2D_faces_outer_core(NUMFACES_SHARED)
+  integer npoin2D_faces_inner_core(NUMFACES_SHARED)
+#endif
+
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+             npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+             npoin2D_xi_inner_core,npoin2D_eta_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
+  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
+
+! number of elements on the boundaries
+  integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: kappavstore_crust_mantle,muvstore_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
+    kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore_inner_core,muvstore_inner_core
+
+! 2-D jacobians and normals
+
+  integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
+
+  integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
+  integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
+
+  integer, dimension(NSPEC2DMAX_XMIN_XMAX_IC) :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
+  integer, dimension(NSPEC2DMAX_YMIN_YMAX_IC) :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
+  integer, dimension(NSPEC2D_BOTTOM_IC) :: ibelm_bottom_inner_core
+  integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
+
+#ifdef USE_MPI
+  integer, dimension(NGLOB2DMAX_XY_VAL_CM,NUMFACES_SHARED) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_VAL_OC,NUMFACES_SHARED) :: iboolfaces_outer_core
+  integer, dimension(NGLOB2DMAX_XY_VAL_IC,NUMFACES_SHARED) :: iboolfaces_inner_core
+#endif
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+
+  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+
+#ifdef USE_MPI
+  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
+  integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
+  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_OC) :: iboolleft_xi_outer_core,iboolright_xi_outer_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
+#endif
+
+  integer :: npoin2D_max_all,NDIM_smaller_buffers
+
+! receiver information
+  integer :: nrec,ios
+  character(len=150) :: STATIONS,rec_filename,dummystring
+
+!---- arrays to assemble between chunks
+
+#ifdef USE_MPI
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: imsg_type,iprocfrom_faces,iprocto_faces
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+#endif
+
+! attenuation_model_variables
+  type attenuation_model_variables
+    sequence
+    double precision min_period, max_period
+    double precision                          :: QT_c_source        ! Source Frequency
+    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
+    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+    double precision, dimension(:), pointer   :: Qr                 ! Radius
+    integer, dimension(:), pointer            :: Qs                 ! Steps
+    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer                                   :: Qn                 ! Number of points
+  end type attenuation_model_variables
+
+  type (attenuation_model_variables) AM_V
+! attenuation_model_variables
 
 ! ************** PROGRAM STARTS HERE **************
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.
+#ifdef USE_MPI
   call MPI_INIT(ier)
+#else
+  ier = 0
+#endif
   if(ier /= 0) stop 'error: cannot start MPI!!!'
 
 ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
@@ -258,19 +376,43 @@
 ! as usual in MPI, process 0 is in charge of coordinating everything
 ! and also takes care of the main output
 ! do not create anything for the inner core here, will be done in solver
+#ifdef USE_MPI
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+#else
+  myrank = 0
+  sizeprocs = NPROCTOT_VAL
+#endif
 
 ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
 
-!! DK DK for the merged version
-!!!!!!!! DK DK mesher inserted here
-!!!!!!!! DK DK mesher inserted here
-!!!!!!!! DK DK mesher inserted here
-  include 'call_meshfem1.f90'
+!! DK DK for the merged version, mesher inserted here
+  call meshfem3D(myrank,sizeprocs,addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,ibathy_topo,NSOURCES, &
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS,ibool_crust_mantle,ibool_outer_core,ibool_inner_core, &
+  idoubling_crust_mantle,idoubling_inner_core,ibelm_bottom_crust_mantle, ibelm_bottom_outer_core, ibelm_top_outer_core, &
+  ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+  ibelm_top_inner_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
+  normal_bottom_outer_core, normal_top_outer_core,kappavstore_crust_mantle,muvstore_crust_mantle, &
+  kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle,kappavstore_inner_core,muvstore_inner_core, &
+  rmass_crust_mantle, rmass_outer_core, rmass_inner_core, &
+  nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+#ifdef USE_MPI
+  iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+  iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+  iboolleft_xi_inner_core,iboolright_xi_inner_core, iboolleft_eta_inner_core,iboolright_eta_inner_core,&
+  iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iboolfaces_crust_mantle,iboolfaces_outer_core,iboolfaces_inner_core, &
+  iboolcorner_crust_mantle,iboolcorner_outer_core,iboolcorner_inner_core, &
+  npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+  npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+  npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+#endif
+  rmass_ocean_load,normal_top_crust_mantle,ibelm_top_crust_mantle,AM_V)
 
-! synchronize all the processes to make sure everybody has finished
+! synchronize all the processes to make sure everybody has finished creating the mesh
+#ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#endif
 
 ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
 
@@ -311,19 +453,42 @@
     close(IIN)
   endif
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
   call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#endif
 
-!! DK DK for the merged version
-!!!!!!!! DK DK solver inserted here
-!!!!!!!! DK DK solver inserted here
-!!!!!!!! DK DK solver inserted here
-  include 'call_specfem1.f90'
+!! DK DK for the merged version, solver inserted here
+  call specfem3D(myrank,sizeprocs,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NSOURCES, &
+  NTSTEP_BETWEEN_OUTPUT_SEISMOS,ibool_crust_mantle,ibool_outer_core,ibool_inner_core, &
+  idoubling_crust_mantle,idoubling_inner_core,ibelm_bottom_crust_mantle, ibelm_bottom_outer_core, ibelm_top_outer_core, &
+ibelm_top_inner_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
+  normal_bottom_outer_core, normal_top_outer_core,kappavstore_crust_mantle,muvstore_crust_mantle, &
+  kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle,kappavstore_inner_core,muvstore_inner_core, &
+  rmass_crust_mantle,rmass_outer_core,rmass_inner_core,rmass_ocean_load, &
+#ifdef USE_MPI
+  NDIM_smaller_buffers,npoin2D_max_all,nrec,addressing,ibathy_topo, &
+  ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+  iboolleft_xi_inner_core,iboolright_xi_inner_core, iboolleft_eta_inner_core,iboolright_eta_inner_core,&
+  nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+  iboolfaces_crust_mantle,iboolfaces_outer_core,iboolfaces_inner_core, &
+  iboolcorner_crust_mantle,iboolcorner_outer_core,iboolcorner_inner_core, &
+  npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+  npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+  npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+  normal_top_crust_mantle,ibelm_top_crust_mantle, &
+#endif
+  AM_V)
 
+#ifdef USE_MPI
 ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 ! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)
+#endif
 
   end program main_program
 

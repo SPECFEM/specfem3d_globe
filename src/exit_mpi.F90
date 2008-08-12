@@ -33,7 +33,9 @@
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
 
   include "constants.h"
 
@@ -43,7 +45,9 @@
   integer myrank
   character(len=*) error_msg
 
+#ifdef USE_MPI
   integer ier
+#endif
   character(len=80) outputname
   character(len=150) OUTPUT_FILES
 
@@ -63,7 +67,9 @@
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
 ! stop all the MPI processes, and exit
+#ifdef USE_MPI
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+#endif
   stop 'error, program ended in exit_MPI'
 
   end subroutine exit_MPI
@@ -73,26 +79,32 @@
 !
 
 ! version without rank number printed in the error message
-  subroutine exit_MPI_without_rank(error_msg)
+  subroutine exit_mpi_without_rank(error_msg)
 
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
 
   include "constants.h"
 
   character(len=*) error_msg
 
+#ifdef USE_MPI
   integer ier
+#endif
 
 ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
   write(*,*) 'Error detected, aborting MPI...'
 
 ! stop all the MPI processes, and exit
+#ifdef USE_MPI
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+#endif
   stop 'error, program ended in exit_MPI'
 
-  end subroutine exit_MPI_without_rank
+  end subroutine exit_mpi_without_rank
 

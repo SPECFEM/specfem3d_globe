@@ -74,7 +74,7 @@
   colat = theta / DEGREES_TO_RADIANS
 
 ! uncomment this line to suppress the anisotropic mantle model
-! call exit_MPI_without_rank('please provide an anisotropic mantle model for subroutine aniso_mantle_model')
+! call exit_mpi_without_rank('please provide an anisotropic mantle model for subroutine aniso_mantle_model')
 
 ! assign the local (d_ij) or global (c_ij) anisotropic parameters.
 ! The c_ij are the coefficients in the global
@@ -128,7 +128,7 @@
 
 ! dimensionalize
   depth = R_EARTH_KM*(R_UNIT_SPHERE - r)
-  if(depth <= pro(nz0) .or. depth >= pro(1)) call exit_MPI_without_rank('r out of range in build_cij')
+  if(depth <= pro(nz0) .or. depth >= pro(1)) call exit_mpi_without_rank('r out of range in build_cij')
   itheta = int(theta + pxy0)/pxy0
   ilon = int(phi + pxy0)/pxy0
   tet = theta
@@ -153,12 +153,12 @@
   icz1 = icz0 + 1
 
 ! check that parameters make sense
-  if(ict0 < 1 .or. ict0 > nx0) call exit_MPI_without_rank('ict0 out of range')
-  if(ict1 < 1 .or. ict1 > nx0) call exit_MPI_without_rank('ict1 out of range')
-  if(icp0 < 1 .or. icp0 > ny0) call exit_MPI_without_rank('icp0 out of range')
-  if(icp1 < 1 .or. icp1 > ny0) call exit_MPI_without_rank('icp1 out of range')
-  if(icz0 < 1 .or. icz0 > nz0) call exit_MPI_without_rank('icz0 out of range')
-  if(icz1 < 1 .or. icz1 > nz0) call exit_MPI_without_rank('icz1 out of range')
+  if(ict0 < 1 .or. ict0 > nx0) call exit_mpi_without_rank('ict0 out of range')
+  if(ict1 < 1 .or. ict1 > nx0) call exit_mpi_without_rank('ict1 out of range')
+  if(icp0 < 1 .or. icp0 > ny0) call exit_mpi_without_rank('icp0 out of range')
+  if(icp1 < 1 .or. icp1 > ny0) call exit_mpi_without_rank('icp1 out of range')
+  if(icz0 < 1 .or. icz0 > nz0) call exit_mpi_without_rank('icz0 out of range')
+  if(icz1 < 1 .or. icz1 > nz0) call exit_mpi_without_rank('icz1 out of range')
 
   do ipar = 1,14
     anispara(ipar,1,1) = beta(ipar,icz0,ict0,icp0)

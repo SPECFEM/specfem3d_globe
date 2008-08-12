@@ -33,7 +33,9 @@
   implicit none
 
 ! standard include of the MPI library
+#ifdef USE_MPI
   include 'mpif.h'
+#endif
 
   include "constants.h"
 
@@ -48,7 +50,11 @@
 
 !--- local variables below
 
-  integer i,ier
+  integer :: i
+
+#ifdef USE_MPI
+  integer :: ier
+#endif
 
   integer, parameter :: LENGTH_REGION_NAME = 150
   character(len=LENGTH_REGION_NAME) region
@@ -70,6 +76,7 @@
   endif
 
 ! broadcast the information read on the master to the nodes
+#ifdef USE_MPI
   call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -87,6 +94,7 @@
   call MPI_BCAST(cmt_hdur,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(ename,12,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+#endif
 
   end subroutine get_event_info_parallel
 

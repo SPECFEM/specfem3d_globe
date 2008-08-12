@@ -31,8 +31,8 @@ FC = mpxlf90 -qmaxmem=-1 -qxflag=stacksize
 FCFLAGS = #-g
 MPIFC = mpxlf90 -qmaxmem=-1 -qxflag=stacksize 
 MPILIBS = 
-FLAGS_NO_CHECK =   -O3 -qarch=440 -qtune=440  -qfree=f90 -Q -qsuffix=f=f90 
-FLAGS_CHECK =    $(FLAGS_NO_CHECK)
+FLAGS_NO_CHECK =  -O3 -qstrict -qarch=440 -qtune=440  -qfree=f90 -Q -qsuffix=f=f90 
+FLAGS_CHECK = $(FLAGS_NO_CHECK)
 FCFLAGS_f90 = 
 
 CC = mpcc -I$(SPECINC) 
