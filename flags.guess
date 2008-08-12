@@ -15,10 +15,10 @@ case $FC in
         # Beowulf Portland pgf90
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-fast -Mnobounds -Mneginfo -Mdclchk -Knoieee" # -mcmodel=medium
+            FLAGS_CHECK="-fast -Mnobounds -Mdclchk -Knoieee" # -mcmodel=medium
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-fast -Mnobounds -Mneginfo -Mdclchk -Knoieee -Ktrap=none -Minline" # -mcmodel=medium
+            FLAGS_NO_CHECK="-fast -Mnobounds -Mdclchk -Knoieee -Ktrap=none -Minline" # -mcmodel=medium
         fi
         ;;
     ifort|*/ifort)
@@ -134,10 +134,10 @@ case $FC in
         #
         if test x"$FLAGS_NO_CHECK" = x; then
 
-            FLAGS_NO_CHECK="-O3 -qstrict -qnosave -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qlanglvl=2003pure"
+            FLAGS_NO_CHECK="-O3 -qstrict -q64 -qnosave -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w"
         # One can also use -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap -qinitauto=7FBFFFFF to trap errors
         # on MareNostrum at the Barcelona SuperComputing Center (Spain) use
-        # -qtune=ppc970 -qarch=ppc64v -qsave instead of -qnosave -qtune=auto -qarch=auto
+        # -qsave -qtune=ppc970 -qarch=ppc64v instead of -qnosave -qtune=auto -qarch=auto
         # otherwise the IBM compiler allocates the
         # arrays in the stack and the code crashes if the stack size is too
         # small (it is limited to 1GB on MareNostrum)
