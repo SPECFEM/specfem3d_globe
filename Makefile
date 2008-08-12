@@ -53,6 +53,18 @@ FLAGS_NO_CHECK = -O1 -vec-report0 -e03 -std03 -implicitnone -warn truncated_sour
 #MPIFC = mpif90
 #FLAGS_NO_CHECK = -fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mstandard -fastsse -tp amd64e
 
+#
+# IBM xlf
+#
+#FC = xlf_r
+#MPIFC = mpxlf90
+#FLAGS_NO_CHECK = -O3 -qnosave -qnostrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qlanglvl=2003pure -qnoflttrap
+# One can also use -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap -qinitauto=7FBFFFFF to trap errors
+# on MareNostrum at the Barcelona SuperComputing Center (Spain) use
+# -qtune=ppc970 -qarch=ppc64v -qsave -qstrict instead of -qnosave -qnostrict -qtune=auto -qarch=auto
+# otherwise the IBM compiler allocates the arrays in the stack and the code crashes
+# if the stack size is too small (it is limited to 1GB on MareNostrum)
+
 FLAGS_CHECK = $(FLAGS_NO_CHECK)
 FCFLAGS_f90 =
 MPILIBS =
