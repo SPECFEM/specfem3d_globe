@@ -54,7 +54,7 @@ FLAGS_NO_CHECK = -O3 -xP -vec-report0 -e03 -std03 -implicitnone -warn truncated_
 #FC = pgf90
 #MPIFC = mpif90
 #MPIFLAGS = -DUSE_MPI
-#FLAGS_NO_CHECK = -fast -Mnobounds -Minline -Mdclchk -Knoieee -fastsse -tp amd64e -Minform=warn
+#FLAGS_NO_CHECK = -fast -Mnobounds -Minline -Mdclchk -Knoieee -fastsse -tp amd64e -Minform=warn -Ktrap=none
 
 #
 # IBM xlf
