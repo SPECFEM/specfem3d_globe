@@ -727,7 +727,7 @@
   Mak135_V%vs_ak135(143) =   3.20000000000000
   Mak135_V%vs_ak135(144) =   3.20000000000000
 
-  if (SUPPRESS_CRUSTAL_MESH) then
+  if (SUPPRESS_CRUSTAL_MESH .and. .not. PATCH_TIKIR_PARTLY_RESTORE) then
     Mak135_V%vp_ak135(137:144) = Mak135_V%vp_ak135(136)
     Mak135_V%vs_ak135(137:144) = Mak135_V%vs_ak135(136)
     Mak135_V%density_ak135(137:144) = Mak135_V%density_ak135(136)

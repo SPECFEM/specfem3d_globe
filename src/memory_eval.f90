@@ -62,7 +62,7 @@
   double precision, intent(out) :: static_memory_size
 
 ! variables
-  integer :: ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,ispec_aniso
+  integer :: ilayer,NUMBER_OF_MESH_LAYERS,ner_without_doubling,nspec_tiso
 
   integer, intent(out) :: NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
          NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
@@ -78,8 +78,6 @@
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION
 
 ! generate the elements in all the regions of the mesh
-  ispec_aniso = 0
-
   if (ONE_CRUST) then
     NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
   else
@@ -87,19 +85,25 @@
   endif
 
 ! count anisotropic elements
+  nspec_tiso = 0
   do ilayer = 1, NUMBER_OF_MESH_LAYERS
       if(doubling_index(ilayer) == IFLAG_220_80 .or. doubling_index(ilayer) == IFLAG_80_MOHO) then
           ner_without_doubling = ner(ilayer)
           if(this_layer_has_a_doubling(ilayer)) then
               ner_without_doubling = ner_without_doubling - 2
-              ispec_aniso = ispec_aniso + &
+              nspec_tiso = nspec_tiso + &
               (NSPEC_DOUBLING_SUPERBRICK*(NEX_PER_PROC_XI/ratio_sampling_array(ilayer)/2)* &
               (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer)/2))
           endif
-          ispec_aniso = ispec_aniso + &
+          nspec_tiso = nspec_tiso + &
           ((NEX_PER_PROC_XI/ratio_sampling_array(ilayer))*(NEX_PER_PROC_ETA/ratio_sampling_array(ilayer))*ner_without_doubling)
       endif
   enddo
+!! DK DK the above code by David is incorrect when SUPPRESS_CRUSTAL_MESH = .true.
+!! DK DK therefore apply a temporary patch for now
+!! DK DK we should fix the above code later
+!! DK DK temporary patch to cut in multiples of 8 instead of 16; will do better later
+  if(SUPPRESS_CRUSTAL_MESH .and. PATCH_TIKIR_PARTLY_RESTORE) nspec_tiso = NSPEC(IREGION_CRUST_MANTLE)
 
 ! define static size of the arrays whose size depends on logical tests
 
@@ -117,7 +121,7 @@
 
     NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
     if(TRANSVERSE_ISOTROPY) then
-      NSPECMAX_TISO_MANTLE = ispec_aniso
+      NSPECMAX_TISO_MANTLE = nspec_tiso
     else
       NSPECMAX_TISO_MANTLE = 1
     endif

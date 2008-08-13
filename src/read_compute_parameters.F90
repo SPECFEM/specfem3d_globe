@@ -1114,36 +1114,50 @@
   if(NEX_ETA < 48) stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
 
 ! check that mesh can be coarsened in depth three or four times
-  CUT_SUPERBRICK_XI=.false.
-  CUT_SUPERBRICK_ETA=.false.
+  CUT_SUPERBRICK_XI = .false.
+  CUT_SUPERBRICK_ETA = .false.
+
+!! DK DK temporary patch
+  if(PATCH_TIKIR_PARTLY_RESTORE .and. .not. SUPPRESS_CRUSTAL_MESH) &
+    stop 'temporary patch: must set SUPPRESS_CRUSTAL_MESH = .true. if PATCH_TIKIR_PARTLY_RESTORE = .true.'
 
   if (SUPPRESS_CRUSTAL_MESH .and. .not. ADD_4TH_DOUBLING) then
+
     if(mod(NEX_XI,8) /= 0) stop 'NEX_XI must be a multiple of 8'
     if(mod(NEX_ETA,8) /= 0) stop 'NEX_ETA must be a multiple of 8'
+!! DK DK temporary patch
+ if(PATCH_TIKIR_PARTLY_RESTORE) then
+    if(mod(NEX_XI/8,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 8*NPROC_XI'
+    if(mod(NEX_ETA/8,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 8*NPROC_ETA'
+ else
     if(mod(NEX_XI/4,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 4*NPROC_XI'
     if(mod(NEX_ETA/4,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 4*NPROC_ETA'
-    if(mod(NEX_XI/8,NPROC_XI) /=0) CUT_SUPERBRICK_XI = .true.
-    if(mod(NEX_ETA/8,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
-  elseif (SUPPRESS_CRUSTAL_MESH .or. .not. ADD_4TH_DOUBLING) then
+    if(mod(NEX_XI/8,NPROC_XI) /= 0) CUT_SUPERBRICK_XI = .true.
+    if(mod(NEX_ETA/8,NPROC_ETA) /= 0) CUT_SUPERBRICK_ETA = .true.
+ endif
+
+  else if (SUPPRESS_CRUSTAL_MESH .or. .not. ADD_4TH_DOUBLING) then
+
     if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
     if(mod(NEX_ETA,16) /= 0) stop 'NEX_ETA must be a multiple of 16'
     if(mod(NEX_XI/8,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 8*NPROC_XI'
     if(mod(NEX_ETA/8,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 8*NPROC_ETA'
-    if(mod(NEX_XI/16,NPROC_XI) /=0) CUT_SUPERBRICK_XI = .true.
-    if(mod(NEX_ETA/16,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
+    if(mod(NEX_XI/16,NPROC_XI) /= 0) CUT_SUPERBRICK_XI = .true.
+    if(mod(NEX_ETA/16,NPROC_ETA) /= 0) CUT_SUPERBRICK_ETA = .true.
 !! DK DK added this because of temporary bug in David's code
-    if(mod(NEX_XI/16,NPROC_XI) /=0) &
+    if(mod(NEX_XI/16,NPROC_XI) /= 0) &
       stop 'NEX_XI multiple of 8*NPROC_XI but not of 16*NPROC_XI is currently unsafe'
-    if(mod(NEX_ETA/16,NPROC_ETA) /=0) &
+    if(mod(NEX_ETA/16,NPROC_ETA) /= 0) &
       stop 'NEX_ETA multiple of 8*NPROC_ETA but not of 16*NPROC_ETA is currently unsafe'
 !! DK DK added this because of temporary bug in David's code
   else
+
     if(mod(NEX_XI,32) /= 0) stop 'NEX_XI must be a multiple of 32'
     if(mod(NEX_ETA,32) /= 0) stop 'NEX_ETA must be a multiple of 32'
     if(mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
     if(mod(NEX_ETA/16,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 16*NPROC_ETA'
-    if(mod(NEX_XI/32,NPROC_XI) /=0) CUT_SUPERBRICK_XI = .true.
-    if(mod(NEX_ETA/32,NPROC_ETA) /=0) CUT_SUPERBRICK_ETA = .true.
+    if(mod(NEX_XI/32,NPROC_XI) /= 0) CUT_SUPERBRICK_XI = .true.
+    if(mod(NEX_ETA/32,NPROC_ETA) /= 0) CUT_SUPERBRICK_ETA = .true.
   endif
 
 ! check that topology is correct if more than two chunks

@@ -180,7 +180,7 @@
     Qmu=80.0d0
     Qkappa=57827.0d0
   else
-  if(CRUSTAL .and. .not. SUPPRESS_CRUSTAL_MESH) then
+  if(CRUSTAL .and. (.not. SUPPRESS_CRUSTAL_MESH .or. PATCH_TIKIR_PARTLY_RESTORE)) then
 ! fill with PREM mantle and later add CRUST2.0
     if(r > R80) then
       drhodr=0.6924d0
@@ -201,7 +201,7 @@
       Qkappa=57827.0d0
 
 
-    else if (SUPPRESS_CRUSTAL_MESH) then
+    else if (SUPPRESS_CRUSTAL_MESH .and. .not. PATCH_TIKIR_PARTLY_RESTORE) then
 !! DK DK extend the Moho up to the surface instead of the crust
       drhodr=0.6924d0
       rho = 2.6910d0+0.6924d0*(RMOHO / R_EARTH)
