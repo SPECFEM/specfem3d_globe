@@ -37,8 +37,10 @@
 FC = ifort
 MPIFC = mpif90
 MPIFLAGS = -DUSE_MPI # -lmpi
-#FLAGS_NO_CHECK = -O1 -vec-report0 -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv
-FLAGS_NO_CHECK = -O3 -xP -vec-report0 -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
+#FLAGS_NO_CHECK = -O1 -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv
+FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
+# we need the -no-heap-arrays flag to force the compiler to allocate memory on the stack
+# instead of on the heap to minimize memory fragmentation
 
 #
 # GNU gfortran
@@ -54,7 +56,9 @@ FLAGS_NO_CHECK = -O3 -xP -vec-report0 -e03 -std03 -implicitnone -warn truncated_
 #FC = pgf90
 #MPIFC = mpif90
 #MPIFLAGS = -DUSE_MPI
-#FLAGS_NO_CHECK = -fast -Mnobounds -Minline -Mdclchk -Knoieee -fastsse -tp amd64e -Minform=warn -Ktrap=none
+#FLAGS_NO_CHECK = -fast -Mnobounds -Mrecursive -Minline -Mdclchk -Knoieee -fastsse -tp amd64e -Minform=warn -Ktrap=none
+# we need the -Mrecursive flag to force the compiler to allocate memory on the stack
+# instead of on the heap to minimize memory fragmentation
 
 #
 # IBM xlf
