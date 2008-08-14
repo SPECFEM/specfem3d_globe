@@ -1480,7 +1480,7 @@
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
     call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-              rhostore,dvpstore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
               ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
               RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
               RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V,SEA1DM_V)
