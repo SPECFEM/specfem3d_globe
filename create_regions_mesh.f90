@@ -1477,7 +1477,7 @@
         iglobnum=ibool(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
 
 ! compute local height of oceans
-        if(ISOTROPIC_3D_MANTLE) then
+        if(CASE_3D) then
 
 ! get coordinates of current point
           xval = xstore(ix_oceans,iy_oceans,iz_oceans,ispec_oceans)
