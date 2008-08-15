@@ -118,6 +118,11 @@ libspecfem_a_OBJECTS = \
 	$O/calc_jacobian.o \
 	$O/convert_time.o \
 	$O/calendar.o \
+	$O/create_name_database.o \
+	$O/write_AVS_DX_surface_data.o \
+	$O/write_AVS_DX_global_chunks_data.o \
+	$O/write_AVS_DX_global_faces_data.o \
+	$O/write_AVS_DX_global_data.o \
 	$O/comp_source_spectrum.o \
 	$O/comp_source_time_function.o \
 	$O/compute_arrays_source.o \
@@ -204,6 +209,7 @@ DEFAULT = \
 	xcreate_header_file \
   $(OUTPUT_FILES_INC)/values_from_mesher.h \
 	xspecfem3D \
+  xcombine_AVS_DX \
 	$(EMPTY_MACRO)
 
 default: $(DEFAULT)
@@ -229,6 +235,9 @@ xspecfem3D: $(XMESHFEM_OBJECTS)
 # solver also depends on values from mesher
 XSPECFEM_OBJECTS = $(SOLVER_ARRAY_OBJECTS) $O/exit_mpi.o $(LIBSPECFEM)
 
+xcombine_AVS_DX: $O/combine_AVS_DX.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o $(BIN)/xcombine_AVS_DX $O/combine_AVS_DX.o $(LIBSPECFEM)
+
 xconvolve_source_timefunction: $O/convolve_source_timefunction.o
 	${FCCOMPILE_CHECK} -o $(BIN)/xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
@@ -236,7 +245,7 @@ xcreate_header_file: $O/create_header_file.o $O/exit_mpi.o $O/get_value_paramete
 	${MPIFCCOMPILE_CHECK} -o $(BIN)/xcreate_header_file $O/create_header_file.o $O/exit_mpi.o $O/get_value_parameters.o $O/read_compute_parameters.o $O/memory_eval.o $O/save_header_file.o $O/count_number_of_sources.o $O/read_value_parameters.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o $O/auto_ner.o
 
 clean:
-	rm -f $O/* *.o work.pc* *.mod $(BIN)/xspecfem3D $(BIN)/xconvolve_source_timefunction $(BIN)/xcreate_header_file PI*
+	rm -f $O/* *.o work.pc* *.mod $(BIN)/xspecfem3D $(BIN)/xconvolve_source_timefunction $(BIN)/xcreate_header_file $(BIN)/xcombine_AVS_DX
 
 
 ###
@@ -292,6 +301,10 @@ $O/create_header_file.o: $S/create_header_file.f90
 $O/comp_source_time_function.o: $S/comp_source_time_function.f90
 	${FCCOMPILE_CHECK} -c -o $O/comp_source_time_function.o ${FCFLAGS_f90} $S/comp_source_time_function.f90
 
+## leave MPIFLAGS below because we use the C preprocessor for that file
+$O/combine_AVS_DX.o: $(SPECINC)/constants.h $S/combine_AVS_DX.F90
+	${FCCOMPILE_CHECK} $(MPIFLAGS) -c -o $O/combine_AVS_DX.o ${FCFLAGS_f90} $S/combine_AVS_DX.F90
+
 ## use MPI here
 $O/create_chunk_buffers.o: $(SPECINC)/constants.h $S/create_chunk_buffers.F90
 	${MPIFCCOMPILE_CHECK} -c -o $O/create_chunk_buffers.o ${FCFLAGS_f90} $S/create_chunk_buffers.F90
@@ -331,6 +344,21 @@ $O/convert_time.o: $(SPECINC)/constants.h $S/convert_time.f90
 
 $O/calendar.o: $(SPECINC)/constants.h $S/calendar.f90
 	${FCCOMPILE_CHECK} -c -o $O/calendar.o ${FCFLAGS_f90} $S/calendar.f90
+
+$O/create_name_database.o: $(SPECINC)/constants.h $S/create_name_database.f90
+	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} $S/create_name_database.f90
+
+$O/write_AVS_DX_surface_data.o: $(SPECINC)/constants.h $S/write_AVS_DX_surface_data.f90
+	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_surface_data.o ${FCFLAGS_f90} $S/write_AVS_DX_surface_data.f90
+
+$O/write_AVS_DX_global_chunks_data.o: $(SPECINC)/constants.h $S/write_AVS_DX_global_chunks_data.f90
+	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_global_chunks_data.o ${FCFLAGS_f90} $S/write_AVS_DX_global_chunks_data.f90
+
+$O/write_AVS_DX_global_faces_data.o: $(SPECINC)/constants.h $S/write_AVS_DX_global_faces_data.f90
+	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_global_faces_data.o ${FCFLAGS_f90} $S/write_AVS_DX_global_faces_data.f90
+
+$O/write_AVS_DX_global_data.o: $(SPECINC)/constants.h $S/write_AVS_DX_global_data.f90
+	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_global_data.o ${FCFLAGS_f90} $S/write_AVS_DX_global_data.f90
 
 $O/crustal_model.o: $(SPECINC)/constants.h $S/crustal_model.f90
 	${FCCOMPILE_CHECK} -c -o $O/crustal_model.o ${FCFLAGS_f90} $S/crustal_model.f90
