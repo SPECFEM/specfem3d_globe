@@ -108,7 +108,7 @@
 
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
   print *
-  print *,'creating file ', trim(HEADER_FILE), ' to compile solver with correct values'
+  print *,'creating file ', trim(HEADER_FILE), ' to compile the code with correct static values'
 
 ! read the parameter file and compute additional parameters
   call read_compute_parameters(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &

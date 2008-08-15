@@ -416,6 +416,8 @@
 
 ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
 
+  if(.not. MESHER_ONLY) then
+
 !! DK DK for merged version, temporary patch for David's code to cut the superbrick
 !! DK DK which I have not fully ported to the merged version yet: I do not
 !! DK DK yet distinguish the two values of each array, therefore let me set them
@@ -482,11 +484,15 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #endif
   AM_V)
 
-#ifdef USE_MPI
 ! synchronize all the processes to make sure everybody has finished
+#ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#endif
+
+  endif ! end of test if running the mesher only but not the solver
 
 ! stop all the MPI processes, and exit
+#ifdef USE_MPI
   call MPI_FINALIZE(ier)
 #endif
 

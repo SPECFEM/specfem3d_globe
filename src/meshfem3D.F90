@@ -902,8 +902,8 @@
     write(IMAIN,*)
   endif
   do ichunk = 1,NCHUNKS
-    do iproc_eta=0,NPROC_ETA-1
-      do iproc_xi=0,NPROC_XI-1
+    do iproc_eta = 0,NPROC_ETA-1
+      do iproc_xi = 0,NPROC_XI-1
         iprocnum = (ichunk-1)*NPROC + iproc_eta * NPROC_XI + iproc_xi
         addressing(ichunk,iproc_xi,iproc_eta) = iprocnum
         ichunk_slice(iprocnum) = ichunk
@@ -1455,7 +1455,7 @@
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
   yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
 #endif
-  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES)
 
   else if(iregion_code == IREGION_OUTER_CORE) then
 ! outer_core
@@ -1490,7 +1490,7 @@
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
   yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
 #endif
-  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES)
 
   else if(iregion_code == IREGION_INNER_CORE) then
 ! inner_core
@@ -1525,7 +1525,7 @@
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
   yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
 #endif
-  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES)
 
   else
     stop 'DK DK incorrect region in merged code'
@@ -1754,15 +1754,24 @@
   if(myrank == 0) then
 #ifdef USE_MPI
     tCPU = MPI_WTIME() - time_start
-    write(IMAIN,*)
-    write(IMAIN,*) 'Elapsed time for mesh generation and buffer creation in seconds = ',tCPU
-    write(IMAIN,*) 'End of mesh generation'
-    write(IMAIN,*)
 #else
     tCPU = 0
 #endif
+
+    write(IMAIN,*)
+#ifdef USE_MPI
+    write(IMAIN,*) 'Elapsed time for mesh generation and buffer creation in seconds = ',tCPU
+#endif
+    write(IMAIN,*) 'End of mesh generation'
+    write(IMAIN,*)
+
+    if(MESHER_ONLY) then
+      write(IMAIN,*) 'Generation of the mesh only, not starting the solver because MESHER_ONLY is true'
+      write(IMAIN,*)
+    endif
+
 ! close main output file
-    if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
+    if(IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
   endif
 
   end subroutine meshfem3D

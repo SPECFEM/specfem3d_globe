@@ -50,7 +50,7 @@
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
   yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
 #endif
-  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso)
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES)
 
 ! create the different regions of the mesh
 
@@ -373,7 +373,7 @@
 
   integer npointot
 
-  logical ELLIPTICITY,TOPOGRAPHY
+  logical ELLIPTICITY,TOPOGRAPHY,SAVE_MESH_FILES
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,OCEANS
 
   logical ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS
@@ -381,7 +381,7 @@
   double precision R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
 
-  character(len=150) errmsg
+  character(len=150) errmsg,prname
 
 ! use integer array to store values
   integer ibathy_topo(NX_BATHY,NY_BATHY)
@@ -1291,7 +1291,12 @@
     enddo
     enddo
 
-    if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) call exit_MPI(myrank,'incorrect global numbering after sorting')
+    if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) then
+      print *,'Incorrect global numbering after sorting: mask_ibool ',minval(mask_ibool),maxval(mask_ibool)
+      print *,'Incorrect global numbering after sorting: ibool ',minval(ibool),maxval(ibool)
+      print *,'Incorrect global numbering after sorting: expected min/max = 1, ',nglob_theor
+      call exit_MPI(myrank,'incorrect global numbering after sorting')
+    endif
 
 ! create MPI buffers
 ! arrays locval(npointot) and ifseg(npointot) used to save memory
@@ -1314,6 +1319,28 @@
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
   iregion_code)
 #endif
+
+! create AVS or DX mesh data for the slices
+  if(SAVE_MESH_FILES) then
+    call create_name_database(prname,myrank,iregion_code)
+
+    call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
+
+    call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
+
+    call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
+!! DK DK changed for now because array rhostore is not available in v4.1 anymore
+!! DK DK      rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              nspl,rspl,espl,espl2, &
+              ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+              RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,iregion_code)
+
+    call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
+  endif
 
 ! only create mass matrix and save all the final arrays in the second pass
   else if(ipass == 2) then
@@ -1430,7 +1457,7 @@
 !! DK DK save Brian's attenuation files to a shared disk
 !! DK DK obviously we should do this with MPI or with subroutine arguments
 !! DK DK shared by the mesher and the solver subroutines at some point
-  call attenuation_save_arrays(iregion_code, AM_V)
+  if(ATTENUATION_VAL) call attenuation_save_arrays(iregion_code, AM_V)
 
 ! compute volume, bottom and top area of that part of the slice
   volume_local = ZERO

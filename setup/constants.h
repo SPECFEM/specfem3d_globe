@@ -171,6 +171,9 @@
   logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
   logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
 
+! flag to only create the mesh but not start the solver (for instance to check the mesh obtained)
+  logical, parameter :: MESHER_ONLY = .true.
+
 !------------------------------------------------------
 !----------- do not modify anything below -------------
 !------------------------------------------------------
