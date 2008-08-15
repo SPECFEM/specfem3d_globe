@@ -1702,7 +1702,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #endif
 
 ! initialize variables for writing seismograms
-  seismo_offset = it_begin-1
+  seismo_offset = it_begin - 1
   seismo_current = 0
 
 ! *********************************************************
@@ -2407,33 +2407,43 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #ifdef USE_MPI
   if (nrec_local > 0) then
 
-  do irec_local = 1,nrec_local
+    do irec_local = 1,nrec_local
 
 ! get global number of that receiver
-    irec = number_receiver_global(irec_local)
+      irec = number_receiver_global(irec_local)
 
 ! perform the general interpolation using Lagrange polynomials
-    uxd = ZERO
-    uyd = ZERO
-    uzd = ZERO
+      if(FASTER_RECEIVERS_POINTS_ONLY) then
 
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
+        iglob = ibool_crust_mantle(nint(xi_receiver(irec)),nint(eta_receiver(irec)), &
+                     nint(gamma_receiver(irec)),ispec_selected_rec(irec))
+        uxd = dble(displ_crust_mantle(1,iglob))
+        uyd = dble(displ_crust_mantle(2,iglob))
+        uzd = dble(displ_crust_mantle(3,iglob))
 
-            iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
+      else
 
-            hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
+        uxd = ZERO
+        uyd = ZERO
+        uzd = ZERO
 
-            uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
-            uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
-            uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
+              iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
 
+              hlagrange = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
+
+              uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
+              uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
+              uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
+            enddo
           enddo
         enddo
-      enddo
-! store North, East and Vertical components
 
+      endif ! of if FASTER_RECEIVERS_POINTS_ONLY
+
+! store North, East and Vertical components
 ! distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then
         seismograms(:,irec_local,seismo_current) = sngl(scale_displ*(nu(:,1,irec)*uxd + &

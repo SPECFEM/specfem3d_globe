@@ -31,9 +31,16 @@
 !--- user can modify parameters below
 !
 
-! deccrease the number of MPI messages by 3 but increase the size
+!! DK DK temporary patch for the large Gordon Bell runs: set RECEIVERS_CAN_BE_BURIED
+!! DK DK to false in all cases etc
+  logical, parameter :: PATCH_FOR_GORDON_BELL = .true.
+
+! (much) faster detection of receivers at high resolution: use grid points only
+  logical, parameter :: FASTER_RECEIVERS_POINTS_ONLY = .true.
+
+! decrease the number of MPI messages by 3 but increase the size
 ! of several MPI buffers by 3 but in order to do that
-  logical, parameter :: FEWER_MESSAGES_LARGER_BUFFERS = .true.
+  logical, parameter :: FEWER_MESSAGES_LARGER_BUFFERS = .false.
 
 !
 ! solver in single or double precision depending on the machine (4 or 8 bytes)
@@ -172,7 +179,7 @@
   logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
 
 ! flag to only create the mesh but not start the solver (for instance to check the mesh obtained)
-  logical, parameter :: MESHER_ONLY = .true.
+  logical, parameter :: MESHER_ONLY = .false.
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------
@@ -401,7 +408,6 @@
 ! for lookup table for gravity every 100 m in radial direction of Earth model
   integer, parameter :: NRAD_GRAVITY = 70000
 
-!!!!!!!!!!!!!! parameters added for the thread-safe version of the code
 ! number of layers in DATA/1066a/1066a.dat
   integer, parameter :: NR_1066A = 160
 
@@ -439,7 +445,6 @@
     integer, parameter :: NCAP_CRUST = 180
   ! use sedimentary layers of crust 2.0
     logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
-!!!!!!!!!!!!!! end of parameters added for the thread-safe version of the code
 
 ! to inflate the central cube (set to 0.d0 for a non-inflated cube)
   double precision, parameter :: CENTRAL_CUBE_INFLATE_FACTOR = 0.41d0

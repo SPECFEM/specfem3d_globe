@@ -1070,6 +1070,9 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'solver.PRINT_SOURCE_TIME_FUNCTION')
 
+!! DK DK temporary patch for the large Gordon Bell runs
+  if(PATCH_FOR_GORDON_BELL) RECEIVERS_CAN_BE_BURIED = .false.
+
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 
 ! close parameter file

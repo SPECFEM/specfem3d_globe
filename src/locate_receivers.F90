@@ -81,7 +81,7 @@
   double precision stazi,stdip
 
   integer irec
-  integer i,j,k,ispec,iglob
+  integer i,j,k,ispec,iglob,imin,imax,jmin,jmax,kmin,kmax
 
 #ifdef USE_MPI
   integer :: ier
@@ -157,8 +157,9 @@
 
 ! **************
 
-! make sure we clean the array before the gather
-  ispec_selected_rec(:) = 0
+!! DK DK temporary patch for the large Gordon Bell runs
+  if(PATCH_FOR_GORDON_BELL .and. .not. FASTER_RECEIVERS_POINTS_ONLY) &
+    call exit_MPI(myrank,'should use FASTER_RECEIVERS_POINTS_ONLY if PATCH_FOR_GORDON_BELL')
 
 ! get MPI starting time
 #ifdef USE_MPI
@@ -175,8 +176,14 @@
     write(IMAIN,*)
   endif
 
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
 ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
+
+! make sure we clean the array before the gather
+  ispec_selected_rec(:) = 0
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -210,15 +217,15 @@
 #endif
 
 ! loop on all the stations to locate them in the mesh
-  do irec=1,nrec
+  do irec = 1,nrec
 
 ! set distance to huge initial value
-    distmin=HUGEVAL
+    distmin = HUGEVAL
 
 ! convert geographic latitude stlat (degrees)
 ! to geocentric colatitude theta (radians)
-    theta=PI/2.0d0-atan(0.99329534d0*dtan(stlat(irec)*PI/180.0d0))
-    phi=stlon(irec)*PI/180.0d0
+    theta = PI/2.0d0-atan(0.99329534d0*dtan(stlat(irec)*PI/180.0d0))
+    phi = stlon(irec)*PI/180.0d0
     call reduce(theta,phi)
 
 ! compute epicentral distance
@@ -275,16 +282,16 @@
     enddo
 
 !     ellipticity
-      r0=1.0d0
+      r0 = 1.0d0
       if(ELLIPTICITY) then
         if(TOPOGRAPHY) then
            call get_topo_bathy(stlat(irec),stlon(irec),elevation,ibathy_topo)
            r0 = r0 + elevation/R_EARTH
         endif
-        cost=cos(theta)
-        p20=0.5d0*(3.0d0*cost*cost-1.0d0)
+        cost = cos(theta)
+        p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
         call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
-        r0=r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
+        r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
       endif
 
 ! subtract station burial depth (in meters)
@@ -295,16 +302,37 @@
       y_target(irec) = r0*sin(theta)*sin(phi)
       z_target(irec) = r0*cos(theta)
 
+! define the interval in which we look for points
+      if(FASTER_RECEIVERS_POINTS_ONLY) then
+        imin = 1
+        imax = NGLLX
+
+        jmin = 1
+        jmax = NGLLY
+
+        kmin = 1
+        kmax = NGLLZ
+
 ! examine top of the elements only (receivers always at the surface)
-!      k = NGLLZ
-
-      do ispec=1,nspec
-
+        if(.not. RECEIVERS_CAN_BE_BURIED) kmin = NGLLZ
+      else
 ! loop only on points inside the element
 ! exclude edges to ensure this point is not shared with other elements
-        do k=2,NGLLZ-1
-        do j=2,NGLLY-1
-          do i=2,NGLLX-1
+        imin = 2
+        imax = NGLLX - 1
+
+        jmin = 2
+        jmax = NGLLY - 1
+
+        kmin = 2
+        kmax = NGLLZ - 1
+      endif
+
+      do ispec = 1,nspec
+
+        do k = kmin,kmax
+        do j = jmin,jmax
+          do i = imin,imax
 
             iglob = ibool(i,j,k,ispec)
             dist = dsqrt((x_target(irec)-dble(xstore(iglob)))**2 &
@@ -318,6 +346,20 @@
               ix_initial_guess(irec) = i
               iy_initial_guess(irec) = j
               iz_initial_guess(irec) = k
+
+!! DK DK added this for FASTER_RECEIVERS_POINTS_ONLY
+! store xi,eta and x,y,z of point found
+  xi_receiver(irec) = dble(ix_initial_guess(irec))
+  eta_receiver(irec) = dble(iy_initial_guess(irec))
+  gamma_receiver(irec) = dble(iz_initial_guess(irec))
+  x_found(irec) = xstore(iglob)
+  y_found(irec) = ystore(iglob)
+  z_found(irec) = zstore(iglob)
+
+! compute final distance between asked and found (converted to km)
+  final_distance(irec) = dist*R_EARTH/1000.d0
+!! DK DK end of section added for FASTER_RECEIVERS_POINTS_ONLY
+
             endif
 
           enddo
@@ -331,10 +373,7 @@
   enddo
 
 ! create RECORDHEADER file with usual format for normal-mode codes
-  if(myrank == 0) then
-
-! get the base pathname for output files
-    call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+  if(myrank == 0 .and. .not. PATCH_FOR_GORDON_BELL) then
 
 ! create file for QmX Harvard
 ! Harvard format does not support the network name
@@ -377,6 +416,8 @@
 ! find the best (xi,eta) for each receiver
 ! ****************************************
 
+  if(.not. FASTER_RECEIVERS_POINTS_ONLY) then
+
 ! loop on all the receivers to iterate in that slice
     do irec = 1,nrec
 
@@ -389,7 +430,7 @@
 
 ! define coordinates of the control points of the element
 
-  do ia=1,NGNOD
+  do ia = 1,NGNOD
 
     if(iaddx(ia) == 0) then
       iax = 1
@@ -490,6 +531,8 @@
 
     enddo
 
+  endif ! of if FASTER_RECEIVERS_POINTS_ONLY
+
 ! for MPI version, gather information from all the nodes
   ispec_selected_rec_all(:,:) = -1
 #ifdef USE_MPI
@@ -543,7 +586,11 @@
       write(IMAIN,*) '   epicentral distance: ',sngl(epidist(irec))
       write(IMAIN,*) 'closest estimate found: ',sngl(final_distance(irec)),' km away'
       write(IMAIN,*) ' in slice ',islice_selected_rec(irec),' in element ',ispec_selected_rec(irec)
-      write(IMAIN,*) ' at xi,eta,gamma coordinates = ',xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec)
+      if(FASTER_RECEIVERS_POINTS_ONLY) then
+        write(IMAIN,*) 'in point i,j,k = ',nint(xi_receiver(irec)),nint(eta_receiver(irec)),nint(gamma_receiver(irec))
+      else
+        write(IMAIN,*) 'at xi,eta,gamma coordinates = ',xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec)
+      endif
     endif
 
 ! add warning if estimate is poor
