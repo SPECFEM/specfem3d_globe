@@ -101,7 +101,7 @@
   enddo
 !! DK DK the above code by David is incorrect when SUPPRESS_CRUSTAL_MESH = .true.
 !! DK DK therefore apply a temporary patch for now
-!! DK DK we should fix the above code later
+!! DK DK we should fix the above code later because this patch wastes memory
   if(SUPPRESS_CRUSTAL_MESH) nspec_tiso = NSPEC(IREGION_CRUST_MANTLE)
 
 ! define static size of the arrays whose size depends on logical tests

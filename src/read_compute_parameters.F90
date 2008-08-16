@@ -781,10 +781,6 @@
       if (NER_CRUST<2) NER_CRUST=2
     endif
 
-! take a 5% safety margin on the maximum stable time step
-! which was obtained by trial and error
-!!!!!!!!!!!!!!!!!!  DT = DT * (1.d0 - 0.05d0)
-
 ! determine suitable attenuation periods for the mesh
   call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES,NEX_MAX,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 

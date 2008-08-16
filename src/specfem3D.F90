@@ -2498,7 +2498,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
             SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,one_seismogram,scale_displ,nu)
 
-      if(myrank==0) then
+      if(myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) ' Total number of time steps written: ',it-it_begin+1
         write(IMAIN,*)

@@ -157,7 +157,6 @@
   real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
   real(kind=CUSTOM_REAL) tempz1l,tempz2l,tempz3l
 
-! for gravity
   real(kind=CUSTOM_REAL) radius_cr
 
 ! ****************************************************
@@ -256,23 +255,8 @@
 
 ! precompute terms for attenuation if needed
   if(ATTENUATION_VAL) then
-!! DK DK do not call Brian's routine anymore, to improve performance I rewrote it differently
     radius_cr = xstore(ibool(i,j,k,ispec))
-!!!    call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
-    iregion_selected = nint(radius_cr * TABLE_ATTENUATION)
-    if(idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
-      iregion = IREGION_ATTENUATION_CMB_670
-    else if(idoubling(ispec) == IFLAG_670_220) then
-      iregion = IREGION_ATTENUATION_670_220
-    else if(idoubling(ispec) == IFLAG_220_80) then
-      iregion = IREGION_ATTENUATION_220_80
-    else if(idoubling(ispec) == IFLAG_CRUST .or. idoubling(ispec) == IFLAG_80_MOHO) then
-      iregion = IREGION_ATTENUATION_80_SURFACE
-    endif
-! clamp regions
-    if(iregion_selected < AM_V%Qrmin(iregion)) iregion_selected = AM_V%Qrmin(iregion)
-    if(iregion_selected > AM_V%Qrmax(iregion)) iregion_selected = AM_V%Qrmax(iregion)
-!! DK DK do not call Brian's routine anymore, to improve performance I rewrote it differently
+    call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
     one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
     minus_sum_beta =  one_minus_sum_beta_use - 1.0
   endif

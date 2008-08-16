@@ -463,8 +463,7 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2D_BOTTOM_OC = ',NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
   write(IOUT,*) 'integer, parameter :: NSPEC2D_TOP_OC = ',NSPEC2D_TOP(IREGION_OUTER_CORE)
 
-  ! for boundary kernels
-
+! for boundary kernels
   if (SAVE_BOUNDARY_MESH) then
     NSPEC2D_MOHO = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     NSPEC2D_400 = NSPEC2D_MOHO / 4

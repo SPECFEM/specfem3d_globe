@@ -182,7 +182,7 @@
   logical, parameter :: MESHER_ONLY = .false.
 
 ! flag to put a fictitious source in each region in the case of a serial test
-  logical, parameter :: PUT_SOURCE_IN_EACH_REGION = .true.
+  logical, parameter :: PUT_SOURCE_IN_EACH_REGION = .false.
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------
