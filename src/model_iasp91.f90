@@ -186,7 +186,7 @@
       Qmu=600.0d0
       Qkappa=57827.0d0
 
-  else if (SUPPRESS_CRUSTAL_MESH .and. .not. PATCH_TIKIR_PARTLY_RESTORE) then
+  else if (SUPPRESS_CRUSTAL_MESH) then
 !! DK DK extend the Moho up to the surface instead of the crust
           vp = 8.78541d0-0.74953d0*(RMOHO / R_EARTH)
           vs = 6.706231d0-2.248585d0*(RMOHO / R_EARTH)

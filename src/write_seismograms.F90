@@ -88,6 +88,7 @@
 ! new flags to decide on seismogram type BS BS 06/2007
   logical OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
           OUTPUT_SEISMOS_SAC_BINARY
+
 ! flag whether seismograms are ouput for North-East-Z component or Radial-Transverse-Z
   logical ROTATE_SEISMOGRAMS_RT
 

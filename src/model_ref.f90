@@ -7361,7 +7361,7 @@
  1.00000000000000 , &
  1.00000000000000 /)
 
-  if (SUPPRESS_CRUSTAL_MESH .and. .not. PATCH_TIKIR_PARTLY_RESTORE) then
+  if (SUPPRESS_CRUSTAL_MESH) then
     Mref_V%density_ref(718:750) = Mref_V%density_ref(717)
     Mref_V%vpv_ref(718:750) = Mref_V%vpv_ref(717)
     Mref_V%vph_ref(718:750) = Mref_V%vph_ref(717)

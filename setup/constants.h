@@ -181,6 +181,9 @@
 ! flag to only create the mesh but not start the solver (for instance to check the mesh obtained)
   logical, parameter :: MESHER_ONLY = .false.
 
+! flag to put a fictitious source in each region in the case of a serial test
+  logical, parameter :: PUT_SOURCE_IN_EACH_REGION = .true.
+
 !------------------------------------------------------
 !----------- do not modify anything below -------------
 !------------------------------------------------------
@@ -454,8 +457,6 @@
 
 ! to suppress the crustal layers (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
   logical, parameter :: SUPPRESS_CRUSTAL_MESH = .false.
-!! DK DK temporary patch to cut in multiples of 8 instead of 16; will do better later
-  logical, parameter :: PATCH_TIKIR_PARTLY_RESTORE = .false.
 
 ! to add a fourth doubling at the bottom of the outer core
   logical, parameter :: ADD_4TH_DOUBLING = .false.

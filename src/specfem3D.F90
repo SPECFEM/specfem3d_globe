@@ -2108,6 +2108,21 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY_VAL_OC,NCHUNKS)
 #endif
 
+#ifndef USE_MPI
+!! DK DK put a fictitious source in each region in the case of a serial test if needed
+  if(PUT_SOURCE_IN_EACH_REGION) then
+    stf = 1.d-6 * comp_source_time_function(dble(it-1)*DT-t0,10.d0)
+! distinguish between single and double precision for reals
+    if(CUSTOM_REAL == SIZE_REAL) then
+      stf_used = sngl(stf)
+    else
+      stf_used = stf
+    endif
+    iglob = ibool_outer_core(2,2,2,2)
+    accel_outer_core(iglob) = accel_outer_core(iglob) + stf_used
+  endif
+#endif
+
 ! multiply by the inverse of the mass matrix and update velocity
   do i=1,NGLOB_OUTER_CORE
     accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
@@ -2393,6 +2408,21 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
   enddo
 
+#ifndef USE_MPI
+!! DK DK put a fictitious source in each region in the case of a serial test if needed
+  if(PUT_SOURCE_IN_EACH_REGION) then
+    stf = 1.d-6 * comp_source_time_function(dble(it-1)*DT-t0,10.d0)
+! distinguish between single and double precision for reals
+    if(CUSTOM_REAL == SIZE_REAL) then
+      stf_used = sngl(stf)
+    else
+      stf_used = stf
+    endif
+    iglob = ibool_inner_core(2,2,2,2)
+    accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + stf_used
+  endif
+#endif
+
   do i=1,NGLOB_INNER_CORE
     accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i)
     accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i)
@@ -2459,6 +2489,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 ! write the current or final seismograms
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
+
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
             yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
@@ -2468,13 +2499,20 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
             seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
             SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,one_seismogram)
+
       if(myrank==0) then
         write(IMAIN,*)
-        write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
+        write(IMAIN,*) ' Total number of time steps written: ',it-it_begin+1
         write(IMAIN,*)
       endif
+
+! prepare to shift to the next interval to store seismograms
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
+
+! clean seismogram array
+    seismograms(:,:,:) = 0._CUSTOM_REAL
+
   endif
 #endif
 

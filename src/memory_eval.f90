@@ -102,8 +102,7 @@
 !! DK DK the above code by David is incorrect when SUPPRESS_CRUSTAL_MESH = .true.
 !! DK DK therefore apply a temporary patch for now
 !! DK DK we should fix the above code later
-!! DK DK temporary patch to cut in multiples of 8 instead of 16; will do better later
-  if(SUPPRESS_CRUSTAL_MESH .and. PATCH_TIKIR_PARTLY_RESTORE) nspec_tiso = NSPEC(IREGION_CRUST_MANTLE)
+  if(SUPPRESS_CRUSTAL_MESH) nspec_tiso = NSPEC(IREGION_CRUST_MANTLE)
 
 ! define static size of the arrays whose size depends on logical tests
 
