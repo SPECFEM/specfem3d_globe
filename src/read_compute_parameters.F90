@@ -731,7 +731,6 @@
 
 ! case of regular PREM with two crustal layers: change the time step for small meshes
 ! because of a different size of elements in the radial direction in the crust
-    if (.not. PATCH_FOR_GORDON_BELL) then
     if (HONOR_1D_SPHERICAL_MOHO) then
       if (.not. ONE_CRUST) then
         ! case 1D + two crustal layers
@@ -753,7 +752,6 @@
           DT = 0.155d0
       endif
     endif
-    endif ! of .not. PATCH_FOR_GORDON_BELL
 
 ! model 1066A has one very thin layer therefore we need to drastically reduce the time step
     if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) DT = DT*0.20d0
@@ -763,13 +761,15 @@
 !----
     if(.not. PATCH_FOR_GORDON_BELL .and. (ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .or. ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0)) then
 
-     call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
+      call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
           NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
           NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
           NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
           R_CENTRAL_CUBE, CASE_3D)
 
-     call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
+      call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
+
+    endif ! of call to Brian Savage's set of auto_ner routines
 
     if (HONOR_1D_SPHERICAL_MOHO) then
       if (.not. ONE_CRUST) then
@@ -780,8 +780,6 @@
       ! case 3D
       if (NER_CRUST<2) NER_CRUST=2
     endif
-
-  endif ! of call to Brian Savage's set of auto_ner routines
 
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
