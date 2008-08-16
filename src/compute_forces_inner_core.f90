@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_inner_core(displ,accel,xstore, &
+  subroutine compute_forces_inner_core(displ,accel, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
@@ -33,7 +33,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           R_memory,epsilondev,&
           one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN, AM_V)
+          vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN)
 
   implicit none
 
@@ -43,27 +43,8 @@
 ! done for performance only using static allocation to allow for loop unrolling
   include "values_from_mesher.h"
 
-! attenuation_model_variables
-  type attenuation_model_variables
-    sequence
-    double precision min_period, max_period
-    double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(N_SLS)        :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-    double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q                 ! Steps
-    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-    integer                                   :: Qn                 ! Number of points
-  end type attenuation_model_variables
-
-  type (attenuation_model_variables) AM_V
-! attenuation_model_variables
+! same attenuation everywhere in the inner core therefore no need to use Brian's routines
+  integer, parameter :: iregion_selected = 1
 
 ! for forward or backward simulations
   logical COMPUTE_AND_STORE_STRAIN
@@ -132,12 +113,6 @@
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
   real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
   real(kind=CUSTOM_REAL) tempz1l,tempz2l,tempz3l
-
-! for gravity
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: xstore
-  integer iregion_selected
-
-  real(kind=CUSTOM_REAL) radius_cr
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -238,8 +213,9 @@
   endif
 
   if(ATTENUATION_VAL) then
-        radius_cr = xstore(ibool(i,j,k,ispec))
-        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
+! same attenuation everywhere in the inner core therefore no need to use Brian's routines
+!!!!!        radius_cr = xstore(ibool(i,j,k,ispec))
+!!!!!        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
         minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
   endif ! ATTENUATION_VAL
 
@@ -362,34 +338,35 @@
       enddo
     enddo
 
-! use Runge-Kutta scheme to march memory variables in time
-! convention for attenuation
+! update memory variables based upon a Runge-Kutta scheme.
+! convention for attenuation:
 ! term in xx = 1
 ! term in yy = 2
 ! term in xy = 3
 ! term in xz = 4
 ! term in yz = 5
 ! term in zz not computed since zero trace
-
     if(ATTENUATION_VAL) then
-
-       do i_sls = 1,N_SLS
-          do i_memory = 1,5
-             R_memory(i_memory,i_sls,:,:,:,ispec) = &
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            do i_sls = 1,N_SLS
+              do i_memory = 1,5
+                R_memory(i_memory,i_sls,i,j,k,ispec) = &
                   alphaval(i_sls) * &
-                  R_memory(i_memory,i_sls,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
+                  R_memory(i_memory,i_sls,i,j,k,ispec) + muvstore(i,j,k,ispec) * &
                   factor_common(i_sls,1,1,1,iregion_selected) * &
                   (betaval(i_sls) * &
-                  epsilondev(i_memory,:,:,:,ispec) + gammaval(i_sls) * epsilondev_loc(i_memory,:,:,:))
+                epsilondev(i_memory,i,j,k,ispec) + gammaval(i_sls) * epsilondev_loc(i_memory,i,j,k))
+              enddo
+            enddo
           enddo
-       enddo
+        enddo
+      enddo
+    endif
 
-     endif
-
-     if (COMPUTE_AND_STORE_STRAIN) then
 ! save deviatoric strain for Runge-Kutta scheme
-       epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-     endif
+    if(COMPUTE_AND_STORE_STRAIN) epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
 
    endif   ! end test to exclude fictitious elements in central cube
 

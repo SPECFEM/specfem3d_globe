@@ -1452,7 +1452,6 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
 
 ! rescale in crust and mantle
-
     do ispec = 1,NSPEC_CRUST_MANTLE
       do k=1,NGLLZ
         do j=1,NGLLY
@@ -1503,7 +1502,6 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     enddo ! END DO CRUST MANTLE
 
 ! rescale in inner core
-
     do ispec = 1,NSPEC_INNER_CORE
       do k=1,NGLLZ
         do j=1,NGLLY
@@ -2157,7 +2155,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
 
-  call compute_forces_inner_core(displ_inner_core,accel_inner_core,xstore_inner_core, &
+  call compute_forces_inner_core(displ_inner_core,accel_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
           etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
@@ -2168,7 +2166,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN)
 
 #ifdef USE_MPI
 

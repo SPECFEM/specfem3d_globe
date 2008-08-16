@@ -887,6 +887,8 @@ subroutine set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
 
 end subroutine set_attenuation_regions_1D
 
+!------------------------------------------------------------------------
+
 subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
 
   implicit none
@@ -972,7 +974,7 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
 
   endif
 
-! Clamp regions
+! clamp regions
   if(index < AM_V%Qrmin(iregion)) index = AM_V%Qrmin(iregion)
   if(index > AM_V%Qrmax(iregion)) index = AM_V%Qrmax(iregion)
 

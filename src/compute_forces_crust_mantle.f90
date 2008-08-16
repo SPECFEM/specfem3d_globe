@@ -83,7 +83,7 @@
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
-  integer iregion_selected
+  integer iregion_selected,iregion
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
@@ -256,9 +256,24 @@
 
 ! precompute terms for attenuation if needed
   if(ATTENUATION_VAL) then
-      radius_cr = xstore(ibool(i,j,k,ispec))
-      call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
-      one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
+!! DK DK do not call Brian's routine anymore, to improve performance I rewrote it differently
+    radius_cr = xstore(ibool(i,j,k,ispec))
+!!!    call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
+    iregion_selected = nint(radius_cr * TABLE_ATTENUATION)
+    if(idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
+      iregion = IREGION_ATTENUATION_CMB_670
+    else if(idoubling(ispec) == IFLAG_670_220) then
+      iregion = IREGION_ATTENUATION_670_220
+    else if(idoubling(ispec) == IFLAG_220_80) then
+      iregion = IREGION_ATTENUATION_220_80
+    else if(idoubling(ispec) == IFLAG_CRUST .or. idoubling(ispec) == IFLAG_80_MOHO) then
+      iregion = IREGION_ATTENUATION_80_SURFACE
+    endif
+! clamp regions
+    if(iregion_selected < AM_V%Qrmin(iregion)) iregion_selected = AM_V%Qrmin(iregion)
+    if(iregion_selected > AM_V%Qrmax(iregion)) iregion_selected = AM_V%Qrmax(iregion)
+!! DK DK do not call Brian's routine anymore, to improve performance I rewrote it differently
+    one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
     minus_sum_beta =  one_minus_sum_beta_use - 1.0
   endif
 
@@ -594,34 +609,34 @@
       enddo
     enddo
 
-! update memory variables based upon the Runge-Kutta scheme
-! convention for attenuation
+! update memory variables based upon a Runge-Kutta scheme.
+! convention for attenuation:
 ! term in xx = 1
 ! term in yy = 2
 ! term in xy = 3
 ! term in xz = 4
 ! term in yz = 5
 ! term in zz not computed since zero trace
-
-  if(ATTENUATION_VAL) then
-
-! use Runge-Kutta scheme to march in time
-  do i_sls = 1,N_SLS
-  do i_memory = 1,5
-
+    if(ATTENUATION_VAL) then
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            do i_sls = 1,N_SLS
+              do i_memory = 1,5
 ! get coefficients for that standard linear solid
 ! IMPROVE we use mu_v here even if there is some anisotropy
 ! IMPROVE we should probably use an average value instead
-
-     R_memory(i_memory,i_sls,:,:,:,ispec) = alphaval(i_sls) * &
-                R_memory(i_memory,i_sls,:,:,:,ispec) + &
-                factor_common(i_sls,1,1,1,iregion_selected) * muvstore(:,:,:,ispec) * &
-                (betaval(i_sls) * epsilondev(i_memory,:,:,:,ispec) + &
-                gammaval(i_sls) * epsilondev_loc(i_memory,:,:,:))
-     enddo
-  enddo
-
-  endif
+                R_memory(i_memory,i_sls,i,j,k,ispec) = alphaval(i_sls) * &
+                  R_memory(i_memory,i_sls,i,j,k,ispec) + &
+                  factor_common(i_sls,1,1,1,iregion_selected) * muvstore(i,j,k,ispec) * &
+                  (betaval(i_sls) * epsilondev(i_memory,i,j,k,ispec) + &
+                  gammaval(i_sls) * epsilondev_loc(i_memory,i,j,k))
+              enddo
+            enddo
+          enddo
+        enddo
+      enddo
+    endif
 
 ! save deviatoric strain for Runge-Kutta scheme
   if(COMPUTE_AND_STORE_STRAIN) epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
