@@ -83,23 +83,11 @@
   call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
   open(unit=13,file=topo_bathy_file,status='old',action='read')
-
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
-
       read(13,*) ibathy_topo(itopo_x,itopo_y)
-
-! impose maximum height of mountains, to suppress oscillations in Himalaya etc.
-  if(USE_MAXIMUM_HEIGHT_TOPO .and. ibathy_topo(itopo_x,itopo_y) > MAXIMUM_HEIGHT_TOPO) &
-    ibathy_topo(itopo_x,itopo_y) = MAXIMUM_HEIGHT_TOPO
-
-! impose maximum depth of oceans, to suppress oscillations near deep trenches
-  if(USE_MAXIMUM_DEPTH_OCEANS .and. ibathy_topo(itopo_x,itopo_y) < MAXIMUM_DEPTH_OCEANS) &
-    ibathy_topo(itopo_x,itopo_y) = MAXIMUM_DEPTH_OCEANS
-
     enddo
   enddo
-
   close(13)
 
   end subroutine read_topo_bathy_file

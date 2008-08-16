@@ -83,7 +83,7 @@
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
-  integer iregion_selected,iregion
+  integer iregion_selected
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
