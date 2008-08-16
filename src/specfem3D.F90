@@ -342,8 +342,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   integer :: seismo_offset, seismo_current
 #ifdef USE_MPI
   integer :: nit_written
-  double precision :: uxd, uyd, uzd
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
+  double precision :: uxd,uyd,uzd
+  double precision, dimension(:,:), allocatable :: uxdstore,uydstore,uzdstore
 #endif
 
   integer :: i,j,k,ispec,iglob,iglob_mantle,iglob_inner_core
@@ -811,7 +811,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           call exit_MPI(myrank, 'SIMULATION_TYPE could be only 1, 2, or 3')
 
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
-    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
+    call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.F90')
 
   if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
     COMPUTE_AND_STORE_STRAIN = .true.
@@ -1548,13 +1548,17 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #ifdef USE_MPI
 ! allocate seismogram array
   if (nrec_local > 0) then
-      allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-      if (ier /= 0 ) then
-        print *,"ABORTING can not allocate in specfem3D while allocating seismograms ier=",ier
-        call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
-      endif
+    allocate(uxdstore(nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+    allocate(uydstore(nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+    allocate(uzdstore(nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+    if (ier /= 0) then
+      print *,"ABORTING can not allocate in specfem3D while allocating seismograms ier=",ier
+      call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
+    endif
 ! initialize seismograms
-    seismograms(:,:,:) = 0._CUSTOM_REAL
+    uxdstore(:,:) = 0.d0
+    uydstore(:,:) = 0.d0
+    uzdstore(:,:) = 0.d0
     nit_written = 0
   endif
 #endif
@@ -2473,15 +2477,11 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
       endif ! of if FASTER_RECEIVERS_POINTS_ONLY
 
-! store North, East and Vertical components
-! distinguish between single and double precision for reals
-      if(CUSTOM_REAL == SIZE_REAL) then
-        seismograms(:,irec_local,seismo_current) = sngl(scale_displ*(nu(:,1,irec)*uxd + &
-                   nu(:,2,irec)*uyd + nu(:,3,irec)*uzd))
-      else
-        seismograms(:,irec_local,seismo_current) = scale_displ*(nu(:,1,irec)*uxd + &
-                   nu(:,2,irec)*uyd + nu(:,3,irec)*uzd)
-      endif
+! store X, Y and Z components for now
+! will be converted to North, East and Vertical components later
+      uxdstore(irec_local,seismo_current) = uxd
+      uydstore(irec_local,seismo_current) = uyd
+      uzdstore(irec_local,seismo_current) = uzd
 
     enddo
 
@@ -2490,7 +2490,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! write the current or final seismograms
   if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
 
-      call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+      call write_seismograms(myrank,uxdstore,uydstore,uzdstore,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
             yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
             elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,&
@@ -2498,7 +2498,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
             OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
             seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
-            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,one_seismogram)
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,one_seismogram,scale_displ,nu)
 
       if(myrank==0) then
         write(IMAIN,*)
@@ -2506,12 +2506,14 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
         write(IMAIN,*)
       endif
 
-! prepare to shift to the next interval to store seismograms
+! prepare to shift to the next time interval to store seismograms
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
 
-! clean seismogram array
-    seismograms(:,:,:) = 0._CUSTOM_REAL
+! clean seismograms for the next time interval
+    uxdstore(:,:) = 0.d0
+    uydstore(:,:) = 0.d0
+    uzdstore(:,:) = 0.d0
 
   endif
 #endif

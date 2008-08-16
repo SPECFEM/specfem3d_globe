@@ -26,7 +26,7 @@
 !=====================================================================
 
 ! write seismograms to files
-  subroutine write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+  subroutine write_seismograms(myrank,uxdstore,uydstore,uzdstore,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,nrec,nrec_local,DT,hdur,it_end, &
             yr,jda,ho,mi,sec,t_cmt, &
             elat,elon,depth,mb,ename,cmt_lat,cmt_lon, &
@@ -34,7 +34,7 @@
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
             OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
             seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER,&
-            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,one_seismogram)
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,one_seismogram,scale_displ,nu)
 
  implicit none
 
@@ -55,8 +55,10 @@
  integer :: seismo_offset, seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
  integer, dimension(nrec_local) :: number_receiver_global
 
+ double precision, dimension(nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: uxdstore,uydstore,uzdstore
  real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismograms
- double precision hdur,DT
+ double precision, dimension(NDIM,NDIM,nrec) :: nu
+ double precision hdur,DT,scale_displ
 
  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
@@ -70,7 +72,7 @@
 
 ! variables
  integer :: iproc,sender,irec_local,irec,receiver,nrec_local_received,nrec_tot_found
- integer :: total_seismos,total_seismos_local
+ integer :: total_seismos,total_seismos_local,it_seismo,idimension
  double precision :: write_time_begin,write_time
 
 #ifdef USE_MPI
@@ -113,6 +115,30 @@
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
+! convert seismograms from X, Y, Z components to North, East and Vertical components
+! distinguish between single and double precision for reals
+  do it_seismo = 1,NTSTEP_BETWEEN_OUTPUT_SEISMOS
+    do irec_local = 1,nrec_local
+
+! get global number of that receiver
+      irec = number_receiver_global(irec_local)
+
+      do idimension = 1,NDIM
+        if(CUSTOM_REAL == SIZE_REAL) then
+          seismograms(idimension,irec_local,it_seismo) = &
+            sngl(scale_displ*(nu(idimension,1,irec)*uxdstore(irec_local,it_seismo) + &
+                              nu(idimension,2,irec)*uydstore(irec_local,it_seismo) + &
+                              nu(idimension,3,irec)*uzdstore(irec_local,it_seismo)))
+        else
+          seismograms(idimension,irec_local,it_seismo) = &
+            scale_displ*(nu(idimension,1,irec)*uxdstore(irec_local,it_seismo) + &
+                         nu(idimension,2,irec)*uydstore(irec_local,it_seismo) + &
+                         nu(idimension,3,irec)*uzdstore(irec_local,it_seismo))
+        endif
+      enddo
+    enddo
+  enddo
 
 ! all the processes write their local seismograms themselves
  if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
@@ -334,7 +360,7 @@
 
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
 
- integer myrank
+  integer myrank
   double precision hdur,DT
 
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
@@ -434,8 +460,8 @@
   endif
 
     !do iorientation = 1,NDIM
-    !do iorientation = 1,5                   ! BS BS changed from 3 (NEZ) to 5 (NEZRT) components
-    do iorientation = ior_start,ior_end      ! BS BS changed according to ROTATE_SEISMOGRAMS_RT
+    !do iorientation = 1,5                   ! changed from 3 (NEZ) to 5 (NEZRT) components
+    do iorientation = ior_start,ior_end      ! changed according to ROTATE_SEISMOGRAMS_RT
 
      if(iorientation == 1) then
        chn = 'LHN'
@@ -451,9 +477,9 @@
         call exit_MPI(myrank,'incorrect channel value')
      endif
 
-      if (iorientation == 4 .or. iorientation == 5) then        ! LMU BS BS
+      if (iorientation == 4 .or. iorientation == 5) then
 
-          ! BS BS calculate backazimuth needed to rotate East and North
+          ! calculate backazimuth needed to rotate East and North
           ! components to Radial and Transverse components
 
           if (backaz>180.) then
@@ -467,7 +493,7 @@
           cphi=cos(phi*pi/180)
           sphi=sin(phi*pi/180)
 
-          ! BS BS do the rotation of the components and put result in
+          ! rotate of the components and put result in
           ! new variable seismogram_tmp
           if (iorientation == 4) then ! radial component
              do isample = 1,seismo_current
