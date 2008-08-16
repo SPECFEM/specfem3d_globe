@@ -83,7 +83,7 @@
 !! resolution of topography file in minutes
 !  integer, parameter :: RESOLUTION_TOPO_FILE = 5
 !! pathname of the topography file
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
+!  character(len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
 
 !---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
@@ -91,7 +91,8 @@
 ! resolution of topography file in minutes
   integer, parameter :: RESOLUTION_TOPO_FILE = 4
 ! pathname of the topography file
-  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat'
+! character(len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat'
+  character(len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_11_minmax_3500.dat'
 
 !!--- ETOPO2 2-minute model, not implemented yet
 !! size of topography and bathymetry file
@@ -99,14 +100,7 @@
 !! resolution of topography file in minutes
 !  integer, parameter :: RESOLUTION_TOPO_FILE = 2
 !! pathname of the topography file
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat'
-
-! maximum depth of the oceans in trenches and height of topo in mountains
-! to avoid taking into account spurious oscillations in global model ETOPO
-  logical, parameter :: USE_MAXIMUM_HEIGHT_TOPO = .false.
-  integer, parameter :: MAXIMUM_HEIGHT_TOPO = +20000
-  logical, parameter :: USE_MAXIMUM_DEPTH_OCEANS = .false.
-  integer, parameter :: MAXIMUM_DEPTH_OCEANS = -20000
+!  character(len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat'
 
 ! minimum thickness in meters to include the effect of the oceans and topo
   double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 100.d0
