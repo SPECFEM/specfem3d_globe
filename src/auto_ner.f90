@@ -47,7 +47,7 @@
 !  and the core determination was developed.
 !
 
-  subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
+  subroutine auto_time_stepping(WIDTH, NEX_MAX, DT)
     implicit none
 
     include 'constants.h'
@@ -150,7 +150,7 @@
     integer,          dimension(NUM_REGIONS-1) :: NER
     integer NEX_ETA
 
-    ! This is PREM in Kilometers, well ... kinda, not really ....
+    ! This is PREM in Kilometers, well ... kind of, not really ....
     radius(1)  = 6371.00d0 ! Surface
     radius(2)  = 6346.60d0 !    Moho - 1st Mesh Doubling Interface
     radius(3)  = 6291.60d0 !      80
@@ -238,10 +238,10 @@
           ner_test = ner_test + 1      ! Increment ner_test and
           ratio = (dr / ner_test) / w  ! look for a better
           xi = dabs(ratio - 1.0d0)     ! solution
-       end do
+       enddo
        rt(i) = dr / NER(i) / wt        ! Find the Ratio of Top
        rb(i) = dr / NER(i) / wb        ! and Bottom for completeness
-    end do
+    enddo
 
   end subroutine auto_optimal_ner
 
@@ -289,7 +289,7 @@
           max_edgemax = MAX(max_edgemax, edgemax)
           min_edgemin = MIN(min_edgemin, edgemin)
           max_aspect_ratio = MAX(max_aspect_ratio, aspect_ratio)
-       end do
+       enddo
        xi = (max_edgemax / min_edgemin)
        deallocate(points)
        if(xi < ximin) then
@@ -333,7 +333,7 @@
           dist_cc_icb = dist_cc_icb * 2
        endif
        somme = somme + dist_cc_icb
-    end do
+    enddo
     dist_moy = somme / (nex_xi + 1)
     ner = nint(dist_moy / ((PI * RICB_KM) / (2*nex_xi)))
   end subroutine compute_nex
@@ -365,7 +365,7 @@
                sqrt( (pts(ix2,1) - pts(ix3,1))**2 + (pts(ix2,2) - pts(ix3,2))**2 )
         edgemax = MAX(edgemax, edge)
         edgemin = MIN(edgemin, edge)
-    end do
+    enddo
   end subroutine get_size_min_max
 
   subroutine compute_IC_mesh(rcube, points, npts, nspec_cube, nspec_chunks, nex_xi, nex_eta)
@@ -397,11 +397,11 @@
                 points(k,1) = x
                 points(k,2) = y
                 k = k + 1
-             end do
+             enddo
              nspec_chunks = nspec_chunks + 1
-          end do
-       end do
-    end do
+          enddo
+       enddo
+    enddo
 
     nspec_cube = 0
     do ix = 0,(nex_xi-1)*2,2
@@ -411,10 +411,10 @@
              points(k,1) = x
              points(k,2) = y
              k = k + 1
-          end do
+          enddo
           nspec_cube = nspec_cube + 1
-       end do
-    end do
+       enddo
+    enddo
 
   end subroutine compute_IC_mesh
 
@@ -446,6 +446,7 @@
   end subroutine compute_coordinate_central_cube
 
   subroutine compute_coordinate(ix,iy,nbx, nby, rcube, ic, alpha, x, y)
+
     implicit none
 
     double precision, parameter :: PI      = 3.1415d0
@@ -491,5 +492,7 @@
        temp = x
        x    = -y
        y    = temp
-    end if
+    endif
+
   end subroutine compute_coordinate
+

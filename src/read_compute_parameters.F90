@@ -498,17 +498,15 @@
 !----  case prem_onecrust by default
 !----
       if (SUPPRESS_CRUSTAL_MESH) then
-        multiplication_factor=2
+        multiplication_factor = 2
       else
-        multiplication_factor=1
+        multiplication_factor = 1
       endif
 
      ! element width =   0.5625000      degrees =    62.54715      km
       if(NEX_MAX*multiplication_factor <= 160) then
-        DT                       = 0.252d0
 
-        MIN_ATTENUATION_PERIOD   = 30
-        MAX_ATTENUATION_PERIOD   = 1500
+        DT                       = 0.252d0
 
         NER_CRUST                = 1
         NER_80_MOHO              = 1
@@ -525,10 +523,8 @@
 
     ! element width =   0.3515625      degrees =    39.09196      km
       else if(NEX_MAX*multiplication_factor <= 256) then
-        DT                       = 0.225d0
 
-        MIN_ATTENUATION_PERIOD   = 20
-        MAX_ATTENUATION_PERIOD   = 1000
+        DT                       = 0.225d0
 
         NER_CRUST                = 1
         NER_80_MOHO              = 1
@@ -545,10 +541,8 @@
 
     ! element width =   0.2812500      degrees =    31.27357      km
       else if(NEX_MAX*multiplication_factor <= 320) then
-        DT                       = 0.16d0
 
-        MIN_ATTENUATION_PERIOD   = 15
-        MAX_ATTENUATION_PERIOD   = 750
+        DT                       = 0.16d0
 
         NER_CRUST                = 1
         NER_80_MOHO              = 1
@@ -565,10 +559,8 @@
 
     ! element width =   0.1875000      degrees =    20.84905      km
       else if(NEX_MAX*multiplication_factor <= 480) then
-        DT                       = 0.11d0
 
-        MIN_ATTENUATION_PERIOD   = 10
-        MAX_ATTENUATION_PERIOD   = 500
+        DT                       = 0.11d0
 
         NER_CRUST                = 1
         NER_80_MOHO              = 2
@@ -585,10 +577,8 @@
 
     ! element width =   0.1757812      degrees =    19.54598      km
       else if(NEX_MAX*multiplication_factor <= 512) then
-        DT                       = 0.1125d0
 
-        MIN_ATTENUATION_PERIOD   = 9
-        MAX_ATTENUATION_PERIOD   = 500
+        DT                       = 0.1125d0
 
         NER_CRUST                = 1
         NER_80_MOHO              = 2
@@ -605,10 +595,8 @@
 
     ! element width =   0.1406250      degrees =    15.63679      km
       else if(NEX_MAX*multiplication_factor <= 640) then
-        DT                       = 0.09d0
 
-        MIN_ATTENUATION_PERIOD   = 8
-        MAX_ATTENUATION_PERIOD   = 400
+        DT                       = 0.09d0
 
         NER_CRUST                = 2
         NER_80_MOHO              = 3
@@ -625,16 +613,14 @@
 
     ! element width =   0.1041667      degrees =    11.58280      km
       else if(NEX_MAX*multiplication_factor <= 864) then
-        DT                       = 0.0667d0
 
-        MIN_ATTENUATION_PERIOD   = 6
-        MAX_ATTENUATION_PERIOD   = 300
+        DT                       = 0.0667d0
 
         NER_CRUST                = 2
         NER_80_MOHO              = 4
         NER_220_80               = 6
-        NER_400_220              = 10
-        NER_600_400              = 10
+        NER_400_220              = 8
+        NER_600_400              = 9
         NER_670_600              = 3
         NER_771_670              = 4
         NER_TOPDDOUBLEPRIME_771  = 79
@@ -645,67 +631,98 @@
 
     ! element width =   7.8125000E-02  degrees =    8.687103      km
       else if(NEX_MAX*multiplication_factor <= 1152) then
+
         DT                       = 0.05d0
 
-        MIN_ATTENUATION_PERIOD   = 4
-        MAX_ATTENUATION_PERIOD   = 200
-
         NER_CRUST                = 3
-        NER_80_MOHO              = 6
-        NER_220_80               = 8
-        NER_400_220              = 13
-        NER_600_400              = 13
+        NER_80_MOHO              = 3 !!!!!!! 4 !!!!!!! 6
+        NER_220_80               = 7 !!!!!!!!! 8
+        NER_400_220              = 9 !!!!!!!!! 11 !!!!!!! 13
+        NER_600_400              = 11 !!!!!!! 13
         NER_670_600              = 4
         NER_771_670              = 6
-        NER_TOPDDOUBLEPRIME_771  = 106
+        NER_TOPDDOUBLEPRIME_771  = 86 !!!! 106
         NER_CMB_TOPDDOUBLEPRIME  = 7
-        NER_OUTER_CORE           = 116
+        NER_OUTER_CORE           = 112 !!!!!!!!!! 116
         NER_TOP_CENTRAL_CUBE_ICB = 12
         R_CENTRAL_CUBE = 985000.d0
 
     ! element width =   7.2115384E-02  degrees =    8.018865      km
       else if(NEX_MAX*multiplication_factor <= 1248) then
+
         DT                       = 0.0462d0
 
-        MIN_ATTENUATION_PERIOD   = 4
-        MAX_ATTENUATION_PERIOD   = 200
-
         NER_CRUST                = 3
-        NER_80_MOHO              = 6
-        NER_220_80               = 9
-        NER_400_220              = 14
-        NER_600_400              = 14
-        NER_670_600              = 5
+        NER_80_MOHO              = 4 !!!!!!!!!!! 6
+        NER_220_80               = 8 !!!!!!!!!!! 9
+        NER_400_220              = 11 !!!!! 10 !!!!!!!!!! 14
+        NER_600_400              = 12 !!!!!!!! 11 !!! 13 !!!!!!!!!!! 14
+        NER_670_600              = 4 !!!!!!!!!!!!! 5
         NER_771_670              = 6
-        NER_TOPDDOUBLEPRIME_771  = 114
+        NER_TOPDDOUBLEPRIME_771  = 94 !!!!!!!! 114
         NER_CMB_TOPDDOUBLEPRIME  = 8
-        NER_OUTER_CORE           = 124
+        NER_OUTER_CORE           = 116 !!!!!!!!! 124
         NER_TOP_CENTRAL_CUBE_ICB = 13
         R_CENTRAL_CUBE = 985000.d0
 
-      else
+      else  if(NEX_MAX*multiplication_factor <= 2368) then
 
-! scale with respect to 1248 if above that limit
-        DT                       = 0.0462d0 * 1248.d0 / (2.d0*NEX_MAX)
-
-        MIN_ATTENUATION_PERIOD   = 4
-        MAX_ATTENUATION_PERIOD   = 200
-
-        NER_CRUST                = nint(3 * 2.d0*NEX_MAX / 1248.d0)
-        NER_80_MOHO              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
-        NER_220_80               = nint(9 * 2.d0*NEX_MAX / 1248.d0)
-        NER_400_220              = nint(14 * 2.d0*NEX_MAX / 1248.d0)
-        NER_600_400              = nint(14 * 2.d0*NEX_MAX / 1248.d0)
-        NER_670_600              = nint(5 * 2.d0*NEX_MAX / 1248.d0)
-        NER_771_670              = nint(6 * 2.d0*NEX_MAX / 1248.d0)
-        NER_TOPDDOUBLEPRIME_771  = nint(114 * 2.d0*NEX_MAX / 1248.d0)
-        NER_CMB_TOPDDOUBLEPRIME  = nint(8 * 2.d0*NEX_MAX / 1248.d0)
-        NER_OUTER_CORE           = nint(124 * 2.d0*NEX_MAX / 1248.d0)
-        NER_TOP_CENTRAL_CUBE_ICB = nint(13 * 2.d0*NEX_MAX / 1248.d0)
+! simple scaling for the time step
+        DT                       = 0.0462d0 * 1248.d0 / dble(NEX_MAX*multiplication_factor)
         R_CENTRAL_CUBE = 985000.d0
 
-!! removed this limit           else
-!! removed this limit             stop 'problem with this value of NEX_MAX'
+ NER_CRUST =            5 !!!!!!!!!! 6
+ NER_80_MOHO =            7 !!!!!!!!!!! 8
+ NER_220_80 =           15
+ NER_400_220 =           21
+ NER_600_400 =           23
+ NER_670_600 =            8
+ NER_771_670 =           11
+ NER_TOPDDOUBLEPRIME_771 =          178
+ NER_CMB_TOPDDOUBLEPRIME =           15
+ NER_OUTER_CORE =          220
+ NER_TOP_CENTRAL_CUBE_ICB =           27 !!!!!!!!! 25
+
+      else  if(NEX_MAX*multiplication_factor <= 2880) then
+
+! simple scaling for the time step
+        DT                       = 0.0462d0 * 1248.d0 / dble(NEX_MAX*multiplication_factor)
+        R_CENTRAL_CUBE = 985000.d0
+
+ NER_CRUST =            5 !!!!!!!!!!!!!!!!!! 6
+ NER_80_MOHO =            8 !!!!!!!!!!!!! 9
+ NER_220_80 =           18
+ NER_400_220 =           24 !!!!!!!!!! 26
+ NER_600_400 =           26 !!!!!!!!!! 28
+ NER_670_600 =           9 !!!!!!!!!!! 10
+ NER_771_670 =           13
+ NER_TOPDDOUBLEPRIME_771 =          216
+ NER_CMB_TOPDDOUBLEPRIME =           18
+ NER_OUTER_CORE =          268
+ NER_TOP_CENTRAL_CUBE_ICB =           33
+
+      else  if(NEX_MAX*multiplication_factor <= 3264) then
+
+! simple scaling for the time step
+        DT                       = 0.0462d0 * 1248.d0 / dble(NEX_MAX*multiplication_factor)
+        R_CENTRAL_CUBE = 985000.d0
+
+ NER_CRUST =            6
+ NER_80_MOHO =            8 !!!!!!!!!!!!!!! 9
+ NER_220_80 =           20
+ NER_400_220 =           27
+ NER_600_400 =           29
+ NER_670_600 =           10
+ NER_771_670 =           15
+ NER_TOPDDOUBLEPRIME_771 =          245
+ NER_CMB_TOPDDOUBLEPRIME =           19 !!!!!!!!!!! 20
+ NER_OUTER_CORE =          304
+ NER_TOP_CENTRAL_CUBE_ICB =           37
+
+      else
+
+        stop 'values of NEX_MAX > 3264 not implemented yet in read_compute_parameters'
+
       endif
 
 !----
@@ -714,6 +731,7 @@
 
 ! case of regular PREM with two crustal layers: change the time step for small meshes
 ! because of a different size of elements in the radial direction in the crust
+    if (.not. PATCH_FOR_GORDON_BELL) then
     if (HONOR_1D_SPHERICAL_MOHO) then
       if (.not. ONE_CRUST) then
         ! case 1D + two crustal layers
@@ -735,29 +753,21 @@
           DT = 0.155d0
       endif
     endif
+    endif ! of .not. PATCH_FOR_GORDON_BELL
 
-    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-      DT = DT*0.20d0
-    endif
+! model 1066A has one very thin layer therefore we need to drastically reduce the time step
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) DT = DT*0.20d0
 
-
-    if( .not. ATTENUATION_RANGE_PREDEFINED ) then
-       call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-            MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
-    endif
-
-    if(ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .or. &
-       ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .or. &
-       NEX_MAX > 1248) then
+!----
+! if the chunk is smaller than full 90 degrees, call Brian Savage's set of auto_ner routines
+!----
+    if(.not. PATCH_FOR_GORDON_BELL .and. (ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .or. ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0)) then
 
      call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
           NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
           NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
           NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
           R_CENTRAL_CUBE, CASE_3D)
-
-     call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-          MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
      call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
 
@@ -770,11 +780,15 @@
       ! case 3D
       if (NER_CRUST<2) NER_CRUST=2
     endif
-  endif
+
+  endif ! of call to Brian Savage's set of auto_ner routines
 
 ! take a 5% safety margin on the maximum stable time step
 ! which was obtained by trial and error
 !!!!!!!!!!!!!!!!!!  DT = DT * (1.d0 - 0.05d0)
+
+! determine suitable attenuation periods for the mesh
+  call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES,NEX_MAX,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 
   call read_value_logical(OCEANS, 'model.OCEANS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
@@ -791,6 +805,13 @@
 
   call read_value_logical(ABSORBING_CONDITIONS, 'solver.ABSORBING_CONDITIONS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+
+  if(PATCH_FOR_GORDON_BELL) then
+    OCEANS = .false.
+    GRAVITY = .false.
+    ROTATION = .false.
+    ABSORBING_CONDITIONS = .false.
+  endif
 
   if(ABSORBING_CONDITIONS .and. NCHUNKS == 6) stop 'cannot have absorbing conditions in the full Earth'
 
