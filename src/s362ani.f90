@@ -921,7 +921,7 @@
         numvar,ivarkern,varstr, &
         refmdl,kerstr,hsplfl,dskker,ierror)
   else
-    write(6,"('the model ',a,' does not exits')") modeldef(1:len_trim(modeldef))
+    write(6,"('model ',a,' does not exits')") modeldef(1:len_trim(modeldef))
   endif
 
 !         --- check arrays
@@ -995,7 +995,7 @@
   end subroutine splcon
 
 
-! --- evaluate perturbations in per cent
+! --- evaluate perturbations in percent
 
   subroutine subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
     numker,numhpa,numcof,ihpa,lmax,nylm, &

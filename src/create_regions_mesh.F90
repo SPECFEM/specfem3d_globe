@@ -727,7 +727,7 @@
 ! creating mass matrix in this slice (will be fully assembled in the solver)
   if(ipass == 2) rmass(:) = 0._CUSTOM_REAL
 
-  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
+  if (.not. PATCH_FOR_GORDON_BELL .and. (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH)) then
     allocate(stretch_tab(2,ner(1)),STAT=ier )
     if (ier /= 0) then
       print *,"ABORTING can not allocate in create_regions_mesh ier=",ier
@@ -781,7 +781,7 @@
 ! define topological coordinates of this mesh point
       offset_x(ignod) = (ix_elem - 1) + iaddx(ignod) * ratio_sampling_array(ilayer)
       offset_y(ignod) = (iy_elem - 1) + iaddy(ignod) * ratio_sampling_array(ilayer)
-      if (ilayer == 1 .and. CASE_3D) then
+      if (.not. PATCH_FOR_GORDON_BELL .and. (ilayer == 1 .and. CASE_3D)) then
         offset_z(ignod) = iaddz(ignod)
       else
         offset_z(ignod) = (iz_elem - 1) + iaddz(ignod)
@@ -790,10 +790,8 @@
      call add_missing_nodes(offset_x,offset_y,offset_z)
 
 ! compute the actual position of all the grid points of that element
-  if (ilayer == 1 .and. CASE_3D .and. .not. SUPPRESS_CRUSTAL_MESH) then
+  if (.not. PATCH_FOR_GORDON_BELL .and. (ilayer == 1 .and. CASE_3D .and. .not. SUPPRESS_CRUSTAL_MESH)) then
 ! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
-! max ratio between size of upper crust elements and lower crust elements is given by the param MAX_RATIO_STRETCHING
-! to avoid stretching, set MAX_RATIO_STRETCHING = 1.d0  in constants.h
     call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
                ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -1060,7 +1058,7 @@
 ! end of loop on all the layers of the mesh
   enddo
 
-  if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
+  if (.not. PATCH_FOR_GORDON_BELL .and. (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH)) then
     deallocate(stretch_tab,STAT=ier )
     if (ier /= 0) then
       print *,"ERROR can not deallocate stretch_tab in create_regions_mesh ier=",ier

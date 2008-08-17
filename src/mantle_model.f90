@@ -192,7 +192,6 @@
   type (three_d_mantle_model_variables) D3MM_V
 ! three_d_mantle_model_variables
 
-
   integer i,j
   double precision qqwk(3,NK+1)
 

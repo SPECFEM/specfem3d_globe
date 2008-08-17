@@ -494,6 +494,12 @@
 ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
 
+!! never honor a 1D model in the crust for Gordon Bell runs
+  if(PATCH_FOR_GORDON_BELL) then
+    CASE_3D = .true.
+    HONOR_1D_SPHERICAL_MOHO = .false.
+  endif
+
 !----
 !----  case prem_onecrust by default
 !----
@@ -1003,6 +1009,8 @@
     RMOHO_FICTITIOUS_IN_MESHER = RMOHO
   else
     RMOHO_FICTITIOUS_IN_MESHER = (R80 + R_EARTH) / 2
+    if(PATCH_FOR_GORDON_BELL) &
+      RMOHO_FICTITIOUS_IN_MESHER = R80 + (R_EARTH - R80) * dble(NER_80_MOHO) / dble(NER_CRUST + NER_80_MOHO)
   endif
 
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES')
@@ -1394,7 +1402,7 @@
       rmaxs(14) = RICB / R_EARTH
       rmins(14) = R_CENTRAL_CUBE / R_EARTH
 
-    elseif (ONE_CRUST) then
+    else if (ONE_CRUST) then
 
       NUMBER_OF_MESH_LAYERS = 13
       layer_offset = 0
@@ -1525,15 +1533,27 @@
 
     else
 
+!! DK DK this is the case we use for the Gordon Bell runs
+!! DK DK this is the case we use for the Gordon Bell runs
+!! DK DK this is the case we use for the Gordon Bell runs
+
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1
-      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
+
+      if ((RMIDDLE_CRUST-RMOHO) < (R_EARTH-RMIDDLE_CRUST)) then
         ner( 1) = ceiling (NER_CRUST / 2.d0)
         ner( 2) = floor (NER_CRUST / 2.d0)
       else
         ner( 1) = floor (NER_CRUST / 2.d0)
         ner( 2) = ceiling (NER_CRUST / 2.d0)
       endif
+
+!! DK DK use only one layer in the upper part of the mesh if 3D model
+      if(PATCH_FOR_GORDON_BELL .and. CASE_3D) then
+        ner( 1) = NER_CRUST
+        ner( 2) = 0
+      endif
+
       ner( 3) = NER_80_MOHO
       ner( 4) = NER_220_80
       ner( 5) = NER_400_220
@@ -1584,6 +1604,12 @@
       r_top(2) = RMIDDLE_CRUST
       r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER
 
+!! DK DK use only one layer in the upper part of the mesh if 3D model
+      if(PATCH_FOR_GORDON_BELL .and. CASE_3D) then
+        r_top(1) = R_EARTH
+        r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
+      endif
+
       r_top(3) = RMOHO_FICTITIOUS_IN_MESHER
       r_bottom(3) = R80
 
@@ -1627,6 +1653,12 @@
       rmaxs(2) = RMIDDLE_CRUST / R_EARTH
       rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
 
+!! DK DK use only one layer in the upper part of the mesh if 3D model
+      if(PATCH_FOR_GORDON_BELL .and. CASE_3D) then
+        rmaxs(1) = ONE
+        rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
+      endif
+
       rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
       rmins(3) = R80 / R_EARTH
 
@@ -1658,7 +1690,9 @@
       rmins(14) = R_CENTRAL_CUBE / R_EARTH
 
     endif
-  else
+
+  else !! DK DK if ADD_4TH_DOUBLING
+
     if (SUPPRESS_CRUSTAL_MESH) then
 
       ONE_CRUST = .false.
