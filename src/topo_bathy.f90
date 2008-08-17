@@ -38,17 +38,16 @@
 ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
+! compute number of samples per degree
+  double precision, parameter :: samples_per_degree_topo = RESOLUTION_TOPO_FILE / 60.d0
+
   double precision xlat,xlon,value
 
   integer iadd1,iel1
-  double precision samples_per_degree_topo
   double precision xlo
 
   xlo = xlon
   if(xlon < 0.d0) xlo = xlo + 360.d0
-
-! compute number of samples per degree
-  samples_per_degree_topo = dble(RESOLUTION_TOPO_FILE) / 60.d0
 
 ! compute offset in data file and avoid edge effects
   iadd1 = 1 + int((90.d0-xlat)/samples_per_degree_topo)

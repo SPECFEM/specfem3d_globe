@@ -567,9 +567,6 @@
   character(len=80) kerstr
   character(len=40) varstr(maxker)
 
-! to perform two passes of the whole routine to be able to save memory
-  integer :: ipass
-
 ! the height at which the central cube is cut
   integer :: nz_inf_limit
 
@@ -588,9 +585,6 @@
   real(kind=CUSTOM_REAL) :: normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
   real(kind=CUSTOM_REAL) :: normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM)
   real(kind=CUSTOM_REAL) :: normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP)
-
-! perform two passes of the whole routine to be able to save memory
-  do ipass = 1,2
 
 ! attenuation
   if(ATTENUATION .and. ATTENUATION_3D) then
@@ -716,7 +710,7 @@
   ystore(:,:,:,:) = 0.d0
   zstore(:,:,:,:) = 0.d0
 
-  if(ipass == 1) ibool(:,:,:,:) = 0
+  ibool(:,:,:,:) = 0
 
 ! initialize boundary arrays
   iboun(:,:) = .false.
@@ -725,7 +719,7 @@
 
 !! DK DK added this for merged version
 ! creating mass matrix in this slice (will be fully assembled in the solver)
-  if(ipass == 2) rmass(:) = 0._CUSTOM_REAL
+  rmass(:) = 0._CUSTOM_REAL
 
   if (.not. PATCH_FOR_GORDON_BELL .and. (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH)) then
     allocate(stretch_tab(2,ner(1)),STAT=ier )
@@ -1228,9 +1222,6 @@
 ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
 
-! only create global addressing and the MPI buffers in the first pass
-  if(ipass == 1) then
-
     locval = 0
     ifseg = .false.
     xp = 0.d0
@@ -1258,8 +1249,8 @@
 
   ! check that number of points found equals theoretical value
     if(nglob /= nglob_theor) then
-      write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor,ipass,iregion_code = ',&
-        myrank,nglob,nglob_theor,ipass,iregion_code
+      write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor,iregion_code = ',&
+        myrank,nglob,nglob_theor,iregion_code
       call exit_MPI(myrank,errmsg)
     endif
 
@@ -1340,10 +1331,7 @@
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
   endif
 
-! only create mass matrix and save all the final arrays in the second pass
-  else if(ipass == 2) then
-
-! copy the theoretical number of points for the second pass
+! copy the theoretical number of points
   nglob = nglob_theor
 
 ! count number of anisotropic elements in current region
@@ -1512,13 +1500,6 @@
       enddo
     enddo
   enddo
-
-  else
-    stop 'there cannot be more than two passes in mesh creation'
-
-  endif  ! end of test if first or second pass
-
-  enddo ! of loop on ipass = 1,2
 
   end subroutine create_regions_mesh
 

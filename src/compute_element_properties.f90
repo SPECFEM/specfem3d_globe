@@ -398,9 +398,12 @@
 ! add topography on the Moho *before* adding the 3D crustal model so that the streched
 ! mesh gets assigned the right model values
 !! DK DK added this for merged version because array idoubling is not allocated in outer core
+!! DK DK unsafe at very high resolution therefore remove for now
+  if(.not. PATCH_FOR_GORDON_BELL) then
   if(iregion_code /= IREGION_OUTER_CORE) then
     if(THREE_D_MODEL/=0 .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
        .or. idoubling(ispec)==IFLAG_80_MOHO)) call moho_stretching(myrank,xelm,yelm,zelm,RMOHO,R220)
+  endif
   endif
 
 ! compute values for the Earth model
@@ -440,6 +443,8 @@
   endif
 
 ! add topography on 410 km and 650 km discontinuity in model S362ANI
+!! DK DK unsafe at very high resolution therefore remove for now
+  if(.not. PATCH_FOR_GORDON_BELL) then
   if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
      .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) &
           call add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771, &
@@ -447,6 +452,7 @@
                                       lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
                                       nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
                                       coe,ylmcof,wk1,wk2,wk3,varstr)
+  endif
 
 ! CMB topography
 !! DK DK merged version: this will not work anymore because idoubling not allocated in outer core
