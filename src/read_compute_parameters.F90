@@ -731,26 +731,45 @@
 
       endif
 
+! we cannot honor a two-layer crust with only one element in the crust
+  if(NER_CRUST == 1) ONE_CRUST = .true.
+
 !----
 !----  change some values in the case of regular PREM with two crustal layers or of 3D models
 !----
 
 ! case of regular PREM with two crustal layers: change the time step for small meshes
 ! because of a different size of elements in the radial direction in the crust
-    if (HONOR_1D_SPHERICAL_MOHO) then
-      if (.not. ONE_CRUST) then
-        ! case 1D + two crustal layers
-        if (NER_CRUST<2) NER_CRUST=2
-        if(NEX_MAX*multiplication_factor <= 160) then
-          DT = 0.20d0
-        else if(NEX_MAX*multiplication_factor <= 256) then
-          DT = 0.20d0
-        endif
-      endif
-    else
-      ! case 3D
-      if (NER_CRUST<2) NER_CRUST=2
+! case 1D + two crustal layers
+    if(HONOR_1D_SPHERICAL_MOHO .and. .not. ONE_CRUST .and. NER_CRUST < 2) NER_CRUST = 2
+
+    if (.not. ONE_CRUST) then
       if(NEX_MAX*multiplication_factor <= 160) then
+        DT = 0.20d0
+      else if(NEX_MAX*multiplication_factor <= 256) then
+        DT = 0.20d0
+      endif
+    endif
+
+!! DK DK I do not understand why we should impose two layers in the crust here
+!! DK DK therefore I got rid of it
+!! DK DK    else
+!! DK DK      ! case 3D
+!! DK DK      if (NER_CRUST<2) NER_CRUST=2
+!! DK DK      if(NEX_MAX*multiplication_factor <= 160) then
+!! DK DK          DT = 0.15d0
+!! DK DK      else if(NEX_MAX*multiplication_factor <= 256) then
+!! DK DK          DT = 0.17d0
+!! DK DK      else if(NEX_MAX*multiplication_factor <= 320) then
+!! DK DK          DT = 0.155d0
+!! DK DK      endif
+
+! because of distorted elements (for instance due to topography)
+! we need a smaller time steps at low resolution in the 3D case
+    if(CASE_3D) then
+      if(NEX_MAX*multiplication_factor <= 80) then
+          DT = 0.125d0
+      else if(NEX_MAX*multiplication_factor <= 160) then
           DT = 0.15d0
       else if(NEX_MAX*multiplication_factor <= 256) then
           DT = 0.17d0
@@ -760,7 +779,7 @@
     endif
 
 ! model 1066A has one very thin layer therefore we need to drastically reduce the time step
-    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) DT = DT*0.20d0
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) DT = DT / 5.d0
 
 !----
 ! if the chunk is smaller than full 90 degrees, call Brian Savage's set of auto_ner routines
@@ -777,15 +796,13 @@
 
     endif ! of call to Brian Savage's set of auto_ner routines
 
-    if (HONOR_1D_SPHERICAL_MOHO) then
-      if (.not. ONE_CRUST) then
-        ! case 1D + two crustal layers
-        if (NER_CRUST<2) NER_CRUST=2
-      endif
-    else
-      ! case 3D
-      if (NER_CRUST<2) NER_CRUST=2
-    endif
+! case 1D + two crustal layers
+    if(HONOR_1D_SPHERICAL_MOHO .and. .not. ONE_CRUST .and. NER_CRUST < 2) NER_CRUST = 2
+!! DK DK I do not understand why we should impose two layers in the crust here
+!! DK DK therefore I got rid of it
+!! DK DK    else
+!! DK DK      ! case 3D
+!! DK DK      if (NER_CRUST<2) NER_CRUST=2
 
 ! determine suitable attenuation periods for the mesh
   call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES,NEX_MAX,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)

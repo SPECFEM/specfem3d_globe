@@ -104,6 +104,9 @@
   logical SAVE_ALL_SEISMOS_IN_ONE_FILE
   logical USE_BINARY_FOR_LARGE_FILE
 
+! suppress calculation and storage of seismograms if needed
+  if(.not. COMPUTE_STORE_SEISMOGRAMS) return
+
 ! check that the sum of the number of receivers in each slice is nrec
 #ifdef USE_MPI
   call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)

@@ -1015,7 +1015,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
 
 ! locate receivers in the crust in the mesh
-  call locate_receivers(myrank,DT,NSTEP,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
+  if(COMPUTE_STORE_SEISMOGRAMS) &
+    call locate_receivers(myrank,DT,NSTEP,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xigll,yigll,zigll,trim(rec_filename), &
             nrec,islice_selected_rec,ispec_selected_rec, &
@@ -1046,6 +1047,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   enddo
 
 !--- select local receivers
+
+  if(COMPUTE_STORE_SEISMOGRAMS) then
 
 ! count number of receivers located in this slice
   nrec_local = 0
@@ -1113,6 +1116,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
       write(IMAIN,*) 'this total is okay'
     endif
   endif
+
+  endif ! of if(COMPUTE_STORE_SEISMOGRAMS)
 
 !! DK DK end of section with sources and receivers excluded in the serial case
 #else
@@ -1215,8 +1220,14 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   else
     write(IMAIN,*) 'no general mantle anisotropy'
   endif
+
   write(IMAIN,*)
-  write(IMAIN,*)
+  if(COMPUTE_STORE_SEISMOGRAMS) then
+    write(IMAIN,*) 'computing and storing seismograms'
+  else
+    write(IMAIN,*) 'not computing and storing seismograms'
+  endif
+
   write(IMAIN,*)
 
   endif
@@ -1545,7 +1556,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 #ifdef USE_MPI
 ! allocate seismogram array
-  if (nrec_local > 0) then
+  if(COMPUTE_STORE_SEISMOGRAMS .and. nrec_local > 0) then
     allocate(uxdstore(nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
     allocate(uydstore(nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
     allocate(uzdstore(nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
@@ -2437,7 +2448,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 ! store the seismograms only if there is at least one receiver located in this slice
 #ifdef USE_MPI
-  if (nrec_local > 0) then
+  if(COMPUTE_STORE_SEISMOGRAMS .and. nrec_local > 0) then
 
     do irec_local = 1,nrec_local
 
@@ -2486,7 +2497,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   endif ! nrec_local
 
 ! write the current or final seismograms
-  if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
+  if(COMPUTE_STORE_SEISMOGRAMS .and. (seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end)) then
 
       call write_seismograms(myrank,uxdstore,uydstore,uzdstore,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
