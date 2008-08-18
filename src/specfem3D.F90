@@ -1103,6 +1103,9 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     hgammar_store(irec_local,:) = hgammar(:)
   enddo
 
+  else
+! allocate dummy array to be able to call subroutines with this argument
+    allocate(number_receiver_global(1),STAT=ier)
   endif ! nrec_local
 
 ! check that the sum of the number of receivers in each slice is nrec
@@ -1569,6 +1572,11 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     uydstore(:,:) = 0.d0
     uzdstore(:,:) = 0.d0
     nit_written = 0
+  else
+! allocate dummy arrays to be able to call subroutines with these arguments
+    allocate(uxdstore(1,1),stat=ier)
+    allocate(uydstore(1,1),stat=ier)
+    allocate(uzdstore(1,1),stat=ier)
   endif
 #endif
 
