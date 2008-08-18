@@ -45,7 +45,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
 
   implicit none
 
@@ -288,7 +288,7 @@
 ! attenuation_simplex_variables
 
 ! correct number of spectral elements in each block depending on chunk type
-  integer ispec,nspec,nspec_stacey
+  integer ispec,nspec,nspec_stacey,ipass
 
   integer REFERENCE_1D_MODEL,THREE_D_MODEL
 
@@ -433,7 +433,7 @@
           numker,numhpa,numcof,ihpa,lmax,nylm, &
           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-          coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+          coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
 
 ! add topography without the crustal model
 !! DK DK added this for merged version because array idoubling is not allocated in outer core

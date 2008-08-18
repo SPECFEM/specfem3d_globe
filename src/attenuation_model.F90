@@ -1931,7 +1931,7 @@ subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
      Qmu=600.0d0
      Qkappa = 57827.0d0
   else
-     call exit_mpi_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
+     call exit_mpi_without_rank('Invalid idoubling flag in attenuation_model_1D_prem')
   endif
 
 end subroutine attenuation_model_1D_PREM

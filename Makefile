@@ -37,8 +37,8 @@
 FC = ifort
 MPIFC = mpif90
 MPIFLAGS = -DUSE_MPI # -lmpi
-#FLAGS_NO_CHECK = -O1 -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv
-FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
+#FLAGS_NO_CHECK = -O1 -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv # -mcmodel=medium -shared-intel
+FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz # -mcmodel=medium -shared-intel
 # we need the -no-heap-arrays flag to force the compiler to allocate memory on the stack
 # instead of on the heap to minimize memory fragmentation
 
@@ -48,7 +48,7 @@ FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone 
 #FC = gfortran
 #MPIFC = /opt/mpich2_gfortran/bin/mpif90
 #MPIFLAGS = -DUSE_MPI
-#FLAGS_NO_CHECK = -std=f2003 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -fbounds-check
+#FLAGS_NO_CHECK = -std=f2003 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -fbounds-check # -mcmodel=medium
 
 #
 # Portland pgf90
@@ -56,7 +56,7 @@ FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone 
 #FC = pgf90
 #MPIFC = mpif90
 #MPIFLAGS = -DUSE_MPI
-#FLAGS_NO_CHECK = -fast -Mnobounds -Mrecursive -Minline -Mdclchk -Knoieee -fastsse -tp amd64e -Minform=warn -Ktrap=none
+#FLAGS_NO_CHECK = -fast -Mnobounds -Mrecursive -Minline -Mdclchk -Knoieee -fastsse -tp amd64e -Minform=warn -Ktrap=none # -mcmodel=medium
 # we need the -Mrecursive flag to force the compiler to allocate memory on the stack
 # instead of on the heap to minimize memory fragmentation
 

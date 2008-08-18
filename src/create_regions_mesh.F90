@@ -567,6 +567,9 @@
   character(len=80) kerstr
   character(len=40) varstr(maxker)
 
+! to perform two passes of the whole routine to be able to save memory
+  integer :: ipass
+
 ! the height at which the central cube is cut
   integer :: nz_inf_limit
 
@@ -585,6 +588,9 @@
   real(kind=CUSTOM_REAL) :: normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
   real(kind=CUSTOM_REAL) :: normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM)
   real(kind=CUSTOM_REAL) :: normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP)
+
+! perform two passes of the whole routine to be able to save memory
+  do ipass = 1,2
 
 ! attenuation
   if(ATTENUATION .and. ATTENUATION_3D) then
@@ -710,7 +716,7 @@
   ystore(:,:,:,:) = 0.d0
   zstore(:,:,:,:) = 0.d0
 
-  ibool(:,:,:,:) = 0
+  if(ipass == 1) ibool(:,:,:,:) = 0
 
 ! initialize boundary arrays
   iboun(:,:) = .false.
@@ -719,7 +725,7 @@
 
 !! DK DK added this for merged version
 ! creating mass matrix in this slice (will be fully assembled in the solver)
-  rmass(:) = 0._CUSTOM_REAL
+  if(ipass == 2) rmass(:) = 0._CUSTOM_REAL
 
   if (.not. PATCH_FOR_GORDON_BELL .and. (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH)) then
     allocate(stretch_tab(2,ner(1)),STAT=ier )
@@ -853,7 +859,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
 
 !! DK DK added this for merged version
     include "comp_mass_matrix_one_element.f90"
@@ -1037,7 +1043,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
 
 !! DK DK added this for merged version
     include "comp_mass_matrix_one_element.f90"
@@ -1184,7 +1190,6 @@
     idoubling(ispec) = IFLAG_IN_FICTITIOUS_CUBE
   endif
 
-
 ! compute several rheological and geometrical properties for this spectral element
      call compute_element_properties(ispec,iregion_code,idoubling, &
            xstore,ystore,zstore,nspec, &
@@ -1205,7 +1210,7 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
 
 !! DK DK added this for merged version
     include "comp_mass_matrix_one_element.f90"
@@ -1221,6 +1226,9 @@
 
 ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
+
+! only create global addressing and the MPI buffers in the first pass
+  if(ipass == 1) then
 
     locval = 0
     ifseg = .false.
@@ -1249,8 +1257,8 @@
 
   ! check that number of points found equals theoretical value
     if(nglob /= nglob_theor) then
-      write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor,iregion_code = ',&
-        myrank,nglob,nglob_theor,iregion_code
+      write(errmsg,*) 'incorrect total number of points found: myrank,nglob,nglob_theor,ipass,iregion_code = ',&
+        myrank,nglob,nglob_theor,ipass,iregion_code
       call exit_MPI(myrank,errmsg)
     endif
 
@@ -1309,29 +1317,10 @@
   iregion_code)
 #endif
 
-! create AVS or DX mesh data for the slices
-  if(SAVE_MESH_FILES) then
-    call create_name_database(prname,myrank,iregion_code)
+! only create mass matrix and save all the final arrays in the second pass
+  else if(ipass == 2) then
 
-    call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
-
-    call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
-
-    call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
-!! DK DK changed for now because array rhostore is not available in v4.1 anymore
-!! DK DK      rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-              nspl,rspl,espl,espl2, &
-              ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
-              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,iregion_code)
-
-    call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
-  endif
-
-! copy the theoretical number of points
+! copy the theoretical number of points for the second pass
   nglob = nglob_theor
 
 ! count number of anisotropic elements in current region
@@ -1445,6 +1434,28 @@
 !! DK DK shared by the mesher and the solver subroutines at some point
   if(ATTENUATION_VAL) call attenuation_save_arrays(iregion_code, AM_V)
 
+! create AVS or DX mesh data for the slices
+  if(SAVE_MESH_FILES) then
+    call create_name_database(prname,myrank,iregion_code)
+
+    call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
+
+    call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
+
+    call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
+!! DK DK changed for now because array rhostore is not available in v4.1 anymore
+!! DK DK      rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              nspl,rspl,espl,espl2, &
+              ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+              RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,iregion_code)
+
+    call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot,iregion_code)
+  endif
+
 ! compute volume, bottom and top area of that part of the slice
   volume_local = ZERO
   area_local_bottom = ZERO
@@ -1500,6 +1511,12 @@
       enddo
     enddo
   enddo
+
+  else
+    stop 'there cannot be more than two passes in mesh creation'
+  endif  ! end of test if first or second pass
+
+  enddo ! of loop on ipass = 1,2
 
   end subroutine create_regions_mesh
 

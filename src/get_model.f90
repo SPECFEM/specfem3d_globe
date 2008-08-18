@@ -44,7 +44,7 @@
     numker,numhpa,numcof,ihpa,lmax,nylm, &
     lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
     nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-    coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+    coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ipass)
 
   implicit none
 
@@ -321,7 +321,7 @@
 
   real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey),rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
 
-  integer nspec_ani
+  integer nspec_ani,ipass
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
   double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
@@ -389,22 +389,29 @@
   character(len=80) kerstr
   character(len=40) varstr(maxker)
 
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+
        xmesh = ZERO
        ymesh = ZERO
        zmesh = ZERO
-       do ia=1,NGNOD
+
+       do ia = 1,NGNOD
          xmesh = xmesh + shape3D(ia,i,j,k)*xelm(ia)
          ymesh = ymesh + shape3D(ia,i,j,k)*yelm(ia)
          zmesh = zmesh + shape3D(ia,i,j,k)*zelm(ia)
        enddo
-       r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
 
        xstore(i,j,k) = xmesh
        ystore(i,j,k) = ymesh
        zstore(i,j,k) = zmesh
+
+!! DK DK only assign material properties in the second pass, because it involves
+!! DK DK a costly interpolation process at grid points in the case of 3D models
+       if(ipass == 2) then
+
+       r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
 
 !      make sure we are within the right shell in PREM to honor discontinuities
 !      use small geometrical tolerance
@@ -997,6 +1004,8 @@
           tau_e_store(:,i,j,k,ispec) = tau_e(:)
           Qmu_store(i,j,k,ispec)     = Qmu
        endif
+
+       endif ! of if(ipass == 2)
 
      enddo
    enddo
