@@ -1,8 +1,6 @@
 
 !! DK DK added this for merged version
 
-  if(ipass == 2) then
-
 ! suppress fictitious elements in central cube
 ! also take into account the fact that array idoubling is not allocated for the outer core
   add_contrib_this_element = .true.
@@ -69,6 +67,4 @@
   enddo
 
   endif ! of exclusion of fictitious inner core elements
-
-  endif ! of ipass == 2
 
