@@ -42,7 +42,7 @@
   logical, parameter :: COMPUTE_STORE_SEISMOGRAMS = .true.
 
 ! decrease the number of MPI messages by 3 but increase the size
-! of several MPI buffers by 3 but in order to do that
+! of several MPI buffers by 3 in order to do that
   logical, parameter :: FEWER_MESSAGES_LARGER_BUFFERS = .true.
 
 !
