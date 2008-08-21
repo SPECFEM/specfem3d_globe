@@ -1111,7 +1111,19 @@
   call read_value_logical(PRINT_SOURCE_TIME_FUNCTION, 'solver.PRINT_SOURCE_TIME_FUNCTION')
 
 !! DK DK temporary patch for the large Gordon Bell runs
-  if(PATCH_FOR_GORDON_BELL) RECEIVERS_CAN_BE_BURIED = .false.
+  if(PATCH_FOR_GORDON_BELL) then
+    NTSTEP_BETWEEN_OUTPUT_INFO      = 100
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
+    NTSTEP_BETWEEN_READ_ADJSRC      = 1000
+    OUTPUT_SEISMOS_ASCII_TEXT       = .true.
+    OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
+    OUTPUT_SEISMOS_SAC_BINARY       = .false.
+    ROTATE_SEISMOGRAMS_RT           = .false.
+    WRITE_SEISMOGRAMS_BY_MASTER     = .true.
+    SAVE_ALL_SEISMOS_IN_ONE_FILE    = .true.
+    USE_BINARY_FOR_LARGE_FILE       = .false.
+    RECEIVERS_CAN_BE_BURIED         = .false.
+  endif
 
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
 

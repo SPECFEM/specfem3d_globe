@@ -2511,6 +2511,20 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
   endif ! nrec_local
 
+!! DK DK added this for Gordon Bell runs, to save seismograms every 10000 time steps
+!! DK DK just in case the full simulation does not finish
+  if(PATCH_FOR_GORDON_BELL .and. mod(it,10000) == 0) then
+      call write_seismograms(myrank,uxdstore,uydstore,uzdstore,number_receiver_global,station_name, &
+            network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
+            yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
+            elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,&
+            cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC,NPROCTOT, &
+            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+            OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+            seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,one_seismogram,scale_displ,nu)
+  endif
+
 ! write the current or final seismograms
   if(COMPUTE_STORE_SEISMOGRAMS .and. (seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end)) then
 
