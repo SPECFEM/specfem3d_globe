@@ -258,8 +258,8 @@
       endif
 
 !     get the orientation of the seismometer
-      thetan=(90.0d0+stdip)*PI/180.0d0
-      phin=stazi*PI/180.0d0
+      thetan = (90.0d0+stdip)*PI/180.0d0
+      phin = stazi*PI/180.0d0
 
 ! we use the same convention as in Harvard normal modes for the orientation
 

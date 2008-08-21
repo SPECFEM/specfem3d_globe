@@ -1766,6 +1766,13 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
     Ufluidnorm = maxval(abs(displ_outer_core))
 
+    if(Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0 .or. &
+       Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0) &
+      print *,'stability problem in slice ',myrank,' in chunk ',ichunk
+      print *,'around latitude ',(PI/2.0d0 - ystore_crust_mantle(ibool_crust_mantle(1,1,1,1))) * 180.0d0/PI
+      print *,'and longitude ',zstore_crust_mantle(ibool_crust_mantle(1,1,1,1)) * 180.0d0/PI
+    endif
+
 ! compute the maximum of the maxima for all the slices using an MPI reduction
 #ifdef USE_MPI
     call MPI_REDUCE(Usolidnorm,Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
