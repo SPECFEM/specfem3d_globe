@@ -334,7 +334,6 @@
   implicit none
   include "constants.h"
 
-
 ! argument variables
   integer ierr
   double precision rhtyp(NLAYERS_CRUST),thtp(NLAYERS_CRUST)

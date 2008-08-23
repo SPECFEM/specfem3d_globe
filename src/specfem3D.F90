@@ -1767,7 +1767,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     Ufluidnorm = maxval(abs(displ_outer_core))
 
     if(Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0 .or. &
-       Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0) &
+       Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0) then
       print *,'stability problem in slice ',myrank,' in chunk ',ichunk
       print *,'around latitude ',(PI/2.0d0 - ystore_crust_mantle(ibool_crust_mantle(1,1,1,1))) * 180.0d0/PI
       print *,'and longitude ',zstore_crust_mantle(ibool_crust_mantle(1,1,1,1)) * 180.0d0/PI
