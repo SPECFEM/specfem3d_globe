@@ -438,13 +438,18 @@
   double precision,parameter :: LON_MIN = 130.d0
   double precision,parameter :: DEP_MAX = 500.d0
 
-! crustal_model_constants
-  ! crustal model parameters for crust2.0
-    integer, parameter :: NKEYS_CRUST = 359
-    integer, parameter :: NLAYERS_CRUST = 8
-    integer, parameter :: NCAP_CRUST = 180
-  ! use sedimentary layers of crust 2.0
-    logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
+! crustal model parameters for crust2.0
+  integer, parameter :: NKEYS_CRUST = 359
+  integer, parameter :: NLAYERS_CRUST = 8
+  integer, parameter :: NCAP_CRUST = 180
+
+! use sedimentary layers of crust 2.0
+  logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
+
+! number of points per degree in smoothed crust2.0
+  integer, parameter :: NFACTOR_CRUST = 2
+  integer, parameter :: NLON_CRUST = 180 * NFACTOR_CRUST
+  integer, parameter :: NLAT_CRUST = 90 * NFACTOR_CRUST
 
 ! to inflate the central cube (set to 0.d0 for a non-inflated cube)
   double precision, parameter :: CENTRAL_CUBE_INFLATE_FACTOR = 0.41d0
