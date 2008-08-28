@@ -28,6 +28,9 @@
   subroutine model_iasp91(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &
                      RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
+! from B. L. N. Kennett and E. R. Engdahl, Traveltimes for global earthquake location
+! and phase identification, Geophysical Journal International, vol. 105, p. 429-465 (1991)
+
   implicit none
 
   include "constants.h"
@@ -163,13 +166,6 @@
     vs=15.24213-11.08552*x
     Qmu=143.0d0
     Qkappa=57827.0d0
-
-! from Sebastien Chevrot: for the IASP91 model
-! Depth        R                Vp                    Vs
-! 0-20       6351-6371         5.80                  3.36
-! 20-35      6336-6351         6.50                  3.75
-! 35-120     6251-6336   8.78541-0.74953 x       6.706231-2.248585 x
-! with x = r / 6371
 
   else if(r > R220 .and. r <= R120) then
     rho=2.6910d0+0.6924d0*x
