@@ -31,6 +31,11 @@
 ! from B. L. N. Kennett and E. R. Engdahl, Traveltimes for global earthquake location
 ! and phase identification, Geophysical Journal International, vol. 105, p. 429-465 (1991)
 
+! we use the density model of PREM (or close to PREM in the crust)
+! because IASP91 does not provide a density model.
+! Note that "ttimes" from the official IASP91 package uses a slightly different
+! model: scaling of the P wave velocity based on Birch's law. Both options are fine.
+
   implicit none
 
   include "constants.h"
