@@ -65,6 +65,10 @@
 ! include values created by the mesher
   include "values_from_mesher.h"
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! DK DK to debug the second sorting routine
+  logical, parameter :: DEBUG = .false.
+
 !! DK DK added this for merged version
 #ifdef USE_MPI
   integer :: npoin2D_xi,npoin2D_eta
@@ -1274,14 +1278,64 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(DEBUG .and. copy_ibool_ori(i,j,k,ispec) < 1) then
+              print *,'error: copy_ibool is < 1 in debug1 of second sorting: ',copy_ibool_ori(i,j,k,ispec) 
+              call exit_MPI(myrank,'error: copy_ibool is < 1 in debug1 of second sorting')
+            endif
+            if(DEBUG .and. copy_ibool_ori(i,j,k,ispec) > nglob_theor) then
+              print *,'error: copy_ibool is too high in debug1 of second sorting: ',copy_ibool_ori(i,j,k,ispec),nglob_theor
+              call exit_MPI(myrank,'error: copy_ibool is too high in debug1 of second sorting')
+            endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           if(mask_ibool(copy_ibool_ori(i,j,k,ispec)) == -1) then
   ! create a new point
             inumber = inumber + 1
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(DEBUG .and. inumber < 1) then
+              print *,'error: inumber is < 1 in debug2 of second sorting: ',inumber
+              call exit_MPI(myrank,'error: inumber is < 1 in debug2 of second sorting')
+            endif
+            if(DEBUG .and. inumber > nglob_theor) then
+              print *,'error: inumber is too high in debug2 of second sorting: ',inumber,nglob_theor
+              call exit_MPI(myrank,'error: inumber is too high in debug2 of second sorting')
+            endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             ibool(i,j,k,ispec) = inumber
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(DEBUG .and. copy_ibool_ori(i,j,k,ispec) < 1) then
+              print *,'error: copy_ibool is < 1 in debug3 of second sorting: ',copy_ibool_ori(i,j,k,ispec)
+              call exit_MPI(myrank,'error: copy_ibool is < 1 in debug3 of second sorting')
+            endif
+            if(DEBUG .and. copy_ibool_ori(i,j,k,ispec) > nglob_theor) then
+              print *,'error: copy_ibool is too high in debug3 of second sorting: ',copy_ibool_ori(i,j,k,ispec),nglob_theor
+              call exit_MPI(myrank,'error: copy_ibool is too high in debug3 of second sorting')
+            endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             mask_ibool(copy_ibool_ori(i,j,k,ispec)) = inumber
           else
   ! use an existing point created previously
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(DEBUG .and. copy_ibool_ori(i,j,k,ispec) < 1) then
+              print *,'error: copy_ibool is < 1 in debug4 of second sorting: ',copy_ibool_ori(i,j,k,ispec)
+              call exit_MPI(myrank,'error: copy_ibool is < 1 in debug4 of second sorting')
+            endif
+            if(DEBUG .and. copy_ibool_ori(i,j,k,ispec) > nglob_theor) then
+              print *,'error: copy_ibool is too high in debug4 of second sorting: ',copy_ibool_ori(i,j,k,ispec),nglob_theor
+              call exit_MPI(myrank,'error: copy_ibool is too high in debug4 of second sorting')
+            endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             ibool(i,j,k,ispec) = mask_ibool(copy_ibool_ori(i,j,k,ispec))
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(DEBUG .and. ibool(i,j,k,ispec) < 1) then
+              print *,'error: ibool is < 1 in debug5 of second sorting: ',ibool(i,j,k,ispec) 
+              call exit_MPI(myrank,'error: ibool is < 1 in debug5 of second sorting')
+            endif
+            if(DEBUG .and. ibool(i,j,k,ispec) > nglob_theor) then
+              print *,'error: ibool is too high in debug5 of second sorting: ',ibool(i,j,k,ispec) ,nglob_theor
+              call exit_MPI(myrank,'error: ibool is too high in debug5 of second sorting')
+            endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           endif
         enddo
       enddo
@@ -1289,10 +1343,10 @@
     enddo
 
     if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) then
-      print *,'Incorrect global numbering after sorting: mask_ibool ',minval(mask_ibool),maxval(mask_ibool)
-      print *,'Incorrect global numbering after sorting: ibool ',minval(ibool),maxval(ibool)
-      print *,'Incorrect global numbering after sorting: expected min/max = 1, ',nglob_theor
-      call exit_MPI(myrank,'incorrect global numbering after sorting')
+      print *,'Incorrect global numbering after second sorting: mask_ibool ',minval(mask_ibool),maxval(mask_ibool)
+      print *,'Incorrect global numbering after second sorting: ibool ',minval(ibool),maxval(ibool)
+      print *,'Incorrect global numbering after second sorting: expected min/max = 1, ',nglob_theor
+      call exit_MPI(myrank,'incorrect global numbering after second sorting')
     endif
 
 ! create MPI buffers
