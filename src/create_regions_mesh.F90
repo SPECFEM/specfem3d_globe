@@ -1280,7 +1280,7 @@
         do i=1,NGLLX
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(DEBUG .and. copy_ibool_ori(i,j,k,ispec) < 1) then
-              print *,'error: copy_ibool is < 1 in debug1 of second sorting: ',copy_ibool_ori(i,j,k,ispec) 
+              print *,'error: copy_ibool is < 1 in debug1 of second sorting: ',copy_ibool_ori(i,j,k,ispec)
               call exit_MPI(myrank,'error: copy_ibool is < 1 in debug1 of second sorting')
             endif
             if(DEBUG .and. copy_ibool_ori(i,j,k,ispec) > nglob_theor) then
@@ -1328,7 +1328,7 @@
             ibool(i,j,k,ispec) = mask_ibool(copy_ibool_ori(i,j,k,ispec))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(DEBUG .and. ibool(i,j,k,ispec) < 1) then
-              print *,'error: ibool is < 1 in debug5 of second sorting: ',ibool(i,j,k,ispec) 
+              print *,'error: ibool is < 1 in debug5 of second sorting: ',ibool(i,j,k,ispec)
               call exit_MPI(myrank,'error: ibool is < 1 in debug5 of second sorting')
             endif
             if(DEBUG .and. ibool(i,j,k,ispec) > nglob_theor) then
