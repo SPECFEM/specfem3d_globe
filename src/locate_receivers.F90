@@ -222,9 +222,13 @@
 ! set distance to huge initial value
     distmin = HUGEVAL
 
-! convert geographic latitude stlat (degrees)
-! to geocentric colatitude theta (radians)
-    theta = PI/2.0d0-atan(0.99329534d0*dtan(stlat(irec)*PI/180.0d0))
+! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
+    if(ASSUME_PERFECT_SPHERE) then
+      theta = PI/2.0d0 - stlat(irec)*PI/180.0d0
+    else
+      theta = PI/2.0d0 - atan(0.99329534d0*dtan(stlat(irec)*PI/180.0d0))
+    endif
+
     phi = stlon(irec)*PI/180.0d0
     call reduce(theta,phi)
 

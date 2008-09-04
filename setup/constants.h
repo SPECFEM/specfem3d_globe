@@ -175,6 +175,11 @@
   logical, parameter :: ACTUALLY_COUPLE_FLUID_CMB = .true.
   logical, parameter :: ACTUALLY_COUPLE_FLUID_ICB = .true.
 
+! flag to turn off the conversion of geographic to geocentric coordinates for
+! the seismic source and the stations; i.e. assume a perfect sphere, which
+! can be useful for benchmarks of a spherical Earth with fictitious sources and stations
+  logical, parameter :: ASSUME_PERFECT_SPHERE = .false.
+
 ! flag to only create the mesh but not start the solver (for instance to check the mesh obtained)
   logical, parameter :: MESHER_ONLY = .false.
 

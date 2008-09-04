@@ -237,10 +237,14 @@
 ! mapping from source number in current subset to real source number in all the subsets
   isource = isource_in_this_subset + isources_already_done
 
-! convert geographic latitude lat (degrees)
-! to geocentric colatitude theta (radians)
-  theta=PI/2.0d0-atan(0.99329534d0*dtan(lat(isource)*PI/180.0d0))
-  phi=long(isource)*PI/180.0d0
+! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
+  if(ASSUME_PERFECT_SPHERE) then
+    theta = PI/2.0d0 - lat(isource)*PI/180.0d0
+  else
+    theta = PI/2.0d0 - atan(0.99329534d0*dtan(lat(isource)*PI/180.0d0))
+  endif
+
+  phi = long(isource)*PI/180.0d0
   call reduce(theta,phi)
 
 ! get the moment tensor
