@@ -1493,7 +1493,7 @@
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
 
         case(IREGION_INNER_CORE)
-          write(IMAIN,*) '            exact area (central cube): ',dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
+          write(IMAIN,*) '            similar area (central cube): ',dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
 
         case default
           call exit_MPI(myrank,'incorrect region code')
