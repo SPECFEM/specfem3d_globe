@@ -509,7 +509,6 @@
         multiplication_factor = 1
       endif
 
-     ! element width =   0.5625000      degrees =    62.54715      km
       if(NEX_MAX*multiplication_factor <= 160) then
 
         DT                       = 0.252d0
@@ -527,7 +526,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 2
         R_CENTRAL_CUBE = 950000.d0
 
-    ! element width =   0.3515625      degrees =    39.09196      km
       else if(NEX_MAX*multiplication_factor <= 256) then
 
         DT                       = 0.225d0
@@ -545,7 +543,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 3
         R_CENTRAL_CUBE = 965000.d0
 
-    ! element width =   0.2812500      degrees =    31.27357      km
       else if(NEX_MAX*multiplication_factor <= 320) then
 
         DT                       = 0.16d0
@@ -563,7 +560,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 4
         R_CENTRAL_CUBE = 940000.d0
 
-    ! element width =   0.1875000      degrees =    20.84905      km
       else if(NEX_MAX*multiplication_factor <= 480) then
 
         DT                       = 0.11d0
@@ -581,7 +577,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 5
         R_CENTRAL_CUBE = 988000.d0
 
-    ! element width =   0.1757812      degrees =    19.54598      km
       else if(NEX_MAX*multiplication_factor <= 512) then
 
         DT                       = 0.1125d0
@@ -599,7 +594,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 5
         R_CENTRAL_CUBE = 1010000.d0
 
-    ! element width =   0.1406250      degrees =    15.63679      km
       else if(NEX_MAX*multiplication_factor <= 640) then
 
         DT                       = 0.09d0
@@ -617,7 +611,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 6
         R_CENTRAL_CUBE = 1020000.d0
 
-    ! element width =   0.1041667      degrees =    11.58280      km
       else if(NEX_MAX*multiplication_factor <= 864) then
 
         DT                       = 0.0667d0
@@ -635,7 +628,6 @@
         NER_TOP_CENTRAL_CUBE_ICB = 9
         R_CENTRAL_CUBE = 990000.d0
 
-    ! element width =   7.8125000E-02  degrees =    8.687103      km
       else if(NEX_MAX*multiplication_factor <= 1152) then
 
         DT                       = 0.05d0
@@ -653,7 +645,23 @@
         NER_TOP_CENTRAL_CUBE_ICB = 12
         R_CENTRAL_CUBE = 985000.d0
 
-    ! element width =   7.2115384E-02  degrees =    8.018865      km
+      else if(NEX_MAX*multiplication_factor <= 1216) then
+
+        DT                       = 0.0462d0
+
+        NER_CRUST                = 2 !!!!!!!!!! 3
+        NER_80_MOHO              = 3
+        NER_220_80               = 7 !!!!!!!!!! 8
+        NER_400_220              = 10 !!!!!!!!!!!!!!! 11
+        NER_600_400              = 11 !!!!!!!!!!!!!!! 12
+        NER_670_600              = 4
+        NER_771_670              = 6
+        NER_TOPDDOUBLEPRIME_771  = 94
+        NER_CMB_TOPDDOUBLEPRIME  = 8
+        NER_OUTER_CORE           = 116
+        NER_TOP_CENTRAL_CUBE_ICB = 13
+        R_CENTRAL_CUBE = 985000.d0
+
       else if(NEX_MAX*multiplication_factor <= 1248) then
 
         DT                       = 0.0462d0
@@ -670,6 +678,24 @@
         NER_OUTER_CORE           = 116 !!!!!!!!! 124
         NER_TOP_CENTRAL_CUBE_ICB = 13
         R_CENTRAL_CUBE = 985000.d0
+
+      else  if(NEX_MAX*multiplication_factor <= 1824) then
+
+! simple scaling for the time step
+        DT                       = 0.0462d0 * 1248.d0 / dble(NEX_MAX*multiplication_factor)
+        R_CENTRAL_CUBE = 985000.d0
+
+        NER_CRUST =            4 !!! 5
+        NER_80_MOHO =          4 !!! 7
+        NER_220_80 =           12 !!! 15
+        NER_400_220 =           18 !!  21
+        NER_600_400 =           20 !! 23
+        NER_670_600 =            6 !! 8
+        NER_771_670 =           7 !! 11
+        NER_TOPDDOUBLEPRIME_771 =  137
+        NER_CMB_TOPDDOUBLEPRIME =  12
+        NER_OUTER_CORE =          169
+        NER_TOP_CENTRAL_CUBE_ICB = 21
 
       else  if(NEX_MAX*multiplication_factor <= 2368) then
 
