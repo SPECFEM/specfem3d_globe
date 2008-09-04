@@ -135,7 +135,7 @@
 
 ! for the cut doublingbrick improvement
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  integer :: lastdoubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
+  integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
               normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
@@ -1334,7 +1334,7 @@
       this_region_has_a_doubling(:)  = .false.
       this_region_has_a_doubling(10) = .true.
       this_region_has_a_doubling(13) = .true.
-      lastdoubling_layer = 13
+      last_doubling_layer = 13
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
   ! the first region is the crust at the surface of the Earth
@@ -1458,7 +1458,7 @@
       this_region_has_a_doubling(2)  = .true.
       this_region_has_a_doubling(9)  = .true.
       this_region_has_a_doubling(12) = .true.
-      lastdoubling_layer = 12
+      last_doubling_layer = 12
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
   ! the first region is the crust at the surface of the Earth
@@ -1589,7 +1589,7 @@
       this_region_has_a_doubling(10) = .true.
       this_region_has_a_doubling(13) = .true.
       this_region_has_a_doubling(14) = .false.
-      lastdoubling_layer = 13
+      last_doubling_layer = 13
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
   ! the first region is the crust at the surface of the Earth
@@ -1723,7 +1723,7 @@
       this_region_has_a_doubling(10) = .true.
       this_region_has_a_doubling(13) = .true.
       this_region_has_a_doubling(14) = .true.
-      lastdoubling_layer = 14
+      last_doubling_layer = 14
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
   ! the first region is the crust at the surface of the Earth
@@ -1853,7 +1853,7 @@
       this_region_has_a_doubling(9)  = .true.
       this_region_has_a_doubling(12) = .true.
       this_region_has_a_doubling(13) = .true.
-      lastdoubling_layer = 13
+      last_doubling_layer = 13
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
   ! the first region is the crust at the surface of the Earth
@@ -1989,7 +1989,7 @@
       this_region_has_a_doubling(10) = .true.
       this_region_has_a_doubling(13) = .true.
       this_region_has_a_doubling(14) = .true.
-      lastdoubling_layer = 14
+      last_doubling_layer = 14
 
   ! define the top and bottom radii of all the regions of the mesh in the radial direction
   ! the first region is the crust at the surface of the Earth
@@ -2174,7 +2174,7 @@ do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
     tmp_sum_nglob2D_eta = 0
     do iter_layer = ifirst_region, ilast_region
         if (this_region_has_a_doubling(iter_layer)) then
-            if (iter_region == IREGION_OUTER_CORE .and. iter_layer == lastdoubling_layer) then
+            if (iter_region == IREGION_OUTER_CORE .and. iter_layer == last_doubling_layer) then
               ! simple brick
               divider = 1
               nglob_surf = 6*NGLLX**2 - 7*NGLLX + 2
@@ -2442,7 +2442,7 @@ enddo
         nglob_corner_edge = 0
         nglob_border_edge = 0
         if (this_region_has_a_doubling(iter_layer)) then
-            if (iter_region == IREGION_OUTER_CORE .and. iter_layer == lastdoubling_layer .and. &
+            if (iter_region == IREGION_OUTER_CORE .and. iter_layer == last_doubling_layer .and. &
                (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
               doubling = 1
               normal_doubling = 0
