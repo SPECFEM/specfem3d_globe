@@ -52,7 +52,7 @@
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
     sequence
-    double precision beta(14,34,37,73)
+    double precision beta(AMM_V_DIM1,AMM_V_DIM2,AMM_V_DIM3,AMM_V_DIM4)
     double precision pro(47)
     integer npar1
   end type aniso_mantle_model_variables
@@ -109,7 +109,7 @@
   double precision d1,d2,d3,d4,sd,thickness,dprof1,dprof2,eps,pc1,pc2,pc3,pc4,&
                    dpr1,dpr2,param,scale_GPa,scaleval
   double precision A,C,F,AL,AN,BC,BS,GC,GS,HC,HS,EC,ES,C1p,C1sv,C1sh,C3,S1p,S1sv,S1sh,S3
-  double precision beta(14,34,37,73),pro(47)
+  double precision beta(AMM_V_DIM1,AMM_V_DIM2,AMM_V_DIM3,AMM_V_DIM4),pro(47)
   double precision anispara(14,2,4),elpar(14)
 
   ndepth = npar1
@@ -329,7 +329,7 @@
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
     sequence
-    double precision beta(14,34,37,73)
+    double precision beta(AMM_V_DIM1,AMM_V_DIM2,AMM_V_DIM3,AMM_V_DIM4)
     double precision pro(47)
     integer npar1
   end type aniso_mantle_model_variables
@@ -340,7 +340,7 @@
   integer nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
   double precision xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
   double precision ra(47),pari(14,47)
-  double precision bet2(14,34,37,73)
+  double precision bet2(AMM_V_DIM1,AMM_V_DIM2,AMM_V_DIM3,AMM_V_DIM4)
   double precision alph(73,37),ph(73,37)
   character(len=150) glob_prem3sm01, globpreman3sm01
 

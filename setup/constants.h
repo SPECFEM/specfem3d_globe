@@ -45,6 +45,14 @@
 ! of several MPI buffers by 3 in order to do that
   logical, parameter :: FEWER_MESSAGES_LARGER_BUFFERS = .true.
 
+!! DK DK for Gordon Bell
+! integer, parameter :: SEA99_VS_DIM1 = 100, SEA99_VS_DIM2 = 100, SEA99_VS_DIM3 = 100
+  integer, parameter :: SEA99_VS_DIM1 = 1, SEA99_VS_DIM2 = 1, SEA99_VS_DIM3 = 1
+
+!! DK DK for Gordon Bell
+! integer, parameter :: AMM_V_DIM1 = 14, AMM_V_DIM2 = 34, AMM_V_DIM3 = 37, AMM_V_DIM4 = 73
+  integer, parameter :: AMM_V_DIM1 = 1, AMM_V_DIM2 = 1, AMM_V_DIM3 = 1, AMM_V_DIM4 = 1
+
 !
 ! solver in single or double precision depending on the machine (4 or 8 bytes)
 !
@@ -90,7 +98,8 @@
 
 !---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
-  integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
+!!!!!! DK DK for Gordon Bell  integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
+  integer, parameter :: NX_BATHY = 1,NY_BATHY = 1
 ! resolution of topography file in minutes
   integer, parameter :: RESOLUTION_TOPO_FILE = 4
 ! pathname of the topography file

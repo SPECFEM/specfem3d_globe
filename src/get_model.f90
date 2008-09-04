@@ -57,7 +57,7 @@
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
     sequence
-    double precision beta(14,34,37,73)
+    double precision beta(AMM_V_DIM1,AMM_V_DIM2,AMM_V_DIM3,AMM_V_DIM4)
     double precision pro(47)
     integer npar1
   end type aniso_mantle_model_variables
@@ -239,7 +239,7 @@
     double precision :: alatmax
     double precision :: alonmin
     double precision :: alonmax
-    double precision :: sea99_vs(100,100,100)
+    double precision :: sea99_vs(SEA99_VS_DIM1,SEA99_VS_DIM2,SEA99_VS_DIM3)
     double precision :: sea99_depth(100)
     integer :: sea99_ndep
     integer :: sea99_nlat

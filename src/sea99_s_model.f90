@@ -39,7 +39,7 @@ subroutine read_sea99_s_model(SEA99M_V)
     double precision :: alatmax
     double precision :: alonmin
     double precision :: alonmax
-    double precision :: sea99_vs(100,100,100)
+    double precision :: sea99_vs(SEA99_VS_DIM1,SEA99_VS_DIM2,SEA99_VS_DIM3)
     double precision :: sea99_depth(100)
     integer :: sea99_ndep
     integer :: sea99_nlat
@@ -96,7 +96,7 @@ subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
      double precision :: alatmax
      double precision :: alonmin
      double precision :: alonmax
-     double precision :: sea99_vs(100,100,100)
+     double precision :: sea99_vs(SEA99_VS_DIM1,SEA99_VS_DIM2,SEA99_VS_DIM3)
      double precision :: sea99_depth(100)
      integer :: sea99_ndep
      integer :: sea99_nlat
