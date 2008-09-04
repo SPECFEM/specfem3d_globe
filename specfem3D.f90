@@ -3470,7 +3470,7 @@
 !--- couple with inner core at the bottom of the outer core
 !---
 
-  if(ACTUALLY_COUPLE_FLUID_ICB .and. NCHUNKS_VAL == 6) then
+  if(ACTUALLY_COUPLE_FLUID_ICB) then
 
 ! for surface elements exactly on the ICB
     do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
@@ -4080,7 +4080,7 @@
 !--- couple with outer core at the top of the inner core
 !---
 
-  if(ACTUALLY_COUPLE_FLUID_ICB .and. NCHUNKS_VAL == 6) then
+  if(ACTUALLY_COUPLE_FLUID_ICB) then
 
 ! for surface elements exactly on the ICB
     do ispec2D = 1,NSPEC2D_TOP(IREGION_INNER_CORE)
