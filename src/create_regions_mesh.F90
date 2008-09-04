@@ -41,7 +41,7 @@
   muhstore,eta_anisostore,rmass,xelm_store,yelm_store,zelm_store,xigll,wxgll,yigll,wygll,zigll,wzgll,shape3D,dershape3D, &
   shape2D_x,shape2D_y,shape2D_bottom,shape2D_top,dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top,rhostore_local, &
   kappavstore_local,c11store,c12store,c13store,c14store,c15store,c16store,c22store,c23store,c24store,c25store,c26store, &
-  c33store,c34store,c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store,iboun,locval,ifseg,xp,yp,zp, &
+  c33store,c34store,c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store,iboun,locval,ifseg, &
   rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
 #ifdef USE_MPI
   NGLOB1D_RADIAL_MAX,NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,NGLOB2DMAX_XMIN_XMAX, &
@@ -478,9 +478,8 @@
 ! variables for creating array ibool (some arrays also used for AVS or DX files)
   integer, dimension(npointot) :: locval
   logical, dimension(npointot) :: ifseg
-  double precision, dimension(npointot) :: xp,yp,zp
 
-  integer :: nglob,nglob_theor,ieoff,ilocnum,ier
+  integer :: nglob,nglob_theor,ier
 #ifdef USE_MPI
   integer :: errorcode
 #endif
@@ -1236,28 +1235,10 @@
 
     locval = 0
     ifseg = .false.
-    xp = 0.d0
-    yp = 0.d0
-    zp = 0.d0
 
-  ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
-  ! these arrays and therefore destroy them
-    do ispec=1,nspec
-    ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
-    ilocnum = 0
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-          ilocnum = ilocnum + 1
-          xp(ilocnum+ieoff) = xstore(i,j,k,ispec)
-          yp(ilocnum+ieoff) = ystore(i,j,k,ispec)
-          zp(ilocnum+ieoff) = zstore(i,j,k,ispec)
-        enddo
-      enddo
-    enddo
-    enddo
-
-    call get_global(nspec,xp,yp,zp,ibool,locval,ifseg,nglob,npointot)
+! arrays xstore,ystore,zstore are destroyed by this sorting routine but
+! they will be recreated in the second pass
+    call get_global(nspec,xstore,ystore,zstore,ibool,locval,ifseg,nglob,npointot)
 
   ! check that number of points found equals theoretical value
     if(nglob /= nglob_theor) then
@@ -1349,6 +1330,12 @@
       call exit_MPI(myrank,'incorrect global numbering after second sorting')
     endif
 
+! create MPI buffers and mass matrix in the second pass
+  else if(ipass == 2) then
+
+! copy the theoretical number of points for the second pass
+  nglob = nglob_theor
+
 ! create MPI buffers
 ! arrays locval(npointot) and ifseg(npointot) used to save memory
 #ifdef USE_MPI
@@ -1370,12 +1357,6 @@
   zread1D_leftxi_lefteta, zread1D_rightxi_lefteta, zread1D_leftxi_righteta, zread1D_rightxi_righteta, &
   iregion_code)
 #endif
-
-! only create mass matrix and save all the final arrays in the second pass
-  else if(ipass == 2) then
-
-! copy the theoretical number of points for the second pass
-  nglob = nglob_theor
 
 ! count number of anisotropic elements in current region
 ! should be zero in all the regions except in the mantle

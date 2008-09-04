@@ -514,7 +514,6 @@
 ! very large arrays used for the sorting routine
   integer, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: locval
   logical, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: ifseg
-  double precision, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: xp,yp,zp
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
@@ -1445,7 +1444,7 @@
   zelm_store_crust_mantle,xigll,wxgll,yigll,wygll,zigll,wzgll,shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
   dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top,rhostore_local,kappavstore_local,c11store,c12store,c13store,c14store, &
   c15store,c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store,c36store,c44store,c45store,c46store, &
-  c55store,c56store,c66store,iboun,locval,ifseg,xp,yp,zp,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
+  c55store,c56store,c66store,iboun,locval,ifseg,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
 #ifdef USE_MPI
   maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)),NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
 !! DK DK this below with index (1) will have to change to fully support David's code to cut the superbrick
@@ -1480,7 +1479,7 @@
   zelm_store_outer_core,xigll,wxgll,yigll,wygll,zigll,wzgll,shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
   dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top,rhostore_local,kappavstore_local,c11store,c12store,c13store,c14store, &
   c15store,c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store,c36store,c44store,c45store,c46store, &
-  c55store,c56store,c66store,iboun,locval,ifseg,xp,yp,zp,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
+  c55store,c56store,c66store,iboun,locval,ifseg,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
 #ifdef USE_MPI
   maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)),NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
 !! DK DK this below with index (1) will have to change to fully support David's code to cut the superbrick
@@ -1515,7 +1514,7 @@
   zelm_store_inner_core,xigll,wxgll,yigll,wygll,zigll,wzgll,shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
   dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top,rhostore_local,kappavstore_local,c11store,c12store,c13store,c14store, &
   c15store,c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store,c36store,c44store,c45store,c46store, &
-  c55store,c56store,c66store,iboun,locval,ifseg,xp,yp,zp,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
+  c55store,c56store,c66store,iboun,locval,ifseg,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
 #ifdef USE_MPI
   maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)),NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
 !! DK DK this below with index (1) will have to change to fully support David's code to cut the superbrick
