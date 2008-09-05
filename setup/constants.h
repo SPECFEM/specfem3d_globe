@@ -51,7 +51,8 @@
 
 !! DK DK for Gordon Bell
 ! integer, parameter :: AMM_V_DIM1 = 14, AMM_V_DIM2 = 34, AMM_V_DIM3 = 37, AMM_V_DIM4 = 73
-  integer, parameter :: AMM_V_DIM1 = 1, AMM_V_DIM2 = 1, AMM_V_DIM3 = 1, AMM_V_DIM4 = 1
+! use 6 for first index to avoid a warning when compiling
+  integer, parameter :: AMM_V_DIM1 = 6, AMM_V_DIM2 = 1, AMM_V_DIM3 = 1, AMM_V_DIM4 = 1
 
 !
 ! solver in single or double precision depending on the machine (4 or 8 bytes)

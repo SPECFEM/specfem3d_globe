@@ -53,7 +53,9 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
   normal_top_crust_mantle,ibelm_top_crust_mantle, &
 #endif
-  AM_V)
+  AM_V,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle)
 
   use dyn_array
 

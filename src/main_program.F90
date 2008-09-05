@@ -361,6 +361,44 @@
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
 
+! use equivalence statements to reduce total memory size
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
+
+  integer, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: locval
+  logical, dimension(NSPEC_CRUST_MANTLE * NGLLX * NGLLY * NGLLZ) :: ifseg
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: copy_ibool_ori
+
+  integer, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
+
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: xstore,ystore,zstore
+
+! displacement, velocity, acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
+
+  equivalence(locval,         xix_crust_mantle)
+  equivalence(ifseg,          xiy_crust_mantle)
+  equivalence(copy_ibool_ori, xiz_crust_mantle)
+
+  equivalence(xstore,         etax_crust_mantle)
+  equivalence(ystore,         etay_crust_mantle)
+  equivalence(zstore,         etaz_crust_mantle)
+
+  equivalence(mask_ibool,     displ_crust_mantle)
+
+! because NSPEC_OUTER_CORE is always an even number, we can put
+! two single-precision arrays in each double-precision array.
+! this does *NOT* work if double precision is turned on because
+! the size of an integer does not correspond to the size of a double.
+! but if one comments out the three lines below the other equivalence statements
+! above will work fine even in double precision.
+  equivalence(xstore(1,1,1,NSPEC_CRUST_MANTLE/2+1), gammax_crust_mantle)
+  equivalence(ystore(1,1,1,NSPEC_CRUST_MANTLE/2+1), gammay_crust_mantle)
+  equivalence(zstore(1,1,1,NSPEC_CRUST_MANTLE/2+1), gammaz_crust_mantle)
+
 ! ************** PROGRAM STARTS HERE **************
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.
@@ -383,6 +421,9 @@
   myrank = 0
   sizeprocs = NPROCTOT_VAL
 #endif
+
+  if(CUSTOM_REAL /= 4) &
+    stop 'some of the equivalence statements used to save memory do not work in double precision, please edit and recompile'
 
 ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
 
@@ -407,7 +448,8 @@
   npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
 #endif
-  rmass_ocean_load,normal_top_crust_mantle,ibelm_top_crust_mantle,AM_V)
+  rmass_ocean_load,normal_top_crust_mantle,ibelm_top_crust_mantle,AM_V, &
+  locval,ifseg,copy_ibool_ori,mask_ibool,xstore,ystore,zstore)
 
 ! synchronize all the processes to make sure everybody has finished creating the mesh
 #ifdef USE_MPI
@@ -482,7 +524,9 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
   normal_top_crust_mantle,ibelm_top_crust_mantle, &
 #endif
-  AM_V)
+  AM_V,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle)
 
 ! synchronize all the processes to make sure everybody has finished
 #ifdef USE_MPI

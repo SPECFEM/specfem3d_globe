@@ -287,6 +287,13 @@
   write(IOUT,*)
 
   write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT = ',NSPEC_CRUST_MANTLE_ATTENUAT
+
+  if(ATTENUATION_3D) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT3D = ',NSPEC_CRUST_MANTLE_ATTENUAT
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT3D = 1'
+  endif
+
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ATTENUATION = ',NSPEC_INNER_CORE_ATTENUATION
   write(IOUT,*)
 

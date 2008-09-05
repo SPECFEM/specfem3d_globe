@@ -54,7 +54,8 @@
   npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
 #endif
-  rmass_ocean_load,normal_top_crust_mantle,ibelm_top_crust_mantle,AM_V)
+  rmass_ocean_load,normal_top_crust_mantle,ibelm_top_crust_mantle,AM_V, &
+  locval,ifseg,copy_ibool_ori,mask_ibool,xstore,ystore,zstore)
 
   use dyn_array
 
@@ -526,8 +527,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: rho_vp,rho_vs
 
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: Qmu_store
-  double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: tau_e_store
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT3D) :: Qmu_store
+  double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT3D) :: tau_e_store
 
 !!!!! DK DK for merged version, all the arrays below are allocated statically instead
 

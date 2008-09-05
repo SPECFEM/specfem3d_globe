@@ -142,6 +142,9 @@
 
   integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
 
+  if(CUSTOM_REAL /= 4) &
+    stop 'some of the equivalence statements used to save memory do not work in double precision, please edit and recompile'
+
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
@@ -1248,11 +1251,21 @@
       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
         stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
-  ELEMENT_WIDTH = ANGULAR_WIDTH_XI_IN_DEGREES/dble(NEX_MAX) * DEGREES_TO_RADIANS
+  if(TOPOGRAPHY .and. (NX_BATHY == 1 .or. NY_BATHY == 1)) &
+      stop 'topography model has been turned off, please edit and recompile'
+
+  if(ANISOTROPIC_3D_MANTLE .and. (AMM_V_DIM2 == 1 .or. AMM_V_DIM3 == 1 .or. AMM_V_DIM4 == 1)) &
+      stop 'anisotropic mantle model has been turned off, please edit and recompile'
+
+  if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D .and. &
+    (SEA99_VS_DIM1 == 1 .or. SEA99_VS_DIM2 == 1 .or. SEA99_VS_DIM3 == 1)) &
+      stop 'model SEA99 has been turned off, please edit and recompile'
 
 !
 !--- compute additional parameters
 !
+
+  ELEMENT_WIDTH = ANGULAR_WIDTH_XI_IN_DEGREES/dble(NEX_MAX) * DEGREES_TO_RADIANS
 
 ! number of elements horizontally in each slice (i.e. per processor)
 ! these two values MUST be equal in all cases
@@ -2457,6 +2470,9 @@ enddo
          (NEX_XI / ratio_divide_central_cube)
 
   if(minval(NSPEC) <= 0) stop 'negative NSPEC, there is a problem somewhere'
+
+  if(mod(NSPEC(IREGION_CRUST_MANTLE),2) /= 0) &
+    stop 'some of the equivalence statements used to save memory require an even NSPEC(IREGION_CRUST_MANTLE)'
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
