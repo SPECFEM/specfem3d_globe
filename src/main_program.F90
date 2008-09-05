@@ -425,6 +425,17 @@
   if(CUSTOM_REAL /= 4) &
     stop 'some of the equivalence statements used to save memory do not work in double precision, please edit and recompile'
 
+! make sure there is no overlap between arrays due to the "equivalence" statement
+  etax_crust_mantle = -10._CUSTOM_REAL
+  gammax_crust_mantle = +20._CUSTOM_REAL
+  if(any(etax_crust_mantle) > -9.999_CUSTOM_REAL .or. any(gammax_crust_mantle) < 19.999_CUSTOM_REAL) &
+    stop 'error: memory overlap between arrays in equivalence statement'
+
+  gammax_crust_mantle = +20._CUSTOM_REAL
+  etax_crust_mantle = -10._CUSTOM_REAL
+  if(any(etax_crust_mantle) > -9.999_CUSTOM_REAL .or. any(gammax_crust_mantle) < 19.999_CUSTOM_REAL) &
+    stop 'error: memory overlap between arrays in equivalence statement'
+
 ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
 
 !! DK DK for the merged version, mesher inserted here
