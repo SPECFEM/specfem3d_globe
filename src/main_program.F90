@@ -428,13 +428,15 @@
 ! make sure there is no overlap between arrays due to the "equivalence" statement
   etax_crust_mantle = -10._CUSTOM_REAL
   gammax_crust_mantle = +20._CUSTOM_REAL
-  if(any(etax_crust_mantle) > -9.999_CUSTOM_REAL .or. any(gammax_crust_mantle) < 19.999_CUSTOM_REAL) &
-    stop 'error: memory overlap between arrays in equivalence statement'
+  if(maxval(abs(etax_crust_mantle + 10._CUSTOM_REAL)) > 0.001_CUSTOM_REAL .or. &
+     maxval(abs(gammax_crust_mantle - 20._CUSTOM_REAL)) > 0.001_CUSTOM_REAL) &
+       stop 'error: memory overlap between arrays in equivalence statement'
 
   gammax_crust_mantle = +20._CUSTOM_REAL
   etax_crust_mantle = -10._CUSTOM_REAL
-  if(any(etax_crust_mantle) > -9.999_CUSTOM_REAL .or. any(gammax_crust_mantle) < 19.999_CUSTOM_REAL) &
-    stop 'error: memory overlap between arrays in equivalence statement'
+  if(maxval(abs(etax_crust_mantle + 10._CUSTOM_REAL)) > 0.001_CUSTOM_REAL .or. &
+     maxval(abs(gammax_crust_mantle - 20._CUSTOM_REAL)) > 0.001_CUSTOM_REAL) &
+       stop 'error: memory overlap between arrays in equivalence statement'
 
 ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
 
