@@ -35,15 +35,14 @@
 !! DK DK to false in all cases etc
   logical, parameter :: PATCH_FOR_GORDON_BELL = .true.
 
+! save partial seismograms every 10,000 time steps or not
+  logical, parameter :: SAVE_PARTIAL_SEISMOGRAMS = .false.
+
 ! (much) faster detection of receivers at high resolution: use grid points only
   logical, parameter :: FASTER_RECEIVERS_POINTS_ONLY = .true.
 
 ! suppress calculation and storage of seismograms if needed
   logical, parameter :: COMPUTE_STORE_SEISMOGRAMS = .true.
-
-! decrease the number of MPI messages by 3 but increase the size
-! of several MPI buffers by 3 in order to do that
-  logical, parameter :: FEWER_MESSAGES_LARGER_BUFFERS = .true.
 
 !! DK DK for Gordon Bell
 ! integer, parameter :: SEA99_VS_DIM1 = 100, SEA99_VS_DIM2 = 100, SEA99_VS_DIM3 = 100
@@ -78,6 +77,11 @@
   integer, parameter :: IMAIN = 42
 ! uncomment this to write messages to the screen (slows down the code)
 ! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+
+! number of values read in Par_file that we need to broadcast
+  integer, parameter :: NVALUES_bcast_integer = 41
+  integer, parameter :: NVALUES_bcast_double_precision = 30
+  integer, parameter :: NVALUES_bcast_logical = 33
 
 ! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
@@ -452,11 +456,6 @@
   double precision,parameter :: LON_MAX = 145.d0
   double precision,parameter :: LON_MIN = 130.d0
   double precision,parameter :: DEP_MAX = 500.d0
-
-! crustal model parameters for crust2.0
-  integer, parameter :: NKEYS_CRUST = 359
-  integer, parameter :: NLAYERS_CRUST = 8
-  integer, parameter :: NCAP_CRUST = 180
 
 ! use sedimentary layers of crust 2.0
   logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.

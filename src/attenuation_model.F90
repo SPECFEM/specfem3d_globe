@@ -686,6 +686,7 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
 
   integer i,j,rmax
 #ifdef USE_MPI
+  double precision, dimension(N_SLS+2) :: array_to_broadcast
   integer :: ier
 #endif
   double precision scale_t
@@ -717,9 +718,15 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
 
   ! Synch up after the Read
 #ifdef USE_MPI
-  call MPI_BCAST(AM_V%QT_c_source,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(tau_s,N_SLS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(AM_V%Qn,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  array_to_broadcast(1:N_SLS) = tau_s(:)
+  array_to_broadcast(N_SLS+1) = AM_V%QT_c_source
+  array_to_broadcast(N_SLS+2) = AM_V%Qn
+
+  call MPI_BCAST(array_to_broadcast,N_SLS+2,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  tau_s(:) = array_to_broadcast(1:N_SLS)
+  AM_V%QT_c_source = array_to_broadcast(N_SLS+1)
+  AM_V%Qn = nint(array_to_broadcast(N_SLS+2))
 #endif
 
   if(myrank /= 0) then

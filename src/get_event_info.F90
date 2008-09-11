@@ -53,6 +53,7 @@
   integer :: i
 
 #ifdef USE_MPI
+  double precision, dimension(14) :: array_to_broadcast
   integer :: ier
 #endif
 
@@ -77,21 +78,43 @@
 
 ! broadcast the information read on the master to the nodes
 #ifdef USE_MPI
-  call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(mi,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+! integer
+  array_to_broadcast( 1) = yr
+  array_to_broadcast( 2) = jda
+  array_to_broadcast( 3) = ho
+  array_to_broadcast( 4) = mi
+  array_to_broadcast( 5) = NSOURCES
 
-  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(t_cmt,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(elat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(elon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_lat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_lon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_depth,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(cmt_hdur,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+! double precision
+  array_to_broadcast( 6) = sec
+  array_to_broadcast( 7) = t_cmt
+  array_to_broadcast( 8) = elat
+  array_to_broadcast( 9) = elon
+  array_to_broadcast(10) = depth
+  array_to_broadcast(11) = cmt_lat
+  array_to_broadcast(12) = cmt_lon
+  array_to_broadcast(13) = cmt_depth
+  array_to_broadcast(14) = cmt_hdur
+
+  call MPI_BCAST(array_to_broadcast,14,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+! integer
+  yr = nint(array_to_broadcast( 1))
+  jda = nint(array_to_broadcast( 2))
+  ho = nint(array_to_broadcast( 3))
+  mi = nint(array_to_broadcast( 4))
+  NSOURCES = nint(array_to_broadcast( 5))
+
+! double precision
+  sec = array_to_broadcast( 6)
+  t_cmt = array_to_broadcast( 7)
+  elat = array_to_broadcast( 8)
+  elon = array_to_broadcast( 9)
+  depth = array_to_broadcast(10)
+  cmt_lat = array_to_broadcast(11)
+  cmt_lon = array_to_broadcast(12)
+  cmt_depth = array_to_broadcast(13)
+  cmt_hdur = array_to_broadcast(14)
 
   call MPI_BCAST(ename,12,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 #endif

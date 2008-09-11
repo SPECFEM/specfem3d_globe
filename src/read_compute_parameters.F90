@@ -1150,7 +1150,7 @@
     ROTATE_SEISMOGRAMS_RT           = .false.
     WRITE_SEISMOGRAMS_BY_MASTER     = .true.
     SAVE_ALL_SEISMOS_IN_ONE_FILE    = .true.
-    USE_BINARY_FOR_LARGE_FILE       = .false.
+    USE_BINARY_FOR_LARGE_FILE       = .true.
     RECEIVERS_CAN_BE_BURIED         = .false.
   endif
 

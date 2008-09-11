@@ -26,37 +26,117 @@
 !=====================================================================
 
 !
-! read and smooth crust2.0 model
-! based on software routines provided with the crust2.0 model by Bassin et al.
+! read or evaluate smoothed crust2.0 model
 !
 
-  subroutine crustal_model(lat,lon,x,vp,vs,rho,moho,found_crust,CM_V)
+  subroutine get_smoothed_crust(lat,lon,x,vp,vs,rho,moho,found_crust,CM_V)
 
   implicit none
+
   include "constants.h"
+
+  logical found_crust
+  double precision lat,lon,x,vp,vs,rho,moho
+
+  double precision h_sed,h_uc
+  double precision x3,x4,x5,x6,x7,scaleval
+  double precision vps(3:7),vss(3:7),rhos(3:7),thicks(3:7)
+
+  double precision vps1(3:7),vss1(3:7),rhos1(3:7),thicks1(3:7)
+  double precision vps2(3:7),vss2(3:7),rhos2(3:7),thicks2(3:7)
+  double precision vps3(3:7),vss3(3:7),rhos3(3:7),thicks3(3:7)
+  double precision vps4(3:7),vss4(3:7),rhos4(3:7),thicks4(3:7)
 
 ! crustal_model_variables
   type crustal_model_variables
     sequence
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
-    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-    character(len=2) code(NKEYS_CRUST)
+    real(kind=4) velocp(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) velocs(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) dens(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) thlr(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
   end type crustal_model_variables
 
   type (crustal_model_variables) CM_V
 ! crustal_model_variables
 
-  double precision lat,lon,x,vp,vs,rho,moho
-  logical found_crust
+  integer ilon_scaled,ilat_scaled
+  double precision lon_scaled,lat_scaled
+  double precision gamma_lon,gamma_lat
 
-  double precision h_sed,h_uc
-  double precision x3,x4,x5,x6,x7,scaleval
-  double precision vps(NLAYERS_CRUST),vss(NLAYERS_CRUST),rhos(NLAYERS_CRUST),thicks(NLAYERS_CRUST)
+! scale interval and make all values positive
+  lon_scaled = lon * NFACTOR_CRUST + NLON_CRUST
+  lat_scaled = lat * NFACTOR_CRUST + NLAT_CRUST
 
-  call crust(lat,lon,vps,vss,rhos,thicks,CM_V%abbreviation,CM_V%code,CM_V%thlr,CM_V%velocp,CM_V%velocs,CM_V%dens)
+! select the right cell to use in smoothed file
+  ilon_scaled = int(lon_scaled)
+  ilat_scaled = int(lat_scaled)
+
+! compute coordinates in interpolation cell
+  gamma_lon = lon_scaled - dble(ilon_scaled)
+  gamma_lat = lat_scaled - dble(ilat_scaled)
+
+! prevent edge effects
+  if(ilon_scaled < 0) then
+    ilon_scaled = 0
+    gamma_lon = 0.d0
+  endif
+
+  if(ilat_scaled < 0) then
+    ilat_scaled = 0
+    gamma_lat = 0.d0
+  endif
+
+  if(ilon_scaled >= 2*NLON_CRUST) then
+    ilon_scaled = 2*NLON_CRUST - 1
+    gamma_lon = 1.d0
+  endif
+
+  if(ilat_scaled >= 2*NLAT_CRUST) then
+    ilat_scaled = 2*NLAT_CRUST - 1
+    gamma_lat = 1.d0
+  endif
+
+! copy four corners of interpolation cell
+  vps1(:) = dble(CM_V%velocp(ilon_scaled,ilat_scaled,:))
+  vss1(:) = dble(CM_V%velocs(ilon_scaled,ilat_scaled,:))
+  rhos1(:) = dble(CM_V%dens(ilon_scaled,ilat_scaled,:))
+  thicks1(:) = dble(CM_V%thlr(ilon_scaled,ilat_scaled,:))
+
+  vps2(:) = dble(CM_V%velocp(ilon_scaled+1,ilat_scaled,:))
+  vss2(:) = dble(CM_V%velocs(ilon_scaled+1,ilat_scaled,:))
+  rhos2(:) = dble(CM_V%dens(ilon_scaled+1,ilat_scaled,:))
+  thicks2(:) = dble(CM_V%thlr(ilon_scaled+1,ilat_scaled,:))
+
+  vps3(:) = dble(CM_V%velocp(ilon_scaled+1,ilat_scaled+1,:))
+  vss3(:) = dble(CM_V%velocs(ilon_scaled+1,ilat_scaled+1,:))
+  rhos3(:) = dble(CM_V%dens(ilon_scaled+1,ilat_scaled+1,:))
+  thicks3(:) = dble(CM_V%thlr(ilon_scaled+1,ilat_scaled+1,:))
+
+  vps4(:) = dble(CM_V%velocp(ilon_scaled,ilat_scaled+1,:))
+  vss4(:) = dble(CM_V%velocs(ilon_scaled,ilat_scaled+1,:))
+  rhos4(:) = dble(CM_V%dens(ilon_scaled,ilat_scaled+1,:))
+  thicks4(:) = dble(CM_V%thlr(ilon_scaled,ilat_scaled+1,:))
+
+! perform interpolation from the four corners
+  vps(:) = (1.d0-gamma_lon)*(1.d0-gamma_lat)*vps1(:) + &
+           gamma_lon*(1.d0-gamma_lat)*vps2(:) + &
+           gamma_lon*gamma_lat*vps3(:) + &
+           (1.d0-gamma_lon)*gamma_lat*vps4(:)
+
+  vss(:) = (1.d0-gamma_lon)*(1.d0-gamma_lat)*vss1(:) + &
+           gamma_lon*(1.d0-gamma_lat)*vss2(:) + &
+           gamma_lon*gamma_lat*vss3(:) + &
+           (1.d0-gamma_lon)*gamma_lat*vss4(:)
+
+  rhos(:) = (1.d0-gamma_lon)*(1.d0-gamma_lat)*rhos1(:) + &
+           gamma_lon*(1.d0-gamma_lat)*rhos2(:) + &
+           gamma_lon*gamma_lat*rhos3(:) + &
+           (1.d0-gamma_lon)*gamma_lat*rhos4(:)
+
+  thicks(:) = (1.d0-gamma_lon)*(1.d0-gamma_lat)*thicks1(:) + &
+           gamma_lon*(1.d0-gamma_lat)*thicks2(:) + &
+           gamma_lon*gamma_lat*thicks3(:) + &
+           (1.d0-gamma_lon)*gamma_lat*thicks4(:)
 
  x3 = (R_EARTH-thicks(3)*1000.0d0)/R_EARTH
  h_sed = thicks(3) + thicks(4)
@@ -67,6 +147,7 @@
  x7 = (R_EARTH-(h_uc+thicks(6)+thicks(7))*1000.0d0)/R_EARTH
 
  found_crust = .true.
+
  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST) then
    vp = vps(3)
    vs = vss(3)
@@ -91,276 +172,77 @@
    found_crust = .false.
  endif
 
- if (found_crust) then
+  if(found_crust) then
+
 !   non-dimensionalize
     scaleval = dsqrt(PI*GRAV*RHOAV)
     vp = vp*1000.0d0/(R_EARTH*scaleval)
     vs = vs*1000.0d0/(R_EARTH*scaleval)
     rho = rho*1000.0d0/RHOAV
     moho = (h_uc+thicks(6)+thicks(7))*1000.0d0/R_EARTH
- endif
 
- end subroutine crustal_model
+  endif
+
+ end subroutine get_smoothed_crust
 
 !---------------------------
 
-  subroutine read_crustal_model(CM_V)
+  subroutine read_smoothed_3D_crustal_model(CM_V)
 
   implicit none
+
   include "constants.h"
 
 ! crustal_model_variables
   type crustal_model_variables
     sequence
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
-    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-    character(len=2) code(NKEYS_CRUST)
-  end type crustal_model_variables
+    real(kind=4) velocp(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) velocs(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) dens(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) thlr(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    end type crustal_model_variables
 
   type (crustal_model_variables) CM_V
 ! crustal_model_variables
 
-! local variables
-  integer i
-  integer ila,icolat
-  integer ikey
+  integer ilon,ilat
 
-  double precision h_moho_min,h_moho_max
+  open(unit=1,file='DATA/crust2.0/smoothed_crust2.0.dat',status='old',action='read')
 
-  character(len=150) CNtype2, CNtype2_key_modif
+! loop on latitude and longitude
+  do ilat = 0,2*NLAT_CRUST
+  do ilon = 0,2*NLON_CRUST
 
-  call get_value_string(CNtype2, 'model.CNtype2', 'DATA/crust2.0/CNtype2.txt')
-  call get_value_string(CNtype2_key_modif, 'model.CNtype2_key_modif', 'DATA/crust2.0/CNtype2_key_modif.txt')
+! we only saved layers 3 to 7 because 1, 2 and 8 are never used in the mesher
 
-  open(unit=1,file=CNtype2,status='old',action='read')
-  do ila=1,NCAP_CRUST/2
-    read(1,*) icolat,(CM_V%abbreviation(ila,i),i=1,NCAP_CRUST)
+  read(1,*) CM_V%velocp(ilon,ilat,3)
+  read(1,*) CM_V%velocp(ilon,ilat,4)
+  read(1,*) CM_V%velocp(ilon,ilat,5)
+  read(1,*) CM_V%velocp(ilon,ilat,6)
+  read(1,*) CM_V%velocp(ilon,ilat,7)
+
+  read(1,*) CM_V%velocs(ilon,ilat,3)
+  read(1,*) CM_V%velocs(ilon,ilat,4)
+  read(1,*) CM_V%velocs(ilon,ilat,5)
+  read(1,*) CM_V%velocs(ilon,ilat,6)
+  read(1,*) CM_V%velocs(ilon,ilat,7)
+
+  read(1,*) CM_V%dens(ilon,ilat,3)
+  read(1,*) CM_V%dens(ilon,ilat,4)
+  read(1,*) CM_V%dens(ilon,ilat,5)
+  read(1,*) CM_V%dens(ilon,ilat,6)
+  read(1,*) CM_V%dens(ilon,ilat,7)
+
+  read(1,*) CM_V%thlr(ilon,ilat,3)
+  read(1,*) CM_V%thlr(ilon,ilat,4)
+  read(1,*) CM_V%thlr(ilon,ilat,5)
+  read(1,*) CM_V%thlr(ilon,ilat,6)
+  read(1,*) CM_V%thlr(ilon,ilat,7)
+
   enddo
+  enddo
+
   close(1)
 
-  open(unit=1,file=CNtype2_key_modif,status='old',action='read')
-  h_moho_min=HUGEVAL
-  h_moho_max=-HUGEVAL
-  do ikey=1,NKEYS_CRUST
-    read (1,"(a2)") CM_V%code(ikey)
-    read (1,*) (CM_V%velocp(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (CM_V%velocs(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (CM_V%dens(ikey,i),i=1,NLAYERS_CRUST)
-    read (1,*) (CM_V%thlr(ikey,i),i=1,NLAYERS_CRUST-1),CM_V%thlr(ikey,NLAYERS_CRUST)
-    if(CM_V%thlr(ikey,NLAYERS_CRUST) > h_moho_max) h_moho_max=CM_V%thlr(ikey,NLAYERS_CRUST)
-    if(CM_V%thlr(ikey,NLAYERS_CRUST) < h_moho_min) h_moho_min=CM_V%thlr(ikey,NLAYERS_CRUST)
-  enddo
-  close(1)
-
-  if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) &
-    stop 'incorrect moho depths in read_3D_crustal_model'
-
-  end subroutine read_crustal_model
-
-!---------------------------
-
-  subroutine crust(lat,lon,velp,vels,rho,thick,abbreviation,code,thlr,velocp,velocs,dens)
-
-! crustal vp and vs in km/s, layer thickness in km
-! crust2.0 is smoothed with a cap of size CAP using NTHETA points
-! in the theta direction and NPHI in the phi direction.
-! The cap is rotated to the North Pole.
-
-  implicit none
-  include "constants.h"
-
-  integer, parameter :: NTHETA = 2
-  integer, parameter :: NPHI = 10
-  double precision, parameter :: CAP = 2.0d0*PI/180.0d0
-
-! argument variables
-  double precision lat,lon
-  double precision rho(NLAYERS_CRUST),thick(NLAYERS_CRUST),velp(NLAYERS_CRUST),vels(NLAYERS_CRUST)
-  double precision thlr(NKEYS_CRUST,NLAYERS_CRUST),velocp(NKEYS_CRUST,NLAYERS_CRUST)
-  double precision velocs(NKEYS_CRUST,NLAYERS_CRUST),dens(NKEYS_CRUST,NLAYERS_CRUST)
-  character(len=2) code(NKEYS_CRUST),abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-
-! local variables
-  integer i,j,k,icolat,ilon,ierr
-  integer itheta,iphi,npoints
-  double precision theta,phi,sint,cost,sinp,cosp,dtheta,dphi,cap_area,wght,total
-  double precision r_rot,theta_rot,phi_rot
-  double precision rotation_matrix(3,3),x(3),xc(3)
-  double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
-  double precision rhol(NLAYERS_CRUST),thickl(NLAYERS_CRUST),velpl(NLAYERS_CRUST),velsl(NLAYERS_CRUST)
-  character(len=2) crustaltype
-
-! get integer colatitude and longitude of crustal cap
-! -90<lat<90 -180<lon<180
-  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
-    stop 'error in latitude/longitude range in crust'
-  if(lat==90.0d0) lat=89.9999d0
-  if(lat==-90.0d0) lat=-89.9999d0
-  if(lon==180.0d0) lon=179.9999d0
-  if(lon==-180.0d0) lon=-179.9999d0
-
-  call icolat_ilon(lat,lon,icolat,ilon)
-  crustaltype=abbreviation(icolat,ilon)
-  call get_crust_structure(crustaltype,velp,vels,rho,thick, &
-                    code,thlr,velocp,velocs,dens,ierr)
-
-!  uncomment the following line to use crust2.0 as is, without smoothing
-!
-!  return
-
-  theta = (90.0-lat)*PI/180.0
-  phi = lon*PI/180.0
-
-  sint = sin(theta)
-  cost = cos(theta)
-  sinp = sin(phi)
-  cosp = cos(phi)
-
-! set up rotation matrix to go from cap at North pole
-! to cap around point of interest
-  rotation_matrix(1,1) = cosp*cost
-  rotation_matrix(1,2) = -sinp
-  rotation_matrix(1,3) = cosp*sint
-  rotation_matrix(2,1) = sinp*cost
-  rotation_matrix(2,2) = cosp
-  rotation_matrix(2,3) = sinp*sint
-  rotation_matrix(3,1) = -sint
-  rotation_matrix(3,2) = 0.0
-  rotation_matrix(3,3) = cost
-
-  dtheta = CAP/dble(NTHETA)
-  dphi = 2.0*PI/dble(NPHI)
-  cap_area = 2.0*PI*(1.0-cos(CAP))
-
-! integrate over a cap at the North pole
-  i = 0
-  total = 0.0
-  do itheta = 1,NTHETA
-
-    theta = 0.5*dble(2*itheta-1)*CAP/dble(NTHETA)
-    cost = cos(theta)
-    sint = sin(theta)
-    wght = sint*dtheta*dphi/cap_area
-
-    do iphi = 1,NPHI
-
-      i = i+1
-!     get the weight associated with this integration point (same for all phi)
-      weight(i) = wght
-      total = total + weight(i)
-      phi = dble(2*iphi-1)*PI/dble(NPHI)
-      cosp = cos(phi)
-      sinp = sin(phi)
-!     x,y,z coordinates of integration point in cap at North pole
-      xc(1) = sint*cosp
-      xc(2) = sint*sinp
-      xc(3) = cost
-!     get x,y,z coordinates in cap around point of interest
-      do j=1,3
-        x(j) = 0.0
-        do k=1,3
-          x(j) = x(j)+rotation_matrix(j,k)*xc(k)
-        enddo
-      enddo
-!     get latitude and longitude (degrees) of integration point
-      call xyz_2_rthetaphi_dble(x(1),x(2),x(3),r_rot,theta_rot,phi_rot)
-      call reduce(theta_rot,phi_rot)
-      xlat(i) = (PI/2.0-theta_rot)*180.0/PI
-      xlon(i) = phi_rot*180.0/PI
-      if(xlon(i) > 180.0) xlon(i) = xlon(i)-360.0
-
-    enddo
-
-  enddo
-
-  if(abs(total-1.0) > 0.001) stop 'error in cap integration for crust2.0'
-
-  npoints = i
-
-  do j=1,NLAYERS_CRUST
-    rho(j)=0.0d0
-    thick(j)=0.0d0
-    velp(j)=0.0d0
-    vels(j)=0.0d0
-  enddo
-
-  do i=1,npoints
-    call icolat_ilon(xlat(i),xlon(i),icolat,ilon)
-    crustaltype=abbreviation(icolat,ilon)
-    call get_crust_structure(crustaltype,velpl,velsl,rhol,thickl, &
-                    code,thlr,velocp,velocs,dens,ierr)
-    if(ierr /= 0) stop 'error in routine get_crust_structure'
-    do j=1,NLAYERS_CRUST
-      rho(j)=rho(j)+weight(i)*rhol(j)
-      thick(j)=thick(j)+weight(i)*thickl(j)
-      velp(j)=velp(j)+weight(i)*velpl(j)
-      vels(j)=vels(j)+weight(i)*velsl(j)
-    enddo
-  enddo
-
-  end subroutine crust
-
-!------------------------------------------------------
-
-  subroutine icolat_ilon(xlat,xlon,icolat,ilon)
-
-  implicit none
-
-
-! argument variables
-  double precision xlat,xlon
-  integer icolat,ilon
-
-  if(xlat > 90.0d0 .or. xlat < -90.0d0 .or. xlon > 180.0d0 .or. xlon < -180.0d0) &
-    stop 'error in latitude/longitude range in icolat_ilon'
-  icolat=int(1+((90.d0-xlat)/2.d0))
-  if(icolat == 91) icolat=90
-  ilon=int(1+((180.d0+xlon)/2.d0))
-  if(ilon == 181) ilon=1
-
-  if(icolat>90 .or. icolat<1) stop 'error in routine icolat_ilon'
-  if(ilon<1 .or. ilon>180) stop 'error in routine icolat_ilon'
-
-  end subroutine icolat_ilon
-
-!---------------------------------------------------------------------
-
-  subroutine get_crust_structure(type,vptyp,vstyp,rhtyp,thtp, &
-               code,thlr,velocp,velocs,dens,ierr)
-
-  implicit none
-  include "constants.h"
-
-! argument variables
-  integer ierr
-  double precision rhtyp(NLAYERS_CRUST),thtp(NLAYERS_CRUST)
-  double precision vptyp(NLAYERS_CRUST),vstyp(NLAYERS_CRUST)
-  character(len=2) type,code(NKEYS_CRUST)
-  double precision thlr(NKEYS_CRUST,NLAYERS_CRUST),velocp(NKEYS_CRUST,NLAYERS_CRUST)
-  double precision velocs(NKEYS_CRUST,NLAYERS_CRUST),dens(NKEYS_CRUST,NLAYERS_CRUST)
-
-! local variables
-  integer i,ikey
-
-  ierr=1
-  do ikey=1,NKEYS_CRUST
-  if (code(ikey) == type) then
-    do i=1,NLAYERS_CRUST
-      vptyp(i)=velocp(ikey,i)
-      vstyp(i)=velocs(ikey,i)
-      rhtyp(i)=dens(ikey,i)
-    enddo
-    do i=1,NLAYERS_CRUST-1
-      thtp(i)=thlr(ikey,i)
-    enddo
-!   get distance to Moho from the bottom of the ocean or the ice
-    thtp(NLAYERS_CRUST)=thlr(ikey,NLAYERS_CRUST)-thtp(1)-thtp(2)
-    ierr=0
-  endif
-  enddo
-
-  end subroutine get_crust_structure
+  end subroutine read_smoothed_3D_crustal_model
 

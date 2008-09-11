@@ -55,7 +55,11 @@
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
 #endif
   rmass_ocean_load,normal_top_crust_mantle,ibelm_top_crust_mantle,AM_V, &
-  locval,ifseg,copy_ibool_ori,mask_ibool,xstore,ystore,zstore)
+  locval,ifseg,copy_ibool_ori,mask_ibool,xstore,ystore,zstore,nrec, &
+  bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &
+  r_bottom,r_top,rmins,rmaxs,this_layer_has_a_doubling,NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
+  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI)
 
   use dyn_array
 
@@ -269,12 +273,10 @@
 ! crustal_model_variables
   type crustal_model_variables
     sequence
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
-    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-    character(len=2) code(NKEYS_CRUST)
+    real(kind=4) velocp(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) velocs(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) dens(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) thlr(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
   end type crustal_model_variables
 
   type (crustal_model_variables) CM_V
@@ -425,9 +427,9 @@
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
 ! arrays for BCAST
-  integer, dimension(40) :: bcast_integer
-  double precision, dimension(30) :: bcast_double_precision
-  logical, dimension(26) :: bcast_logical
+  integer, dimension(NVALUES_bcast_integer) :: bcast_integer
+  double precision, dimension(NVALUES_bcast_double_precision) :: bcast_double_precision
+  logical, dimension(NVALUES_bcast_logical) :: bcast_logical
 
   integer, parameter :: maxker=200
   integer, parameter :: maxl=72
@@ -529,6 +531,10 @@
 
   double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT3D) :: Qmu_store
   double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT3D) :: tau_e_store
+
+! receiver information
+  integer :: nrec,ios
+  character(len=150) :: STATIONS,rec_filename,dummystring
 
 !!!!! DK DK for merged version, all the arrays below are allocated statically instead
 
@@ -647,6 +653,12 @@
 
 ! communication pattern for corners between chunks
   integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS,7) :: array_to_broadcast_1
+  integer, dimension(MAX_NUM_REGIONS,12) :: array_to_broadcast_2
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE,2) :: array_to_broadcast_3
+  double precision, dimension(2) :: array_to_broadcast_4
+  double precision, dimension(0:NK,0:NS,0:NS,4) :: array_to_broadcast_5
 #endif
 
 ! get the base pathname for output files
@@ -678,7 +690,7 @@
     write(IMAIN,*)
   endif
 
-  if (myrank==0) then
+  if (myrank == 0) then
 ! read the parameter file and compute additional parameters
     call read_compute_parameters(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
@@ -718,6 +730,20 @@
 ! count the total number of sources in the CMTSOLUTION file
     call count_number_of_sources(NSOURCES)
 
+! read the number of receivers
+  rec_filename = 'DATA/STATIONS'
+  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
+! get total number of receivers
+  if(myrank == 0) then
+    open(unit=IIN,file=STATIONS,iostat=ios,status='old',action='read')
+    nrec = 0
+    do while(ios == 0)
+      read(IIN,"(a)",iostat=ios) dummystring
+      if(ios == 0) nrec = nrec + 1
+    enddo
+    close(IIN)
+  endif
+
     bcast_integer = (/MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
             NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
             NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
@@ -727,15 +753,17 @@
             NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
             SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
             NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
-            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,ifirst_layer_aniso,ilast_layer_aniso/)
+            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,ifirst_layer_aniso,ilast_layer_aniso,nrec/)
 
     bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
             CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-            TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,ATTENUATION_3D, &
+            TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
             RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
             SAVE_MESH_FILES,ATTENUATION, &
-            ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D,&
-            CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,SAVE_ALL_SEISMOS_IN_ONE_FILE/)
+            ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
+            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+            ROTATE_SEISMOGRAMS_RT,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+            WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE/)
 
     bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
             CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
@@ -747,45 +775,80 @@
 
 ! broadcast the information read on the master to the nodes
 #ifdef USE_MPI
-    call MPI_BCAST(bcast_integer,40,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_integer,NVALUES_bcast_integer,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_double_precision,30,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_double_precision,NVALUES_bcast_double_precision,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(bcast_logical,26,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(bcast_logical,NVALUES_bcast_logical,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
     call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(ner,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(doubling_index,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(r_bottom,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(r_top,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(rmins,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(rmaxs,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(rmaxs,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
     call MPI_BCAST(this_layer_has_a_doubling,MAX_NUMBER_OF_MESH_LAYERS,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
 
-    call MPI_BCAST(NSPEC,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2D_XI,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2D_ETA,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2DMAX_XMIN_XMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2DMAX_YMIN_YMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2D_BOTTOM,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2D_TOP,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC1D_RADIAL,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NGLOB1D_RADIAL,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NGLOB2DMAX_XMIN_XMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NGLOB2DMAX_YMIN_YMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NGLOB,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! integer
+    array_to_broadcast_1(:,1) = ner(:)
+    array_to_broadcast_1(:,2) = ratio_sampling_array(:)
+    array_to_broadcast_1(:,3) = doubling_index(:)
 
+! double precision
+    array_to_broadcast_1(:,4) = r_bottom(:)
+    array_to_broadcast_1(:,5) = r_top(:)
+    array_to_broadcast_1(:,6) = rmins(:)
+    array_to_broadcast_1(:,7) = rmaxs(:)
+
+    call MPI_BCAST(array_to_broadcast_1,7*MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+! integer
+    ner(:) = nint(array_to_broadcast_1(:,1))
+    ratio_sampling_array(:) = nint(array_to_broadcast_1(:,2))
+    doubling_index(:) = nint(array_to_broadcast_1(:,3))
+
+! double precision
+    r_bottom(:) = array_to_broadcast_1(:,4)
+    r_top(:) = array_to_broadcast_1(:,5)
+    rmins(:) = array_to_broadcast_1(:,6)
+    rmaxs(:) = array_to_broadcast_1(:,7)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    array_to_broadcast_2(:, 1) = NSPEC(:)
+    array_to_broadcast_2(:, 2) = NSPEC2D_XI(:)
+    array_to_broadcast_2(:, 3) = NSPEC2D_ETA(:)
+    array_to_broadcast_2(:, 4) = NSPEC2DMAX_XMIN_XMAX(:)
+    array_to_broadcast_2(:, 5) = NSPEC2DMAX_YMIN_YMAX(:)
+    array_to_broadcast_2(:, 6) = NSPEC2D_BOTTOM(:)
+    array_to_broadcast_2(:, 7) = NSPEC2D_TOP(:)
+    array_to_broadcast_2(:, 8) = NSPEC1D_RADIAL(:)
+    array_to_broadcast_2(:, 9) = NGLOB1D_RADIAL(:)
+    array_to_broadcast_2(:,10) = NGLOB2DMAX_XMIN_XMAX(:)
+    array_to_broadcast_2(:,11) = NGLOB2DMAX_YMIN_YMAX(:)
+    array_to_broadcast_2(:,12) = NGLOB(:)
+
+    call MPI_BCAST(array_to_broadcast_2,12*MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+    NSPEC(:) = array_to_broadcast_2(:, 1)
+    NSPEC2D_XI(:) = array_to_broadcast_2(:, 2)
+    NSPEC2D_ETA(:) = array_to_broadcast_2(:, 3)
+    NSPEC2DMAX_XMIN_XMAX(:) = array_to_broadcast_2(:, 4)
+    NSPEC2DMAX_YMIN_YMAX(:) = array_to_broadcast_2(:, 5)
+    NSPEC2D_BOTTOM(:) = array_to_broadcast_2(:, 6)
+    NSPEC2D_TOP(:) = array_to_broadcast_2(:, 7)
+    NSPEC1D_RADIAL(:) = array_to_broadcast_2(:, 8)
+    NGLOB1D_RADIAL(:) = array_to_broadcast_2(:, 9)
+    NGLOB2DMAX_XMIN_XMAX(:) = array_to_broadcast_2(:,10)
+    NGLOB2DMAX_YMIN_YMAX(:) = array_to_broadcast_2(:,11)
+    NGLOB(:) = array_to_broadcast_2(:,12)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call MPI_BCAST(DIFF_NSPEC1D_RADIAL,NB_SQUARE_CORNERS*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-#endif
 
-  if (myrank /=0) then
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    array_to_broadcast_3(:,:,1) = DIFF_NSPEC2D_XI(:,:)
+    array_to_broadcast_3(:,:,2) = DIFF_NSPEC2D_ETA(:,:)
+    call MPI_BCAST(array_to_broadcast_3,2*NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    DIFF_NSPEC2D_XI(:,:) = array_to_broadcast_3(:,:,1)
+    DIFF_NSPEC2D_ETA(:,:) = array_to_broadcast_3(:,:,2)
+#endif
 
     MIN_ATTENUATION_PERIOD = bcast_integer(1)
     MAX_ATTENUATION_PERIOD = bcast_integer(2)
@@ -827,6 +890,7 @@
     MOVIE_STOP = bcast_integer(38)
     ifirst_layer_aniso = bcast_integer(39)
     ilast_layer_aniso = bcast_integer(40)
+    nrec = bcast_integer(41)
 
     TRANSVERSE_ISOTROPY = bcast_logical(1)
     ANISOTROPIC_3D_MANTLE = bcast_logical(2)
@@ -841,19 +905,26 @@
     OCEANS = bcast_logical(11)
     MOVIE_SURFACE = bcast_logical(12)
     MOVIE_VOLUME = bcast_logical(13)
-    ATTENUATION_3D = bcast_logical(14)
-    RECEIVERS_CAN_BE_BURIED = bcast_logical(15)
-    PRINT_SOURCE_TIME_FUNCTION = bcast_logical(16)
-    SAVE_MESH_FILES = bcast_logical(17)
-    ATTENUATION = bcast_logical(18)
-    ABSORBING_CONDITIONS = bcast_logical(19)
-    INCLUDE_CENTRAL_CUBE = bcast_logical(20)
-    INFLATE_CENTRAL_CUBE = bcast_logical(21)
-    SAVE_FORWARD = bcast_logical(22)
-    CASE_3D = bcast_logical(23)
-    CUT_SUPERBRICK_XI = bcast_logical(24)
-    CUT_SUPERBRICK_ETA = bcast_logical(25)
-    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(26)
+    MOVIE_COARSE = bcast_logical(14)
+    ATTENUATION_3D = bcast_logical(15)
+    RECEIVERS_CAN_BE_BURIED = bcast_logical(16)
+    PRINT_SOURCE_TIME_FUNCTION = bcast_logical(17)
+    SAVE_MESH_FILES = bcast_logical(18)
+    ATTENUATION = bcast_logical(19)
+    ABSORBING_CONDITIONS = bcast_logical(20)
+    INCLUDE_CENTRAL_CUBE = bcast_logical(21)
+    INFLATE_CENTRAL_CUBE = bcast_logical(22)
+    SAVE_FORWARD = bcast_logical(23)
+    CASE_3D = bcast_logical(24)
+    OUTPUT_SEISMOS_ASCII_TEXT = bcast_logical(25)
+    OUTPUT_SEISMOS_SAC_ALPHANUM = bcast_logical(26)
+    OUTPUT_SEISMOS_SAC_BINARY = bcast_logical(27)
+    ROTATE_SEISMOGRAMS_RT = bcast_logical(28)
+    CUT_SUPERBRICK_XI = bcast_logical(29)
+    CUT_SUPERBRICK_ETA = bcast_logical(30)
+    WRITE_SEISMOGRAMS_BY_MASTER = bcast_logical(31)
+    SAVE_ALL_SEISMOS_IN_ONE_FILE = bcast_logical(32)
+    USE_BINARY_FOR_LARGE_FILE = bcast_logical(33)
 
     DT = bcast_double_precision(1)
     ANGULAR_WIDTH_XI_IN_DEGREES = bcast_double_precision(2)
@@ -885,8 +956,6 @@
     MOVIE_EAST = bcast_double_precision(28)
     MOVIE_NORTH = bcast_double_precision(29)
     MOVIE_SOUTH = bcast_double_precision(30)
-
-  endif
 
 ! check that the code is running with the requested number of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
@@ -1088,10 +1157,16 @@
       if(myrank == 0) call read_mantle_model(D3MM_V)
 ! broadcast the information read on the master to the nodes
 #ifdef USE_MPI
-      call MPI_BCAST(D3MM_V%dvs_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-      call MPI_BCAST(D3MM_V%dvs_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-      call MPI_BCAST(D3MM_V%dvp_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-      call MPI_BCAST(D3MM_V%dvp_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+      array_to_broadcast_5(:,:,:,1) = D3MM_V%dvs_a
+      array_to_broadcast_5(:,:,:,2) = D3MM_V%dvs_b
+      array_to_broadcast_5(:,:,:,3) = D3MM_V%dvp_a
+      array_to_broadcast_5(:,:,:,4) = D3MM_V%dvp_b
+      call MPI_BCAST(array_to_broadcast_5,4*(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+      D3MM_V%dvs_a = array_to_broadcast_5(:,:,:,1)
+      D3MM_V%dvs_b = array_to_broadcast_5(:,:,:,2)
+      D3MM_V%dvp_a = array_to_broadcast_5(:,:,:,3)
+      D3MM_V%dvp_b = array_to_broadcast_5(:,:,:,4)
+
       call MPI_BCAST(D3MM_V%spknt,NK+1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(D3MM_V%qq0,(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
       call MPI_BCAST(D3MM_V%qq,3*(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -1298,15 +1373,13 @@
 
   if(CRUSTAL) then
 ! the variables read are declared and stored in structure CM_V
-    if(myrank == 0) call read_crustal_model(CM_V)
+    if(myrank == 0) call read_smoothed_3D_crustal_model(CM_V)
 ! broadcast the information read on the master to the nodes
 #ifdef USE_MPI
-    call MPI_BCAST(CM_V%thlr,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(CM_V%velocp,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(CM_V%velocs,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(CM_V%dens,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(CM_V%abbreviation,NCAP_CRUST*NCAP_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(CM_V%code,2*NKEYS_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(CM_V%velocp,(2*NLON_CRUST+1)*(2*NLAT_CRUST+1)*5,MPI_REAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(CM_V%velocs,(2*NLON_CRUST+1)*(2*NLAT_CRUST+1)*5,MPI_REAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(CM_V%dens,(2*NLON_CRUST+1)*(2*NLAT_CRUST+1)*5,MPI_REAL,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(CM_V%thlr,(2*NLON_CRUST+1)*(2*NLAT_CRUST+1)*5,MPI_REAL,0,MPI_COMM_WORLD,ier)
 #endif
   endif
 
@@ -1318,8 +1391,12 @@
   if(ATTENUATION .and. ATTENUATION_3D) then
     if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 #ifdef USE_MPI
-    call MPI_BCAST(AM_V%min_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-    call MPI_BCAST(AM_V%max_period,  1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    array_to_broadcast_4(1) = AM_V%min_period
+    array_to_broadcast_4(2) = AM_V%max_period
+    call MPI_BCAST(array_to_broadcast_4,2,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD, ier)
+    AM_V%min_period = array_to_broadcast_4(1)
+    AM_V%max_period = array_to_broadcast_4(2)
+
     call MPI_BCAST(AM_V%QT_c_source, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%Qtau_s(1),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
     call MPI_BCAST(AM_V%Qtau_s(2),   1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
@@ -1330,8 +1407,11 @@
   if(ATTENUATION .and. .not. ATTENUATION_3D) then
      if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 #ifdef USE_MPI
-    call MPI_BCAST(AM_V%min_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
-    call MPI_BCAST(AM_V%max_period, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+    array_to_broadcast_4(1) = AM_V%min_period
+    array_to_broadcast_4(2) = AM_V%max_period
+    call MPI_BCAST(array_to_broadcast_4,2,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD, ier)
+    AM_V%min_period = array_to_broadcast_4(1)
+    AM_V%max_period = array_to_broadcast_4(2)
 #endif
     call attenuation_model_setup(REFERENCE_1D_MODEL, RICB, RCMB, R670, R220, R80,AM_V,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,AM_S,AS_V)
   endif

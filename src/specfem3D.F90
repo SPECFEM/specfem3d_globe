@@ -39,7 +39,7 @@ ibelm_top_inner_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
   kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle,kappavstore_inner_core,muvstore_inner_core, &
   rmass_crust_mantle,rmass_outer_core,rmass_inner_core,rmass_ocean_load, &
 #ifdef USE_MPI
-  NDIM_smaller_buffers,npoin2D_max_all,nrec,addressing,ibathy_topo, &
+  npoin2D_max_all,nrec,addressing,ibathy_topo, &
   ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
 iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
 iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -55,7 +55,11 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #endif
   AM_V,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
   etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle)
+  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle, &
+  bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &
+  r_bottom,r_top,rmins,rmaxs,this_layer_has_a_doubling,NSPEC_computed,NSPEC2D_XI,NSPEC2D_ETA, &
+  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI)
 
   use dyn_array
 
@@ -197,8 +201,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! always three times bigger and therefore scalars can use the first part
 ! of the vector buffer in memory even if it has an additional index here
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
-  integer :: npoin2D_max_all,NDIM_smaller_buffers
-  real(kind=CUSTOM_REAL), dimension(NDIM_smaller_buffers,npoin2D_max_all) :: buffer_send_faces,buffer_received_faces
+  integer :: npoin2D_max_all
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all) :: buffer_send_faces,buffer_received_faces
 
 #endif
 
@@ -528,10 +532,10 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
   logical :: CASE_3D
 
-! arrays for BCAST
-  integer, dimension(40) :: bcast_integer
-  double precision, dimension(30) :: bcast_double_precision
-  logical, dimension(33) :: bcast_logical
+! arrays from BCAST
+  integer, dimension(NVALUES_bcast_integer) :: bcast_integer
+  double precision, dimension(NVALUES_bcast_double_precision) :: bcast_double_precision
+  logical, dimension(NVALUES_bcast_logical) :: bcast_logical
 
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
@@ -630,75 +634,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
     if(err_occurred() /= 0) call exit_MPI(myrank,'an error occurred while reading the parameter file')
 
-    bcast_integer = (/MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-            NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-            NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-            NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
-            NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-            NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-            NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,&
-            SIMULATION_TYPE,REFERENCE_1D_MODEL,THREE_D_MODEL,NPROC,NPROCTOT, &
-            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
-            MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,ifirst_layer_aniso,ilast_layer_aniso/)
-
-    bcast_logical = (/TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-            CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE, &
-            TOPOGRAPHY,OCEANS,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE,ATTENUATION_3D, &
-            RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-            SAVE_MESH_FILES,ATTENUATION, &
-            ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
-            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-            ROTATE_SEISMOGRAMS_RT,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
-            WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE/)
-
-    bcast_double_precision = (/DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
-            CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
-            RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-            R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-            MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH/)
-
   endif
-
-! broadcast the information read on the master to the nodes
-#ifdef USE_MPI
-    call MPI_BCAST(bcast_integer,40,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(bcast_double_precision,30,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(bcast_logical,33,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(MODEL,150,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(ner,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(doubling_index,MAX_NUMBER_OF_MESH_LAYERS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(r_bottom,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(r_top,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(rmins,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(rmaxs,MAX_NUMBER_OF_MESH_LAYERS,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(this_layer_has_a_doubling,MAX_NUMBER_OF_MESH_LAYERS,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(NSPEC_computed,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2D_XI,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2D_ETA,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2DMAX_XMIN_XMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2DMAX_YMIN_YMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2D_BOTTOM,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC2D_TOP,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NSPEC1D_RADIAL,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NGLOB1D_RADIAL,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NGLOB2DMAX_XMIN_XMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NGLOB2DMAX_YMIN_YMAX,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(NGLOB_computed,MAX_NUM_REGIONS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-    call MPI_BCAST(DIFF_NSPEC1D_RADIAL,NB_SQUARE_CORNERS*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-    call MPI_BCAST(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-#endif
-
-  if (myrank /=0) then
 
     MIN_ATTENUATION_PERIOD = bcast_integer(1)
     MAX_ATTENUATION_PERIOD = bcast_integer(2)
@@ -740,6 +676,10 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     MOVIE_STOP = bcast_integer(38)
     ifirst_layer_aniso = bcast_integer(39)
     ilast_layer_aniso = bcast_integer(40)
+    ilast_layer_aniso = bcast_integer(40)
+#ifdef USE_MPI
+    nrec = bcast_integer(41)
+#endif
 
     TRANSVERSE_ISOTROPY = bcast_logical(1)
     ANISOTROPIC_3D_MANTLE = bcast_logical(2)
@@ -805,8 +745,6 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     MOVIE_EAST = bcast_double_precision(28)
     MOVIE_NORTH = bcast_double_precision(29)
     MOVIE_SOUTH = bcast_double_precision(30)
-
-  endif
 
 ! check simulation pararmeters
   if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
@@ -2357,7 +2295,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS,NDIM_smaller_buffers)
+            NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS)
 #endif
 
 !---
@@ -2515,7 +2453,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 !! DK DK added this for Gordon Bell runs, to save seismograms every 10000 time steps
 !! DK DK just in case the full simulation does not finish
-  if(PATCH_FOR_GORDON_BELL .and. mod(it,10000) == 0) then
+  if(SAVE_PARTIAL_SEISMOGRAMS .and. mod(it,10000) == 0) then
       call write_seismograms(myrank,uxdstore,uydstore,uzdstore,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,nrec,nrec_local,DT,t0,it_end, &
             yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &

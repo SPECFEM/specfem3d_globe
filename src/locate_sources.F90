@@ -87,6 +87,7 @@
   integer i,j,k,ispec,iglob
 
 #ifdef USE_MPI
+  double precision, dimension(NSOURCES,16) :: array_to_broadcast
   integer :: ier
 #endif
 
@@ -186,20 +187,55 @@
   if(myrank == 0) call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor,DT,NSOURCES)
 ! broadcast the information read on the master to the nodes
 #ifdef USE_MPI
-  call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(mi,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+! integer
+  array_to_broadcast(1,1) = yr
+  array_to_broadcast(1,2) = jda
+  array_to_broadcast(1,3) = ho
+  array_to_broadcast(1,4) = mi
 
-  call MPI_BCAST(t_cmt,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(hdur,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(lat,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(long,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(depth,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+! double precision variable
+  array_to_broadcast(1,5) = sec
 
-  call MPI_BCAST(moment_tensor,6*NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+! double precision arrays
+  array_to_broadcast(:, 6) = t_cmt(:)
+  array_to_broadcast(:, 7) = hdur(:)
+  array_to_broadcast(:, 8) = lat(:)
+  array_to_broadcast(:, 9) = long(:)
+  array_to_broadcast(:,10) = depth(:)
+
+  array_to_broadcast(:,11) = moment_tensor(1,:)
+  array_to_broadcast(:,12) = moment_tensor(2,:)
+  array_to_broadcast(:,13) = moment_tensor(3,:)
+  array_to_broadcast(:,14) = moment_tensor(4,:)
+  array_to_broadcast(:,15) = moment_tensor(5,:)
+  array_to_broadcast(:,16) = moment_tensor(6,:)
+
+  call MPI_BCAST(array_to_broadcast,16*NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+! integer
+  yr = nint(array_to_broadcast(1,1))
+  jda = nint(array_to_broadcast(1,2))
+  ho = nint(array_to_broadcast(1,3))
+  mi = nint(array_to_broadcast(1,4))
+
+! double precision variable
+  sec = array_to_broadcast(1,5)
+
+! double precision arrays
+  t_cmt(:) = array_to_broadcast(:, 6)
+  hdur(:) = array_to_broadcast(:, 7)
+  lat(:) = array_to_broadcast(:, 8)
+  long(:) = array_to_broadcast(:, 9)
+  depth(:) = array_to_broadcast(:,10)
+
+  moment_tensor(1,:) = array_to_broadcast(:,11)
+  moment_tensor(2,:) = array_to_broadcast(:,12)
+  moment_tensor(3,:) = array_to_broadcast(:,13)
+  moment_tensor(4,:) = array_to_broadcast(:,14)
+  moment_tensor(5,:) = array_to_broadcast(:,15)
+  moment_tensor(6,:) = array_to_broadcast(:,16)
+
 #endif
 
 ! define topology of the control element
@@ -680,11 +716,25 @@
 
 ! main process broadcasts the results to all the slices
 #ifdef USE_MPI
-  call MPI_BCAST(islice_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ispec_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(xi_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eta_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(gamma_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+! integer
+  array_to_broadcast(:,1) = islice_selected_source(:)
+  array_to_broadcast(:,2) = ispec_selected_source(:)
+
+! double precision
+  array_to_broadcast(:,3) = xi_source(:)
+  array_to_broadcast(:,4) = eta_source(:)
+  array_to_broadcast(:,5) = gamma_source(:)
+
+  call MPI_BCAST(array_to_broadcast,5*NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+! integer
+  islice_selected_source(:) = nint(array_to_broadcast(:,1))
+  ispec_selected_source(:) = nint(array_to_broadcast(:,2))
+
+! double precision
+  xi_source(:) = array_to_broadcast(:,3)
+  eta_source(:) = array_to_broadcast(:,4)
+  gamma_source(:) = array_to_broadcast(:,5)
 #endif
 
 ! elapsed time since beginning of source detection

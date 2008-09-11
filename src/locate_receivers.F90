@@ -84,6 +84,7 @@
   integer i,j,k,ispec,iglob,imin,imax,jmin,jmax,kmin,kmax
 
 #ifdef USE_MPI
+  double precision, dimension(nrec,8) :: array_to_broadcast
   integer :: ier
 #endif
 
@@ -210,10 +211,17 @@
   call MPI_BCAST(station_name,nrec*MAX_LENGTH_STATION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(network_name,nrec*MAX_LENGTH_NETWORK_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
-  call MPI_BCAST(stlat,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stlon,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stbur,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  array_to_broadcast(:,1) = stlat(:)
+  array_to_broadcast(:,2) = stlon(:)
+  array_to_broadcast(:,3) = stele(:)
+  array_to_broadcast(:,4) = stbur(:)
+
+  call MPI_BCAST(array_to_broadcast,4*nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  stlat(:) = array_to_broadcast(:,1)
+  stlon(:) = array_to_broadcast(:,2)
+  stele(:) = array_to_broadcast(:,3)
+  stbur(:) = array_to_broadcast(:,4)
 #endif
 
 ! loop on all the stations to locate them in the mesh
@@ -688,19 +696,37 @@
 #ifdef USE_MPI
   call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-  call MPI_BCAST(islice_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ispec_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(xi_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(eta_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
   call MPI_BCAST(station_name,nrec*MAX_LENGTH_STATION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(network_name,nrec*MAX_LENGTH_NETWORK_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
-  call MPI_BCAST(stlat,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stlon,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(nu,nrec*3*3,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+! integer
+  array_to_broadcast(1:nrec,1) = islice_selected_rec(1:nrec)
+  array_to_broadcast(1:nrec,2) = ispec_selected_rec(1:nrec)
+
+! double precision
+  array_to_broadcast(1:nrec,3) = xi_receiver(1:nrec)
+  array_to_broadcast(1:nrec,4) = eta_receiver(1:nrec)
+  array_to_broadcast(1:nrec,5) = gamma_receiver(1:nrec)
+  array_to_broadcast(1:nrec,6) = stlat(1:nrec)
+  array_to_broadcast(1:nrec,7) = stlon(1:nrec)
+  array_to_broadcast(1:nrec,8) = stele(1:nrec)
+
+  call MPI_BCAST(array_to_broadcast,8*nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+! integer
+  islice_selected_rec(1:nrec) = nint(array_to_broadcast(1:nrec,1))
+  ispec_selected_rec(1:nrec) = nint(array_to_broadcast(1:nrec,2))
+
+! double precision
+  xi_receiver(1:nrec) = array_to_broadcast(1:nrec,3)
+  eta_receiver(1:nrec) = array_to_broadcast(1:nrec,4)
+  gamma_receiver(1:nrec) = array_to_broadcast(1:nrec,5)
+  stlat(1:nrec) = array_to_broadcast(1:nrec,6)
+  stlon(1:nrec) = array_to_broadcast(1:nrec,7)
+  stele(1:nrec) = array_to_broadcast(1:nrec,8)
+
 #endif
 
   end subroutine locate_receivers

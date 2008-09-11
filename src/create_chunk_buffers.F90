@@ -140,7 +140,7 @@
   integer ichunk_receive,iproc_xi_receive,iproc_eta_receive
   integer iproc_loop,iproc_xi_loop,iproc_eta_loop
   integer iproc_xi_loop_inv,iproc_eta_loop_inv
-  integer imember_corner
+  integer imember_corner,npoin2D_value_received
 
   integer iregion_code
 
@@ -152,11 +152,13 @@
   integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
   integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
 
-  integer npoin2D,npoin2D_send_local,npoin2D_receive_local
+  integer npoin2D
 
   integer i,j,k,ispec,ispec2D,ipoin2D
 
 #ifdef USE_MPI
+  integer :: sender,receiver
+  integer, dimension(MPI_STATUS_SIZE) :: msg_status
   integer :: ier
 #endif
 
@@ -747,29 +749,24 @@
 !
 
 ! gather information about all the messages on all processes
+#ifdef USE_MPI
   do imsg = 1,NUMMSGS_FACES
+!     send or receive number of points for sender
+      if(myrank == iprocto_faces(imsg)) then
+        sender = iprocfrom_faces(imsg)
+        call MPI_RECV(npoin2D_value_received,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+        if(npoin2D_value_received /= npoin2D_receive(imsg)) &
+            call exit_MPI(myrank,'incorrect number of points for sender/receiver pair detected')
+      endif
 
-!     gather number of points for sender
-      npoin2D_send_local = npoin2D_send(imsg)
-#ifdef USE_MPI
-      call MPI_BCAST(npoin2D_send_local,1,MPI_INTEGER,iprocfrom_faces(imsg),MPI_COMM_WORLD,ier)
-#endif
-      if(myrank /= iprocfrom_faces(imsg)) npoin2D_send(imsg) = npoin2D_send_local
-
-!     gather number of points for receiver
-      npoin2D_receive_local = npoin2D_receive(imsg)
-#ifdef USE_MPI
-      call MPI_BCAST(npoin2D_receive_local,1,MPI_INTEGER,iprocto_faces(imsg),MPI_COMM_WORLD,ier)
-#endif
-      if(myrank /= iprocto_faces(imsg)) npoin2D_receive(imsg) = npoin2D_receive_local
-
+      if(myrank == iprocfrom_faces(imsg)) then
+        receiver = iprocto_faces(imsg)
+        call MPI_SEND(npoin2D_send(imsg),1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
+      endif
   enddo
+#endif
 
 ! check the number of points
-  do imsg = 1,NUMMSGS_FACES
-    if(npoin2D_send(imsg) /= npoin2D_receive(imsg)) &
-        call exit_MPI(myrank,'incorrect number of points for sender/receiver pair detected')
-  enddo
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'all the messages for chunk faces have the right size'

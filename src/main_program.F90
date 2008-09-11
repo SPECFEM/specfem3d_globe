@@ -323,11 +323,10 @@
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
 #endif
 
-  integer :: npoin2D_max_all,NDIM_smaller_buffers
+  integer :: npoin2D_max_all
 
 ! receiver information
-  integer :: nrec,ios
-  character(len=150) :: STATIONS,rec_filename,dummystring
+  integer :: nrec
 
 !---- arrays to assemble between chunks
 
@@ -360,6 +359,32 @@
 
   type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
+
+! arrays from BCAST
+  integer, dimension(NVALUES_bcast_integer) :: bcast_integer
+  double precision, dimension(NVALUES_bcast_double_precision) :: bcast_double_precision
+  logical, dimension(NVALUES_bcast_logical) :: bcast_logical
+
+  character(len=150) MODEL
+
+! computed in read_compute_parameters
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_layer_has_a_doubling
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
+
+! this for all the regions
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_computed, &
+               NSPEC2D_XI, NSPEC2D_ETA, &
+               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
+               NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+               NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+               NGLOB_computed
+
+  integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
 ! use equivalence statements to reduce total memory size
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
@@ -462,7 +487,11 @@
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
 #endif
   rmass_ocean_load,normal_top_crust_mantle,ibelm_top_crust_mantle,AM_V, &
-  locval,ifseg,copy_ibool_ori,mask_ibool,xstore,ystore,zstore)
+  locval,ifseg,copy_ibool_ori,mask_ibool,xstore,ystore,zstore,nrec, &
+  bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &
+  r_bottom,r_top,rmins,rmaxs,this_layer_has_a_doubling,NSPEC_computed,NSPEC2D_XI,NSPEC2D_ETA, &
+  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI)
 
 ! synchronize all the processes to make sure everybody has finished creating the mesh
 #ifdef USE_MPI
@@ -490,29 +519,6 @@
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
   npoin2D_max_all = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
                         maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
-  if(FEWER_MESSAGES_LARGER_BUFFERS) then
-    NDIM_smaller_buffers = NDIM
-  else
-    NDIM_smaller_buffers = 1
-  endif
-
-! read the number of receivers
-  rec_filename = 'DATA/STATIONS'
-  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-! get total number of receivers
-  if(myrank == 0) then
-    open(unit=IIN,file=STATIONS,iostat=ios,status='old',action='read')
-    nrec = 0
-    do while(ios == 0)
-      read(IIN,"(a)",iostat=ios) dummystring
-      if(ios == 0) nrec = nrec + 1
-    enddo
-    close(IIN)
-  endif
-! broadcast the information read on the master to the nodes
-#ifdef USE_MPI
-  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-#endif
 
 !! DK DK for the merged version, solver inserted here
   call specfem3D(myrank,sizeprocs,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NSOURCES, &
@@ -523,7 +529,7 @@ ibelm_top_inner_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
   kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle,kappavstore_inner_core,muvstore_inner_core, &
   rmass_crust_mantle,rmass_outer_core,rmass_inner_core,rmass_ocean_load, &
 #ifdef USE_MPI
-  NDIM_smaller_buffers,npoin2D_max_all,nrec,addressing,ibathy_topo, &
+  npoin2D_max_all,nrec,addressing,ibathy_topo, &
   ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
 iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
 iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -539,7 +545,11 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #endif
   AM_V,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
   etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle)
+  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle, &
+  bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &
+  r_bottom,r_top,rmins,rmaxs,this_layer_has_a_doubling,NSPEC_computed,NSPEC2D_XI,NSPEC2D_ETA, &
+  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
+  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI)
 
 ! synchronize all the processes to make sure everybody has finished
 #ifdef USE_MPI

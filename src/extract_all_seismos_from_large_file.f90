@@ -33,14 +33,16 @@
 
   implicit none
 
-  include "constants.h"
+  include "setup/constants.h"
 
 ! number of seismogram files stored in the unique large file
   integer, parameter :: N_COMPONENTS = 3
-  integer, parameter :: NREC = 344 * N_COMPONENTS
+  integer, parameter :: NREC = 35 * N_COMPONENTS
 
 ! number of time steps in each seismogram file
-  integer, parameter :: NSTEP = 66800
+  integer, parameter :: NSTEP = 10100
+
+  logical, parameter :: USE_BINARY_FOR_LARGE_FILE = .true.
 
   integer :: irec,istep,irepeat
   real :: time,U_value
@@ -49,9 +51,9 @@
 
 ! open the large seismogram file
   if(USE_BINARY_FOR_LARGE_FILE) then
-    open(unit=30,file='OUTPUT_FILES/all_seismograms_d.bin',status='old',form='unformatted',action='read')
+    open(unit=30,file='OUTPUT_FILES/all_seismograms.bin',status='old',form='unformatted',action='read')
   else
-    open(unit=30,file='all_seismograms.ascii',status='old',action='read')
+    open(unit=30,file='OUTPUT_FILES/all_seismograms.ascii',status='old',action='read')
   endif
 
 ! loop on all the seismogram files

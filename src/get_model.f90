@@ -252,12 +252,10 @@
 ! crustal_model_variables
   type crustal_model_variables
     sequence
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
-    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
-    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
-    character(len=2) code(NKEYS_CRUST)
+    real(kind=4) velocp(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) velocs(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) dens(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
+    real(kind=4) thlr(0:2*NLON_CRUST,0:2*NLAT_CRUST,3:7)
   end type crustal_model_variables
 
   type (crustal_model_variables) CM_V
@@ -787,7 +785,7 @@
                    lat=(PI/2.0d0-theta)*180.0d0/PI
                    lon=phi*180.0d0/PI
                    if(lon>180.0d0) lon=lon-360.0d0
-                   call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V)
+                   call get_smoothed_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V)
                    if (found_crust) then
                       vpv=vpc
                       vph=vpc
@@ -824,7 +822,7 @@
                 lat=(PI/2.0d0-theta)*180.0d0/PI
                 lon=phi*180.0d0/PI
                 if(lon>180.0d0) lon=lon-360.0d0
-                call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V)
+                call get_smoothed_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V)
                 if (found_crust) then
                    vpv=vpc
                    vph=vpc
