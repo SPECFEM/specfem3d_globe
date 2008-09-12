@@ -37,7 +37,7 @@
 FC = ifort
 MPIFC = mpif90
 MPIFLAGS = -DUSE_MPI # -lmpi
-#FLAGS_NO_CHECK = -O1 -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv # -mcmodel=medium -shared-intel
+#FLAGS_NO_CHECK = -O1 -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check all -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv # -mcmodel=medium -shared-intel
 FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz # -mcmodel=medium -shared-intel
 # we need the -no-heap-arrays flag to force the compiler to allocate memory on the stack
 # instead of on the heap to minimize memory fragmentation
@@ -113,6 +113,7 @@ libspecfem_a_OBJECTS = \
 	$O/anisotropic_inner_core_model.o \
 	$O/anisotropic_mantle_model.o \
 	$O/assemble_MPI_scalar.o \
+	$O/assemble_MPI_scalar_block.o \
 	$O/assemble_MPI_vector.o \
 	$O/attenuation_model.o \
 	$O/calc_jacobian.o \
@@ -191,9 +192,9 @@ libspecfem_a_OBJECTS = \
 # values_from_mesher.h
 SOLVER_ARRAY_OBJECTS = \
 	$O/assemble_MPI_central_cube.o \
-	$O/compute_forces_crust_mantle.o \
-	$O/compute_forces_inner_core.o \
-	$O/compute_forces_outer_core.o \
+	$O/assemble_MPI_central_cube_block.o \
+	$O/compute_forces_CM_IC.o \
+	$O/compute_forces_OC.o \
 	$O/specfem3D.o \
 	$(EMPTY_MACRO)
 
@@ -268,14 +269,11 @@ $O/libspecfem.a: $(libspecfem_a_OBJECTS)
 $O/specfem3D.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/specfem3D.F90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.F90
 
-$O/compute_forces_crust_mantle.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_crust_mantle.f90
-	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_crust_mantle.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle.f90
+$O/compute_forces_CM_IC.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_CM_IC.f90
+	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_CM_IC.o ${FCFLAGS_f90} $S/compute_forces_CM_IC.f90
 
-$O/compute_forces_outer_core.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_outer_core.f90
-	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_outer_core.o ${FCFLAGS_f90} $S/compute_forces_outer_core.f90
-
-$O/compute_forces_inner_core.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_inner_core.f90
-	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_inner_core.o ${FCFLAGS_f90} $S/compute_forces_inner_core.f90
+$O/compute_forces_OC.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_OC.f90
+	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_OC.o ${FCFLAGS_f90} $S/compute_forces_OC.f90
 
 ### use MPI here
 $O/assemble_MPI_vector.o: $(SPECINC)/constants.h $S/assemble_MPI_vector.F90
@@ -285,8 +283,14 @@ $O/assemble_MPI_vector.o: $(SPECINC)/constants.h $S/assemble_MPI_vector.F90
 $O/assemble_MPI_scalar.o: $(SPECINC)/constants.h $S/assemble_MPI_scalar.F90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar.o ${FCFLAGS_f90} $S/assemble_MPI_scalar.F90
 
+$O/assemble_MPI_scalar_block.o: $(SPECINC)/constants.h $S/assemble_MPI_scalar_block.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar_block.o ${FCFLAGS_f90} $S/assemble_MPI_scalar_block.F90
+
 $O/assemble_MPI_central_cube.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/assemble_MPI_central_cube.F90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube.F90
+
+$O/assemble_MPI_central_cube_block.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/assemble_MPI_central_cube_block.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube_block.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube_block.F90
 
 ###
 ### regular compilation options here

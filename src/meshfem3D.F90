@@ -59,7 +59,8 @@
   bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &
   r_bottom,r_top,rmins,rmaxs,this_layer_has_a_doubling,NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
   NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI)
+  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI, &
+  is_on_a_slice_edge_crust_mantle,is_on_a_slice_edge_outer_core,is_on_a_slice_edge_inner_core)
 
   use dyn_array
 
@@ -76,6 +77,11 @@
 !! DK DK for the merged version
 ! include values created by the mesher
   include "values_from_mesher.h"
+
+! for non blocking communications
+  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
+  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
+  logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
 
 ! aniso_mantle_model_variables
   type aniso_mantle_model_variables
@@ -99,7 +105,7 @@
     integer, dimension(:), pointer            :: Qs                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -1535,7 +1541,7 @@
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
   yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
 #endif
-  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES)
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES,is_on_a_slice_edge_crust_mantle)
 
   else if(iregion_code == IREGION_OUTER_CORE) then
 ! outer_core
@@ -1570,7 +1576,7 @@
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
   yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
 #endif
-  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES)
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES,is_on_a_slice_edge_outer_core)
 
   else if(iregion_code == IREGION_INNER_CORE) then
 ! inner_core
@@ -1605,7 +1611,7 @@
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
   yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
 #endif
-  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES)
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES,is_on_a_slice_edge_inner_core)
 
   else
     stop 'DK DK incorrect region in merged code'

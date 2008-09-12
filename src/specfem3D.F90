@@ -59,7 +59,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &
   r_bottom,r_top,rmins,rmaxs,this_layer_has_a_doubling,NSPEC_computed,NSPEC2D_XI,NSPEC2D_ETA, &
   NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI)
+  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI, &
+  is_on_a_slice_edge_crust_mantle,is_on_a_slice_edge_outer_core,is_on_a_slice_edge_inner_core)
 
   use dyn_array
 
@@ -76,6 +77,13 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! include values created by the mesher
   include "values_from_mesher.h"
 
+! for non blocking communications
+  integer :: icall
+  real :: percentage_edge
+  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
+  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
+  logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
+
 ! attenuation_model_variables
   type attenuation_model_variables
     sequence
@@ -87,7 +95,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     integer, dimension(:), pointer            :: interval_Q         ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -100,8 +108,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 ! memory variables and standard linear solids for attenuation
   double precision, dimension(N_SLS) :: tau_sigma_dble
-  double precision, dimension(ATT1,ATT2,ATT3,ATT4) :: omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
-  double precision, dimension(ATT1,ATT2,ATT3,ATT5) :: omsb_inner_core_dble, factor_scale_inner_core_dble
+  double precision, dimension(ATT1,ATT2,ATT3,ATT4) :: one_minus_sum_beta_CM_dble, factor_scale_crust_mantle_dble
+  double precision, dimension(ATT1,ATT2,ATT3,ATT5) :: one_minus_sum_beta_IC_dble, factor_scale_inner_core_dble
   real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT4) :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
   real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT5) :: one_minus_sum_beta_inner_core, factor_scale_inner_core
 
@@ -809,6 +817,24 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
   write(IMAIN,*)
 
+  write(IMAIN,*) 'for overlapping of communications with calculations:'
+  write(IMAIN,*)
+
+  percentage_edge = 100.*count(is_on_a_slice_edge_crust_mantle(:))/real(NSPEC_CRUST_MANTLE)
+  write(IMAIN,*) 'percentage of edge elements in crust/mantle ',percentage_edge,'%'
+  write(IMAIN,*) 'percentage of volume elements in crust/mantle ',100. - percentage_edge,'%'
+  write(IMAIN,*)
+
+  percentage_edge = 100.*count(is_on_a_slice_edge_outer_core(:))/real(NSPEC_OUTER_CORE)
+  write(IMAIN,*) 'percentage of edge elements in outer core ',percentage_edge,'%'
+  write(IMAIN,*) 'percentage of volume elements in outer core ',100. - percentage_edge,'%'
+  write(IMAIN,*)
+
+  percentage_edge = 100.*count(is_on_a_slice_edge_inner_core(:))/real(NSPEC_INNER_CORE)
+  write(IMAIN,*) 'percentage of edge elements in inner core ',percentage_edge,'%'
+  write(IMAIN,*) 'percentage of volume elements in inner core ',100. - percentage_edge,'%'
+  write(IMAIN,*)
+
   endif
 
 ! check that the code is running with the requested nb of processes
@@ -1181,7 +1207,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 ! ocean load
   if (OCEANS) then
-    call assemble_MPI_scalar(myrank,rmass_ocean_load,NGLOB_CRUST_MANTLE, &
+    call assemble_MPI_scalar_block(myrank,rmass_ocean_load,NGLOB_CRUST_MANTLE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -1196,7 +1222,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   endif
 
 ! crust and mantle
-  call assemble_MPI_scalar(myrank,rmass_crust_mantle,NGLOB_CRUST_MANTLE, &
+  call assemble_MPI_scalar_block(myrank,rmass_crust_mantle,NGLOB_CRUST_MANTLE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -1210,7 +1236,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY_VAL_CM,NCHUNKS)
 
 ! outer core
-  call assemble_MPI_scalar(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
+  call assemble_MPI_scalar_block(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
@@ -1224,7 +1250,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY_VAL_OC,NCHUNKS)
 
 ! inner core
-  call assemble_MPI_scalar(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
+  call assemble_MPI_scalar_block(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
@@ -1308,7 +1334,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     ndim_assemble = 1
 
 ! use these buffers to assemble the inner core mass matrix with the central cube
-    call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
+    call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
      npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
      receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
      ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,rmass_inner_core,ndim_assemble)
@@ -1370,9 +1396,9 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! get and store PREM attenuation model
 
         call get_attenuation_model_1D(myrank, IREGION_CRUST_MANTLE, tau_sigma_dble, &
-             omsb_crust_mantle_dble, factor_common_crust_mantle_dble,  &
+             one_minus_sum_beta_CM_dble, factor_common_crust_mantle_dble,  &
              factor_scale_crust_mantle_dble, NRAD_ATTENUATION,1,1,1, AM_V)
-        omsb_inner_core_dble(:,:,:,1:min(ATT4,ATT5)) = omsb_crust_mantle_dble(:,:,:,1:min(ATT4,ATT5))
+        one_minus_sum_beta_IC_dble(:,:,:,1:min(ATT4,ATT5)) = one_minus_sum_beta_CM_dble(:,:,:,1:min(ATT4,ATT5))
         factor_scale_inner_core_dble(:,:,:,1:min(ATT4,ATT5))    = factor_scale_crust_mantle_dble(:,:,:,1:min(ATT4,ATT5))
         factor_common_inner_core_dble(:,:,:,:,1:min(ATT4,ATT5)) = factor_common_crust_mantle_dble(:,:,:,:,1:min(ATT4,ATT5))
         ! Tell the Attenuation Code about the IDOUBLING regions within the Mesh
@@ -1380,19 +1406,19 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
    if(CUSTOM_REAL == SIZE_REAL) then
       factor_scale_crust_mantle       = sngl(factor_scale_crust_mantle_dble)
-      one_minus_sum_beta_crust_mantle = sngl(omsb_crust_mantle_dble)
+      one_minus_sum_beta_crust_mantle = sngl(one_minus_sum_beta_CM_dble)
       factor_common_crust_mantle      = sngl(factor_common_crust_mantle_dble)
 
       factor_scale_inner_core         = sngl(factor_scale_inner_core_dble)
-      one_minus_sum_beta_inner_core   = sngl(omsb_inner_core_dble)
+      one_minus_sum_beta_inner_core   = sngl(one_minus_sum_beta_IC_dble)
       factor_common_inner_core        = sngl(factor_common_inner_core_dble)
    else
       factor_scale_crust_mantle       = factor_scale_crust_mantle_dble
-      one_minus_sum_beta_crust_mantle = omsb_crust_mantle_dble
+      one_minus_sum_beta_crust_mantle = one_minus_sum_beta_CM_dble
       factor_common_crust_mantle      = factor_common_crust_mantle_dble
 
       factor_scale_inner_core         = factor_scale_inner_core_dble
-      one_minus_sum_beta_inner_core   = omsb_inner_core_dble
+      one_minus_sum_beta_inner_core   = one_minus_sum_beta_IC_dble
       factor_common_inner_core        = factor_common_inner_core_dble
    endif
 
@@ -1947,14 +1973,29 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     time = (dble(it-1)*DT-t0)/scale_t
   endif
 
-! accel_outer_core, div_displ_outer_core are initialized to zero in the following subroutine.
-  call compute_forces_outer_core(d_ln_density_dr_table, &
+  icall = 1
+  call compute_forces_OC(d_ln_density_dr_table, &
          displ_outer_core,accel_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
          xix_outer_core,xiy_outer_core,xiz_outer_core, &
          etax_outer_core,etay_outer_core,etaz_outer_core, &
          gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool_outer_core)
+         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool_outer_core,icall,is_on_a_slice_edge_outer_core)
+
+#ifndef USE_MPI
+!! DK DK put a fictitious source in each region in the case of a serial test if needed
+  if(PUT_SOURCE_IN_EACH_REGION) then
+    stf = 1.d-6 * comp_source_time_function(dble(it-1)*DT-t0,10.d0)
+! distinguish between single and double precision for reals
+    if(CUSTOM_REAL == SIZE_REAL) then
+      stf_used = sngl(stf)
+    else
+      stf_used = stf
+    endif
+    iglob = ibool_outer_core(2,2,2,2)
+    accel_outer_core(iglob) = accel_outer_core(iglob) + stf_used
+  endif
+#endif
 
 ! ****************************************************
 ! **********  add matching with solid part  **********
@@ -2058,6 +2099,15 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
   endif
 
+  icall = 2
+  call compute_forces_OC(d_ln_density_dr_table, &
+         displ_outer_core,accel_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+         xix_outer_core,xiy_outer_core,xiz_outer_core, &
+         etax_outer_core,etay_outer_core,etaz_outer_core, &
+         gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+         hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool_outer_core,icall,is_on_a_slice_edge_outer_core)
+
 ! assemble all the contributions between slices using MPI
 
 ! outer core
@@ -2076,21 +2126,6 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY_VAL_OC,NCHUNKS)
 #endif
 
-#ifndef USE_MPI
-!! DK DK put a fictitious source in each region in the case of a serial test if needed
-  if(PUT_SOURCE_IN_EACH_REGION) then
-    stf = 1.d-6 * comp_source_time_function(dble(it-1)*DT-t0,10.d0)
-! distinguish between single and double precision for reals
-    if(CUSTOM_REAL == SIZE_REAL) then
-      stf_used = sngl(stf)
-    else
-      stf_used = stf
-    endif
-    iglob = ibool_outer_core(2,2,2,2)
-    accel_outer_core(iglob) = accel_outer_core(iglob) + stf_used
-  endif
-#endif
-
 ! multiply by the inverse of the mass matrix and update velocity
   do i=1,NGLOB_OUTER_CORE
     accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
@@ -2105,34 +2140,33 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 ! for anisotropy and gravity, x y and z contain r theta and phi
 
-  call compute_forces_crust_mantle(displ_crust_mantle,accel_crust_mantle, &
+  icall = 1
+  call compute_forces_CM_IC(displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-          etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle,muhstore_crust_mantle, &
+          eta_anisostore_crust_mantle, &
+          ibool_crust_mantle,idoubling_crust_mantle,R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          factor_common_crust_mantle,size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
+          is_on_a_slice_edge_crust_mantle, &
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          displ_inner_core,accel_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          R_memory_inner_core,epsilondev_inner_core,&
+          one_minus_sum_beta_inner_core,factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
+          is_on_a_slice_edge_inner_core, &
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
-          muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
-          alphaval,betaval,gammaval,factor_common_crust_mantle, &
-          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
-
-  call compute_forces_inner_core(displ_inner_core,accel_inner_core, &
-          xix_inner_core,xiy_inner_core,xiz_inner_core, &
-          etax_inner_core,etay_inner_core,etaz_inner_core, &
-          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core,one_minus_sum_beta_inner_core, &
           alphaval,betaval,gammaval, &
-          factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN)
+          COMPUTE_AND_STORE_STRAIN,AM_V,icall)
 
 #ifdef USE_MPI
 
@@ -2176,6 +2210,21 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   endif
    iglob = ibool_crust_mantle(2,2,2,2)
    accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + stf_used
+#endif
+
+#ifndef USE_MPI
+!! DK DK put a fictitious source in each region in the case of a serial test if needed
+  if(PUT_SOURCE_IN_EACH_REGION) then
+    stf = 1.d-6 * comp_source_time_function(dble(it-1)*DT-t0,10.d0)
+! distinguish between single and double precision for reals
+    if(CUSTOM_REAL == SIZE_REAL) then
+      stf_used = sngl(stf)
+    else
+      stf_used = stf
+    endif
+    iglob = ibool_inner_core(2,2,2,2)
+    accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + stf_used
+  endif
 #endif
 
 ! ****************************************************
@@ -2276,6 +2325,34 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
     endif
 
+  icall = 2
+  call compute_forces_CM_IC(displ_crust_mantle,accel_crust_mantle, &
+          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle,muhstore_crust_mantle, &
+          eta_anisostore_crust_mantle, &
+          ibool_crust_mantle,idoubling_crust_mantle,R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          factor_common_crust_mantle,size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
+          is_on_a_slice_edge_crust_mantle, &
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          displ_inner_core,accel_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          R_memory_inner_core,epsilondev_inner_core,&
+          one_minus_sum_beta_inner_core,factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
+          is_on_a_slice_edge_inner_core, &
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          hprime_xx,hprime_yy,hprime_zz, &
+          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
+          alphaval,betaval,gammaval, &
+          COMPUTE_AND_STORE_STRAIN,AM_V,icall)
+
 ! assemble all the contributions between slices using MPI
 
 ! crust/mantle and inner core handled in the same call
@@ -2375,21 +2452,6 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   do i=1,NGLOB_CRUST_MANTLE
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
   enddo
-
-#ifndef USE_MPI
-!! DK DK put a fictitious source in each region in the case of a serial test if needed
-  if(PUT_SOURCE_IN_EACH_REGION) then
-    stf = 1.d-6 * comp_source_time_function(dble(it-1)*DT-t0,10.d0)
-! distinguish between single and double precision for reals
-    if(CUSTOM_REAL == SIZE_REAL) then
-      stf_used = sngl(stf)
-    else
-      stf_used = stf
-    endif
-    iglob = ibool_inner_core(2,2,2,2)
-    accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + stf_used
-  endif
-#endif
 
   do i=1,NGLOB_INNER_CORE
     accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i)

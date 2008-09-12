@@ -256,6 +256,11 @@
   integer npoin2D_faces_inner_core(NUMFACES_SHARED)
 #endif
 
+! for non blocking communications
+  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
+  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
+  logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
+
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
              npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
              npoin2D_xi_inner_core,npoin2D_eta_inner_core
@@ -349,7 +354,7 @@
     integer, dimension(:), pointer            :: Qs                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -491,7 +496,8 @@
   bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &
   r_bottom,r_top,rmins,rmaxs,this_layer_has_a_doubling,NSPEC_computed,NSPEC2D_XI,NSPEC2D_ETA, &
   NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI)
+  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI, &
+  is_on_a_slice_edge_crust_mantle,is_on_a_slice_edge_outer_core,is_on_a_slice_edge_inner_core)
 
 ! synchronize all the processes to make sure everybody has finished creating the mesh
 #ifdef USE_MPI
@@ -549,7 +555,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &
   r_bottom,r_top,rmins,rmaxs,this_layer_has_a_doubling,NSPEC_computed,NSPEC2D_XI,NSPEC2D_ETA, &
   NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI)
+  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB_computed,DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_ETA,DIFF_NSPEC2D_XI, &
+  is_on_a_slice_edge_crust_mantle,is_on_a_slice_edge_outer_core,is_on_a_slice_edge_inner_core)
 
 ! synchronize all the processes to make sure everybody has finished
 #ifdef USE_MPI

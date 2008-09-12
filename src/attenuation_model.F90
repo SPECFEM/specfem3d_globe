@@ -83,7 +83,7 @@ subroutine attenuation_model_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,AM
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -284,7 +284,7 @@ subroutine attenuation_save_arrays(iregion_code, AM_V)
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -437,7 +437,7 @@ subroutine attenuation_conversion(Qmu_in, T_c_source, tau_s, tau_e, AM_V, AM_S, 
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -512,7 +512,7 @@ subroutine read_attenuation_model(min, max, AM_V)
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -667,7 +667,7 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -750,11 +750,11 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
   AM_V%Qr(:) = AM_V%Qr(:) / R_EARTH
 
   allocate(AM_V%Qsf(AM_V%Qn))
-  allocate(AM_V%Qomsb(AM_V%Qn))
+  allocate(AM_V%Qone_minus_sum_beta(AM_V%Qn))
   allocate(AM_V%Qfc(N_SLS,AM_V%Qn))
 
   allocate(AM_V%Qsf2(AM_V%Qn))
-  allocate(AM_V%Qomsb2(AM_V%Qn))
+  allocate(AM_V%Qone_minus_sum_beta2(AM_V%Qn))
   allocate(AM_V%Qfc2(N_SLS,AM_V%Qn))
 
   allocate(AM_V%interval_Q(AM_V%Qn))
@@ -764,18 +764,18 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
 
   do i = 1,AM_V%Qn
      if(AM_V%Qmu(i) == 0.0d0) then
-        AM_V%Qomsb(i) = 0.0d0
+        AM_V%Qone_minus_sum_beta(i) = 0.0d0
         AM_V%Qfc(:,i) = 0.0d0
         AM_V%Qsf(i)   = 0.0d0
      else
-        call attenuation_property_values(tau_s, AM_V%Qtau_e(:,i), AM_V%Qfc(:,i), AM_V%Qomsb(i))
+        call attenuation_property_values(tau_s, AM_V%Qtau_e(:,i), AM_V%Qfc(:,i), AM_V%Qone_minus_sum_beta(i))
         call attenuation_scale_factor(myrank, AM_V%QT_c_source, AM_V%Qtau_e(:,i), tau_s, AM_V%Qmu(i), AM_V%Qsf(i))
      endif
   enddo
 
   ! Determine the Spline Coefficients or Second Derivatives
   call pspline_construction(AM_V%Qr, AM_V%Qsf,   AM_V%Qn, Qp1, Qpn, AM_V%Qsf2,   AM_V%interval_Q)
-  call pspline_construction(AM_V%Qr, AM_V%Qomsb, AM_V%Qn, Qp1, Qpn, AM_V%Qomsb2, AM_V%interval_Q)
+  call pspline_construction(AM_V%Qr, AM_V%Qone_minus_sum_beta, AM_V%Qn, Qp1, Qpn, AM_V%Qone_minus_sum_beta2, AM_V%interval_Q)
   do i = 1,N_SLS
 ! copy the sub-arrays to temporary arrays to avoid a warning by some compilers
 ! about temporary arrays being created automatically when using this expression
@@ -794,7 +794,8 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
   do i = 1,rmax
      call attenuation_lookup_value(i, radius)
      call pspline_evaluation(AM_V%Qr, AM_V%Qsf,   AM_V%Qsf2,   AM_V%Qn, radius, scale_factor(1,1,1,i),       AM_V%interval_Q)
-     call pspline_evaluation(AM_V%Qr, AM_V%Qomsb, AM_V%Qomsb2, AM_V%Qn, radius, one_minus_sum_beta(1,1,1,i), AM_V%interval_Q)
+     call pspline_evaluation(AM_V%Qr, AM_V%Qone_minus_sum_beta, AM_V%Qone_minus_sum_beta2, &
+                   AM_V%Qn, radius, one_minus_sum_beta(1,1,1,i), AM_V%interval_Q)
      do j = 1,N_SLS
         Qfctmp  = AM_V%Qfc(j,:)
         Qfc2tmp = AM_V%Qfc2(j,:)
@@ -812,10 +813,10 @@ subroutine get_attenuation_model_1D(myrank, iregion_code, tau_s, one_minus_sum_b
 
   deallocate(AM_V%Qfc2)
   deallocate(AM_V%Qsf2)
-  deallocate(AM_V%Qomsb2)
+  deallocate(AM_V%Qone_minus_sum_beta2)
   deallocate(AM_V%Qfc)
   deallocate(AM_V%Qsf)
-  deallocate(AM_V%Qomsb)
+  deallocate(AM_V%Qone_minus_sum_beta)
   deallocate(AM_V%Qtau_e)
   deallocate(Qfctmp)
   deallocate(Qfc2tmp)
@@ -839,7 +840,7 @@ subroutine set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -913,7 +914,7 @@ subroutine get_attenuation_index(iflag, radius, index, inner_core, AM_V)
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -994,14 +995,14 @@ subroutine get_attenuation_model_3D(myrank, one_minus_sum_beta, factor_common, s
   include 'constants.h'
 
   integer myrank, vnspec
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,vnspec)       :: one_minus_sum_beta, scale_factor
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,vnspec)       :: one_minus_sum_beta_array, scale_factor
   double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,vnspec) :: factor_common
   double precision, dimension(N_SLS)                          :: tau_s
 
   integer i,j,k,ispec
 
   double precision, dimension(N_SLS) :: tau_e, fc
-  double precision  omsb, Q_mu, sf, T_c_source, scale_t
+  double precision  one_minus_sum_beta, Q_mu, sf, T_c_source, scale_t
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
@@ -1032,10 +1033,10 @@ subroutine get_attenuation_model_3D(myrank, one_minus_sum_beta, factor_common, s
               Q_mu     = scale_factor(i,j,k,ispec)
 
               ! Determine the factor_common and one_minus_sum_beta from tau_s and tau_e
-              call attenuation_property_values(tau_s, tau_e, fc, omsb)
+              call attenuation_property_values(tau_s, tau_e, fc, one_minus_sum_beta)
 
               factor_common(:,i,j,k,ispec)    = fc(:)
-              one_minus_sum_beta(i,j,k,ispec) = omsb
+              one_minus_sum_beta_array(i,j,k,ispec) = one_minus_sum_beta
 
               ! Determine the "scale_factor" from tau_s, tau_e, central source frequency, and Q
               call attenuation_scale_factor(myrank, T_c_source, tau_e, tau_s, Q_mu, sf)

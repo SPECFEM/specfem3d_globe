@@ -25,14 +25,30 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_crust_mantle(displ,accel,xstore,ystore,zstore, &
-          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+! compute forces in the crust/mantle and in the inner core (i.e., all the solid regions)
+  subroutine compute_forces_CM_IC(displ_crust_mantle,accel_crust_mantle, &
+          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle,muhstore_crust_mantle, &
+          eta_anisostore_crust_mantle, &
+          ibool_crust_mantle,idoubling_crust_mantle,R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          factor_common_crust_mantle,vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle, &
+          is_on_a_slice_edge_crust_mantle, &
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          displ_inner_core,accel_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          R_memory_inner_core,epsilondev_inner_core,&
+          one_minus_sum_beta_inner_core,factor_common_inner_core, &
+          vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core,is_on_a_slice_edge_inner_core, &
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-          ibool,idoubling,R_memory,epsilondev,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN, AM_V)
+          alphaval,betaval,gammaval, &
+          COMPUTE_AND_STORE_STRAIN,AM_V,icall)
 
   implicit none
 
@@ -41,6 +57,10 @@
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
   include "values_from_mesher.h"
+
+  integer :: icall
+
+  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
 
 ! attenuation_model_variables
   type attenuation_model_variables
@@ -53,7 +73,7 @@
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -68,38 +88,41 @@
   logical COMPUTE_AND_STORE_STRAIN
 
 ! array with the local to global mapping per slice
-  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling
+  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
 
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ,accel
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
 
 ! memory variables for attenuation
 ! memory variables R_ij are stored at the local rather than global level
 ! to allow for optimization of cache access by compiler
   integer i_sls,i_memory
 ! variable sized array variables for one_minus_sum_beta and factor_common
-  integer vx, vy, vz, vnspec
+  integer vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle
 
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle) :: &
+       one_minus_sum_beta_crust_mantle
 
   integer iregion_selected
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev_crust_mantle
 
 ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
-  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS,vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle) :: &
+       factor_common_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
 ! arrays with mesh parameters per slice
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
 
 ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -113,14 +136,14 @@
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
 
 ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
-        kappavstore,muvstore
+        kappavstore_crust_mantle,muvstore_crust_mantle
 
 ! store anisotropic properties only where needed to save memory
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
-        kappahstore,muhstore,eta_anisostore
+        kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
 
   integer ispec,iglob
   integer i,j,k,l
@@ -159,14 +182,52 @@
 
   real(kind=CUSTOM_REAL) radius_cr
 
+!=====================================================================
+!=====================================================================
+!=====================================================================
+
+  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_inner_core
+
+! same attenuation everywhere in the inner core therefore no need to use Brian's routines
+  integer, parameter :: iregion_selected_inner_core = 1
+
+! displacement and acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core
+
+! variable lengths for factor_common and one_minus_sum_beta
+  integer vx_inner_core, vy_inner_core, vz_inner_core, vnspec_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core) :: one_minus_sum_beta_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(N_SLS,vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core) :: factor_common_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory_inner_core
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev_inner_core
+
+! array with the local to global mapping per slice
+  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
+
+! arrays with mesh parameters per slice
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+       xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core,etaz_inner_core,&
+       gammax_inner_core,gammay_inner_core,gammaz_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore_inner_core,muvstore_inner_core
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
 
 ! set acceleration to zero
-  accel(:,:) = 0._CUSTOM_REAL
+  if(icall == 1) accel_crust_mantle(:,:) = 0._CUSTOM_REAL
 
   do ispec = 1,NSPEC_CRUST_MANTLE
+
+! hide communications by computing the edges first
+    if((icall == 2 .and. is_on_a_slice_edge_crust_mantle(ispec)) .or. &
+       (icall == 1 .and. .not. is_on_a_slice_edge_crust_mantle(ispec))) cycle
+
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -185,39 +246,39 @@
 
           do l=1,NGLLX
             hp1 = hprime_xx(i,l)
-            iglob = ibool(l,j,k,ispec)
-            tempx1l = tempx1l + displ(1,iglob)*hp1
-            tempy1l = tempy1l + displ(2,iglob)*hp1
-            tempz1l = tempz1l + displ(3,iglob)*hp1
+            iglob = ibool_crust_mantle(l,j,k,ispec)
+            tempx1l = tempx1l + displ_crust_mantle(1,iglob)*hp1
+            tempy1l = tempy1l + displ_crust_mantle(2,iglob)*hp1
+            tempz1l = tempz1l + displ_crust_mantle(3,iglob)*hp1
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
             hp2 = hprime_yy(j,l)
-            iglob = ibool(i,l,k,ispec)
-            tempx2l = tempx2l + displ(1,iglob)*hp2
-            tempy2l = tempy2l + displ(2,iglob)*hp2
-            tempz2l = tempz2l + displ(3,iglob)*hp2
+            iglob = ibool_crust_mantle(i,l,k,ispec)
+            tempx2l = tempx2l + displ_crust_mantle(1,iglob)*hp2
+            tempy2l = tempy2l + displ_crust_mantle(2,iglob)*hp2
+            tempz2l = tempz2l + displ_crust_mantle(3,iglob)*hp2
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
             hp3 = hprime_zz(k,l)
-            iglob = ibool(i,j,l,ispec)
-            tempx3l = tempx3l + displ(1,iglob)*hp3
-            tempy3l = tempy3l + displ(2,iglob)*hp3
-            tempz3l = tempz3l + displ(3,iglob)*hp3
+            iglob = ibool_crust_mantle(i,j,l,ispec)
+            tempx3l = tempx3l + displ_crust_mantle(1,iglob)*hp3
+            tempy3l = tempy3l + displ_crust_mantle(2,iglob)*hp3
+            tempz3l = tempz3l + displ_crust_mantle(3,iglob)*hp3
           enddo
 
 !         get derivatives of ux, uy and uz with respect to x, y and z
 
-          xixl = xix(i,j,k,ispec)
-          xiyl = xiy(i,j,k,ispec)
-          xizl = xiz(i,j,k,ispec)
-          etaxl = etax(i,j,k,ispec)
-          etayl = etay(i,j,k,ispec)
-          etazl = etaz(i,j,k,ispec)
-          gammaxl = gammax(i,j,k,ispec)
-          gammayl = gammay(i,j,k,ispec)
-          gammazl = gammaz(i,j,k,ispec)
+          xixl = xix_crust_mantle(i,j,k,ispec)
+          xiyl = xiy_crust_mantle(i,j,k,ispec)
+          xizl = xiz_crust_mantle(i,j,k,ispec)
+          etaxl = etax_crust_mantle(i,j,k,ispec)
+          etayl = etay_crust_mantle(i,j,k,ispec)
+          etazl = etaz_crust_mantle(i,j,k,ispec)
+          gammaxl = gammax_crust_mantle(i,j,k,ispec)
+          gammayl = gammay_crust_mantle(i,j,k,ispec)
+          gammazl = gammaz_crust_mantle(i,j,k,ispec)
 
 ! compute the jacobian
           jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
@@ -255,9 +316,9 @@
 
 ! precompute terms for attenuation if needed
   if(ATTENUATION_VAL) then
-    radius_cr = xstore(ibool(i,j,k,ispec))
-    call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
-    one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
+    radius_cr = xstore_crust_mantle(ibool_crust_mantle(i,j,k,ispec))
+    call get_attenuation_index(idoubling_crust_mantle(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
+    one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,iregion_selected)
     minus_sum_beta =  one_minus_sum_beta_use - 1.0
   endif
 
@@ -270,11 +331,12 @@
   else
 
 ! do not use transverse isotropy except if element is between d220 and Moho
-  if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO))) then
+  if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling_crust_mantle(ispec)==IFLAG_220_80 .or. &
+                                           idoubling_crust_mantle(ispec)==IFLAG_80_MOHO))) then
 
 ! layer with no transverse isotropy, use kappav and muv
-          kappal = kappavstore(i,j,k,ispec)
-          mul = muvstore(i,j,k,ispec)
+          kappal = kappavstore_crust_mantle(i,j,k,ispec)
+          mul = muvstore_crust_mantle(i,j,k,ispec)
 
 ! use unrelaxed parameters if attenuation
     if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta_use
@@ -295,11 +357,11 @@
     else
 
 ! use Kappa and mu from transversely isotropic model
-      kappavl = kappavstore(i,j,k,ispec)
-      muvl = muvstore(i,j,k,ispec)
+      kappavl = kappavstore_crust_mantle(i,j,k,ispec)
+      muvl = muvstore_crust_mantle(i,j,k,ispec)
 
-      kappahl = kappahstore(i,j,k,ispec)
-      muhl = muhstore(i,j,k,ispec)
+      kappahl = kappahstore_crust_mantle(i,j,k,ispec)
+      muhl = muhstore_crust_mantle(i,j,k,ispec)
 
 ! use unrelaxed parameters if attenuation
 ! eta does not need to be shifted since it is a ratio
@@ -314,14 +376,14 @@
   rhovsvsq = muvl  !!! that is L
   rhovshsq = muhl  !!! that is N
 
-  eta_aniso = eta_anisostore(i,j,k,ispec)  !!! that is  F / (A - 2 L)
+  eta_aniso = eta_anisostore_crust_mantle(i,j,k,ispec)  !!! that is  F / (A - 2 L)
 
 ! use mesh coordinates to get theta and phi
-! ystore and zstore contain theta and phi
+! ystore_crust_mantle and zstore_crust_mantle contain theta and phi
 
-  iglob = ibool(i,j,k,ispec)
-  theta = ystore(iglob)
-  phi = zstore(iglob)
+  iglob = ibool_crust_mantle(i,j,k,ispec)
+  theta = ystore_crust_mantle(iglob)
+  phi = zstore_crust_mantle(iglob)
 
   costheta = cos(theta)
   sintheta = sin(theta)
@@ -504,14 +566,14 @@
 ! subtract memory variables if attenuation
   if(ATTENUATION_VAL) then
     do i_sls = 1,N_SLS
-      R_xx_val = R_memory(1,i_sls,i,j,k,ispec)
-      R_yy_val = R_memory(2,i_sls,i,j,k,ispec)
+      R_xx_val = R_memory_crust_mantle(1,i_sls,i,j,k,ispec)
+      R_yy_val = R_memory_crust_mantle(2,i_sls,i,j,k,ispec)
       sigma_xx = sigma_xx - R_xx_val
       sigma_yy = sigma_yy - R_yy_val
       sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_memory(3,i_sls,i,j,k,ispec)
-      sigma_xz = sigma_xz - R_memory(4,i_sls,i,j,k,ispec)
-      sigma_yz = sigma_yz - R_memory(5,i_sls,i,j,k,ispec)
+      sigma_xy = sigma_xy - R_memory_crust_mantle(3,i_sls,i,j,k,ispec)
+      sigma_xz = sigma_xz - R_memory_crust_mantle(4,i_sls,i,j,k,ispec)
+      sigma_yz = sigma_yz - R_memory_crust_mantle(5,i_sls,i,j,k,ispec)
     enddo
   endif
 
@@ -585,10 +647,10 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          accel(1,iglob) = accel(1,iglob) + sum_terms(1,i,j,k)
-          accel(2,iglob) = accel(2,iglob) + sum_terms(2,i,j,k)
-          accel(3,iglob) = accel(3,iglob) + sum_terms(3,i,j,k)
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,i,j,k)
+          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,i,j,k)
+          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,i,j,k)
         enddo
       enddo
     enddo
@@ -610,10 +672,10 @@
 ! get coefficients for that standard linear solid
 ! IMPROVE we use mu_v here even if there is some anisotropy
 ! IMPROVE we should probably use an average value instead
-                R_memory(i_memory,i_sls,i,j,k,ispec) = alphaval(i_sls) * &
-                  R_memory(i_memory,i_sls,i,j,k,ispec) + &
-                  factor_common(i_sls,1,1,1,iregion_selected) * muvstore(i,j,k,ispec) * &
-                  (betaval(i_sls) * epsilondev(i_memory,i,j,k,ispec) + &
+                R_memory_crust_mantle(i_memory,i_sls,i,j,k,ispec) = alphaval(i_sls) * &
+                  R_memory_crust_mantle(i_memory,i_sls,i,j,k,ispec) + &
+                  factor_common_crust_mantle(i_sls,1,1,1,iregion_selected) * muvstore_crust_mantle(i,j,k,ispec) * &
+                  (betaval(i_sls) * epsilondev_crust_mantle(i_memory,i,j,k,ispec) + &
                   gammaval(i_sls) * epsilondev_loc(i_memory,i,j,k))
               enddo
             enddo
@@ -623,9 +685,275 @@
     endif
 
 ! save deviatoric strain for Runge-Kutta scheme
-  if(COMPUTE_AND_STORE_STRAIN) epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+  if(COMPUTE_AND_STORE_STRAIN) epsilondev_crust_mantle(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
 
   enddo   ! spectral element loop
 
-  end subroutine compute_forces_crust_mantle
+!=====================================================================
+!=====================================================================
+!=====================================================================
+
+! ****************************************************
+!   big loop over all spectral elements in the solid
+! ****************************************************
+
+! set acceleration to zero
+  if(icall == 1) accel_inner_core(:,:) = 0._CUSTOM_REAL
+
+  do ispec = 1,NSPEC_INNER_CORE
+
+! hide communications by computing the edges first
+    if((icall == 2 .and. is_on_a_slice_edge_inner_core(ispec)) .or. &
+       (icall == 1 .and. .not. is_on_a_slice_edge_inner_core(ispec))) cycle
+
+! exclude fictitious elements in central cube
+    if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+
+          tempx1l = 0._CUSTOM_REAL
+          tempx2l = 0._CUSTOM_REAL
+          tempx3l = 0._CUSTOM_REAL
+
+          tempy1l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+
+          tempz1l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
+
+          do l=1,NGLLX
+            hp1 = hprime_xx(i,l)
+            iglob = ibool_inner_core(l,j,k,ispec)
+            tempx1l = tempx1l + displ_inner_core(1,iglob)*hp1
+            tempy1l = tempy1l + displ_inner_core(2,iglob)*hp1
+            tempz1l = tempz1l + displ_inner_core(3,iglob)*hp1
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
+            hp2 = hprime_yy(j,l)
+            iglob = ibool_inner_core(i,l,k,ispec)
+            tempx2l = tempx2l + displ_inner_core(1,iglob)*hp2
+            tempy2l = tempy2l + displ_inner_core(2,iglob)*hp2
+            tempz2l = tempz2l + displ_inner_core(3,iglob)*hp2
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
+            hp3 = hprime_zz(k,l)
+            iglob = ibool_inner_core(i,j,l,ispec)
+            tempx3l = tempx3l + displ_inner_core(1,iglob)*hp3
+            tempy3l = tempy3l + displ_inner_core(2,iglob)*hp3
+            tempz3l = tempz3l + displ_inner_core(3,iglob)*hp3
+          enddo
+
+!         get derivatives of ux, uy and uz with respect to x, y and z
+
+          xixl = xix_inner_core(i,j,k,ispec)
+          xiyl = xiy_inner_core(i,j,k,ispec)
+          xizl = xiz_inner_core(i,j,k,ispec)
+          etaxl = etax_inner_core(i,j,k,ispec)
+          etayl = etay_inner_core(i,j,k,ispec)
+          etazl = etaz_inner_core(i,j,k,ispec)
+          gammaxl = gammax_inner_core(i,j,k,ispec)
+          gammayl = gammay_inner_core(i,j,k,ispec)
+          gammazl = gammaz_inner_core(i,j,k,ispec)
+
+! compute the jacobian
+          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                        + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+          duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+          duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+          duxdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+
+          duydxl = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l
+          duydyl = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l
+          duydzl = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l
+
+          duzdxl = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l
+          duzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l
+          duzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l
+
+! precompute some sums to save CPU time
+          duxdxl_plus_duydyl = duxdxl + duydyl
+          duxdxl_plus_duzdzl = duxdxl + duzdzl
+          duydyl_plus_duzdzl = duydyl + duzdzl
+          duxdyl_plus_duydxl = duxdyl + duydxl
+          duzdxl_plus_duxdzl = duzdxl + duxdzl
+          duzdyl_plus_duydzl = duzdyl + duydzl
+
+! compute deviatoric strain
+  if (COMPUTE_AND_STORE_STRAIN) then
+    epsilondev_loc(1,i,j,k) = duxdxl - ONE_THIRD * (duxdxl + duydyl + duzdzl)
+    epsilondev_loc(2,i,j,k) = duydyl - ONE_THIRD * (duxdxl + duydyl + duzdzl)
+    epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+    epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+    epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+  endif
+
+  if(ATTENUATION_VAL) then
+! same attenuation everywhere in the inner core therefore no need to use Brian's routines
+!!!!!        radius_cr = xstore(ibool_inner_core(i,j,k,ispec))
+!!!!!        call get_attenuation_index(idoubling_inner_core(ispec), dble(radius_cr), iregion_selected_inner_core, .TRUE., AM_V)
+        minus_sum_beta =  one_minus_sum_beta_inner_core(1,1,1,iregion_selected_inner_core) - 1.0
+  endif ! ATTENUATION_VAL
+
+       if(ANISOTROPIC_INNER_CORE_VAL) then
+
+       else
+
+! inner core with no anisotropy, use kappav and muv for instance
+! layer with no anisotropy, use kappav and muv for instance
+          kappal = kappavstore_inner_core(i,j,k,ispec)
+          mul = muvstore_inner_core(i,j,k,ispec)
+
+! use unrelaxed parameters if attenuation
+  if(ATTENUATION_VAL) then
+      mul = mul * one_minus_sum_beta_inner_core(1,1,1,iregion_selected_inner_core)
+  endif
+
+          lambdalplus2mul = kappal + FOUR_THIRDS * mul
+          lambdal = lambdalplus2mul - 2.*mul
+
+! compute stress sigma
+
+          sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
+          sigma_yy = lambdalplus2mul*duydyl + lambdal*duxdxl_plus_duzdzl
+          sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl_plus_duydyl
+
+          sigma_xy = mul*duxdyl_plus_duydxl
+          sigma_xz = mul*duzdxl_plus_duxdzl
+          sigma_yz = mul*duzdyl_plus_duydzl
+
+        endif
+
+! subtract memory variables if attenuation
+  if(ATTENUATION_VAL) then
+    do i_sls = 1,N_SLS
+      R_xx_val = R_memory_inner_core(1,i_sls,i,j,k,ispec)
+      R_yy_val = R_memory_inner_core(2,i_sls,i,j,k,ispec)
+      sigma_xx = sigma_xx - R_xx_val
+      sigma_yy = sigma_yy - R_yy_val
+      sigma_zz = sigma_zz + R_xx_val + R_yy_val
+      sigma_xy = sigma_xy - R_memory_inner_core(3,i_sls,i,j,k,ispec)
+      sigma_xz = sigma_xz - R_memory_inner_core(4,i_sls,i,j,k,ispec)
+      sigma_yz = sigma_yz - R_memory_inner_core(5,i_sls,i,j,k,ispec)
+    enddo
+  endif
+
+! form dot product with test vector, symmetric form
+      tempx1(i,j,k) = jacobianl * (sigma_xx*xixl + sigma_xy*xiyl + sigma_xz*xizl)
+      tempy1(i,j,k) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_yz*xizl)
+      tempz1(i,j,k) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl)
+
+      tempx2(i,j,k) = jacobianl * (sigma_xx*etaxl + sigma_xy*etayl + sigma_xz*etazl)
+      tempy2(i,j,k) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_yz*etazl)
+      tempz2(i,j,k) = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl)
+
+      tempx3(i,j,k) = jacobianl * (sigma_xx*gammaxl + sigma_xy*gammayl + sigma_xz*gammazl)
+      tempy3(i,j,k) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_yz*gammazl)
+      tempz3(i,j,k) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl)
+
+          enddo
+        enddo
+      enddo
+
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+
+          tempx1l = 0._CUSTOM_REAL
+          tempy1l = 0._CUSTOM_REAL
+          tempz1l = 0._CUSTOM_REAL
+
+          tempx2l = 0._CUSTOM_REAL
+          tempy2l = 0._CUSTOM_REAL
+          tempz2l = 0._CUSTOM_REAL
+
+          tempx3l = 0._CUSTOM_REAL
+          tempy3l = 0._CUSTOM_REAL
+          tempz3l = 0._CUSTOM_REAL
+
+          do l=1,NGLLX
+            fac1 = hprimewgll_xx(l,i)
+            tempx1l = tempx1l + tempx1(l,j,k)*fac1
+            tempy1l = tempy1l + tempy1(l,j,k)*fac1
+            tempz1l = tempz1l + tempz1(l,j,k)*fac1
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
+            fac2 = hprimewgll_yy(l,j)
+            tempx2l = tempx2l + tempx2(i,l,k)*fac2
+            tempy2l = tempy2l + tempy2(i,l,k)*fac2
+            tempz2l = tempz2l + tempz2(i,l,k)*fac2
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
+            fac3 = hprimewgll_zz(l,k)
+            tempx3l = tempx3l + tempx3(i,j,l)*fac3
+            tempy3l = tempy3l + tempy3(i,j,l)*fac3
+            tempz3l = tempz3l + tempz3(i,j,l)*fac3
+          enddo
+
+          fac1 = wgllwgll_yz(j,k)
+          fac2 = wgllwgll_xz(i,k)
+          fac3 = wgllwgll_xy(i,j)
+
+          sum_terms(1,i,j,k) = - (fac1*tempx1l + fac2*tempx2l + fac3*tempx3l)
+          sum_terms(2,i,j,k) = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l)
+          sum_terms(3,i,j,k) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
+
+        enddo
+      enddo
+    enddo
+
+! sum contributions from each element to the global mesh and add gravity terms
+    do k=1,NGLLZ
+      do j=1,NGLLY
+        do i=1,NGLLX
+          iglob = ibool_inner_core(i,j,k,ispec)
+          accel_inner_core(:,iglob) = accel_inner_core(:,iglob) + sum_terms(:,i,j,k)
+        enddo
+      enddo
+    enddo
+
+! update memory variables based upon a Runge-Kutta scheme.
+! convention for attenuation:
+! term in xx = 1
+! term in yy = 2
+! term in xy = 3
+! term in xz = 4
+! term in yz = 5
+! term in zz not computed since zero trace
+    if(ATTENUATION_VAL) then
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            do i_sls = 1,N_SLS
+              do i_memory = 1,5
+                R_memory_inner_core(i_memory,i_sls,i,j,k,ispec) = &
+                  alphaval(i_sls) * &
+                  R_memory_inner_core(i_memory,i_sls,i,j,k,ispec) + muvstore_inner_core(i,j,k,ispec) * &
+                  factor_common_inner_core(i_sls,1,1,1,iregion_selected_inner_core) * &
+                  (betaval(i_sls) * &
+                epsilondev_inner_core(i_memory,i,j,k,ispec) + gammaval(i_sls) * epsilondev_loc(i_memory,i,j,k))
+              enddo
+            enddo
+          enddo
+        enddo
+      enddo
+    endif
+
+! save deviatoric strain for Runge-Kutta scheme
+    if(COMPUTE_AND_STORE_STRAIN) epsilondev_inner_core(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+
+   endif   ! end test to exclude fictitious elements in central cube
+
+  enddo ! spectral element loop
+
+  end subroutine compute_forces_CM_IC
 

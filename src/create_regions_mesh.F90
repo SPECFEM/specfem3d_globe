@@ -50,7 +50,7 @@
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
   yread1D_rightxi_righteta,zread1D_leftxi_lefteta,zread1D_rightxi_lefteta,zread1D_leftxi_righteta,zread1D_rightxi_righteta, &
 #endif
-  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES)
+  rho_vp,rho_vs,Qmu_store,tau_e_store,ifirst_layer_aniso,ilast_layer_aniso,SAVE_MESH_FILES,is_on_a_slice_edge)
 
 ! create the different regions of the mesh
 
@@ -68,6 +68,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! DK DK to debug the second sorting routine
   logical, parameter :: DEBUG = .true.
+
+  logical, dimension(nspec) :: is_on_a_slice_edge
 
 !! DK DK added this for merged version
 #ifdef USE_MPI
@@ -152,7 +154,7 @@
     integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+    double precision, dimension(:), pointer   :: Qone_minus_sum_beta, Qone_minus_sum_beta2      ! one_minus_sum_beta
     double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
@@ -837,6 +839,9 @@
       iboun(5,ispec)= .true.
   endif
 
+  is_on_a_slice_edge(ispec) = iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+      iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec) .or. iboun(5,ispec) .or. iboun(6,ispec)
+
 ! define the doubling flag of this element
      if(iregion_code /= IREGION_OUTER_CORE) idoubling(ispec) = doubling_index(ilayer)
 
@@ -1021,6 +1026,9 @@
   if (ilayer==ifirst_layer) iboun(6,ispec)= iboun_sb(ispec_superbrick,6)
   if (ilayer==ilast_layer .and. iz_elem==1) iboun(5,ispec)= iboun_sb(ispec_superbrick,5)
 
+  is_on_a_slice_edge(ispec) = iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+      iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec) .or. iboun(5,ispec) .or. iboun(6,ispec)
+
 ! define the doubling flag of this element
      if(iregion_code /= IREGION_OUTER_CORE) idoubling(ispec) = doubling_index(ilayer)
 
@@ -1161,6 +1169,9 @@
       iMPIcut_eta(2,ispec) = .true.
       if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= .true.
   endif
+
+  is_on_a_slice_edge(ispec) = iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+      iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec) .or. iboun(5,ispec) .or. iboun(6,ispec)
 
 ! define the doubling flag of this element
 ! only two active central cubes, the four others are fictitious

@@ -25,12 +25,13 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_outer_core(d_ln_density_dr_table, &
+! compute forces in the outer core (i.e., the fluid region)
+  subroutine compute_forces_OC(d_ln_density_dr_table, &
           displfluid,accelfluid,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool)
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool,icall,is_on_a_slice_edge_outer_core)
 
   implicit none
 
@@ -39,6 +40,10 @@
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
   include "values_from_mesher.h"
+
+  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
+
+  integer :: icall
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: displfluid,accelfluid
@@ -73,14 +78,19 @@
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
 
   double precision grad_x_ln_rho,grad_y_ln_rho,grad_z_ln_rho
+
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
 ! set acceleration to zero
-  accelfluid(:) = 0._CUSTOM_REAL
+  if(icall == 1) accelfluid(:) = 0._CUSTOM_REAL
 
   do ispec = 1,NSPEC_OUTER_CORE
+
+! hide communications by computing the edges first
+    if((icall == 2 .and. is_on_a_slice_edge_outer_core(ispec)) .or. &
+       (icall == 1 .and. .not. is_on_a_slice_edge_outer_core(ispec))) cycle
 
     do k=1,NGLLZ
       do j=1,NGLLY
@@ -220,5 +230,5 @@
 
   enddo   ! spectral element loop
 
-  end subroutine compute_forces_outer_core
+  end subroutine compute_forces_OC
 
