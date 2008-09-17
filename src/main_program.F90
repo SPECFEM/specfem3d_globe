@@ -419,7 +419,7 @@
 
   equivalence(mask_ibool,     displ_crust_mantle)
 
-! because NSPEC_OUTER_CORE is always an even number, we can put
+! because NSPEC_CRUST_MANTLE is always an even number, we can put
 ! two single-precision arrays in each double-precision array.
 ! this does *NOT* work if double precision is turned on because
 ! the size of an integer does not correspond to the size of a double.
@@ -525,6 +525,26 @@
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
   npoin2D_max_all = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
                         maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
+
+!! DK DK fix the non-blocking arrays to assemble inside the chunks: elements
+!! DK DK in contact with the MPI faces by an edge or a corner only but not
+!! DK DK a full face are missing, therefore let us add them
+#ifdef USE_MPI
+  call fix_non_blocking_arrays(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
+         iboolleft_xi_crust_mantle,iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
+         npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1),ibool_crust_mantle, &
+         mask_ibool,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM)
+
+  call fix_non_blocking_arrays(is_on_a_slice_edge_outer_core,iboolright_xi_outer_core, &
+         iboolleft_xi_outer_core,iboolright_eta_outer_core,iboolleft_eta_outer_core, &
+         npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1),ibool_outer_core, &
+         mask_ibool,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC)
+
+  call fix_non_blocking_arrays(is_on_a_slice_edge_inner_core,iboolright_xi_inner_core, &
+         iboolleft_xi_inner_core,iboolright_eta_inner_core,iboolleft_eta_inner_core, &
+         npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1),ibool_inner_core, &
+         mask_ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC)
+#endif
 
 !! DK DK for the merged version, solver inserted here
   call specfem3D(myrank,sizeprocs,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NSOURCES, &

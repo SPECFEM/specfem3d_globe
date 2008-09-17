@@ -34,20 +34,32 @@
           eta_anisostore_crust_mantle, &
           ibool_crust_mantle,idoubling_crust_mantle,R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
           factor_common_crust_mantle,vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle, &
-          is_on_a_slice_edge_crust_mantle, &
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           displ_inner_core,accel_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           R_memory_inner_core,epsilondev_inner_core,&
           one_minus_sum_beta_inner_core,factor_common_inner_core, &
-          vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core,is_on_a_slice_edge_inner_core, &
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
           alphaval,betaval,gammaval, &
+#ifdef USE_MPI
+            is_on_a_slice_edge_crust_mantle,is_on_a_slice_edge_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUM_MSG_TYPES,iphase, &
+#endif
           COMPUTE_AND_STORE_STRAIN,AM_V,icall)
 
   implicit none
@@ -59,8 +71,6 @@
   include "values_from_mesher.h"
 
   integer :: icall
-
-  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
 
 ! attenuation_model_variables
   type attenuation_model_variables
@@ -97,8 +107,9 @@
 ! memory variables R_ij are stored at the local rather than global level
 ! to allow for optimization of cache access by compiler
   integer i_sls,i_memory
-! variable sized array variables for one_minus_sum_beta and factor_common
-  integer vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle
+
+! variable lengths for factor_common and one_minus_sum_beta
+  integer :: vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle
 
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle) :: &
@@ -186,8 +197,6 @@
 !=====================================================================
 !=====================================================================
 
-  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_inner_core
-
 ! same attenuation everywhere in the inner core therefore no need to use Brian's routines
   integer, parameter :: iregion_selected_inner_core = 1
 
@@ -195,7 +204,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core
 
 ! variable lengths for factor_common and one_minus_sum_beta
-  integer vx_inner_core, vy_inner_core, vz_inner_core, vnspec_inner_core
+  integer :: vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core
 
   real(kind=CUSTOM_REAL), dimension(vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core) :: one_minus_sum_beta_inner_core
 
@@ -215,6 +224,54 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore_inner_core,muvstore_inner_core
 
+  integer :: computed_elements
+
+#ifdef USE_MPI
+  integer :: iphase
+
+  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
+  logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
+
+  integer :: ichunk,iproc_xi,iproc_eta,myrank
+
+  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
+
+  integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
+  integer npoin2D_faces_inner_core(NUMFACES_SHARED)
+
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
+
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
+  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
+
+  integer, dimension(NGLOB2DMAX_XY_VAL_CM,NUMFACES_SHARED) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_VAL_IC,NUMFACES_SHARED) :: iboolfaces_inner_core
+
+  integer :: npoin2D_max_all
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all) :: buffer_send_faces,buffer_received_faces
+
+! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
+     buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
+
+! number of message types
+  integer NUM_MSG_TYPES
+#endif
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
@@ -222,11 +279,34 @@
 ! set acceleration to zero
   if(icall == 1) accel_crust_mantle(:,:) = 0._CUSTOM_REAL
 
+  computed_elements = 0
+
   do ispec = 1,NSPEC_CRUST_MANTLE
 
+#ifdef USE_MPI
 ! hide communications by computing the edges first
     if((icall == 2 .and. is_on_a_slice_edge_crust_mantle(ispec)) .or. &
        (icall == 1 .and. .not. is_on_a_slice_edge_crust_mantle(ispec))) cycle
+
+! process the communications every ELEMENTS_BETWEEN_NONBLOCKING elements
+    computed_elements = computed_elements + 1
+    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_BETWEEN_NONBLOCKING) == 0) &
+         call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUMMSGS_FACES_VAL,NUM_MSG_TYPES,NCORNERSCHUNKS_VAL, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
+            NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
+#endif
 
     do k=1,NGLLZ
       do j=1,NGLLY
@@ -700,14 +780,39 @@
 ! set acceleration to zero
   if(icall == 1) accel_inner_core(:,:) = 0._CUSTOM_REAL
 
+  computed_elements = 0
+
   do ispec = 1,NSPEC_INNER_CORE
 
+#ifdef USE_MPI
 ! hide communications by computing the edges first
     if((icall == 2 .and. is_on_a_slice_edge_inner_core(ispec)) .or. &
        (icall == 1 .and. .not. is_on_a_slice_edge_inner_core(ispec))) cycle
+#endif
 
 ! exclude fictitious elements in central cube
-    if(idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+    if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+
+#ifdef USE_MPI
+! process the communications every ELEMENTS_BETWEEN_NONBLOCKING elements
+    computed_elements = computed_elements + 1
+    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_BETWEEN_NONBLOCKING) == 0) &
+         call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUMMSGS_FACES_VAL,NUM_MSG_TYPES,NCORNERSCHUNKS_VAL, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
+            NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
+#endif
 
     do k=1,NGLLZ
       do j=1,NGLLY
@@ -950,8 +1055,6 @@
 
 ! save deviatoric strain for Runge-Kutta scheme
     if(COMPUTE_AND_STORE_STRAIN) epsilondev_inner_core(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-
-   endif   ! end test to exclude fictitious elements in central cube
 
   enddo ! spectral element loop
 

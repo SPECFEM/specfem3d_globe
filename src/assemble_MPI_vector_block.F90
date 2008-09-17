@@ -31,7 +31,7 @@
 !---- to reduce the total number of MPI calls
 !----
 
-  subroutine assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+  subroutine assemble_MPI_vector_block(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -45,7 +45,7 @@
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL_crust_mantle, &
-            NGLOB1D_RADIAL_inner_core,NCHUNKS,iphase)
+            NGLOB1D_RADIAL_inner_core,NCHUNKS)
 
   implicit none
 
@@ -62,7 +62,7 @@
 ! include values created by the mesher
   include "values_from_mesher.h"
 
-  integer myrank,NCHUNKS,iphase
+  integer myrank,NCHUNKS
 
 ! the two arrays to assemble
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
@@ -119,14 +119,10 @@
   integer :: imsg,imsg_loop
   integer :: icount_faces,npoin2D_chunks_all
 
-  integer :: npoin2D_xi_all,npoin2D_eta_all,NGLOB1D_RADIAL_all
-
-  integer, save :: ioffset
+  integer :: npoin2D_xi_all,npoin2D_eta_all,NGLOB1D_RADIAL_all,ioffset
 
 #ifdef USE_MPI
   integer :: ier
-  integer, save :: request_send,request_receive
-  logical :: flag_result_test
 #endif
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -148,7 +144,8 @@
 !---- first assemble along xi using the 2-D topology
 !----
 
-  if(iphase == 1) then
+! assemble along xi only if more than one slice
+  if(NPROC_XI > 1) then
 
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_xi_crust_mantle
@@ -182,38 +179,9 @@
     receiver = addressing(ichunk,iproc_xi + 1,iproc_eta)
   endif
 #ifdef USE_MPI
-! call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,receiver, &
-!       itag2,buffer_received_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,sender, &
-!       itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_RECV(buffer_received_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,sender, &
-!       itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_SEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,receiver, &
-!       itag2,MPI_COMM_WORLD,ier)
-
-  call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,request_receive,ier)
-
-  call MPI_ISEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,receiver, &
-        itag2,MPI_COMM_WORLD,request_send,ier)
-
-#endif
-
-  iphase = iphase + 1
-  return ! exit because we have started some communications therefore we need some time
-
-  endif !!!!!!!!! end of iphase 1
-
-  if(iphase == 2) then
-
-#ifdef USE_MPI
-! call MPI_WAIT(request_send,msg_status,ier)
-! call MPI_WAIT(request_receive,msg_status,ier)
-  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
-  if(.not. flag_result_test) return ! exit if message not sent yet
-  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
-  if(.not. flag_result_test) return ! exit if message not received yet
+  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,receiver, &
+        itag2,buffer_received_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,sender, &
+        itag,MPI_COMM_WORLD,msg_status,ier)
 #endif
 
 ! all slices add the buffer received to the contributions on the left face
@@ -270,38 +238,9 @@
     receiver = addressing(ichunk,iproc_xi - 1,iproc_eta)
   endif
 #ifdef USE_MPI
-! call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,receiver, &
-!       itag2,buffer_received_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,sender, &
-!       itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_RECV(buffer_received_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,sender, &
-!       itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_SEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,receiver, &
-!       itag2,MPI_COMM_WORLD,ier)
-
-  call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,request_receive,ier)
-
-  call MPI_ISEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,receiver, &
-        itag2,MPI_COMM_WORLD,request_send,ier)
-
-#endif
-
-  iphase = iphase + 1
-  return ! exit because we have started some communications therefore we need some time
-
-  endif !!!!!!!!! end of iphase 2
-
-  if(iphase == 3) then
-
-#ifdef USE_MPI
-! call MPI_WAIT(request_send,msg_status,ier)
-! call MPI_WAIT(request_receive,msg_status,ier)
-  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
-  if(.not. flag_result_test) return ! exit if message not sent yet
-  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
-  if(.not. flag_result_test) return ! exit if message not received yet
+  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,receiver, &
+        itag2,buffer_received_faces_vector,NDIM*npoin2D_xi_all,CUSTOM_MPI_TYPE,sender, &
+        itag,MPI_COMM_WORLD,msg_status,ier)
 #endif
 
 ! all slices copy the buffer received to the contributions on the right face
@@ -321,9 +260,14 @@
 
   endif
 
+  endif
+
 !----
 !---- then assemble along eta using the 2-D topology
 !----
+
+! assemble along eta only if more than one slice
+  if(NPROC_ETA > 1) then
 
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_eta_crust_mantle
@@ -357,38 +301,9 @@
     receiver = addressing(ichunk,iproc_xi,iproc_eta + 1)
   endif
 #ifdef USE_MPI
-! call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,receiver, &
-!   itag2,buffer_received_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,sender, &
-!   itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_RECV(buffer_received_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,sender, &
-!   itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_SEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,receiver, &
-!   itag2,MPI_COMM_WORLD,ier)
-
-  call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,request_receive,ier)
-
-  call MPI_ISEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,receiver, &
-    itag2,MPI_COMM_WORLD,request_send,ier)
-
-#endif
-
-  iphase = iphase + 1
-  return ! exit because we have started some communications therefore we need some time
-
-  endif !!!!!!!!! end of iphase 3
-
-  if(iphase == 4) then
-
-#ifdef USE_MPI
-! call MPI_WAIT(request_send,msg_status,ier)
-! call MPI_WAIT(request_receive,msg_status,ier)
-  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
-  if(.not. flag_result_test) return ! exit if message not sent yet
-  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
-  if(.not. flag_result_test) return ! exit if message not received yet
+  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,receiver, &
+    itag2,buffer_received_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,sender, &
+    itag,MPI_COMM_WORLD,msg_status,ier)
 #endif
 
 ! all slices add the buffer received to the contributions on the left face
@@ -445,38 +360,9 @@
     receiver = addressing(ichunk,iproc_xi,iproc_eta - 1)
   endif
 #ifdef USE_MPI
-! call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,receiver, &
-!   itag2,buffer_received_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,sender, &
-!   itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_RECV(buffer_received_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,sender, &
-!   itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_SEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,receiver, &
-!   itag2,MPI_COMM_WORLD,ier)
-
-  call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,request_receive,ier)
-
-  call MPI_ISEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,receiver, &
-    itag2,MPI_COMM_WORLD,request_send,ier)
-
-#endif
-
-  iphase = iphase + 1
-  return ! exit because we have started some communications therefore we need some time
-
-  endif !!!!!!!!! end of iphase 4
-
-  if(iphase == 5) then
-
-#ifdef USE_MPI
-! call MPI_WAIT(request_send,msg_status,ier)
-! call MPI_WAIT(request_receive,msg_status,ier)
-  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
-  if(.not. flag_result_test) return ! exit if message not sent yet
-  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
-  if(.not. flag_result_test) return ! exit if message not received yet
+  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,receiver, &
+    itag2,buffer_received_faces_vector,NDIM*npoin2D_eta_all,CUSTOM_MPI_TYPE,sender, &
+    itag,MPI_COMM_WORLD,msg_status,ier)
 #endif
 
 ! all slices copy the buffer received to the contributions on the right face
@@ -496,9 +382,7 @@
 
   endif
 
-  iphase = iphase + 1
-
-!! DK DK do the rest in blocking for now, for simplicity
+  endif
 
 !----
 !---- start MPI assembling phase between chunks
@@ -506,10 +390,7 @@
 
 ! check flag to see if we need to assemble (might be turned off when debugging)
 ! and do not assemble if only one chunk
-  if (.not. ACTUALLY_ASSEMBLE_MPI_CHUNKS .or. NCHUNKS == 1) then
-    iphase = 9999 ! this means everything is finished
-    return
-  endif
+  if (.not. ACTUALLY_ASSEMBLE_MPI_CHUNKS .or. NCHUNKS == 1) return
 
 ! ***************************************************************
 !  transmit messages in forward direction (iprocfrom -> iprocto)
@@ -858,7 +739,5 @@
 
   enddo
 
-  endif !!!!!!!!! end of iphase 5
-
-  end subroutine assemble_MPI_vector
+  end subroutine assemble_MPI_vector_block
 

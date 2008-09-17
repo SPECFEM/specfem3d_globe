@@ -78,7 +78,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   include "values_from_mesher.h"
 
 ! for non blocking communications
-  integer :: icall
+  integer :: icall,iphase
   real :: percentage_edge
   logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
   logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
@@ -160,6 +160,10 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   real(kind=CUSTOM_REAL) additional_term,force_normal_comp
 #endif
 
+! variable lengths for factor_common and one_minus_sum_beta
+  integer :: vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle
+  integer :: vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core
+
 ! arrays to couple with the fluid regions by pointwise matching
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
   integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
@@ -191,6 +195,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! ---- arrays to assemble between chunks
 
 #ifdef USE_MPI
+
+  integer :: ipoin
 
 ! communication pattern for faces between chunks
   integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
@@ -443,7 +449,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
 #endif
 
-  integer ichunk,iproc_xi,iproc_eta
+  integer :: ichunk,iproc_xi,iproc_eta
   integer NPROC_ONE_DIRECTION
 
 ! maximum of the norm of the displacement and of the potential in the fluid
@@ -1650,13 +1656,33 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   call get_event_info_parallel(myrank,yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC, &
                  elat_SAC,elon_SAC,depth_SAC,mb_SAC,ename_SAC,cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES_SAC)
 
+  if(.not. USE_NONBLOCKING_COMMS) then
+    is_on_a_slice_edge_crust_mantle(:) = .true.
+    is_on_a_slice_edge_outer_core(:) = .true.
+    is_on_a_slice_edge_inner_core(:) = .true.
+  endif
+
+  vx_crust_mantle = size(factor_common_crust_mantle,2)
+  vy_crust_mantle = size(factor_common_crust_mantle,3)
+  vz_crust_mantle = size(factor_common_crust_mantle,4)
+  vnspec_crust_mantle = size(factor_common_crust_mantle,5)
+
+  vx_inner_core = size(factor_common_inner_core,2)
+  vy_inner_core = size(factor_common_inner_core,3)
+  vz_inner_core = size(factor_common_inner_core,4)
+  vnspec_inner_core = size(factor_common_inner_core,5)
+
 ! define correct time steps if restart files
   if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > 3) stop 'number of restart runs can be 1, 2 or 3'
   if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
   if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) stop 'Only 1 run for SIMULATION_TYPE = 2/3'
 
-    it_begin = 1
-    it_end = NSTEP
+  it_begin = 1
+  it_end = NSTEP
+
+! initialize variables for writing seismograms
+  seismo_offset = it_begin - 1
+  seismo_current = 0
 
 !
 !   s t a r t   t i m e   i t e r a t i o n s
@@ -1687,10 +1713,6 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #else
   time_start = 0
 #endif
-
-! initialize variables for writing seismograms
-  seismo_offset = it_begin - 1
-  seismo_current = 0
 
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
@@ -1973,14 +1995,28 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     time = (dble(it-1)*DT-t0)/scale_t
   endif
 
+  iphase = 0 ! do not start any non blocking communications at this stage
   icall = 1
   call compute_forces_OC(d_ln_density_dr_table, &
-         displ_outer_core,accel_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-         xix_outer_core,xiy_outer_core,xiz_outer_core, &
-         etax_outer_core,etay_outer_core,etaz_outer_core, &
-         gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-         hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool_outer_core,icall,is_on_a_slice_edge_outer_core)
+          displ_outer_core,accel_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+          xix_outer_core,xiy_outer_core,xiz_outer_core, &
+          etax_outer_core,etay_outer_core,etaz_outer_core, &
+          gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+#ifdef USE_MPI
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces,imsg_type, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+          NUM_MSG_TYPES,iphase, &
+#endif
+          hprime_xx,hprime_yy,hprime_zz, &
+          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool_outer_core,icall)
 
 #ifndef USE_MPI
 !! DK DK put a fictitious source in each region in the case of a serial test if needed
@@ -2099,20 +2135,69 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
   endif
 
-  icall = 2
-  call compute_forces_OC(d_ln_density_dr_table, &
-         displ_outer_core,accel_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-         xix_outer_core,xiy_outer_core,xiz_outer_core, &
-         etax_outer_core,etay_outer_core,etaz_outer_core, &
-         gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-         hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool_outer_core,icall,is_on_a_slice_edge_outer_core)
-
-! assemble all the contributions between slices using MPI
-
 ! outer core
 #ifdef USE_MPI
-  call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
+  if(USE_NONBLOCKING_COMMS) then
+    iphase = 1 ! start the non blocking communications
+    call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+            iboolfaces_outer_core,iboolcorner_outer_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY_VAL_OC,NCHUNKS,iphase)
+  endif
+#endif
+
+#ifdef USE_MPI
+  if(USE_NONBLOCKING_COMMS) then
+    icall = 2
+    call compute_forces_OC(d_ln_density_dr_table, &
+          displ_outer_core,accel_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+          xix_outer_core,xiy_outer_core,xiz_outer_core, &
+          etax_outer_core,etay_outer_core,etaz_outer_core, &
+          gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces,imsg_type, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+          NUM_MSG_TYPES,iphase, &
+          hprime_xx,hprime_yy,hprime_zz, &
+          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool_outer_core,icall)
+  endif
+#endif
+
+! assemble all the contributions between slices using MPI
+! outer core
+#ifdef USE_MPI
+  if(USE_NONBLOCKING_COMMS) then
+    do while (iphase <= 5) ! make sure the last communications are finished and processed
+      call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+            iboolfaces_outer_core,iboolcorner_outer_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY_VAL_OC,NCHUNKS,iphase)
+    enddo
+  else
+    call assemble_MPI_scalar_block(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
@@ -2124,6 +2209,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY_VAL_OC,NCHUNKS)
+  endif
 #endif
 
 ! multiply by the inverse of the mass matrix and update velocity
@@ -2140,6 +2226,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 ! for anisotropy and gravity, x y and z contain r theta and phi
 
+  iphase = 0 ! do not start any non blocking communications at this stage
   icall = 1
   call compute_forces_CM_IC(displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -2148,24 +2235,33 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle,muhstore_crust_mantle, &
           eta_anisostore_crust_mantle, &
           ibool_crust_mantle,idoubling_crust_mantle,R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
-          factor_common_crust_mantle,size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
-          is_on_a_slice_edge_crust_mantle, &
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          factor_common_crust_mantle,vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle, &
           displ_inner_core,accel_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           R_memory_inner_core,epsilondev_inner_core,&
           one_minus_sum_beta_inner_core,factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
-          is_on_a_slice_edge_inner_core, &
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
           alphaval,betaval,gammaval, &
+#ifdef USE_MPI
+            is_on_a_slice_edge_crust_mantle,is_on_a_slice_edge_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUM_MSG_TYPES,iphase, &
+#endif
           COMPUTE_AND_STORE_STRAIN,AM_V,icall)
 
 #ifdef USE_MPI
@@ -2325,40 +2421,113 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
     endif
 
-  icall = 2
-  call compute_forces_CM_IC(displ_crust_mantle,accel_crust_mantle, &
+! assemble all the contributions between slices using MPI
+! crust/mantle and inner core handled in the same call
+! in order to reduce the number of MPI messages by 2
+#ifdef USE_MPI
+  if(USE_NONBLOCKING_COMMS) then
+    iphase = 1 ! start the non blocking communications
+    call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS,iphase)
+  endif
+#endif
+
+  if(DEBUG_NONBLOCKING_COMMS) accel_crust_mantle = 1.e27
+
+#ifdef USE_MPI
+  if(USE_NONBLOCKING_COMMS) then
+    icall = 2
+    call compute_forces_CM_IC(displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
           kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle,muhstore_crust_mantle, &
           eta_anisostore_crust_mantle, &
           ibool_crust_mantle,idoubling_crust_mantle,R_memory_crust_mantle,epsilondev_crust_mantle,one_minus_sum_beta_crust_mantle, &
-          factor_common_crust_mantle,size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
-          is_on_a_slice_edge_crust_mantle, &
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          factor_common_crust_mantle,vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle, &
           displ_inner_core,accel_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core,etax_inner_core,etay_inner_core,etaz_inner_core, &
           gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           R_memory_inner_core,epsilondev_inner_core,&
           one_minus_sum_beta_inner_core,factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
-          is_on_a_slice_edge_inner_core, &
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          vx_inner_core,vy_inner_core,vz_inner_core,vnspec_inner_core, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
           alphaval,betaval,gammaval, &
+            is_on_a_slice_edge_crust_mantle,is_on_a_slice_edge_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUM_MSG_TYPES,iphase, &
           COMPUTE_AND_STORE_STRAIN,AM_V,icall)
+  endif
+#endif
+
+  if(DEBUG_USING_OPENDX .and. myrank == 0 .and. it == 2) &
+    call debug_with_opendx(is_on_a_slice_edge_crust_mantle,xstore_crust_mantle, &
+                              ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle)
+
+#ifdef USE_MPI
+  if(DEBUG_NONBLOCKING_COMMS) then
+    do ipoin = 1,npoin2D_xi_crust_mantle(1)
+      if(minval(accel_crust_mantle(:,iboolright_xi_crust_mantle(ipoin))) < 1.e27) call exit_mpi(myrank,'error in new step 1')
+      if(minval(accel_crust_mantle(:,iboolleft_xi_crust_mantle(ipoin))) < 1.e27) call exit_mpi(myrank,'error in new step 2')
+      if(minval(accel_crust_mantle(:,iboolright_eta_crust_mantle(ipoin))) < 1.e27) then
+        print *,'myrank, maxval_abs,ibool = ',myrank, &
+          minval(accel_crust_mantle(:,iboolright_eta_crust_mantle(ipoin))),iboolright_eta_crust_mantle(ipoin)
+        call exit_mpi(myrank,'error in new step 3')
+      endif
+      if(minval(accel_crust_mantle(:,iboolleft_eta_crust_mantle(ipoin))) < 1.e27) call exit_mpi(myrank,'error in new step 4')
+    enddo
+    call exit_mpi(myrank,'everything went well in DEBUG_NONBLOCKING_COMMS, no overlap detected')
+  endif
 
 ! assemble all the contributions between slices using MPI
-
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
-#ifdef USE_MPI
-  call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+  if(USE_NONBLOCKING_COMMS) then
+    do while (iphase <= 5) ! make sure the last communications are finished and processed
+      call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS,iphase)
+    enddo
+  else
+    call assemble_MPI_vector_block(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
@@ -2373,6 +2542,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS)
+  endif
 #endif
 
 !---

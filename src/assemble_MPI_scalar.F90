@@ -40,7 +40,7 @@
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
-            NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS)
+            NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS,iphase)
 
   implicit none
 
@@ -54,7 +54,7 @@
   include "precision.h"
 #endif
 
-  integer myrank,nglob,NCHUNKS
+  integer myrank,nglob,NCHUNKS,iphase
 
 ! array to assemble
   real(kind=CUSTOM_REAL), dimension(nglob) :: array_val
@@ -105,6 +105,8 @@
 
 #ifdef USE_MPI
   integer :: ier
+  integer, save :: request_send,request_receive
+  logical :: flag_result_test
 #endif
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
@@ -122,8 +124,7 @@
 !---- first assemble along xi using the 2-D topology
 !----
 
-! assemble along xi only if more than one slice
-  if(NPROC_XI > 1) then
+  if(iphase == 1) then
 
 ! slices copy the right face into the buffer
   do ipoin=1,npoin2D_xi(2)
@@ -146,9 +147,38 @@
     receiver = addressing(ichunk,iproc_xi + 1,iproc_eta)
   endif
 #ifdef USE_MPI
-  call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
-        itag2,buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,msg_status,ier)
+! call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
+!       itag2,buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
+!       itag,MPI_COMM_WORLD,msg_status,ier)
+
+! call MPI_RECV(buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
+!       itag,MPI_COMM_WORLD,msg_status,ier)
+
+! call MPI_SEND(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
+!       itag2,MPI_COMM_WORLD,ier)
+
+  call MPI_IRECV(buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
+        itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISEND(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
+        itag2,MPI_COMM_WORLD,request_send,ier)
+
+#endif
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 1
+
+  if(iphase == 2) then
+
+#ifdef USE_MPI
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 #endif
 
 ! all slices add the buffer received to the contributions on the left face
@@ -182,9 +212,38 @@
     receiver = addressing(ichunk,iproc_xi - 1,iproc_eta)
   endif
 #ifdef USE_MPI
-  call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
-        itag2,buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,msg_status,ier)
+! call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
+!       itag2,buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
+!       itag,MPI_COMM_WORLD,msg_status,ier)
+
+! call MPI_RECV(buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
+!       itag,MPI_COMM_WORLD,msg_status,ier)
+
+! call MPI_SEND(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
+!       itag2,MPI_COMM_WORLD,ier)
+
+  call MPI_IRECV(buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
+        itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISEND(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
+        itag2,MPI_COMM_WORLD,request_send,ier)
+
+#endif
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 2
+
+  if(iphase == 3) then
+
+#ifdef USE_MPI
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 #endif
 
 ! all slices copy the buffer received to the contributions on the right face
@@ -194,14 +253,9 @@
   enddo
   endif
 
-  endif
-
 !----
 !---- then assemble along eta using the 2-D topology
 !----
-
-! assemble along eta only if more than one slice
-  if(NPROC_ETA > 1) then
 
 ! slices copy the right face into the buffer
   do ipoin=1,npoin2D_eta(2)
@@ -224,9 +278,38 @@
     receiver = addressing(ichunk,iproc_xi,iproc_eta + 1)
   endif
 #ifdef USE_MPI
-  call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
-    itag2,buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,msg_status,ier)
+! call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
+!   itag2,buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
+!   itag,MPI_COMM_WORLD,msg_status,ier)
+
+! call MPI_RECV(buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
+!   itag,MPI_COMM_WORLD,msg_status,ier)
+
+! call MPI_SEND(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
+!   itag2,MPI_COMM_WORLD,ier)
+
+  call MPI_IRECV(buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
+    itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISEND(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
+    itag2,MPI_COMM_WORLD,request_send,ier)
+
+#endif
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 3
+
+  if(iphase == 4) then
+
+#ifdef USE_MPI
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 #endif
 
 ! all slices add the buffer received to the contributions on the left face
@@ -260,9 +343,38 @@
     receiver = addressing(ichunk,iproc_xi,iproc_eta - 1)
   endif
 #ifdef USE_MPI
-  call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
-    itag2,buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,msg_status,ier)
+! call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
+!   itag2,buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
+!   itag,MPI_COMM_WORLD,msg_status,ier)
+
+! call MPI_RECV(buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
+!   itag,MPI_COMM_WORLD,msg_status,ier)
+
+! call MPI_SEND(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
+!   itag2,MPI_COMM_WORLD,ier)
+
+  call MPI_IRECV(buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
+    itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISEND(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
+    itag2,MPI_COMM_WORLD,request_send,ier)
+
+#endif
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 4
+
+  if(iphase == 5) then
+
+#ifdef USE_MPI
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 #endif
 
 ! all slices copy the buffer received to the contributions on the right face
@@ -272,7 +384,9 @@
   enddo
   endif
 
-  endif
+  iphase = iphase + 1
+
+!! DK DK do the rest in blocking for now, for simplicity
 
 !----
 !---- start MPI assembling phase between chunks
@@ -280,7 +394,10 @@
 
 ! check flag to see if we need to assemble (might be turned off when debugging)
 ! and do not assemble if only one chunk
-  if (.not. ACTUALLY_ASSEMBLE_MPI_CHUNKS .or. NCHUNKS == 1) return
+  if (.not. ACTUALLY_ASSEMBLE_MPI_CHUNKS .or. NCHUNKS == 1) then
+    iphase = 9999 ! this means everything is finished
+    return
+  endif
 
 ! ***************************************************************
 !  transmit messages in forward direction (iprocfrom -> iprocto)
@@ -486,6 +603,8 @@
   endif
 
   enddo
+
+  endif !!!!!!!!! end of iphase 5
 
   end subroutine assemble_MPI_scalar
 

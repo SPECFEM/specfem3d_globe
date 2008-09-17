@@ -725,6 +725,7 @@
   iboun(:,:) = .false.
   iMPIcut_xi(:,:) = .false.
   iMPIcut_eta(:,:) = .false.
+  is_on_a_slice_edge(:) = .false.
 
 !! DK DK added this for merged version
 ! creating mass matrix in this slice (will be fully assembled in the solver)
@@ -838,9 +839,6 @@
   if (iz_elem == 1 .and. ilayer == ilast_layer) then    ! defined if no doubling in this layer
       iboun(5,ispec)= .true.
   endif
-
-  is_on_a_slice_edge(ispec) = iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
-      iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec) .or. iboun(5,ispec) .or. iboun(6,ispec)
 
 ! define the doubling flag of this element
      if(iregion_code /= IREGION_OUTER_CORE) idoubling(ispec) = doubling_index(ilayer)
@@ -1026,9 +1024,6 @@
   if (ilayer==ifirst_layer) iboun(6,ispec)= iboun_sb(ispec_superbrick,6)
   if (ilayer==ilast_layer .and. iz_elem==1) iboun(5,ispec)= iboun_sb(ispec_superbrick,5)
 
-  is_on_a_slice_edge(ispec) = iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
-      iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec) .or. iboun(5,ispec) .or. iboun(6,ispec)
-
 ! define the doubling flag of this element
      if(iregion_code /= IREGION_OUTER_CORE) idoubling(ispec) = doubling_index(ilayer)
 
@@ -1170,9 +1165,6 @@
       if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= .true.
   endif
 
-  is_on_a_slice_edge(ispec) = iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
-      iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec) .or. iboun(5,ispec) .or. iboun(6,ispec)
-
 ! define the doubling flag of this element
 ! only two active central cubes, the four others are fictitious
 
@@ -1238,6 +1230,20 @@
 
 ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
+
+! if any of these flags is true, the element is on a communication edge
+! this is not enough because it can also be in contact by an edge or a corner but not a full face
+! therefore we will have to fix array "is_on_a_slice_edge" later to take this into account
+  is_on_a_slice_edge(:) = &
+      iMPIcut_xi(1,:) .or. iMPIcut_xi(2,:) .or. &
+      iMPIcut_eta(1,:) .or. iMPIcut_eta(2,:) .or. &
+      iboun(1,:) .or. iboun(2,:) .or. &
+      iboun(3,:) .or. iboun(4,:) .or. &
+      iboun(5,:) .or. iboun(6,:)
+
+! no need to count fictitious elements on the edges
+! for which communications cannot be overlapped with calculations
+  where(idoubling == IFLAG_IN_FICTITIOUS_CUBE) is_on_a_slice_edge = .false.
 
 ! only create global addressing and the MPI buffers in the first pass
   if(ipass == 1) then

@@ -57,7 +57,7 @@
 
 ! write error message to file
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
-  write(outputname,"('/error_message',i6.6,'.txt')") myrank
+  write(outputname,"('/error_message_from_rank_',i6.6,'.txt')") myrank
   open(unit=IERROR,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
   write(IERROR,*) error_msg(1:len(error_msg))
   write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank

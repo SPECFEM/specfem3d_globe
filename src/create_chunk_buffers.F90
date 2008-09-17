@@ -140,7 +140,7 @@
   integer ichunk_receive,iproc_xi_receive,iproc_eta_receive
   integer iproc_loop,iproc_xi_loop,iproc_eta_loop
   integer iproc_xi_loop_inv,iproc_eta_loop_inv
-  integer imember_corner,npoin2D_value_received
+  integer imember_corner
 
   integer iregion_code
 
@@ -160,6 +160,7 @@
   integer :: sender,receiver
   integer, dimension(MPI_STATUS_SIZE) :: msg_status
   integer :: ier
+  integer :: npoin2D_value_received
 #endif
 
 ! current message number

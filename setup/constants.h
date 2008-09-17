@@ -31,6 +31,13 @@
 !--- user can modify parameters below
 !
 
+! this for non blocking assembly
+  logical, parameter :: USE_NONBLOCKING_COMMS = .true.
+  integer, parameter :: ELEMENTS_BETWEEN_NONBLOCKING = 200
+
+  logical, parameter :: DEBUG_NONBLOCKING_COMMS = .false.
+  logical, parameter :: DEBUG_USING_OPENDX = .false.
+
 !! DK DK temporary patch for the large Gordon Bell runs: set RECEIVERS_CAN_BE_BURIED
 !! DK DK to false in all cases etc
   logical, parameter :: PATCH_FOR_GORDON_BELL = .true.

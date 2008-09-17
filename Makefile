@@ -115,11 +115,14 @@ libspecfem_a_OBJECTS = \
 	$O/assemble_MPI_scalar.o \
 	$O/assemble_MPI_scalar_block.o \
 	$O/assemble_MPI_vector.o \
+	$O/assemble_MPI_vector_block.o \
 	$O/attenuation_model.o \
 	$O/calc_jacobian.o \
 	$O/convert_time.o \
 	$O/calendar.o \
 	$O/create_name_database.o \
+	$O/debug_with_opendx.o \
+	$O/fix_non_blocking_arrays.o \
 	$O/write_AVS_DX_surface_data.o \
 	$O/write_AVS_DX_global_chunks_data.o \
 	$O/write_AVS_DX_global_faces_data.o \
@@ -269,11 +272,11 @@ $O/libspecfem.a: $(libspecfem_a_OBJECTS)
 $O/specfem3D.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/specfem3D.F90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.F90
 
-$O/compute_forces_CM_IC.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_CM_IC.f90
-	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_CM_IC.o ${FCFLAGS_f90} $S/compute_forces_CM_IC.f90
+$O/compute_forces_CM_IC.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_CM_IC.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/compute_forces_CM_IC.o ${FCFLAGS_f90} $S/compute_forces_CM_IC.F90
 
-$O/compute_forces_OC.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_OC.f90
-	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_OC.o ${FCFLAGS_f90} $S/compute_forces_OC.f90
+$O/compute_forces_OC.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/compute_forces_OC.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/compute_forces_OC.o ${FCFLAGS_f90} $S/compute_forces_OC.F90
 
 ### use MPI here
 $O/assemble_MPI_vector.o: $(SPECINC)/constants.h $S/assemble_MPI_vector.F90
@@ -285,6 +288,9 @@ $O/assemble_MPI_scalar.o: $(SPECINC)/constants.h $S/assemble_MPI_scalar.F90
 
 $O/assemble_MPI_scalar_block.o: $(SPECINC)/constants.h $S/assemble_MPI_scalar_block.F90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar_block.o ${FCFLAGS_f90} $S/assemble_MPI_scalar_block.F90
+
+$O/assemble_MPI_vector_block.o: $(SPECINC)/constants.h $S/assemble_MPI_vector_block.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_vector_block.o ${FCFLAGS_f90} $S/assemble_MPI_vector_block.F90
 
 $O/assemble_MPI_central_cube.o: $(SPECINC)/constants.h $(OUTPUT_FILES_INC)/values_from_mesher.h $S/assemble_MPI_central_cube.F90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube.F90
@@ -351,6 +357,12 @@ $O/calendar.o: $(SPECINC)/constants.h $S/calendar.f90
 
 $O/create_name_database.o: $(SPECINC)/constants.h $S/create_name_database.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} $S/create_name_database.f90
+
+$O/debug_with_opendx.o: $(SPECINC)/constants.h $S/debug_with_opendx.f90
+	${FCCOMPILE_CHECK} -c -o $O/debug_with_opendx.o ${FCFLAGS_f90} $S/debug_with_opendx.f90
+
+$O/fix_non_blocking_arrays.o: $(SPECINC)/constants.h $S/fix_non_blocking_arrays.f90
+	${FCCOMPILE_CHECK} -c -o $O/fix_non_blocking_arrays.o ${FCFLAGS_f90} $S/fix_non_blocking_arrays.f90
 
 $O/write_AVS_DX_surface_data.o: $(SPECINC)/constants.h $S/write_AVS_DX_surface_data.f90
 	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_surface_data.o ${FCFLAGS_f90} $S/write_AVS_DX_surface_data.f90
