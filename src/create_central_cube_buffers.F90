@@ -78,7 +78,7 @@
   integer, dimension(non_zero_nb_msgs_theor_in_cube), intent(out) :: sender_from_slices_to_cube
   integer, dimension(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices), intent(out) :: ibool_central_cube
   double precision, dimension(npoin2D_cube_from_slices,NDIM), intent(out) :: buffer_slices,buffer_slices2
-  double precision, dimension(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), intent(out) :: &
+  double precision, dimension(npoin2D_cube_from_slices,NDIM,non_zero_nb_msgs_theor_in_cube), intent(out) :: &
         buffer_all_cube_from_slices
 
 ! local variables below
@@ -246,7 +246,7 @@
 #endif
 
 ! copy buffer in 2D array for each slice
-    buffer_all_cube_from_slices(imsg,:,:) = buffer_slices(:,:)
+    buffer_all_cube_from_slices(:,:,imsg) = buffer_slices(:,:)
 
     enddo
   endif
@@ -313,7 +313,7 @@
     buffer_slices2 = 0
 #endif
 
-    buffer_all_cube_from_slices(nb_msgs_theor_in_cube,:,:) = buffer_slices2(:,:)
+    buffer_all_cube_from_slices(:,:,nb_msgs_theor_in_cube) = buffer_slices2(:,:)
 
   endif
 
@@ -325,9 +325,9 @@
 
    do ipoin = 1,npoin2D_cube_from_slices
 
-     x_target = buffer_all_cube_from_slices(imsg,ipoin,1)
-     y_target = buffer_all_cube_from_slices(imsg,ipoin,2)
-     z_target = buffer_all_cube_from_slices(imsg,ipoin,3)
+     x_target = buffer_all_cube_from_slices(ipoin,1,imsg)
+     y_target = buffer_all_cube_from_slices(ipoin,2,imsg)
+     z_target = buffer_all_cube_from_slices(ipoin,3,imsg)
 
 ! x = x_min
   do ispec2D = 1,nspec2D_xmin_inner_core

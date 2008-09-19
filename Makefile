@@ -122,7 +122,8 @@ libspecfem_a_OBJECTS = \
 	$O/calendar.o \
 	$O/create_name_database.o \
 	$O/debug_with_opendx.o \
-	$O/fix_non_blocking_arrays.o \
+	$O/fix_non_blocking_slices.o \
+	$O/fix_non_blocking_central_cube.o \
 	$O/write_AVS_DX_surface_data.o \
 	$O/write_AVS_DX_global_chunks_data.o \
 	$O/write_AVS_DX_global_faces_data.o \
@@ -361,8 +362,11 @@ $O/create_name_database.o: $(SPECINC)/constants.h $S/create_name_database.f90
 $O/debug_with_opendx.o: $(SPECINC)/constants.h $S/debug_with_opendx.f90
 	${FCCOMPILE_CHECK} -c -o $O/debug_with_opendx.o ${FCFLAGS_f90} $S/debug_with_opendx.f90
 
-$O/fix_non_blocking_arrays.o: $(SPECINC)/constants.h $S/fix_non_blocking_arrays.f90
-	${FCCOMPILE_CHECK} -c -o $O/fix_non_blocking_arrays.o ${FCFLAGS_f90} $S/fix_non_blocking_arrays.f90
+$O/fix_non_blocking_slices.o: $(SPECINC)/constants.h $S/fix_non_blocking_slices.f90
+	${FCCOMPILE_CHECK} -c -o $O/fix_non_blocking_slices.o ${FCFLAGS_f90} $S/fix_non_blocking_slices.f90
+
+$O/fix_non_blocking_central_cube.o: $(SPECINC)/constants.h $S/fix_non_blocking_central_cube.f90
+	${FCCOMPILE_CHECK} -c -o $O/fix_non_blocking_central_cube.o ${FCFLAGS_f90} $S/fix_non_blocking_central_cube.f90
 
 $O/write_AVS_DX_surface_data.o: $(SPECINC)/constants.h $S/write_AVS_DX_surface_data.f90
 	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_surface_data.o ${FCFLAGS_f90} $S/write_AVS_DX_surface_data.f90

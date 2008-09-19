@@ -25,10 +25,10 @@
 !
 !=====================================================================
 
-subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-  npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
-  receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
-  ibelm_bottom_inner_core, NSPEC2D_BOTTOM_INNER_CORE,NGLOB_INNER_CORE,vector_assemble,ndim_assemble)
+  subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+    npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,buffer_slices2,ibool_central_cube, &
+    receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
+    ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,NGLOB_INNER_CORE,vector_assemble,ndim_assemble)
 
   implicit none
 
@@ -42,7 +42,7 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
   integer ichunk, nb_msgs_theor_in_cube, npoin2D_cube_from_slices
   integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
   double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices,buffer_slices2
-  double precision, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM) :: buffer_all_cube_from_slices
+  double precision, dimension(npoin2D_cube_from_slices,NDIM,nb_msgs_theor_in_cube) :: buffer_all_cube_from_slices
   integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
   integer receiver_cube_from_slices
 
@@ -89,7 +89,7 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 #endif
 
 ! copy buffer in 2D array for each slice
-    buffer_all_cube_from_slices(imsg,:,1:ndim_assemble) = buffer_slices(:,1:ndim_assemble)
+    buffer_all_cube_from_slices(:,1:ndim_assemble,imsg) = buffer_slices(:,1:ndim_assemble)
 
     enddo
   endif
@@ -147,7 +147,7 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
         MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,msg_status,ier)
 #endif
 
-   buffer_all_cube_from_slices(nb_msgs_theor_in_cube,:,1:ndim_assemble) = buffer_slices2(:,1:ndim_assemble)
+   buffer_all_cube_from_slices(:,1:ndim_assemble,nb_msgs_theor_in_cube) = buffer_slices2(:,1:ndim_assemble)
 
   endif
 
@@ -164,9 +164,9 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
       do imsg = 1,nb_msgs_theor_in_cube-1
         do ipoin = 1,npoin2D_cube_from_slices
           if(CUSTOM_REAL == SIZE_REAL) then
-            array_central_cube(ibool_central_cube(imsg,ipoin)) = sngl(buffer_all_cube_from_slices(imsg,ipoin,idimension))
+            array_central_cube(ibool_central_cube(imsg,ipoin)) = sngl(buffer_all_cube_from_slices(ipoin,idimension,imsg))
           else
-            array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(imsg,ipoin,idimension)
+            array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(ipoin,idimension,imsg)
           endif
         enddo
       enddo
@@ -178,11 +178,11 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
           if(CUSTOM_REAL == SIZE_REAL) then
             array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
             array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-            sngl(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension))
+            sngl(buffer_all_cube_from_slices(ipoin,idimension,nb_msgs_theor_in_cube))
           else
             array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
             array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-            buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
+            buffer_all_cube_from_slices(ipoin,idimension,nb_msgs_theor_in_cube)
           endif
           mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = .true.
         endif
@@ -206,7 +206,7 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 ! copy sum back
       do imsg = 1,nb_msgs_theor_in_cube-1
         do ipoin = 1,npoin2D_cube_from_slices
-          buffer_all_cube_from_slices(imsg,ipoin,idimension) = vector_assemble(idimension,ibool_central_cube(imsg,ipoin))
+          buffer_all_cube_from_slices(ipoin,idimension,imsg) = vector_assemble(idimension,ibool_central_cube(imsg,ipoin))
         enddo
       enddo
 
@@ -260,7 +260,7 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
    do imsg = 1,nb_msgs_theor_in_cube-1
 
 ! copy buffer in 2D array for each slice
-   buffer_slices(:,1:ndim_assemble) = buffer_all_cube_from_slices(imsg,:,1:ndim_assemble)
+   buffer_slices(:,1:ndim_assemble) = buffer_all_cube_from_slices(:,1:ndim_assemble,imsg)
 
 ! send buffers to slices
     receiver = sender_from_slices_to_cube(imsg)
@@ -272,5 +272,5 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
    enddo
    endif
 
-end subroutine assemble_MPI_central_cube_block
+  end subroutine assemble_MPI_central_cube_block
 

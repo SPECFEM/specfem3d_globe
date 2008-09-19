@@ -530,17 +530,17 @@
 !! DK DK in contact with the MPI faces by an edge or a corner only but not
 !! DK DK a full face are missing, therefore let us add them
 #ifdef USE_MPI
-  call fix_non_blocking_arrays(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
+  call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
          iboolleft_xi_crust_mantle,iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
          npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1),ibool_crust_mantle, &
          mask_ibool,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM)
 
-  call fix_non_blocking_arrays(is_on_a_slice_edge_outer_core,iboolright_xi_outer_core, &
+  call fix_non_blocking_slices(is_on_a_slice_edge_outer_core,iboolright_xi_outer_core, &
          iboolleft_xi_outer_core,iboolright_eta_outer_core,iboolleft_eta_outer_core, &
          npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1),ibool_outer_core, &
          mask_ibool,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC)
 
-  call fix_non_blocking_arrays(is_on_a_slice_edge_inner_core,iboolright_xi_inner_core, &
+  call fix_non_blocking_slices(is_on_a_slice_edge_inner_core,iboolright_xi_inner_core, &
          iboolleft_xi_inner_core,iboolright_eta_inner_core,iboolleft_eta_inner_core, &
          npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1),ibool_inner_core, &
          mask_ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC)

@@ -37,7 +37,7 @@
 
 ! number of seismogram files stored in the unique large file
   integer, parameter :: N_COMPONENTS = 3
-  integer, parameter :: NREC = 35 * N_COMPONENTS
+  integer, parameter :: NREC = 56 * N_COMPONENTS
 
 ! number of time steps in each seismogram file
   integer, parameter :: NSTEP = 10100

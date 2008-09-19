@@ -37,11 +37,10 @@
           iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
           npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
           iboolfaces_outer_core,iboolcorner_outer_core, &
-          iprocfrom_faces,iprocto_faces,imsg_type, &
+          iprocfrom_faces,iprocto_faces, &
           iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
           buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
-          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-          NUM_MSG_TYPES,iphase, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase, &
 #endif
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
@@ -67,7 +66,7 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
 
 ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
 
 ! communication pattern for corners between chunks
   integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
@@ -82,14 +81,11 @@
 ! of the vector buffer in memory even if it has an additional index here
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
   integer :: npoin2D_max_all
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all) :: buffer_send_faces,buffer_received_faces
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all,NUMFACES_SHARED) :: buffer_send_faces,buffer_received_faces
 
   integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_OC) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
-
-! number of message types
-  integer NUM_MSG_TYPES
 
   logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
 
@@ -158,11 +154,11 @@
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
             iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_xi_outer_core(1), &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-            NUMMSGS_FACES_VAL,NUM_MSG_TYPES,NCORNERSCHUNKS_VAL, &
+            NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_OC, &
             NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,NGLOB2DMAX_XY_VAL_OC,NCHUNKS_VAL,iphase)
 #endif

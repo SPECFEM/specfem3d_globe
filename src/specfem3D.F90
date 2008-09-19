@@ -197,6 +197,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #ifdef USE_MPI
 
   integer :: ipoin
+  integer :: iphase_CC
 
 ! communication pattern for faces between chunks
   integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
@@ -216,7 +217,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! of the vector buffer in memory even if it has an additional index here
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
   integer :: npoin2D_max_all
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all) :: buffer_send_faces,buffer_received_faces
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all,NUMFACES_SHARED) :: buffer_send_faces,buffer_received_faces
 
 #endif
 
@@ -1296,7 +1297,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
       call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
     endif
 
-    allocate(buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM),STAT=ier)
+    allocate(buffer_all_cube_from_slices(npoin2D_cube_from_slices,NDIM,non_zero_nb_msgs_theor_in_cube),STAT=ier)
     if (ier /= 0 ) then
       print *,"ABORTING can not allocate in specfem3D ier=",ier
       call MPI_Abort(MPI_COMM_WORLD,errorcode,ier)
@@ -1334,16 +1335,21 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
        receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
        buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
+    call fix_non_blocking_central_cube(is_on_a_slice_edge_inner_core, &
+         ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
+         idoubling_inner_core,npoin2D_cube_from_slices,ibool_central_cube, &
+         NSPEC2D_BOTTOM(IREGION_INNER_CORE),ichunk)
+
     if(myrank == 0) write(IMAIN,*) 'done including central cube'
 
 ! the mass matrix to assemble is a scalar, not a vector
     ndim_assemble = 1
 
 ! use these buffers to assemble the inner core mass matrix with the central cube
-    call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-     npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
-     receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
-     ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,rmass_inner_core,ndim_assemble)
+    call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+     npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,buffer_slices2,ibool_central_cube, &
+     receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
+     ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,rmass_inner_core,ndim_assemble)
 
 ! suppress fictitious mass matrix elements in central cube
 ! because the slices do not compute all their spectral elements in the cube
@@ -1661,6 +1667,18 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     is_on_a_slice_edge_outer_core(:) = .true.
     is_on_a_slice_edge_inner_core(:) = .true.
   endif
+
+#ifdef USE_MPI
+  if(USE_NONBLOCKING_COMMS) then
+     if(npoin2D_xi_crust_mantle(1) /= npoin2D_eta_crust_mantle(1) .or. &
+        npoin2D_xi_crust_mantle(2) /= npoin2D_eta_crust_mantle(2) .or. &
+        npoin2D_xi_outer_core(1) /= npoin2D_eta_outer_core(1) .or. &
+        npoin2D_xi_outer_core(2) /= npoin2D_eta_outer_core(2) .or. &
+        npoin2D_xi_inner_core(1) /= npoin2D_eta_inner_core(1) .or. &
+        npoin2D_xi_inner_core(2) /= npoin2D_eta_inner_core(2)) &
+       stop 'non-blocking scheme temporarily requires npoin2D_xi = npoin2D_eta because of the size of some buffers reused'
+  endif
+#endif
 
   vx_crust_mantle = size(factor_common_crust_mantle,2)
   vy_crust_mantle = size(factor_common_crust_mantle,3)
@@ -2008,11 +2026,10 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
           npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
           iboolfaces_outer_core,iboolcorner_outer_core, &
-          iprocfrom_faces,iprocto_faces,imsg_type, &
+          iprocfrom_faces,iprocto_faces, &
           iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
           buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
-          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-          NUM_MSG_TYPES,iphase, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase, &
 #endif
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
@@ -2144,11 +2161,11 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
             iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_xi_outer_core(1), &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY_VAL_OC,NCHUNKS,iphase)
   endif
@@ -2167,11 +2184,10 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
           npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
           iboolfaces_outer_core,iboolcorner_outer_core, &
-          iprocfrom_faces,iprocto_faces,imsg_type, &
+          iprocfrom_faces,iprocto_faces, &
           iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
           buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
-          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-          NUM_MSG_TYPES,iphase, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,ibool_outer_core,icall)
@@ -2182,17 +2198,17 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! outer core
 #ifdef USE_MPI
   if(USE_NONBLOCKING_COMMS) then
-    do while (iphase <= 5) ! make sure the last communications are finished and processed
+    do while (iphase <= 7) ! make sure the last communications are finished and processed
       call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
             iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_xi_outer_core(1), &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY_VAL_OC,NCHUNKS,iphase)
     enddo
@@ -2256,11 +2272,14 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
-            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUM_MSG_TYPES,iphase, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+!!!!!!!!!!!!!!!!!!!!!!!!!
+          nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+          npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+          receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),INCLUDE_CENTRAL_CUBE,iphase_CC, &
 #endif
           COMPUTE_AND_STORE_STRAIN,AM_V,icall)
 
@@ -2426,7 +2445,17 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! in order to reduce the number of MPI messages by 2
 #ifdef USE_MPI
   if(USE_NONBLOCKING_COMMS) then
-    iphase = 1 ! start the non blocking communications
+
+!   if(INCLUDE_CENTRAL_CUBE) then
+        iphase_CC = 1 ! initialize the non blocking communication counter for the central cube
+!       call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+!         npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+!         receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+!         ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),accel_inner_core,NDIM,iphase_CC)
+!   endif
+
+    iphase = 1 ! initialize the non blocking communication counter
+! start the non blocking communications
     call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
@@ -2435,11 +2464,11 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS,iphase)
   endif
@@ -2477,11 +2506,14 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
-            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUM_MSG_TYPES,iphase, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+!!!!!!!!!!!!!!!!!!!!!!!!!
+          nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+          npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+          receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),INCLUDE_CENTRAL_CUBE,iphase_CC, &
           COMPUTE_AND_STORE_STRAIN,AM_V,icall)
   endif
 #endif
@@ -2509,7 +2541,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
   if(USE_NONBLOCKING_COMMS) then
-    do while (iphase <= 5) ! make sure the last communications are finished and processed
+    do while (iphase <= 7) ! make sure the last communications are finished and processed
       call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
@@ -2518,11 +2550,11 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS,iphase)
     enddo
@@ -2551,10 +2583,19 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 #ifdef USE_MPI
   if(INCLUDE_CENTRAL_CUBE) then
-   call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-     npoin2D_cube_from_slices, buffer_all_cube_from_slices, buffer_slices, buffer_slices2, ibool_central_cube, &
-     receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
-     ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,accel_inner_core,NDIM)
+    if(USE_NONBLOCKING_COMMS) then
+      do while (iphase_CC <= 4) ! make sure the last communications are finished and processed
+        call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+          npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+          receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+          ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),accel_inner_core,NDIM,iphase_CC)
+      enddo
+    else
+      call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+        npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,buffer_slices2,ibool_central_cube, &
+        receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
+        ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,accel_inner_core,NDIM)
+    endif
   endif   ! end of assembling forces with the central cube
 #endif
 

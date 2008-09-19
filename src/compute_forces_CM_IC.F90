@@ -54,11 +54,13 @@
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
-            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUM_MSG_TYPES,iphase, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+               nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+               npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+               receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,INCLUDE_CENTRAL_CUBE,iphase_CC, &
 #endif
           COMPUTE_AND_STORE_STRAIN,AM_V,icall)
 
@@ -249,7 +251,7 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
 ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
 
 ! communication pattern for corners between chunks
   integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
@@ -268,8 +270,19 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
      buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
 
-! number of message types
-  integer NUM_MSG_TYPES
+! for matching with central cube in inner core
+  integer nb_msgs_theor_in_cube, npoin2D_cube_from_slices,iphase_CC
+  integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
+  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices
+  double precision, dimension(npoin2D_cube_from_slices,NDIM,nb_msgs_theor_in_cube) :: buffer_all_cube_from_slices
+  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
+  integer receiver_cube_from_slices
+  logical :: INCLUDE_CENTRAL_CUBE
+
+! local to global mapping
+  integer NSPEC2D_BOTTOM_INNER_CORE
+  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
+
 #endif
 
 ! ****************************************************
@@ -290,8 +303,9 @@
 
 ! process the communications every ELEMENTS_BETWEEN_NONBLOCKING elements
     computed_elements = computed_elements + 1
-    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_BETWEEN_NONBLOCKING) == 0) &
-         call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_BETWEEN_NONBLOCKING) == 0) then
+
+      if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
@@ -299,13 +313,23 @@
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUMMSGS_FACES_VAL,NUM_MSG_TYPES,NCORNERSCHUNKS_VAL, &
+            NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
             NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
+
+      if(INCLUDE_CENTRAL_CUBE) then
+          if(iphase > 7 .and. iphase_CC <= 4) &
+            call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+              npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+              receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+              ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,accel_inner_core,NDIM,iphase_CC)
+      endif
+
+    endif
 #endif
 
     do k=1,NGLLZ
@@ -805,11 +829,11 @@
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUMMSGS_FACES_VAL,NUM_MSG_TYPES,NCORNERSCHUNKS_VAL, &
+            NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
             NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
 #endif

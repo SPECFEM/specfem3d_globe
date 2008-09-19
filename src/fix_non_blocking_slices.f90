@@ -28,7 +28,7 @@
 !! DK DK fix the non-blocking arrays to assemble inside the chunks: elements
 !! DK DK in contact with the MPI faces by an edge or a corner only but not
 !! DK DK a full face are missing, therefore let us add them
-  subroutine fix_non_blocking_arrays(is_on_a_slice_edge,iboolright_xi, &
+  subroutine fix_non_blocking_slices(is_on_a_slice_edge,iboolright_xi, &
          iboolleft_xi,iboolright_eta,iboolleft_eta, &
          npoin2D_xi,npoin2D_eta,ibool, &
          mask_ibool,nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
@@ -85,5 +85,5 @@
   888 continue
   enddo
 
-  end subroutine fix_non_blocking_arrays
+  end subroutine fix_non_blocking_slices
 
