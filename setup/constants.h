@@ -33,7 +33,8 @@
 
 ! this for non blocking assembly
   logical, parameter :: USE_NONBLOCKING_COMMS = .true.
-  integer, parameter :: ELEMENTS_BETWEEN_NONBLOCKING = 3000
+  integer, parameter :: ELEMENTS_NONBLOCKING_CM_IC = 1500
+  integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
 
   logical, parameter :: DEBUG_NONBLOCKING_COMMS = .false.
   logical, parameter :: DEBUG_USING_OPENDX = .false.

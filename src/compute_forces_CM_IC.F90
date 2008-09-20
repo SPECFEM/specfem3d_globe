@@ -301,9 +301,9 @@
     if((icall == 2 .and. is_on_a_slice_edge_crust_mantle(ispec)) .or. &
        (icall == 1 .and. .not. is_on_a_slice_edge_crust_mantle(ispec))) cycle
 
-! process the communications every ELEMENTS_BETWEEN_NONBLOCKING elements
+! process the communications every ELEMENTS_NONBLOCKING elements
     computed_elements = computed_elements + 1
-    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_BETWEEN_NONBLOCKING) == 0) then
+    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
 
       if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -818,10 +818,11 @@
     if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
 #ifdef USE_MPI
-! process the communications every ELEMENTS_BETWEEN_NONBLOCKING elements
+! process the communications every ELEMENTS_NONBLOCKING elements
     computed_elements = computed_elements + 1
-    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_BETWEEN_NONBLOCKING) == 0) &
-         call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
+
+         if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
@@ -836,6 +837,16 @@
             NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
             NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
+
+      if(INCLUDE_CENTRAL_CUBE) then
+          if(iphase > 7 .and. iphase_CC <= 4) &
+            call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+              npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+              receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+              ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,accel_inner_core,NDIM,iphase_CC)
+      endif
+
+    endif
 #endif
 
     do k=1,NGLLZ
