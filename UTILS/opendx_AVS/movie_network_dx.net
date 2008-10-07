@@ -1,25 +1,25 @@
 //
-// time: Tue Oct  7 12:18:07 2008
+// time: Tue Oct  7 22:18:59 2008
 //
 // version: 3.2.0 (format), 4.4.4 (DX)
 //
 //
 // MODULE main
-// workspace: width = 588, height = 633
+// workspace: width = 605, height = 633
 // layout: snap = 0, width = 50, height = 50, align = NN
 //
 macro main(
 ) -> (
 ) {
     // 
-    // node AmbientLight[1]: x = 274, y = 308, inputs = 1, label = AmbientLight
+    // node AmbientLight[1]: x = 361, y = 354, inputs = 1, label = AmbientLight
     //
 main_AmbientLight_1_out_1 = 
     AmbientLight(
     main_AmbientLight_1_in_1
     ) [instance: 1, cache: 1];
     // 
-    // node Sequencer[1]: x = 142, y = 48, inputs = 7, label = Sequencer
+    // node Sequencer[1]: x = 144, y = 12, inputs = 7, label = Sequencer
     // input[1]: defaulting = 0, visible = 0, type = 32, value = "Sequencer_1"
     // input[4]: defaulting = 1, visible = 1, type = 1, value = 1
     // input[5]: defaulting = 1, visible = 1, type = 1, value = 50
@@ -30,7 +30,7 @@ main_AmbientLight_1_out_1 =
     //
     main_Sequencer_1_out_1 = @frame;
     // 
-    // node Format[1]: x = 101, y = 178, inputs = 3, label = Format
+    // node Format[1]: x = 108, y = 118, inputs = 3, label = Format
     // input[1]: defaulting = 0, visible = 1, type = 32, value = "DX_movie_000%3.3d.dx"
     //
 main_Format_1_out_1 = 
@@ -40,7 +40,7 @@ main_Format_1_out_1 =
     main_Format_1_in_3
     ) [instance: 1, cache: 1];
     // 
-    // node Import[2]: x = 60, y = 288, inputs = 6, label = Import
+    // node Import[2]: x = 97, y = 199, inputs = 6, label = Import
     // input[1]: defaulting = 1, visible = 1, type = 32, value = "DX_movie_006600.dx"
     // input[3]: defaulting = 0, visible = 1, type = 32, value = "dx"
     //
@@ -54,7 +54,7 @@ main_Import_2_out_1 =
     main_Import_2_in_6
     ) [instance: 2, cache: 1];
     // 
-    // node AutoColor[1]: x = 53, y = 382, inputs = 10, label = AutoColor
+    // node AutoColor[1]: x = 38, y = 333, inputs = 10, label = AutoColor
     //
 main_AutoColor_1_out_1,
 main_AutoColor_1_out_2 = 
@@ -71,17 +71,24 @@ main_AutoColor_1_out_2 =
     main_AutoColor_1_in_10
     ) [instance: 1, cache: 1];
     // 
+    // node ShowConnections[1]: x = 167, y = 331, inputs = 1, label = ShowConnections
+    //
+main_ShowConnections_1_out_1 = 
+    ShowConnections(
+    main_Import_2_out_1
+    ) [instance: 1, cache: 1];
+    // 
     // node Collect[1]: x = 141, y = 482, inputs = 4, label = Collect
     //
 main_Collect_1_out_1 = 
     Collect(
     main_AutoColor_1_out_1,
-    main_Collect_1_in_2,
+    main_ShowConnections_1_out_1,
     main_AmbientLight_1_out_1,
     main_Collect_1_in_4
     ) [instance: 1, cache: 1];
     // 
-    // node Format[2]: x = 516, y = 430, inputs = 3, label = Format
+    // node Format[2]: x = 533, y = 464, inputs = 3, label = Format
     // input[1]: defaulting = 0, visible = 1, type = 32, value = "imagemovie%3.3d"
     //
 main_Format_2_out_1 = 
@@ -114,7 +121,7 @@ main_Format_2_out_1 =
     // input[29]: defaulting = 1, visible = 0, type = 3, value = 0
     // input[41]: defaulting = 0, visible = 0, type = 32, value = "rotate"
     // depth: value = 24
-    // window: position = (0.4990,0.1842), size = 0.4229x0.5900, screen = 0
+    // window: position = (0.5740,0.1533), size = 0.4229x0.5900, screen = 0
     // internal caching: 1
     //
 main_Image_2_out_1,
@@ -228,7 +235,7 @@ main_AutoColor_1_in_8 = NULL;
 main_AutoColor_1_in_9 = NULL;
 main_AutoColor_1_in_10 = NULL;
 main_AutoColor_1_out_1 = NULL;
-main_Collect_1_in_2 = NULL;
+main_ShowConnections_1_out_1 = NULL;
 main_Collect_1_in_4 = NULL;
 main_Collect_1_out_1 = NULL;
 main_Format_2_in_1 = "imagemovie%3.3d";
