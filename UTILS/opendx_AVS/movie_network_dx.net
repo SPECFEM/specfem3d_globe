@@ -1,15 +1,11 @@
 //
-// time: Mon Nov 25 19:02:14 2002
+// time: Tue Oct  7 12:18:07 2008
 //
-// version: 3.1.2 (format), 4.2.0 (DX)
+// version: 3.2.0 (format), 4.4.4 (DX)
 //
-//
-//
-// macro reference (direct): ImageExport /usr/local/dx/java/server/dxmacros/gifmac.net
-include "gifmac.net"
 //
 // MODULE main
-// workspace: width = 477, height = 713
+// workspace: width = 588, height = 633
 // layout: snap = 0, width = 50, height = 50, align = NN
 //
 macro main(
@@ -30,7 +26,7 @@ main_AmbientLight_1_out_1 =
     // input[6]: defaulting = 1, visible = 0, type = 1, value = 1
     // input[7]: defaulting = 0, visible = 0, type = 16777217, value = { 1 50 1 1 50 1 }
     // vcr[1]: min = 1, max = 50, beg = 1, end = 50, cur = 1, inc = 1, loop = off, step = off, pal = off
-    // window: position = (0.0000,0.0000), size = 0.2734x0.1042
+    // window: position = (0.0052,0.0250), size = 0.1458x0.0667, screen = 0
     //
     main_Sequencer_1_out_1 = @frame;
     // 
@@ -75,48 +71,17 @@ main_AutoColor_1_out_2 =
     main_AutoColor_1_in_10
     ) [instance: 1, cache: 1];
     // 
-    // node Import[3]: x = 299, y = 61, inputs = 6, label = Import
-    // input[1]: defaulting = 0, visible = 1, type = 32, value = "DX_highwayscoast_science.dx"
-    // input[3]: defaulting = 0, visible = 1, type = 32, value = "dx"
-    //
-main_Import_3_out_1 = 
-    Import(
-    main_Import_3_in_1,
-    main_Import_3_in_2,
-    main_Import_3_in_3,
-    main_Import_3_in_4,
-    main_Import_3_in_5,
-    main_Import_3_in_6
-    ) [instance: 3, cache: 1];
-    // 
-    // node AutoColor[2]: x = 229, y = 224, inputs = 10, label = AutoColor
-    //
-main_AutoColor_2_out_1,
-main_AutoColor_2_out_2 = 
-    AutoColor(
-    main_Import_3_out_1,
-    main_AutoColor_2_in_2,
-    main_AutoColor_2_in_3,
-    main_AutoColor_2_in_4,
-    main_AutoColor_2_in_5,
-    main_AutoColor_2_in_6,
-    main_AutoColor_2_in_7,
-    main_AutoColor_2_in_8,
-    main_AutoColor_2_in_9,
-    main_AutoColor_2_in_10
-    ) [instance: 2, cache: 1];
-    // 
     // node Collect[1]: x = 141, y = 482, inputs = 4, label = Collect
     //
 main_Collect_1_out_1 = 
     Collect(
     main_AutoColor_1_out_1,
-    main_AutoColor_2_out_1,
+    main_Collect_1_in_2,
     main_AmbientLight_1_out_1,
     main_Collect_1_in_4
     ) [instance: 1, cache: 1];
     // 
-    // node Format[2]: x = 405, y = 248, inputs = 3, label = Format
+    // node Format[2]: x = 516, y = 430, inputs = 3, label = Format
     // input[1]: defaulting = 0, visible = 1, type = 32, value = "imagemovie%3.3d"
     //
 main_Format_2_out_1 = 
@@ -129,27 +94,27 @@ main_Format_2_out_1 =
     // node Image[2]: x = 211, y = 557, inputs = 49, label = Image
     // input[1]: defaulting = 0, visible = 0, type = 67108863, value = "Image_2"
     // input[4]: defaulting = 0, visible = 0, type = 1, value = 1
-    // input[5]: defaulting = 0, visible = 0, type = 8, value = [450026 3.82478e+06 -381.5]
-    // input[6]: defaulting = 0, visible = 0, type = 8, value = [450026 3.82478e+06 1.65907e+06]
-    // input[7]: defaulting = 0, visible = 0, type = 5, value = 656167.0
-    // input[8]: defaulting = 0, visible = 0, type = 1, value = 419
-    // input[9]: defaulting = 0, visible = 0, type = 5, value = 0.915
-    // input[10]: defaulting = 0, visible = 0, type = 8, value = [0 1 0]
-    // input[11]: defaulting = 1, visible = 0, type = 5, value = 22.367
+    // input[5]: defaulting = 0, visible = 0, type = 8, value = [-1242.9 147.285 -57.7637]
+    // input[6]: defaulting = 0, visible = 0, type = 8, value = [1643.88 -31801.8 80621.4]
+    // input[7]: defaulting = 0, visible = 0, type = 5, value = 46528.4
+    // input[8]: defaulting = 0, visible = 0, type = 1, value = 798
+    // input[9]: defaulting = 0, visible = 0, type = 5, value = 0.836
+    // input[10]: defaulting = 0, visible = 0, type = 8, value = [0.0132238 0.929834 0.367742]
+    // input[11]: defaulting = 1, visible = 0, type = 5, value = 30.0001
     // input[12]: defaulting = 0, visible = 0, type = 1, value = 0
     // input[14]: defaulting = 0, visible = 0, type = 1, value = 1
     // input[15]: defaulting = 1, visible = 0, type = 32, value = "none"
     // input[16]: defaulting = 1, visible = 0, type = 32, value = "none"
     // input[17]: defaulting = 1, visible = 0, type = 1, value = 1
     // input[18]: defaulting = 1, visible = 0, type = 1, value = 1
-    // input[19]: defaulting = 0, visible = 0, type = 3, value = 0
+    // input[19]: defaulting = 0, visible = 0, type = 1, value = 0
     // input[22]: defaulting = 0, visible = 0, type = 32, value = "black"
     // input[25]: defaulting = 0, visible = 0, type = 32, value = "/home/komatits/imagedx-1073744456"
     // input[26]: defaulting = 0, visible = 0, type = 32, value = "tiff"
     // input[29]: defaulting = 1, visible = 0, type = 3, value = 0
-    // input[41]: defaulting = 0, visible = 0, type = 32, value = "panzoom"
-    // depth: value = 16
-    // window: position = (0.3291,0.1914), size = 0.4229x0.5898
+    // input[41]: defaulting = 0, visible = 0, type = 32, value = "rotate"
+    // depth: value = 24
+    // window: position = (0.4990,0.1842), size = 0.4229x0.5900, screen = 0
     // internal caching: 1
     //
 main_Image_2_out_1,
@@ -207,14 +172,24 @@ main_Image_2_out_3 =
     main_Image_2_in_49
     ) [instance: 2, cache: 1];
     // 
-    // node ImageExport[1]: x = 273, y = 651, inputs = 4, label = ImageExport
+    // node Render[1]: x = 351, y = 536, inputs = 3, label = Render
     //
-main_ImageExport_1_out_1 = 
-    ImageExport(
-    main_Image_2_out_1,
-    main_Format_2_out_1,
+main_Render_1_out_1 = 
+    Render(
+    main_Collect_1_out_1,
     main_Image_2_out_2,
-    main_ImageExport_1_in_4
+    main_Render_1_in_3
+    ) [instance: 1, cache: 1];
+    // 
+    // node WriteImage[1]: x = 491, y = 571, inputs = 4, label = WriteImage
+    // input[2]: defaulting = 0, visible = 1, type = 32, value = "movie_asteroide.miff"
+    // input[3]: defaulting = 0, visible = 1, type = 32, value = "miff"
+    //
+    WriteImage(
+    main_Render_1_out_1,
+    main_WriteImage_1_in_2,
+    main_WriteImage_1_in_3,
+    main_WriteImage_1_in_4
     ) [instance: 1, cache: 1];
 // network: end of macro body
 CacheScene(main_Image_2_in_1, main_Image_2_out_1, main_Image_2_out_2);
@@ -253,28 +228,11 @@ main_AutoColor_1_in_8 = NULL;
 main_AutoColor_1_in_9 = NULL;
 main_AutoColor_1_in_10 = NULL;
 main_AutoColor_1_out_1 = NULL;
-main_Import_3_in_1 = "DX_highwayscoast_science.dx";
-main_Import_3_in_2 = NULL;
-main_Import_3_in_3 = "dx";
-main_Import_3_in_4 = NULL;
-main_Import_3_in_5 = NULL;
-main_Import_3_in_6 = NULL;
-main_Import_3_out_1 = NULL;
-main_AutoColor_2_in_2 = NULL;
-main_AutoColor_2_in_3 = NULL;
-main_AutoColor_2_in_4 = NULL;
-main_AutoColor_2_in_5 = NULL;
-main_AutoColor_2_in_6 = NULL;
-main_AutoColor_2_in_7 = NULL;
-main_AutoColor_2_in_8 = NULL;
-main_AutoColor_2_in_9 = NULL;
-main_AutoColor_2_in_10 = NULL;
-main_AutoColor_2_out_1 = NULL;
+main_Collect_1_in_2 = NULL;
 main_Collect_1_in_4 = NULL;
 main_Collect_1_out_1 = NULL;
 main_Format_2_in_1 = "imagemovie%3.3d";
 main_Format_2_in_3 = NULL;
-main_Format_2_out_1 = NULL;
 macro Image(
         id,
         object,
@@ -588,14 +546,14 @@ macro Image(
         RECformat) [instance: 2, cache: 1];
 }
 main_Image_2_in_1 = "Image_2";
-main_Image_2_in_3 = "X16,,";
+main_Image_2_in_3 = "X24,,";
 main_Image_2_in_4 = 1;
-main_Image_2_in_5 = [450026 3.82478e+06 -381.5];
-main_Image_2_in_6 = [450026 3.82478e+06 1.65907e+06];
-main_Image_2_in_7 = 656167.0;
-main_Image_2_in_8 = 419;
-main_Image_2_in_9 = 0.915;
-main_Image_2_in_10 = [0 1 0];
+main_Image_2_in_5 = [-1242.9 147.285 -57.7637];
+main_Image_2_in_6 = [1643.88 -31801.8 80621.4];
+main_Image_2_in_7 = 46528.4;
+main_Image_2_in_8 = 798;
+main_Image_2_in_9 = 0.836;
+main_Image_2_in_10 = [0.0132238 0.929834 0.367742];
 main_Image_2_in_11 = NULL;
 main_Image_2_in_12 = 0;
 main_Image_2_in_13 = NULL;
@@ -625,7 +583,7 @@ main_Image_2_in_37 = NULL;
 main_Image_2_in_38 = NULL;
 main_Image_2_in_39 = NULL;
 main_Image_2_in_40 = NULL;
-main_Image_2_in_41 = "panzoom";
+main_Image_2_in_41 = "rotate";
 main_Image_2_in_42 = NULL;
 main_Image_2_in_43 = NULL;
 main_Image_2_in_44 = NULL;
@@ -634,10 +592,13 @@ main_Image_2_in_46 = NULL;
 main_Image_2_in_47 = NULL;
 main_Image_2_in_48 = NULL;
 main_Image_2_in_49 = NULL;
-main_Image_2_out_1 = NULL;
 main_Image_2_out_2 = NULL;
-main_ImageExport_1_in_4 = NULL;
-Executive("product version 4 2 0");
+main_Render_1_in_3 = NULL;
+main_Render_1_out_1 = NULL;
+main_WriteImage_1_in_2 = "movie_asteroide.miff";
+main_WriteImage_1_in_3 = "miff";
+main_WriteImage_1_in_4 = NULL;
+Executive("product version 4 4 4");
 $sync
 
 sequence main();
