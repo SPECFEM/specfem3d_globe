@@ -31,7 +31,7 @@
          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-         NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,DT, &
+         NTSTEP_BETWEEN_OUTPUT_INFO,IT_LAST_VALUE_DUMPED,INTERVAL_DUMP_FILES,NCHUNKS,DT, &
          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
@@ -70,7 +70,7 @@
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
+          NTSTEP_BETWEEN_OUTPUT_INFO,IT_LAST_VALUE_DUMPED,INTERVAL_DUMP_FILES,NCHUNKS,SIMULATION_TYPE, &
           REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
           NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,ifirst_layer_aniso,ilast_layer_aniso
 
@@ -1109,9 +1109,9 @@
 
   call read_value_logical(SAVE_MESH_FILES, 'mesher.SAVE_MESH_FILES')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_integer(NUMBER_OF_RUNS, 'solver.NUMBER_OF_RUNS')
+  call read_value_integer(IT_LAST_VALUE_DUMPED, 'solver.IT_LAST_VALUE_DUMPED')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_integer(NUMBER_OF_THIS_RUN, 'solver.NUMBER_OF_THIS_RUN')
+  call read_value_integer(INTERVAL_DUMP_FILES, 'solver.INTERVAL_DUMP_FILES')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
@@ -1119,6 +1119,16 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
   call read_value_integer(NTSTEP_BETWEEN_READ_ADJSRC, 'solver.NTSTEP_BETWEEN_READ_ADJSRC')
   if(err_occurred() /= 0) return
+
+! when using restart files, make sure the two intervals coincide
+  if(USE_RESTART_FILES) then
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS = INTERVAL_DUMP_FILES
+! some people might erroneously think that they should start with 1, fix that to 0
+    if(IT_LAST_VALUE_DUMPED <= 1) IT_LAST_VALUE_DUMPED = 0
+  else
+! if no restart files
+    IT_LAST_VALUE_DUMPED = 0
+  endif
 
   call read_value_logical(OUTPUT_SEISMOS_ASCII_TEXT, 'solver.OUTPUT_SEISMOS_ASCII_TEXT')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
@@ -1152,6 +1162,14 @@
     SAVE_ALL_SEISMOS_IN_ONE_FILE    = .true.
     USE_BINARY_FOR_LARGE_FILE       = .true.
     RECEIVERS_CAN_BE_BURIED         = .false.
+
+! when using restart files, make sure the two intervals coincide
+    if(USE_RESTART_FILES) then
+      NTSTEP_BETWEEN_OUTPUT_SEISMOS = INTERVAL_DUMP_FILES
+      SAVE_ALL_SEISMOS_IN_ONE_FILE    = .false.
+      USE_BINARY_FOR_LARGE_FILE       = .false.
+    endif
+
   endif
 
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'

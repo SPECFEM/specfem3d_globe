@@ -31,6 +31,10 @@
 !--- user can modify parameters below
 !
 
+! for restart files
+  logical, parameter :: USE_RESTART_FILES = .true.
+  character(len=100), parameter :: PATH_RESTART_FILES = '/scratch/komatits/dump_restart_files'
+
 ! this for non blocking assembly
   logical, parameter :: USE_NONBLOCKING_COMMS = .true.
   integer, parameter :: ELEMENTS_NONBLOCKING_CM_IC = 1500

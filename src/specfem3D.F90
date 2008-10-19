@@ -485,7 +485,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS,&
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
+          NTSTEP_BETWEEN_OUTPUT_INFO,IT_LAST_VALUE_DUMPED,INTERVAL_DUMP_FILES,NCHUNKS,SIMULATION_TYPE, &
           REFERENCE_1D_MODEL,THREE_D_MODEL,MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
           ifirst_layer_aniso,ilast_layer_aniso
 
@@ -619,7 +619,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
          NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
-         NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,DT, &
+         NTSTEP_BETWEEN_OUTPUT_INFO,IT_LAST_VALUE_DUMPED,INTERVAL_DUMP_FILES,NCHUNKS,DT, &
          ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
          CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
@@ -675,8 +675,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     NSOURCES = bcast_integer(22)
     NTSTEP_BETWEEN_FRAMES = bcast_integer(23)
     NTSTEP_BETWEEN_OUTPUT_INFO = bcast_integer(24)
-    NUMBER_OF_RUNS = bcast_integer(25)
-    NUMBER_OF_THIS_RUN = bcast_integer(26)
+    IT_LAST_VALUE_DUMPED = bcast_integer(25)
+    INTERVAL_DUMP_FILES = bcast_integer(26)
     NCHUNKS = bcast_integer(27)
     SIMULATION_TYPE = bcast_integer(28)
     REFERENCE_1D_MODEL = bcast_integer(29)
@@ -1690,13 +1690,49 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   vz_inner_core = size(factor_common_inner_core,4)
   vnspec_inner_core = size(factor_common_inner_core,5)
 
-! define correct time steps if restart files
-  if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > 3) stop 'number of restart runs can be 1, 2 or 3'
-  if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) stop 'incorrect run number'
-  if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) stop 'Only 1 run for SIMULATION_TYPE = 2/3'
-
   it_begin = 1
   it_end = NSTEP
+
+! read restart files
+  if(USE_RESTART_FILES) then
+
+    it_begin = IT_LAST_VALUE_DUMPED + 1
+
+! if this is not the first part of the run, read all the files dumped to disk
+    if(IT_LAST_VALUE_DUMPED > 0) then
+      write(outputname,"('/dump_all_arrays',i6.6)") myrank
+      open(unit=55,file=trim(PATH_RESTART_FILES)//outputname,status='old',form='unformatted',action='read')
+      read(55) displ_crust_mantle
+      read(55) veloc_crust_mantle
+      read(55) accel_crust_mantle
+      read(55) displ_inner_core
+      read(55) veloc_inner_core
+      read(55) accel_inner_core
+      read(55) displ_outer_core
+      read(55) veloc_outer_core
+      read(55) accel_outer_core
+      read(55) R_memory_crust_mantle
+      read(55) R_memory_inner_core
+      read(55) epsilondev_crust_mantle
+      read(55) epsilondev_inner_core
+!     read(55) A_array_rotation
+!     read(55) B_array_rotation
+      close(55)
+
+! write a stamp to disk to notify user that files have been read back
+      if(myrank == 0) then
+        write(outputname,"('/restart_file_read_back_for_timestamp',i6.6)") it_begin
+        open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
+        write(IOUT,*) 'Restart file read back for time step # ',it_begin
+        close(IOUT)
+      endif
+    endif
+
+! synchronize all the processes to make sure everybody has finished
+#ifdef USE_MPI
+    call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#endif
+  endif
 
 ! initialize variables for writing seismograms
   seismo_offset = it_begin - 1
@@ -1762,7 +1798,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! compute the maximum of the norm of the displacement
 ! in all the slices using an MPI reduction
 ! and output timestamp file to check that simulation is running fine
-  if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+  if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it - it_begin + 1 == 5 .or. it == NSTEP) then
 
 ! compute maximum of norm of displacement in each slice
     Usolidnorm = max( &
@@ -1813,11 +1849,11 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #ifdef USE_MPI
       write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
       write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-      write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+      write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it - it_begin + 1)
 #endif
 
 ! compute estimated remaining simulation time
-      t_remain = (NSTEP - it) * (tCPU/dble(it))
+      t_remain = (NSTEP - it) * (tCPU/dble(it - it_begin + 1))
       int_t_remain = int(t_remain)
       ihours_remain = int_t_remain / 3600
       iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
@@ -1841,10 +1877,10 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
       write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_total,iminutes_total,iseconds_total
 #endif
-      write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
+      write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it - it_begin + 1)/dble(NSTEP - IT_LAST_VALUE_DUMPED)),'% of that'
 
 #ifdef USE_MPI
-      if(it < 100) then
+      if(it - it_begin + 1 < 100) then
         write(IMAIN,*) '************************************************************'
         write(IMAIN,*) '**** BEWARE: the above time estimates are not reliable'
         write(IMAIN,*) '**** because fewer than 100 iterations have been performed'
@@ -1912,7 +1948,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
       endif
 
-      if(it < 100) then
+      if(it - it_begin + 1 < 100) then
         write(IMAIN,*) '************************************************************'
         write(IMAIN,*) '**** BEWARE: the above time estimates are not reliable'
         write(IMAIN,*) '**** because fewer than 100 iterations have been performed'
@@ -1939,7 +1975,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #ifdef USE_MPI
       write(IOUT,*) 'Elapsed time in seconds = ',tCPU
       write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-      write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+      write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it- it_begin + 1 )
       write(IOUT,*)
 #endif
 
@@ -1955,7 +1991,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
       write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
                ihours_total,iminutes_total,iseconds_total
 #endif
-      write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
+      write(IOUT,*) 'We have done ',sngl(100.d0*dble(it - it_begin + 1)/dble(NSTEP - IT_LAST_VALUE_DUMPED)),'% of that'
       write(IOUT,*)
 
 #ifdef USE_MPI
@@ -1979,7 +2015,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             weekday_name(day_of_week_remote),month_name(mon_remote),day_remote,year_remote,hr_remote,minutes_remote
       endif
 
-      if(it < 100) then
+      if(it - it_begin + 1 < 100) then
         write(IOUT,*)
         write(IOUT,*) '************************************************************'
         write(IOUT,*) '**** BEWARE: the above time estimates are not reliable'
@@ -2768,6 +2804,44 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
   endif
 #endif
+
+! dump restart files
+! if this is not the first part of the run, write all the files to disk
+  if(USE_RESTART_FILES .and. mod(it,INTERVAL_DUMP_FILES) == 0 .and. it /= NSTEP) then
+
+    write(outputname,"('/dump_all_arrays',i6.6)") myrank
+    open(unit=55,file=trim(PATH_RESTART_FILES)//outputname,status='unknown',form='unformatted',action='write')
+    write(55) displ_crust_mantle
+    write(55) veloc_crust_mantle
+    write(55) accel_crust_mantle
+    write(55) displ_inner_core
+    write(55) veloc_inner_core
+    write(55) accel_inner_core
+    write(55) displ_outer_core
+    write(55) veloc_outer_core
+    write(55) accel_outer_core
+    write(55) R_memory_crust_mantle
+    write(55) R_memory_inner_core
+    write(55) epsilondev_crust_mantle
+    write(55) epsilondev_inner_core
+!   write(55) A_array_rotation
+!   write(55) B_array_rotation
+    close(55)
+
+! synchronize all the processes to make sure everybody has finished
+#ifdef USE_MPI
+    call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#endif
+
+! write a stamp to disk to notify user that files have been written
+    if(myrank == 0) then
+      write(outputname,"('/restart_file_for_timestamp',i6.6)") it
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
+      write(IOUT,*) 'Restart file created for time step # ',it
+      close(IOUT)
+    endif
+
+  endif
 
 !---- end of time iteration loop
 !
