@@ -88,6 +88,7 @@ case $FC in
                     FLAGS_NO_CHECK="-ansi -u -64 -O3 -OPT:Olimit=0 -OPT:roundoff=3 -OPT:IEEE_arithmetic=3 -r10000 -mips4"
                 fi
                 ;;
+            SX-*:SUPER-UX | ES:ESOS)
                 ################## NEC SX ##################
                 if test x"$MPIFC" = x; then
                     MPIFC=$FC
