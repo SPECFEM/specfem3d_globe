@@ -46,7 +46,7 @@
 	$num_individual_lines = $currentelem;
   print STDOUT "There are $num_individual_lines individual line segments\n";
 
-	$pi = 3.14159265 ;
+	$pi = 3.1415926535 ;
 
 # write header for AVS (with point data)
       print FILEAVS "object 1 class array type float rank 1 shape 3 items $numpoints data follows\n";
@@ -67,14 +67,16 @@
  $latitude = substr($line,index($line," ")+1);
 
 # convert geographic latitude to geocentric colatitude and convert to radians 
-      $theta = $pi/2. - atan2(0.99329534 * tan($latitude * $pi / 180.),1) ;
+#     $theta = $pi/2. - atan2(0.99329534 * tan($latitude * $pi / 180.),1) ;
+      $theta = $pi/2. - $latitude * $pi / 180. ;
       $phi = $longitude * $pi / 180. ;
 
-# compute the Cartesian position of the receiver (ignore ellipticity for AVS)
+# compute the Cartesian position of the receiver (ignore ellipticity)
 # assume a sphere of radius one
 ## DK DK make the radius a little bit bigger to make sure it is 
-## DK DK correctly superimposed to the mesh in final AVS figure
-      $r_target = 1.015 ;
+## DK DK correctly superimposed to the mesh in final AVS or OpenDX figure
+#     $r_target = 1.015 ;
+      $r_target = 1.007 ;
       $x_target = $r_target*sin($theta)*cos($phi) ;
       $y_target = $r_target*sin($theta)*sin($phi) ;
       $z_target = $r_target*cos($theta) ;
