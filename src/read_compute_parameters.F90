@@ -1162,6 +1162,8 @@
     SAVE_ALL_SEISMOS_IN_ONE_FILE    = .true.
     USE_BINARY_FOR_LARGE_FILE       = .true.
     RECEIVERS_CAN_BE_BURIED         = .false.
+    MOVIE_SURFACE = .false.
+    MOVIE_VOLUME = .false.
 
 ! when using restart files, make sure the two intervals coincide
     if(USE_RESTART_FILES) then
@@ -1169,7 +1171,6 @@
       SAVE_ALL_SEISMOS_IN_ONE_FILE    = .false.
       USE_BINARY_FOR_LARGE_FILE       = .false.
     endif
-
   endif
 
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'

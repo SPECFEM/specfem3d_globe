@@ -77,6 +77,15 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! include values created by the mesher
   include "values_from_mesher.h"
 
+! to save movie frames
+  integer nmovie_points
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+      store_val_x,store_val_y,store_val_z, &
+      store_val_ux,store_val_uy,store_val_uz
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+      store_val_x_all,store_val_y_all,store_val_z_all, &
+      store_val_ux_all,store_val_uy_all,store_val_uz_all
+
 ! for non blocking communications
   integer :: icall,iphase
   real :: percentage_edge
@@ -976,6 +985,16 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
   if(minval(t_cmt) /= 0.) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
 
+! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
+  if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
+     hdur = sqrt(hdur**2 + HDUR_MOVIE**2)
+     if(myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',HDUR_MOVIE
+        write(IMAIN,*)
+     endif
+  endif
+
 ! convert the half duration for triangle STF to the one for gaussian STF
   hdur_gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
 
@@ -1594,6 +1613,25 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
        d_ln_density_dr_table(int_radius) = drhodr/rho
      enddo
+
+! allocate files to save movies
+  if(MOVIE_SURFACE) then
+    nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+
+    allocate(store_val_x(nmovie_points))
+    allocate(store_val_y(nmovie_points))
+    allocate(store_val_z(nmovie_points))
+    allocate(store_val_ux(nmovie_points))
+    allocate(store_val_uy(nmovie_points))
+    allocate(store_val_uz(nmovie_points))
+
+    allocate(store_val_x_all(nmovie_points,0:NPROCTOT-1))
+    allocate(store_val_y_all(nmovie_points,0:NPROCTOT-1))
+    allocate(store_val_z_all(nmovie_points,0:NPROCTOT-1))
+    allocate(store_val_ux_all(nmovie_points,0:NPROCTOT-1))
+    allocate(store_val_uy_all(nmovie_points,0:NPROCTOT-1))
+    allocate(store_val_uz_all(nmovie_points,0:NPROCTOT-1))
+  endif
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -2838,6 +2876,59 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
       write(outputname,"('/restart_file_for_timestamp',i6.6)") it
       open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write')
       write(IOUT,*) 'Restart file created for time step # ',it
+      close(IOUT)
+    endif
+
+  endif
+
+! save movie on surface
+  if(MOVIE_SURFACE .and. mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
+
+! save velocity here to avoid static offset on displacement for movies
+
+! get coordinates of surface mesh and surface displacement
+    ipoin = 0
+    do ispec2D = 1,NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+      ispec = ibelm_top_crust_mantle(ispec2D)
+      k = NGLLZ
+
+! loop on all the points inside the element
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ipoin = ipoin + 1
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          store_val_x(ipoin) = xstore_crust_mantle(iglob)
+          store_val_y(ipoin) = ystore_crust_mantle(iglob)
+          store_val_z(ipoin) = zstore_crust_mantle(iglob)
+          store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
+          store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
+          store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
+        enddo
+      enddo
+
+    enddo
+
+! gather info on master proc
+    ispec = nmovie_points
+#ifdef USE_MPI
+    call MPI_GATHER(store_val_x,ispec,CUSTOM_MPI_TYPE,store_val_x_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+    call MPI_GATHER(store_val_y,ispec,CUSTOM_MPI_TYPE,store_val_y_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+    call MPI_GATHER(store_val_z,ispec,CUSTOM_MPI_TYPE,store_val_z_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+    call MPI_GATHER(store_val_ux,ispec,CUSTOM_MPI_TYPE,store_val_ux_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+    call MPI_GATHER(store_val_uy,ispec,CUSTOM_MPI_TYPE,store_val_uy_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+    call MPI_GATHER(store_val_uz,ispec,CUSTOM_MPI_TYPE,store_val_uz_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+#endif
+
+! save movie data to disk in home directory
+    if(myrank == 0) then
+      write(outputname,"('/scratch/komatits/moviedata',i6.6)") it
+      open(unit=IOUT,file=outputname,status='unknown',form='unformatted',action='write')
+      write(IOUT) store_val_x_all
+      write(IOUT) store_val_y_all
+      write(IOUT) store_val_z_all
+      write(IOUT) store_val_ux_all
+      write(IOUT) store_val_uy_all
+      write(IOUT) store_val_uz_all
       close(IOUT)
     endif
 

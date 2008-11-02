@@ -136,6 +136,7 @@ libspecfem_a_OBJECTS = \
 	$O/count_number_of_sources.o \
 	$O/create_central_cube_buffers.o \
 	$O/create_chunk_buffers.o \
+	$O/create_movie_AVS_DX.o \
 	$O/create_regions_mesh.o \
 	$O/crustal_model.o \
 	$O/define_derivation_matrices.o \
@@ -215,6 +216,7 @@ DEFAULT = \
   $(OUTPUT_FILES_INC)/values_from_mesher.h \
 	xspecfem3D \
   xcombine_AVS_DX \
+  xcreate_movie_AVS_DX \
 	$(EMPTY_MACRO)
 
 default: $(DEFAULT)
@@ -243,6 +245,9 @@ XSPECFEM_OBJECTS = $(SOLVER_ARRAY_OBJECTS) $O/exit_mpi.o $(LIBSPECFEM)
 xcombine_AVS_DX: $O/combine_AVS_DX.o $(LIBSPECFEM)
 	${FCCOMPILE_CHECK} -o $(BIN)/xcombine_AVS_DX $O/combine_AVS_DX.o $(LIBSPECFEM)
 
+xcreate_movie_AVS_DX: $O/create_movie_AVS_DX.o $(LIBSPECFEM)
+	${FCCOMPILE_CHECK} -o $(BIN)/xcreate_movie_AVS_DX $O/create_movie_AVS_DX.o $(LIBSPECFEM)
+
 xconvolve_source_timefunction: $O/convolve_source_timefunction.o
 	${FCCOMPILE_CHECK} -o $(BIN)/xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
@@ -250,7 +255,7 @@ xcreate_header_file: $O/create_header_file.o $O/exit_mpi.o $O/get_value_paramete
 	${MPIFCCOMPILE_CHECK} -o $(BIN)/xcreate_header_file $O/create_header_file.o $O/exit_mpi.o $O/get_value_parameters.o $O/read_compute_parameters.o $O/memory_eval.o $O/save_header_file.o $O/count_number_of_sources.o $O/read_value_parameters.o $O/euler_angles.o $O/reduce.o $O/rthetaphi_xyz.o $O/auto_ner.o
 
 clean:
-	rm -f $O/* *.o work.pc* *.mod $(BIN)/xspecfem3D $(BIN)/xconvolve_source_timefunction $(BIN)/xcreate_header_file $(BIN)/xcombine_AVS_DX
+	rm -f $O/* *.o work.pc* *.mod $(BIN)/xspecfem3D $(BIN)/xconvolve_source_timefunction $(BIN)/xcreate_header_file $(BIN)/xcombine_AVS_DX $(BIN)/xcreate_movie_AVS_DX
 
 
 ###
@@ -311,6 +316,9 @@ $O/create_header_file.o: $S/create_header_file.f90
 
 $O/comp_source_time_function.o: $S/comp_source_time_function.f90
 	${FCCOMPILE_CHECK} -c -o $O/comp_source_time_function.o ${FCFLAGS_f90} $S/comp_source_time_function.f90
+
+$O/create_movie_AVS_DX.o: $(SPECINC)/constants.h $S/create_movie_AVS_DX.f90
+	${FCCOMPILE_CHECK} -c -o $O/create_movie_AVS_DX.o ${FCFLAGS_f90} $S/create_movie_AVS_DX.f90
 
 ## leave MPIFLAGS below because we use the C preprocessor for that file
 $O/combine_AVS_DX.o: $(SPECINC)/constants.h $S/combine_AVS_DX.F90
