@@ -1,0 +1,18 @@
+#!/bin/bash
+#PBS -N PKP_movie_1536
+#PBS -m n
+#PBS -l select=192:ncpus=8:mpiprocs=8
+#PBS -l walltime=55:00:00
+
+######################PBS -q test
+
+cd $PBS_O_WORKDIR
+
+mkdir -p OUTPUT_FILES
+
+# save information about the job in output directory
+cp $PBS_NODEFILE OUTPUT_FILES/host_list_solver_${PBS_JOBID}
+touch OUTPUT_FILES/job_ID_solver_is_${PBS_JOBID}
+
+/usr/pbs/bin/mpiexec -n 1536 bin/xspecfem3D
+
