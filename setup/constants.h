@@ -32,7 +32,7 @@
 !
 
 ! for restart files
-  logical, parameter :: USE_RESTART_FILES = .true.
+  logical, parameter :: USE_RESTART_FILES = .false.
   character(len=100), parameter :: PATH_RESTART_FILES = '/scratch/komatits/dump_restart_files'
 
 ! this for non blocking assembly
