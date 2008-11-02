@@ -986,7 +986,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   if(minval(t_cmt) /= 0.) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
 
 ! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
-  if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
+  if (MOVIE_SURFACE .or. MOVIE_VOLUME) then
      hdur = sqrt(hdur**2 + HDUR_MOVIE**2)
      if(myrank == 0) then
         write(IMAIN,*)
@@ -2919,10 +2919,10 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     call MPI_GATHER(store_val_uz,ispec,CUSTOM_MPI_TYPE,store_val_uz_all,ispec,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
 #endif
 
-! save movie data to disk in home directory
+! save movie data files
     if(myrank == 0) then
-      write(outputname,"('/scratch/komatits/moviedata',i6.6)") it
-      open(unit=IOUT,file=outputname,status='unknown',form='unformatted',action='write')
+      write(outputname,"('/moviedata',i6.6)") it
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',action='write')
       write(IOUT) store_val_x_all
       write(IOUT) store_val_y_all
       write(IOUT) store_val_z_all

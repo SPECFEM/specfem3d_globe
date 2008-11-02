@@ -401,9 +401,8 @@
   print *
 
 ! read all the elements from the same file
-!! DK DK changed that for now  write(outputname,"('/moviedata',i6.6)") it
-!! DK DK changed that for now  open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted')
-  write(outputname,"('/scratch/komatits/moviedata',i6.6)") it
+  write(outputname,"('/moviedata',i6.6)") it
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted')
   open(unit=IOUT,file=outputname,status='old',action='read',form='unformatted')
   read(IOUT) store_val_x
   read(IOUT) store_val_y
