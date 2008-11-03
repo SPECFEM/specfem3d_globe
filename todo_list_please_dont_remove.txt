@@ -2,13 +2,7 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch:
 ------------------------------------------------------
 
-- The superbrick cannot be cut in two in its middle: David Michea implemented
-it but the implementation has a bug and the code crashes (when NEX_XI is a
-multiple of 8 rather than 16). We should fix this bug in version 4.1 below at some point.
-
 Things that could be done in a future version 4.1:
-
-- partial ALTIVEC support (will be done by Nicolas Le Goff)
 
 - use a potential of (rho * u) instead of u in the fluid, in case of
   fluid-fluid discontinuities
