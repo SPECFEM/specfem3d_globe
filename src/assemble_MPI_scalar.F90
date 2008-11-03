@@ -36,7 +36,7 @@
             iboolfaces,iboolcorner, &
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_real_size, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
@@ -78,9 +78,9 @@
   integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
   integer icount_corners
 
-  integer :: npoin2D_real_size
+  integer :: npoin2D_max_all_CM_IC
   integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
-  real(kind=CUSTOM_REAL), dimension(npoin2D_real_size,NUMFACES_SHARED) :: buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: buffer_send_faces_scalar,buffer_received_faces_scalar
 
 ! buffers for send and receive between corners of the chunks
   real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
@@ -151,16 +151,6 @@
     receiver = addressing(ichunk,iproc_xi + 1,iproc_eta)
   endif
 #ifdef USE_MPI
-! call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
-!       itag2,buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
-!       itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_RECV(buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
-!       itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_SEND(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
-!       itag2,MPI_COMM_WORLD,ier)
-
   call MPI_IRECV(buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
         itag,MPI_COMM_WORLD,request_receive,ier)
 
@@ -216,16 +206,6 @@
     receiver = addressing(ichunk,iproc_xi - 1,iproc_eta)
   endif
 #ifdef USE_MPI
-! call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
-!       itag2,buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
-!       itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_RECV(buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
-!       itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_SEND(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
-!       itag2,MPI_COMM_WORLD,ier)
-
   call MPI_IRECV(buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
         itag,MPI_COMM_WORLD,request_receive,ier)
 
@@ -282,16 +262,6 @@
     receiver = addressing(ichunk,iproc_xi,iproc_eta + 1)
   endif
 #ifdef USE_MPI
-! call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
-!   itag2,buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
-!   itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_RECV(buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
-!   itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_SEND(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
-!   itag2,MPI_COMM_WORLD,ier)
-
   call MPI_IRECV(buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
     itag,MPI_COMM_WORLD,request_receive,ier)
 
@@ -347,16 +317,6 @@
     receiver = addressing(ichunk,iproc_xi,iproc_eta - 1)
   endif
 #ifdef USE_MPI
-! call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
-!   itag2,buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
-!   itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_RECV(buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
-!   itag,MPI_COMM_WORLD,msg_status,ier)
-
-! call MPI_SEND(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
-!   itag2,MPI_COMM_WORLD,ier)
-
   call MPI_IRECV(buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
     itag,MPI_COMM_WORLD,request_receive,ier)
 

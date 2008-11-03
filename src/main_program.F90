@@ -328,7 +328,7 @@
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
 #endif
 
-  integer :: npoin2D_max_all
+  integer :: npoin2D_max_all_CM_IC
 
 ! receiver information
   integer :: nrec
@@ -508,41 +508,28 @@
 
   if(.not. MESHER_ONLY) then
 
-!! DK DK for merged version, temporary patch for David's code to cut the superbrick
-!! DK DK which I have not fully ported to the merged version yet: I do not
-!! DK DK yet distinguish the two values of each array, therefore let me set them
-!! DK DK equal here
-  npoin2D_xi_crust_mantle(2) = npoin2D_xi_crust_mantle(1)
-  npoin2D_eta_crust_mantle(2) = npoin2D_eta_crust_mantle(1)
-
-  npoin2D_xi_outer_core(2) = npoin2D_xi_outer_core(1)
-  npoin2D_eta_outer_core(2) = npoin2D_eta_outer_core(1)
-
-  npoin2D_xi_inner_core(2) = npoin2D_xi_inner_core(1)
-  npoin2D_eta_inner_core(2) = npoin2D_eta_inner_core(1)
-
-!! DK DK added this to reduce the size of the buffers
+! added this to reduce the size of the buffers
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-  npoin2D_max_all = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
+  npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
                         maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
 
-!! DK DK fix the non-blocking arrays to assemble inside the chunks: elements
-!! DK DK in contact with the MPI faces by an edge or a corner only but not
-!! DK DK a full face are missing, therefore let us add them
+! fix the non-blocking arrays to assemble inside the chunks: elements
+! in contact with the MPI faces by an edge or a corner only but not
+! a full face are missing, therefore let us add them
 #ifdef USE_MPI
   call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
          iboolleft_xi_crust_mantle,iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
-         npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1),ibool_crust_mantle, &
+         npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle,ibool_crust_mantle, &
          mask_ibool,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM)
 
   call fix_non_blocking_slices(is_on_a_slice_edge_outer_core,iboolright_xi_outer_core, &
          iboolleft_xi_outer_core,iboolright_eta_outer_core,iboolleft_eta_outer_core, &
-         npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1),ibool_outer_core, &
+         npoin2D_xi_outer_core,npoin2D_eta_outer_core,ibool_outer_core, &
          mask_ibool,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC)
 
   call fix_non_blocking_slices(is_on_a_slice_edge_inner_core,iboolright_xi_inner_core, &
          iboolleft_xi_inner_core,iboolright_eta_inner_core,iboolleft_eta_inner_core, &
-         npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1),ibool_inner_core, &
+         npoin2D_xi_inner_core,npoin2D_eta_inner_core,ibool_inner_core, &
          mask_ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC)
 #endif
 
@@ -555,7 +542,7 @@ ibelm_top_inner_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
   kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle,kappavstore_inner_core,muvstore_inner_core, &
   rmass_crust_mantle,rmass_outer_core,rmass_inner_core,rmass_ocean_load, &
 #ifdef USE_MPI
-  npoin2D_max_all,nrec,addressing,ibathy_topo, &
+  npoin2D_max_all_CM_IC,nrec,addressing,ibathy_topo, &
   ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
 iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
 iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &

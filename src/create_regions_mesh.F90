@@ -73,7 +73,7 @@
 
 !! DK DK added this for merged version
 #ifdef USE_MPI
-  integer :: npoin2D_xi,npoin2D_eta
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi,npoin2D_eta
 #endif
 
 ! mass matrix

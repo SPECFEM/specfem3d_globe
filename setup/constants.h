@@ -40,7 +40,6 @@
   integer, parameter :: ELEMENTS_NONBLOCKING_CM_IC = 1500
   integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
 
-  logical, parameter :: DEBUG_NONBLOCKING_COMMS = .false.
   logical, parameter :: DEBUG_USING_OPENDX = .false.
 
 !! DK DK temporary patch for the large Gordon Bell runs: set RECEIVERS_CAN_BE_BURIED

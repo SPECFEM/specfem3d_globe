@@ -37,7 +37,9 @@
 
   include "constants.h"
 
-  integer :: npoin2D_xi,npoin2D_eta,nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+  integer :: nspec,nglob,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi,npoin2D_eta
 
   logical, dimension(nspec) :: is_on_a_slice_edge
 
@@ -56,14 +58,20 @@
   mask_ibool(:) = .false.
 
 ! mark all the points that are in the MPI buffers to assemble inside each chunk
-  do ipoin = 1,npoin2D_xi
-    mask_ibool(iboolright_xi(ipoin)) = .true.
+  do ipoin = 1,npoin2D_xi(1)
     mask_ibool(iboolleft_xi(ipoin)) = .true.
   enddo
 
-  do ipoin = 1,npoin2D_eta
-    mask_ibool(iboolright_eta(ipoin)) = .true.
+  do ipoin = 1,npoin2D_eta(1)
     mask_ibool(iboolleft_eta(ipoin)) = .true.
+  enddo
+
+  do ipoin = 1,npoin2D_xi(2)
+    mask_ibool(iboolright_xi(ipoin)) = .true.
+  enddo
+
+  do ipoin = 1,npoin2D_eta(2)
+    mask_ibool(iboolright_eta(ipoin)) = .true.
   enddo
 
 ! now label all the elements that have at least one corner belonging

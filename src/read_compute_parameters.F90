@@ -1237,12 +1237,7 @@
     if(mod(NEX_ETA/8,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 8*NPROC_ETA'
     if(mod(NEX_XI/16,NPROC_XI) /= 0) CUT_SUPERBRICK_XI = .true.
     if(mod(NEX_ETA/16,NPROC_ETA) /= 0) CUT_SUPERBRICK_ETA = .true.
-!! DK DK added this because of temporary bug in David's code
-    if(mod(NEX_XI/16,NPROC_XI) /= 0) &
-      stop 'NEX_XI multiple of 8*NPROC_XI but not of 16*NPROC_XI is currently unsafe'
-    if(mod(NEX_ETA/16,NPROC_ETA) /= 0) &
-      stop 'NEX_ETA multiple of 8*NPROC_ETA but not of 16*NPROC_ETA is currently unsafe'
-!! DK DK added this because of temporary bug in David's code
+
   else
 
     if(mod(NEX_XI,32) /= 0) stop 'NEX_XI must be a multiple of 32'
@@ -1251,6 +1246,7 @@
     if(mod(NEX_ETA/16,NPROC_ETA) /= 0) stop 'NEX_ETA must be a multiple of 16*NPROC_ETA'
     if(mod(NEX_XI/32,NPROC_XI) /= 0) CUT_SUPERBRICK_XI = .true.
     if(mod(NEX_ETA/32,NPROC_ETA) /= 0) CUT_SUPERBRICK_ETA = .true.
+
   endif
 
 ! check that topology is correct if more than two chunks

@@ -39,7 +39,7 @@ ibelm_top_inner_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
   kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle,kappavstore_inner_core,muvstore_inner_core, &
   rmass_crust_mantle,rmass_outer_core,rmass_inner_core,rmass_ocean_load, &
 #ifdef USE_MPI
-  npoin2D_max_all,nrec,addressing,ibathy_topo, &
+  npoin2D_max_all_CM_IC,nrec,addressing,ibathy_topo, &
   ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
 iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
 iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -225,8 +225,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! always three times bigger and therefore scalars can use the first part
 ! of the vector buffer in memory even if it has an additional index here
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
-  integer :: npoin2D_max_all
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all,NUMFACES_SHARED) :: buffer_send_faces,buffer_received_faces
+  integer :: npoin2D_max_all_CM_IC
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: buffer_send_faces,buffer_received_faces
 
 #endif
 
@@ -454,9 +454,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #endif
 
 #ifdef USE_MPI
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+      npoin2D_xi_outer_core,npoin2D_eta_outer_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core
 #endif
 
   integer :: ichunk,iproc_xi,iproc_eta
@@ -1240,7 +1239,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
@@ -1255,7 +1254,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
@@ -1269,7 +1268,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
@@ -1283,7 +1282,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
@@ -1706,18 +1705,6 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     is_on_a_slice_edge_inner_core(:) = .true.
   endif
 
-#ifdef USE_MPI
-  if(USE_NONBLOCKING_COMMS) then
-     if(npoin2D_xi_crust_mantle(1) /= npoin2D_eta_crust_mantle(1) .or. &
-        npoin2D_xi_crust_mantle(2) /= npoin2D_eta_crust_mantle(2) .or. &
-        npoin2D_xi_outer_core(1) /= npoin2D_eta_outer_core(1) .or. &
-        npoin2D_xi_outer_core(2) /= npoin2D_eta_outer_core(2) .or. &
-        npoin2D_xi_inner_core(1) /= npoin2D_eta_inner_core(1) .or. &
-        npoin2D_xi_inner_core(2) /= npoin2D_eta_inner_core(2)) &
-       stop 'non-blocking scheme temporarily requires npoin2D_xi = npoin2D_eta because of the size of some buffers reused'
-  endif
-#endif
-
   vx_crust_mantle = size(factor_common_crust_mantle,2)
   vy_crust_mantle = size(factor_common_crust_mantle,3)
   vz_crust_mantle = size(factor_common_crust_mantle,4)
@@ -2102,7 +2089,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           iboolfaces_outer_core,iboolcorner_outer_core, &
           iprocfrom_faces,iprocto_faces, &
           iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-          buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
           buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase, &
 #endif
           hprime_xx,hprime_yy,hprime_zz, &
@@ -2237,7 +2224,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_xi_outer_core(1), &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
@@ -2260,7 +2247,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           iboolfaces_outer_core,iboolcorner_outer_core, &
           iprocfrom_faces,iprocto_faces, &
           iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-          buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
           buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase, &
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
@@ -2280,7 +2267,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_xi_outer_core(1), &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
@@ -2294,7 +2281,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
@@ -2348,7 +2335,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
 !!!!!!!!!!!!!!!!!!!!!!!!!
           nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
@@ -2533,22 +2520,20 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS,iphase)
   endif
 #endif
-
-  if(DEBUG_NONBLOCKING_COMMS) accel_crust_mantle = 1.e27
 
 #ifdef USE_MPI
   if(USE_NONBLOCKING_COMMS) then
@@ -2582,7 +2567,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
 !!!!!!!!!!!!!!!!!!!!!!!!!
           nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
@@ -2597,20 +2582,6 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
                               ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle)
 
 #ifdef USE_MPI
-  if(DEBUG_NONBLOCKING_COMMS) then
-    do ipoin = 1,npoin2D_xi_crust_mantle(1)
-      if(minval(accel_crust_mantle(:,iboolright_xi_crust_mantle(ipoin))) < 1.e27) call exit_mpi(myrank,'error in new step 1')
-      if(minval(accel_crust_mantle(:,iboolleft_xi_crust_mantle(ipoin))) < 1.e27) call exit_mpi(myrank,'error in new step 2')
-      if(minval(accel_crust_mantle(:,iboolright_eta_crust_mantle(ipoin))) < 1.e27) then
-        print *,'myrank, maxval_abs,ibool = ',myrank, &
-          minval(accel_crust_mantle(:,iboolright_eta_crust_mantle(ipoin))),iboolright_eta_crust_mantle(ipoin)
-        call exit_mpi(myrank,'error in new step 3')
-      endif
-      if(minval(accel_crust_mantle(:,iboolleft_eta_crust_mantle(ipoin))) < 1.e27) call exit_mpi(myrank,'error in new step 4')
-    enddo
-    call exit_mpi(myrank,'everything went well in DEBUG_NONBLOCKING_COMMS, no overlap detected')
-  endif
-
 ! assemble all the contributions between slices using MPI
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
@@ -2619,14 +2590,14 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
       call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
@@ -2636,14 +2607,14 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     call assemble_MPI_vector_block(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1), &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
             iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1), &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &

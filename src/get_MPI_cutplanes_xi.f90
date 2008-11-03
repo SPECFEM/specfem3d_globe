@@ -56,20 +56,18 @@
   integer ispec
 
 ! MPI cut-plane element numbering
-  integer ispecc1,ispecc2,npoin2D_xi,ix,iy,iz
-  integer nspec2Dtheor
+  integer :: ispecc1,ispecc2,ix,iy,iz,nspec2Dtheor
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi
 
   character(len=150) errmsg
-
-! theoretical number of surface elements in the buffers
-! cut planes along xi=constant correspond to ETA faces
-      nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,1)
-! write the MPI buffers for the left and right edges of the slice
-! and the position of the points to check that the buffers are fine
 
 !
 ! determine if the element falls on the left MPI cut plane
 !
+
+! theoretical number of surface elements in the buffers
+! cut planes along xi=constant correspond to ETA faces
+  nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,1)
 
 ! global point number and coordinates left MPI cut-plane
 
@@ -77,7 +75,7 @@
   mask_ibool(:) = .false.
 
 ! nb of global points shared with the other slice
-  npoin2D_xi = 0
+  npoin2D_xi(1) = 0
 
 ! nb of elements in this cut-plane
   ispecc1=0
@@ -92,13 +90,13 @@
             ! select point, if not already selected
             if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
                 mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-                npoin2D_xi = npoin2D_xi + 1
+                npoin2D_xi(1) = npoin2D_xi(1) + 1
 !! DK DK added this for merged
-                if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX) stop 'DK DK error points merged'
+                if(npoin2D_xi(1) > NGLOB2DMAX_XMIN_XMAX) stop 'DK DK error points merged'
 !! DK DK suppressed merged                  write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
 !! DK DK suppressed merged                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
 !! DK DK added this for merged
-                iboolleft_xi(npoin2D_xi) = ibool(ix,iy,iz,ispec)
+                iboolleft_xi(npoin2D_xi(1)) = ibool(ix,iy,iz,ispec)
             endif
           enddo
       enddo
@@ -111,7 +109,7 @@
 !! DK DK suppressed merged  write(10,*) '0 0  0.  0.  0.'
 
 ! write total number of points
-!! DK DK suppressed merged  write(10,*) npoin2D_xi
+!! DK DK suppressed merged  write(10,*) npoin2D_xi(1)
 
 !! DK DK suppressed merged  close(10)
 
@@ -120,10 +118,12 @@
     write(errmsg,*) 'error MPI cut-planes detection in xi=left T=',nspec2Dtheor,' C=',ispecc1
     call exit_MPI(myrank,errmsg)
   endif
+
+
 !
 ! determine if the element falls on the right MPI cut plane
 !
-      nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
+  nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
 
 ! global point number and coordinates right MPI cut-plane
 
@@ -131,7 +131,7 @@
   mask_ibool(:) = .false.
 
 ! nb of global points shared with the other slice
-  npoin2D_xi = 0
+  npoin2D_xi(2) = 0
 
 ! nb of elements in this cut-plane
   ispecc2=0
@@ -146,12 +146,12 @@
           ! select point, if not already selected
           if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
               mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-              npoin2D_xi = npoin2D_xi + 1
+              npoin2D_xi(2) = npoin2D_xi(2) + 1
 !! DK DK added this for merged
-              if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX) stop 'DK DK error points merged'
+              if(npoin2D_xi(2) > NGLOB2DMAX_XMIN_XMAX) stop 'DK DK error points merged'
 !! DK DK suppressed merged                write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
 !! DK DK suppressed merged                      ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
-              iboolright_xi(npoin2D_xi) = ibool(ix,iy,iz,ispec)
+              iboolright_xi(npoin2D_xi(2)) = ibool(ix,iy,iz,ispec)
           endif
         enddo
       enddo
@@ -164,7 +164,7 @@
 !! DK DK suppressed merged  write(10,*) '0 0  0.  0.  0.'
 
 ! write total number of points
-!! DK DK suppressed merged  write(10,*) npoin2D_xi
+!! DK DK suppressed merged  write(10,*) npoin2D_xi(2)
 
 !! DK DK suppressed merged  close(10)
 

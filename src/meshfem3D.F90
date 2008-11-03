@@ -1534,8 +1534,7 @@
   c55store,c56store,c66store,iboun,locval,ifseg,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
 #ifdef USE_MPI
   maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)),NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-!! DK DK this below with index (1) will have to change to fully support David's code to cut the superbrick
-  NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM,npoin2D_xi_crust_mantle(1),npoin2D_eta_crust_mantle(1),iboolleft_xi_crust_mantle,&
+  NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle,iboolleft_xi_crust_mantle,&
   iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle,ibool1D_leftxi_lefteta, &
   ibool1D_rightxi_lefteta,ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
@@ -1569,8 +1568,7 @@
   c55store,c56store,c66store,iboun,locval,ifseg,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
 #ifdef USE_MPI
   maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)),NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-!! DK DK this below with index (1) will have to change to fully support David's code to cut the superbrick
-  NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,npoin2D_xi_outer_core(1),npoin2D_eta_outer_core(1),iboolleft_xi_outer_core, &
+  NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,npoin2D_xi_outer_core,npoin2D_eta_outer_core,iboolleft_xi_outer_core, &
   iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core,ibool1D_leftxi_lefteta, &
   ibool1D_rightxi_lefteta,ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &
@@ -1604,8 +1602,7 @@
   c55store,c56store,c66store,iboun,locval,ifseg,rmass_ocean_load,mask_ibool,copy_ibool_ori,iMPIcut_xi,iMPIcut_eta, &
 #ifdef USE_MPI
   maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)),NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
-!! DK DK this below with index (1) will have to change to fully support David's code to cut the superbrick
-  NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC,npoin2D_xi_inner_core(1),npoin2D_eta_inner_core(1),iboolleft_xi_inner_core, &
+  NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC,npoin2D_xi_inner_core,npoin2D_eta_inner_core,iboolleft_xi_inner_core, &
   iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core,ibool1D_leftxi_lefteta, &
   ibool1D_rightxi_lefteta,ibool1D_leftxi_righteta,ibool1D_rightxi_righteta,xread1D_leftxi_lefteta,xread1D_rightxi_lefteta, &
   xread1D_leftxi_righteta,xread1D_rightxi_righteta,yread1D_leftxi_lefteta,yread1D_rightxi_lefteta,yread1D_leftxi_righteta, &

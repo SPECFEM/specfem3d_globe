@@ -56,19 +56,16 @@
   integer ispec
 
 ! MPI cut-plane element numbering
-  integer ispecc1,ispecc2,npoin2D_eta,ix,iy,iz
-  integer nspec2Dtheor
-
-! theoretical number of surface elements in the buffers
-! cut planes along eta=constant correspond to XI faces
-      nspec2Dtheor = NSPEC2D_XI_FACE(iregion,1)
-
-! write the MPI buffers for the left and right edges of the slice
-! and the position of the points to check that the buffers are fine
+  integer :: ispecc1,ispecc2,ix,iy,iz,nspec2Dtheor
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_eta
 
 !
 ! determine if the element falls on the left MPI cut plane
 !
+
+! theoretical number of surface elements in the buffers
+! cut planes along eta=constant correspond to XI faces
+  nspec2Dtheor = NSPEC2D_XI_FACE(iregion,1)
 
 ! global point number and coordinates left MPI cut-plane
 
@@ -76,7 +73,7 @@
   mask_ibool(:) = .false.
 
 ! nb of global points shared with the other slice
-  npoin2D_eta = 0
+  npoin2D_eta(1) = 0
 
 ! nb of elements in this cut-plane
   ispecc1=0
@@ -91,15 +88,15 @@
             ! select point, if not already selected
             if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
                 mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-                npoin2D_eta = npoin2D_eta + 1
+                npoin2D_eta(1) = npoin2D_eta(1) + 1
 !! DK DK added this for merged
-                if(npoin2D_eta > NGLOB2DMAX_YMIN_YMAX) stop 'DK DK error points merged'
+                if(npoin2D_eta(1) > NGLOB2DMAX_YMIN_YMAX) stop 'DK DK error points merged'
 !! DK DK suppressed merged                  write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
 !! DK DK suppressed merged                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
 !! DK DK added this for merged
 !! DK DK merged   ces deux tableaux sont les memes donc on pourrait n'en declarer qu'un seul
 !! DK DK merged   mais en fait non car on le reutilise ci-dessous pour ibool_right
-                iboolleft_eta(npoin2D_eta) = ibool(ix,iy,iz,ispec)
+                iboolleft_eta(npoin2D_eta(1)) = ibool(ix,iy,iz,ispec)
             endif
           enddo
       enddo
@@ -112,17 +109,18 @@
 !! DK DK suppressed merged  write(10,*) '0 0  0.  0.  0.'
 
 ! write total number of points
-!! DK DK suppressed merged  write(10,*) npoin2D_eta
+!! DK DK suppressed merged  write(10,*) npoin2D_eta(1)
 
 !! DK DK suppressed merged  close(10)
 
 ! compare number of surface elements detected to analytical value
   if(ispecc1 /= nspec2Dtheor) call exit_MPI(myrank,'error MPI cut-planes detection in eta=left')
 
+
 !
 ! determine if the element falls on the right MPI cut plane
 !
-      nspec2Dtheor = NSPEC2D_XI_FACE(iregion,2)
+  nspec2Dtheor = NSPEC2D_XI_FACE(iregion,2)
 
 ! global point number and coordinates right MPI cut-plane
 
@@ -130,7 +128,7 @@
   mask_ibool(:) = .false.
 
 ! nb of global points shared with the other slice
-  npoin2D_eta = 0
+  npoin2D_eta(2) = 0
 
 ! nb of elements in this cut-plane
   ispecc2=0
@@ -145,15 +143,15 @@
           ! select point, if not already selected
           if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
               mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
-              npoin2D_eta = npoin2D_eta + 1
+              npoin2D_eta(2) = npoin2D_eta(2) + 1
 !! DK DK added this for merged
-              if(npoin2D_eta > NGLOB2DMAX_YMIN_YMAX) stop 'DK DK error points merged'
+              if(npoin2D_eta(2) > NGLOB2DMAX_YMIN_YMAX) stop 'DK DK error points merged'
 !! DK DK suppressed merged                write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
 !! DK DK suppressed merged                      ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
 !! DK DK added this for merged
 !! DK DK merged   ces deux tableaux sont les memes donc on pourrait n'en declarer qu'un seul
 !! DK DK merged   mais en fait non car on le reutilise ci-dessous pour ibool_right
-              iboolright_eta(npoin2D_eta) = ibool(ix,iy,iz,ispec)
+              iboolright_eta(npoin2D_eta(2)) = ibool(ix,iy,iz,ispec)
           endif
         enddo
       enddo
@@ -166,7 +164,7 @@
 !! DK DK suppressed merged  write(10,*) '0 0  0.  0.  0.'
 
 ! write total number of points
-!! DK DK suppressed merged  write(10,*) npoin2D_eta
+!! DK DK suppressed merged  write(10,*) npoin2D_eta(2)
 
 !! DK DK suppressed merged  close(10)
 

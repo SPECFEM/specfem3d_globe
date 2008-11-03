@@ -39,7 +39,7 @@
           iboolfaces_outer_core,iboolcorner_outer_core, &
           iprocfrom_faces,iprocto_faces, &
           iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-          buffer_send_faces,buffer_received_faces,npoin2D_max_all, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
           buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase, &
 #endif
           hprime_xx,hprime_yy,hprime_zz, &
@@ -80,8 +80,8 @@
 ! always three times bigger and therefore scalars can use the first part
 ! of the vector buffer in memory even if it has an additional index here
 ! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
-  integer :: npoin2D_max_all
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all,NUMFACES_SHARED) :: buffer_send_faces,buffer_received_faces
+  integer :: npoin2D_max_all_CM_IC
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: buffer_send_faces,buffer_received_faces
 
   integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
 
@@ -156,7 +156,7 @@
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_xi_outer_core(1), &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_OC, &
