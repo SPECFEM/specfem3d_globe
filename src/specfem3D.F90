@@ -1728,7 +1728,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
     it_begin = IT_LAST_VALUE_DUMPED + 1
 
-! if this is not the first part of the run, read all the files dumped to disk
+! if this is not the first part of the run, read all the files previously written to disk
     if(IT_LAST_VALUE_DUMPED > 0) then
       write(outputname,"('/dump_all_arrays',i6.6)") myrank
       open(unit=55,file=trim(PATH_RESTART_FILES)//outputname,status='old',form='unformatted',action='read')
@@ -2896,7 +2896,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #endif
 
 ! write restart files
-! if this is not the first part of the run, write all the files to disk
+! if this is not the last part of the run, write all the files to disk
   if(USE_RESTART_FILES .and. mod(it,INTERVAL_DUMP_FILES) == 0 .and. it /= NSTEP) then
 
     write(outputname,"('/dump_all_arrays',i6.6)") myrank
