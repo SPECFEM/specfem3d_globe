@@ -120,6 +120,7 @@ libspecfem_a_OBJECTS = \
 	$O/calc_jacobian.o \
 	$O/convert_time.o \
 	$O/calendar.o \
+	$O/icrc.o \
 	$O/create_name_database.o \
 	$O/debug_with_opendx.o \
 	$O/fix_non_blocking_slices.o \
@@ -363,6 +364,9 @@ $O/convert_time.o: $(SPECINC)/constants.h $S/convert_time.f90
 
 $O/calendar.o: $(SPECINC)/constants.h $S/calendar.f90
 	${FCCOMPILE_CHECK} -c -o $O/calendar.o ${FCFLAGS_f90} $S/calendar.f90
+
+$O/icrc.o: $S/icrc.f90
+	${FCCOMPILE_CHECK} -c -o $O/icrc.o ${FCFLAGS_f90} $S/icrc.f90
 
 $O/create_name_database.o: $(SPECINC)/constants.h $S/create_name_database.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} $S/create_name_database.f90

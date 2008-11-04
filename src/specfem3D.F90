@@ -569,6 +569,11 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
  real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
 #endif
 
+! to compute a simple 16-bit cyclic redundancy check (CRC) for restart files
+  integer, parameter :: I2B = SELECTED_INT_KIND(4)
+  integer :: total_size_array
+  integer(I2B) :: icrc,icrc_read
+
 ! ************** PROGRAM STARTS HERE **************
 
 ! set up GLL points, weights and derivation matrices
@@ -1727,21 +1732,97 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     if(IT_LAST_VALUE_DUMPED > 0) then
       write(outputname,"('/dump_all_arrays',i6.6)") myrank
       open(unit=55,file=trim(PATH_RESTART_FILES)//outputname,status='old',form='unformatted',action='read')
+
       read(55) displ_crust_mantle
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*NDIM*NGLOB_CRUST_MANTLE
+      call compute_icrc(icrc,0_I2B,displ_crust_mantle,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       read(55) veloc_crust_mantle
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*NDIM*NGLOB_CRUST_MANTLE
+      call compute_icrc(icrc,0_I2B,veloc_crust_mantle,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       read(55) accel_crust_mantle
-      read(55) displ_inner_core
-      read(55) veloc_inner_core
-      read(55) accel_inner_core
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*NDIM*NGLOB_CRUST_MANTLE
+      call compute_icrc(icrc,0_I2B,accel_crust_mantle,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       read(55) displ_outer_core
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+      call compute_icrc(icrc,0_I2B,displ_outer_core,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       read(55) veloc_outer_core
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+      call compute_icrc(icrc,0_I2B,veloc_outer_core,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       read(55) accel_outer_core
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+      call compute_icrc(icrc,0_I2B,accel_outer_core,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
+      read(55) displ_inner_core
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*NDIM*NGLOB_INNER_CORE
+      call compute_icrc(icrc,0_I2B,displ_inner_core,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
+      read(55) veloc_inner_core
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*NDIM*NGLOB_INNER_CORE
+      call compute_icrc(icrc,0_I2B,veloc_inner_core,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
+      read(55) accel_inner_core
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*NDIM*NGLOB_INNER_CORE
+      call compute_icrc(icrc,0_I2B,accel_inner_core,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       read(55) R_memory_crust_mantle
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT
+      call compute_icrc(icrc,0_I2B,R_memory_crust_mantle,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       read(55) R_memory_inner_core
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
+      call compute_icrc(icrc,0_I2B,R_memory_inner_core,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       read(55) epsilondev_crust_mantle
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*5*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_STR_OR_ATT
+      call compute_icrc(icrc,0_I2B,epsilondev_crust_mantle,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       read(55) epsilondev_inner_core
+      read(55) icrc_read
+      total_size_array = CUSTOM_REAL*5*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_STR_OR_ATT
+      call compute_icrc(icrc,0_I2B,epsilondev_inner_core,total_size_array,0_I2B,1)
+      if(icrc /= icrc_read) stop 'CRC error in restart file'
+
 !     read(55) A_array_rotation
+!     read(55) icrc_read
+!     total_size_array = YYYYYYYYYYYYY
+!     call compute_icrc(icrc,0_I2B,A_array_rotation,total_size_array,0_I2B,1)
+!     if(icrc /= icrc_read) stop 'CRC error in restart file'
+
 !     read(55) B_array_rotation
+!     read(55) icrc_read
+!     total_size_array = YYYYYYYYYYYYY
+!     call compute_icrc(icrc,0_I2B,B_array_rotation,total_size_array,0_I2B,1)
+!     if(icrc /= icrc_read) stop 'CRC error in restart file'
+
       close(55)
 
 ! write a stamp to disk to notify user that files have been read back
@@ -2814,27 +2895,88 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   endif
 #endif
 
-! dump restart files
+! write restart files
 ! if this is not the first part of the run, write all the files to disk
   if(USE_RESTART_FILES .and. mod(it,INTERVAL_DUMP_FILES) == 0 .and. it /= NSTEP) then
 
     write(outputname,"('/dump_all_arrays',i6.6)") myrank
     open(unit=55,file=trim(PATH_RESTART_FILES)//outputname,status='unknown',form='unformatted',action='write')
+
     write(55) displ_crust_mantle
+    total_size_array = CUSTOM_REAL*NDIM*NGLOB_CRUST_MANTLE
+    call compute_icrc(icrc,0_I2B,displ_crust_mantle,total_size_array,0_I2B,1)
+    write(55) icrc
+
     write(55) veloc_crust_mantle
+    total_size_array = CUSTOM_REAL*NDIM*NGLOB_CRUST_MANTLE
+    call compute_icrc(icrc,0_I2B,veloc_crust_mantle,total_size_array,0_I2B,1)
+    write(55) icrc
+
     write(55) accel_crust_mantle
-    write(55) displ_inner_core
-    write(55) veloc_inner_core
-    write(55) accel_inner_core
+    total_size_array = CUSTOM_REAL*NDIM*NGLOB_CRUST_MANTLE
+    call compute_icrc(icrc,0_I2B,accel_crust_mantle,total_size_array,0_I2B,1)
+    write(55) icrc
+
     write(55) displ_outer_core
+    total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+    call compute_icrc(icrc,0_I2B,displ_outer_core,total_size_array,0_I2B,1)
+    write(55) icrc
+
     write(55) veloc_outer_core
+    total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+    call compute_icrc(icrc,0_I2B,veloc_outer_core,total_size_array,0_I2B,1)
+    write(55) icrc
+
     write(55) accel_outer_core
+    total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+    call compute_icrc(icrc,0_I2B,accel_outer_core,total_size_array,0_I2B,1)
+    write(55) icrc
+
+    write(55) displ_inner_core
+    total_size_array = CUSTOM_REAL*NDIM*NGLOB_INNER_CORE
+    call compute_icrc(icrc,0_I2B,displ_inner_core,total_size_array,0_I2B,1)
+    write(55) icrc
+
+    write(55) veloc_inner_core
+    total_size_array = CUSTOM_REAL*NDIM*NGLOB_INNER_CORE
+    call compute_icrc(icrc,0_I2B,veloc_inner_core,total_size_array,0_I2B,1)
+    write(55) icrc
+
+    write(55) accel_inner_core
+    total_size_array = CUSTOM_REAL*NDIM*NGLOB_INNER_CORE
+    call compute_icrc(icrc,0_I2B,accel_inner_core,total_size_array,0_I2B,1)
+    write(55) icrc
+
     write(55) R_memory_crust_mantle
+    total_size_array = CUSTOM_REAL*5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUAT
+    call compute_icrc(icrc,0_I2B,R_memory_crust_mantle,total_size_array,0_I2B,1)
+    write(55) icrc
+
     write(55) R_memory_inner_core
+    total_size_array = CUSTOM_REAL*5*N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
+    call compute_icrc(icrc,0_I2B,R_memory_inner_core,total_size_array,0_I2B,1)
+    write(55) icrc
+
     write(55) epsilondev_crust_mantle
+    total_size_array = CUSTOM_REAL*5*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_STR_OR_ATT
+    call compute_icrc(icrc,0_I2B,epsilondev_crust_mantle,total_size_array,0_I2B,1)
+    write(55) icrc
+
     write(55) epsilondev_inner_core
+    total_size_array = CUSTOM_REAL*5*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_STR_OR_ATT
+    call compute_icrc(icrc,0_I2B,epsilondev_inner_core,total_size_array,0_I2B,1)
+    write(55) icrc
+
 !   write(55) A_array_rotation
+!   total_size_array = YYYYYYYYYYYYY
+!   call compute_icrc(icrc,0_I2B,A_array_rotation,total_size_array,0_I2B,1)
+!   write(55) icrc
+
 !   write(55) B_array_rotation
+!   total_size_array = YYYYYYYYYYYYY
+!   call compute_icrc(icrc,0_I2B,B_array_rotation,total_size_array,0_I2B,1)
+!   write(55) icrc
+
     close(55)
 
 ! synchronize all the processes to make sure everybody has finished
