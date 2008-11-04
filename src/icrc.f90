@@ -29,8 +29,8 @@
     do j=0,255
       icrctb(j)=icrc1(ishft(j,8),char(0))
       rchr(j)=ishft(it(iand(j,15_I2B)),4)+it(ishft(j,-4))
-    end do
-  end if
+    enddo
+  endif
 
   cword=crc
 
@@ -38,13 +38,13 @@
     cword=ior(jinit,ishft(jinit,8))
   else if (jrev < 0) then
     cword=ior(rchr(hibyte()),ishft(rchr(lobyte()),8))
-  end if
+  endif
 
   do j=1,n
     ich=ichar(buf(j))
     if (jrev < 0) ich=rchr(ich)
     cword=ieor(icrctb(ieor(ich,hibyte())),ishft(lobyte(),8))
-  end do
+  enddo
 
   icrc=merge(cword,ior(rchr(hibyte()),ishft(rchr(lobyte()),8)), jrev >= 0)
 
@@ -80,7 +80,7 @@
   do i=1,8
     icrc1=merge(ieor(ccitt,ishft(icrc1,1)), &
       ishft(icrc1,1), iand(icrc1,bit16) /= 0)
-  end do
+  enddo
   END FUNCTION icrc1
 
   end subroutine compute_icrc
