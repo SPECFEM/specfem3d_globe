@@ -78,42 +78,42 @@
     write(texttowrite,201) i
     print *,trim(texttowrite),radius_ak135(i)
   enddo
- 201 format(' radius_ak135(',i3,') = ')
+ 201 format(' Mak135_V%radius_ak135(',i3,') = ')
   print *
 
   do i=1,NR_AK135
     write(texttowrite,202) i
     print *,trim(texttowrite),density_ak135(i)
   enddo
- 202 format(' density_ak135(',i3,') = ')
+ 202 format(' Mak135_V%density_ak135(',i3,') = ')
   print *
 
   do i=1,NR_AK135
     write(texttowrite,203) i
     print *,trim(texttowrite),vp_ak135(i)
   enddo
- 203 format(' vp_ak135(',i3,') = ')
+ 203 format(' Mak135_V%vp_ak135(',i3,') = ')
   print *
 
   do i=1,NR_AK135
     write(texttowrite,204) i
     print *,trim(texttowrite),vs_ak135(i)
   enddo
- 204 format(' vs_ak135(',i3,') = ')
+ 204 format(' Mak135_V%vs_ak135(',i3,') = ')
   print *
 
   do i=1,NR_AK135
     write(texttowrite,205) i
     print *,trim(texttowrite),Qkappa_ak135(i)
   enddo
- 205 format(' Qkappa_ak135(',i3,') = ')
+ 205 format(' Mak135_V%Qkappa_ak135(',i3,') = ')
   print *
 
   do i=1,NR_AK135
     write(texttowrite,206) i
     print *,trim(texttowrite),Qmu_ak135(i)
   enddo
- 206 format(' Qmu_ak135(',i3,') = ')
+ 206 format(' Mak135_V%Qmu_ak135(',i3,') = ')
   print *
 
   end program read_model_ak135
