@@ -28,7 +28,7 @@
   implicit none
 
 ! number of layers in DATA/ak135/ak135.dat
-  integer, parameter :: NR_AK135 = 144
+  integer, parameter :: NR_AK135 = 135
 
 ! these are the values we need
   double precision radius_ak135(NR_AK135),density_ak135(NR_AK135)
@@ -62,14 +62,15 @@
   enddo
   close(10)
 
-  do i=NR_AK135-4,NR_AK135
+!! DK DK not needed anymore because these layers have now been suppressed from the input file
+! do i=NR_AK135-4,NR_AK135
 ! strip the ocean and sediment layers and replace them by upper crust
-    density_ak135(i) = density_ak135(NR_AK135-5)
-    vp_ak135(i) = vp_ak135(NR_AK135-5)
-    vs_ak135(i) = vs_ak135(NR_AK135-5)
-    Qkappa_ak135(i) = Qkappa_ak135(NR_AK135-5)
-    Qmu_ak135(i) = Qmu_ak135(NR_AK135-5)
-  enddo
+!   density_ak135(i) = density_ak135(NR_AK135-5)
+!   vp_ak135(i) = vp_ak135(NR_AK135-5)
+!   vs_ak135(i) = vs_ak135(NR_AK135-5)
+!   Qkappa_ak135(i) = Qkappa_ak135(NR_AK135-5)
+!   Qmu_ak135(i) = Qmu_ak135(NR_AK135-5)
+! enddo
 
   print *
 
