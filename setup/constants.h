@@ -442,7 +442,7 @@
   integer, parameter :: NR_1066A = 160
 
 ! number of layers in DATA/ak135/ak135.dat
-  integer, parameter :: NR_AK135 = 144
+  integer, parameter :: NR_AK135 = 135
 
 ! number of layers in DATA/s362ani/REF
   integer, parameter :: NR_REF = 750
