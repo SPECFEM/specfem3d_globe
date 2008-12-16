@@ -149,7 +149,8 @@
   !event_id, date,origin time,latitude,longitude,depth, mb, MS, region
 
   ! read header with event information
-    read(821,*) datasource,yr,mo,da,ho,mi,sec,elat,elon,depth,mb,ms,region
+    read(821,"(a4,i5,i3,i3,i3,i3,f6.2,a)") datasource,yr,mo,da,ho,mi,sec,dummystring
+    read(dummystring,*) elat,elon,depth,mb,ms,region
 
     jda=julian_day(yr,mo,da)
 
