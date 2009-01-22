@@ -66,10 +66,6 @@
 
   double precision r,frac,scaleval
 
-!! DK DK UGLY implementation of model ak135 below and its radii in
-!! DK DK UGLY subroutine read_parameter_file.f90 has not been thoroughly
-!! DK DK UGLY checked yet
-
 ! compute real physical radius in meters
   r = x * R_EARTH
 
