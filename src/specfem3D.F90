@@ -1753,19 +1753,19 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
       read(55) displ_outer_core
       read(55) icrc_read
-      total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+      total_size_array = CUSTOM_REAL*NGLOB_OUTER_CORE
       call compute_icrc(icrc,0_I2B,displ_outer_core,total_size_array,0_I2B,1)
       if(icrc /= icrc_read) stop 'CRC error in restart file'
 
       read(55) veloc_outer_core
       read(55) icrc_read
-      total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+      total_size_array = CUSTOM_REAL*NGLOB_OUTER_CORE
       call compute_icrc(icrc,0_I2B,veloc_outer_core,total_size_array,0_I2B,1)
       if(icrc /= icrc_read) stop 'CRC error in restart file'
 
       read(55) accel_outer_core
       read(55) icrc_read
-      total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+      total_size_array = CUSTOM_REAL*NGLOB_OUTER_CORE
       call compute_icrc(icrc,0_I2B,accel_outer_core,total_size_array,0_I2B,1)
       if(icrc /= icrc_read) stop 'CRC error in restart file'
 
@@ -2918,17 +2918,17 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     write(55) icrc
 
     write(55) displ_outer_core
-    total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+    total_size_array = CUSTOM_REAL*NGLOB_OUTER_CORE
     call compute_icrc(icrc,0_I2B,displ_outer_core,total_size_array,0_I2B,1)
     write(55) icrc
 
     write(55) veloc_outer_core
-    total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+    total_size_array = CUSTOM_REAL*NGLOB_OUTER_CORE
     call compute_icrc(icrc,0_I2B,veloc_outer_core,total_size_array,0_I2B,1)
     write(55) icrc
 
     write(55) accel_outer_core
-    total_size_array = CUSTOM_REAL*NDIM*NGLOB_OUTER_CORE
+    total_size_array = CUSTOM_REAL*NGLOB_OUTER_CORE
     call compute_icrc(icrc,0_I2B,accel_outer_core,total_size_array,0_I2B,1)
     write(55) icrc
 
