@@ -28,7 +28,7 @@
   implicit none
 
 ! number of layers in DATA/ak135/ak135.dat
-  integer, parameter :: NR_AK135 = 135
+  integer, parameter :: NR_AK135 = 136
 
 ! these are the values we need
   double precision radius_ak135(NR_AK135),density_ak135(NR_AK135)
