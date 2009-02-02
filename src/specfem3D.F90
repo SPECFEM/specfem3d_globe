@@ -514,6 +514,7 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
   character(len=150) OUTPUT_FILES,MODEL
+  character(len=400) system_command
 
 ! parameters deduced from parameters read from file
   integer NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
@@ -2898,6 +2899,19 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 ! write restart files
 ! if this is not the last part of the run, write all the files to disk
   if(USE_RESTART_FILES .and. mod(it,INTERVAL_DUMP_FILES) == 0 .and. it /= NSTEP) then
+
+! move the current restart files (if any) to a backup directory in order to save
+! them just in case the current run crashes while writing the new restart files
+    if(myrank == 0) then
+      system_command = 'rm -f -r '//trim(PATH_RESTART_FILES)//'_old'
+      call system(system_command)
+      system_command = 'mv -f '//trim(PATH_RESTART_FILES)//' '//trim(PATH_RESTART_FILES)//'_old'
+      call system(system_command)
+      system_command = 'mkdir -p '//trim(PATH_RESTART_FILES)
+      call system(system_command)
+    endif
+! synchronize all the processes to make sure everybody has finished
+    call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
     write(outputname,"('/dump_all_arrays',i6.6)") myrank
     open(unit=55,file=trim(PATH_RESTART_FILES)//outputname,status='unknown',form='unformatted',action='write')
