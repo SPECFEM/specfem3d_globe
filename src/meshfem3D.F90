@@ -964,7 +964,9 @@
     MOVIE_SOUTH = bcast_double_precision(30)
 
 ! check that the code is running with the requested number of processes
+#ifdef USE_MPI
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
+#endif
 
   addressing(:,:,:) = 0
   ichunk_slice(:) = 0

@@ -736,7 +736,7 @@
  NER_OUTER_CORE =          268
  NER_TOP_CENTRAL_CUBE_ICB =           33
 
-      else  !! DK DK temporary fix for Laura  if(NEX_MAX*multiplication_factor <= 3264) then
+      else if(NEX_MAX*multiplication_factor <= 3264) then
 
 ! simple scaling for the time step
         DT                       = 0.0462d0 * 1248.d0 / dble(NEX_MAX*multiplication_factor)
@@ -754,9 +754,27 @@
  NER_OUTER_CORE =          304
  NER_TOP_CENTRAL_CUBE_ICB =           37
 
-!! DK DK temporary fix for Laura      else
+      else if(NEX_MAX*multiplication_factor <= 3792) then
 
-!! DK DK temporary fix for Laura        stop 'values of NEX_MAX > 3264 not implemented yet in read_compute_parameters'
+! simple scaling for the time step
+        DT                       = 0.0462d0 * 1248.d0 / dble(NEX_MAX*multiplication_factor)
+        R_CENTRAL_CUBE = 985000.d0
+
+ NER_CRUST =            8
+ NER_80_MOHO =            8 !!!!!!!!!!!!!!! 9
+ NER_220_80 =           20
+ NER_400_220 =           27
+ NER_600_400 =           29
+ NER_670_600 =           10
+ NER_771_670 =           15
+ NER_TOPDDOUBLEPRIME_771 =          245
+ NER_CMB_TOPDDOUBLEPRIME =           19 !!!!!!!!!!! 20
+ NER_OUTER_CORE =          304
+ NER_TOP_CENTRAL_CUBE_ICB =           37
+
+      else
+
+        stop 'values of NEX_MAX > 3792 not implemented yet in read_compute_parameters'
 
       endif
 

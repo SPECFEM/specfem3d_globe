@@ -861,7 +861,9 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   endif
 
 ! check that the code is running with the requested nb of processes
+#ifdef USE_MPI
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
+#endif
 
 ! check that the code has been compiled with the right values
   if (NSPEC_computed(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE) then
