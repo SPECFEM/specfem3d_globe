@@ -51,9 +51,9 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
   npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-  normal_top_crust_mantle,ibelm_top_crust_mantle, &
+  normal_top_crust_mantle, &
 #endif
-  AM_V,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+  ibelm_top_crust_mantle,AM_V,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
   etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
   gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle, &
   bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &
@@ -161,13 +161,14 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 ! additional mass matrix for ocean load
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
 ! flag to mask ocean-bottom degrees of freedom for ocean load
   logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
 
   real(kind=CUSTOM_REAL) additional_term,force_normal_comp
 #endif
+
+  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
 ! variable lengths for factor_common and one_minus_sum_beta
   integer :: vx_crust_mantle,vy_crust_mantle,vz_crust_mantle,vnspec_crust_mantle
@@ -203,9 +204,10 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 
 ! ---- arrays to assemble between chunks
 
+  integer :: ipoin
+
 #ifdef USE_MPI
 
-  integer :: ipoin
   integer :: iphase_CC
 
 ! communication pattern for faces between chunks
@@ -2911,7 +2913,9 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
       call system(system_command)
     endif
 ! synchronize all the processes to make sure everybody has finished
+#ifdef USE_MPI
     call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#endif
 
     write(outputname,"('/dump_all_arrays',i6.6)") myrank
     open(unit=55,file=trim(PATH_RESTART_FILES)//outputname,status='unknown',form='unformatted',action='write')

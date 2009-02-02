@@ -254,6 +254,8 @@
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
   integer npoin2D_faces_outer_core(NUMFACES_SHARED)
   integer npoin2D_faces_inner_core(NUMFACES_SHARED)
+
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
 #endif
 
 ! for non blocking communications
@@ -262,7 +264,6 @@
   logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
 
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-             npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
              npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
@@ -554,9 +555,9 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
   npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
   npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-  normal_top_crust_mantle,ibelm_top_crust_mantle, &
+  normal_top_crust_mantle, &
 #endif
-  AM_V,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+  ibelm_top_crust_mantle,AM_V,xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
   etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
   gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,displ_crust_mantle, &
   bcast_integer,bcast_double_precision,bcast_logical,MODEL,ner,ratio_sampling_array,doubling_index, &

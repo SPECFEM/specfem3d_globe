@@ -8,7 +8,7 @@
  !
  ! number of chunks =            6
  !
- ! these statistics include the central cube
+ ! these statistics do not include the central cube
  !
  ! number of processors =           96
  !
@@ -17,18 +17,18 @@
  ! on NEC SX, make sure "loopcnt=" parameter
  ! in Makefile is greater than max vector length =      1528347
  !
- ! total elements per slice =         8592
- ! total points per slice =       578531
+ ! total elements per slice =         8336
+ ! total points per slice =       560035
  !
  ! total for full 6-chunk mesh:
  ! ---------------------------
  !
  ! exact total number of spectral elements in entire mesh = 
- !    804352.000000000     
+ !    800256.000000000     
  ! approximate total number of points in entire mesh = 
- !    54165851.0000000     
+ !    53763360.0000000     
  ! approximate total number of degrees of freedom in entire mesh = 
- !    153284433.000000     
+ !    152076960.000000     
  !
  ! resolution of the mesh at the surface:
  ! -------------------------------------
@@ -48,7 +48,7 @@
  ! approximate static memory needed by the solver:
  ! ----------------------------------------------
  !
- ! size of static arrays per slice =   0.155213307589293       GB
+ ! size of static arrays per slice =   0.150383662432432       GB
  !
  !   (should be below and typically equal to 80% of 1.5 GB = 1.2 GB on pangu
  !    at Caltech, and below and typically equal to 85% of 2 GB = 1.7 GB
@@ -56,8 +56,8 @@
  !   (if significantly more, the job will not run by lack of memory)
  !   (if significantly less, you waste a significant amount of memory)
  !
- ! size of static arrays for all slices =    14.9004775285721       GB
- !                                      =   1.455124758649617E-002  TB
+ ! size of static arrays for all slices =    14.4368315935135       GB
+ !                                      =   1.409846835304052E-002  TB
  !
  
  integer, parameter :: NEX_XI_VAL =          128
@@ -65,11 +65,11 @@
  
  integer, parameter :: NSPEC_CRUST_MANTLE =         7616
  integer, parameter :: NSPEC_OUTER_CORE =          688
- integer, parameter :: NSPEC_INNER_CORE =          288
+ integer, parameter :: NSPEC_INNER_CORE =           32
  
  integer, parameter :: NGLOB_CRUST_MANTLE =       509449
  integer, parameter :: NGLOB_OUTER_CORE =        47985
- integer, parameter :: NGLOB_INNER_CORE =        21097
+ integer, parameter :: NGLOB_INNER_CORE =         2601
  
  integer, parameter :: NSPECMAX_ANISO_IC =            1
  
@@ -79,10 +79,10 @@
  
  integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT =         7616
  integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUAT3D = 1
- integer, parameter :: NSPEC_INNER_CORE_ATTENUATION =          288
+ integer, parameter :: NSPEC_INNER_CORE_ATTENUATION =           32
  
  integer, parameter :: NSPEC_CRUST_MANTLE_STR_OR_ATT =         7616
- integer, parameter :: NSPEC_INNER_CORE_STR_OR_ATT =          288
+ integer, parameter :: NSPEC_INNER_CORE_STR_OR_ATT =           32
  
  integer, parameter :: NSPEC_CRUST_MANTLE_STR_AND_ATT =            1
  integer, parameter :: NSPEC_INNER_CORE_STR_AND_ATT =            1
@@ -125,17 +125,17 @@
  integer, parameter :: NGLOB1D_RADIAL_IC =            9
  integer, parameter :: NGLOB2DMAX_XMIN_XMAX_CM =         7934
  integer, parameter :: NGLOB2DMAX_XMIN_XMAX_OC =         2134
- integer, parameter :: NGLOB2DMAX_XMIN_XMAX_IC =         1283
+ integer, parameter :: NGLOB2DMAX_XMIN_XMAX_IC =          178
  integer, parameter :: NGLOB2DMAX_YMIN_YMAX_CM =         7934
  integer, parameter :: NGLOB2DMAX_YMIN_YMAX_OC =         2134
- integer, parameter :: NGLOB2DMAX_YMIN_YMAX_IC =         1283
+ integer, parameter :: NGLOB2DMAX_YMIN_YMAX_IC =          178
  integer, parameter :: NPROC_XI_VAL =            4
  integer, parameter :: NPROC_ETA_VAL =            4
  integer, parameter :: NCHUNKS_VAL =            6
  integer, parameter :: NPROCTOT_VAL =           96
  integer, parameter :: NGLOB2DMAX_XY_VAL_CM =         7934
  integer, parameter :: NGLOB2DMAX_XY_VAL_OC =         2134
- integer, parameter :: NGLOB2DMAX_XY_VAL_IC =         1283
+ integer, parameter :: NGLOB2DMAX_XY_VAL_IC =          178
  integer, parameter :: NUMMSGS_FACES_VAL =           48
  integer, parameter :: NCORNERSCHUNKS_VAL =            8
  integer, parameter :: ATT1 =            1
@@ -147,8 +147,8 @@
  integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM =          408
  integer, parameter :: NSPEC2D_BOTTOM_CM =           64
  integer, parameter :: NSPEC2D_TOP_CM =         1024
- integer, parameter :: NSPEC2DMAX_XMIN_XMAX_IC =           72
- integer, parameter :: NSPEC2DMAX_YMIN_YMAX_IC =           72
+ integer, parameter :: NSPEC2DMAX_XMIN_XMAX_IC =            8
+ integer, parameter :: NSPEC2DMAX_YMIN_YMAX_IC =            8
  integer, parameter :: NSPEC2D_BOTTOM_IC =           16
  integer, parameter :: NSPEC2D_TOP_IC =           16
  integer, parameter :: NSPEC2DMAX_XMIN_XMAX_OC =          100
