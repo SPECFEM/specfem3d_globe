@@ -2085,7 +2085,7 @@
 !!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  ratio_divide_central_cube = maxval(ratio_sampling_array)
+  ratio_divide_central_cube = maxval(ratio_sampling_array(1:NUMBER_OF_MESH_LAYERS))
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
