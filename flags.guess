@@ -120,6 +120,10 @@ case $FC in
         ;;
     *xlf*|*/*xlf*)
         #
+        # do NOT remove option -qsave otherwise the IBM compiler allocates the
+        # arrays in the stack and the code crashes if the stack size is too
+        # small (which is often the case)
+        #
         # on IBM with xlf one should also set
         #
         # CC = xlc_r
@@ -133,15 +137,9 @@ case $FC in
         # for the C compiler when using -q64 for the Fortran compiler
         #
         if test x"$FLAGS_NO_CHECK" = x; then
-
-            FLAGS_NO_CHECK="-O3 -qstrict -q64 -qnosave -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w"
-        # One can also use -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap -qinitauto=7FBFFFFF to trap errors
+            FLAGS_NO_CHECK="-O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003pure -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap -qinitauto=7FBFFFFF -Q -Q+rank,swap_all,mxm_m1_m2_5points,mxm_m1_m1_5points,mxm_m2_m1_5points"
         # on MareNostrum at the Barcelona SuperComputing Center (Spain) use
-        # -qsave -qtune=ppc970 -qarch=ppc64v instead of -qnosave -qtune=auto -qarch=auto
-        # otherwise the IBM compiler allocates the
-        # arrays in the stack and the code crashes if the stack size is too
-        # small (it is limited to 1GB on MareNostrum)
-
+        # -qtune=ppc970 -qarch=ppc64v instead of -qtune=auto -qarch=auto
         fi
         if test x"$FLAGS_CHECK" = x; then
             FLAGS_CHECK="\$(FLAGS_NO_CHECK) -C -qddim -qfloat=nans -qfullpath"
