@@ -39,6 +39,7 @@ MPIFC = mpif90
 MPIFLAGS = -DUSE_MPI # -lmpi
 #FLAGS_NO_CHECK = -O1 -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check all -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv # -mcmodel=medium -shared-intel
 FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz # -mcmodel=medium -shared-intel
+FLAGS_CHECK = $(FLAGS_NO_CHECK)
 # we need the -no-heap-arrays flag to force the compiler to allocate memory on the stack
 # instead of on the heap to minimize memory fragmentation
 
@@ -49,6 +50,7 @@ FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone 
 #MPIFC = /opt/mpich2_gfortran/bin/mpif90
 #MPIFLAGS = -DUSE_MPI
 #FLAGS_NO_CHECK = -std=f2003 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -fbounds-check # -mcmodel=medium
+#FLAGS_CHECK = $(FLAGS_NO_CHECK)
 
 #
 # Portland pgf90
@@ -57,6 +59,7 @@ FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone 
 #MPIFC = mpif90
 #MPIFLAGS = -DUSE_MPI
 #FLAGS_NO_CHECK = -fast -Mnobounds -Mrecursive -Minline -Mdclchk -Knoieee -fastsse -tp amd64e -Minform=warn -Ktrap=none # -mcmodel=medium
+#FLAGS_CHECK = $(FLAGS_NO_CHECK)
 # we need the -Mrecursive flag to force the compiler to allocate memory on the stack
 # instead of on the heap to minimize memory fragmentation
 
@@ -66,19 +69,20 @@ FLAGS_NO_CHECK = -O3 -xP -vec-report0 -no-heap-arrays -e03 -std03 -implicitnone 
 #FC = xlf_r
 #MPIFC = mpxlf90
 #MPIFLAGS = -WF,-DUSE_MPI
-#FLAGS_NO_CHECK = -O3 -qstrict -q64 -qnosave -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w
+#FLAGS_NO_CHECK = -O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003pure -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap -qinitauto=7FBFFFFF -Q -Q+rank,swap_all,mxm_m1_m2_5points,mxm_m1_m1_5points,mxm_m2_m1_5points
+#FLAGS_CHECK = $(FLAGS_NO_CHECK) -C -qddim -qfloat=nans -qfullpath
 #
-# One can also use -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap -qinitauto=7FBFFFFF to trap errors
+# do NOT remove option -qsave otherwise the IBM compiler allocates the
+# arrays in the stack and the code crashes if the stack size is too
+# small (which is often the case)
+#
 # on MareNostrum at the Barcelona SuperComputing Center (Spain) use
-# -qsave -qtune=ppc970 -qarch=ppc64v instead of -qnosave -qtune=auto -qarch=auto
-# otherwise the IBM compiler allocates the arrays in the stack and the code crashes
-# if the stack size is too small (it is limited to 1GB on MareNostrum)
+# -qtune=ppc970 -qarch=ppc64v instead of -qtune=auto -qarch=auto
 
 #######
 ####### no need to change anything below this
 #######
 
-FLAGS_CHECK = $(FLAGS_NO_CHECK)
 FCFLAGS_f90 =
 MPILIBS =
 FCFLAGS = #-g
