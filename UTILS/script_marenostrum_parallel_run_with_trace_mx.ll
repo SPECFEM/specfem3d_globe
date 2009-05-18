@@ -24,9 +24,8 @@
 #@ queue
 #@ features = mx
 
-#################MPITRACE_HOME=/gpfs/apps/CEPBATOOLS/64.hwc
-MPITRACE_HOME=/gpfs/apps/CEPBATOOLS/mpitrace/64
-#####################MPITRACE_HOME=/gpfs/apps/CEPBATOOLS/64.burst
+# DK DK this below OK in May 2009
+MPITRACE_HOME=/gpfs/apps/CEPBATOOLS/mpitrace-mx/64
 
 #environment
 MP_EUILIB=mx

@@ -10,10 +10,11 @@
 #
 ###########################################################################
 
-export MPITRACE_HOME=/gpfs/apps/CEPBATOOLS/64.hwc
+# DK DK this below OK in May 2009
+export MPITRACE_HOME=/gpfs/apps/CEPBATOOLS/mpitrace-mx/64
 export LD_PRELOAD=${MPITRACE_HOME}/lib/libmpitrace.so
 export MPITRACE_ON=1
-# the list of available counters is in /gpfs/apps/CEPBATOOLS/tracing-example/counters.txt
+# the list of available counters is in /gpfs/apps/CEPBATOOLS/mpitrace/64/share/example-with-user-events/counters.txt
 # monitor L1 below
 #export MPTRACE_COUNTERS="0x80000000,0x80000017,0x80000032,0x8000003b"
 # monitor L2 below
@@ -31,12 +32,12 @@ export MPITRACE_MPI_CALLER=1,2,3
 #########export MPTRACE_CONFIG_FILE=mpitrace_extended.xml
 export MPTRACE_BUFFER_SIZE=150000
 
-# last year 2006: begin
+# older from the year 2006: begin
 #export MPTRACE_DIR=/gpfs/scratch/hpce07/hpce07084/TRACE_DIR/
 #export MPTRACE_FILE_SIZE=10
 #export MPTRACE_BUFFER_SIZE=25000
 #export MPTRACE_COUNTERS="0x80000004,0x8000000e,0x80000032,0x8000003b"
-# last year 2006: end
+# older from the year 2006: end
 
 ## Run the desired program
 $*
