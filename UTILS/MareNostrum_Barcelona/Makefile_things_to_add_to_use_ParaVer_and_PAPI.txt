@@ -1,14 +1,9 @@
 
-Here is what to add to the Makefile on MareNostrum in Barcelona
-to link with the ParaVer and PAPI tracing system (the paths below
-are OK in May 2009):
+May 2009: there is no need to add tracing libraries to the Makefile any more
+to generate some ParaVer traces. Just type on MareNostrum:
 
-MPITRACE_HOME = /gpfs/apps/CEPBATOOLS/mpitrace-mx/64
-PAPI_HOME = /gpfs/apps/PAPI/3.2.1-970mp/64
+./configure FC=xlf_r
 
-and add this at the end of the definition of FLAGS_NO_CHECK:
-
--L$(MPITRACE_HOME)/lib -lmpitracef -lxml2 -L${PAPI_HOME}/lib -lpapi -lperfctr /opt/osshpc/mpich-mx/64/lib/libmpich.a
-
-Also change the default compiler from "xlf" to "xlf_r".
+and then edit the Makefile to use
+-qtune=ppc970 -qarch=ppc64v instead of -qtune=auto -qarch=auto
 

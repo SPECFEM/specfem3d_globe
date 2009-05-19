@@ -16,23 +16,19 @@
 #####################################################################
 #@ total_tasks = 32
 #@ tasks_per_node = 4
-# Wall clock limit hhh:mm:ss
-######### hpce is a queue that has a 24-hour (i.e. 86400 seconds) wallclock time limit
+## Wall clock limit hhh:mm:ss
 #@ wall_clock_limit = 00:20:00
 #@ output = Specfem3D_run_%j.out
 #@ error = Specfem3D_run_%j.err
 #@ queue
 #@ features = mx
 
-# DK DK this below OK in May 2009
-MPITRACE_HOME=/gpfs/apps/CEPBATOOLS/mpitrace-mx/64
-
 #environment
 MP_EUILIB=mx
 OBJECT_MODE=64
 MP_RSH=ssh
 
-    srun ./generate_trace_paraver.sh ./xspecfem2D
+    srun ./generate_trace_paraver.sh ./xspecfem3D
 
 # then merge the trace at the end
     sleep 5
