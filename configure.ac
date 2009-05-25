@@ -77,9 +77,9 @@ if test x"$MPIFC" = x; then
     MPIFC=mpif90
 fi
 
-AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are also seen as global with same path @<:@default=false@:>@])
+AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are also seen as global with same path @<:@default=true@:>@])
 if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then
-    LOCAL_PATH_IS_ALSO_GLOBAL=false
+    LOCAL_PATH_IS_ALSO_GLOBAL=true
 fi
 
 
