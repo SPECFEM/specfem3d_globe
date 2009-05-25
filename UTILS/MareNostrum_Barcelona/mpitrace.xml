@@ -36,7 +36,7 @@
       </set>
     </cpu>
 
-    <network enabled="yes" />
+    <network enabled="no" />
 
     <resource-usage enabled="yes" />
   </counters>
