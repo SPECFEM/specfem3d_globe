@@ -18,7 +18,8 @@
 #@ error = Specfem3D_merge_%j.err
 #@ total_tasks = 32
 #@ tasks_per_node = 4
-#@ wall_clock_limit = 00:20:00
+############## Wall clock limit hhh:mm:ss
+#@ wall_clock_limit = 02:00:00
 #@ queue
 #@ features = mx 
 #####################################################################
