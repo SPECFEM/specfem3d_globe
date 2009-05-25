@@ -14,10 +14,10 @@
 #####################################################################
 ## Running the job with tracing step
 #####################################################################
-#@ total_tasks = 32
+#@ total_tasks = 64
 #@ tasks_per_node = 4
-## Wall clock limit hhh:mm:ss
-#@ wall_clock_limit = 00:20:00
+############## Wall clock limit hhh:mm:ss
+#@ wall_clock_limit = 02:00:00
 #@ output = Specfem3D_run_%j.out
 #@ error = Specfem3D_run_%j.err
 #@ queue
@@ -28,7 +28,7 @@ MP_EUILIB=mx
 OBJECT_MODE=64
 MP_RSH=ssh
 
-    srun ./generate_trace_paraver.sh ./xspecfem3D
+    srun ./generate_trace_marenostrum.sh ./xspecfem3D
 
 # then merge the trace at the end
     sleep 5

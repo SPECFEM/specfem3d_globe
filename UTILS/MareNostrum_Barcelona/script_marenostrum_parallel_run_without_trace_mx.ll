@@ -14,11 +14,10 @@
 #####################################################################
 ## Running the job with tracing step
 #####################################################################
-#@ total_tasks = 32
+#@ total_tasks = 64
 #@ tasks_per_node = 4
-# Wall clock limit hhh:mm:ss
-######### hpce is a queue that has a 24-hour (i.e. 86400 seconds) wallclock time limit
-#@ wall_clock_limit = 00:20:00
+############## Wall clock limit hhh:mm:ss
+#@ wall_clock_limit = 02:00:00
 #@ output = Specfem3D_run_%j.out
 #@ error = Specfem3D_run_%j.err
 #@ queue
@@ -29,6 +28,6 @@ MP_EUILIB=mx
 OBJECT_MODE=64
 MP_RSH=ssh
 
-    srun ./xmeshfem3D
-    srun ./xspecfem3D
+    srun ./xgenerate_databases
+#    srun ./xspecfem3D
 
