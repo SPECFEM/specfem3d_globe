@@ -169,6 +169,9 @@
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *
   if(MOVIE_COARSE) then
+    !daniel: note that
+    ! nex_per_proc_xi*nex_per_proc_eta = nex_xi*nex_eta/nproc = nspec2d_top(iregion_crust_mantle) used in specfem3D.f90
+    ! and ilocnum = nmovie_points = 2 * 2 * NEX_XI * NEX_ETA / NPROC      
     ilocnum = 2 * 2 * NEX_PER_PROC_XI*NEX_PER_PROC_ETA
     NIT =NGLLX-1
   else
@@ -371,10 +374,60 @@
                     else
                       ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))+1
                     endif
-                    xp(ieoff) = dble(x(i,j))
-                    yp(ieoff) = dble(y(i,j))
-                    zp(ieoff) = dble(z(i,j))
-                    field_display(ieoff) = dble(displn(i,j))
+
+                    !daniel:  for movie_coarse e.g. x(i,j) is defined at x(1,1), x(1,NGLLY), x(NGLLX,1) and x(NGLLX,NGLLY)
+                    !            be aware that for the cubed sphere, the mapping changes for different chunks, 
+                    !            i.e. e.g. x(1,1) and x(5,5) flip left and right sides of the elements in geographical coordinates                                          
+                    if( MOVIE_COARSE) then              
+                      if( NCHUNKS == 6 ) then
+                        ! chunks mapped such that element corners increase in long/lat
+                        select case (iproc/NPROC+1)
+                          case(CHUNK_AB)
+                            xp(ieoff) = dble(x(1,NGLLY))
+                            yp(ieoff) = dble(y(1,NGLLY))
+                            zp(ieoff) = dble(z(1,NGLLY))
+                            field_display(ieoff) = dble(displn(1,NGLLY))
+                          case(CHUNK_AB_ANTIPODE)
+                            xp(ieoff) = dble(x(1,1))
+                            yp(ieoff) = dble(y(1,1))
+                            zp(ieoff) = dble(z(1,1))
+                            field_display(ieoff) = dble(displn(1,1))
+                          case(CHUNK_AC)
+                            xp(ieoff) = dble(x(1,NGLLY))
+                            yp(ieoff) = dble(y(1,NGLLY))
+                            zp(ieoff) = dble(z(1,NGLLY))
+                            field_display(ieoff) = dble(displn(1,NGLLY))
+                          case(CHUNK_AC_ANTIPODE)
+                            xp(ieoff) = dble(x(1,1))
+                            yp(ieoff) = dble(y(1,1))
+                            zp(ieoff) = dble(z(1,1))
+                            field_display(ieoff) = dble(displn(1,1))
+                          case(CHUNK_BC)
+                            xp(ieoff) = dble(x(1,NGLLY))
+                            yp(ieoff) = dble(y(1,NGLLY))
+                            zp(ieoff) = dble(z(1,NGLLY))
+                            field_display(ieoff) = dble(displn(1,NGLLY))
+                          case(CHUNK_BC_ANTIPODE)
+                            xp(ieoff) = dble(x(NGLLX,NGLLY))
+                            yp(ieoff) = dble(y(NGLLX,NGLLY))
+                            zp(ieoff) = dble(z(NGLLX,NGLLY))
+                            field_display(ieoff) = dble(displn(NGLLX,NGLLY))
+                          case default
+                            stop 'incorrect chunk number'
+                        end select
+                      else              
+                        xp(ieoff) = dble(x(1,1))
+                        yp(ieoff) = dble(y(1,1))
+                        zp(ieoff) = dble(z(1,1))
+                        field_display(ieoff) = dble(displn(1,1)) 
+                      endif ! NCHUNKS
+                    else
+                      xp(ieoff) = dble(x(i,j))
+                      yp(ieoff) = dble(y(i,j))
+                      zp(ieoff) = dble(z(i,j))
+                      field_display(ieoff) = dble(displn(i,j))
+                    endif ! MOVIE_COARSE
+              
                  enddo !i
               enddo  !j
 
