@@ -594,15 +594,19 @@
  STEL = stele(irec)
  STDP = undef    !stdep(irec)
 !event values (hypocenter):
- EVLA   = elat
- EVLO   = elon
+! EVLA   = elat
+! EVLO   = elon
+ EVLA   = cmt_lat
+ EVLO   = cmt_lon
  EVEL   = undef  !not defined
- EVDP   = depth
+ EVDP   = cmt_depth
 
 !cmt location values (different from hypocenter location, usually):
- USER0  = cmt_lat
- USER1  = cmt_lon
- USER2  = cmt_depth
+! USER0  = cmt_lat
+! USER1  = cmt_lon
+ USER0  = elat
+ USER1  = elon
+ USER2  = depth
 
  USER3  = cmt_hdur !half duration from CMT if not changed to hdur=0.d0 (point source)
 
@@ -678,9 +682,9 @@
  KCMPNM = chn(3:3)           ! 3A8
  KNETWK = network_name(irec) !  A6
 
- KUSER0 = 'CMT_LAT_'          !  A8
- KUSER1 = 'CMT_LON_'          !  A8
- KUSER2 = 'CMTDEPTH'          !  A8
+ KUSER0 = 'PDE_LAT_'          !  A8
+ KUSER1 = 'PDE_LON_'          !  A8
+ KUSER2 = 'PDEDEPTH'          !  A8
 !----------------------------------
 
   if (OUTPUT_SEISMOS_SAC_ALPHANUM) then
