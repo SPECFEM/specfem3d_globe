@@ -71,3 +71,4 @@ Things to add to the manual:
 
 - supprimer sections qui decrivent write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront ete fusionnes
 
+---------------------------------------------------------------------------------
