@@ -1889,22 +1889,16 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
     seismo_current = seismo_current + 1
 
 ! mantle
-  do i=1,NGLOB_CRUST_MANTLE
-    displ_crust_mantle(:,i) = displ_crust_mantle(:,i) + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
-    veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-  enddo
+    displ_crust_mantle(:,:) = displ_crust_mantle(:,:) + deltat*veloc_crust_mantle(:,:) + deltatsqover2*accel_crust_mantle(:,:)
+    veloc_crust_mantle(:,:) = veloc_crust_mantle(:,:) + deltatover2*accel_crust_mantle(:,:)
 
 ! outer core
-  do i=1,NGLOB_OUTER_CORE
-    displ_outer_core(i) = displ_outer_core(i) + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
-    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-  enddo
+    displ_outer_core(:) = displ_outer_core(:) + deltat*veloc_outer_core(:) + deltatsqover2*accel_outer_core(:)
+    veloc_outer_core(:) = veloc_outer_core(:) + deltatover2*accel_outer_core(:)
 
 ! inner core
-  do i=1,NGLOB_INNER_CORE
-    displ_inner_core(:,i) = displ_inner_core(:,i) + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
-    veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-  enddo
+    displ_inner_core(:,:) = displ_inner_core(:,:) + deltat*veloc_inner_core(:,:) + deltatsqover2*accel_inner_core(:,:)
+    veloc_inner_core(:,:) = veloc_inner_core(:,:) + deltatover2*accel_inner_core(:,:)
 
 ! compute the maximum of the norm of the displacement
 ! in all the slices using an MPI reduction
@@ -2376,10 +2370,8 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
 #endif
 
 ! multiply by the inverse of the mass matrix and update velocity
-  do i=1,NGLOB_OUTER_CORE
-    accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-    veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-  enddo
+    accel_outer_core(:) = accel_outer_core(:)*rmass_outer_core(:)
+    veloc_outer_core(:) = veloc_outer_core(:) + deltatover2*accel_outer_core(:)
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -2791,17 +2783,15 @@ iprocfrom_faces,iprocto_faces,imsg_type,iproc_master_corners,iproc_worker1_corne
   if(mod(it,100) == 0) write(IMAIN,*) 'suppressing OCEANS from the serial test because they can be unstable on a small surface'
 #endif
 
-  do i=1,NGLOB_CRUST_MANTLE
-    veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-  enddo
+  veloc_crust_mantle(:,:) = veloc_crust_mantle(:,:) + deltatover2*accel_crust_mantle(:,:)
 
   do i=1,NGLOB_INNER_CORE
     accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i)
     accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i)
     accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-
-    veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
   enddo
+
+  veloc_inner_core(:,:) = veloc_inner_core(:,:) + deltatover2*accel_inner_core(:,:)
 
 ! write the seismograms with time shift
 
