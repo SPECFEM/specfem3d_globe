@@ -197,32 +197,45 @@
 !      global arrays sorted to speed up the simulation, seismos can be
 !      written by the master, one more doubling level at the bottom
 !      of the outer core if needed (off by default)
+!
 ! v. 3.6 Many people, many affiliations, September 2006:
 !      adjoint and kernel calculations, fixed IASP91 model,
 !      added AK135 and 1066a, fixed topography/bathymetry routine,
 !      new attenuation routines, faster and better I/Os on very large
 !      systems, many small improvements and bug fixes, new "configure"
 !      script, new Pyre version, new user's manual etc.
+!
 ! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
 !      any size of chunk, 3D attenuation, case of two chunks,
 !      more precise topography/bathymetry model, new Par_file structure
+!
 ! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
 !      merged global and regional codes, no iterations in fluid, better movies
+!
 ! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
 !      flexible mesh doubling in outer core, inlined code, OpenDX support
+!
 ! v. 3.2 Jeroen Tromp, Caltech, July 2002:
 !      multiple sources and flexible PREM reading
+!
 ! v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
 !      vectorized loops in solver and merged central cube
+!
 ! v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
 !   ported to SGI and Compaq, double precision solver, more general anisotropy
+!
 ! v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
 !                       gravity, rotation, oceans and 3-D models
+!
 ! v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, March 2001:
 !                       final MPI package
+!
 ! v. 2.0 Dimitri Komatitsch, Harvard, January 2000: MPI code for the globe
+!
 ! v. 1.0 Dimitri Komatitsch, Mexico, June 1999: first MPI code for a chunk
+!
 ! Jeroen Tromp, Harvard, July 1998: first chunk solver using OpenMP on Sun
+!
 ! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
 !
 ! From Dahlen and Tromp (1998):
