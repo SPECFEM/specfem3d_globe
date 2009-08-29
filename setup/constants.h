@@ -44,25 +44,25 @@
 
 !! DK DK temporary patch for the large Gordon Bell runs: set RECEIVERS_CAN_BE_BURIED
 !! DK DK to false in all cases etc
-  logical, parameter :: PATCH_FOR_GORDON_BELL = .true.
+  logical, parameter :: PATCH_FOR_GORDON_BELL = .false.
 
 ! save partial seismograms every 10,000 time steps or not
   logical, parameter :: SAVE_PARTIAL_SEISMOGRAMS = .false.
 
 ! (much) faster detection of receivers at high resolution: use grid points only
-  logical, parameter :: FASTER_RECEIVERS_POINTS_ONLY = .true.
+  logical, parameter :: FASTER_RECEIVERS_POINTS_ONLY = .false.
 
 ! suppress calculation and storage of seismograms if needed
   logical, parameter :: COMPUTE_STORE_SEISMOGRAMS = .true.
 
+  integer, parameter :: SEA99_VS_DIM1 = 100, SEA99_VS_DIM2 = 100, SEA99_VS_DIM3 = 100
 !! DK DK for Gordon Bell
-! integer, parameter :: SEA99_VS_DIM1 = 100, SEA99_VS_DIM2 = 100, SEA99_VS_DIM3 = 100
-  integer, parameter :: SEA99_VS_DIM1 = 1, SEA99_VS_DIM2 = 1, SEA99_VS_DIM3 = 1
+! integer, parameter :: SEA99_VS_DIM1 = 1, SEA99_VS_DIM2 = 1, SEA99_VS_DIM3 = 1
 
+  integer, parameter :: AMM_V_DIM1 = 14, AMM_V_DIM2 = 34, AMM_V_DIM3 = 37, AMM_V_DIM4 = 73
 !! DK DK for Gordon Bell
-! integer, parameter :: AMM_V_DIM1 = 14, AMM_V_DIM2 = 34, AMM_V_DIM3 = 37, AMM_V_DIM4 = 73
 ! use 6 for first index to avoid a warning when compiling
-  integer, parameter :: AMM_V_DIM1 = 6, AMM_V_DIM2 = 1, AMM_V_DIM3 = 1, AMM_V_DIM4 = 1
+! integer, parameter :: AMM_V_DIM1 = 6, AMM_V_DIM2 = 1, AMM_V_DIM3 = 1, AMM_V_DIM4 = 1
 
 !
 ! solver in single or double precision depending on the machine (4 or 8 bytes)
@@ -114,8 +114,9 @@
 
 !---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
 ! size of topography and bathymetry file
-!!!!!! DK DK for Gordon Bell  integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
-  integer, parameter :: NX_BATHY = 1,NY_BATHY = 1
+  integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
+!!!!!! DK DK for Gordon Bell
+! integer, parameter :: NX_BATHY = 1,NY_BATHY = 1
 ! resolution of topography file in minutes
   integer, parameter :: RESOLUTION_TOPO_FILE = 4
 ! pathname of the topography file
