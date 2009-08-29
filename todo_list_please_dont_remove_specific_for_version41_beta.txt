@@ -1,0 +1,13 @@
+
+Dimitri Komatitsch, August 29, 2009:
+
+non-exhaustive list of things to do in version 4.1_beta (in addition
+to the general todo list for SPECFEM3D_GLOBE version 4.0 or above,
+which is in file ../todo_list_please_dont_remove.txt ):
+
+- put the full write_seismograms.f90 routine back, with full support for ASCII
+and binary SAC (with Bernhard Schuberth); for the Gordon Bell runs I had
+removed the SAC binary routines because they had to be linked with C
+
+- put the sensitivity kernels and adjoint runs back
+
