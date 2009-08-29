@@ -47,7 +47,50 @@
 !                                                                       !
 !=======================================================================!
 !
-! If you use this code for your own research, please cite some of these articles:
+! If you use this code for your own research, please cite at least one article
+! written by the developers of the package, for instance:
+!
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
+! year = {2008},
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
+!
+! or
+!
+! @INCOLLECTION{ChKoViCaVaFe07,
+! author = {Emmanuel Chaljub and Dimitri Komatitsch and Jean-Pierre Vilotte and
+! Yann Capdeville and Bernard Valette and Gaetano Festa},
+! title = {Spectral Element Analysis in Seismology},
+! booktitle = {Advances in Wave Propagation in Heterogeneous Media},
+! publisher = {Elsevier - Academic Press},
+! year = {2007},
+! editor = {Ru-Shan Wu and Val\'erie Maupin},
+! volume = {48},
+! series = {Advances in Geophysics},
+! pages = {365-419}}
+!
+! @ARTICLE{KoVi98,
+! author={D. Komatitsch and J. P. Vilotte},
+! title={The spectral-element method: an efficient tool to simulate the seismic response of 2{D} and 3{D} geological structures},
+! journal={Bull. Seismol. Soc. Am.},
+! year=1998,
+! volume=88,
+! number=2,
+! pages={368-392}}
+!
+! @ARTICLE{KoTr99,
+! author={D. Komatitsch and J. Tromp},
+! year=1999,
+! title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
+! journal={Geophys. J. Int.},
+! volume=139,
+! number=3,
+! pages={806-822},
+! doi={10.1046/j.1365-246x.1999.00967.x}}
 !
 ! @ARTICLE{KoRiTr02,
 ! author={D. Komatitsch and J. Ritsema and J. Tromp},
@@ -79,26 +122,22 @@
 ! number=1,
 ! doi={10.1046/j.1365-246X.2002.01716.x}}
 !
-! @ARTICLE{KoTr99,
-! author={D. Komatitsch and J. Tromp},
-! year=1999,
-! title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
-! journal={Geophys. J. Int.},
-! volume=139,
-! number=3,
-! pages={806-822},
-! doi={10.1046/j.1365-246x.1999.00967.x}}
+! and/or another article from http://web.univ-pau.fr/~dkomati1/publications.html
 !
-! @ARTICLE{KoVi98,
-! author={D. Komatitsch and J. P. Vilotte},
-! title={The spectral-element method: an efficient tool to simulate the seismic response of 2{D} and 3{D} geological structures},
-! journal={Bull. Seismol. Soc. Am.},
-! year=1998,
-! volume=88,
-! number=2,
-! pages={368-392}}
 !
-! If you use the kernel capabilities of the code, please cite
+! If you use the kernel capabilities of the code, please cite at least one article
+! written by the developers of the package, for instance:
+!
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
+! year = {2008},
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
+!
+! or
 !
 ! @ARTICLE{LiTr06,
 ! author={Qinya Liu and Jeroen Tromp},
@@ -110,7 +149,7 @@
 ! pages={2383-2397},
 ! doi={10.1785/0120060041}}
 !
-! If you use 3-D model S20RTS, please cite
+! If you use 3-D model S20RTS, please cite:
 !
 ! @ARTICLE{RiVa00,
 ! author={J. Ritsema and H. J. {Van Heijst}},
@@ -145,7 +184,7 @@
 !  - Z axis is up
 !
 ! To report bugs or suggest improvements to the code, please send an email
-! to Jeroen Tromp <jtromp AT caltech.edu> and/or use our online
+! to Jeroen Tromp <jtromp AT princeton.edu> and/or use our online
 ! bug tracking system at http://www.geodynamics.org/roundup .
 !
 ! Evolution of the code:
