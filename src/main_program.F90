@@ -39,7 +39,50 @@
 !                                                                   !
 !===================================================================!
 !
-! If you use this code for your own research, please cite some of these articles:
+! If you use this code for your own research, please cite at least one article
+! written by the developers of the package, for instance:
+!
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
+! year = {2008},
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
+!
+! or
+!
+! @INCOLLECTION{ChKoViCaVaFe07,
+! author = {Emmanuel Chaljub and Dimitri Komatitsch and Jean-Pierre Vilotte and
+! Yann Capdeville and Bernard Valette and Gaetano Festa},
+! title = {Spectral Element Analysis in Seismology},
+! booktitle = {Advances in Wave Propagation in Heterogeneous Media},
+! publisher = {Elsevier - Academic Press},
+! year = {2007},
+! editor = {Ru-Shan Wu and Val\'erie Maupin},
+! volume = {48},
+! series = {Advances in Geophysics},
+! pages = {365-419}}
+!
+! @ARTICLE{KoVi98,
+! author={D. Komatitsch and J. P. Vilotte},
+! title={The spectral-element method: an efficient tool to simulate the seismic response of 2{D} and 3{D} geological structures},
+! journal={Bull. Seismol. Soc. Am.},
+! year=1998,
+! volume=88,
+! number=2,
+! pages={368-392}}
+!
+! @ARTICLE{KoTr99,
+! author={D. Komatitsch and J. Tromp},
+! year=1999,
+! title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
+! journal={Geophys. J. Int.},
+! volume=139,
+! number=3,
+! pages={806-822},
+! doi={10.1046/j.1365-246x.1999.00967.x}}
 !
 ! @ARTICLE{KoRiTr02,
 ! author={D. Komatitsch and J. Ritsema and J. Tromp},
@@ -71,26 +114,22 @@
 ! number=1,
 ! doi={10.1046/j.1365-246X.2002.01716.x}}
 !
-! @ARTICLE{KoTr99,
-! author={D. Komatitsch and J. Tromp},
-! year=1999,
-! title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
-! journal={Geophys. J. Int.},
-! volume=139,
-! number=3,
-! pages={806-822},
-! doi={10.1046/j.1365-246x.1999.00967.x}}
+! and/or another article from http://web.univ-pau.fr/~dkomati1/publications.html
 !
-! @ARTICLE{KoVi98,
-! author={D. Komatitsch and J. P. Vilotte},
-! title={The spectral-element method: an efficient tool to simulate the seismic response of 2{D} and 3{D} geological structures},
-! journal={Bull. Seismol. Soc. Am.},
-! year=1998,
-! volume=88,
-! number=2,
-! pages={368-392}}
 !
-! If you use the kernel capabilities of the code, please cite
+! If you use the kernel capabilities of the code, please cite at least one article
+! written by the developers of the package, for instance:
+!
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
+! year = {2008},
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
+!
+! or
 !
 ! @ARTICLE{LiTr06,
 ! author={Qinya Liu and Jeroen Tromp},
@@ -102,7 +141,7 @@
 ! pages={2383-2397},
 ! doi={10.1785/0120060041}}
 !
-! If you use 3-D model S20RTS, please cite
+! If you use 3-D model S20RTS, please cite:
 !
 ! @ARTICLE{RiVa00,
 ! author={J. Ritsema and H. J. {Van Heijst}},
@@ -147,58 +186,66 @@
 !      merged the mesher and the solver, support for diskless supercomputers,
 !      converted many arrays from memory heap to stack (using automatic arrays instead of allocatable)
 !      to avoid memory fragmentation in the case of very large models
-!
 ! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
 !      new doubling brick in the mesh, new perfectly load-balanced mesh,
 !      more flexible routines for mesh design, new inflated central cube
 !      with optimized shape, far fewer mesh files saved by the mesher,
-!      global arrays sorted to speed up the simulation, seismograms can be
-!      written by the master
-!
+!      global arrays sorted to speed up the simulation, seismos can be
+!      written by the master, one more doubling level at the bottom
+!      of the outer core if needed (off by default)
 ! v. 3.6 Many people, many affiliations, September 2006:
-!      adjoint and kernel calculations (by Qinya Liu), fixed IASP91 model,
+!      adjoint and kernel calculations, fixed IASP91 model,
 !      added AK135 and 1066a, fixed topography/bathymetry routine,
 !      new attenuation routines, faster and better I/Os on very large
 !      systems, many small improvements and bug fixes, new "configure"
 !      script, new Pyre version, new user's manual etc.
-!
 ! v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
 !      any size of chunk, 3D attenuation, case of two chunks,
 !      more precise topography/bathymetry model, new Par_file structure
-!
 ! v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
 !      merged global and regional codes, no iterations in fluid, better movies
-!
 ! v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
-!      flexible mesh doubling in outer core, inlined code, OpenDX support for mesh files
-!
+!      flexible mesh doubling in outer core, inlined code, OpenDX support
 ! v. 3.2 Jeroen Tromp, Caltech, July 2002:
 !      multiple sources and flexible PREM reading
-!
 ! v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
 !      vectorized loops in solver and merged central cube
-!
 ! v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
-!      ported to SGI and Compaq DEC Alpha, double precision solver, more general anisotropy
-!
+!   ported to SGI and Compaq, double precision solver, more general anisotropy
 ! v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
-!      gravity, rotation, oceans and 3-D models
-!
+!                       gravity, rotation, oceans and 3-D models
 ! v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, March 2001:
-!      final MPI package
+!                       final MPI package
+! v. 2.0 Dimitri Komatitsch, Harvard, January 2000: MPI code for the globe
+! v. 1.0 Dimitri Komatitsch, Mexico, June 1999: first MPI code for a chunk
+! Jeroen Tromp, Harvard, July 1998: first chunk solver using OpenMP on Sun
+! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
 !
-! v. 2.0 Dimitri Komatitsch, Harvard, January 2000:
-!      MPI code for the globe
+! From Dahlen and Tromp (1998):
+! ----------------------------
 !
-! v. 1.0 Dimitri Komatitsch, Mexico, June 1999:
-!      first MPI code for a chunk
+! Gravity is approximated by solving eq (3.259) without the Phi_E' term
+! The ellipsoidal reference model is that of section 14.1
+! The transversely isotropic expression for PREM is that of eq (8.190)
 !
-! Jeroen Tromp, Harvard, July 1998:
-!      first chunk solver using OpenMP on Sun
+! Formulation in the fluid (acoustic) outer core:
+! -----------------------------------------------
 !
-! Dimitri Komatitsch, IPG Paris, December 1996:
-!      first 3-D solver for the Connection Machine CM-5 (by Thinking Machines)
-!
+! In case of an acoustic medium, a displacement potential Chi is used
+! as in Chaljub and Valette, Geophysical Journal International, vol. 158,
+! p. 131-141 (2004) and *NOT* a velocity potential as in Komatitsch and Tromp,
+! Geophysical Journal International, vol. 150, p. 303-318 (2002).
+! This permits acoustic-elastic coupling based on a non-iterative time scheme.
+! Displacement if we ignore gravity is then: u = grad(Chi)
+! (In the context of the Cowling approximation displacement is
+! u = grad(rho * Chi) / rho, *not* u = grad(Chi).)
+! Velocity is then: v = grad(Chi_dot)       (Chi_dot being the time derivative of Chi)
+! and pressure is: p = - rho * Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+! The source in an acoustic element is a pressure source.
+! The potential in the outer core is called displ_outer_core for simplicity.
+! Its first time derivative is called veloc_outer_core.
+! Its second time derivative is called accel_outer_core.
+
 
 !! DK DK added this for merged version
 !! DK DK stored in single precision for merged version, check if it precise enough (probably yes)
