@@ -865,6 +865,10 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
+  ! Deville routine
+  logical :: USE_DEVILLE
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
+  
 ! ************** PROGRAM STARTS HERE **************
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.
@@ -1489,6 +1493,20 @@
          hprime_xx,hprime_yy,hprime_zz, &
          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
+
+  if( NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5 ) then
+    USE_DEVILLE = .true.
+
+    ! define transpose of derivation matrix
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+        hprime_xxT(j,i) = hprime_xx(i,j)
+        hprimewgll_xxT(j,i) = hprimewgll_xx(i,j)
+      enddo
+    enddo    
+  else
+    USE_DEVILLE = .false.  
+  endif
 
 ! read topography and bathymetry file
   if(myrank == 0 .and. (TOPOGRAPHY .or. OCEANS)) call read_topo_bathy_file(ibathy_topo)
@@ -3626,7 +3644,32 @@
 
 ! for anisotropy and gravity, x y and z contain r theta and phi
 
-  call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+  if( USE_DEVILLE ) then
+    call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          displ_crust_mantle,accel_crust_mantle, &
+          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+          etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+          hprime_xx,hprime_xxT, &
+          hprimewgll_xx,hprimewgll_xxT, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
+          muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+          c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+          c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+          c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+          c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+          c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+          c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+          c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+          ibool_crust_mantle,idoubling_crust_mantle, &
+          R_memory_crust_mantle,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          alphaval,betaval,gammaval,factor_common_crust_mantle, &
+          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+  else
+    call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -3649,10 +3692,36 @@
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
-
+  endif
+  
   if (SIMULATION_TYPE == 3) then
 ! for anisotropy and gravity, x y and z contain r theta and phi
-  call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+    if( USE_DEVILLE ) then
+    call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          b_displ_crust_mantle,b_accel_crust_mantle, &
+          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+          etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+          hprime_xx,hprime_xxT, &
+          hprimewgll_xx,hprimewgll_xxT, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
+          muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+          c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+          c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+          c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+          c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+          c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+          c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+          c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+          ibool_crust_mantle,idoubling_crust_mantle, &
+          b_R_memory_crust_mantle,b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
+          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+    else
+      call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -3675,6 +3744,8 @@
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+    
+    endif
   endif
 
 
@@ -3908,7 +3979,26 @@
 
   endif ! Stacey conditions
 
-  call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+  ! deville routine
+  if( USE_DEVILLE ) then
+    call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          displ_inner_core,accel_inner_core, &
+          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core, &
+          etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+          hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core, &
+          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+          one_minus_sum_beta_inner_core, &
+          alphaval,betaval,gammaval, &
+          factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+  else
+    call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
@@ -3923,10 +4013,29 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)  
+  endif
 
   if (SIMULATION_TYPE == 3) then
-  call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+    if( USE_DEVILLE ) then
+      call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          b_displ_inner_core,b_accel_inner_core, &
+          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core, &
+          etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+          hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          c11store_inner_core,c33store_inner_core,c12store_inner_core,c13store_inner_core,c44store_inner_core, &
+          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
+          one_minus_sum_beta_inner_core, &
+          b_alphaval,b_betaval,b_gammaval, &
+          factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+    else
+      call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
@@ -3941,7 +4050,8 @@
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)    
+    endif
   endif
 
 ! add the sources
