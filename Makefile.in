@@ -123,6 +123,7 @@ libspecfem_a_OBJECTS = \
 	$O/moho_stretching.o \
 	$O/spline_routines.o \
 	$O/netlib_specfun_erf.o \
+	$O/param_reader.o \
 	$O/read_arrays_buffers_solver.o \
 	$O/read_compute_parameters.o \
 	$O/read_value_parameters.o \
@@ -351,6 +352,9 @@ $O/read_value_parameters.o: constants.h $S/read_value_parameters.f90
 
 $O/get_value_parameters.o: constants.h $S/get_value_parameters.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_value_parameters.o ${FCFLAGS_f90} $S/get_value_parameters.f90
+
+$O/param_reader.o: $S/param_reader.c
+	${CC} -c $(CFLAGS) -o $O/param_reader.o $S/param_reader.c
 
 $O/topo_bathy.o: constants.h $S/topo_bathy.f90
 	${FCCOMPILE_CHECK} -c -o $O/topo_bathy.o ${FCFLAGS_f90} $S/topo_bathy.f90
