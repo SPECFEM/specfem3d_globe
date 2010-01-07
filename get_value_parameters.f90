@@ -25,50 +25,6 @@
 !
 !=====================================================================
 
-  subroutine get_value_integer(value_to_get, name, default_value)
-
-  implicit none
-
-  integer value_to_get, default_value
-  character(len=*) name
-
-  call unused_string(name)
-
-  value_to_get = default_value
-
-  end subroutine get_value_integer
-
-!--------------------
-
-  subroutine get_value_double_precision(value_to_get, name, default_value)
-
-  implicit none
-
-  double precision value_to_get, default_value
-  character(len=*) name
-
-  call unused_string(name)
-
-  value_to_get = default_value
-
-  end subroutine get_value_double_precision
-
-!--------------------
-
-  subroutine get_value_logical(value_to_get, name, default_value)
-
-  implicit none
-
-  logical value_to_get, default_value
-  character(len=*) name
-
-  call unused_string(name)
-
-  value_to_get = default_value
-
-  end subroutine get_value_logical
-
-!--------------------
 
   subroutine get_value_string(value_to_get, name, default_value)
 
@@ -82,3 +38,64 @@
   value_to_get = default_value
 
   end subroutine get_value_string
+
+!--------------------
+
+! dummy subroutine to avoid warnings about variable not used in other subroutines
+  subroutine unused_string(s)
+
+  character(len=*) s
+
+  if (len(s) == 1) continue
+
+  end subroutine unused_string
+
+!--------------------
+
+!
+! unused routines:
+!
+
+!  subroutine get_value_integer(value_to_get, name, default_value)
+!
+!  implicit none
+!
+!  integer value_to_get, default_value
+!  character(len=*) name
+!
+!  call unused_string(name)
+!
+!  value_to_get = default_value
+!
+!  end subroutine get_value_integer
+!
+!!--------------------
+!
+!  subroutine get_value_double_precision(value_to_get, name, default_value)
+!
+!  implicit none
+!
+!  double precision value_to_get, default_value
+!  character(len=*) name
+!
+!  call unused_string(name)
+!
+!  value_to_get = default_value
+!
+!  end subroutine get_value_double_precision
+!
+!!--------------------
+!
+!  subroutine get_value_logical(value_to_get, name, default_value)
+!
+!  implicit none
+!
+!  logical value_to_get, default_value
+!  character(len=*) name
+!
+!  call unused_string(name)
+!
+!  value_to_get = default_value
+!
+!  end subroutine get_value_logical
+
