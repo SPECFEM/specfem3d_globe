@@ -34,7 +34,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
           one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN, AM_V)
+          vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN)
 
   implicit none
 
@@ -63,8 +63,10 @@
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
 
-  type (attenuation_model_variables) AM_V
+!> Hejun
+!  type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
+!< Hejun
 
 ! for forward or backward simulations
   logical COMPUTE_AND_STORE_STRAIN
@@ -153,9 +155,10 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: xstore,ystore,zstore
-  integer iregion_selected
-
-  real(kind=CUSTOM_REAL) radius_cr
+!> Hejun
+!  integer iregion_selected
+!  real(kind=CUSTOM_REAL) radius_cr
+!< Hejun
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -261,15 +264,17 @@
     epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
   endif
 
+!> Hejun
   if(ATTENUATION_VAL) then
-     if(ATTENUATION_3D_VAL) then
+!     if(ATTENUATION_3D_VAL) then
         minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
-     else
-        radius_cr = xstore(ibool(i,j,k,ispec))
-        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
-        minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
-     endif ! ATTENUATION_3D_VAL
+!     else
+!        radius_cr = xstore(ibool(i,j,k,ispec))
+!        call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
+!        minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
+!     endif ! ATTENUATION_3D_VAL
   endif ! ATTENUATION_VAL
+!< Hejun
 
        if(ANISOTROPIC_INNER_CORE_VAL) then
 
@@ -319,15 +324,16 @@
           kappal = kappavstore(i,j,k,ispec)
           mul = muvstore(i,j,k,ispec)
 
+!> Hejun
 ! use unrelaxed parameters if attenuation
   if(ATTENUATION_VAL) then
-    if(ATTENUATION_3D_VAL) then
+!    if(ATTENUATION_3D_VAL) then
       mul = mul * one_minus_sum_beta(i,j,k,ispec)
-    else
-      mul = mul * one_minus_sum_beta(1,1,1,iregion_selected)
-    endif
+!    else
+!      mul = mul * one_minus_sum_beta(1,1,1,iregion_selected)
+!    endif
   endif
-
+!< Hejun
           lambdalplus2mul = kappal + FOUR_THIRDS * mul
           lambdal = lambdalplus2mul - 2.*mul
 
@@ -572,11 +578,13 @@
     if(ATTENUATION_VAL) then
 
        do i_sls = 1,N_SLS
-          if(ATTENUATION_3D_VAL) then
+!> Hejun
+!          if(ATTENUATION_3D_VAL) then
              factor_common_use = factor_common(i_sls,:,:,:,ispec)
-          else
-             factor_common_use(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
-          endif
+!          else
+!             factor_common_use(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
+!          endif
+!< Hejun
           do i_memory = 1,5
              R_memory(i_memory,i_sls,:,:,:,ispec) = &
                   alphaval(i_sls) * &
@@ -613,7 +621,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
           one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN, AM_V)
+          vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN)
 
   implicit none
 
@@ -642,8 +650,10 @@
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
 
-  type (attenuation_model_variables) AM_V
+!> Hejun
+!  type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
+!< Hejun
 
 ! for forward or backward simulations
   logical COMPUTE_AND_STORE_STRAIN
@@ -726,9 +736,10 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: xstore,ystore,zstore
-  integer iregion_selected
-
-  real(kind=CUSTOM_REAL) radius_cr
+!> Hejun
+!  integer iregion_selected
+!  real(kind=CUSTOM_REAL) radius_cr
+!< Hejun
 
 ! Deville
 ! manually inline the calls to the Deville et al. (2002) routines
@@ -916,17 +927,17 @@
               epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
               epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
             endif
-
+!> Hejun
             if(ATTENUATION_VAL) then
-              if(ATTENUATION_3D_VAL) then
+!              if(ATTENUATION_3D_VAL) then
                 minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
-              else
-                radius_cr = xstore(ibool(i,j,k,ispec))
-                call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
-                minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
-              endif ! ATTENUATION_3D_VAL
+!              else
+!                radius_cr = xstore(ibool(i,j,k,ispec))
+!                call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .TRUE., AM_V)
+!                minus_sum_beta =  one_minus_sum_beta(1,1,1,iregion_selected) - 1.0
+!              endif ! ATTENUATION_3D_VAL
             endif ! ATTENUATION_VAL
-
+!< Hejun
             if(ANISOTROPIC_INNER_CORE_VAL) then
               ! elastic tensor for hexagonal symmetry in reduced notation:
               !
@@ -972,16 +983,16 @@
               ! layer with no anisotropy, use kappav and muv for instance
               kappal = kappavstore(i,j,k,ispec)
               mul = muvstore(i,j,k,ispec)
-
+!> Hejun
               ! use unrelaxed parameters if attenuation
               if(ATTENUATION_VAL) then
-                if(ATTENUATION_3D_VAL) then
+!                if(ATTENUATION_3D_VAL) then
                   mul = mul * one_minus_sum_beta(i,j,k,ispec)
-                else
-                  mul = mul * one_minus_sum_beta(1,1,1,iregion_selected)
-                endif
+!                else
+!                  mul = mul * one_minus_sum_beta(1,1,1,iregion_selected)
+!                endif
               endif
-
+!< Hejun
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
               lambdal = lambdalplus2mul - 2.*mul
 
@@ -1255,13 +1266,14 @@
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
       if(ATTENUATION_VAL) then
-      
+!> Hejun      
         do i_sls = 1,N_SLS
-          if(ATTENUATION_3D_VAL) then
+!          if(ATTENUATION_3D_VAL) then
              factor_common_use = factor_common(i_sls,:,:,:,ispec)
-          else
-             factor_common_use(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
-          endif
+!          else
+!             factor_common_use(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
+!          endif
+!< Hejun
           do i_memory = 1,5
              R_memory(i_memory,i_sls,:,:,:,ispec) = &
                   alphaval(i_sls) * &

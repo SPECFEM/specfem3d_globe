@@ -193,3 +193,166 @@
 
   end subroutine write_AVS_DX_global_data
 
+!> Hejun
+! write material information for gll points
+  subroutine write_AVS_DX_global_data_gll(prname,nspec, &
+                 xstore,ystore,zstore,rhostore,kappavstore,muvstore,Qmustore)
+
+  implicit none
+
+  include "constants.h"
+
+  integer nspec
+  character(len=150) prname
+
+  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+
+  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec)
+  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision::  Qmustore(NGLLX,NGLLY,NGLLZ,nspec)
+
+  ! local parameters
+  double precision,dimension(8):: vp,vs,rho,Qmu
+  double precision:: vp_average,vs_average,rho_average,Qmu_average
+
+  integer flag(NGLLX,NGLLY,NGLLZ,nspec)
+
+  integer ispec,i,j,k
+  integer iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
+  integer numpoin,nelem
+
+
+! writing points
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpoints_gll.txt',status='unknown')
+
+! number of points in AVS or DX file
+  write(10,*) nspec*NGLLX*NGLLY*NGLLZ
+
+
+! output global AVS or DX points
+  numpoin = 0
+  do ispec=1,nspec
+        do k = 1,NGLLZ
+        do j = 1,NGLLY
+        do i = 1,NGLLX
+                numpoin = numpoin + 1
+                write(10,*) numpoin,sngl(xstore(i,j,k,ispec)),&
+                        sngl(ystore(i,j,k,ispec)),sngl(zstore(i,j,k,ispec))
+                flag(i,j,k,ispec) = numpoin
+        end do 
+        end do 
+        end do 
+  enddo
+
+  close(10)
+
+! writing elements
+  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelements_gll.txt',status='unknown')
+
+
+! number of elements in AVS or DX file
+  write(10,*) nspec*(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)
+
+  nelem = 0
+! output global AVS or DX elements
+  do ispec=1,nspec
+        do k = 1,NGLLZ-1
+        do j = 1,NGLLY-1
+        do i = 1,NGLLX-1
+                nelem = nelem + 1  
+                iglob1=flag(i,j,k,ispec)
+                iglob2=flag(i+1,j,k,ispec)
+                iglob3=flag(i+1,j+1,k,ispec)
+                iglob4=flag(i,j+1,k,ispec)
+                iglob5=flag(i,j,k+1,ispec)
+                iglob6=flag(i+1,j,k+1,ispec)
+                iglob7=flag(i+1,j+1,k+1,ispec)
+                iglob8=flag(i,j+1,k+1,ispec)
+        
+                write(10,*) nelem,iglob1, &
+                        iglob2,iglob3,iglob4,&
+                        iglob5,iglob6,iglob7,iglob8
+        end do 
+        end do 
+        end do 
+  enddo
+
+  close(10)
+
+! writing elements properity
+  open(unit=1001,file=prname(1:len_trim(prname))//'AVS_DXmaterials_gll.txt',status='unknown')
+
+! number of elements in AVS or DX file
+  write(1001,*) nspec*(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)
+
+  nelem = 0
+! output global AVS or DX elements
+  do ispec=1,nspec
+        do k = 1,NGLLZ-1
+        do j = 1,NGLLY-1
+        do i = 1,NGLLX-1
+                nelem = nelem + 1
+                rho(1)=dble(rhostore(i,j,k,ispec))
+                vs(1)=dble(sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)))
+                vp(1)=dble(sqrt(kappavstore(i,j,k,ispec)/rhostore(i,j,k,ispec)+4.d0*vs(1)*vs(1)/3.d0))
+                Qmu(1)=dble(Qmustore(i,j,k,ispec))
+
+                rho(2)=dble(rhostore(i+1,j,k,ispec))
+                vs(2)=dble(sqrt(muvstore(i+1,j,k,ispec)/rhostore(i+1,j,k,ispec)))
+                vp(2)=dble(sqrt(kappavstore(i+1,j,k,ispec)/rhostore(i+1,j,k,ispec)+4.d0*vs(2)*vs(2)/3.d0))
+                Qmu(2)=dble(Qmustore(i+1,j,k,ispec))
+
+                rho(3)=dble(rhostore(i+1,j+1,k,ispec))
+                vs(3)=dble(sqrt(muvstore(i+1,j+1,k,ispec)/rhostore(i+1,j+1,k,ispec)))
+                vp(3)=dble(sqrt(kappavstore(i+1,j+1,k,ispec)/rhostore(i+1,j+1,k,ispec)+4.d0*vs(3)*vs(3)/3.d0))
+                Qmu(3)=dble(Qmustore(i+1,j+1,k,ispec))
+
+                rho(4)=dble(rhostore(i,j+1,k,ispec))
+                vs(4)=dble(sqrt(muvstore(i,j+1,k,ispec)/rhostore(i,j+1,k,ispec)))
+                vp(4)=dble(sqrt(kappavstore(i,j+1,k,ispec)/rhostore(i,j+1,k,ispec)+4.d0*vs(4)*vs(4)/3.d0))
+                Qmu(4)=dble(Qmustore(i,j+1,k,ispec))
+
+                rho(5)=dble(rhostore(i,j,k+1,ispec))
+                vs(5)=dble(sqrt(muvstore(i,j,k+1,ispec)/rhostore(i,j,k+1,ispec)))
+                vp(5)=dble(sqrt(kappavstore(i,j,k+1,ispec)/rhostore(i,j,k+1,ispec)+4.d0*vs(5)*vs(5)/3.d0))
+                Qmu(5)=dble(Qmustore(i,j,k+1,ispec))
+
+                rho(6)=dble(rhostore(i+1,j,k+1,ispec))
+                vs(6)=dble(sqrt(muvstore(i+1,j,k+1,ispec)/rhostore(i+1,j,k+1,ispec)))
+                vp(6)=dble(sqrt(kappavstore(i+1,j,k+1,ispec)/rhostore(i+1,j,k+1,ispec)+4.d0*vs(6)*vs(6)/3.d0))
+                Qmu(6)=dble(Qmustore(i+1,j,k+1,ispec))
+
+                rho(7)=dble(rhostore(i+1,j+1,k+1,ispec))
+                vs(7)=dble(sqrt(muvstore(i+1,j+1,k+1,ispec)/rhostore(i+1,j+1,k+1,ispec)))
+                vp(7)=dble(sqrt(kappavstore(i+1,j+1,k+1,ispec)/rhostore(i+1,j+1,k+1,ispec)+4.d0*vs(7)*vs(7)/3.d0))
+                Qmu(7)=dble(Qmustore(i+1,j+1,k+1,ispec))
+
+                rho(8)=dble(rhostore(i,j+1,k+1,ispec))
+                vs(8)=dble(sqrt(muvstore(i,j+1,k+1,ispec)/rhostore(i,j+1,k+1,ispec)))
+                vp(8)=dble(sqrt(kappavstore(i,j+1,k+1,ispec)/rhostore(i,j+1,k+1,ispec)+4.d0*vs(8)*vs(8)/3.d0))
+                Qmu(8)=dble(Qmustore(i,j+1,k+1,ispec))
+
+                !rho_average=sum(rho(1:4))/4.d0
+                !vp_average=sum(vp(1:4))/4.d0
+                !vs_average=sum(vs(1:4))/4.d0
+                !Qmu_average=sum(Qmu(1:4))/4.d0
+                rho_average=rho(1)
+                vp_average=vp(1)
+                vs_average=vs(1)
+                Qmu_average=Qmu(1)
+
+                write(1001,*) nelem,rho_average,vp_average,vs_average,Qmu_average
+        end do 
+        end do 
+        end do
+  enddo
+
+  close(1001)
+
+  end subroutine write_AVS_DX_global_data_gll
+!< Hejun
+
+

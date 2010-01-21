@@ -44,6 +44,10 @@
   double precision samples_per_degree_topo
   double precision xlo
 
+!> Hejun
+  double precision:: lon_corner,lat_corner,ratio_lon,ratio_lat
+!< Hejun
+
   xlo = xlon
   if(xlon < 0.d0) xlo = xlo + 360.d0
 
@@ -58,8 +62,29 @@
   iel1 = int(xlo/samples_per_degree_topo)
   if(iel1 <= 0 .or. iel1 > NX_BATHY) iel1 = NX_BATHY
 
+!> Hejun
+! Use bilinear interpolation rather nearest point interpolation
 ! convert integer value to double precision
-  value = dble(ibathy_topo(iel1,iadd1))
+!  value = dble(ibathy_topo(iel1,iadd1))
+
+
+  lon_corner=iel1*samples_per_degree_topo
+  lat_corner=90.d0-iadd1*samples_per_degree_topo
+
+  ratio_lon = (xlo-lon_corner)/samples_per_degree_topo
+  ratio_lat = (xlat-lat_corner)/samples_per_degree_topo
+
+  if(ratio_lon<0.0) ratio_lon=0.0
+  if(ratio_lon>1.0) ratio_lon=1.0
+  if(ratio_lat<0.0) ratio_lat=0.0
+  if(ratio_lat>1.0) ratio_lat=1.0
+
+! convert integer value to double precision
+  value = dble(ibathy_topo(iel1,iadd1))*(1-ratio_lon)*(1.-ratio_lat)+&
+          dble(ibathy_topo(iel1+1,iadd1))*ratio_lon*(1.-ratio_lat)+&
+          dble(ibathy_topo(iel1+1,iadd1+1))*ratio_lon*ratio_lat+&
+          dble(ibathy_topo(iel1,iadd1+1))*(1.-ratio_lon)*ratio_lat
+ !< Hejun
 
   end subroutine get_topo_bathy
 

@@ -299,3 +299,115 @@
 
   end subroutine read_smooth_moho
 
+!> Hejun
+! stretching the moho according to the crust 2.0
+! input:  myrank, xelm, yelm, zelm, RMOHO_FICTITIOUS_IN_MESHER R220,RMIDDLE_CRUST, CM_V
+! Dec, 30, 2009
+  subroutine hornor_moho_crust2(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST,CM_V,elem_in_crust)
+
+  implicit none
+
+  include "constants.h"
+
+  double precision xelm(NGNOD)
+  double precision yelm(NGNOD)
+  double precision zelm(NGNOD)
+  double precision R220,RMIDDLE_CRUST
+  integer::RMOHO_FICTITIOUS_IN_MESHER
+  integer::myrank
+  logical:: elem_in_crust
+  
+! crustal_model_variables
+  type crustal_model_variables
+    sequence
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: thlr
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocp
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: velocs
+    double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
+    character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
+    character(len=2) code(NKEYS_CRUST)
+  end type crustal_model_variables
+
+  type(crustal_model_variables) CM_V
+
+
+  ! local parameters
+  integer:: ia,count
+  double precision:: r,theta,phi,lat,lon
+  double precision:: vpc,vsc,rhoc,moho,elevation,gamma
+  logical:: found_crust
+
+
+  count = 0
+  do ia= 1,NGNOD
+          call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
+          call reduce(theta,phi)
+
+          lat=(PI/2.0d0-theta)*180.0d0/PI
+          lon = phi*180.0d0/PI
+          if (lon>180.d0) lon = lon-360.0d0
+
+          call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V,elem_in_crust)
+
+          moho = ONE-moho
+
+          elevation = 0.d0
+
+          if (moho<dble(RMOHO_FICTITIOUS_IN_MESHER)/R_EARTH) then
+
+                  elevation = (moho-dble(RMOHO_FICTITIOUS_IN_MESHER)/R_EARTH)
+
+                  if ( r >= dble(RMOHO_FICTITIOUS_IN_MESHER)/R_EARTH) then
+                          gamma = (( R_UNIT_SPHERE -r )/(R_UNIT_SPHERE-dble(RMOHO_FICTITIOUS_IN_MESHER)/R_EARTH))
+                  else if ( r < dble(RMOHO_FICTITIOUS_IN_MESHER)/R_EARTH) then
+                          gamma = (( r-R220/R_EARTH)/(dble(RMOHO_FICTITIOUS_IN_MESHER)/R_EARTH-R220/R_EARTH)) 
+                          ! since not all GLL points are exactlly at R220, use a small
+                          ! tolerance for R220 detection, fix R220
+                          if (abs(gamma) < SMALLVAL) then
+                                gamma = 0.0
+                          end if 
+                  end if 
+                  if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
+                 
+                  xelm(ia)=xelm(ia)*(ONE+gamma*elevation/r)
+                  yelm(ia)=yelm(ia)*(ONE+gamma*elevation/r)
+                  zelm(ia)=zelm(ia)*(ONE+gamma*elevation/r)
+
+
+         else  if ( moho> RMIDDLE_CRUST/R_EARTH) then
+                  elevation = moho - RMIDDLE_CRUST/R_EARTH
+
+                  if ( r > RMIDDLE_CRUST/R_EARTH) then
+                          gamma= (R_UNIT_SPHERE-r)/(R_UNIT_SPHERE-RMIDDLE_CRUST/R_EARTH)
+                  else if ( r <= RMIDDLE_CRUST/R_EARTH) then
+                          gamma = (r-R220/R_EARTH)/(RMIDDLE_CRUST/R_EARTH-R220/R_EARTH) 
+                          ! since not all GLL points are exactlly at R220, use a small
+                          ! tolerance for R220 detection, fix R220
+                          if (abs(gamma) < SMALLVAL) then
+                                gamma = 0.0
+                          end if 
+                  end if
+                  if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
+
+                  xelm(ia)=xelm(ia)*(ONE+gamma*elevation/r)
+                  yelm(ia)=yelm(ia)*(ONE+gamma*elevation/r)
+                  zelm(ia)=zelm(ia)*(ONE+gamma*elevation/r)
+
+         end if 
+
+
+         ! recalculate radius to decide whether this element is in the crust
+         call xyz_2_rthetaphi_dble(xelm(ia),yelm(ia),zelm(ia),r,theta,phi)
+
+         if ( r>= 0.9999d0*moho ) then
+                 count = count + 1
+         end if 
+
+ end do   
+
+ if ( count == NGNOD) then
+         elem_in_crust = .true.
+ end if 
+
+ end subroutine hornor_moho_crust2
+!< Hejun

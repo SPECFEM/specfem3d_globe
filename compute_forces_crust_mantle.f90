@@ -36,7 +36,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN, AM_V)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN)
 
   implicit none
 
@@ -65,8 +65,10 @@
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
 
-  type (attenuation_model_variables) AM_V
+!> Hejun
+!  type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
+!< Hejun
 
 ! for forward or backward simulations
   logical COMPUTE_AND_STORE_STRAIN
@@ -87,7 +89,9 @@
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
-  integer iregion_selected
+!>Hejun
+!  integer iregion_selected
+!<Hejun
 
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
@@ -172,7 +176,9 @@
 ! for gravity
   integer int_radius
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
-  real(kind=CUSTOM_REAL) radius_cr
+!> Hejun
+!  real(kind=CUSTOM_REAL) radius_cr
+!< Hejun
   double precision radius,rho,minus_g,minus_dg
   double precision minus_g_over_radius,minus_dg_plus_g_over_radius
   double precision cos_theta,sin_theta,cos_phi,sin_phi
@@ -283,17 +289,19 @@
     epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
   endif
 
+!> Hejun
 ! precompute terms for attenuation if needed
   if(ATTENUATION_VAL) then
-    if(ATTENUATION_3D_VAL) then
+!    if(ATTENUATION_3D_VAL) then
       one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-    else
-      radius_cr = xstore(ibool(i,j,k,ispec))
-      call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
-      one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
-    endif
+!    else
+!      radius_cr = xstore(ibool(i,j,k,ispec))
+!      call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
+!      one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
+!    endif
     minus_sum_beta =  one_minus_sum_beta_use - 1.0
   endif
+!< Hejun
 
 !
 ! compute either isotropic or anisotropic elements
@@ -821,11 +829,13 @@
 ! IMPROVE we should probably use an average value instead
 
 ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-     if(ATTENUATION_3D_VAL) then
+!> Hejun
+!     if(ATTENUATION_3D_VAL) then
         factor_common_c44_muv = factor_common(i_sls,:,:,:,ispec)
-     else
-        factor_common_c44_muv(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
-     endif
+!     else
+!        factor_common_c44_muv(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
+!     endif
+!< Hejun
      if(ANISOTROPIC_3D_MANTLE_VAL) then
         factor_common_c44_muv = factor_common_c44_muv * c44store(:,:,:,ispec)
      else
@@ -867,7 +877,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN, AM_V)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN)
 
   implicit none
 
@@ -896,8 +906,10 @@
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
 
-  type (attenuation_model_variables) AM_V
+!> Hejun
+!  type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
+!< Hejun
 
 ! for forward or backward simulations
   logical COMPUTE_AND_STORE_STRAIN
@@ -917,9 +929,9 @@
 
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use,minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
-
-  integer iregion_selected
-
+!> Hejun
+!  integer iregion_selected
+!< Hejun
 ! for attenuation
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
@@ -997,7 +1009,9 @@
 ! for gravity
   integer int_radius
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
-  real(kind=CUSTOM_REAL) radius_cr
+!> Hejun
+!  real(kind=CUSTOM_REAL) radius_cr
+!< Hejun
   double precision radius,rho,minus_g,minus_dg
   double precision minus_g_over_radius,minus_dg_plus_g_over_radius
   double precision cos_theta,sin_theta,cos_phi,sin_phi
@@ -1188,19 +1202,19 @@
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
           endif
-
+!> Hejun
           ! precompute terms for attenuation if needed
           if(ATTENUATION_VAL) then
-            if(ATTENUATION_3D_VAL) then
+!            if(ATTENUATION_3D_VAL) then
               one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
-            else
-              radius_cr = xstore(ibool(i,j,k,ispec))
-              call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
-              one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
-            endif
+!            else
+!              radius_cr = xstore(ibool(i,j,k,ispec))
+!              call get_attenuation_index(idoubling(ispec), dble(radius_cr), iregion_selected, .FALSE., AM_V)
+!              one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,iregion_selected)
+!            endif
             minus_sum_beta =  one_minus_sum_beta_use - 1.0
           endif
-
+!< Hejun
           !
           ! compute either isotropic or anisotropic elements
           !
@@ -1753,13 +1767,14 @@
           ! get coefficients for that standard linear solid
           ! IMPROVE we use mu_v here even if there is some anisotropy
           ! IMPROVE we should probably use an average value instead
-
+!> Hejun
           ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-         if(ATTENUATION_3D_VAL) then
+!         if(ATTENUATION_3D_VAL) then
             factor_common_c44_muv = factor_common(i_sls,:,:,:,ispec)
-         else
-            factor_common_c44_muv(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
-         endif
+!         else
+!            factor_common_c44_muv(:,:,:) = factor_common(i_sls,1,1,1,iregion_selected)
+!         endif
+!< Hejun
          if(ANISOTROPIC_3D_MANTLE_VAL) then
             factor_common_c44_muv = factor_common_c44_muv * c44store(:,:,:,ispec)
          else

@@ -33,7 +33,7 @@
            HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-           RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+           RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,dvpstore, &
            kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
@@ -45,7 +45,8 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS,&
+           xigll,yigll,zigll)
 
   implicit none
 
@@ -321,6 +322,9 @@
 
   double precision RICB,RCMB,R670,RMOHO, &
     RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
+!> Hejun
+  integer:: RMOHO_FICTITIOUS_IN_MESHER
+!< Hejun
 
 ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
@@ -409,11 +413,32 @@
   character(len=80) kerstr
   character(len=40) varstr(maxker)
 
+!> Hejun
+! Parameters used to calculate Jacobian based upon 125 GLL points
+  double precision:: xigll(NGLLX)
+  double precision:: yigll(NGLLY)
+  double precision:: zigll(NGLLZ)
+! Parameter used to decide whether this element in crust or not
+  logical:: elem_in_crust
+  elem_in_crust=.false.
+!< Hejun
+
 ! **************
 ! add topography on the Moho *before* adding the 3D crustal model so that the streched
 ! mesh gets assigned the right model values
+!  if(THREE_D_MODEL/=0 .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
+!     .or. idoubling(ispec)==IFLAG_80_MOHO)) call moho_stretching(myrank,xelm,yelm,zelm,RMOHO,R220)
+
+
+!> Hejun
+! Stretch mesh to hornor smoothed moho thickness from crust2.0
   if(THREE_D_MODEL/=0 .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
-     .or. idoubling(ispec)==IFLAG_80_MOHO)) call moho_stretching(myrank,xelm,yelm,zelm,RMOHO,R220)
+     .or. idoubling(ispec)==IFLAG_80_MOHO)) then
+        call hornor_moho_crust2(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
+                                R220,RMIDDLE_CRUST,CM_V,elem_in_crust)
+  end if 
+!< Hejun
+
 
 ! compute values for the Earth model
   call get_model(myrank,iregion_code,nspec, &
@@ -433,39 +458,91 @@
           numker,numhpa,numcof,ihpa,lmax,nylm, &
           lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
           nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-          coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+          coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,elem_in_crust)
 
-! add topography without the crustal model
-  if(TOPOGRAPHY .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
-     .or. idoubling(ispec)==IFLAG_80_MOHO)) call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
+!> Hejun
+! Use GLL points or anchor points to capture TOPOGRAPHY and ELLIPCITY
+  if (.not.USE_GLL) then          
+      ! add topography without the crustal model
+      if(TOPOGRAPHY .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
+            .or. idoubling(ispec)==IFLAG_80_MOHO)) call add_topography(myrank,xelm,yelm,zelm,ibathy_topo,R220)
 
-! add topography on 410 km and 650 km discontinuity in model S362ANI
-  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
-     .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) &
-          call add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771, &
+      ! add topography on 410 km and 650 km discontinuity in model S362ANI
+      if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
+            .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) &
+             call add_topography_410_650(myrank,xelm,yelm,zelm,R220,R400,R670,R771, &
                                       numker,numhpa,numcof,ihpa,lmax,nylm, &
                                       lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
                                       nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
                                       coe,ylmcof,wk1,wk2,wk3,varstr)
 
-! CMB topography
-!  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
-!     .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
-!           call add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
+      ! CMB topography
+      !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
+      !     .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
+      !           call add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
 
-! ICB topography
-!  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
-!     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
-!     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
-!     .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
-!           call add_topography_icb(myrank,xelm,yelm,zelm,RICB,RCMB)
+      ! ICB topography
+      !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
+      !     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
+      !     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
+      !     .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
+      !           call add_topography_icb(myrank,xelm,yelm,zelm,RICB,RCMB)
 
-! make the Earth elliptical
-  if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
+      ! make the Earth elliptical
+      if(ELLIPTICITY) call get_ellipticity(xelm,yelm,zelm,nspl,rspl,espl,espl2)
 
-! recompute coordinates and jacobian for real 3-D model
-  call calc_jacobian(myrank,xixstore,xiystore,xizstore, &
-          etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-          xstore,ystore,zstore,xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
+      ! recompute coordinates and jacobian for real 3-D model
+      call calc_jacobian(myrank,xixstore,xiystore,xizstore, &
+              etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+              xstore,ystore,zstore,xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
+  else 
 
+      ! first calculate coordinate for GLL points
+      call calc_jacobian(myrank,xixstore,xiystore,xizstore, &
+                etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+                xstore,ystore,zstore,xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
+
+      ! add topography without the crustal model, by using ALL 125 GLL points
+      if(TOPOGRAPHY .and. (idoubling(ispec)==IFLAG_CRUST .or. idoubling(ispec)==IFLAG_220_80 &
+                .or. idoubling(ispec)==IFLAG_80_MOHO))& 
+                call add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,ibathy_topo,R220)
+
+
+      ! add topography on 410 km and 650 km discontinuity in model S362ANI,
+      ! use 125 GLL points
+      if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
+                .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) &
+                call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec,R220,R400,R670,R771, &
+                                      numker,numhpa,numcof,ihpa,lmax,nylm, &
+                                      lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
+                                      nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
+                                      coe,ylmcof,wk1,wk2,wk3,varstr)
+
+
+      ! CMB topography
+      !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
+      !     .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
+      !           call add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
+
+      ! ICB topography
+      !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
+      !     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
+      !     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
+      !     .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
+      !           call add_topography_icb(myrank,xelm,yelm,zelm,RICB,RCMB)
+
+      ! make the Earth ellipticity, use GLL points
+      if(ELLIPTICITY) call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
+
+
+      ! recalculate jacobian according new coordinates
+      call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
+                                ispec,nspec,ACTUALLY_STORE_ARRAYS,&
+                                xixstore,xiystore,xizstore,&
+                                etaxstore,etaystore,etazstore,&
+                                gammaxstore,gammaystore,gammazstore)
+                      
+                        
+  end if 
+  !< Hejun
   end subroutine compute_element_properties

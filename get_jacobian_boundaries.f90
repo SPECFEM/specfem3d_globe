@@ -36,7 +36,7 @@
               normal_ymin,normal_ymax, &
               normal_bottom,normal_top, &
               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,xigll,yigll,zigll)
 
   implicit none
 
@@ -83,6 +83,15 @@
 
   double precision xelm(NGNOD2D),yelm(NGNOD2D),zelm(NGNOD2D)
 
+!> Hejun 
+! Parameters used to calculate 2D Jacobian based upon 25 GLL points
+  integer:: i,j,k
+  double precision xelm2D(NGLLX,NGLLY),yelm2D(NGLLX,NGLLY),zelm2D(NGLLX,NGLLY)
+  double precision,dimension(NGLLX):: xigll
+  double precision,dimension(NGLLY):: yigll
+  double precision,dimension(NGLLZ):: zigll
+!< Hejun
+
 ! check that the parameter file is correct
   if(NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')
   if(NGNOD2D /= 9) call exit_MPI(myrank,'surface elements should have 9 control nodes')
@@ -94,6 +103,7 @@
   ispecb5 = 0
   ispecb6 = 0
 
+!> Hejun
   do ispec=1,nspec
 
 ! determine if the element falls on a boundary
@@ -105,38 +115,52 @@
     ispecb1=ispecb1+1
     ibelm_xmin(ispecb1)=ispec
 
-!   specify the 9 nodes for the 2-D boundary element
-    xelm(1)=xstore(1,1,1,ispec)
-    yelm(1)=ystore(1,1,1,ispec)
-    zelm(1)=zstore(1,1,1,ispec)
-    xelm(2)=xstore(1,NGLLY,1,ispec)
-    yelm(2)=ystore(1,NGLLY,1,ispec)
-    zelm(2)=zstore(1,NGLLY,1,ispec)
-    xelm(3)=xstore(1,NGLLY,NGLLZ,ispec)
-    yelm(3)=ystore(1,NGLLY,NGLLZ,ispec)
-    zelm(3)=zstore(1,NGLLY,NGLLZ,ispec)
-    xelm(4)=xstore(1,1,NGLLZ,ispec)
-    yelm(4)=ystore(1,1,NGLLZ,ispec)
-    zelm(4)=zstore(1,1,NGLLZ,ispec)
-    xelm(5)=xstore(1,(NGLLY+1)/2,1,ispec)
-    yelm(5)=ystore(1,(NGLLY+1)/2,1,ispec)
-    zelm(5)=zstore(1,(NGLLY+1)/2,1,ispec)
-    xelm(6)=xstore(1,NGLLY,(NGLLZ+1)/2,ispec)
-    yelm(6)=ystore(1,NGLLY,(NGLLZ+1)/2,ispec)
-    zelm(6)=zstore(1,NGLLY,(NGLLZ+1)/2,ispec)
-    xelm(7)=xstore(1,(NGLLY+1)/2,NGLLZ,ispec)
-    yelm(7)=ystore(1,(NGLLY+1)/2,NGLLZ,ispec)
-    zelm(7)=zstore(1,(NGLLY+1)/2,NGLLZ,ispec)
-    xelm(8)=xstore(1,1,(NGLLZ+1)/2,ispec)
-    yelm(8)=ystore(1,1,(NGLLZ+1)/2,ispec)
-    zelm(8)=zstore(1,1,(NGLLZ+1)/2,ispec)
-    xelm(9)=xstore(1,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
-    yelm(9)=ystore(1,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
-    zelm(9)=zstore(1,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
+    if ( .not. USE_GLL) then
+        !   specify the 9 nodes for the 2-D boundary element
+        xelm(1)=xstore(1,1,1,ispec)
+        yelm(1)=ystore(1,1,1,ispec)
+        zelm(1)=zstore(1,1,1,ispec)
+        xelm(2)=xstore(1,NGLLY,1,ispec)
+        yelm(2)=ystore(1,NGLLY,1,ispec)
+        zelm(2)=zstore(1,NGLLY,1,ispec)
+        xelm(3)=xstore(1,NGLLY,NGLLZ,ispec)
+        yelm(3)=ystore(1,NGLLY,NGLLZ,ispec)
+        zelm(3)=zstore(1,NGLLY,NGLLZ,ispec)
+        xelm(4)=xstore(1,1,NGLLZ,ispec)
+        yelm(4)=ystore(1,1,NGLLZ,ispec)
+        zelm(4)=zstore(1,1,NGLLZ,ispec)
+        xelm(5)=xstore(1,(NGLLY+1)/2,1,ispec)
+        yelm(5)=ystore(1,(NGLLY+1)/2,1,ispec)
+        zelm(5)=zstore(1,(NGLLY+1)/2,1,ispec)
+        xelm(6)=xstore(1,NGLLY,(NGLLZ+1)/2,ispec)
+        yelm(6)=ystore(1,NGLLY,(NGLLZ+1)/2,ispec)
+        zelm(6)=zstore(1,NGLLY,(NGLLZ+1)/2,ispec)
+        xelm(7)=xstore(1,(NGLLY+1)/2,NGLLZ,ispec)
+        yelm(7)=ystore(1,(NGLLY+1)/2,NGLLZ,ispec)
+        zelm(7)=zstore(1,(NGLLY+1)/2,NGLLZ,ispec)
+        xelm(8)=xstore(1,1,(NGLLZ+1)/2,ispec)
+        yelm(8)=ystore(1,1,(NGLLZ+1)/2,ispec)
+        zelm(8)=zstore(1,1,(NGLLZ+1)/2,ispec)
+        xelm(9)=xstore(1,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
+        yelm(9)=ystore(1,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
+        zelm(9)=zstore(1,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
 
-    call compute_jacobian_2D(myrank,ispecb1,xelm,yelm,zelm,dershape2D_x, &
+        call compute_jacobian_2D(myrank,ispecb1,xelm,yelm,zelm,dershape2D_x, &
                   jacobian2D_xmin,normal_xmin,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
-
+    else
+        ! get 25 GLL points for xmin
+        do k = 1,NGLLZ
+           do j = 1,NGLLY
+              xelm2D(j,k) = xstore(1,j,k,ispec)
+              yelm2D(j,k) = ystore(1,j,k,ispec)
+              zelm2D(j,k) = zstore(1,j,k,ispec)
+           end do 
+        end do
+        ! recalculate jacobian according to 2D GLL points
+        call recalc_jacobian_gll2D(myrank,ispecb1,xelm2D,yelm2D,zelm2D, &
+                        yigll,zigll,jacobian2D_xmin,normal_xmin,&
+                        NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+   end if 
   endif
 
 ! on boundary: xmax
@@ -146,38 +170,53 @@
     ispecb2=ispecb2+1
     ibelm_xmax(ispecb2)=ispec
 
-!   specify the 9 nodes for the 2-D boundary element
-    xelm(1)=xstore(NGLLX,1,1,ispec)
-    yelm(1)=ystore(NGLLX,1,1,ispec)
-    zelm(1)=zstore(NGLLX,1,1,ispec)
-    xelm(2)=xstore(NGLLX,NGLLY,1,ispec)
-    yelm(2)=ystore(NGLLX,NGLLY,1,ispec)
-    zelm(2)=zstore(NGLLX,NGLLY,1,ispec)
-    xelm(3)=xstore(NGLLX,NGLLY,NGLLZ,ispec)
-    yelm(3)=ystore(NGLLX,NGLLY,NGLLZ,ispec)
-    zelm(3)=zstore(NGLLX,NGLLY,NGLLZ,ispec)
-    xelm(4)=xstore(NGLLX,1,NGLLZ,ispec)
-    yelm(4)=ystore(NGLLX,1,NGLLZ,ispec)
-    zelm(4)=zstore(NGLLX,1,NGLLZ,ispec)
-    xelm(5)=xstore(NGLLX,(NGLLY+1)/2,1,ispec)
-    yelm(5)=ystore(NGLLX,(NGLLY+1)/2,1,ispec)
-    zelm(5)=zstore(NGLLX,(NGLLY+1)/2,1,ispec)
-    xelm(6)=xstore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
-    yelm(6)=ystore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
-    zelm(6)=zstore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
-    xelm(7)=xstore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
-    yelm(7)=ystore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
-    zelm(7)=zstore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
-    xelm(8)=xstore(NGLLX,1,(NGLLZ+1)/2,ispec)
-    yelm(8)=ystore(NGLLX,1,(NGLLZ+1)/2,ispec)
-    zelm(8)=zstore(NGLLX,1,(NGLLZ+1)/2,ispec)
-    xelm(9)=xstore(NGLLX,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
-    yelm(9)=ystore(NGLLX,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
-    zelm(9)=zstore(NGLLX,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
+    if ( .not. USE_GLL) then
+        !   specify the 9 nodes for the 2-D boundary element
+        xelm(1)=xstore(NGLLX,1,1,ispec)
+        yelm(1)=ystore(NGLLX,1,1,ispec)
+        zelm(1)=zstore(NGLLX,1,1,ispec)
+        xelm(2)=xstore(NGLLX,NGLLY,1,ispec)
+        yelm(2)=ystore(NGLLX,NGLLY,1,ispec)
+        zelm(2)=zstore(NGLLX,NGLLY,1,ispec)
+        xelm(3)=xstore(NGLLX,NGLLY,NGLLZ,ispec)
+        yelm(3)=ystore(NGLLX,NGLLY,NGLLZ,ispec)
+        zelm(3)=zstore(NGLLX,NGLLY,NGLLZ,ispec)
+        xelm(4)=xstore(NGLLX,1,NGLLZ,ispec)
+        yelm(4)=ystore(NGLLX,1,NGLLZ,ispec)
+        zelm(4)=zstore(NGLLX,1,NGLLZ,ispec)
+        xelm(5)=xstore(NGLLX,(NGLLY+1)/2,1,ispec)
+        yelm(5)=ystore(NGLLX,(NGLLY+1)/2,1,ispec)
+        zelm(5)=zstore(NGLLX,(NGLLY+1)/2,1,ispec)
+        xelm(6)=xstore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
+        yelm(6)=ystore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
+        zelm(6)=zstore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
+        xelm(7)=xstore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
+        yelm(7)=ystore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
+        zelm(7)=zstore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
+        xelm(8)=xstore(NGLLX,1,(NGLLZ+1)/2,ispec)
+        yelm(8)=ystore(NGLLX,1,(NGLLZ+1)/2,ispec)
+        zelm(8)=zstore(NGLLX,1,(NGLLZ+1)/2,ispec)
+        xelm(9)=xstore(NGLLX,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
+        yelm(9)=ystore(NGLLX,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
+        zelm(9)=zstore(NGLLX,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
 
-    call compute_jacobian_2D(myrank,ispecb2,xelm,yelm,zelm,dershape2D_x, &
+        call compute_jacobian_2D(myrank,ispecb2,xelm,yelm,zelm,dershape2D_x, &
                   jacobian2D_xmax,normal_xmax,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
 
+    else 
+        ! get 25 GLL points for xmax
+        do k = 1,NGLLZ
+           do j = 1,NGLLY
+              xelm2D(j,k) = xstore(NGLLX,j,k,ispec)
+              yelm2D(j,k) = ystore(NGLLX,j,k,ispec)
+              zelm2D(j,k) = zstore(NGLLX,j,k,ispec)
+           end do 
+        end do
+        ! recalculate jacobian according to 2D GLL points
+        call recalc_jacobian_gll2D(myrank,ispecb2,xelm2D,yelm2D,zelm2D,&
+                        yigll,zigll,jacobian2D_xmax,normal_xmax,&
+                        NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
+     end if 
   endif
 
 ! on boundary: ymin
@@ -187,38 +226,53 @@
     ispecb3=ispecb3+1
     ibelm_ymin(ispecb3)=ispec
 
-!   specify the 9 nodes for the 2-D boundary element
-    xelm(1)=xstore(1,1,1,ispec)
-    yelm(1)=ystore(1,1,1,ispec)
-    zelm(1)=zstore(1,1,1,ispec)
-    xelm(2)=xstore(NGLLX,1,1,ispec)
-    yelm(2)=ystore(NGLLX,1,1,ispec)
-    zelm(2)=zstore(NGLLX,1,1,ispec)
-    xelm(3)=xstore(NGLLX,1,NGLLZ,ispec)
-    yelm(3)=ystore(NGLLX,1,NGLLZ,ispec)
-    zelm(3)=zstore(NGLLX,1,NGLLZ,ispec)
-    xelm(4)=xstore(1,1,NGLLZ,ispec)
-    yelm(4)=ystore(1,1,NGLLZ,ispec)
-    zelm(4)=zstore(1,1,NGLLZ,ispec)
-    xelm(5)=xstore((NGLLX+1)/2,1,1,ispec)
-    yelm(5)=ystore((NGLLX+1)/2,1,1,ispec)
-    zelm(5)=zstore((NGLLX+1)/2,1,1,ispec)
-    xelm(6)=xstore(NGLLX,1,(NGLLZ+1)/2,ispec)
-    yelm(6)=ystore(NGLLX,1,(NGLLZ+1)/2,ispec)
-    zelm(6)=zstore(NGLLX,1,(NGLLZ+1)/2,ispec)
-    xelm(7)=xstore((NGLLX+1)/2,1,NGLLZ,ispec)
-    yelm(7)=ystore((NGLLX+1)/2,1,NGLLZ,ispec)
-    zelm(7)=zstore((NGLLX+1)/2,1,NGLLZ,ispec)
-    xelm(8)=xstore(1,1,(NGLLZ+1)/2,ispec)
-    yelm(8)=ystore(1,1,(NGLLZ+1)/2,ispec)
-    zelm(8)=zstore(1,1,(NGLLZ+1)/2,ispec)
-    xelm(9)=xstore((NGLLX+1)/2,1,(NGLLZ+1)/2,ispec)
-    yelm(9)=ystore((NGLLX+1)/2,1,(NGLLZ+1)/2,ispec)
-    zelm(9)=zstore((NGLLX+1)/2,1,(NGLLZ+1)/2,ispec)
+    if ( .not. USE_GLL) then
+        !   specify the 9 nodes for the 2-D boundary element
+        xelm(1)=xstore(1,1,1,ispec)
+        yelm(1)=ystore(1,1,1,ispec)
+        zelm(1)=zstore(1,1,1,ispec)
+        xelm(2)=xstore(NGLLX,1,1,ispec)
+        yelm(2)=ystore(NGLLX,1,1,ispec)
+        zelm(2)=zstore(NGLLX,1,1,ispec)
+        xelm(3)=xstore(NGLLX,1,NGLLZ,ispec)
+        yelm(3)=ystore(NGLLX,1,NGLLZ,ispec)
+        zelm(3)=zstore(NGLLX,1,NGLLZ,ispec)
+        xelm(4)=xstore(1,1,NGLLZ,ispec)
+        yelm(4)=ystore(1,1,NGLLZ,ispec)
+        zelm(4)=zstore(1,1,NGLLZ,ispec)
+        xelm(5)=xstore((NGLLX+1)/2,1,1,ispec)
+        yelm(5)=ystore((NGLLX+1)/2,1,1,ispec)
+        zelm(5)=zstore((NGLLX+1)/2,1,1,ispec)
+        xelm(6)=xstore(NGLLX,1,(NGLLZ+1)/2,ispec)
+        yelm(6)=ystore(NGLLX,1,(NGLLZ+1)/2,ispec)
+        zelm(6)=zstore(NGLLX,1,(NGLLZ+1)/2,ispec)
+        xelm(7)=xstore((NGLLX+1)/2,1,NGLLZ,ispec)
+        yelm(7)=ystore((NGLLX+1)/2,1,NGLLZ,ispec)
+        zelm(7)=zstore((NGLLX+1)/2,1,NGLLZ,ispec)
+        xelm(8)=xstore(1,1,(NGLLZ+1)/2,ispec)
+        yelm(8)=ystore(1,1,(NGLLZ+1)/2,ispec)
+        zelm(8)=zstore(1,1,(NGLLZ+1)/2,ispec)
+        xelm(9)=xstore((NGLLX+1)/2,1,(NGLLZ+1)/2,ispec)
+        yelm(9)=ystore((NGLLX+1)/2,1,(NGLLZ+1)/2,ispec)
+        zelm(9)=zstore((NGLLX+1)/2,1,(NGLLZ+1)/2,ispec)
 
-    call compute_jacobian_2D(myrank,ispecb3,xelm,yelm,zelm,dershape2D_y, &
+        call compute_jacobian_2D(myrank,ispecb3,xelm,yelm,zelm,dershape2D_y, &
                   jacobian2D_ymin,normal_ymin,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
+   else
+        ! get 25 GLL points for ymin
+        do k =1 ,NGLLZ
+           do i = 1,NGLLX
+              xelm2D(i,k) = xstore(i,1,k,ispec)
+              yelm2D(i,k) = ystore(i,1,k,ispec)
+              zelm2D(i,k) = zstore(i,1,k,ispec)
+           end do 
+        end do 
+        ! recalcualte 2D jacobian according to GLL points
+        call recalc_jacobian_gll2D(myrank,ispecb3,xelm2D,yelm2D,zelm2D,&
+                        xigll,zigll,jacobian2D_ymin,normal_ymin,&
+                        NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+   end if 
   endif
 
 ! on boundary: ymax
@@ -228,38 +282,53 @@
     ispecb4=ispecb4+1
     ibelm_ymax(ispecb4)=ispec
 
-!   specify the 9 nodes for the 2-D boundary element
-    xelm(1)=xstore(1,NGLLY,1,ispec)
-    yelm(1)=ystore(1,NGLLY,1,ispec)
-    zelm(1)=zstore(1,NGLLY,1,ispec)
-    xelm(2)=xstore(NGLLX,NGLLY,1,ispec)
-    yelm(2)=ystore(NGLLX,NGLLY,1,ispec)
-    zelm(2)=zstore(NGLLX,NGLLY,1,ispec)
-    xelm(3)=xstore(NGLLX,NGLLY,NGLLZ,ispec)
-    yelm(3)=ystore(NGLLX,NGLLY,NGLLZ,ispec)
-    zelm(3)=zstore(NGLLX,NGLLY,NGLLZ,ispec)
-    xelm(4)=xstore(1,NGLLY,NGLLZ,ispec)
-    yelm(4)=ystore(1,NGLLY,NGLLZ,ispec)
-    zelm(4)=zstore(1,NGLLY,NGLLZ,ispec)
-    xelm(5)=xstore((NGLLX+1)/2,NGLLY,1,ispec)
-    yelm(5)=ystore((NGLLX+1)/2,NGLLY,1,ispec)
-    zelm(5)=zstore((NGLLX+1)/2,NGLLY,1,ispec)
-    xelm(6)=xstore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
-    yelm(6)=ystore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
-    zelm(6)=zstore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
-    xelm(7)=xstore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
-    yelm(7)=ystore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
-    zelm(7)=zstore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
-    xelm(8)=xstore(1,NGLLY,(NGLLZ+1)/2,ispec)
-    yelm(8)=ystore(1,NGLLY,(NGLLZ+1)/2,ispec)
-    zelm(8)=zstore(1,NGLLY,(NGLLZ+1)/2,ispec)
-    xelm(9)=xstore((NGLLX+1)/2,NGLLY,(NGLLZ+1)/2,ispec)
-    yelm(9)=ystore((NGLLX+1)/2,NGLLY,(NGLLZ+1)/2,ispec)
-    zelm(9)=zstore((NGLLX+1)/2,NGLLY,(NGLLZ+1)/2,ispec)
+    if ( .not. USE_GLL) then
+        !   specify the 9 nodes for the 2-D boundary element
+        xelm(1)=xstore(1,NGLLY,1,ispec)
+        yelm(1)=ystore(1,NGLLY,1,ispec)
+        zelm(1)=zstore(1,NGLLY,1,ispec)
+        xelm(2)=xstore(NGLLX,NGLLY,1,ispec)
+        yelm(2)=ystore(NGLLX,NGLLY,1,ispec)
+        zelm(2)=zstore(NGLLX,NGLLY,1,ispec)
+        xelm(3)=xstore(NGLLX,NGLLY,NGLLZ,ispec)
+        yelm(3)=ystore(NGLLX,NGLLY,NGLLZ,ispec)
+        zelm(3)=zstore(NGLLX,NGLLY,NGLLZ,ispec)
+        xelm(4)=xstore(1,NGLLY,NGLLZ,ispec)
+        yelm(4)=ystore(1,NGLLY,NGLLZ,ispec)
+        zelm(4)=zstore(1,NGLLY,NGLLZ,ispec)
+        xelm(5)=xstore((NGLLX+1)/2,NGLLY,1,ispec)
+        yelm(5)=ystore((NGLLX+1)/2,NGLLY,1,ispec)
+        zelm(5)=zstore((NGLLX+1)/2,NGLLY,1,ispec)
+        xelm(6)=xstore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
+        yelm(6)=ystore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
+        zelm(6)=zstore(NGLLX,NGLLY,(NGLLZ+1)/2,ispec)
+        xelm(7)=xstore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
+        yelm(7)=ystore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
+        zelm(7)=zstore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
+        xelm(8)=xstore(1,NGLLY,(NGLLZ+1)/2,ispec)
+        yelm(8)=ystore(1,NGLLY,(NGLLZ+1)/2,ispec)
+        zelm(8)=zstore(1,NGLLY,(NGLLZ+1)/2,ispec)
+        xelm(9)=xstore((NGLLX+1)/2,NGLLY,(NGLLZ+1)/2,ispec)
+        yelm(9)=ystore((NGLLX+1)/2,NGLLY,(NGLLZ+1)/2,ispec)
+        zelm(9)=zstore((NGLLX+1)/2,NGLLY,(NGLLZ+1)/2,ispec)
 
-    call compute_jacobian_2D(myrank,ispecb4,xelm,yelm,zelm,dershape2D_y, &
+        call compute_jacobian_2D(myrank,ispecb4,xelm,yelm,zelm,dershape2D_y, &
                   jacobian2D_ymax,normal_ymax,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
+    else
+        ! get 25 GLL points for ymax
+        do k =1,NGLLZ
+           do i = 1,NGLLX
+              xelm2D(i,k) = xstore(i,NGLLY,k,ispec)
+              yelm2D(i,k) = ystore(i,NGLLY,k,ispec)
+              zelm2D(i,k) = zstore(i,NGLLY,k,ispec)
+           end do 
+        end do 
+        ! recalculate jacobian for 2D GLL points
+        call recalc_jacobian_gll2D(myrank,ispecb4,xelm2D,yelm2D,zelm2D,&
+                        xigll,zigll,jacobian2D_ymax,normal_ymax,&
+                        NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
+    end if 
   endif
 
 ! on boundary: bottom
@@ -269,36 +338,52 @@
     ispecb5=ispecb5+1
     ibelm_bottom(ispecb5)=ispec
 
-    xelm(1)=xstore(1,1,1,ispec)
-    yelm(1)=ystore(1,1,1,ispec)
-    zelm(1)=zstore(1,1,1,ispec)
-    xelm(2)=xstore(NGLLX,1,1,ispec)
-    yelm(2)=ystore(NGLLX,1,1,ispec)
-    zelm(2)=zstore(NGLLX,1,1,ispec)
-    xelm(3)=xstore(NGLLX,NGLLY,1,ispec)
-    yelm(3)=ystore(NGLLX,NGLLY,1,ispec)
-    zelm(3)=zstore(NGLLX,NGLLY,1,ispec)
-    xelm(4)=xstore(1,NGLLY,1,ispec)
-    yelm(4)=ystore(1,NGLLY,1,ispec)
-    zelm(4)=zstore(1,NGLLY,1,ispec)
-    xelm(5)=xstore((NGLLX+1)/2,1,1,ispec)
-    yelm(5)=ystore((NGLLX+1)/2,1,1,ispec)
-    zelm(5)=zstore((NGLLX+1)/2,1,1,ispec)
-    xelm(6)=xstore(NGLLX,(NGLLY+1)/2,1,ispec)
-    yelm(6)=ystore(NGLLX,(NGLLY+1)/2,1,ispec)
-    zelm(6)=zstore(NGLLX,(NGLLY+1)/2,1,ispec)
-    xelm(7)=xstore((NGLLX+1)/2,NGLLY,1,ispec)
-    yelm(7)=ystore((NGLLX+1)/2,NGLLY,1,ispec)
-    zelm(7)=zstore((NGLLX+1)/2,NGLLY,1,ispec)
-    xelm(8)=xstore(1,(NGLLY+1)/2,1,ispec)
-    yelm(8)=ystore(1,(NGLLY+1)/2,1,ispec)
-    zelm(8)=zstore(1,(NGLLY+1)/2,1,ispec)
-    xelm(9)=xstore((NGLLX+1)/2,(NGLLY+1)/2,1,ispec)
-    yelm(9)=ystore((NGLLX+1)/2,(NGLLY+1)/2,1,ispec)
-    zelm(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,1,ispec)
+    if ( .not. USE_GLL) then
+        xelm(1)=xstore(1,1,1,ispec)
+        yelm(1)=ystore(1,1,1,ispec)
+        zelm(1)=zstore(1,1,1,ispec)
+        xelm(2)=xstore(NGLLX,1,1,ispec)
+        yelm(2)=ystore(NGLLX,1,1,ispec)
+        zelm(2)=zstore(NGLLX,1,1,ispec)
+        xelm(3)=xstore(NGLLX,NGLLY,1,ispec)
+        yelm(3)=ystore(NGLLX,NGLLY,1,ispec)
+        zelm(3)=zstore(NGLLX,NGLLY,1,ispec)
+        xelm(4)=xstore(1,NGLLY,1,ispec)
+        yelm(4)=ystore(1,NGLLY,1,ispec)
+        zelm(4)=zstore(1,NGLLY,1,ispec)
+        xelm(5)=xstore((NGLLX+1)/2,1,1,ispec)
+        yelm(5)=ystore((NGLLX+1)/2,1,1,ispec)
+        zelm(5)=zstore((NGLLX+1)/2,1,1,ispec)
+        xelm(6)=xstore(NGLLX,(NGLLY+1)/2,1,ispec)
+        yelm(6)=ystore(NGLLX,(NGLLY+1)/2,1,ispec)
+        zelm(6)=zstore(NGLLX,(NGLLY+1)/2,1,ispec)
+        xelm(7)=xstore((NGLLX+1)/2,NGLLY,1,ispec)
+        yelm(7)=ystore((NGLLX+1)/2,NGLLY,1,ispec)
+        zelm(7)=zstore((NGLLX+1)/2,NGLLY,1,ispec)
+        xelm(8)=xstore(1,(NGLLY+1)/2,1,ispec)
+        yelm(8)=ystore(1,(NGLLY+1)/2,1,ispec)
+        zelm(8)=zstore(1,(NGLLY+1)/2,1,ispec)
+        xelm(9)=xstore((NGLLX+1)/2,(NGLLY+1)/2,1,ispec)
+        yelm(9)=ystore((NGLLX+1)/2,(NGLLY+1)/2,1,ispec)
+        zelm(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,1,ispec)
 
-    call compute_jacobian_2D(myrank,ispecb5,xelm,yelm,zelm,dershape2D_bottom, &
+        call compute_jacobian_2D(myrank,ispecb5,xelm,yelm,zelm,dershape2D_bottom, &
                   jacobian2D_bottom,normal_bottom,NGLLX,NGLLY,NSPEC2D_BOTTOM)
+                 
+    else 
+        ! get 25 GLL points for zmin
+        do j = 1,NGLLY
+           do i = 1,NGLLX
+              xelm2D(i,j) = xstore(i,j,1,ispec)
+              yelm2D(i,j) = ystore(i,j,1,ispec)
+              zelm2D(i,j) = zstore(i,j,1,ispec)
+           end do 
+        end do
+        ! recalcuate 2D jacobian according to GLL points
+        call recalc_jacobian_gll2D(myrank,ispecb5,xelm2D,yelm2D,zelm2D,&
+                        xigll,yigll,jacobian2D_bottom,normal_bottom,&
+                        NGLLX,NGLLY,NSPEC2D_BOTTOM)
+   end if 
 
   endif
 
@@ -309,40 +394,58 @@
     ispecb6=ispecb6+1
     ibelm_top(ispecb6)=ispec
 
-    xelm(1)=xstore(1,1,NGLLZ,ispec)
-    yelm(1)=ystore(1,1,NGLLZ,ispec)
-    zelm(1)=zstore(1,1,NGLLZ,ispec)
-    xelm(2)=xstore(NGLLX,1,NGLLZ,ispec)
-    yelm(2)=ystore(NGLLX,1,NGLLZ,ispec)
-    zelm(2)=zstore(NGLLX,1,NGLLZ,ispec)
-    xelm(3)=xstore(NGLLX,NGLLY,NGLLZ,ispec)
-    yelm(3)=ystore(NGLLX,NGLLY,NGLLZ,ispec)
-    zelm(3)=zstore(NGLLX,NGLLY,NGLLZ,ispec)
-    xelm(4)=xstore(1,NGLLY,NGLLZ,ispec)
-    yelm(4)=ystore(1,NGLLY,NGLLZ,ispec)
-    zelm(4)=zstore(1,NGLLY,NGLLZ,ispec)
-    xelm(5)=xstore((NGLLX+1)/2,1,NGLLZ,ispec)
-    yelm(5)=ystore((NGLLX+1)/2,1,NGLLZ,ispec)
-    zelm(5)=zstore((NGLLX+1)/2,1,NGLLZ,ispec)
-    xelm(6)=xstore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
-    yelm(6)=ystore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
-    zelm(6)=zstore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
-    xelm(7)=xstore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
-    yelm(7)=ystore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
-    zelm(7)=zstore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
-    xelm(8)=xstore(1,(NGLLY+1)/2,NGLLZ,ispec)
-    yelm(8)=ystore(1,(NGLLY+1)/2,NGLLZ,ispec)
-    zelm(8)=zstore(1,(NGLLY+1)/2,NGLLZ,ispec)
-    xelm(9)=xstore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
-    yelm(9)=ystore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
-    zelm(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
+    if ( .not. USE_GLL) then
+        xelm(1)=xstore(1,1,NGLLZ,ispec)
+        yelm(1)=ystore(1,1,NGLLZ,ispec)
+        zelm(1)=zstore(1,1,NGLLZ,ispec)
+        xelm(2)=xstore(NGLLX,1,NGLLZ,ispec)
+        yelm(2)=ystore(NGLLX,1,NGLLZ,ispec)
+        zelm(2)=zstore(NGLLX,1,NGLLZ,ispec)
+        xelm(3)=xstore(NGLLX,NGLLY,NGLLZ,ispec)
+        yelm(3)=ystore(NGLLX,NGLLY,NGLLZ,ispec)
+        zelm(3)=zstore(NGLLX,NGLLY,NGLLZ,ispec)
+        xelm(4)=xstore(1,NGLLY,NGLLZ,ispec)
+        yelm(4)=ystore(1,NGLLY,NGLLZ,ispec)
+        zelm(4)=zstore(1,NGLLY,NGLLZ,ispec)
+        xelm(5)=xstore((NGLLX+1)/2,1,NGLLZ,ispec)
+        yelm(5)=ystore((NGLLX+1)/2,1,NGLLZ,ispec)
+        zelm(5)=zstore((NGLLX+1)/2,1,NGLLZ,ispec)
+        xelm(6)=xstore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
+        yelm(6)=ystore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
+        zelm(6)=zstore(NGLLX,(NGLLY+1)/2,NGLLZ,ispec)
+        xelm(7)=xstore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
+        yelm(7)=ystore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
+        zelm(7)=zstore((NGLLX+1)/2,NGLLY,NGLLZ,ispec)
+        xelm(8)=xstore(1,(NGLLY+1)/2,NGLLZ,ispec)
+        yelm(8)=ystore(1,(NGLLY+1)/2,NGLLZ,ispec)
+        zelm(8)=zstore(1,(NGLLY+1)/2,NGLLZ,ispec)
+        xelm(9)=xstore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
+        yelm(9)=ystore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
+        zelm(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
 
-    call compute_jacobian_2D(myrank,ispecb6,xelm,yelm,zelm,dershape2D_top, &
+        call compute_jacobian_2D(myrank,ispecb6,xelm,yelm,zelm,dershape2D_top, &
                   jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
+    else
+        ! get 25 GLL points for zmax
+        do j = 1,NGLLY
+           do i = 1,NGLLX
+              xelm2D(i,j) = xstore(i,j,NGLLZ,ispec)
+              yelm2D(i,j) = ystore(i,j,NGLLZ,ispec)
+              zelm2D(i,j) = zstore(i,j,NGLLZ,ispec)
+           end do 
+        end do
+        ! recalcuate jacobian according to 2D gll points
+        call recalc_jacobian_gll2D(myrank,ispecb6,xelm2D,yelm2D,zelm2D,&
+                xigll,yigll,jacobian2D_top,normal_top,&
+                NGLLX,NGLLY,NSPEC2D_TOP)
+
+    end if 
 
   endif
 
   enddo
+!< Hejun
+
 
 ! check theoretical value of elements at the bottom
   if(ispecb5 /= NSPEC2D_BOTTOM) then

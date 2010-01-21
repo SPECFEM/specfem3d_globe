@@ -955,8 +955,10 @@ subroutine get_attenuation_model_3D(myrank, prname, one_minus_sum_beta, factor_c
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
-
-  open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin',status='old',action='read',form='unformatted')
+!> Hejun
+!  open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin',status='old',action='read',form='unformatted')
+  open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin',status='old',action='read',form='unformatted')
+!< Hejun
   read(27) tau_s
   read(27) factor_common
   read(27) scale_factor
@@ -1787,7 +1789,7 @@ subroutine pspline_construction(x, y, n, yp1, ypn, y2, steps)
 
 end subroutine pspline_construction
 
-subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
+subroutine attenuation_model_1D_PREM(x, Qmu)
 
 ! x in the radius from 0 to 1 where 0 is the center and 1 is the surface
 ! This version is for 1D PREM.
@@ -1795,8 +1797,9 @@ subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
   implicit none
 
   include 'constants.h'
-
-  integer iflag
+!> Hejun
+!  integer iflag
+!< Hejun
   double precision r, x, Qmu,RICB,RCMB, &
       RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80, ROCEAN, RMOHO, RMIDDLE_CRUST
   double precision Qkappa
@@ -1869,36 +1872,122 @@ subroutine attenuation_model_1D_PREM(x, Qmu, iflag)
      Qkappa=57827.0d0
   endif
 
+!> Hejun
+! Since R80 may be changed, we use radius to decide the attenuation region
+! rather than doubling flag
+
   ! We determine the attenuation value here dependent on the doubling flag and
   ! which region we are sitting in. The radius reported is not accurate for
   ! determination of which region we are actually in, whereas the idoubling flag is
-  if(iflag == IFLAG_INNER_CORE_NORMAL .or. iflag == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-       iflag == IFLAG_BOTTOM_CENTRAL_CUBE .or. iflag == IFLAG_TOP_CENTRAL_CUBE .or. &
-       iflag == IFLAG_IN_FICTITIOUS_CUBE) then
-     Qmu =  84.6d0
-     Qkappa = 1327.7d0
-  else if(iflag == IFLAG_OUTER_CORE_NORMAL) then
-     Qmu = 0.0d0
-     Qkappa = 57827.0d0
-  else if(iflag == IFLAG_MANTLE_NORMAL) then ! D'' to 670 km
-     Qmu = 312.0d0
-     Qkappa = 57827.0d0
-  else if(iflag == IFLAG_670_220) then
-     Qmu=143.0d0
-     Qkappa = 57827.0d0
-  else if(iflag == IFLAG_220_80) then
-     Qmu=80.0d0
-     Qkappa = 57827.0d0
-  else if(iflag == IFLAG_80_MOHO) then
-     Qmu=600.0d0
-     Qkappa = 57827.0d0
-  else if(iflag == IFLAG_CRUST) then
-     Qmu=600.0d0
-     Qkappa = 57827.0d0
-  else
-     write(*,*)'iflag:',iflag
-     call exit_MPI_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
+!  if(iflag == IFLAG_INNER_CORE_NORMAL .or. iflag == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+!       iflag == IFLAG_BOTTOM_CENTRAL_CUBE .or. iflag == IFLAG_TOP_CENTRAL_CUBE .or. &
+!       iflag == IFLAG_IN_FICTITIOUS_CUBE) then
+!     Qmu =  84.6d0
+!     Qkappa = 1327.7d0
+!  else if(iflag == IFLAG_OUTER_CORE_NORMAL) then
+!     Qmu = 0.0d0
+!     Qkappa = 57827.0d0
+!  else if(iflag == IFLAG_MANTLE_NORMAL) then ! D'' to 670 km
+!     Qmu = 312.0d0
+!     Qkappa = 57827.0d0
+!  else if(iflag == IFLAG_670_220) then
+!     Qmu=143.0d0
+!     Qkappa = 57827.0d0
+!  else if(iflag == IFLAG_220_80) then
+!     Qmu=80.0d0
+!     Qkappa = 57827.0d0
+!  else if(iflag == IFLAG_80_MOHO) then
+!     Qmu=600.0d0
+!     Qkappa = 57827.0d0
+!  else if(iflag == IFLAG_CRUST) then
+!     Qmu=600.0d0
+!     Qkappa = 57827.0d0
+!  else
+!     write(*,*)'iflag:',iflag
+!     call exit_MPI_without_rank('Invalid idoubling flag in attenuation_model_1D_prem from get_model()')
+!  endif
+
+!< Hejun
+end subroutine attenuation_model_1D_PREM
+
+
+!> Hejun
+! get 1D REF attenuation model according to radius
+subroutine attenuation_model_1D_REF(x, Qmu)
+
+! x in the radius from 0 to 1 where 0 is the center and 1 is the surface
+! This version is for 1D REF.
+
+  implicit none
+
+  include 'constants.h'
+
+  double precision r, x, Qmu,RICB,RCMB, &
+      RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80, ROCEAN, RMOHO, RMIDDLE_CRUST
+  double precision Qkappa
+
+  r = x * R_EARTH
+
+  ROCEAN = 6368000.d0
+  RMIDDLE_CRUST = 6356000.d0
+  RMOHO = 6346600.d0
+  R80  = 6291000.d0
+  R220 = 6151000.d0
+  R400 = 5961000.d0
+  R600 = 5771000.d0
+  R670 = 5721000.d0
+  R771 = 5600000.d0
+  RTOPDDOUBLEPRIME = 3630000.d0
+  RCMB = 3479958.d0
+  RICB = 1221491.d0
+
+! REF model
+!
+!--- inner core
+!
+  if(r >= 0.d0 .and. r <= RICB) then
+     Qmu=104.0d0
+     Qkappa=1327.6d0
+
+!--- outer core
+!
+  else if(r > RICB .and. r <= RCMB) then
+     Qmu=0.0d0
+     Qkappa=57822.5d0
+     if(RCMB - r < r - RICB) then
+        Qmu = 355.0d0  ! CMB
+     else
+        Qmu = 104.0d0   ! ICB
+     endif
+
+!--- D" at the base of the mantle
+!
+  else if(r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
+     Qmu=355.0d0
+     Qkappa=57822.5d0
+
+!--- mantle: from top of D" to d670
+!
+  else if(r > RTOPDDOUBLEPRIME .and. r <= R670) then
+     Qmu=355.0d0
+     Qkappa=57822.5d0
+
+!--- mantle: above d670
+!
+  else if(r > R670 .and. r <= R220) then
+     Qmu=165.0d0
+     Qkappa=943.0d0
+  else if(r > R220 .and. r <= R80) then
+     Qmu=70.0d0
+     Qkappa=943.0d0
+  else if(r > R80.and. r<=RMOHO) then
+     Qmu=191.0d0
+     Qkappa=943.0d0
+  else if (r > RMOHO) then
+     Qmu=300.0d0
+     Qkappa=57822.5d0
   endif
 
-end subroutine attenuation_model_1D_PREM
+end subroutine attenuation_model_1D_REF
+!< Hejun
 

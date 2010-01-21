@@ -282,8 +282,10 @@
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
 
-  type (attenuation_model_variables) AM_V
+!> Hejun
+!  type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
+!< Hejun
 
 ! memory variables and standard linear solids for attenuation
   double precision, dimension(N_SLS) :: tau_sigma_dble
@@ -302,7 +304,9 @@
   double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core_dble
 
   double precision scale_factor,scale_factor_minus_one
-  real(kind=CUSTOM_REAL) dist_cr
+!> Hejun  
+!  real(kind=CUSTOM_REAL) dist_cr
+!< Hejun
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: epsilondev_crust_mantle
@@ -831,7 +835,9 @@
 ! if running on MareNostrum in Barcelona
   character(len=400) system_command
 
-  integer iregion_selected
+!> Hejun
+!  integer iregion_selected
+!< Hejun
 
 ! computed in read_compute_parameters
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
@@ -2376,27 +2382,41 @@
 
 ! get and store PREM attenuation model
 
+!> Hejun
+! Use the same reader for 1D and 3D attenuation model
 ! ATTENUATION_3D get values from mesher
-     if(ATTENUATION_3D_VAL) then
-        ! CRUST_MANTLE ATTENUATION
-        call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-        call get_attenuation_model_3D(myrank, prname, omsb_crust_mantle_dble, &
+!     if(ATTENUATION_3D_VAL) then
+!        ! CRUST_MANTLE ATTENUATION
+!        call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
+!        call get_attenuation_model_3D(myrank, prname, omsb_crust_mantle_dble, &
+!             factor_common_crust_mantle_dble, factor_scale_crust_mantle_dble, tau_sigma_dble, NSPEC_CRUST_MANTLE)
+!        ! INNER_CORE ATTENUATION
+!        call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
+!        call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
+!             factor_common_inner_core_dble, factor_scale_inner_core_dble, tau_sigma_dble, NSPEC_INNER_CORE)
+!     else ! ATTENUATION = .true. .and. ATTENUATION_3D = .false.
+!        call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
+!        call get_attenuation_model_1D(myrank, prname, IREGION_CRUST_MANTLE, tau_sigma_dble, &
+!             omsb_crust_mantle_dble, factor_common_crust_mantle_dble,  &
+!             factor_scale_crust_mantle_dble, NRAD_ATTENUATION,1,1,1, AM_V)
+!        omsb_inner_core_dble(:,:,:,1:min(ATT4,ATT5)) = omsb_crust_mantle_dble(:,:,:,1:min(ATT4,ATT5))
+!        factor_scale_inner_core_dble(:,:,:,1:min(ATT4,ATT5))    = factor_scale_crust_mantle_dble(:,:,:,1:min(ATT4,ATT5))
+!        factor_common_inner_core_dble(:,:,:,:,1:min(ATT4,ATT5)) = factor_common_crust_mantle_dble(:,:,:,:,1:min(ATT4,ATT5))
+!        ! Tell the Attenuation Code about the IDOUBLING regions within the Mesh
+!        call set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
+!     endif ! ATTENUATION_3D
+!< Hejun
+
+!> Hejun
+   ! CRUST_MANTLE ATTENUATION
+   call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
+   call get_attenuation_model_3D(myrank, prname, omsb_crust_mantle_dble, &
              factor_common_crust_mantle_dble, factor_scale_crust_mantle_dble, tau_sigma_dble, NSPEC_CRUST_MANTLE)
-        ! INNER_CORE ATTENUATION
-        call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
-        call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
+   ! INNER_CORE ATTENUATION
+   call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
+   call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
              factor_common_inner_core_dble, factor_scale_inner_core_dble, tau_sigma_dble, NSPEC_INNER_CORE)
-     else ! ATTENUATION = .true. .and. ATTENUATION_3D = .false.
-        call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-        call get_attenuation_model_1D(myrank, prname, IREGION_CRUST_MANTLE, tau_sigma_dble, &
-             omsb_crust_mantle_dble, factor_common_crust_mantle_dble,  &
-             factor_scale_crust_mantle_dble, NRAD_ATTENUATION,1,1,1, AM_V)
-        omsb_inner_core_dble(:,:,:,1:min(ATT4,ATT5)) = omsb_crust_mantle_dble(:,:,:,1:min(ATT4,ATT5))
-        factor_scale_inner_core_dble(:,:,:,1:min(ATT4,ATT5))    = factor_scale_crust_mantle_dble(:,:,:,1:min(ATT4,ATT5))
-        factor_common_inner_core_dble(:,:,:,:,1:min(ATT4,ATT5)) = factor_common_crust_mantle_dble(:,:,:,:,1:min(ATT4,ATT5))
-        ! Tell the Attenuation Code about the IDOUBLING regions within the Mesh
-        call set_attenuation_regions_1D(RICB, RCMB, R670, R220, R80, AM_V)
-     endif ! ATTENUATION_3D
+!< Hejun
 
    if(CUSTOM_REAL == SIZE_REAL) then
       factor_scale_crust_mantle       = sngl(factor_scale_crust_mantle_dble)
@@ -2431,17 +2451,18 @@
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
-
+!> Hejun
 ! ATTENUATION_3D get scale_factor
-            if(ATTENUATION_3D_VAL) then
+            !if(ATTENUATION_3D_VAL) then
               ! tau_mu and tau_sigma need to reference a point in the mesh
               scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
-            else
-              iglob   = ibool_crust_mantle(i,j,k,ispec)
-              dist_cr = xstore_crust_mantle(iglob)
-              call get_attenuation_index(idoubling_crust_mantle(ispec), dble(dist_cr), iregion_selected, .FALSE., AM_V)
-              scale_factor = factor_scale_crust_mantle(1,1,1,iregion_selected)
-            endif ! ATTENUATION_3D
+            !else
+            !  iglob   = ibool_crust_mantle(i,j,k,ispec)
+            !  dist_cr = xstore_crust_mantle(iglob)
+            !  call get_attenuation_index(idoubling_crust_mantle(ispec), dble(dist_cr), iregion_selected, .FALSE., AM_V)
+            !  scale_factor = factor_scale_crust_mantle(1,1,1,iregion_selected)
+            !endif ! ATTENUATION_3D
+!< Hejun
 
     if(ANISOTROPIC_3D_MANTLE_VAL) then
       scale_factor_minus_one = scale_factor - 1.
@@ -2486,15 +2507,16 @@
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
-
-            if(ATTENUATION_3D_VAL) then
+!> Hejun
+!            if(ATTENUATION_3D_VAL) then
                scale_factor_minus_one = factor_scale_inner_core(i,j,k,ispec) - 1.0
-            else
-               iglob   = ibool_inner_core(i,j,k,ispec)
-               dist_cr = xstore_inner_core(iglob)
-               call get_attenuation_index(idoubling_inner_core(ispec), dble(dist_cr), iregion_selected, .TRUE., AM_V)
-               scale_factor_minus_one = factor_scale_inner_core(1,1,1,iregion_selected) - 1.
-            endif
+!            else
+!               iglob   = ibool_inner_core(i,j,k,ispec)
+!               dist_cr = xstore_inner_core(iglob)
+!               call get_attenuation_index(idoubling_inner_core(ispec), dble(dist_cr), iregion_selected, .TRUE., AM_V)
+!               scale_factor_minus_one = factor_scale_inner_core(1,1,1,iregion_selected) - 1.
+!            endif
+!< Hejun
 
         if(ANISOTROPIC_INNER_CORE_VAL) then
           mul = muvstore_inner_core(i,j,k,ispec)
@@ -2510,11 +2532,13 @@
                   + scale_factor_minus_one * mul
         endif
 
-            if(ATTENUATION_3D_VAL) then
-               muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
-            else
-               muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(1,1,1,iregion_selected)
-            endif
+!> Hejun
+        !if(ATTENUATION_3D_VAL) then
+            muvstore_inner_core(i,j,k,ispec) = muvstore_inner_core(i,j,k,ispec) * factor_scale_inner_core(i,j,k,ispec)
+        !else
+        !   muvstore_inner_core(i,j,k,ispec)=muvstore_inner_core(i,j,k,ispec)*factor_scale_inner_core(1,1,1,iregion_selected)
+        !endif
+!< Hejun
 
           enddo
         enddo
@@ -3667,7 +3691,7 @@
           R_memory_crust_mantle,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN)
   else
     call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -3691,7 +3715,7 @@
           R_memory_crust_mantle,epsilondev_crust_mantle,eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN)
   endif
   
   if (SIMULATION_TYPE == 3) then
@@ -3719,7 +3743,7 @@
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN)
     else
       call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
@@ -3743,7 +3767,7 @@
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle,b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5),COMPUTE_AND_STORE_STRAIN)
     
     endif
   endif
@@ -3996,7 +4020,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN)
   else
     call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -4013,7 +4037,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)  
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN)  
   endif
 
   if (SIMULATION_TYPE == 3) then
@@ -4033,7 +4057,7 @@
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN)
     else
       call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
@@ -4050,7 +4074,7 @@
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN,AM_V)    
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5),COMPUTE_AND_STORE_STRAIN)    
     endif
   endif
 
