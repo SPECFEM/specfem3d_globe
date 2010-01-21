@@ -30,7 +30,7 @@
 ! based on software routines provided with the crust2.0 model by Bassin et al.
 !
 
-  subroutine crustal_model(lat,lon,x,vp,vs,rho,moho,found_crust,CM_V)
+  subroutine crustal_model(lat,lon,x,vp,vs,rho,moho,found_crust,CM_V,elem_in_crust)
 
   implicit none
   include "constants.h"
@@ -56,6 +56,9 @@
   double precision x3,x4,x5,x6,x7,scaleval
   double precision vps(NLAYERS_CRUST),vss(NLAYERS_CRUST),rhos(NLAYERS_CRUST),thicks(NLAYERS_CRUST)
 
+!> Hejun
+  logical::elem_in_crust
+!< Hejun
   call crust(lat,lon,vps,vss,rhos,thicks,CM_V%abbreviation,CM_V%code,CM_V%thlr,CM_V%velocp,CM_V%velocs,CM_V%dens)
 
  x3 = (R_EARTH-thicks(3)*1000.0d0)/R_EARTH
@@ -83,7 +86,7 @@
    vp = vps(6)
    vs = vss(6)
    rho = rhos(6)
- else if(x > x7) then
+ else if(x > x7.or.elem_in_crust) then
    vp = vps(7)
    vs = vss(7)
    rho = rhos(7)
@@ -97,9 +100,13 @@
     vp = vp*1000.0d0/(R_EARTH*scaleval)
     vs = vs*1000.0d0/(R_EARTH*scaleval)
     rho = rho*1000.0d0/RHOAV
-    moho = (h_uc+thicks(6)+thicks(7))*1000.0d0/R_EARTH
+!    moho = (h_uc+thicks(6)+thicks(7))*1000.0d0/R_EARTH
  endif
 
+ !> Hejun
+ ! No matter found_crust true or false, output moho thickness
+ moho = (h_uc+thicks(6)+thicks(7))*1000.0d0/R_EARTH
+ !< Hejun 
  end subroutine crustal_model
 
 !---------------------------
@@ -171,10 +178,11 @@
 
   implicit none
   include "constants.h"
-
-  integer, parameter :: NTHETA = 2
-  integer, parameter :: NPHI = 10
-  double precision, parameter :: CAP = 2.0d0*PI/180.0d0
+!> Hejun
+! Change the CAP function to smooth crustal model
+  integer, parameter :: NTHETA = 4         !2
+  integer, parameter :: NPHI = 20          !10
+  double precision, parameter :: CAP = 1.0d0*PI/180.0d0   ! 2.0d0*PI/180.0d0
 
 ! argument variables
   double precision lat,lon

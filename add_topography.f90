@@ -85,3 +85,85 @@
 
   end subroutine add_topography
 
+  !> Hejun
+  ! This subroutine uses GLL points to capture topography variation rather
+  ! than using control nodes
+  ! Hejun Zhu, OCT16, 2009
+
+  ! input parameters: myrank,
+  !                   xstore,ystore,zstore,
+  !                   ispec,nspec,
+  !                   ibathy_topo
+  !                   R220
+
+  subroutine add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,&
+                                ibathy_topo,R220)
+
+  implicit none
+
+  include "constants.h"
+
+  ! input parameters
+  integer:: myrank
+  integer:: ispec,nspec
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  double precision:: R220
+
+  ! local parameters used in this subroutine                                      
+  integer:: i,j,k
+  double precision:: r,theta,phi,colat
+  double precision:: lat,lon,elevation,gamma
+
+  do k = 1,NGLLZ
+     do j = 1,NGLLY
+        do i = 1,NGLLX
+
+           ! convert to r theta phi
+           ! slightly move points to avoid roundoff problem when exactly on the polar axis
+           call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),&
+                                          r,theta,phi)
+           theta = theta + 0.0000001d0
+           phi = phi + 0.0000001d0
+           call reduce(theta,phi)
+
+
+           ! convert the geocentric colatitude to a geographic colatitude
+           colat = PI/2.0d0 - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+
+           ! get geographic latitude and longitude in degrees
+           lat = 90.0d0 - colat*180.0d0/PI
+           lon = phi*180.0d0/PI
+           elevation = 0.d0
+
+           ! compute elevation at current point
+           call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+           ! non-dimensionalize the elevation, which is in meters
+
+           elevation = elevation / R_EARTH
+
+           ! stretching topography between d220 and the surface
+           gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
+           !
+
+           ! add elevation to all the points of that element
+           ! also make sure factor makes sense
+           if(gamma < -0.02 .or. gamma > 1.02) then
+                call exit_MPI(myrank,'incorrect value of factor for topography gll points')
+           end if 
+           !
+
+           ! since not all GLL points are exactlly at R220, use a small
+           ! tolerance for R220 detection
+           if (abs(gamma) < SMALLVAL) then
+               gamma = 0.0
+           end if 
+           xstore(i,j,k,ispec) = xstore(i,j,k,ispec)*(ONE + gamma * elevation / r)
+           ystore(i,j,k,ispec) = ystore(i,j,k,ispec)*(ONE + gamma * elevation / r)
+           zstore(i,j,k,ispec) = zstore(i,j,k,ispec)*(ONE + gamma * elevation / r)
+
+        end do 
+     end do 
+  end do
+  end subroutine add_topography_gll
+  !< Hejun

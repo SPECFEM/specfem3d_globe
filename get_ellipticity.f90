@@ -63,3 +63,47 @@
 
   end subroutine get_ellipticity
 
+  !> Hejun 
+  ! get ellipticity according to GLL points
+  ! JAN08, 2010
+  subroutine get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
+
+  implicit none
+
+  include "constants.h"
+
+  integer nspl
+  integer::ispec,nspec
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
+  double precision rspl(NR),espl(NR),espl2(NR)
+
+  integer i,j,k
+
+  double precision ell
+  double precision r,theta,phi,factor
+  double precision cost,p20
+
+  do k = 1,NGLLZ
+     do j = 1,NGLLY
+        do i = 1,NGLLX
+
+           call xyz_2_rthetaphi_dble(xstore(i,j,k,ispec),ystore(i,j,k,ispec),zstore(i,j,k,ispec),r,theta,phi)
+
+           cost=dcos(theta)
+           p20=0.5d0*(3.0d0*cost*cost-1.0d0)
+
+           ! get ellipticity using spline evaluation
+           call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+
+           factor=ONE-(TWO/3.0d0)*ell*p20
+
+           xstore(i,j,k,ispec)=xstore(i,j,k,ispec)*factor
+           ystore(i,j,k,ispec)=ystore(i,j,k,ispec)*factor
+           zstore(i,j,k,ispec)=zstore(i,j,k,ispec)*factor
+
+        end do
+      end do 
+  end do
+  end subroutine get_ellipticity_gll
+  !< Hejun
+

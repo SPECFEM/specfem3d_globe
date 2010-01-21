@@ -102,6 +102,17 @@
 !! pathname of the topography file
 !  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat'
 
+!!--- ETOPO1 1-minute model, implemented now, data must be created first 
+!! size of topography and bathymetry file
+!  integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
+!! resolution of topography file in minutes
+!  integer, parameter :: RESOLUTION_TOPO_FILE = 1
+!! pathname of the topography file
+!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1.xyz'
+
+! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY
+  logical,parameter :: USE_GLL = .false.
+
 ! maximum depth of the oceans in trenches and height of topo in mountains
 ! to avoid taking into account spurious oscillations in global model ETOPO
   logical, parameter :: USE_MAXIMUM_HEIGHT_TOPO = .false.

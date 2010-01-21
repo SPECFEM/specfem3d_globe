@@ -41,7 +41,8 @@
            rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
            ATTENUATION,ATTENUATION_3D,SAVE_MESH_FILES, &
            NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
+           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            ner,ratio_sampling_array,doubling_index,r_bottom,r_top,this_region_has_a_doubling,CASE_3D, &
            AMM_V,AM_V,QRFSI12_Q,M1066a_V,Mak135_V,Mref_V,SEA1DM_V,D3MM_V,HMM,JP3DM_V,SEA99M_V,CM_V, AM_S, AS_V, &
            numker,numhpa,numcof,ihpa,lmax,nylm, &
@@ -353,6 +354,9 @@
 
   double precision R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO, &
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
+!> Hejun
+  integer:: RMOHO_FICTITIOUS_IN_MESHER
+!< Hejun
 
   character(len=150) LOCAL_PATH,errmsg
 
@@ -564,18 +568,29 @@
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
+!> Hejun
+! New Attenuation defination
 ! Attenuation
-  if(ATTENUATION .and. ATTENUATION_3D) then
-    T_c_source = AM_V%QT_c_source
-    tau_s(:)   = AM_V%Qtau_s(:)
-    allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec))
-    allocate(tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
-  else
-    allocate(Qmu_store(1,1,1,1))
-    allocate(tau_e_store(N_SLS,1,1,1,1))
-    Qmu_store(1,1,1,1) = 0.0d0
-    tau_e_store(:,1,1,1,1) = 0.0d0
-  endif
+!  if(ATTENUATION .and. ATTENUATION_3D) then
+!    T_c_source = AM_V%QT_c_source
+!    tau_s(:)   = AM_V%Qtau_s(:)
+!    allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec))
+!    allocate(tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
+!  else
+!    allocate(Qmu_store(1,1,1,1))
+!    allocate(tau_e_store(N_SLS,1,1,1,1))
+!    Qmu_store(1,1,1,1) = 0.0d0
+!    tau_e_store(:,1,1,1,1) = 0.0d0
+!  endif
+   if (ATTENUATION) then
+      T_c_source = AM_V%QT_c_source
+      tau_s(:)   = AM_V%Qtau_s(:)
+      allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec))
+      allocate(tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec))
+   end if 
+!< Hejun
+
+
 
 ! Gauss-Lobatto-Legendre points of integration
   allocate(xigll(NGLLX))
@@ -980,7 +995,7 @@
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-           RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+           RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -991,7 +1006,8 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS,&
+           xigll,yigll,zigll)
 
 ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -1182,7 +1198,7 @@
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-           RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+           RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -1193,7 +1209,8 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS,&
+           xigll,yigll,zigll)
 
 ! boundary mesh
      if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -1351,7 +1368,7 @@
            ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE,CRUSTAL,ONE_CRUST, &
            myrank,ibathy_topo,ATTENUATION,ATTENUATION_3D, &
            ABSORBING_CONDITIONS,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-           RICB,RCMB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
+           RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
            xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -1362,7 +1379,8 @@
            numker,numhpa,numcof,ihpa,lmax,nylm, &
            lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
            nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS)
+           coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,ACTUALLY_STORE_ARRAYS,&
+           xigll,yigll,zigll)
       enddo
     enddo
   enddo
@@ -1486,6 +1504,12 @@
               RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V,SEA1DM_V)
     call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
+!> Hejun
+! Output material information for all GLL points
+! Can be use to check the mesh
+!    call write_AVS_DX_global_data_gll(prname,nspec,xstore,ystore,zstore,&
+!                rhostore,kappavstore,muvstore,Qmu_store)
+!< Hejun
   endif
 
   deallocate(locval,stat=ier); if(ier /= 0) stop 'error in deallocate'
@@ -1512,7 +1536,8 @@
               normal_ymin,normal_ymax, &
               normal_bottom,normal_top, &
               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
+              xigll,yigll,zigll)
 
 ! creating mass matrix in this slice (will be fully assembled in the solver)
   allocate(rmass(nglob),stat=ier); if(ier /= 0) stop 'error in allocate'
@@ -1685,9 +1710,9 @@
             jacobian2D_bottom,jacobian2D_top,nspec,nglob, &
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
             TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
-            tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,ATTENUATION_3D, &
+            tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION, &
             size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
-            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,ABSORBING_CONDITIONS,AM_V)
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,ABSORBING_CONDITIONS)
 
   deallocate(rmass,stat=ier); if(ier /= 0) stop 'error in deallocate'
   deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate'
@@ -1831,8 +1856,12 @@
   deallocate(nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta)
   deallocate(rho_vp,rho_vs)
 
-  deallocate(Qmu_store)
-  deallocate(tau_e_store)
+!> Hejun
+  if (ATTENUATION) then
+     deallocate(Qmu_store)
+     deallocate(tau_e_store)
+  end if 
+!< Hejun
 
   end subroutine create_regions_mesh
 

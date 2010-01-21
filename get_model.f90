@@ -42,7 +42,7 @@
     numker,numhpa,numcof,ihpa,lmax,nylm, &
     lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
     nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
-    coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+    coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr,elem_in_crust)
 
   implicit none
 
@@ -400,6 +400,10 @@
   character(len=80) kerstr
   character(len=40) varstr(maxker)
 
+!> Hejun
+  logical::elem_in_crust
+!< Hejun
+
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -749,21 +753,23 @@
            c66 = c44
          endif
        endif
-
+!> Hejun
+! Assign Attenuation after get 3-D crustal model 
 ! This is here to identify how and where to include 3D attenuation
-       if(ATTENUATION .and. ATTENUATION_3D) then
-         call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
-         call reduce(theta,phi)
-         theta_degrees = theta / DEGREES_TO_RADIANS
-         phi_degrees = phi / DEGREES_TO_RADIANS
-         tau_e(:)   = 0.0d0
-         ! Get the value of Qmu (Attenuation) dependedent on
-         ! the radius (r_prem) and idoubling flag
-         !call attenuation_model_1D_PREM(r_prem, Qmu, idoubling)
-          call attenuation_model_3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,QRFSI12_Q,idoubling)
-          ! Get tau_e from tau_s and Qmu
-         call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
-       endif
+!       if(ATTENUATION .and. ATTENUATION_3D) then
+!         call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
+!         call reduce(theta,phi)
+!         theta_degrees = theta / DEGREES_TO_RADIANS
+!         phi_degrees = phi / DEGREES_TO_RADIANS
+!         tau_e(:)   = 0.0d0
+!         ! Get the value of Qmu (Attenuation) dependedent on
+!         ! the radius (r_prem) and idoubling flag
+!         !call attenuation_model_1D_PREM(r_prem, Qmu, idoubling)
+!          call attenuation_model_3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,QRFSI12_Q,idoubling)
+!          ! Get tau_e from tau_s and Qmu
+!         call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
+!       endif
+!<Hejun
 
 !      get the 3-D crustal model
        if(CRUSTAL) then
@@ -811,7 +817,7 @@
                    lat=(PI/2.0d0-theta)*180.0d0/PI
                    lon=phi*180.0d0/PI
                    if(lon>180.0d0) lon=lon-360.0d0
-                   call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V)
+                   call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V,elem_in_crust)
                    if (found_crust) then
                       vpv=vpc
                       vph=vpc
@@ -848,7 +854,7 @@
                 lat=(PI/2.0d0-theta)*180.0d0/PI
                 lon=phi*180.0d0/PI
                 if(lon>180.0d0) lon=lon-360.0d0
-                call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V)
+                call crustal_model(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V,elem_in_crust)
                 if (found_crust) then
                    vpv=vpc
                    vph=vpc
@@ -883,6 +889,50 @@
              endif
           endif
        endif
+
+!> Hejun
+! New Attenuation assignment
+! Define 3D and 1D Attenuation after moho stretch 
+! and before TOPOGRAPHY/ELLIPCITY
+       if (ATTENUATION) then
+           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
+           call reduce(theta,phi)
+           lat=(PI/2.0d0-theta)*180.0d0/PI
+           lon=phi*180.0d0/PI
+           if(lon>180.0d0) lon=lon-360.0d0
+
+           theta_degrees = theta / DEGREES_TO_RADIANS
+           phi_degrees = phi / DEGREES_TO_RADIANS
+           tau_e(:)   = 0.0d0
+           ! Get the value of Qmu (Attenuation) dependedent on
+           ! the radius (r_prem) and idoubling flag
+        
+           if (ATTENUATION_3D) then
+                call attenuation_model_3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,&
+                        phi_degrees,Qmu,QRFSI12_Q,idoubling)
+           else 
+                if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then 
+                    call attenuation_model_1D_PREM(r_prem, Qmu)
+                else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
+                    call attenuation_model_1D_REF(r_prem, Qmu)
+
+                    if ( CRUSTAL ) then
+                        ! extand the R80 to surface
+                        if (r_prem > R80/R_EARTH) then
+                            Qmu = 191.0d0
+                            Qkappa = 943.0d0
+                        end if 
+                        if ( r_prem > (ONE-moho) .or. elem_in_crust) then
+                            Qmu=300.0d0
+                            Qkappa=57822.5d0
+                        end if 
+                    end if 
+                end if 
+           end if 
+           ! Get tau_e from tau_s and Qmu
+           call attenuation_conversion(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
+       endif
+!< Hejun 
 
 ! define elastic parameters in the model
 
@@ -1007,10 +1057,20 @@
 
        endif
 
-       if(ATTENUATION .and. ATTENUATION_3D) then
+       !> Hejun
+       ! No matter 1D or 3D attenuation, we save all gll point value
+       !if(ATTENUATION .and. ATTENUATION_3D) then
+       !   tau_e_store(:,i,j,k,ispec) = tau_e(:)
+       !   Qmu_store(i,j,k,ispec)     = Qmu
+       !endif
+
+       if(ATTENUATION) then
           tau_e_store(:,i,j,k,ispec) = tau_e(:)
           Qmu_store(i,j,k,ispec)     = Qmu
        endif
+       !< Hejun
+
+
 
      enddo
    enddo

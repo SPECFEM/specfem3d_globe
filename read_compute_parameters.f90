@@ -142,6 +142,10 @@
 
   integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
 
+!> Hejun
+  double precision:: R80_FICTITIOUS_IN_MESHER
+!< Hejun  
+
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
@@ -1046,8 +1050,14 @@
 ! from the d220 to the Earth surface
   if(HONOR_1D_SPHERICAL_MOHO) then
     RMOHO_FICTITIOUS_IN_MESHER = RMOHO
+    !> Hejun
+    R80_FICTITIOUS_IN_MESHER=R80
+    !< Hejun
   else
     RMOHO_FICTITIOUS_IN_MESHER = (R80 + R_EARTH) / 2
+    !> Hejun
+    R80_FICTITIOUS_IN_MESHER=R80-40000.d0
+    !< Hejun
   endif
 
   call read_value_double_precision(RECORD_LENGTH_IN_MINUTES, 'solver.RECORD_LENGTH_IN_MINUTES')
@@ -1340,15 +1350,15 @@
   ! the last region is in the inner core near the center of the Earth
 
       r_top(1) = R_EARTH
-      r_bottom(1) = R80
+      r_bottom(1) = R80_FICTITIOUS_IN_MESHER
 
       r_top(2) = RMIDDLE_CRUST    !!!! now fictitious
       r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
 
       r_top(3) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
-      r_bottom(3) = R80    !!!! now fictitious
+      r_bottom(3) = R80_FICTITIOUS_IN_MESHER    !!!! now fictitious
 
-      r_top(4) = R80
+      r_top(4) = R80_FICTITIOUS_IN_MESHER
       r_bottom(4) = R220
 
       r_top(5) = R220
@@ -1383,15 +1393,15 @@
 
   ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
-      rmins(1) = R80 / R_EARTH
+      rmins(1) = R80_FICTITIOUS_IN_MESHER / R_EARTH
 
       rmaxs(2) = RMIDDLE_CRUST / R_EARTH    !!!! now fictitious
       rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
 
       rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
-      rmins(3) = R80 / R_EARTH    !!!! now fictitious
+      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
 
-      rmaxs(4) = R80 / R_EARTH
+      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_EARTH
       rmins(4) = R220 / R_EARTH
 
       rmaxs(5) = R220 / R_EARTH
@@ -1474,9 +1484,9 @@
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
 
       r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
-      r_bottom(2) = R80
+      r_bottom(2) = R80_FICTITIOUS_IN_MESHER
 
-      r_top(3) = R80
+      r_top(3) = R80_FICTITIOUS_IN_MESHER
       r_bottom(3) = R220
 
       r_top(4) = R220
@@ -1514,9 +1524,9 @@
       rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
 
       rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(2) = R80 / R_EARTH
+      rmins(2) = R80_FICTITIOUS_IN_MESHER / R_EARTH
 
-      rmaxs(3) = R80 / R_EARTH
+      rmaxs(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH
       rmins(3) = R220 / R_EARTH
 
       rmaxs(4) = R220 / R_EARTH
@@ -1601,9 +1611,9 @@
       r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER
 
       r_top(3) = RMOHO_FICTITIOUS_IN_MESHER
-      r_bottom(3) = R80
+      r_bottom(3) = R80_FICTITIOUS_IN_MESHER
 
-      r_top(4) = R80
+      r_top(4) = R80_FICTITIOUS_IN_MESHER
       r_bottom(4) = R220
 
       r_top(5) = R220
@@ -1644,9 +1654,9 @@
       rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
 
       rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(3) = R80 / R_EARTH
+      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH
 
-      rmaxs(4) = R80 / R_EARTH
+      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_EARTH
       rmins(4) = R220 / R_EARTH
 
       rmaxs(5) = R220 / R_EARTH
@@ -1729,15 +1739,15 @@
   ! the last region is in the inner core near the center of the Earth
 
       r_top(1) = R_EARTH
-      r_bottom(1) = R80
+      r_bottom(1) = R80_FICTITIOUS_IN_MESHER
 
       r_top(2) = RMIDDLE_CRUST    !!!! now fictitious
       r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
 
       r_top(3) = RMOHO_FICTITIOUS_IN_MESHER    !!!! now fictitious
-      r_bottom(3) = R80    !!!! now fictitious
+      r_bottom(3) = R80_FICTITIOUS_IN_MESHER    !!!! now fictitious
 
-      r_top(4) = R80
+      r_top(4) = R80_FICTITIOUS_IN_MESHER
       r_bottom(4) = R220
 
       r_top(5) = R220
@@ -1775,15 +1785,15 @@
 
   ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
-      rmins(1) = R80 / R_EARTH
+      rmins(1) = R80_FICTITIOUS_IN_MESHER / R_EARTH
 
       rmaxs(2) = RMIDDLE_CRUST / R_EARTH    !!!! now fictitious
       rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
 
       rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
-      rmins(3) = R80 / R_EARTH    !!!! now fictitious
+      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH    !!!! now fictitious
 
-      rmaxs(4) = R80 / R_EARTH
+      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_EARTH
       rmins(4) = R220 / R_EARTH
 
       rmaxs(5) = R220 / R_EARTH
@@ -1869,9 +1879,9 @@
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
 
       r_top(2) = RMOHO_FICTITIOUS_IN_MESHER
-      r_bottom(2) = R80
+      r_bottom(2) = R80_FICTITIOUS_IN_MESHER
 
-      r_top(3) = R80
+      r_top(3) = R80_FICTITIOUS_IN_MESHER
       r_bottom(3) = R220
 
       r_top(4) = R220
@@ -1912,9 +1922,9 @@
       rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
 
       rmaxs(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(2) = R80 / R_EARTH
+      rmins(2) = R80_FICTITIOUS_IN_MESHER / R_EARTH
 
-      rmaxs(3) = R80 / R_EARTH
+      rmaxs(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH
       rmins(3) = R220 / R_EARTH
 
       rmaxs(4) = R220 / R_EARTH
@@ -2001,9 +2011,9 @@
       r_bottom(2) = RMOHO_FICTITIOUS_IN_MESHER
 
       r_top(3) = RMOHO_FICTITIOUS_IN_MESHER
-      r_bottom(3) = R80
+      r_bottom(3) = R80_FICTITIOUS_IN_MESHER
 
-      r_top(4) = R80
+      r_top(4) = R80_FICTITIOUS_IN_MESHER
       r_bottom(4) = R220
 
       r_top(5) = R220
@@ -2047,9 +2057,9 @@
       rmins(2) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
 
       rmaxs(3) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
-      rmins(3) = R80 / R_EARTH
+      rmins(3) = R80_FICTITIOUS_IN_MESHER / R_EARTH
 
-      rmaxs(4) = R80 / R_EARTH
+      rmaxs(4) = R80_FICTITIOUS_IN_MESHER / R_EARTH
       rmins(4) = R220 / R_EARTH
 
       rmaxs(5) = R220 / R_EARTH

@@ -46,8 +46,8 @@
             NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
             TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
             tau_s,tau_e_store,Qmu_store,T_c_source, &
-            ATTENUATION,ATTENUATION_3D,vx,vy,vz,vnspec, &
-            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,ABSORBING_CONDITIONS,AM_V)
+            ATTENUATION,vx,vy,vz,vnspec, &
+            NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk,NCHUNKS,ABSORBING_CONDITIONS)
 
   implicit none
 
@@ -72,10 +72,13 @@
     integer                                   :: Qn                 ! Number of points
   end type attenuation_model_variables
 
-  type (attenuation_model_variables) AM_V
+!> Hejun
+!  type (attenuation_model_variables) AM_V
 ! attenuation_model_variables
+!< Hejun
 
-  logical ATTENUATION,ATTENUATION_3D,ABSORBING_CONDITIONS
+  logical ATTENUATION,ABSORBING_CONDITIONS
+!  logical ATTENUATION_3D
 
   integer NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk
 
@@ -364,16 +367,28 @@
 
   close(27)
 
-  if(ATTENUATION .and. ATTENUATION_3D) then
-     open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin', status='unknown', form='unformatted',action='write')
+!> Hejun
+! No matter 1D or 3D Attenuation, we save value for gll points
+!  if(ATTENUATION .and. ATTENUATION_3D) then
+!     open(unit=27, file=prname(1:len_trim(prname))//'attenuation3D.bin', status='unknown', form='unformatted',action='write')
+!     write(27) tau_s
+!     write(27) tau_e_store
+!     write(27) Qmu_store
+!     write(27) T_c_source
+!     close(27)
+!  else if(ATTENUATION) then
+!     call attenuation_save_arrays(prname, iregion_code, AM_V)
+!  endif
+
+  if(ATTENUATION) then
+     open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', status='unknown', form='unformatted',action='write')
      write(27) tau_s
      write(27) tau_e_store
      write(27) Qmu_store
      write(27) T_c_source
      close(27)
-  else if(ATTENUATION) then
-     call attenuation_save_arrays(prname, iregion_code, AM_V)
   endif
+!< Hejun
 
   end subroutine save_arrays_solver
 
