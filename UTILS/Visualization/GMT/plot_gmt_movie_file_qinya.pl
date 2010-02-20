@@ -1,4 +1,7 @@
 #!/usr/bin/perl -w
+#
+# reads in files produced from xcreate_movie_AVS_DX for GMT plotting
+#
 
 use POSIX;
 
