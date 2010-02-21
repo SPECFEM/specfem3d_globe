@@ -533,7 +533,7 @@
 
       B      = sngl((seismo_offset)*DT-hdur + t_cmt) ! [REQUIRED]
       E      = BYSAC       ! [REQUIRED]
-      O      = undef  !###
+      O      = 0  !
       A      = undef  !###
       !station values:
       STLA = stlat(irec)
@@ -684,7 +684,7 @@
       !  KEVNM  = ename(1:len_trim(ename))//'_sFS'! A16
       !endif
 
-      KCMPNM = chn(3:3)           ! 3A8
+      KCMPNM = chn(1:3)           ! 3A8
       KNETWK = network_name(irec) !  A6
 
       ! indicates SEM synthetics
