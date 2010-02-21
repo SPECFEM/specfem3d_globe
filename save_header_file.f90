@@ -28,25 +28,27 @@
 ! save header file OUTPUT_FILES/values_from_mesher.h
 
   subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
-        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-        ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D, &
-        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
-        INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
-        static_memory_size,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-        NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
-        NPROC_XI,NPROC_ETA, &
-         NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
-         NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
-         NSPEC_INNER_CORE_ATTENUATION, &
-         NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
-         NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
-         NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
-         NSPEC_CRUST_MANTLE_ADJOINT, &
-         NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
-         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
-         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-         NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
+                        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
+                        ELLIPTICITY,GRAVITY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_3D, &
+                        ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
+                        INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
+                        CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
+                        static_memory_size,NGLOB1D_RADIAL, &
+                        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
+                        NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &
+                        NPROC_XI,NPROC_ETA, &
+                        NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                        NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUAT, &
+                        NSPEC_INNER_CORE_ATTENUATION, &
+                        NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                        NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                        NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                        NSPEC_CRUST_MANTLE_ADJOINT, &
+                        NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                        NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                        NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                        NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
 
   implicit none
 
@@ -57,7 +59,7 @@
   integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ELLIPTICITY,GRAVITY,ROTATION,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
+          ELLIPTICITY,GRAVITY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
@@ -370,6 +372,13 @@
   endif
   write(IOUT,*)
 
+  if(OCEANS) then
+    write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .true.'
+  else
+    write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .false.'
+  endif
+  write(IOUT,*)
+
   if(ROTATION) then
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .true.'
   else
@@ -410,26 +419,19 @@
     NCORNERSCHUNKS = 8
     NUM_FACES = 4
     NUM_MSG_TYPES = 3
+  else
+    stop 'error nchunks in save_header_file()'
   endif
 
   write(IOUT,*) 'integer, parameter :: NUMMSGS_FACES_VAL = ',NPROC_XI*NUM_FACES*NUM_MSG_TYPES
   write(IOUT,*) 'integer, parameter :: NCORNERSCHUNKS_VAL = ',NCORNERSCHUNKS
 
-!> Hejun
   if(ATTENUATION) then
-!     if(ATTENUATION_3D) then
-        att1     = NGLLX
-        att2     = NGLLY
-        att3     = NGLLZ
-        att4     = NSPEC(IREGION_CRUST_MANTLE)
-        att5     = NSPEC(IREGION_INNER_CORE)
-!     else
-!        att1     = 1
-!        att2     = 1
-!        att3     = 1
-!        att4     = NRAD_ATTENUATION
-!        att5     = NRAD_ATTENUATION
-!     endif
+    att1     = NGLLX
+    att2     = NGLLY
+    att3     = NGLLZ
+    att4     = NSPEC(IREGION_CRUST_MANTLE)
+    att5     = NSPEC(IREGION_INNER_CORE)
   else
     att1     = 1
     att2     = 1
@@ -437,7 +439,6 @@
     att4     = 1
     att5     = 1
   endif
-!< Hejun
 
   write(IOUT,*) 'integer, parameter :: ATT1 = ',att1
   write(IOUT,*) 'integer, parameter :: ATT2 = ',att2
@@ -481,6 +482,13 @@
   write(IOUT,*) 'integer, parameter :: NSPEC2D_670 = ',NSPEC2D_670
   write(IOUT,*) 'integer, parameter :: NSPEC2D_CMB = ',NSPEC2D_CMB
   write(IOUT,*) 'integer, parameter :: NSPEC2D_ICB = ',NSPEC2D_ICB
+
+  ! deville routines only implemented for NGLLX = NGLLY = NGLLZ = 5
+  if( NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5 ) then
+    write(IOUT,*) 'logical, parameter :: USE_DEVILLE_VAL = .true.'
+  else
+    write(IOUT,*) 'logical, parameter :: USE_DEVILLE_VAL = .false.'  
+  endif
 
   close(IOUT)
 

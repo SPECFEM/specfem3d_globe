@@ -37,14 +37,18 @@
   double precision f(640),r(640),s1(640),s2(640)
   double precision s3(640),sum
 
-! Local variables
-  integer i,j,n,kdis(28)
-  integer ndis,nir1
-  double precision rji,yprime(640)
-
+! Local variables  
   double precision, parameter :: third = 1.0d0/3.0d0
   double precision, parameter :: fifth = 1.0d0/5.0d0
   double precision, parameter :: sixth = 1.0d0/6.0d0
+
+  double precision rji,yprime(640)
+  double precision s1l,s2l,s3l
+  
+  integer i,j,n,kdis(28)
+  integer ndis,nir1
+
+
 
   data kdis/163,323,336,517,530,540,565,590,609,619,626,633,16*0/
 
@@ -57,10 +61,13 @@
   do i=nir1,ner
     j = i-1
     rji = r(i) - r(j)
-    sum=sum+r(j)*r(j)*rji*(f(j)+rji*(.50d0*s1(j)+rji*(third*s2(j)+rji* &
-      .250d0*s3(j))))+2.0d0*r(j)*rji*rji*(.50d0*f(j)+rji*(third*s1(j)+rji* &
-     (.250d0*s2(j)+rji*fifth*s3(j))))+rji*rji*rji*(third*f(j)+rji* &
-     (.250d0*s1(j)+rji*(fifth*s2(j)+rji*sixth*s3(j))))
+    s1l = s1(j)
+    s2l = s2(j)
+    s3l = s3(j)
+    sum = sum + r(j)*r(j)*rji*(f(j) &
+              + rji*(0.5d0*s1l + rji*(third*s2l + rji*0.25d0*s3l))) &
+              + 2.0d0*r(j)*rji*rji*(0.5d0*f(j) + rji*(third*s1l + rji*(0.25d0*s2l + rji*fifth*s3l))) &
+              + rji*rji*rji*(third*f(j) + rji*(0.25d0*s1l + rji*(fifth*s2l + rji*sixth*s3l)))
   enddo
 
   end subroutine intgrl

@@ -25,15 +25,40 @@
 !
 !=====================================================================
 
+!--------------------------------------------------------------------------------------------------
+!
+! 1D REF model of Kustowski et al. (2008)
+!
+! this is STW105 - new reference model, also known as REF
+!
+! A recent 1D Earth model developed by Kustowski et al. This model is the 1D background 
+! model for the 3D models s362ani, s362wmani, s362ani_prem, and s29ea.
+!
+! see chapter 3, in:
+! Kustowski, B, Ekstrom, G., and A. M. Dziewonski, 2008, 
+! Anisotropic shear-wave velocity structure of the Earth's mantle: A global model,
+! J. Geophys. Res., 113, B06306, doi:10.1029/2007JB005169.
+!
+! model is identical to PREM at crustal depths, between 220 and 400km
+! and below 670km.
+!
+! attenuation structure is taken from model QL6: 
+! Durek, J. J. and G. Ekström, 1996.
+! A radial model of anelasticity consistent with long period surface wave attenuation, 
+! Bull. Seism. Soc. Am., 86, 144-158
+!--------------------------------------------------------------------------------------------------
 
-  subroutine model_ref(x,rho,vpv,vph,vsv,vsh,eta,Qkappa,Qmu,iregion_code,CRUSTAL,Mref_V)
+
+  subroutine model_1dref_broadcast(CRUSTAL,Mref_V)
+
+! standard routine to setup model 
 
   implicit none
 
   include "constants.h"
 
-! model_ref_variables
-  type model_ref_variables
+  ! model_1dref_variables
+  type model_1dref_variables
     sequence
       double precision, dimension(NR_REF) :: radius_ref
       double precision, dimension(NR_REF) :: density_ref
@@ -44,10 +69,44 @@
       double precision, dimension(NR_REF) :: eta_ref
       double precision, dimension(NR_REF) :: Qkappa_ref
       double precision, dimension(NR_REF) :: Qmu_ref
-  end type model_ref_variables
+  end type model_1dref_variables
 
-  type (model_ref_variables) Mref_V
-! model_ref_variables
+  type (model_1dref_variables) Mref_V
+  ! model_1dref_variables
+
+  logical :: CRUSTAL
+
+  ! all processes will define same parameters
+  call define_model_1dref(CRUSTAL,Mref_V)
+  
+  end subroutine model_1dref_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_1dref(x,rho,vpv,vph,vsv,vsh,eta,Qkappa,Qmu,iregion_code,CRUSTAL,Mref_V)
+
+  implicit none
+
+  include "constants.h"
+
+! model_1dref_variables
+  type model_1dref_variables
+    sequence
+      double precision, dimension(NR_REF) :: radius_ref
+      double precision, dimension(NR_REF) :: density_ref
+      double precision, dimension(NR_REF) :: vpv_ref
+      double precision, dimension(NR_REF) :: vph_ref
+      double precision, dimension(NR_REF) :: vsv_ref
+      double precision, dimension(NR_REF) :: vsh_ref
+      double precision, dimension(NR_REF) :: eta_ref
+      double precision, dimension(NR_REF) :: Qkappa_ref
+      double precision, dimension(NR_REF) :: Qmu_ref
+  end type model_1dref_variables
+
+  type (model_1dref_variables) Mref_V
+! model_1dref_variables
 
 ! input:
 ! dimensionless radius x
@@ -86,10 +145,14 @@
   if(iregion_code == IREGION_OUTER_CORE .and. i > 358) i = 358
 
   if(iregion_code == IREGION_CRUST_MANTLE .and. i < 360) i = 360
+  
+  ! if crustal model is used, mantle gets expanded up to surface
+  ! for any depth less than 24.4 km, values from mantle below moho are taken
   if(CRUSTAL .and. i > 717) i = 717
 
 
   if(i == 1) then
+    ! first layer in inner core
     rho = Mref_V%density_ref(i)
     vpv = Mref_V%vpv_ref(i)
     vph = Mref_V%vph_ref(i)
@@ -99,10 +162,10 @@
     Qkappa = Mref_V%Qkappa_ref(i)
     Qmu = Mref_V%Qmu_ref(i)
   else
-
-! interpolate from radius_ref(i-1) to r using the values at i-1 and i
+    ! interpolates between one layer below to actual radius layer, 
+    ! that is from radius_ref(i-1) to r using the values at i-1 and i
     frac = (r-Mref_V%radius_ref(i-1))/(Mref_V%radius_ref(i)-Mref_V%radius_ref(i-1))
-
+    ! interpolated model parameters
     rho = Mref_V%density_ref(i-1) + frac * (Mref_V%density_ref(i)-Mref_V%density_ref(i-1))
     vpv = Mref_V%vpv_ref(i-1) + frac * (Mref_V%vpv_ref(i)-Mref_V%vpv_ref(i-1))
     vph = Mref_V%vph_ref(i-1) + frac * (Mref_V%vph_ref(i)-Mref_V%vph_ref(i-1))
@@ -111,11 +174,10 @@
     eta = Mref_V%eta_ref(i-1) + frac * (Mref_V%eta_ref(i)-Mref_V%eta_ref(i-1))
     Qkappa = Mref_V%Qkappa_ref(i-1) + frac * (Mref_V%Qkappa_ref(i)-Mref_V%Qkappa_ref(i-1))
     Qmu = Mref_V%Qmu_ref(i-1) + frac * (Mref_V%Qmu_ref(i)-Mref_V%Qmu_ref(i-1))
-
   endif
 
-! make sure Vs is zero in the outer core even if roundoff errors on depth
-! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
+  ! make sure Vs is zero in the outer core even if roundoff errors on depth
+  ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
   if(iregion_code == IREGION_OUTER_CORE) then
     vsv = 0.d0
     vsh = 0.d0
@@ -123,8 +185,8 @@
     Qmu = 3000.d0
   endif
 
-! non-dimensionalize
-! time scaling (s^{-1}) is done with scaleval
+  ! non-dimensionalize
+  ! time scaling (s^{-1}) is done with scaleval
   scaleval=dsqrt(PI*GRAV*RHOAV)
   rho=rho/RHOAV
   vpv=vpv/(R_EARTH*scaleval)
@@ -132,17 +194,17 @@
   vsv=vsv/(R_EARTH*scaleval)
   vsh=vsh/(R_EARTH*scaleval)
 
-  end subroutine model_ref
+  end subroutine model_1dref
 
 !-------------------
 
-  subroutine define_model_ref(Mref_V)
+  subroutine define_model_1dref(USE_EXTERNAL_CRUSTAL_MODEL,Mref_V)
 
   implicit none
   include "constants.h"
 
-! model_ref_variables
-  type model_ref_variables
+! model_1dref_variables
+  type model_1dref_variables
     sequence
       double precision, dimension(NR_REF) :: radius_ref
       double precision, dimension(NR_REF) :: density_ref
@@ -153,10 +215,12 @@
       double precision, dimension(NR_REF) :: eta_ref
       double precision, dimension(NR_REF) :: Qkappa_ref
       double precision, dimension(NR_REF) :: Qmu_ref
-  end type model_ref_variables
+  end type model_1dref_variables
 
-  type (model_ref_variables) Mref_V
-! model_ref_variables
+  type (model_1dref_variables) Mref_V
+! model_1dref_variables
+
+  logical USE_EXTERNAL_CRUSTAL_MODEL
 
 
 ! define the 1D REF model of Kustowski et al. (2007)
@@ -7361,14 +7425,18 @@
  1.00000000000000 , &
  1.00000000000000 /)
 
-  if (SUPPRESS_CRUSTAL_MESH) then
+! strip the crust and replace it by mantle
+  if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then
+    ! sets values for depths less than 24.4 km to mantle values below
     Mref_V%density_ref(718:750) = Mref_V%density_ref(717)
     Mref_V%vpv_ref(718:750) = Mref_V%vpv_ref(717)
     Mref_V%vph_ref(718:750) = Mref_V%vph_ref(717)
     Mref_V%vsv_ref(718:750) = Mref_V%vsv_ref(717)
     Mref_V%vsh_ref(718:750) = Mref_V%vsh_ref(717)
+    Mref_V%Qmu_ref(718:750) = Mref_V%Qmu_ref(717)
+    Mref_V%Qkappa_ref(718:750) = Mref_V%Qkappa_ref(717)
   endif
 
 
-  end subroutine define_model_ref
+  end subroutine define_model_1dref
 

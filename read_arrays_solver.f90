@@ -175,7 +175,8 @@
 
 ! read coordinates of the mesh
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_2.bin',status='old',action='read',form='unformatted')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
+       status='old',action='read',form='unformatted')
   read(IIN) xstore
   read(IIN) ystore
   read(IIN) zstore

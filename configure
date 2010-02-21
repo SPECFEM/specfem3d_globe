@@ -1713,6 +1713,9 @@ fi
 if test x"$MPIFC" = x && test x"$MPIF90" != x; then
     MPIFC="$MPIF90"
 fi
+if test x"$CC" = x; then
+    CC="$CC"
+fi
 
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'

@@ -24,6 +24,56 @@
 !
 !=====================================================================
 
+!--------------------------------------------------------------------------------------------------
+! HMM
+!
+! generic heterogeneous mantle model
+!--------------------------------------------------------------------------------------------------
+
+  subroutine model_heterogen_mntl_broadcast(myrank,HMM)
+
+! standard routine to setup model 
+
+  implicit none
+
+  include "constants.h"
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+  ! model_heterogen_m_variables
+  type model_heterogen_m_variables
+    sequence
+    double precision rho_in(N_R*N_THETA*N_PHI)
+  end type model_heterogen_m_variables
+
+  type (model_heterogen_m_variables) HMM
+  ! model_heterogen_m_variables
+
+  integer :: myrank
+  integer :: ier
+  
+  if(myrank == 0) then
+     write(IMAIN,*) 'Reading in model_heterogen_mantle.'
+     call read_heterogen_mantle_model(HMM)
+     write(IMAIN,*) 'model_heterogen_mantle is read in.'
+  endif
+
+  ! broadcast the information read on the master to the nodes
+  call MPI_BCAST(HMM%rho_in,N_R*N_THETA*N_PHI,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  if(myrank == 0) then
+     write(IMAIN,*) 'model_heterogen_mantle is broadcast.'
+     write(IMAIN,*) 'First value in HMM:',HMM%rho_in(1)
+     write(IMAIN,*) 'Last value in HMM:',HMM%rho_in(N_R*N_THETA*N_PHI)
+  endif  
+
+  end subroutine model_heterogen_mntl_broadcast
+  
+!
+!-------------------------------------------------------------------------------------------------
+!
+  
+
 !
 ! NOTE: CURRENTLY THIS ROUTINE ONLY WORKS FOR N_R=N_THETA=N_PHI !!!!!
 !
@@ -36,14 +86,14 @@
 
   integer i,j
 
-! heterogen_mod_variables
-  type heterogen_mod_variables
+! model_heterogen_m_variables
+  type model_heterogen_m_variables
     sequence
     double precision rho_in(N_R*N_THETA*N_PHI)
-  end type heterogen_mod_variables
+  end type model_heterogen_m_variables
 
-  type (heterogen_mod_variables) HMM
-! heterogen_mod_variables
+  type (model_heterogen_m_variables) HMM
+! model_heterogen_m_variables
 
 
 ! open heterogen.dat
@@ -62,7 +112,7 @@
 
 !====================================================================
 
-  subroutine heterogen_mantle_model(radius,theta,phi,dvs,dvp,drho,HMM)
+  subroutine model_heterogen_mantle(radius,theta,phi,dvs,dvp,drho,HMM)
 
   implicit none
 
@@ -82,14 +132,14 @@
   double precision a,b,c                       ! substitutions in interpolation algorithm (weights)
 
 
-! heterogen_mod_variables
-  type heterogen_mod_variables
+! model_heterogen_m_variables
+  type model_heterogen_m_variables
     sequence
     double precision rho_in(N_R*N_THETA*N_PHI)
-  end type heterogen_mod_variables
+  end type model_heterogen_m_variables
 
-  type (heterogen_mod_variables) HMM
-! heterogen_mod_variables
+  type (model_heterogen_m_variables) HMM
+! model_heterogen_m_variables
 
   radius = radius*R_EARTH
   r_inner = 3.500d6  !lower bound for heterogeneity zone
@@ -166,4 +216,4 @@
     dvs = 0.
   end if
 
-  end subroutine heterogen_mantle_model
+  end subroutine model_heterogen_mantle

@@ -50,7 +50,7 @@
     if(xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
     phi = sngl(datan2(ymesh,xmesh))
 
-    r = sngl(dsqrt(xmesh**2 + ymesh**2 + zmesh**2))
+    r = sngl(dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh))
 
   else
 
@@ -65,7 +65,7 @@
     if(xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
     phi = datan2(ymesh,xmesh)
 
-    r = dsqrt(xmesh**2 + ymesh**2 + zmesh**2)
+    r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
 
   endif
 
@@ -90,12 +90,15 @@
 
   if(zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
   if(zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
+  
   theta = datan2(dsqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
+  
   if(xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
   if(xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
+  
   phi = datan2(ymesh,xmesh)
 
-  r = dsqrt(xmesh**2 + ymesh**2 + zmesh**2)
+  r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
 
   end subroutine xyz_2_rthetaphi_dble
 

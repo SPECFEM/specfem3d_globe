@@ -93,12 +93,11 @@
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l,sum_terms
 
   double precision grad_x_ln_rho,grad_y_ln_rho,grad_z_ln_rho
+
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-! set acceleration to zero
-  accelfluid(:) = 0._CUSTOM_REAL
   if (NSPEC_OUTER_CORE_ADJOINT /= 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
 
   do ispec = 1,NSPEC_OUTER_CORE
@@ -107,26 +106,19 @@
       do j=1,NGLLY
         do i=1,NGLLX
 
-          iglob = ibool(i,j,k,ispec)
 
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
           tempx3l = 0._CUSTOM_REAL
 
           do l=1,NGLLX
+            !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
             tempx1l = tempx1l + displfluid(ibool(l,j,k,ispec)) * hprime_xx(i,l)
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
-
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
             tempx2l = tempx2l + displfluid(ibool(i,l,k,ispec)) * hprime_yy(j,l)
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
-
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
             tempx3l = tempx3l + displfluid(ibool(i,j,l,ispec)) * hprime_zz(k,l)
           enddo
 
-!         get derivatives of velocity potential with respect to x, y and z
-
+          ! get derivatives of velocity potential with respect to x, y and z
           xixl = xix(i,j,k,ispec)
           xiyl = xiy(i,j,k,ispec)
           xizl = xiz(i,j,k,ispec)
@@ -137,7 +129,7 @@
           gammayl = gammay(i,j,k,ispec)
           gammazl = gammaz(i,j,k,ispec)
 
-! compute the jacobian
+          ! compute the jacobian
           jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
                         - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
@@ -146,38 +138,38 @@
           dpotentialdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
           dpotentialdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
-! compute contribution of rotation and add to gradient of potential
-! this term has no Z component
-    if(ROTATION_VAL) then
+          ! compute contribution of rotation and add to gradient of potential
+          ! this term has no Z component
+          if(ROTATION_VAL) then
 
-! store the source for the Euler scheme for A_rotation and B_rotation
-      two_omega_deltat = deltat * two_omega_earth
+            ! store the source for the Euler scheme for A_rotation and B_rotation
+            two_omega_deltat = deltat * two_omega_earth
 
-      cos_two_omega_t = cos(two_omega_earth*time)
-      sin_two_omega_t = sin(two_omega_earth*time)
+            cos_two_omega_t = cos(two_omega_earth*time)
+            sin_two_omega_t = sin(two_omega_earth*time)
 
-! time step deltat of Euler scheme is included in the source
-      source_euler_A(i,j,k) = two_omega_deltat * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl)
-      source_euler_B(i,j,k) = two_omega_deltat * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl)
+            ! time step deltat of Euler scheme is included in the source
+            source_euler_A(i,j,k) = two_omega_deltat * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl)
+            source_euler_B(i,j,k) = two_omega_deltat * (sin_two_omega_t * dpotentialdyl - cos_two_omega_t * dpotentialdxl)
 
-      A_rotation = A_array_rotation(i,j,k,ispec)
-      B_rotation = B_array_rotation(i,j,k,ispec)
+            A_rotation = A_array_rotation(i,j,k,ispec)
+            B_rotation = B_array_rotation(i,j,k,ispec)
 
-      ux_rotation =   A_rotation*cos_two_omega_t + B_rotation*sin_two_omega_t
-      uy_rotation = - A_rotation*sin_two_omega_t + B_rotation*cos_two_omega_t
+            ux_rotation =   A_rotation*cos_two_omega_t + B_rotation*sin_two_omega_t
+            uy_rotation = - A_rotation*sin_two_omega_t + B_rotation*cos_two_omega_t
 
-      dpotentialdx_with_rot = dpotentialdxl + ux_rotation
-      dpotentialdy_with_rot = dpotentialdyl + uy_rotation
+            dpotentialdx_with_rot = dpotentialdxl + ux_rotation
+            dpotentialdy_with_rot = dpotentialdyl + uy_rotation
 
-    else
+          else
 
-      dpotentialdx_with_rot = dpotentialdxl
-      dpotentialdy_with_rot = dpotentialdyl
+            dpotentialdx_with_rot = dpotentialdxl
+            dpotentialdy_with_rot = dpotentialdyl
 
-    endif  ! end of section with rotation
+          endif  ! end of section with rotation
 
-! add (chi/rho)grad(rho) term in no gravity case
-   if(.not. GRAVITY_VAL) then
+          ! add (chi/rho)grad(rho) term in no gravity case
+          if(.not. GRAVITY_VAL) then
 
 ! With regards to the non-gravitating case: we cannot set N^2 = 0 *and* let g = 0.
 ! We can *either* assume N^2 = 0 but keep gravity g, *or* we can assume that gravity
@@ -211,36 +203,38 @@
 
 ! use mesh coordinates to get theta and phi
 ! x y z contain r theta phi
+            iglob = ibool(i,j,k,ispec)
+            
+            radius = dble(xstore(iglob))
+            theta = dble(ystore(iglob))
+            phi = dble(zstore(iglob))
 
-      radius = dble(xstore(iglob))
-      theta = dble(ystore(iglob))
-      phi = dble(zstore(iglob))
+            cos_theta = dcos(theta)
+            sin_theta = dsin(theta)
+            cos_phi = dcos(phi)
+            sin_phi = dsin(phi)
 
-      cos_theta = dcos(theta)
-      sin_theta = dsin(theta)
-      cos_phi = dcos(phi)
-      sin_phi = dsin(phi)
+            int_radius = nint(radius * R_EARTH_KM * 10.d0)
 
-      int_radius = nint(radius * R_EARTH_KM * 10.d0)
-
-! grad(rho)/rho in Cartesian components
-      grad_x_ln_rho = sin_theta * cos_phi * d_ln_density_dr_table(int_radius)
-      grad_y_ln_rho = sin_theta * sin_phi * d_ln_density_dr_table(int_radius)
-      grad_z_ln_rho = cos_theta * d_ln_density_dr_table(int_radius)
-
-! adding (chi/rho)grad(rho)
-      dpotentialdx_with_rot = dpotentialdxl + displfluid(iglob) * grad_x_ln_rho
-      dpotentialdy_with_rot = dpotentialdyl + displfluid(iglob) * grad_y_ln_rho
-      dpotentialdzl = dpotentialdzl + displfluid(iglob) * grad_z_ln_rho
+            ! grad(rho)/rho in Cartesian components
+            grad_x_ln_rho = sin_theta * cos_phi * d_ln_density_dr_table(int_radius)
+            grad_y_ln_rho = sin_theta * sin_phi * d_ln_density_dr_table(int_radius)
+            grad_z_ln_rho = cos_theta * d_ln_density_dr_table(int_radius)
+  
+            ! adding (chi/rho)grad(rho)
+            dpotentialdx_with_rot = dpotentialdxl + displfluid(iglob) * grad_x_ln_rho
+            dpotentialdy_with_rot = dpotentialdyl + displfluid(iglob) * grad_y_ln_rho
+            dpotentialdzl = dpotentialdzl + displfluid(iglob) * grad_z_ln_rho
 
 
-   else  ! if gravity is turned on
+         else  ! if gravity is turned on
 
-! compute divergence of displacment
-! precompute and store gravity term
+            ! compute divergence of displacment
+            ! precompute and store gravity term
 
-! use mesh coordinates to get theta and phi
-! x y z contain r theta phi
+            ! use mesh coordinates to get theta and phi
+            ! x y z contain r theta phi
+            iglob = ibool(i,j,k,ispec)
 
             radius = dble(xstore(iglob))
             theta = dble(ystore(iglob))
@@ -251,18 +245,18 @@
             cos_phi = dcos(phi)
             sin_phi = dsin(phi)
 
-! get g, rho and dg/dr=dg
-! spherical components of the gravitational acceleration
-! for efficiency replace with lookup table every 100 m in radial direction
+            ! get g, rho and dg/dr=dg
+            ! spherical components of the gravitational acceleration
+            ! for efficiency replace with lookup table every 100 m in radial direction
             int_radius = nint(radius * R_EARTH_KM * 10.d0)
 
-! Cartesian components of the gravitational acceleration
-! integrate and multiply by rho / Kappa
+            ! Cartesian components of the gravitational acceleration
+            ! integrate and multiply by rho / Kappa
             gxl = sin_theta*cos_phi
             gyl = sin_theta*sin_phi
             gzl = cos_theta
 
-! distinguish between single and double precision for reals
+            ! distinguish between single and double precision for reals
             if(CUSTOM_REAL == SIZE_REAL) then
               gravity_term(i,j,k) = &
                 sngl(minus_rho_g_over_kappa_fluid(int_radius) * &
@@ -275,7 +269,10 @@
                  dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
             endif
 
-! divergence of displacement field with gravity on
+            ! divergence of displacement field with gravity on
+            ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
+            !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
+            !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
             if (NSPEC_OUTER_CORE_ADJOINT /= 1) then
               div_displfluid(i,j,k,ispec) =  &
                  minus_rho_g_over_kappa_fluid(int_radius) * (dpotentialdx_with_rot * gxl + &
@@ -288,9 +285,9 @@
           tempx2(i,j,k) = jacobianl*(etaxl*dpotentialdx_with_rot + etayl*dpotentialdy_with_rot + etazl*dpotentialdzl)
           tempx3(i,j,k) = jacobianl*(gammaxl*dpotentialdx_with_rot + gammayl*dpotentialdy_with_rot + gammazl*dpotentialdzl)
 
-          enddo
         enddo
       enddo
+    enddo
 
     do k=1,NGLLZ
       do j=1,NGLLY
@@ -301,35 +298,27 @@
           tempx3l = 0._CUSTOM_REAL
 
           do l=1,NGLLX
+            !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
             tempx1l = tempx1l + tempx1(l,j,k) * hprimewgll_xx(l,i)
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
-
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
             tempx2l = tempx2l + tempx2(i,l,k) * hprimewgll_yy(l,j)
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
-
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
             tempx3l = tempx3l + tempx3(i,j,l) * hprimewgll_zz(l,k)
           enddo
 
-! sum contributions from each element to the global mesh and add gravity term
-
-          iglob = ibool(i,j,k,ispec)
-          sum_terms = - (wgllwgll_yz(j,k)*tempx1l + wgllwgll_xz(i,k)*tempx2l + wgllwgll_xy(i,j)*tempx3l)
+          ! sum contributions from each element to the global mesh and add gravity term
+          sum_terms = - (wgllwgll_yz(j,k)*tempx1l + wgllwgll_xz(i,k)*tempx2l + wgllwgll_xy(i,j)*tempx3l)          
           if(GRAVITY_VAL) sum_terms = sum_terms + gravity_term(i,j,k)
-          accelfluid(iglob) = accelfluid(iglob) + sum_terms
+          
+          accelfluid(ibool(i,j,k,ispec)) = accelfluid(ibool(i,j,k,ispec)) + sum_terms
 
         enddo
       enddo
     enddo
 
-! update rotation term with Euler scheme
+    ! update rotation term with Euler scheme
     if(ROTATION_VAL) then
-
-! use the source saved above
+      ! use the source saved above
       A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + source_euler_A(:,:,:)
       B_array_rotation(:,:,:,ispec) = B_array_rotation(:,:,:,ispec) + source_euler_B(:,:,:)
-
     endif
 
   enddo   ! spectral element loop

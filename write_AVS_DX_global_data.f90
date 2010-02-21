@@ -193,10 +193,15 @@
 
   end subroutine write_AVS_DX_global_data
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 !> Hejun
 ! write material information for gll points
   subroutine write_AVS_DX_global_data_gll(prname,nspec, &
-                 xstore,ystore,zstore,rhostore,kappavstore,muvstore,Qmustore)
+                 xstore,ystore,zstore,rhostore,kappavstore,muvstore,Qmustore,&
+                 ATTENUATION)
 
   implicit none
 
@@ -214,6 +219,8 @@
   real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision::  Qmustore(NGLLX,NGLLY,NGLLZ,nspec)
 
+  logical :: ATTENUATION
+  
   ! local parameters
   double precision,dimension(8):: vp,vs,rho,Qmu
   double precision:: vp_average,vs_average,rho_average,Qmu_average
@@ -294,57 +301,63 @@
         do k = 1,NGLLZ-1
         do j = 1,NGLLY-1
         do i = 1,NGLLX-1
-                nelem = nelem + 1
+               nelem = nelem + 1
                 rho(1)=dble(rhostore(i,j,k,ispec))
                 vs(1)=dble(sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)))
                 vp(1)=dble(sqrt(kappavstore(i,j,k,ispec)/rhostore(i,j,k,ispec)+4.d0*vs(1)*vs(1)/3.d0))
-                Qmu(1)=dble(Qmustore(i,j,k,ispec))
 
                 rho(2)=dble(rhostore(i+1,j,k,ispec))
                 vs(2)=dble(sqrt(muvstore(i+1,j,k,ispec)/rhostore(i+1,j,k,ispec)))
                 vp(2)=dble(sqrt(kappavstore(i+1,j,k,ispec)/rhostore(i+1,j,k,ispec)+4.d0*vs(2)*vs(2)/3.d0))
-                Qmu(2)=dble(Qmustore(i+1,j,k,ispec))
 
                 rho(3)=dble(rhostore(i+1,j+1,k,ispec))
                 vs(3)=dble(sqrt(muvstore(i+1,j+1,k,ispec)/rhostore(i+1,j+1,k,ispec)))
                 vp(3)=dble(sqrt(kappavstore(i+1,j+1,k,ispec)/rhostore(i+1,j+1,k,ispec)+4.d0*vs(3)*vs(3)/3.d0))
-                Qmu(3)=dble(Qmustore(i+1,j+1,k,ispec))
 
                 rho(4)=dble(rhostore(i,j+1,k,ispec))
                 vs(4)=dble(sqrt(muvstore(i,j+1,k,ispec)/rhostore(i,j+1,k,ispec)))
                 vp(4)=dble(sqrt(kappavstore(i,j+1,k,ispec)/rhostore(i,j+1,k,ispec)+4.d0*vs(4)*vs(4)/3.d0))
-                Qmu(4)=dble(Qmustore(i,j+1,k,ispec))
 
                 rho(5)=dble(rhostore(i,j,k+1,ispec))
                 vs(5)=dble(sqrt(muvstore(i,j,k+1,ispec)/rhostore(i,j,k+1,ispec)))
                 vp(5)=dble(sqrt(kappavstore(i,j,k+1,ispec)/rhostore(i,j,k+1,ispec)+4.d0*vs(5)*vs(5)/3.d0))
-                Qmu(5)=dble(Qmustore(i,j,k+1,ispec))
 
                 rho(6)=dble(rhostore(i+1,j,k+1,ispec))
                 vs(6)=dble(sqrt(muvstore(i+1,j,k+1,ispec)/rhostore(i+1,j,k+1,ispec)))
                 vp(6)=dble(sqrt(kappavstore(i+1,j,k+1,ispec)/rhostore(i+1,j,k+1,ispec)+4.d0*vs(6)*vs(6)/3.d0))
-                Qmu(6)=dble(Qmustore(i+1,j,k+1,ispec))
 
                 rho(7)=dble(rhostore(i+1,j+1,k+1,ispec))
                 vs(7)=dble(sqrt(muvstore(i+1,j+1,k+1,ispec)/rhostore(i+1,j+1,k+1,ispec)))
                 vp(7)=dble(sqrt(kappavstore(i+1,j+1,k+1,ispec)/rhostore(i+1,j+1,k+1,ispec)+4.d0*vs(7)*vs(7)/3.d0))
-                Qmu(7)=dble(Qmustore(i+1,j+1,k+1,ispec))
 
                 rho(8)=dble(rhostore(i,j+1,k+1,ispec))
                 vs(8)=dble(sqrt(muvstore(i,j+1,k+1,ispec)/rhostore(i,j+1,k+1,ispec)))
                 vp(8)=dble(sqrt(kappavstore(i,j+1,k+1,ispec)/rhostore(i,j+1,k+1,ispec)+4.d0*vs(8)*vs(8)/3.d0))
-                Qmu(8)=dble(Qmustore(i,j+1,k+1,ispec))
 
+                if (ATTENUATION) then
+                        Qmu(1)=dble(Qmustore(i,j,k,ispec))
+                        Qmu(2)=dble(Qmustore(i+1,j,k,ispec))
+                        Qmu(3)=dble(Qmustore(i+1,j+1,k,ispec))
+                        Qmu(4)=dble(Qmustore(i,j+1,k,ispec))
+                        Qmu(5)=dble(Qmustore(i,j,k+1,ispec))
+                        Qmu(6)=dble(Qmustore(i+1,j,k+1,ispec))
+                        Qmu(7)=dble(Qmustore(i+1,j+1,k+1,ispec))
+                        Qmu(8)=dble(Qmustore(i,j+1,k+1,ispec))
+                        Qmu_average=Qmu(1)
+                end if 
                 !rho_average=sum(rho(1:4))/4.d0
                 !vp_average=sum(vp(1:4))/4.d0
                 !vs_average=sum(vs(1:4))/4.d0
-                !Qmu_average=sum(Qmu(1:4))/4.d0
                 rho_average=rho(1)
                 vp_average=vp(1)
                 vs_average=vs(1)
-                Qmu_average=Qmu(1)
 
-                write(1001,*) nelem,rho_average,vp_average,vs_average,Qmu_average
+                if (ATTENUATION) then
+                        write(1001,*) nelem,rho_average,vp_average,vs_average,Qmu_average
+                else 
+                        write(1001,*) nelem,rho_average,vp_average,vs_average
+                end if 
+
         end do 
         end do 
         end do
@@ -353,6 +366,5 @@
   close(1001)
 
   end subroutine write_AVS_DX_global_data_gll
-!< Hejun
 
 

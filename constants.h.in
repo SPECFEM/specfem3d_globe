@@ -102,13 +102,15 @@
 !! pathname of the topography file
 !  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat'
 
-!!--- ETOPO1 1-minute model, implemented now, data must be created first 
+!!--- ETOPO1 1-minute model, implemented now, but data file must be created first 
 !! size of topography and bathymetry file
 !  integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
 !! resolution of topography file in minutes
 !  integer, parameter :: RESOLUTION_TOPO_FILE = 1
-!! pathname of the topography file
+!! pathname of the topography file (un-smoothed)
 !  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1.xyz'
+!! pathname of the topography file (smoothed)
+!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_smoothed_window_7.dat'
 
 ! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY
   logical,parameter :: USE_GLL = .false.
@@ -122,6 +124,22 @@
 
 ! minimum thickness in meters to include the effect of the oceans and topo
   double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 100.d0
+
+!-- crustal models 
+  integer, parameter :: ICRUST_CRUST2 = 1
+  integer, parameter :: ICRUST_CRUSTMAPS = 2
+
+! increase smoothing for critical regions  (increases mesh stability)
+  logical, parameter :: SMOOTH_CRUST = .true.  
+
+! use sedimentary layers in crustal model
+  logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
+  double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
+  
+!-- uncomment for using Crust2.0 (used when CRUSTAL flag is set for simulation)
+  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
+!!-- uncomment for using General Crustmaps instead
+!!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
 
 ! number of GLL points in each direction of an element (degree plus one)
   integer, parameter :: NGLLX = 5
@@ -169,6 +187,12 @@
 ! default is .false. to compute isotropic kernels (related to alpha and beta)
   logical, parameter :: ANISOTROPIC_KL = .false.
 
+! mimicking attenuation for kernel simulations, using a constant apparent velocity shift:
+! (mimics only effect of attenuation upon velocities in CRUST_MANTLE region 
+!  for the middle east, an empirical value is factor = 1/1.015 )
+  logical, parameter                   :: ATTENUATION_MIMIK = .false.
+  real(kind=CUSTOM_REAL), parameter    :: ATTENUATION_MIMIK_FACTOR = 1./1.015
+
 ! print date and time estimate of end of run in another country,
 ! in addition to local time.
 ! For instance: the code runs at Caltech in California but the person
@@ -199,6 +223,7 @@
 !! DK DK UGLY because we then need some calls to the system to use GPFS
   logical, parameter :: RUN_ON_MARENOSTRUM_BARCELONA = .false.
 
+
 !------------------------------------------------------
 !----------- do not modify anything below -------------
 !------------------------------------------------------
@@ -223,6 +248,9 @@
 
 ! number of nodes for 2D and 3D shape functions for hexahedra with 27 nodes
   integer, parameter :: NGNOD = 27, NGNOD2D = 9
+
+! Deville routines optimized for NGLLX = NGLLY = NGLLZ = 5
+  integer, parameter :: m1 = NGLLX, m2 = NGLLX * NGLLY
 
 ! gravitational constant
   double precision, parameter :: GRAV = 6.6723d-11
@@ -316,7 +344,7 @@
   integer, parameter :: REFERENCE_MODEL_IASP91 = 2
   integer, parameter :: REFERENCE_MODEL_1066A  = 3
   integer, parameter :: REFERENCE_MODEL_AK135  = 4
-  integer, parameter :: REFERENCE_MODEL_REF  = 5
+  integer, parameter :: REFERENCE_MODEL_1DREF  = 5
   integer, parameter :: REFERENCE_MODEL_JP1D  = 6
   integer, parameter :: REFERENCE_MODEL_SEA1D  = 7
 
@@ -329,6 +357,8 @@
   integer, parameter :: THREE_D_MODEL_SEA99_JP3D  = 6
   integer, parameter :: THREE_D_MODEL_SEA99  = 7
   integer, parameter :: THREE_D_MODEL_JP3D  = 8
+  integer, parameter :: THREE_D_MODEL_PPM  = 9     ! format for point profile models
+  integer, parameter :: THREE_D_MODEL_GLL  = 10    ! format for iterations with GLL mesh
 
 ! define flag for regions of the global Earth for attenuation
   integer, parameter :: NUM_REGIONS_ATTENUATION = 5
@@ -468,22 +498,28 @@
   double precision,parameter :: DEP_MAX = 500.d0
 
 ! crustal_model_constants
-  ! crustal model parameters for crust2.0
-    integer, parameter :: NKEYS_CRUST = 359
-    integer, parameter :: NLAYERS_CRUST = 8
-    integer, parameter :: NCAP_CRUST = 180
-  ! use sedimentary layers of crust 2.0
-    logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
+! crustal model parameters for crust2.0
+  integer, parameter :: NKEYS_CRUST = 359
+  integer, parameter :: NLAYERS_CRUST = 8
+  integer, parameter :: NCAP_CRUST = 180
+
+! General Crustmaps parameters
+  integer, parameter :: CRUSTMAP_RESOLUTION = 4 !means 1/4 degrees
+  integer, parameter :: NLAYERS_CRUSTMAP = 5 
+    
 !!!!!!!!!!!!!! end of parameters added for the thread-safe version of the code
+
+! for the stretching of crustal elements in the case of 3D models
+  double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.6d0 
+  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = 5000.d0
+  double precision, parameter :: R80_STRETCH_ADJUSTEMENT = -40000.d0
+
+! to suppress the crustal layers 
+! (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
+  logical, parameter :: SUPPRESS_CRUSTAL_MESH = .false.
 
 ! to inflate the central cube (set to 0.d0 for a non-inflated cube)
   double precision, parameter :: CENTRAL_CUBE_INFLATE_FACTOR = 0.41d0
-
-! for the stretching of crustal elements in the case of 3D models
-  double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.6d0
-
-! to suppress the crustal layers (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
-  logical, parameter :: SUPPRESS_CRUSTAL_MESH = .false.
 
 ! to add a fourth doubling at the bottom of the outer core
   logical, parameter :: ADD_4TH_DOUBLING = .false.

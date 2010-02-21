@@ -25,6 +25,48 @@
 !
 !=====================================================================
 
+!--------------------------------------------------------------------------------------------------
+! 1066A
+!
+! Spherically symmetric earth model 1066A [Gilbert and Dziewonski, 1975]. 
+!
+! When ATTENTUATION is on, it uses an unpublished 1D attenuation model from Scripps.
+!--------------------------------------------------------------------------------------------------
+
+
+  subroutine model_1066a_broadcast(CRUSTAL,M1066a_V)
+
+! standard routine to setup model 
+
+  implicit none
+
+  include "constants.h"
+
+  ! model_1066a_variables
+  type model_1066a_variables
+    sequence
+      double precision, dimension(NR_1066A) :: radius_1066a
+      double precision, dimension(NR_1066A) :: density_1066a
+      double precision, dimension(NR_1066A) :: vp_1066a
+      double precision, dimension(NR_1066A) :: vs_1066a
+      double precision, dimension(NR_1066A) :: Qkappa_1066a
+      double precision, dimension(NR_1066A) :: Qmu_1066a
+  end type model_1066a_variables
+
+  type (model_1066a_variables) M1066a_V
+  ! model_1066a_variables
+
+  logical :: CRUSTAL
+
+  ! all processes will define same parameters
+  call define_model_1066a(CRUSTAL, M1066a_V)
+  
+  end subroutine model_1066a_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
   subroutine model_1066a(x,rho,vp,vs,Qkappa,Qmu,iregion_code,M1066a_V)
 
@@ -1117,7 +1159,7 @@
   M1066a_V%Qmu_1066a(160) =   117.900000000000
 
 ! strip the crust and replace it by mantle if we use an external crustal model
-  if(USE_EXTERNAL_CRUSTAL_MODEL) then
+  if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then
     do i=NR_1066A-3,NR_1066A
       M1066a_V%density_1066a(i) = M1066a_V%density_1066a(NR_1066A-4)
       M1066a_V%vp_1066a(i) = M1066a_V%vp_1066a(NR_1066A-4)

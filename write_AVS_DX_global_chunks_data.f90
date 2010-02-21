@@ -30,22 +30,23 @@
   subroutine write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun, &
         ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
         npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-        ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST,REFERENCE_1D_MODEL, &
+        ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
         RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-        RMIDDLE_CRUST,ROCEAN,M1066a_V,Mak135_V,Mref_V,SEA1DM_V)
+        RMIDDLE_CRUST,ROCEAN,iregion_code) 
 
   implicit none
 
   include "constants.h"
 
-  integer nspec,myrank,REFERENCE_1D_MODEL
+  integer nspec,myrank 
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer idoubling(nspec)
 
-  logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE,CRUSTAL,ONE_CRUST
+  logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE 
 
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
+    R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -81,64 +82,8 @@
 ! processor identification
   character(len=150) prname
 
-! model_1066a_variables
-  type model_1066a_variables
-    sequence
-      double precision, dimension(NR_1066A) :: radius_1066a
-      double precision, dimension(NR_1066A) :: density_1066a
-      double precision, dimension(NR_1066A) :: vp_1066a
-      double precision, dimension(NR_1066A) :: vs_1066a
-      double precision, dimension(NR_1066A) :: Qkappa_1066a
-      double precision, dimension(NR_1066A) :: Qmu_1066a
-  end type model_1066a_variables
+  integer iregion_code
 
-  type (model_1066a_variables) M1066a_V
-! model_1066a_variables
-
-! model_ak135_variables
-  type model_ak135_variables
-    sequence
-    double precision, dimension(NR_AK135) :: radius_ak135
-    double precision, dimension(NR_AK135) :: density_ak135
-    double precision, dimension(NR_AK135) :: vp_ak135
-    double precision, dimension(NR_AK135) :: vs_ak135
-    double precision, dimension(NR_AK135) :: Qkappa_ak135
-    double precision, dimension(NR_AK135) :: Qmu_ak135
-  end type model_ak135_variables
-
- type (model_ak135_variables) Mak135_V
-! model_ak135_variables
-
-! model_ref_variables
-  type model_ref_variables
-    sequence
-     double precision, dimension(NR_REF) :: radius_ref
-     double precision, dimension(NR_REF) :: density_ref
-     double precision, dimension(NR_REF) :: vpv_ref
-     double precision, dimension(NR_REF) :: vph_ref
-     double precision, dimension(NR_REF) :: vsv_ref
-     double precision, dimension(NR_REF) :: vsh_ref
-     double precision, dimension(NR_REF) :: eta_ref
-     double precision, dimension(NR_REF) :: Qkappa_ref
-     double precision, dimension(NR_REF) :: Qmu_ref
-  end type model_ref_variables
-
- type (model_ref_variables) Mref_V
-! model_ref_variables
-
-! sea1d_model_variables
-  type sea1d_model_variables
-    sequence
-     double precision, dimension(NR_SEA1D) :: radius_sea1d
-     double precision, dimension(NR_SEA1D) :: density_sea1d
-     double precision, dimension(NR_SEA1D) :: vp_sea1d
-     double precision, dimension(NR_SEA1D) :: vs_sea1d
-     double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
-     double precision, dimension(NR_SEA1D) :: Qmu_sea1d
-  end type sea1d_model_variables
-
-  type (sea1d_model_variables) SEA1DM_V
-! sea1d_model_variables
 
 ! writing points
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='unknown')
@@ -152,54 +97,54 @@
 ! mark global AVS or DX points
   do ispec=1,nspec
 ! only if on face
-  if(iboun(1,ispec) .or. iboun(2,ispec) .or. &
-              iboun(3,ispec) .or. iboun(4,ispec)) then
-    iglobval(1)=ibool(1,1,1,ispec)
-    iglobval(2)=ibool(NGLLX,1,1,ispec)
-    iglobval(3)=ibool(NGLLX,NGLLY,1,ispec)
-    iglobval(4)=ibool(1,NGLLY,1,ispec)
-    iglobval(5)=ibool(1,1,NGLLZ,ispec)
-    iglobval(6)=ibool(NGLLX,1,NGLLZ,ispec)
-    iglobval(7)=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglobval(8)=ibool(1,NGLLY,NGLLZ,ispec)
+    if(iboun(1,ispec) .or. iboun(2,ispec) .or. &
+                iboun(3,ispec) .or. iboun(4,ispec)) then
+      iglobval(1)=ibool(1,1,1,ispec)
+      iglobval(2)=ibool(NGLLX,1,1,ispec)
+      iglobval(3)=ibool(NGLLX,NGLLY,1,ispec)
+      iglobval(4)=ibool(1,NGLLY,1,ispec)
+      iglobval(5)=ibool(1,1,NGLLZ,ispec)
+      iglobval(6)=ibool(NGLLX,1,NGLLZ,ispec)
+      iglobval(7)=ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglobval(8)=ibool(1,NGLLY,NGLLZ,ispec)
 
 ! face xi = xi_min
-  if(iboun(1,ispec)) then
-    nspecface = nspecface + 1
-    mask_ibool(iglobval(1)) = .true.
-    mask_ibool(iglobval(4)) = .true.
-    mask_ibool(iglobval(8)) = .true.
-    mask_ibool(iglobval(5)) = .true.
-  endif
+      if(iboun(1,ispec)) then
+        nspecface = nspecface + 1
+        mask_ibool(iglobval(1)) = .true.
+        mask_ibool(iglobval(4)) = .true.
+        mask_ibool(iglobval(8)) = .true.
+        mask_ibool(iglobval(5)) = .true.
+      endif
 
 ! face xi = xi_max
-  if(iboun(2,ispec)) then
-    nspecface = nspecface + 1
-    mask_ibool(iglobval(2)) = .true.
-    mask_ibool(iglobval(3)) = .true.
-    mask_ibool(iglobval(7)) = .true.
-    mask_ibool(iglobval(6)) = .true.
-  endif
+      if(iboun(2,ispec)) then
+        nspecface = nspecface + 1
+        mask_ibool(iglobval(2)) = .true.
+        mask_ibool(iglobval(3)) = .true.
+        mask_ibool(iglobval(7)) = .true.
+        mask_ibool(iglobval(6)) = .true.
+      endif
 
 ! face eta = eta_min
-  if(iboun(3,ispec)) then
-    nspecface = nspecface + 1
-    mask_ibool(iglobval(1)) = .true.
-    mask_ibool(iglobval(2)) = .true.
-    mask_ibool(iglobval(6)) = .true.
-    mask_ibool(iglobval(5)) = .true.
-  endif
+      if(iboun(3,ispec)) then
+        nspecface = nspecface + 1
+        mask_ibool(iglobval(1)) = .true.
+        mask_ibool(iglobval(2)) = .true.
+        mask_ibool(iglobval(6)) = .true.
+        mask_ibool(iglobval(5)) = .true.
+      endif
 
 ! face eta = eta_max
-  if(iboun(4,ispec)) then
-    nspecface = nspecface + 1
-    mask_ibool(iglobval(4)) = .true.
-    mask_ibool(iglobval(3)) = .true.
-    mask_ibool(iglobval(7)) = .true.
-    mask_ibool(iglobval(8)) = .true.
-  endif
+      if(iboun(4,ispec)) then
+        nspecface = nspecface + 1
+        mask_ibool(iglobval(4)) = .true.
+        mask_ibool(iglobval(3)) = .true.
+        mask_ibool(iglobval(7)) = .true.
+        mask_ibool(iglobval(8)) = .true.
+      endif
 
-  endif
+    endif
   enddo
 
 ! count global number of AVS or DX points
@@ -215,97 +160,97 @@
   numpoin = 0
   do ispec=1,nspec
 ! only if on face
-  if(iboun(1,ispec) .or. iboun(2,ispec) .or. &
-              iboun(3,ispec) .or. iboun(4,ispec)) then
-    iglobval(1)=ibool(1,1,1,ispec)
-    iglobval(2)=ibool(NGLLX,1,1,ispec)
-    iglobval(3)=ibool(NGLLX,NGLLY,1,ispec)
-    iglobval(4)=ibool(1,NGLLY,1,ispec)
-    iglobval(5)=ibool(1,1,NGLLZ,ispec)
-    iglobval(6)=ibool(NGLLX,1,NGLLZ,ispec)
-    iglobval(7)=ibool(NGLLX,NGLLY,NGLLZ,ispec)
-    iglobval(8)=ibool(1,NGLLY,NGLLZ,ispec)
+    if(iboun(1,ispec) .or. iboun(2,ispec) .or. &
+                iboun(3,ispec) .or. iboun(4,ispec)) then
+      iglobval(1)=ibool(1,1,1,ispec)
+      iglobval(2)=ibool(NGLLX,1,1,ispec)
+      iglobval(3)=ibool(NGLLX,NGLLY,1,ispec)
+      iglobval(4)=ibool(1,NGLLY,1,ispec)
+      iglobval(5)=ibool(1,1,NGLLZ,ispec)
+      iglobval(6)=ibool(NGLLX,1,NGLLZ,ispec)
+      iglobval(7)=ibool(NGLLX,NGLLY,NGLLZ,ispec)
+      iglobval(8)=ibool(1,NGLLY,NGLLZ,ispec)
 
 ! face xi = xi_min
-  if(iboun(1,ispec)) then
+      if(iboun(1,ispec)) then
 
-    if(.not. mask_ibool(iglobval(1))) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglobval(1)) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,1,1,ispec)), &
-              sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
-      vmax = sqrt((kappavstore(1,1,1,ispec)+4.*muvstore(1,1,1,ispec)/3.)/rhostore(1,1,1,ispec))
-      vmin = sqrt(muvstore(1,1,1,ispec)/rhostore(1,1,1,ispec))
+        if(.not. mask_ibool(iglobval(1))) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglobval(1)) = numpoin
+          write(10,*) numpoin,sngl(xstore(1,1,1,ispec)), &
+                  sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
+          vmax = sqrt((kappavstore(1,1,1,ispec)+4.*muvstore(1,1,1,ispec)/3.)/rhostore(1,1,1,ispec))
+          vmin = sqrt(muvstore(1,1,1,ispec)/rhostore(1,1,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
-    r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
-  endif
-      if(vmin == 0.0) vmin=vmax
-      write(11,*) numpoin,vmin,vmax
-    endif
+          if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
+            r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
+            call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+            vmax = vp
+            vmin = vp
+          endif
+          if(vmin == 0.0) vmin=vmax
+          write(11,*) numpoin,vmin,vmax
+        endif
 
-    if(.not. mask_ibool(iglobval(4))) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglobval(4)) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
-              sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
-      vmax = sqrt((kappavstore(1,NGLLY,1,ispec)+4.*muvstore(1,NGLLY,1,ispec)/3.)/rhostore(1,NGLLY,1,ispec))
-      vmin = sqrt(muvstore(1,NGLLY,1,ispec)/rhostore(1,NGLLY,1,ispec))
+        if(.not. mask_ibool(iglobval(4))) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglobval(4)) = numpoin
+          write(10,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
+                  sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
+          vmax = sqrt((kappavstore(1,NGLLY,1,ispec)+4.*muvstore(1,NGLLY,1,ispec)/3.)/rhostore(1,NGLLY,1,ispec))
+          vmin = sqrt(muvstore(1,NGLLY,1,ispec)/rhostore(1,NGLLY,1,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
-    r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
-  endif
-      if(vmin == 0.0) vmin=vmax
-      write(11,*) numpoin,vmin,vmax
-    endif
+          if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
+            r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
+            call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+            vmax = vp
+            vmin = vp
+          endif
+          if(vmin == 0.0) vmin=vmax
+          write(11,*) numpoin,vmin,vmax
+        endif
 
-    if(.not. mask_ibool(iglobval(8))) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglobval(8)) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
-              sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
-      vmax = sqrt((kappavstore(1,NGLLY,NGLLZ,ispec)+4.*muvstore(1,NGLLY,NGLLZ,ispec)/3.)/rhostore(1,NGLLY,NGLLZ,ispec))
-      vmin = sqrt(muvstore(1,NGLLY,NGLLZ,ispec)/rhostore(1,NGLLY,NGLLZ,ispec))
+        if(.not. mask_ibool(iglobval(8))) then
+          numpoin = numpoin + 1
+          num_ibool_AVS_DX(iglobval(8)) = numpoin
+          write(10,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
+                  sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
+          vmax = sqrt((kappavstore(1,NGLLY,NGLLZ,ispec)+4.*muvstore(1,NGLLY,NGLLZ,ispec)/3.)/rhostore(1,NGLLY,NGLLZ,ispec))
+          vmin = sqrt(muvstore(1,NGLLY,NGLLZ,ispec)/rhostore(1,NGLLY,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
-    r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
-  endif
-      if(vmin == 0.0) vmin=vmax
-      write(11,*) numpoin,vmin,vmax
-    endif
+        if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
+          r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
+          call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+          vmax = vp
+          vmin = vp
+        endif
+        if(vmin == 0.0) vmin=vmax
+        write(11,*) numpoin,vmin,vmax
+      endif
 
-    if(.not. mask_ibool(iglobval(5))) then
-      numpoin = numpoin + 1
-      num_ibool_AVS_DX(iglobval(5)) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
-              sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
-      vmax = sqrt((kappavstore(1,1,NGLLZ,ispec)+4.*muvstore(1,1,NGLLZ,ispec)/3.)/rhostore(1,1,NGLLZ,ispec))
-      vmin = sqrt(muvstore(1,1,NGLLZ,ispec)/rhostore(1,1,NGLLZ,ispec))
+      if(.not. mask_ibool(iglobval(5))) then
+        numpoin = numpoin + 1
+        num_ibool_AVS_DX(iglobval(5)) = numpoin
+        write(10,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
+                sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
+        vmax = sqrt((kappavstore(1,1,NGLLZ,ispec)+4.*muvstore(1,1,NGLLZ,ispec)/3.)/rhostore(1,1,NGLLZ,ispec))
+        vmin = sqrt(muvstore(1,1,NGLLZ,ispec)/rhostore(1,1,NGLLZ,ispec))
 ! particular case of the outer core (muvstore contains 1/rho)
-  if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
-    r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
-    vmax = vp
-    vmin = vp
-  endif
-      if(vmin == 0.0) vmin=vmax
-      write(11,*) numpoin,vmin,vmax
-    endif
+        if(idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
+          r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
+          call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+          vmax = vp
+          vmin = vp
+        endif
+        if(vmin == 0.0) vmin=vmax
+        write(11,*) numpoin,vmin,vmax
+      endif
 
-    mask_ibool(iglobval(1)) = .true.
-    mask_ibool(iglobval(4)) = .true.
-    mask_ibool(iglobval(8)) = .true.
-    mask_ibool(iglobval(5)) = .true.
-  endif
+      mask_ibool(iglobval(1)) = .true.
+      mask_ibool(iglobval(4)) = .true.
+      mask_ibool(iglobval(8)) = .true.
+      mask_ibool(iglobval(5)) = .true.
+    endif
 
 ! face xi = xi_max
   if(iboun(2,ispec)) then
@@ -603,7 +548,7 @@
             y=ystore(i,j,k,ispec)
             z=zstore(i,j,k,ispec)
             r=dsqrt(x*x+y*y+z*z)
-!           take out ellipticity
+            ! take out ellipticity
             if(ELLIPTICITY) then
               call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi_dummy)
               cost=dcos(theta)
@@ -613,37 +558,35 @@
               r=r/factor
             endif
 
-            if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-              call model_iasp91(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),ONE_CRUST, &
-                .true.,RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
-            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
-              call prem_iso(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &
-                CRUSTAL,ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-
-            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-              call model_1066a(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),M1066a_V)
-
-            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135) then
-              call model_ak135(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),Mak135_V)
-
-            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_REF) then
-              call model_ref(r,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,idoubling(ispec),CRUSTAL,Mref_V)
-              vp = vpv
-              vs = vsv
-            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
-              call model_jp1d(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec), &
-              .true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-               R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
-            else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-              call model_sea1d(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec),SEA1DM_V)
+            ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
+            call meshfem3D_models_get1D_val(myrank,iregion_code,idoubling(ispec), &
+                              r,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                              Qkappa,Qmu,RICB,RCMB, &
+                              RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
+                              RMOHO,RMIDDLE_CRUST,ROCEAN)
+                              
+            ! calculates isotropic values 
+            vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
+                    + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
+            vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
+                    + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
+                                  
+            if( abs(rhostore(i,j,k,ispec))< 1.e-20 ) then
+              print*,' attention: rhostore close to zero',rhostore(i,j,k,ispec),r,i,j,k,ispec              
+              dvp = 0.0
+              dvs = 0.0
+            else if( abs(sngl(vp))< 1.e-20 ) then
+              print*,' attention: vp close to zero',sngl(vp),r,i,j,k,ispec
+              dvp = 0.0
+            else if( abs(sngl(vs))< 1.e-20 ) then
+              print*,' attention: vs close to zero',sngl(vs),r,i,j,k,ispec
+              dvs = 0.0
             else
-              call exit_MPI(myrank,'unknown 1D reference Earth model in writing of AVS/DX data')
+              dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
+              dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)            
             endif
-
-            dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
-            dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)
+            
           enddo
         enddo
       enddo

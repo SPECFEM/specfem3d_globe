@@ -25,7 +25,21 @@
 !
 !=====================================================================
 
-  subroutine prem_iso(myrank,x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+!--------------------------------------------------------------------------------------------------
+!
+! PREM [Dziewonski and Anderson, 1981]. 
+!
+! A. M. Dziewonski and D. L. Anderson. 
+! Preliminary reference Earth model. 
+! Phys. Earth Planet. Inter., 25:297–356, 1981. 
+!
+! Isotropic (iso) and transversely isotropic (aniso) version of the 
+! spherically symmetric Preliminary Reference Earth Model 
+!
+!--------------------------------------------------------------------------------------------------
+
+
+  subroutine model_prem_iso(myrank,x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
       ONE_CRUST,check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
@@ -52,52 +66,47 @@
 ! we use strict inequalities since r has been slighly changed in mesher
 
  if(check_doubling_flag) then
-
-!
-!--- inner core
-!
-
-  if(r >= 0.d0 .and. r < RICB) then
-    if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
-       idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
-         call exit_MPI(myrank,'wrong doubling flag for inner core point')
-!
-!--- outer core
-!
-  else if(r > RICB .and. r < RCMB) then
-    if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for outer core point')
-!
-!--- D" at the base of the mantle
-!
-  else if(r > RCMB .and. r < RTOPDDOUBLEPRIME) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for D" point')
-!
-!--- mantle: from top of D" to d670
-!
-  else if(r > RTOPDDOUBLEPRIME .and. r < R670) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point')
-
-!
-!--- mantle: from d670 to d220
-!
-  else if(r > R670 .and. r < R220) then
-    if(idoubling /= IFLAG_670_220) &
-      call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point')
-
-!
-!--- mantle and crust: from d220 to MOHO and then to surface
-!
-  else if(r > R220) then
-    if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-      call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point')
-
-  endif
+    !
+    !--- inner core
+    !
+    if(r >= 0.d0 .and. r < RICB) then
+      if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
+         idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
+           call exit_MPI(myrank,'wrong doubling flag for inner core point in model_prem_iso()')
+    !
+    !--- outer core
+    !
+    else if(r > RICB .and. r < RCMB) then
+      if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
+        call exit_MPI(myrank,'wrong doubling flag for outer core point in model_prem_iso()')
+    !
+    !--- D" at the base of the mantle
+    !
+    else if(r > RCMB .and. r < RTOPDDOUBLEPRIME) then
+      if(idoubling /= IFLAG_MANTLE_NORMAL) &
+        call exit_MPI(myrank,'wrong doubling flag for D" point in model_prem_iso()')
+    !
+    !--- mantle: from top of D" to d670
+    !
+    else if(r > RTOPDDOUBLEPRIME .and. r < R670) then
+      if(idoubling /= IFLAG_MANTLE_NORMAL) &
+        call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point in model_prem_iso()')
+    !
+    !--- mantle: from d670 to d220
+    !
+    else if(r > R670 .and. r < R220) then
+      if(idoubling /= IFLAG_670_220) &
+        call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point in model_prem_iso()')
+    !
+    !--- mantle and crust: from d220 to MOHO and then to surface
+    !
+    else if(r > R220) then
+      if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
+        call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point in model_prem_iso()')
+    endif
 
   endif
 
@@ -183,10 +192,12 @@
   if(CRUSTAL .and. .not. SUPPRESS_CRUSTAL_MESH) then
 ! fill with PREM mantle and later add CRUST2.0
     if(r > R80) then
+      ! density/velocity from mantle just below moho
       drhodr=0.6924d0
       rho=2.6910d0+0.6924d0*x
       vp=4.1875d0+3.9382d0*x
       vs=2.1519d0+2.3481d0*x
+      ! shear attenuation for R80 to surface
       Qmu=600.0d0
       Qkappa=57827.0d0
     endif
@@ -199,7 +210,6 @@
       vs=2.1519d0+2.3481d0*x
       Qmu=600.0d0
       Qkappa=57827.0d0
-
 
     else if (SUPPRESS_CRUSTAL_MESH) then
 !! DK DK extend the Moho up to the surface instead of the crust
@@ -256,13 +266,13 @@
   vp=vp*1000.0d0/(R_EARTH*scaleval)
   vs=vs*1000.0d0/(R_EARTH*scaleval)
 
-  end subroutine prem_iso
+  end subroutine model_prem_iso
 
 !
 !=====================================================================
 !
 
-  subroutine prem_aniso(myrank,x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
+  subroutine model_prem_aniso(myrank,x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
       idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
@@ -298,39 +308,41 @@
        idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
-         call exit_MPI(myrank,'wrong doubling flag for inner core point')
+         call exit_MPI(myrank,'wrong doubling flag for inner core point in model_prem_aniso()')
 !
 !--- outer core
 !
   else if(r > RICB .and. r < RCMB) then
     if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for outer core point')
+      call exit_MPI(myrank,'wrong doubling flag for outer core point in model_prem_aniso()')
 !
 !--- D" at the base of the mantle
 !
   else if(r > RCMB .and. r < RTOPDDOUBLEPRIME) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for D" point')
+    if(idoubling /= IFLAG_MANTLE_NORMAL) then
+      print*,'error dprime point:',r, RCMB,RTOPDDOUBLEPRIME,idoubling,IFLAG_MANTLE_NORMAL
+      call exit_MPI(myrank,'wrong doubling flag for D" point in model_prem_aniso()')
+    endif
 !
 !--- mantle: from top of D" to d670
 !
   else if(r > RTOPDDOUBLEPRIME .and. r < R670) then
     if(idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point')
+      call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point in model_prem_aniso()')
 
 !
 !--- mantle: from d670 to d220
 !
   else if(r > R670 .and. r < R220) then
     if(idoubling /= IFLAG_670_220) &
-      call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point')
+      call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point in model_prem_aniso()')
 
 !
 !--- mantle and crust: from d220 to MOHO and then to surface
 !
   else if(r > R220) then
     if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-      call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point')
+      call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point in model_prem_aniso()')
 
   endif
 
@@ -509,7 +521,7 @@
   vph=vph*1000.0d0/(R_EARTH*scaleval)
   vsh=vsh*1000.0d0/(R_EARTH*scaleval)
 
-  end subroutine prem_aniso
+  end subroutine model_prem_aniso
 
 !
 !=====================================================================
@@ -532,7 +544,8 @@
 
   double precision scaleval
 
-  if(idoubling /= IFLAG_OUTER_CORE_NORMAL) call exit_MPI(myrank,'wrong doubling flag for outer core point')
+  if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
+    call exit_MPI(myrank,'wrong doubling flag for outer core point in prem_display_outer_core()')
 
 !
 !--- outer core
@@ -570,8 +583,10 @@
 
   double precision r
 
+  ! compute real physical radius in meters
   r = x * R_EARTH
 
+  ! calculates density according to radius
   if(r <= RICB) then
     rho=13.0885d0-8.8381d0*x*x
   else if(r > RICB .and. r <= RCMB) then
