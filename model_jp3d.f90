@@ -25,10 +25,12 @@
 !
 !=====================================================================
 
-
-!=====================================================================
+!--------------------------------------------------------------------------------------------------
+! JP3D
 !
-!         Last Time Modified by Min Chen, Caltech, 03/14/2008
+! 3D japan Vp velocity model
+!
+! based on:
 !
 !          Program ----- veljp3d.f -----
 !
@@ -51,14 +53,24 @@
 !                            St. Louis, MO 63130
 !                            U.S.A.
 !                            dapeng@izu.wustl.edu
-!=========================================================================
-subroutine read_iso3d_dpzhao_model(JP3DM_V)
+!
+!
+!         Last Time Modified by Min Chen, Caltech, 03/14/2008
+!
+!--------------------------------------------------------------------------------------------------
+
+  subroutine model_jp3d_broadcast(myrank,JP3DM_V)
+
+! standard routine to setup model 
 
   implicit none
 
   include "constants.h"
-! jp3d_model_variables
-  type jp3d_model_variables
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -120,27 +132,172 @@ subroutine read_iso3d_dpzhao_model(JP3DM_V)
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
 
-      OPEN(2,FILE="DATA/Zhao_JP_model/m3d1341")
-      OPEN(3,FILE="DATA/Zhao_JP_model/datadis")
+  integer :: myrank
+  integer :: ier
+  
+  if(myrank == 0) call read_jp3d_iso_zhao_model(JP3DM_V)
 
-      CALL INPUTJP(JP3DM_V)
-      CALL INPUT1(JP3DM_V)
-      CALL INPUT2(JP3DM_V)
+  ! JP3DM_V
+  call MPI_BCAST(JP3DM_V%NPA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%NRA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%NHA,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%NPB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%NRB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%NHB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%PNA,MPA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%RNA,MRA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%HNA,MHA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%PNB,MPB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%RNB,MRB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%HNB,MHB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%VELAP,MPA*MRA*MHA,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%VELBP,MPB*MRB*MHB,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%PN,51,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%RRN,63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%DEPA,51*63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%DEPB,51*63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%DEPC,51*63,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%IPLOCA,MKA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%IRLOCA,MKA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%IHLOCA,MKA,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%IPLOCB,MKB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%IRLOCB,MKB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%IHLOCB,MKB,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%PLA,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%RLA,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%HLA,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%PLB,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%RLB,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%HLB,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%IP,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%JP,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%KP,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%IP1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%JP1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%KP1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%WV,8,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%P,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%R,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%H,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%PF,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%RF,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%HF,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%PF1,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%RF1,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%HF1,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%PD,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%RD,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%HD,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%VP,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%VS,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%RA,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(JP3DM_V%DEPJ,29,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-end subroutine read_iso3d_dpzhao_model
+
+  end subroutine model_jp3d_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+  
+  subroutine read_jp3d_iso_zhao_model(JP3DM_V)
+
+  implicit none
+
+  include "constants.h"
+! model_jp3d_variables
+  type model_jp3d_variables
+    sequence
+! vmod3d
+  integer :: NPA
+  integer :: NRA
+  integer :: NHA
+  integer :: NPB
+  integer :: NRB
+  integer :: NHB
+  double precision :: PNA(MPA)
+  double precision :: RNA(MRA)
+  double precision :: HNA(MHA)
+  double precision :: PNB(MPB)
+  double precision :: RNB(MRB)
+  double precision :: HNB(MHB)
+  double precision :: VELAP(MPA,MRA,MHA)
+  double precision :: VELBP(MPB,MRB,MHB)
+! discon
+  double precision :: PN(51)
+  double precision :: RRN(63)
+  double precision :: DEPA(51,63)
+  double precision :: DEPB(51,63)
+  double precision :: DEPC(51,63)
+! locate
+  integer :: IPLOCA(MKA)
+  integer :: IRLOCA(MKA)
+  integer :: IHLOCA(MKA)
+  integer :: IPLOCB(MKB)
+  integer :: IRLOCB(MKB)
+  integer :: IHLOCB(MKB)
+  double precision :: PLA
+  double precision :: RLA
+  double precision :: HLA
+  double precision :: PLB
+  double precision :: RLB
+  double precision :: HLB
+! weight
+  integer :: IP
+  integer :: JP
+  integer :: KP
+  integer :: IP1
+  integer :: JP1
+  integer :: KP1
+  double precision :: WV(8)
+! prhfd
+  double precision :: P
+  double precision :: R
+  double precision :: H
+  double precision :: PF
+  double precision :: RF
+  double precision :: HF
+  double precision :: PF1
+  double precision :: RF1
+  double precision :: HF1
+  double precision :: PD
+  double precision :: RD
+  double precision :: HD
+! jpmodv
+  double precision :: VP(29)
+  double precision :: VS(29)
+  double precision :: RA(29)
+  double precision :: DEPJ(29)
+  end type model_jp3d_variables
+
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
+
+  OPEN(2,FILE="DATA/Zhao_JP_model/m3d1341")
+  OPEN(3,FILE="DATA/Zhao_JP_model/datadis")
+
+  CALL INPUTJP(JP3DM_V)
+  CALL INPUT1(JP3DM_V)
+  CALL INPUT2(JP3DM_V)
+
+  end subroutine read_jp3d_iso_zhao_model
+
+!  
 !==========================================================================
-subroutine iso3d_dpzhao_model(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3DM_V)
+!
+
+  subroutine model_jp3d_iso_zhao(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3DM_V)
   implicit none
 
   include "constants.h"
 
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -202,10 +359,10 @@ subroutine iso3d_dpzhao_model(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
 
   logical found_crust
   double precision :: radius,theta,phi,vp,vs,dvs,dvp,rho
@@ -238,10 +395,11 @@ subroutine iso3d_dpzhao_model(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3
   ELSE
      LAY = 4
   END IF
+  
   CALL VEL1D(HE,vp,LAY,1,JP3DM_V)
   CALL VEL1D(HE,vs,LAY,2,JP3DM_V)
-
   CALL VEL3(PE,RE,HE,dvp,LAY,JP3DM_V)
+  
   dvp = 0.01d0*dvp
   dvs = 1.5d0*dvp
   vp = vp*(1.0d0+dvp)
@@ -263,16 +421,19 @@ subroutine iso3d_dpzhao_model(radius,theta,phi,vp,vs,dvp,dvs,rho,found_crust,JP3
   rho=rho*1000.0d0/RHOAV
   vp=vp*1000.0d0/(R_EARTH*scaleval)
   vs=vs*1000.0d0/(R_EARTH*scaleval)
-END subroutine iso3d_dpzhao_model
+  
+  END subroutine model_jp3d_iso_zhao
 
+!
 !---------------------------------------------------------------
+!
 
-      SUBROUTINE INPUT1(JP3DM_V)
+  SUBROUTINE INPUT1(JP3DM_V)
    implicit none
 
    include "constants.h"
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -334,10 +495,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
 
 100     FORMAT(3I3)
       READ(2,100)  JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA
@@ -363,15 +524,18 @@ END subroutine iso3d_dpzhao_model
 140         FORMAT(4(14F5.2/))
          enddo
       enddo
-    END SUBROUTINE PUT1
+  END SUBROUTINE PUT1
 
-      SUBROUTINE INPUT2(JP3DM_V)
+!
+!---------------------------------------------------------------------------------------------
+!
+  SUBROUTINE INPUT2(JP3DM_V)
   implicit none
 
   include "constants.h"
 
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -433,10 +597,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
 
       integer :: NP,NNR,I,J
       READ(3,100)  NP,NNR
@@ -458,12 +622,16 @@ END subroutine iso3d_dpzhao_model
       RETURN
       END
 
-      SUBROUTINE BLDMAP(JP3DM_V)
+!
+!-----------------------------------------------------------------------------------
+!
+
+  SUBROUTINE BLDMAP(JP3DM_V)
   implicit none
 
   include "constants.h"
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -525,10 +693,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
 
       CALL LOCX(JP3DM_V%PNA,JP3DM_V%RNA,JP3DM_V%HNA,JP3DM_V%NPA,JP3DM_V%NRA,JP3DM_V%NHA,MKA, &
            JP3DM_V%PLA,JP3DM_V%RLA,JP3DM_V%HLA,JP3DM_V%IPLOCA,JP3DM_V%IRLOCA,JP3DM_V%IHLOCA)
@@ -573,12 +741,16 @@ END subroutine iso3d_dpzhao_model
       RETURN
       END
 
-      SUBROUTINE VEL3(PE,RE,HE,V,LAY,JP3DM_V)
-        implicit none
+!
+!-------------------------------------------------------------------------------------------
+!
 
-        include "constants.h"
-! jp3d_model_variables
-  type jp3d_model_variables
+  SUBROUTINE VEL3(PE,RE,HE,V,LAY,JP3DM_V)
+  implicit none
+
+  include "constants.h"
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -640,10 +812,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
 
        double precision :: PE,RE,HE,V
 
@@ -679,14 +851,18 @@ END subroutine iso3d_dpzhao_model
         RETURN
       END SUBROUTINE VEL3
 
-      SUBROUTINE VABPS(MP,MR,MH,V,VEL,JP3DM_V)
+!
+!---------------------------------------------------------------------------------------
+!
+  
+  SUBROUTINE VABPS(MP,MR,MH,V,VEL,JP3DM_V)
   implicit none
 
   include "constants.h"
 
 
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -748,10 +924,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
       double precision :: VEL
       integer :: MP,MR,MH
       double precision :: V(MP,MR,MH)
@@ -770,14 +946,18 @@ END subroutine iso3d_dpzhao_model
       RETURN
       END
 
-      SUBROUTINE PRHF(IPLOCX,IRLOCX,IHLOCX,PLX,RLX,HLX, &
+!
+!------------------------------------------------------------------------------------------------
+!
+
+  SUBROUTINE PRHF(IPLOCX,IRLOCX,IHLOCX,PLX,RLX,HLX, &
                       PNX,RNX,HNX,MPX,MRX,MHX,MKX,JP3DM_V)
   implicit none
 
   include "constants.h"
 
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -839,10 +1019,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
 
         integer :: MPX,MRX,MHX,MKX
         integer ::  IPLOCX(MKX),IRLOCX(MKX),IHLOCX(MKX)
@@ -869,12 +1049,16 @@ END subroutine iso3d_dpzhao_model
       RETURN
       END
 
-      SUBROUTINE HLAY(PE,RE,HE,IJK,JP3DM_V)
+!
+!----------------------------------------------------------------------------------------------
+!
+  
+  SUBROUTINE HLAY(PE,RE,HE,IJK,JP3DM_V)
   implicit none
 
   include "constants.h"
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -936,10 +1120,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
         double precision :: PE,RE,HE,WV1,WV2,WV3,WV4,P,R,PF,RF,PF1,RF1
         integer :: IJK,J,J1,I,I1
         P = 90.0-PE/DEGREES_TO_RADIANS
@@ -986,12 +1170,15 @@ END subroutine iso3d_dpzhao_model
       IF(C.GT.A2)   C = A2
     END SUBROUTINE LIMIT
 
-      SUBROUTINE VEL1D(HE,V,LAY,IPS,JP3DM_V)
+!
+!-----------------------------
+!
+  SUBROUTINE VEL1D(HE,V,LAY,IPS,JP3DM_V)
   implicit none
 
   include "constants.h"
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -1053,10 +1240,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
 
       integer :: IPS,LAY
       double precision :: HE,V,VM,HM
@@ -1083,8 +1270,8 @@ END subroutine iso3d_dpzhao_model
   implicit none
 
   include "constants.h"
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -1146,10 +1333,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
       double precision :: VP1(29),VS1(29),RA1(29)
       integer :: L
       DATA VP1/7.75, 7.94, 8.13, 8.33, 8.54, 8.75, 8.97, &
@@ -1173,12 +1360,15 @@ END subroutine iso3d_dpzhao_model
       RETURN
       END
 
-      SUBROUTINE JPMODEL(IPS,H,V,JP3DM_V)
+!
+!---------------------------------------------
+!
+  SUBROUTINE JPMODEL(IPS,H,V,JP3DM_V)
   implicit none
 
   include "constants.h"
-! jp3d_model_variables
-  type jp3d_model_variables
+! model_jp3d_variables
+  type model_jp3d_variables
     sequence
 ! vmod3d
   integer :: NPA
@@ -1240,10 +1430,10 @@ END subroutine iso3d_dpzhao_model
   double precision :: VS(29)
   double precision :: RA(29)
   double precision :: DEPJ(29)
-  end type jp3d_model_variables
+  end type model_jp3d_variables
 
-  type (jp3d_model_variables) JP3DM_V
-! jp3d_model_variables
+  type (model_jp3d_variables) JP3DM_V
+! model_jp3d_variables
       integer :: IPS,K,K1
       double precision :: H1,H2,H12,H,V
       DO 2 K = 1,28

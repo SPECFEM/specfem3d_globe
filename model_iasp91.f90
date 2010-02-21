@@ -25,11 +25,19 @@
 !
 !=====================================================================
 
+!--------------------------------------------------------------------------------------------------
+! IASP91
+!
+! Spherically symmetric isotropic IASP91 model [Kennett and Engdahl, 1991]
+!
+! B. L. N. Kennett and E. R. Engdahl, Traveltimes for global earthquake location
+! and phase identification, Geophysical Journal International, vol. 105, p. 429-465 (1991)
+!--------------------------------------------------------------------------------------------------
+
+
   subroutine model_iasp91(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &
                      RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
-! from B. L. N. Kennett and E. R. Engdahl, Traveltimes for global earthquake location
-! and phase identification, Geophysical Journal International, vol. 105, p. 429-465 (1991)
 
 ! we use the density model of PREM (or close to PREM in the crust)
 ! because IASP91 does not provide a density model.
@@ -47,7 +55,8 @@
 
   integer idoubling,myrank
 
-  double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST
+  double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
+    R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST
 
   logical ONE_CRUST
 
@@ -61,89 +70,93 @@
   x1 = R120 / R_EARTH
   x2 = RMOHO / R_EARTH
 
-! check flags to make sure we correctly honor the discontinuities
-! we use strict inequalities since r has been slighly changed in mesher
-
+  ! check flags to make sure we correctly honor the discontinuities
+  ! we use strict inequalities since r has been slightly changed in mesher
   if(check_doubling_flag) then
+    !
+    !--- inner core
+    !
+    if(r >= 0.d0 .and. r < RICB) then
 
-!
-!--- inner core
-!
-  if(r >= 0.d0 .and. r < RICB) then
-    if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
-       idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
-         call exit_MPI(myrank,'wrong doubling flag for inner core point')
-!
-!--- outer core
-!
-  else if(r > RICB .and. r < RCMB) then
-    if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for outer core point')
-!
-!--- D" at the base of the mantle
-!
-  else if(r > RCMB .and. r < RTOPDDOUBLEPRIME) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for D" point')
-!
-!--- mantle: from top of D" to d670
-!
-  else if(r > RTOPDDOUBLEPRIME .and. r < R670) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point')
+      if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
+         idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
+           call exit_MPI(myrank,'wrong doubling flag for inner core point')
+    !
+    !--- outer core
+    !
+    else if(r > RICB .and. r < RCMB) then
+    
+      if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
+        call exit_MPI(myrank,'wrong doubling flag for outer core point')
+    !
+    !--- D" at the base of the mantle
+    !
+    else if(r > RCMB .and. r < RTOPDDOUBLEPRIME) then
+    
+      if(idoubling /= IFLAG_MANTLE_NORMAL) &
+        call exit_MPI(myrank,'wrong doubling flag for D" point')
+    !
+    !--- mantle: from top of D" to d670
+    !
+    else if(r > RTOPDDOUBLEPRIME .and. r < R670) then
+    
+      if(idoubling /= IFLAG_MANTLE_NORMAL) &
+        call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point')
+    !
+    !--- mantle: from d670 to d220
+    !
+    else if(r > R670 .and. r < R220) then
+    
+      if(idoubling /= IFLAG_670_220) &
+        call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point')
+    !
+    !--- mantle and crust: from d220 to MOHO and then to surface
+    !
+    else if(r > R220) then
+    
+      if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
+        call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point')
 
-!
-!--- mantle: from d670 to d220
-!
-  else if(r > R670 .and. r < R220) then
-    if(idoubling /= IFLAG_670_220) &
-      call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point')
+    endif ! r
 
-!
-!--- mantle and crust: from d220 to MOHO and then to surface
-!
-  else if(r > R220) then
-    if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-      call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point')
+  endif ! check_doubling_flag
 
-  endif
 
-  endif
+  ! assigns model values
 
-!
-!--- inner core
-!
+  !
+  !--- inner core
+  !
   if(r >= 0.d0 .and. r <= RICB) then
     rho=13.0885d0-8.8381d0*x*x
     vp=11.24094-4.09689*x**2
     vs=3.56454-3.45241*x**2
     Qmu=84.6d0
     Qkappa=1327.7d0
-!
-!--- outer core
-!
+  !
+  !--- outer core
+  !
   else if(r > RICB .and. r <= RCMB) then
     rho=12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
     vp=10.03904+3.75665*x-13.67046*x**2
     vs=0.0d0
     Qmu=0.0d0
     Qkappa=57827.0d0
-!
-!--- D" at the base of the mantle
-!
+  !
+  !--- D" at the base of the mantle
+  !
   else if(r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
     vp=14.49470-1.47089*x
     vs=8.16616-1.58206*x
     Qmu=312.0d0
     Qkappa=57827.0d0
-
-!
-!--- mantle: from top of D" to d670
-!
+  !
+  !--- mantle: from top of D" to d670
+  !
   else if(r > RTOPDDOUBLEPRIME .and. r <= R771) then
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
     vp=25.1486-41.1538*x+51.9932*x**2-26.6083*x**3
@@ -156,15 +169,16 @@
     vs=20.76890-16.53147*x
     Qmu=312.0d0
     Qkappa=57827.0d0
-!
-!--- mantle: above d670
-!
+  !
+  !--- mantle: above d670
+  !
   else if(r > R670 .and. r <= R400) then
     rho=5.3197d0-1.4836d0*x
     vp=29.38896-21.40656*x
     vs=17.70732-13.50652*x
     Qmu=143.0d0
     Qkappa=57827.0d0
+    
   else if(r > R400 .and. r <= R220) then
     rho=7.1089d0-3.8045d0*x
     vp=30.78765-23.25415*x
@@ -188,7 +202,7 @@
       Qkappa=57827.0d0
 
   else if (SUPPRESS_CRUSTAL_MESH) then
-!! DK DK extend the Moho up to the surface instead of the crust
+  !! DK DK extend the Moho up to the surface instead of the crust
           vp = 8.78541d0-0.74953d0*(RMOHO / R_EARTH)
           vs = 6.706231d0-2.248585d0*(RMOHO / R_EARTH)
           rho = 3.3198d0
@@ -202,7 +216,7 @@
       Qmu=600.0d0
       Qkappa=57827.0d0
 
-! same properties everywhere in PREM crust if we decide to define only one layer in the crust
+  ! same properties everywhere in PREM crust if we decide to define only one layer in the crust
       if(ONE_CRUST) then
         vp = 5.8d0
         vs = 3.36d0
@@ -219,8 +233,16 @@
       Qkappa=57827.0d0
   endif
 
-! non-dimensionalize
-! time scaling (s^{-1}) is done with scaleval
+  ! make sure Vs is zero in the outer core even if roundoff errors on depth
+  ! also set fictitious attenuation for Qkappa to a very high value (attenuation is not used in the fluid)
+  if(idoubling == IFLAG_OUTER_CORE_NORMAL) then
+    vs = 0.d0
+    Qkappa = 0.d0
+    Qmu = ATTENUATION_COMP_MAXIMUM
+  endif
+
+  ! non-dimensionalize
+  ! time scaling (s^{-1}) is done with scaleval
   scaleval=dsqrt(PI*GRAV*RHOAV)
   rho=rho*1000.0d0/RHOAV
   vp=vp*1000.0d0/(R_EARTH*scaleval)

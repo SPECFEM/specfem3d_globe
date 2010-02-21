@@ -128,6 +128,7 @@ void param_read_(char * string_read, int * string_read_len, char * name, int * n
 	if (fseek(fd, 0, SEEK_SET) != 0) {
 		printf("Can't seek to begining of parameter file\n");
 		*ierr = 1;
+    regfree(&compiled_pattern);
 		return;
 	}
 	// Read every line in the file.
@@ -148,6 +149,7 @@ void param_read_(char * string_read, int * string_read_len, char * name, int * n
 		if(regret != 0) {
 			printf("regexec returned error %d\n", regret);
 			*ierr = 1;
+      regfree(&compiled_pattern);
 			return;
 		}
     //		printf("Line read = %s\n", line);
@@ -159,6 +161,7 @@ void param_read_(char * string_read, int * string_read_len, char * name, int * n
 			continue;
 		}
 		free(keyword);
+    regfree(&compiled_pattern);
 		// If it matches, extract the value from the line.
 		value = strndup(line+parameter[2].rm_so, parameter[2].rm_eo-parameter[2].rm_so);
 		// Clear out the return string with blanks, copy the value into it, and return.
@@ -172,6 +175,7 @@ void param_read_(char * string_read, int * string_read_len, char * name, int * n
 	// If no keyword matches, print out error and die.
 	printf("No match in parameter file for keyword %s\n", namecopy);
 	free(namecopy);
+  regfree(&compiled_pattern);
 	*ierr = 1;
 	return;
 }

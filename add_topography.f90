@@ -57,33 +57,37 @@
     call reduce(theta,phi)
 
 ! convert the geocentric colatitude to a geographic colatitude
-  colat = PI/2.0d0 - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+    colat = PI/2.0d0 - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
 
 ! get geographic latitude and longitude in degrees
-  lat = 90.0d0 - colat*180.0d0/PI
-  lon = phi*180.0d0/PI
-  elevation = 0.d0
+    lat = 90.0d0 - colat*180.0d0/PI
+    lon = phi*180.0d0/PI
+    elevation = 0.d0
 
 ! compute elevation at current point
-  call get_topo_bathy(lat,lon,elevation,ibathy_topo)
+    call get_topo_bathy(lat,lon,elevation,ibathy_topo)
 
 ! non-dimensionalize the elevation, which is in meters
-  elevation = elevation / R_EARTH
+    elevation = elevation / R_EARTH
 
 ! stretching topography between d220 and the surface
-  gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
+    gamma = (r - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
 
 ! add elevation to all the points of that element
 ! also make sure gamma makes sense
-  if(gamma < -0.02 .or. gamma > 1.02) call exit_MPI(myrank,'incorrect value of gamma for topography')
+    if(gamma < -0.02 .or. gamma > 1.02) call exit_MPI(myrank,'incorrect value of gamma for topography')
 
-  xelm(ia) = xelm(ia)*(ONE + gamma * elevation / r)
-  yelm(ia) = yelm(ia)*(ONE + gamma * elevation / r)
-  zelm(ia) = zelm(ia)*(ONE + gamma * elevation / r)
+    xelm(ia) = xelm(ia)*(ONE + gamma * elevation / r)
+    yelm(ia) = yelm(ia)*(ONE + gamma * elevation / r)
+    zelm(ia) = zelm(ia)*(ONE + gamma * elevation / r)
 
   enddo
 
   end subroutine add_topography
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   !> Hejun
   ! This subroutine uses GLL points to capture topography variation rather
@@ -166,4 +170,3 @@
      end do 
   end do
   end subroutine add_topography_gll
-  !< Hejun

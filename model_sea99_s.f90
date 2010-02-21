@@ -25,18 +25,39 @@
 !
 !=====================================================================
 
-subroutine read_sea99_s_model(SEA99M_V)
+!--------------------------------------------------------------------------------------------------
+! SEA 99 model
+!
+! contains relative Vs anomalies  dVs/Vs from
+! SV-velocity model for SE Asia - W Pacific.
+!
+! defined for:
+! -20.00   45.00 -- min, max latitude
+!  95.00  160.00 -- min, max longitude
+! and depths between 6 km to 860 km
+!
+! computed by Lebedev and Nolet in 1999, to come out in JGR in 2003.
+! reference period: 50 s.
+!--------------------------------------------------------------------------------------------------
+
+
+  subroutine model_sea99_s_broadcast(myrank,SEA99M_V)
+
+! standard routine to setup model 
 
   implicit none
 
   include "constants.h"
+  ! standard include of the MPI library
+  include 'mpif.h'
 
-! sea99_s_model_variables
-  type sea99_s_model_variables
+  ! model_sea99_s_variables
+  type model_sea99_s_variables
     sequence
     integer :: sea99_ndep
     integer :: sea99_nlat
     integer :: sea99_nlon
+    integer :: dummy_pad ! padding 4 bytes to align the structure    
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
@@ -44,10 +65,59 @@ subroutine read_sea99_s_model(SEA99M_V)
     double precision :: alonmax
     double precision :: sea99_vs(100,100,100)
     double precision :: sea99_depth(100)
- end type sea99_s_model_variables
+  end type model_sea99_s_variables
 
- type (sea99_s_model_variables) SEA99M_V
-! sea99_s_model_variables
+  type (model_sea99_s_variables) SEA99M_V
+  ! model_sea99_s_variables
+
+  integer :: myrank
+  integer :: ier
+  
+  if(myrank == 0) call read_sea99_s_model(SEA99M_V)
+
+  ! broadcast the information read on the master to the nodes
+  ! SEA99M_V
+  call MPI_BCAST(SEA99M_V%sea99_ndep,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(SEA99M_V%sea99_nlat,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(SEA99M_V%sea99_nlon,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(SEA99M_V%sea99_ddeg,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(SEA99M_V%alatmin,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(SEA99M_V%alatmax,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(SEA99M_V%alonmin,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(SEA99M_V%alonmax,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(SEA99M_V%sea99_vs,100*100*100,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(SEA99M_V%sea99_depth,100,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  end subroutine model_sea99_s_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_sea99_s_model(SEA99M_V)
+
+  implicit none
+
+  include "constants.h"
+
+  ! model_sea99_s_variables
+  type model_sea99_s_variables
+    sequence
+    integer :: sea99_ndep
+    integer :: sea99_nlat
+    integer :: sea99_nlon
+    integer :: dummy_pad ! padding 4 bytes to align the structure    
+    double precision :: sea99_ddeg
+    double precision :: alatmin
+    double precision :: alatmax
+    double precision :: alonmin
+    double precision :: alonmax
+    double precision :: sea99_vs(100,100,100)
+    double precision :: sea99_depth(100)
+  end type model_sea99_s_variables
+
+  type (model_sea99_s_variables) SEA99M_V
+  ! model_sea99_s_variables
 
   integer :: i,ia,io,j
 
@@ -81,20 +151,27 @@ subroutine read_sea99_s_model(SEA99M_V)
      enddo
   enddo
 
-end subroutine read_sea99_s_model
+  end subroutine read_sea99_s_model
 
-subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_sea99_s(radius,theta,phi,dvs,SEA99M_V)
+
+! returns Vs perturbation (dvs) for given position r/theta/phi
 
   implicit none
 
   include "constants.h"
 
-! sea99_s_model_variables
-  type sea99_s_model_variables
+  ! model_sea99_s_variables
+  type model_sea99_s_variables
      sequence
      integer :: sea99_ndep
      integer :: sea99_nlat
      integer :: sea99_nlon
+     integer :: dummy_pad ! padding 4 bytes to align the structure    
      double precision :: sea99_ddeg
      double precision :: alatmin
      double precision :: alatmax
@@ -102,18 +179,23 @@ subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
      double precision :: alonmax
      double precision :: sea99_vs(100,100,100)
      double precision :: sea99_depth(100)
-  end type sea99_s_model_variables
+  end type model_sea99_s_variables
 
-  type (sea99_s_model_variables) SEA99M_V
-! sea99_s_model_variables
+  type (model_sea99_s_variables) SEA99M_V
+  ! model_sea99_s_variables
 
   integer :: id1,i,ilat,ilon
   double precision :: alat1,alon1,radius,theta,phi,dvs
   double precision :: xxx,yyy,dep,pla,plo,xd1,dd1,dd2,ddd(2)
- !----------------------- depth in the model ------------------
-  dep=R_EARTH_KM*(R_UNIT_SPHERE - radius)
-  pla=90.0d0 - theta/DEGREES_TO_RADIANS
-  plo=phi/DEGREES_TO_RADIANS
+
+  ! initializes
+  dvs = 0.d0
+  
+  id1 = 0
+  xd1 = 0
+
+  !----------------------- depth in the model ------------------
+  dep=R_EARTH_KM*(R_UNIT_SPHERE - radius)      
   if (dep .le. SEA99M_V%sea99_depth(1)) then
      id1 = 1
      xd1 = 0
@@ -125,15 +207,26 @@ subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
         if (dep .le. SEA99M_V%sea99_depth(i)) then
            id1 = i-1
            xd1 = (dep-SEA99M_V%sea99_depth(i-1)) / (SEA99M_V%sea99_depth(i) - SEA99M_V%sea99_depth(i-1))
-           go to 1
+           exit
         endif
      enddo
   endif
-1 continue
 
-!----------------------- value at a point ---------------------
-!----- approximate interpolation, OK for the (dense) 1-degree sampling ------
+  !----------------------- value at a point ---------------------
+  !----- approximate interpolation, OK for the (dense) 1-degree sampling ------
 
+  ! latitude / longitude in degree
+  pla = 90.0d0 - theta/DEGREES_TO_RADIANS
+  plo = phi/DEGREES_TO_RADIANS
+
+  ! model defined for:
+  ! -20.00   45.00 -- min, max latitude
+  !  95.00  160.00 -- min, max longitude
+  ! checks range
+  if( pla < SEA99M_V%alatmin .or. pla > SEA99M_V%alatmax &
+    .or. plo < SEA99M_V%alonmin .or. plo > SEA99M_V%alonmax ) return
+    
+  ! array indices
   ilat = int((pla - SEA99M_V%alatmin)/SEA99M_V%sea99_ddeg) + 1
   ilon = int((plo - SEA99M_V%alonmin)/SEA99M_V%sea99_ddeg) + 1
   alat1 = SEA99M_V%alatmin + (ilat-1)*SEA99M_V%sea99_ddeg
@@ -150,8 +243,10 @@ subroutine sea99_s_model(radius,theta,phi,dvs,SEA99M_V)
      ddd(i) = dd1 + yyy*xxx
   enddo
   dvs = ddd(1) + (ddd(2)-ddd(1)) * xd1
-  if(dvs>1.d0) dvs=0.0d0
+  
+  ! checks perturbation
+  if(dvs > 1.d0) dvs = 0.0d0
 
-end subroutine sea99_s_model
+  end subroutine model_sea99_s
 
 

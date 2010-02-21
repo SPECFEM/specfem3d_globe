@@ -25,14 +25,28 @@
 !
 !=====================================================================
 
-  subroutine read_mantle_model(D3MM_V)
+!--------------------------------------------------------------------------------------------------
+! S20rts
+!
+! 3D mantle model S20RTS [Ritsema et al., 1999] 
+!
+! Note that S20RTS uses transversely isotropic PREM as a background 
+! model, and that we use the PREM radial attenuation model when ATTENUATION is incorporated. 
+!--------------------------------------------------------------------------------------------------
+
+
+  subroutine model_s20rts_broadcast(myrank,D3MM_V)
+
+! standard routine to setup model 
 
   implicit none
 
   include "constants.h"
+  ! standard include of the MPI library
+  include 'mpif.h'
 
-! three_d_mantle_model_variables
-  type three_d_mantle_model_variables
+! model_s20rts_variables s20rts
+  type model_s20rts_variables
     sequence
     double precision dvs_a(0:NK,0:NS,0:NS)
     double precision dvs_b(0:NK,0:NS,0:NS)
@@ -41,10 +55,51 @@
     double precision spknt(NK+1)
     double precision qq0(NK+1,NK+1)
     double precision qq(3,NK+1,NK+1)
-  end type three_d_mantle_model_variables
+  end type model_s20rts_variables
 
-  type (three_d_mantle_model_variables) D3MM_V
-! three_d_mantle_model_variables
+  type (model_s20rts_variables) D3MM_V
+! model_s20rts_variables
+
+  integer :: myrank
+  integer :: ier
+
+  ! the variables read are declared and stored in structure D3MM_V      
+  if(myrank == 0) call read_model_s20rts(D3MM_V)
+      
+  ! broadcast the information read on the master to the nodes
+  call MPI_BCAST(D3MM_V%dvs_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%dvs_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%dvp_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%dvp_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%spknt,NK+1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%qq0,(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%qq,3*(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  end subroutine model_s20rts_broadcast
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_model_s20rts(D3MM_V)
+
+  implicit none
+
+  include "constants.h"
+
+! model_s20rts_variables
+  type model_s20rts_variables
+    sequence
+    double precision dvs_a(0:NK,0:NS,0:NS)
+    double precision dvs_b(0:NK,0:NS,0:NS)
+    double precision dvp_a(0:NK,0:NS,0:NS)
+    double precision dvp_b(0:NK,0:NS,0:NS)
+    double precision spknt(NK+1)
+    double precision qq0(NK+1,NK+1)
+    double precision qq(3,NK+1,NK+1)
+  end type model_s20rts_variables
+
+  type (model_s20rts_variables) D3MM_V
+! model_s20rts_variables
 
   integer k,l,m
 
@@ -81,18 +136,18 @@
 ! set up the splines used as radial basis functions by Ritsema
   call splhsetup(D3MM_V)
 
-  end subroutine read_mantle_model
+  end subroutine read_model_s20rts
 
 !---------------------------
 
-  subroutine mantle_model(radius,theta,phi,dvs,dvp,drho,D3MM_V)
+  subroutine mantle_s20rts(radius,theta,phi,dvs,dvp,drho,D3MM_V)
 
   implicit none
 
   include "constants.h"
 
-! three_d_mantle_model_variables
-  type three_d_mantle_model_variables
+! model_s20rts_variables
+  type model_s20rts_variables
     sequence
     double precision dvs_a(0:NK,0:NS,0:NS)
     double precision dvs_b(0:NK,0:NS,0:NS)
@@ -101,10 +156,10 @@
     double precision spknt(NK+1)
     double precision qq0(NK+1,NK+1)
     double precision qq(3,NK+1,NK+1)
-  end type three_d_mantle_model_variables
+  end type model_s20rts_variables
 
-  type (three_d_mantle_model_variables) D3MM_V
-! three_d_mantle_model_variables
+  type (model_s20rts_variables) D3MM_V
+! model_s20rts_variables
 
 ! factor to convert perturbations in shear speed to perturbations in density
   double precision, parameter :: SCALE_RHO = 0.40d0
@@ -166,7 +221,7 @@
 
   drho = SCALE_RHO*dvs
 
-  end subroutine mantle_model
+  end subroutine mantle_s20rts
 
 !----------------------------------
 
@@ -177,8 +232,8 @@
 
 !!!!!!!!!!!!!!!!!!!  double precision spknt(NK+1),qq0(NK+1,NK+1),qq(3,NK+1,NK+1)
 
-! three_d_mantle_model_variables
-  type three_d_mantle_model_variables
+! model_s20rts_variables
+  type model_s20rts_variables
     sequence
     double precision dvs_a(0:NK,0:NS,0:NS)
     double precision dvs_b(0:NK,0:NS,0:NS)
@@ -187,10 +242,10 @@
     double precision spknt(NK+1)
     double precision qq0(NK+1,NK+1)
     double precision qq(3,NK+1,NK+1)
-  end type three_d_mantle_model_variables
+  end type model_s20rts_variables
 
-  type (three_d_mantle_model_variables) D3MM_V
-! three_d_mantle_model_variables
+  type (model_s20rts_variables) D3MM_V
+! model_s20rts_variables
 
 
   integer i,j

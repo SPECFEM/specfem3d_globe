@@ -25,6 +25,13 @@
 !
 !=====================================================================
 
+!--------------------------------------------------------------------------------------------------
+! JP1D
+!
+! 1-D Japan model used as reference model for the 3-D model JP3D by Zhao et al. 1994
+!--------------------------------------------------------------------------------------------------
+
+
 subroutine model_jp1d(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling, &
      check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
      R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
@@ -34,7 +41,7 @@ subroutine model_jp1d(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling, &
   include "constants.h"
 
   ! given a normalized radius x, gives the non-dimensionalized density rho,
-! speeds vp and vs, and the quality factors Qkappa and Qmu
+  ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
   logical check_doubling_flag
   integer idoubling,myrank
@@ -45,57 +52,53 @@ subroutine model_jp1d(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling, &
   double precision r
   double precision scaleval
 
-! compute real physical radius in meters
+  ! compute real physical radius in meters
   r = x * R_EARTH
 
-! check flags to make sure we correctly honor the discontinuities
-! we use strict inequalities since r has been slighly changed in mesher
+  ! check flags to make sure we correctly honor the discontinuities
+  ! we use strict inequalities since r has been slighly changed in mesher
 
   if(check_doubling_flag) then
-
-!--- inner core
-!
-  if(r >= 0.d0 .and. r < RICB) then
-    if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
-       idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
-       idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
-         call exit_MPI(myrank,'wrong doubling flag for inner core point')
-!
-!--- outer core
-!
-  else if(r > RICB .and. r < RCMB) then
-    if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for outer core point')
-!
-!--- D" at the base of the mantle
-!
-  else if(r > RCMB .and. r < RTOPDDOUBLEPRIME) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for D" point')
-!
-!--- mantle: from top of D" to d670
-!
-  else if(r > RTOPDDOUBLEPRIME .and. r < R670) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point')
-
-!
-!--- mantle: from d670 to d220
-!
-  else if(r > R670 .and. r < R220) then
-    if(idoubling /= IFLAG_670_220) &
-      call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point')
-
-!
-!--- mantle and crust: from d220 to MOHO and then to surface
-!
-  else if(r > R220) then
-    if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-      call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point')
-
-  endif
+    !--- inner core
+    !
+    if(r >= 0.d0 .and. r < RICB) then
+      if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
+         idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
+         idoubling /= IFLAG_IN_FICTITIOUS_CUBE) &
+           call exit_MPI(myrank,'wrong doubling flag for inner core point')
+    !
+    !--- outer core
+    !
+    else if(r > RICB .and. r < RCMB) then
+      if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
+        call exit_MPI(myrank,'wrong doubling flag for outer core point')
+    !
+    !--- D" at the base of the mantle
+    !
+    else if(r > RCMB .and. r < RTOPDDOUBLEPRIME) then
+      if(idoubling /= IFLAG_MANTLE_NORMAL) &
+        call exit_MPI(myrank,'wrong doubling flag for D" point')
+    !
+    !--- mantle: from top of D" to d670
+    !
+    else if(r > RTOPDDOUBLEPRIME .and. r < R670) then
+      if(idoubling /= IFLAG_MANTLE_NORMAL) &
+        call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point')
+    !
+    !--- mantle: from d670 to d220
+    !
+    else if(r > R670 .and. r < R220) then
+      if(idoubling /= IFLAG_670_220) &
+        call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point')
+    !
+    !--- mantle and crust: from d220 to MOHO and then to surface
+    !
+    else if(r > R220) then
+      if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
+        call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point')
+    endif
 
   endif
 
@@ -201,4 +204,5 @@ subroutine model_jp1d(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling, &
   rho=rho*1000.0d0/RHOAV
   vp=vp*1000.0d0/(R_EARTH*scaleval)
   vs=vs*1000.0d0/(R_EARTH*scaleval)
-end subroutine model_jp1d
+  
+  end subroutine model_jp1d

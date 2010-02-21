@@ -25,12 +25,52 @@
 !
 !=====================================================================
 
-  subroutine model_ak135(x,rho,vp,vs,Qkappa,Qmu,iregion_code,Mak135_V)
-
-! model AK135 from B. L. N. Kennett, E. R. Engdahl and R. Buland,
+!--------------------------------------------------------------------------------------------------
+! AK135
+!
+! Spherically symmetric isotropic AK135 model [Kennett et al., 1995].
+!
+! B. L. N. Kennett, E. R. Engdahl and R. Buland,
 ! Constraints on seismic velocities in the Earth from traveltimes,
 ! Geophysical Journal International, Volume 122, Issue 1, Pages 1-351 (1995),
 ! DOI: 10.1111/j.1365-246X.1995.tb03540.x
+!--------------------------------------------------------------------------------------------------
+
+
+  subroutine model_ak135_broadcast(CRUSTAL,Mak135_V)
+
+! standard routine to setup model 
+
+  implicit none
+
+  include "constants.h"
+
+  ! model_ak135_variables
+  type model_ak135_variables
+    sequence
+    double precision, dimension(NR_AK135) :: radius_ak135
+    double precision, dimension(NR_AK135) :: density_ak135
+    double precision, dimension(NR_AK135) :: vp_ak135
+    double precision, dimension(NR_AK135) :: vs_ak135
+    double precision, dimension(NR_AK135) :: Qkappa_ak135
+    double precision, dimension(NR_AK135) :: Qmu_ak135
+  end type model_ak135_variables
+
+  type (model_ak135_variables) Mak135_V
+  ! model_ak135_variables
+
+  logical :: CRUSTAL
+
+  ! all processes will define same parameters
+  call define_model_ak135(CRUSTAL, Mak135_V)
+  
+  end subroutine model_ak135_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_ak135(x,rho,vp,vs,Qkappa,Qmu,iregion_code,Mak135_V)
 
   implicit none
 

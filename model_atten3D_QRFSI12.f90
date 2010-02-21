@@ -1,14 +1,87 @@
 !=====================================================================
 !
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          --------------------------------------------------
+!
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!             and University of Pau / CNRS / INRIA, France
+! (c) California Institute of Technology and University of Pau / CNRS / INRIA
+!                            February 2008
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+
+!--------------------------------------------------------------------------------------------------
+!
 !   This file contains subroutines to read in and get values for
 !   3-D attenuation model QRFSI12 (Dalton, Ekstrom, & Dziewonski, 2008)
+!
+! C.A. Dalton, G. Ekstr\"om and A.M. Dziewonski, 2008.
+! The global attenuation structure of the upper mantle,
+! J. Geophys. Res., 113, B05317,10.1029/2006JB004394
 !
 !   Last edit: Colleen Dalton, March 25, 2008
 !
 ! Q1: what are theta and phi?
 ! Q2: units for radius?
 ! Q3: what to do about core?
-!=====================================================================
+!--------------------------------------------------------------------------------------------------
+
+
+  subroutine model_atten3D_QRFSI12_broadcast(myrank,QRFSI12_Q)
+
+! standard routine to setup model 
+
+  implicit none
+
+  include "constants.h"
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+  ! model_atten3D_QRFSI12_variables
+  type model_atten3D_QRFSI12_variables
+    sequence
+    double precision dqmu(NKQ,NSQ)
+    double precision spknt(NKQ)
+    double precision refdepth(NDEPTHS_REFQ)
+    double precision refqmu(NDEPTHS_REFQ)
+  end type model_atten3D_QRFSI12_variables
+
+  type (model_atten3D_QRFSI12_variables) QRFSI12_Q
+  ! model_atten3D_QRFSI12_variables
+
+  integer :: myrank
+  integer :: ier
+
+  if(myrank == 0) call read_atten_model_3D_QRFSI12(QRFSI12_Q)
+
+  call MPI_BCAST(QRFSI12_Q%dqmu,          NKQ*NSQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call MPI_BCAST(QRFSI12_Q%spknt,             NKQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call MPI_BCAST(QRFSI12_Q%refdepth, NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+  call MPI_BCAST(QRFSI12_Q%refqmu,   NDEPTHS_REFQ,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+
+  if(myrank == 0) write(IMAIN,*) 'read 3D attenuation model'
+
+  
+  end subroutine 
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine read_atten_model_3D_QRFSI12(QRFSI12_Q)
 
@@ -16,17 +89,17 @@
 
   include "constants.h"
 
-! three_d_atten_model_QRFSI12_variables
-  type atten_model_QRFSI12_variables
+! three_d_model_atten3D_QRFSI12_variables
+  type model_atten3D_QRFSI12_variables
     sequence
     double precision dqmu(NKQ,NSQ)
     double precision spknt(NKQ)
     double precision refdepth(NDEPTHS_REFQ)
     double precision refqmu(NDEPTHS_REFQ)
-  end type atten_model_QRFSI12_variables
+  end type model_atten3D_QRFSI12_variables
 
-  type (atten_model_QRFSI12_variables) QRFSI12_Q
-! three_d_atten_model_QRFSI12_variables
+  type (model_atten3D_QRFSI12_variables) QRFSI12_Q
+! three_d_model_atten3D_QRFSI12_variables
 
   integer j,k,l,m
   integer index,ll,mm
@@ -85,23 +158,23 @@
 !----------------------------------
 !----------------------------------
 
-  subroutine attenuation_model_3D_QRFSI12(radius,theta,phi,Qmu,QRFSI12_Q,idoubling)
+  subroutine model_atten3D_QRFSI12(radius,theta,phi,Qmu,QRFSI12_Q,idoubling)
 
   implicit none
 
   include "constants.h"
 
-! atten_model_QRFSI12_variables
-  type atten_model_QRFSI12_variables
+! model_atten3D_QRFSI12_variables
+  type model_atten3D_QRFSI12_variables
     sequence
     double precision dqmu(NKQ,NSQ)
     double precision spknt(NKQ)
     double precision refdepth(NDEPTHS_REFQ)
     double precision refqmu(NDEPTHS_REFQ)
-  end type atten_model_QRFSI12_variables
+  end type model_atten3D_QRFSI12_variables
 
-  type (atten_model_QRFSI12_variables) QRFSI12_Q
-! atten_model_QRFSI12_variables
+  type (model_atten3D_QRFSI12_variables) QRFSI12_Q
+! model_atten3D_QRFSI12_variables
 
   integer i,j,k,n,idoubling
   integer ifnd
@@ -110,7 +183,7 @@
   real(kind=4) depth,ylat,xlon
   real(kind=4) shdep(NSQ)
   real(kind=4) xlmvec(NSQ),wk1(NSQ),wk2(NSQ),wk3(NSQ)
-  double precision, parameter :: rmoho = 6371.0-24.4
+  double precision, parameter :: rmoho_prem = 6371.0-24.4
   double precision, parameter :: rcmb = 3480.0
 
  !in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
@@ -120,9 +193,11 @@
   ylat=90.0d0-theta
   xlon=phi
 
-  if(idoubling == IFLAG_CRUST .or. radius >= rmoho) then
-     Qmu = 600.0d0
+! only checks radius for crust, idoubling is missleading for oceanic crust when we want to expand mantle up to surface...
+!  !if(idoubling == IFLAG_CRUST .or. radius >= rmoho) then
+  if( radius >= rmoho_prem ) then
   !   print *,'QRFSI12: we are in the crust'
+     Qmu = 600.0d0
   else if(idoubling == IFLAG_INNER_CORE_NORMAL .or. idoubling == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
        idoubling == IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling == IFLAG_TOP_CENTRAL_CUBE .or. &
        idoubling == IFLAG_IN_FICTITIOUS_CUBE) then
@@ -176,7 +251,7 @@
 
   endif
 
-  end subroutine attenuation_model_3D_QRFSI12
+  end subroutine model_atten3D_QRFSI12
 
 !----------------------------------
 !----------------------------------

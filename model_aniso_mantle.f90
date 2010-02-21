@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-!=====================================================================
+!--------------------------------------------------------------------------------------------------
 !
 !       Jean-Paul Montagner, January 2002
 !       modified by Min Chen, Caltech, February 2002
@@ -38,10 +38,51 @@
 !  creates parameters p(i=1,14,r,theta,phi)
 !  from model glob-prem3sm01 globpreman3sm01 (Montagner, 2002)
 !
-!======================================================================
+!--------------------------------------------------------------------------------------------------
 
 
-  subroutine aniso_mantle_model(r,theta,phi,rho, &
+  subroutine model_aniso_mantle_broadcast(myrank,AMM_V)
+
+! standard routine to setup model 
+
+  implicit none
+
+  include "constants.h"
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+  ! model_aniso_mantle_variables
+  type model_aniso_mantle_variables
+    sequence
+    double precision beta(14,34,37,73)
+    double precision pro(47)
+    integer npar1
+    integer dummy_pad ! padding 4 bytes to align the structure    
+  end type model_aniso_mantle_variables
+
+  type (model_aniso_mantle_variables) AMM_V
+  ! model_aniso_mantle_variables
+  
+  integer :: myrank
+  integer :: ier
+  
+  ! the variables read are declared and stored in structure AMM_V
+  if(myrank == 0) call read_aniso_mantle_model(AMM_V)
+  
+  ! broadcast the information read on the master to the nodes
+  call MPI_BCAST(AMM_V%npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(AMM_V%beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(AMM_V%pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+
+  
+  end subroutine model_aniso_mantle_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine model_aniso_mantle(r,theta,phi,rho, &
     c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,&
     AMM_V)
 
@@ -49,16 +90,17 @@
 
   include "constants.h"
 
-! aniso_mantle_model_variables
-  type aniso_mantle_model_variables
+! model_aniso_mantle_variables
+  type model_aniso_mantle_variables
     sequence
     double precision beta(14,34,37,73)
     double precision pro(47)
     integer npar1
-  end type aniso_mantle_model_variables
+    integer dummy_pad ! padding 4 bytes to align the structure    
+  end type model_aniso_mantle_variables
 
-  type (aniso_mantle_model_variables) AMM_V
-! aniso_mantle_model_variables
+  type (model_aniso_mantle_variables) AMM_V
+! model_aniso_mantle_variables
 
   double precision r,theta,phi
   double precision rho
@@ -88,7 +130,7 @@
        c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
        c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
-  end subroutine aniso_mantle_model
+  end subroutine model_aniso_mantle
 
 !--------------------------------------------------------------------
 
@@ -326,16 +368,17 @@
 
   include "constants.h"
 
-! aniso_mantle_model_variables
-  type aniso_mantle_model_variables
+! model_aniso_mantle_variables
+  type model_aniso_mantle_variables
     sequence
     double precision beta(14,34,37,73)
     double precision pro(47)
     integer npar1
-  end type aniso_mantle_model_variables
+    integer dummy_pad ! padding 4 bytes to align the structure    
+  end type model_aniso_mantle_variables
 
-  type (aniso_mantle_model_variables) AMM_V
-! aniso_mantle_model_variables
+  type (model_aniso_mantle_variables) AMM_V
+! model_aniso_mantle_variables
 
   integer nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
   double precision xinf,yinf,pxy,ppp,angle,A,A2L,AL,af

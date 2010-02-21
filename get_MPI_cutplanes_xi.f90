@@ -59,7 +59,8 @@
 ! MPI cut-plane element numbering
   integer ispecc1,ispecc2,npoin2D_xi,ix,iy,iz
   integer nspec2Dtheor
-
+  integer ier
+  
 ! processor identification
   character(len=150) prname,errmsg
 
@@ -74,8 +75,10 @@
 !
 
 ! global point number and coordinates left MPI cut-plane
-  open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt',status='unknown')
-
+  open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt', &
+       status='unknown',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error creating iboolleft_xi.txt for this process')
+  
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
@@ -123,8 +126,10 @@
       nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
 
 ! global point number and coordinates right MPI cut-plane
-  open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='unknown')
-
+  open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt', &
+        status='unknown',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error creating iboolright_xi.txt for this process')
+  
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 

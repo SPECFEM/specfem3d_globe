@@ -45,9 +45,24 @@
 
   integer mo,da,julian_day,isource
   double precision scaleM
+  double precision t_shift(NSOURCES)
   character(len=5) datasource
   character(len=150) string, CMTSOLUTION
 
+  ! initializes
+  lat(:) = 0.d0
+  long(:) = 0.d0
+  depth(:) = 0.d0
+  t_shift(:) = 0.d0
+  t_cmt(:) = 0.d0
+  hdur(:) = 0.d0
+  moment_tensor(:,:) = 0.d0
+  yr = 0
+  jda = 0
+  ho = 0
+  mi = 0
+  sec = 0.d0
+  
 !
 !---- read hypocenter info
 !
@@ -67,7 +82,8 @@
 
 ! read time shift
   read(1,"(a)") string
-  read(string(12:len_trim(string)),*) t_cmt(isource)
+  !read(string(12:len_trim(string)),*) t_cmt(isource)
+  read(string(12:len_trim(string)),*) t_shift(isource)
 
 ! read half duration
   read(1,"(a)") string
@@ -116,6 +132,13 @@
   enddo
 
   close(1)
+
+  ! Sets t_cmt to zero to initiate the simulation! 
+  if(NSOURCES == 1)then
+      t_cmt = 0.d0
+  else 
+      t_cmt(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
+  endif
 
 !
 ! scale and non-dimensionalize the moment tensor

@@ -95,13 +95,15 @@
   real(kind=CUSTOM_REAL), parameter :: THRESHOLD = 1._CUSTOM_REAL / 100._CUSTOM_REAL
 
 ! flag to apply non linear scaling to normalized norm of displacement
-  logical, parameter :: NONLINEAR_SCALING = .true.
+  logical, parameter :: NONLINEAR_SCALING = .false.
+  logical, parameter :: FIX_SCALING = .false.  ! uses fixed max_value to normalize instead of max of current wavefield
+  real,parameter:: MAX_VALUE = 6.77e-4
 
 ! coefficient of power law used for non linear scaling
   real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.30_CUSTOM_REAL
 
 ! flag to cut amplitude below a certain threshold
-  logical, parameter :: APPLY_THRESHOLD = .false.
+  logical, parameter :: APPLY_THRESHOLD = .true.
 
   integer i,j,it
   integer it1,it2
@@ -412,20 +414,33 @@
   print *
   print *,'minimum amplitude in current snapshot = ',min_field_current
   print *,'maximum amplitude in current snapshot = ',max_field_current
+  if( FIX_SCALING ) then
+    print *,'  to be normalized by : ',MAX_VALUE
+    if( max_field_current > MAX_VALUE ) stop 'increase MAX_VALUE'
+  endif
   print *
 
-! normalize field to [0:1]
-  field_display(:) = (field_display(:) - min_field_current) / (max_field_current - min_field_current)
 
+
+! normalize field to [0:1]
+  print *,'normalizing... '
+  if( FIX_SCALING ) then
+    field_display(:) = (field_display(:) + MAX_VALUE) / (2.0*MAX_VALUE)
+  else
+    field_display(:) = (field_display(:) - min_field_current) / (max_field_current - min_field_current)
+  endif
 ! rescale to [-1,1]
   field_display(:) = 2.*field_display(:) - 1.
 
 ! apply threshold to normalized field
-  if(APPLY_THRESHOLD) &
+  if(APPLY_THRESHOLD) then
+    print *,'thresholding... '
     where(abs(field_display(:)) <= THRESHOLD) field_display = 0.
-
+  endif
+  
 ! apply non linear scaling to normalized field if needed
   if(NONLINEAR_SCALING) then
+    print *,'nonlinear scaling... '
     where(field_display(:) >= 0.)
       field_display = field_display ** POWER_SCALING
     elsewhere
@@ -433,13 +448,16 @@
     endwhere
   endif
 
+  print *,'color scaling... '
 ! map back to [0,1]
   field_display(:) = (field_display(:) + 1.) / 2.
 
 ! map field to [0:255] for AVS color scale
   field_display(:) = 255. * field_display(:)
 
+
 ! copy coordinate arrays since the sorting routine does not preserve them
+  print *,'sorting... '
   xp_save(:) = xp(:)
   yp_save(:) = yp(:)
   zp_save(:) = zp(:)
@@ -504,108 +522,108 @@
 
   else
 ! if unique file, output geometry only once
-  if(.not. UNIQUE_FILE .or. iframe == 1) then
+    if(.not. UNIQUE_FILE .or. iframe == 1) then
 
 ! output list of points
-  mask_point = .false.
-  ipoin = 0
-  do ispec=1,nspectot_AVS_max
-    ieoff = NGNOD2D_AVS_DX*(ispec-1)
+      mask_point = .false.
+      ipoin = 0
+      do ispec=1,nspectot_AVS_max
+        ieoff = NGNOD2D_AVS_DX*(ispec-1)
 ! four points for each element
-    do ilocnum = 1,NGNOD2D_AVS_DX
-      ibool_number = iglob(ilocnum+ieoff)
-      if(.not. mask_point(ibool_number)) then
-        ipoin = ipoin + 1
-        ireorder(ibool_number) = ipoin
-        if(USE_OPENDX) then
-          write(11,"(f10.7,1x,f10.7,1x,f10.7)") &
-            xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
-        else if(USE_AVS) then
-          write(11,"(i6,1x,f10.7,1x,f10.7,1x,f10.7)") ireorder(ibool_number), &
-            xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
-        endif
-      endif
-      mask_point(ibool_number) = .true.
-    enddo
-  enddo
+        do ilocnum = 1,NGNOD2D_AVS_DX
+          ibool_number = iglob(ilocnum+ieoff)
+          if(.not. mask_point(ibool_number)) then
+            ipoin = ipoin + 1
+            ireorder(ibool_number) = ipoin
+            if(USE_OPENDX) then
+              write(11,"(f10.7,1x,f10.7,1x,f10.7)") &
+                xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
+            else if(USE_AVS) then
+              write(11,"(i6,1x,f10.7,1x,f10.7,1x,f10.7)") ireorder(ibool_number), &
+                xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
+            endif
+          endif
+          mask_point(ibool_number) = .true.
+        enddo
+      enddo
 
-  if(USE_OPENDX) &
-    write(11,*) 'object 2 class array type int rank 1 shape 4 items ',nspectot_AVS_max,' data follows'
+      if(USE_OPENDX) &
+        write(11,*) 'object 2 class array type int rank 1 shape 4 items ',nspectot_AVS_max,' data follows'
 
 ! output list of elements
-  do ispec=1,nspectot_AVS_max
-    ieoff = NGNOD2D_AVS_DX*(ispec-1)
+      do ispec=1,nspectot_AVS_max
+        ieoff = NGNOD2D_AVS_DX*(ispec-1)
 ! four points for each element
-    ibool_number1 = iglob(ieoff + 1)
-    ibool_number2 = iglob(ieoff + 2)
-    ibool_number3 = iglob(ieoff + 3)
-    ibool_number4 = iglob(ieoff + 4)
-    if(USE_OPENDX) then
+        ibool_number1 = iglob(ieoff + 1)
+        ibool_number2 = iglob(ieoff + 2)
+        ibool_number3 = iglob(ieoff + 3)
+        ibool_number4 = iglob(ieoff + 4)
+        if(USE_OPENDX) then
 ! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
-      write(11,"(i10,1x,i10,1x,i10,1x,i10)") ireorder(ibool_number1)-1, &
-        ireorder(ibool_number4)-1,ireorder(ibool_number2)-1,ireorder(ibool_number3)-1
-    else
-      write(11,"(i10,' 1 quad ',i10,1x,i10,1x,i10,1x,i10)") ispec,ireorder(ibool_number1), &
-        ireorder(ibool_number2),ireorder(ibool_number3),ireorder(ibool_number4)
-    endif
-  enddo
-
-  endif
-
-  if(USE_OPENDX) then
-    write(11,*) 'attribute "element type" string "quads"'
-    write(11,*) 'attribute "ref" string "positions"'
-    write(11,*) 'object 3 class array type float rank 0 items ',nglob,' data follows'
-  else
-    if(UNIQUE_FILE) then
-! step number for AVS multistep file
-      if(iframe > 1) then
-        if(iframe < 10) then
-          write(11,"('step',i1,' image',i1)") iframe,iframe
-        else if(iframe < 100) then
-          write(11,"('step',i2,' image',i2)") iframe,iframe
-        else if(iframe < 1000) then
-          write(11,"('step',i3,' image',i3)") iframe,iframe
+          write(11,"(i10,1x,i10,1x,i10,1x,i10)") ireorder(ibool_number1)-1, &
+            ireorder(ibool_number4)-1,ireorder(ibool_number2)-1,ireorder(ibool_number3)-1
         else
-          write(11,"('step',i4,' image',i4)") iframe,iframe
+          write(11,"(i10,' 1 quad ',i10,1x,i10,1x,i10,1x,i10)") ispec,ireorder(ibool_number1), &
+            ireorder(ibool_number2),ireorder(ibool_number3),ireorder(ibool_number4)
         endif
-      endif
-      write(11,*) '1 0'
+      enddo
+
     endif
+
+    if(USE_OPENDX) then
+      write(11,*) 'attribute "element type" string "quads"'
+      write(11,*) 'attribute "ref" string "positions"'
+      write(11,*) 'object 3 class array type float rank 0 items ',nglob,' data follows'
+    else
+      if(UNIQUE_FILE) then
+! step number for AVS multistep file
+        if(iframe > 1) then
+          if(iframe < 10) then
+            write(11,"('step',i1,' image',i1)") iframe,iframe
+          else if(iframe < 100) then
+            write(11,"('step',i2,' image',i2)") iframe,iframe
+          else if(iframe < 1000) then
+            write(11,"('step',i3,' image',i3)") iframe,iframe
+          else
+            write(11,"('step',i4,' image',i4)") iframe,iframe
+          endif
+        endif
+        write(11,*) '1 0'
+      endif
 ! dummy text for labels
-    write(11,*) '1 1'
-    write(11,*) 'a, b'
-  endif
+      write(11,*) '1 1'
+      write(11,*) 'a, b'
+    endif
 
 ! output data values
-  mask_point = .false.
+    mask_point = .false.
 
 ! output point data
-  do ispec=1,nspectot_AVS_max
-  ieoff = NGNOD2D_AVS_DX*(ispec-1)
+    do ispec=1,nspectot_AVS_max
+      ieoff = NGNOD2D_AVS_DX*(ispec-1)
 ! four points for each element
-  do ilocnum = 1,NGNOD2D_AVS_DX
-    ibool_number = iglob(ilocnum+ieoff)
-    if(.not. mask_point(ibool_number)) then
-      if(USE_OPENDX) then
-        write(11,"(f7.2)") field_display(ilocnum+ieoff)
-      else
-        write(11,"(i10,1x,f7.2)") ireorder(ibool_number),field_display(ilocnum+ieoff)
-      endif
-    endif
-    mask_point(ibool_number) = .true.
-  enddo
-  enddo
+      do ilocnum = 1,NGNOD2D_AVS_DX
+        ibool_number = iglob(ilocnum+ieoff)
+        if(.not. mask_point(ibool_number)) then
+          if(USE_OPENDX) then
+            write(11,"(f7.2)") field_display(ilocnum+ieoff)
+          else
+            write(11,"(i10,1x,f7.2)") ireorder(ibool_number),field_display(ilocnum+ieoff)
+          endif
+        endif
+        mask_point(ibool_number) = .true.
+      enddo
+    enddo
 
 ! define OpenDX field
-  if(USE_OPENDX) then
-    write(11,*) 'attribute "dep" string "positions"'
-    write(11,*) 'object "irregular positions irregular connections" class field'
-    write(11,*) 'component "positions" value 1'
-    write(11,*) 'component "connections" value 2'
-    write(11,*) 'component "data" value 3'
-    write(11,*) 'end'
-  endif
+    if(USE_OPENDX) then
+      write(11,*) 'attribute "dep" string "positions"'
+      write(11,*) 'object "irregular positions irregular connections" class field'
+      write(11,*) 'component "positions" value 1'
+      write(11,*) 'component "connections" value 2'
+      write(11,*) 'component "data" value 3'
+      write(11,*) 'end'
+    endif
 
 ! end of test for GMT format
   endif
@@ -688,7 +706,7 @@
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
           NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA,RMOHO_FICTITIOUS_IN_MESHER, &
+          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
           NPROC_XI,NPROC_ETA,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
@@ -698,7 +716,7 @@
           CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
+          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH,RMOHO_FICTITIOUS_IN_MESHER
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
           CRUSTAL,ELLIPTICITY,GRAVITY,ONE_CRUST,ROTATION,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
@@ -759,17 +777,15 @@
          ATTENUATION,REFERENCE_1D_MODEL,THREE_D_MODEL,ABSORBING_CONDITIONS, &
          INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,LOCAL_PATH,MODEL,SIMULATION_TYPE,SAVE_FORWARD, &
          NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-         NSPEC, &
-         NSPEC2D_XI, &
-         NSPEC2D_ETA, &
+         NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
          NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
+         NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
          ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.)
+         
   if(MOVIE_COARSE) stop 'create_movie_AVS_DX does not work with MOVIE_COARSE'
 
   end subroutine read_AVS_DX_parameters

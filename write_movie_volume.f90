@@ -254,7 +254,7 @@
 
 ! ---------------------------------------------
 
- subroutine write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
+  subroutine write_movie_volume_strains(myrank,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                     it,eps_trace_over_3_crust_mantle,epsilondev_crust_mantle,muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
@@ -264,203 +264,205 @@
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
-! input
-integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
-real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: eps_trace_over_3_crust_mantle
-real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev_crust_mantle
-real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: muvstore_crust_mantle_3dmovie
-logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
-logical :: MOVIE_COARSE
-real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
-character(len=150) LOCAL_PATH,outputname
+  ! input
+  integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: eps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: muvstore_crust_mantle_3dmovie
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
+  logical :: MOVIE_COARSE
+  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
+  character(len=150) LOCAL_PATH,outputname
 
-! variables
-character(len=150) prname
-integer :: ipoints_3dmovie,i,j,k,ispec,NIT
-real(kind=CUSTOM_REAL) :: muv_3dmovie
-real(kind=CUSTOM_REAL),dimension(3,3) :: eps_loc,eps_loc_new
-real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ,&
-                                                   store_val3d_NE,store_val3d_NZ,store_val3d_EZ
+  ! variables
+  character(len=150) prname
+  integer :: ipoints_3dmovie,i,j,k,ispec,NIT
+  real(kind=CUSTOM_REAL) :: muv_3dmovie
+  real(kind=CUSTOM_REAL),dimension(3,3) :: eps_loc,eps_loc_new
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ,&
+                                                     store_val3d_NE,store_val3d_NZ,store_val3d_EZ
 
-character(len=1) movie_prefix
+  character(len=1) movie_prefix
 
- allocate(store_val3d_NN(npoints_3dmovie))
- allocate(store_val3d_EE(npoints_3dmovie))
- allocate(store_val3d_ZZ(npoints_3dmovie))
- allocate(store_val3d_NE(npoints_3dmovie))
- allocate(store_val3d_NZ(npoints_3dmovie))
- allocate(store_val3d_EZ(npoints_3dmovie))
+  allocate(store_val3d_NN(npoints_3dmovie))
+  allocate(store_val3d_EE(npoints_3dmovie))
+  allocate(store_val3d_ZZ(npoints_3dmovie))
+  allocate(store_val3d_NE(npoints_3dmovie))
+  allocate(store_val3d_NZ(npoints_3dmovie))
+  allocate(store_val3d_EZ(npoints_3dmovie))
 
- if(NDIM /= 3) call exit_MPI(myrank, 'write_movie_volume requires NDIM = 3')
+  if(NDIM /= 3) call exit_MPI(myrank, 'write_movie_volume requires NDIM = 3')
 
- if(MOVIE_VOLUME_TYPE == 1) then
+  if(MOVIE_VOLUME_TYPE == 1) then
       movie_prefix='E' ! strain
- else if(MOVIE_VOLUME_TYPE == 2) then
+  else if(MOVIE_VOLUME_TYPE == 2) then
       movie_prefix='S' ! time integral of strain
- else if(MOVIE_VOLUME_TYPE == 3) then
+  else if(MOVIE_VOLUME_TYPE == 3) then
       movie_prefix='P' ! potency, or integral of strain x \mu
- endif
- if(MOVIE_COARSE) then
+  endif
+  if(MOVIE_COARSE) then
    NIT = NGLLX-1
- else
+  else
    NIT = 1
- endif
-   write(prname,"('proc',i6.6)") myrank
-    ipoints_3dmovie=0
-    do ispec=1,NSPEC_CRUST_MANTLE
-     do k=1,NGLLZ,NIT
-      do j=1,NGLLY,NIT
-       do i=1,NGLLX,NIT
-        if(mask_3dmovie(i,j,k,ispec)) then
-         ipoints_3dmovie=ipoints_3dmovie+1
-         muv_3dmovie=muvstore_crust_mantle_3dmovie(i,j,k,ispec)
-         eps_loc(1,1)=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_crust_mantle(1,i,j,k,ispec)
-         eps_loc(2,2)=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_crust_mantle(2,i,j,k,ispec)
-         eps_loc(3,3)=eps_trace_over_3_crust_mantle(i,j,k,ispec)- &
-                   epsilondev_crust_mantle(1,i,j,k,ispec) - epsilondev_crust_mantle(2,i,j,k,ispec)
-         eps_loc(1,2)=epsilondev_crust_mantle(3,i,j,k,ispec)
-         eps_loc(1,3)=epsilondev_crust_mantle(4,i,j,k,ispec)
-         eps_loc(2,3)=epsilondev_crust_mantle(5,i,j,k,ispec)
-         eps_loc(2,1)=eps_loc(1,2)
-         eps_loc(3,1)=eps_loc(1,3)
-         eps_loc(3,2)=eps_loc(2,3)
+  endif
+  
+  write(prname,"('proc',i6.6)") myrank
+  ipoints_3dmovie=0
+  do ispec=1,NSPEC_CRUST_MANTLE
+   do k=1,NGLLZ,NIT
+    do j=1,NGLLY,NIT
+     do i=1,NGLLX,NIT
+      if(mask_3dmovie(i,j,k,ispec)) then
+       ipoints_3dmovie=ipoints_3dmovie+1
+       muv_3dmovie=muvstore_crust_mantle_3dmovie(i,j,k,ispec)
+       eps_loc(1,1)=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_crust_mantle(1,i,j,k,ispec)
+       eps_loc(2,2)=eps_trace_over_3_crust_mantle(i,j,k,ispec) + epsilondev_crust_mantle(2,i,j,k,ispec)
+       eps_loc(3,3)=eps_trace_over_3_crust_mantle(i,j,k,ispec)- &
+                 epsilondev_crust_mantle(1,i,j,k,ispec) - epsilondev_crust_mantle(2,i,j,k,ispec)
+       eps_loc(1,2)=epsilondev_crust_mantle(3,i,j,k,ispec)
+       eps_loc(1,3)=epsilondev_crust_mantle(4,i,j,k,ispec)
+       eps_loc(2,3)=epsilondev_crust_mantle(5,i,j,k,ispec)
+       eps_loc(2,1)=eps_loc(1,2)
+       eps_loc(3,1)=eps_loc(1,3)
+       eps_loc(3,2)=eps_loc(2,3)
 
-! rotate eps_loc to spherical coordinates
-      eps_loc_new(:,:) = matmul(matmul(nu_3dmovie(:,:,ipoints_3dmovie),eps_loc(:,:)), transpose(nu_3dmovie(:,:,ipoints_3dmovie)))
-         if(MOVIE_VOLUME_TYPE == 3) eps_loc_new(:,:) = eps_loc(:,:)*muv_3dmovie
-         store_val3d_NN(ipoints_3dmovie)=eps_loc_new(1,1)
-         store_val3d_EE(ipoints_3dmovie)=eps_loc_new(2,2)
-         store_val3d_ZZ(ipoints_3dmovie)=eps_loc_new(3,3)
-         store_val3d_NE(ipoints_3dmovie)=eps_loc_new(1,2)
-         store_val3d_NZ(ipoints_3dmovie)=eps_loc_new(1,3)
-         store_val3d_EZ(ipoints_3dmovie)=eps_loc_new(2,3)
-        endif
-       enddo
-      enddo
+  ! rotate eps_loc to spherical coordinates
+    eps_loc_new(:,:) = matmul(matmul(nu_3dmovie(:,:,ipoints_3dmovie),eps_loc(:,:)), transpose(nu_3dmovie(:,:,ipoints_3dmovie)))
+       if(MOVIE_VOLUME_TYPE == 3) eps_loc_new(:,:) = eps_loc(:,:)*muv_3dmovie
+       store_val3d_NN(ipoints_3dmovie)=eps_loc_new(1,1)
+       store_val3d_EE(ipoints_3dmovie)=eps_loc_new(2,2)
+       store_val3d_ZZ(ipoints_3dmovie)=eps_loc_new(3,3)
+       store_val3d_NE(ipoints_3dmovie)=eps_loc_new(1,2)
+       store_val3d_NZ(ipoints_3dmovie)=eps_loc_new(1,3)
+       store_val3d_EZ(ipoints_3dmovie)=eps_loc_new(2,3)
+      endif
      enddo
     enddo
-    if(ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
+   enddo
+  enddo
+  if(ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
 
-    write(outputname,"('proc',i6.6,'_movie3D_',a,'NN',i6.6,'.bin')") myrank,movie_prefix,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_NN(1:npoints_3dmovie)
-    close(27)
+  write(outputname,"('proc',i6.6,'_movie3D_',a,'NN',i6.6,'.bin')") myrank,movie_prefix,it
+  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  write(27) store_val3d_NN(1:npoints_3dmovie)
+  close(27)
 
-    write(outputname,"('proc',i6.6,'_movie3D_',a,'EE',i6.6,'.bin')") myrank,movie_prefix,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_EE(1:npoints_3dmovie)
-    close(27)
+  write(outputname,"('proc',i6.6,'_movie3D_',a,'EE',i6.6,'.bin')") myrank,movie_prefix,it
+  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  write(27) store_val3d_EE(1:npoints_3dmovie)
+  close(27)
 
-    write(outputname,"('proc',i6.6,'_movie3D_',a,'ZZ',i6.6,'.bin')") myrank,movie_prefix,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_ZZ(1:npoints_3dmovie)
-    close(27)
+  write(outputname,"('proc',i6.6,'_movie3D_',a,'ZZ',i6.6,'.bin')") myrank,movie_prefix,it
+  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  write(27) store_val3d_ZZ(1:npoints_3dmovie)
+  close(27)
 
-    write(outputname,"('proc',i6.6,'_movie3D_',a,'NE',i6.6,'.bin')") myrank,movie_prefix,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_NE(1:npoints_3dmovie)
-    close(27)
+  write(outputname,"('proc',i6.6,'_movie3D_',a,'NE',i6.6,'.bin')") myrank,movie_prefix,it
+  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  write(27) store_val3d_NE(1:npoints_3dmovie)
+  close(27)
 
 
-    write(outputname,"('proc',i6.6,'_movie3D_',a,'NZ',i6.6,'.bin')") myrank,movie_prefix,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_NZ(1:npoints_3dmovie)
-    close(27)
+  write(outputname,"('proc',i6.6,'_movie3D_',a,'NZ',i6.6,'.bin')") myrank,movie_prefix,it
+  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  write(27) store_val3d_NZ(1:npoints_3dmovie)
+  close(27)
 
-    write(outputname,"('proc',i6.6,'_movie3D_',a,'EZ',i6.6,'.bin')") myrank,movie_prefix,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_EZ(1:npoints_3dmovie)
-    close(27)
+  write(outputname,"('proc',i6.6,'_movie3D_',a,'EZ',i6.6,'.bin')") myrank,movie_prefix,it
+  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  write(27) store_val3d_EZ(1:npoints_3dmovie)
+  close(27)
 
- end subroutine write_movie_volume_strains
+  end subroutine write_movie_volume_strains
 
 ! ---------------------------------------------
- subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
+  subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
                     MOVIE_COARSE,ibool_crust_mantle,vector_crust_mantle,scalingval,mask_3dmovie,nu_3dmovie)
   implicit none
 
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
-! input
-integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
-integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: vector_crust_mantle,vector_scaled
-real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
-double precision :: scalingval
-real(kind=CUSTOM_REAL), dimension(3) :: vector_local,vector_local_new
-logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
-logical :: MOVIE_COARSE
-character(len=150) LOCAL_PATH
+  ! input
+  integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: vector_crust_mantle,vector_scaled
+  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
+  double precision :: scalingval
+  real(kind=CUSTOM_REAL), dimension(3) :: vector_local,vector_local_new
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
+  logical :: MOVIE_COARSE
+  character(len=150) LOCAL_PATH
 
-! variables
-integer :: ipoints_3dmovie,i,j,k,ispec,NIT,iglob
-real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_N,store_val3d_E,store_val3d_Z
-character(len=150) outputname
-character(len=2) movie_prefix
+  ! variables
+  integer :: ipoints_3dmovie,i,j,k,ispec,NIT,iglob
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_N,store_val3d_E,store_val3d_Z
+  character(len=150) outputname
+  character(len=2) movie_prefix
 
-if(NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
+  if(NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
 
-allocate(store_val3d_N(npoints_3dmovie))
-allocate(store_val3d_E(npoints_3dmovie))
-allocate(store_val3d_Z(npoints_3dmovie))
+  allocate(store_val3d_N(npoints_3dmovie))
+  allocate(store_val3d_E(npoints_3dmovie))
+  allocate(store_val3d_Z(npoints_3dmovie))
 
- if(MOVIE_VOLUME_TYPE == 5) then
+  if(MOVIE_VOLUME_TYPE == 5) then
       movie_prefix='DI' ! displacement
- else if(MOVIE_VOLUME_TYPE == 6) then
+  else if(MOVIE_VOLUME_TYPE == 6) then
       movie_prefix='VE' ! velocity
- endif
- if(MOVIE_COARSE) then
+  endif
+  if(MOVIE_COARSE) then
    NIT = NGLLX-1
- else
+  else
    NIT = 1
- endif
-    if(CUSTOM_REAL == SIZE_REAL) then
-      vector_scaled = vector_crust_mantle*sngl(scalingval)
-    else
-      vector_scaled = vector_crust_mantle*scalingval
-    endif
+  endif
 
-    ipoints_3dmovie=0
-    do ispec=1,NSPEC_CRUST_MANTLE
-     do k=1,NGLLZ,NIT
-      do j=1,NGLLY,NIT
-       do i=1,NGLLX,NIT
-        if(mask_3dmovie(i,j,k,ispec)) then
-         ipoints_3dmovie=ipoints_3dmovie+1
-         iglob = ibool_crust_mantle(i,j,k,ispec)
-         vector_local(:) = vector_scaled(:,iglob)
+  if(CUSTOM_REAL == SIZE_REAL) then
+    vector_scaled = vector_crust_mantle*sngl(scalingval)
+  else
+    vector_scaled = vector_crust_mantle*scalingval
+  endif
 
-! rotate eps_loc to spherical coordinates
-         vector_local_new(:) = matmul(nu_3dmovie(:,:,ipoints_3dmovie), vector_local(:))
-         store_val3d_N(ipoints_3dmovie)=vector_local_new(1)
-         store_val3d_E(ipoints_3dmovie)=vector_local_new(2)
-         store_val3d_Z(ipoints_3dmovie)=vector_local_new(3)
-        endif
-       enddo
-      enddo
+  ipoints_3dmovie=0
+  do ispec=1,NSPEC_CRUST_MANTLE
+   do k=1,NGLLZ,NIT
+    do j=1,NGLLY,NIT
+     do i=1,NGLLX,NIT
+      if(mask_3dmovie(i,j,k,ispec)) then
+       ipoints_3dmovie=ipoints_3dmovie+1
+       iglob = ibool_crust_mantle(i,j,k,ispec)
+       vector_local(:) = vector_scaled(:,iglob)
+
+  ! rotate eps_loc to spherical coordinates
+       vector_local_new(:) = matmul(nu_3dmovie(:,:,ipoints_3dmovie), vector_local(:))
+       store_val3d_N(ipoints_3dmovie)=vector_local_new(1)
+       store_val3d_E(ipoints_3dmovie)=vector_local_new(2)
+       store_val3d_Z(ipoints_3dmovie)=vector_local_new(3)
+      endif
      enddo
     enddo
-    close(IOUT)
-    if(ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
+   enddo
+  enddo
+  close(IOUT)
+  if(ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
 
-    write(outputname,"('proc',i6.6,'_movie3D_',a,'N',i6.6,'.bin')") myrank,movie_prefix,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_N(1:npoints_3dmovie)
-    close(27)
+  write(outputname,"('proc',i6.6,'_movie3D_',a,'N',i6.6,'.bin')") myrank,movie_prefix,it
+  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  write(27) store_val3d_N(1:npoints_3dmovie)
+  close(27)
 
-    write(outputname,"('proc',i6.6,'_movie3D_',a,'E',i6.6,'.bin')") myrank,movie_prefix,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_E(1:npoints_3dmovie)
-    close(27)
+  write(outputname,"('proc',i6.6,'_movie3D_',a,'E',i6.6,'.bin')") myrank,movie_prefix,it
+  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  write(27) store_val3d_E(1:npoints_3dmovie)
+  close(27)
 
-    write(outputname,"('proc',i6.6,'_movie3D_',a,'Z',i6.6,'.bin')") myrank,movie_prefix,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
-    write(27) store_val3d_Z(1:npoints_3dmovie)
-    close(27)
+  write(outputname,"('proc',i6.6,'_movie3D_',a,'Z',i6.6,'.bin')") myrank,movie_prefix,it
+  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  write(27) store_val3d_Z(1:npoints_3dmovie)
+  close(27)
 
 
- end subroutine write_movie_volume_vector
+  end subroutine write_movie_volume_vector
 
 !--------------------
 

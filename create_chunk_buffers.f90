@@ -27,13 +27,15 @@
 
 ! subroutine to create MPI buffers to assemble between chunks
 
-  subroutine create_chunk_buffers(iregion_code,nspec,ibool,idoubling,xstore,ystore,zstore, &
-                nglob_ori, &
-                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-                NPROC_XI,NPROC_ETA,NPROC,NPROCTOT,NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
-                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                myrank,LOCAL_PATH, &
-                addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
+  subroutine create_chunk_buffers(iregion_code,nspec,ibool,idoubling, &
+                                  xstore,ystore,zstore, &
+                                  nglob_ori, &
+                                  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+                                  NPROC_XI,NPROC_ETA,NPROC,NPROCTOT, &
+                                  NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
+                                  NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+                                  myrank,LOCAL_PATH,addressing, &
+                                  ichunk_slice,iproc_xi_slice,iproc_eta_slice,NCHUNKS)
 
   implicit none
 

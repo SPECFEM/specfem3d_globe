@@ -1,3 +1,230 @@
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          --------------------------------------------------
+!
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!    Seismological Laboratory, California Institute of Technology, USA
+!             and University of Pau / CNRS / INRIA, France
+! (c) California Institute of Technology and University of Pau / CNRS / INRIA
+!                            February 2008
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+
+!--------------------------------------------------------------------------------------------------
+! S362ani
+!
+! A global shear-wave speed model developed by Kustowski et al. [2006]. 
+!
+! In this model, radial anisotropy is conﬁned to the uppermost mantle.
+! The model (and the corresponding mesh) incorporate 
+! tomography on the 650~km and 410~km discontinuities in the 1D reference model REF.
+!
+! s362wmani: A version of S362ANI with anisotropy allowed throughout the mantle.
+!
+! s362ani_prem: A version of S362ANI calculated using PREM as the 1D reference model
+!
+! s29ea: A global model with higher resolution in the upper mantle beneath Eurasia 
+! calculated using REF as the 1D reference model. 
+!--------------------------------------------------------------------------------------------------
+
+
+  subroutine model_s362ani_broadcast(myrank,THREE_D_MODEL,numker,numhpa,ihpa,&
+                              lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
+                              xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
+
+! standard routine to setup model 
+
+  implicit none
+
+  include "constants.h"
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+  integer THREE_D_MODEL
+
+! used for 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
+  integer, parameter :: maxker=200
+  integer, parameter :: maxl=72
+  integer, parameter :: maxcoe=2000
+  integer, parameter :: maxver=1000
+  integer, parameter :: maxhpa=2
+
+  integer numker
+  integer numhpa !,numcof
+  integer ihpa !,lmax,nylm
+  integer lmxhpa(maxhpa)
+  integer itypehpa(maxhpa)
+  integer ihpakern(maxker)
+  integer numcoe(maxhpa)
+  integer ivarkern(maxker)
+  integer itpspl(maxcoe,maxhpa)
+
+  !integer nconpt(maxhpa),iver
+  !integer iconpt(maxver,maxhpa)
+  !real(kind=4) conpt(maxver,maxhpa)
+
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+  character(len=80) hsplfl(maxhpa)
+  character(len=40) dskker(maxker)
+  
+  !real(kind=4) vercof(maxker)
+  !real(kind=4) vercofd(maxker)
+
+  !real(kind=4) ylmcof((maxl+1)**2,maxhpa)
+  !real(kind=4) wk1(maxl+1)
+  !real(kind=4) wk2(maxl+1)
+  !real(kind=4) wk3(maxl+1)
+
+  character(len=80) kerstr
+  character(len=40) varstr(maxker)
+  character(len=80) refmdl
+
+  integer :: myrank
+  integer :: ier
+
+  ! master process
+  if(myrank == 0) call read_model_s362ani(THREE_D_MODEL,THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
+                          THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
+                          numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
+                          xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
+                          
+  call MPI_BCAST(numker,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(numhpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(ihpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(lmxhpa,maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(itypehpa,maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(ihpakern,maxker,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(numcoe,maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(ivarkern,maxker,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(itpspl,maxcoe*maxhpa,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+  call MPI_BCAST(xlaspl,maxcoe*maxhpa,MPI_REAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(xlospl,maxcoe*maxhpa,MPI_REAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(radspl,maxcoe*maxhpa,MPI_REAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(coe,maxcoe*maxker,MPI_REAL,0,MPI_COMM_WORLD,ier)
+
+  call MPI_BCAST(hsplfl,80*maxhpa,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(dskker,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(kerstr,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(refmdl,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(varstr,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  
+  
+  end subroutine model_s362ani_broadcast
+  
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine read_model_s362ani(THREE_D_MODEL, &
+              THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
+              THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
+              numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
+              xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
+
+  implicit none
+
+  integer THREE_D_MODEL,THREE_D_MODEL_S362ANI
+  integer THREE_D_MODEL_S362WMANI
+  integer THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA
+
+  integer lu
+  character(len=128) modeldef
+  logical exists
+  integer numvar
+  integer ierror
+
+  integer, parameter :: maxker=200
+  integer, parameter :: maxl=72
+  integer, parameter :: maxcoe=2000
+  integer, parameter :: maxver=1000
+  integer, parameter :: maxhpa=2
+
+  integer numker
+  integer numhpa
+  integer ihpa
+  integer lmxhpa(maxhpa)
+  integer itypehpa(maxhpa)
+  integer ihpakern(maxker)
+  integer numcoe(maxhpa)
+  integer ivarkern(maxker)
+  integer itpspl(maxcoe,maxhpa)
+
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+  character(len=80) hsplfl(maxhpa)
+  character(len=40) dskker(maxker)
+
+  character(len=80) kerstr
+  character(len=80) refmdl
+  character(len=40) varstr(maxker)
+
+! -------------------------------------
+
+  lu=1                    ! --- log unit: input 3-D model
+  if(THREE_D_MODEL  ==  THREE_D_MODEL_S362ANI) then
+    modeldef='DATA/s362ani/S362ANI'
+  elseif(THREE_D_MODEL  ==  THREE_D_MODEL_S362WMANI) then
+    modeldef='DATA/s362ani/S362WMANI'
+  elseif(THREE_D_MODEL  ==  THREE_D_MODEL_S362ANI_PREM) then
+    modeldef='DATA/s362ani/S362ANI_PREM'
+  elseif(THREE_D_MODEL  ==  THREE_D_MODEL_S29EA) then
+    modeldef='DATA/s362ani/S2.9EA'
+  else
+    stop 'unknown 3D model in read_model_s362ani'
+  endif
+  inquire(file=modeldef,exist=exists)
+  if(exists) then
+    call gt3dmodl(lu,modeldef, &
+        maxhpa,maxker,maxcoe, &
+        numhpa,numker,numcoe,lmxhpa, &
+        ihpakern,itypehpa,coe, &
+        itpspl,xlaspl,xlospl,radspl, &
+        numvar,ivarkern,varstr, &
+        refmdl,kerstr,hsplfl,dskker,ierror)
+  else
+    write(6,"('the model ',a,' does not exits')") modeldef(1:len_trim(modeldef))
+  endif
+
+!         --- check arrays
+
+  if(numker > maxker) stop 'numker > maxker'
+  do ihpa=1,numhpa
+    if(itypehpa(ihpa) == 1) then
+      if(lmxhpa(ihpa) > maxl) stop 'lmxhpa(ihpa) > maxl'
+    else if(itypehpa(ihpa) == 2) then
+      if(numcoe(ihpa) > maxcoe) stop 'numcoe(ihpa) > maxcoe'
+    else
+      stop 'problem with itypehpa'
+    endif
+  enddo
+
+  end subroutine read_model_s362ani
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine evradker(depth,string,nker,vercof,dvercof,ierror)
 
@@ -543,7 +770,9 @@
 
   end subroutine evradker
 
-! ---
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine chebyfun(u,kmax,f)
 
@@ -581,6 +810,10 @@
   enddo
 
   end subroutine chebyfun
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 
   subroutine gt3dmodl(lu,targetfile, &
@@ -708,6 +941,10 @@
   kerstr=kernstri
 
   end subroutine gt3dmodl
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 
   subroutine rd3dmodl(lu,filename,ierror, &
@@ -854,93 +1091,9 @@
 
   end subroutine rd3dmodl
 
-
-   subroutine read_model_s362ani(THREE_D_MODEL, &
-              THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-              THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
-              numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
-              xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
-
-  implicit none
-
-  integer THREE_D_MODEL,THREE_D_MODEL_S362ANI
-  integer THREE_D_MODEL_S362WMANI
-  integer THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA
-
-  integer lu
-  character(len=128) modeldef
-  logical exists
-  integer numvar
-  integer ierror
-
-  integer, parameter :: maxker=200
-  integer, parameter :: maxl=72
-  integer, parameter :: maxcoe=2000
-  integer, parameter :: maxver=1000
-  integer, parameter :: maxhpa=2
-
-  integer numker
-  integer numhpa
-  integer ihpa
-  integer lmxhpa(maxhpa)
-  integer itypehpa(maxhpa)
-  integer ihpakern(maxker)
-  integer numcoe(maxhpa)
-  integer ivarkern(maxker)
-  integer itpspl(maxcoe,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-  character(len=80) hsplfl(maxhpa)
-  character(len=40) dskker(maxker)
-
-  character(len=80) kerstr
-  character(len=80) refmdl
-  character(len=40) varstr(maxker)
-
-! -------------------------------------
-
-  lu=1                    ! --- log unit: input 3-D model
-  if(THREE_D_MODEL  ==  THREE_D_MODEL_S362ANI) then
-    modeldef='DATA/s362ani/S362ANI'
-  elseif(THREE_D_MODEL  ==  THREE_D_MODEL_S362WMANI) then
-    modeldef='DATA/s362ani/S362WMANI'
-  elseif(THREE_D_MODEL  ==  THREE_D_MODEL_S362ANI_PREM) then
-    modeldef='DATA/s362ani/S362ANI_PREM'
-  elseif(THREE_D_MODEL  ==  THREE_D_MODEL_S29EA) then
-    modeldef='DATA/s362ani/S2.9EA'
-  else
-    stop 'unknown 3D model in read_model_s362ani'
-  endif
-  inquire(file=modeldef,exist=exists)
-  if(exists) then
-    call gt3dmodl(lu,modeldef, &
-        maxhpa,maxker,maxcoe, &
-        numhpa,numker,numcoe,lmxhpa, &
-        ihpakern,itypehpa,coe, &
-        itpspl,xlaspl,xlospl,radspl, &
-        numvar,ivarkern,varstr, &
-        refmdl,kerstr,hsplfl,dskker,ierror)
-  else
-    write(6,"('the model ',a,' does not exits')") modeldef(1:len_trim(modeldef))
-  endif
-
-!         --- check arrays
-
-  if(numker > maxker) stop 'numker > maxker'
-  do ihpa=1,numhpa
-    if(itypehpa(ihpa) == 1) then
-      if(lmxhpa(ihpa) > maxl) stop 'lmxhpa(ihpa) > maxl'
-    else if(itypehpa(ihpa) == 2) then
-      if(numcoe(ihpa) > maxcoe) stop 'numcoe(ihpa) > maxcoe'
-    else
-      stop 'problem with itypehpa'
-    endif
-  enddo
-
-  end subroutine read_model_s362ani
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 
   subroutine splcon(xlat,xlon,nver,verlat,verlon,verrad,ncon,icon,con)
@@ -997,10 +1150,14 @@
 
   end subroutine splcon
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
 ! --- evaluate perturbations in per cent
 
-  subroutine subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
+  subroutine model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv, &
     numker,numhpa,numcof,ihpa,lmax,nylm, &
     lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
     nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
@@ -1065,7 +1222,9 @@
   integer ierror
 
 ! -------------------------------------
-
+  vsv3drel = 0.
+  vsh3drel = 0.
+  
   depth=6371.0-xrad
   call evradker (depth,kerstr,numker,vercof,vercofd,ierror)
   if(ierror /= 0) stop 'ierror evradker'
@@ -1163,8 +1322,11 @@
   dvph=0.55*dvsh    ! --- scaling used in the inversion
   dvpv=0.55*dvsv    ! --- scaling used in the inversion
 
-  end subroutine subshsv
+  end subroutine model_s362ani_subshsv
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! --- evaluate depressions of the 410- and 650-km discontinuities in km
 
@@ -1291,6 +1453,10 @@
   topo650=valu(2)
 
   end subroutine subtopo
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine vbspl(x,np,xarr,splcon,splcond)
 !
@@ -1644,6 +1810,9 @@
 
   end subroutine vbspl
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine ylm(XLAT,XLON,LMAX,Y,WK1,WK2,WK3)
 
@@ -1692,7 +1861,9 @@
 
   end subroutine ylm
 
-!------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine legndr(THETA,L,M,X,XP,XCOSEC)
 

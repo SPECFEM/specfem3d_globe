@@ -166,167 +166,140 @@
 
 !================================================================
 
-subroutine compute_arrays_adjoint_source(myrank, adj_source_file, &
+subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
       xi_receiver,eta_receiver,gamma_receiver, nu,adj_sourcearray, &
-      xigll,yigll,zigll,NSTEP)
-
-  implicit none
-
-  include 'constants.h'
-
-! input
-  integer myrank, NSTEP
-
-  double precision xi_receiver, eta_receiver, gamma_receiver
-
-  character(len=*) adj_source_file
-
-! output
-  real(kind=CUSTOM_REAL) :: adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLY,NGLLZ)
-
-! Gauss-Lobatto-Legendre points of integration and weights
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLY) :: yigll
-  double precision, dimension(NGLLZ) :: zigll
-
-  double precision, dimension(NDIM,NDIM) :: nu
-
-  double precision scale_displ
-
-  double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
-        hgammar(NGLLZ), hpgammar(NGLLZ)
-  real(kind=CUSTOM_REAL) :: adj_src(NSTEP,NDIM),adj_src_u(NSTEP,NDIM)
-
-  integer icomp, itime, i, j, k, ios
-  double precision :: junk
-  character(len=3) :: comp(NDIM)
-  character(len=150) :: filename
-
-  scale_displ = R_EARTH
-
-  call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
-  call lagrange_any(eta_receiver,NGLLY,yigll,hetar,hpetar)
-  call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)
-
-  adj_sourcearray(:,:,:,:,:) = 0.
-
-  comp = (/"LHN", "LHE", "LHZ"/)
-
-  do icomp = 1, NDIM
-
-    filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
-    open(unit = IIN, file = trim(filename), iostat = ios)
-    if (ios /= 0) call exit_MPI(myrank, ' file '//trim(filename)//' does not exist')
-    do itime = 1, NSTEP
-      read(IIN,*) junk, adj_src(itime,icomp)
-    enddo
-    close(IIN)
-
-  enddo
-
-  adj_src = adj_src/scale_displ
-
-  do itime = 1, NSTEP
-    adj_src_u(itime,:) = nu(1,:) * adj_src(itime,1) + nu(2,:) * adj_src(itime,2) + nu(3,:) * adj_src(itime,3)
-  enddo
-
-  do k = 1, NGLLZ
-    do j = 1, NGLLY
-      do i = 1, NGLLX
-        adj_sourcearray(:,:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_u(:,:)
-      enddo
-    enddo
-  enddo
-
-
-end subroutine compute_arrays_adjoint_source
-
-!================================================================
-
-subroutine comp_subarrays_adjoint_src(myrank, adj_source_file, &
-      xi_receiver,eta_receiver,gamma_receiver, nu,adj_sourcearray, &
-      xigll,yigll,zigll,NSTEP,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
+      xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
       NTSTEP_BETWEEN_READ_ADJSRC)
 
   implicit none
 
   include 'constants.h'
 
-! input -- notice here NSTEP is different from the NSTEP in the main program
-! instead NSTEP = iadjsrc_len(it_sub_adj), the length of this specific block
-  integer myrank, NSTEP
+! input -- notice here NSTEP_BLOCK is different from the NSTEP in the main program
+! instead NSTEP_BLOCK = iadjsrc_len(it_sub_adj), the length of this specific block
+
+  integer myrank, NSTEP_BLOCK
 
   double precision xi_receiver, eta_receiver, gamma_receiver
 
   character(len=*) adj_source_file
 
-! Vala added
+  ! Vala added
   integer it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC
   integer, dimension(NSTEP_SUB_ADJ,2) :: iadjsrc
 
-! output
-  real(kind=CUSTOM_REAL) :: adj_sourcearray(NTSTEP_BETWEEN_READ_ADJSRC,NDIM,NGLLX,NGLLY,NGLLZ)
+  ! output
+  real(kind=CUSTOM_REAL) :: adj_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC)
 
-! Gauss-Lobatto-Legendre points of integration and weights
+  ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLY) :: yigll
   double precision, dimension(NGLLZ) :: zigll
 
   double precision, dimension(NDIM,NDIM) :: nu
 
-  double precision scale_displ
+  double precision,parameter :: scale_displ_inv = 1.d0/R_EARTH
 
   double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
         hgammar(NGLLZ), hpgammar(NGLLZ)
-  real(kind=CUSTOM_REAL) :: adj_src(NSTEP,NDIM),adj_src_u(NSTEP,NDIM)
+  real(kind=CUSTOM_REAL) :: adj_src(NDIM,NSTEP_BLOCK),adj_src_u(NDIM,NSTEP_BLOCK)
 
   integer icomp, itime, i, j, k, ios
-  double precision :: junk
-  character(len=3) :: comp(NDIM)
+  integer it_start,it_end,index_i
+  real(kind=CUSTOM_REAL) :: junk
+  character(len=3),dimension(NDIM) :: comp = (/ "LHN", "LHE", "LHZ" /)
   character(len=150) :: filename
+  
+  ! (sub)trace start and end
+  ! reading starts in chunks of NSTEP_BLOCK from the end of the trace,
+  ! i.e. as an example: total length NSTEP = 3000, chunk length NSTEP_BLOCK= 1000  
+  !                                then it will read in first it_start=2001 to it_end=3000, 
+  !                                second time, it will be it_start=1001 to it_end=2000 and so on...
+  it_start = iadjsrc(it_sub_adj,1)
+  it_end = iadjsrc(it_sub_adj,1)+NSTEP_BLOCK-1
 
-  scale_displ = R_EARTH
+  
+  ! unfortunately, things become more tricky because of the Newark time scheme at
+  ! the very beginning of the time loop.
+  !
+  ! see the comment on where we add the adjoint source (compute_add_sources_adjoint()).
+  !
+  ! we will thus shift this indices by minus 1, to read in the adjoint source trace between 0 to 2999.
+  ! since 0 index is out of bounds, we put that adjoint source displacement artifically to zero
+  !
+  ! that is e.g., it_start is now 2000 and it_end = 2999, then 1000 to 1999, then 0 to 999.
+  it_start = it_start - 1
+  it_end = it_end - 1
+  
+  adj_src = 0._CUSTOM_REAL
+  do icomp = 1, NDIM
 
+    ! opens adjoint component file
+    filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+    open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ios)
+    if (ios /= 0) cycle ! cycles to next file
+     
+    ! jumps over unused trace length
+    do itime =1,it_start-1
+      read(IIN,*,iostat=ios) junk,junk
+      if( ios /= 0) &
+        call exit_MPI(myrank,&
+          'file '//trim(filename)//' has wrong length, please check with your simulation duration')
+    enddo
+     
+    ! reads in (sub)trace
+    do itime = it_start,it_end
+
+      ! index will run from 1 to NSTEP_BLOCK
+      index_i = itime - it_start + 1
+    
+      ! skips read and sets source artifically to zero if out of bounds, see comments above
+      if( it_start == 0 .and. itime == 0 ) then 
+        adj_src(icomp,1) = 0._CUSTOM_REAL
+        cycle
+      endif
+      
+      ! reads in adjoint source trace
+      !read(IIN,*,iostat=ios) junk, adj_src(icomp,itime-it_start+1)
+      read(IIN,*,iostat=ios) junk, adj_src(icomp,index_i)
+      
+      if( ios /= 0) &
+        call exit_MPI(myrank, &
+          'file '//trim(filename)//' has wrong length, please check with your simulation duration')
+    enddo
+    
+    close(IIN)
+
+  enddo
+
+  ! non-dimensionalize 
+  adj_src = adj_src*scale_displ_inv
+
+  ! rotates to cartesian
+  do itime = 1, NSTEP_BLOCK
+    adj_src_u(:,itime) = nu(1,:) * adj_src(1,itime) &
+                       + nu(2,:) * adj_src(2,itime) &
+                       + nu(3,:) * adj_src(3,itime)
+  enddo
+
+  ! receiver interpolators  
   call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
   call lagrange_any(eta_receiver,NGLLY,yigll,hetar,hpetar)
   call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)
 
-  adj_sourcearray(:,:,:,:,:) = 0.
-
-  comp = (/"LHN", "LHE", "LHZ"/)
-
-  do icomp = 1, NDIM
-
-     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
-     open(unit = IIN, file = trim(filename), iostat = ios)
-     if (ios /= 0) call exit_MPI(myrank, ' file '//trim(filename)//'does not exist')
-     do itime =1,iadjsrc(it_sub_adj,1)-1
-        read(IIN,*) junk,junk
-     enddo
-     do itime = iadjsrc(it_sub_adj,1), iadjsrc(it_sub_adj,1)+NSTEP-1
-        read(IIN,*) junk, adj_src(itime-iadjsrc(it_sub_adj,1)+1,icomp)
-     enddo
-     close(IIN)
-
-  enddo
-
-  adj_src = adj_src/scale_displ
-
-  do itime = 1, NSTEP
-    adj_src_u(itime,:) = nu(1,:) * adj_src(itime,1) + nu(2,:) * adj_src(itime,2) + nu(3,:) * adj_src(itime,3)
-  enddo
-
-
+  ! adds interpolated source contribution to all GLL points within this element
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
-        adj_sourcearray(1:NSTEP,:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_u(:,:)
+        do itime = 1, NSTEP_BLOCK
+          adj_sourcearray(:,i,j,k,itime) = hxir(i) * hetar(j) * hgammar(k) * adj_src_u(:,itime)
+        enddo
       enddo
     enddo
   enddo
 
 
-end subroutine comp_subarrays_adjoint_src
+end subroutine compute_arrays_source_adjoint
 
 ! =======================================================================
 
@@ -510,3 +483,82 @@ subroutine compute_adj_source_frechet(displ_s,Mxx,Myy,Mzz,Mxy,Mxz,Myz,eps_s,eps_
 
 end subroutine compute_adj_source_frechet
 
+!================================================================
+!
+! deprecated...
+!
+!subroutine compute_arrays_adjoint_source(myrank, adj_source_file, &
+!      xi_receiver,eta_receiver,gamma_receiver, nu,adj_sourcearray, &
+!      xigll,yigll,zigll,NSTEP)
+!
+!  implicit none
+!
+!  include 'constants.h'
+!
+!! input
+!  integer myrank, NSTEP
+!
+!  double precision xi_receiver, eta_receiver, gamma_receiver
+!
+!  character(len=*) adj_source_file
+!
+!! output
+!  real(kind=CUSTOM_REAL) :: adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLY,NGLLZ)
+!
+!! Gauss-Lobatto-Legendre points of integration and weights
+!  double precision, dimension(NGLLX) :: xigll
+!  double precision, dimension(NGLLY) :: yigll
+!  double precision, dimension(NGLLZ) :: zigll
+!
+!  double precision, dimension(NDIM,NDIM) :: nu
+!
+!  double precision scale_displ
+!
+!  double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
+!        hgammar(NGLLZ), hpgammar(NGLLZ)
+!  real(kind=CUSTOM_REAL) :: adj_src(NSTEP,NDIM),adj_src_u(NSTEP,NDIM)
+!
+!  integer icomp, itime, i, j, k, ios
+!  double precision :: junk
+!  character(len=3) :: comp(NDIM)
+!  character(len=150) :: filename
+!
+!  scale_displ = R_EARTH
+!
+!  call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
+!  call lagrange_any(eta_receiver,NGLLY,yigll,hetar,hpetar)
+!  call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)
+!
+!  adj_sourcearray(:,:,:,:,:) = 0.
+!
+!  comp = (/"LHN", "LHE", "LHZ"/)
+!
+!  do icomp = 1, NDIM
+!
+!    filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+!    open(unit = IIN, file = trim(filename), iostat = ios)
+!    if (ios /= 0) call exit_MPI(myrank, ' file '//trim(filename)//' does not exist')
+!    do itime = 1, NSTEP
+!      read(IIN,*) junk, adj_src(itime,icomp)
+!    enddo
+!    close(IIN)
+!
+!  enddo
+!
+!  adj_src = adj_src/scale_displ
+!
+!  do itime = 1, NSTEP
+!    adj_src_u(itime,:) = nu(1,:) * adj_src(itime,1) + nu(2,:) * adj_src(itime,2) + nu(3,:) * adj_src(itime,3)
+!  enddo
+!
+!  do k = 1, NGLLZ
+!    do j = 1, NGLLY
+!      do i = 1, NGLLX
+!        adj_sourcearray(:,:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_u(:,:)
+!      enddo
+!    enddo
+!  enddo
+!
+!
+!end subroutine compute_arrays_adjoint_source
+!

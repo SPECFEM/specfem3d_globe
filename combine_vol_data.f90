@@ -37,13 +37,14 @@ program combine_vol_data
 
   integer,parameter :: MAX_NUM_NODES = 300
   integer  iregion, ir, irs, ire, ires, pfd, efd
-  character(len=150) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
-  character(len=150) :: prname_topo, prname_file, dimension_file, command_name
-  character(len=150) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file, data_file, topo_file
+  character(len=256) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
+  character(len=256) :: prname_topo, prname_file, dimension_file
+  character(len=1038) :: command_name
+  character(len=256) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file, data_file, topo_file
   integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob, npoint, nelement
   integer iproc, num_node, i,j,k,ispec, ios, it, di, dj, dk
   integer np, ne,  njunk
-  real(kind=CUSTOM_REAL) data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: data
   real(kind=CUSTOM_REAL),dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
   integer ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
   integer num_ibool(NGLOB_CRUST_MANTLE)
@@ -51,8 +52,16 @@ program combine_vol_data
   real x, y, z, dat
   integer numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
+  
+  !daniel: instead of taking the first value which appears for a global point, average the values 
+  !            if there are more than one gll points for a global point (points on element corners, edges, faces) 
+  logical,parameter:: AVERAGE_GLOBALPOINTS = .false.
+  integer:: ibool_count(NGLOB_CRUST_MANTLE)
+  real(kind=CUSTOM_REAL):: ibool_dat(NGLOB_CRUST_MANTLE)
+  
+  
 
-
+  ! starts here--------------------------------------------------------------------------------------------------
   do i = 1, 7
     call getarg(i,arg(i))
     if (i < 7 .and. trim(arg(i)) == '') then
@@ -90,7 +99,11 @@ program combine_vol_data
   ! get slices id
   num_node = 0
   open(unit = 20, file = trim(arg(1)), status = 'old',iostat = ios)
-  if (ios /= 0) stop 'Error opening file'
+  if (ios /= 0) then
+    print*,'no file: ',trim(arg(1))
+    stop 'Error opening slices file'
+  endif
+  
   do while (1 == 1)
     read(20,'(a)',iostat=ios) sline
     if (ios /= 0) exit
@@ -117,11 +130,18 @@ program combine_vol_data
   if (ires == 0) then
     HIGH_RESOLUTION_MESH = .false.
     di = NGLLX-1; dj = NGLLY-1; dk = NGLLZ-1
-  else
+  else if( ires == 1 ) then
     HIGH_RESOLUTION_MESH = .true.
     di = 1; dj = 1; dk = 1
+  else if( ires == 2 ) then
+    HIGH_RESOLUTION_MESH = .false.
+    di = (NGLLX-1)/2.0; dj = (NGLLY-1)/2.0; dk = (NGLLZ-1)/2.0  
   endif
-  print *, 'resolution ', HIGH_RESOLUTION_MESH
+  if( HIGH_RESOLUTION_MESH ) then
+    print *, ' high resolution ', HIGH_RESOLUTION_MESH
+  else
+    print *, ' low resolution ', HIGH_RESOLUTION_MESH  
+  endif  
 
   do ir = irs, ire
     print *, '----------- Region ', ir, '----------------'
@@ -148,15 +168,22 @@ program combine_vol_data
 
       dimension_file = trim(prname_topo) //'array_dims.txt'
       open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
-      if (ios /= 0) stop 'Error opening file'
+      if (ios /= 0) then
+       print*,'error ',ios
+       print*,'file:',trim(dimension_file)
+       stop 'Error opening file'
+      endif
+      
       read(27,*) nspec(it)
       read(27,*) nglob(it)
       close(27)
       if (HIGH_RESOLUTION_MESH) then
         npoint(it) = nglob(it)
         nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1)
-      else
+      else if( ires == 0 ) then
         nelement(it) = nspec(it)
+      else if (ires == 2 ) then
+        nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1) / 8      
       endif
 
     enddo
@@ -170,11 +197,11 @@ program combine_vol_data
     ne = 0
 
     ! write points information
-
     do it = 1, num_node
 
       iproc = node_list(it)
-
+      
+      
       print *, ' '
       print *, 'Reading slice ', iproc
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
@@ -183,46 +210,112 @@ program combine_vol_data
       ! filename.bin
       data_file = trim(prname_file) // trim(filename) // '.bin'
       open(unit = 27,file = trim(data_file),status='old',action='read', iostat = ios,form ='unformatted')
-      if (ios /= 0) stop 'Error opening file'
+      if (ios /= 0) then
+       print*,'error ',ios
+       print*,'file:',trim(data_file)
+       stop 'Error opening file'
+      endif
 
+      data(:,:,:,:) = -1.e10
       read(27) data(:,:,:,1:nspec(it))
       close(27)
-      print *, trim(data_file)
-
+      
+      print *,trim(data_file)
+      print *,'  min/max value: ',minval(data(:,:,:,1:nspec(it))),maxval(data(:,:,:,1:nspec(it)))
+      print *
+      
       ! topology file
       topo_file = trim(prname_topo) // 'solver_data_2' // '.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
-      if (ios /= 0) stop 'Error opening file'
-
+      if (ios /= 0) then
+       print*,'error ',ios
+       print*,'file:',trim(topo_file)
+       stop 'Error opening file'
+      endif
+      xstore(:) = 0.0
+      ystore(:) = 0.0
+      zstore(:) = 0.0
+      ibool(:,:,:,:) = -1
       read(28) xstore(1:nglob(it))
       read(28) ystore(1:nglob(it))
       read(28) zstore(1:nglob(it))
       read(28) ibool(:,:,:,1:nspec(it))
       close(28)
+      
       print *, trim(topo_file)
+
+
+      !average data on global points
+      ibool_count(:) = 0    
+      ibool_dat(:) = 0.0
+      if( AVERAGE_GLOBALPOINTS ) then
+        do ispec=1,nspec(it)
+          do k = 1, NGLLZ, dk
+            do j = 1, NGLLY, dj
+              do i = 1, NGLLX, di
+                iglob = ibool(i,j,k,ispec)              
+
+                dat = data(i,j,k,ispec)
+
+                ibool_dat(iglob) = ibool_dat(iglob) + dat
+                ibool_count(iglob) = ibool_count(iglob) + 1
+              enddo
+            enddo
+          enddo
+        enddo
+        do iglob=1,nglob(it)
+          if( ibool_count(iglob) > 0 ) then
+            ibool_dat(iglob) = ibool_dat(iglob)/ibool_count(iglob)
+          endif
+        enddo
+      endif
 
       mask_ibool(:) = .false.
       num_ibool(:) = 0
       numpoin = 0
 
+        
       ! write point file
       do ispec=1,nspec(it)
         do k = 1, NGLLZ, dk
           do j = 1, NGLLY, dj
             do i = 1, NGLLX, di
               iglob = ibool(i,j,k,ispec)
-              if(.not. mask_ibool(iglob)) then
-                numpoin = numpoin + 1
-                x = xstore(iglob)
-                y = ystore(iglob)
-                z = zstore(iglob)
-                dat = data(i,j,k,ispec)
-                call write_real_fd(pfd,x)
-                call write_real_fd(pfd,y)
-                call write_real_fd(pfd,z)
-                call write_real_fd(pfd,dat)
-                mask_ibool(iglob) = .true.
-                num_ibool(iglob) = numpoin
+              if( iglob == -1 ) cycle
+              
+              ! takes the averaged data value for mesh
+              if( AVERAGE_GLOBALPOINTS ) then
+                if(.not. mask_ibool(iglob)) then
+                  numpoin = numpoin + 1
+                  x = xstore(iglob)
+                  y = ystore(iglob)
+                  z = zstore(iglob)
+                  
+                  !dat = data(i,j,k,ispec)
+                  dat = ibool_dat(iglob)
+                  
+                  call write_real_fd(pfd,x)
+                  call write_real_fd(pfd,y)
+                  call write_real_fd(pfd,z)
+                  call write_real_fd(pfd,dat)
+                  
+                  mask_ibool(iglob) = .true.
+                  num_ibool(iglob) = numpoin
+                endif
+              else
+                if(.not. mask_ibool(iglob)) then
+                  numpoin = numpoin + 1
+                  x = xstore(iglob)
+                  y = ystore(iglob)
+                  z = zstore(iglob)
+                  dat = data(i,j,k,ispec)
+                  call write_real_fd(pfd,x)
+                  call write_real_fd(pfd,y)
+                  call write_real_fd(pfd,z)
+                  call write_real_fd(pfd,dat)
+                  mask_ibool(iglob) = .true.
+                  num_ibool(iglob) = numpoin
+                endif
               endif
             enddo ! i
           enddo ! j
@@ -231,6 +324,8 @@ program combine_vol_data
 
       ! no way to check the number of points for low-res
       if (HIGH_RESOLUTION_MESH .and. numpoin /= npoint(it)) then
+        print*,'region:',ir
+        print*,'error number of points:',numpoin,npoint(it)
         stop 'different number of points (high-res)'
       else if (.not. HIGH_RESOLUTION_MESH) then
         npoint(it) = numpoin
@@ -289,8 +384,7 @@ program combine_vol_data
     call write_integer_fd(pfd,np)
     call close_file_fd(pfd)
 
-    command_name='cat '//trim(pt_mesh_file2)//' '//trim(pt_mesh_file1)//' '&
-               //trim(em_mesh_file)//' > '//trim(mesh_file)
+    command_name='cat '//trim(pt_mesh_file2)//' '//trim(pt_mesh_file1)//' '//trim(em_mesh_file)//' > '//trim(mesh_file)
     print *, ' '
     print *, 'cat mesh files: '
     print *, trim(command_name)

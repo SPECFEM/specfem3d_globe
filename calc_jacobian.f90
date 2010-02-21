@@ -24,138 +24,9 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
-
-  subroutine calc_jacobian(myrank,xixstore,xiystore,xizstore, &
-     etaxstore,etaystore,etazstore, &
-     gammaxstore,gammaystore,gammazstore, &
-     xstore,ystore,zstore, &
-     xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
-
-  implicit none
-
-  include "constants.h"
-
-  integer ispec,nspec,myrank
-
-  logical ACTUALLY_STORE_ARRAYS
-
-  double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
-  double precision dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ)
-
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
-
-  real(kind=CUSTOM_REAL) xixstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         xiystore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         xizstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         etaxstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         etaystore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         etazstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         gammaxstore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         gammaystore(NGLLX,NGLLY,NGLLZ,nspec), &
-                         gammazstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-  integer i,j,k,ia
-
-  double precision xxi,xeta,xgamma,yxi,yeta,ygamma,zxi,zeta,zgamma
-  double precision xmesh,ymesh,zmesh
-  double precision xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-  double precision jacobian
-
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
-
-      xxi = ZERO
-      xeta = ZERO
-      xgamma = ZERO
-      yxi = ZERO
-      yeta = ZERO
-      ygamma = ZERO
-      zxi = ZERO
-      zeta = ZERO
-      zgamma = ZERO
-      xmesh = ZERO
-      ymesh = ZERO
-      zmesh = ZERO
-
-      do ia=1,NGNOD
-        xxi = xxi + dershape3D(1,ia,i,j,k)*xelm(ia)
-        xeta = xeta + dershape3D(2,ia,i,j,k)*xelm(ia)
-        xgamma = xgamma + dershape3D(3,ia,i,j,k)*xelm(ia)
-        yxi = yxi + dershape3D(1,ia,i,j,k)*yelm(ia)
-        yeta = yeta + dershape3D(2,ia,i,j,k)*yelm(ia)
-        ygamma = ygamma + dershape3D(3,ia,i,j,k)*yelm(ia)
-        zxi = zxi + dershape3D(1,ia,i,j,k)*zelm(ia)
-        zeta = zeta + dershape3D(2,ia,i,j,k)*zelm(ia)
-        zgamma = zgamma + dershape3D(3,ia,i,j,k)*zelm(ia)
-        xmesh = xmesh + shape3D(ia,i,j,k)*xelm(ia)
-        ymesh = ymesh + shape3D(ia,i,j,k)*yelm(ia)
-        zmesh = zmesh + shape3D(ia,i,j,k)*zelm(ia)
-      enddo
-
-      jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
-             xeta*(yxi*zgamma-ygamma*zxi) + &
-             xgamma*(yxi*zeta-yeta*zxi)
-
-      if(jacobian <= ZERO) call exit_MPI(myrank,'3D Jacobian undefined')
-
-! invert the relation (Fletcher p. 50 vol. 2)
-      xix = (yeta*zgamma-ygamma*zeta) / jacobian
-      xiy = (xgamma*zeta-xeta*zgamma) / jacobian
-      xiz = (xeta*ygamma-xgamma*yeta) / jacobian
-      etax = (ygamma*zxi-yxi*zgamma) / jacobian
-      etay = (xxi*zgamma-xgamma*zxi) / jacobian
-      etaz = (xgamma*yxi-xxi*ygamma) / jacobian
-      gammax = (yxi*zeta-yeta*zxi) / jacobian
-      gammay = (xeta*zxi-xxi*zeta) / jacobian
-      gammaz = (xxi*yeta-xeta*yxi) / jacobian
-
-! save the derivatives and the jacobian
-! distinguish between single and double precision for reals
-      if(ACTUALLY_STORE_ARRAYS) then
-        if(CUSTOM_REAL == SIZE_REAL) then
-          xixstore(i,j,k,ispec) = sngl(xix)
-          xiystore(i,j,k,ispec) = sngl(xiy)
-          xizstore(i,j,k,ispec) = sngl(xiz)
-          etaxstore(i,j,k,ispec) = sngl(etax)
-          etaystore(i,j,k,ispec) = sngl(etay)
-          etazstore(i,j,k,ispec) = sngl(etaz)
-          gammaxstore(i,j,k,ispec) = sngl(gammax)
-          gammaystore(i,j,k,ispec) = sngl(gammay)
-          gammazstore(i,j,k,ispec) = sngl(gammaz)
-        else
-          xixstore(i,j,k,ispec) = xix
-          xiystore(i,j,k,ispec) = xiy
-          xizstore(i,j,k,ispec) = xiz
-          etaxstore(i,j,k,ispec) = etax
-          etaystore(i,j,k,ispec) = etay
-          etazstore(i,j,k,ispec) = etaz
-          gammaxstore(i,j,k,ispec) = gammax
-          gammaystore(i,j,k,ispec) = gammay
-          gammazstore(i,j,k,ispec) = gammaz
-        endif
-      endif
-
-! store mesh coordinates
-      xstore(i,j,k,ispec) = xmesh
-      ystore(i,j,k,ispec) = ymesh
-      zstore(i,j,k,ispec) = zmesh
-
-      enddo
-    enddo
-  enddo
-
-  end subroutine calc_jacobian
-
-
+!
 !> Hejun
-! This subroutine recompute the 3D jacobian for one element 
+! This subroutine recomputes the 3D jacobian for one element 
 ! based upon 125 GLL points 
 ! Hejun Zhu OCT16,2009
 
@@ -206,7 +77,7 @@
   double precision:: hlagrange,hlagrange_xi,hlagrange_eta,hlagrange_gamma
   double precision:: jacobian
   double precision:: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-
+  double precision:: r,theta,phi
 
 
   ! test parameters which can be deleted 
@@ -306,7 +177,9 @@
 
             ! Check the jacobian      
             if(jacobian <= ZERO) then 
-                   call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
+              call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
+              print*,'r/lat/lon:',r*R_EARTH_KM,90.0-theta*180./PI,phi*180./PI
+              call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
             end if 
 
             !     invert the relation (Fletcher p. 50 vol. 2)
@@ -353,6 +226,9 @@
   end subroutine recalc_jacobian_gll3D
 
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   ! Hejun Zhu used to recalculate 2D jacobian according to gll points rather
   ! than control nodes
@@ -471,4 +347,152 @@
   end do 
                                 
   end subroutine recalc_jacobian_gll2D
-!< Hejun
+  
+!
+!-------------------------------------------------------------------------------------------------
+!  
+! deprecated...
+!
+!  subroutine calc_jacobian(myrank,xixstore,xiystore,xizstore, &
+!     etaxstore,etaystore,etazstore, &
+!     gammaxstore,gammaystore,gammazstore, &
+!     xstore,ystore,zstore, &
+!     xelm,yelm,zelm,shape3D,dershape3D,ispec,nspec,ACTUALLY_STORE_ARRAYS)
+!
+!  implicit none
+!
+!  include "constants.h"
+!
+!  integer ispec,nspec,myrank
+!
+!  logical ACTUALLY_STORE_ARRAYS
+!
+!  double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
+!  double precision dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ)
+!
+!  double precision xelm(NGNOD)
+!  double precision yelm(NGNOD)
+!  double precision zelm(NGNOD)
+!
+!  real(kind=CUSTOM_REAL) xixstore(NGLLX,NGLLY,NGLLZ,nspec), &
+!                         xiystore(NGLLX,NGLLY,NGLLZ,nspec), &
+!                         xizstore(NGLLX,NGLLY,NGLLZ,nspec), &
+!                         etaxstore(NGLLX,NGLLY,NGLLZ,nspec), &
+!                         etaystore(NGLLX,NGLLY,NGLLZ,nspec), &
+!                         etazstore(NGLLX,NGLLY,NGLLZ,nspec), &
+!                         gammaxstore(NGLLX,NGLLY,NGLLZ,nspec), &
+!                         gammaystore(NGLLX,NGLLY,NGLLZ,nspec), &
+!                         gammazstore(NGLLX,NGLLY,NGLLZ,nspec)
+!
+!  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
+!  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
+!  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+!
+!  integer i,j,k,ia
+!
+!  double precision xxi,xeta,xgamma,yxi,yeta,ygamma,zxi,zeta,zgamma
+!  double precision xmesh,ymesh,zmesh
+!  double precision xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+!  double precision jacobian
+!
+!  do k=1,NGLLZ
+!    do j=1,NGLLY
+!      do i=1,NGLLX
+!
+!      xxi = ZERO
+!      xeta = ZERO
+!      xgamma = ZERO
+!      yxi = ZERO
+!      yeta = ZERO
+!      ygamma = ZERO
+!      zxi = ZERO
+!      zeta = ZERO
+!      zgamma = ZERO
+!      xmesh = ZERO
+!      ymesh = ZERO
+!      zmesh = ZERO
+!
+!      do ia=1,NGNOD
+!        xxi = xxi + dershape3D(1,ia,i,j,k)*xelm(ia)
+!        xeta = xeta + dershape3D(2,ia,i,j,k)*xelm(ia)
+!        xgamma = xgamma + dershape3D(3,ia,i,j,k)*xelm(ia)
+!        yxi = yxi + dershape3D(1,ia,i,j,k)*yelm(ia)
+!        yeta = yeta + dershape3D(2,ia,i,j,k)*yelm(ia)
+!        ygamma = ygamma + dershape3D(3,ia,i,j,k)*yelm(ia)
+!        zxi = zxi + dershape3D(1,ia,i,j,k)*zelm(ia)
+!        zeta = zeta + dershape3D(2,ia,i,j,k)*zelm(ia)
+!        zgamma = zgamma + dershape3D(3,ia,i,j,k)*zelm(ia)
+!        xmesh = xmesh + shape3D(ia,i,j,k)*xelm(ia)
+!        ymesh = ymesh + shape3D(ia,i,j,k)*yelm(ia)
+!        zmesh = zmesh + shape3D(ia,i,j,k)*zelm(ia)
+!      enddo
+!
+!      jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
+!             xeta*(yxi*zgamma-ygamma*zxi) + &
+!             xgamma*(yxi*zeta-yeta*zxi)
+!
+!      if(jacobian <= ZERO) then
+!        print*,'jacobian error:',myrank
+!        print*,'  point ijk:',i,j,k,ispec
+!        print*,'  xyz:',xmesh,ymesh,zmesh
+!        call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,xxi,xeta,xgamma)        
+!        print*,'  r/lat/lon:',xxi*R_EARTH_KM,90.0-xeta*180./PI,xgamma*180./PI
+!        print*,'  nodes:'
+!        do ia=1,NGNOD
+!          print*,xelm(ia),yelm(ia),zelm(ia)
+!        enddo
+!        print*
+!        print*,'maybe check with CAP smoothing'        
+!        call exit_MPI(myrank,'3D Jacobian undefined')
+!      endif
+!
+!! invert the relation (Fletcher p. 50 vol. 2)
+!      xix = (yeta*zgamma-ygamma*zeta) / jacobian
+!      xiy = (xgamma*zeta-xeta*zgamma) / jacobian
+!      xiz = (xeta*ygamma-xgamma*yeta) / jacobian
+!      etax = (ygamma*zxi-yxi*zgamma) / jacobian
+!      etay = (xxi*zgamma-xgamma*zxi) / jacobian
+!      etaz = (xgamma*yxi-xxi*ygamma) / jacobian
+!      gammax = (yxi*zeta-yeta*zxi) / jacobian
+!      gammay = (xeta*zxi-xxi*zeta) / jacobian
+!      gammaz = (xxi*yeta-xeta*yxi) / jacobian
+!
+!! save the derivatives and the jacobian
+!! distinguish between single and double precision for reals
+!      if(ACTUALLY_STORE_ARRAYS) then
+!        if(CUSTOM_REAL == SIZE_REAL) then
+!          xixstore(i,j,k,ispec) = sngl(xix)
+!          xiystore(i,j,k,ispec) = sngl(xiy)
+!          xizstore(i,j,k,ispec) = sngl(xiz)
+!          etaxstore(i,j,k,ispec) = sngl(etax)
+!          etaystore(i,j,k,ispec) = sngl(etay)
+!          etazstore(i,j,k,ispec) = sngl(etaz)
+!          gammaxstore(i,j,k,ispec) = sngl(gammax)
+!          gammaystore(i,j,k,ispec) = sngl(gammay)
+!          gammazstore(i,j,k,ispec) = sngl(gammaz)
+!        else
+!          xixstore(i,j,k,ispec) = xix
+!          xiystore(i,j,k,ispec) = xiy
+!          xizstore(i,j,k,ispec) = xiz
+!          etaxstore(i,j,k,ispec) = etax
+!          etaystore(i,j,k,ispec) = etay
+!          etazstore(i,j,k,ispec) = etaz
+!          gammaxstore(i,j,k,ispec) = gammax
+!          gammaystore(i,j,k,ispec) = gammay
+!          gammazstore(i,j,k,ispec) = gammaz
+!        endif
+!      endif
+!
+!! store mesh coordinates
+!!      xstore(i,j,k,ispec) = xmesh
+!!      ystore(i,j,k,ispec) = ymesh
+!!      zstore(i,j,k,ispec) = zmesh
+!
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine calc_jacobian
+!
+
+  

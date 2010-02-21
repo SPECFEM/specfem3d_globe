@@ -61,6 +61,10 @@
 
   enddo
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   end subroutine get_ellipticity
 
   !> Hejun 
@@ -105,5 +109,4 @@
       end do 
   end do
   end subroutine get_ellipticity_gll
-  !< Hejun
 

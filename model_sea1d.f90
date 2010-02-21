@@ -25,14 +25,23 @@
 !
 !=====================================================================
 
-  subroutine model_sea1d(x,rho,vp,vs,Qkappa,Qmu,iregion_code,SEA1DM_V)
+!--------------------------------------------------------------------------------------------------
+! SEA 1D
+!
+! used as 1-D reference model for SEA 99, Vs model by Lebedev & Nolet 2003
+!--------------------------------------------------------------------------------------------------
+
+
+  subroutine model_sea1d_broadcast(CRUSTAL, SEA1DM_V)
+
+! standard routine to setup model 
 
   implicit none
 
   include "constants.h"
 
-! sea1d_model_variables
-  type sea1d_model_variables
+  ! model_sea1d_variables
+  type model_sea1d_variables
     sequence
      double precision, dimension(NR_SEA1D) :: radius_sea1d
      double precision, dimension(NR_SEA1D) :: density_sea1d
@@ -40,10 +49,41 @@
      double precision, dimension(NR_SEA1D) :: vs_sea1d
      double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
      double precision, dimension(NR_SEA1D) :: Qmu_sea1d
-  end type sea1d_model_variables
+  end type model_sea1d_variables
 
-  type (sea1d_model_variables) SEA1DM_V
-! sea1d_model_variables
+  type (model_sea1d_variables) SEA1DM_V
+  ! model_sea1d_variables
+
+  logical :: CRUSTAL
+
+  ! all processes will define same parameters
+  call define_model_sea1d(CRUSTAL, SEA1DM_V)
+  
+  end subroutine model_sea1d_broadcast
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_sea1d(x,rho,vp,vs,Qkappa,Qmu,iregion_code,SEA1DM_V)
+
+  implicit none
+
+  include "constants.h"
+
+! model_sea1d_variables
+  type model_sea1d_variables
+    sequence
+     double precision, dimension(NR_SEA1D) :: radius_sea1d
+     double precision, dimension(NR_SEA1D) :: density_sea1d
+     double precision, dimension(NR_SEA1D) :: vp_sea1d
+     double precision, dimension(NR_SEA1D) :: vs_sea1d
+     double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
+     double precision, dimension(NR_SEA1D) :: Qmu_sea1d
+  end type model_sea1d_variables
+
+  type (model_sea1d_variables) SEA1DM_V
+! model_sea1d_variables
 
 ! input:
 ! radius r: meters
@@ -75,10 +115,8 @@
 
 ! make sure we stay in the right region
   if(iregion_code == IREGION_INNER_CORE .and. i > 13) i = 13
-
   if(iregion_code == IREGION_OUTER_CORE .and. i < 15) i = 15
   if(iregion_code == IREGION_OUTER_CORE .and. i > 37) i = 37
-
   if(iregion_code == IREGION_CRUST_MANTLE .and. i < 39) i = 39
 
   if(i == 1) then
@@ -125,8 +163,8 @@
 
   include "constants.h"
 
-! sea1d_model_variables
-  type sea1d_model_variables
+! model_sea1d_variables
+  type model_sea1d_variables
     sequence
      double precision, dimension(NR_SEA1D) :: radius_sea1d
      double precision, dimension(NR_SEA1D) :: density_sea1d
@@ -134,10 +172,10 @@
      double precision, dimension(NR_SEA1D) :: vs_sea1d
      double precision, dimension(NR_SEA1D) :: Qkappa_sea1d
      double precision, dimension(NR_SEA1D) :: Qmu_sea1d
-  end type sea1d_model_variables
+  end type model_sea1d_variables
 
-  type (sea1d_model_variables) SEA1DM_V
-! three_d_mantle_model_variables
+  type (model_sea1d_variables) SEA1DM_V
+! model_sea1d_variables
 
   logical USE_EXTERNAL_CRUSTAL_MODEL
 
@@ -1130,7 +1168,7 @@
   SEA1DM_V%Qmu_sea1d(163)= 300.0000000000000
 
 ! strip the crust and replace it by mantle
-  if(USE_EXTERNAL_CRUSTAL_MODEL) then
+  if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then  
     do i=NR_SEA1D-12,NR_SEA1D
       SEA1DM_V%density_sea1d(i) = SEA1DM_V%density_sea1d(NR_SEA1D-13)
       SEA1DM_V%vp_sea1d(i) = SEA1DM_V%vp_sea1d(NR_SEA1D-13)
