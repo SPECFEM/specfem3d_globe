@@ -727,7 +727,7 @@
   double precision :: r_used,r_dummy,theta,phi
   double precision :: dvs,drho,vp,vs
   real(kind=4) :: xcolat,xlon,xrad,dvpv,dvph,dvsv,dvsh
-  logical :: found_crust
+  logical :: found_crust,suppress_mantle_extension
 
   ! initializes perturbation values
   dvs = ZERO
@@ -738,7 +738,8 @@
   dvsv = 0.
   dvsh = 0.
   r_used = ZERO
-
+  suppress_mantle_extension = .false.
+  
   ! gets point's theta/phi
   call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
   call reduce(theta,phi)
@@ -748,6 +749,11 @@
 ! ADD YOUR MODEL HERE
 !
 !---
+
+  ! sets flag when mantle should not be extended to surface
+  if(r_prem >= RMOHO/R_EARTH .and. .not. CRUSTAL) then
+    suppress_mantle_extension = .true.
+  endif
   
   ! gets parameters for isotropic 3D mantle model
   !
@@ -755,18 +761,20 @@
   !           like kappav,kappah,muv,muh and eta_aniso are used for these simulations
   !
   ! note: in general, models here make use of perturbation values with respect to their 
-  !          corresponding 1-D reference models  
-  if( ISOTROPIC_3D_MANTLE .and. r_prem > RCMB/R_EARTH ) then
+  !          corresponding 1-D reference models    
+  if( ISOTROPIC_3D_MANTLE .and. r_prem > RCMB/R_EARTH .and. .not. suppress_mantle_extension) then
       
     ! extend 3-D mantle model above the Moho to the surface before adding the crust
     if(r_prem > RCMB/R_EARTH .and. r_prem < RMOHO/R_EARTH) then
       ! GLL point is in mantle region, takes exact location
       r_used = r
     else ! else if(r_prem >= RMOHO/R_EARTH) then
-      ! GLL point is above moho
-      ! takes radius slightly below moho radius, this will then "extend the mantle up to the surface";
-      ! crustal values will be superimposed later on
-      r_used = 0.999999d0*RMOHO/R_EARTH
+      if( CRUSTAL ) then
+        ! GLL point is above moho
+        ! takes radius slightly below moho radius, this will then "extend the mantle up to the surface";
+        ! crustal values will be superimposed later on
+        r_used = 0.999999d0*RMOHO/R_EARTH
+      endif
     endif
     
     ! gets model parameters
@@ -866,7 +874,7 @@
   endif ! ISOTROPIC_3D_MANTLE
 
   ! heterogen model
-  if( HETEROGEN_3D_MANTLE ) then
+  if( HETEROGEN_3D_MANTLE .and. .not. suppress_mantle_extension ) then
     call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_used,theta,phi)
     call reduce(theta,phi)
     call model_heterogen_mantle(r_used,theta,phi,dvs,dvp,drho,HMM)
@@ -884,20 +892,21 @@
   if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     
     ! anisotropic model between the Moho and 670 km (change to CMB if desired)
-    if( r_prem > R670/R_EARTH) then
+    if( r_prem > R670/R_EARTH .and. .not. suppress_mantle_extension ) then
 
       ! extend 3-D mantle model above the Moho to the surface before adding the crust
       if( r_prem < RMOHO/R_EARTH) then
         r_used = r_prem
       else
-        ! fills 3-D mantle model above the Moho with the values at moho depth
-        r_used = RMOHO/R_EARTH
+        if( CRUSTAL ) then
+          ! fills 3-D mantle model above the Moho with the values at moho depth
+          r_used = RMOHO/R_EARTH
+        endif
       endif    
       call model_aniso_mantle(r_used,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
                         c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,AMM_V)
                         
     else
-
       ! fills the rest of the mantle with the isotropic model
       c11 = rho*vpv*vpv
       c12 = rho*(vpv*vpv-2.*vsv*vsv)
@@ -953,7 +962,7 @@
                               c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
                               elem_in_crust,moho)
 
-! returns velocities and density for points in crustal region
+! returns velocities and density for points in 3D crustal region
 
   use meshfem3D_models_par
 

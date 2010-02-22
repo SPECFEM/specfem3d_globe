@@ -36,7 +36,7 @@
                       rmin,rmax,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
                       R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                       tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &                      
-                      ABSORBING_CONDITIONS,elem_in_crust)
+                      ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
 
   use meshfem3D_models_par
 
@@ -75,7 +75,7 @@
   double precision  T_c_source
 
   logical ABSORBING_CONDITIONS
-  logical elem_in_crust
+  logical elem_in_crust,elem_in_mantle
   
   ! local parameters
   double precision xmesh,ymesh,zmesh
@@ -163,13 +163,15 @@
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
                         
         ! gets the 3-D crustal model
-        if(CRUSTAL) &
-          call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
+        if( CRUSTAL ) then
+          if( .not. elem_in_mantle) &
+            call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
                               vpv,vph,vsv,vsh,rho,eta_aniso,dvp, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25, &
                               c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
                               elem_in_crust,moho)
-
+        endif
+        
         ! overwrites with tomographic model values (from iteration step) here, given at all GLL points
         call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,&
                                         myrank,iregion_code,ispec,i,j,k)

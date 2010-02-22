@@ -100,9 +100,12 @@
          ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY
   logical OCEANS,TOPOGRAPHY
   
+  ! local parameters  
   character(len=4) ending
-  character(len=150) MODEL_ROOT
+  character(len=8) ending_1Dcrust
   
+  character(len=150) MODEL_ROOT  
+  logical :: impose_1Dcrust
   
   ! defaults: 
   !
@@ -134,6 +137,17 @@
     ! sets root name of model to original one
     MODEL_ROOT = MODEL
   endif
+  
+  ! checks with '_1Dcrust' option
+  impose_1Dcrust = .false.
+  ending_1Dcrust = ' '
+  if( len_trim(MODEL_ROOT) > 8 ) ending_1Dcrust = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
+  if( ending_1Dcrust == '_1Dcrust' ) then
+    impose_1Dcrust = .true.
+    ! in case it has an ending for the inner core, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL)-8)
+  endif
+
   
 !---
 !
@@ -377,6 +391,19 @@
     OCEANS = .false.
     ONE_CRUST = .false.
     TOPOGRAPHY = .false.    
+  endif
+
+  ! additional option for 3D mantle models:
+  ! this takes crust from reference 1D model rather than a 3D crust; 
+  if( impose_1Dcrust ) then
+    ! no 3D crust
+    CRUSTAL = .false.
+    ! no crustal moho stretching
+    CASE_3D = .false.
+    ! mesh honors the 1D moho depth
+    HONOR_1D_SPHERICAL_MOHO = .true.
+    ! 2 element layers in top crust region rather than just one 
+    ONE_CRUST = .false.
   endif
 
   ! checks flag consistency for crust
