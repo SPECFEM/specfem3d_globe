@@ -140,7 +140,8 @@
                       NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
                       NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
                       NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
-                      R_CENTRAL_CUBE, CASE_3D)
+                      R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
+                      HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
   implicit none
 
@@ -152,8 +153,10 @@
        NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
        NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB
   double precision R_CENTRAL_CUBE
-  logical CASE_3D
+  logical CASE_3D,CRUSTAL,HONOR_1D_SPHERICAL_MOHO
+  integer REFERENCE_1D_MODEL
 
+  ! local parameters  
   integer,          parameter                :: NUM_REGIONS = 14
   integer,          dimension(NUM_REGIONS)   :: scaling
   double precision, dimension(NUM_REGIONS)   :: radius
@@ -161,22 +164,53 @@
   double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
   integer,          dimension(NUM_REGIONS-1) :: NER
   integer NEX_ETA
+  double precision ROCEAN,RMIDDLE_CRUST, &
+          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+          RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
+  double precision RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
 
   ! This is PREM in Kilometers, well ... kinda, not really ....
-  radius(1)  = 6371.00d0 ! Surface
-  radius(2)  = 6346.60d0 !    Moho - 1st Mesh Doubling Interface
-  radius(3)  = 6291.60d0 !      80
-  radius(4)  = 6151.00d0 !     220
-  radius(5)  = 5971.00d0 !     400
-  radius(6)  = 5771.00d0 !     600
-  radius(7)  = 5701.00d0 !     670
-  radius(8)  = 5600.00d0 !     771
-  radius(9)  = 4712.00d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
-  radius(10) = 3630.00d0 !     D''
-  radius(11) = 3480.00d0 !     CMB
-  radius(12) = 2511.00d0 !    3860 - 3rd Mesh Doubling Interface
-  radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
-  radius(14) =  982.00d0 ! Top Central Cube
+  !radius(1)  = 6371.00d0 ! Surface
+  !radius(2)  = 6346.60d0 !    Moho - 1st Mesh Doubling Interface
+  !radius(3)  = 6291.60d0 !      80
+  !radius(4)  = 6151.00d0 !     220
+  !radius(5)  = 5971.00d0 !     400
+  !radius(6)  = 5771.00d0 !     600
+  !radius(7)  = 5701.00d0 !     670
+  !radius(8)  = 5600.00d0 !     771
+  !radius(9)  = 4712.00d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
+  !radius(10) = 3630.00d0 !     D''
+  !radius(11) = 3480.00d0 !     CMB
+  !radius(12) = 2511.00d0 !    3860 - 3rd Mesh Doubling Interface
+  !radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
+  !radius(14) =  982.00d0 ! Top Central Cube
+
+  ! gets model specific radii used to determine number of elements in radial direction
+  call get_model_parameters_radii(REFERENCE_1D_MODEL,ROCEAN,RMIDDLE_CRUST, &
+                                  RMOHO,R80,R120,R220,R400,R600,R670,R771, &
+                                  RTOPDDOUBLEPRIME,RCMB,RICB, &
+                                  RMOHO_FICTITIOUS_IN_MESHER, &
+                                  R80_FICTITIOUS_IN_MESHER, &
+                                  RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
+                                  HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL)
+
+  radius(1)  = R_EARTH ! Surface
+  radius(2)  = RMOHO_FICTITIOUS_IN_MESHER !    Moho - 1st Mesh Doubling Interface
+  radius(3)  = R80    !      80
+  radius(4)  = R220   !     220
+  radius(5)  = R400   !     400
+  radius(6)  = R600   !     600
+  radius(7)  = R670   !     670
+  radius(8)  = R771   !     771
+  radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
+  radius(10) = RTOPDDOUBLEPRIME   !     D''
+  radius(11) = RCMB   !     CMB
+  radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
+  radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
+  radius(14) =  982000.0d0 ! Top Central Cube
+  
+  ! radii in km
+  radius(:) = radius(:) / 1000.0d0
 
   call find_r_central_cube(NEX_MAX, radius(14), NEX_ETA)
 

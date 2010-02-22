@@ -418,10 +418,27 @@
     enddo
   endif
 
-  ! crustal layer stretching: first layer's top and bottom radii will get stretched
+  ! crustal layer stretching: element layer's top and bottom radii will get stretched when in crust 
+  ! (number of element layers in crust can vary for different resolutions and 1chunk simulations)
   allocate(stretch_tab(2,ner(1)))
   if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
+    ! stretching function determines top and bottom of each element layer in the
+    ! crust region (between r_top(1) and r_bottom(1)), where ner(1) is the
+    ! number of element layers in this crust region
     call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
+
+    ! RMIDDLE_CRUST so far is only used for 1D - models with two layers in the crust 
+    ! (i.e. ONE_CRUST is set to .false.), those models do not use CASE_3D
+    
+    ! all 3D models use this stretching function to honor a 3D crustal model
+    ! for those models, we set RMIDDLE_CRUST to the bottom of the first element layer
+    ! this value will be used in moho_stretching.f90 to decide whether or not elements
+    ! have to be stretched under oceanic crust.
+    !
+    ! note: stretch_tab uses (dimensionalized) radii from r_top and r_bottom
+    !(with stretch_tab( index_radius(1=top,2=bottom), index_layer( 1=first layer, 2=second layer, 3= ...) )
+    RMIDDLE_CRUST = stretch_tab(2,1) 
+
   endif
 
 !----

@@ -219,7 +219,8 @@
                           NER_TOP_CENTRAL_CUBE_ICB,R_CENTRAL_CUBE, &
                           NEX_MAX,NCHUNKS,REFERENCE_1D_MODEL, &
                           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-                          ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,ANISOTROPIC_INNER_CORE)
+                          ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL, &
+                          ANISOTROPIC_INNER_CORE)
     
   ! compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
@@ -355,7 +356,8 @@
                           NER_TOP_CENTRAL_CUBE_ICB,R_CENTRAL_CUBE, &
                           NEX_MAX,NCHUNKS,REFERENCE_1D_MODEL, &
                           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
-                          ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,ANISOTROPIC_INNER_CORE)
+                          ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL, &
+                          ANISOTROPIC_INNER_CORE)
 
 
   implicit none
@@ -375,7 +377,7 @@
   double precision R_CENTRAL_CUBE
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
 
-  logical ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,ANISOTROPIC_INNER_CORE
+  logical ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL,ANISOTROPIC_INNER_CORE
 
 ! local variables
   integer multiplication_factor
@@ -653,7 +655,8 @@
                 NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
                 NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
                 NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
-                R_CENTRAL_CUBE, CASE_3D)
+                R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
+                HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
    call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
                         MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
@@ -2086,7 +2089,7 @@
          (NEX_PER_PROC_ETA / ratio_divide_central_cube) * &
          (NEX_XI / ratio_divide_central_cube)
 
-  if(minval(NSPEC) <= 0) stop 'negative NSPEC, there is a problem somewhere :) '
+  if(minval(NSPEC) <= 0) stop 'negative NSPEC, there is a problem somewhere, try to recompile :) '
 
   
   end subroutine rcp_count_elements

@@ -960,7 +960,8 @@
   implicit none
 
   integer iregion_code
-  double precision xmesh,ymesh,zmesh,r
+  ! note: r is the exact radius (and not r_prem with tolerance)  
+  double precision xmesh,ymesh,zmesh,r 
   double precision vpv,vph,vsv,vsh,rho,eta_aniso,dvp
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
