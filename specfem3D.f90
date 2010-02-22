@@ -1898,8 +1898,21 @@
       time = (dble(it-1)*DT-t0)*scale_t_inv
     endif
 
-    ! div_displ_outer_core is initialized to zero in the following subroutine.
-    call compute_forces_outer_core(time,deltat,two_omega_earth, &
+    if( USE_DEVILLE_VAL ) then
+      ! uses deville et al. (2002) routine
+      call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
+           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
+           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
+           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+           xix_outer_core,xiy_outer_core,xiz_outer_core, &
+           etax_outer_core,etay_outer_core,etaz_outer_core, &
+           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           ibool_outer_core)
+    else
+      ! div_displ_outer_core is initialized to zero in the following subroutine.
+      call compute_forces_outer_core(time,deltat,two_omega_earth, &
            A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
@@ -1909,22 +1922,23 @@
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core)
-
-!    ! uses deville et al. (2002) routine
-!    call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
-!           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
-!           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
-!           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-!           xix_outer_core,xiy_outer_core,xiz_outer_core, &
-!           etax_outer_core,etay_outer_core,etaz_outer_core, &
-!           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-!           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-!           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-!           ibool_outer_core)
-
+    endif
 
     if (SIMULATION_TYPE == 3) then
-      call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
+      if( USE_DEVILLE_VAL ) then
+        ! uses deville et al. (2002) routine
+        call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
+           b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
+           minus_rho_g_over_kappa_fluid,b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+           xix_outer_core,xiy_outer_core,xiz_outer_core, &
+           etax_outer_core,etay_outer_core,etaz_outer_core, &
+           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           ibool_outer_core)      
+      else
+        call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid,b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
@@ -1934,20 +1948,7 @@
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core)
-
-!      ! uses deville et al. (2002) routine
-!      call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
-!           b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
-!           minus_rho_g_over_kappa_fluid,b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
-!           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-!           xix_outer_core,xiy_outer_core,xiz_outer_core, &
-!           etax_outer_core,etay_outer_core,etaz_outer_core, &
-!           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-!           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-!           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-!           ibool_outer_core)
-
-
+      endif
     endif
 
     ! Stacey absorbing boundaries

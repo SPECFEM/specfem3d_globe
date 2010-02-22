@@ -210,6 +210,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/compute_forces_inner_core.o \
 	$O/compute_forces_inner_core_Dev.o \
 	$O/compute_forces_outer_core.o \
+	$O/compute_forces_outer_core_Dev.o \
 	$O/compute_kernels.o \
 	$O/compute_seismograms.o \
 	$O/compute_stacey_crust_mantle.o \
@@ -411,6 +412,9 @@ $O/compute_forces_crust_mantle_Dev.o: constants.h OUTPUT_FILES/values_from_meshe
 
 $O/compute_forces_outer_core.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/compute_forces_outer_core.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_outer_core.o ${FCFLAGS_f90} $S/compute_forces_outer_core.f90
+
+$O/compute_forces_outer_core_Dev.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/compute_forces_outer_core_Dev.f90
+	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_outer_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_outer_core_Dev.f90
 
 $O/compute_forces_inner_core.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/compute_forces_inner_core.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_inner_core.o ${FCFLAGS_f90} $S/compute_forces_inner_core.f90

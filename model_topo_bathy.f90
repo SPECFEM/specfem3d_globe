@@ -74,12 +74,17 @@
 ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-  integer itopo_x,itopo_y
+  integer itopo_x,itopo_y,ier
 
   call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
   ! reads in topography values from file
-  open(unit=13,file=topo_bathy_file,status='old',action='read')
+  open(unit=13,file=trim(topo_bathy_file),status='old',action='read',iostat=ier)
+  if( ier /= 0 ) then
+    print*,'error opening:',trim(topo_bathy_file)
+    call exit_mpi(0,'error opening topography data file')
+  endif
+  ! reads in topography array
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
       read(13,*) ibathy_topo(itopo_x,itopo_y)
