@@ -2,7 +2,27 @@
 To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch:
 ------------------------------------------------------
 
-Things that could be done in a future version 4.1:
+Things that could be done in a future version:
+
+- there is something in SPECFEM3D_GLOBE that we noticed a few years ago
+regarding attenuation but never fixed: on page 813 of our 1999 paper
+I used a trick suggested by Robertsson et al. (1994)
+to use a non-staggered Runge-Kutta (RK4) scheme for the attenuation
+equations while using a staggered finite-difference (Newmark)
+time scheme for all the other equations. 
+(combining staggered and non-staggered formulations being difficult)
+The trick works fine in most cases but there is a hidden problem for very long
+simulations, and in particular for multi-orbit surface waves: 
+because of that trick, the RK4 is not really a real Runge-Kutta scheme
+(because grad(displacement) is used as a source but not known half way between
+time steps, therefore I replaced it with an average between
+t and t + Delta_t, which implies that the approximation is not fourth-order
+accurate any more because of that smoothing/interpolation). Therefore
+dispersion due to attenuation is not very accurately computed in the case of
+very long runs; that matters mostly for surface waves.
+We should fix that one day. The only thing to do would be to design a better time
+integration scheme for the attenuation equation, without that trick; the rest
+(Newmark etc) is fine and does not need to change.
 
 - use a potential of (rho * u) instead of u in the fluid, in case of
   fluid-fluid discontinuities
