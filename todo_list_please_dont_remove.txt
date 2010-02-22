@@ -4,6 +4,15 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch:
 
 Things that could be done in a future version:
 
+- Jeroen Ritsema (from Univ of Michigan, USA) has an interesting suggestion (on February 22, 2010)
+for SPECFEM3D_GLOBE, an option that is currently missing
+but that would be easy to add, and potentially very useful:
+"If I may suggest one modification to specfem-3D: allow for 3D mantle
+structure (i.e. s20rts) and a PREM crust.
+This is helpful in isolating the mantle contribution to waveform anomalies.
+Right now, crust2.0 structure is automatically included if the mantle model is
+turned on." 
+
 - there is something in SPECFEM3D_GLOBE that we noticed a few years ago
 regarding attenuation but never fixed: on page 813 of our 1999 paper
 I used a trick suggested by Robertsson et al. (1994)
