@@ -149,10 +149,17 @@
     vs = vss(6)
     rho = rhos(6)
   else if(x > x7 .or. elem_in_crust) then
+    ! takes lower crustal values only if x is slightly above moho depth or
+    ! if elem_in_crust is set
+    !
+    ! note: it looks like this does distinguish between GLL points at the exact moho boundary,
+    !          where the point is on the interface between both, 
+    !          oceanic elements and mantle elements below
     vp = vps(7)
     vs = vss(7)
     rho = rhos(7)
   else
+    ! note: if x is exactly the moho depth this will return false
     found_crust = .false.
   endif
 

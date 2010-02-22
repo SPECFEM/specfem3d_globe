@@ -28,6 +28,9 @@
 subroutine stretching_function(r_top,r_bottom,ner,stretch_tab)
 
 ! define stretch_tab which contains r_top and r_bottom for each element layer in the crust for 3D models.
+!
+! stretch_tab array uses indices index_radius & index_layer : 
+!   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
 
   implicit none
 
@@ -36,16 +39,18 @@ subroutine stretching_function(r_top,r_bottom,ner,stretch_tab)
   double precision :: r_top, r_bottom,value
   integer :: ner,i
   double precision, dimension (2,ner) :: stretch_tab
-! for increasing execution speed but have less precision in stretching, increase step
-! not very effective algorithm, but sufficient : used once per proc for meshing.
+  ! for increasing execution speed but have less precision in stretching, increase step
+  ! not very effective algorithm, but sufficient : used once per proc for meshing.
   double precision, parameter :: step = 0.001
 
-! initialize array
+  ! initializes array
+  ! for example: 2 element layers (ner=2)  for most probable resolutions (NEX < 1000) in the crust
+  !                      then stretch_tab(2,1) = 0.5 = stretch_tab(2,2)
   do i=1,ner
     stretch_tab(2,i)=(1.d0/ner)
   enddo
 
-! fill with ratio of the layer one thickness for each element
+  ! fill with ratio of the layer one thickness for each element
   do while((stretch_tab(2,1) / stretch_tab(2,ner)) > MAX_RATIO_CRUST_STRETCHING)
     if (modulo(ner,2) /= 0) then
       value = -floor(ner/2.d0)*step

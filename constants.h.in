@@ -510,7 +510,9 @@
 !!!!!!!!!!!!!! end of parameters added for the thread-safe version of the code
 
 ! for the stretching of crustal elements in the case of 3D models
-  double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.6d0 
+! (values are chosen for 3D models to have RMOHO_FICTICIOUS at 35 km
+!  and RMIDDLE_CRUST to become 15 km with stretching function stretch_tab)
+  double precision, parameter :: MAX_RATIO_CRUST_STRETCHING = 0.75d0
   double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = 5000.d0
   double precision, parameter :: R80_STRETCH_ADJUSTEMENT = -40000.d0
 
