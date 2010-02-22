@@ -106,7 +106,6 @@
       do j=1,NGLLY
         do i=1,NGLLX
 
-
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
           tempx3l = 0._CUSTOM_REAL
@@ -170,39 +169,38 @@
 
           ! add (chi/rho)grad(rho) term in no gravity case
           if(.not. GRAVITY_VAL) then
+            ! With regards to the non-gravitating case: we cannot set N^2 = 0 *and* let g = 0.
+            ! We can *either* assume N^2 = 0 but keep gravity g, *or* we can assume that gravity
+            ! is negligible to begin with, as in our GJI 2002a, in which case N does not arise.
+            ! We get:
+            !
+            ! \ddot\chi = \rho^{-1}\kappa\bdel\cdot(\bdel\chi+\chi\bdel\ln\rho)
+            !
+            ! Then the displacement is
+            !
+            ! \bu = \bdel\chi+\chi\bdel\ln\rho = \rho^{-1}\bdel(\rho\chi)
+            !
+            ! and the pressure is
+            !
+            ! p = -\rho\ddot{\chi}
+            !
+            ! Thus in our 2002b GJI paper eqn (21) is wrong, and equation (41)
+            ! in our AGU monograph is incorrect; these equations should be replaced by
+            !
+            ! \ddot\chi = \rho^{-1}\kappa\bdel\cdot(\bdel\chi+\chi\bdel\ln\rho)
+            !
+            ! Note that the fluid potential we use in GJI 2002a differs from the one used here:
+            !
+            ! \chi_GJI2002a = \rho\partial\t\chi
+            !
+            ! such that
+            !
+            ! \bv = \partial_t\bu=\rho^{-1}\bdel\chi_GJI2002a  (GJI 2002a eqn 20)
+            !
+            ! p = - \partial_t\chi_GJI2002a (GJI 2002a eqn 19)
 
-! With regards to the non-gravitating case: we cannot set N^2 = 0 *and* let g = 0.
-! We can *either* assume N^2 = 0 but keep gravity g, *or* we can assume that gravity
-! is negligible to begin with, as in our GJI 2002a, in which case N does not arise.
-! We get:
-!
-! \ddot\chi = \rho^{-1}\kappa\bdel\cdot(\bdel\chi+\chi\bdel\ln\rho)
-!
-! Then the displacement is
-!
-! \bu = \bdel\chi+\chi\bdel\ln\rho = \rho^{-1}\bdel(\rho\chi)
-!
-! and the pressure is
-!
-! p = -\rho\ddot{\chi}
-!
-! Thus in our 2002b GJI paper eqn (21) is wrong, and equation (41)
-! in our AGU monograph is incorrect; these equations should be replaced by
-!
-! \ddot\chi = \rho^{-1}\kappa\bdel\cdot(\bdel\chi+\chi\bdel\ln\rho)
-!
-! Note that the fluid potential we use in GJI 2002a differs from the one used here:
-!
-! \chi_GJI2002a = \rho\partial\t\chi
-!
-! such that
-!
-! \bv = \partial_t\bu=\rho^{-1}\bdel\chi_GJI2002a  (GJI 2002a eqn 20)
-!
-! p = - \partial_t\chi_GJI2002a (GJI 2002a eqn 19)
-
-! use mesh coordinates to get theta and phi
-! x y z contain r theta phi
+            ! use mesh coordinates to get theta and phi
+            ! x y z contain r theta phi
             iglob = ibool(i,j,k,ispec)
             
             radius = dble(xstore(iglob))
@@ -222,8 +220,8 @@
             grad_z_ln_rho = cos_theta * d_ln_density_dr_table(int_radius)
   
             ! adding (chi/rho)grad(rho)
-            dpotentialdx_with_rot = dpotentialdxl + displfluid(iglob) * grad_x_ln_rho
-            dpotentialdy_with_rot = dpotentialdyl + displfluid(iglob) * grad_y_ln_rho
+            dpotentialdx_with_rot = dpotentialdx_with_rot + displfluid(iglob) * grad_x_ln_rho
+            dpotentialdy_with_rot = dpotentialdx_with_rot + displfluid(iglob) * grad_y_ln_rho
             dpotentialdzl = dpotentialdzl + displfluid(iglob) * grad_z_ln_rho
 
 

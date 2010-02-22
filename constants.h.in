@@ -109,8 +109,6 @@
 !  integer, parameter :: RESOLUTION_TOPO_FILE = 1
 !! pathname of the topography file (un-smoothed)
 !  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1.xyz'
-!! pathname of the topography file (smoothed)
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo1_smoothed_window_7.dat'
 
 ! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY
   logical,parameter :: USE_GLL = .false.
