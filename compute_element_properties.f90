@@ -109,11 +109,12 @@
   double precision:: zigll(NGLLZ)
   
   ! Parameter used to decide whether this element is in the crust or not
-  logical:: elem_in_crust
+  logical:: elem_in_crust,elem_in_mantle
     
   ! add topography of the Moho *before* adding the 3D crustal velocity model so that the streched
   ! mesh gets assigned the right model values
   elem_in_crust = .false.
+  elem_in_mantle = .false.  
   if( iregion_code == IREGION_CRUST_MANTLE ) then
     if( CRUSTAL .and. CASE_3D ) then 
       if( idoubling(ispec) == IFLAG_CRUST &
@@ -121,7 +122,7 @@
         .or. idoubling(ispec) == IFLAG_80_MOHO ) then
         ! Stretch mesh to honor smoothed moho thickness from crust2.0
         call moho_stretching_honor_crust(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
-                                        R220,RMIDDLE_CRUST,elem_in_crust)
+                                        R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
       endif
     endif 
   endif
@@ -144,7 +145,7 @@
                       R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                       tau_s,tau_e_store,Qmu_store,T_c_source, &
                       size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5), &                      
-                      ABSORBING_CONDITIONS,elem_in_crust )                      
+                      ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)                      
 
 
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY

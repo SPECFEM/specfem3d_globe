@@ -27,7 +27,7 @@
 
 
   subroutine moho_stretching_honor_crust(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
-                              R220,RMIDDLE_CRUST,elem_in_crust)
+                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
 
 ! stretching the moho according to the crust 2.0
 ! input:  myrank, xelm, yelm, zelm, RMOHO_FICTITIOUS_IN_MESHER R220,RMIDDLE_CRUST, CM_V
@@ -43,10 +43,10 @@
   double precision R220,RMIDDLE_CRUST
   double precision RMOHO_FICTITIOUS_IN_MESHER
   integer :: myrank
-  logical :: elem_in_crust
+  logical :: elem_in_crust,elem_in_mantle
   
   ! local parameters
-  integer:: ia,count
+  integer:: ia,count_crust,count_mantle
   double precision:: r,theta,phi,lat,lon
   double precision:: vpc,vsc,rhoc,moho,elevation,gamma
   logical:: found_crust
@@ -62,7 +62,8 @@
   R_middlecrust = RMIDDLE_CRUST/R_EARTH  
   
   ! loops over element's anchor points  
-  count = 0
+  count_crust = 0
+  count_mantle = 0
   do ia = 1,NGNOD
     x = xelm(ia)
     y = yelm(ia)
@@ -166,17 +167,28 @@
     end if 
 
     ! counts corners in above moho
+    ! note: uses a small tolerance 
     if ( r >= 0.9999d0*moho ) then
-      count = count + 1
-    end if 
+      count_crust = count_crust + 1
+    endif 
+    ! counts corners below moho
+    ! again within a small tolerance
+    if ( r <= 1.0001d0*moho ) then
+      count_mantle = count_mantle + 1
+    endif
 
   end do   
 
   ! sets flag when all corners are above moho
-  if ( count == NGNOD) then
+  if( count_crust == NGNOD) then
     elem_in_crust = .true.
   end if 
+  ! sets flag when all corners are below moho
+  if( count_mantle == NGNOD) then
+    elem_in_mantle = .true.
+  end if 
 
+  ! small stretch check: stretching should affect only points above R220
   if( r*R_EARTH < R220 ) then
     print*,'error moho stretching: ',r*R_EARTH,R220,moho*R_EARTH
     call exit_mpi(myrank,'incorrect moho stretching')
