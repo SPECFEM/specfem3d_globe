@@ -76,10 +76,6 @@ Vala partially fixed this problem by using subsets of 1000 stations, but after
 careful analysis we have found a way of doing better and getting rid of all
 the GATHERs and *all* the extra memory (this way we won't have to limit the number of sources to a maximum of 100000, as currently done in the solver).
 
-- from Dimitri: function "idaywk", which I found on the Web, has a bug
-(it currently returns a day that is not correct) therefore I commented out what it prints;
-that is a temporary solution, one day we should either fix "idaywk" or try to find
-another version on the Web.
 
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
