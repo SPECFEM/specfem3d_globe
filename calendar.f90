@@ -1,11 +1,6 @@
 
 ! open-source subroutines taken from ftp://ftp.met.fsu.edu/pub/ahlquist/calendar_software/
 
-!! DK DK function "idaywk" below, which I found on the Web, has a bug (it currently returns
-!! DK DK a day that is not correct) therefore in check_simulation_stability.f90
-!! DK DK I commented out what it prints; that is a temporary
-!! DK DK solution, one day we should either fix it or try to find another version on the Web
-
   integer function idaywk(jdayno)
 
 ! IDAYWK = compute the DAY of the WeeK given the Julian Day number,
@@ -75,8 +70,13 @@
   implicit none
 
 ! specify the desired calendar conversion option.
-  integer, parameter :: ioptn = -1
-
+! in order to return the julian day number, compatible with function idaywk from above,
+! we choose option 3
+! (tested with dates: Feb, 23 2010 -> idaywk = Tue
+!                               Dec, 24 2009 -> idaywk = Thu
+!                               Oct, 15 1582  -> idaywk = Fri ...which all look o.k. )
+  integer, parameter :: ioptn = 3 
+  
 ! Input/Output variables
   integer, intent(inout) :: iday,month,iyear,idayct
 

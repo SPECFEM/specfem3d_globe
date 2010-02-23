@@ -82,11 +82,7 @@
   character(len=3), dimension(12) :: month_name
   character(len=3), dimension(0:6) :: weekday_name
   data month_name /'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'/
-!! DK DK function "idaywk" below, which I found on the Web, has a bug (it currently returns
-!! DK DK a day that is not correct) therefore I comment out what it prints; that is a temporary
-!! DK DK solution, one day we should either fix "idaywk" or try to find another version on the Web
-!! DK DK   data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
-  data weekday_name /'   ', '   ', '   ', '   ', '   ', '   ', '   '/
+  data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
   integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week, &
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer :: ier
