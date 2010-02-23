@@ -1,6 +1,11 @@
 
 ! open-source subroutines taken from ftp://ftp.met.fsu.edu/pub/ahlquist/calendar_software/
 
+!! DK DK function "idaywk" below, which I found on the Web, has a bug (it currently returns
+!! DK DK a day that is not correct) therefore in check_simulation_stability.f90
+!! DK DK I commented out what it prints; that is a temporary
+!! DK DK solution, one day we should either fix it or try to find another version on the Web
+
   integer function idaywk(jdayno)
 
 ! IDAYWK = compute the DAY of the WeeK given the Julian Day number,
