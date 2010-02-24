@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
@@ -192,7 +192,7 @@
 !
 ! v. 5.0 aka Tiger, many developers some with Princeton Tiger logo on their shirts, February 2010:
 !     new moho mesh stretching honoring crust2.0 moho depths, 
-!     new attenuation assignement, new SAC headers, new general crustal models,
+!     new attenuation assignment, new SAC headers, new general crustal models,
 !     faster performance due to Deville routines and enhanced loop unrolling,
 !     slight changes in code structure (see also trivia at program start)
 !

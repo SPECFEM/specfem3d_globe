@@ -1,12 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !    Seismological Laboratory, California Institute of Technology, USA
-!                    and University of Pau, France
-! (c) California Institute of Technology and University of Pau, October 2007
+!             and University of Pau / CNRS / INRIA, France
+! (c) California Institute of Technology and University of Pau / CNRS / INRIA
+!                            February 2008
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -23,6 +24,7 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
+
 
   program extract_all_seismos_large_file
 

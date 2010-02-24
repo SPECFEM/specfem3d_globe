@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
