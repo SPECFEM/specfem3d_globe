@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
@@ -194,9 +194,9 @@
 !
 ! v. 5.0 aka Tiger, many developers some with Princeton Tiger logo on their shirts, February 2010:
 !     new moho mesh stretching honoring crust2.0 moho depths, 
-!     new attenuation assignement, new SAC headers, new general crustal models,
+!     new attenuation assignment, new SAC headers, new general crustal models,
 !     faster performance due to Deville routines and enhanced loop unrolling,
-!     slight changes in code structure (see also trivia at program start)
+!     slight changes in code structure 
 !
 ! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
 !      new doubling brick in the mesh, new perfectly load-balanced mesh,
@@ -396,7 +396,59 @@
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
 
+
 ! ************** PROGRAM STARTS HERE **************
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
+! trivia about the programming style adopted here
+!
+! note 1: in general, we do not use modules in the fortran codes. this seems to
+!             be mainly a performance reason. changing the codes to adopt modules 
+!             will have to prove that it performs as fast as it does without now.
+!
+!             however, the mesher makes one exception here: it uses the
+!             module "meshfem3D_models_par" defined in the 'meshfem3D_models.f90' file.
+!             the exception is based on the fact, that when one wants to incorporate
+!             a new 3D/1D velocity model, it became tedious to change so many routines hardly
+!             related to any model specific need.
+!
+! note 2: adding a new velocity model should become easier. the module tries to help with
+!             that task. basically, you would follow the comments "ADD YOUR MODEL HERE"
+!             to have an idea where you will have to put some new code:
+!
+!                 - meshfem3D_models.f90: main file for models
+!                     put your model structure into the module "meshfem3D_models_par"
+!                     and add your specific routine calls to get 1D/3D/attenuation values.
+!
+!                 - get_model_parameters.f90: 
+!                     set your specific model flags and radii
+!
+!                 - read_compute_parameters.f90:
+!                     some models need to explicitly set smaller time steps which
+!                     can be done in routine rcp_set_timestep_and_layers()
+!
+!                 - add your model implementation into a new file named model_***.f90:
+!                     in general, this file should have as first routine the model_***_broadcast() routine
+!                     implemented which deals with passing the model structure to all processes.
+!                     this involves reading in model specific data which is normally put in directory DATA/
+!                     then follows a routine that returns the velocity values 
+!                     (as perturbation to the associated 1D reference model) for a given point location.
+! 
+!             finally, in order to compile the new mesher with your new file(s), 
+!             you will add it to the list in the 'Makefile.in' file and run 
+!             ./configure to recreate a new Makefile.
+!             
+!
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.
   call MPI_INIT(ier)
