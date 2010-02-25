@@ -98,7 +98,7 @@ CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 # Checks for library functions.
 
 
-AC_CONFIG_FILES([Makefile constants.h precision.h])
+AC_CONFIG_FILES([Makefile constants.h precision.h DATA/Par_file DATA/CMTSOLUTION DATA/STATIONS])
 AC_OUTPUT
 
 
