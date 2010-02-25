@@ -4,10 +4,10 @@
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory, California Institute of Technology, USA
+!    Seismological Laboratory, California Institute of Technology / Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
-! (c) California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2008
+! (c) California Institute of Technology / Princeton University and University of Pau / CNRS / INRIA
+!                            March 2010
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
                          xstore,ystore,zstore,nspec,myrank,ABSORBING_CONDITIONS, &
                          RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
                          R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-                         xelm,yelm,zelm,shape3D,dershape3D,rmin,rmax,rhostore,dvpstore, &
+                         xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
                          gammaxstore,gammaystore,gammazstore,nspec_actually, &
@@ -65,7 +65,6 @@
 
 ! 3D shape functions and their derivatives
   double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
-  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
 
   double precision, dimension(NGNOD) :: xelm,yelm,zelm
 
