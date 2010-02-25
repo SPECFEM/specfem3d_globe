@@ -4,10 +4,10 @@
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory, California Institute of Technology, USA
+!    Seismological Laboratory, California Institute of Technology / Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
-! (c) California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2008
+! (c) California Institute of Technology / Princeton University and University of Pau / CNRS / INRIA
+!                            March 2010
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -486,7 +486,7 @@
                     ner_without_doubling,ner,ratio_sampling_array,r_top,r_bottom, &
                     xstore,ystore,zstore, &
                     iaddx,iaddy,iaddz,xigll,yigll,zigll, &
-                    shape3D,dershape3D,dershape2D_bottom, &
+                    shape3D,dershape2D_bottom, &
                     INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
                     RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
                     R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
@@ -517,7 +517,7 @@
                     NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                     ner,ratio_sampling_array,r_top,r_bottom, &
                     xstore,ystore,zstore,xigll,yigll,zigll, &
-                    shape3D,dershape3D,dershape2D_bottom, &
+                    shape3D,dershape2D_bottom, &
                     INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
                     RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME, &
                     R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
@@ -550,7 +550,7 @@
                         idoubling,iregion_code,xstore,ystore,zstore, &
                         RICB,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,RTOPDDOUBLEPRIME,&
                         R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-                        shape3D,dershape3D,rmin,rmax,rhostore,dvpstore,&
+                        shape3D,rmin,rmax,rhostore,dvpstore,&
                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
                         gammaxstore,gammaystore,gammazstore,nspec_actually, &

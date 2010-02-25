@@ -4,10 +4,10 @@
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory, California Institute of Technology, USA
+!    Seismological Laboratory, California Institute of Technology / Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
-! (c) California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2008
+! (c) California Institute of Technology / Princeton University and University of Pau / CNRS / INRIA
+!                            March 2010
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -1197,7 +1197,7 @@
     endif ! CRUSTAL
     
     ! gets value according to radius/theta/phi location and idoubling flag
-    call model_atten3D_QRFSI12(r_used,theta_degrees,phi_degrees,Qmu,QRFSI12_Q,idoubling)                                                                            
+    call model_atten3D_QRFSI12(r_used,theta_degrees,phi_degrees,Qmu,QRFSI12_Q,idoubling)
 
   else 
 

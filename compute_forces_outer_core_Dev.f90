@@ -4,10 +4,10 @@
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory, California Institute of Technology, USA
+!    Seismological Laboratory, California Institute of Technology / Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
-! (c) California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2008
+! (c) California Institute of Technology / Princeton University and University of Pau / CNRS / INRIA
+!                            March 2010
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -86,13 +86,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: source_euler_A,source_euler_B
 
   integer ispec,iglob
-  integer i,j,k,l
+  integer i,j,k
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) dpotentialdxl,dpotentialdyl,dpotentialdzl
-  real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l,sum_terms
-
-  double precision grad_x_ln_rho,grad_y_ln_rho,grad_z_ln_rho
+  real(kind=CUSTOM_REAL) sum_terms
 
   ! manually inline the calls to the Deville et al. (2002) routines
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc

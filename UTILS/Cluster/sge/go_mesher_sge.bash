@@ -44,11 +44,6 @@ cp -p *.in OUTPUT_FILES/src/
 cp -p *.h OUTPUT_FILES/src/
 
 
-# obtain job information
-cat $PBS_NODEFILE > OUTPUT_FILES/compute_nodes
-echo "$PBS_JOBID" > OUTPUT_FILES/jobid
-
-
 echo starting run in current directory $PWD
 echo " "
 
