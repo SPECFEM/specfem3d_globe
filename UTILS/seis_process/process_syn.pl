@@ -8,7 +8,7 @@ sub Usage{
 print STDERR <<END;
 
 Usage:   process_syn_new.pl
-     -S -m CMTFILE -h -o offset -lStart/End -tTmin/Tmax -P n/p
+     -S -m CMTFILE -h -o offset -lStart/End -tTmin/Tmax -f -P n/p
      -i Dir -A amp_factor -p -a STAFILE -s sps -y t0/V0/t1/V1...
      -c -d OutDir -x Ext  synthetics_files
 where
@@ -18,6 +18,7 @@ where
     -o moves the synthetics back by 'offset' from centroid time.
     -l lmin/lmax   start/end cut of trace
     -t Tmin/Tmax -- shortest/longest period of bandpass filter
+    -f -- apply transfer filter instead of butterworth filter for -t
     -P -- number of poles and passes in butterworth filter(default 4/2)
     -i Dir -- convolve synthetics with instrument response in Dir
     -A amp_factor -- multiple all files with an amplification factor
@@ -32,10 +33,12 @@ where
 
     names of files -- name of syn files to be processed
 
-    Make sure you have sac, saclst, phtimes, asc2sac, ascii2sac.csh  
-    in PATH before execution
+ NOTE: Please make sure that SAC, saclst and IASP91 packages are installed properly on 
+       your system, and that all the environment variables are set properly before
+       running the script.
 
-    Qinya Liu, Caltech, May 2007
+    
+    Qinya Liu, originally written in Oct 2002, most recently updated in Feb 2010.
 
 END
 exit(1);
@@ -43,7 +46,7 @@ exit(1);
 
 @ARGV > 1 or Usage();
 
-if (!getopts('Sm:ho:l:t:i:pP:a:cd:x:vs:y:A:')) {die(" check input arguments\n");}
+if (!getopts('Sm:ho:l:t:fi:pP:a:cd:x:vs:y:A:')) {die(" check input arguments\n");}
 
 if ($opt_t) {($tmin, $tmax) = split(/\//,$opt_t);
              $f1 = 1./$tmax;  $f2=1./$tmin;}
@@ -54,21 +57,24 @@ else{($poles,$pass)=split(/\//,$opt_P);
      if(not defined $pass or $pass<1){$pass=2;}}
 if ($opt_l) {($lmin,$lmax) = split(/\//,$opt_l);} 
 else {$lmin = 0; $lmax = 3600;}
-if ($opt_a and not -f $opt_a) {$opt_a="/opt/seismo-util/data/STATIONS_new";}
+if ($opt_a and not -f $opt_a) {$opt_a="/opt/seismo/data/STATIONS_new";}
 if ($opt_o and not $opt_m) {die("Specify centroid time first\n");}
 if ($opt_d and not -d $opt_d) {die("No such directory as $opt_d\n");}
 if ($opt_i and not -d $opt_i) {die("No such directory as $opt_i\n");}
 if ($opt_A) {if ($opt_A !~ /^\d/) {die("-A option should be numbers\n");}}
+if ($opt_f) {
+  if (not $opt_t) {die("-t tmin/tmax has to be specified for -f\n");}
+  else {$f0=$f1*0.8;  $f3=$f2*1.2;}}
 
 $undef = -12345;
 $eps = 0.1;
 
-$saclst="/opt/seismo-util/source/saclst/saclst";
-$phtimes="/opt/seismo-util/bin/phtimes";
-$asc2sac="/opt/seismo-util/bin/ascii2sac.csh";
-if (! -e $saclst)  {die(" No $saclst file\n");}
-if (! -e $phtimes) {die("No $phtimes file\n");}
-if (! -e $asc2sac) {die("No $asc2sac file\n");}
+$saclst="saclst";
+$phtimes="phtimes";
+$asc2sac="ascii2sac.csh";
+#if (! -e $saclst)  {die(" No $saclst file\n");}
+#if (! -e $phtimes) {die("No $phtimes file\n");}
+#if (! -e $asc2sac) {die("No $asc2sac file\n");}
 
 $min_hdur=1.0;
 
@@ -115,9 +121,13 @@ foreach $file (@ARGV) {
     if ($opt_c) {open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
     print SAC "echo on\n r $outfile\n";}
 
-    if ($opt_h and $hdur > $min_hdur) { # convolve source time function
-    system("/opt/seismo-util/bin/convolve_stf g $hdur $outfile");
-    system("mv ${outfile}.conv ${outfile}");}
+  if ($opt_h and $hdur > $min_hdur) { # convolve source time function
+    print SAC "quit\n";
+    close(SAC);
+    system("/opt/seismo-utils/bin/convolve_stf g $hdur $outfile");
+    system("mv ${outfile}.conv ${outfile}");
+    if ($opt_c) {open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
+    print SAC "echo on\n r $outfile\n";}
 
 
   if ($opt_a) { # add station information
@@ -136,7 +146,13 @@ foreach $file (@ARGV) {
          $sta_text .="$sta ";}}
     print SAC "ch stla $sta_lat stlo $sta_lon stel $sta_ele stdp $sta_bur\nwh\n";}
 
-  if ($opt_l) {
+  if ($opt_s) {print SAC "interp delta $dt\n";}
+   print SAC "w over\nquit\n";
+   close(SAC);
+   if ($opt_c) { open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
+   print SAC "echo on\n r $outfile\n ";
+
+  if ($opt_l) { #cut record
      print SAC "setbb begin ( max &1,b ( &1,o + $lmin ) ) \n";
      print SAC "setbb end   ( min &1,e ( &1,o + $lmax ) ) \n";
      print SAC "cut %begin% %end% \n";
@@ -145,18 +161,15 @@ foreach $file (@ARGV) {
 
   if ($opt_A) {print SAC "mul $opt_A\n";}
 
-  if ($opt_s) {print SAC "interp delta $dt\n";}
-  print SAC "w over\nquit\n";
-  close(SAC);
-  if ($opt_c) { open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
-  print SAC "echo on\n r $outfile\n ";
-
-  if ($opt_t){ # filter record
+  if ($opt_t)  { # filter record
     print "Filtering records...\n";
     print SAC "rtrend\n rmean\n taper\n";
-    printf SAC ("bp n $poles p $pass co %10.5f %10.5f\n",$f1,$f2);
+    if ($opt_f) {
+      printf SAC ("trans from none to none freq %12.6f %12.6f %12.6f %12.6f\n",$f0,$f1,$f2,$f3);}
+    else {
+      printf SAC ("bp n $poles p $pass co %10.5f %10.5f\n",$f1,$f2);}
     print SAC "rtrend\n rmean\n taper\n";}
-
+ 
   if ($opt_i) {# convolve with instrument response
     print "Convolving instrument response...\n";
     $pzfile="SAC_PZs_${net}_${sta}_${comp}_";
@@ -246,5 +259,4 @@ sub get_cmt {
     close(CMT);
     return ($oyear,$omonth,$oday,$ohr,$omin,$osec,$omsec,$tshift,$hdur,$elat,$elon,$edep,$Mrr,$Mtt,$Mpp,$Mrt,$Mrp,$Mtp);
 }
-
 
