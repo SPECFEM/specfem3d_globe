@@ -4,7 +4,7 @@
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory, California Institute of Technology / Princeton University, USA
+!                        Princeton University, USA
 !                    and University of Pau, France
 ! (c) California Institute of Technology / Princeton University and University of Pau, October 2007
 !
