@@ -5,9 +5,9 @@
  !          --------------------------------------------------
  !
  !          Main authors: Dimitri Komatitsch and Jeroen Tromp
- !    Seismological Laboratory, California Institute of Technology / Princeton University, USA
+ !                        Princeton University, USA
  !             and University of Pau / CNRS / INRIA, France
- ! (c) California Institute of Technology / Princeton University and University of Pau / CNRS / INRIA
+ ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
  !                            March 2010
  !
  ! This program is free software; you can redistribute it and/or modify
