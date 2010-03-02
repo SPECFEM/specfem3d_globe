@@ -788,7 +788,12 @@
 !             passing them along as arguments to the routine makes the code slower.
 !             it seems that this stack/heap criterion is more complicated.
 ! 
-!             also, it would nice to test, if using modules with static arrays would perform as well as this.
+!             another reason why modules are avoided, is to make the code thread safe.
+!             having different threads access the same data structure and modifying it at the same time
+!             would lead to problems. passing arguments is a way to avoid such complications.
+!
+!             nevertheless, it would be nice to test - where possible - , if using modules 
+!             together with static arrays would perform as well as this.
 !             at least, it would make the code more elegant and less error prone...
 !
 ! note 2: in general, most of the computation time for our earthquake simulations is spent

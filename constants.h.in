@@ -110,7 +110,7 @@
 !! pathname of the topography file (un-smoothed)
 !  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1.xyz'
 
-! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY
+! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature)
   logical,parameter :: USE_GLL = .false.
 
 ! maximum depth of the oceans in trenches and height of topo in mountains
