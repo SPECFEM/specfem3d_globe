@@ -76,7 +76,7 @@ if ($opt_l) {($lmin,$lmax) = split(/\//,$opt_l);} else {$lmin = 0; $lmax = 3600;
 if ($opt_f and not ($opt_R or $opt_i)) {die("-f option goes together with -i or -R\n");}
 
 $saclst="saclst";
-$phtimes="phtimes";
+$phtimes="./phtimes.csh";
 
 $eps=1e-5; $undef=-12345.0; $cundef="-12345";
 

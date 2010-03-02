@@ -1,6 +1,9 @@
 #!/bin/csh -f
-
+#
 # Vala Hjorleifsdottir and Qinya Liu, Caltech, Jan 2007
+#
+# uses `asc2sac` binary which can be compiled from UTILS/lib/asc2sac.c
+# (requires SAC libraries for compilation)
 
 foreach file ($*)
 	echo $file

@@ -410,6 +410,10 @@
 !             be mainly a performance reason. changing the codes to adopt modules 
 !             will have to prove that it performs as fast as it does without now.
 !
+!             another reason why modules are avoided, is to make the code thread safe.
+!             having different threads access the same data structure and modifying it at the same time
+!             would lead to problems. passing arguments is a way to avoid such complications.
+!
 !             however, the mesher makes one exception here: it uses the
 !             module "meshfem3D_models_par" defined in the 'meshfem3D_models.f90' file.
 !             the exception is based on the fact, that when one wants to incorporate
@@ -440,7 +444,7 @@
 ! 
 !             finally, in order to compile the new mesher with your new file(s), 
 !             you will add it to the list in the 'Makefile.in' file and run 
-!             ./configure to recreate a new Makefile.
+!             `configure` to recreate a new Makefile.
 !             
 !
 !-------------------------------------------------------------------------------------------------
