@@ -16,41 +16,41 @@ Main developers: Dimitri Komatitsch, Jeroen Tromp, Qinya Liu and David Michea.
 Basic installation
 ------------------
 
-1. untar the SPECFEM3D_GLOBE package: 
+1. untar the SPECFEM3D_GLOBE package:
 
-   > tar -zxvf SPECFEM3D_GLOBE*.tar.gz 
+   > tar -zxvf SPECFEM3D_GLOBE*.tar.gz
 
-   in the following, we will assume you set the root directory of the 
+   in the following, we will assume you set the root directory of the
    package name to:
-   
+
    SPECFEM3D_GLOBE/
-   
+
 2. configure the software for your system:
 
     > cd SPECFEM3D_GLOBE/
     > ./configure
 
     by default, it uses gfortran as a Fortran compiler, mpif90 for MPI compilation
-    and gcc as a C compiler. 
-    
+    and gcc as a C compiler.
+
     in order to use a different compiler, use for example:
-    
+
         > ./configure FC=ifort
-  
+
     in this case, it would make use of
-    
-    - ifort, Intel Fortran Compiler 
+
+    - ifort, Intel Fortran Compiler
       (see http://software.intel.com/en-us/intel-compilers/ )
-      with which we see very good performance results.   
-        
-    - a default MPI installation which provides mpif90 as fortran wrapper command.     
+      with which we see very good performance results.
+
+    - a default MPI installation which provides mpif90 as fortran wrapper command.
       An excellent package is provided by Open MPI (see http://www.open-mpi.org/).
-      
-      for the example above, you would make sure that the mpif90 command 
+
+      for the example above, you would make sure that the mpif90 command
       would also use ifort as a Fortran compiler.
-    
+
     - a C compiler provided from the GNU compiler collection (see http://gcc.gnu.org/).
-    
+
     in case `configure` was successful, it will create the files:
 
     ./Makefile
@@ -59,18 +59,18 @@ Basic installation
     ./DATA/Par_file
     ./DATA/CMTSOLUTION
     ./DATA/STATIONS
-    
-    please make sure, your installation is working and that 
+
+    please make sure, your installation is working and that
     the created files 'constant.h' and 'Makefile' satisfy
-    your needs. 
+    your needs.
 
     more information is given in the manual provided in USER_MANUAL.
 
 3. compile the package:
 
    > make
-   
-   
+
+
 well done!
 
 
@@ -81,19 +81,19 @@ Configure options
 
 'configure' accepts the following options:
 
-FC                          Fortran90 compiler command name, 
+FC                          Fortran90 compiler command name,
                             default is 'gfortran'
- 
-MPIFC                       MPI Fortran90 command name, 
+
+MPIFC                       MPI Fortran90 command name,
                             default is 'mpif90'
 
 CC                          C compiler command name,
                             default is 'gcc'
 
-FLAGS_CHECK                 Compiler ﬂags for non-critical subroutines, 
+FLAGS_CHECK                 Compiler ﬂags for non-critical subroutines,
                             default is '-O3'
-                  
-FLAGS_NO_CHECK              Compiler ﬂags for creating fast, production-run code for 
+
+FLAGS_NO_CHECK              Compiler ﬂags for creating fast, production-run code for
                             critical subroutines,
                             default is '-O3'
 
@@ -106,20 +106,20 @@ and flags:
 
 
 --enable-double-precision   The package can run either in single or in double precision.
-                            default is single precision 
-                            
---help                      Directs configure to print a usage screen 
-                            
+                            default is single precision
 
-run with 
+--help                      Directs configure to print a usage screen
+
+
+run with
   ./configure <option>=<my_option> --<flag>
-  
+
 
 Compiler specific flags are set in file 'flags.guess' in order to provide
-suitable default options for different compilers. 
+suitable default options for different compilers.
 
-you might however want to modify the created 'Makefile' and specify your best 
-system compiler flags in order to ensure optimal performance of the code. 
+you might however want to modify the created 'Makefile' and specify your best
+system compiler flags in order to ensure optimal performance of the code.
 
 
 
@@ -133,13 +133,13 @@ FAQ
 1. configuration fails:
 
    Examine the log file 'config.log'. It contains detailed informations.
-   in many cases, the path's to these specific compiler commands F90, 
+   in many cases, the path's to these specific compiler commands F90,
    CC and MPIF90 won't be correct if `configure` fails.
-   
-   please make sure that you have a working installation of a Fortran compiler, 
+
+   please make sure that you have a working installation of a Fortran compiler,
    a C compiler and an MPI implementation. you should be able to compile this
    little program code:
-   
+
       program main
         include 'mpif.h'
         integer, parameter :: CUSTOM_MPI_TYPE = MPI_REAL
@@ -149,43 +149,43 @@ FAQ
         call MPI_FINALIZE(ier)
       end
 
-    
+
 2. compilation fails stating :
-    ... 
+    ...
     In file ./compute_element_properties.f90:44
 
       use meshfem3D_models_par
                          1
     Fatal Error: File 'meshfem3d_models_par.mod' opened at (1) is not a GFORTRAN module file
     ...
-    
-  make sure, you're pointing to the right 'mpif90' wrapper command. 
-  
+
+  make sure, you're pointing to the right 'mpif90' wrapper command.
+
   normally, this message will appear when you're mixing two different fortran
-  compilers. that is, using e.g. gfortran to compile non-MPI files 
-  and mpif90, wrapper provided for e.g. ifort, to compile MPI-files. 
-  the module will be created by the wrapper, thus ifort, while the gfortran compiler 
+  compilers. that is, using e.g. gfortran to compile non-MPI files
+  and mpif90, wrapper provided for e.g. ifort, to compile MPI-files.
+  the module will be created by the wrapper, thus ifort, while the gfortran compiler
   is trying to read that module for the compilation of 'compute_element_properties.f90'.
-  
+
   fix: e.g. specify > ./configure FC=gfortran MPIF90=/usr/local/openmpi-gfortran/bin/mpif90
-  
-  
+
+
 3. compilation fails with:
     ...
     obj/specfem3D.o: In function `MAIN__':
     specfem3D.f90:(.text+0xb66): relocation truncated to fit: R_X86_64_32S against `.bss'
     ...
-    
-  you're probably using some resolution settings in 'DATA/Par_file' which are 
+
+  you're probably using some resolution settings in 'DATA/Par_file' which are
   too big for a single processor on your system. the solver tries to statically allocate arrays,
   which can not be handled by a 32-bit address anymore in this case.
-  
+
   fix: check the static memory needed by the solver, which is outputted
        when you run: > make xcreate_header_file
                      > ./xcreate_header_file
-       
+
        the size of static arrays per slice has to fit on to a single processor.
-  
+
        you can either try to use e.g. -mcmodel=medium as additional compiler flag,
        or better, change your resolution settings for NPROC_XI,NPROC_ETA and NEX_XI,NEX_ETA.
-       
+
