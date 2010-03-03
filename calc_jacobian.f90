@@ -26,19 +26,19 @@
 !=====================================================================
 !
 !> Hejun
-! This subroutine recomputes the 3D jacobian for one element 
-! based upon 125 GLL points 
+! This subroutine recomputes the 3D jacobian for one element
+! based upon 125 GLL points
 ! Hejun Zhu OCT16,2009
 
 ! input: myrank,
 !        xstore,ystore,zstore ----- input GLL point coordinate
 !        xigll,yigll,zigll ----- gll points position
-!        ispec,nspec       ----- element number       
+!        ispec,nspec       ----- element number
 !        ACTUALLY_STORE_ARRAYS   ------ save array or not
 
-! output: xixstore,xiystore,xizstore, 
+! output: xixstore,xiystore,xizstore,
 !         etaxstore,etaystore,etazstore,
-!         gammaxstore,gammaystore,gammazstore ------ parameters used to calculate jacobian 
+!         gammaxstore,gammaystore,gammazstore ------ parameters used to calculate jacobian
 
 
   subroutine recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
@@ -80,7 +80,7 @@
   double precision:: r,theta,phi
 
 
-  ! test parameters which can be deleted 
+  ! test parameters which can be deleted
   double precision:: xmesh,ymesh,zmesh
   double precision:: sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
 
@@ -88,7 +88,7 @@
   do k=1,NGLLZ
      do j=1,NGLLY
         do i=1,NGLLX
-            
+
             xxi = 0.0
             xeta = 0.0
             xgamma = 0.0
@@ -103,7 +103,7 @@
             eta = yigll(j)
             gamma = zigll(k)
 
-            ! calculate lagrange polynomial and its derivative 
+            ! calculate lagrange polynomial and its derivative
             call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
             call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
             call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
@@ -116,7 +116,7 @@
             xmesh = 0.0
             ymesh = 0.0
             zmesh = 0.0
-            
+
 
             do k1 = 1,NGLLZ
                do j1 = 1,NGLLY
@@ -126,7 +126,7 @@
                      hlagrange_eta = hxir(i1)*hpetar(j1)*hgammar(k1)
                      hlagrange_gamma = hxir(i1)*hetar(j1)*hpgammar(k1)
 
-                                   
+
                      xxi = xxi + xstore(i1,j1,k1,ispec)*hlagrange_xi
                      xeta = xeta + xstore(i1,j1,k1,ispec)*hlagrange_eta
                      xgamma = xgamma + xstore(i1,j1,k1,ispec)*hlagrange_gamma
@@ -139,48 +139,48 @@
                      zeta = zeta + zstore(i1,j1,k1,ispec)*hlagrange_eta
                      zgamma = zgamma + zstore(i1,j1,k1,ispec)*hlagrange_gamma
 
-                     ! test the lagrange polynomial and its derivate 
+                     ! test the lagrange polynomial and its derivate
                      xmesh = xmesh + xstore(i1,j1,k1,ispec)*hlagrange
                      ymesh = ymesh + ystore(i1,j1,k1,ispec)*hlagrange
                      zmesh = zmesh + zstore(i1,j1,k1,ispec)*hlagrange
                      sumshape = sumshape + hlagrange
                      sumdershapexi = sumdershapexi + hlagrange_xi
-                     sumdershapeeta = sumdershapeeta + hlagrange_eta 
+                     sumdershapeeta = sumdershapeeta + hlagrange_eta
                      sumdershapegamma = sumdershapegamma + hlagrange_gamma
-                     
-                  end do
-               end do 
-            end do 
 
-            ! Check the lagrange polynomial and its derivative 
+                  end do
+               end do
+            end do
+
+            ! Check the lagrange polynomial and its derivative
             if (xmesh /=xstore(i,j,k,ispec).or.ymesh/=ystore(i,j,k,ispec)&
                         .or.zmesh/=zstore(i,j,k,ispec)) then
                     call exit_MPI(myrank,'new mesh are wrong in recalc_jacobian_gall3D.f90')
-            end if 
+            end if
             if(abs(sumshape-one) >  TINYVAL) then
                     call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll3D.f90')
-            end if 
-            if(abs(sumdershapexi) >  TINYVAL) then 
+            end if
+            if(abs(sumdershapexi) >  TINYVAL) then
                     call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll3D.f90')
-            end if 
-            if(abs(sumdershapeeta) >  TINYVAL) then 
+            end if
+            if(abs(sumdershapeeta) >  TINYVAL) then
                     call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll3D.f90')
-            end if 
-            if(abs(sumdershapegamma) >  TINYVAL) then 
+            end if
+            if(abs(sumdershapegamma) >  TINYVAL) then
                     call exit_MPI(myrank,'error derivative gamma in recalc_jacobian_gll3D.f90')
-            end if 
-  
+            end if
+
 
             jacobian = xxi*(yeta*zgamma-ygamma*zeta) - &
                  xeta*(yxi*zgamma-ygamma*zxi) + &
                  xgamma*(yxi*zeta-yeta*zxi)
 
-            ! Check the jacobian      
-            if(jacobian <= ZERO) then 
+            ! Check the jacobian
+            if(jacobian <= ZERO) then
               call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
               print*,'r/lat/lon:',r*R_EARTH_KM,90.0-theta*180./PI,phi*180./PI
               call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
-            end if 
+            end if
 
             !     invert the relation (Fletcher p. 50 vol. 2)
             xix = (yeta*zgamma-ygamma*zeta) / jacobian
@@ -218,7 +218,7 @@
                     gammaystore(i,j,k,ispec) = gammay
                     gammazstore(i,j,k,ispec) = gammaz
                 endif
-             end if 
+             end if
         enddo
     enddo
   enddo
@@ -237,7 +237,7 @@
   ! input parameters:   myrank,ispecb,
   !                     xelm2D,yelm2D,zelm2D,
   !                     xigll,yigll,NSPEC2DMAX_AB,NGLLA,NGLLB
-  
+
   ! output results:     jacobian2D,normal
   subroutine recalc_jacobian_gll2D(myrank,ispecb, &
                                 xelm2D,yelm2D,zelm2D,xigll,yigll,&
@@ -256,7 +256,7 @@
   real(kind=CUSTOM_REAL),dimension(3,NGLLA,NGLLB,NSPEC2DMAX_AB)::normal
 
 
-  ! local parameters in this subroutine 
+  ! local parameters in this subroutine
   integer::i,j,i1,j1
   double precision::xxi,xeta,yxi,yeta,zxi,zeta,&
                 xi,eta,xmesh,ymesh,zmesh,hlagrange,hlagrange_xi,hlagrange_eta,&
@@ -279,7 +279,7 @@
         call lagrange_any(xi,NGLLA,xigll,hxir,hpxir)
         call lagrange_any(eta,NGLLB,yigll,hetar,hpetar)
 
-  
+
         xmesh = 0.0
         ymesh = 0.0
         zmesh = 0.0
@@ -294,7 +294,7 @@
 
               xxi = xxi + xelm2D(i1,j1)*hlagrange_xi
               xeta = xeta + xelm2D(i1,j1)*hlagrange_eta
-                
+
               yxi = yxi + yelm2D(i1,j1)*hlagrange_xi
               yeta = yeta + yelm2D(i1,j1)*hlagrange_eta
 
@@ -307,25 +307,25 @@
               sumshape = sumshape + hlagrange
               sumdershapexi = sumdershapexi + hlagrange_xi
               sumdershapeeta = sumdershapeeta + hlagrange_eta
-           end do 
+           end do
         end do
 
 
-        ! Check the lagrange polynomial 
+        ! Check the lagrange polynomial
         if (xmesh/=xelm2D(i,j).or.ymesh/=yelm2D(i,j).or.zmesh/=zelm2D(i,j)) then
            call exit_MPI(myrank,'new boundary mesh is wrong in recalc_jacobian_gll2D')
-        end if 
-            
+        end if
+
         if (abs(sumshape-one) >  TINYVAL) then
            call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll2D')
-        end if 
-        if (abs(sumdershapexi) >  TINYVAL) then 
+        end if
+        if (abs(sumdershapexi) >  TINYVAL) then
            call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll2D')
-        end if 
+        end if
         if (abs(sumdershapeeta) >  TINYVAL) then
            call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll2D')
-        end if 
-                   
+        end if
+
         unx = yxi*zeta - yeta*zxi
         uny = zxi*xeta - zeta*xxi
         unz = xxi*yeta - xeta*yxi
@@ -343,14 +343,14 @@
            normal(2,i,j,ispecb)=uny/jacobian
            normal(3,i,j,ispecb)=unz/jacobian
         endif
-     end do 
-  end do 
-                                
+     end do
+  end do
+
   end subroutine recalc_jacobian_gll2D
-  
+
 !
 !-------------------------------------------------------------------------------------------------
-!  
+!
 ! deprecated...
 !
 !  subroutine calc_jacobian(myrank,xixstore,xiystore,xizstore, &
@@ -435,14 +435,14 @@
 !        print*,'jacobian error:',myrank
 !        print*,'  point ijk:',i,j,k,ispec
 !        print*,'  xyz:',xmesh,ymesh,zmesh
-!        call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,xxi,xeta,xgamma)        
+!        call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,xxi,xeta,xgamma)
 !        print*,'  r/lat/lon:',xxi*R_EARTH_KM,90.0-xeta*180./PI,xgamma*180./PI
 !        print*,'  nodes:'
 !        do ia=1,NGNOD
 !          print*,xelm(ia),yelm(ia),zelm(ia)
 !        enddo
 !        print*
-!        print*,'maybe check with CAP smoothing'        
+!        print*,'maybe check with CAP smoothing'
 !        call exit_MPI(myrank,'3D Jacobian undefined')
 !      endif
 !
@@ -495,4 +495,4 @@
 !  end subroutine calc_jacobian
 !
 
-  
+

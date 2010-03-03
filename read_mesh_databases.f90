@@ -57,15 +57,15 @@
             c33store_inner_core,c44store_inner_core, &
             ibool_inner_core,idoubling_inner_core,rmass_inner_core, &
             ABSORBING_CONDITIONS,LOCAL_PATH)
-  
-  
+
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
 
-  integer myrank 
+  integer myrank
 
   ! Stacey
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: &
@@ -102,8 +102,8 @@
   ! additional mass matrix for ocean load
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
 
-  ! stacy outer core 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY) :: vp_outer_core  
+  ! stacy outer core
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY) :: vp_outer_core
   ! mesh parameters
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
         xstore_outer_core,ystore_outer_core,zstore_outer_core
@@ -139,7 +139,7 @@
   !local parameters
   logical READ_KAPPA_MU,READ_TISO
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
-  
+
   ! start reading the databases
   ! read arrays created by the mesher
 
@@ -276,7 +276,7 @@
                     iboolcorner_outer_core, &
                     iboolleft_xi_inner_core,iboolright_xi_inner_core, &
                     iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-                    npoin2D_xi_inner_core,npoin2D_eta_inner_core, &     
+                    npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
                     iboolfaces_inner_core,npoin2D_faces_inner_core, &
                     iboolcorner_inner_core, &
                     iprocfrom_faces,iprocto_faces,imsg_type, &
@@ -288,13 +288,13 @@
                     ichunk,iproc_xi,iproc_eta)
 
   implicit none
-  
+
   include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank
-  
+
   ! 2-D addressing and buffers for summation between slices
   integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
@@ -302,7 +302,7 @@
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
   integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
-  
+
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
@@ -483,12 +483,12 @@
 
 
   end subroutine read_mesh_databases_addressing
-  
 
-!  
+
+!
 !-------------------------------------------------------------------------------------------------
-!    
-  
+!
+
   subroutine read_mesh_databases_coupling(myrank, &
               nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
               nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
@@ -507,7 +507,7 @@
               jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core,jacobian2D_ymin_outer_core, &
               jacobian2D_ymax_outer_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
               nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-              nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, & 
+              nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
               ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core, &
               ibelm_ymax_inner_core,ibelm_bottom_inner_core,ibelm_top_inner_core, &
               ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
@@ -517,7 +517,7 @@
 
 ! to couple mantle with outer core
   implicit none
-  
+
   include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
@@ -546,7 +546,7 @@
 
   ! arrays to couple with the fluid regions by pointwise matching
   integer nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
-    nspec2D_ymin_outer_core,nspec2D_ymax_outer_core  
+    nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_OC) :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
   integer, dimension(NSPEC2DMAX_YMIN_YMAX_OC) :: ibelm_ymin_outer_core,ibelm_ymax_outer_core
   integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
@@ -590,9 +590,9 @@
 
   character(len=150) LOCAL_PATH
   integer SIMULATION_TYPE
-  
+
   ! local parameters
-  integer njunk1,njunk2,njunk3  
+  integer njunk1,njunk2,njunk3
   character(len=150) prname
 
 
@@ -705,9 +705,9 @@
 
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
-  
+
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-    
+
     open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
           status='old',form='unformatted')
     read(27) njunk1,njunk2,njunk3
@@ -761,7 +761,7 @@
                       SIMULATION_TYPE,SAVE_FORWARD,LOCAL_PATH)
 
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -774,29 +774,29 @@
   integer nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
     nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
   integer reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, reclen_ymin_crust_mantle, &
-    reclen_ymax_crust_mantle  
-  
+    reclen_ymax_crust_mantle
+
   integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_OC) :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
-  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_OC) :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core  
+  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_OC) :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
   integer nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
-    nspec2D_ymin_outer_core,nspec2D_ymax_outer_core  
+    nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
   integer reclen_xmin_outer_core, reclen_xmax_outer_core,reclen_ymin_outer_core, &
     reclen_ymax_outer_core
-    
+
   integer reclen_zmin
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_BOTTOM
-                
+
   integer SIMULATION_TYPE
   logical SAVE_FORWARD
-  character(len=150) LOCAL_PATH        
-  
+  character(len=150) LOCAL_PATH
+
   ! local parameters
   character(len=150) prname
 
 
   ! crust and mantle
   ! create name of database
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)        
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
   ! read arrays for Stacey conditions
   open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
@@ -950,8 +950,8 @@
             recl=reclen_zmin+2*4)
     endif
   endif
-  
+
   end subroutine read_mesh_databases_stacey
-  
-  
+
+
 

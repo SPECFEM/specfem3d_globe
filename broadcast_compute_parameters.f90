@@ -53,18 +53,18 @@
                 this_region_has_a_doubling,rmins,rmaxs, &
                 ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                 DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-                REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &  
+                REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
                 HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
                 ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE)
-  
+
   implicit none
 
 ! standard include of the MPI library
   include 'mpif.h'
   include "constants.h"
   include "precision.h"
-  
+
   integer myrank
 
   ! parameters read from parameter file
@@ -89,7 +89,7 @@
           SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT,&
           OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE
-          
+
   character(len=150) LOCAL_PATH,MODEL
 
   ! parameters to be computed based upon parameters above read from file
@@ -102,7 +102,7 @@
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ratio_sampling_array,ner
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-  
+
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
 
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
@@ -116,9 +116,9 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
   ! mesh model parameters
-  integer REFERENCE_1D_MODEL,THREE_D_MODEL  
+  integer REFERENCE_1D_MODEL,THREE_D_MODEL
 
-  logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &  
+  logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
     HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
     ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
     ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE
@@ -128,7 +128,7 @@
   integer, dimension(38) :: bcast_integer
   logical, dimension(35) :: bcast_logical
   integer ier
-  
+
   ! master process prepares broadcasting arrays
   if (myrank==0) then
     ! count the total number of sources in the CMTSOLUTION file
@@ -201,7 +201,7 @@
 
   ! non-master processes set their parameters
   if (myrank /=0) then
-    
+
     ! please, be careful with ordering and counting here
     ! integers
     MIN_ATTENUATION_PERIOD = bcast_integer(1)
@@ -242,7 +242,7 @@
     MOVIE_START = bcast_integer(36)
     MOVIE_STOP = bcast_integer(37)
     NSOURCES = bcast_integer(38)
-    
+
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)
     ANISOTROPIC_3D_MANTLE = bcast_logical(2)
@@ -314,5 +314,5 @@
     RMOHO_FICTITIOUS_IN_MESHER = bcast_double_precision(31)
 
   endif
-    
+
   end subroutine broadcast_compute_parameters

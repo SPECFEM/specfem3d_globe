@@ -34,7 +34,7 @@
 
   subroutine model_sea1d_broadcast(CRUSTAL, SEA1DM_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -58,7 +58,7 @@
 
   ! all processes will define same parameters
   call define_model_sea1d(CRUSTAL, SEA1DM_V)
-  
+
   end subroutine model_sea1d_broadcast
 
 !
@@ -1168,7 +1168,7 @@
   SEA1DM_V%Qmu_sea1d(163)= 300.0000000000000
 
 ! strip the crust and replace it by mantle
-  if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then  
+  if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then
     do i=NR_SEA1D-12,NR_SEA1D
       SEA1DM_V%density_sea1d(i) = SEA1DM_V%density_sea1d(NR_SEA1D-13)
       SEA1DM_V%vp_sea1d(i) = SEA1DM_V%vp_sea1d(NR_SEA1D-13)

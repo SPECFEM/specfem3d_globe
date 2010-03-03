@@ -39,7 +39,7 @@
 
   subroutine model_ak135_broadcast(CRUSTAL,Mak135_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -63,7 +63,7 @@
 
   ! all processes will define same parameters
   call define_model_ak135(CRUSTAL, Mak135_V)
-  
+
   end subroutine model_ak135_broadcast
 
 !

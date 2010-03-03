@@ -46,9 +46,9 @@
                               nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
                               absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
                               absorb_ymin_crust_mantle,absorb_ymax_crust_mantle)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -88,8 +88,8 @@
     njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
 
   integer nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle  
-    
+    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
+
   integer reclen_xmin_crust_mantle,reclen_xmax_crust_mantle,&
     reclen_ymin_crust_mantle,reclen_ymax_crust_mantle
 
@@ -97,12 +97,12 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,nabs_xmin_cm) :: absorb_xmin_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,nabs_xmax_cm) :: absorb_xmax_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,nabs_ymin_cm) :: absorb_ymin_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,nabs_ymax_cm) :: absorb_ymax_crust_mantle  
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,nabs_ymax_cm) :: absorb_ymax_crust_mantle
 
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: weight
-  real(kind=CUSTOM_REAL) :: vn,vx,vy,vz,nx,ny,nz,tx,ty,tz    
+  real(kind=CUSTOM_REAL) :: vn,vx,vy,vz,nx,ny,nz,tx,ty,tz
   integer :: i,j,k,ispec,iglob,ispec2D
   integer :: reclen1,reclen2
 
@@ -233,7 +233,7 @@
     if (reclen1 /= reclen_ymin_crust_mantle .or. reclen1 /= reclen2)  &
        call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin')
   endif
-  
+
   do ispec2D=1,nspec2D_ymin_crust_mantle
 
     ispec=ibelm_ymin_crust_mantle(ispec2D)
@@ -287,7 +287,7 @@
     if (reclen1 /= reclen_ymax_crust_mantle .or. reclen1 /= reclen2)  &
        call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax')
   endif
-  
+
   do ispec2D=1,nspec2D_ymax_crust_mantle
 
     ispec=ibelm_ymax_crust_mantle(ispec2D)
@@ -331,9 +331,9 @@
       enddo
     enddo
   enddo
-  
+
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) &
-     write(54,rec=it) reclen_ymax_crust_mantle,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle  
-  
+     write(54,rec=it) reclen_ymax_crust_mantle,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle
+
   end subroutine compute_stacey_crust_mantle
-    
+

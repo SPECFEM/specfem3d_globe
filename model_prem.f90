@@ -27,14 +27,14 @@
 
 !--------------------------------------------------------------------------------------------------
 !
-! PREM [Dziewonski and Anderson, 1981]. 
+! PREM [Dziewonski and Anderson, 1981].
 !
-! A. M. Dziewonski and D. L. Anderson. 
-! Preliminary reference Earth model. 
-! Phys. Earth Planet. Inter., 25:297–356, 1981. 
+! A. M. Dziewonski and D. L. Anderson.
+! Preliminary reference Earth model.
+! Phys. Earth Planet. Inter., 25:297–356, 1981.
 !
-! Isotropic (iso) and transversely isotropic (aniso) version of the 
-! spherically symmetric Preliminary Reference Earth Model 
+! Isotropic (iso) and transversely isotropic (aniso) version of the
+! spherically symmetric Preliminary Reference Earth Model
 !
 !--------------------------------------------------------------------------------------------------
 

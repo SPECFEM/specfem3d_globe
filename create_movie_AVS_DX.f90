@@ -437,7 +437,7 @@
     print *,'thresholding... '
     where(abs(field_display(:)) <= THRESHOLD) field_display = 0.
   endif
-  
+
 ! apply non linear scaling to normalized field if needed
   if(NONLINEAR_SCALING) then
     print *,'nonlinear scaling... '
@@ -785,7 +785,7 @@
          ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.)
-         
+
   if(MOVIE_COARSE) stop 'create_movie_AVS_DX does not work with MOVIE_COARSE'
 
   end subroutine read_AVS_DX_parameters

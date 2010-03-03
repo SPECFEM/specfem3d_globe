@@ -43,7 +43,7 @@
                     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
                     ANISOTROPIC_INNER_CORE,OCEANS, &
                     tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,vx,vy,vz,vnspec, &
-                    ABSORBING_CONDITIONS,SAVE_MESH_FILES) 
+                    ABSORBING_CONDITIONS,SAVE_MESH_FILES)
 
 
   implicit none
@@ -67,7 +67,7 @@
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
-    integer dummy_pad ! padding 4 bytes to align the structure    
+    integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
 
   logical ATTENUATION
@@ -75,7 +75,7 @@
   character(len=150) prname
   integer iregion_code
 
-  integer nspec,nglob,nspec_stacey 
+  integer nspec,nglob,nspec_stacey
   integer npointot_oceans
 
 ! Stacey
@@ -116,7 +116,7 @@
 
 ! boundary parameters locator
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
-  
+
   integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
   integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
   integer ibelm_bottom(NSPEC2D_BOTTOM),ibelm_top(NSPEC2D_TOP)
@@ -152,25 +152,25 @@
   ! local parameters
   integer i,j,k,ispec,iglob,nspec1, nglob1
   real(kind=CUSTOM_REAL) scaleval1,scaleval2
-  
+
 ! save nspec and nglob, to be used in combine_paraview_data
   open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt',status='unknown',action='write')
 
   nspec1 = nspec
   nglob1 = nglob
-  
+
   ! might be wrong, check...
   !if (NCHUNKS == 6 .and. ichunk /= CHUNK_AB .and. iregion_code == IREGION_INNER_CORE) then
-  !  ! only chunk_AB contains inner core?    
+  !  ! only chunk_AB contains inner core?
   !  ratio_divide_central_cube = 16
-  !  ! corrects nspec/nglob 
+  !  ! corrects nspec/nglob
   !  nspec1 = nspec1 - (NEX_PER_PROC_XI/ratio_divide_central_cube) &
   !            * (NEX_PER_PROC_ETA/ratio_divide_central_cube) * (NEX_XI/ratio_divide_central_cube)
   !  nglob1 = nglob1 -   ((NEX_PER_PROC_XI/ratio_divide_central_cube)*(NGLLX-1)+1) &
   !            * ((NEX_PER_PROC_ETA/ratio_divide_central_cube)*(NGLLY-1)+1) &
-  !            * (NEX_XI/ratio_divide_central_cube)*(NGLLZ-1)       
+  !            * (NEX_XI/ratio_divide_central_cube)*(NGLLZ-1)
   !endif
-  
+
   write(27,*) nspec1
   write(27,*) nglob1
   close(27)
@@ -394,7 +394,7 @@
     write(27) rhostore*scaleval2
     close(27)
   endif
-  
+
   end subroutine save_arrays_solver
 
 

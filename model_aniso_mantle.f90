@@ -43,7 +43,7 @@
 
   subroutine model_aniso_mantle_broadcast(myrank,AMM_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -57,24 +57,24 @@
     double precision beta(14,34,37,73)
     double precision pro(47)
     integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure    
+    integer dummy_pad ! padding 4 bytes to align the structure
   end type model_aniso_mantle_variables
 
   type (model_aniso_mantle_variables) AMM_V
   ! model_aniso_mantle_variables
-  
+
   integer :: myrank
   integer :: ier
-  
+
   ! the variables read are declared and stored in structure AMM_V
   if(myrank == 0) call read_aniso_mantle_model(AMM_V)
-  
+
   ! broadcast the information read on the master to the nodes
   call MPI_BCAST(AMM_V%npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(AMM_V%beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(AMM_V%pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-  
+
   end subroutine model_aniso_mantle_broadcast
 
 !
@@ -96,7 +96,7 @@
     double precision beta(14,34,37,73)
     double precision pro(47)
     integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure    
+    integer dummy_pad ! padding 4 bytes to align the structure
   end type model_aniso_mantle_variables
 
   type (model_aniso_mantle_variables) AMM_V
@@ -374,7 +374,7 @@
     double precision beta(14,34,37,73)
     double precision pro(47)
     integer npar1
-    integer dummy_pad ! padding 4 bytes to align the structure    
+    integer dummy_pad ! padding 4 bytes to align the structure
   end type model_aniso_mantle_variables
 
   type (model_aniso_mantle_variables) AMM_V

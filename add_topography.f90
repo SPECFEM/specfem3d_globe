@@ -114,7 +114,7 @@
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
   double precision:: R220
 
-  ! local parameters used in this subroutine                                      
+  ! local parameters used in this subroutine
   integer:: i,j,k
   double precision:: r,theta,phi,colat
   double precision:: lat,lon,elevation,gamma
@@ -154,19 +154,19 @@
            ! also make sure factor makes sense
            if(gamma < -0.02 .or. gamma > 1.02) then
                 call exit_MPI(myrank,'incorrect value of factor for topography gll points')
-           end if 
+           end if
            !
 
            ! since not all GLL points are exactlly at R220, use a small
            ! tolerance for R220 detection
            if (abs(gamma) < SMALLVAL) then
                gamma = 0.0
-           end if 
+           end if
            xstore(i,j,k,ispec) = xstore(i,j,k,ispec)*(ONE + gamma * elevation / r)
            ystore(i,j,k,ispec) = ystore(i,j,k,ispec)*(ONE + gamma * elevation / r)
            zstore(i,j,k,ispec) = zstore(i,j,k,ispec)*(ONE + gamma * elevation / r)
 
-        end do 
-     end do 
+        end do
+     end do
   end do
   end subroutine add_topography_gll

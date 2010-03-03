@@ -557,7 +557,7 @@
     open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
     !if(icolor == 5 .or. icolor == 6) &
     !  open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementschunks_dvp_dvs.txt',status='old',action='read')
-    
+
   endif
 
   read(10,*) nspec

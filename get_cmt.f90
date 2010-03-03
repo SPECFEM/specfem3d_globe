@@ -62,7 +62,7 @@
   ho = 0
   mi = 0
   sec = 0.d0
-  
+
 !
 !---- read hypocenter info
 !
@@ -133,10 +133,10 @@
 
   close(1)
 
-  ! Sets t_cmt to zero to initiate the simulation! 
+  ! Sets t_cmt to zero to initiate the simulation!
   if(NSOURCES == 1)then
       t_cmt = 0.d0
-  else 
+  else
       t_cmt(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
   endif
 

@@ -45,20 +45,20 @@
   double precision, dimension(nrec_local,NGLLX) :: hxir_store
   double precision, dimension(nrec_local,NGLLY) :: hetar_store
   double precision, dimension(nrec_local,NGLLZ) :: hgammar_store
-  
+
   double precision scale_displ
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
   integer, dimension(nrec) :: ispec_selected_rec
   integer, dimension(nrec_local) :: number_receiver_global
-  
-  integer :: seismo_current  
+
+  integer :: seismo_current
   integer :: NTSTEP_BETWEEN_OUTPUT_SEISMOS
-  
+
   real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: &
     seismograms
-  
+
   ! local parameters
   double precision :: uxd,uyd,uzd,hlagrange
   integer :: i,j,k,iglob,irec_local,irec
@@ -97,16 +97,16 @@
     else
       seismograms(:,irec_local,seismo_current) = scale_displ*(nu(:,1,irec)*uxd + &
                  nu(:,2,irec)*uyd + nu(:,3,irec)*uzd)
-    endif  
+    endif
 
   enddo
-  
+
   end subroutine compute_seismograms
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
   subroutine compute_seismograms_backward(nrec_local,nrec,b_displ_crust_mantle, &
                                 nu,hxir_store,hetar_store,hgammar_store, &
                                 scale_displ,ibool_crust_mantle, &
@@ -127,20 +127,20 @@
   double precision, dimension(nrec_local,NGLLX) :: hxir_store
   double precision, dimension(nrec_local,NGLLY) :: hetar_store
   double precision, dimension(nrec_local,NGLLZ) :: hgammar_store
-  
+
   double precision scale_displ
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
   integer, dimension(nrec) :: ispec_selected_rec
   integer, dimension(nrec_local) :: number_receiver_global
-  
+
   integer :: seismo_current
   integer :: NTSTEP_BETWEEN_OUTPUT_SEISMOS
-  
+
   real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: &
     seismograms
-  
+
   ! local parameters
   double precision :: uxd,uyd,uzd,hlagrange
   integer :: i,j,k,iglob,irec_local,irec
@@ -183,13 +183,13 @@
 
 
   enddo
-  
+
   end subroutine compute_seismograms_backward
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-    
+
   subroutine compute_seismograms_adjoint(NSOURCES,nrec_local,displ_crust_mantle, &
                     eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
@@ -210,7 +210,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer NSOURCES,nrec_local
-  
+
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
     displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
@@ -240,19 +240,19 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NDIM,nrec_local) :: moment_der
   real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local) :: sloc_der
-  
+
   integer NTSTEP_BETWEEN_OUTPUT_SEISMOS
-  
+
   real(kind=CUSTOM_REAL), dimension(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: &
     seismograms
   real(kind=CUSTOM_REAL) :: deltat
-    
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
   integer,dimension(NSOURCES) :: ispec_selected_source
-  integer, dimension(nrec_local) :: number_receiver_global  
-  integer :: NSTEP,it,nit_written  
-  
+  integer, dimension(nrec_local) :: number_receiver_global
+  integer :: NSTEP,it,nit_written
+
   ! local parameters
   double precision :: uxd,uyd,uzd,hlagrange
   double precision :: eps_trace,dxx,dyy,dxy,dxz,dyz
@@ -356,10 +356,10 @@
 
     stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-t_cmt(irec),hdur_gaussian(irec))
     stf_deltat = stf * deltat
-    
+
     moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
     sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_s(:) * stf_deltat
 
   enddo
-  
-  end subroutine compute_seismograms_adjoint  
+
+  end subroutine compute_seismograms_adjoint

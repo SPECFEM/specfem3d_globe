@@ -81,9 +81,9 @@
   double precision R_CENTRAL_CUBE,RICB,RCMB,R670,RMOHO, &
           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
           RMOHO_FICTITIOUS_IN_MESHER
-  
+
   double precision RHO_OCEANS
-  
+
   character(len=150) LOCAL_PATH,errmsg
 
   ! arrays with the mesh in double precision
@@ -184,7 +184,7 @@
   ! number of elements on the boundaries
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
 
-  integer i,j,k,ispec 
+  integer i,j,k,ispec
   integer iproc_xi,iproc_eta,ichunk
 
   double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
@@ -203,7 +203,7 @@
 
   integer NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
     first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
-    
+
   double precision, dimension(:,:), allocatable :: stretch_tab
 
   integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
@@ -234,7 +234,7 @@
     nspec_att = nspec
   else
     nspec_att = 1
-  end if 
+  end if
   allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att))
   allocate(tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att))
 
@@ -405,7 +405,7 @@
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   allocate (perm_layer(ifirst_region:ilast_region))
   perm_layer = (/ (i, i=ilast_region,ifirst_region,-1) /)
-  
+
   if(iregion_code == IREGION_CRUST_MANTLE) then
     cpt=3
     perm_layer(1)=first_layer_aniso
@@ -418,7 +418,7 @@
     enddo
   endif
 
-  ! crustal layer stretching: element layer's top and bottom radii will get stretched when in crust 
+  ! crustal layer stretching: element layer's top and bottom radii will get stretched when in crust
   ! (number of element layers in crust can vary for different resolutions and 1chunk simulations)
   allocate(stretch_tab(2,ner(1)))
   if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
@@ -427,9 +427,9 @@
     ! number of element layers in this crust region
     call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
 
-    ! RMIDDLE_CRUST so far is only used for 1D - models with two layers in the crust 
+    ! RMIDDLE_CRUST so far is only used for 1D - models with two layers in the crust
     ! (i.e. ONE_CRUST is set to .false.), those models do not use CASE_3D
-    
+
     ! all 3D models use this stretching function to honor a 3D crustal model
     ! for those models, we set RMIDDLE_CRUST to the bottom of the first element layer
     ! this value will be used in moho_stretching.f90 to decide whether or not elements
@@ -437,7 +437,7 @@
     !
     ! note: stretch_tab uses (dimensionalized) radii from r_top and r_bottom
     !(with stretch_tab( index_radius(1=top,2=bottom), index_layer( 1=first layer, 2=second layer, 3= ...) )
-    RMIDDLE_CRUST = stretch_tab(2,1) 
+    RMIDDLE_CRUST = stretch_tab(2,1)
 
   endif
 
@@ -507,8 +507,8 @@
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot)
-    
-    
+
+
     ! mesh doubling elements
     if( this_region_has_a_doubling(ilayer) ) &
       call create_doubling_elements(myrank,ilayer,ichunk,ispec,ipass, &
@@ -652,20 +652,20 @@
     ! create AVS or DX mesh data for the slices
     if(SAVE_MESH_FILES) then
       call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
-      
+
       call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
-              
+
       call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
               rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
               ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
               RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-              RMIDDLE_CRUST,ROCEAN,iregion_code) 
-              
+              RMIDDLE_CRUST,ROCEAN,iregion_code)
+
       call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
-              
+
       !> Hejun
       ! Output material information for all GLL points
       ! Can be use to check the mesh
@@ -701,7 +701,7 @@
               xigll,yigll,zigll)
 
     ! allocates mass matrix in this slice (will be fully assembled in the solver)
-    allocate(rmass(nglob),stat=ier); if(ier /= 0) stop 'error in allocate'    
+    allocate(rmass(nglob),stat=ier); if(ier /= 0) stop 'error in allocate'
     ! allocates ocean load mass matrix as well if oceans
     if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
       nglob_oceans = nglob
@@ -718,8 +718,8 @@
                           gammaxstore,gammaystore,gammazstore, &
                           iregion_code,nglob,rmass,rhostore,kappavstore, &
                           nglob_oceans,rmass_ocean_load,NSPEC2D_TOP,ibelm_top,jacobian2D_top, &
-                          xstore,ystore,zstore,RHO_OCEANS)    
-  
+                          xstore,ystore,zstore,RHO_OCEANS)
+
     ! save the binary files
     call save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
                   prname,iregion_code,xixstore,xiystore,xizstore, &
@@ -783,7 +783,7 @@
                             nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                             NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
-                            
+
 
   else
     stop 'there cannot be more than two passes in mesh creation'
@@ -858,7 +858,7 @@
                         ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
                         iregion_code,ifirst_region,ilast_region, &
                         first_layer_aniso,last_layer_aniso,nb_layer_above_aniso)
-  
+
 ! create the different regions of the mesh
 
   implicit none
@@ -871,7 +871,7 @@
   double precision wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
 
   double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ),dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ)
-  
+
   double precision shape2D_x(NGNOD2D,NGLLY,NGLLZ),shape2D_y(NGNOD2D,NGLLX,NGLLZ)
   double precision shape2D_bottom(NGNOD2D,NGLLX,NGLLY),shape2D_top(NGNOD2D,NGLLX,NGLLY)
   double precision dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ),dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ)
@@ -885,10 +885,10 @@
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
   integer idoubling(nspec)
-  
+
   logical iboun(6,nspec)
   logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
-  
+
   integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
     ispec2D_670_top,ispec2D_670_bot
   integer NEX_PER_PROC_ETA,nex_eta_moho
@@ -993,7 +993,7 @@
 
   end subroutine crm_initialize_layers
 
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -1002,13 +1002,13 @@
                             nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                             NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
-  
+
   implicit none
-  
+
   include "constants.h"
 
   double precision :: volume_local,area_local_bottom,area_local_top
-  
+
   integer :: nspec
   double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
 
@@ -1018,12 +1018,12 @@
   integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM) :: jacobian2D_bottom
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP) :: jacobian2D_top
-  
+
   ! local parameters
   double precision :: weight
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   integer :: i,j,k,ispec
-    
+
   ! initializes
   volume_local = ZERO
   area_local_bottom = ZERO
@@ -1075,7 +1075,7 @@
       enddo
     enddo
   enddo
-  
-  
+
+
   end subroutine crm_compute_volumes
-  
+

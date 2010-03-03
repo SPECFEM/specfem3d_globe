@@ -289,7 +289,7 @@
             if(ATTENUATION_VAL) then
               mul = mul * one_minus_sum_beta(i,j,k,ispec)
             endif
-          
+
             lambdalplus2mul = kappal + FOUR_THIRDS * mul
             lambdal = lambdalplus2mul - 2.*mul
 
@@ -434,7 +434,7 @@
               rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
 
             endif
-  
+
           endif  ! end of section with gravity terms
 
 ! form dot product with test vector, non-symmetric form

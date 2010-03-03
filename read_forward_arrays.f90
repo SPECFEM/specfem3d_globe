@@ -45,14 +45,14 @@
 ! reads in saved wavefields
 
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
-  
+
   integer myrank,NSTEP
 
   integer SIMULATION_TYPE
-  
+
   integer NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,it_begin,it_end
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -178,4 +178,4 @@
   endif
 
   end subroutine read_forward_arrays
-  
+

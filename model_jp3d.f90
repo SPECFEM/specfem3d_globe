@@ -61,7 +61,7 @@
 
   subroutine model_jp3d_broadcast(myrank,JP3DM_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -139,7 +139,7 @@
 
   integer :: myrank
   integer :: ier
-  
+
   if(myrank == 0) call read_jp3d_iso_zhao_model(JP3DM_V)
 
   ! JP3DM_V
@@ -204,7 +204,7 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
   subroutine read_jp3d_iso_zhao_model(JP3DM_V)
 
   implicit none
@@ -287,7 +287,7 @@
 
   end subroutine read_jp3d_iso_zhao_model
 
-!  
+!
 !==========================================================================
 !
 
@@ -395,11 +395,11 @@
   ELSE
      LAY = 4
   END IF
-  
+
   CALL VEL1D(HE,vp,LAY,1,JP3DM_V)
   CALL VEL1D(HE,vs,LAY,2,JP3DM_V)
   CALL VEL3(PE,RE,HE,dvp,LAY,JP3DM_V)
-  
+
   dvp = 0.01d0*dvp
   dvs = 1.5d0*dvp
   vp = vp*(1.0d0+dvp)
@@ -421,7 +421,7 @@
   rho=rho*1000.0d0/RHOAV
   vp=vp*1000.0d0/(R_EARTH*scaleval)
   vs=vs*1000.0d0/(R_EARTH*scaleval)
-  
+
   END subroutine model_jp3d_iso_zhao
 
 !
@@ -854,7 +854,7 @@
 !
 !---------------------------------------------------------------------------------------
 !
-  
+
   SUBROUTINE VABPS(MP,MR,MH,V,VEL,JP3DM_V)
   implicit none
 
@@ -1052,7 +1052,7 @@
 !
 !----------------------------------------------------------------------------------------------
 !
-  
+
   SUBROUTINE HLAY(PE,RE,HE,IJK,JP3DM_V)
   implicit none
 

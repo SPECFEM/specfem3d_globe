@@ -25,10 +25,10 @@
 !
 !=====================================================================
 
- 
+
   subroutine save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
-                  alpha_kl_crust_mantle,beta_kl_crust_mantle, &  
+                  alpha_kl_crust_mantle,beta_kl_crust_mantle, &
                   ystore_crust_mantle,zstore_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
@@ -40,7 +40,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank
-  
+
   double precision :: scale_t,scale_displ
 
   real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
@@ -54,7 +54,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
         rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
-    
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
   character(len=150) LOCAL_PATH
@@ -62,12 +62,12 @@
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle
-  real(kind=CUSTOM_REAL),dimension(21) ::  cijkl_kl_local   
+  real(kind=CUSTOM_REAL),dimension(21) ::  cijkl_kl_local
   real(kind=CUSTOM_REAL) :: scale_kl,scale_kl_ani,scale_kl_rho
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k,iglob
   character(len=150) prname
-  
+
 
   scale_kl = scale_t/scale_displ * 1.d9
   ! For anisotropic kernels
@@ -92,7 +92,7 @@
             ! ystore and zstore are thetaval and phival (line 2252) -- dangerous
             call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local, &
                  ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
-                 
+
             cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_local * scale_kl_ani
             rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
 
@@ -101,7 +101,7 @@
             rhol = rhostore_crust_mantle(i,j,k,ispec)
             mul = muvstore_crust_mantle(i,j,k,ispec)
             kappal = kappavstore_crust_mantle(i,j,k,ispec)
-            
+
             ! kernel values for rho, kappa, mu
             rho_kl = - rhol * rho_kl_crust_mantle(i,j,k,ispec)
             alpha_kl = - kappal * alpha_kl_crust_mantle(i,j,k,ispec)
@@ -110,7 +110,7 @@
             rhonotprime_kl_crust_mantle(i,j,k,ispec) = rho_kl * scale_kl
             mu_kl_crust_mantle(i,j,k,ispec) = beta_kl * scale_kl
             kappa_kl_crust_mantle(i,j,k,ispec) = alpha_kl * scale_kl
-            
+
             ! kernels rho^prime, beta, alpha
             rho_kl_crust_mantle(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
             beta_kl_crust_mantle(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
@@ -160,26 +160,26 @@
 
   endif
 
- 
+
   end subroutine save_kernels_crust_mantle
 
-!  
+!
 !-------------------------------------------------------------------------------------------------
-!  
- 
+!
+
   subroutine save_kernels_outer_core(myrank,scale_t,scale_displ, &
                         rho_kl_outer_core,alpha_kl_outer_core, &
                         rhostore_outer_core,kappavstore_outer_core, &
                         deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
                         LOCAL_PATH)
-                        
+
   implicit none
 
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank
-  
+
   double precision :: scale_t,scale_displ
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: &
@@ -197,10 +197,10 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
-  real(kind=CUSTOM_REAL) :: rhol,kappal,rho_kl,alpha_kl,beta_kl  
+  real(kind=CUSTOM_REAL) :: rhol,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k
   character(len=150) prname
-  
+
   scale_kl = scale_t/scale_displ * 1.d9
 
   ! outer_core
@@ -212,17 +212,17 @@
           kappal = kappavstore_outer_core(i,j,k,ispec)
           rho_kl = - rhol * rho_kl_outer_core(i,j,k,ispec)
           alpha_kl = - kappal * alpha_kl_outer_core(i,j,k,ispec)
-          
+
           rho_kl_outer_core(i,j,k,ispec) = (rho_kl + alpha_kl) * scale_kl
           alpha_kl_outer_core(i,j,k,ispec) = 2 * alpha_kl * scale_kl
-          
-          
+
+
           !deviatoric kernel check
           if( deviatoric_outercore ) then
             beta_kl =  - 2 * beta_kl_outer_core(i,j,k,ispec)  ! not using mul, since it's zero for the fluid
             beta_kl_outer_core(i,j,k,ispec) = beta_kl
           endif
-          
+
         enddo
       enddo
     enddo
@@ -240,15 +240,15 @@
   if( deviatoric_outercore ) then
     open(unit=27,file=trim(prname)//'mu_kernel.bin',status='unknown',form='unformatted',action='write')
     write(27) beta_kl_outer_core
-    close(27)        
+    close(27)
   endif
- 
+
   end subroutine save_kernels_outer_core
-  
-!  
+
+!
 !-------------------------------------------------------------------------------------------------
-!  
- 
+!
+
   subroutine save_kernels_inner_core(myrank,scale_t,scale_displ, &
                           rho_kl_inner_core,beta_kl_inner_core,alpha_kl_inner_core, &
                           rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
@@ -259,9 +259,9 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank
-  
+
   double precision :: scale_t,scale_displ
-  
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
     rho_kl_inner_core, beta_kl_inner_core, alpha_kl_inner_core
 
@@ -272,10 +272,10 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
-  real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl  
+  real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k
   character(len=150) prname
-  
+
 
   scale_kl = scale_t/scale_displ * 1.d9
 
@@ -287,11 +287,11 @@
           rhol = rhostore_inner_core(i,j,k,ispec)
           mul = muvstore_inner_core(i,j,k,ispec)
           kappal = kappavstore_inner_core(i,j,k,ispec)
-          
+
           rho_kl = -rhol * rho_kl_inner_core(i,j,k,ispec)
           alpha_kl = -kappal * alpha_kl_inner_core(i,j,k,ispec)
           beta_kl =  - 2 * mul * beta_kl_inner_core(i,j,k,ispec)
-          
+
           rho_kl_inner_core(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
           beta_kl_inner_core(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
           alpha_kl_inner_core(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
@@ -310,13 +310,13 @@
   open(unit=27,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) beta_kl_inner_core
   close(27)
-  
+
   end subroutine save_kernels_inner_core
 
-!  
+!
 !-------------------------------------------------------------------------------------------------
-!  
- 
+!
+
   subroutine save_kernels_boundary_kl(myrank,scale_t,scale_displ, &
                                   moho_kl,d400_kl,d670_kl,cmb_kl,icb_kl, &
                                   LOCAL_PATH,HONOR_1D_SPHERICAL_MOHO)
@@ -327,7 +327,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank
-  
+
   double precision :: scale_t,scale_displ
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_MOHO) :: moho_kl
@@ -339,7 +339,7 @@
   character(len=150) LOCAL_PATH
 
   logical HONOR_1D_SPHERICAL_MOHO
-  
+
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
   character(len=150) prname
@@ -356,39 +356,39 @@
   icb_kl = icb_kl * scale_kl * 1.d3
 
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-  
+
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
     open(unit=27,file=trim(prname)//'moho_kernel.bin',status='unknown',form='unformatted',action='write')
     write(27) moho_kl
     close(27)
   endif
-  
+
   open(unit=27,file=trim(prname)//'d400_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) d400_kl
   close(27)
-  
+
   open(unit=27,file=trim(prname)//'d670_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) d670_kl
   close(27)
-  
+
   open(unit=27,file=trim(prname)//'CMB_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) cmb_kl
   close(27)
-  
+
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-  
+
   open(unit=27,file=trim(prname)//'ICB_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) icb_kl
   close(27)
 
-  
-  end subroutine save_kernels_boundary_kl
-  
 
-!  
+  end subroutine save_kernels_boundary_kl
+
+
+!
 !-------------------------------------------------------------------------------------------------
-!  
- 
+!
+
   subroutine save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
                                 nu_source,moment_der,sloc_der,number_receiver_global)
 
@@ -404,7 +404,7 @@
   real(kind=CUSTOM_REAL) :: moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local)
 
   integer, dimension(nrec_local) :: number_receiver_global
-  
+
   ! local parameters
   real(kind=CUSTOM_REAL),parameter :: scale_mass = RHOAV * (R_EARTH**3)
   integer :: irec_local
@@ -416,7 +416,7 @@
     ! rotate and scale the location derivatives to correspond to dn,de,dz
     sloc_der(:,irec_local) = matmul(nu_source(:,:,irec_local),sloc_der(:,irec_local)) &
                              * scale_displ * scale_t
-                             
+
     ! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
     moment_der(:,:,irec_local) = matmul(matmul(nu_source(:,:,irec_local),moment_der(:,:,irec_local)),&
                transpose(nu_source(:,:,irec_local))) * scale_t ** 3 / scale_mass
@@ -448,4 +448,4 @@
 
   end subroutine save_kernels_source_derivatives
 
-    
+

@@ -305,7 +305,7 @@
   else
    NIT = 1
   endif
-  
+
   write(prname,"('proc',i6.6)") myrank
   ipoints_3dmovie=0
   do ispec=1,NSPEC_CRUST_MANTLE

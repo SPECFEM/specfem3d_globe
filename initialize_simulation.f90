@@ -56,9 +56,9 @@
                 hprimewgll_xx,hprimewgll_yy,hprimewgll_zz,hprimewgll_xxT, &
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
                 rec_filename,STATIONS,nrec)
-  
+
   implicit none
-  
+
   include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
@@ -85,12 +85,12 @@
           SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT,&
           OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE
-          
+
   character(len=150) LOCAL_PATH,OUTPUT_FILES
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ratio_sampling_array,ner
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-  
+
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
 
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
@@ -98,8 +98,8 @@
 
 
   ! mesh model parameters
-  logical TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST        
-  logical COMPUTE_AND_STORE_STRAIN  
+  logical TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST
+  logical COMPUTE_AND_STORE_STRAIN
 
   ! for ellipticity
   integer nspl
@@ -111,7 +111,7 @@
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
-  
+
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll,wxgll
   double precision, dimension(NGLLY) :: yigll,wygll
@@ -122,36 +122,36 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy,hprimewgll_yy
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT  
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
 
   character(len=150) rec_filename,STATIONS
   integer nrec
-      
+
   ! local parameters
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_computed,NGLOB_computed, &
-               NSPEC2D_XI,NSPEC2D_ETA,NSPEC1D_RADIAL      
+               NSPEC2D_XI,NSPEC2D_ETA,NSPEC1D_RADIAL
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   integer :: ratio_divide_central_cube
   integer :: sizeprocs
-  integer :: ier,i,j,ios 
-  integer :: NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS,NPROC_XI,NPROC_ETA  
+  integer :: ier,i,j,ios
+  integer :: NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS,NPROC_XI,NPROC_ETA
   double precision :: RMOHO_FICTITIOUS_IN_MESHER,R120,R_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,&
    CENTER_LATITUDE_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES,&
    GAMMA_ROTATION_AZIMUTH
-  integer :: REFERENCE_1D_MODEL,THREE_D_MODEL  
+  integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
   logical :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
     ATTENUATION,ATTENUATION_3D,ROTATION,ELLIPTICITY,GRAVITY,CASE_3D,ISOTROPIC_3D_MANTLE, &
-    HETEROGEN_3D_MANTLE,CRUSTAL,INFLATE_CENTRAL_CUBE    
-  character(len=150) :: MODEL,dummystring    
+    HETEROGEN_3D_MANTLE,CRUSTAL,INFLATE_CENTRAL_CUBE
+  character(len=150) :: MODEL,dummystring
   ! if running on MareNostrum in Barcelona
-  character(len=400) :: system_command    
+  character(len=400) :: system_command
   integer, external :: err_occurred
-  
+
 
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
@@ -199,7 +199,7 @@
     if(err_occurred() /= 0) then
       call exit_MPI(myrank,'an error occurred while reading the parameter file')
     endif
-    
+
   endif
 
   ! distributes parameters from master to all processes
@@ -232,7 +232,7 @@
                 this_region_has_a_doubling,rmins,rmaxs, &
                 ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                 DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-                REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &  
+                REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
                 HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
                 ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE)
@@ -305,7 +305,7 @@
     write(IMAIN,*)
 
     write(IMAIN,*) 'model:'
-    
+
     if(ISOTROPIC_3D_MANTLE) then
       write(IMAIN,*) '  incorporates 3-D lateral variations'
     else
@@ -341,10 +341,10 @@
     else
       write(IMAIN,*) '  no general mantle anisotropy'
     endif
-    
+
     write(IMAIN,*)
     write(IMAIN,*)
-    
+
   endif
 
   ! check that the code is running with the requested nb of processes
@@ -447,12 +447,12 @@
   if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
      call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
-  ! checks attenuation 
+  ! checks attenuation
   if( ATTENUATION_VAL ) then
     if (NSPEC_CRUST_MANTLE_ATTENUAT /= NSPEC_CRUST_MANTLE) &
        call exit_MPI(myrank, 'NSPEC_CRUST_MANTLE_ATTENUAT /= NSPEC_CRUST_MANTLE, exit')
     if (NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE) &
-       call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')  
+       call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')
     if( ATTENUATION_MIMIK ) then
       print *,'Attenuation set true, no mimiking possible'
       call exit_MPI(myrank,'attenuation and attenuation_mimik confilct')
@@ -466,7 +466,7 @@
     COMPUTE_AND_STORE_STRAIN = .false.
   endif
 
-  
+
   ! make ellipticity
   if(ELLIPTICITY_VAL) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
@@ -488,7 +488,7 @@
         hprime_xxT(j,i) = hprime_xx(i,j)
         hprimewgll_xxT(j,i) = hprimewgll_xx(i,j)
       enddo
-    enddo    
+    enddo
   endif
 
   ! counts receiver stations
@@ -514,5 +514,5 @@
 
 
   end subroutine initialize_simulation
-  
-  
+
+

@@ -204,5 +204,5 @@ subroutine model_jp1d(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling, &
   rho=rho*1000.0d0/RHOAV
   vp=vp*1000.0d0/(R_EARTH*scaleval)
   vs=vs*1000.0d0/(R_EARTH*scaleval)
-  
+
   end subroutine model_jp1d

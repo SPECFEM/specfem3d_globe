@@ -52,8 +52,8 @@
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                     CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta)
-    
-  
+
+
 ! adds doubling elements to the different regions of the mesh
 
   use meshfem3D_models_par
@@ -64,7 +64,7 @@
   ! code for the four regions of the mesh
   integer iregion_code
   ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS 
+  integer nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS
   integer NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
@@ -148,26 +148,26 @@
   real(kind=CUSTOM_REAL) jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
   real(kind=CUSTOM_REAL) jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
   real(kind=CUSTOM_REAL) jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
-    
+
   integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
 
   integer :: offset_proc_xi,offset_proc_eta
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
 
   ! local parameters
-  double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick  
+  double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick
   double precision, dimension(NGNOD) :: offset_x,offset_y,offset_z
   double precision, dimension(NGNOD) :: xelm,yelm,zelm
   double precision :: r1,r2,r3,r4,r5,r6,r7,r8
   ! mesh doubling superbrick
-  integer, dimension(NGNOD_EIGHT_CORNERS,NSPEC_DOUBLING_SUPERBRICK) :: ibool_superbrick  
+  integer, dimension(NGNOD_EIGHT_CORNERS,NSPEC_DOUBLING_SUPERBRICK) :: ibool_superbrick
   integer :: ix_elem,iy_elem,iz_elem,ignod,ispec_superbrick,case_xi,case_eta
   integer :: step_mult,subblock_num
-  integer :: nspec_sb  
+  integer :: nspec_sb
   logical, dimension(NSPEC_DOUBLING_SUPERBRICK,6) :: iboun_sb
   logical :: is_superbrick
 
- 
+
 ! If there is a doubling at the top of this region, let us add these elements.
 ! The superbrick implements a symmetric four-to-two doubling and therefore replaces
 ! a basic regular block of 2 x 2 = 4 elements.
@@ -363,5 +363,5 @@
       enddo
     enddo
   enddo
-   
+
   end subroutine create_doubling_elements

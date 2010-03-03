@@ -63,7 +63,7 @@
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
-    integer dummy_pad ! padding 4 bytes to align the structure    
+    integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
 
 ! for forward or backward simulations
@@ -404,7 +404,7 @@
         !mimik: apparent velocity shift
               if( ATTENUATION_MIMIK) then
                 muvl = muvl * ATTENUATION_MIMIK_FACTOR
-                muhl = muhl * ATTENUATION_MIMIK_FACTOR  
+                muhl = muhl * ATTENUATION_MIMIK_FACTOR
               endif
 
               rhovpvsq = kappavl + FOUR_THIRDS * muvl  !!! that is C
@@ -697,7 +697,7 @@
               rho_s_H(3,i,j,k) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
 
             else
-          
+
         ! get displacement and multiply by density to compute G tensor
               sx_l = rho * displ(1,iglob)
               sy_l = rho * displ(2,iglob)

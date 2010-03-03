@@ -53,8 +53,8 @@
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot)
-    
-  
+
+
 ! adds a regular spectral element to the different regions of the mesh
 
   use meshfem3D_models_par
@@ -65,10 +65,10 @@
   ! code for the four regions of the mesh
   integer iregion_code
   ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS 
+  integer nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS
   integer NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
-  integer :: ner_without_doubling 
+  integer :: ner_without_doubling
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
 
@@ -156,7 +156,7 @@
   real(kind=CUSTOM_REAL) jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
   real(kind=CUSTOM_REAL) jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
   real(kind=CUSTOM_REAL) jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
-    
+
   integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
 
@@ -166,7 +166,7 @@
   double precision :: r1,r2,r3,r4,r5,r6,r7,r8
   integer :: ix_elem,iy_elem,iz_elem,ignod,ispec_superbrick
   logical :: is_superbrick
-    
+
   ! loop on all the elements
   do ix_elem = 1,NEX_PER_PROC_XI,ratio_sampling_array(ilayer)
     do iy_elem = 1,NEX_PER_PROC_ETA,ratio_sampling_array(ilayer)
@@ -187,7 +187,7 @@
         ! compute the actual position of all the grid points of that element
         if (ilayer == 1 .and. CASE_3D .and. .not. SUPPRESS_CRUSTAL_MESH) then
           ! crustal elements are stretched to be thinner in the upper crust than in lower crust in the 3D case
-          ! max ratio between size of upper crust elements and 
+          ! max ratio between size of upper crust elements and
           ! lower crust elements is given by the param MAX_RATIO_STRETCHING
           ! to avoid stretching, set MAX_RATIO_STRETCHING = 1.0d  in constants.h
           call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &

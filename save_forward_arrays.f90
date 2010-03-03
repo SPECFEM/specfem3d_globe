@@ -34,12 +34,12 @@
                     epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation, &
                     LOCAL_PATH)
-  
+
   implicit none
 
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
-  
+
   integer myrank
 
   integer SIMULATION_TYPE
@@ -68,9 +68,9 @@
   character(len=150) LOCAL_PATH
 
   ! local parameters
-  character(len=150) outputname  
+  character(len=150) outputname
 
-    
+
   ! save files to local disk or tape system if restart file
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
     write(outputname,"('dump_all_arrays',i6.6)") myrank

@@ -209,16 +209,16 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
   real(kind=CUSTOM_REAL) :: junk
   character(len=3),dimension(NDIM) :: comp = (/ "LHN", "LHE", "LHZ" /)
   character(len=150) :: filename
-  
+
   ! (sub)trace start and end
   ! reading starts in chunks of NSTEP_BLOCK from the end of the trace,
-  ! i.e. as an example: total length NSTEP = 3000, chunk length NSTEP_BLOCK= 1000  
-  !                                then it will read in first it_start=2001 to it_end=3000, 
+  ! i.e. as an example: total length NSTEP = 3000, chunk length NSTEP_BLOCK= 1000
+  !                                then it will read in first it_start=2001 to it_end=3000,
   !                                second time, it will be it_start=1001 to it_end=2000 and so on...
   it_start = iadjsrc(it_sub_adj,1)
   it_end = iadjsrc(it_sub_adj,1)+NSTEP_BLOCK-1
 
-  
+
   ! unfortunately, things become more tricky because of the Newark time scheme at
   ! the very beginning of the time loop.
   !
@@ -230,7 +230,7 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
   ! that is e.g., it_start is now 2000 and it_end = 2999, then 1000 to 1999, then 0 to 999.
   it_start = it_start - 1
   it_end = it_end - 1
-  
+
   adj_src = 0._CUSTOM_REAL
   do icomp = 1, NDIM
 
@@ -238,7 +238,7 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
     open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ios)
     if (ios /= 0) cycle ! cycles to next file
-     
+
     ! jumps over unused trace length
     do itime =1,it_start-1
       read(IIN,*,iostat=ios) junk,junk
@@ -246,33 +246,33 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
         call exit_MPI(myrank,&
           'file '//trim(filename)//' has wrong length, please check with your simulation duration')
     enddo
-     
+
     ! reads in (sub)trace
     do itime = it_start,it_end
 
       ! index will run from 1 to NSTEP_BLOCK
       index_i = itime - it_start + 1
-    
+
       ! skips read and sets source artifically to zero if out of bounds, see comments above
-      if( it_start == 0 .and. itime == 0 ) then 
+      if( it_start == 0 .and. itime == 0 ) then
         adj_src(icomp,1) = 0._CUSTOM_REAL
         cycle
       endif
-      
+
       ! reads in adjoint source trace
       !read(IIN,*,iostat=ios) junk, adj_src(icomp,itime-it_start+1)
       read(IIN,*,iostat=ios) junk, adj_src(icomp,index_i)
-      
+
       if( ios /= 0) &
         call exit_MPI(myrank, &
           'file '//trim(filename)//' has wrong length, please check with your simulation duration')
     enddo
-    
+
     close(IIN)
 
   enddo
 
-  ! non-dimensionalize 
+  ! non-dimensionalize
   adj_src = adj_src*scale_displ_inv
 
   ! rotates to cartesian
@@ -282,7 +282,7 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
                        + nu(3,:) * adj_src(3,itime)
   enddo
 
-  ! receiver interpolators  
+  ! receiver interpolators
   call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
   call lagrange_any(eta_receiver,NGLLY,yigll,hetar,hpetar)
   call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)

@@ -30,9 +30,9 @@
                           eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           COMPUTE_AND_STORE_STRAIN,myrank)
-  
+
   implicit none
-  
+
   include 'mpif.h'
   include "constants.h"
   include "precision.h"
@@ -40,7 +40,7 @@
 
   ! time step
   integer it,NSTEP,myrank
-    
+
   ! displacement
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core
@@ -61,7 +61,7 @@
   double precision :: time_start,DT,t0
 
   logical COMPUTE_AND_STORE_STRAIN
-  
+
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
@@ -70,7 +70,7 @@
   ! names of the data files for all the processors in MPI
   character(len=150) outputname
   ! timer MPI
-  double precision :: tCPU,t_remain,t_total  
+  double precision :: tCPU,t_remain,t_total
   integer :: ihours,iminutes,iseconds,int_tCPU, &
              ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
              ihours_total,iminutes_total,iseconds_total,int_t_total
@@ -87,10 +87,10 @@
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer :: ier
   integer, external :: idaywk
-  
+
   double precision,parameter :: scale_displ = R_EARTH
 
-     
+
   ! compute maximum of norm of displacement in each slice
   Usolidnorm = max( &
       maxval(sqrt(displ_crust_mantle(1,:)**2 + &
@@ -104,7 +104,7 @@
                       MPI_COMM_WORLD,ier)
   call MPI_REDUCE(Ufluidnorm,Ufluidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                       MPI_COMM_WORLD,ier)
-                      
+
   if (SIMULATION_TYPE == 3) then
     b_Usolidnorm = max( &
              maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
@@ -140,13 +140,13 @@
     Usolidnorm_all = Usolidnorm_all * sngl(scale_displ)
     write(IMAIN,*) 'Max norm displacement vector U in solid in all slices (m) = ',Usolidnorm_all
     write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices = ',Ufluidnorm_all
-    
+
     if (SIMULATION_TYPE == 3) then
       b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
       write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
       write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
     endif
-    
+
     if(COMPUTE_AND_STORE_STRAIN) then
       write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
       write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
@@ -333,14 +333,14 @@
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the solid')
     if(Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0) &
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
-      
+
     if(SIMULATION_TYPE == 3) then
       if(b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
       if(b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the fluid')
     endif
-    
+
   endif
-  
+
   end subroutine check_simulation_stability

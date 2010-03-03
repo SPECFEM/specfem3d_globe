@@ -36,7 +36,7 @@
 
   subroutine model_topo_bathy_broadcast(myrank,ibathy_topo)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -49,12 +49,12 @@
 
   integer :: myrank
   integer :: ier
-  
+
   if(myrank == 0) call read_topo_bathy_file(ibathy_topo)
-  
+
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)  
-  
+  call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
   end subroutine model_topo_bathy_broadcast
 
 !
@@ -91,10 +91,10 @@
     enddo
   enddo
   close(13)
-  
+
   ! note: we check the limits after reading in the data. this seems to perform sligthly faster
   !          however, reading ETOPO1.xyz will take ~ 2m 1.2s for a single process
-  
+
   ! imposes limits
   if( USE_MAXIMUM_HEIGHT_TOPO .or. USE_MAXIMUM_DEPTH_OCEANS ) then
     do itopo_y=1,NY_BATHY
@@ -110,7 +110,7 @@
 
       enddo
     enddo
-    
+
   endif
 
   end subroutine read_topo_bathy_file
@@ -181,10 +181,10 @@
     value = dble(ibathy_topo(iel1,iadd1))*(1-ratio_lon)*(1.-ratio_lat) &
             + dble(ibathy_topo(1,iadd1))*ratio_lon*(1.-ratio_lat) &
             + dble(ibathy_topo(1,iadd1+1))*ratio_lon*ratio_lat &
-            + dble(ibathy_topo(iel1,iadd1+1))*(1.-ratio_lon)*ratio_lat  
+            + dble(ibathy_topo(iel1,iadd1+1))*(1.-ratio_lon)*ratio_lat
   else
     ! for points on latitude boundaries
-    value = dble(ibathy_topo(iel1,iadd1))  
+    value = dble(ibathy_topo(iel1,iadd1))
   endif
 
   end subroutine get_topo_bathy

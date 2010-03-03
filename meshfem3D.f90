@@ -193,10 +193,10 @@
 ! ---------------------
 !
 ! v. 5.0 aka Tiger, many developers some with Princeton Tiger logo on their shirts, February 2010:
-!     new moho mesh stretching honoring crust2.0 moho depths, 
+!     new moho mesh stretching honoring crust2.0 moho depths,
 !     new attenuation assignment, new SAC headers, new general crustal models,
 !     faster performance due to Deville routines and enhanced loop unrolling,
-!     slight changes in code structure 
+!     slight changes in code structure
 !
 ! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
 !      new doubling brick in the mesh, new perfectly load-balanced mesh,
@@ -287,9 +287,9 @@
   integer myrank,sizeprocs,ier
 
 ! check area and volume of the final mesh
-  double precision area_local_bottom 
-  double precision area_local_top 
-  double precision volume_local,volume_total 
+  double precision area_local_bottom
+  double precision area_local_top
+  double precision volume_local,volume_total
 
   !integer iprocnum
 
@@ -407,7 +407,7 @@
 ! trivia about the programming style adopted here
 !
 ! note 1: in general, we do not use modules in the fortran codes. this seems to
-!             be mainly a performance reason. changing the codes to adopt modules 
+!             be mainly a performance reason. changing the codes to adopt modules
 !             will have to prove that it performs as fast as it does without now.
 !
 !             another reason why modules are avoided, is to make the code thread safe.
@@ -428,7 +428,7 @@
 !                     put your model structure into the module "meshfem3D_models_par"
 !                     and add your specific routine calls to get 1D/3D/attenuation values.
 !
-!                 - get_model_parameters.f90: 
+!                 - get_model_parameters.f90:
 !                     set your specific model flags and radii
 !
 !                 - read_compute_parameters.f90:
@@ -439,13 +439,13 @@
 !                     in general, this file should have as first routine the model_***_broadcast() routine
 !                     implemented which deals with passing the model structure to all processes.
 !                     this involves reading in model specific data which is normally put in directory DATA/
-!                     then follows a routine that returns the velocity values 
+!                     then follows a routine that returns the velocity values
 !                     (as perturbation to the associated 1D reference model) for a given point location.
-! 
-!             finally, in order to compile the new mesher with your new file(s), 
-!             you will add it to the list in the 'Makefile.in' file and run 
+!
+!             finally, in order to compile the new mesher with your new file(s),
+!             you will add it to the list in the 'Makefile.in' file and run
 !             `configure` to recreate a new Makefile.
-!             
+!
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -551,11 +551,11 @@
                 this_region_has_a_doubling,rmins,rmaxs, &
                 ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                 DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
-                REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &  
+                REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
                 HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
                 ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE)
-  
+
   ! check that the code is running with the requested number of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
 
@@ -563,7 +563,7 @@
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * PI / 180.d0
   ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * PI / 180.d0
   if(NCHUNKS /= 6) call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
-  
+
 
 ! DK DK UGLY if running on MareNostrum in Barcelona
   if(RUN_ON_MARENOSTRUM_BARCELONA) then
@@ -622,18 +622,18 @@
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                         NPROCTOT,iproc_xi_slice,iproc_eta_slice, &
                         NSPEC1D_RADIAL_CORNER,NSPEC2D_XI_FACE, &
-                        NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER)  
+                        NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER)
 
   ! user output
   if(myrank == 0) call meshfem3D_output_info(myrank,sizeprocs,NEX_XI,NEX_ETA, &
                                            NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT, &
                                            R_CENTRAL_CUBE)
-  
-  ! distributes 3D models 
+
+  ! distributes 3D models
   call meshfem3D_models_broadcast(myrank,NSPEC, &
                                 MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
                                 R80,R220,R670,RCMB,RICB)
-  
+
 
   if(myrank == 0 ) then
     write(IMAIN,*)
@@ -692,7 +692,7 @@
 
     ! create all the regions of the mesh
     ! perform two passes in this part to be able to save memory
-    do ipass = 1,2  
+    do ipass = 1,2
 
       call create_regions_mesh(iregion_code,ibool,idoubling, &
                           xstore,ystore,zstore,rmins,rmaxs, &
@@ -727,7 +727,7 @@
                               area_local_bottom,area_local_top,&
                               volume_local,volume_total, &
                               RCMB,RICB,R_CENTRAL_CUBE)
-                              
+
 
     ! create chunk buffers if more than one chunk
     if(NCHUNKS > 1) then
@@ -904,21 +904,21 @@
   subroutine meshfem3D_create_addressing(myrank,NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT, &
                         addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
                         OUTPUT_FILES)
-  
+
   implicit none
-  
+
   include "constants.h"
-  
+
   integer :: myrank,NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT
-  
+
   integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
   integer, dimension(0:NPROCTOT-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
 
   character(len=150) OUTPUT_FILES
-  
+
   ! local parameters
   integer ichunk,iproc_eta,iproc_xi,iprocnum,ier
-  
+
   ! initializes
   addressing(:,:,:) = 0
   ichunk_slice(:) = 0
@@ -932,7 +932,7 @@
     write(IMAIN,*) 'creating global slice addressing'
     write(IMAIN,*)
   endif
-  
+
   do ichunk = 1,NCHUNKS
     do iproc_eta=0,NPROC_ETA-1
       do iproc_xi=0,NPROC_XI-1
@@ -947,7 +947,7 @@
   enddo
 
   if(myrank == 0) close(IOUT)
-  
+
   end subroutine meshfem3D_create_addressing
 
 
@@ -968,15 +968,15 @@
 !              NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER
 
   implicit none
-  
+
   include "constants.h"
-  
+
   integer myrank
 
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_XI,NSPEC2D_ETA, &
                                          NSPEC1D_RADIAL,NGLOB1D_RADIAL
-    
+
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
@@ -990,15 +990,15 @@
 ! 1 : xi_min, eta_min
 ! 2 : xi_max, eta_min
 ! 3 : xi_max, eta_max
-! 4 : xi_min, eta_max  
+! 4 : xi_min, eta_max
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: &
     NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
 ! 1 -> min, 2 -> max
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
-  
-  
+
+
   ! local parameters
-  integer :: iregion  
+  integer :: iregion
 
   do iregion=1,MAX_NUM_REGIONS
     NSPEC1D_RADIAL_CORNER(iregion,:) = NSPEC1D_RADIAL(iregion)
@@ -1069,8 +1069,8 @@
                                                         + (DIFF_NSPEC1D_RADIAL(:,2)*(NGLLZ-1))
       endif
     endif
-  endif  
-  
+  endif
+
   end subroutine meshfem3D_setup_counters
 
 
@@ -1083,13 +1083,13 @@
                                 R_CENTRAL_CUBE)
 
   use meshfem3D_models_par
-  
+
   implicit none
 
   integer :: myrank,sizeprocs,NEX_XI,NEX_ETA, &
            NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT
   double precision :: R_CENTRAL_CUBE
-  
+
   write(IMAIN,*) 'This is process ',myrank
   write(IMAIN,*) 'There are ',sizeprocs,' MPI processes'
   write(IMAIN,*) 'Processes are numbered from 0 to ',sizeprocs-1
@@ -1183,13 +1183,13 @@
     write(IMAIN,*) 'incorporating anisotropic inner core'
   else
     write(IMAIN,*) 'no inner-core anisotropy'
-  endif  
+  endif
   write(IMAIN,*)
   if(ANISOTROPIC_3D_MANTLE) then
     write(IMAIN,*) 'incorporating anisotropic mantle'
   else
     write(IMAIN,*) 'no general mantle anisotropy'
-  endif  
+  endif
   write(IMAIN,*)
   write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'
   write(IMAIN,*)
@@ -1207,21 +1207,21 @@
                                     RCMB,RICB,R_CENTRAL_CUBE)
 
   use meshfem3D_models_par
-  
+
   implicit none
-  
+
   include 'mpif.h'
 
   integer :: myrank,NCHUNKS,iregion_code
-  
+
   double precision :: area_local_bottom,area_local_top,volume_local
   double precision :: volume_total
   double precision :: RCMB,RICB,R_CENTRAL_CUBE
-  
+
   ! local parameters
   double precision :: volume_total_region,area_total_bottom,area_total_top
   integer :: ier
-  
+
   ! use MPI reduction to compute total area and volume
   volume_total_region = ZERO
   area_total_bottom   = ZERO
@@ -1274,7 +1274,7 @@
 
   endif
 
-  
+
   end subroutine meshfem3D_compute_area
 
-  
+

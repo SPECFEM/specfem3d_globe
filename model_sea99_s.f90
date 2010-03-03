@@ -43,7 +43,7 @@
 
   subroutine model_sea99_s_broadcast(myrank,SEA99M_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -57,7 +57,7 @@
     integer :: sea99_ndep
     integer :: sea99_nlat
     integer :: sea99_nlon
-    integer :: dummy_pad ! padding 4 bytes to align the structure    
+    integer :: dummy_pad ! padding 4 bytes to align the structure
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
@@ -72,7 +72,7 @@
 
   integer :: myrank
   integer :: ier
-  
+
   if(myrank == 0) call read_sea99_s_model(SEA99M_V)
 
   ! broadcast the information read on the master to the nodes
@@ -106,7 +106,7 @@
     integer :: sea99_ndep
     integer :: sea99_nlat
     integer :: sea99_nlon
-    integer :: dummy_pad ! padding 4 bytes to align the structure    
+    integer :: dummy_pad ! padding 4 bytes to align the structure
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
@@ -171,7 +171,7 @@
      integer :: sea99_ndep
      integer :: sea99_nlat
      integer :: sea99_nlon
-     integer :: dummy_pad ! padding 4 bytes to align the structure    
+     integer :: dummy_pad ! padding 4 bytes to align the structure
      double precision :: sea99_ddeg
      double precision :: alatmin
      double precision :: alatmax
@@ -190,12 +190,12 @@
 
   ! initializes
   dvs = 0.d0
-  
+
   id1 = 0
   xd1 = 0
 
   !----------------------- depth in the model ------------------
-  dep=R_EARTH_KM*(R_UNIT_SPHERE - radius)      
+  dep=R_EARTH_KM*(R_UNIT_SPHERE - radius)
   if (dep .le. SEA99M_V%sea99_depth(1)) then
      id1 = 1
      xd1 = 0
@@ -225,7 +225,7 @@
   ! checks range
   if( pla < SEA99M_V%alatmin .or. pla > SEA99M_V%alatmax &
     .or. plo < SEA99M_V%alonmin .or. plo > SEA99M_V%alonmax ) return
-    
+
   ! array indices
   ilat = int((pla - SEA99M_V%alatmin)/SEA99M_V%sea99_ddeg) + 1
   ilon = int((plo - SEA99M_V%alonmin)/SEA99M_V%sea99_ddeg) + 1
@@ -243,7 +243,7 @@
      ddd(i) = dd1 + yyy*xxx
   enddo
   dvs = ddd(1) + (ddd(2)-ddd(1)) * xd1
-  
+
   ! checks perturbation
   if(dvs > 1.d0) dvs = 0.0d0
 

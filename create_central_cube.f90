@@ -24,7 +24,7 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
-  
+
   subroutine create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz, &
                         nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
@@ -131,7 +131,7 @@
   integer nx_central_cube,ny_central_cube,nz_central_cube
   ! the height at which the central cube is cut
   integer :: nz_inf_limit
-  
+
 
 
   ! create the shape of a regular mesh element in the inner core

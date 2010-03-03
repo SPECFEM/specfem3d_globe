@@ -31,27 +31,27 @@
 !
 ! this is STW105 - new reference model, also known as REF
 !
-! A recent 1D Earth model developed by Kustowski et al. This model is the 1D background 
+! A recent 1D Earth model developed by Kustowski et al. This model is the 1D background
 ! model for the 3D models s362ani, s362wmani, s362ani_prem, and s29ea.
 !
 ! see chapter 3, in:
-! Kustowski, B, Ekstrom, G., and A. M. Dziewonski, 2008, 
+! Kustowski, B, Ekstrom, G., and A. M. Dziewonski, 2008,
 ! Anisotropic shear-wave velocity structure of the Earth's mantle: A global model,
 ! J. Geophys. Res., 113, B06306, doi:10.1029/2007JB005169.
 !
 ! model is identical to PREM at crustal depths, between 220 and 400km
 ! and below 670km.
 !
-! attenuation structure is taken from model QL6: 
+! attenuation structure is taken from model QL6:
 ! Durek, J. J. and G. Ekström, 1996.
-! A radial model of anelasticity consistent with long period surface wave attenuation, 
+! A radial model of anelasticity consistent with long period surface wave attenuation,
 ! Bull. Seism. Soc. Am., 86, 144-158
 !--------------------------------------------------------------------------------------------------
 
 
   subroutine model_1dref_broadcast(CRUSTAL,Mref_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -78,7 +78,7 @@
 
   ! all processes will define same parameters
   call define_model_1dref(CRUSTAL,Mref_V)
-  
+
   end subroutine model_1dref_broadcast
 
 !
@@ -145,7 +145,7 @@
   if(iregion_code == IREGION_OUTER_CORE .and. i > 358) i = 358
 
   if(iregion_code == IREGION_CRUST_MANTLE .and. i < 360) i = 360
-  
+
   ! if crustal model is used, mantle gets expanded up to surface
   ! for any depth less than 24.4 km, values from mantle below moho are taken
   if(CRUSTAL .and. i > 717) i = 717
@@ -162,7 +162,7 @@
     Qkappa = Mref_V%Qkappa_ref(i)
     Qmu = Mref_V%Qmu_ref(i)
   else
-    ! interpolates between one layer below to actual radius layer, 
+    ! interpolates between one layer below to actual radius layer,
     ! that is from radius_ref(i-1) to r using the values at i-1 and i
     frac = (r-Mref_V%radius_ref(i-1))/(Mref_V%radius_ref(i)-Mref_V%radius_ref(i-1))
     ! interpolated model parameters

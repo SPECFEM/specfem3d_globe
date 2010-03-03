@@ -31,9 +31,9 @@
                             normal_top_outer_core,jacobian2D_top_outer_core, &
                             wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                             SIMULATION_TYPE,nspec_top)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -41,7 +41,7 @@
     displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
     b_displ_crust_mantle
-    
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
 
@@ -61,8 +61,8 @@
   ! local parameters
   real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,displ_n,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_cm,iglob_oc,ispec_selected
-    
-  
+
+
   ! for surface elements exactly on the CMB
   do ispec2D = 1,nspec_top !NSPEC2D_TOP(IREGION_OUTER_CORE)
     ispec = ibelm_top_outer_core(ispec2D)
@@ -96,7 +96,7 @@
 
         ! get global point number
         iglob_oc = ibool_outer_core(i,j,k,ispec)
-        
+
         ! update fluid acceleration/pressure
         accel_outer_core(iglob_oc) = accel_outer_core(iglob_oc) + weight*displ_n
 
@@ -106,9 +106,9 @@
           displ_x = b_displ_crust_mantle(1,iglob_cm)
           displ_y = b_displ_crust_mantle(2,iglob_cm)
           displ_z = b_displ_crust_mantle(3,iglob_cm)
-          
+
           displ_n = displ_x*nx + displ_y*ny + displ_z*nz
-          
+
           ! update fluid acceleration/pressure
           iglob_oc = ibool_outer_core(i,j,k,ispec)
           b_accel_outer_core(iglob_oc) = b_accel_outer_core(iglob_oc) + weight*displ_n
@@ -130,9 +130,9 @@
                             normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                             wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                             SIMULATION_TYPE,nspec_bottom)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -140,7 +140,7 @@
     displ_inner_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
     b_displ_inner_core
-    
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
 
@@ -156,7 +156,7 @@
 
   integer SIMULATION_TYPE
   integer nspec_bottom
-  
+
   ! local parameters
   real(kind=CUSTOM_REAL) :: displ_x,displ_y,displ_z,displ_n,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_oc,iglob_ic,ispec_selected
@@ -201,11 +201,11 @@
 
         if (SIMULATION_TYPE == 3) then
           ! get displacement in inner core
-          iglob_ic = ibool_inner_core(i,j,k_corresp,ispec_selected)          
+          iglob_ic = ibool_inner_core(i,j,k_corresp,ispec_selected)
           displ_x = b_displ_inner_core(1,iglob_ic)
           displ_y = b_displ_inner_core(2,iglob_ic)
           displ_z = b_displ_inner_core(3,iglob_ic)
-          
+
           displ_n = displ_x*nx + displ_y*ny + displ_z*nz
 
 
@@ -234,9 +234,9 @@
                             wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                             RHO_TOP_OC,minus_g_cmb, &
                             SIMULATION_TYPE,nspec_bottom)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -244,7 +244,7 @@
     displ_crust_mantle,accel_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
     b_displ_crust_mantle,b_accel_crust_mantle
-    
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
 
@@ -260,7 +260,7 @@
 
   double precision RHO_TOP_OC
   real(kind=CUSTOM_REAL) minus_g_cmb
-  
+
   integer SIMULATION_TYPE
   integer nspec_bottom
 
@@ -325,10 +325,10 @@
       enddo
     enddo
   enddo
-    
+
   end subroutine compute_coupling_CMB_fluid
-  
-  
+
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -341,9 +341,9 @@
                             wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                             RHO_BOTTOM_OC,minus_g_icb, &
                             SIMULATION_TYPE,nspec_top)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -351,7 +351,7 @@
     displ_inner_core,accel_inner_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
     b_displ_inner_core,b_accel_inner_core
-    
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
 
@@ -370,7 +370,7 @@
 
   integer SIMULATION_TYPE
   integer nspec_top
-  
+
   ! local parameters
   real(kind=CUSTOM_REAL) :: pressure,nx,ny,nz,weight
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob,iglob_inner_core,ispec_selected
@@ -433,19 +433,19 @@
   enddo
 
   end subroutine compute_coupling_ICB_fluid
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
   subroutine compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
                             rmass_crust_mantle,rmass_ocean_load,normal_top_crust_mantle, &
                             ibool_crust_mantle,ibelm_top_crust_mantle, &
                             updated_dof_ocean_load, &
                             SIMULATION_TYPE,nspec_top)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -455,9 +455,9 @@
     b_accel_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load  
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: normal_top_crust_mantle
-    
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
 
@@ -470,7 +470,7 @@
   real(kind=CUSTOM_REAL) :: force_normal_comp,b_force_normal_comp
   real(kind=CUSTOM_REAL) :: additional_term,b_additional_term
   real(kind=CUSTOM_REAL) :: nx,ny,nz
-  integer :: i,j,k,ispec,ispec2D,iglob    
+  integer :: i,j,k,ispec,ispec2D,iglob
 
   !   initialize the updates
   updated_dof_ocean_load(:) = .false.
@@ -532,4 +532,4 @@
   enddo
 
   end subroutine compute_coupling_ocean
-  
+

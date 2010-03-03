@@ -93,12 +93,12 @@
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
           NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
           NPROC_XI,NPROC_ETA,REFERENCE_1D_MODEL,THREE_D_MODEL
-          
+
   double precision DT,ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R120,R220,R400, &
           R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
           RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
-          
+
   double precision MOVIE_TOP,MOVIE_BOTTOM,MOVIE_EAST,MOVIE_WEST,&
           MOVIE_NORTH,MOVIE_SOUTH
 
@@ -165,7 +165,7 @@
                           SAVE_MESH_FILES,ATTENUATION,ABSORBING_CONDITIONS,SAVE_FORWARD, &
                           OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                           ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-                          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)  
+                          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
 
   ! converts values to radians
   MOVIE_EAST = MOVIE_EAST_DEG * DEGREES_TO_RADIANS
@@ -175,7 +175,7 @@
   ! converts movie top/bottom depths to radii
   MOVIE_TOP = (R_EARTH_KM-MOVIE_TOP_KM)/R_EARTH_KM
   MOVIE_BOTTOM = (R_EARTH_KM-MOVIE_BOTTOM_KM)/R_EARTH_KM
-  
+
   ! include central cube or not
   ! use regular cubed sphere instead of cube for large distances
   if(NCHUNKS == 6) then
@@ -208,7 +208,7 @@
                         RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO_FICTITIOUS_IN_MESHER, &
                         R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS)
 
-                  
+
   ! sets time step size and number of layers
   ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
@@ -221,14 +221,14 @@
                           ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
                           ONE_CRUST,HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL, &
                           ANISOTROPIC_INNER_CORE)
-    
+
   ! compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
   if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) then
-    NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP    
+    NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
   endif
 
   ! computes a default hdur_movie that creates nice looking movies.
@@ -290,11 +290,11 @@
   NPROCTOT = NCHUNKS * NPROC
 
 
-  !  definition of general mesh parameters 
+  !  definition of general mesh parameters
   call rcp_define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80,&
                         NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
                         NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                        NER_TOP_CENTRAL_CUBE_ICB,&          
+                        NER_TOP_CENTRAL_CUBE_ICB,&
                         RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
                         R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER,&
                         ONE_CRUST,ner,ratio_sampling_array,&
@@ -307,7 +307,7 @@
                         doubling_index,rmins,rmaxs)
 
 
-  ! calculates number of elements (NSPEC) 
+  ! calculates number of elements (NSPEC)
   call rcp_count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC,&
                         NEX_PER_PROC_ETA,ratio_divide_central_cube,&
                         NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
@@ -340,15 +340,15 @@
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                         last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
                         normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
-  
-  
+
+
 
   end subroutine read_compute_parameters
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
   subroutine rcp_set_timestep_and_layers(DT,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
                           NER_CRUST,NER_80_MOHO,NER_220_80,NER_400_220,&
                           NER_600_400,NER_670_600,NER_771_670, &
@@ -366,13 +366,13 @@
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
-  
+
   integer NER_CRUST,NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
           NER_TOP_CENTRAL_CUBE_ICB
-  
+
   integer NEX_MAX,NCHUNKS,REFERENCE_1D_MODEL
-  
+
   double precision DT
   double precision R_CENTRAL_CUBE
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
@@ -390,7 +390,7 @@
   else
     multiplication_factor=1
   endif
-  
+
   ! element width =   0.5625000      degrees =    62.54715      km
   if(NEX_MAX*multiplication_factor <= 160) then
     ! time step
@@ -412,7 +412,7 @@
     NER_CMB_TOPDDOUBLEPRIME  = 1
     NER_OUTER_CORE           = 16
     NER_TOP_CENTRAL_CUBE_ICB = 2
-    
+
     ! radius of central cube
     R_CENTRAL_CUBE = 950000.d0
 
@@ -607,7 +607,7 @@
   ! the 670-discontinuity is moved up to 650 km depth.
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
     NER_771_670 = NER_771_670 + 1
-  end if 
+  end if
 
   !----
   !----  change some values in the case of regular PREM with two crustal layers or of 3D models
@@ -629,7 +629,7 @@
     endif
   else
     ! 3D models: must have two element layers for crust
-    if (NER_CRUST < 2 ) NER_CRUST = 2    
+    if (NER_CRUST < 2 ) NER_CRUST = 2
     ! makes time step smaller
     if(NEX_MAX*multiplication_factor <= 80) then
         DT = 0.125d0
@@ -702,7 +702,7 @@
       ! case 3D
       if (NER_CRUST < 2 ) NER_CRUST = 2
     endif
-    
+
   endif
 
 !---
@@ -713,18 +713,18 @@
 
 
   ! time step reductions are based on empirical values (..somehow)
-  
+
   ! following models need special attention, at least for global simulations:
-  if( NCHUNKS == 6 ) then  
-  
+  if( NCHUNKS == 6 ) then
+
     ! makes time step smaller for this ref model, otherwise becomes unstable in fluid
     if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) &
       DT = DT*(1.d0 - 0.3d0)
 
     ! using inner core anisotropy, simulations might become unstable in solid
     if( ANISOTROPIC_INNER_CORE ) then
-      ! DT = DT*(1.d0 - 0.1d0) not working yet... 
-      stop 'anisotropic inner core - unstable feature, uncomment this line in read_compute_parameters.f90' 
+      ! DT = DT*(1.d0 - 0.1d0) not working yet...
+      stop 'anisotropic inner core - unstable feature, uncomment this line in read_compute_parameters.f90'
     endif
 
   endif
@@ -732,7 +732,7 @@
   ! following models need special attention, regardless of number of chunks:
   ! it makes the time step smaller for this ref model, otherwise becomes unstable in fluid
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) &
-    DT = DT*(1.d0 - 0.8d0)  ! *0.20d0 
+    DT = DT*(1.d0 - 0.8d0)  ! *0.20d0
 
 
   if( ITYPE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS ) &
@@ -747,9 +747,9 @@
   ! takes a 5% safety margin on the maximum stable time step
   ! which was obtained by trial and error
   DT = DT * (1.d0 - 0.05d0)
-  
+
   end subroutine rcp_set_timestep_and_layers
-  
+
 
 
 !
@@ -766,13 +766,13 @@
 
   include "constants.h"
 
-  integer  NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,NCHUNKS,NTSTEP_BETWEEN_OUTPUT_SEISMOS          
+  integer  NEX_XI,NEX_ETA,NPROC_XI,NPROC_ETA,NCHUNKS,NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
-  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES   
+  double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
 
   logical ATTENUATION_3D,ATTENUATION,ABSORBING_CONDITIONS,&
-        INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM        
-  
+        INCLUDE_CENTRAL_CUBE,OUTPUT_SEISMOS_SAC_ALPHANUM
+
 
 ! checks parameters
 
@@ -847,17 +847,17 @@
   if(NCHUNKS > 1 .and. (NPROC_XI == 1 .or. NPROC_ETA == 1)) stop 'support for only one slice per chunk has been discontinued'
 
   end subroutine rcp_check_parameters
-  
-    
+
+
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
-  
+
+
   subroutine rcp_define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80,&
                         NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
                         NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                        NER_TOP_CENTRAL_CUBE_ICB,&          
+                        NER_TOP_CENTRAL_CUBE_ICB,&
                         RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
                         R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER,&
                         ONE_CRUST,ner,ratio_sampling_array,&
@@ -884,7 +884,7 @@
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
           NER_TOP_CENTRAL_CUBE_ICB
   integer NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer
-          
+
   double precision RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
 
@@ -1738,8 +1738,8 @@
 
 
   end subroutine rcp_define_all_layers
-  
-  
+
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -1765,7 +1765,7 @@
   implicit none
 
   include "constants.h"
-  
+
 
 ! parameters to be computed based upon parameters above read from file
   integer NPROC,NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
@@ -1773,7 +1773,7 @@
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
       NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
       NSPEC1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
-      
+
 
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
 
@@ -1962,9 +1962,9 @@
                 (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))-1)*(ner(iter_layer) - to_remove - doubling*nb_lay_sb)) + &
                 doubling * (((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))/divider) * (nglob_surf-nglob_edges_h) - &
                 ((NEX_PER_PROC_ETA / ratio_sampling_array(iter_layer))/divider -1) * nglob_edge_v)
-    
+
     enddo ! iter_layer
-    
+
     NSPEC2D_XI(iter_region) = tmp_sum_xi
     NSPEC2D_ETA(iter_region) = tmp_sum_eta
 
@@ -2091,9 +2091,9 @@
 
   if(minval(NSPEC) <= 0) stop 'negative NSPEC, there is a problem somewhere, try to recompile :) '
 
-  
+
   end subroutine rcp_count_elements
-  
+
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -2111,7 +2111,7 @@
                         nb_lay_sb, nglob_vol, nglob_surf, nglob_edge, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                         last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
-                        normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)  
+                        normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!
@@ -2134,7 +2134,7 @@
       NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
       NGLOB
 
-  integer NER_TOP_CENTRAL_CUBE_ICB,NEX_XI  
+  integer NER_TOP_CENTRAL_CUBE_ICB,NEX_XI
   integer nblocks_xi,nblocks_eta
 
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
@@ -2312,4 +2312,4 @@
 !!! NGLOB = 6.NGLL^2 - 7.NGLL + 2 (SURFACE 2)
 
   end subroutine rcp_count_points
-  
+

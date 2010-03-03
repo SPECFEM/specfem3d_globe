@@ -51,7 +51,7 @@
 !
 
   subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
-  
+
   implicit none
 
   include 'constants.h'
@@ -156,7 +156,7 @@
   logical CASE_3D,CRUSTAL,HONOR_1D_SPHERICAL_MOHO
   integer REFERENCE_1D_MODEL
 
-  ! local parameters  
+  ! local parameters
   integer,          parameter                :: NUM_REGIONS = 14
   integer,          dimension(NUM_REGIONS)   :: scaling
   double precision, dimension(NUM_REGIONS)   :: radius
@@ -208,7 +208,7 @@
   radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
   radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
   radius(14) =  982000.0d0 ! Top Central Cube
-  
+
   ! radii in km
   radius(:) = radius(:) / 1000.0d0
 

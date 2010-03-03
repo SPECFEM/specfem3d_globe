@@ -243,7 +243,7 @@
         if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
 
         enddo
-     end do 
+     end do
   end do
 
   end subroutine add_topography_410_650_gll

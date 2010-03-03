@@ -46,16 +46,16 @@
                       buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
                       NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
                       NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY)
-  
-  
+
+
   implicit none
-  
+
   include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank
-  
+
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
@@ -63,18 +63,18 @@
 
   integer ichunk,iproc_xi,iproc_eta
   integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
-  
+
   ! 2-D addressing and buffers for summation between slices
   integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
-  
+
   integer, dimension(NGLOB2DMAX_XMIN_XMAX_OC) :: iboolleft_xi_outer_core,iboolright_xi_outer_core
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
   integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
   integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
-  
+
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
-  
+
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
@@ -177,8 +177,8 @@
 
   if(myrank == 0) write(IMAIN,*) 'end assembling MPI mass matrix'
 
-  end subroutine prepare_timerun_rmass  
-  
+  end subroutine prepare_timerun_rmass
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -198,7 +198,7 @@
                       buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
   implicit none
-  
+
   include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
@@ -208,7 +208,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
 
   integer ichunk,iproc_xi,iproc_eta
-  
+
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
   integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
 
@@ -285,16 +285,16 @@
 ! precomputes constants for time integration
 
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
-  
+
   integer myrank,NSTEP
 
   double precision DT
   double precision t0
-  
-  
+
+
   double precision scale_t,scale_t_inv,scale_displ,scale_veloc
 
   real(kind=CUSTOM_REAL) deltat,deltatover2,deltatsqover2
@@ -307,9 +307,9 @@
   real(kind=CUSTOM_REAL) b_two_omega_earth
 
   integer SIMULATION_TYPE
-  
-  ! local parameters  
- 
+
+  ! local parameters
+
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -324,9 +324,9 @@
   ! scaling to make displacement in meters and velocity in meters per second
   scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
   scale_t_inv = dsqrt(PI*GRAV*RHOAV)
-  
+
   scale_displ = R_EARTH
-  
+
   scale_veloc = scale_displ * scale_t_inv
 
   ! distinguish between single and double precision for reals
@@ -366,7 +366,7 @@
     endif
     A_array_rotation = 0.
     B_array_rotation = 0.
-    
+
     if (SIMULATION_TYPE == 3) then
       if(CUSTOM_REAL == SIZE_REAL) then
         b_two_omega_earth = sngl(2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv))
@@ -381,7 +381,7 @@
 
 
   end subroutine prepare_timerun_constants
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -396,10 +396,10 @@
 ! precomputes gravity factors
 
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
-  
+
   integer myrank
 
   real(kind=CUSTOM_REAL) minus_g_cmb,minus_g_icb
@@ -410,17 +410,17 @@
     d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
 
   logical ONE_CRUST
-  
+
   double precision RICB,RCMB,RTOPDDOUBLEPRIME, &
     R80,R220,R400,R600,R670,R771,RMOHO,RMIDDLE_CRUST,ROCEAN
-  
+
   ! local parameters
   double precision :: rspl_gravity(NR),gspl(NR),gspl2(NR)
   double precision :: radius,radius_km,g,dg
   double precision :: g_cmb_dble,g_icb_dble
   double precision :: rho,drhodr,vp,vs,Qkappa,Qmu
   integer :: int_radius,idoubling,nspl_gravity
-    
+
   ! store g, rho and dg/dr=dg using normalized radius in lookup table every 100 m
   ! get density and velocity from PREM model using dummy doubling flag
   ! this assumes that the gravity perturbations are small and smooth
@@ -439,7 +439,7 @@
           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
       dg = 4.0d0*rho - 2.0d0*g/radius
-      
+
       minus_gravity_table(int_radius) = - g
       minus_deriv_gravity_table(int_radius) = - dg
       density_table(int_radius) = rho
@@ -481,9 +481,9 @@
        call model_prem_iso(myrank,radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
            ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-           
+
        d_ln_density_dr_table(int_radius) = drhodr/rho
-       
+
     enddo
 
   endif
@@ -513,10 +513,10 @@
   ! precomputes attenuation factors
 
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
-  
+
   integer myrank
 
   ! memory variables and standard linear solids for attenuation
@@ -525,7 +525,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &  
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
       c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
       c22store_crust_mantle,c23store_crust_mantle, &
       c33store_crust_mantle,c44store_crust_mantle, &
@@ -536,7 +536,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
         muhstore_crust_mantle
   integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
-        
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
         muvstore_inner_core
 
@@ -545,7 +545,7 @@
   logical MOVIE_VOLUME
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: muvstore_crust_mantle_3dmovie
-  
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: &
         c11store_inner_core,c33store_inner_core,c12store_inner_core, &
         c13store_inner_core,c44store_inner_core
@@ -564,7 +564,7 @@
   double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core_dble
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
   double precision, dimension(N_SLS) :: tau_sigma_dble
-  
+
   double precision :: scale_factor,scale_factor_minus_one
   real(kind=CUSTOM_REAL) :: mul
   integer :: ispec,i,j,k
@@ -576,7 +576,7 @@
   call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
   call get_attenuation_model_3D(myrank, prname, omsb_crust_mantle_dble, &
            factor_common_crust_mantle_dble,factor_scale_crust_mantle_dble,tau_sigma_dble,NSPEC_CRUST_MANTLE)
-           
+
   ! INNER_CORE ATTENUATION
   call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
   call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
@@ -683,7 +683,7 @@
     enddo
   enddo ! END DO INNER CORE
 
-  ! precompute Runge-Kutta coefficients 
+  ! precompute Runge-Kutta coefficients
   call get_attenuation_memory_values(tau_sigma_dble, deltat, alphaval_dble, betaval_dble, gammaval_dble)
   if(CUSTOM_REAL == SIZE_REAL) then
     alphaval = sngl(alphaval_dble)
@@ -694,7 +694,7 @@
     betaval  = betaval_dble
     gammaval = gammaval_dble
   endif
-  
+
   if (SIMULATION_TYPE == 3) then
    call get_attenuation_memory_values(tau_sigma_dble, b_deltat, alphaval_dble, betaval_dble, gammaval_dble)
    if(CUSTOM_REAL == SIZE_REAL) then
@@ -709,6 +709,6 @@
   endif
 
   end subroutine prepare_timerun_attenuation
-  
-  
-  
+
+
+

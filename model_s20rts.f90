@@ -28,16 +28,16 @@
 !--------------------------------------------------------------------------------------------------
 ! S20rts
 !
-! 3D mantle model S20RTS [Ritsema et al., 1999] 
+! 3D mantle model S20RTS [Ritsema et al., 1999]
 !
-! Note that S20RTS uses transversely isotropic PREM as a background 
-! model, and that we use the PREM radial attenuation model when ATTENUATION is incorporated. 
+! Note that S20RTS uses transversely isotropic PREM as a background
+! model, and that we use the PREM radial attenuation model when ATTENUATION is incorporated.
 !--------------------------------------------------------------------------------------------------
 
 
   subroutine model_s20rts_broadcast(myrank,D3MM_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -63,9 +63,9 @@
   integer :: myrank
   integer :: ier
 
-  ! the variables read are declared and stored in structure D3MM_V      
+  ! the variables read are declared and stored in structure D3MM_V
   if(myrank == 0) call read_model_s20rts(D3MM_V)
-      
+
   ! broadcast the information read on the master to the nodes
   call MPI_BCAST(D3MM_V%dvs_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(D3MM_V%dvs_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)

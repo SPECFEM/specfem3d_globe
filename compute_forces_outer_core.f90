@@ -202,7 +202,7 @@
             ! use mesh coordinates to get theta and phi
             ! x y z contain r theta phi
             iglob = ibool(i,j,k,ispec)
-            
+
             radius = dble(xstore(iglob))
             theta = dble(ystore(iglob))
             phi = dble(zstore(iglob))
@@ -218,7 +218,7 @@
             grad_x_ln_rho = sin_theta * cos_phi * d_ln_density_dr_table(int_radius)
             grad_y_ln_rho = sin_theta * sin_phi * d_ln_density_dr_table(int_radius)
             grad_z_ln_rho = cos_theta * d_ln_density_dr_table(int_radius)
-  
+
             ! adding (chi/rho)grad(rho)
             dpotentialdx_with_rot = dpotentialdx_with_rot + displfluid(iglob) * grad_x_ln_rho
             dpotentialdy_with_rot = dpotentialdx_with_rot + displfluid(iglob) * grad_y_ln_rho
@@ -303,9 +303,9 @@
           enddo
 
           ! sum contributions from each element to the global mesh and add gravity term
-          sum_terms = - (wgllwgll_yz(j,k)*tempx1l + wgllwgll_xz(i,k)*tempx2l + wgllwgll_xy(i,j)*tempx3l)          
+          sum_terms = - (wgllwgll_yz(j,k)*tempx1l + wgllwgll_xz(i,k)*tempx2l + wgllwgll_xy(i,j)*tempx3l)
           if(GRAVITY_VAL) sum_terms = sum_terms + gravity_term(i,j,k)
-          
+
           accelfluid(ibool(i,j,k,ispec)) = accelfluid(ibool(i,j,k,ispec)) + sum_terms
 
         enddo
