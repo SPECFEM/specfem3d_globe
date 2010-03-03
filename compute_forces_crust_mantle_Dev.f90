@@ -65,7 +65,7 @@
   ! array with derivatives of Lagrange polynomials and precalculated products
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT  
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
@@ -107,10 +107,10 @@
   logical COMPUTE_AND_STORE_STRAIN
 
 ! local parameters
-  ! Deville  
+  ! Deville
   ! manually inline the calls to the Deville et al. (2002) routines
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
-    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3  
+    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc, &
     newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,m2) :: B1_m1_m2_5points,B2_m1_m2_5points,B3_m1_m2_5points
@@ -188,10 +188,10 @@
 
   integer ::i_sls,i_memory
   integer :: ispec,ispec_strain
-  integer :: i,j,k 
+  integer :: i,j,k
   integer :: int_radius
   integer :: iglob1,iglob2,iglob3,iglob4,iglob5
-  
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
@@ -204,7 +204,7 @@
     do k=1,NGLLZ
       do j=1,NGLLY
 
-! way 1:      
+! way 1:
 !        do i=1,NGLLX
 !            iglob = ibool(i,j,k,ispec)
 !            dummyx_loc(i,j,k) = displ(1,iglob)
@@ -219,7 +219,7 @@
         iglob3 = ibool(3,j,k,ispec)
         iglob4 = ibool(4,j,k,ispec)
         iglob5 = ibool(5,j,k,ispec)
-        
+
         dummyx_loc(1,j,k) = displ(1,iglob1)
         dummyy_loc(1,j,k) = displ(2,iglob1)
         dummyz_loc(1,j,k) = displ(3,iglob1)
@@ -239,9 +239,9 @@
         dummyx_loc(5,j,k) = displ(1,iglob5)
         dummyy_loc(5,j,k) = displ(2,iglob5)
         dummyz_loc(5,j,k) = displ(3,iglob5)
-        
+
       enddo
-    enddo  
+    enddo
     do j=1,m2
       do i=1,m1
         C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
@@ -262,7 +262,7 @@
                               hprime_xx(i,4)*B3_m1_m2_5points(4,j) + &
                               hprime_xx(i,5)*B3_m1_m2_5points(5,j)
       enddo
-    enddo  
+    enddo
     do j=1,m1
       do i=1,m1
         ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
@@ -308,7 +308,7 @@
                                   A3_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
       enddo
     enddo
-  
+
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
@@ -488,7 +488,7 @@
               !mimik: apparent velocity shift
               if( ATTENUATION_MIMIK) then
                 muvl = muvl * ATTENUATION_MIMIK_FACTOR
-                muhl = muhl * ATTENUATION_MIMIK_FACTOR  
+                muhl = muhl * ATTENUATION_MIMIK_FACTOR
               endif
 
               rhovpvsq = kappavl + FOUR_THIRDS * muvl  !!! that is C
@@ -693,7 +693,7 @@
 !              sigma_zz = sigma_zz + R_xx_val + R_yy_val
 !              sigma_xy = sigma_xy - R_memory(3,i_sls,i,j,k,ispec)
 !              sigma_xz = sigma_xz - R_memory(4,i_sls,i,j,k,ispec)
-!              sigma_yz = sigma_yz - R_memory(5,i_sls,i,j,k,ispec)            
+!              sigma_yz = sigma_yz - R_memory(5,i_sls,i,j,k,ispec)
 !            enddo
 
 ! way 2:
@@ -708,9 +708,9 @@
               sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
               sigma_xy = sigma_xy - R_memory(3,i_sls,i,j,k,ispec)
               sigma_xz = sigma_xz - R_memory(4,i_sls,i,j,k,ispec)
-              sigma_yz = sigma_yz - R_memory(5,i_sls,i,j,k,ispec)            
+              sigma_yz = sigma_yz - R_memory(5,i_sls,i,j,k,ispec)
             enddo
-            
+
             do i_sls = mod(N_SLS,3)+1,N_SLS,3
               R_xx_val1 = R_memory(1,i_sls,i,j,k,ispec)
               R_yy_val1 = R_memory(2,i_sls,i,j,k,ispec)
@@ -825,7 +825,7 @@
               rho_s_H(3,i,j,k) = sngl(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl))
 
             else
-          
+
               ! get displacement and multiply by density to compute G tensor
               sx_l = rho * displ(1,iglob1)
               sy_l = rho * displ(2,iglob1)
@@ -943,9 +943,9 @@
 
     do k=1,NGLLZ
       do j=1,NGLLY
-      
+
 ! way 1:
-! this seems to be still the fastest way here.      
+! this seems to be still the fastest way here.
         fac1 = wgllwgll_yz(j,k)
         do i=1,NGLLX
           fac2 = wgllwgll_xz(i,k)
@@ -966,18 +966,18 @@
     ! sum contributions from each element to the global mesh and add gravity terms
     do k=1,NGLLZ
       do j=1,NGLLY
-! way 1:      
+! way 1:
 !        do i=1,NGLLX
 !          iglob = ibool(i,j,k,ispec)
-!          accel(:,iglob) = accel(:,iglob) + sum_terms(:,i,j,k)          
+!          accel(:,iglob) = accel(:,iglob) + sum_terms(:,i,j,k)
 !        enddo
 
 ! way 2:
-        accel(:,ibool(1,j,k,ispec)) = accel(:,ibool(1,j,k,ispec)) + sum_terms(:,1,j,k)          
-        accel(:,ibool(2,j,k,ispec)) = accel(:,ibool(2,j,k,ispec)) + sum_terms(:,2,j,k)          
-        accel(:,ibool(3,j,k,ispec)) = accel(:,ibool(3,j,k,ispec)) + sum_terms(:,3,j,k)          
-        accel(:,ibool(4,j,k,ispec)) = accel(:,ibool(4,j,k,ispec)) + sum_terms(:,4,j,k)          
-        accel(:,ibool(5,j,k,ispec)) = accel(:,ibool(5,j,k,ispec)) + sum_terms(:,5,j,k)          
+        accel(:,ibool(1,j,k,ispec)) = accel(:,ibool(1,j,k,ispec)) + sum_terms(:,1,j,k)
+        accel(:,ibool(2,j,k,ispec)) = accel(:,ibool(2,j,k,ispec)) + sum_terms(:,2,j,k)
+        accel(:,ibool(3,j,k,ispec)) = accel(:,ibool(3,j,k,ispec)) + sum_terms(:,3,j,k)
+        accel(:,ibool(4,j,k,ispec)) = accel(:,ibool(4,j,k,ispec)) + sum_terms(:,4,j,k)
+        accel(:,ibool(5,j,k,ispec)) = accel(:,ibool(5,j,k,ispec)) + sum_terms(:,5,j,k)
 
       enddo
     enddo
@@ -1007,7 +1007,7 @@
 
 ! way 1:
 ! it still seems to be the fastest way here.
-      do i_sls = 1,N_SLS      
+      do i_sls = 1,N_SLS
         ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
         factor_common_c44_muv = factor_common(i_sls,:,:,:,ispec)
 
@@ -1016,7 +1016,7 @@
         else
           factor_common_c44_muv = factor_common_c44_muv * muvstore(:,:,:,ispec)
         endif
-      
+
         do i_memory = 1,5
           R_memory(i_memory,i_sls,:,:,:,ispec) = alphaval(i_sls) * &
                     R_memory(i_memory,i_sls,:,:,:,ispec) + &

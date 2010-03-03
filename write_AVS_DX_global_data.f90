@@ -220,7 +220,7 @@
   double precision::  Qmustore(NGLLX,NGLLY,NGLLZ,nspec)
 
   logical :: ATTENUATION
-  
+
   ! local parameters
   double precision,dimension(8):: vp,vs,rho,Qmu
   double precision:: vp_average,vs_average,rho_average,Qmu_average
@@ -249,9 +249,9 @@
                 write(10,*) numpoin,sngl(xstore(i,j,k,ispec)),&
                         sngl(ystore(i,j,k,ispec)),sngl(zstore(i,j,k,ispec))
                 flag(i,j,k,ispec) = numpoin
-        end do 
-        end do 
-        end do 
+        end do
+        end do
+        end do
   enddo
 
   close(10)
@@ -269,7 +269,7 @@
         do k = 1,NGLLZ-1
         do j = 1,NGLLY-1
         do i = 1,NGLLX-1
-                nelem = nelem + 1  
+                nelem = nelem + 1
                 iglob1=flag(i,j,k,ispec)
                 iglob2=flag(i+1,j,k,ispec)
                 iglob3=flag(i+1,j+1,k,ispec)
@@ -278,13 +278,13 @@
                 iglob6=flag(i+1,j,k+1,ispec)
                 iglob7=flag(i+1,j+1,k+1,ispec)
                 iglob8=flag(i,j+1,k+1,ispec)
-        
+
                 write(10,*) nelem,iglob1, &
                         iglob2,iglob3,iglob4,&
                         iglob5,iglob6,iglob7,iglob8
-        end do 
-        end do 
-        end do 
+        end do
+        end do
+        end do
   enddo
 
   close(10)
@@ -344,7 +344,7 @@
                         Qmu(7)=dble(Qmustore(i+1,j+1,k+1,ispec))
                         Qmu(8)=dble(Qmustore(i,j+1,k+1,ispec))
                         Qmu_average=Qmu(1)
-                end if 
+                end if
                 !rho_average=sum(rho(1:4))/4.d0
                 !vp_average=sum(vp(1:4))/4.d0
                 !vs_average=sum(vs(1:4))/4.d0
@@ -354,12 +354,12 @@
 
                 if (ATTENUATION) then
                         write(1001,*) nelem,rho_average,vp_average,vs_average,Qmu_average
-                else 
+                else
                         write(1001,*) nelem,rho_average,vp_average,vs_average
-                end if 
+                end if
 
-        end do 
-        end do 
+        end do
+        end do
         end do
   enddo
 

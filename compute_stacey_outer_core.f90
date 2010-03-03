@@ -50,16 +50,16 @@
                               absorb_zmin_outer_core, &
                               absorb_xmin_outer_core,absorb_xmax_outer_core, &
                               absorb_ymin_outer_core,absorb_ymax_outer_core)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank,ichunk,SIMULATION_TYPE
   integer NSTEP,it
   logical SAVE_FORWARD
-  
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
@@ -91,8 +91,8 @@
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_BOTTOM
   integer nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
-    nspec2D_ymin_outer_core,nspec2D_ymax_outer_core  
-    
+    nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
+
   integer reclen_zmin,reclen_xmin_outer_core,reclen_xmax_outer_core,&
     reclen_ymin_outer_core,reclen_ymax_outer_core
 
@@ -101,14 +101,14 @@
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,nabs_xmax_oc) :: absorb_xmax_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nabs_ymin_oc) :: absorb_ymin_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nabs_ymax_oc) :: absorb_ymax_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,nabs_zmin_oc) :: absorb_zmin_outer_core  
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,nabs_zmin_oc) :: absorb_zmin_outer_core
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: sn,weight
   integer :: reclen1,reclen2
   integer :: i,j,k,ispec2D,ispec,iglob
-  
-  
+
+
   !   xmin
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then

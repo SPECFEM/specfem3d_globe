@@ -32,18 +32,18 @@
         npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
         ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
         RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-        RMIDDLE_CRUST,ROCEAN,iregion_code) 
+        RMIDDLE_CRUST,ROCEAN,iregion_code)
 
   implicit none
 
   include "constants.h"
 
-  integer nspec,myrank 
+  integer nspec,myrank
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer idoubling(nspec)
 
-  logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE 
+  logical iboun(6,nspec),ELLIPTICITY,ISOTROPIC_3D_MANTLE
 
   double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
     R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
@@ -565,15 +565,15 @@
                               Qkappa,Qmu,RICB,RCMB, &
                               RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
                               RMOHO,RMIDDLE_CRUST,ROCEAN)
-                              
-            ! calculates isotropic values 
+
+            ! calculates isotropic values
             vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                     + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
             vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                     + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
-                                  
+
             if( abs(rhostore(i,j,k,ispec))< 1.e-20 ) then
-              print*,' attention: rhostore close to zero',rhostore(i,j,k,ispec),r,i,j,k,ispec              
+              print*,' attention: rhostore close to zero',rhostore(i,j,k,ispec),r,i,j,k,ispec
               dvp = 0.0
               dvs = 0.0
             else if( abs(sngl(vp))< 1.e-20 ) then
@@ -584,9 +584,9 @@
               dvs = 0.0
             else
               dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)
-              dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)            
+              dvs = dvs + (sqrt(muvstore(i,j,k,ispec)/rhostore(i,j,k,ispec)) - sngl(vs))/sngl(vs)
             endif
-            
+
           enddo
         enddo
       enddo

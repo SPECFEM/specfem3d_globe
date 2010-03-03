@@ -33,9 +33,9 @@
 
 ! reads in files: OUTPUT_FILES/moviedata******
 !
-! and creates new files: ascii_movie_*** (ascii option) /or/ bin_movie_*** (binary option) 
+! and creates new files: ascii_movie_*** (ascii option) /or/ bin_movie_*** (binary option)
 !
-! these files can then be visualized using GMT, the Generic Mapping Tools 
+! these files can then be visualized using GMT, the Generic Mapping Tools
 ! ( http://www.soest.hawaii.edu/GMT/ )
 !
 ! example scripts can be found in: UTILS/Visualization/GMT/

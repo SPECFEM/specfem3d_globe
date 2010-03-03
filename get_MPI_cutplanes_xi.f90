@@ -60,7 +60,7 @@
   integer ispecc1,ispecc2,npoin2D_xi,ix,iy,iz
   integer nspec2Dtheor
   integer ier
-  
+
 ! processor identification
   character(len=150) prname,errmsg
 
@@ -78,7 +78,7 @@
   open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt', &
        status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error creating iboolleft_xi.txt for this process')
-  
+
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
@@ -129,7 +129,7 @@
   open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt', &
         status='unknown',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error creating iboolright_xi.txt for this process')
-  
+
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 

@@ -33,7 +33,7 @@
 
   subroutine model_heterogen_mntl_broadcast(myrank,HMM)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -52,7 +52,7 @@
 
   integer :: myrank
   integer :: ier
-  
+
   if(myrank == 0) then
      write(IMAIN,*) 'Reading in model_heterogen_mantle.'
      call read_heterogen_mantle_model(HMM)
@@ -66,14 +66,14 @@
      write(IMAIN,*) 'model_heterogen_mantle is broadcast.'
      write(IMAIN,*) 'First value in HMM:',HMM%rho_in(1)
      write(IMAIN,*) 'Last value in HMM:',HMM%rho_in(N_R*N_THETA*N_PHI)
-  endif  
+  endif
 
   end subroutine model_heterogen_mntl_broadcast
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
 
 !
 ! NOTE: CURRENTLY THIS ROUTINE ONLY WORKS FOR N_R=N_THETA=N_PHI !!!!!

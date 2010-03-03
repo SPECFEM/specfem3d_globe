@@ -44,7 +44,7 @@
   double precision RMOHO_FICTITIOUS_IN_MESHER
   integer :: myrank
   logical :: elem_in_crust,elem_in_mantle
-  
+
   ! local parameters
   integer:: ia,count_crust,count_mantle
   double precision:: r,theta,phi,lat,lon
@@ -55,20 +55,20 @@
   double precision, parameter :: PI_OVER_TWO = PI / 2.0d0
   double precision :: stretch_factor
   double precision :: x,y,z
-  double precision :: R_moho,R_middlecrust 
+  double precision :: R_moho,R_middlecrust
 
   ! radii for stretching criteria
   R_moho = RMOHO_FICTITIOUS_IN_MESHER/R_EARTH
-  R_middlecrust = RMIDDLE_CRUST/R_EARTH  
-  
-  ! loops over element's anchor points  
+  R_middlecrust = RMIDDLE_CRUST/R_EARTH
+
+  ! loops over element's anchor points
   count_crust = 0
   count_mantle = 0
   do ia = 1,NGNOD
     x = xelm(ia)
     y = yelm(ia)
     z = zelm(ia)
-    
+
     call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
     call reduce(theta,phi)
 
@@ -95,28 +95,28 @@
     if (moho < R_moho ) then
       ! actual moho below fictitious moho
       ! elements in second layer will stretch down to honor moho topography
-      
+
       elevation = moho - R_moho
 
       if ( r >= R_moho ) then
         ! point above fictitious moho
         ! gamma ranges from 0 (point at surface) to 1 (point at fictitious moho depth)
         gamma = (( R_UNIT_SPHERE - r )/( R_UNIT_SPHERE - R_moho ))
-      else 
+      else
         ! point below fictitious moho
         ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
-        gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH)) 
-        
+        gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
+
         ! since not all GLL points are exactlly at R220, use a small
         ! tolerance for R220 detection, fix R220
         if (abs(gamma) < SMALLVAL) then
           gamma = 0.0d0
-        end if 
-      end if 
+        end if
+      end if
 
       if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
         call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
-      
+
       ! offset will be gamma * elevation
       ! scaling cartesian coordinates xyz rather than spherical r/theta/phi involves division of offset by r
       stretch_factor = ONE + gamma * elevation/r
@@ -131,23 +131,23 @@
     else  if ( moho > R_middlecrust ) then
       ! moho above middle crust
       ! elements in first layer will squeeze into crust above moho
-   
+
       elevation = moho - R_middlecrust
 
       if ( r > R_middlecrust ) then
         ! point above middle crust
         ! gamma ranges from 0 (point at surface) to 1 (point at middle crust depth)
         gamma = (R_UNIT_SPHERE-r)/(R_UNIT_SPHERE - R_middlecrust )
-      else 
+      else
         ! point below middle crust
-        ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)    
-        gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH ) 
-        
+        ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
+        gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
+
         ! since not all GLL points are exactlly at R220, use a small
         ! tolerance for R220 detection, fix R220
         if (abs(gamma) < SMALLVAL) then
           gamma = 0.0d0
-        end if 
+        end if
       end if
 
       if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
@@ -156,7 +156,7 @@
       ! offset will be gamma * elevation
       ! scaling cartesian coordinates xyz rather than spherical r/theta/phi involves division of offset by r
       stretch_factor = ONE + gamma * elevation/r
-      
+
       xelm(ia) = x * stretch_factor
       yelm(ia) = y * stretch_factor
       zelm(ia) = z * stretch_factor
@@ -164,29 +164,29 @@
       ! recalculate radius to decide whether this element is in the crust
       r = dsqrt(xelm(ia)*xelm(ia) + yelm(ia)*yelm(ia) + zelm(ia)*zelm(ia))
 
-    end if 
+    end if
 
     ! counts corners in above moho
-    ! note: uses a small tolerance 
+    ! note: uses a small tolerance
     if ( r >= 0.9999d0*moho ) then
       count_crust = count_crust + 1
-    endif 
+    endif
     ! counts corners below moho
     ! again within a small tolerance
     if ( r <= 1.0001d0*moho ) then
       count_mantle = count_mantle + 1
     endif
 
-  end do   
+  end do
 
   ! sets flag when all corners are above moho
   if( count_crust == NGNOD) then
     elem_in_crust = .true.
-  end if 
+  end if
   ! sets flag when all corners are below moho
   if( count_mantle == NGNOD) then
     elem_in_mantle = .true.
-  end if 
+  end if
 
   ! small stretch check: stretching should affect only points above R220
   if( r*R_EARTH < R220 ) then
@@ -481,4 +481,4 @@
 !  end subroutine read_smooth_moho
 
 
-  
+

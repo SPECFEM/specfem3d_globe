@@ -39,16 +39,16 @@
                       nrec_local,nadj_rec_local,nrec_simulation, &
                       SIMULATION_TYPE,RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME, &
                       HDUR_MOVIE,OUTPUT_FILES)
-  
-  
+
+
   implicit none
-  
+
   include 'mpif.h'
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer NSOURCES,myrank
-  
+
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
         xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
@@ -58,7 +58,7 @@
   double precision, dimension(NGLLZ) :: zigll
 
   logical TOPOGRAPHY
-  
+
   double precision sec,DT,t0
 
   double precision, dimension(NSOURCES) :: t_cmt,hdur,hdur_gaussian
@@ -68,21 +68,21 @@
 
   integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
   integer NSTEP
-  
+
   ! for ellipticity
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
-  
+
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   integer NEX_XI
   logical PRINT_SOURCE_TIME_FUNCTION
 
   character(len=150) rec_filename
-    
+
   integer nrec
   integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
-    
+
   double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
@@ -93,13 +93,13 @@
   integer nrec_local,nadj_rec_local,nrec_simulation
 
   integer SIMULATION_TYPE
-  
+
   logical RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME
-  
+
   double precision HDUR_MOVIE
-  
+
   character(len=150) OUTPUT_FILES
-    
+
   ! local parameters
   double precision :: junk
   integer :: yr,jda,ho,mi
@@ -107,8 +107,8 @@
   integer :: icomp,itime,nadj_files_found,nadj_files_found_tot
   character(len=3),dimension(NDIM) :: comp = (/ "LHN", "LHE", "LHZ" /)
   character(len=150) :: filename,adj_source_file,system_command,filename_new
-  
-! sources  
+
+! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
   if(myrank == 0) then
@@ -151,7 +151,7 @@
   t0 = - 1.5d0*minval(t_cmt-hdur)
 
 
-!  receivers 
+!  receivers
   if(myrank == 0) then
     write(IMAIN,*)
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
@@ -199,7 +199,7 @@
         ! adjoint receiver station in this process slice
         if(islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) &
           call exit_MPI(myrank,'something is wrong with the source slice number in adjoint simulation')
-        
+
         ! updates counter
         nadj_rec_local = nadj_rec_local + 1
 
@@ -211,7 +211,7 @@
           if( ier == 0 ) then
             ! checks length of file
             itime = 0
-            do while(ier == 0) 
+            do while(ier == 0)
               read(IIN,*,iostat=ier) junk,junk
               if( ier == 0 ) itime = itime + 1
             enddo
@@ -221,8 +221,8 @@
             nadj_files_found = nadj_files_found + 1
           endif
           close(IIN)
-        enddo        
-      endif      
+        enddo
+      endif
     enddo
     ! checks if any adjoint source files found at all
     call MPI_REDUCE(nadj_files_found,nadj_files_found_tot,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
@@ -255,11 +255,11 @@
 
     !  we should know NSOURCES+nrec at this point...
     write(filename,*) trim(OUTPUT_FILES)//'/sr_tmp.vtk'
-    write(filename_new,*) trim(OUTPUT_FILES)//'/sr.vtk'    
+    write(filename_new,*) trim(OUTPUT_FILES)//'/sr.vtk'
     write(system_command,"('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,' < ',a,' > ',a)") &
       "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
     call system(system_command)
-            
+
     write(IMAIN,*)
     write(IMAIN,*) 'Total number of samples for seismograms = ',NSTEP
     write(IMAIN,*)
@@ -269,7 +269,7 @@
   endif
 
   end subroutine setup_sources_receivers
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -283,9 +283,9 @@
                       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                       gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                       xigll,yigll,zigll,sourcearrays)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -305,12 +305,12 @@
   double precision, dimension(NGLLZ) :: zigll
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES) :: sourcearrays
-  
-  
+
+
   ! local parameters
   integer :: isource
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
-  
+
   do isource = 1,NSOURCES
 
     !   check that the source slice number is okay
@@ -333,7 +333,7 @@
   enddo
 
   end subroutine setup_sources_receivers_srcarr
-  
+
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -343,9 +343,9 @@
   subroutine setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
                       NTSTEP_BETWEEN_READ_ADJSRC, &
                       iadjsrc,iadjsrc_len,iadj_vec)
-  
+
   implicit none
-  
+
   include "constants.h"
 
   integer NSTEP,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC
@@ -353,8 +353,8 @@
   integer, dimension(NSTEP_SUB_ADJ,2) :: iadjsrc ! to read input in chunks
   integer, dimension(NSTEP_SUB_ADJ) :: iadjsrc_len
   integer, dimension(NSTEP) :: iadj_vec
-  
-  
+
+
   ! local parameters
   integer :: iadj_block,it,it_sub_adj
 
@@ -364,11 +364,11 @@
   iadjsrc_len(:) = 0
 
   ! setting up chunks of NTSTEP_BETWEEN_READ_ADJSRC to read adjoint source traces
-  ! i.e. as an example: total length NSTEP = 3000, chunk length NTSTEP_BETWEEN_READ_ADJSRC= 1000  
-  !                                then it will set first block from 2001 to 3000, 
+  ! i.e. as an example: total length NSTEP = 3000, chunk length NTSTEP_BETWEEN_READ_ADJSRC= 1000
+  !                                then it will set first block from 2001 to 3000,
   !                                second block from 1001 to 2000 and so on...
   !
-  ! see routine: compute_arrays_source_adjoint() 
+  ! see routine: compute_arrays_source_adjoint()
   !                     how we read in the adjoint source trace in blocks/chunk sizes
   !
   ! see routine: compute_add_sources_adjoint()
@@ -377,23 +377,23 @@
 
     ! block number
     ! e.g. increases from 1 (case it=1-1000), 2 (case it=1001-2000) to 3 (case it=2001-3000)
-    it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) ) 
+    it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
 
     ! we are at the edge of a block
-    if(mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then 
-     ! block start time ( e.g. 2001) 
+    if(mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then
+     ! block start time ( e.g. 2001)
      iadjsrc(iadj_block,1) = NSTEP-it_sub_adj*NTSTEP_BETWEEN_READ_ADJSRC+1
      ! block end time (e.g. 3000)
      iadjsrc(iadj_block,2) = NSTEP-(it_sub_adj-1)*NTSTEP_BETWEEN_READ_ADJSRC
-     
-     ! final adj src array 
-     ! e.g. will be from 1000 to 1, but doesn't go below 1 in cases where NSTEP isn't 
+
+     ! final adj src array
+     ! e.g. will be from 1000 to 1, but doesn't go below 1 in cases where NSTEP isn't
      ! a multiple of NTSTEP_BETWEEN_READ_ADJSRC
-     if(iadjsrc(iadj_block,1) < 0) iadjsrc(iadj_block,1) = 1         
-     
+     if(iadjsrc(iadj_block,1) < 0) iadjsrc(iadj_block,1) = 1
+
      ! actual block length
      iadjsrc_len(iadj_block) = iadjsrc(iadj_block,2)-iadjsrc(iadj_block,1)+1
-     
+
      ! increases block number
      iadj_block = iadj_block+1
     endif
@@ -425,15 +425,15 @@
                       xi_receiver,eta_receiver,gamma_receiver, &
                       hxir_store,hetar_store,hgammar_store, &
                       nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
-  
+
   implicit none
-  
+
   include "constants.h"
 
   integer NSOURCES,myrank
 
   integer, dimension(NSOURCES) :: islice_selected_source
-  
+
   double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLY) :: yigll
@@ -443,7 +443,7 @@
   integer SIMULATION_TYPE
 
   integer nrec,nrec_local
-  integer, dimension(nrec) :: islice_selected_rec  
+  integer, dimension(nrec) :: islice_selected_rec
   integer, dimension(nrec_local) :: number_receiver_global
   double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
 
@@ -455,14 +455,14 @@
   double precision, dimension(nadj_hprec_local,NGLLX) :: hpxir_store
   double precision, dimension(nadj_hprec_local,NGLLY) :: hpetar_store
   double precision, dimension(nadj_hprec_local,NGLLZ) :: hpgammar_store
-  
-  
+
+
   ! local parameters
   integer :: isource,irec,irec_local
   double precision, dimension(NGLLX) :: hxir,hpxir
   double precision, dimension(NGLLY) :: hpetar,hetar
   double precision, dimension(NGLLZ) :: hgammar,hpgammar
-  
+
 
   ! select local receivers
 
@@ -511,4 +511,4 @@
   endif
 
   end subroutine setup_sources_receivers_intp
-  
+

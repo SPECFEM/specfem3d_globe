@@ -48,7 +48,7 @@
     ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY
 
   logical OCEANS,TOPOGRAPHY
-  
+
   double precision ROCEAN,RMIDDLE_CRUST, &
     RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
     RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
@@ -71,7 +71,7 @@
                                   RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
                                   HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL)
 
-                        
+
   end subroutine get_model_parameters
 
 
@@ -99,15 +99,15 @@
          CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO,&
          ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY
   logical OCEANS,TOPOGRAPHY
-  
-  ! local parameters  
+
+  ! local parameters
   character(len=4) ending
   character(len=8) ending_1Dcrust
-  
-  character(len=150) MODEL_ROOT  
+
+  character(len=150) MODEL_ROOT
   logical :: impose_1Dcrust
-  
-  ! defaults: 
+
+  ! defaults:
   !
   ! HONOR_1D_SPHERICAL_MOHO: honor PREM Moho or not: doing so drastically reduces
   ! the stability condition and therefore the time step, resulting in expensive
@@ -122,22 +122,22 @@
   ! layers in the case of 3D models. The purpose of this stretching is to squeeze more
   ! GLL points per km in the upper part of the crust than in the lower part.
   !
-  
+
   ! extract ending of model name
   ending = ' '
   if( len_trim(MODEL) > 4 ) ending = MODEL(len_trim(MODEL)-3:len_trim(MODEL))
-  
+
   ! determines if the anisotropic inner core option should be turned on
   if( ending == '_AIC' ) then
     ANISOTROPIC_INNER_CORE = .true.
     ! in case it has an ending for the inner core, remove it from the name
     MODEL_ROOT = MODEL(1: len_trim(MODEL)-4)
   else
-    ANISOTROPIC_INNER_CORE = .false.    
+    ANISOTROPIC_INNER_CORE = .false.
     ! sets root name of model to original one
     MODEL_ROOT = MODEL
   endif
-  
+
   ! checks with '_1Dcrust' option
   impose_1Dcrust = .false.
   ending_1Dcrust = ' '
@@ -148,14 +148,14 @@
     MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL)-8)
   endif
 
-  
+
 !---
 !
 ! ADD YOUR MODEL HERE
 !
 !---
-    
-  
+
+
   ! uses PREM as the 1D reference model by default
   ! uses no mantle heterogeneities by default
   ! uses no 3D model by default
@@ -172,7 +172,7 @@
   TRANSVERSE_ISOTROPY = .false.
 
   ! model specifics
-  
+
   ! 1-D models
   if(MODEL_ROOT == '1D_isotropic_prem') then
     HONOR_1D_SPHERICAL_MOHO = .true.
@@ -353,16 +353,16 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == 'PPM') then    
+  else if(MODEL_ROOT == 'PPM') then
     ! overimposed based on isotropic-prem
-    CASE_3D = .true.    
+    CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_PPM
 
-  else if(MODEL_ROOT == 'GLL') then    
-    ! model will be given on local basis, at all GLL points, 
+  else if(MODEL_ROOT == 'GLL') then
+    ! model will be given on local basis, at all GLL points,
     ! as from meshfem3d output from routine save_arrays_solver()
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -370,8 +370,8 @@
     ONE_CRUST = .true.
     ! based on model s29ea
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
-    THREE_D_MODEL = THREE_D_MODEL_GLL 
-    TRANSVERSE_ISOTROPY = .true.    
+    THREE_D_MODEL = THREE_D_MODEL_GLL
+    TRANSVERSE_ISOTROPY = .true.
     ! note: after call to this routines read_compute_parameters() we will set
     ! mgll_v%model_gll flag and reset
     ! THREE_D_MODEL = THREE_D_MODEL_S29EA
@@ -381,20 +381,20 @@
 
   else
     print*
-    print*,'error model: ',trim(MODEL)    
+    print*,'error model: ',trim(MODEL)
     stop 'model not implemented yet, edit get_model_parameters.f90 and recompile'
   endif
 
-  ! suppress the crustal layers 
+  ! suppress the crustal layers
   if( SUPPRESS_CRUSTAL_MESH ) then
     CRUSTAL = .false.
     OCEANS = .false.
     ONE_CRUST = .false.
-    TOPOGRAPHY = .false.    
+    TOPOGRAPHY = .false.
   endif
 
   ! additional option for 3D mantle models:
-  ! this takes crust from reference 1D model rather than a 3D crust; 
+  ! this takes crust from reference 1D model rather than a 3D crust;
   if( impose_1Dcrust ) then
     ! no 3D crust
     CRUSTAL = .false.
@@ -402,7 +402,7 @@
     CASE_3D = .false.
     ! mesh honors the 1D moho depth
     HONOR_1D_SPHERICAL_MOHO = .true.
-    ! 2 element layers in top crust region rather than just one 
+    ! 2 element layers in top crust region rather than just one
     ONE_CRUST = .false.
   endif
 
@@ -441,7 +441,7 @@
 
 ! parameters read from parameter file
   integer REFERENCE_1D_MODEL
-  
+
   double precision ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
@@ -449,7 +449,7 @@
   double precision RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
 
   logical HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL
-  
+
 ! radii in PREM or IASP91
 ! and normalized density at fluid-solid interface on fluid size for coupling
 ! ROCEAN: radius of the ocean (m)
@@ -637,7 +637,7 @@
     R80_FICTITIOUS_IN_MESHER = R80
     if( CRUSTAL .and. CASE_3D ) then
       !> Hejun
-      ! mesh will honor 3D crustal moho topography 
+      ! mesh will honor 3D crustal moho topography
       ! moves MOHO up 5km to honor moho topography deeper than 35 km
       ! moves R80 down to 120km depth in order to have less squeezing for elements below moho
       RMOHO_FICTITIOUS_IN_MESHER = RMOHO_FICTITIOUS_IN_MESHER + RMOHO_STRETCH_ADJUSTEMENT

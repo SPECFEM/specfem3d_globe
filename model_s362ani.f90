@@ -28,18 +28,18 @@
 !--------------------------------------------------------------------------------------------------
 ! S362ani
 !
-! A global shear-wave speed model developed by Kustowski et al. [2006]. 
+! A global shear-wave speed model developed by Kustowski et al. [2006].
 !
 ! In this model, radial anisotropy is conﬁned to the uppermost mantle.
-! The model (and the corresponding mesh) incorporate 
+! The model (and the corresponding mesh) incorporate
 ! tomography on the 650~km and 410~km discontinuities in the 1D reference model REF.
 !
 ! s362wmani: A version of S362ANI with anisotropy allowed throughout the mantle.
 !
 ! s362ani_prem: A version of S362ANI calculated using PREM as the 1D reference model
 !
-! s29ea: A global model with higher resolution in the upper mantle beneath Eurasia 
-! calculated using REF as the 1D reference model. 
+! s29ea: A global model with higher resolution in the upper mantle beneath Eurasia
+! calculated using REF as the 1D reference model.
 !--------------------------------------------------------------------------------------------------
 
 
@@ -47,7 +47,7 @@
                               lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
                               xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -84,7 +84,7 @@
   real(kind=4) coe(maxcoe,maxker)
   character(len=80) hsplfl(maxhpa)
   character(len=40) dskker(maxker)
-  
+
   !real(kind=4) vercof(maxker)
   !real(kind=4) vercofd(maxker)
 
@@ -105,7 +105,7 @@
                           THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA, &
                           numker,numhpa,ihpa,lmxhpa,itypehpa,ihpakern,numcoe,ivarkern,itpspl, &
                           xlaspl,xlospl,radspl,coe,hsplfl,dskker,kerstr,varstr,refmdl)
-                          
+
   call MPI_BCAST(numker,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(numhpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(ihpa,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -126,10 +126,10 @@
   call MPI_BCAST(kerstr,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(refmdl,80,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(varstr,40*maxker,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  
-  
+
+
   end subroutine model_s362ani_broadcast
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -1224,7 +1224,7 @@
 ! -------------------------------------
   vsv3drel = 0.
   vsh3drel = 0.
-  
+
   depth=6371.0-xrad
   call evradker (depth,kerstr,numker,vercof,vercofd,ierror)
   if(ierror /= 0) stop 'ierror evradker'

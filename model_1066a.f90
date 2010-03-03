@@ -28,7 +28,7 @@
 !--------------------------------------------------------------------------------------------------
 ! 1066A
 !
-! Spherically symmetric earth model 1066A [Gilbert and Dziewonski, 1975]. 
+! Spherically symmetric earth model 1066A [Gilbert and Dziewonski, 1975].
 !
 ! When ATTENTUATION is on, it uses an unpublished 1D attenuation model from Scripps.
 !--------------------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@
 
   subroutine model_1066a_broadcast(CRUSTAL,M1066a_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -60,7 +60,7 @@
 
   ! all processes will define same parameters
   call define_model_1066a(CRUSTAL, M1066a_V)
-  
+
   end subroutine model_1066a_broadcast
 
 !

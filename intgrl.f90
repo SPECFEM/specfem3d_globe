@@ -37,14 +37,14 @@
   double precision f(640),r(640),s1(640),s2(640)
   double precision s3(640),sum
 
-! Local variables  
+! Local variables
   double precision, parameter :: third = 1.0d0/3.0d0
   double precision, parameter :: fifth = 1.0d0/5.0d0
   double precision, parameter :: sixth = 1.0d0/6.0d0
 
   double precision rji,yprime(640)
   double precision s1l,s2l,s3l
-  
+
   integer i,j,n,kdis(28)
   integer ndis,nir1
 

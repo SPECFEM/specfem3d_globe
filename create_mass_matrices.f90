@@ -34,11 +34,11 @@
                           xstore,ystore,zstore,RHO_OCEANS)
 
 ! creates rmass and rmass_ocean_load
-  
+
   use meshfem3D_models_par
 
   implicit none
-  
+
   integer myrank,nspec
 
   integer idoubling(nspec)
@@ -56,9 +56,9 @@
   ! mass matrix
   integer nglob
   real(kind=CUSTOM_REAL), dimension(nglob) :: rmass
-    
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,kappavstore
-  
+
   ! ocean mass matrix
   integer nglob_oceans
   real(kind=CUSTOM_REAL), dimension(nglob_oceans) :: rmass_ocean_load
@@ -66,26 +66,26 @@
   integer NSPEC2D_TOP
   integer, dimension(NSPEC2D_TOP) :: ibelm_top
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP) :: jacobian2D_top
-  
+
   ! arrays with the mesh in double precision
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-  
+
   double precision RHO_OCEANS
-  
+
   ! local parameters
   double precision weight
   double precision xval,yval,zval,rval,thetaval,phival
   double precision lat,lon,colat
   double precision elevation,height_oceans
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
-  
+
   integer :: ispec,i,j,k,iglobnum
   integer :: ix_oceans,iy_oceans,iz_oceans,ispec_oceans,ispec2D_top_crust
-  
-    
-  ! initializes  
+
+
+  ! initializes
   rmass(:) = 0._CUSTOM_REAL
 
   do ispec=1,nspec
@@ -224,5 +224,5 @@
     rmass_ocean_load(:) = rmass_ocean_load(:) + rmass(:)
 
   endif
-  
+
   end subroutine create_mass_matrices

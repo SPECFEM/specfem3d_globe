@@ -7,7 +7,7 @@
 !=======================================================================!
 
 Instructions on how to install and use SPECFEM3D_GLOBE are
-available in the manual located in directory USERS_MANUAL.
+available in the manual located in directory USER_MANUAL.
 
 Main developers: Dimitri Komatitsch, Jeroen Tromp, Qinya Liu and David Michea.
 
@@ -16,7 +16,7 @@ Installation
 ------------
 
 In order to compile the package on your system, please consult the
-manual located in directory USERS_MANUAL and the file './INSTALL' within this
+manual located in directory USER_MANUAL and the file './INSTALL' within this
 package directory.
 
 

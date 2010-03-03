@@ -75,8 +75,8 @@
 ! (tested with dates: Feb, 23 2010 -> idaywk = Tue
 !                               Dec, 24 2009 -> idaywk = Thu
 !                               Oct, 15 1582  -> idaywk = Fri ...which all look o.k. )
-  integer, parameter :: ioptn = 3 
-  
+  integer, parameter :: ioptn = 3
+
 ! Input/Output variables
   integer, intent(inout) :: iday,month,iyear,idayct
 

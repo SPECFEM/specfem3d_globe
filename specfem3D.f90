@@ -191,7 +191,7 @@
 ! ---------------------
 !
 ! v. 5.0 aka Tiger, many developers some with Princeton Tiger logo on their shirts, February 2010:
-!     new moho mesh stretching honoring crust2.0 moho depths, 
+!     new moho mesh stretching honoring crust2.0 moho depths,
 !     new attenuation assignment, new SAC headers, new general crustal models,
 !     faster performance due to Deville routines and enhanced loop unrolling,
 !     slight changes in code structure (see also trivia at program start)
@@ -307,7 +307,7 @@
   integer nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
 
 ! to save movie frames
-  integer nmovie_points,NIT 
+  integer nmovie_points,NIT
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
       store_val_x,store_val_y,store_val_z, &
       store_val_ux,store_val_uy,store_val_uz
@@ -512,7 +512,7 @@
 
 ! Newmark time scheme parameters and non-dimensionalization
   real(kind=CUSTOM_REAL) time,deltat,deltatover2,deltatsqover2
-  double precision scale_t,scale_t_inv,scale_displ,scale_veloc 
+  double precision scale_t,scale_t_inv,scale_displ,scale_veloc
 
 ! ADJOINT
   real(kind=CUSTOM_REAL) b_deltat,b_deltatover2,b_deltatsqover2
@@ -527,18 +527,18 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: b_div_displ_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: rho_kl_crust_mantle, &
-     beta_kl_crust_mantle, alpha_kl_crust_mantle 
+     beta_kl_crust_mantle, alpha_kl_crust_mantle
 ! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
   real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: cijkl_kl_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core, &
      alpha_kl_outer_core
-     
-  ! check for deviatoric kernel for outer core region  
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: beta_kl_outer_core 
+
+  ! check for deviatoric kernel for outer core region
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: beta_kl_outer_core
   integer :: nspec_beta_kl_outer_core
   logical,parameter:: deviatoric_outercore = .false.
-  
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: rho_kl_inner_core, &
      beta_kl_inner_core, alpha_kl_inner_core
 
@@ -550,10 +550,10 @@
      absorb_zmin_outer_core
   integer nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm
   integer nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc,nabs_zmin_oc
-  
+
   integer reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, reclen_ymin_crust_mantle, &
      reclen_ymax_crust_mantle, reclen_xmin_outer_core, reclen_xmax_outer_core,&
-     reclen_ymin_outer_core, reclen_ymax_outer_core, reclen_zmin 
+     reclen_ymin_outer_core, reclen_ymax_outer_core, reclen_zmin
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE) :: vector_accel_outer_core,&
              vector_displ_outer_core, b_vector_displ_outer_core
@@ -563,11 +563,11 @@
   integer npoin2D_faces_inner_core(NUMFACES_SHARED)
 
 ! parameters for the source
-  integer it 
+  integer it
   integer, dimension(:), allocatable :: islice_selected_source,ispec_selected_source
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearrays
   double precision, dimension(:,:,:) ,allocatable:: nu_source
-  double precision sec 
+  double precision sec
   double precision, dimension(:), allocatable :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
   double precision, dimension(:), allocatable :: t_cmt,hdur,hdur_gaussian
@@ -579,7 +579,7 @@
   integer nrec,nrec_local
   integer, dimension(:), allocatable :: islice_selected_rec,ispec_selected_rec,number_receiver_global
   double precision, dimension(:), allocatable :: xi_receiver,eta_receiver,gamma_receiver
-  character(len=150) :: STATIONS,rec_filename 
+  character(len=150) :: STATIONS,rec_filename
   double precision, dimension(:,:,:), allocatable :: nu
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
@@ -670,14 +670,14 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
-  integer ichunk,iproc_xi,iproc_eta 
-  
+  integer ichunk,iproc_xi,iproc_eta
+
 !ADJOINT
   real(kind=CUSTOM_REAL) b_two_omega_earth
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: &
     b_A_array_rotation,b_B_array_rotation
 
-  double precision :: time_start 
+  double precision :: time_start
 
 ! parameters read from parameter file
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
@@ -693,7 +693,7 @@
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
           MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
-                    
+
   logical ONE_CRUST,TOPOGRAPHY,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
           SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,SAVE_FORWARD, &
@@ -701,7 +701,7 @@
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH 
+  character(len=150) OUTPUT_FILES,LOCAL_PATH
 
   logical COMPUTE_AND_STORE_STRAIN
 
@@ -711,13 +711,13 @@
   double precision t_cmt_SAC,t_shift_SAC,elat_SAC,elon_SAC,depth_SAC, &
     cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,sec_SAC
   character(len=20) event_name_SAC
-  
+
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                NGLOB1D_RADIAL, &
                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
-               
+
   character(len=150) prname
 
 ! lookup table every km for gravity
@@ -736,7 +736,7 @@
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
 ! Boundary Mesh and Kernels
-  integer k_top,k_bot,iregion_code 
+  integer k_top,k_bot,iregion_code
   integer, dimension(NSPEC2D_MOHO) :: ibelm_moho_top,ibelm_moho_bot
   integer, dimension(NSPEC2D_400) :: ibelm_400_top,ibelm_400_bot
   integer, dimension(NSPEC2D_670) :: ibelm_670_top,ibelm_670_bot
@@ -750,7 +750,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_ICB) :: icb_kl, icb_kl_top, icb_kl_bot
   logical :: fluid_solid_boundary
 
-  integer i,ier 
+  integer i,ier
 
   ! if running on MareNostrum in Barcelona
   character(len=400) system_command
@@ -778,26 +778,26 @@
 !
 !             when calling a function, additional storage will be allocated for the variables in that function.
 !             that storage will be allocated in the heap memory segment.
-!         
+!
 !             most routine calls here will have rather long argument lists, probably because of this performance criteria.
 !             using modules/common data blocks together with dynamic allocation will put data into heap memory,
 !             thus it has longer latency to access variables than stack memory variables.
 !
-!             however, declaring the static arrays needed in compute_forces_crust_mantle_Dev() 
+!             however, declaring the static arrays needed in compute_forces_crust_mantle_Dev()
 !             like e.g. sum_terms, tempx1,...B1_m1_m2_5points,... in this main routine and
 !             passing them along as arguments to the routine makes the code slower.
 !             it seems that this stack/heap criterion is more complicated.
-! 
+!
 !             another reason why modules are avoided, is to make the code thread safe.
 !             having different threads access the same data structure and modifying it at the same time
 !             would lead to problems. passing arguments is a way to avoid such complications.
 !
-!             nevertheless, it would be nice to test - where possible - , if using modules 
+!             nevertheless, it would be nice to test - where possible - , if using modules
 !             together with static arrays would perform as well as this.
 !             at least, it would make the code more elegant and less error prone...
 !
 ! note 2: in general, most of the computation time for our earthquake simulations is spent
-!             inside the time loop (mainly the compute_forces_crust_mantle_Dev() routine). 
+!             inside the time loop (mainly the compute_forces_crust_mantle_Dev() routine).
 !             any code performance tuning will be most effective in there.
 !
 ! note 3: fortran is a code language that uses column-first ordering for arrays,
@@ -808,7 +808,7 @@
 ! note 4: Deville routines help compilers to better vectorize the do-loops and
 !             for most compilers, will result in a significant speedup ( > 30%).
 !
-! note 5: one common technique in computational science to help compilers 
+! note 5: one common technique in computational science to help compilers
 !             enhance pipelining is loop unrolling. we do attempt this here in a very simple
 !             and straigthforward way. so don't be confused about the somewhat
 !             bewildering do-loop writing...
@@ -858,7 +858,7 @@
                 hprimewgll_xx,hprimewgll_yy,hprimewgll_zz,hprimewgll_xxT, &
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
                 rec_filename,STATIONS,nrec)
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -914,7 +914,7 @@
               iboolcorner_outer_core, &
               iboolleft_xi_inner_core,iboolright_xi_inner_core, &
               iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-              npoin2D_xi_inner_core,npoin2D_eta_inner_core, &     
+              npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
               iboolfaces_inner_core,npoin2D_faces_inner_core, &
               iboolcorner_inner_core, &
               iprocfrom_faces,iprocto_faces,imsg_type, &
@@ -944,88 +944,88 @@
               jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core,jacobian2D_ymin_outer_core, &
               jacobian2D_ymax_outer_core,jacobian2D_bottom_outer_core,jacobian2D_top_outer_core, &
               nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
-              nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, & 
+              nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
               ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core, &
               ibelm_ymax_inner_core,ibelm_bottom_inner_core,ibelm_top_inner_core, &
               ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
               ibelm_670_top,ibelm_670_bot,normal_moho,normal_400,normal_670, &
               k_top,k_bot,moho_kl,d400_kl,d670_kl,cmb_kl,icb_kl, &
               LOCAL_PATH,SIMULATION_TYPE)
-              
+
   ! absorbing boundaries
   if(ABSORBING_CONDITIONS) then
     ! crust_mantle
     if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       nabs_xmin_cm = nspec2D_xmin_crust_mantle
-    else      
+    else
       nabs_xmin_cm = 1
-    endif    
+    endif
     allocate(absorb_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmin_cm))
 
     if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       nabs_xmax_cm = nspec2D_xmax_crust_mantle
-    else      
+    else
       nabs_xmax_cm = 1
-    endif    
+    endif
     allocate(absorb_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmax_cm))
 
     if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       nabs_ymin_cm = nspec2D_ymin_crust_mantle
-    else      
+    else
       nabs_ymin_cm = 1
-    endif    
+    endif
     allocate(absorb_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymin_cm))
 
     if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       nabs_ymax_cm = nspec2D_ymax_crust_mantle
-    else      
+    else
       nabs_ymax_cm = 1
-    endif    
+    endif
     allocate(absorb_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymax_cm))
 
     ! outer_core
     if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       nabs_xmin_oc = nspec2D_xmin_outer_core
-    else      
+    else
       nabs_xmin_oc = 1
-    endif    
+    endif
     allocate(absorb_xmin_outer_core(NGLLY,NGLLZ,nabs_xmin_oc))
 
     if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       nabs_xmax_oc = nspec2D_xmax_outer_core
-    else      
+    else
       nabs_xmax_oc = 1
-    endif    
+    endif
     allocate(absorb_xmax_outer_core(NGLLY,NGLLZ,nabs_xmax_oc))
 
     if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       nabs_ymin_oc = nspec2D_ymin_outer_core
-    else      
+    else
       nabs_ymin_oc = 1
-    endif    
+    endif
     allocate(absorb_ymin_outer_core(NGLLX,NGLLZ,nabs_ymin_oc))
 
     if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       nabs_ymax_oc = nspec2D_ymax_outer_core
-    else      
+    else
       nabs_ymax_oc = 1
-    endif    
+    endif
     allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nabs_ymax_oc))
 
     if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. &
        (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       nabs_zmin_oc = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
-    else      
+    else
       nabs_zmin_oc = 1
-    endif    
+    endif
     allocate(absorb_zmin_outer_core(NGLLX,NGLLY,nabs_zmin_oc))
 
     ! read arrays for Stacey conditions
@@ -1044,9 +1044,9 @@
                       reclen_ymin_outer_core,reclen_ymax_outer_core, &
                       reclen_zmin,NSPEC2D_BOTTOM, &
                       SIMULATION_TYPE,SAVE_FORWARD,LOCAL_PATH)
-    
+
   endif
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -1118,10 +1118,10 @@
                       xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                       gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                      xigll,yigll,zigll,sourcearrays)    
-  endif  
-  
-  
+                      xigll,yigll,zigll,sourcearrays)
+  endif
+
+
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
     allocate(iadj_vec(NSTEP))
@@ -1129,19 +1129,19 @@
     do it=1,NSTEP
        iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record
     enddo
-    
+
     if(nadj_rec_local > 0) then
       ! allocate adjoint source arrays
       allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC))
-      adj_sourcearrays = 0._CUSTOM_REAL    
-        
+      adj_sourcearrays = 0._CUSTOM_REAL
+
       ! allocate indexing arrays
       allocate(iadjsrc(NSTEP_SUB_ADJ,2))
       allocate(iadjsrc_len(NSTEP_SUB_ADJ))
       ! initializes iadjsrc, iadjsrc_len and iadj_vec
       call setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
                       NTSTEP_BETWEEN_READ_ADJSRC, &
-                      iadjsrc,iadjsrc_len,iadj_vec)    
+                      iadjsrc,iadjsrc_len,iadj_vec)
     endif
   endif
 
@@ -1158,7 +1158,7 @@
       nadj_hprec_local = nrec_local
     else
       nadj_hprec_local = 1
-    endif    
+    endif
     allocate(hpxir_store(nadj_hprec_local,NGLLX))
     allocate(hpetar_store(nadj_hprec_local,NGLLY))
     allocate(hpgammar_store(nadj_hprec_local,NGLLZ))
@@ -1172,7 +1172,7 @@
                       islice_selected_rec,number_receiver_global, &
                       xi_receiver,eta_receiver,gamma_receiver, &
                       hxir_store,hetar_store,hgammar_store, &
-                      nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)    
+                      nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
 
     ! allocate seismogram array
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
@@ -1184,11 +1184,11 @@
       ! allocate Frechet derivatives array
       allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local))
       moment_der = 0._CUSTOM_REAL
-      sloc_der = 0._CUSTOM_REAL      
+      sloc_der = 0._CUSTOM_REAL
     endif
     ! initialize seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
-    nit_written = 0    
+    nit_written = 0
   endif
 
   ! get information about event name and location for SAC seismograms
@@ -1314,7 +1314,7 @@
     allocate(buffer_slices(npoin2D_cube_from_slices,NDIM))
     allocate(buffer_slices2(npoin2D_cube_from_slices,NDIM))
     allocate(ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices))
-    
+
     ! handles the communications with the central cube if it was included in the mesh
     call prepare_timerun_centralcube(myrank,rmass_inner_core, &
                       iproc_xi,iproc_eta,ichunk, &
@@ -1328,7 +1328,7 @@
                       nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube, &
                       npoin2D_cube_from_slices,receiver_cube_from_slices, &
                       sender_from_slices_to_cube,ibool_central_cube, &
-                      buffer_slices,buffer_slices2,buffer_all_cube_from_slices)        
+                      buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
   endif
 
   ! check that all the mass matrices are positive
@@ -1344,7 +1344,7 @@
   rmass_crust_mantle = 1._CUSTOM_REAL / rmass_crust_mantle
   rmass_outer_core = 1._CUSTOM_REAL / rmass_outer_core
   rmass_inner_core = 1._CUSTOM_REAL / rmass_inner_core
-  
+
 
   ! change x, y, z to r, theta and phi once and for all
   ! IMPROVE dangerous: old name kept (xstore ystore zstore) for new values
@@ -1409,7 +1409,7 @@
     allocate(store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1))
     allocate(store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1))
   endif
-  
+
   ! output point and element information for 3D movies
   if(MOVIE_VOLUME) then
     ! the following has to be true for the the array dimensions of eps to match with those of xstore etc..
@@ -1426,7 +1426,7 @@
 
 
     allocate(nu_3dmovie(3,3,npoints_3dmovie))
-    
+
     call write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
                            ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
                            mask_3dmovie,mask_ibool_3dmovie,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
@@ -1453,7 +1453,7 @@
   call prepare_timerun_gravity(myrank, &
                     minus_g_cmb,minus_g_icb, &
                     minus_gravity_table,minus_deriv_gravity_table, &
-                    density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid, &   
+                    density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid, &
                     ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
                     R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
@@ -1473,7 +1473,7 @@
                 c33store_inner_core,c44store_inner_core, &
                 alphaval,betaval,gammaval,b_alphaval,b_betaval,b_gammaval, &
                 deltat,b_deltat,LOCAL_PATH)
-  endif     
+  endif
 
 
   ! initialize arrays to zero
@@ -1524,7 +1524,7 @@
     beta_kl_outer_core = 0._CUSTOM_REAL
   endif
 
-  ! initialize to be on the save side for adjoint runs SIMULATION_TYPE==2 
+  ! initialize to be on the save side for adjoint runs SIMULATION_TYPE==2
   eps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
   epsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
   eps_trace_over_3_inner_core(:,:,:,:) = 0._CUSTOM_REAL
@@ -1553,7 +1553,7 @@
     endif
   endif
 
-  ! reads files back from local disk or MT tape system if restart file  
+  ! reads files back from local disk or MT tape system if restart file
   call read_forward_arrays(myrank,NSTEP, &
                     SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     it_begin,it_end, &
@@ -1568,7 +1568,7 @@
                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
                     b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
-                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)  
+                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -1644,9 +1644,9 @@
 
 ! way 2:
 ! One common technique in computational science to help enhance pipelining is loop unrolling
-!     
+!
 ! we're accessing NDIM=3 components at each line,
-! that is, for an iteration, the register must contain 
+! that is, for an iteration, the register must contain
 ! NDIM * displ_ + NDIM * veloc_ + NDIM * accel + deltat + deltatsq..
 ! in most cases a real (CUSTOM_REAL) value will have 4 bytes,
 ! assuming a default cache size of of about 128 bytes, we unroll here in steps of 3, thus 29 reals or 118 bytes,
@@ -1654,12 +1654,12 @@
     do i = 1,mod(NGLOB_CRUST_MANTLE,3)
       displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
         + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
-        
+
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
         + deltatover2*accel_crust_mantle(:,i)
 
       accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-    enddo    
+    enddo
     do i = mod(NGLOB_CRUST_MANTLE,3)+1,NGLOB_CRUST_MANTLE, 3 ! in steps of 3
       displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
         + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
@@ -1668,35 +1668,35 @@
       displ_crust_mantle(:,i+2) = displ_crust_mantle(:,i+2) &
         + deltat*veloc_crust_mantle(:,i+2) + deltatsqover2*accel_crust_mantle(:,i+2)
 
-        
+
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
         + deltatover2*accel_crust_mantle(:,i)
       veloc_crust_mantle(:,i+1) = veloc_crust_mantle(:,i+1) &
         + deltatover2*accel_crust_mantle(:,i+1)
       veloc_crust_mantle(:,i+2) = veloc_crust_mantle(:,i+2) &
-        + deltatover2*accel_crust_mantle(:,i+2)    
-        
+        + deltatover2*accel_crust_mantle(:,i+2)
+
       ! set acceleration to zero
       ! note: we do initialize acceleration in this loop since it is read already into the cache,
-      !           otherwise it would have to be read in again for this explicitly, 
+      !           otherwise it would have to be read in again for this explicitly,
       !           which would make this step more expensive
       accel_crust_mantle(:,i) = 0._CUSTOM_REAL
       accel_crust_mantle(:,i+1) = 0._CUSTOM_REAL
-      accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL                
+      accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
     enddo
-    
+
 
     ! outer core
-    do i = 1,mod(NGLOB_OUTER_CORE,4)    
+    do i = 1,mod(NGLOB_OUTER_CORE,4)
       displ_outer_core(i) = displ_outer_core(i) &
         + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
-        
+
       veloc_outer_core(i) = veloc_outer_core(i) &
         + deltatover2*accel_outer_core(i)
-       
-      accel_outer_core(i) = 0._CUSTOM_REAL           
-    enddo    
-    do i = mod(NGLOB_OUTER_CORE,4)+1,NGLOB_OUTER_CORE, 4 ! in steps of 4    
+
+      accel_outer_core(i) = 0._CUSTOM_REAL
+    enddo
+    do i = mod(NGLOB_OUTER_CORE,4)+1,NGLOB_OUTER_CORE, 4 ! in steps of 4
       displ_outer_core(i) = displ_outer_core(i) &
         + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
       displ_outer_core(i+1) = displ_outer_core(i+1) &
@@ -1705,7 +1705,7 @@
         + deltat*veloc_outer_core(i+2) + deltatsqover2*accel_outer_core(i+2)
       displ_outer_core(i+3) = displ_outer_core(i+3) &
         + deltat*veloc_outer_core(i+3) + deltatsqover2*accel_outer_core(i+3)
-        
+
       veloc_outer_core(i) = veloc_outer_core(i) &
         + deltatover2*accel_outer_core(i)
       veloc_outer_core(i+1) = veloc_outer_core(i+1) &
@@ -1715,32 +1715,32 @@
       veloc_outer_core(i+3) = veloc_outer_core(i+3) &
         + deltatover2*accel_outer_core(i+3)
 
-      accel_outer_core(i) = 0._CUSTOM_REAL   
-      accel_outer_core(i+1) = 0._CUSTOM_REAL   
-      accel_outer_core(i+2) = 0._CUSTOM_REAL   
-      accel_outer_core(i+3) = 0._CUSTOM_REAL   
+      accel_outer_core(i) = 0._CUSTOM_REAL
+      accel_outer_core(i+1) = 0._CUSTOM_REAL
+      accel_outer_core(i+2) = 0._CUSTOM_REAL
+      accel_outer_core(i+3) = 0._CUSTOM_REAL
     enddo
-    
-    
+
+
     ! inner core
-    do i = 1,mod(NGLOB_INNER_CORE,3)    
+    do i = 1,mod(NGLOB_INNER_CORE,3)
       displ_inner_core(:,i) = displ_inner_core(:,i) &
         + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
-        
+
       veloc_inner_core(:,i) = veloc_inner_core(:,i) &
         + deltatover2*accel_inner_core(:,i)
-        
-      accel_inner_core(:,i) = 0._CUSTOM_REAL          
+
+      accel_inner_core(:,i) = 0._CUSTOM_REAL
     enddo
-    do i = mod(NGLOB_INNER_CORE,3)+1,NGLOB_INNER_CORE, 3 ! in steps of 3    
+    do i = mod(NGLOB_INNER_CORE,3)+1,NGLOB_INNER_CORE, 3 ! in steps of 3
       displ_inner_core(:,i) = displ_inner_core(:,i) &
         + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
       displ_inner_core(:,i+1) = displ_inner_core(:,i+1) &
         + deltat*veloc_inner_core(:,i+1) + deltatsqover2*accel_inner_core(:,i+1)
       displ_inner_core(:,i+2) = displ_inner_core(:,i+2) &
         + deltat*veloc_inner_core(:,i+2) + deltatsqover2*accel_inner_core(:,i+2)
-                
-        
+
+
       veloc_inner_core(:,i) = veloc_inner_core(:,i) &
         + deltatover2*accel_inner_core(:,i)
       veloc_inner_core(:,i+1) = veloc_inner_core(:,i+1) &
@@ -1748,9 +1748,9 @@
       veloc_inner_core(:,i+2) = veloc_inner_core(:,i+2) &
         + deltatover2*accel_inner_core(:,i+2)
 
-      accel_inner_core(:,i) = 0._CUSTOM_REAL  
-      accel_inner_core(:,i+1) = 0._CUSTOM_REAL  
-      accel_inner_core(:,i+2) = 0._CUSTOM_REAL  
+      accel_inner_core(:,i) = 0._CUSTOM_REAL
+      accel_inner_core(:,i+1) = 0._CUSTOM_REAL
+      accel_inner_core(:,i+2) = 0._CUSTOM_REAL
     enddo
 
 
@@ -1812,7 +1812,7 @@
           + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
         b_veloc_outer_core(i) = b_veloc_outer_core(i) &
           + b_deltatover2*b_accel_outer_core(i)
-        b_accel_outer_core(i) = 0._CUSTOM_REAL  
+        b_accel_outer_core(i) = 0._CUSTOM_REAL
       enddo
       do i=mod(NGLOB_OUTER_CORE,4)+1,NGLOB_OUTER_CORE,4
         b_displ_outer_core(i) = b_displ_outer_core(i) &
@@ -1833,10 +1833,10 @@
         b_veloc_outer_core(i+3) = b_veloc_outer_core(i+3) &
           + b_deltatover2*b_accel_outer_core(i+3)
 
-        b_accel_outer_core(i) = 0._CUSTOM_REAL  
-        b_accel_outer_core(i+1) = 0._CUSTOM_REAL  
-        b_accel_outer_core(i+2) = 0._CUSTOM_REAL  
-        b_accel_outer_core(i+3) = 0._CUSTOM_REAL  
+        b_accel_outer_core(i) = 0._CUSTOM_REAL
+        b_accel_outer_core(i+1) = 0._CUSTOM_REAL
+        b_accel_outer_core(i+2) = 0._CUSTOM_REAL
+        b_accel_outer_core(i+3) = 0._CUSTOM_REAL
       enddo
 
 
@@ -1882,13 +1882,13 @@
     ! compute the maximum of the norm of the displacement
     ! in all the slices using an MPI reduction
     ! and output timestamp file to check that simulation is running fine
-    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) &    
+    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) &
       call check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
                           b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
                           eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           COMPUTE_AND_STORE_STRAIN,myrank)
-    
+
 
 
 
@@ -1941,7 +1941,7 @@
            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core)      
+           ibool_outer_core)
       else
         call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
@@ -2000,7 +2000,7 @@
                             accel_outer_core,b_accel_outer_core, &
                             normal_top_outer_core,jacobian2D_top_outer_core, &
                             wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                            SIMULATION_TYPE,NSPEC2D_TOP(IREGION_OUTER_CORE))        
+                            SIMULATION_TYPE,NSPEC2D_TOP(IREGION_OUTER_CORE))
 
     !---
     !--- couple with inner core at the bottom of the outer core
@@ -2040,7 +2040,7 @@
 !      veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
 !    enddo
 
-! way 2:  
+! way 2:
     do i=1,mod(NGLOB_OUTER_CORE,4)
       accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
       veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
@@ -2050,14 +2050,14 @@
       accel_outer_core(i+1) = accel_outer_core(i+1)*rmass_outer_core(i+1)
       accel_outer_core(i+2) = accel_outer_core(i+2)*rmass_outer_core(i+2)
       accel_outer_core(i+3) = accel_outer_core(i+3)*rmass_outer_core(i+3)
-      
+
       veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
       veloc_outer_core(i+1) = veloc_outer_core(i+1) + deltatover2*accel_outer_core(i+1)
       veloc_outer_core(i+2) = veloc_outer_core(i+2) + deltatover2*accel_outer_core(i+2)
       veloc_outer_core(i+3) = veloc_outer_core(i+3) + deltatover2*accel_outer_core(i+3)
-    enddo      
-      
-      
+    enddo
+
+
 
     if (SIMULATION_TYPE == 3) then
       call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
@@ -2096,8 +2096,8 @@
         b_veloc_outer_core(i+1) = b_veloc_outer_core(i+1) + b_deltatover2*b_accel_outer_core(i+1)
         b_veloc_outer_core(i+2) = b_veloc_outer_core(i+2) + b_deltatover2*b_accel_outer_core(i+2)
         b_veloc_outer_core(i+3) = b_veloc_outer_core(i+3) + b_deltatover2*b_accel_outer_core(i+3)
-      enddo      
-      
+      enddo
+
     endif
 
 
@@ -2164,7 +2164,7 @@
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
           COMPUTE_AND_STORE_STRAIN)
     endif
-  
+
     if (SIMULATION_TYPE == 3) then
     ! for anisotropy and gravity, x y and z contain r theta and phi
       if( USE_DEVILLE_VAL ) then
@@ -2219,7 +2219,7 @@
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
           COMPUTE_AND_STORE_STRAIN)
-    
+
       endif
     endif
 
@@ -2288,7 +2288,7 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
-          COMPUTE_AND_STORE_STRAIN)  
+          COMPUTE_AND_STORE_STRAIN)
     endif
 
     if (SIMULATION_TYPE == 3) then
@@ -2329,7 +2329,7 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
-          COMPUTE_AND_STORE_STRAIN)    
+          COMPUTE_AND_STORE_STRAIN)
       endif
     endif
 
@@ -2338,7 +2338,7 @@
       call compute_add_sources(myrank,NSOURCES, &
                                 accel_crust_mantle,sourcearrays, &
                                 DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,it)      
+                                islice_selected_source,ispec_selected_source,it)
 
     ! add adjoint sources
     if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
@@ -2352,7 +2352,7 @@
                                 NSTEP_SUB_ADJ,iadjsrc_len,iadjsrc,iadj_vec, &
                                 it,it_begin,station_name,network_name)
     endif
-    
+
     ! add sources for backward/reconstructed wavefield
     if (SIMULATION_TYPE == 3) &
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
@@ -2360,7 +2360,7 @@
                                 DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it)
 
-  
+
     ! ****************************************************
     ! **********  add matching with fluid part  **********
     ! ****************************************************
@@ -2379,7 +2379,7 @@
                             wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
                             RHO_TOP_OC,minus_g_cmb, &
                             SIMULATION_TYPE,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
-      
+
     !---
     !--- couple with outer core at the top of the inner core
     !---
@@ -2721,15 +2721,15 @@
 ! write the seismograms with time shift
 
 ! store the seismograms only if there is at least one receiver located in this slice
-  if (nrec_local > 0) then  
+  if (nrec_local > 0) then
     if (SIMULATION_TYPE == 1) then
       call compute_seismograms(nrec_local,nrec,displ_crust_mantle, &
                                 nu,hxir_store,hetar_store,hgammar_store, &
                                 scale_displ,ibool_crust_mantle, &
                                 ispec_selected_rec,number_receiver_global, &
                                 seismo_current,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                                seismograms)  
-                                
+                                seismograms)
+
     else if (SIMULATION_TYPE == 2 ) then
       call compute_seismograms_adjoint(NSOURCES,nrec_local,displ_crust_mantle, &
                     eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
@@ -2745,15 +2745,15 @@
                     NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismograms,deltat, &
                     ibool_crust_mantle,ispec_selected_source,number_receiver_global, &
                     NSTEP,it,nit_written)
-                    
+
     else if (SIMULATION_TYPE == 3 ) then
       call compute_seismograms_backward(nrec_local,nrec,b_displ_crust_mantle, &
                                 nu,hxir_store,hetar_store,hgammar_store, &
                                 scale_displ,ibool_crust_mantle, &
                                 ispec_selected_rec,number_receiver_global, &
                                 seismo_current,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                                seismograms)  
-    
+                                seismograms)
+
     endif
   endif ! nrec_local
 
@@ -2800,12 +2800,12 @@
     ! crust mantle
     call compute_kernels_crust_mantle(ibool_crust_mantle, &
                           rho_kl_crust_mantle,beta_kl_crust_mantle, &
-                          alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &  
+                          alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &
                           accel_crust_mantle,b_displ_crust_mantle, &
                           epsilondev_crust_mantle,b_epsilondev_crust_mantle, &
                           eps_trace_over_3_crust_mantle,b_eps_trace_over_3_crust_mantle, &
                           deltat)
-    
+
     ! outer core
     call compute_kernels_outer_core(ibool_outer_core, &
                         xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -2825,7 +2825,7 @@
     ! inner core
     call compute_kernels_inner_core(ibool_inner_core, &
                           rho_kl_inner_core,beta_kl_inner_core, &
-                          alpha_kl_inner_core, &  
+                          alpha_kl_inner_core, &
                           accel_inner_core,b_displ_inner_core, &
                           epsilondev_inner_core,b_epsilondev_inner_core, &
                           eps_trace_over_3_inner_core,b_eps_trace_over_3_inner_core, &
@@ -3046,7 +3046,7 @@
                     store_val_ux_all,store_val_uy_all,store_val_uz_all, &
                     ibelm_top_crust_mantle,ibool_crust_mantle, &
                     NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-                    NIT,it,OUTPUT_FILES)      
+                    NIT,it,OUTPUT_FILES)
     endif
   endif
 
@@ -3063,7 +3063,7 @@
                     muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
-      else if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then 
+      else if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then
         ! output the Time Integral of Strain, or \mu*TIS
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
@@ -3127,7 +3127,7 @@
     ! crust mantle
     call save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
                   cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
-                  alpha_kl_crust_mantle,beta_kl_crust_mantle, &  
+                  alpha_kl_crust_mantle,beta_kl_crust_mantle, &
                   ystore_crust_mantle,zstore_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
@@ -3145,7 +3145,7 @@
                           rho_kl_inner_core,beta_kl_inner_core,alpha_kl_inner_core, &
                           rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
                           LOCAL_PATH)
-    
+
     ! boundary kernel
     if (SAVE_BOUNDARY_MESH) then
       call save_kernels_boundary_kl(myrank,scale_t,scale_displ, &
@@ -3158,7 +3158,7 @@
   ! save source derivatives for adjoint simulations
   if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
     call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
-                                nu_source,moment_der,sloc_der,number_receiver_global)    
+                                nu_source,moment_der,sloc_der,number_receiver_global)
   endif
 
 
@@ -3188,7 +3188,7 @@
   ! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)
 
-  
+
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -3196,7 +3196,7 @@
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !
- 
+
 
   end program xspecfem3D
 

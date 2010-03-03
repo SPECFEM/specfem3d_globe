@@ -28,14 +28,14 @@
 
   subroutine compute_kernels_crust_mantle(ibool_crust_mantle, &
                           rho_kl_crust_mantle,beta_kl_crust_mantle, &
-                          alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &  
+                          alpha_kl_crust_mantle,cijkl_kl_crust_mantle, &
                           accel_crust_mantle,b_displ_crust_mantle, &
                           epsilondev_crust_mantle,b_epsilondev_crust_mantle, &
                           eps_trace_over_3_crust_mantle,b_eps_trace_over_3_crust_mantle, &
                           deltat)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -43,11 +43,11 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     rho_kl_crust_mantle, beta_kl_crust_mantle, alpha_kl_crust_mantle
-    
+
   real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     cijkl_kl_crust_mantle
 
-  
+
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
      accel_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
@@ -66,7 +66,7 @@
   real(kind=CUSTOM_REAL) deltat
 
   ! local parameters
-  real(kind=CUSTOM_REAL),dimension(21) :: prod !, cijkl_kl_local  
+  real(kind=CUSTOM_REAL),dimension(21) :: prod !, cijkl_kl_local
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   integer :: i,j,k,ispec,iglob
@@ -81,7 +81,7 @@
           ! density kernel: see e.g. Tromp et al.(2005), equation (14)
           !                         b_displ_crust_mantle is the backward/reconstructed wavefield, that is s(x,t) in eq. (14),
           !                         accel_crust_mantle is the adjoint wavefield, that corresponds to s_dagger(x,T-t)
-          !                         
+          !
           !                         note with respect to eq. (14) the second time derivative is applied to the
           !                         adjoint wavefield here rather than the backward/reconstructed wavefield.
           !                         this is a valid operation and the resultant kernel identical to the eq. (14).
@@ -106,7 +106,7 @@
             cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_crust_mantle(:,i,j,k,ispec) + deltat * prod(:)
 
           else
-            
+
             ! kernel for shear modulus, see e.g. Tromp et al. (2005), equation (17)
             ! note: multiplication with 2*mu(x) will be done after the time loop
             beta_kl_crust_mantle(i,j,k,ispec) =  beta_kl_crust_mantle(i,j,k,ispec) &
@@ -128,8 +128,8 @@
       enddo
     enddo
   enddo
-  
-  
+
+
   end subroutine compute_kernels_crust_mantle
 
 
@@ -152,9 +152,9 @@
                         rho_kl_outer_core,alpha_kl_outer_core, &
                         deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
                         deltat)
-  
+
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -191,9 +191,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core) :: &
     beta_kl_outer_core
   logical deviatoric_outercore
-  
+
   real(kind=CUSTOM_REAL) deltat
-  
+
   ! local parameters
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,kappal
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
@@ -279,7 +279,7 @@
                 - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                               + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                               + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-                              
+
             b_epsilondev_loc(2) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l  &
                 - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                               + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
@@ -302,7 +302,7 @@
                 - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                               + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                               + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-                          
+
           endif !deviatoric kernel check
 
 
@@ -383,7 +383,7 @@
                 - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                               + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                               + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
-                              
+
             epsilondev_loc(2) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l  &
                 - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                               + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
@@ -412,7 +412,7 @@
                + (epsilondev_loc(1)+epsilondev_loc(2)) * (b_epsilondev_loc(1)+b_epsilondev_loc(2)) &
                + 2 * (epsilondev_loc(3)*b_epsilondev_loc(3) + epsilondev_loc(4)*b_epsilondev_loc(4) + &
                 epsilondev_loc(5)*b_epsilondev_loc(5)) )
-                          
+
           endif !deviatoric kernel check
 
 
@@ -421,7 +421,7 @@
              + deltat * dot_product(vector_accel_outer_core(:,iglob), b_vector_displ_outer_core(:,iglob))
 
           kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)
-          
+
           div_displ_outer_core(i,j,k,ispec) =  kappal * accel_outer_core(iglob)
           b_div_displ_outer_core(i,j,k,ispec) =  kappal * b_accel_outer_core(iglob)
 
@@ -435,8 +435,8 @@
   enddo
 
   end subroutine compute_kernels_outer_core
-  
-  
+
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -444,15 +444,15 @@
 
   subroutine compute_kernels_inner_core(ibool_inner_core, &
                           rho_kl_inner_core,beta_kl_inner_core, &
-                          alpha_kl_inner_core, &  
+                          alpha_kl_inner_core, &
                           accel_inner_core,b_displ_inner_core, &
                           epsilondev_inner_core,b_epsilondev_inner_core, &
                           eps_trace_over_3_inner_core,b_eps_trace_over_3_inner_core, &
                           deltat)
-  
+
 
   implicit none
-  
+
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
@@ -460,7 +460,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
     rho_kl_inner_core, beta_kl_inner_core, alpha_kl_inner_core
-    
+
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
      accel_inner_core
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
@@ -481,9 +481,9 @@
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
-  
+
   integer :: i,j,k,ispec,iglob
-  
+
 
   ! inner_core
   do ispec = 1, NSPEC_INNER_CORE
@@ -513,7 +513,7 @@
   enddo
 
   end subroutine compute_kernels_inner_core
-  
+
 
 !
 !-------------------------------------------------------------------------------------------------

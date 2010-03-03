@@ -32,10 +32,10 @@
                       c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                       c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                       nspec_stacey,rho_vp,rho_vs, &
-                      xstore,ystore,zstore, &                                            
+                      xstore,ystore,zstore, &
                       rmin,rmax,RCMB,RICB,R670,RMOHO,RTOPDDOUBLEPRIME,R600,R220, &
                       R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-                      tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &                      
+                      tau_s,tau_e_store,Qmu_store,T_c_source,vx,vy,vz,vnspec, &
                       ABSORBING_CONDITIONS,elem_in_crust,elem_in_mantle)
 
   use meshfem3D_models_par
@@ -76,26 +76,26 @@
 
   logical ABSORBING_CONDITIONS
   logical elem_in_crust,elem_in_mantle
-  
+
   ! local parameters
   double precision xmesh,ymesh,zmesh
   ! the 21 coefficients for an anisotropic medium in reduced notation
   double precision c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
-  double precision, dimension(N_SLS) :: tau_e                   
+  double precision, dimension(N_SLS) :: tau_e
 
-  ! local parameters    
-  double precision rho,dvp 
+  ! local parameters
+  double precision rho,dvp
   double precision vpv,vph,vsv,vsh,eta_aniso
-  double precision Qkappa,Qmu 
-  double precision r,r_prem,moho 
+  double precision Qkappa,Qmu
+  double precision r,r_prem,moho
   integer i,j,k
 
   ! loops over all gll points for this spectral element
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
-      
+
         ! initializes values
         rho = 0.d0
         vpv = 0.d0
@@ -123,17 +123,17 @@
         c46 = 0.d0
         c55 = 0.d0
         c56 = 0.d0
-        c66 = 0.d0        
+        c66 = 0.d0
         Qmu = 0.d0
         Qkappa = 0.d0 ! not used, not stored so far...
         tau_e(:) = 0.d0
         dvp = 0.d0
-        
+
         ! sets xyz coordinates of GLL point
         xmesh = xstore(i,j,k,ispec)
         ymesh = ystore(i,j,k,ispec)
-        zmesh = zstore(i,j,k,ispec)        
-        
+        zmesh = zstore(i,j,k,ispec)
+
         ! exact point location radius
         r = dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh)
 
@@ -146,7 +146,7 @@
         call get_model_check_idoubling(r_prem,xmesh,ymesh,zmesh,rmin,rmax,idoubling, &
                             RICB,RCMB,RTOPDDOUBLEPRIME, &
                             R220,R670,myrank)
-        
+
         ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
         call meshfem3D_models_get1D_val(myrank,iregion_code,idoubling, &
                               r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
@@ -161,7 +161,7 @@
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
-                        
+
         ! gets the 3-D crustal model
         if( CRUSTAL ) then
           if( .not. elem_in_mantle) &
@@ -171,11 +171,11 @@
                               c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
                               elem_in_crust,moho)
         endif
-        
+
         ! overwrites with tomographic model values (from iteration step) here, given at all GLL points
         call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,&
                                         myrank,iregion_code,ispec,i,j,k)
-        
+
         ! checks vpv: if close to zero then there is probably an error
         if( vpv < TINYVAL ) then
           print*,'error vpv: ',vpv,vph,vsv,vsh,rho
@@ -185,10 +185,10 @@
 
         !> Hejun
         ! New Attenuation assignment
-        ! Define 3D and 1D Attenuation after moho stretch 
+        ! Define 3D and 1D Attenuation after moho stretch
         ! and before TOPOGRAPHY/ELLIPCITY
         !
-        !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...          
+        !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
         if( ATTENUATION ) &
           call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
                               tau_e,tau_s,T_c_source, &
@@ -336,7 +336,7 @@
                             R220,R670,myrank)
 
   use meshfem3D_models_par
-  
+
   implicit none
 
   !include "constants.h"
@@ -344,14 +344,14 @@
   integer idoubling,myrank
 
   double precision r_prem,rmin,rmax,x,y,z
-  
+
   double precision RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220
   double precision r_m,r,theta,phi
 
   ! compute real physical radius in meters
   r_m = r_prem * R_EARTH
 
-  ! checks layers 
+  ! checks layers
   if( abs(rmax - rmin ) < TINYVAL ) then
     ! there's probably an error
     print*,'error layer radius min/max:',rmin,rmax
@@ -374,7 +374,7 @@
        idoubling /= IFLAG_IN_FICTITIOUS_CUBE) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print*,'error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
-      print*,'  idoubling/IFLAG: ',idoubling,IFLAG_INNER_CORE_NORMAL,'-to-',IFLAG_IN_FICTITIOUS_CUBE    
+      print*,'  idoubling/IFLAG: ',idoubling,IFLAG_INNER_CORE_NORMAL,'-to-',IFLAG_IN_FICTITIOUS_CUBE
       call exit_MPI(myrank,'error  in get_model_check_idoubling() wrong doubling flag for inner core point')
     endif
   !
@@ -432,5 +432,5 @@
     endif
 
   endif
-    
+
   end subroutine get_model_check_idoubling

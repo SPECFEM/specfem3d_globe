@@ -52,14 +52,14 @@ program combine_vol_data
   real x, y, z, dat
   integer numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
-  
-  !daniel: instead of taking the first value which appears for a global point, average the values 
-  !            if there are more than one gll points for a global point (points on element corners, edges, faces) 
+
+  !daniel: instead of taking the first value which appears for a global point, average the values
+  !            if there are more than one gll points for a global point (points on element corners, edges, faces)
   logical,parameter:: AVERAGE_GLOBALPOINTS = .false.
   integer:: ibool_count(NGLOB_CRUST_MANTLE)
   real(kind=CUSTOM_REAL):: ibool_dat(NGLOB_CRUST_MANTLE)
-  
-  
+
+
 
   ! starts here--------------------------------------------------------------------------------------------------
   do i = 1, 7
@@ -103,7 +103,7 @@ program combine_vol_data
     print*,'no file: ',trim(arg(1))
     stop 'Error opening slices file'
   endif
-  
+
   do while (1 == 1)
     read(20,'(a)',iostat=ios) sline
     if (ios /= 0) exit
@@ -135,13 +135,13 @@ program combine_vol_data
     di = 1; dj = 1; dk = 1
   else if( ires == 2 ) then
     HIGH_RESOLUTION_MESH = .false.
-    di = (NGLLX-1)/2.0; dj = (NGLLY-1)/2.0; dk = (NGLLZ-1)/2.0  
+    di = (NGLLX-1)/2.0; dj = (NGLLY-1)/2.0; dk = (NGLLZ-1)/2.0
   endif
   if( HIGH_RESOLUTION_MESH ) then
     print *, ' high resolution ', HIGH_RESOLUTION_MESH
   else
-    print *, ' low resolution ', HIGH_RESOLUTION_MESH  
-  endif  
+    print *, ' low resolution ', HIGH_RESOLUTION_MESH
+  endif
 
   do ir = irs, ire
     print *, '----------- Region ', ir, '----------------'
@@ -173,7 +173,7 @@ program combine_vol_data
        print*,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
-      
+
       read(27,*) nspec(it)
       read(27,*) nglob(it)
       close(27)
@@ -183,7 +183,7 @@ program combine_vol_data
       else if( ires == 0 ) then
         nelement(it) = nspec(it)
       else if (ires == 2 ) then
-        nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1) / 8      
+        nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1) / 8
       endif
 
     enddo
@@ -200,8 +200,8 @@ program combine_vol_data
     do it = 1, num_node
 
       iproc = node_list(it)
-      
-      
+
+
       print *, ' '
       print *, 'Reading slice ', iproc
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
@@ -219,11 +219,11 @@ program combine_vol_data
       data(:,:,:,:) = -1.e10
       read(27) data(:,:,:,1:nspec(it))
       close(27)
-      
+
       print *,trim(data_file)
       print *,'  min/max value: ',minval(data(:,:,:,1:nspec(it))),maxval(data(:,:,:,1:nspec(it)))
       print *
-      
+
       ! topology file
       topo_file = trim(prname_topo) // 'solver_data_2' // '.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
@@ -241,19 +241,19 @@ program combine_vol_data
       read(28) zstore(1:nglob(it))
       read(28) ibool(:,:,:,1:nspec(it))
       close(28)
-      
+
       print *, trim(topo_file)
 
 
       !average data on global points
-      ibool_count(:) = 0    
+      ibool_count(:) = 0
       ibool_dat(:) = 0.0
       if( AVERAGE_GLOBALPOINTS ) then
         do ispec=1,nspec(it)
           do k = 1, NGLLZ, dk
             do j = 1, NGLLY, dj
               do i = 1, NGLLX, di
-                iglob = ibool(i,j,k,ispec)              
+                iglob = ibool(i,j,k,ispec)
 
                 dat = data(i,j,k,ispec)
 
@@ -274,7 +274,7 @@ program combine_vol_data
       num_ibool(:) = 0
       numpoin = 0
 
-        
+
       ! write point file
       do ispec=1,nspec(it)
         do k = 1, NGLLZ, dk
@@ -282,7 +282,7 @@ program combine_vol_data
             do i = 1, NGLLX, di
               iglob = ibool(i,j,k,ispec)
               if( iglob == -1 ) cycle
-              
+
               ! takes the averaged data value for mesh
               if( AVERAGE_GLOBALPOINTS ) then
                 if(.not. mask_ibool(iglob)) then
@@ -290,15 +290,15 @@ program combine_vol_data
                   x = xstore(iglob)
                   y = ystore(iglob)
                   z = zstore(iglob)
-                  
+
                   !dat = data(i,j,k,ispec)
                   dat = ibool_dat(iglob)
-                  
+
                   call write_real_fd(pfd,x)
                   call write_real_fd(pfd,y)
                   call write_real_fd(pfd,z)
                   call write_real_fd(pfd,dat)
-                  
+
                   mask_ibool(iglob) = .true.
                   num_ibool(iglob) = numpoin
                 endif

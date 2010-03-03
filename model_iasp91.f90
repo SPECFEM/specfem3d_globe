@@ -88,35 +88,35 @@
     !--- outer core
     !
     else if(r > RICB .and. r < RCMB) then
-    
+
       if(idoubling /= IFLAG_OUTER_CORE_NORMAL) &
         call exit_MPI(myrank,'wrong doubling flag for outer core point')
     !
     !--- D" at the base of the mantle
     !
     else if(r > RCMB .and. r < RTOPDDOUBLEPRIME) then
-    
+
       if(idoubling /= IFLAG_MANTLE_NORMAL) &
         call exit_MPI(myrank,'wrong doubling flag for D" point')
     !
     !--- mantle: from top of D" to d670
     !
     else if(r > RTOPDDOUBLEPRIME .and. r < R670) then
-    
+
       if(idoubling /= IFLAG_MANTLE_NORMAL) &
         call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point')
     !
     !--- mantle: from d670 to d220
     !
     else if(r > R670 .and. r < R220) then
-    
+
       if(idoubling /= IFLAG_670_220) &
         call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point')
     !
     !--- mantle and crust: from d220 to MOHO and then to surface
     !
     else if(r > R220) then
-    
+
       if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
         call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point')
 
@@ -178,7 +178,7 @@
     vs=17.70732-13.50652*x
     Qmu=143.0d0
     Qkappa=57827.0d0
-    
+
   else if(r > R400 .and. r <= R220) then
     rho=7.1089d0-3.8045d0*x
     vp=30.78765-23.25415*x

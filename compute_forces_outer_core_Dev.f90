@@ -128,7 +128,7 @@
         do i=1,NGLLX
           iglob = ibool(i,j,k,ispec)
 
-          ! stores "displacement"  
+          ! stores "displacement"
           dummyx_loc(i,j,k) = displfluid(iglob)
 
           ! pre-computes factors
@@ -144,8 +144,8 @@
           sin_phi = dsin(phi)
 
           int_radius = nint(radius * R_EARTH_KM * 10.d0)
-            
-          if( .not. GRAVITY_VAL ) then          
+
+          if( .not. GRAVITY_VAL ) then
             ! grad(rho)/rho in Cartesian components
             displ_times_grad_x_ln_rho(i,j,k) = dummyx_loc(i,j,k) &
                   * sngl(sin_theta * cos_phi * d_ln_density_dr_table(int_radius))
@@ -160,7 +160,7 @@
             temp_gyl(i,j,k) = sin_theta*sin_phi
             temp_gzl(i,j,k) = cos_theta
           endif
-          
+
         enddo
       enddo
     enddo
@@ -383,7 +383,7 @@
           ! sum contributions from each element to the global mesh and add gravity term
           sum_terms = - (wgllwgll_yz(j,k)*newtempx1(i,j,k) &
                        + wgllwgll_xz(i,k)*newtempx2(i,j,k) &
-                       + wgllwgll_xy(i,j)*newtempx3(i,j,k))        
+                       + wgllwgll_xy(i,j)*newtempx3(i,j,k))
 
           if(GRAVITY_VAL) sum_terms = sum_terms + gravity_term(i,j,k)
 

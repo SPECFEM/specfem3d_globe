@@ -358,7 +358,7 @@
     ! create file for QmX Harvard
     ! Harvard format does not support the network name
     ! therefore only the station name is included below
-    ! compute total number of samples for normal modes with 1 sample per second    
+    ! compute total number of samples for normal modes with 1 sample per second
     open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS',status='unknown')
     nsamp = nint(dble(NSTEP-1)*DT)
     do irec = 1,nrec

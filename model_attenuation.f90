@@ -53,7 +53,7 @@
 
   subroutine model_attenuation_broadcast(myrank,AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -78,7 +78,7 @@
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
     integer                                   :: Qn                 ! Number of points
-    integer dummy_pad ! padding 4 bytes to align the structure    
+    integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
 
   type (model_attenuation_variables) AM_V
@@ -292,7 +292,7 @@
   if(myrank > 0) return
 
 
-  ! uses "pure" 1D models including their 1D-crust profiles 
+  ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
   if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
      AM_V%Qn = 12
@@ -493,11 +493,11 @@
   !Qmu = Qtmp / Q_resolution;
 
   ! by default: resolution is Q_resolution = 10
-  ! converts Qmu to an array integer index: 
+  ! converts Qmu to an array integer index:
   ! e.g. Qmu = 150.31 -> Qtmp = 150.31 * 10 = int( 1503.10 ) = 1503
   Qtmp    = Qmu * dble(AM_S%Q_resolution)
-  
-  ! rounds to corresponding double value: 
+
+  ! rounds to corresponding double value:
   ! e.g. Qmu_new = dble( 1503 ) / dble(10) = 150.30
   ! but Qmu_new is not used any further...
   Qmu_new = dble(Qtmp) / dble(AM_S%Q_resolution)

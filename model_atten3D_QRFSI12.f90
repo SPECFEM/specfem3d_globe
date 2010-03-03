@@ -44,7 +44,7 @@
 
   subroutine model_atten3D_QRFSI12_broadcast(myrank,QRFSI12_Q)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -76,8 +76,8 @@
 
   if(myrank == 0) write(IMAIN,*) 'read 3D attenuation model'
 
-  
-  end subroutine 
+
+  end subroutine
 
 !
 !-------------------------------------------------------------------------------------------------

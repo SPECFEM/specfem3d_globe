@@ -29,7 +29,7 @@ subroutine stretching_function(r_top,r_bottom,ner,stretch_tab)
 
 ! define stretch_tab which contains r_top and r_bottom for each element layer in the crust for 3D models.
 !
-! stretch_tab array uses indices index_radius & index_layer : 
+! stretch_tab array uses indices index_radius & index_layer :
 !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
 
   implicit none

@@ -27,9 +27,9 @@
 
 ! get information about event name and location for SAC seismograms: MPI version by Dimitri Komatitsch
 
-! Instead of using region names as event names, 
-! event names given in the second row of CMT files will be used. 
-! Thus, I removed old parameters ename, region, LENGTH_REGION_NAME and added event_name!!!!!!!  
+! Instead of using region names as event names,
+! event names given in the second row of CMT files will be used.
+! Thus, I removed old parameters ename, region, LENGTH_REGION_NAME and added event_name!!!!!!!
 ! Also, t_shift is added as a new parameter to be written on sac headers!
 ! by Ebru Bozdag
 
@@ -99,9 +99,9 @@
   call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  
+
   call MPI_BCAST(t_cmt,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  
+
   ! event location given on first, PDE line
   call MPI_BCAST(elat,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(elon,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -114,7 +114,7 @@
   call MPI_BCAST(cmt_hdur,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   !call MPI_BCAST(ename,12,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(event_name,20,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier) 
+  call MPI_BCAST(event_name,20,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   end subroutine get_event_info_parallel
 
@@ -124,8 +124,8 @@
 ! This subroutine reads the first line of the DATA/CMTSOLUTION file
 ! and extracts event information needed for SAC or PITSA headers
 
-! This subroutine has been modified to read full CMTSOLUTION file particularly for multiple-source cases. 
-! Time-shifts of all sources can be read and the minimum t_shift is taken to be written in sac headers!     
+! This subroutine has been modified to read full CMTSOLUTION file particularly for multiple-source cases.
+! Time-shifts of all sources can be read and the minimum t_shift is taken to be written in sac headers!
 ! by Ebru
 
   subroutine get_event_info_serial(yr,jda,ho,mi,sec,event_name,t_cmt,t_shift,&
@@ -160,7 +160,7 @@
 
   integer ios,mo,da,julian_day
   integer isource
-  
+
   double precision, dimension(NSOURCES) :: t_s,hdur,lat,lon,depth
   character(len=20), dimension(NSOURCES) :: e_n
 
@@ -169,7 +169,7 @@
   character(len=5) datasource
   character(len=150) string,CMTSOLUTION
   !character(len=150) string,dummystring,CMTSOLUTION
-  
+
 
 !
 !---- read hypocenter info
@@ -188,7 +188,7 @@
   !if(mod(icounter,NLINES_PER_CMTSOLUTION_SOURCE) /= 0) &
   !  stop 'total number of lines in CMTSOLUTION file should be a multiple of NLINES_PER_CMTSOLUTION_SOURCE'
   !NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
-  !if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'  
+  !if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
   !open(unit=821,file=CMTSOLUTION,status='old',action='read')
 
   ! example header line of CMTSOLUTION file
@@ -234,13 +234,13 @@
     read(821,"(a)") string
     read(821,"(a)") string
   enddo
-  ! sets t_cmt to zero  
+  ! sets t_cmt to zero
   t_cmt = 0.
-  
+
   ! takes first event id as event_name
   event_name = e_n(1)
-  
-  ! sets cmt infos 
+
+  ! sets cmt infos
   if (NSOURCES == 1) then
     cmt_lat = lat(1)
     cmt_lon = lon(1)

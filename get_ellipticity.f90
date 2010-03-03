@@ -67,7 +67,7 @@
 
   end subroutine get_ellipticity
 
-  !> Hejun 
+  !> Hejun
   ! get ellipticity according to GLL points
   ! JAN08, 2010
   subroutine get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
@@ -106,7 +106,7 @@
            zstore(i,j,k,ispec)=zstore(i,j,k,ispec)*factor
 
         end do
-      end do 
+      end do
   end do
   end subroutine get_ellipticity_gll
 

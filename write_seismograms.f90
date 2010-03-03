@@ -542,7 +542,7 @@
       STDP = stbur(irec)
 
       !event values (hypocenter):
-      ! note: this writes out the CMT location, which might be different 
+      ! note: this writes out the CMT location, which might be different
       ! to the event location given in the first, PDE line
       EVLA   = cmt_lat
       EVLO   = cmt_lon
@@ -553,16 +553,16 @@
       ! by Ebru
       ! SAC headers will have new format
       USER0  = cmt_hdur !half duration from CMT file if not changed to hdur=0.d0 (point source)
-      
+
       ! we remove any PDE information, since the simulation could also start
       ! with a "pure" CMT solution, without having any PDE infos
       !
-      !USER1  = t_shift !time shift between PDE and CMT solutions 
+      !USER1  = t_shift !time shift between PDE and CMT solutions
       !PDE location values (different from CMT location, usually):
       !USER2  = depth !PDE depth
       !USER3  = elat !PDE event latitude
       !USER4  = elon !PDE event longitude
-      !  
+      !
       !cmt location values (different from hypocenter location, usually):
       ! USER0  = cmt_lat
       ! USER1  = cmt_lon
@@ -575,15 +575,15 @@
       value1 = elat
       value1 = elon
       value1 = depth
-        
 
-      ! it is not clear, which magnitude to write out: 
-      ! should it be 
+
+      ! it is not clear, which magnitude to write out:
+      ! should it be
       !   body-wave-magnitude (Mb), surface-wave-magnitude (Ms), moment magnitude (Mw)
       !   or leave magnitude and use scalar moment (M0, but calculated by which convention, Harvard?)
       !
       ! it's confusing, and as a result, we will omit it.
-      ! by Ebru      
+      ! by Ebru
       MAG    = undef
       IMAGTYP= undef
 
@@ -620,15 +620,15 @@
       NZHOUR =ho
       NZMIN  =mi
 
-      ! adds time-shift to get the CMT time in the headers as origin time of events  
-      ! by Ebru      
+      ! adds time-shift to get the CMT time in the headers as origin time of events
+      ! by Ebru
       NZSEC  =int(sec+t_shift)
       NZMSEC =int((sec+t_shift-int(sec+t_shift))*1000)
 
       !NZSEC  =int(sec)
       !NZMSEC =int((sec-int(sec))*1000)
 
-      ! Adjust event time and date after t_shift is added 
+      ! Adjust event time and date after t_shift is added
       if (NZSEC >= 60) then
        time_sec = jda*24*3600 + ho*3600 + mi*60 + int(sec+t_shift)
        NZJDAY   = int(time_sec/(24*3600))
@@ -677,7 +677,7 @@
       ! writes out event id as event name
       ! by Ebru
       KEVNM  = event_name(1:len_trim(event_name)) ! A16
-      
+
       !if (NSOURCES == 1) then
       !  KEVNM  = ename(1:len_trim(ename))//'_syn'! A16
       !else
@@ -690,9 +690,9 @@
       ! indicates SEM synthetics
       ! by Ebru
       KUSER0 = 'SEM'          !  A8
-      KUSER1 = 'v5.0.0 ' 
+      KUSER1 = 'v5.0.0 '
       KUSER2 = 'Tiger' ! aka. awesome (princeton) tiger version :)
-      
+
       !KUSER0 = 'PDE_LAT_'          !  A8
       !KUSER1 = 'PDE_LON_'          !  A8
       !KUSER2 = 'PDEDEPTH'          !  A8

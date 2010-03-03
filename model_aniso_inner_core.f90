@@ -29,7 +29,7 @@
 !
 ! based on scaling factors by Ishii et al. (2002)
 !
-! one should add an MPI_BCAST in meshfem3D_models.f90 if one 
+! one should add an MPI_BCAST in meshfem3D_models.f90 if one
 ! adds a 3D model or a read_aniso_inner_core_model subroutine
 !--------------------------------------------------------------------------------------------------
 
@@ -46,21 +46,21 @@
 
   double precision x,c11,c33,c12,c13,c44
   double precision rho,vpv,vph,vsv,vsh,eta_aniso
-  
+
   ! local parameters
   double precision vp,vs
   double precision vpc,vsc,rhoc
   double precision vp0,vs0,rho0,A0
   double precision c66
   double precision scale_fac
-  
+
   ! calculates isotropic values from given (transversely isotropic) reference values
   ! (are non-dimensionalized)
   vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
             + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
   vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                     + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
-                    
+
   ! scale to dimensions (e.g. used in prem model)
   scale_fac = R_EARTH*dsqrt(PI*GRAV*RHOAV)/1000.d0
   vp = vp * scale_fac
@@ -68,7 +68,7 @@
   rho = rho * RHOAV/1000.d0
 
   select case(REFERENCE_1D_MODEL)
-  
+
     case(REFERENCE_MODEL_IASP91)
       vpc=11.24094d0-4.09689d0*x*x
       vsc=3.56454d0-3.45241d0*x*x
@@ -77,13 +77,13 @@
       if( abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho) > TINYVAL) then
         stop 'error isotropic IASP91 values in model_aniso_inner_core() '
       endif
-    
+
       ! values at center
       vp0=11.24094d0
       vs0=3.56454d0
       rho0=13.0885d0
 
-    case(REFERENCE_MODEL_PREM) 
+    case(REFERENCE_MODEL_PREM)
       vpc=11.2622d0-6.3640d0*x*x
       vsc=3.6678d0-4.4475d0*x*x
       rhoc=13.0885d0-8.8381d0*x*x
@@ -97,7 +97,7 @@
       vs0=3.6678d0
       rho0=13.0885d0
 
-    case(REFERENCE_MODEL_1DREF) 
+    case(REFERENCE_MODEL_1DREF)
       ! values at center
       vp0 = 11262.20 / 1000.0d0
       vs0 = 3667.800 / 1000.0d0
@@ -108,13 +108,13 @@
       vp0 = 11.33830
       vs0 = 3.62980
       rho0 = 13.429030
-    
+
     case(REFERENCE_MODEL_AK135)
       ! values at center
       vp0 = 11.26220
       vs0 = 3.667800
       rho0 = 13.01220
-    
+
     case(REFERENCE_MODEL_JP1D)
       ! values at center
       vp0 = 11.24094
@@ -162,7 +162,7 @@
 !       c13 = lambda
 !       c44 = mu
 !       c66 = mu
-  
+
 ! Ishii et al. (2002):
 !
 ! alpha = 3.490 % = (C-A)/A0    = (c33-c11)/A0
@@ -195,7 +195,7 @@
   c12 = c11 - 2.0d0*c66
 
   A0 = rho0*vp0*vp0*scale_fac
-  
+
   c33 = c11 + 0.0349d0*A0
   c44 = c66 + 0.00988d0*A0
   c13 = c12 - 0.00881d0*A0

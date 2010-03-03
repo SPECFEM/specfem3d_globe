@@ -28,9 +28,9 @@
 !--------------------------------------------------------------------------------------------------
 ! CRUST 2.0 model by Bassin et al. (2000)
 !
-! C. Bassin, G. Laske, and G. Masters. 
-! The current limits of resolution for surface wave tomography in North America. 
-! EOS, 81: F897, 2000. 
+! C. Bassin, G. Laske, and G. Masters.
+! The current limits of resolution for surface wave tomography in North America.
+! EOS, 81: F897, 2000.
 !
 ! reads and smooths crust2.0 model
 !--------------------------------------------------------------------------------------------------
@@ -38,7 +38,7 @@
 
   subroutine model_crust_broadcast(myrank,CM_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -55,15 +55,15 @@
     double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
     character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
     character(len=2) code(NKEYS_CRUST)
-    character(len=2) dummy_pad ! padding 2 bytes to align the structure    
+    character(len=2) dummy_pad ! padding 2 bytes to align the structure
   end type model_crust_variables
 
   type (model_crust_variables) CM_V
   ! model_crust_variables
-  
+
   integer :: myrank
   integer :: ier
-    
+
   ! the variables read are declared and stored in structure CM_V
   if(myrank == 0) call read_crust_model(CM_V)
 
@@ -74,8 +74,8 @@
   call MPI_BCAST(CM_V%dens,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(CM_V%abbreviation,NCAP_CRUST*NCAP_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(CM_V%code,2*NKEYS_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
-  
-  
+
+
   end subroutine model_crust_broadcast
 
 !
@@ -97,14 +97,14 @@
     double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
     character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
     character(len=2) code(NKEYS_CRUST)
-    character(len=2) dummy_pad ! padding 2 bytes to align the structure    
+    character(len=2) dummy_pad ! padding 2 bytes to align the structure
   end type model_crust_variables
 
   type (model_crust_variables) CM_V
 ! model_crust_variables
 
   double precision lat,lon,x,vp,vs,rho,moho
-  logical found_crust,elem_in_crust  
+  logical found_crust,elem_in_crust
 
   ! local parameters
   double precision h_sed,h_uc
@@ -129,8 +129,8 @@
   x7 = (R_EARTH-(h_uc+thicks(6)+thicks(7))*1000.0d0)/R_EARTH
 
   found_crust = .true.
-    
-  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST & 
+
+  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
    .and. h_sed > MINIMUM_SEDIMENT_THICKNESS/R_EARTH_KM) then
     vp = vps(3)
     vs = vss(3)
@@ -139,7 +139,7 @@
    .and. h_sed > MINIMUM_SEDIMENT_THICKNESS/R_EARTH_KM) then
     vp = vps(4)
     vs = vss(4)
-    rho = rhos(4)    
+    rho = rhos(4)
   else if(x > x5) then
     vp = vps(5)
     vs = vss(5)
@@ -153,7 +153,7 @@
     ! if elem_in_crust is set
     !
     ! note: it looks like this does distinguish between GLL points at the exact moho boundary,
-    !          where the point is on the interface between both, 
+    !          where the point is on the interface between both,
     !          oceanic elements and mantle elements below
     vp = vps(7)
     vs = vss(7)
@@ -167,12 +167,12 @@
   if (found_crust) then
     scaleval = dsqrt(PI*GRAV*RHOAV)
     vp = vp*1000.0d0/(R_EARTH*scaleval)
-    vs = vs*1000.0d0/(R_EARTH*scaleval)    
+    vs = vs*1000.0d0/(R_EARTH*scaleval)
     rho = rho*1000.0d0/RHOAV
  endif
- 
+
  ! checks moho value
- !moho = h_uc + thicks(6) + thicks(7) 
+ !moho = h_uc + thicks(6) + thicks(7)
  !if( moho /= thicks(NLAYERS_CRUST) ) then
  ! print*,'moho:',moho,thicks(NLAYERS_CRUST)
  ! print*,'  lat/lon/x:',lat,lon,x
@@ -180,7 +180,7 @@
 
  ! No matter found_crust true or false, output moho thickness
  moho = (h_uc+thicks(6)+thicks(7))*1000.0d0/R_EARTH
- 
+
  end subroutine model_crust
 
 !---------------------------
@@ -199,7 +199,7 @@
     double precision, dimension(NKEYS_CRUST,NLAYERS_CRUST) :: dens
     character(len=2) abbreviation(NCAP_CRUST/2,NCAP_CRUST)
     character(len=2) code(NKEYS_CRUST)
-    character(len=2) dummy_pad ! padding 2 bytes to align the structure    
+    character(len=2) dummy_pad ! padding 2 bytes to align the structure
   end type model_crust_variables
 
   type (model_crust_variables) CM_V
@@ -271,17 +271,17 @@
   ! work-around to avoid jacobian problems when stretching mesh elements;
   ! one could also try to slightly change the shape of the doulbing element bricks (which cause the problem)...
   !
-  ! defines a "critical" region around the andes to have at least a 2-degree smoothing; 
-  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small  
+  ! defines a "critical" region around the andes to have at least a 2-degree smoothing;
+  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small
   double precision,parameter :: LAT_CRITICAL_ANDES = -20.0d0
   double precision,parameter :: LON_CRITICAL_ANDES = -70.0d0
   double precision,parameter :: CRITICAL_RANGE = 70.0d0
   !-------------------------------
-  
+
   ! local variables
   double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
   double precision rhol(NLAYERS_CRUST),thickl(NLAYERS_CRUST),velpl(NLAYERS_CRUST),velsl(NLAYERS_CRUST)
-  double precision weightl,cap_degree,dist 
+  double precision weightl,cap_degree,dist
   integer i,icolat,ilon,ierr
   character(len=2) crustaltype
 
@@ -297,22 +297,22 @@
 
   ! sets up smoothing points
   ! by default uses CAP smoothing with 1 degree
-  cap_degree = 1.0d0    
-  
+  cap_degree = 1.0d0
+
   ! checks if inside/outside of critical region for mesh stretching
   if( SMOOTH_CRUST ) then
     dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
     if( dist < CRITICAL_RANGE ) then
-      ! increases cap smoothing degree    
+      ! increases cap smoothing degree
       ! scales between -1 at center and 0 at border
       dist = dist / CRITICAL_RANGE - 1.0d0
       ! shifts value to 1 at center and 0 to the border with exponential decay
-      dist = 1.0d0 - exp( - dist*dist*10.0d0 )     
+      dist = 1.0d0 - exp( - dist*dist*10.0d0 )
       ! increases smoothing degree inside of critical region to 2 degree
       cap_degree = cap_degree + dist
-    endif    
+    endif
   endif
-    
+
   ! gets smoothing points and weights
   call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
 
@@ -333,16 +333,16 @@
 
     ! weighting value
     weightl = weight(i)
-    
+
     ! total, smoothed values
     rho(:) = rho(:) + weightl*rhol(:)
     thick(:) = thick(:) + weightl*thickl(:)
     velp(:) = velp(:) + weightl*velpl(:)
-    vels(:) = vels(:) + weightl*velsl(:)        
+    vels(:) = vels(:) + weightl*velsl(:)
   enddo
 
   end subroutine crust_CAPsmoothed
-  
+
 
 !------------------------------------------------------
 
@@ -422,8 +422,8 @@
   include "constants.h"
 
   ! sampling rate
-  integer :: NTHETA 
-  integer :: NPHI          
+  integer :: NTHETA
+  integer :: NPHI
   ! smoothing size (in degrees)
   double precision :: CAP_DEGREE
 
@@ -436,7 +436,7 @@
   double precision theta,phi,sint,cost,sinp,cosp,wght,total
   double precision r_rot,theta_rot,phi_rot
   double precision rotation_matrix(3,3),x(3),xc(3)
-  double precision dtheta,dphi,cap_area,dweight,pi_over_nphi 
+  double precision dtheta,dphi,cap_area,dweight,pi_over_nphi
   integer i,j,k
   integer itheta,iphi
 
@@ -447,7 +447,7 @@
   xlon(:) = 0.d0
   xlat(:) = 0.d0
   weight(:) = 0.d0
-  
+
   ! checks cap degree size
   if( CAP_DEGREE < TINYVAL ) then
     ! no cap smoothing
@@ -455,15 +455,15 @@
     print*,'  lat/lon:',lat,lon
     stop 'error cap_degree too small'
   endif
-  
+
   ! pre-compute parameters
-  CAP = CAP_DEGREE * PI/180.0d0     
+  CAP = CAP_DEGREE * PI/180.0d0
   dtheta = 0.5d0 * CAP / dble(NTHETA)
   dphi = TWO_PI / dble(NPHI)
   cap_area = TWO_PI * (1.0d0 - dcos(CAP))
   dweight = CAP / dble(NTHETA) * dphi / cap_area
   pi_over_nphi = PI/dble(NPHI)
-  
+
   ! colatitude/longitude in radian
   theta = (90.0d0 - lat ) * DEGREES_TO_RADIANS
   phi = lon * DEGREES_TO_RADIANS
@@ -494,14 +494,14 @@
     cost = dcos(theta)
     sint = dsin(theta)
     wght = sint*dweight
-    
+
     do iphi = 1,NPHI
 
       i = i+1
-      
+
       !  get the weight associated with this integration point (same for all phi)
       weight(i) = wght
-      
+
       total = total + weight(i)
       phi = dble(2*iphi-1)*pi_over_nphi
       cosp = dcos(phi)
@@ -562,7 +562,7 @@
 !  integer icolat,ilon,ierr
 !  character(len=2) crustaltype
 !
-!  
+!
 !! get integer colatitude and longitude of crustal cap
 !! -90<lat<90 -180<lon<180
 !  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
@@ -579,7 +579,7 @@
 !  if( ierr /= 0 ) stop 'error in routine get_crust_structure'
 !
 !  end subroutine crust_singlevalue
-!    
+!
 !---------------------------
 !
 !
@@ -723,4 +723,4 @@
 !  enddo
 !
 !  end subroutine crust_org
-  
+

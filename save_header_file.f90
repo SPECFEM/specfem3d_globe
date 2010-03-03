@@ -487,7 +487,7 @@
   if( NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5 ) then
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_VAL = .true.'
   else
-    write(IOUT,*) 'logical, parameter :: USE_DEVILLE_VAL = .false.'  
+    write(IOUT,*) 'logical, parameter :: USE_DEVILLE_VAL = .false.'
   endif
 
   close(IOUT)

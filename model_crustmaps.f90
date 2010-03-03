@@ -30,10 +30,10 @@
 !
 ! combines Crust2.0 and EUcrust07 for moho depths; the crustal maps are
 ! interpolating the crustal velocities from Crust2.0 onto the more detailed EUcrust
-! crustal depths where ever they are defined. 
+! crustal depths where ever they are defined.
 
-! current crustmaps (cmaps) take sediment thickness 
-! and moho depths from EUcrust07 if possible and interpolate corresponding 
+! current crustmaps (cmaps) take sediment thickness
+! and moho depths from EUcrust07 if possible and interpolate corresponding
 ! velocity/densities given from Crust2.0.
 !
 ! main author: Matthias Meschede (meschede@princeton.edu)
@@ -41,7 +41,7 @@
 
   subroutine model_crustmaps_broadcast(myrank,GC_V)
 
-! standard routine to setup model 
+! standard routine to setup model
 
   implicit none
 
@@ -49,8 +49,8 @@
   ! standard include of the MPI library
   include 'mpif.h'
 
-  integer :: myrank 
-  
+  integer :: myrank
+
   !model_crustmaps_variables
   type model_crustmaps_variables
     sequence
@@ -71,7 +71,7 @@
     double precision densitysp(NLAYERS_CRUSTMAP)
     double precision velocpsp(NLAYERS_CRUSTMAP)
     double precision velocssp(NLAYERS_CRUSTMAP)
-      
+
   end type model_crustmaps_variables
   type (model_crustmaps_variables) GC_V
   !model_crustmaps_variables
@@ -118,10 +118,10 @@
 
   subroutine read_general_crustmap(GC_V)
 
-  implicit none 
+  implicit none
   include "constants.h"
 
-!Matthias Meschede 
+!Matthias Meschede
 !general_crustmap_variables
   type general_crustmap_variables
     sequence
@@ -145,7 +145,7 @@
 
   integer ila,iln,i,l
 
-  character(len=150)           eucrustt3,eucrustt4,eucrustt5,eucrustt6,eucrustt7,& 
+  character(len=150)           eucrustt3,eucrustt4,eucrustt5,eucrustt6,eucrustt7,&
                                eucrustr3,eucrustr4,eucrustr5,eucrustr6,eucrustr7,&
                                eucrustp3,eucrustp4,eucrustp5,eucrustp6,eucrustp7,&
                                eucrusts3,eucrusts4,eucrusts5,eucrusts6,eucrusts7
@@ -156,19 +156,19 @@
   call get_value_string(eucrustt5, 'model.eucrustt5','DATA/crustmap/eucrustt5.cmap')
   call get_value_string(eucrustt6, 'model.eucrustt6','DATA/crustmap/eucrustt6.cmap')
   call get_value_string(eucrustt7, 'model.eucrustt7','DATA/crustmap/eucrustt7.cmap')
-  
+
   call get_value_string(eucrustr3, 'model.eucrustr3','DATA/crustmap/eucrustr3.cmap')
   call get_value_string(eucrustr4, 'model.eucrustr4','DATA/crustmap/eucrustr4.cmap')
   call get_value_string(eucrustr5, 'model.eucrustr5','DATA/crustmap/eucrustr5.cmap')
   call get_value_string(eucrustr6, 'model.eucrustr6','DATA/crustmap/eucrustr6.cmap')
   call get_value_string(eucrustr7, 'model.eucrustr7','DATA/crustmap/eucrustr7.cmap')
-  
+
   call get_value_string(eucrustp3, 'model.eucrustp3','DATA/crustmap/eucrustp3.cmap')
   call get_value_string(eucrustp4, 'model.eucrustp4','DATA/crustmap/eucrustp4.cmap')
   call get_value_string(eucrustp5, 'model.eucrustp5','DATA/crustmap/eucrustp5.cmap')
   call get_value_string(eucrustp6, 'model.eucrustp6','DATA/crustmap/eucrustp6.cmap')
   call get_value_string(eucrustp7, 'model.eucrustp7','DATA/crustmap/eucrustp7.cmap')
-  
+
   call get_value_string(eucrusts3, 'model.eucrusts3','DATA/crustmap/eucrusts3.cmap')
   call get_value_string(eucrusts4, 'model.eucrusts4','DATA/crustmap/eucrusts4.cmap')
   call get_value_string(eucrusts5, 'model.eucrusts5','DATA/crustmap/eucrusts5.cmap')
@@ -302,7 +302,7 @@
     read(1,*) (GC_V%velocs(ila,iln,5),iln=1,360*CRUSTMAP_RESOLUTION)
   enddo
   close(1)
-  
+
   GC_V%thicknessnp(:) = 0.0
   GC_V%thicknesssp(:) = 0.0
   GC_V%densitynp(:) = 0.0
@@ -335,8 +335,8 @@
 
 !    print *,'thicknessnp(',l,')',GC_V%thicknessnp(l)
   enddo
-    
-    
+
+
   end subroutine read_general_crustmap
 
 !
@@ -353,7 +353,7 @@
   implicit none
   include "constants.h"
 
-!Matthias Meschede 
+!Matthias Meschede
 !general_crustmap_variables
   type general_crustmap_variables
     sequence
@@ -371,7 +371,7 @@
     double precision velocpsp(NLAYERS_CRUSTMAP)
     double precision velocssp(NLAYERS_CRUSTMAP)
   end type general_crustmap_variables
-  
+
   type (general_crustmap_variables) GC_V
 !general_crustmap_variables
 
@@ -393,7 +393,7 @@
   x7 = (R_EARTH-(h_uc+thicks(4)+thicks(5))*1000.0d0)/R_EARTH
 
   found_crust = .true.
-  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST & 
+  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
    .and. h_sed > MINIMUM_SEDIMENT_THICKNESS/R_EARTH_KM) then
    vp = vps(1)
    vs = vss(1)
@@ -426,7 +426,7 @@
     vs = vs*1000.0d0/(R_EARTH*scaleval)
     rho = rho*1000.0d0/RHOAV
    ! moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_EARTH
-  else 
+  else
     scaleval = dsqrt(PI*GRAV*RHOAV)
     vp = 20.0*1000.0d0/(R_EARTH*scaleval)
     vs = 20.0*1000.0d0/(R_EARTH*scaleval)
@@ -453,7 +453,7 @@
 ! argument variables
   double precision lat,lon
   double precision rhos(5),thicks(5),velp(5),vels(5)
-!Matthias Meschede 
+!Matthias Meschede
 !general_crustmap_variables
   type general_crustmap_variables
     sequence
@@ -479,29 +479,29 @@
   ! work-around to avoid jacobian problems when stretching mesh elements;
   ! one could also try to slightly change the shape of the doulbing element bricks (which cause the problem)...
   !
-  ! defines a "critical" region to have at least a 1-degree smoothing; 
-  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small  
+  ! defines a "critical" region to have at least a 1-degree smoothing;
+  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small
   double precision,parameter :: LAT_CRITICAL_EUROPE = 50.0d0
   double precision,parameter :: LON_CRITICAL_EUROPE = 22.0d0
   double precision,parameter :: CRITICAL_RANGE_EUROPE = 50.0d0
-  
-  ! defines a "critical" region around the andes to have at least a 1-degree smoothing; 
-  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small  
+
+  ! defines a "critical" region around the andes to have at least a 1-degree smoothing;
+  ! critical region can lead to negative jacobians for mesh stretching when CAP smoothing is too small
   double precision,parameter :: LAT_CRITICAL_ANDES = -20.0d0
   double precision,parameter :: LON_CRITICAL_ANDES = -70.0d0
   double precision,parameter :: CRITICAL_RANGE_ANDES = 70.0d0
-  
+
   ! sampling rate for CAP points
   integer, parameter :: NTHETA = 4
-  integer, parameter :: NPHI = 20  
+  integer, parameter :: NPHI = 20
   !-------------------------------
 
 ! local variables
   double precision weightup,weightleft,weightul,weightur,weightll,weightlr
   double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
   double precision rhol(NLAYERS_CRUSTMAP),thickl(NLAYERS_CRUSTMAP), &
-    velpl(NLAYERS_CRUSTMAP),velsl(NLAYERS_CRUSTMAP)  
-  double precision weightl,cap_degree,dist   
+    velpl(NLAYERS_CRUSTMAP),velsl(NLAYERS_CRUSTMAP)
+  double precision weightl,cap_degree,dist
   integer num_points
   integer i,ipoin,iupcolat,ileftlng,irightlng
 
@@ -523,13 +523,13 @@
     if( dist < CRITICAL_RANGE_EUROPE ) then
       ! sets up smoothing points
       ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
-      cap_degree = 1.d0 / CRUSTMAP_RESOLUTION 
-      
-      ! increases cap smoothing degree    
+      cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
+
+      ! increases cap smoothing degree
       ! scales between -1 at center and 0 at border
       dist = dist / CRITICAL_RANGE_EUROPE - 1.0d0
       ! shifts value to 1 at center and 0 to the border with exponential decay
-      dist = 1.0d0 - exp( - dist*dist*10.0d0 )     
+      dist = 1.0d0 - exp( - dist*dist*10.0d0 )
       ! increases smoothing degree inside of critical region
       cap_degree = cap_degree + dist
 
@@ -541,27 +541,27 @@
     if( dist < CRITICAL_RANGE_ANDES ) then
       ! sets up smoothing points
       ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
-      cap_degree = 1.d0 / CRUSTMAP_RESOLUTION 
+      cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
 
-      ! increases cap smoothing degree    
+      ! increases cap smoothing degree
       ! scales between -1 at center and 0 at border
       dist = dist / CRITICAL_RANGE_ANDES - 1.0d0
       ! shifts value to 1 at center and 0 to the border with exponential decay
-      dist = 1.0d0 - exp( - dist*dist*10.0d0 )     
+      dist = 1.0d0 - exp( - dist*dist*10.0d0 )
       ! increases smoothing degree inside of critical region
       cap_degree = cap_degree + dist
-      
+
       ! gets smoothing points and weights
       call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
       num_points = NTHETA*NPHI
-    endif    
+    endif
   endif
 
   ! initializes
   velp(:) = 0.0d0
   vels(:) = 0.0d0
   rhos(:) = 0.0d0
-  thicks(:) = 0.0d0    
+  thicks(:) = 0.0d0
 
   ! loops over weight points
   do ipoin=1,num_points
@@ -595,7 +595,7 @@
     weightur=weightup*(1.0-weightleft)
     weightll=(1.0-weightup)*weightleft
     weightlr=(1.0-weightup)*(1.0-weightleft)
-   
+
     if(iupcolat==0) then
       ! north pole
       do i=1,NLAYERS_CRUSTMAP
@@ -637,12 +637,12 @@
     !   vels(i)=1.0i
       enddo
     endif
-    
+
     ! total, smoothed values
     rhos(:) = rhos(:) + weightl*rhol(:)
     thicks(:) = thicks(:) + weightl*thickl(:)
     velp(:) = velp(:) + weightl*velpl(:)
-    vels(:) = vels(:) + weightl*velsl(:)        
+    vels(:) = vels(:) + weightl*velsl(:)
   enddo
 
   end subroutine read_crustmaps
@@ -650,7 +650,7 @@
 !--------------------------------------------------------------------------------------------
 
   subroutine ibilinearmap(lat,lng,iupcolat,ileftlng,weightup,weightleft)
-  
+
   implicit none
   include "constants.h"
 
@@ -677,14 +677,14 @@
 
   if(iupcolat<0) iupcolat=0
   if(iupcolat>180*CRUSTMAP_RESOLUTION)  iupcolat=180*CRUSTMAP_RESOLUTION
-  
-  
+
+
   buffer=0.5+(xlng*CRUSTMAP_RESOLUTION)
   ileftlng=int(buffer)
   weightleft=1.0-(buffer-dble(ileftlng))
 
   if(ileftlng<1) ileftlng=360*CRUSTMAP_RESOLUTION
-  if(ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1 
+  if(ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1
 
 
 
@@ -695,7 +695,7 @@
 !
 !
 !  subroutine ilatlng(lat,lng,icolat,ilng)
-!  
+!
 !  implicit none
 !  include "constants.h"
 !

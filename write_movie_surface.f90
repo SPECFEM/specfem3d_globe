@@ -33,23 +33,23 @@
                     store_val_ux_all,store_val_uy_all,store_val_uz_all, &
                     ibelm_top_crust_mantle,ibool_crust_mantle,nspec_top, &
                     NIT,it,OUTPUT_FILES)
-  
+
   implicit none
-  
+
   include 'mpif.h'
   include "precision.h"
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
-  
+
   integer myrank,nmovie_points
   double precision :: scale_veloc
-  
+
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
      veloc_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
         xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-  
+
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: &
       store_val_x,store_val_y,store_val_z, &
       store_val_ux,store_val_uy,store_val_uz
@@ -67,17 +67,17 @@
   ! local parameters
   character(len=150) :: outputname
   integer :: ipoin,ispec2D,ispec,i,j,k,ier,iglob
-  
+
   ! save velocity here to avoid static offset on displacement for movies
 
 
-  ! get coordinates of surface mesh and surface displacement  
+  ! get coordinates of surface mesh and surface displacement
   ipoin = 0
   do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
-    
-    !daniel: in case of global, NCHUNKS_VAL == 6 simulations, be aware that for 
-    !            the cubed sphere, the mapping changes for different chunks, 
+
+    !daniel: in case of global, NCHUNKS_VAL == 6 simulations, be aware that for
+    !            the cubed sphere, the mapping changes for different chunks,
     !            i.e. e.g. x(1,1) and x(5,5) flip left and right sides of the elements in geographical coordinates.
     !            for future consideration, like in create_movie_GMT_global.f90 ...
     k = NGLLZ
@@ -119,5 +119,5 @@
     write(IOUT) store_val_uz_all
     close(IOUT)
   endif
-  
+
   end subroutine write_movie_surface

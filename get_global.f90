@@ -146,19 +146,19 @@ enddo
 ! (put into this subroutine but compiler keeps on complaining that it can't vectorize loops...)
 
   implicit none
-  
+
   include "constants.h"
-  
+
   integer :: nspec,nglob
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  
+
   ! mask to sort ibool
   integer, dimension(:), allocatable :: mask_ibool
-  integer, dimension(:,:,:,:), allocatable :: copy_ibool_ori  
+  integer, dimension(:,:,:,:), allocatable :: copy_ibool_ori
   integer :: inumber
   integer:: i,j,k,ispec,ier
-  
-  ! copies original array  
+
+  ! copies original array
   allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec),stat=ier); if(ier /= 0) stop 'error in allocate'
   allocate(mask_ibool(nglob),stat=ier); if(ier /= 0) stop 'error in allocate'
 
