@@ -764,12 +764,14 @@
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
-! trivia about the programming style adopted here
 !
-! note 1: (it seems) for performance reasons, we will try to use as much from the stack memory as possible.
-!             stack memory is a place in computer memory where all the variables that are declared
+! trivia about the programming style adopted here:
+!
+! note 1: for performance reasons, we try to use as much from the stack memory as possible.
+!             This is done to avoid memory fragmentation and also to optimize performance.
+!             Stack memory is a place in computer memory where all the variables that are declared
 !             and initialized **before** runtime are stored. Our static array allocation will use that one.
-!             all variables declared within our main routine also will be stored on the stack.
+!             All variables declared within our main routine also will be stored on the stack.
 !
 !             the heap is the section of computer memory where all the variables created or initialized
 !             **at** runtime are stored. it is used for dynamic memory allocation.
@@ -788,34 +790,27 @@
 !             passing them along as arguments to the routine makes the code slower.
 !             it seems that this stack/heap criterion is more complicated.
 !
-!             another reason why modules are avoided, is to make the code thread safe.
+!             another reason why modules are avoided is to make the code thread safe.
 !             having different threads access the same data structure and modifying it at the same time
 !             would lead to problems. passing arguments is a way to avoid such complications.
 !
-!             nevertheless, it would be nice to test - where possible - , if using modules
-!             together with static arrays would perform as well as this.
-!             at least, it would make the code more elegant and less error prone...
+! note 2: Most of the computation time is spent
+!             inside the time loop (mainly in the compute_forces_crust_mantle_Dev() routine).
+!             Any code performance tuning will be most effective in there.
 !
-! note 2: in general, most of the computation time for our earthquake simulations is spent
-!             inside the time loop (mainly the compute_forces_crust_mantle_Dev() routine).
-!             any code performance tuning will be most effective in there.
-!
-! note 3: fortran is a code language that uses column-first ordering for arrays,
+! note 3: Fortran is a code language that uses column-first ordering for arrays,
 !             e.g., it stores a(i,j) in this order: a(1,1),a(2,1),a(3,1),...,a(1,2),a(2,2),a(3,2),..
-!             it is therefor more efficient to have the inner-loop over i, and the outer loop over j
-!             for this reason, e.g. the indexing for the pre-computed sourcearrays changed
+!             it is therefore more efficient to have the inner-loop over i, and the outer loop over j
 !
-! note 4: Deville routines help compilers to better vectorize the do-loops and
-!             for most compilers, will result in a significant speedup ( > 30%).
+! note 4: Deville et al. (2002) routines significantly reduce the total number of memory accesses
+!             required to perform matrix-matrix products at the spectral element level.
+!             For most compilers and hardware, will result in a significant speedup (> 30% or more, sometimes twice faster).
 !
-! note 5: one common technique in computational science to help compilers
-!             enhance pipelining is loop unrolling. we do attempt this here in a very simple
-!             and straigthforward way. so don't be confused about the somewhat
-!             bewildering do-loop writing...
+! note 5: a common technique to help compilers enhance pipelining is loop unrolling. We do this here in a simple
+!             and straigthforward way, so don't be confused about the do-loop writing.
 !
 ! note 6: whenever adding some new code, please make sure to use
-!             spaces rather than tabs. tabulators have different sizes in different editors
-!             and most of the time, it messes up the code's formating :(
+!             spaces rather than tabs. Tabulators are in principle not allowed in Fortran95.
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
