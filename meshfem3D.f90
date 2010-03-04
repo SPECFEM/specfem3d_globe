@@ -351,11 +351,6 @@
                NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                NGLOB
 
-! DK DK UGLY if running on MareNostrum in Barcelona
-  integer :: sender, receiver, dummy1, dummy2
-  integer msg_status(MPI_STATUS_SIZE)
-  character(len=400) system_command
-
 ! computed in read_compute_parameters
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
@@ -563,45 +558,6 @@
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * PI / 180.d0
   ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * PI / 180.d0
   if(NCHUNKS /= 6) call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
-
-
-! DK DK UGLY if running on MareNostrum in Barcelona
-  if(RUN_ON_MARENOSTRUM_BARCELONA) then
-
-    ! check that we combine the seismograms in one large file to avoid GPFS overloading
-    if(.not. SAVE_ALL_SEISMOS_IN_ONE_FILE) call exit_MPI(myrank,'should use SAVE_ALL_SEISMOS_IN_ONE_FILE for GPFS in Barcelona')
-
-    ! clean the local scratch space using a cascade (serial removal, one process after the other)
-    if(myrank == 0) then
-
-      receiver = myrank + 1
-      call system('rm -f -r /scratch/komatits_new* > /dev/null')
-      call MPI_SEND(dummy1,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
-
-    else
-
-      sender = myrank - 1
-      receiver = myrank + 1
-      call MPI_RECV(dummy2,1,MPI_INTEGER,sender,itag,MPI_COMM_WORLD,msg_status,ier)
-      call system('rm -f -r /scratch/komatits_new* > /dev/null')
-      if(myrank < sizeprocs - 1) call MPI_SEND(dummy1,1,MPI_INTEGER,receiver,itag,MPI_COMM_WORLD,ier)
-
-    endif
-
-    call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
-    ! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
-    LOCAL_PATH = '/scratch/komatits_new'
-
-    ! add processor name to local /scratch/komatits_new path
-    write(system_command,"('_proc',i4.4)") myrank
-    LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
-
-    ! create a local directory to store all the local files
-    write(system_command,"('mkdir /scratch/komatits_new_proc',i4.4)") myrank
-    call system(system_command)
-
-  endif
 
   ! dynamic allocation of mesh arrays
   allocate(addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1))

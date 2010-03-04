@@ -752,10 +752,6 @@
 
   integer i,ier
 
-  ! if running on MareNostrum in Barcelona
-  character(len=400) system_command
-
-
 ! ************** PROGRAM STARTS HERE **************
 !
 !-------------------------------------------------------------------------------------------------
@@ -3156,19 +3152,6 @@
                                 nu_source,moment_der,sloc_der,number_receiver_global)
   endif
 
-
-  ! if running on MareNostrum in Barcelona
-  if(RUN_ON_MARENOSTRUM_BARCELONA) then
-
-  ! synchronize all the processes to make sure everybody has finished
-    call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
-  ! suppress the local directory to leave space for future runs with a different rank number
-    write(system_command,"('rm -r -f /scratch/komatits_new_proc',i4.4)") myrank
-    call system(system_command)
-
-  endif
-
   ! close the main output file
   if(myrank == 0) then
     write(IMAIN,*)
@@ -3183,15 +3166,12 @@
   ! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)
 
-
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
-!
-
 
   end program xspecfem3D
 
