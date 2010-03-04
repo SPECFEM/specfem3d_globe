@@ -199,7 +199,8 @@
                   NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
 
   print *
-  print *,'edit file OUTPUT_FILES/values_from_mesher.h to see some statistics about the mesh'
+  print *,'edit file OUTPUT_FILES/values_from_mesher.h to see'
+  print *,'some statistics about the mesh'
   print *
 
   print *,'number of processors = ',NPROCTOT
@@ -226,7 +227,8 @@
   print *
   print *,'size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
   print *
-  print *,'   (should be below and typically equal to 80% or 90% of the memory installed per core)'
+  print *,'   (should be below and typically equal to 80% or 90%'
+  print *,'    of the memory installed per core)'
   print *,'   (if significantly more, the job will not run by lack of memory)'
   print *,'   (if significantly less, you waste a significant amount of memory)'
   print *
