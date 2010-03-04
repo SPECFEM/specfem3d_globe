@@ -148,10 +148,7 @@
     ATTENUATION,ATTENUATION_3D,ROTATION,ELLIPTICITY,GRAVITY,CASE_3D,ISOTROPIC_3D_MANTLE, &
     HETEROGEN_3D_MANTLE,CRUSTAL,INFLATE_CENTRAL_CUBE
   character(len=150) :: MODEL,dummystring
-  ! if running on MareNostrum in Barcelona
-  character(len=400) :: system_command
   integer, external :: err_occurred
-
 
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
@@ -236,22 +233,6 @@
                 HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
                 ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE)
-
-  ! if running on MareNostrum in Barcelona
-  if(RUN_ON_MARENOSTRUM_BARCELONA) then
-
-    ! check that we combine the seismograms in one large file to avoid GPFS overloading
-    if(.not. SAVE_ALL_SEISMOS_IN_ONE_FILE) &
-      call exit_MPI(myrank,'should use SAVE_ALL_SEISMOS_IN_ONE_FILE for GPFS in Barcelona')
-
-    ! use the local scratch disk to save all the files, ignore the path that is given in the Par_file
-    LOCAL_PATH = '/scratch/komatits_new'
-
-    ! add processor name to local /scratch/komatits_new path
-    write(system_command,"('_proc',i4.4)") myrank
-    LOCAL_PATH = trim(LOCAL_PATH) // trim(system_command)
-
-  endif
 
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')

@@ -44,6 +44,18 @@
 
   include "constants.h"
 
+!---------------------
+! USER PARAMETER
+
+  ! to avoid flickering in movies, the displacement field will get normalized with an 
+  ! averaged maximum value over the past few, available snapshots
+  logical,parameter :: USE_AVERAGED_MAXIMUM = .false.
+  
+  ! minimum number of frames to average maxima
+  integer,parameter :: AVERAGE_MINIMUM = 2
+  
+!---------------------
+
   integer i,j,it
   integer it1,it2
   integer ispec
@@ -55,7 +67,12 @@
   real(kind=CUSTOM_REAL) normal_x,normal_y,normal_z
   real(kind=CUSTOM_REAL) thetahat_x,thetahat_y,thetahat_z
   real(kind=CUSTOM_REAL) phihat_x,phihat_y
-  double precision min_field_current,max_field_current,max_absol
+  
+  ! to average maxima over past few steps
+  double precision min_field_current,max_field_current,max_absol,max_average
+  double precision,dimension(:),allocatable :: max_history
+  integer :: nmax_history,imax
+
   real disp,lat,long
   integer nframes,iframe,USE_COMPONENT
 
@@ -187,6 +204,7 @@
   print *,'Allocating arrays for reading data of size ',ilocnum*NPROCTOT,'=',6*ilocnum*NPROCTOT*CUSTOM_REAL/1000000,'MB'
   print *
 
+  ! allocates movie arrays
   allocate(store_val_x(ilocnum,0:NPROCTOT-1),stat=ierror)
   if(ierror /= 0) stop 'error while allocating store_val_x'
 
@@ -217,27 +235,31 @@
   allocate(displn(NGLLX,NGLLY),stat=ierror)
   if(ierror /= 0) stop 'error while allocating displn'
 
-
-
   print *,'movie frames have been saved every ',NTSTEP_BETWEEN_FRAMES,' time steps'
   print *
 
+  ! user input
+  print *,'--------'
   print *,'enter first time step of movie (e.g. 1)'
   read(5,*) it1
 
-  print *,'enter last time step of movie (e.g. ',NSTEP,')'
+  print *,'enter last time step of movie (e.g. ',NSTEP,'or -1 for all)'
   read(5,*) it2
-
+  
   print *,'enter component (e.g. 1=Z, 2=N, 3=E)'
   read(5,*) USE_COMPONENT
 
   print *,'enter output ascii (F) or binary (T)'
   read(5,*) OUTPUT_BINARY
+  print *,'--------'
+
+  ! checks options
+  if( it2 == -1 ) it2 = NSTEP
 
   print *
   print *,'looping from ',it1,' to ',it2,' every ',NTSTEP_BETWEEN_FRAMES,' time steps'
 
-! count number of movie frames
+  ! counts number of movie frames
   nframes = 0
   do it = it1,it2
     if(mod(it,NTSTEP_BETWEEN_FRAMES) == 0) nframes = nframes + 1
@@ -246,7 +268,7 @@
   print *,'total number of frames will be ',nframes
   if(nframes == 0) stop 'null number of frames'
 
-! maximum theoretical number of points at the surface
+  ! maximum theoretical number of points at the surface
   if(MOVIE_COARSE) then
     npointot = NCHUNKS * NEX_XI * NEX_ETA
   else
@@ -275,6 +297,23 @@
   if(ierror /= 0) stop 'error while allocating field_display'
 
 
+  ! initializes maxima history
+  if( USE_AVERAGED_MAXIMUM ) then
+    ! determines length of history
+    nmax_history = AVERAGE_MINIMUM + int( HDUR_MOVIE / (DT*NTSTEP_BETWEEN_FRAMES) * 1.5 )
+    
+    ! allocates history array
+    allocate(max_history(nmax_history))
+    max_history(:) = 0.0d0
+
+    print *
+    print *,'Movie half-duration: ',HDUR_MOVIE,'(s)'
+    print *,'Frame step size    : ',DT*NTSTEP_BETWEEN_FRAMES,'(s)'
+    print *,'Normalization by averaged maxima over ',nmax_history,'snapshots'
+    print *
+  endif
+  print *,'--------'
+
 !--- ****** read data saved by solver ******
 
 ! --------------------------------------
@@ -294,7 +333,7 @@
 
         print *
         print *,'reading snapshot time step ',it,' out of ',NSTEP,' file ',outputname
-        print *
+        !print *
 
         read(IOUT) store_val_x
         read(IOUT) store_val_y
@@ -303,7 +342,7 @@
         read(IOUT) store_val_uy
         read(IOUT) store_val_uz
         close(IOUT)
-        print *, 'finished reading ',outputname
+        !print *, 'finished reading ',outputname
         ! clear number of elements kept
         ispec = 0
 
@@ -380,9 +419,9 @@
                       ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))+1
                     endif
 
-! Daniel: for movie_coarse e.g. x(i,j) is defined at x(1,1), x(1,NGLLY), x(NGLLX,1) and x(NGLLX,NGLLY)
-!         be aware that for the cubed sphere, the mapping changes for different chunks,
-!         i.e. e.g. x(1,1) and x(5,5) flip left and right sides of the elements in geographical coordinates
+! for movie_coarse e.g. x(i,j) is defined at x(1,1), x(1,NGLLY), x(NGLLX,1) and x(NGLLX,NGLLY)
+! be aware that for the cubed sphere, the mapping changes for different chunks,
+! i.e. e.g. x(1,1) and x(5,5) flip left and right sides of the elements in geographical coordinates
                     if(MOVIE_COARSE) then
                       if(NCHUNKS == 6) then
                         ! chunks mapped such that element corners increase in long/lat
@@ -448,16 +487,51 @@
         print *
         print *,'minimum amplitude in current snapshot = ',min_field_current
         print *,'maximum amplitude in current snapshot = ',max_field_current
-        print *
 
-        ! make sure range is always symmetric and center is in zero
-        ! this assumption works only for fields that can be negative
-        ! would not work for norm of vector for instance
-        ! (we would lose half of the color palette if no negative values)
-        max_absol = max(abs(min_field_current),abs(max_field_current))
-        min_field_current = - max_absol
-        max_field_current = + max_absol
+        ! takes average over last few snapshots available and uses it
+        ! to normalize field values
+        if( USE_AVERAGED_MAXIMUM ) then
+        
+          ! make sure range is always symmetric and center is in zero
+          ! this assumption works only for fields that can be negative
+          ! would not work for norm of vector for instance
+          ! (we would lose half of the color palette if no negative values)
+          max_absol = max(abs(min_field_current),abs(max_field_current))
+        
+          ! index between 1 and nmax_history
+          imax = mod(iframe-1,nmax_history) + 1        
+        
+          ! stores last few maxima
+          max_history( imax ) = max_absol
+        
+          ! average over history 
+          max_average = sum( max_history )
+          if( iframe < nmax_history ) then
+            ! history not filled yet, only average over available entries
+            max_average = max_average / iframe
+          else
+            ! average over all history entries
+            max_average = max_average / nmax_history        
+          endif
 
+          print *,'maximum amplitude over averaged last snapshots = ',max_average
+
+          ! thresholds positive & negative maximum values
+          if( max_field_current > max_average ) then
+            where( field_display(:) > max_average ) field_display = max_average          
+          endif
+          if( min_field_current < - max_average ) then          
+            where( field_display(:) < - max_average ) field_display = -max_average
+          endif
+          
+          ! scales field values up to maximum when too small
+          if( max_absol < max_average .and. max_absol > TINYVAL) &
+            field_display = field_display * max_average / max_absol 
+                     
+          ! normalizes field values
+          if( max_average > TINYVAL ) field_display = field_display / max_average
+          
+        endif
 
         print *
         print *,'initial number of points (with multiples) was ',npointot
@@ -466,27 +540,27 @@
         !--- ****** create GMT file ******
 
         ! create file name and open file
-      if(OUTPUT_BINARY) then
-        if(USE_COMPONENT == 1) then
+        if(OUTPUT_BINARY) then
+          if(USE_COMPONENT == 1) then
            write(outputname,"('bin_movie_',i6.6,'.d')") it
-        elseif(USE_COMPONENT == 2) then
+          elseif(USE_COMPONENT == 2) then
            write(outputname,"('bin_movie_',i6.6,'.N')") it
-        elseif(USE_COMPONENT == 3) then
+          elseif(USE_COMPONENT == 3) then
            write(outputname,"('bin_movie_',i6.6,'.E')") it
-        endif
-        open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted')
-        if(iframe == 1) open(unit=12,file='OUTPUT_FILES/bin_movie.xy',status='unknown',form='unformatted')
-       else
-        if(USE_COMPONENT == 1) then
+          endif
+          open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted')
+          if(iframe == 1) open(unit=12,file='OUTPUT_FILES/bin_movie.xy',status='unknown',form='unformatted')
+        else
+          if(USE_COMPONENT == 1) then
            write(outputname,"('ascii_movie_',i6.6,'.d')") it
-        elseif(USE_COMPONENT == 2) then
+          elseif(USE_COMPONENT == 2) then
            write(outputname,"('ascii_movie_',i6.6,'.N')") it
-        elseif(USE_COMPONENT == 3) then
+          elseif(USE_COMPONENT == 3) then
            write(outputname,"('ascii_movie_',i6.6,'.E')") it
+          endif
+          open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown')
+          if(iframe == 1) open(unit=12,file='OUTPUT_FILES/ascii_movie.xy',status='unknown')
         endif
-        open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown')
-        if(iframe == 1) open(unit=12,file='OUTPUT_FILES/ascii_movie.xy',status='unknown')
-       endif
         ! clear number of elements kept
         ispec = 0
 
@@ -494,41 +568,53 @@
         print *,'Writing output',outputname
         do iproc = 0,NPROCTOT-1
 
-           ! reset point number
-           ipoin = 0
+          ! reset point number
+          ipoin = 0
 
-           do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
-              ispec = ispec + 1
-              if(MOVIE_COARSE) then
-                ielm = ispec - 1
-              else
-                ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
-              endif
-                do j = 1,NGLLY-NIT
-                 do i = 1,NGLLX-NIT
-                    if(MOVIE_COARSE) then
-                     ieoff = ielm + 1
-                    else
-                     ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))+1
-                    endif
-                    xcoord = sngl(xp(ieoff))
-                    ycoord = sngl(yp(ieoff))
-                    zcoord = sngl(zp(ieoff))
-                    call xyz_2_rthetaphi(xcoord,ycoord,zcoord,rval,thetaval,phival)
-                    lat = sngl((PI/2.0-thetaval)*180.0/PI)
-                    long = sngl(phival*180.0/PI)
-                    disp = sngl(field_display(ieoff))
-                   if(long > 180.0) long = long-360.0
-                    if(OUTPUT_BINARY) then
-                     write(11) disp
-                    if(iframe == 1) write(12) long,lat
-                    else
-                     write(11,*) disp
-                     if(iframe == 1) write(12,*) long,lat
-                    endif
-                 enddo !i
-              enddo !j
-           enddo !ispecloc
+          do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
+            ispec = ispec + 1
+            if(MOVIE_COARSE) then
+              ielm = ispec - 1
+            else
+              ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
+            endif
+            
+            do j = 1,NGLLY-NIT
+              do i = 1,NGLLX-NIT
+                if(MOVIE_COARSE) then
+                  ieoff = ielm + 1
+                else
+                  ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))+1
+                endif
+                
+                ! point position
+                if(iframe == 1) then
+                  xcoord = sngl(xp(ieoff))
+                  ycoord = sngl(yp(ieoff))
+                  zcoord = sngl(zp(ieoff))
+                
+                  ! location latitude/longitude
+                  call xyz_2_rthetaphi(xcoord,ycoord,zcoord,rval,thetaval,phival)
+                  lat = sngl((PI/2.0-thetaval)*180.0/PI)
+                  long = sngl(phival*180.0/PI)
+                  if(long > 180.0) long = long-360.0
+                endif
+                
+                ! displacement
+                disp = sngl(field_display(ieoff))
+                
+                ! writes displacement and latitude/longitude to corresponding files
+                if(OUTPUT_BINARY) then
+                  write(11) disp
+                  if(iframe == 1) write(12) long,lat
+                else
+                  write(11,*) disp
+                  if(iframe == 1) write(12,*) long,lat
+                endif
+                
+              enddo !i
+            enddo !j
+          enddo !ispecloc
         enddo !iproc
         close(11)
         if(iframe == 1) close(12)
