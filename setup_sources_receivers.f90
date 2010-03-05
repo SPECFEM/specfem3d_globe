@@ -113,7 +113,7 @@
   ! call to locate_sources, where further write statements to that file follow
   if(myrank == 0) then
   ! write source and receiver VTK files for Paraview
-    write(filename,*) trim(OUTPUT_FILES)//'/sr_tmp.vtk'
+    filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
     open(IOVTK,file=trim(filename),status='unknown')
     write(IOVTK,'(a)') '# vtk DataFile Version 2.0'
     write(IOVTK,'(a)') 'Source and Receiver VTK file'
@@ -254,8 +254,8 @@
     close(IOVTK)
 
     !  we should know NSOURCES+nrec at this point...
-    write(filename,*) trim(OUTPUT_FILES)//'/sr_tmp.vtk'
-    write(filename_new,*) trim(OUTPUT_FILES)//'/sr.vtk'
+    filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
+    filename_new = trim(OUTPUT_FILES)//'/sr.vtk'
     write(system_command,"('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,' < ',a,' > ',a)") &
       "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
     call system(system_command)
