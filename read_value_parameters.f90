@@ -87,7 +87,7 @@
 
   character(len=*) value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=150) string_read
   integer ierr
   common /param_err_common/ ierr
 

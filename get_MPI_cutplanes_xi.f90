@@ -77,8 +77,17 @@
 ! global point number and coordinates left MPI cut-plane
   open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt', &
        status='unknown',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error creating iboolleft_xi.txt for this process')
-
+  if( ier /= 0 ) then
+    if( myrank == 0 ) then 
+      write(IMAIN,*)
+      write(IMAIN,*) 'error creating file: '
+      write(IMAIN,*) prname(1:len_trim(prname))//'iboolleft_xi.txt'
+      write(IMAIN,*)
+      write(IMAIN,*) 'please make sure that the directory specified in Par_file as LOCAL_PATH exists'
+      write(IMAIN,*)
+    endif
+    call exit_mpi(myrank,'error creating iboolleft_xi.txt, please check your Par_file LOCAL_PATH setting')
+  endif
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
 
