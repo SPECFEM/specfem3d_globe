@@ -260,10 +260,12 @@
 
 ! EUcrust
   type model_eucrust_variables
+    sequence
     double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -316,19 +318,23 @@
 
 ! point profile model_variables
   type model_ppm_variables
+    sequence
     double precision,dimension(:),pointer :: dvs,lat,lon,depth
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
 ! GLL model_variables
   type model_gll_variables
+    sequence
     ! tomographic iteration model on GLL points
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
     double precision :: scale_velocity,scale_density
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
     logical :: MODEL_GLL
+    logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
   end type model_gll_variables
   type (model_gll_variables) MGLL_V
 

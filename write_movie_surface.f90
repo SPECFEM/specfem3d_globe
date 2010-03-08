@@ -76,10 +76,10 @@
   do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
 
-    !daniel: in case of global, NCHUNKS_VAL == 6 simulations, be aware that for
-    !            the cubed sphere, the mapping changes for different chunks,
-    !            i.e. e.g. x(1,1) and x(5,5) flip left and right sides of the elements in geographical coordinates.
-    !            for future consideration, like in create_movie_GMT_global.f90 ...
+    ! in case of global, NCHUNKS_VAL == 6 simulations, be aware that for
+    ! the cubed sphere, the mapping changes for different chunks,
+    ! i.e. e.g. x(1,1) and x(5,5) flip left and right sides of the elements in geographical coordinates.
+    ! for future consideration, like in create_movie_GMT_global.f90 ...
     k = NGLLZ
 
   ! loop on all the points inside the element

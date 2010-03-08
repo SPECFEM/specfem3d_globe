@@ -46,10 +46,12 @@
 
   ! GLL model_variables
   type model_gll_variables
+    sequence
     ! tomographic iteration model on GLL points
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
     double precision :: scale_velocity,scale_density
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
     logical :: MODEL_GLL
+    logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
   end type model_gll_variables
   type (model_gll_variables) MGLL_V
 
@@ -95,10 +97,12 @@
 
   ! GLL model_variables
   type model_gll_variables
+    sequence
     ! tomographic iteration model on GLL points
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
     double precision :: scale_velocity,scale_density
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
     logical :: MODEL_GLL
+    logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
   end type model_gll_variables
   type (model_gll_variables) MGLL_V
 

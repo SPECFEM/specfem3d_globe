@@ -53,8 +53,8 @@ program combine_vol_data
   integer numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
 
-  !daniel: instead of taking the first value which appears for a global point, average the values
-  !            if there are more than one gll points for a global point (points on element corners, edges, faces)
+  ! instead of taking the first value which appears for a global point, average the values
+  ! if there are more than one gll points for a global point (points on element corners, edges, faces)
   logical,parameter:: AVERAGE_GLOBALPOINTS = .false.
   integer:: ibool_count(NGLOB_CRUST_MANTLE)
   real(kind=CUSTOM_REAL):: ibool_dat(NGLOB_CRUST_MANTLE)

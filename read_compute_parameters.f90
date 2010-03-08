@@ -742,11 +742,29 @@
   !  if( THREE_D_MODEL == THREE_D_MODEL_PPM ) &
   !    DT = DT * (1.d0 - 0.2d0)
 
-
-
   ! takes a 5% safety margin on the maximum stable time step
   ! which was obtained by trial and error
   DT = DT * (1.d0 - 0.05d0)
+
+  ! adapts number of element layers in crust and time step for regional simulations
+  if( REGIONAL_MOHO_MESH ) then    
+    ! hard coded number of crustal element layers and time step
+
+    ! checks
+    if( NCHUNKS > 1 ) stop 'regional moho mesh: NCHUNKS error in rcp_set_timestep_and_layers'
+    if( HONOR_1D_SPHERICAL_MOHO ) return
+    
+    ! enforce 3 element layers
+    NER_CRUST = 3  
+        
+    ! increased stability, empirical 
+    DT = DT*(1.d0 + 0.5d0)
+    
+    if( REGIONAL_MOHO_MESH_EUROPE ) DT = 0.14 ! europe 
+    if( REGIONAL_MOHO_MESH_ASIA ) DT = 0.10 ! asia & middle east
+    
+  endif
+
 
   end subroutine rcp_set_timestep_and_layers
 
