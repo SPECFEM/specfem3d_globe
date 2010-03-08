@@ -394,12 +394,12 @@
 
   found_crust = .true.
   if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
-   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS/R_EARTH_KM) then
+   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
    vp = vps(1)
    vs = vss(1)
    rho = rhos(1)
   else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST &
-   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS/R_EARTH_KM) then
+   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
    vp = vps(2)
    vs = vss(2)
    rho = rhos(2)

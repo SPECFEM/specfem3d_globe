@@ -45,10 +45,12 @@
 
   ! EUcrust
   type model_eucrust_variables
+    sequence
     double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -87,10 +89,12 @@
   include "constants.h"
 
   type model_eucrust_variables
+    sequence
     double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -154,10 +158,12 @@
   implicit none
 
   type model_eucrust_variables
+    sequence
     double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -201,10 +207,12 @@
   include "constants.h"
 
   type model_eucrust_variables
+    sequence
     double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -247,7 +255,13 @@
 
               scaleval = dsqrt(PI*GRAV*RHOAV)
 
-              if( x > x3 ) then
+              if( x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
+                .and. h_basement > MINIMUM_SEDIMENT_THICKNESS) then
+                ! above sediment basement, returns average upper crust value
+                ! since no special sediment values are given
+                found_crust = .true.
+                vp = EUCM_V%eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+                crust_eu = vp
                 return
               else if( x > x4 ) then
                 found_crust = .true.
@@ -287,10 +301,12 @@
   logical :: found
 
   type model_eucrust_variables
+    sequence
     double precision, dimension(:),pointer :: eucrust_lat,eucrust_lon,&
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 

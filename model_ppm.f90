@@ -102,10 +102,12 @@
 
 ! point profile model_variables
   type model_ppm_variables
+    sequence
     double precision,dimension(:),pointer :: dvs,lat,lon,depth
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -151,10 +153,12 @@
 
   ! point profile model_variables
   type model_ppm_variables
+    sequence
     double precision,dimension(:),pointer :: dvs,lat,lon,depth
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -332,10 +336,12 @@
 
   ! point profile model_variables
   type model_ppm_variables
+    sequence
     double precision,dimension(:),pointer :: dvs,lat,lon,depth
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -444,10 +450,12 @@
 
   ! point profile model_variables
   type model_ppm_variables
+    sequence
     double precision,dimension(:),pointer :: dvs,lat,lon,depth
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -545,10 +553,12 @@
 
   ! point profile model_variables
   type model_ppm_variables
+    sequence
     double precision,dimension(:),pointer :: dvs,lat,lon,depth
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
+    integer :: dummy ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 

@@ -165,9 +165,14 @@ case $FC in
         # or
         #
         # CC = gcc
-        # CFLAGS = -O3 -m64
+        # CFLAGS = -O3 -m64 
         #
         # for the C compiler when using -q64 for the Fortran compiler
+        #
+        # on IBM xlf90 compiler:
+        # when encountering errors: ...relocation truncated to fit: R_PPC_LOCAL24PC...
+        # one should also use additional flags: 
+        # CFLAGS = -Wl,-relax
         #
         if test x"$FLAGS_NO_CHECK" = x; then
             FLAGS_NO_CHECK="-O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003pure -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap -qinitauto=7FBFFFFF -Q -Q+rank,swap_all,mxm_m1_m2_5points,mxm_m1_m1_5points,mxm_m2_m1_5points"

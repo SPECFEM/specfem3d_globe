@@ -120,8 +120,17 @@
         .or. idoubling(ispec) == IFLAG_220_80 &
         .or. idoubling(ispec) == IFLAG_80_MOHO ) then
         ! Stretch mesh to honor smoothed moho thickness from crust2.0
-        call moho_stretching_honor_crust(myrank,xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
-                                        R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+        
+        ! differentiate between regional and global meshing
+        if( REGIONAL_MOHO_MESH ) then
+          call moho_stretching_honor_crust_reg(myrank, &
+                              xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
+                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)        
+        else
+          call moho_stretching_honor_crust(myrank, &
+                              xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
+                              R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
+        endif
       endif
     endif
   endif

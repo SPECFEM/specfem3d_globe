@@ -189,3 +189,34 @@ FAQ
        you can either try to use e.g. -mcmodel=medium as additional compiler flag,
        or better, change your resolution settings for NPROC_XI,NPROC_ETA and NEX_XI,NEX_ETA.
 
+4. compilation fails with:
+    ...
+    /opt/ibmcmp/xlf/bg/11.1/bglib/libxl.a(mf2x2.o): In function `mf2x2':
+    mf2x2.c:(.text+0x10): relocation truncated to fit: R_PPC_LOCAL24PC against symbol `_GLOBAL_OFFSET_TABLE_'
+    ...
+
+  this could happen when using IBM xlf90 compiler and gcc to link binaries.
+    
+  fix: add the flag -Wl,-relax in the Makefile, e.g.:         
+            CFLAGS = -O2 -Wl,-relax         
+        should solve the problem.
+
+
+5. compilation fails with:
+    ...
+    obj/libspecfem_mesher.a(read_value_parameters.o): In function `read_value_integer':
+    (.text+0x78): undefined reference to `param_read'    
+    ...
+    
+  this might happen when the default settings add/suppress trailing underscores
+  to function routine names.
+  
+  fix: use corresponding flags for your fortran & C compilers, or remove the underscores at the
+       end of the function names in param_reader.c, like e.g.
+          
+          void param_read(char * ..
+        
+        
+        
+         
+
