@@ -223,7 +223,7 @@
 
             ! adding (chi/rho)grad(rho)
             dpotentialdx_with_rot = dpotentialdx_with_rot + displfluid(iglob) * grad_x_ln_rho
-            dpotentialdy_with_rot = dpotentialdx_with_rot + displfluid(iglob) * grad_y_ln_rho
+            dpotentialdy_with_rot = dpotentialdy_with_rot + displfluid(iglob) * grad_y_ln_rho
             dpotentialdzl = dpotentialdzl + displfluid(iglob) * grad_z_ln_rho
 
 
