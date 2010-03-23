@@ -626,7 +626,7 @@
     nu(:,:,1:nrec) = nu_found(:,:,1:nrec)
     epidist(1:nrec) = epidist_found(1:nrec)
 
-! write the list of stations and associated epicentral distance
+    ! write the list of stations and associated epicentral distance
     open(unit=27,file=trim(OUTPUT_FILES)//'/output_list_stations.txt',status='unknown')
     write(27,*)
     write(27,*) 'total number of stations: ',nrec
@@ -637,6 +637,21 @@
                   ' epicentral distance ',sngl(epidist(irec)),' deg'
     enddo
     close(27)
+
+    ! write out a filtered station list
+    if( NCHUNKS /= 6 ) then
+      open(unit=27,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED',status='unknown')
+      ! loop on all the stations to read station information
+      do irec = 1,nrec
+        write(27,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),&
+                  trim(network_name(irec)),sngl(stlat(irec)),&
+                  sngl(stlon(irec)),sngl(stele(irec)),sngl(stbur(irec))
+      enddo
+      ! close receiver file
+      close(27)
+    endif
+    
+
 
 ! elapsed time since beginning of mesh generation
     tCPU = MPI_WTIME() - time_start

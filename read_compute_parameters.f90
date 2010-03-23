@@ -753,6 +753,10 @@
     ! checks
     if( NCHUNKS > 1 ) stop 'regional moho mesh: NCHUNKS error in rcp_set_timestep_and_layers'
     if( HONOR_1D_SPHERICAL_MOHO ) return
+
+    ! original values
+    !print*,'NER:',NER_CRUST
+    !print*,'DT:',DT
     
     ! enforce 3 element layers
     NER_CRUST = 3  
@@ -761,7 +765,7 @@
     DT = DT*(1.d0 + 0.5d0)
     
     if( REGIONAL_MOHO_MESH_EUROPE ) DT = 0.14 ! europe 
-    if( REGIONAL_MOHO_MESH_ASIA ) DT = 0.10 ! asia & middle east
+    if( REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! asia & middle east
     
   endif
 

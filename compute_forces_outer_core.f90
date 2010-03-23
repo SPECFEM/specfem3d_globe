@@ -26,16 +26,16 @@
 !=====================================================================
 
   subroutine compute_forces_outer_core(time,deltat,two_omega_earth, &
-          A_array_rotation,B_array_rotation, &
-          d_ln_density_dr_table, &
-          minus_rho_g_over_kappa_fluid,displfluid,accelfluid, &
-          div_displfluid, &
-          xstore,ystore,zstore, &
-          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-          hprime_xx,hprime_yy,hprime_zz, &
-          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          ibool)
+                          A_array_rotation,B_array_rotation, &
+                          d_ln_density_dr_table, &
+                          minus_rho_g_over_kappa_fluid,displfluid,accelfluid, &
+                          div_displfluid, &
+                          xstore,ystore,zstore, &
+                          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                          hprime_xx,hprime_yy,hprime_zz, &
+                          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+                          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+                          ibool,MOVIE_VOLUME)
 
   implicit none
 
@@ -64,6 +64,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+
+  logical MOVIE_VOLUME
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
 
@@ -271,7 +273,7 @@
             ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
             !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
             !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-            if (NSPEC_OUTER_CORE_ADJOINT /= 1) then
+            if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. MOVIE_VOLUME ) then
               div_displfluid(i,j,k,ispec) =  &
                  minus_rho_g_over_kappa_fluid(int_radius) * (dpotentialdx_with_rot * gxl + &
                  dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)

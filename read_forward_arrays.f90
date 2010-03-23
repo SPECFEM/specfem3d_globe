@@ -25,8 +25,7 @@
 !
 !=====================================================================
 
-
-  subroutine read_forward_arrays(myrank,NSTEP, &
+  subroutine read_forward_arrays_startrun(myrank,NSTEP, &
                     SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     it_begin,it_end, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
@@ -153,29 +152,98 @@
   endif
 
   if (SIMULATION_TYPE == 3) then
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
-    read(55) b_displ_crust_mantle
-    read(55) b_veloc_crust_mantle
-    read(55) b_accel_crust_mantle
-    read(55) b_displ_inner_core
-    read(55) b_veloc_inner_core
-    read(55) b_accel_inner_core
-    read(55) b_displ_outer_core
-    read(55) b_veloc_outer_core
-    read(55) b_accel_outer_core
-    read(55) b_epsilondev_crust_mantle
-    read(55) b_epsilondev_inner_core
+    ! initializes
+    b_displ_crust_mantle = 0._CUSTOM_REAL
+    b_veloc_crust_mantle = 0._CUSTOM_REAL
+    b_accel_crust_mantle = 0._CUSTOM_REAL
+    b_displ_inner_core = 0._CUSTOM_REAL
+    b_veloc_inner_core = 0._CUSTOM_REAL
+    b_accel_inner_core = 0._CUSTOM_REAL
+    b_displ_outer_core = 0._CUSTOM_REAL
+    b_veloc_outer_core = 0._CUSTOM_REAL
+    b_accel_outer_core = 0._CUSTOM_REAL
+    b_epsilondev_crust_mantle = 0._CUSTOM_REAL
+    b_epsilondev_inner_core = 0._CUSTOM_REAL
     if (ROTATION_VAL) then
-      read(55) b_A_array_rotation
-      read(55) b_B_array_rotation
+      b_A_array_rotation = 0._CUSTOM_REAL
+      b_B_array_rotation = 0._CUSTOM_REAL
     endif
     if (ATTENUATION_VAL) then
-      read(55) b_R_memory_crust_mantle
-      read(55) b_R_memory_inner_core
+      b_R_memory_crust_mantle = 0._CUSTOM_REAL
+      b_R_memory_inner_core = 0._CUSTOM_REAL
     endif
-    close(55)
   endif
 
-  end subroutine read_forward_arrays
+  end subroutine read_forward_arrays_startrun
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_forward_arrays(myrank, &
+                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                    b_R_memory_crust_mantle,b_R_memory_inner_core, &
+                    b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
+                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
+
+! reads in saved wavefields
+
+  implicit none
+
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer myrank
+
+  ! backward/reconstructed wavefields
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
+    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
+    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
+    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
+    b_R_memory_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    b_epsilondev_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: &
+    b_R_memory_inner_core
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
+    b_epsilondev_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: &
+    b_A_array_rotation,b_B_array_rotation
+
+  character(len=150) LOCAL_PATH
+
+  !local parameters
+  character(len=150) outputname
+
+  write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
+  open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
+  read(55) b_displ_crust_mantle
+  read(55) b_veloc_crust_mantle
+  read(55) b_accel_crust_mantle
+  read(55) b_displ_inner_core
+  read(55) b_veloc_inner_core
+  read(55) b_accel_inner_core
+  read(55) b_displ_outer_core
+  read(55) b_veloc_outer_core
+  read(55) b_accel_outer_core
+  read(55) b_epsilondev_crust_mantle
+  read(55) b_epsilondev_inner_core
+  if (ROTATION_VAL) then
+    read(55) b_A_array_rotation
+    read(55) b_B_array_rotation
+  endif
+  if (ATTENUATION_VAL) then
+    read(55) b_R_memory_crust_mantle
+    read(55) b_R_memory_inner_core
+  endif
+  close(55)
+
+  end subroutine read_forward_arrays

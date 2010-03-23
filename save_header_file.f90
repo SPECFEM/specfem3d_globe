@@ -48,7 +48,8 @@
                         NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                         NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                         NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION)
+                        NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
+                        SIMULATION_TYPE,SAVE_FORWARD,MOVIE_VOLUME)
 
   implicit none
 
@@ -102,6 +103,10 @@
          NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
          NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, NSPEC2D_CMB, NSPEC2D_ICB
 
+  integer :: SIMULATION_TYPE
+  logical :: SAVE_FORWARD,MOVIE_VOLUME
+  
+  
 ! copy number of elements and points in an include file for the solver
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
   open(unit=IOUT,file=HEADER_FILE,status='unknown')
@@ -488,6 +493,32 @@
   else
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_VAL = .false.'
   endif
+
+  ! backward/reconstruction of forward wavefield: 
+  ! can only mimic attenuation effects on velocity at this point, since no full wavefield snapshots are stored  
+  if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+    ! attenuation mimic:
+    ! mimicking effect of attenuation on apparent velocities, not amplitudes. that is,
+    ! phase shifts should be correctly accounted for, but amplitudes will differ in adjoint simulations
+    if( ATTENUATION ) then
+      write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .true.'
+    else
+      write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .false.'
+    endif
+    
+  else
+    write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .false.'  
+  endif
+
+  ! attenuation and/or adjoint simulations
+  if (ATTENUATION .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
+    .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
+    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .true. '
+  else
+    write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .false.'
+  endif
+
+
 
   close(IOUT)
 

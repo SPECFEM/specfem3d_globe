@@ -185,12 +185,6 @@
 ! default is .false. to compute isotropic kernels (related to alpha and beta)
   logical, parameter :: ANISOTROPIC_KL = .false.
 
-! mimicking attenuation for kernel simulations, using a constant apparent velocity shift:
-! (mimics only effect of attenuation upon velocities in CRUST_MANTLE region 
-!  for the middle east, an empirical value is factor = 1/1.015 )
-  logical, parameter                   :: ATTENUATION_MIMIK = .false.
-  real(kind=CUSTOM_REAL), parameter    :: ATTENUATION_MIMIK_FACTOR = 1./1.015
-
 ! print date and time estimate of end of run in another country,
 ! in addition to local time.
 ! For instance: the code runs at Caltech in California but the person

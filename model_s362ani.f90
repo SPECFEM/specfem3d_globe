@@ -1820,13 +1820,17 @@
 
   complex TEMP,FAC,DFAC
 
-  real(kind=4) WK1(1),WK2(1),WK3(1),Y(1),XLAT,XLON
-
+  !real(kind=4) WK1(1),WK2(1),WK3(1),Y(1),XLAT,XLON
+  
   integer :: LMAX
 
 !
 !     WK1,WK2,WK3 SHOULD BE DIMENSIONED AT LEAST (LMAX+1)*4
 !
+  real(kind=4) WK1(LMAX+1),WK2(LMAX+1),WK3(LMAX+1)
+  real(kind=4) XLAT,XLON
+  real(kind=4) Y(1) !! Y should go at least from 1 to fac(LMAX)
+
   real(kind=4), parameter :: RADIAN = 57.2957795
 
   integer :: IM,IL1,IND,LM1,L
@@ -1841,21 +1845,25 @@
 
   DO IL1=1,LM1
 
-  L=IL1-1
-  CALL legndr(THETA,L,L,WK1,WK2,WK3)
+    ! index L goes from 0 to LMAX
+    L=IL1-1
+    !CALL legndr(THETA,L,L,WK1,WK2,WK3)
+    CALL legndr(THETA,L,L,WK1(1:L+1),WK2(1:L+1),WK3(1:L+1)) !! see legndr(): WK1,WK2,WK3 should go from 1 to L+1
 
-  FAC=(1.,0.)
-  DFAC=CEXP(CMPLX(0.,PHI))
+    FAC=(1.,0.)
+    DFAC=CEXP(CMPLX(0.,PHI))
 
-  do IM=1,IL1
-    TEMP=FAC*CMPLX(WK1(IM),0.)
-    IND=IND+1
-    Y(IND)=REAL(TEMP)
-    IF(IM == 1) GOTO 20
-    IND=IND+1
-    Y(IND)=AIMAG(TEMP)
- 20 FAC=FAC*DFAC
-  enddo
+    ! loops over M 
+    do IM=1,IL1
+      ! index IM goes maximum from 1 to LMAX+1
+      TEMP=FAC*CMPLX(WK1(IM),0.)
+      IND=IND+1
+      Y(IND)=REAL(TEMP)
+      IF(IM == 1) GOTO 20
+      IND=IND+1
+      Y(IND)=AIMAG(TEMP)
+ 20   FAC=FAC*DFAC
+    enddo
 
   enddo
 
@@ -1869,7 +1877,7 @@
 
   implicit none
 
-  real(kind=4) :: X(2),XP(2),XCOSEC(2)
+  !real(kind=4) :: X(2),XP(2),XCOSEC(2) !! X, XP, XCOSEC should go from 1 to M+1
 
   double precision :: SMALL,SUM,COMPAR,CT,ST,FCT,COT,X1,X2,X3,F1,F2,XM,TH
 
@@ -1878,6 +1886,9 @@
   integer :: i,M,MP1,k,l,LP1
 
   real(kind=4) :: THETA,DSFL3,COSEC,SFL3
+
+  real(kind=4) :: X(M+1),XP(M+1),XCOSEC(M+1) !! X, XP, XCOSEC should go from 1 to M+1
+
 
 !!!!!! illegal statement, removed by Dimitri Komatitsch   DFLOAT(I)=FLOAT(I)
 

@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_stacey_crust_mantle(myrank,ichunk,SIMULATION_TYPE, &
+  subroutine compute_stacey_crust_mantle(ichunk,SIMULATION_TYPE, &
                               NSTEP,it,SAVE_FORWARD,ibool_crust_mantle, &
                               veloc_crust_mantle,accel_crust_mantle,b_accel_crust_mantle, &
                               jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
@@ -52,7 +52,7 @@
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer myrank,ichunk,SIMULATION_TYPE
+  integer ichunk,SIMULATION_TYPE
   integer NSTEP,it
   logical SAVE_FORWARD
 
@@ -104,7 +104,15 @@
   real(kind=CUSTOM_REAL) :: weight
   real(kind=CUSTOM_REAL) :: vn,vx,vy,vz,nx,ny,nz,tx,ty,tz
   integer :: i,j,k,ispec,iglob,ispec2D
-  integer :: reclen1,reclen2
+  !integer :: reclen1,reclen2
+
+  ! note: we use c functions for I/O as they still have a better performance than 
+  !           fortran, unformatted file I/O. however, using -assume byterecl together with fortran functions
+  !           comes very close (only  ~ 4 % slower ).
+  !
+  !           tests with intermediate storages (every 8 step) and/or asynchronious 
+  !           file access (by process rank modulo 8) showed that the following, 
+  !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
 
   ! crust & mantle
@@ -113,10 +121,11 @@
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
 
+    ! reads absorbing boundary values
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_crust_mantle > 0)  then
-      read(51,rec=NSTEP-it+1) reclen1,absorb_xmin_crust_mantle,reclen2
-      if (reclen1 /= reclen_xmin_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmin')
+      ! note: backward/reconstructed wavefields are read in after the Newmark time scheme in the first time loop
+      !          this leads to a corresponding boundary condition at time index NSTEP - (it-1) = NSTEP - it + 1    
+      call read_abs(0,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle,NSTEP-it+1)
     endif
 
     do ispec2D=1,nspec2D_xmin_crust_mantle
@@ -162,19 +171,19 @@
       enddo
     enddo
 
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) &
-               write(51,rec=it) reclen_xmin_crust_mantle,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle
-
+    ! writes absorbing boundary values
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) then
+      call write_abs(0,absorb_xmin_crust_mantle, reclen_xmin_crust_mantle,it)
+    endif
   endif
 
   !   xmax
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
 
+    ! reads absorbing boundary values
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_crust_mantle > 0)  then
-      read(52,rec=NSTEP-it+1) reclen1,absorb_xmax_crust_mantle,reclen2
-      if (reclen1 /= reclen_xmax_crust_mantle .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax')
+      call read_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,NSTEP-it+1)
     endif
 
     do ispec2D=1,nspec2D_xmax_crust_mantle
@@ -221,17 +230,17 @@
       enddo
     enddo
 
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) &
-               write(52,rec=it) reclen_xmax_crust_mantle,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle
-
+    ! writes absorbing boundary values
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) then
+      call write_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,it)
+    endif
   endif
 
   !   ymin
 
+  ! reads absorbing boundary values
   if (SIMULATION_TYPE == 3 .and. nspec2D_ymin_crust_mantle > 0)  then
-    read(53,rec=NSTEP-it+1) reclen1,absorb_ymin_crust_mantle,reclen2
-    if (reclen1 /= reclen_ymin_crust_mantle .or. reclen1 /= reclen2)  &
-       call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin')
+    call read_abs(2,absorb_ymin_crust_mantle, reclen_ymin_crust_mantle,NSTEP-it+1)
   endif
 
   do ispec2D=1,nspec2D_ymin_crust_mantle
@@ -277,15 +286,19 @@
       enddo
     enddo
   enddo
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) &
-     write(53,rec=it) reclen_ymin_crust_mantle,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle
-
+    
+  ! writes absorbing boundary values
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) then
+    call write_abs(2,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle,it)
+  endif
+  
+  
+  
   !   ymax
 
+  ! reads absorbing boundary values
   if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_crust_mantle > 0)  then
-    read(54,rec=NSTEP-it+1) reclen1,absorb_ymax_crust_mantle,reclen2
-    if (reclen1 /= reclen_ymax_crust_mantle .or. reclen1 /= reclen2)  &
-       call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax')
+    call read_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,NSTEP-it+1)
   endif
 
   do ispec2D=1,nspec2D_ymax_crust_mantle
@@ -332,8 +345,10 @@
     enddo
   enddo
 
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) &
-     write(54,rec=it) reclen_ymax_crust_mantle,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle
-
+  ! writes absorbing boundary values
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) then
+    call write_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,it)
+  endif
+  
   end subroutine compute_stacey_crust_mantle
 

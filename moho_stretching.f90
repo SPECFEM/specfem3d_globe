@@ -53,7 +53,7 @@
 
   double precision, parameter :: RADIANS_TO_DEGREES = 180.d0 / PI
   double precision, parameter :: PI_OVER_TWO = PI / 2.0d0
-  double precision :: stretch_factor
+  !double precision :: stretch_factor
   double precision :: x,y,z
   double precision :: R_moho,R_middlecrust
 
@@ -254,9 +254,11 @@
     !         - below 60 km (in HONOR_DEEP_MOHO case)
     !         otherwise, the moho will be "interpolated" within the element
     if( HONOR_DEEP_MOHO) then    
-      call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220)    
+      call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
+                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)    
     else
-      call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220)      
+      call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
+                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)      
     endif 
 
     ! counts corners in above moho
@@ -295,7 +297,8 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220)
+  subroutine stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
+                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
 
 ! honors deep moho (below 60 km), otherwise keeps the mesh boundary at r60 fixed
 
@@ -312,6 +315,8 @@
   double precision :: x,y,z
 
   double precision :: r,moho,R220
+  double precision :: RMIDDLE_CRUST
+  double precision :: RMOHO_FICTITIOUS_IN_MESHER
   
   ! local parameters  
   double precision :: elevation,gamma
@@ -326,9 +331,16 @@
   double precision,parameter ::  R55=6316000.d0/R_EARTH
   double precision,parameter ::  R60=6311000.d0/R_EARTH
 
+  ! checks moho position: supposed to be at 60 km
   if( RMOHO_STRETCH_ADJUSTEMENT /= -20000.d0 ) &
     stop 'wrong moho stretch adjustement for stretch_deep_moho'
+  if( RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R60 ) &
+    stop 'wrong moho depth '
+  ! checks middle crust position: supposed to be bottom of first layer at 15 km
+  if( RMIDDLE_CRUST/R_EARTH /= R15 ) &
+    stop 'wrong middle crust depth'
 
+  ! stretches mesh by moving point coordinates    
   if ( moho < R25 .and. moho > R45 ) then
     ! moho between r25 and r45
 
@@ -436,7 +448,8 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220)
+  subroutine stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
+                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
 
 ! honors shallow and middle depth moho, deep moho will be interpolated within elements
 ! mesh will get stretched down to r220
@@ -453,6 +466,8 @@
 
   double precision :: r,moho,R220
   double precision :: x,y,z
+  double precision :: RMIDDLE_CRUST
+  double precision :: RMOHO_FICTITIOUS_IN_MESHER
   
   ! local parameters  
   double precision :: elevation,gamma
@@ -467,6 +482,15 @@
   double precision,parameter ::  R55=6316000.d0/R_EARTH
   double precision,parameter ::  R60=6311000.d0/R_EARTH
 
+  ! checks moho position: supposed to be at 55 km
+  if( RMOHO_STRETCH_ADJUSTEMENT /= -15000.d0 ) &
+    stop 'wrong moho stretch adjustement for stretch_deep_moho'
+  if( RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R55 ) &
+    stop 'wrong moho depth '    
+  ! checks middle crust position: supposed to be bottom of first layer at 15 km
+  if( RMIDDLE_CRUST/R_EARTH /= R15 ) &
+    stop 'wrong middle crust depth'
+    
   ! moho between 25km and 45 km
   if ( moho < R25 .and. moho > R45 ) then
   

@@ -758,7 +758,7 @@
                       reclen_xmin_outer_core,reclen_xmax_outer_core, &
                       reclen_ymin_outer_core,reclen_ymax_outer_core, &
                       reclen_zmin,NSPEC2D_BOTTOM, &
-                      SIMULATION_TYPE,SAVE_FORWARD,LOCAL_PATH)
+                      SIMULATION_TYPE,SAVE_FORWARD,LOCAL_PATH,NSTEP)
 
   implicit none
 
@@ -789,7 +789,8 @@
   integer SIMULATION_TYPE
   logical SAVE_FORWARD
   character(len=150) LOCAL_PATH
-
+  integer NSTEP
+  
   ! local parameters
   character(len=150) prname
 
@@ -813,13 +814,19 @@
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     reclen_xmin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmin_crust_mantle)
     if (SIMULATION_TYPE == 3) then
-      open(unit=51,file=trim(prname)//'absorb_xmin.bin', &
-            status='old',action='read',form='unformatted',access='direct', &
-            recl=reclen_xmin_crust_mantle+2*4)
+!      open(unit=51,file=trim(prname)//'absorb_xmin.bin', &
+!            status='old',action='read',form='unformatted',access='direct', &
+!            recl=reclen_xmin_crust_mantle+2*4)
+!    else
+!      open(unit=51,file=trim(prname)//'absorb_xmin.bin', &
+!            status='unknown',form='unformatted',access='direct',&
+!            recl=reclen_xmin_crust_mantle+2*4)
+    
+      call open_file_abs_r(0,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_xmin.bin'), &
+                          reclen_xmin_crust_mantle*NSTEP)
     else
-      open(unit=51,file=trim(prname)//'absorb_xmin.bin', &
-            status='unknown',form='unformatted',access='direct',&
-            recl=reclen_xmin_crust_mantle+2*4)
+      call open_file_abs_w(0,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_xmin.bin'), &
+                          reclen_xmin_crust_mantle*NSTEP)
     endif
   endif
 
@@ -827,13 +834,19 @@
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     reclen_xmax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmax_crust_mantle)
     if (SIMULATION_TYPE == 3) then
-      open(unit=52,file=trim(prname)//'absorb_xmax.bin', &
-            status='old',action='read',form='unformatted',access='direct', &
-            recl=reclen_xmax_crust_mantle+2*4)
+!      open(unit=52,file=trim(prname)//'absorb_xmax.bin', &
+!            status='old',action='read',form='unformatted',access='direct', &
+!            recl=reclen_xmax_crust_mantle+2*4)
+!    else
+!      open(unit=52,file=trim(prname)//'absorb_xmax.bin', &
+!            status='unknown',form='unformatted',access='direct', &
+!            recl=reclen_xmax_crust_mantle+2*4)
+    
+      call open_file_abs_r(1,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
+                          reclen_xmax_crust_mantle*NSTEP)
     else
-      open(unit=52,file=trim(prname)//'absorb_xmax.bin', &
-            status='unknown',form='unformatted',access='direct', &
-            recl=reclen_xmax_crust_mantle+2*4)
+      call open_file_abs_w(1,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
+                          reclen_xmax_crust_mantle*NSTEP)
     endif
   endif
 
@@ -841,13 +854,19 @@
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     reclen_ymin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymin_crust_mantle)
     if (SIMULATION_TYPE == 3) then
-      open(unit=53,file=trim(prname)//'absorb_ymin.bin', &
-            status='old',action='read',form='unformatted',access='direct',&
-            recl=reclen_ymin_crust_mantle+2*4)
+!      open(unit=53,file=trim(prname)//'absorb_ymin.bin', &
+!            status='old',action='read',form='unformatted',access='direct',&
+!            recl=reclen_ymin_crust_mantle+2*4)
+!    else
+!      open(unit=53,file=trim(prname)//'absorb_ymin.bin', &
+!            status='unknown',form='unformatted',access='direct',&
+!            recl=reclen_ymin_crust_mantle+2*4)
+    
+      call open_file_abs_r(2,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
+                          reclen_ymin_crust_mantle*NSTEP)
     else
-      open(unit=53,file=trim(prname)//'absorb_ymin.bin', &
-            status='unknown',form='unformatted',access='direct',&
-            recl=reclen_ymin_crust_mantle+2*4)
+      call open_file_abs_w(2,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
+                          reclen_ymin_crust_mantle*NSTEP)
     endif
   endif
 
@@ -855,13 +874,19 @@
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     reclen_ymax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymax_crust_mantle)
     if (SIMULATION_TYPE == 3) then
-      open(unit=54,file=trim(prname)//'absorb_ymax.bin', &
-            status='old',action='read',form='unformatted',access='direct',&
-            recl=reclen_ymax_crust_mantle+2*4)
+!      open(unit=54,file=trim(prname)//'absorb_ymax.bin', &
+!            status='old',action='read',form='unformatted',access='direct',&
+!            recl=reclen_ymax_crust_mantle+2*4)
+!    else
+!      open(unit=54,file=trim(prname)//'absorb_ymax.bin', &
+!            status='unknown',form='unformatted',access='direct',&
+!            recl=reclen_ymax_crust_mantle+2*4)
+    
+      call open_file_abs_r(3,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          reclen_ymax_crust_mantle*NSTEP)
     else
-      open(unit=54,file=trim(prname)//'absorb_ymax.bin', &
-            status='unknown',form='unformatted',access='direct',&
-            recl=reclen_ymax_crust_mantle+2*4)
+      call open_file_abs_w(3,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          reclen_ymax_crust_mantle*NSTEP)
     endif
   endif
 
@@ -885,13 +910,19 @@
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     reclen_xmin_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmin_outer_core)
     if (SIMULATION_TYPE == 3) then
-      open(unit=61,file=trim(prname)//'absorb_xmin.bin', &
-            status='old',action='read',form='unformatted',access='direct', &
-            recl=reclen_xmin_outer_core+2*4)
+!      open(unit=61,file=trim(prname)//'absorb_xmin.bin', &
+!            status='old',action='read',form='unformatted',access='direct', &
+!            recl=reclen_xmin_outer_core+2*4)
+!    else
+!      open(unit=61,file=trim(prname)//'absorb_xmin.bin', &
+!            status='unknown',form='unformatted',access='direct',&
+!            recl=reclen_xmin_outer_core+2*4)
+
+      call open_file_abs_r(4,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          reclen_xmin_outer_core*NSTEP)
     else
-      open(unit=61,file=trim(prname)//'absorb_xmin.bin', &
-            status='unknown',form='unformatted',access='direct',&
-            recl=reclen_xmin_outer_core+2*4)
+      call open_file_abs_w(4,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          reclen_xmin_outer_core*NSTEP)
     endif
   endif
 
@@ -899,27 +930,41 @@
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     reclen_xmax_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmax_outer_core)
     if (SIMULATION_TYPE == 3) then
-      open(unit=62,file=trim(prname)//'absorb_xmax.bin', &
-            status='old',action='read',form='unformatted',access='direct', &
-            recl=reclen_xmax_outer_core+2*4)
+!      open(unit=62,file=trim(prname)//'absorb_xmax.bin', &
+!            status='old',action='read',form='unformatted',access='direct', &
+!            recl=reclen_xmax_outer_core+2*4)
+!    else
+!      open(unit=62,file=trim(prname)//'absorb_xmax.bin', &
+!            status='unknown',form='unformatted',access='direct', &
+!            recl=reclen_xmax_outer_core+2*4)
+
+      call open_file_abs_r(5,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
+                          reclen_xmax_outer_core*NSTEP)
     else
-      open(unit=62,file=trim(prname)//'absorb_xmax.bin', &
-            status='unknown',form='unformatted',access='direct', &
-            recl=reclen_xmax_outer_core+2*4)
-    endif
+      call open_file_abs_w(5,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
+                          reclen_xmax_outer_core*NSTEP)
+   endif
+
   endif
 
   if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     reclen_ymin_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymin_outer_core)
     if (SIMULATION_TYPE == 3) then
-      open(unit=63,file=trim(prname)//'absorb_ymin.bin', &
-            status='old',action='read',form='unformatted',access='direct',&
-            recl=reclen_ymin_outer_core+2*4)
+!      open(unit=63,file=trim(prname)//'absorb_ymin.bin', &
+!            status='old',action='read',form='unformatted',access='direct',&
+!            recl=reclen_ymin_outer_core+2*4)
+!    else
+!      open(unit=63,file=trim(prname)//'absorb_ymin.bin', &
+!            status='unknown',form='unformatted',access='direct',&
+!            recl=reclen_ymin_outer_core+2*4)
+
+      call open_file_abs_r(6,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
+                          reclen_ymin_outer_core*NSTEP)
     else
-      open(unit=63,file=trim(prname)//'absorb_ymin.bin', &
-            status='unknown',form='unformatted',access='direct',&
-            recl=reclen_ymin_outer_core+2*4)
+      call open_file_abs_w(6,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
+                          reclen_ymin_outer_core*NSTEP)
+
     endif
   endif
 
@@ -927,31 +972,41 @@
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     reclen_ymax_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymax_outer_core)
     if (SIMULATION_TYPE == 3) then
-      open(unit=64,file=trim(prname)//'absorb_ymax.bin', &
-            status='old',action='read',form='unformatted',access='direct',&
-            recl=reclen_ymax_outer_core+2*4)
+!      open(unit=64,file=trim(prname)//'absorb_ymax.bin', &
+!            status='old',action='read',form='unformatted',access='direct',&
+!            recl=reclen_ymax_outer_core+2*4)
+!    else
+!      open(unit=64,file=trim(prname)//'absorb_ymax.bin', &
+!            status='unknown',form='unformatted',access='direct',&
+!            recl=reclen_ymax_outer_core+2*4)
+
+      call open_file_abs_r(7,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          reclen_ymax_outer_core*NSTEP)
     else
-      open(unit=64,file=trim(prname)//'absorb_ymax.bin', &
-            status='unknown',form='unformatted',access='direct',&
-            recl=reclen_ymax_outer_core+2*4)
+      call open_file_abs_w(7,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
+                          reclen_ymax_outer_core*NSTEP)
+
     endif
   endif
 
   if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. &
      (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
     reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
-     if (SIMULATION_TYPE == 3) then
-     open(unit=65,file=trim(prname)//'absorb_zmin.bin', &
-            status='old',action='read',form='unformatted',access='direct',&
-            recl=reclen_zmin+2*4)
+    if (SIMULATION_TYPE == 3) then
+!      open(unit=65,file=trim(prname)//'absorb_zmin.bin', &
+!            status='old',action='read',form='unformatted',access='direct',&
+!            recl=reclen_zmin+2*4)
+!    else
+!      open(unit=65,file=trim(prname)//'absorb_zmin.bin', &
+!            status='unknown',form='unformatted',access='direct',&
+!            recl=reclen_zmin+2*4)
+
+      call open_file_abs_r(8,trim(prname)//'absorb_zmin.bin',len_trim(trim(prname)//'absorb_zmin.bin'), &
+                          reclen_zmin*NSTEP)
     else
-      open(unit=65,file=trim(prname)//'absorb_zmin.bin', &
-            status='unknown',form='unformatted',access='direct',&
-            recl=reclen_zmin+2*4)
+      call open_file_abs_w(8,trim(prname)//'absorb_zmin.bin',len_trim(trim(prname)//'absorb_zmin.bin'), &
+                          reclen_zmin*NSTEP)
     endif
   endif
 
   end subroutine read_mesh_databases_stacey
-
-
-

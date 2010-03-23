@@ -220,16 +220,18 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
 
 
   ! unfortunately, things become more tricky because of the Newark time scheme at
-  ! the very beginning of the time loop.
+  ! the very beginning of the time loop. however, when we read in the backward/reconstructed
+  ! wavefields at the end of the first time loop, we can use the adjoint source index from 3000 down to 1.
   !
   ! see the comment on where we add the adjoint source (compute_add_sources_adjoint()).
   !
-  ! we will thus shift this indices by minus 1, to read in the adjoint source trace between 0 to 2999.
-  ! since 0 index is out of bounds, we put that adjoint source displacement artifically to zero
+  ! otherwise,
+  ! we would have to shift this indices by minus 1, to read in the adjoint source trace between 0 to 2999.
+  ! since 0 index is out of bounds, we would have to put that adjoint source displacement artifically to zero
   !
-  ! that is e.g., it_start is now 2000 and it_end = 2999, then 1000 to 1999, then 0 to 999.
-  it_start = it_start - 1
-  it_end = it_end - 1
+  ! here now, it_start is now 2001 and it_end = 3000, then 1001 to 2000, then 1 to 1000.
+  it_start = it_start 
+  it_end = it_end 
 
   adj_src = 0._CUSTOM_REAL
   do icomp = 1, NDIM
@@ -253,7 +255,7 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
       ! index will run from 1 to NSTEP_BLOCK
       index_i = itime - it_start + 1
 
-      ! skips read and sets source artifically to zero if out of bounds, see comments above
+      ! would skip read and set source artifically to zero if out of bounds, see comments above
       if( it_start == 0 .and. itime == 0 ) then
         adj_src(icomp,1) = 0._CUSTOM_REAL
         cycle

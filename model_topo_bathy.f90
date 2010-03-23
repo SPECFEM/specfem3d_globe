@@ -90,7 +90,8 @@
       read(13,*) ibathy_topo(itopo_x,itopo_y)
     enddo
   enddo
-  close(13)
+  close(13)  
+
 
   ! note: we check the limits after reading in the data. this seems to perform sligthly faster
   !          however, reading ETOPO1.xyz will take ~ 2m 1.2s for a single process
