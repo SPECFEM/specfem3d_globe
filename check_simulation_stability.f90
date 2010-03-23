@@ -29,7 +29,7 @@
                           b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
                           eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
-                          COMPUTE_AND_STORE_STRAIN,myrank)
+                          myrank) !COMPUTE_AND_STORE_STRAIN,myrank)
 
   implicit none
 
@@ -60,7 +60,7 @@
 
   double precision :: time_start,DT,t0
 
-  logical COMPUTE_AND_STORE_STRAIN
+!  logical COMPUTE_AND_STORE_STRAIN
 
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid

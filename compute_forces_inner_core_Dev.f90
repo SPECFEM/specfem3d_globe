@@ -34,7 +34,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
           one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN)
+          vx,vy,vz,vnspec)
 
   implicit none
 
@@ -79,16 +79,15 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore,muvstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+!    c11store,c33store,c12store,c13store,c44store
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: &
     c11store,c33store,c12store,c13store,c44store
 
   ! array with the local to global mapping per slice
   integer, dimension(NSPEC_INNER_CORE) :: idoubling
 
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
-
-  ! for forward or backward simulations
-  logical COMPUTE_AND_STORE_STRAIN
 
 ! local parameters
   ! Deville
@@ -141,7 +140,7 @@
 
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
-  real(kind=CUSTOM_REAL) fac1,fac2,fac3
+  real(kind=CUSTOM_REAL) fac1,fac2,fac3,templ
   real(kind=CUSTOM_REAL) lambdal,mul,lambdalplus2mul
   real(kind=CUSTOM_REAL) kappal
 
@@ -157,6 +156,8 @@
   double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
+
+  !real(kind=CUSTOM_REAL), dimension(5) :: dummy
 
   integer :: int_radius
   integer :: ispec,ispec_strain
@@ -333,9 +334,10 @@
               else
                 ispec_strain = ispec
               endif
-              epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-              epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
-              epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
+              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+              epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+              epsilondev_loc(1,i,j,k) = duxdxl - templ
+              epsilondev_loc(2,i,j,k) = duydyl - templ
               epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
               epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
               epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
@@ -343,7 +345,7 @@
 
             if(ATTENUATION_VAL) then
               minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
-            endif ! ATTENUATION_VAL
+            endif 
 
             if(ANISOTROPIC_INNER_CORE_VAL) then
               ! elastic tensor for hexagonal symmetry in reduced notation:
@@ -411,7 +413,7 @@
             endif
 
             ! subtract memory variables if attenuation
-            if(ATTENUATION_VAL) then
+            if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
 
 ! way 1:
 !              do i_sls = 1,N_SLS
@@ -725,7 +727,7 @@
       ! equation (9.59) page 350): Q_\alpha = Q_\mu * 3 * (V_p/V_s)^2 / 4
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
-      if(ATTENUATION_VAL) then
+      if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
         do i_sls = 1,N_SLS
           factor_common_use = factor_common(i_sls,:,:,:,ispec)
           do i_memory = 1,5
@@ -741,8 +743,23 @@
       endif
 
       ! save deviatoric strain for Runge-Kutta scheme
-      if(COMPUTE_AND_STORE_STRAIN) epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-
+      if(COMPUTE_AND_STORE_STRAIN) then
+! way 1:
+        !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+! way 2:        
+        do k=1,NGLLZ
+          do j=1,NGLLY
+              !dummy(:) = epsilondev_loc(:,1,j,k)
+          
+              epsilondev(:,1,j,k,ispec) = epsilondev_loc(:,1,j,k)
+              epsilondev(:,2,j,k,ispec) = epsilondev_loc(:,2,j,k)
+              epsilondev(:,3,j,k,ispec) = epsilondev_loc(:,3,j,k)
+              epsilondev(:,4,j,k,ispec) = epsilondev_loc(:,4,j,k)
+              epsilondev(:,5,j,k,ispec) = epsilondev_loc(:,5,j,k)
+          enddo
+        enddo
+      endif
+      
     endif   ! end test to exclude fictitious elements in central cube
 
   enddo ! spectral element loop

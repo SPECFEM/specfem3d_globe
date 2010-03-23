@@ -26,7 +26,7 @@
 !=====================================================================
 
 
-  subroutine compute_stacey_outer_core(myrank,ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
+  subroutine compute_stacey_outer_core(ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
                               NSTEP,it,ibool_outer_core, &
                               veloc_outer_core,accel_outer_core,b_accel_outer_core, &
                               vp_outer_core,wgllwgll_xz,wgllwgll_yz,wgllwgll_xy, &
@@ -56,7 +56,7 @@
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  integer myrank,ichunk,SIMULATION_TYPE
+  integer ichunk,SIMULATION_TYPE
   integer NSTEP,it
   logical SAVE_FORWARD
 
@@ -105,18 +105,33 @@
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: sn,weight
-  integer :: reclen1,reclen2
+  !integer :: reclen1,reclen2
   integer :: i,j,k,ispec2D,ispec,iglob
 
+  ! note: we use c functions for I/O as they still have a better performance than 
+  !           fortran, unformatted file I/O. however, using -assume byterecl together with fortran functions
+  !           comes very close (only  ~ 4 % slower ).
+  !
+  !           tests with intermediate storages (every 8 step) and/or asynchronious 
+  !           file access (by process rank modulo 8) showed that the following, 
+  !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
   !   xmin
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
 
+    ! reads absorbing boundary values
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_outer_core > 0)  then
-      read(61,rec=NSTEP-it+1) reclen1,absorb_xmin_outer_core,reclen2
-      if (reclen1 /= reclen_xmin_outer_core .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmin_outer_core')
+      ! note: backward/reconstructed wavefields are read in after the Newmark time scheme in the first time loop
+      !          this leads to a corresponding boundary condition at time index NSTEP - (it-1) = NSTEP - it + 1
+
+      call read_abs(4,absorb_xmin_outer_core,reclen_xmin_outer_core,NSTEP-it+1)
+
+!      read(61,rec=NSTEP-it+1) reclen1,absorb_xmin_outer_core,reclen2
+!      if (reclen1 /= reclen_xmin_outer_core .or. reclen1 /= reclen2)  &
+!         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmin_outer_core')
+
+
     endif
 
     do ispec2D=1,nspec2D_xmin_outer_core
@@ -146,9 +161,14 @@
       enddo
     enddo
 
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_outer_core > 0 ) &
-               write(61,rec=it) reclen_xmin_outer_core,absorb_xmin_outer_core,reclen_xmin_outer_core
+    ! writes absorbing boundary values
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_outer_core > 0 ) then
 
+      call write_abs(4,absorb_xmin_outer_core,reclen_xmin_outer_core,it)
+    
+!      write(61,rec=it) reclen_xmin_outer_core,absorb_xmin_outer_core,reclen_xmin_outer_core
+    endif
+    
   endif
 
   !   xmax
@@ -156,9 +176,12 @@
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
 
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_outer_core > 0)  then
-      read(62,rec=NSTEP-it+1) reclen1,absorb_xmax_outer_core,reclen2
-      if (reclen1 /= reclen_xmax_outer_core .or. reclen1 /= reclen2)  &
-         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax_outer_core')
+
+      call read_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,NSTEP-it+1)
+    
+!      read(62,rec=NSTEP-it+1) reclen1,absorb_xmax_outer_core,reclen2
+!      if (reclen1 /= reclen_xmax_outer_core .or. reclen1 /= reclen2)  &
+!         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax_outer_core')
     endif
 
     do ispec2D=1,nspec2D_xmax_outer_core
@@ -189,16 +212,22 @@
       enddo
     enddo
 
-    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_outer_core > 0 ) &
-               write(62,rec=it) reclen_xmax_outer_core,absorb_xmax_outer_core,reclen_xmax_outer_core
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_outer_core > 0 ) then
+      call write_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,it)
 
+!      write(62,rec=it) reclen_xmax_outer_core,absorb_xmax_outer_core,reclen_xmax_outer_core
+    endif
+    
   endif
 
   !   ymin
   if (SIMULATION_TYPE == 3 .and. nspec2D_ymin_outer_core > 0)  then
-    read(63,rec=NSTEP-it+1) reclen1,absorb_ymin_outer_core,reclen2
-    if (reclen1 /= reclen_ymin_outer_core .or. reclen1 /= reclen2)  &
-       call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin_outer_core')
+
+    call read_abs(6,absorb_ymin_outer_core,reclen_ymin_outer_core,NSTEP-it+1)
+
+!    read(63,rec=NSTEP-it+1) reclen1,absorb_ymin_outer_core,reclen2
+!    if (reclen1 /= reclen_ymin_outer_core .or. reclen1 /= reclen2)  &
+!       call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymin_outer_core')
   endif
 
   do ispec2D=1,nspec2D_ymin_outer_core
@@ -229,15 +258,20 @@
     enddo
   enddo
 
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_outer_core > 0 ) &
-     write(63,rec=it) reclen_ymin_outer_core,absorb_ymin_outer_core,reclen_ymin_outer_core
-
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_outer_core > 0 ) then
+    call write_abs(6,absorb_ymin_outer_core,reclen_ymin_outer_core,it)
+  
+!    write(63,rec=it) reclen_ymin_outer_core,absorb_ymin_outer_core,reclen_ymin_outer_core
+  endif
 
   !   ymax
   if (SIMULATION_TYPE == 3 .and. nspec2D_ymax_outer_core > 0)  then
-    read(64,rec=NSTEP-it+1) reclen1,absorb_ymax_outer_core,reclen2
-    if (reclen1 /= reclen_ymax_outer_core .or. reclen1 /= reclen2)  &
-       call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax_outer_core')
+
+    call read_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,NSTEP-it+1)
+
+!    read(64,rec=NSTEP-it+1) reclen1,absorb_ymax_outer_core,reclen2
+!    if (reclen1 /= reclen_ymax_outer_core .or. reclen1 /= reclen2)  &
+!       call exit_MPI(myrank,'Error reading absorbing contribution absorb_ymax_outer_core')
   endif
   do ispec2D=1,nspec2D_ymax_outer_core
 
@@ -267,15 +301,20 @@
     enddo
   enddo
 
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_outer_core > 0 ) &
-     write(64,rec=it) reclen_ymax_outer_core,absorb_ymax_outer_core,reclen_ymax_outer_core
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_outer_core > 0 ) then
+    call write_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,it)
 
+!    write(64,rec=it) reclen_ymax_outer_core,absorb_ymax_outer_core,reclen_ymax_outer_core
+  endif
 
   ! for surface elements exactly on the ICB
   if (SIMULATION_TYPE == 3 .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE)> 0)  then
-    read(65,rec=NSTEP-it+1) reclen1,absorb_zmin_outer_core,reclen2
-    if (reclen1 /= reclen_zmin .or. reclen1 /= reclen2)  &
-       call exit_MPI(myrank,'Error reading absorbing contribution absorb_zmin_outer_core')
+
+    call read_abs(8,absorb_zmin_outer_core,reclen_zmin,NSTEP-it+1)
+
+!    read(65,rec=NSTEP-it+1) reclen1,absorb_zmin_outer_core,reclen2
+!    if (reclen1 /= reclen_zmin .or. reclen1 /= reclen2)  &
+!       call exit_MPI(myrank,'Error reading absorbing contribution absorb_zmin_outer_core')
   endif
 
   do ispec2D = 1,NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
@@ -303,7 +342,10 @@
     enddo
   enddo
 
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 ) &
-     write(65,rec=it) reclen_zmin,absorb_zmin_outer_core,reclen_zmin
-
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 ) then
+    call write_abs(8,absorb_zmin_outer_core,reclen_zmin,it)
+  
+!    write(65,rec=it) reclen_zmin,absorb_zmin_outer_core,reclen_zmin
+  endif
+  
   end subroutine compute_stacey_outer_core

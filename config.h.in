@@ -28,3 +28,6 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Uncomment to select optimized file i/o for regional simulations */
+/* #define USE_MAP_FUNCTION  */

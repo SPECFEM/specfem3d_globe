@@ -49,10 +49,18 @@
 
   ! to avoid flickering in movies, the displacement field will get normalized with an 
   ! averaged maximum value over the past few, available snapshots
-  logical,parameter :: USE_AVERAGED_MAXIMUM = .false.
+  logical,parameter :: USE_AVERAGED_MAXIMUM = .true.
   
   ! minimum number of frames to average maxima
-  integer,parameter :: AVERAGE_MINIMUM = 2
+  integer,parameter :: AVERAGE_MINIMUM = 5
+
+  ! muting source region
+  logical, parameter :: MUTE_SOURCE = .true.
+  real(kind=CUSTOM_REAL) :: RADIUS_TO_MUTE = 10.0    ! start radius in degrees  
+  real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 20.0 ! factor times hdur_movie
+
+  ! normalizes output values
+  logical, parameter :: NORMALIZE_VALUES = .true.
   
 !---------------------
 
@@ -144,6 +152,10 @@
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
+
+  real(kind=CUSTOM_REAL) :: LAT_SOURCE,LON_SOURCE 
+  real(kind=CUSTOM_REAL) :: dist_lon,dist_lat,mute_factor
+  character(len=256) line
 
 ! ************** PROGRAM STARTS HERE **************
 
@@ -301,7 +313,7 @@
   if( USE_AVERAGED_MAXIMUM ) then
     ! determines length of history
     nmax_history = AVERAGE_MINIMUM + int( HDUR_MOVIE / (DT*NTSTEP_BETWEEN_FRAMES) * 1.5 )
-    
+        
     ! allocates history array
     allocate(max_history(nmax_history))
     max_history(:) = 0.0d0
@@ -311,6 +323,51 @@
     print *,'Frame step size    : ',DT*NTSTEP_BETWEEN_FRAMES,'(s)'
     print *,'Normalization by averaged maxima over ',nmax_history,'snapshots'
     print *
+    
+    if( MUTE_SOURCE ) then
+      ! initializes
+      LAT_SOURCE = -1000.0
+      LON_SOURCE = -1000.0
+      
+      ! reads in source lat/lon
+      open(22,file="DATA/CMTSOLUTION",status='old',action='read',iostat=ierror )
+      if( ierror == 0 ) then
+        ! skip first line, event name,timeshift,half duration
+        read(22,*,iostat=ierror ) line ! PDE line
+        read(22,*,iostat=ierror ) line ! event name
+        read(22,*,iostat=ierror ) line ! timeshift 
+        read(22,*,iostat=ierror ) line ! halfduration 
+        ! latitude
+        read(22,'(a256)',iostat=ierror ) line
+        if( ierror == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
+        ! longitude
+        read(22,'(a256)',iostat=ierror ) line
+        if( ierror == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
+        close(22)
+      endif
+      
+      print *,'muting source lat/lon: ',LAT_SOURCE,LON_SOURCE
+      
+      ! time when muting starts 
+      STARTTIME_TO_MUTE = STARTTIME_TO_MUTE * HDUR_MOVIE
+      
+      print *,'muting radius: ',RADIUS_TO_MUTE
+      print *,'muting starttime: ',STARTTIME_TO_MUTE,'(s)'
+      print *
+      
+      ! colatitude [0, PI]
+      LAT_SOURCE = (90. - LAT_SOURCE)*PI/180.0
+      
+      ! longitude [-PI, PI]
+      if( LON_SOURCE < -180.0 ) LON_SOURCE = LON_SOURCE + 360.0
+      if( LON_SOURCE > 180.0 ) LON_SOURCE = LON_SOURCE - 360.0
+      LON_SOURCE = LON_SOURCE *PI/180.0
+      
+      ! mute radius in rad
+      RADIUS_TO_MUTE = RADIUS_TO_MUTE*PI/180.0
+    endif
+    
+    
   endif
   print *,'--------'
 
@@ -326,6 +383,46 @@
      if(mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
         iframe = iframe + 1
+
+        ! mutes source region
+        if( MUTE_SOURCE ) then
+
+          ! muting radius grows/shrinks with time
+          if( (it-1)*DT > STARTTIME_TO_MUTE  ) then                          
+
+            ! approximate wavefront travel distance in degrees (~3.5 km/s wave speed for surface waves)
+            mute_factor = 3.5 * (it-1)*DT / 6371. * 180./PI
+            
+            ! approximate distance to source
+            do while ( mute_factor > 360. )
+              mute_factor = mute_factor - 360.
+            enddo
+            if( mute_factor > 180. ) mute_factor = 360. - mute_factor
+
+            ! limit size around source
+            if( mute_factor < 10. ) then
+              mute_factor = 0.0
+            endif
+            if( mute_factor > 80. ) then
+              mute_factor = 80.0
+            endif
+            
+            print*,'muting radius: ',0.5 * mute_factor
+                        
+            RADIUS_TO_MUTE = 0.5 * mute_factor * PI/180.
+            
+          else
+            ! mute_factor used at the beginning for scaling displacement values
+            if( STARTTIME_TO_MUTE > TINYVAL ) then
+              ! scales from 1 to 0
+              mute_factor = ( STARTTIME_TO_MUTE - (it-1)*DT ) / STARTTIME_TO_MUTE  
+              if( mute_factor < TINYVAL ) mute_factor = TINYVAL
+            else
+              mute_factor = 1.0
+            endif          
+          endif
+          
+        endif
 
         ! read all the elements from the same file
         write(outputname,"('OUTPUT_FILES/moviedata',i6.6)") it
@@ -355,6 +452,8 @@
               do j = 1,NGLLY,NIT
                  do i = 1,NGLLX,NIT
                     ipoin = ipoin + 1
+
+                    ! coordinates actually contain r theta phi
                     xcoord = store_val_x(ipoin,iproc)
                     ycoord = store_val_y(ipoin,iproc)
                     zcoord = store_val_z(ipoin,iproc)
@@ -373,6 +472,7 @@
                     x(i,j) = xcoord
                     y(i,j) = ycoord
                     z(i,j) = zcoord
+
 
                     if(USE_COMPONENT == 1) then
                        ! compute unit normal vector to the surface
@@ -402,6 +502,46 @@
 
                        displn(i,j) = displx*phihat_x   + disply*phihat_y
                     endif
+                    
+                    
+                    ! mute values
+                    if( MUTE_SOURCE ) then
+
+                      ! distance in colatitude                                                
+                      dist_lat = thetaval - LAT_SOURCE
+                      
+                      ! distance in longitude
+                      ! checks source longitude range
+                      if( LON_SOURCE - RADIUS_TO_MUTE < -PI .or. LON_SOURCE + RADIUS_TO_MUTE > PI ) then
+                        ! source close to 180. longitudes, shifts range to [0, 2PI]
+                        if( phival < 0.0 ) phival = phival + 2.0*PI
+                        if( LON_SOURCE < 0.0 ) then
+                          dist_lon = phival - (LON_SOURCE + 2.0*PI)
+                        else
+                          dist_lon = phival - LON_SOURCE
+                        endif
+                      else
+                        ! source well between range to [-PI, PI]
+                        ! shifts phival to be like LON_SOURCE between [-PI,PI]
+                        if( phival > PI ) phival = phival - 2.0*PI
+                        if( phival < -PI ) phival = phival + 2.0*PI
+                        
+                        dist_lon = phival - LON_SOURCE
+                      endif
+                      
+                      ! mutes source region values
+                      if ( ( dist_lat**2 + dist_lon**2 ) < RADIUS_TO_MUTE**2 ) then                          
+                        ! muting takes account of the event time
+                        if( (it-1)*DT > STARTTIME_TO_MUTE  ) then                          
+                          displn(i,j) = displn(i,j) * TINYVAL
+                        else
+                          displn(i,j) = displn(i,j) * mute_factor                          
+                        endif
+                      endif
+                        
+                    endif
+                    
+                    
                  enddo !i
               enddo  !j
 
@@ -471,7 +611,7 @@
                       zp(ieoff) = dble(z(i,j))
                       field_display(ieoff) = dble(displn(i,j))
                     endif ! MOVIE_COARSE
-
+                  
                  enddo !i
               enddo  !j
 
@@ -491,17 +631,13 @@
         ! takes average over last few snapshots available and uses it
         ! to normalize field values
         if( USE_AVERAGED_MAXIMUM ) then
-        
-          ! make sure range is always symmetric and center is in zero
-          ! this assumption works only for fields that can be negative
-          ! would not work for norm of vector for instance
-          ! (we would lose half of the color palette if no negative values)
-          max_absol = max(abs(min_field_current),abs(max_field_current))
-        
-          ! index between 1 and nmax_history
-          imax = mod(iframe-1,nmax_history) + 1        
+
+          ! (average) maximum between positive and negative values
+          max_absol = (abs(min_field_current)+abs(max_field_current))/2.0
         
           ! stores last few maxima
+          ! index between 1 and nmax_history
+          imax = mod(iframe-1,nmax_history) + 1                
           max_history( imax ) = max_absol
         
           ! average over history 
@@ -516,20 +652,18 @@
 
           print *,'maximum amplitude over averaged last snapshots = ',max_average
 
-          ! thresholds positive & negative maximum values
-          if( max_field_current > max_average ) then
-            where( field_display(:) > max_average ) field_display = max_average          
-          endif
-          if( min_field_current < - max_average ) then          
-            where( field_display(:) < - max_average ) field_display = -max_average
-          endif
-          
-          ! scales field values up to maximum when too small
-          if( max_absol < max_average .and. max_absol > TINYVAL) &
+          ! scales field values up to match average 
+          if( abs(max_absol) > TINYVAL) &
             field_display = field_display * max_average / max_absol 
-                     
+
+          ! thresholds positive & negative maximum values          
+          where( field_display(:) > max_average ) field_display = max_average          
+          where( field_display(:) < - max_average ) field_display = -max_average
+          
           ! normalizes field values
-          if( max_average > TINYVAL ) field_display = field_display / max_average
+          if( NORMALIZE_VALUES ) then
+            if( abs(max_average) > TINYVAL ) field_display = field_display / max_average
+          endif
           
         endif
 
@@ -627,6 +761,7 @@
   print *,'done creating movie'
   print *,'GMT ascii files are stored in ascii_movie_*.{xy,d,E,N}'
   print *,'binary files are stored in bin_movie_*.{xy,d,E,N}'
-end program create_movie_GMT_global
+  
+  end program create_movie_GMT_global
 
 

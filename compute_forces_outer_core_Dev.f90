@@ -35,7 +35,7 @@
                             hprime_xx,hprime_xxT, &
                             hprimewgll_xx,hprimewgll_xxT, &
                             wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-                            ibool)
+                            ibool,MOVIE_VOLUME)
 
   implicit none
 
@@ -63,6 +63,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+
+  logical MOVIE_VOLUME
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: newtempx1,newtempx2,newtempx3
@@ -292,7 +294,7 @@
             ! use mesh coordinates to get theta and phi
             ! x y z contain r theta phi
             dpotentialdx_with_rot = dpotentialdx_with_rot + displ_times_grad_x_ln_rho(i,j,k)
-            dpotentialdy_with_rot = dpotentialdx_with_rot + displ_times_grad_y_ln_rho(i,j,k)
+            dpotentialdy_with_rot = dpotentialdy_with_rot + displ_times_grad_y_ln_rho(i,j,k)
             dpotentialdzl = dpotentialdzl + displ_times_grad_z_ln_rho(i,j,k)
 
          else  ! if gravity is turned on
@@ -322,7 +324,7 @@
             ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
             !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
             !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-            if (NSPEC_OUTER_CORE_ADJOINT /= 1) then
+            if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. MOVIE_VOLUME) then
               div_displfluid(i,j,k,ispec) =  &
                         minus_rho_g_over_kappa_fluid(int_radius) &
                         * (dpotentialdx_with_rot * gxl &

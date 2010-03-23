@@ -96,21 +96,21 @@
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if(ier /= 0) stop 'error while allocating one temporary seismogram'
 
-! check that the sum of the number of receivers in each slice is nrec
+  ! check that the sum of the number of receivers in each slice is nrec
   call MPI_REDUCE(nrec_local,nrec_tot_found,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
   if(myrank == 0 .and. nrec_tot_found /= nrec) &
       call exit_MPI(myrank,'total number of receivers is incorrect')
 
-! get the base pathname for output files
+  ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
-! all the processes write their local seismograms themselves
- if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
+  ! all the processes write their local seismograms themselves
+  if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 
-   write_time_begin = MPI_WTIME()
+    write_time_begin = MPI_WTIME()
 
-   if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
-        write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
+    if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+      write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
 
       if(USE_BINARY_FOR_LARGE_FILE) then
         if (seismo_offset==0) then
@@ -127,22 +127,22 @@
                form='formatted',position='append',action='write')
         endif
       endif
-   endif
+    endif
 
-   total_seismos_local = 0
+    total_seismos_local = 0
 
-! loop on all the local receivers
-   do irec_local = 1,nrec_local
+    ! loop on all the local receivers
+    do irec_local = 1,nrec_local
 
-! get global number of that receiver
-   irec = number_receiver_global(irec_local)
+      ! get global number of that receiver
+      irec = number_receiver_global(irec_local)
 
-   total_seismos_local = total_seismos_local + 1
+      total_seismos_local = total_seismos_local + 1
 
-   one_seismogram = seismograms(:,irec_local,:)
+      one_seismogram = seismograms(:,irec_local,:)
 
-! write this seismogram
-   call write_one_seismogram(one_seismogram,irec, &
+      ! write this seismogram
+      call write_one_seismogram(one_seismogram,irec, &
                              station_name,network_name,stlat,stlon,stele,stbur,nrec, &
                              DT,hdur,it_end, &
                              yr,jda,ho,mi,sec,t_cmt,t_shift, &
@@ -153,21 +153,24 @@
                              NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
                              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
 
-   enddo
+    enddo
 
-   if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
+    ! create one large file instead of one small file per station to avoid file system overload
+    if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
-   write_time = MPI_WTIME() - write_time_begin
+    if(total_seismos_local/= nrec_local) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
-   if(myrank == 0) then
+    write_time = MPI_WTIME() - write_time_begin
+
+    if(myrank == 0) then
      write(IMAIN,*)
      write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
      write(IMAIN,*)
-   endif
+    endif
 
-! now only the master process does the writing of seismograms and
-! collects the data from all other processes
- else ! WRITE_SEISMOGRAMS_BY_MASTER
+  ! now only the master process does the writing of seismograms and
+  ! collects the data from all other processes
+  else ! WRITE_SEISMOGRAMS_BY_MASTER
 
     write_time_begin = MPI_WTIME()
 
@@ -243,7 +246,7 @@
 
        if(total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
-   ! create one large file instead of one small file per station to avoid file system overload
+       ! create one large file instead of one small file per station to avoid file system overload
        if(SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
     else  ! on the nodes, send the seismograms to the master
@@ -268,7 +271,7 @@
       write(IMAIN,*)
     endif
 
- endif ! WRITE_SEISMOGRAMS_BY_MASTER
+  endif ! WRITE_SEISMOGRAMS_BY_MASTER
 
   deallocate(one_seismogram)
 
@@ -310,7 +313,7 @@
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
-  integer irec,length_station_name,length_network_name
+  integer irec,ier,length_station_name,length_network_name
   integer iorientation,isample
   double precision value
 
@@ -1006,10 +1009,13 @@
         endif
       else
         if (seismo_offset==0) then
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='unknown',action='write')
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2), &
+                status='unknown',action='write',iostat=ier)
         else
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2),status='old',position='append',action='write')
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2), &
+                status='old',position='append',action='write',iostat=ier)
         endif
+        if( ier /= 0 ) call exit_mpi(myrank,'error opening file:'//trim(OUTPUT_FILES)//trim(sisname_2))        
       endif
 
       ! subtract half duration of the source to make sure travel time is correct

@@ -34,7 +34,7 @@
           kappavstore,muvstore,ibool,idoubling, &
           c11store,c33store,c12store,c13store,c44store,R_memory,epsilondev,epsilon_trace_over_3,&
           one_minus_sum_beta,alphaval,betaval,gammaval,factor_common, &
-          vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN)
+          vx,vy,vz,vnspec)
 
   implicit none
 
@@ -43,9 +43,6 @@
 ! include values created by the mesher
 ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
-
-! for forward or backward simulations
-  logical COMPUTE_AND_STORE_STRAIN
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ,accel
@@ -91,7 +88,9 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: kappavstore,muvstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+!    c11store,c33store,c12store,c13store,c44store
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: &
     c11store,c33store,c12store,c13store,c44store
 
   integer ispec,iglob,ispec_strain
@@ -235,7 +234,7 @@
 
           if(ATTENUATION_VAL) then
             minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
-          endif ! ATTENUATION_VAL
+          endif 
 
           if(ANISOTROPIC_INNER_CORE_VAL) then
 
@@ -306,7 +305,7 @@
           endif
 
 ! subtract memory variables if attenuation
-          if(ATTENUATION_VAL) then
+          if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
             do i_sls = 1,N_SLS
               R_xx_val = R_memory(1,i_sls,i,j,k,ispec)
               R_yy_val = R_memory(2,i_sls,i,j,k,ispec)
@@ -531,7 +530,7 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL) then
+    if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )) then
 
       do i_sls = 1,N_SLS
         factor_common_use = factor_common(i_sls,:,:,:,ispec)
@@ -549,7 +548,15 @@
 
     if (COMPUTE_AND_STORE_STRAIN) then
 ! save deviatoric strain for Runge-Kutta scheme
-      epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+      do k=1,NGLLZ
+        do j=1,NGLLY
+          do i=1,NGLLX
+            epsilondev(:,i,j,k,ispec) = epsilondev_loc(:,i,j,k)
+          enddo
+        enddo
+      enddo
+      
     endif
 
   endif   ! end test to exclude fictitious elements in central cube

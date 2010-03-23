@@ -122,13 +122,17 @@
   include "constants.h"
 
 !Matthias Meschede
-!general_crustmap_variables
-  type general_crustmap_variables
+ !model_crustmaps_variables
+  type model_crustmaps_variables
     sequence
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
+    double precision, dimension(180*CRUSTMAP_RESOLUTION,&
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
+    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
+    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
+    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
 
     double precision thicknessnp(NLAYERS_CRUSTMAP)
     double precision densitynp(NLAYERS_CRUSTMAP)
@@ -139,9 +143,11 @@
     double precision velocpsp(NLAYERS_CRUSTMAP)
     double precision velocssp(NLAYERS_CRUSTMAP)
 
-  end type general_crustmap_variables
+  end type model_crustmaps_variables
+  type (model_crustmaps_variables) GC_V
+  !model_crustmaps_variables
 
-  type (general_crustmap_variables) GC_V
+
 
   integer ila,iln,i,l
 
@@ -354,13 +360,17 @@
   include "constants.h"
 
 !Matthias Meschede
-!general_crustmap_variables
-  type general_crustmap_variables
+ !model_crustmaps_variables
+  type model_crustmaps_variables
     sequence
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
+    double precision, dimension(180*CRUSTMAP_RESOLUTION,&
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
+    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
+    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
+    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
 
     double precision thicknessnp(NLAYERS_CRUSTMAP)
     double precision densitynp(NLAYERS_CRUSTMAP)
@@ -370,10 +380,10 @@
     double precision densitysp(NLAYERS_CRUSTMAP)
     double precision velocpsp(NLAYERS_CRUSTMAP)
     double precision velocssp(NLAYERS_CRUSTMAP)
-  end type general_crustmap_variables
 
-  type (general_crustmap_variables) GC_V
-!general_crustmap_variables
+  end type model_crustmaps_variables
+  type (model_crustmaps_variables) GC_V
+  !model_crustmaps_variables
 
 
   double precision lat,lon,x,vp,vs,rho,moho
@@ -454,13 +464,17 @@
   double precision lat,lon
   double precision rhos(5),thicks(5),velp(5),vels(5)
 !Matthias Meschede
-!general_crustmap_variables
-  type general_crustmap_variables
+ !model_crustmaps_variables
+  type model_crustmaps_variables
     sequence
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
-    double precision, dimension(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
+    double precision, dimension(180*CRUSTMAP_RESOLUTION,&
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: thickness
+    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: density
+    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocp
+    double precision, dimension(180*CRUSTMAP_RESOLUTION, &
+      360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP) :: velocs
 
     double precision thicknessnp(NLAYERS_CRUSTMAP)
     double precision densitynp(NLAYERS_CRUSTMAP)
@@ -471,9 +485,9 @@
     double precision velocpsp(NLAYERS_CRUSTMAP)
     double precision velocssp(NLAYERS_CRUSTMAP)
 
-  end type general_crustmap_variables
-
-  type (general_crustmap_variables) GC_V
+  end type model_crustmaps_variables
+  type (model_crustmaps_variables) GC_V
+  !model_crustmaps_variables
 
   !-------------------------------
   ! work-around to avoid jacobian problems when stretching mesh elements;

@@ -94,8 +94,8 @@ subroutine stretching_function_regional(r_top,r_bottom,ner,stretch_tab)
 
   include "constants.h"
 
-  double precision :: r_top, r_bottom,value
-  integer :: ner,i
+  double precision :: r_top, r_bottom !,value
+  integer :: ner !,i
   double precision, dimension (2,ner) :: stretch_tab
 !  ! for increasing execution speed but have less precision in stretching, increase step
 !  ! not very effective algorithm, but sufficient : used once per proc for meshing.

@@ -47,7 +47,7 @@
                 LOCAL_PATH,OUTPUT_FILES, &
                 ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
                 this_region_has_a_doubling,rmins,rmaxs, &
-                TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST,COMPUTE_AND_STORE_STRAIN, &
+                TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST, &
                 nspl,rspl,espl,espl2,ibathy_topo, &
                 NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                 NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
@@ -99,7 +99,7 @@
 
   ! mesh model parameters
   logical TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST
-  logical COMPUTE_AND_STORE_STRAIN
+  !logical COMPUTE_AND_STORE_STRAIN
 
   ! for ellipticity
   integer nspl
@@ -411,41 +411,48 @@
 
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
     call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
+  
+  if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then  
+    if ( ATTENUATION_VAL) then
+      ! checks mimic flag:
+      ! attenuation for adjoint simulations must have USE_ATTENUATION_MIMIC set by xcreate_header_file
+      if( USE_ATTENUATION_MIMIC .eqv. .false. ) &
+        call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17')
 
-  if (SIMULATION_TYPE == 3 .and. ATTENUATION_VAL) &
-    call exit_MPI(myrank, 'attenuation is not implemented for kernel simulations yet, try ATTENUATION_MIMIK in constants.h')
-
-  if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+      ! user output
+      write(IMAIN,*) 'incorporates ATTENUATION for time-reversed simulation'
+    endif    
+  
+    ! checks adjoint array dimensions
     if(NSPEC_CRUST_MANTLE_ADJOINT /= NSPEC_CRUST_MANTLE &
       .or. NSPEC_OUTER_CORE_ADJOINT /= NSPEC_OUTER_CORE &
       .or. NSPEC_INNER_CORE_ADJOINT /= NSPEC_INNER_CORE &
       .or. NGLOB_CRUST_MANTLE_ADJOINT /= NGLOB_CRUST_MANTLE &
       .or. NGLOB_OUTER_CORE_ADJOINT /= NGLOB_OUTER_CORE &
       .or. NGLOB_INNER_CORE_ADJOINT /= NGLOB_INNER_CORE) &
-      call exit_MPI(myrank, 'improper dimensions of adjoint arrays, please recompile solver')
+      call exit_MPI(myrank, 'improper dimensions of adjoint arrays, please recompile solver 18')
   endif
-
-  if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
-     call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
   ! checks attenuation
   if( ATTENUATION_VAL ) then
     if (NSPEC_CRUST_MANTLE_ATTENUAT /= NSPEC_CRUST_MANTLE) &
        call exit_MPI(myrank, 'NSPEC_CRUST_MANTLE_ATTENUAT /= NSPEC_CRUST_MANTLE, exit')
     if (NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE) &
-       call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')
-    if( ATTENUATION_MIMIK ) then
-      print *,'Attenuation set true, no mimiking possible'
-      call exit_MPI(myrank,'attenuation and attenuation_mimik confilct')
-    endif
+       call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')       
   endif
 
+  ! checks strain storage
   if (ATTENUATION_VAL .or. SIMULATION_TYPE /= 1 .or. SAVE_FORWARD &
     .or. (MOVIE_VOLUME .and. SIMULATION_TYPE /= 3)) then
-    COMPUTE_AND_STORE_STRAIN = .true.
+    if( COMPUTE_AND_STORE_STRAIN .neqv. .true. ) &
+      call exit_MPI(myrank, 'error in compiled compute_and_store_strain parameter, please recompile solver 19')
   else
-    COMPUTE_AND_STORE_STRAIN = .false.
+    if( COMPUTE_AND_STORE_STRAIN .neqv. .false. ) &
+      call exit_MPI(myrank, 'error in compiled compute_and_store_strain parameter, please recompile solver 20')    
   endif
+
+  if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
+     call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
 
   ! make ellipticity
@@ -491,7 +498,7 @@
   endif
   ! broadcast the information read on the master to the nodes
   call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  if(nrec < 1) call exit_MPI(myrank,'need at least one receiver')
+  if(nrec < 1) call exit_MPI(myrank,trim(STATIONS)//': need at least one receiver')
 
 
   end subroutine initialize_simulation

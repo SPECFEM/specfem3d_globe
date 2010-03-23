@@ -238,8 +238,10 @@
             !           the same time step is saved for the forward wavefields to reconstruct them;
             !           however, the Newark time scheme acts at the very beginning of this time loop
             !           such that we have the backward/reconstructed wavefield updated by
-            !           a single time step into the direction -DT and b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT - DT
+            !           a single time step into the direction -DT and b_displ(it=1) would  corresponds to -t0 + (NSTEP-1)*DT - DT
             !           after the Newark (predictor) time step update.
+            !           however, we will read the backward/reconstructed wavefield at the end of the first time loop,
+            !           such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT (which is the one saved in the files).
             !
             !           for the kernel calculations, we want:
             !             adjoint wavefield at time t, starting from 0 to T
@@ -252,14 +254,13 @@
             !           the corresponding time for the adjoint wavefield thus would be 0 + DT
             !           and the adjoint source index would be iadj_vec(it+1)
             !           however, iadj_vec(it+1) which would go from 999 down to 0. 0 is out of bounds.
-            !           we thus have to read in the adjoint source trace beginning from 2999 down to 0.
-            !           index 0 is not defined in the adjoint source trace, let's just set it to zero.
+            !           we thus would have to read in the adjoint source trace beginning from 2999 down to 0.
+            !           index 0 is not defined in the adjoint source trace, and would be set to zero.
             !
-            !           for this reason, we use iadj_vec(it) from 1000 down to 1, but
-            !           pointing to the indices in the adjoint source trace from 2999 down to 0 (virtually zero).
-            !           i guess by now everyone is confused. see how we read in the adjoint source trace
-            !           in routine compute_arrays_source_adjoint() and note that there is a shift of indices.
-            !           then the following should be correct...
+            !           however, since this complicates things, we read the backward/reconstructed 
+            !           wavefield at the end of the first time loop, such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT.
+            !           assuming that until that end the backward/reconstructed wavefield and adjoint fields
+            !           have a zero contribution to adjoint kernels.
             accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
                           + adj_sourcearrays(:,i,j,k,irec_local,iadj_vec(it))
 
@@ -315,15 +316,17 @@
     if(myrank == islice_selected_source(isource)) then
 
 ! note on backward/reconstructed wavefields:
-!       time for b_displ( it ) corresponds to (NSTEP - it - 1 )*DT - t0  ...
-!       as we start with saved wavefields b_displ( 0 ) = displ( NSTEP ) which correspond
+!       time for b_displ( it ) corresponds to (NSTEP - (it-1) - 1 )*DT - t0  ...
+!       as we start with saved wavefields b_displ( 1 ) = displ( NSTEP ) which correspond
 !       to a time (NSTEP - 1)*DT - t0
 !       (see sources for simulation_type 1 and seismograms)
 !
-!       now, at the beginning of the time loop, the numerical Newark time scheme updates
-!       the wavefields, that is b_displ( it=1) corresponds now to time (NSTEP -1 - 1)*DT - t0.
-!       this leads to the timing (NSTEP-it-1)*DT-t0-t_cmt for the source time function here
-      stf = comp_source_time_function(dble(NSTEP-it-1)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
+!       now, at the beginning of the time loop, the numerical Newmark time scheme updates
+!       the wavefields, that is b_displ( it=1) would correspond to time (NSTEP -1 - 1)*DT - t0.
+!       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
+!       in the first (it=1) time loop.
+!       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-t_cmt for the source time function here
+      stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
 
       !     distinguish between single and double precision for reals
       if(CUSTOM_REAL == SIZE_REAL) then

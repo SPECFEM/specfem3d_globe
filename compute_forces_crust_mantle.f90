@@ -36,7 +36,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec,COMPUTE_AND_STORE_STRAIN)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec) 
 
   implicit none
 
@@ -65,9 +65,6 @@
     integer                                   :: Qn                 ! Number of points
     integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
-
-! for forward or backward simulations
-  logical COMPUTE_AND_STORE_STRAIN
 
 ! array with the local to global mapping per slice
   integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling
@@ -325,36 +322,22 @@
               c66 = c66 + minus_sum_beta * mul
             endif
 
-            ! mimik apparent velocity shift
-            if( ATTENUATION_MIMIK) then
-              mul = c44
-              c11 = c11 + FOUR_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c12 = c12 - TWO_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c13 = c13 - TWO_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c22 = c22 + FOUR_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c23 = c23 - TWO_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c33 = c33 + FOUR_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c44 = c44 + (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c55 = c55 + (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c66 = c66 + (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-            endif
-
-             sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
+            sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
                        c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl
 
-             sigma_yy = c12*duxdxl + c26*duxdyl_plus_duydxl + c22*duydyl + &
+            sigma_yy = c12*duxdxl + c26*duxdyl_plus_duydxl + c22*duydyl + &
                        c25*duzdxl_plus_duxdzl + c24*duzdyl_plus_duydzl + c23*duzdzl
 
-             sigma_zz = c13*duxdxl + c36*duxdyl_plus_duydxl + c23*duydyl + &
+            sigma_zz = c13*duxdxl + c36*duxdyl_plus_duydxl + c23*duydyl + &
                        c35*duzdxl_plus_duxdzl + c34*duzdyl_plus_duydzl + c33*duzdzl
 
-             sigma_xy = c16*duxdxl + c66*duxdyl_plus_duydxl + c26*duydyl + &
+            sigma_xy = c16*duxdxl + c66*duxdyl_plus_duydxl + c26*duydyl + &
                        c56*duzdxl_plus_duxdzl + c46*duzdyl_plus_duydzl + c36*duzdzl
 
-             sigma_xz = c15*duxdxl + c56*duxdyl_plus_duydxl + c25*duydyl + &
+            sigma_xz = c15*duxdxl + c56*duxdyl_plus_duydxl + c25*duydyl + &
                        c55*duzdxl_plus_duxdzl + c45*duzdyl_plus_duydzl + c35*duzdzl
 
-             sigma_yz = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl + &
+            sigma_yz = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl + &
                        c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
           else
@@ -368,9 +351,6 @@
 
         ! use unrelaxed parameters if attenuation
               if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta_use
-
-        !mimik: apparent velocity shift
-              if( ATTENUATION_MIMIK) mul = mul * ATTENUATION_MIMIK_FACTOR
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
               lambdal = lambdalplus2mul - 2.*mul
@@ -399,12 +379,6 @@
               if(ATTENUATION_VAL) then
                 muvl = muvl * one_minus_sum_beta_use
                 muhl = muhl * one_minus_sum_beta_use
-              endif
-
-        !mimik: apparent velocity shift
-              if( ATTENUATION_MIMIK) then
-                muvl = muvl * ATTENUATION_MIMIK_FACTOR
-                muhl = muhl * ATTENUATION_MIMIK_FACTOR
               endif
 
               rhovpvsq = kappavl + FOUR_THIRDS * muvl  !!! that is C
@@ -601,7 +575,7 @@
           endif   ! end of test whether isotropic or anisotropic element
 
         ! subtract memory variables if attenuation
-          if(ATTENUATION_VAL) then
+          if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
             do i_sls = 1,N_SLS
               R_xx_val = R_memory(1,i_sls,i,j,k,ispec)
               R_yy_val = R_memory(2,i_sls,i,j,k,ispec)
@@ -822,7 +796,7 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL) then
+    if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )) then
 
 ! use Runge-Kutta scheme to march in time
       do i_sls = 1,N_SLS
@@ -851,8 +825,17 @@
     endif
 
 ! save deviatoric strain for Runge-Kutta scheme
-    if(COMPUTE_AND_STORE_STRAIN) epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-
+    if(COMPUTE_AND_STORE_STRAIN) then
+      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)    
+      do k=1,NGLLZ
+        do j=1,NGLLY
+          do i=1,NGLLX
+            epsilondev(:,i,j,k,ispec) = epsilondev_loc(:,i,j,k)
+          enddo
+        enddo
+      enddo
+    endif
+    
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE
 
   end subroutine compute_forces_crust_mantle

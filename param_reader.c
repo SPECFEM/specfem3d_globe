@@ -49,6 +49,7 @@ by Dennis McRitchie
  ..
 */
 
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #define __USE_GNU
@@ -57,9 +58,10 @@ by Dennis McRitchie
 
 #define LINE_MAX 255
 
-FILE * fd;
+FILE * fid;
 
-void param_open_(char * filename, int * length, int * ierr)
+void
+FC_FUNC_(param_open,PARAM_OPEN)(char * filename, int * length, int * ierr)
 {
 	char * fncopy;
 	char * blank;
@@ -70,7 +72,7 @@ void param_open_(char * filename, int * length, int * ierr)
 	if (blank != NULL) {
 		fncopy[blank - fncopy] = '\0';
 	}
-	if ((fd = fopen(fncopy, "r")) == NULL) {
+	if ((fid = fopen(fncopy, "r")) == NULL) {
 		printf("Can't open '%s'\n", fncopy);
 		*ierr = 1;
 		return;
@@ -78,12 +80,14 @@ void param_open_(char * filename, int * length, int * ierr)
 	free(fncopy);
 }
 
-void param_close_()
+void
+FC_FUNC_(param_close,PARAM_CLOSE)()
 {
-	fclose(fd);
+	fclose(fid);
 }
 
-void param_read_(char * string_read, int * string_read_len, char * name, int * name_len, int * ierr)
+void
+FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char * name, int * name_len, int * ierr)
 {
 	char * namecopy;
 	char * blank;
@@ -125,14 +129,14 @@ void param_read_(char * string_read, int * string_read_len, char * name, int * n
 		printf("regcomp returned error %d\n", status);
 	}
 	// Position the open file to the beginning.
-	if (fseek(fd, 0, SEEK_SET) != 0) {
+	if (fseek(fid, 0, SEEK_SET) != 0) {
 		printf("Can't seek to begining of parameter file\n");
 		*ierr = 1;
     regfree(&compiled_pattern);
 		return;
 	}
 	// Read every line in the file.
-	while (fgets(line, LINE_MAX, fd) != NULL) {
+	while (fgets(line, LINE_MAX, fid) != NULL) {
 		// Get rid of the ending newline.
 		int linelen = strlen(line);
 		if (line[linelen-1] == '\n') {

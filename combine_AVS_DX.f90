@@ -70,8 +70,10 @@
   double precision x_source_trgl2,y_source_trgl2,z_source_trgl2
   double precision x_source_trgl3,y_source_trgl3,z_source_trgl3
   double precision theta,phi,delta_trgl
-  double precision sec,t_cmt,hdur
-  double precision lat,long,depth
+  double precision sec !,t_cmt,hdur
+  !double precision lat,long,depth
+  double precision, dimension(1) :: t_cmt,hdur,lat,long,depth
+  
   double precision moment_tensor(6)
 
 ! for receiver location
@@ -667,8 +669,8 @@
     stabmax = dmax1(scale_factor*DT*vmaxcoord(ipointnumber1_vert)/(distance_vert*percent_GLL(NGLL_current_vert)),stabmax)
 
 ! compute number of points per wavelength
-    gridmin = dmin1(scale_factor*hdur*vmincoord(ipointnumber1_horiz)*dble(NGLL_current_horiz)/distance_horiz,gridmin)
-    gridmin = dmin1(scale_factor*hdur*vmincoord(ipointnumber1_vert)*dble(NGLL_current_vert)/distance_vert,gridmin)
+    gridmin = dmin1(scale_factor*hdur(1)*vmincoord(ipointnumber1_horiz)*dble(NGLL_current_horiz)/distance_horiz,gridmin)
+    gridmin = dmin1(scale_factor*hdur(1)*vmincoord(ipointnumber1_vert)*dble(NGLL_current_vert)/distance_vert,gridmin)
 
     enddo
 
@@ -709,7 +711,7 @@
     stabmax = dmax1(scale_factor*DT*vmaxcoord(ipointnumber1_vert)/(distance_vert*percent_GLL(NGLL_current_vert)),stabmax)
 
 ! compute number of points per wavelength
-    gridmin = dmin1(scale_factor*hdur*vmincoord(ipointnumber1_vert)*dble(NGLL_current_vert)/distance_vert,gridmin)
+    gridmin = dmin1(scale_factor*hdur(1)*vmincoord(ipointnumber1_vert)*dble(NGLL_current_vert)/distance_vert,gridmin)
 
         endif
       enddo
@@ -974,10 +976,10 @@
       gridpoints_per_wavelength_max / gridpoints_per_wavelength_min
 
     print *
-    print *,'half duration of ',sngl(hdur),' s used for points per wavelength'
+    print *,'half duration of ',sngl(hdur(1)),' s used for points per wavelength'
     print *
 
-    if(hdur < 5.*DT) then
+    if(hdur(1) < 5.*DT) then
       print *,'***************************************************************'
       print *,'Source time function is a Heaviside, points per wavelength meaningless'
       print *,'***************************************************************'
@@ -1018,8 +1020,8 @@
 
 !   convert geographic latitude lat (degrees)
 !   to geocentric colatitude theta (radians)
-    theta=PI/2.0d0-atan(0.99329534d0*tan(dble(lat)*PI/180.0d0))
-    phi=dble(long)*PI/180.0d0
+    theta=PI/2.0d0-atan(0.99329534d0*tan(dble(lat(1))*PI/180.0d0))
+    phi=dble(long(1))*PI/180.0d0
     call reduce(theta,phi)
 
 !   compute Cartesian position of the source (ignore ellipticity for AVS_DX)

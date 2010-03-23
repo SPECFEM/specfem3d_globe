@@ -542,8 +542,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: rho_kl_inner_core, &
      beta_kl_inner_core, alpha_kl_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
-     absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: absorb_xmin_crust_mantle5, &
+     absorb_xmax_crust_mantle5, absorb_ymin_crust_mantle5, absorb_ymax_crust_mantle5
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_xmin_outer_core, &
      absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, &
@@ -703,7 +703,7 @@
 
   character(len=150) OUTPUT_FILES,LOCAL_PATH
 
-  logical COMPUTE_AND_STORE_STRAIN
+!  logical COMPUTE_AND_STORE_STRAIN
 
 ! for SAC headers for seismograms
   integer yr_SAC,jda_SAC,ho_SAC,mi_SAC
@@ -840,7 +840,7 @@
                 LOCAL_PATH,OUTPUT_FILES, &
                 ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
                 this_region_has_a_doubling,rmins,rmaxs, &
-                TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST,COMPUTE_AND_STORE_STRAIN, &
+                TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST, &
                 nspl,rspl,espl,espl2,ibathy_topo, &
                 NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                 NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
@@ -952,7 +952,7 @@
     else
       nabs_xmin_cm = 1
     endif
-    allocate(absorb_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmin_cm))
+    allocate(absorb_xmin_crust_mantle5(NDIM,NGLLY,NGLLZ,nabs_xmin_cm,8))
 
     if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -960,7 +960,7 @@
     else
       nabs_xmax_cm = 1
     endif
-    allocate(absorb_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmax_cm))
+    allocate(absorb_xmax_crust_mantle5(NDIM,NGLLY,NGLLZ,nabs_xmax_cm,8))
 
     if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -968,7 +968,7 @@
     else
       nabs_ymin_cm = 1
     endif
-    allocate(absorb_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymin_cm))
+    allocate(absorb_ymin_crust_mantle5(NDIM,NGLLX,NGLLZ,nabs_ymin_cm,8))
 
     if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -976,7 +976,7 @@
     else
       nabs_ymax_cm = 1
     endif
-    allocate(absorb_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymax_cm))
+    allocate(absorb_ymax_crust_mantle5(NDIM,NGLLX,NGLLZ,nabs_ymax_cm,8))
 
     ! outer_core
     if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
@@ -1034,7 +1034,7 @@
                       reclen_xmin_outer_core,reclen_xmax_outer_core, &
                       reclen_ymin_outer_core,reclen_ymax_outer_core, &
                       reclen_zmin,NSPEC2D_BOTTOM, &
-                      SIMULATION_TYPE,SAVE_FORWARD,LOCAL_PATH)
+                      SIMULATION_TYPE,SAVE_FORWARD,LOCAL_PATH,NSTEP)
 
   endif
 
@@ -1248,7 +1248,10 @@
     write(IMAIN,*)
     if(ATTENUATION_VAL) then
       write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
+      
       if(ATTENUATION_3D_VAL) write(IMAIN,*) 'using 3D attenuation'
+      
+      if(USE_ATTENUATION_MIMIC ) write(IMAIN,*) 'mimicking effects on velocity only'
     else
       write(IMAIN,*) 'no attenuation'
     endif
@@ -1545,7 +1548,10 @@
   endif
 
   ! reads files back from local disk or MT tape system if restart file
-  call read_forward_arrays(myrank,NSTEP, &
+  ! note: for SIMULATION_TYPE 3 simulations, the stored wavefields
+  !          will be read in the time loop after the Newmark time scheme update.
+  !          this makes indexing and timing easier to match with adjoint wavefields indexing.
+  call read_forward_arrays_startrun(myrank,NSTEP, &
                     SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
                     it_begin,it_end, &
                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
@@ -1878,7 +1884,7 @@
                           b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
                           eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
-                          COMPUTE_AND_STORE_STRAIN,myrank)
+                          myrank)
 
 
 
@@ -1905,7 +1911,7 @@
            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core)
+           ibool_outer_core,MOVIE_VOLUME)
     else
       ! div_displ_outer_core is initialized to zero in the following subroutine.
       call compute_forces_outer_core(time,deltat,two_omega_earth, &
@@ -1917,10 +1923,21 @@
            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core)
+           ibool_outer_core,MOVIE_VOLUME)
     endif
 
     if (SIMULATION_TYPE == 3) then
+      ! note on backward/reconstructed wavefields:
+      !       time for b_displ( it=1 ) corresponds to (NSTEP - 1)*DT - t0  (after Newmark scheme...)
+      !       as we start with saved wavefields b_displ( 1 ) <-> displ( NSTEP ) which correspond
+      !       to a time (NSTEP - (it-1) - 1)*DT - t0
+      !       for reconstructing the rotational contributions
+      if(CUSTOM_REAL == SIZE_REAL) then
+        time = sngl((dble(NSTEP-it)*DT-t0)*scale_t_inv)
+      else
+        time = (dble(NSTEP-it)*DT-t0)*scale_t_inv
+      endif
+
       if( USE_DEVILLE_VAL ) then
         ! uses deville et al. (2002) routine
         call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
@@ -1932,7 +1949,7 @@
            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core)
+           ibool_outer_core,MOVIE_VOLUME)
       else
         call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
@@ -1943,13 +1960,13 @@
            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core)
+           ibool_outer_core,MOVIE_VOLUME)
       endif
     endif
 
     ! Stacey absorbing boundaries
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-      call compute_stacey_outer_core(myrank,ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
+      call compute_stacey_outer_core(ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
                               NSTEP,it,ibool_outer_core, &
                               veloc_outer_core,accel_outer_core,b_accel_outer_core, &
                               vp_outer_core,wgllwgll_xz,wgllwgll_yz,wgllwgll_xy, &
@@ -2124,10 +2141,7 @@
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
-          COMPUTE_AND_STORE_STRAIN)
-
-
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
     else
       call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -2152,8 +2166,7 @@
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
-          COMPUTE_AND_STORE_STRAIN)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
     endif
 
     if (SIMULATION_TYPE == 3) then
@@ -2182,8 +2195,7 @@
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
-          COMPUTE_AND_STORE_STRAIN)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
       else
         call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
@@ -2208,8 +2220,7 @@
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
-          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5), &
-          COMPUTE_AND_STORE_STRAIN)
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
 
       endif
     endif
@@ -2217,7 +2228,7 @@
 
     ! Stacey
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-      call compute_stacey_crust_mantle(myrank,ichunk,SIMULATION_TYPE, &
+      call compute_stacey_crust_mantle(ichunk,SIMULATION_TYPE, &
                               NSTEP,it,SAVE_FORWARD,ibool_crust_mantle, &
                               veloc_crust_mantle,accel_crust_mantle,b_accel_crust_mantle, &
                               jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
@@ -2236,8 +2247,8 @@
                               reclen_xmin_crust_mantle,reclen_xmax_crust_mantle, &
                               reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
                               nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
-                              absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
-                              absorb_ymin_crust_mantle,absorb_ymax_crust_mantle)
+                              absorb_xmin_crust_mantle5,absorb_xmax_crust_mantle5, &
+                              absorb_ymin_crust_mantle5,absorb_ymax_crust_mantle5)
     endif ! Stacey conditions
 
 
@@ -2259,8 +2270,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
-          COMPUTE_AND_STORE_STRAIN)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
     else
       call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -2278,8 +2288,7 @@
           alphaval,betaval,gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
-          COMPUTE_AND_STORE_STRAIN)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
     endif
 
     if (SIMULATION_TYPE == 3) then
@@ -2300,8 +2309,7 @@
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
-          COMPUTE_AND_STORE_STRAIN)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
       else
         call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
@@ -2319,8 +2327,7 @@
           b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5), &
-          COMPUTE_AND_STORE_STRAIN)
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
       endif
     endif
 
@@ -2708,6 +2715,19 @@
     endif
 
 
+    ! restores last time snapshot saved for backward/reconstruction of wavefields
+    ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
+    !          and adjoint sources will become more complicated
+    !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
+    if( SIMULATION_TYPE == 3 .and. it == 1 ) then
+      call read_forward_arrays(myrank, &
+                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                    b_R_memory_crust_mantle,b_R_memory_inner_core, &
+                    b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
+                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)    
+    endif
 
 ! write the seismograms with time shift
 
@@ -3102,6 +3122,65 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  ! synchronize all processes, waits until all processes have written their seismograms
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error synchronize after time loop')
+  
+  ! closes Stacey absorbing boundary snapshots
+  if( ABSORBING_CONDITIONS ) then
+    ! crust mantle
+    if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+      call close_file_abs(0)
+    endif
+
+    if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+      call close_file_abs(1)
+    endif
+
+    if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+      call close_file_abs(2)
+    endif
+
+    if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
+      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+      call close_file_abs(3)
+    endif
+    
+    ! outer core
+    if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+      call close_file_abs(4)
+    endif
+
+    if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+      call close_file_abs(5)
+    endif
+
+    if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+      call close_file_abs(6)
+    endif
+
+    if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+      call close_file_abs(7)
+    endif
+
+    if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. (SIMULATION_TYPE == 3 &
+      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+      call close_file_abs(8)
+    endif
+    
+  endif
+
+  ! synchronize all processes
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error synchronize closing snapshots')
+
   ! save files to local disk or tape system if restart file
   call save_forward_arrays(myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                     NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
@@ -3112,6 +3191,10 @@
                     epsilondev_crust_mantle,epsilondev_inner_core, &
                     A_array_rotation,B_array_rotation, &
                     LOCAL_PATH)
+
+  ! synchronize all processes
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error synchronize saving forward')
 
   ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
@@ -3162,6 +3245,7 @@
 
   ! synchronize all the processes to make sure everybody has finished
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error synchronize finishing simulation')
 
   ! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)

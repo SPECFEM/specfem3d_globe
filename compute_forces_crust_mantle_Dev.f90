@@ -37,8 +37,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec, &
-          COMPUTE_AND_STORE_STRAIN)
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
 
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5
@@ -102,10 +101,7 @@
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
-
-  ! for forward or backward simulations
-  logical COMPUTE_AND_STORE_STRAIN
-
+  
 ! local parameters
   ! Deville
   ! manually inline the calls to the Deville et al. (2002) routines
@@ -172,7 +168,7 @@
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
-  real(kind=CUSTOM_REAL) fac1,fac2,fac3
+  real(kind=CUSTOM_REAL) fac1,fac2,fac3,templ
   real(kind=CUSTOM_REAL) lambdal,mul,lambdalplus2mul
   real(kind=CUSTOM_REAL) kappal,kappavl,kappahl,muvl,muhl
 
@@ -186,7 +182,9 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
-  integer ::i_sls,i_memory
+  !real(kind=CUSTOM_REAL), dimension(5) :: dummy
+  
+  integer :: i_sls,i_memory
   integer :: ispec,ispec_strain
   integer :: i,j,k
   integer :: int_radius
@@ -355,9 +353,10 @@
             else
               ispec_strain = ispec
             endif
-            epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-            epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
-            epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
+            templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+            epsilondev_loc(1,i,j,k) = duxdxl - templ
+            epsilondev_loc(2,i,j,k) = duydyl - templ
             epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
             epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
             epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
@@ -409,20 +408,6 @@
               c66 = c66 + minus_sum_beta * mul
             endif
 
-            !mimik: apparent velocity shift
-            if( ATTENUATION_MIMIK) then
-              mul = c44
-              c11 = c11 + FOUR_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c12 = c12 - TWO_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c13 = c13 - TWO_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c22 = c22 + FOUR_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c23 = c23 - TWO_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c33 = c33 + FOUR_THIRDS * (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c44 = c44 + (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c55 = c55 + (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-              c66 = c66 + (1.0-ATTENUATION_MIMIK_FACTOR) * mul
-            endif
-
             sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
                      c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl
 
@@ -454,9 +439,6 @@
               ! use unrelaxed parameters if attenuation
               if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta_use
 
-              !mimik: apparent velocity shift
-              if( ATTENUATION_MIMIK) mul = mul * ATTENUATION_MIMIK_FACTOR
-
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
               lambdal = lambdalplus2mul - 2.*mul
 
@@ -483,12 +465,6 @@
               if(ATTENUATION_VAL) then
                 muvl = muvl * one_minus_sum_beta_use
                 muhl = muhl * one_minus_sum_beta_use
-              endif
-
-              !mimik: apparent velocity shift
-              if( ATTENUATION_MIMIK) then
-                muvl = muvl * ATTENUATION_MIMIK_FACTOR
-                muhl = muhl * ATTENUATION_MIMIK_FACTOR
               endif
 
               rhovpvsq = kappavl + FOUR_THIRDS * muvl  !!! that is C
@@ -683,7 +659,7 @@
           endif   ! end of test whether isotropic or anisotropic element
 
           ! subtract memory variables if attenuation
-          if(ATTENUATION_VAL) then
+          if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
 ! way 1:
 !            do i_sls = 1,N_SLS
 !              R_xx_val = R_memory(1,i_sls,i,j,k,ispec)
@@ -997,7 +973,7 @@
     ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
     ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL) then
+    if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
 
       ! use Runge-Kutta scheme to march in time
 
@@ -1029,8 +1005,23 @@
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme
-    if(COMPUTE_AND_STORE_STRAIN) epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-
+    if(COMPUTE_AND_STORE_STRAIN) then
+! way 1:    
+      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+! way 2:      
+      do k=1,NGLLZ
+        do j=1,NGLLY
+            !dummy(:) = epsilondev_loc(:,1,j,k)
+            
+            epsilondev(:,1,j,k,ispec) = epsilondev_loc(:,1,j,k)
+            epsilondev(:,2,j,k,ispec) = epsilondev_loc(:,2,j,k)
+            epsilondev(:,3,j,k,ispec) = epsilondev_loc(:,3,j,k)
+            epsilondev(:,4,j,k,ispec) = epsilondev_loc(:,4,j,k)
+            epsilondev(:,5,j,k,ispec) = epsilondev_loc(:,5,j,k)
+        enddo
+      enddo
+    endif
+    
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE
 
   end subroutine compute_forces_crust_mantle_Dev
