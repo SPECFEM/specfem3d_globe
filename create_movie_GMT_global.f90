@@ -56,8 +56,8 @@
 
   ! muting source region
   logical, parameter :: MUTE_SOURCE = .true.
-  real(kind=CUSTOM_REAL) :: RADIUS_TO_MUTE = 10.0    ! start radius in degrees  
-  real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 20.0 ! factor times hdur_movie
+  real(kind=CUSTOM_REAL) :: RADIUS_TO_MUTE = 1.0    ! start radius in degrees  
+  real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 2.0 ! factor times hdur_movie
 
   ! normalizes output values
   logical, parameter :: NORMALIZE_VALUES = .true.
@@ -393,23 +393,23 @@
             ! approximate wavefront travel distance in degrees (~3.5 km/s wave speed for surface waves)
             mute_factor = 3.5 * (it-1)*DT / 6371. * 180./PI
             
-            ! approximate distance to source
+            ! approximate distance to source (in degrees)
             do while ( mute_factor > 360. )
               mute_factor = mute_factor - 360.
             enddo
             if( mute_factor > 180. ) mute_factor = 360. - mute_factor
 
-            ! limit size around source
-            if( mute_factor < 10. ) then
-              mute_factor = 0.0
-            endif
+            ! limit size around source (in degrees)
+            !if( mute_factor < 10. ) then
+            !  mute_factor = 0.0
+            !endif
             if( mute_factor > 80. ) then
               mute_factor = 80.0
             endif
             
-            print*,'muting radius: ',0.5 * mute_factor
+            print*,'muting radius: ',0.7 * mute_factor
                         
-            RADIUS_TO_MUTE = 0.5 * mute_factor * PI/180.
+            RADIUS_TO_MUTE = 0.7 * mute_factor * PI/180.
             
           else
             ! mute_factor used at the beginning for scaling displacement values

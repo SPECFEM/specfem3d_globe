@@ -693,7 +693,7 @@
       ! indicates SEM synthetics
       ! by Ebru
       KUSER0 = 'SEM'          !  A8
-      KUSER1 = 'v5.0.0 '
+      KUSER1 = 'v5.0.1'
       KUSER2 = 'Tiger' ! aka. awesome (princeton) tiger version :)
 
       !KUSER0 = 'PDE_LAT_'          !  A8
