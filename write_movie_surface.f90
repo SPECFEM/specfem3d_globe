@@ -82,7 +82,7 @@
     ! for future consideration, like in create_movie_GMT_global.f90 ...
     k = NGLLZ
 
-  ! loop on all the points inside the element
+    ! loop on all the points inside the element
     do j = 1,NGLLY,NIT
       do i = 1,NGLLX,NIT
         ipoin = ipoin + 1

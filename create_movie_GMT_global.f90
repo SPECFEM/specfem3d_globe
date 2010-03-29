@@ -153,7 +153,7 @@
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
-  real(kind=CUSTOM_REAL) :: LAT_SOURCE,LON_SOURCE 
+  real(kind=CUSTOM_REAL) :: LAT_SOURCE,LON_SOURCE,DEP_SOURCE 
   real(kind=CUSTOM_REAL) :: dist_lon,dist_lat,mute_factor
   character(len=256) line
 
@@ -343,13 +343,19 @@
         ! longitude
         read(22,'(a256)',iostat=ierror ) line
         if( ierror == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
+        ! depth
+        read(22,'(a256)',iostat=ierror ) line
+        if( ierror == 0 ) read(line(11:len_trim(line)),*) DEP_SOURCE
         close(22)
       endif
       
-      print *,'muting source lat/lon: ',LAT_SOURCE,LON_SOURCE
+      print *,'muting source lat/lon/dep: ',LAT_SOURCE,LON_SOURCE,DEP_SOURCE
+      
+      ! becomes time (s) from hypocenter to reach surface (using average 8 km/s p-wave speed)
+      DEP_SOURCE = DEP_SOURCE / 8.0
       
       ! time when muting starts 
-      STARTTIME_TO_MUTE = STARTTIME_TO_MUTE * HDUR_MOVIE
+      STARTTIME_TO_MUTE = STARTTIME_TO_MUTE * HDUR_MOVIE + DEP_SOURCE
       
       print *,'muting radius: ',RADIUS_TO_MUTE
       print *,'muting starttime: ',STARTTIME_TO_MUTE,'(s)'
@@ -432,14 +438,20 @@
         print *,'reading snapshot time step ',it,' out of ',NSTEP,' file ',outputname
         !print *
 
+        ! reads in point locations
+        ! (given as r theta phi for geocentric coordinate system)
         read(IOUT) store_val_x
         read(IOUT) store_val_y
         read(IOUT) store_val_z
+        
+        ! reads in associated values (velocity..)
         read(IOUT) store_val_ux
         read(IOUT) store_val_uy
         read(IOUT) store_val_uz
+        
         close(IOUT)
         !print *, 'finished reading ',outputname
+
         ! clear number of elements kept
         ispec = 0
 
@@ -506,8 +518,10 @@
                     
                     ! mute values
                     if( MUTE_SOURCE ) then
-
+                      
                       ! distance in colatitude                                                
+                      ! note: this mixes geocentric (point location) and geographic (source location) coordinates;
+                      !          since we only need approximate distances here, this should be fine for the muting region  
                       dist_lat = thetaval - LAT_SOURCE
                       
                       ! distance in longitude
@@ -723,13 +737,22 @@
                 
                 ! point position
                 if(iframe == 1) then
+                  ! gets cartesian coordinates
                   xcoord = sngl(xp(ieoff))
                   ycoord = sngl(yp(ieoff))
                   zcoord = sngl(zp(ieoff))
                 
-                  ! location latitude/longitude
+                  ! location latitude/longitude (with geocentric colatitude theta )
                   call xyz_2_rthetaphi(xcoord,ycoord,zcoord,rval,thetaval,phival)
-                  lat = sngl((PI/2.0-thetaval)*180.0/PI)
+                  
+                  ! converts the geocentric colatitude to a geographic colatitude
+                  if(.not. ASSUME_PERFECT_SPHERE) then
+                    thetaval = PI/2.0d0 - &
+                      datan(1.006760466d0*dcos(dble(thetaval))/dmax1(TINYVAL,dble(sin(thetaval))))
+                  endif
+                  
+                  ! gets geographic latitude and longitude in degrees
+                  lat = sngl(90.d0 - thetaval*180.0/PI)
                   long = sngl(phival*180.0/PI)
                   if(long > 180.0) long = long-360.0
                 endif

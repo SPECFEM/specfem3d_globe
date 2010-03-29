@@ -420,7 +420,7 @@
         call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17')
 
       ! user output
-      write(IMAIN,*) 'incorporates ATTENUATION for time-reversed simulation'
+      if( myrank == 0 ) write(IMAIN,*) 'incorporates ATTENUATION for time-reversed simulation'
     endif    
   
     ! checks adjoint array dimensions
