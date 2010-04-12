@@ -403,13 +403,15 @@
   x7 = (R_EARTH-(h_uc+thicks(4)+thicks(5))*1000.0d0)/R_EARTH
 
   found_crust = .true.
-  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
-   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+!  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
+!   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST ) then
    vp = vps(1)
    vs = vss(1)
    rho = rhos(1)
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST &
-   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+!  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST &
+!   .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST ) then
    vp = vps(2)
    vs = vss(2)
    rho = rhos(2)
@@ -516,6 +518,7 @@
   double precision rhol(NLAYERS_CRUSTMAP),thickl(NLAYERS_CRUSTMAP), &
     velpl(NLAYERS_CRUSTMAP),velsl(NLAYERS_CRUSTMAP)
   double precision weightl,cap_degree,dist
+  double precision h_sed  
   integer num_points
   integer i,ipoin,iupcolat,ileftlng,irightlng
 
@@ -650,6 +653,19 @@
     !   velp(i)=1.0
     !   vels(i)=1.0i
       enddo
+    endif
+
+    ! sediment thickness
+    h_sed = thickl(1) + thickl(2)
+    
+    ! takes upper crust value if sediment too thin
+    if( h_sed < MINIMUM_SEDIMENT_THICKNESS ) then
+      velpl(1) = velpl(3)
+      velpl(2) = velpl(3)
+      velsl(1) = velsl(3)
+      velsl(2) = velsl(3)
+      rhol(1) = rhol(3)
+      rhol(2) = rhol(3)
     endif
 
     ! total, smoothed values

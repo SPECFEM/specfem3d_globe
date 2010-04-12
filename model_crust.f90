@@ -130,13 +130,15 @@
 
   found_crust = .true.
 
-  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
-   .and. h_sed >= MINIMUM_SEDIMENT_THICKNESS) then
+!  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST &
+!   .and. h_sed >= MINIMUM_SEDIMENT_THICKNESS) then
+  if(x > x3 .and. INCLUDE_SEDIMENTS_CRUST ) then
     vp = vps(3)
     vs = vss(3)
     rho = rhos(3)
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST &
-   .and. h_sed >= MINIMUM_SEDIMENT_THICKNESS) then
+!  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST &
+!   .and. h_sed >= MINIMUM_SEDIMENT_THICKNESS) then
+  else if(x > x4 .and. INCLUDE_SEDIMENTS_CRUST ) then
     vp = vps(4)
     vs = vss(4)
     rho = rhos(4)
@@ -282,6 +284,7 @@
   double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
   double precision rhol(NLAYERS_CRUST),thickl(NLAYERS_CRUST),velpl(NLAYERS_CRUST),velsl(NLAYERS_CRUST)
   double precision weightl,cap_degree,dist
+  double precision h_sed
   integer i,icolat,ilon,ierr
   character(len=2) crustaltype
 
@@ -330,6 +333,19 @@
     call get_crust_structure(crustaltype,velpl,velsl,rhol,thickl, &
                             code,thlr,velocp,velocs,dens,ierr)
     if(ierr /= 0) stop 'error in routine get_crust_structure'
+
+    ! sediment thickness
+    h_sed = thickl(3) + thickl(4)
+    
+    ! takes upper crust value if sediment too thin
+    if( h_sed < MINIMUM_SEDIMENT_THICKNESS ) then
+      velpl(3) = velpl(5)
+      velpl(4) = velpl(5)
+      velsl(3) = velsl(5)
+      velsl(4) = velsl(5)
+      rhol(3) = rhol(5)
+      rhol(4) = rhol(5)
+    endif
 
     ! weighting value
     weightl = weight(i)
