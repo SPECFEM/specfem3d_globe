@@ -87,7 +87,7 @@
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer :: ier
   integer, external :: idaywk
-
+  
   double precision,parameter :: scale_displ = R_EARTH
 
 
@@ -98,7 +98,7 @@
       maxval(sqrt(displ_inner_core(1,:)**2 + displ_inner_core(2,:)**2 + displ_inner_core(3,:)**2)))
 
   Ufluidnorm = maxval(abs(displ_outer_core))
-
+  
   ! compute the maximum of the maxima for all the slices using an MPI reduction
   call MPI_REDUCE(Usolidnorm,Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                       MPI_COMM_WORLD,ier)

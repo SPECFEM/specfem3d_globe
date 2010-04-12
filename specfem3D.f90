@@ -750,7 +750,10 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_ICB) :: icb_kl, icb_kl_top, icb_kl_bot
   logical :: fluid_solid_boundary
 
-  integer i,ier
+  integer :: i,ier
+
+  !daniel: debugging
+  !integer:: indx(1)
 
 ! ************** PROGRAM STARTS HERE **************
 !
@@ -1874,6 +1877,23 @@
                                               + deltat*eps_trace_over_3_crust_mantle(:,:,:,:)
     endif
 
+    ! daniel: debugging
+    !if( maxval(displ_crust_mantle(1,:)**2 + &
+    !                displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2) > 1.e4 ) then
+    !  print*,'slice',myrank
+    !  print*,'  crust_mantle displ:', maxval(displ_crust_mantle(1,:)),maxval(displ_crust_mantle(2,:)),maxval(displ_crust_mantle(3,:))
+    !  print*,'  indxs: ',maxloc( displ_crust_mantle(1,:)),maxloc( displ_crust_mantle(2,:)),maxloc( displ_crust_mantle(3,:))
+    !  indx = maxloc( displ_crust_mantle(3,:) )
+    !  rval = xstore_crust_mantle(indx(1))
+    !  thetaval = ystore_crust_mantle(indx(1))
+    !  phival = zstore_crust_mantle(indx(1))
+    !  !thetaval = PI/2.0d0-datan(1.006760466d0*dcos(dble(thetaval))/dmax1(TINYVAL,dsin(dble(thetaval))))
+    !  print*,'r/lat/lon:',rval*R_EARTH_KM,90.0-thetaval*180./PI,phival*180./PI
+    !  call rthetaphi_2_xyz(rval,thetaval,phival,xstore_crust_mantle(indx(1)),&
+    !                     ystore_crust_mantle(indx(1)),zstore_crust_mantle(indx(1)))
+    !  print*,'x/y/z:',rval,thetaval,phival
+    !  call exit_MPI(myrank,'error stability')    
+    !endif
 
 
     ! compute the maximum of the norm of the displacement
