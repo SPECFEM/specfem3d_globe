@@ -1,7 +1,8 @@
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1
-SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
+NOISE_TOMOGRAPHY                = 1        # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
+SAVE_FORWARD                    = .true.  # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
 NCHUNKS                         = 6
@@ -15,12 +16,12 @@ GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 240
-NEX_ETA                         = 240
+NEX_XI                          = 160
+NEX_ETA                         = 160
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 5
-NPROC_ETA                       = 5
+NPROC_XI                        = 10
+NPROC_ETA                       = 10
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135, 1D_ref, 1D_ref_iso, 1D_jp3d,1D_sea99
@@ -37,26 +38,26 @@ NPROC_ETA                       = 5
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model 
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = s362ani
+MODEL                           = 1D_isotropic_prem
 
 # parameters describing the Earth model
-OCEANS                          = .true.
-ELLIPTICITY                     = .true.
-TOPOGRAPHY                      = .true.
-GRAVITY                         = .true.
-ROTATION                        = .true.
-ATTENUATION                     = .true.
+OCEANS                          = .false.
+ELLIPTICITY                     = .false.
+TOPOGRAPHY                      = .false.
+GRAVITY                         = .false.
+ROTATION                        = .false.
+ATTENUATION                     = .false.
 
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 15.0d0
+RECORD_LENGTH_IN_MINUTES        = 5.0d0
 
 # save AVS or OpenDX movies
 #MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME) 
 #MOVIE_COARSE does not work with create_movie_AVS_DX
-MOVIE_SURFACE                   = .false.
+MOVIE_SURFACE                   = .true.
 MOVIE_VOLUME                    = .false.
 MOVIE_COARSE                    = .false.
 NTSTEP_BETWEEN_FRAMES           = 100
@@ -86,7 +87,8 @@ NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
-LOCAL_PATH                      = ./DATABASES_MPI
+LOCAL_PATH                      = /scratch/yangl/DATABASES_MPI
+#/scratch/yangl/DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
 NTSTEP_BETWEEN_OUTPUT_INFO      = 1000
@@ -115,5 +117,4 @@ USE_BINARY_FOR_LARGE_FILE       = .false.
 RECEIVERS_CAN_BE_BURIED         = .true.
 
 # print source time function
-PRINT_SOURCE_TIME_FUNCTION      = .false.
-
+PRINT_SOURCE_TIME_FUNCTION      = .true.

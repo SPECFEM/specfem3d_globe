@@ -41,7 +41,7 @@
                                 SAVE_MESH_FILES,ATTENUATION,ABSORBING_CONDITIONS,SAVE_FORWARD, &
                                 OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                                 ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
-                                SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+                                SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY)
 
   implicit none
 
@@ -51,7 +51,7 @@
   integer NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
           MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read
+          NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read,NOISE_TOMOGRAPHY
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,&
@@ -82,6 +82,8 @@
   ! reads in values
   call read_value_integer(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: SIMULATION_TYPE'
+  call read_value_integer(NOISE_TOMOGRAPHY, 'solver.NOISE_TOMOGRAPHY')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: NOISE_TOMOGRAPHY'
   call read_value_logical(SAVE_FORWARD, 'solver.SAVE_FORWARD')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: SAVE_FORWARD'
   call read_value_integer(NCHUNKS, 'mesher.NCHUNKS')
