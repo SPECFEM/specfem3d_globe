@@ -132,6 +132,7 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/model_prem.o \
 	$O/model_1dref.o \
 	$O/model_s20rts.o \
+	$O/model_s40rts.o \
 	$O/model_s362ani.o \
 	$O/model_sea1d.o \
 	$O/model_topo_bathy.o \
@@ -806,6 +807,9 @@ $O/model_ppm.o: constants.h $S/model_ppm.f90
 
 $O/model_s20rts.o: constants.h $S/model_s20rts.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_s20rts.o ${FCFLAGS_f90} $S/model_s20rts.f90
+
+$O/model_s40rts.o: constants.h $S/model_s40rts.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/model_s40rts.o ${FCFLAGS_f90} $S/model_s40rts.f90
 
 $O/model_s362ani.o: constants.h $S/model_s362ani.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_s362ani.o ${FCFLAGS_f90} $S/model_s362ani.f90
