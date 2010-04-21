@@ -246,6 +246,14 @@
     THREE_D_MODEL = THREE_D_MODEL_S20RTS
     TRANSVERSE_ISOTROPY = .true.
 
+  else if(MODEL_ROOT == 's40rts') then
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ISOTROPIC_3D_MANTLE = .true.
+    ONE_CRUST = .true.
+    THREE_D_MODEL = THREE_D_MODEL_S40RTS
+    TRANSVERSE_ISOTROPY = .true.
+
   else if(MODEL_ROOT == 'sea99_jp3d1994') then
     CASE_3D = .true.
     CRUSTAL = .true.
