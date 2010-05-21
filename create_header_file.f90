@@ -212,6 +212,7 @@
   print *,'total points per slice = ',sum(nglob)
   print *
   print *,'number of time steps = ',NSTEP
+  print *,'time-stepping of the solver will be: ',DT
   print *
   if(MOVIE_SURFACE .or. MOVIE_VOLUME) then
     print *,'MOVIE_VOLUME:',MOVIE_VOLUME

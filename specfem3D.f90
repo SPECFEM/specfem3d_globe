@@ -1502,7 +1502,7 @@
     rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     alpha_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-    Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    if (NOISE_TOMOGRAPHY == 3) Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     ! For anisotropic kernels (in crust_mantle only)
     cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
 
