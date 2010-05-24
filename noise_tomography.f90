@@ -31,7 +31,8 @@
 
 ! subroutine for NOISE TOMOGRAPHY
 ! chracterize noise statistics
-! for a given point (xcoord,ycoord,zcoord), specify the noise direction and noise distribution "mask_noise"
+! for a given point (xcoord,ycoord,zcoord), specify the noise direction "normal_x/y/z_noise"
+!     and noise distribution "mask_noise"
 ! USERS need to modify this subroutine for their own noise characteristics
   subroutine noise_distribution_direction(xcoord_in,ycoord_in,zcoord_in, &
                   normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
@@ -47,7 +48,7 @@
   real(kind=CUSTOM_REAL) :: xcoord,ycoord,zcoord
 
 
-  ! coordinates "x/y/zcoord" actually contain r theta phi, therefore convert back to x y z
+  ! coordinates "x/y/zcoord_in" actually contain r theta phi, therefore convert back to x y z
   call rthetaphi_2_xyz(xcoord,ycoord,zcoord, xcoord_in,ycoord_in,zcoord_in)
   ! NOTE that all coordinates are non-dimensionalized in GLOBAL package!
   ! USERS are free to choose which set to use,
@@ -66,6 +67,7 @@
   mask_noise_out = 1.0
   !******************************** change your noise characteristics above ****************************************
   !*****************************************************************************************************************
+
   end subroutine noise_distribution_direction
 
 ! =============================================================================================================
@@ -90,7 +92,7 @@
   integer, dimension(nrec) :: islice_selected_rec
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
+  double precision, dimension(nrec)  :: xi_receiver,eta_receiver,gamma_receiver
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLY) :: yigll
   double precision, dimension(NGLLZ) :: zigll
@@ -118,12 +120,15 @@
     call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file contains the ID of the master receiver')
   read(IIN_NOISE,*,iostat=ios) irec_master_noise
   close(IIN_NOISE)
+
   if (myrank == 0) then
-     WRITE(IMAIN,*) 'The master receiver is: (RECEIVER ID)', irec_master_noise
+     open(unit=IOUT_NOISE,file='OUTPUT_FILES/irec_master_noise',status='unknown',action='write')
+     WRITE(IOUT_NOISE,*) 'The master receiver is: (RECEIVER ID)', irec_master_noise
+     close(IOUT_NOISE)
   endif
 
   ! compute source arrays for "ensemble forward source", which is source of "ensemble forward wavefield"
-  if(myrank == islice_selected_rec(irec_master_noise) .OR. myrank==0) then ! myrank==0 is used for output only
+  if(myrank == islice_selected_rec(irec_master_noise) .OR. myrank == 0) then ! myrank == 0 is used for output only
     call compute_arrays_source_noise(myrank, &
               xi_receiver(irec_master_noise),eta_receiver(irec_master_noise),gamma_receiver(irec_master_noise), &
               nu(:,:,irec_master_noise),noise_sourcearray, xigll,yigll,zigll,NSTEP)
@@ -141,7 +146,7 @@
       do i = 1,NGLLX,NIT
         ipoin = ipoin + 1
         iglob = ibool_crust_mantle(i,j,k,ispec)
-        ! this subroutine must be provided by USERS
+        ! this subroutine must be modified by USERS
         call noise_distribution_direction(xstore_crust_mantle(iglob), &
                   ystore_crust_mantle(iglob),zstore_crust_mantle(iglob), &
                   normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
@@ -207,7 +212,7 @@
 ! =============================================================================================================
 
 ! subroutine for NOISE TOMOGRAPHY
-! check for consistency of parameters
+! check for consistency of the parameters
   subroutine check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                                     NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
                                     SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE)
@@ -224,21 +229,23 @@
 
 
   if (myrank == 0) then
-     WRITE(IMAIN,*) '*******************************************************************************'
-     WRITE(IMAIN,*) '*******************************************************************************'
-     WRITE(IMAIN,*) 'WARNING!!!!!!!!!!!!'
-     WRITE(IMAIN,*) 'You are running simulations using NOISE TOMOGRAPHY techniques.'
-     WRITE(IMAIN,*) 'Please make sure you understand the procedures before you have a try.'
-     WRITE(IMAIN,*) 'Displacements everywhere at the free surface are saved every timestep,'
-     WRITE(IMAIN,*) 'so make sure that LOCAL_PATH in DATA/Par_file is not global.'
-     WRITE(IMAIN,*) 'Otherwise the disk storage may be a serious issue, as is the speed of I/O.'
-     WRITE(IMAIN,*) 'Also make sure that NO earthquakes are included,'
-     WRITE(IMAIN,*) 'i.e., set moment tensor to be ZERO in CMTSOLUTION'
-     WRITE(IMAIN,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-     WRITE(IMAIN,*) 'If you just want a regular EARTHQUAKE simulation,'
-     WRITE(IMAIN,*) 'set NOISE_TOMOGRAPHY=0 in DATA/Par_file'
-     WRITE(IMAIN,*) '*******************************************************************************'
-     WRITE(IMAIN,*) '*******************************************************************************'
+     open(unit=IOUT_NOISE,file='OUTPUT_FILES/NOISE_SIMULATION',status='unknown',action='write')
+     WRITE(IOUT_NOISE,*) '*******************************************************************************'
+     WRITE(IOUT_NOISE,*) '*******************************************************************************'
+     WRITE(IOUT_NOISE,*) 'WARNING!!!!!!!!!!!!'
+     WRITE(IOUT_NOISE,*) 'You are running simulations using NOISE TOMOGRAPHY techniques.'
+     WRITE(IOUT_NOISE,*) 'Please make sure you understand the procedures before you have a try.'
+     WRITE(IOUT_NOISE,*) 'Displacements everywhere at the free surface are saved every timestep,'
+     WRITE(IOUT_NOISE,*) 'so make sure that LOCAL_PATH in DATA/Par_file is not global.'
+     WRITE(IOUT_NOISE,*) 'Otherwise the disk storage may be a serious issue, as is the speed of I/O.'
+     WRITE(IOUT_NOISE,*) 'Also make sure that NO earthquakes are included,'
+     WRITE(IOUT_NOISE,*) 'i.e., set moment tensor to be ZERO in CMTSOLUTION'
+     WRITE(IOUT_NOISE,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+     WRITE(IOUT_NOISE,*) 'If you just want a regular EARTHQUAKE simulation,'
+     WRITE(IOUT_NOISE,*) 'set NOISE_TOMOGRAPHY=0 in DATA/Par_file'
+     WRITE(IOUT_NOISE,*) '*******************************************************************************'
+     WRITE(IOUT_NOISE,*) '*******************************************************************************'
+     close(IOUT_NOISE)
   endif
 
   if (NUMBER_OF_RUNS/=1 .OR. NUMBER_OF_THIS_RUN/=1) &
@@ -271,8 +278,8 @@
 ! subroutine for NOISE TOMOGRAPHY
 ! read and construct the "source" (source time function based upon noise spectrum) for "ensemble forward source"
   subroutine compute_arrays_source_noise(myrank, &
-      xi_noise,eta_noise,gamma_noise,nu_single,noise_sourcearray, &
-      xigll,yigll,zigll,NSTEP)
+                                         xi_noise,eta_noise,gamma_noise,nu_single,noise_sourcearray, &
+                                         xigll,yigll,zigll,NSTEP)
   implicit none
   include 'constants.h'
   include "OUTPUT_FILES/values_from_mesher.h"
@@ -296,12 +303,12 @@
   character(len=150) :: filename
 
 
-  noise_src = 0._CUSTOM_REAL
-  ! noise file
+  noise_src(:) = 0._CUSTOM_REAL
+  ! noise file (source time function)
   filename = 'NOISE_TOMOGRAPHY/'//'S_squared'
   open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ios)
   if( ios /= 0)  &
-    call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file is based upon noise spectrum')
+    call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file is generated by Matlab scripts')
   
   do itime =1,NSTEP
     read(IIN_NOISE,*,iostat=ios) junk, noise_src(itime)
@@ -314,7 +321,7 @@
   filename = 'NOISE_TOMOGRAPHY/'//'nu_master'
   open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ios)
   if( ios /= 0)  call exit_MPI(myrank,&
-        'file '//trim(filename)//' does NOT exist! nu_master is the component direction for master receiver')
+        'file '//trim(filename)//' does NOT exist! nu_master is the component direction (NEZ) for master receiver')
   
   do itime =1,3
     read(IIN_NOISE,*,iostat=ios) nu_master(itime)
@@ -323,8 +330,11 @@
   enddo
   close(IIN_NOISE)
 
-  if (myrank == 0) &
-     WRITE(IMAIN,*) 'The direction (NEZ) of selected component of master receiver is', nu_master
+  if (myrank == 0) then
+     open(unit=IOUT_NOISE,file='OUTPUT_FILES/nu_master',status='unknown',action='write')
+     WRITE(IOUT_NOISE,*) 'The direction (NEZ) of selected component of master receiver is', nu_master
+     close(IOUT_NOISE)
+  endif
   
   ! rotates to cartesian
   do itime = 1, NSTEP
@@ -398,7 +408,7 @@
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 1: calculate the "ensemble forward source"
-! save surface movie (displacement) at every time steps, for step 2.
+! save surface movie (displacement) at every time steps, for step 2 & 3.
   subroutine noise_save_surface_movie(myrank,nmovie_points,displ_crust_mantle, &
                     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                     store_val_x,store_val_y,store_val_z, &
@@ -452,7 +462,7 @@
 
   ! save surface motion to disk 
   ! LOCAL storage is better than GLOBAL, because we have to save the 'movie' at every time step
-  ! also note that the surface movie does NOT have to be shared with other nodes/procs
+  ! also note that the surface movie does NOT have to be shared with other nodes/CPUs
   ! change LOCAL_PATH specified in "DATA/Par_file"
     write(outputname,"('/proc',i6.6,'_surface_movie',i6.6)") myrank, it
     open(unit=IOUT_NOISE,file=trim(LOCAL_PATH)//outputname,status='unknown',form='unformatted',action='write')
@@ -623,17 +633,18 @@
   ! input parameters
   integer myrank
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: Sigma_kl_crust_mantle
-  double precision :: scale_t,scale_displ,scale_Sigma_kl
+  double precision :: scale_t,scale_displ
   character(len=150) :: LOCAL_PATH
   ! output parameters
   ! local parameters
+  double precision :: scale_Sigma_kl
   character(len=150) :: prname
 
 
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
     open(unit=IOUT_NOISE,file=trim(prname)//'Sigma_kernel.bin',status='unknown',form='unformatted',action='write')
-    write(IOUT_NOISE) Sigma_kl_crust_mantle
+    write(IOUT_NOISE) Sigma_kl_crust_mantle     ! need to put dimensions back (not done yet)
     close(IOUT_NOISE)
   end subroutine save_kernels_strength_noise
 

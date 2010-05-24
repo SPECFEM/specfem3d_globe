@@ -1584,11 +1584,11 @@
        allocate(normal_y_noise(nmovie_points))
        allocate(normal_z_noise(nmovie_points))
        allocate(mask_noise(nmovie_points))
-       noise_sourcearray = 0._CUSTOM_REAL
-       normal_x_noise    = 0._CUSTOM_REAL
-       normal_y_noise    = 0._CUSTOM_REAL
-       normal_z_noise    = 0._CUSTOM_REAL
-       mask_noise        = 0._CUSTOM_REAL
+       noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
+       normal_x_noise(:)            = 0._CUSTOM_REAL
+       normal_y_noise(:)            = 0._CUSTOM_REAL
+       normal_z_noise(:)            = 0._CUSTOM_REAL
+       mask_noise(:)                = 0._CUSTOM_REAL
        
        call read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
                                   islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
@@ -2441,7 +2441,7 @@
         ! third step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to reconstruct the ensemble forward wavefield
         ! the ensemble adjoint wavefield is done as usual
-        ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal
+        ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
         call noise_read_add_surface_movie(myrank,nmovie_points,b_accel_crust_mantle, &
                               normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
                               store_val_ux,store_val_uy,store_val_uz, &
