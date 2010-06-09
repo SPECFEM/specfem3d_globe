@@ -1600,7 +1600,8 @@
        if (myrank == 0) &
        call check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                                   NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
-                                  SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE)
+                                  SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
+                                  MOVIE_COARSE)
     endif
 !>YANGL
 
@@ -2426,7 +2427,7 @@
                                 it,irec_master_noise)
     elseif ( NOISE_TOMOGRAPHY == 2 ) then
        ! second step of noise tomography, i.e., read the surface movie saved at every timestep
-       ! use the movie to drive the unsemble forward wavefield
+       ! use the movie to drive the ensemble forward wavefield
        call noise_read_add_surface_movie(myrank,nmovie_points,accel_crust_mantle, &
                               normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
                               store_val_ux,store_val_uy,store_val_uz, &

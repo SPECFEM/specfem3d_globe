@@ -215,7 +215,8 @@
 ! check for consistency of the parameters
   subroutine check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                                     NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
-                                    SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE)
+                                    SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
+                                    MOVIE_COARSE)
   implicit none
   include 'mpif.h'
   include "precision.h"
@@ -223,7 +224,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
   integer :: myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
-  logical :: SAVE_FORWARD,ROTATE_SEISMOGRAMS_RT,SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE
+  logical :: SAVE_FORWARD,ROTATE_SEISMOGRAMS_RT,SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE,MOVIE_COARSE
   ! output parameters
   ! local parameters
 
@@ -254,6 +255,9 @@
      call exit_mpi(myrank,'Do NOT rotate seismograms in the code, change ROTATE_SEISMOGRAMS_RT in DATA/Par_file')
   if (SAVE_ALL_SEISMOS_IN_ONE_FILE .OR. USE_BINARY_FOR_LARGE_FILE) &
      call exit_mpi(myrank,'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false.')
+  if (MOVIE_COARSE) &
+     call exit_mpi(myrank,'Please set MOVIE_COARSE in DATA/Par_file to be .false.') 
+
 
   if (NOISE_TOMOGRAPHY==1) then
      if (SIMULATION_TYPE/=1) &
@@ -376,14 +380,14 @@
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
-  integer :: myrank,nrec,NSTEP
+  integer :: myrank,nrec,NSTEP, irec_master_noise
   integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP) :: noise_sourcearray
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle  ! both input and output
   ! output parameters
   ! local parameters
-  integer :: irec_master_noise,i,j,k,iglob, it
+  integer :: i,j,k,iglob,it
 
 
   ! adds noise source (only if this proc carries the noise)
