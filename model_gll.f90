@@ -59,14 +59,17 @@
   integer :: myrank
 
   ! local parameters
-  double precision :: min_dvs,max_dvs
+  double precision :: min_dvs,max_dvs,min_dvs_all,max_dvs_all,scaleval
   integer :: ier
 
   allocate( MGLL_V%vp_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
   allocate( MGLL_V%vs_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
   allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
+  
   ! non-dimensionalize scaling values
-  MGLL_V%scale_velocity = 1000.0d0/(PI*GRAV*RHOAV*R_EARTH)
+  ! (model velocities must be given as km/s)
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  MGLL_V%scale_velocity = 1000.0d0/(R_EARTH*scaleval)
   MGLL_V%scale_density =  1000.0d0/RHOAV
 
   call read_gll_model(myrank,MGLL_V,NSPEC)
@@ -74,11 +77,11 @@
   ! checks velocity range
   max_dvs = maxval( MGLL_V%vs_new )
   min_dvs = minval( MGLL_V%vs_new )
-  call mpi_reduce(max_dvs, max_dvs, 1, MPI_DOUBLE_PRECISION, MPI_MAX, 0, MPI_COMM_WORLD,ier)
-  call mpi_reduce(min_dvs, min_dvs, 1, MPI_DOUBLE_PRECISION, MPI_MIN, 0, MPI_COMM_WORLD,ier)
+  call mpi_reduce(max_dvs, max_dvs_all, 1, MPI_DOUBLE_PRECISION, MPI_MAX, 0, MPI_COMM_WORLD,ier)
+  call mpi_reduce(min_dvs, min_dvs_all, 1, MPI_DOUBLE_PRECISION, MPI_MIN, 0, MPI_COMM_WORLD,ier)
   if( myrank == 0 ) then
     write(IMAIN,*)'model GLL:'
-    write(IMAIN,*) '  vs new min/max: ',min_dvs,max_dvs
+    write(IMAIN,*) '  vs new min/max: ',min_dvs_all,max_dvs_all
     write(IMAIN,*)
   endif
 
@@ -112,13 +115,18 @@
   !--------------------------------------------------------------------
   ! USER PARAMETER
 
-  character(len=150),parameter:: MGLL_path = 'KERNELS/model_m1/'
+  character(len=150),parameter:: MGLL_path = 'DATA/GLL/'
   !--------------------------------------------------------------------
 
   ! local parameters
   integer :: ier
   character(len=150) :: prname
 
+  if( myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*)'reading in model from ',trim(MGLL_path)
+  endif
+  
   ! only crust and mantle
   write(prname,'(a,i6.6,a)') MGLL_path(1:len_trim(MGLL_path))//'proc',myrank,'_reg1_'
 
