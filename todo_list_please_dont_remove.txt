@@ -26,13 +26,6 @@ On 23/07/10 02:21, Dimitri Komatitsch wrote:
 >
 > Hi Ying,
 >
-> Thank you for your message. I cc all the other developers in order to
-> know if anybody else has seen a similar problem with attenuation.
-> That is weird because in the SPECFEM3D manual Anne Sieminski added
-> nice pictures showing an excellent fit with normal modes down to 9
-> seconds (if I remember correctly), including attenuation in at least some of
-> the tests (Anne, could you maybe confirm that?).
->
 > What I know for sure if that back in 1999 when I developed the time
 > scheme for attenuation I used a trick that made implementation much
 > easier but that also makes the 4th order Runge Kutta (RK4) time scheme
@@ -42,7 +35,7 @@ On 23/07/10 02:21, Dimitri Komatitsch wrote:
 > time scheme (in which case reducing Delta_t purposely solves the
 > problem, but of course makes the simulation more expensive).
 >
-> A nice way of solving this problem would be to switch to better time
+> A way of solving this problem could be to switch to better time
 > schemes such as the symplectic time scheme that Tarje introduced in a
 > GJI paper a few years ago. Tarje and I should probably implement that
 > in the code one day... (therefore I cc him; we talked about this at
