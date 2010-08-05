@@ -1382,7 +1382,7 @@
     if(MOVIE_COARSE) then  !only output corners
        nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
        if(NGLLX /= NGLLY) &
-        call MPI_exit(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
+        call exit_MPI(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
        NIT = NGLLX - 1
        print *,'    type: surface - coarse'
        print *,'    points: ',nmovie_points

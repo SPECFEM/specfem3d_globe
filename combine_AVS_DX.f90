@@ -549,7 +549,9 @@
   if(ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')
     open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old',action='read')
-  else if(ivalue == 2) then
+    if(icolor == 5 .or. icolor == 6) &
+      open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces_dvp_dvs.txt',status='old',action='read')
+ else if(ivalue == 2) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old',action='read')
     if(icolor == 5 .or. icolor == 6) &
       open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementschunks_dvp_dvs.txt',status='old',action='read')
@@ -557,8 +559,8 @@
   else if(ivalue == 3) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
     open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
-    !if(icolor == 5 .or. icolor == 6) &
-    !  open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementschunks_dvp_dvs.txt',status='old',action='read')
+    if(icolor == 5 .or. icolor == 6) &
+      open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementssurface_dvp_dvs.txt',status='old',action='read')
 
   endif
 
@@ -809,7 +811,9 @@
 
   endif
 
-  if(ISOTROPIC_3D_MANTLE) then
+  if(icolor == 5 .or. icolor == 6) then
+
+   if(ISOTROPIC_3D_MANTLE) then
 
 ! compute absolute maximum for dvp
     rnorm_factor = maxval(dabs(dvp(:)))
@@ -843,6 +847,7 @@
       endif
     enddo
 
+   endif
   endif
 
 ! ************* generate element data values ******************
