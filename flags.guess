@@ -24,12 +24,13 @@ case $FC in
     ifort|*/ifort)
         #
         # Intel ifort Fortran90 for Linux
+        # check: http://software.intel.com/sites/products/documentation/hpc/compilerpro/en-us/fortran/lin/compiler_f/index.htm
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-O3 -fpe0 -ftz -align sequence -assume byterecl -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage" # -mcmodel=medium
+            FLAGS_CHECK="-O3 -assume byterecl" # -mcmodel=medium
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-O3 -fpe0 -ftz -align sequence -assume byterecl -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage" # -mcmodel=medium
+            FLAGS_NO_CHECK="-O3 -assume byterecl" # -mcmodel=medium
         fi
         # useful for debugging...
         #if test x"$FLAGS_CHECK" = x; then
@@ -69,7 +70,7 @@ case $FC in
         if test x"$FLAGS_CHECK" = x; then
             FLAGS_CHECK="\$(FLAGS_NO_CHECK)" 
         fi
-        # useful for debugging...
+        # useful for debugging... -ffpe-trap=underflow,overflow,zero -fbacktrace
         #if test x"$FLAGS_NO_CHECK" = x; then
         #    FLAGS_NO_CHECK="-std=f95 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math" # -mcmodel=medium
         #
