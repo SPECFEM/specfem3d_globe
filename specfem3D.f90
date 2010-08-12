@@ -1389,7 +1389,7 @@
     if(MOVIE_COARSE .and. NOISE_TOMOGRAPHY ==0) then  ! only output corners !for noise tomography, must NOT be coarse
        nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
        if(NGLLX /= NGLLY) &
-        call MPI_exit(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
+        call exit_MPI(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
        NIT = NGLLX - 1
     else
        nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)

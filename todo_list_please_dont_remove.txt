@@ -4,6 +4,46 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch:
 
 Things that could be done in a future version:
 
+Subject: Re: SEM attenuation
+Date: Fri, 23 Jul 2010 12:16:40 +0200
+From: Tarje Nissen-Meyer <tarjen@ethz.ch>
+Organization: ETH Zurich
+To: Dimitri Komatitsch <dimitri.komatitsch@univ-pau.fr>
+CC: <yingz@vt.edu>, Jeroen Tromp <jtromp@princeton.edu>, Min Chen	<mchen@gps.caltech.edu>, Vala Hjorleifsdottir <vala@ldeo.columbia.edu>,	"Brian Savage" <savage@uri.edu>, Shiann-Jong Lee <sjlee@earth.sinica.edu.tw>,	"Roland Martin" <roland.martin@univ-pau.fr>, Bernhard Schuberth	<mail@bernhard-schuberth.de>, Carl Tape <carltape@fas.harvard.edu>, "Anne Sieminski" <anne.sieminski@obs.ujf-grenoble.fr>, Paul Friberg	<p.friberg@isti.com>, Kasper van Wijk <kasper@cgiss.boisestate.edu>, "Dylan Mikesell" <dmikesell@cgiss.boisestate.edu>, Federica Magnoni	<federica.magnoni@ingv.it>, Ebru Bozdag <bozdag@princeton.edu>, Hejun Zhu	<hejunzhu@princeton.edu>, Pieyre Le Loher <pieyre.le_loher@inria.fr>,	Christina Morency <cmorency@Princeton.EDU>, Emanuele Casarotti	<emanuele.casarotti@gmail.com>, Piero Basini <basini@bo.ingv.it>, "Emmanuel Chaljub" <Emmanuel.Chaljub@obs.ujf-grenoble.fr>, Qinya Liu	<liuqy@physics.utoronto.ca>, Yang Luo <yangl@Princeton.EDU>, Daniel Peter	<dpeter@Princeton.EDU>
+
+Hi all,
+
+Just to add that symplectic schemes are based on conservative systems
+(they approximate the Hamiltonian) and we don't know yet how they behave
+for dissipative media. But still of course something to be added and
+looked at. Should also give credit to Jean-Paul Ampuero who really first
+suggested trying these schemes for elastodynamics with the SEM.
+
+Best regards,
+Tarje
+
+On 23/07/10 02:21, Dimitri Komatitsch wrote:
+>
+> Hi Ying,
+>
+> What I know for sure if that back in 1999 when I developed the time
+> scheme for attenuation I used a trick that made implementation much
+> easier but that also makes the 4th order Runge Kutta (RK4) time scheme
+> become second order only, i.e. RK2 instead of RK4. This means that for
+> very long simulations (for instance multi-orbit surface waves)
+> attenuation can become inaccurate because of a lack of accuracy in the
+> time scheme (in which case reducing Delta_t purposely solves the
+> problem, but of course makes the simulation more expensive).
+>
+> A way of solving this problem could be to switch to better time
+> schemes such as the symplectic time scheme that Tarje introduced in a
+> GJI paper a few years ago. Tarje and I should probably implement that
+> in the code one day... (therefore I cc him; we talked about this at
+> the EGU meeting in May)
+>
+> Thank you,
+> Dimitri.
+
 - symplectic time scheme (will be done by Tarje Nissen-Meyer and/or Jean-Paul Ampuero) (would be useful in the 2D version of the code as well):
 Hi Jeroen, Perfect. I think talking to Jean-Paul Ampuero would be useful
 as well because in Utrecht last year he had told us that

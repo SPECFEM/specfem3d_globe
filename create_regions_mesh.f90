@@ -660,7 +660,11 @@
       call write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
 
       call write_AVS_DX_global_faces_data(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
+              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+              RMIDDLE_CRUST,ROCEAN,iregion_code)
 
       call write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
               idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
@@ -670,7 +674,11 @@
               RMIDDLE_CRUST,ROCEAN,iregion_code)
 
       call write_AVS_DX_surface_data(myrank,prname,nspec,iboun,ibool, &
-              idoubling,xstore,ystore,zstore,locval,ifseg,npointot)
+              idoubling,xstore,ystore,zstore,locval,ifseg,npointot, &
+              rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+              RMIDDLE_CRUST,ROCEAN,iregion_code)
 
       !> Hejun
       ! Output material information for all GLL points
