@@ -776,12 +776,6 @@
       write(27) normal_400
       write(27) normal_670
       close(27)
-
-      deallocate(ibelm_moho_top,ibelm_moho_bot)
-      deallocate(ibelm_400_top,ibelm_400_bot)
-      deallocate(ibelm_670_top,ibelm_670_bot)
-      deallocate(normal_moho,normal_400,normal_670)
-      deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
     endif
 
     ! compute volume, bottom and top area of that part of the slice
@@ -846,6 +840,11 @@
   deallocate(rho_vp,rho_vs)
   deallocate(Qmu_store)
   deallocate(tau_e_store)
+  deallocate(ibelm_moho_top,ibelm_moho_bot)
+  deallocate(ibelm_400_top,ibelm_400_bot)
+  deallocate(ibelm_670_top,ibelm_670_bot)
+  deallocate(normal_moho,normal_400,normal_670)
+  deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
 
   end subroutine create_regions_mesh
 

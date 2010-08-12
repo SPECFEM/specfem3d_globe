@@ -1259,9 +1259,9 @@
     write(IMAIN,*)
     if(ATTENUATION_VAL) then
       write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
-      
+
       if(ATTENUATION_3D_VAL) write(IMAIN,*) 'using 3D attenuation'
-      
+
       if(USE_ATTENUATION_MIMIC ) write(IMAIN,*) 'mimicking effects on velocity only'
     else
       write(IMAIN,*) 'no attenuation'
@@ -1928,7 +1928,7 @@
     !  call rthetaphi_2_xyz(rval,thetaval,phival,xstore_crust_mantle(indx(1)),&
     !                     ystore_crust_mantle(indx(1)),zstore_crust_mantle(indx(1)))
     !  print*,'x/y/z:',rval,thetaval,phival
-    !  call exit_MPI(myrank,'error stability')    
+    !  call exit_MPI(myrank,'error stability')
     !endif
 
 
@@ -2818,7 +2818,7 @@
                     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
                     b_R_memory_crust_mantle,b_R_memory_inner_core, &
                     b_epsilondev_crust_mantle,b_epsilondev_inner_core, &
-                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)    
+                    b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
     endif
 
 ! write the seismograms with time shift
@@ -3241,7 +3241,7 @@
   ! synchronize all processes, waits until all processes have written their seismograms
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error synchronize after time loop')
-  
+
   ! closes Stacey absorbing boundary snapshots
   if( ABSORBING_CONDITIONS ) then
     ! crust mantle
@@ -3264,7 +3264,7 @@
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       call close_file_abs(3)
     endif
-    
+
     ! outer core
     if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -3290,7 +3290,7 @@
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       call close_file_abs(8)
     endif
-    
+
   endif
 
   ! synchronize all processes
