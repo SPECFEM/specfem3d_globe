@@ -140,16 +140,30 @@
 ! model_s20rts_variables
   type model_s20rts_variables
     sequence
-    double precision dvs_a(0:NK,0:NS,0:NS)
-    double precision dvs_b(0:NK,0:NS,0:NS)
-    double precision dvp_a(0:NK,0:NS,0:NS)
-    double precision dvp_b(0:NK,0:NS,0:NS)
-    double precision spknt(NK+1)
-    double precision qq0(NK+1,NK+1)
-    double precision qq(3,NK+1,NK+1)
+    double precision dvs_a(0:NK_20,0:NS_20,0:NS_20)   !a = positive m  (radial, theta, phi) --> (k,l,m) (maybe other way around??)
+    double precision dvs_b(0:NK_20,0:NS_20,0:NS_20)   !b = negative m  (radial, theta, phi) --> (k,l,-m)
+    double precision dvp_a(0:NK_20,0:NS_20,0:NS_20)
+    double precision dvp_b(0:NK_20,0:NS_20,0:NS_20)
+    double precision spknt(NK_20+1)
+    double precision qq0(NK_20+1,NK_20+1)
+    double precision qq(3,NK_20+1,NK_20+1)
   end type model_s20rts_variables
-  type (model_s20rts_variables) D3MM_V
+  type (model_s20rts_variables) S20RTS_V
 ! model_s20rts_variables
+
+! model_s40rts_variables
+  type model_s40rts_variables
+    sequence
+    double precision dvs_a(0:NK_20,0:NS_40,0:NS_40)
+    double precision dvs_b(0:NK_20,0:NS_40,0:NS_40)
+    double precision dvp_a(0:NK_20,0:NS_40,0:NS_40)
+    double precision dvp_b(0:NK_20,0:NS_40,0:NS_40)
+    double precision spknt(NK_20+1)
+    double precision qq0(NK_20+1,NK_20+1)
+    double precision qq(3,NK_20+1,NK_20+1)
+  end type model_s40rts_variables
+  type (model_s40rts_variables) S40RTS_V
+! model_s40rts_variables
 
 ! model_heterogen_m_variables
   type model_heterogen_m_variables
@@ -450,7 +464,10 @@
     select case( THREE_D_MODEL )
 
       case(THREE_D_MODEL_S20RTS)
-        call model_s20rts_broadcast(myrank,D3MM_V)
+        call model_s20rts_broadcast(myrank,S20RTS_V)
+      
+      case(THREE_D_MODEL_S40RTS)
+        call model_s40rts_broadcast(myrank,S40RTS_V)
 
       case(THREE_D_MODEL_SEA99_JP3D)
         ! the variables read are declared and stored in structure SEA99M_V and JP3DM_V
@@ -788,7 +805,16 @@
 
       case(THREE_D_MODEL_S20RTS)
         ! s20rts
-        call mantle_s20rts(r_used,theta,phi,dvs,dvp,drho,D3MM_V)
+        call mantle_s20rts(r_used,theta,phi,dvs,dvp,drho,S20RTS_V)
+        vpv=vpv*(1.0d0+dvp)
+        vph=vph*(1.0d0+dvp)
+        vsv=vsv*(1.0d0+dvs)
+        vsh=vsh*(1.0d0+dvs)
+        rho=rho*(1.0d0+drho)
+
+      case(THREE_D_MODEL_S40RTS)
+        ! s40rts
+        call mantle_s40rts(r_used,theta,phi,dvs,dvp,drho,S40RTS_V)
         vpv=vpv*(1.0d0+dvp)
         vph=vph*(1.0d0+dvp)
         vsv=vsv*(1.0d0+dvs)
