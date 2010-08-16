@@ -35,7 +35,7 @@ program combine_vol_data
   include 'constants.h'
   include 'OUTPUT_FILES/values_from_mesher.h'
 
-  integer,parameter :: MAX_NUM_NODES = 300
+  integer,parameter :: MAX_NUM_NODES = 1000
   integer  iregion, ir, irs, ire, ires, pfd, efd
   character(len=256) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
   character(len=256) :: prname_topo, prname_file, dimension_file

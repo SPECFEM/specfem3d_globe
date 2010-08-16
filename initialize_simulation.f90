@@ -55,7 +55,7 @@
                 hprime_xx,hprime_yy,hprime_zz,hprime_xxT, &
                 hprimewgll_xx,hprimewgll_yy,hprimewgll_zz,hprimewgll_xxT, &
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-                rec_filename,STATIONS,nrec)
+                rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY)
 
   implicit none
 
@@ -73,7 +73,7 @@
           NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
           NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP
+          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
 
   double precision DT,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
@@ -191,7 +191,7 @@
          HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
          WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
-         USE_BINARY_FOR_LARGE_FILE,.false.)
+         USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY)
 
     if(err_occurred() /= 0) then
       call exit_MPI(myrank,'an error occurred while reading the parameter file')
@@ -232,7 +232,7 @@
                 REFERENCE_1D_MODEL,THREE_D_MODEL,ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
                 HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
-                ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE)
+                ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY)
 
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -329,7 +329,7 @@
   endif
 
   ! check that the code is running with the requested nb of processes
-  if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
+  if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes(initialization specfem)')
 
   ! check that the code has been compiled with the right values
   if (NSPEC_computed(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE) then

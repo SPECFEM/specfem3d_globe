@@ -230,6 +230,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/specfem3D.o \
 	$O/write_movie_volume.o \
 	$O/write_movie_surface.o \
+        $O/noise_tomography.o \
 	$(EMPTY_MACRO)
 
 XCREATE_HEADER_OBJECTS = \
@@ -735,6 +736,9 @@ $O/write_movie_surface.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/write
 
 $O/write_movie_volume.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/write_movie_volume.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/write_movie_volume.o ${FCFLAGS_f90} $S/write_movie_volume.f90
+
+$O/noise_tomography.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/noise_tomography.f90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/noise_tomography.o ${FCFLAGS_f90} $S/noise_tomography.f90
 
 ### non-dependent on values from mesher here
 

@@ -58,6 +58,7 @@
 ! input, output and main MPI I/O files
   integer, parameter :: ISTANDARD_OUTPUT = 6
   integer, parameter :: IIN = 40,IOUT = 41,IOUT_SAC = 903
+  integer, parameter :: IIN_NOISE = 43,IOUT_NOISE = 44
 ! local file unit for output of buffers
   integer, parameter :: IOUT_BUFFERS = 35
 ! uncomment this to write messages to a text file
