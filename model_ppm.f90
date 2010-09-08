@@ -107,7 +107,7 @@
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -158,7 +158,7 @@
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -341,7 +341,7 @@
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -455,7 +455,7 @@
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -558,7 +558,7 @@
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -588,54 +588,11 @@
   real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey)
   real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
 
-! model_attenuation_variables
-!  type model_attenuation_variables
-!    sequence
-!    double precision min_period, max_period
-!    double precision                          :: QT_c_source        ! Source Frequency
-!    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-!    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-!    double precision, dimension(:), pointer   :: Qr                 ! Radius
-!    integer, dimension(:), pointer            :: interval_Q                 ! Steps
-!    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-!    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-!    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-!    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-!    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-!    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-!    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-!    integer                                   :: Qn                 ! Number of points
-!    integer dummy_pad ! padding 4 bytes to align the structure
-!  end type model_attenuation_variables
-!
-!  type (model_attenuation_variables) AM_V
-! model_attenuation_variables
-
-! attenuation
-  !logical ATTENUATION,ATTENUATION_3D
-  !integer vx, vy, vz, vnspec
-  !double precision  T_c_source
-  !double precision, dimension(N_SLS)                     :: tau_s
-  !double precision, dimension(vx, vy, vz, vnspec)        :: Qmu_store
-  !double precision, dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
-
-  !integer NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NEX_XI,ichunk
-  !integer nglob
-
-  !integer nspec_ani
-  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
-  !  c11store,c12store,c13store,c14store,c15store,c16store, &
-  !  c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
-  !  c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
-
-  !logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE
-  !logical OCEANS
-
   ! local parameters
   integer i,j,k,ispec
   integer iregion_code
 
-! only include the neighboring 3 x 3 slices
+  ! only include the neighboring 3 x 3 slices
   integer, parameter :: NSLICES = 3
   integer ,parameter :: NSLICES2 = NSLICES * NSLICES
 

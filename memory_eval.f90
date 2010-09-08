@@ -117,7 +117,11 @@
 
     NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
     if(TRANSVERSE_ISOTROPY) then
-      NSPECMAX_TISO_MANTLE = ispec_aniso
+! note: the number of transverse isotropic elements is ispec_aniso
+!          however for transverse isotropic kernels, the arrays muhstore,kappahstore,eta_anisostore, 
+!          will be needed for the crust_mantle region everywhere still...
+!          originally: NSPECMAX_TISO_MANTLE = ispec_aniso
+      NSPECMAX_TISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
     else
       NSPECMAX_TISO_MANTLE = 1
     endif
@@ -142,7 +146,8 @@
     NSPEC_INNER_CORE_STR_OR_ATT = 1
   endif
 
-  if(ATTENUATION .and. SIMULATION_TYPE == 3) then
+  if(ATTENUATION .and. &
+    ( SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) ) then
     NSPEC_CRUST_MANTLE_STR_AND_ATT = NSPEC(IREGION_CRUST_MANTLE)
     NSPEC_INNER_CORE_STR_AND_ATT = NSPEC(IREGION_INNER_CORE)
   else

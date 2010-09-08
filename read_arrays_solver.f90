@@ -95,7 +95,8 @@
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
-  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_1.bin',status='old',action='read',form='unformatted')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_1.bin', &
+        status='old',action='read',form='unformatted')
 
   read(IIN) xix
   read(IIN) xiy

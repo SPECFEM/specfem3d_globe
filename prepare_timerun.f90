@@ -364,8 +364,9 @@
         two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv)
       endif
     endif
-    A_array_rotation = 0.
-    B_array_rotation = 0.
+    
+    A_array_rotation = 0._CUSTOM_REAL
+    B_array_rotation = 0._CUSTOM_REAL
 
     if (SIMULATION_TYPE == 3) then
       if(CUSTOM_REAL == SIZE_REAL) then
@@ -709,6 +710,3 @@
   endif
 
   end subroutine prepare_timerun_attenuation
-
-
-

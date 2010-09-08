@@ -186,6 +186,10 @@
 ! default is .false. to compute isotropic kernels (related to alpha and beta)
   logical, parameter :: ANISOTROPIC_KL = .false.
 
+! output only transverse isotropic kernels (alpha_v,alpha_h,beta_v,beta_h,eta,rho) 
+! rather than fully anisotropic kernels in case ANISOTROPIC_KL is set to .true. 
+  logical, parameter :: SAVE_TRANSVERSE_KL = .false.
+
 ! print date and time estimate of end of run in another country,
 ! in addition to local time.
 ! For instance: the code runs at Caltech in California but the person

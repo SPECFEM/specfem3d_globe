@@ -372,11 +372,11 @@
   else if(MODEL_ROOT == 'GLL') then
     ! model will be given on local basis, at all GLL points,
     ! as from meshfem3d output from routine save_arrays_solver()
+    ! based on model s29ea
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
     ONE_CRUST = .true.
-    ! based on model s29ea
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_GLL
     TRANSVERSE_ISOTROPY = .true.

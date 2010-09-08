@@ -1917,7 +1917,8 @@
     !if( maxval(displ_crust_mantle(1,:)**2 + &
     !                displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2) > 1.e4 ) then
     !  print*,'slice',myrank
-    !  print*,'  crust_mantle displ:', maxval(displ_crust_mantle(1,:)),maxval(displ_crust_mantle(2,:)),maxval(displ_crust_mantle(3,:))
+    !  print*,'  crust_mantle displ:', maxval(displ_crust_mantle(1,:)), &
+    !           maxval(displ_crust_mantle(2,:)),maxval(displ_crust_mantle(3,:))
     !  print*,'  indxs: ',maxloc( displ_crust_mantle(1,:)),maxloc( displ_crust_mantle(2,:)),maxloc( displ_crust_mantle(3,:))
     !  indx = maxloc( displ_crust_mantle(3,:) )
     !  rval = xstore_crust_mantle(indx(1))
@@ -3321,6 +3322,8 @@
                   ystore_crust_mantle,zstore_crust_mantle, &
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
+                  kappahstore_crust_mantle,muhstore_crust_mantle, &
+                  eta_anisostore_crust_mantle,idoubling_crust_mantle, &                  
                   LOCAL_PATH)
 
 !<YANGL

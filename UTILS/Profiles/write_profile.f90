@@ -279,8 +279,6 @@
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
     double precision Q  ! Q     = Desired Value of Attenuation or Q
     double precision iQ ! iQ    = 1/Q
     double precision, dimension(:), pointer ::  f
@@ -288,6 +286,8 @@
     double precision, dimension(:), pointer :: tau_s
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids    
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V

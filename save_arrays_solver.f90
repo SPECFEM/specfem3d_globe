@@ -58,7 +58,6 @@
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q          ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -66,6 +65,7 @@
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     integer                                   :: Qn                 ! Number of points
     integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
@@ -327,7 +327,6 @@
       enddo
     enddo
   enddo
-
   write(27) rmass
 
   write(27) ibool
@@ -384,15 +383,49 @@
   if( SAVE_MESH_FILES ) then
     scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
     scaleval2 = sngl( RHOAV/1000.0d0 )
+    
+    ! isotropic model
+    ! vp
     open(unit=27,file=prname(1:len_trim(prname))//'vp.bin',status='unknown',form='unformatted',action='write')
     write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
     close(27)
+    ! vs
     open(unit=27,file=prname(1:len_trim(prname))//'vs.bin',status='unknown',form='unformatted',action='write')
     write(27) sqrt( muvstore/rhostore )*scaleval1
     close(27)
+    ! rho
     open(unit=27,file=prname(1:len_trim(prname))//'rho.bin',status='unknown',form='unformatted',action='write')
     write(27) rhostore*scaleval2
     close(27)
+    
+    ! transverse isotropic model
+    if( TRANSVERSE_ISOTROPY ) then
+      ! vpv
+      open(unit=27,file=prname(1:len_trim(prname))//'vpv.bin',status='unknown',form='unformatted',action='write')
+      write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
+      close(27)
+      ! vph
+      open(unit=27,file=prname(1:len_trim(prname))//'vph.bin',status='unknown',form='unformatted',action='write')
+      write(27) sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1
+      close(27)
+      ! vsv
+      open(unit=27,file=prname(1:len_trim(prname))//'vsv.bin',status='unknown',form='unformatted',action='write')
+      write(27) sqrt( muvstore/rhostore )*scaleval1
+      close(27)
+      ! vsh
+      open(unit=27,file=prname(1:len_trim(prname))//'vsh.bin',status='unknown',form='unformatted',action='write')
+      write(27) sqrt( muhstore/rhostore )*scaleval1
+      close(27)
+      ! rho
+      open(unit=27,file=prname(1:len_trim(prname))//'rho.bin',status='unknown',form='unformatted',action='write')
+      write(27) rhostore*scaleval2
+      close(27)
+      ! eta
+      open(unit=27,file=prname(1:len_trim(prname))//'eta.bin',status='unknown',form='unformatted',action='write')
+      write(27) eta_anisostore
+      close(27)    
+    endif
+    
   endif
 
   end subroutine save_arrays_solver

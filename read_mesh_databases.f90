@@ -602,7 +602,7 @@
 
   ! Stacey put back
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='unknown',form='unformatted',action='read')
+        status='old',form='unformatted',action='read')
   read(27) nspec2D_xmin_crust_mantle
   read(27) nspec2D_xmax_crust_mantle
   read(27) nspec2D_ymin_crust_mantle
@@ -645,7 +645,7 @@
 
   ! Stacey put back
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='unknown',form='unformatted',action='read')
+        status='old',form='unformatted',action='read')
   read(27) nspec2D_xmin_outer_core
   read(27) nspec2D_xmax_outer_core
   read(27) nspec2D_ymin_outer_core
@@ -685,7 +685,7 @@
 
   ! read info for vertical edges for central cube matching in inner core
   open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
-        status='old',action='read',form='unformatted')
+        status='old',form='unformatted',action='read')
   read(27) nspec2D_xmin_inner_core
   read(27) nspec2D_xmax_inner_core
   read(27) nspec2D_ymin_inner_core
@@ -709,7 +709,7 @@
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
     open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
-          status='old',form='unformatted')
+          status='old',form='unformatted',action='read')
     read(27) njunk1,njunk2,njunk3
     if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
                call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
@@ -801,7 +801,7 @@
 
   ! read arrays for Stacey conditions
   open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-        status='unknown',form='unformatted',action='read')
+        status='old',form='unformatted',action='read')
   read(27) nimin_crust_mantle
   read(27) nimax_crust_mantle
   read(27) njmin_crust_mantle
@@ -897,7 +897,7 @@
 
   ! read arrays for Stacey conditions
   open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
-        status='unknown',form='unformatted',action='read')
+        status='old',form='unformatted',action='read')
   read(27) nimin_outer_core
   read(27) nimax_outer_core
   read(27) njmin_outer_core

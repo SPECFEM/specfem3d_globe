@@ -69,7 +69,6 @@
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -77,6 +76,7 @@
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     integer                                   :: Qn                 ! Number of points
     integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
@@ -119,7 +119,6 @@
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -127,6 +126,7 @@
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     integer                                   :: Qn                 ! Number of points
     integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
@@ -173,7 +173,6 @@
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -181,6 +180,7 @@
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     integer                                   :: Qn                 ! Number of points
     integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
@@ -250,10 +250,10 @@
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
     sequence
-    integer Q_resolution
-    integer Q_max
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
+    integer Q_resolution
+    integer Q_max    
   end type model_attenuation_storage_var
 
   type (model_attenuation_storage_var) AM_S
@@ -262,8 +262,6 @@
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
     double precision Q  ! Q     = Desired Value of Attenuation or Q
     double precision iQ ! iQ    = 1/Q
     double precision, dimension(:), pointer ::  f
@@ -271,6 +269,8 @@
     double precision, dimension(:), pointer :: tau_s
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids    
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -371,7 +371,6 @@
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -379,6 +378,7 @@
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     integer                                   :: Qn                 ! Number of points
     integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
@@ -389,10 +389,10 @@
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
     sequence
-    integer Q_resolution
-    integer Q_max
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
+    integer Q_resolution
+    integer Q_max    
   end type model_attenuation_storage_var
 
   type (model_attenuation_storage_var) AM_S
@@ -401,8 +401,6 @@
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
     double precision Q  ! Q     = Desired Value of Attenuation or Q
     double precision iQ ! iQ    = 1/Q
     double precision, dimension(:), pointer ::  f
@@ -410,6 +408,8 @@
     double precision, dimension(:), pointer :: tau_s
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids    
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -446,10 +446,10 @@
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
     sequence
-    integer Q_resolution
-    integer Q_max
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
+    integer Q_resolution
+    integer Q_max    
   end type model_attenuation_storage_var
 
   type (model_attenuation_storage_var) AM_S
@@ -587,8 +587,6 @@
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
     double precision Q  ! Q     = Desired Value of Attenuation or Q
     double precision iQ ! iQ    = 1/Q
     double precision, dimension(:), pointer ::  f
@@ -596,6 +594,8 @@
     double precision, dimension(:), pointer :: tau_s
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids    
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -690,8 +690,6 @@
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
     double precision Q  ! Q     = Desired Value of Attenuation or Q
     double precision iQ ! iQ    = 1/Q
     double precision, dimension(:), pointer ::  f
@@ -699,6 +697,8 @@
     double precision, dimension(:), pointer :: tau_s
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids    
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -718,8 +718,6 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
     double precision Q  ! Q     = Desired Value of Attenuation or Q
     double precision iQ ! iQ    = 1/Q
     double precision, dimension(:), pointer ::  f
@@ -727,6 +725,8 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
     double precision, dimension(:), pointer :: tau_s
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids    
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -843,8 +843,6 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
     double precision Q  ! Q     = Desired Value of Attenuation or Q
     double precision iQ ! iQ    = 1/Q
     double precision, dimension(:), pointer ::  f
@@ -852,6 +850,8 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
     double precision, dimension(:), pointer :: tau_s
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids    
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -921,8 +921,6 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
     double precision Q  ! Q     = Desired Value of Attenuation or Q
     double precision iQ ! iQ    = 1/Q
     double precision, dimension(:), pointer ::  f
@@ -930,6 +928,8 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
     double precision, dimension(:), pointer :: tau_s
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids    
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V

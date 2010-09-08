@@ -72,66 +72,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -213,66 +216,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -299,66 +305,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -435,66 +444,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -537,66 +549,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -633,66 +648,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -752,66 +770,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -864,66 +885,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -959,66 +983,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -1060,66 +1087,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -1180,66 +1210,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -1273,66 +1306,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V
@@ -1370,66 +1406,69 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-! vmod3d
-  integer :: NPA
-  integer :: NRA
-  integer :: NHA
-  integer :: NPB
-  integer :: NRB
-  integer :: NHB
-  double precision :: PNA(MPA)
-  double precision :: RNA(MRA)
-  double precision :: HNA(MHA)
-  double precision :: PNB(MPB)
-  double precision :: RNB(MRB)
-  double precision :: HNB(MHB)
-  double precision :: VELAP(MPA,MRA,MHA)
-  double precision :: VELBP(MPB,MRB,MHB)
-! discon
-  double precision :: PN(51)
-  double precision :: RRN(63)
-  double precision :: DEPA(51,63)
-  double precision :: DEPB(51,63)
-  double precision :: DEPC(51,63)
-! locate
-  integer :: IPLOCA(MKA)
-  integer :: IRLOCA(MKA)
-  integer :: IHLOCA(MKA)
-  integer :: IPLOCB(MKB)
-  integer :: IRLOCB(MKB)
-  integer :: IHLOCB(MKB)
-  double precision :: PLA
-  double precision :: RLA
-  double precision :: HLA
-  double precision :: PLB
-  double precision :: RLB
-  double precision :: HLB
-! weight
-  integer :: IP
-  integer :: JP
-  integer :: KP
-  integer :: IP1
-  integer :: JP1
-  integer :: KP1
-  double precision :: WV(8)
-! prhfd
-  double precision :: P
-  double precision :: R
-  double precision :: H
-  double precision :: PF
-  double precision :: RF
-  double precision :: HF
-  double precision :: PF1
-  double precision :: RF1
-  double precision :: HF1
-  double precision :: PD
-  double precision :: RD
-  double precision :: HD
-! jpmodv
-  double precision :: VP(29)
-  double precision :: VS(29)
-  double precision :: RA(29)
-  double precision :: DEPJ(29)
+    ! vmod3d
+    double precision :: PNA(MPA)
+    double precision :: RNA(MRA)
+    double precision :: HNA(MHA)
+    double precision :: PNB(MPB)
+    double precision :: RNB(MRB)
+    double precision :: HNB(MHB)
+    double precision :: VELAP(MPA,MRA,MHA)
+    double precision :: VELBP(MPB,MRB,MHB)
+    ! discon
+    double precision :: PN(51)
+    double precision :: RRN(63)
+    double precision :: DEPA(51,63)
+    double precision :: DEPB(51,63)
+    double precision :: DEPC(51,63)
+    ! locate
+    double precision :: PLA
+    double precision :: RLA
+    double precision :: HLA
+    double precision :: PLB
+    double precision :: RLB
+    double precision :: HLB
+    ! weight
+    double precision :: WV(8)
+    ! prhfd
+    double precision :: P
+    double precision :: R
+    double precision :: H
+    double precision :: PF
+    double precision :: RF
+    double precision :: HF
+    double precision :: PF1
+    double precision :: RF1
+    double precision :: HF1
+    double precision :: PD
+    double precision :: RD
+    double precision :: HD
+    ! jpmodv
+    double precision :: VP(29)
+    double precision :: VS(29)
+    double precision :: RA(29)
+    double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
 
   type (model_jp3d_variables) JP3DM_V

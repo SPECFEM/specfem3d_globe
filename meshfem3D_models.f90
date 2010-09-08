@@ -57,7 +57,6 @@
     double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
     double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
     double precision, dimension(:), pointer   :: Qr                 ! Radius
-    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
     double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
     double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
@@ -65,6 +64,7 @@
     double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
     integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
     integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+    integer, dimension(:), pointer            :: interval_Q                 ! Steps
     integer                                   :: Qn                 ! Number of points
     integer dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
@@ -176,13 +176,7 @@
 ! model_jp3d_variables
   type model_jp3d_variables
     sequence
-  ! vmod3d
-    integer :: NPA
-    integer :: NRA
-    integer :: NHA
-    integer :: NPB
-    integer :: NRB
-    integer :: NHB
+    ! vmod3d
     double precision :: PNA(MPA)
     double precision :: RNA(MRA)
     double precision :: HNA(MHA)
@@ -191,34 +185,22 @@
     double precision :: HNB(MHB)
     double precision :: VELAP(MPA,MRA,MHA)
     double precision :: VELBP(MPB,MRB,MHB)
-  ! discon
+    ! discon
     double precision :: PN(51)
     double precision :: RRN(63)
     double precision :: DEPA(51,63)
     double precision :: DEPB(51,63)
     double precision :: DEPC(51,63)
-  ! locate
-    integer :: IPLOCA(MKA)
-    integer :: IRLOCA(MKA)
-    integer :: IHLOCA(MKA)
-    integer :: IPLOCB(MKB)
-    integer :: IRLOCB(MKB)
-    integer :: IHLOCB(MKB)
+    ! locate
     double precision :: PLA
     double precision :: RLA
     double precision :: HLA
     double precision :: PLB
     double precision :: RLB
     double precision :: HLB
-  ! weight
-    integer :: IP
-    integer :: JP
-    integer :: KP
-    integer :: IP1
-    integer :: JP1
-    integer :: KP1
+    ! weight
     double precision :: WV(8)
-  ! prhfd
+    ! prhfd
     double precision :: P
     double precision :: R
     double precision :: H
@@ -231,11 +213,32 @@
     double precision :: PD
     double precision :: RD
     double precision :: HD
-  ! jpmodv
+    ! jpmodv
     double precision :: VP(29)
     double precision :: VS(29)
     double precision :: RA(29)
     double precision :: DEPJ(29)
+    ! locate integers
+    integer :: IPLOCA(MKA)
+    integer :: IRLOCA(MKA)
+    integer :: IHLOCA(MKA)
+    integer :: IPLOCB(MKB)
+    integer :: IRLOCB(MKB)
+    integer :: IHLOCB(MKB)
+    ! vmod3D integers
+    integer :: NPA
+    integer :: NRA
+    integer :: NHA
+    integer :: NPB
+    integer :: NRB
+    integer :: NHB
+    ! weight integers
+    integer :: IP
+    integer :: JP
+    integer :: KP
+    integer :: IP1
+    integer :: JP1
+    integer :: KP1    
   end type model_jp3d_variables
   type (model_jp3d_variables) JP3DM_V
 ! model_jp3d_variables
@@ -243,17 +246,17 @@
 ! model_sea99_s_variables
   type model_sea99_s_variables
     sequence
-    integer :: sea99_ndep
-    integer :: sea99_nlat
-    integer :: sea99_nlon
-    integer :: dummy_pad ! padding 4 bytes to align the structure
+    double precision :: sea99_vs(100,100,100)
+    double precision :: sea99_depth(100)
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
     double precision :: alonmin
     double precision :: alonmax
-    double precision :: sea99_vs(100,100,100)
-    double precision :: sea99_depth(100)
+    integer :: sea99_ndep
+    integer :: sea99_nlat
+    integer :: sea99_nlon
+    integer :: dummy_pad ! padding 4 bytes to align the structure    
  end type model_sea99_s_variables
  type (model_sea99_s_variables) SEA99M_V
 ! model_sea99_s_variables
@@ -279,7 +282,7 @@
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -305,10 +308,10 @@
 ! model_attenuation_storage_var
   type model_attenuation_storage_var
     sequence
-    integer Q_resolution
-    integer Q_max
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
+    integer Q_resolution
+    integer Q_max    
   end type model_attenuation_storage_var
   type (model_attenuation_storage_var) AM_S
 ! model_attenuation_storage_var
@@ -316,8 +319,6 @@
 ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
-    integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids
     double precision Q  ! Q     = Desired Value of Attenuation or Q
     double precision iQ ! iQ    = 1/Q
     double precision, dimension(:), pointer ::  f
@@ -325,8 +326,9 @@
     double precision, dimension(:), pointer :: tau_s
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
+    integer nf          ! nf    = Number of Frequencies
+    integer nsls        ! nsls  = Number of Standard Linear Solids    
   end type attenuation_simplex_variables
-
   type(attenuation_simplex_variables) AS_V
 ! attenuation_simplex_variables
 
@@ -337,7 +339,7 @@
     double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth
     double precision :: dlat,dlon,ddepth,max_dvs,min_dvs
     integer :: num_v,num_latperlon,num_lonperdepth
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_ppm_variables
   type (model_ppm_variables) PPM_V
 
@@ -346,7 +348,11 @@
     sequence
     ! tomographic iteration model on GLL points
     double precision :: scale_velocity,scale_density
+    ! isotropic model
     real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
+    ! transverse isotropic model
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vsv_new,vpv_new, &
+      vsh_new,vph_new,eta_new
     logical :: MODEL_GLL
     logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
   end type model_gll_variables
@@ -362,9 +368,19 @@
   integer, parameter :: maxver=1000
   integer, parameter :: maxhpa=2
 
-  integer numker
-  integer numhpa,numcof
-  integer ihpa,lmax,nylm
+  real(kind=4) conpt(maxver,maxhpa)
+  real(kind=4) xlaspl(maxcoe,maxhpa)
+  real(kind=4) xlospl(maxcoe,maxhpa)
+  real(kind=4) radspl(maxcoe,maxhpa)
+  real(kind=4) coe(maxcoe,maxker)
+  real(kind=4) vercof(maxker)
+  real(kind=4) vercofd(maxker)
+
+  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
+  real(kind=4) wk1(maxl+1)
+  real(kind=4) wk2(maxl+1)
+  real(kind=4) wk3(maxl+1)
+
   integer lmxhpa(maxhpa)
   integer itypehpa(maxhpa)
   integer ihpakern(maxker)
@@ -374,30 +390,20 @@
 
   integer nconpt(maxhpa),iver
   integer iconpt(maxver,maxhpa)
-  real(kind=4) conpt(maxver,maxhpa)
-
-  real(kind=4) xlaspl(maxcoe,maxhpa)
-  real(kind=4) xlospl(maxcoe,maxhpa)
-  real(kind=4) radspl(maxcoe,maxhpa)
-  real(kind=4) coe(maxcoe,maxker)
-  character(len=80) hsplfl(maxhpa)
-  character(len=40) dskker(maxker)
-  real(kind=4) vercof(maxker)
-  real(kind=4) vercofd(maxker)
-
-  real(kind=4) ylmcof((maxl+1)**2,maxhpa)
-  real(kind=4) wk1(maxl+1)
-  real(kind=4) wk2(maxl+1)
-  real(kind=4) wk3(maxl+1)
+  integer numker
+  integer numhpa,numcof
+  integer ihpa,lmax,nylm
 
   character(len=80) kerstr
   character(len=80) refmdl
   character(len=40) varstr(maxker)
+  character(len=80) hsplfl(maxhpa)
+  character(len=40) dskker(maxker)
 
 
 ! for ellipticity
-  integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
+  integer nspl
 
 ! model parameter and flags
   integer REFERENCE_1D_MODEL,THREE_D_MODEL
@@ -1297,32 +1303,72 @@
 
   ! model GLL
   if( MGLL_V%MODEL_GLL .and. iregion_code == IREGION_CRUST_MANTLE ) then
-    !check
-    if( ispec > size(MGLL_V%vp_new(1,1,1,:)) ) then
-      call exit_MPI(myrank,'model gll: ispec too big')
-    endif
-    ! takes stored gll values from file
-    if(CUSTOM_REAL == SIZE_REAL) then
-      vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
-      vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
-      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+    
+    ! isotropic model 
+    if( .not. TRANSVERSE_ISOTROPY ) then     
+    
+      !check
+      if( ispec > size(MGLL_V%vp_new(1,1,1,:)) ) then
+        call exit_MPI(myrank,'model gll: ispec too big')
+      endif
+    
+      ! takes stored gll values from file
+      if(CUSTOM_REAL == SIZE_REAL) then
+        vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
+        vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
+        rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+      else
+        vp = MGLL_V%vp_new(i,j,k,ispec)
+        vs = MGLL_V%vs_new(i,j,k,ispec)
+        rho = MGLL_V%rho_new(i,j,k,ispec)
+      endif
+      ! non-dimensionalize
+      vp = vp * MGLL_V%scale_velocity
+      vs = vs * MGLL_V%scale_velocity
+      rho = rho * MGLL_V%scale_density
+      ! isotropic model
+      vpv = vp
+      vph = vp
+      vsv = vs
+      vsh = vs
+      rho = rho
+      dvp = 0.0d0
+      eta_aniso = 1.0d0
+    
+    ! transverse isotropic model
     else
-      vp = MGLL_V%vp_new(i,j,k,ispec)
-      vs = MGLL_V%vs_new(i,j,k,ispec)
-      rho = MGLL_V%rho_new(i,j,k,ispec)
+    
+      !check
+      if( ispec > size(MGLL_V%vpv_new(1,1,1,:)) ) then
+        call exit_MPI(myrank,'model gll: ispec too big')
+      endif
+    
+      ! takes stored gll values from file
+      if(CUSTOM_REAL == SIZE_REAL) then
+        vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
+        vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
+        vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
+        vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
+        rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+        eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
+      else
+        vph = MGLL_V%vph_new(i,j,k,ispec)
+        vsh = MGLL_V%vsh_new(i,j,k,ispec)
+        vpv = MGLL_V%vpv_new(i,j,k,ispec)
+        vsv = MGLL_V%vsv_new(i,j,k,ispec)
+        rho = MGLL_V%rho_new(i,j,k,ispec)
+        eta_aniso = MGLL_V%eta_new(i,j,k,ispec)
+      endif
+      ! non-dimensionalize
+      ! transverse isotropic model 
+      vpv = vpv * MGLL_V%scale_velocity
+      vph = vph * MGLL_V%scale_velocity
+      vsv = vsv * MGLL_V%scale_velocity
+      vsh = vsh * MGLL_V%scale_velocity
+      rho = rho * MGLL_V%scale_density
+      dvp = 0.0d0
     endif
-    ! non-dimensionalize
-    vp = vp * MGLL_V%scale_velocity
-    vs = vs * MGLL_V%scale_velocity
-    rho = rho * MGLL_V%scale_density
-    ! isotropic model
-    vpv = vp
-    vph = vp
-    vsv = vs
-    vsh = vs
-    rho = rho
-    dvp = 0.0d0
-    eta_aniso = 1.0d0
+    
   endif ! MODEL_GLL
 
   end subroutine meshfem3D_models_impose_val

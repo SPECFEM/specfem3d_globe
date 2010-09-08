@@ -453,6 +453,16 @@
 
             else
 
+! note : mesh is built such that anisotropic elements are created first in anisotropic layers,
+!           thus they are listed first ( see in create_regions_mesh.f90: perm_layer() ordering )
+!           this is therefore still in bounds of 1:NSPECMAX_TISO_MANTLE even if NSPECMAX_TISO is less than NSPEC
+
+              ! uncomment to debug
+              !if ( ispec > NSPECMAX_TISO_MANTLE ) then
+              !  print*,'error tiso: ispec = ',ispec,'max = ',NSPECMAX_TISO_MANTLE
+              !  call exit_mpi(0,'error tiso ispec bounds')
+              !endif
+              
               ! use Kappa and mu from transversely isotropic model
               kappavl = kappavstore(i,j,k,ispec)
               muvl = muvstore(i,j,k,ispec)
