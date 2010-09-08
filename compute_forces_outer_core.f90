@@ -46,10 +46,10 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: displfluid,accelfluid
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displfluid,accelfluid
 
 ! divergence of displacement
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: div_displfluid
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displfluid
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: ibool

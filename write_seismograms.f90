@@ -635,7 +635,7 @@
       if (NZSEC >= 60) then
        time_sec = jda*24*3600 + ho*3600 + mi*60 + int(sec+t_shift)
        NZJDAY   = int(time_sec/(24*3600))
-       NZHOUR   = int(mod(time_sec,24)/3600)
+       NZHOUR   = int(mod(time_sec,24*3600)/3600)
        NZMIN    = int(mod(time_sec,3600)/60)
        NZSEC    = mod(time_sec,60)
        if (NZJDAY  > 365 .and. .not. is_leap_year(NZYEAR)) then

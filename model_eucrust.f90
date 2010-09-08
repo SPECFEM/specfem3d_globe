@@ -50,7 +50,7 @@
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -94,7 +94,7 @@
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -163,7 +163,7 @@
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -212,7 +212,7 @@
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
@@ -306,7 +306,7 @@
       eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
       eucrust_basement,eucrust_ucdepth
     integer :: num_eucrust
-    integer :: dummy ! padding 4 bytes to align the structure
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 

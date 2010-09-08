@@ -454,6 +454,17 @@
   if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
      call exit_MPI(myrank, 'anisotropic model is not implemented for kernel simulations yet')
 
+  ! checks model for transverse isotropic kernel computation
+  if( SAVE_TRANSVERSE_KL ) then
+    if( ANISOTROPIC_3D_MANTLE_VAL ) then
+        call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL: Earth model not supported yet')
+    endif
+    if( SIMULATION_TYPE == 3 ) then
+      if( .not. ANISOTROPIC_KL ) then
+        call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL: needs anisotropic kernel calculations')      
+      endif
+    endif
+  endif
 
   ! make ellipticity
   if(ELLIPTICITY_VAL) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)

@@ -54,18 +54,18 @@
   ! model_sea99_s_variables
   type model_sea99_s_variables
     sequence
-    integer :: sea99_ndep
-    integer :: sea99_nlat
-    integer :: sea99_nlon
-    integer :: dummy_pad ! padding 4 bytes to align the structure
+    double precision :: sea99_vs(100,100,100)
+    double precision :: sea99_depth(100)
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
     double precision :: alonmin
     double precision :: alonmax
-    double precision :: sea99_vs(100,100,100)
-    double precision :: sea99_depth(100)
-  end type model_sea99_s_variables
+    integer :: sea99_ndep
+    integer :: sea99_nlat
+    integer :: sea99_nlon
+    integer :: dummy_pad ! padding 4 bytes to align the structure    
+ end type model_sea99_s_variables
 
   type (model_sea99_s_variables) SEA99M_V
   ! model_sea99_s_variables
@@ -103,18 +103,18 @@
   ! model_sea99_s_variables
   type model_sea99_s_variables
     sequence
-    integer :: sea99_ndep
-    integer :: sea99_nlat
-    integer :: sea99_nlon
-    integer :: dummy_pad ! padding 4 bytes to align the structure
+    double precision :: sea99_vs(100,100,100)
+    double precision :: sea99_depth(100)
     double precision :: sea99_ddeg
     double precision :: alatmin
     double precision :: alatmax
     double precision :: alonmin
     double precision :: alonmax
-    double precision :: sea99_vs(100,100,100)
-    double precision :: sea99_depth(100)
-  end type model_sea99_s_variables
+    integer :: sea99_ndep
+    integer :: sea99_nlat
+    integer :: sea99_nlon
+    integer :: dummy_pad ! padding 4 bytes to align the structure    
+ end type model_sea99_s_variables
 
   type (model_sea99_s_variables) SEA99M_V
   ! model_sea99_s_variables
@@ -167,19 +167,19 @@
 
   ! model_sea99_s_variables
   type model_sea99_s_variables
-     sequence
-     integer :: sea99_ndep
-     integer :: sea99_nlat
-     integer :: sea99_nlon
-     integer :: dummy_pad ! padding 4 bytes to align the structure
-     double precision :: sea99_ddeg
-     double precision :: alatmin
-     double precision :: alatmax
-     double precision :: alonmin
-     double precision :: alonmax
-     double precision :: sea99_vs(100,100,100)
-     double precision :: sea99_depth(100)
-  end type model_sea99_s_variables
+    sequence
+    double precision :: sea99_vs(100,100,100)
+    double precision :: sea99_depth(100)
+    double precision :: sea99_ddeg
+    double precision :: alatmin
+    double precision :: alatmax
+    double precision :: alonmin
+    double precision :: alonmax
+    integer :: sea99_ndep
+    integer :: sea99_nlat
+    integer :: sea99_nlon
+    integer :: dummy_pad ! padding 4 bytes to align the structure    
+ end type model_sea99_s_variables
 
   type (model_sea99_s_variables) SEA99M_V
   ! model_sea99_s_variables
