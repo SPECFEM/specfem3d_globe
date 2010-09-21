@@ -489,9 +489,9 @@
 
   ! deville routines only implemented for NGLLX = NGLLY = NGLLZ = 5
   if( NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5 ) then
-    write(IOUT,*) 'logical, parameter :: USE_DEVILLE_VAL = .true.'
+    write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.'
   else
-    write(IOUT,*) 'logical, parameter :: USE_DEVILLE_VAL = .false.'
+    write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .false.'
   endif
 
   ! backward/reconstruction of forward wavefield: 

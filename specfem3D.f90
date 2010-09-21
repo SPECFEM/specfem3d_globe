@@ -1957,7 +1957,7 @@
       time = (dble(it-1)*DT-t0)*scale_t_inv
     endif
 
-    if( USE_DEVILLE_VAL ) then
+    if( USE_DEVILLE_PRODUCTS_VAL ) then
       ! uses deville et al. (2002) routine
       call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
            A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
@@ -1995,7 +1995,7 @@
         time = (dble(NSTEP-it)*DT-t0)*scale_t_inv
       endif
 
-      if( USE_DEVILLE_VAL ) then
+      if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses deville et al. (2002) routine
         call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
@@ -2174,7 +2174,7 @@
 
     ! for anisotropy and gravity, x y and z contain r theta and phi
 
-    if( USE_DEVILLE_VAL ) then
+    if( USE_DEVILLE_PRODUCTS_VAL ) then
       call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -2228,7 +2228,7 @@
 
     if (SIMULATION_TYPE == 3) then
     ! for anisotropy and gravity, x y and z contain r theta and phi
-      if( USE_DEVILLE_VAL ) then
+      if( USE_DEVILLE_PRODUCTS_VAL ) then
         call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -2310,7 +2310,7 @@
 
 
     ! deville routine
-    if( USE_DEVILLE_VAL ) then
+    if( USE_DEVILLE_PRODUCTS_VAL ) then
       call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
@@ -2349,7 +2349,7 @@
     endif
 
     if (SIMULATION_TYPE == 3) then
-      if( USE_DEVILLE_VAL ) then
+      if( USE_DEVILLE_PRODUCTS_VAL ) then
         call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &

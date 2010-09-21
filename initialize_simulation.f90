@@ -480,7 +480,12 @@
          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
 
-  if( USE_DEVILLE_VAL ) then
+  if( USE_DEVILLE_PRODUCTS_VAL ) then
+
+  ! check that optimized routines from Deville et al. (2002) can be used
+    if(NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5) &
+      stop 'Deville et al. (2002) routines can only be used if NGLLX = NGLLY = NGLLZ = 5'
+
     ! define transpose of derivation matrix
     do j = 1,NGLLY
       do i = 1,NGLLX
