@@ -47,7 +47,7 @@
 
 ! list of corners defining the edges
 ! the edge number is sorted according to the numbering convention defined in file hex_nodes.f90
-! as well as in DATA/util/YYYYYYYYYYYYYYYYYYYYYYYYYYY DK DK UGLY YYYYYYYYYYYYYYYYYYY
+! as well as in UTILS/chunk_notes_scanned/numbering_convention_27_nodes.tif
 
   list_corners_edge( 1,1) = 1
   list_corners_edge( 1,2) = 2
@@ -87,7 +87,7 @@
 
 ! list of corners defining the faces
 ! the face number is sorted according to the numbering convention defined in file hex_nodes.f90
-! as well as in DATA/util/YYYYYYYYYYYYYYYYYYYYYYYYYYY DK DK UGLY YYYYYYYYYYYYYYYYYYY
+! as well as in UTILS/chunk_notes_scanned/numbering_convention_27_nodes.tif
 
   list_corners_face(1,1) = 1
   list_corners_face(1,2) = 2
