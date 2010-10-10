@@ -4,6 +4,10 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch:
 
 Things that could be done in a future version:
 
+- merge SPECFEM3D_GLOBE into SPECFEM3D, i.e. create a single package and see the mesh of the Earth as a general mesh that we would decompose in parallel using PT-Scotch. Problem: would this scale for huge global Earth simulations, e.g. at a seismic period of 1 second on 200,000 processor cores?
+
+- use a more accurate time scheme: either symplectic schemes (but there could be a problem in the viscoelastic case, see below) or else Runge Kutta RK4, which is non staggered and would thus solve the approximate implementation of the displacement gradient that I used to implement attenuation back in 1999.
+
 Subject: Re: SEM attenuation
 Date: Fri, 23 Jul 2010 12:16:40 +0200
 From: Tarje Nissen-Meyer <tarjen@ethz.ch>
@@ -44,7 +48,7 @@ On 23/07/10 02:21, Dimitri Komatitsch wrote:
 > Thank you,
 > Dimitri.
 
-- symplectic time scheme (will be done by Tarje Nissen-Meyer and/or Jean-Paul Ampuero) (would be useful in the 2D version of the code as well):
+- use RK4 or symplectic time scheme (will be done by Tarje Nissen-Meyer and/or Jean-Paul Ampuero) (would be useful in the 2D version of the code as well):
 Hi Jeroen, Perfect. I think talking to Jean-Paul Ampuero would be useful
 as well because in Utrecht last year he had told us that
 he had implemented some nice 4th-order symplectic schemes
@@ -95,7 +99,7 @@ This seems to be a nice outlook for a future version update.
 - use a potential of (rho * u) instead of u in the fluid, in case of
   fluid-fluid discontinuities
 
-- compatible with helioseismology / general Cowling formulation (will be done
+- make the code compatible with helioseismology / general Cowling formulation (will be done
   with Tarje Nissen-Meyer)
 
 - could be done by Vala:
@@ -137,8 +141,6 @@ Things to add to the manual:
 
 - ajouter les courbes de dispersion et stabilite au manuel pour tous les NEX classiques (160, 256, 380 etc) dans un Appendix special la-dessus; dire dans cet appendix que dans le outer core ce n'est bien sur pas Vs qui est represente mais Vp / 1.25 (on a pris 25 % de marge car on travaille en velocity potential dans le outer core, ce qui demande un echantillonnage un peu meilleur)
 
-- supprimer sections qui decrivent write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront ete fusionnes
-
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------
@@ -159,4 +161,6 @@ turned on." Solution implemented by Daniel Peter from Princeton Univ (USA) on Fe
 name, e.g. "s20rts_1Dcrust" instead of "s20rts" in the Par_file, it
 will just take the crust from the corresponding 1D reference model
 (which is PREM for his s20rts model). Daniel. "
+
+- Purposely not done because we decided not to merge the mesher with the solver, after trying in version 4.1_beta and noticing that the merged code was difficult to write and to maintain: supprimer sections qui decrivent write_AVS_mesh_quality, check_buffers*.f90, check_mesh_quality*.f90 etc du manuel une fois que le mesher et le solver auront ete fusionnes
 
