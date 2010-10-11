@@ -638,13 +638,14 @@
   real(kind=CUSTOM_REAL) maxlat,maxlon,maxdepth
   real(kind=CUSTOM_REAL) minlat,minlon,mindepth
   real(kind=CUSTOM_REAL) radius,theta,phi,lat,lon,r_depth,margin_v,margin_h
+  real(kind=CUSTOM_REAL) dist_h,dist_v
 
 !----------------------------------------------------------------------------------------------------
   ! smoothing parameters
   logical,parameter:: GAUSS_SMOOTHING = .false. ! set to true to use this smoothing routine
 
   sigma_h = 100.0  ! km, horizontal
-  sigma_v = 50.0   ! km, vertical
+  sigma_v = 100.0   ! km, vertical
 
   ! check if smoothing applies
   if( .not. GAUSS_SMOOTHING ) return
@@ -940,9 +941,18 @@
       ! --- only double loop over the elements in the search radius ---
       do ispec2 = 1, nspec
 
-        ! checks distance between centers of elements
-        if ( (cx(ispec2)-cx0(ispec))**2 + (cy(ispec2)-cy0(ispec))** 2 > sigma_h3 &
-            .or. (cz(ispec2)-cz0(ispec))** 2 > sigma_v3 ) cycle
+        ! calculates horizontal and vertical distance between two element centers
+        
+        ! vector approximation
+        call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
+                          cx(ispec2),cy(ispec2),cz(ispec2))
+        
+        ! note: distances and sigmah, sigmav are normalized by R_EARTH
+                                  
+        ! checks distance between centers of elements        
+        if ( dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
+
+
 
         factor(:,:,:) = jacobian(:,:,:,ispec2) * wgll_cube(:,:,:) ! integration factors
 
@@ -951,14 +961,18 @@
           do j = 1, NGLLY
             do i = 1, NGLLX
 
-              x0 = xl(i,j,k,ispec)
-              y0 = yl(i,j,k,ispec)
-              z0 = zl(i,j,k,ispec) ! current point (i,j,k,ispec)
+              ! current point (i,j,k,ispec) location, cartesian coordinates
+              x0 = xl(i,j,k,ispec) 
+              y0 = yl(i,j,k,ispec) 
+              z0 = zl(i,j,k,ispec)               
 
-              ! gaussian function
-              exp_val(:,:,:) = exp( -(xx(:,:,:,ispec2)-x0)**2/(2.0*sigma_h2) &
-                                    -(yy(:,:,:,ispec2)-y0)**2/(2.0*sigma_h2) &
-                                    -(zz(:,:,:,ispec2)-z0)**2/(2.0*sigma_v2) ) * factor(:,:,:)
+              ! calculate weights based on gaussian smoothing
+              call smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
+                      xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
+              
+              ! adds GLL integration weights
+              exp_val(:,:,:) = exp_val(:,:,:) * factor(:,:,:)
+
 
               ! smoothed kernel values
               tk_rho(i,j,k,ispec) = tk_rho(i,j,k,ispec) + sum(exp_val(:,:,:) * ks_rho(:,:,:,ispec2))
@@ -996,7 +1010,7 @@
   margin_v = sigma_v*R_EARTH/1000.0 ! in km
   margin_h = sigma_h*R_EARTH/1000.0 * 180.0/(R_EARTH_KM*PI) ! in degree
 
-  ! compute the smoothed kernel values
+  ! computes the smoothed values
   do ispec = 1, nspec
 
     ! depth of given radius (in km)
@@ -1088,6 +1102,102 @@
 
   end subroutine
 
+!
+! -----------------------------------------------------------------------------
+!
+  subroutine smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
+                              xx_elem,yy_elem,zz_elem)
+
+  implicit none
+  include "constants.h"
+  
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: exp_val
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: xx_elem, yy_elem, zz_elem  
+  real(kind=CUSTOM_REAL),intent(in) :: x0,y0,z0,sigma_h2,sigma_v2
+  integer,intent(in) :: ispec2
+
+  ! local parameters
+  integer :: ii,jj,kk
+  real(kind=CUSTOM_REAL) :: dist_h,dist_v
+  !real(kind=CUSTOM_REAL) :: r0,r1,theta1
+
+  ! >>>>>  
+  ! uniform sigma
+  ! just to avoid compiler warning
+  ii = ispec2 
+  !exp_val(:,:,:) = exp( -((xx(:,:,:,ispec2)-x0)**2+(yy(:,:,:,ispec2)-y0)**2 &
+  !          +(zz(:,:,:,ispec2)-z0)**2 )/(2*sigma2) )*factor(:,:,:)
+
+  ! from basin code smoothing:
+  ! gaussian function
+  !exp_val(:,:,:) = exp( -(xx(:,:,:,ispec2)-x0)**2/(sigma_h2) &
+  !                      -(yy(:,:,:,ispec2)-y0)**2/(sigma_h2) &
+  !                      -(zz(:,:,:,ispec2)-z0)**2/(sigma_v2) ) * factor(:,:,:)
+  ! >>>>>
+  
+  do kk = 1, NGLLZ 
+    do jj = 1, NGLLY
+      do ii = 1, NGLLX
+        ! point in second slice  
+        
+        ! vector approximation:
+        call get_distance_vec(dist_h,dist_v,x0,y0,z0, &
+            xx_elem(ii,jj,kk),yy_elem(ii,jj,kk),zz_elem(ii,jj,kk))
+            
+        ! gaussian function
+        exp_val(ii,jj,kk) = exp( - dist_h*dist_h/sigma_h2 &
+                                  - dist_v*dist_v/sigma_v2 )    ! * factor(ii,jj,kk)
+
+      enddo
+    enddo
+  enddo
+  
+  end subroutine smoothing_weights_vec
+
+
+!
+! -----------------------------------------------------------------------------
+!
+
+  subroutine get_distance_vec(dist_h,dist_v,x0,y0,z0,x1,y1,z1)
+
+! returns vector lengths as distances in radial and horizontal direction 
+
+  implicit none
+  include "constants.h"
+  
+  real(kind=CUSTOM_REAL),intent(out) :: dist_h,dist_v
+  real(kind=CUSTOM_REAL),intent(in) :: x0,y0,z0,x1,y1,z1
+  
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: r0,r1,alpha
+  real(kind=CUSTOM_REAL) :: vx,vy,vz
+  
+  ! vertical distance 
+  r0 = sqrt( x0*x0 + y0*y0 + z0*z0 ) ! length of first position vector
+  r1 = sqrt( x1*x1 + y1*y1 + z1*z1 )  
+  dist_v = r1 - r0 
+  ! only for flat earth with z in depth: dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
+  
+  ! horizontal distance 
+  ! length of vector from point 0 to point 1 
+  ! assuming small earth curvature  (since only for neighboring elements)
+  
+  ! scales r0 to have same length as r1
+  alpha = r1 / r0
+  vx = alpha * x0
+  vy = alpha * y0 
+  vz = alpha * z0
+  
+  ! vector in horizontal between new r0 and r1
+  vx = x1 - vx
+  vy = y1 - vy
+  vz = z1 - vz
+  
+  ! distance is vector length        
+  dist_h = sqrt( vx*vx + vy*vy + vz*vz )
+  
+  end subroutine get_distance_vec
 
 !
 !--------------------------------------------------------------------------------------------------

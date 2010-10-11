@@ -198,10 +198,16 @@
   ! read that STATIONS file on the master
   if(myrank == 0) then
     call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-    open(unit=1,file=STATIONS,status='old',action='read')
+    open(unit=1,file=STATIONS,status='old',action='read',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening STATIONS file')
+    
     ! loop on all the stations to read station information
     do irec = 1,nrec
-      read(1,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+      read(1,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+      if( ier /= 0 ) then
+        write(IMAIN,*) 'error reading in station ',irec
+        call exit_MPI(myrank,'error reading in station in STATIONS file')
+      endif
     enddo
     ! close receiver file
     close(1)

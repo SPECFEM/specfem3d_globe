@@ -501,6 +501,10 @@
         ! could use EUcrust07 Vp crustal structure
         call model_eucrust_broadcast(myrank,EUCM_V)
 
+      case(THREE_D_MODEL_GAPP2)
+        ! GAP model
+        call model_gapp2_broadcast(myrank)
+
       case default
         call exit_MPI(myrank,'3D model not defined')
 
@@ -903,6 +907,15 @@
         vsv=vsv*(1.0d0+dvs)
         vsh=vsh*(1.0d0+dvs)
         rho=rho*(1.0d0+drho)
+
+      case(THREE_D_MODEL_GAPP2 )
+        ! 3D GAP model (Obayashi)
+        call mantle_gapmodel(r_used,theta,phi,dvs,dvp,drho)
+        vpv=vpv*(1.0d0+dvp)
+        vph=vph*(1.0d0+dvp)
+        vsv=vsv*(1.0d0+dvs)
+        vsh=vsh*(1.0d0+dvs)
+        rho=rho*(1.0d0+drho)        
 
       case default
         stop 'unknown 3D Earth model in meshfem3D_models_get3Dmntl_val() '
@@ -1313,6 +1326,7 @@
       endif
     
       ! takes stored gll values from file
+      ! ( note that these values are non-dimensionalized)
       if(CUSTOM_REAL == SIZE_REAL) then
         vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
         vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
@@ -1322,17 +1336,12 @@
         vs = MGLL_V%vs_new(i,j,k,ispec)
         rho = MGLL_V%rho_new(i,j,k,ispec)
       endif
-      ! non-dimensionalize
-      vp = vp * MGLL_V%scale_velocity
-      vs = vs * MGLL_V%scale_velocity
-      rho = rho * MGLL_V%scale_density
       ! isotropic model
       vpv = vp
       vph = vp
       vsv = vs
       vsh = vs
       rho = rho
-      dvp = 0.0d0
       eta_aniso = 1.0d0
     
     ! transverse isotropic model
@@ -1346,28 +1355,22 @@
       ! takes stored gll values from file
       if(CUSTOM_REAL == SIZE_REAL) then
         vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
-        vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
         vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
+        vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
         vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
         rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
         eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
       else
         vph = MGLL_V%vph_new(i,j,k,ispec)
-        vsh = MGLL_V%vsh_new(i,j,k,ispec)
         vpv = MGLL_V%vpv_new(i,j,k,ispec)
+        vsh = MGLL_V%vsh_new(i,j,k,ispec)
         vsv = MGLL_V%vsv_new(i,j,k,ispec)
         rho = MGLL_V%rho_new(i,j,k,ispec)
         eta_aniso = MGLL_V%eta_new(i,j,k,ispec)
       endif
-      ! non-dimensionalize
-      ! transverse isotropic model 
-      vpv = vpv * MGLL_V%scale_velocity
-      vph = vph * MGLL_V%scale_velocity
-      vsv = vsv * MGLL_V%scale_velocity
-      vsh = vsh * MGLL_V%scale_velocity
-      rho = rho * MGLL_V%scale_density
-      dvp = 0.0d0
     endif
+    ! no mantle vp perturbation
+    dvp = 0.0d0
     
   endif ! MODEL_GLL
 

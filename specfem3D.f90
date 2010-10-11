@@ -1156,7 +1156,7 @@
     ! define local to global receiver numbering mapping
     allocate(number_receiver_global(nrec_local))
     ! define and store Lagrange interpolators at all the receivers
-    if (SIMULATION_TYPE == 2 ) then
+    if (SIMULATION_TYPE == 2) then
       nadj_hprec_local = nrec_local
     else
       nadj_hprec_local = 1
@@ -1589,10 +1589,10 @@
        normal_y_noise(:)            = 0._CUSTOM_REAL
        normal_z_noise(:)            = 0._CUSTOM_REAL
        mask_noise(:)                = 0._CUSTOM_REAL
-       
+
        call read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
                                   islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
-                                  noise_sourcearray,xigll,yigll,zigll,NSPEC2D_TOP(IREGION_CRUST_MANTLE), & 
+                                  noise_sourcearray,xigll,yigll,zigll,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
                                   NIT, ibool_crust_mantle, ibelm_top_crust_mantle, &
                                   xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                                   irec_master_noise,normal_x_noise,normal_y_noise,normal_z_noise,mask_noise)
@@ -2122,8 +2122,6 @@
       veloc_outer_core(i+3) = veloc_outer_core(i+3) + deltatover2*accel_outer_core(i+3)
     enddo
 
-
-
     if (SIMULATION_TYPE == 3) then
       call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2164,7 +2162,6 @@
       enddo
 
     endif
-
 
     ! ****************************************************
     !   big loop over all spectral elements in the solid
@@ -2226,7 +2223,7 @@
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
     endif
 
-    if (SIMULATION_TYPE == 3) then
+    if (SIMULATION_TYPE == 3 ) then
     ! for anisotropy and gravity, x y and z contain r theta and phi
       if( USE_DEVILLE_PRODUCTS_VAL ) then
         call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -2281,7 +2278,6 @@
 
       endif
     endif
-
 
     ! Stacey
     if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
@@ -2433,7 +2429,7 @@
                               normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
                               store_val_ux,store_val_uy,store_val_uz, &
                               ibelm_top_crust_mantle,ibool_crust_mantle,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-                              NIT,NSTEP-it+1,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)  
+                              NIT,NSTEP-it+1,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)
         ! be careful, since ensemble forward sources are reversals of generating wavefield "eta"
         ! hence the "NSTEP-it+1", i.e., start reading from the last timestep
         ! note the ensemble forward sources are generally distributed on the surface of the earth
@@ -2448,7 +2444,7 @@
                               normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
                               store_val_ux,store_val_uy,store_val_uz, &
                               ibelm_top_crust_mantle,ibool_crust_mantle,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-                              NIT,it,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)  
+                              NIT,it,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)
     endif
 !>YANGL
 
@@ -2570,9 +2566,6 @@
       accel_crust_mantle(3,i+3) = accel_crust_mantle(3,i+3)*rmass_crust_mantle(i+3)
     enddo
 
-
-
-
     if (SIMULATION_TYPE == 3) then
 
       ! assemble all the contributions between slices using MPI
@@ -2662,9 +2655,7 @@
         b_accel_crust_mantle(3,i+3) = b_accel_crust_mantle(3,i+3)*rmass_crust_mantle(i+3)
       enddo
 
-
     endif
-
 
     ! couples ocean with crust mantle
     if(OCEANS_VAL) &
@@ -2742,8 +2733,6 @@
       veloc_inner_core(:,i+1) = veloc_inner_core(:,i+1) + deltatover2*accel_inner_core(:,i+1)
       veloc_inner_core(:,i+2) = veloc_inner_core(:,i+2) + deltatover2*accel_inner_core(:,i+2)
     enddo
-
-
 
     if (SIMULATION_TYPE == 3) then
 ! way 1:
@@ -2834,7 +2823,7 @@
                                 seismo_current,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
                                 seismograms)
 
-    else if (SIMULATION_TYPE == 2 ) then
+    else if (SIMULATION_TYPE == 2) then
       call compute_seismograms_adjoint(NSOURCES,nrec_local,displ_crust_mantle, &
                     eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
                     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
@@ -2850,7 +2839,7 @@
                     ibool_crust_mantle,ispec_selected_source,number_receiver_global, &
                     NSTEP,it,nit_written)
 
-    else if (SIMULATION_TYPE == 3 ) then
+    else if (SIMULATION_TYPE == 3) then
       call compute_seismograms_backward(nrec_local,nrec,b_displ_crust_mantle, &
                                 nu,hxir_store,hetar_store,hgammar_store, &
                                 scale_displ,ibool_crust_mantle, &
@@ -3133,11 +3122,11 @@
                  k_bot,ibelm_top_inner_core,normal_bottom_outer_core, &
                  icb_kl_bot,fluid_solid_boundary,NSPEC2D_ICB)
 
-        icb_kl = icb_kl + (icb_kl_top - icb_kl_bot) * deltat
-      endif
+      icb_kl = icb_kl + (icb_kl_top - icb_kl_bot) * deltat
+    endif
 
-    endif ! end computing kernels
-
+  endif ! end computing kernels
+  
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -3323,7 +3312,7 @@
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,idoubling_crust_mantle, &                  
+                  eta_anisostore_crust_mantle,idoubling_crust_mantle, &
                   LOCAL_PATH)
 
 !<YANGL

@@ -1100,11 +1100,22 @@
 
   implicit none
 
-  integer icon(1)
+  integer :: ncon,nver
 
-  real(kind=4) verlat(1)
-  real(kind=4) verlon(1)
-  real(kind=4) verrad(1)
+!daniel: original
+!  integer icon(1)
+!
+!  real(kind=4) verlat(1) 
+!  real(kind=4) verlon(1)
+!  real(kind=4) verrad(1)
+!  real(kind=4) con(1)
+
+!daniel: avoiding out-of-bounds errors
+  real(kind=4) verlat(nver)
+  real(kind=4) verlon(nver)
+  real(kind=4) verrad(nver)
+  
+  integer icon(1)
   real(kind=4) con(1)
 
   double precision dd
@@ -1114,8 +1125,7 @@
   double precision ver8
   double precision xla8
 
-  integer :: ncon,iver,nver
-
+  integer :: iver
   real(kind=4) :: xlat,xlon
 
   xrad=3.14159265358979/180.d0
@@ -1243,9 +1253,15 @@
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
       else if(itypehpa(ihpa) == 2) then
         numcof=numcoe(ihpa)
-        call splcon(y,x,numcof,xlaspl(1,ihpa), &
-              xlospl(1,ihpa),radspl(1,ihpa), &
+!daniel
+!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
+!              xlospl(1,ihpa),radspl(1,ihpa), &
+!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+
+        call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
+              xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+
       else
         write(6,"('problem 1')")
       endif
@@ -1397,9 +1413,17 @@
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
       else if(itypehpa(ihpa) == 2) then
         numcof=numcoe(ihpa)
-        call splcon(y,x,numcof,xlaspl(1,ihpa), &
-              xlospl(1,ihpa),radspl(1,ihpa), &
+
+!daniel
+!        call splcon(y,x,numcof,xlaspl(1,ihpa), &
+!              xlospl(1,ihpa),radspl(1,ihpa), &
+!              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+
+        call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
+              xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+              
+              
       else
         write(6,"('problem 1')")
       endif

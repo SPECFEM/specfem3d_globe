@@ -129,6 +129,7 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/model_jp1d.o \
 	$O/model_jp3d.o \
 	$O/model_ppm.o \
+	$O/model_gapp2.o \
 	$O/model_prem.o \
 	$O/model_1dref.o \
 	$O/model_s20rts.o \
@@ -808,6 +809,9 @@ $O/model_jp3d.o: constants.h $S/model_jp3d.f90
 
 $O/model_ppm.o: constants.h $S/model_ppm.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_ppm.o ${FCFLAGS_f90} $S/model_ppm.f90
+
+$O/model_gapp2.o: constants.h $S/model_gapp2.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/model_gapp2.o ${FCFLAGS_f90} $S/model_gapp2.f90
 
 $O/model_s20rts.o: constants.h $S/model_s20rts.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_s20rts.o ${FCFLAGS_f90} $S/model_s20rts.f90

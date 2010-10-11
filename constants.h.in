@@ -352,6 +352,7 @@
   integer, parameter :: THREE_D_MODEL_PPM  = 9     ! format for point profile models
   integer, parameter :: THREE_D_MODEL_GLL  = 10    ! format for iterations with GLL mesh
   integer, parameter :: THREE_D_MODEL_S40RTS = 11
+  integer, parameter :: THREE_D_MODEL_GAPP2  = 12
 
 ! define flag for regions of the global Earth for attenuation
   integer, parameter :: NUM_REGIONS_ATTENUATION = 5

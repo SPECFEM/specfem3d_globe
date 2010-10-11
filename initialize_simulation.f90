@@ -411,18 +411,18 @@
 
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999)  &
     call exit_MPI(myrank, 'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
-  
-  if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then  
+
+  if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
     if ( ATTENUATION_VAL) then
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have USE_ATTENUATION_MIMIC set by xcreate_header_file
       if( USE_ATTENUATION_MIMIC .eqv. .false. ) &
-        call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17')
+        call exit_MPI(myrank,'error in compiled attenuation parameters, please recompile solver 17b')
 
       ! user output
       if( myrank == 0 ) write(IMAIN,*) 'incorporates ATTENUATION for time-reversed simulation'
-    endif    
-  
+    endif
+
     ! checks adjoint array dimensions
     if(NSPEC_CRUST_MANTLE_ADJOINT /= NSPEC_CRUST_MANTLE &
       .or. NSPEC_OUTER_CORE_ADJOINT /= NSPEC_OUTER_CORE &
@@ -438,7 +438,7 @@
     if (NSPEC_CRUST_MANTLE_ATTENUAT /= NSPEC_CRUST_MANTLE) &
        call exit_MPI(myrank, 'NSPEC_CRUST_MANTLE_ATTENUAT /= NSPEC_CRUST_MANTLE, exit')
     if (NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE) &
-       call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')       
+       call exit_MPI(myrank, 'NSPEC_INNER_CORE_ATTENUATION /= NSPEC_INNER_CORE, exit')
   endif
 
   ! checks strain storage
@@ -448,7 +448,7 @@
       call exit_MPI(myrank, 'error in compiled compute_and_store_strain parameter, please recompile solver 19')
   else
     if( COMPUTE_AND_STORE_STRAIN .neqv. .false. ) &
-      call exit_MPI(myrank, 'error in compiled compute_and_store_strain parameter, please recompile solver 20')    
+      call exit_MPI(myrank, 'error in compiled compute_and_store_strain parameter, please recompile solver 20')
   endif
 
   if (SIMULATION_TYPE == 3 .and. (ANISOTROPIC_3D_MANTLE_VAL .or. ANISOTROPIC_INNER_CORE_VAL)) &
@@ -461,7 +461,7 @@
     endif
     if( SIMULATION_TYPE == 3 ) then
       if( .not. ANISOTROPIC_KL ) then
-        call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL: needs anisotropic kernel calculations')      
+        call exit_mpi(myrank,'error SAVE_TRANSVERSE_KL: needs anisotropic kernel calculations')
       endif
     endif
   endif

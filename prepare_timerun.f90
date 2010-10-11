@@ -364,7 +364,7 @@
         two_omega_earth = - 2.d0 * TWO_PI / (HOURS_PER_DAY * 3600.d0 * scale_t_inv)
       endif
     endif
-    
+
     A_array_rotation = 0._CUSTOM_REAL
     B_array_rotation = 0._CUSTOM_REAL
 

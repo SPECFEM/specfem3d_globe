@@ -141,7 +141,8 @@
   ! checks with '_1Dcrust' option
   impose_1Dcrust = .false.
   ending_1Dcrust = ' '
-  if( len_trim(MODEL_ROOT) > 8 ) ending_1Dcrust = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
+  if( len_trim(MODEL_ROOT) > 8 ) &
+    ending_1Dcrust = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
   if( ending_1Dcrust == '_1Dcrust' ) then
     impose_1Dcrust = .true.
     ! in case it has an ending for the inner core, remove it from the name
@@ -386,6 +387,15 @@
     ! (not done here because we will use mgll_v%model_gll flag to identify this
     !  model, based upon the s29ea model, but putting mgll_v as parameter to this
     !  routine involves too many changes. )
+
+  else if(MODEL == 'gapp2') then
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ISOTROPIC_3D_MANTLE = .true.
+    ONE_CRUST = .true.
+    REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+    THREE_D_MODEL = THREE_D_MODEL_GAPP2
+    TRANSVERSE_ISOTROPY = .true.
 
   else
     print*
