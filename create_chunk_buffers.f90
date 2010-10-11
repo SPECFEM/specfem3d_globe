@@ -161,6 +161,19 @@
     write(IMAIN,*)
   endif
 
+  ! initializes counters
+  NUM_FACES = 0
+  NUM_MSG_TYPES = 0
+  iproc_xi_send = 0
+  iproc_xi_receive = 0
+  iproc_eta_send = 0
+  iproc_eta_receive = 0
+  iproc_edge_send = 0
+  iproc_edge_receive = 0
+  iedge = 0
+  ichunk_receive = 0
+  ichunk_send = 0  
+
 ! number of corners and faces shared between chunks and number of message types
   if(NCHUNKS == 1 .or. NCHUNKS == 2) then
     NCORNERSCHUNKS = 1

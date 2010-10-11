@@ -105,8 +105,8 @@
 
   integer :: SIMULATION_TYPE
   logical :: SAVE_FORWARD,MOVIE_VOLUME
-  
-  
+
+
 ! copy number of elements and points in an include file for the solver
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
   open(unit=IOUT,file=HEADER_FILE,status='unknown')
@@ -494,9 +494,10 @@
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .false.'
   endif
 
-  ! backward/reconstruction of forward wavefield: 
-  ! can only mimic attenuation effects on velocity at this point, since no full wavefield snapshots are stored  
+  ! backward/reconstruction of forward wavefield:
+  ! can only mimic attenuation effects on velocity at this point, since no full wavefield snapshots are stored
   if((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+
     ! attenuation mimic:
     ! mimicking effect of attenuation on apparent velocities, not amplitudes. that is,
     ! phase shifts should be correctly accounted for, but amplitudes will differ in adjoint simulations
@@ -505,9 +506,11 @@
     else
       write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .false.'
     endif
-    
+
   else
-    write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .false.'  
+
+    ! calculates full attenuation (phase & amplitude effects) if used
+    write(IOUT,*) 'logical, parameter :: USE_ATTENUATION_MIMIC = .false.'
   endif
 
   ! attenuation and/or adjoint simulations

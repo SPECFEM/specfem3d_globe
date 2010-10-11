@@ -51,24 +51,24 @@
   include "constants.h"
 
 ! model_attenuation_variables
-  type model_attenuation_variables
-    sequence
-    double precision min_period, max_period
-    double precision                          :: QT_c_source        ! Source Frequency
-    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-    double precision, dimension(:), pointer   :: Qr                 ! Radius
-    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-    integer, dimension(:), pointer            :: interval_Q                 ! Steps
-    integer                                   :: Qn                 ! Number of points
-    integer dummy_pad ! padding 4 bytes to align the structure
-  end type model_attenuation_variables
+!  type model_attenuation_variables
+!    sequence
+!    double precision min_period, max_period
+!    double precision                          :: QT_c_source        ! Source Frequency
+!    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
+!    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
+!    double precision, dimension(:), pointer   :: Qr                 ! Radius
+!    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
+!    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
+!    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
+!    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
+!    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
+!    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
+!    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
+!    integer, dimension(:), pointer            :: interval_Q                 ! Steps
+!    integer                                   :: Qn                 ! Number of points
+!    integer dummy_pad ! padding 4 bytes to align the structure
+!  end type model_attenuation_variables
 
   logical ATTENUATION
 
