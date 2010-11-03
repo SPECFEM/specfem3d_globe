@@ -27,9 +27,9 @@
  !=====================================================================
  */
 
-/* 
+/*
 
-by Dennis McRitchie
+by Dennis McRitchie (Princeton University, USA)
 
  January 7, 2010 - par_file parsing
  ..
@@ -39,7 +39,7 @@ by Dennis McRitchie
  any way to do this in Fortran. I believe that to accomplish this in
  Fortran, you'd have to write a lot of procedural string manipulation
  code, for which Fortran is not very well suited.
- 
+
  But Fortran-C mixes are pretty common these days, so I would not expect
  any problems on that account. There are no wrapper functions used: just
  the C routine called directly from a Fortran routine. Also, regarding
@@ -49,7 +49,6 @@ by Dennis McRitchie
  ..
 */
 
-#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #define __USE_GNU
@@ -58,62 +57,82 @@ by Dennis McRitchie
 
 #define LINE_MAX 255
 
-FILE * fid;
+FILE * fd;
 
-void
-FC_FUNC_(param_open,PARAM_OPEN)(char * filename, int * length, int * ierr)
+/*===============================================================
+  NEW functions coded and added to make the make process operating.
+====*/
+size_t strnlen (const char *string, size_t maxlen)
 {
-	char * fncopy;
-	char * blank;
-  
-	// Trim the file name.
-	fncopy = strndup(filename, *length);
-	blank = strchr(fncopy, ' ');
-	if (blank != NULL) {
-		fncopy[blank - fncopy] = '\0';
-	}
-	if ((fid = fopen(fncopy, "r")) == NULL) {
-		printf("Can't open '%s'\n", fncopy);
-		*ierr = 1;
-		return;
-	}
-	free(fncopy);
+  const char *end = memchr (string, '\0', maxlen);
+  return end ? (size_t) (end - string) : maxlen;
 }
 
-void
-FC_FUNC_(param_close,PARAM_CLOSE)()
+char *strndup (char const *s, size_t n)
 {
-	fclose(fid);
+  size_t len = strnlen (s, n);
+  char *new = malloc (len + 1);
+
+  if (new == NULL)
+    return NULL;
+
+  new[len] = '\0';
+  return memcpy (new, s, len);
 }
 
-void
-FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char * name, int * name_len, int * ierr)
+/*===============================================================*/
+
+void param_open_(char * filename, int * length, int * ierr)
 {
-	char * namecopy;
-	char * blank;
-	char * namecopy2;
-	int status;
-	regex_t compiled_pattern;
-	char line[LINE_MAX];
-	int regret;
-	regmatch_t parameter[3];
-	char * keyword;
-	char * value;
-  
-	// Trim the keyword name we're looking for.
-	namecopy = strndup(name, *name_len);
-	blank = strchr(namecopy, ' ');
-	if (blank != NULL) {
-		namecopy[blank - namecopy] = '\0';
-	}
-	// Then get rid of any dot-terminated prefix.
-	namecopy2 = strchr(namecopy, '.');
-	if (namecopy2 != NULL) {
-		namecopy2 += 1;
-	} else {
-		namecopy2 = namecopy;
-	}
-	/* Regular expression for parsing lines from param file.
+  char * fncopy;
+  char * blank;
+
+  // Trim the file name.
+  fncopy = strndup(filename, *length);
+  blank = strchr(fncopy, ' ');
+  if (blank != NULL) {
+    fncopy[blank - fncopy] = '\0';
+  }
+  if ((fd = fopen(fncopy, "r")) == NULL) {
+    printf("Can't open '%s'\n", fncopy);
+    *ierr = 1;
+    return;
+  }
+  free(fncopy);
+}
+
+void param_close_()
+{
+  fclose(fd);
+}
+
+void param_read_(char * string_read, int * string_read_len, char * name, int * name_len, int * ierr)
+{
+  char * namecopy;
+  char * blank;
+  char * namecopy2;
+  int status;
+  regex_t compiled_pattern;
+  char line[LINE_MAX];
+  int regret;
+  regmatch_t parameter[3];
+  char * keyword;
+  char * value;
+
+  // Trim the keyword name we're looking for.
+  namecopy = strndup(name, *name_len);
+  blank = strchr(namecopy, ' ');
+  if (blank != NULL) {
+    namecopy[blank - namecopy] = '\0';
+  }
+  // Then get rid of any dot-terminated prefix.
+  namecopy2 = strchr(namecopy, '.');
+  if (namecopy2 != NULL) {
+    namecopy2 += 1;
+  } else {
+    namecopy2 = namecopy;
+  }
+  /* Regular expression for parsing lines from param file.
    ** Good luck reading this regular expression.  Basically, the lines of
    ** the parameter file should be of the form 'parameter = value'.  Blank
    ** lines, lines containing only white space and lines whose first non-
@@ -121,65 +140,65 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
    ** ignored.  As you will see later in the code, if both parameter and
    ** value are not specified the line is ignored.
    */
-	char pattern[] = "^[ \t]*([^# \t]*)[ \t]*=[ \t]*([^# \t]*)[ \t]*(#.*){0,1}$";
-  
-	// Compile the regular expression.
-	status = regcomp(&compiled_pattern, pattern, REG_EXTENDED);
-	if (status != 0) {
-		printf("regcomp returned error %d\n", status);
-	}
-	// Position the open file to the beginning.
-	if (fseek(fid, 0, SEEK_SET) != 0) {
-		printf("Can't seek to begining of parameter file\n");
-		*ierr = 1;
+  char pattern[] = "^[ \t]*([^# \t]*)[ \t]*=[ \t]*([^# \t]*)[ \t]*(#.*){0,1}$";
+
+  // Compile the regular expression.
+  status = regcomp(&compiled_pattern, pattern, REG_EXTENDED);
+  if (status != 0) {
+    printf("regcomp returned error %d\n", status);
+  }
+  // Position the open file to the beginning.
+  if (fseek(fd, 0, SEEK_SET) != 0) {
+    printf("Can't seek to begining of parameter file\n");
+    *ierr = 1;
     regfree(&compiled_pattern);
-		return;
-	}
-	// Read every line in the file.
-	while (fgets(line, LINE_MAX, fid) != NULL) {
-		// Get rid of the ending newline.
-		int linelen = strlen(line);
-		if (line[linelen-1] == '\n') {
-			line[linelen-1] = '\0';
-		}
-		/* Test if line matches the regular expression pattern, if so
+    return;
+  }
+  // Read every line in the file.
+  while (fgets(line, LINE_MAX, fd) != NULL) {
+    // Get rid of the ending newline.
+    int linelen = strlen(line);
+    if (line[linelen-1] == '\n') {
+      line[linelen-1] = '\0';
+    }
+    /* Test if line matches the regular expression pattern, if so
      ** return position of keyword and value */
-		regret = regexec(&compiled_pattern, line, 3, parameter, 0);
-		// If no match, check the next line.
-		if (regret == REG_NOMATCH) {
-			continue;
-		}
-		// If any error, bail out with an error message.
-		if(regret != 0) {
-			printf("regexec returned error %d\n", regret);
-			*ierr = 1;
+    regret = regexec(&compiled_pattern, line, 3, parameter, 0);
+    // If no match, check the next line.
+    if (regret == REG_NOMATCH) {
+      continue;
+    }
+    // If any error, bail out with an error message.
+    if(regret != 0) {
+      printf("regexec returned error %d\n", regret);
+      *ierr = 1;
       regfree(&compiled_pattern);
-			return;
-		}
-    //		printf("Line read = %s\n", line);
-		// If we have a match, extract the keyword from the line.
-		keyword = strndup(line+parameter[1].rm_so, parameter[1].rm_eo-parameter[1].rm_so);
-		// If the keyword is not the one we're looking for, check the next line.
-		if (strcmp(keyword, namecopy2) != 0) {
-			free(keyword);
-			continue;
-		}
-		free(keyword);
+      return;
+    }
+    //    printf("Line read = %s\n", line);
+    // If we have a match, extract the keyword from the line.
+    keyword = strndup(line+parameter[1].rm_so, parameter[1].rm_eo-parameter[1].rm_so);
+    // If the keyword is not the one we're looking for, check the next line.
+    if (strcmp(keyword, namecopy2) != 0) {
+      free(keyword);
+      continue;
+    }
+    free(keyword);
     regfree(&compiled_pattern);
-		// If it matches, extract the value from the line.
-		value = strndup(line+parameter[2].rm_so, parameter[2].rm_eo-parameter[2].rm_so);
-		// Clear out the return string with blanks, copy the value into it, and return.
-		memset(string_read, ' ', *string_read_len);
-		strncpy(string_read, value, strlen(value));
-		free(value);
-		free(namecopy);
-		*ierr = 0;
-		return;
-	}
-	// If no keyword matches, print out error and die.
-	printf("No match in parameter file for keyword %s\n", namecopy);
-	free(namecopy);
+    // If it matches, extract the value from the line.
+    value = strndup(line+parameter[2].rm_so, parameter[2].rm_eo-parameter[2].rm_so);
+    // Clear out the return string with blanks, copy the value into it, and return.
+    memset(string_read, ' ', *string_read_len);
+    strncpy(string_read, value, strlen(value));
+    free(value);
+    free(namecopy);
+    *ierr = 0;
+    return;
+  }
+  // If no keyword matches, print out error and die.
+  printf("No match in parameter file for keyword %s\n", namecopy);
+  free(namecopy);
   regfree(&compiled_pattern);
-	*ierr = 1;
-	return;
+  *ierr = 1;
+  return;
 }
