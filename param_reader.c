@@ -49,19 +49,21 @@ by Dennis McRitchie (Princeton University, USA)
  ..
 */
 
+#define _GNU_SOURCE
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
-#define __USE_GNU
 #include <string.h>
 #include <regex.h>
 
 #define LINE_MAX 255
 
-FILE * fd;
-
-/*===============================================================
-  NEW functions coded and added to make the make process operating.
-====*/
+/*
+ * Mac OS X's gcc does not support strnlen and strndup.
+ * So we define them here conditionally, to avoid duplicate definitions
+ * on other systems.
+ */
+#ifdef __APPLE__
 size_t strnlen (const char *string, size_t maxlen)
 {
   const char *end = memchr (string, '\0', maxlen);
@@ -79,10 +81,13 @@ char *strndup (char const *s, size_t n)
   new[len] = '\0';
   return memcpy (new, s, len);
 }
-
+#endif
 /*===============================================================*/
 
-void param_open_(char * filename, int * length, int * ierr)
+FILE * fid;
+
+void
+FC_FUNC_(param_open,PARAM_OPEN)(char * filename, int * length, int * ierr)
 {
   char * fncopy;
   char * blank;
@@ -93,7 +98,7 @@ void param_open_(char * filename, int * length, int * ierr)
   if (blank != NULL) {
     fncopy[blank - fncopy] = '\0';
   }
-  if ((fd = fopen(fncopy, "r")) == NULL) {
+  if ((fid = fopen(fncopy, "r")) == NULL) {
     printf("Can't open '%s'\n", fncopy);
     *ierr = 1;
     return;
@@ -101,12 +106,14 @@ void param_open_(char * filename, int * length, int * ierr)
   free(fncopy);
 }
 
-void param_close_()
+void
+FC_FUNC_(param_close,PARAM_CLOSE)()
 {
-  fclose(fd);
+  fclose(fid);
 }
 
-void param_read_(char * string_read, int * string_read_len, char * name, int * name_len, int * ierr)
+void
+FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char * name, int * name_len, int * ierr)
 {
   char * namecopy;
   char * blank;
@@ -148,14 +155,14 @@ void param_read_(char * string_read, int * string_read_len, char * name, int * n
     printf("regcomp returned error %d\n", status);
   }
   // Position the open file to the beginning.
-  if (fseek(fd, 0, SEEK_SET) != 0) {
-    printf("Can't seek to beginning of parameter file\n");
+  if (fseek(fid, 0, SEEK_SET) != 0) {
+    printf("Can't seek to begining of parameter file\n");
     *ierr = 1;
     regfree(&compiled_pattern);
     return;
   }
   // Read every line in the file.
-  while (fgets(line, LINE_MAX, fd) != NULL) {
+  while (fgets(line, LINE_MAX, fid) != NULL) {
     // Get rid of the ending newline.
     int linelen = strlen(line);
     if (line[linelen-1] == '\n') {
