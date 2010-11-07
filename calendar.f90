@@ -1,5 +1,63 @@
 
-! open-source subroutines taken from ftp://ftp.met.fsu.edu/pub/ahlquist/calendar_software/
+  integer function julian_day(yr,mo,da)
+
+  implicit none
+
+  integer yr,mo,da
+
+  integer mon(12)
+  integer lpyr
+  data mon /0,31,59,90,120,151,181,212,243,273,304,334/
+
+  julian_day = da + mon(mo)
+  if(mo>2) julian_day = julian_day + lpyr(yr)
+
+  end function julian_day
+
+! ------------------------------------------------------------------
+
+  integer function lpyr(yr)
+
+  implicit none
+
+  integer yr
+!
+!---- returns 1 if leap year
+!
+  lpyr=0
+  if(mod(yr,400) == 0) then
+    lpyr=1
+  else if(mod(yr,4) == 0) then
+    lpyr=1
+    if(mod(yr,100) == 0) lpyr=0
+  endif
+
+  end function lpyr
+
+! ------------------------------------------------------------------
+
+! function to determine if year is a leap year
+  logical function is_leap_year(yr)
+
+  implicit none
+
+  integer yr
+
+  integer, external :: lpyr
+
+!---- function lpyr above returns 1 if leap year
+  if(lpyr(yr) == 1) then
+    is_leap_year = .true.
+  else
+    is_leap_year = .false.
+  endif
+
+  end function is_leap_year
+
+
+!----------------------------------------------------------------------------------------------
+! open-source subroutines below taken from ftp://ftp.met.fsu.edu/pub/ahlquist/calendar_software
+!----------------------------------------------------------------------------------------------
 
   integer function idaywk(jdayno)
 
