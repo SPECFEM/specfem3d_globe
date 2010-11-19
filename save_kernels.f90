@@ -706,7 +706,8 @@
   double precision :: scale_displ,scale_t
 
   double precision :: nu_source(NDIM,NDIM,NSOURCES)
-  real(kind=CUSTOM_REAL) :: moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), stshift_der(nrec_local), shdur_der(nrec_local)
+  real(kind=CUSTOM_REAL) :: moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
+                            stshift_der(nrec_local),shdur_der(nrec_local)
 
   integer, dimension(nrec_local) :: number_receiver_global
 
