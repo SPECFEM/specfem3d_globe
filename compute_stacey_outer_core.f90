@@ -108,12 +108,12 @@
   !integer :: reclen1,reclen2
   integer :: i,j,k,ispec2D,ispec,iglob
 
-  ! note: we use c functions for I/O as they still have a better performance than 
+  ! note: we use c functions for I/O as they still have a better performance than
   !           fortran, unformatted file I/O. however, using -assume byterecl together with fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
-  !           tests with intermediate storages (every 8 step) and/or asynchronious 
-  !           file access (by process rank modulo 8) showed that the following, 
+  !           tests with intermediate storages (every 8 step) and/or asynchronious
+  !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
   !   xmin
@@ -165,10 +165,10 @@
     if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_outer_core > 0 ) then
 
       call write_abs(4,absorb_xmin_outer_core,reclen_xmin_outer_core,it)
-    
+
 !      write(61,rec=it) reclen_xmin_outer_core,absorb_xmin_outer_core,reclen_xmin_outer_core
     endif
-    
+
   endif
 
   !   xmax
@@ -178,7 +178,7 @@
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmax_outer_core > 0)  then
 
       call read_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,NSTEP-it+1)
-    
+
 !      read(62,rec=NSTEP-it+1) reclen1,absorb_xmax_outer_core,reclen2
 !      if (reclen1 /= reclen_xmax_outer_core .or. reclen1 /= reclen2)  &
 !         call exit_MPI(myrank,'Error reading absorbing contribution absorb_xmax_outer_core')
@@ -217,7 +217,7 @@
 
 !      write(62,rec=it) reclen_xmax_outer_core,absorb_xmax_outer_core,reclen_xmax_outer_core
     endif
-    
+
   endif
 
   !   ymin
@@ -260,7 +260,7 @@
 
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_outer_core > 0 ) then
     call write_abs(6,absorb_ymin_outer_core,reclen_ymin_outer_core,it)
-  
+
 !    write(63,rec=it) reclen_ymin_outer_core,absorb_ymin_outer_core,reclen_ymin_outer_core
   endif
 
@@ -344,8 +344,8 @@
 
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 ) then
     call write_abs(8,absorb_zmin_outer_core,reclen_zmin,it)
-  
+
 !    write(65,rec=it) reclen_zmin,absorb_zmin_outer_core,reclen_zmin
   endif
-  
+
   end subroutine compute_stacey_outer_core

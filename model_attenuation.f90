@@ -253,7 +253,7 @@
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
     integer Q_resolution
-    integer Q_max    
+    integer Q_max
   end type model_attenuation_storage_var
 
   type (model_attenuation_storage_var) AM_S
@@ -270,7 +270,7 @@
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
     integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids    
+    integer nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -392,7 +392,7 @@
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
     integer Q_resolution
-    integer Q_max    
+    integer Q_max
   end type model_attenuation_storage_var
 
   type (model_attenuation_storage_var) AM_S
@@ -409,7 +409,7 @@
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
     integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids    
+    integer nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -449,7 +449,7 @@
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
     integer Q_resolution
-    integer Q_max    
+    integer Q_max
   end type model_attenuation_storage_var
 
   type (model_attenuation_storage_var) AM_S
@@ -595,7 +595,7 @@
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
     integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids    
+    integer nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -698,7 +698,7 @@
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
     integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids    
+    integer nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -726,7 +726,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
     integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids    
+    integer nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -851,7 +851,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
     integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids    
+    integer nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V
@@ -929,7 +929,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
     integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids    
+    integer nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
 
   type(attenuation_simplex_variables) AS_V

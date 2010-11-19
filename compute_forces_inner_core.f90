@@ -234,7 +234,7 @@
 
           if(ATTENUATION_VAL) then
             minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
-          endif 
+          endif
 
           if(ANISOTROPIC_INNER_CORE_VAL) then
 
@@ -556,7 +556,7 @@
           enddo
         enddo
       enddo
-      
+
     endif
 
   endif   ! end test to exclude fictitious elements in central cube

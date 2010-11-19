@@ -200,7 +200,7 @@
     call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
     open(unit=1,file=STATIONS,status='old',action='read',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening STATIONS file')
-    
+
     ! loop on all the stations to read station information
     do irec = 1,nrec
       read(1,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
@@ -656,7 +656,7 @@
       ! close receiver file
       close(27)
     endif
-    
+
 
 
 ! elapsed time since beginning of mesh generation

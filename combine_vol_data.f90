@@ -59,7 +59,7 @@ program combine_vol_data
   integer:: ibool_count(NGLOB_CRUST_MANTLE)
   real(kind=CUSTOM_REAL):: ibool_dat(NGLOB_CRUST_MANTLE)
 
-  ! note: 
+  ! note:
   !  if one wants to remove the topography and ellipticity distortion, you would run the mesher again
   !  but turning the flags: TOPOGRAPHY and ELLIPTICITY to .false.
   !  then, use those as topo files: proc***_array_dims.txt and proc***_solver_data_2.bin
@@ -71,7 +71,7 @@ program combine_vol_data
   logical,parameter:: CORRECT_ELLIPTICITY = .false.
   integer :: nspl
   double precision :: rspl(NR),espl(NR),espl2(NR)
-  logical,parameter :: ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust 
+  logical,parameter :: ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust
 
 
   ! starts here--------------------------------------------------------------------------------------------------
@@ -328,10 +328,10 @@ program combine_vol_data
                   x = xstore(iglob)
                   y = ystore(iglob)
                   z = zstore(iglob)
-                  
+
                   ! remove ellipticity
                   if( CORRECT_ELLIPTICITY ) call reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
-                  
+
                   dat = data(i,j,k,ispec)
                   call write_real_fd(pfd,x)
                   call write_real_fd(pfd,y)
@@ -437,7 +437,7 @@ end program combine_vol_data
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
   double precision x1,y1,z1
-  
+
   double precision ell
   double precision r,theta,phi,factor
   double precision cost,p20

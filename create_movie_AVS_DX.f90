@@ -511,13 +511,13 @@
           ycoord = sngl(yp_save(ilocnum+ieoff))
           zcoord = sngl(zp_save(ilocnum+ieoff))
           call xyz_2_rthetaphi(xcoord,ycoord,zcoord,rval,thetaval,phival)
-          
+
           ! note: converts the geocentric colatitude to a geographic colatitude
-          if(.not. ASSUME_PERFECT_SPHERE) then          
+          if(.not. ASSUME_PERFECT_SPHERE) then
             thetaval = PI/2.0d0 - &
                     datan(1.006760466d0*dcos(dble(thetaval))/dmax1(TINYVAL,dble(sin(thetaval))))
           endif
-          
+
           lat = (PI/2.0-thetaval)*180.0/PI
           long = phival*180.0/PI
           if(long > 180.0) long = long-360.0

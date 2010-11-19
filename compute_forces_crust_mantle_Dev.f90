@@ -101,7 +101,7 @@
 
   ! gravity
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
-  
+
 ! local parameters
   ! Deville
   ! manually inline the calls to the Deville et al. (2002) routines
@@ -183,7 +183,7 @@
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
   !real(kind=CUSTOM_REAL), dimension(5) :: dummy
-  
+
   integer :: i_sls,i_memory
   integer :: ispec,ispec_strain
   integer :: i,j,k
@@ -462,7 +462,7 @@
               !  print*,'error tiso: ispec = ',ispec,'max = ',NSPECMAX_TISO_MANTLE
               !  call exit_mpi(0,'error tiso ispec bounds')
               !endif
-              
+
               ! use Kappa and mu from transversely isotropic model
               kappavl = kappavstore(i,j,k,ispec)
               muvl = muvstore(i,j,k,ispec)
@@ -1016,13 +1016,13 @@
 
     ! save deviatoric strain for Runge-Kutta scheme
     if(COMPUTE_AND_STORE_STRAIN) then
-! way 1:    
+! way 1:
       !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-! way 2:      
+! way 2:
       do k=1,NGLLZ
         do j=1,NGLLY
             !dummy(:) = epsilondev_loc(:,1,j,k)
-            
+
             epsilondev(:,1,j,k,ispec) = epsilondev_loc(:,1,j,k)
             epsilondev(:,2,j,k,ispec) = epsilondev_loc(:,2,j,k)
             epsilondev(:,3,j,k,ispec) = epsilondev_loc(:,3,j,k)
@@ -1031,7 +1031,7 @@
         enddo
       enddo
     endif
-    
+
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE
 
   end subroutine compute_forces_crust_mantle_Dev

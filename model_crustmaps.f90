@@ -518,7 +518,7 @@
   double precision rhol(NLAYERS_CRUSTMAP),thickl(NLAYERS_CRUSTMAP), &
     velpl(NLAYERS_CRUSTMAP),velsl(NLAYERS_CRUSTMAP)
   double precision weightl,cap_degree,dist
-  double precision h_sed  
+  double precision h_sed
   integer num_points
   integer i,ipoin,iupcolat,ileftlng,irightlng
 
@@ -657,7 +657,7 @@
 
     ! sediment thickness
     h_sed = thickl(1) + thickl(2)
-    
+
     ! takes upper crust value if sediment too thin
     if( h_sed < MINIMUM_SEDIMENT_THICKNESS ) then
       velpl(1) = velpl(3)

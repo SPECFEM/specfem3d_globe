@@ -117,7 +117,7 @@
       if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
         call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
 
-      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)      
+      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
     else  if ( moho > R_middlecrust ) then
       ! moho above middle crust
@@ -144,7 +144,7 @@
       if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
         call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
 
-      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)      
+      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
     end if
 
@@ -207,7 +207,7 @@
   double precision RMOHO_FICTITIOUS_IN_MESHER
   integer :: myrank
   logical :: elem_in_crust,elem_in_mantle
-  
+
   ! local parameters
   integer:: ia,count_crust,count_mantle
   double precision:: r,theta,phi,lat,lon
@@ -217,17 +217,17 @@
   double precision, parameter :: RADIANS_TO_DEGREES = 180.d0 / PI
   double precision, parameter :: PI_OVER_TWO = PI / 2.0d0
   double precision :: x,y,z
-  
-  ! loops over element's anchor points  
+
+  ! loops over element's anchor points
   count_crust = 0
   count_mantle = 0
   do ia = 1,NGNOD
-  
+
     ! anchor point location
     x = xelm(ia)
     y = yelm(ia)
     z = zelm(ia)
-    
+
     call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
     call reduce(theta,phi)
 
@@ -248,40 +248,40 @@
 
     ! checks if moho will be honored by elements
     !
-    ! note: we will honor the moho, if the moho depth is 
+    ! note: we will honor the moho, if the moho depth is
     !         - above 15km
     !         - between 25km and 45km
     !         - below 60 km (in HONOR_DEEP_MOHO case)
     !         otherwise, the moho will be "interpolated" within the element
-    if( HONOR_DEEP_MOHO) then    
+    if( HONOR_DEEP_MOHO) then
       call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)    
+                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
     else
       call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho,R220, &
-                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)      
-    endif 
+                            RMOHO_FICTITIOUS_IN_MESHER,RMIDDLE_CRUST)
+    endif
 
     ! counts corners in above moho
-    ! note: uses a small tolerance 
+    ! note: uses a small tolerance
     if ( r >= 0.9999d0*moho ) then
       count_crust = count_crust + 1
-    endif 
+    endif
     ! counts corners below moho
     ! again within a small tolerance
     if ( r <= 1.0001d0*moho ) then
       count_mantle = count_mantle + 1
     endif
 
-  end do   
+  end do
 
   ! sets flag when all corners are above moho
   if( count_crust == NGNOD) then
     elem_in_crust = .true.
-  end if 
+  end if
   ! sets flag when all corners are below moho
   if( count_mantle == NGNOD) then
     elem_in_mantle = .true.
-  end if 
+  end if
 
   ! small stretch check: stretching should affect only points above R220
   if( r*R_EARTH < R220 ) then
@@ -305,7 +305,7 @@
   implicit none
 
   include "constants.h"
-  
+
   integer ia
 
   double precision xelm(NGNOD)
@@ -317,8 +317,8 @@
   double precision :: r,moho,R220
   double precision :: RMIDDLE_CRUST
   double precision :: RMOHO_FICTITIOUS_IN_MESHER
-  
-  ! local parameters  
+
+  ! local parameters
   double precision :: elevation,gamma
   ! radii for stretching criteria
   double precision,parameter ::  R15=6356000.d0/R_EARTH
@@ -340,7 +340,7 @@
   if( RMIDDLE_CRUST/R_EARTH /= R15 ) &
     stop 'wrong middle crust depth'
 
-  ! stretches mesh by moving point coordinates    
+  ! stretches mesh by moving point coordinates
   if ( moho < R25 .and. moho > R45 ) then
     ! moho between r25 and r45
 
@@ -352,18 +352,18 @@
       gamma = (( r - R60)/( R35 - R60)) ! keeps r60 fixed
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if 
-    else 
+      end if
+    else
       gamma=0.0d0
-    end if 
+    end if
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
-    call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)      
+    call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
   else if ( moho < R45 ) then
     ! moho below r45
-    
+
     ! moves mesh at r35 down to r45
     elevation = R45 - R35
     if ( r>= R35.and.r<R15) then
@@ -372,38 +372,38 @@
       gamma=((r-R60)/(R35-R60)) ! keeps r60 fixed
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if 
-    else 
+      end if
+    else
       gamma=0.0d0
-    end if 
+    end if
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
-    call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)      
+    call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
     ! add deep moho here
     if ( moho < R60) then
       ! moho below r60
-      
+
       ! stretches mesh at r60 to moho
-      elevation = moho - R60        
+      elevation = moho - R60
       if ( r <R45.and. r >= R60) then
-        gamma=(R45-r)/(R45-R60) 
+        gamma=(R45-r)/(R45-R60)
       else if (r<R60) then
         gamma=(r-R220/R_EARTH)/(R60-R220/R_EARTH)
         if (abs(gamma)<SMALLVAL) then
           gamma=0.0d0
-        end if 
-      else 
+        end if
+      else
         gamma=0.0d0
-      end if 
+      end if
 
-      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)      
-    end if 
+      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+    end if
 
   else if (moho > R25) then
     ! moho above r25
-    
+
     ! moves mesh at r35 up to r25
     elevation = R25-R35
     if (r>=R35.and.r<R15) then
@@ -412,19 +412,19 @@
       gamma=(r-R60)/(R35-R60) ! keeps r60 fixed
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if       
-    else 
+      end if
+    else
       gamma=0.0d0
-    end if 
+    end if
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
-    call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)      
+    call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
     ! add shallow moho here
     if ( moho > R15 ) then
       ! moho above r15
-      
+
       ! stretches mesh at r15 to moho depth
       elevation = moho-R15
       if (r>=R15) then
@@ -434,13 +434,13 @@
         if (abs(gamma)<SMALLVAL) then
           gamma=0.0d0
         end if
-      else 
+      else
         gamma=0.0d0
-      end if 
-                   
-      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)      
-    end if 
-  end if 
+      end if
+
+      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+    end if
+  end if
 
   end subroutine stretch_deep_moho
 
@@ -457,7 +457,7 @@
   implicit none
 
   include "constants.h"
-  
+
   integer ia
 
   double precision xelm(NGNOD)
@@ -468,8 +468,8 @@
   double precision :: x,y,z
   double precision :: RMIDDLE_CRUST
   double precision :: RMOHO_FICTITIOUS_IN_MESHER
-  
-  ! local parameters  
+
+  ! local parameters
   double precision :: elevation,gamma
   ! radii for stretching criteria
   double precision,parameter ::  R15=6356000.d0/R_EARTH
@@ -486,53 +486,53 @@
   if( RMOHO_STRETCH_ADJUSTEMENT /= -15000.d0 ) &
     stop 'wrong moho stretch adjustement for stretch_deep_moho'
   if( RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R55 ) &
-    stop 'wrong moho depth '    
+    stop 'wrong moho depth '
   ! checks middle crust position: supposed to be bottom of first layer at 15 km
   if( RMIDDLE_CRUST/R_EARTH /= R15 ) &
     stop 'wrong middle crust depth'
-    
+
   ! moho between 25km and 45 km
   if ( moho < R25 .and. moho > R45 ) then
-  
+
     elevation = moho - R35
     if ( r >=R35.and.r<R15) then
       gamma=((R15-r)/(R15-R35))
     else if ( r<R35.and.r>R220/R_EARTH) then
-      gamma = ((r-R220/R_EARTH)/(R35-R220/R_EARTH)) 
+      gamma = ((r-R220/R_EARTH)/(R35-R220/R_EARTH))
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if 
-    else 
+      end if
+    else
       gamma=0.0d0
-    end if 
-    if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
-      stop 'incorrect value of gamma for moho from crust 2.0'
-
-    call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)      
-
-  else if ( moho < R45 ) then
-    ! moho below 45 km
-    
-    ! moves mesh at r35 down to r45
-    elevation = R45 - R35
-    if ( r>= R35.and.r<R15) then
-      gamma=((R15-r)/(R15-R35)) 
-    else if ( r<R35.and.r>R220/R_EARTH) then
-      gamma=((r-R220/R_EARTH)/(R35-R220/R_EARTH))
-      if (abs(gamma)<SMALLVAL) then
-        gamma=0.0d0
-      end if 
-    else 
-      gamma=0.0d0
-    end if 
+    end if
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
     call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
-  
+
+  else if ( moho < R45 ) then
+    ! moho below 45 km
+
+    ! moves mesh at r35 down to r45
+    elevation = R45 - R35
+    if ( r>= R35.and.r<R15) then
+      gamma=((R15-r)/(R15-R35))
+    else if ( r<R35.and.r>R220/R_EARTH) then
+      gamma=((r-R220/R_EARTH)/(R35-R220/R_EARTH))
+      if (abs(gamma)<SMALLVAL) then
+        gamma=0.0d0
+      end if
+    else
+      gamma=0.0d0
+    end if
+    if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
+      stop 'incorrect value of gamma for moho from crust 2.0'
+
+    call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+
   else if (moho > R25) then
     ! moho above 25km
-    
+
     ! moves mesh at r35 up to r25
     elevation = R25-R35
     if (r>=R35.and.r<R15) then
@@ -541,10 +541,10 @@
       gamma=(r-R220/R_EARTH)/(R35-R220/R_EARTH)
       if (abs(gamma)<SMALLVAL) then
         gamma=0.0d0
-      end if 
-    else 
+      end if
+    else
       gamma=0.0d0
-    end if 
+    end if
     if(gamma < -0.0001d0 .or. gamma > 1.0001d0) &
       stop 'incorrect value of gamma for moho from crust 2.0'
 
@@ -560,13 +560,13 @@
         if (abs(gamma)<SMALLVAL) then
           gamma=0.0d0
         end if
-      else 
+      else
         gamma=0.0d0
-      end if 
+      end if
 
-      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)                             
-    end if 
-  endif 
+      call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+    end if
+  endif
 
   end subroutine stretch_moho
 
@@ -580,7 +580,7 @@
   implicit none
 
   include "constants.h"
-  
+
   integer ia
 
   double precision xelm(NGNOD)
@@ -590,28 +590,28 @@
   double precision :: x,y,z
 
   double precision :: r,elevation,gamma
-  
-  ! local parameters  
+
+  ! local parameters
   double precision :: stretch_factor
-  
+
   !  stretch factor
   ! offset will be gamma * elevation
-  ! scaling cartesian coordinates xyz rather than spherical r/theta/phi involves division of offset by r  
+  ! scaling cartesian coordinates xyz rather than spherical r/theta/phi involves division of offset by r
   stretch_factor = ONE + gamma * elevation/r
 
   ! new point location
   x = x * stretch_factor
   y = y * stretch_factor
   z = z * stretch_factor
-  
+
   ! stores new point location
-  xelm(ia) = x 
-  yelm(ia) = y 
+  xelm(ia) = x
+  yelm(ia) = y
   zelm(ia) = z
 
   ! new radius
   r = dsqrt(xelm(ia)*xelm(ia) + yelm(ia)*yelm(ia) + zelm(ia)*zelm(ia))
-  
+
   end subroutine move_point
 
 

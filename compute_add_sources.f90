@@ -257,7 +257,7 @@
             !           we thus would have to read in the adjoint source trace beginning from 2999 down to 0.
             !           index 0 is not defined in the adjoint source trace, and would be set to zero.
             !
-            !           however, since this complicates things, we read the backward/reconstructed 
+            !           however, since this complicates things, we read the backward/reconstructed
             !           wavefield at the end of the first time loop, such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT.
             !           assuming that until that end the backward/reconstructed wavefield and adjoint fields
             !           have a zero contribution to adjoint kernels.

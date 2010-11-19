@@ -790,7 +790,7 @@
   logical SAVE_FORWARD
   character(len=150) LOCAL_PATH
   integer NSTEP
-  
+
   ! local parameters
   character(len=150) prname
 
@@ -821,7 +821,7 @@
 !      open(unit=51,file=trim(prname)//'absorb_xmin.bin', &
 !            status='unknown',form='unformatted',access='direct',&
 !            recl=reclen_xmin_crust_mantle+2*4)
-    
+
       call open_file_abs_r(0,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_xmin.bin'), &
                           reclen_xmin_crust_mantle*NSTEP)
     else
@@ -841,7 +841,7 @@
 !      open(unit=52,file=trim(prname)//'absorb_xmax.bin', &
 !            status='unknown',form='unformatted',access='direct', &
 !            recl=reclen_xmax_crust_mantle+2*4)
-    
+
       call open_file_abs_r(1,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
                           reclen_xmax_crust_mantle*NSTEP)
     else
@@ -861,7 +861,7 @@
 !      open(unit=53,file=trim(prname)//'absorb_ymin.bin', &
 !            status='unknown',form='unformatted',access='direct',&
 !            recl=reclen_ymin_crust_mantle+2*4)
-    
+
       call open_file_abs_r(2,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
                           reclen_ymin_crust_mantle*NSTEP)
     else
@@ -881,7 +881,7 @@
 !      open(unit=54,file=trim(prname)//'absorb_ymax.bin', &
 !            status='unknown',form='unformatted',access='direct',&
 !            recl=reclen_ymax_crust_mantle+2*4)
-    
+
       call open_file_abs_r(3,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
                           reclen_ymax_crust_mantle*NSTEP)
     else

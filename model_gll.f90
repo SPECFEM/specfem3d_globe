@@ -72,7 +72,7 @@
 
   ! allocates arrays
   ! differs for isotropic model or transverse isotropic models
-  if( .not. TRANSVERSE_ISOTROPY ) then 
+  if( .not. TRANSVERSE_ISOTROPY ) then
     ! isotropic model
     allocate( MGLL_V%vp_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
     allocate( MGLL_V%vs_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
@@ -82,21 +82,21 @@
     allocate( MGLL_V%vph_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
     allocate( MGLL_V%vsv_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
     allocate( MGLL_V%vsh_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
-    allocate( MGLL_V%eta_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )        
+    allocate( MGLL_V%eta_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
   endif
-  allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )  
+  allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)) )
 
   ! reads in model files for each process
   call read_gll_model(myrank,MGLL_V,NSPEC)
 
   ! checks velocity range
-  if( .not. TRANSVERSE_ISOTROPY ) then       
-    
+  if( .not. TRANSVERSE_ISOTROPY ) then
+
     ! isotropic model
     if( myrank == 0 ) then
       write(IMAIN,*)'model GLL: isotropic'
     endif
-    
+
     ! Vs
     max = maxval( MGLL_V%vs_new )
     min = minval( MGLL_V%vs_new )
@@ -115,7 +115,7 @@
     endif
     ! density
     max = maxval( MGLL_V%rho_new )
-    min = minval( MGLL_V%rho_new )  
+    min = minval( MGLL_V%rho_new )
     call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
     call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
     if( myrank == 0 ) then
@@ -132,7 +132,7 @@
 
     ! Vsv
     max = maxval( MGLL_V%vsv_new )
-    min = minval( MGLL_V%vsv_new )  
+    min = minval( MGLL_V%vsv_new )
     call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
     call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
     if( myrank == 0 ) then
@@ -140,7 +140,7 @@
     endif
     ! Vsh
     max = maxval( MGLL_V%vsh_new )
-    min = minval( MGLL_V%vsh_new )  
+    min = minval( MGLL_V%vsh_new )
     call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
     call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
     if( myrank == 0 ) then
@@ -148,7 +148,7 @@
     endif
     ! Vpv
     max = maxval( MGLL_V%vpv_new )
-    min = minval( MGLL_V%vpv_new )  
+    min = minval( MGLL_V%vpv_new )
     call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
     call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
     if( myrank == 0 ) then
@@ -156,7 +156,7 @@
     endif
     ! Vph
     max = maxval( MGLL_V%vph_new )
-    min = minval( MGLL_V%vph_new )  
+    min = minval( MGLL_V%vph_new )
     call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
     call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
     if( myrank == 0 ) then
@@ -164,7 +164,7 @@
     endif
     ! density
     max = maxval( MGLL_V%rho_new )
-    min = minval( MGLL_V%rho_new )  
+    min = minval( MGLL_V%rho_new )
     call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
     call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
     if( myrank == 0 ) then
@@ -172,7 +172,7 @@
     endif
     ! eta
     max = maxval( MGLL_V%eta_new )
-    min = minval( MGLL_V%eta_new )  
+    min = minval( MGLL_V%eta_new )
     call mpi_reduce(max, max_all, 1, CUSTOM_MPI_TYPE, MPI_MAX, 0, MPI_COMM_WORLD,ier)
     call mpi_reduce(min, min_all, 1, CUSTOM_MPI_TYPE, MPI_MIN, 0, MPI_COMM_WORLD,ier)
     if( myrank == 0 ) then
@@ -188,7 +188,7 @@
   ! (model velocities must be given as km/s)
   scaleval = dsqrt(PI*GRAV*RHOAV)
   MGLL_V%scale_velocity = 1000.0d0/(R_EARTH*scaleval)
-  MGLL_V%scale_density =  1000.0d0/RHOAV  
+  MGLL_V%scale_density =  1000.0d0/RHOAV
   if( .not. TRANSVERSE_ISOTROPY ) then
       ! non-dimensionalize isotropic values
       MGLL_V%vp_new = MGLL_V%vp_new * MGLL_V%scale_velocity
@@ -196,14 +196,14 @@
       MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
   else
       ! non-dimensionalize
-      ! transverse isotropic model 
+      ! transverse isotropic model
       MGLL_V%vpv_new = MGLL_V%vpv_new * MGLL_V%scale_velocity
       MGLL_V%vph_new = MGLL_V%vph_new * MGLL_V%scale_velocity
       MGLL_V%vsv_new = MGLL_V%vsv_new * MGLL_V%scale_velocity
       MGLL_V%vsh_new = MGLL_V%vsh_new * MGLL_V%scale_velocity
       MGLL_V%rho_new = MGLL_V%rho_new * MGLL_V%scale_density
-      ! eta is already non-dimensional  
-  endif  
+      ! eta is already non-dimensional
+  endif
 
   end subroutine model_gll_broadcast
 
@@ -215,7 +215,7 @@
   subroutine read_gll_model(myrank,MGLL_V,NSPEC)
 
   use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY
-  
+
   implicit none
 
   include "constants.h"
@@ -252,12 +252,12 @@
     write(IMAIN,*)
     write(IMAIN,*)'reading in model from ',trim(MGLL_path)
   endif
-  
+
   ! only crust and mantle
   write(prname,'(a,i6.6,a)') MGLL_path(1:len_trim(MGLL_path))//'proc',myrank,'_reg1_'
 
   ! reads in model for each partition
-  if( .not. TRANSVERSE_ISOTROPY ) then       
+  if( .not. TRANSVERSE_ISOTROPY ) then
     ! isotropic model
     ! vp mesh
     open(unit=27,file=prname(1:len_trim(prname))//'vp_new.bin',&
@@ -280,7 +280,7 @@
     close(27)
 
   else
-  
+
     ! transverse isotropic model
     ! vp mesh
     open(unit=27,file=prname(1:len_trim(prname))//'vpv_new.bin',&

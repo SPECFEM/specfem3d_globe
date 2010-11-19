@@ -383,7 +383,7 @@
   if( SAVE_MESH_FILES ) then
     scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
     scaleval2 = sngl( RHOAV/1000.0d0 )
-    
+
     ! isotropic model
     ! vp
     open(unit=27,file=prname(1:len_trim(prname))//'vp.bin',status='unknown',form='unformatted',action='write')
@@ -397,7 +397,7 @@
     open(unit=27,file=prname(1:len_trim(prname))//'rho.bin',status='unknown',form='unformatted',action='write')
     write(27) rhostore*scaleval2
     close(27)
-    
+
     ! transverse isotropic model
     if( TRANSVERSE_ISOTROPY ) then
       ! vpv
@@ -423,9 +423,9 @@
       ! eta
       open(unit=27,file=prname(1:len_trim(prname))//'eta.bin',status='unknown',form='unformatted',action='write')
       write(27) eta_anisostore
-      close(27)    
+      close(27)
     endif
-    
+
   endif
 
   end subroutine save_arrays_solver

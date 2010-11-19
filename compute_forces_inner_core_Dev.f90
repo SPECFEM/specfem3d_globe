@@ -345,7 +345,7 @@
 
             if(ATTENUATION_VAL) then
               minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0
-            endif 
+            endif
 
             if(ANISOTROPIC_INNER_CORE_VAL) then
               ! elastic tensor for hexagonal symmetry in reduced notation:
@@ -746,11 +746,11 @@
       if(COMPUTE_AND_STORE_STRAIN) then
 ! way 1:
         !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-! way 2:        
+! way 2:
         do k=1,NGLLZ
           do j=1,NGLLY
               !dummy(:) = epsilondev_loc(:,1,j,k)
-          
+
               epsilondev(:,1,j,k,ispec) = epsilondev_loc(:,1,j,k)
               epsilondev(:,2,j,k,ispec) = epsilondev_loc(:,2,j,k)
               epsilondev(:,3,j,k,ispec) = epsilondev_loc(:,3,j,k)
@@ -759,7 +759,7 @@
           enddo
         enddo
       endif
-      
+
     endif   ! end test to exclude fictitious elements in central cube
 
   enddo ! spectral element loop

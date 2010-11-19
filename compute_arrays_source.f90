@@ -230,8 +230,8 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
   ! since 0 index is out of bounds, we would have to put that adjoint source displacement artifically to zero
   !
   ! here now, it_start is now 2001 and it_end = 3000, then 1001 to 2000, then 1 to 1000.
-  it_start = it_start 
-  it_end = it_end 
+  it_start = it_start
+  it_end = it_end
 
   adj_src = 0._CUSTOM_REAL
   do icomp = 1, NDIM

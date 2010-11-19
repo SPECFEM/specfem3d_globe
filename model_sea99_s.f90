@@ -64,7 +64,7 @@
     integer :: sea99_ndep
     integer :: sea99_nlat
     integer :: sea99_nlon
-    integer :: dummy_pad ! padding 4 bytes to align the structure    
+    integer :: dummy_pad ! padding 4 bytes to align the structure
  end type model_sea99_s_variables
 
   type (model_sea99_s_variables) SEA99M_V
@@ -113,7 +113,7 @@
     integer :: sea99_ndep
     integer :: sea99_nlat
     integer :: sea99_nlon
-    integer :: dummy_pad ! padding 4 bytes to align the structure    
+    integer :: dummy_pad ! padding 4 bytes to align the structure
  end type model_sea99_s_variables
 
   type (model_sea99_s_variables) SEA99M_V
@@ -178,7 +178,7 @@
     integer :: sea99_ndep
     integer :: sea99_nlat
     integer :: sea99_nlon
-    integer :: dummy_pad ! padding 4 bytes to align the structure    
+    integer :: dummy_pad ! padding 4 bytes to align the structure
  end type model_sea99_s_variables
 
   type (model_sea99_s_variables) SEA99M_V

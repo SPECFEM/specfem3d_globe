@@ -118,7 +118,7 @@
     NSPECMAX_ISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
     if(TRANSVERSE_ISOTROPY) then
 ! note: the number of transverse isotropic elements is ispec_aniso
-!          however for transverse isotropic kernels, the arrays muhstore,kappahstore,eta_anisostore, 
+!          however for transverse isotropic kernels, the arrays muhstore,kappahstore,eta_anisostore,
 !          will be needed for the crust_mantle region everywhere still...
 !          originally: NSPECMAX_TISO_MANTLE = ispec_aniso
       NSPECMAX_TISO_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
