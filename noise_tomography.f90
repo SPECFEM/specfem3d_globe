@@ -36,11 +36,10 @@
 ! USERS need to modify this subroutine for their own noise characteristics
   subroutine noise_distribution_direction(xcoord_in,ycoord_in,zcoord_in, &
                   normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
-                  mask_noise_out,NSTEP)
+                  mask_noise_out)
   implicit none
   include "constants.h"
   ! input parameters
-  integer :: NSTEP
   real(kind=CUSTOM_REAL) :: xcoord_in,ycoord_in,zcoord_in
   ! output parameters
   real(kind=CUSTOM_REAL) :: normal_x_noise_out,normal_y_noise_out,normal_z_noise_out,mask_noise_out
@@ -150,7 +149,7 @@
         call noise_distribution_direction(xstore_crust_mantle(iglob), &
                   ystore_crust_mantle(iglob),zstore_crust_mantle(iglob), &
                   normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
-                  mask_noise_out,NSTEP)
+                  mask_noise_out)
         normal_x_noise(ipoin) = normal_x_noise_out
         normal_y_noise(ipoin) = normal_y_noise_out
         normal_z_noise(ipoin) = normal_z_noise_out
@@ -629,19 +628,16 @@
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 3: save noise source strength kernel
-  subroutine save_kernels_strength_noise(myrank,LOCAL_PATH, &
-                                        Sigma_kl_crust_mantle,scale_t,scale_displ)
+  subroutine save_kernels_strength_noise(myrank,LOCAL_PATH,Sigma_kl_crust_mantle)
   implicit none
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
   integer myrank
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: Sigma_kl_crust_mantle
-  double precision :: scale_t,scale_displ
   character(len=150) :: LOCAL_PATH
   ! output parameters
   ! local parameters
-  double precision :: scale_Sigma_kl
   character(len=150) :: prname
 
 

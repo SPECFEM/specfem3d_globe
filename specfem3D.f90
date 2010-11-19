@@ -3404,8 +3404,7 @@
 !<YANGL
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
-       call save_kernels_strength_noise(myrank,LOCAL_PATH, &
-                                        Sigma_kl_crust_mantle,scale_t,scale_displ)
+       call save_kernels_strength_noise(myrank,LOCAL_PATH,Sigma_kl_crust_mantle)
     endif
 !>YANGL
 
