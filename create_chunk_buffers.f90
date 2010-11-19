@@ -172,7 +172,7 @@
   iproc_edge_receive = 0
   iedge = 0
   ichunk_receive = 0
-  ichunk_send = 0  
+  ichunk_send = 0
 
 ! number of corners and faces shared between chunks and number of message types
   if(NCHUNKS == 1 .or. NCHUNKS == 2) then

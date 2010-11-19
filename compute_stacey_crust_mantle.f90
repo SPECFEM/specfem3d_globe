@@ -106,12 +106,12 @@
   integer :: i,j,k,ispec,iglob,ispec2D
   !integer :: reclen1,reclen2
 
-  ! note: we use c functions for I/O as they still have a better performance than 
+  ! note: we use c functions for I/O as they still have a better performance than
   !           fortran, unformatted file I/O. however, using -assume byterecl together with fortran functions
   !           comes very close (only  ~ 4 % slower ).
   !
-  !           tests with intermediate storages (every 8 step) and/or asynchronious 
-  !           file access (by process rank modulo 8) showed that the following, 
+  !           tests with intermediate storages (every 8 step) and/or asynchronious
+  !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
 
@@ -124,7 +124,7 @@
     ! reads absorbing boundary values
     if (SIMULATION_TYPE == 3 .and. nspec2D_xmin_crust_mantle > 0)  then
       ! note: backward/reconstructed wavefields are read in after the Newmark time scheme in the first time loop
-      !          this leads to a corresponding boundary condition at time index NSTEP - (it-1) = NSTEP - it + 1    
+      !          this leads to a corresponding boundary condition at time index NSTEP - (it-1) = NSTEP - it + 1
       call read_abs(0,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle,NSTEP-it+1)
     endif
 
@@ -286,14 +286,14 @@
       enddo
     enddo
   enddo
-    
+
   ! writes absorbing boundary values
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0 ) then
     call write_abs(2,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle,it)
   endif
-  
-  
-  
+
+
+
   !   ymax
 
   ! reads absorbing boundary values
@@ -349,6 +349,6 @@
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) then
     call write_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,it)
   endif
-  
+
   end subroutine compute_stacey_crust_mantle
 

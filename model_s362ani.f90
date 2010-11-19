@@ -1105,7 +1105,7 @@
 !daniel: original
 !  integer icon(1)
 !
-!  real(kind=4) verlat(1) 
+!  real(kind=4) verlat(1)
 !  real(kind=4) verlon(1)
 !  real(kind=4) verrad(1)
 !  real(kind=4) con(1)
@@ -1114,7 +1114,7 @@
   real(kind=4) verlat(nver)
   real(kind=4) verlon(nver)
   real(kind=4) verrad(nver)
-  
+
   integer icon(1)
   real(kind=4) con(1)
 
@@ -1422,8 +1422,8 @@
         call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
               xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
-              
-              
+
+
       else
         write(6,"('problem 1')")
       endif
@@ -1845,7 +1845,7 @@
   complex TEMP,FAC,DFAC
 
   !real(kind=4) WK1(1),WK2(1),WK3(1),Y(1),XLAT,XLON
-  
+
   integer :: LMAX
 
 !
@@ -1877,7 +1877,7 @@
     FAC=(1.,0.)
     DFAC=CEXP(CMPLX(0.,PHI))
 
-    ! loops over M 
+    ! loops over M
     do IM=1,IL1
       ! index IM goes maximum from 1 to LMAX+1
       TEMP=FAC*CMPLX(WK1(IM),0.)

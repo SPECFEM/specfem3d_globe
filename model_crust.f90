@@ -336,7 +336,7 @@
 
     ! sediment thickness
     h_sed = thickl(3) + thickl(4)
-    
+
     ! takes upper crust value if sediment too thin
     if( h_sed < MINIMUM_SEDIMENT_THICKNESS ) then
       velpl(3) = velpl(5)

@@ -30,7 +30,7 @@
 ! GAP P2 model - Global automatic parameterization model
 !
 ! 3D Vp mantle model (version P2) from Masayuki Obayashi
-! 
+!
 !--------------------------------------------------------------------------------------------------
 
 
@@ -41,7 +41,7 @@
     real dela,delo
     ! allocatable model arrays
     real,dimension(:),allocatable :: dep,dep1,vp1
-    real,dimension(:,:,:),allocatable :: vp3    
+    real,dimension(:,:,:),allocatable :: vp3
   end module gapp2_mantle_model_constants
 
 !
@@ -67,10 +67,10 @@
   if( ier /= 0 ) then
     call exit_mpi(myrank,'error allocation GAP model')
   endif
-  
+
   ! the variables read are declared in the module
   if(myrank == 0) call read_mantle_gapmodel()
-  
+
   ! master process broadcasts data to all processes
   call MPI_BCAST( dep,mr+1,MPI_REAL,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(dep1,mr1+1,MPI_REAL,0,MPI_COMM_WORLD,ier)
@@ -82,7 +82,7 @@
   call MPI_BCAST(  na,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST( dela,1,MPI_REAL,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST( delo,1,MPI_REAL,0,MPI_COMM_WORLD,ier)
-  
+
   end subroutine model_gapp2_broadcast
 
 !
@@ -92,7 +92,7 @@
   subroutine read_mantle_gapmodel()
 
   use gapp2_mantle_model_constants
-  
+
   implicit none
   include "constants.h"
   integer i,ir,ia,io
@@ -118,7 +118,7 @@
   enddo
   write(6,*) vp3(1,1,1),vp3(na,no,nnr)
   close(10)
-  
+
   end subroutine read_mantle_gapmodel
 
 !
@@ -126,7 +126,7 @@
 !
 
   subroutine mantle_gapmodel(radius,theta,phi,dvs,dvp,drho)
-  
+
     use gapp2_mantle_model_constants
 
     implicit none
@@ -135,7 +135,7 @@
     real d,dtheta,dphi
 
     double precision radius,theta,phi,dvs,dvp,drho
-    
+
 ! factor to convert perturbations in shear speed to perturbations in density
     double precision, parameter :: SCALE_VS =  1.40d0
     double precision, parameter :: SCALE_RHO = 0.0d0
@@ -148,14 +148,14 @@
     dvs = ZERO_
     dvp = ZERO_
     drho = ZERO_
-  
+
     ! increments in latitude/longitude (in rad)
     dtheta = dela * PI / 180.0
     dphi = delo * PI / 180.0
 
     ! depth given in km
     d=R_EARTH_-radius*R_EARTH_
-    
+
     call d2id(d,nnr,dep,id,icon)
     if(icon.ne.0) then
        write(6,*)icon
@@ -172,14 +172,14 @@
     if(phi .lt. 0.0d0) phi = phi + 2.*PI
     io=phi / dphi + 1
     if(io.gt.no) io=io-no
-    
+
     ! velocity and density perturbations
     dvp = vp3(ia,io,id)/100.d0
     dvs = SCALE_VS*dvp
     drho = SCALE_RHO*dvs
-    
+
   end subroutine mantle_gapmodel
-  
+
 !
 !--------------------------------------------------------------------------------------------------
 !
@@ -198,8 +198,8 @@
 !.................................................................
     integer i, mr, id, icon
     real d,dmax,dmin
-    real di(0:mr) 
-    icon=0 
+    real di(0:mr)
+    icon=0
     dmax=di(mr)
     dmin=di(0)
     if(d.gt.dmax) then

@@ -73,7 +73,7 @@
   double precision sec !,t_cmt,hdur
   !double precision lat,long,depth
   double precision, dimension(1) :: t_cmt,hdur,lat,long,depth
-  
+
   double precision moment_tensor(6)
 
 ! for receiver location

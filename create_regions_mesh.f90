@@ -425,14 +425,14 @@
     ! stretching function determines top and bottom of each element layer in the
     ! crust region (between r_top(1) and r_bottom(1)), where ner(1) is the
     ! number of element layers in this crust region
-    
+
     ! differentiate between regional meshes or global meshes
     if( REGIONAL_MOHO_MESH ) then
-      call stretching_function_regional(r_top(1),r_bottom(1),ner(1),stretch_tab)      
+      call stretching_function_regional(r_top(1),r_bottom(1),ner(1),stretch_tab)
     else
       call stretching_function(r_top(1),r_bottom(1),ner(1),stretch_tab)
     endif
-    
+
     ! RMIDDLE_CRUST so far is only used for 1D - models with two layers in the crust
     ! (i.e. ONE_CRUST is set to .false.), those models do not use CASE_3D
 

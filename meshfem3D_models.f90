@@ -238,7 +238,7 @@
     integer :: KP
     integer :: IP1
     integer :: JP1
-    integer :: KP1    
+    integer :: KP1
   end type model_jp3d_variables
   type (model_jp3d_variables) JP3DM_V
 ! model_jp3d_variables
@@ -256,7 +256,7 @@
     integer :: sea99_ndep
     integer :: sea99_nlat
     integer :: sea99_nlon
-    integer :: dummy_pad ! padding 4 bytes to align the structure    
+    integer :: dummy_pad ! padding 4 bytes to align the structure
  end type model_sea99_s_variables
  type (model_sea99_s_variables) SEA99M_V
 ! model_sea99_s_variables
@@ -311,7 +311,7 @@
     double precision, dimension(:,:), pointer :: tau_e_storage
     double precision, dimension(:), pointer :: Qmu_storage
     integer Q_resolution
-    integer Q_max    
+    integer Q_max
   end type model_attenuation_storage_var
   type (model_attenuation_storage_var) AM_S
 ! model_attenuation_storage_var
@@ -327,7 +327,7 @@
     ! tau_s = Tau_sigma defined by the frequency range and
     !             number of standard linear solids
     integer nf          ! nf    = Number of Frequencies
-    integer nsls        ! nsls  = Number of Standard Linear Solids    
+    integer nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
   type(attenuation_simplex_variables) AS_V
 ! attenuation_simplex_variables
@@ -471,7 +471,7 @@
 
       case(THREE_D_MODEL_S20RTS)
         call model_s20rts_broadcast(myrank,S20RTS_V)
-      
+
       case(THREE_D_MODEL_S40RTS)
         call model_s40rts_broadcast(myrank,S40RTS_V)
 
@@ -915,7 +915,7 @@
         vph=vph*(1.0d0+dvp)
         vsv=vsv*(1.0d0+dvs)
         vsh=vsh*(1.0d0+dvs)
-        rho=rho*(1.0d0+drho)        
+        rho=rho*(1.0d0+drho)
 
       case default
         stop 'unknown 3D Earth model in meshfem3D_models_get3Dmntl_val() '
@@ -1316,15 +1316,15 @@
 
   ! model GLL
   if( MGLL_V%MODEL_GLL .and. iregion_code == IREGION_CRUST_MANTLE ) then
-    
-    ! isotropic model 
-    if( .not. TRANSVERSE_ISOTROPY ) then     
-    
+
+    ! isotropic model
+    if( .not. TRANSVERSE_ISOTROPY ) then
+
       !check
       if( ispec > size(MGLL_V%vp_new(1,1,1,:)) ) then
         call exit_MPI(myrank,'model gll: ispec too big')
       endif
-    
+
       ! takes stored gll values from file
       ! ( note that these values are non-dimensionalized)
       if(CUSTOM_REAL == SIZE_REAL) then
@@ -1343,15 +1343,15 @@
       vsh = vs
       rho = rho
       eta_aniso = 1.0d0
-    
+
     ! transverse isotropic model
     else
-    
+
       !check
       if( ispec > size(MGLL_V%vpv_new(1,1,1,:)) ) then
         call exit_MPI(myrank,'model gll: ispec too big')
       endif
-    
+
       ! takes stored gll values from file
       if(CUSTOM_REAL == SIZE_REAL) then
         vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
@@ -1371,7 +1371,7 @@
     endif
     ! no mantle vp perturbation
     dvp = 0.0d0
-    
+
   endif ! MODEL_GLL
 
   end subroutine meshfem3D_models_impose_val

@@ -87,7 +87,7 @@ subroutine stretching_function_regional(r_top,r_bottom,ner,stretch_tab)
 
 ! define stretch_tab which contains r_top and r_bottom for each element layer in the crust for 3D models.
 !
-! stretch_tab array uses indices index_radius & index_layer : 
+! stretch_tab array uses indices index_radius & index_layer :
 !   stretch_tab( index_radius (1=top,2=bottom) , index_layer (1=first layer, 2=second layer,..) )
 
   implicit none
@@ -135,9 +135,9 @@ subroutine stretching_function_regional(r_top,r_bottom,ner,stretch_tab)
 !  enddo
 
   if( ner /= 3 ) stop 'error regional stretching function: ner value'
-  
+
   stretch_tab(1,1) = r_top
-  stretch_tab(1,2) = 6356000.d0  ! 15km second layer top 
+  stretch_tab(1,2) = 6356000.d0  ! 15km second layer top
   stretch_tab(1,3) = 6336000.d0  ! 35km third layer top
 
   stretch_tab(2,1) = 6356000.d0  ! bottom first layer

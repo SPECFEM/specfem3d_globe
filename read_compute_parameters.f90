@@ -751,7 +751,7 @@
   DT = DT * (1.d0 - 0.05d0)
 
   ! adapts number of element layers in crust and time step for regional simulations
-  if( REGIONAL_MOHO_MESH ) then    
+  if( REGIONAL_MOHO_MESH ) then
     ! hard coded number of crustal element layers and time step
 
     ! checks
@@ -761,16 +761,16 @@
     ! original values
     !print*,'NER:',NER_CRUST
     !print*,'DT:',DT
-    
+
     ! enforce 3 element layers
-    NER_CRUST = 3  
-        
-    ! increased stability, empirical 
+    NER_CRUST = 3
+
+    ! increased stability, empirical
     DT = DT*(1.d0 + 0.5d0)
-    
-    if( REGIONAL_MOHO_MESH_EUROPE ) DT = 0.14 ! europe 
+
+    if( REGIONAL_MOHO_MESH_EUROPE ) DT = 0.14 ! europe
     if( REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! asia & middle east
-    
+
   endif
 
 

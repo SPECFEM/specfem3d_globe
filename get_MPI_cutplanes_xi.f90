@@ -78,7 +78,7 @@
   open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt', &
        status='unknown',iostat=ier)
   if( ier /= 0 ) then
-    if( myrank == 0 ) then 
+    if( myrank == 0 ) then
       write(IMAIN,*)
       write(IMAIN,*) 'error creating file: '
       write(IMAIN,*) prname(1:len_trim(prname))//'iboolleft_xi.txt'

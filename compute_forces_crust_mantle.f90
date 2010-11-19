@@ -36,7 +36,7 @@
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec) 
+          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
 
   implicit none
 
@@ -826,7 +826,7 @@
 
 ! save deviatoric strain for Runge-Kutta scheme
     if(COMPUTE_AND_STORE_STRAIN) then
-      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)    
+      !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
       do k=1,NGLLZ
         do j=1,NGLLY
           do i=1,NGLLX
@@ -835,7 +835,7 @@
         enddo
       enddo
     endif
-    
+
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE
 
   end subroutine compute_forces_crust_mantle
