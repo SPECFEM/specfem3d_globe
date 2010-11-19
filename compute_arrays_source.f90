@@ -307,7 +307,8 @@ end subroutine compute_arrays_source_adjoint
 
 ! compute the integrated derivatives of source parameters (M_jk and X_s)
 
-subroutine compute_adj_source_frechet(displ_s,Mxx,Myy,Mzz,Mxy,Mxz,Myz,eps_s,eps_m_s, &
+subroutine compute_adj_source_frechet(displ_s,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+           eps_s,eps_m_s,eps_m_l_s, &
            hxir,hetar,hgammar,hpxir,hpetar,hpgammar, hprime_xx,hprime_yy,hprime_zz, &
            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
@@ -319,7 +320,7 @@ subroutine compute_adj_source_frechet(displ_s,Mxx,Myy,Mzz,Mxy,Mxz,Myz,eps_s,eps_
   real(kind=CUSTOM_REAL) :: displ_s(NDIM,NGLLX,NGLLY,NGLLZ)
   double precision :: Mxx, Myy, Mzz, Mxy, Mxz, Myz
   ! output
-  real(kind=CUSTOM_REAL) :: eps_s(NDIM,NDIM), eps_m_s(NDIM)
+  real(kind=CUSTOM_REAL) :: eps_s(NDIM,NDIM), eps_m_s, eps_m_l_s(NDIM)
 
   ! auxilliary
   double precision :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ), &
@@ -424,7 +425,7 @@ subroutine compute_adj_source_frechet(displ_s,Mxx,Myy,Mzz,Mxy,Mxz,Myz,eps_s,eps_
   enddo
 
   ! interpolate the strain eps_s(:,:) from eps_array(:,:,i,j,k)
-  eps_s = 0.
+  eps_s = 0.; eps_m_s=0.;
   xix_s = 0.;  xiy_s = 0.;  xiz_s = 0.
   etax_s = 0.; etay_s = 0.; etaz_s = 0.
   gammax_s = 0.; gammay_s = 0.; gammaz_s = 0.
@@ -452,6 +453,7 @@ subroutine compute_adj_source_frechet(displ_s,Mxx,Myy,Mzz,Mxy,Mxz,Myz,eps_s,eps_
         gammay_s = gammay_s + gammay(i,j,k)*hlagrange
         gammaz_s = gammaz_s + gammaz(i,j,k)*hlagrange
 
+        eps_m_s = eps_m_s + eps_m_array(i,j,k)*hlagrange
       enddo
     enddo
   enddo
@@ -463,7 +465,7 @@ subroutine compute_adj_source_frechet(displ_s,Mxx,Myy,Mzz,Mxy,Mxz,Myz,eps_s,eps_
 
 ! compute the gradient of M_jk * eps_jk, and then interpolate it
 
-  eps_m_s = 0.
+  eps_m_l_s = 0.
   do k = 1,NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
@@ -472,11 +474,11 @@ subroutine compute_adj_source_frechet(displ_s,Mxx,Myy,Mzz,Mxy,Mxz,Myz,eps_s,eps_
         hlagrange_eta = hxir(i)*hpetar(j)*hgammar(k)
         hlagrange_gamma = hxir(i)*hetar(j)*hpgammar(k)
 
-        eps_m_s(1) = eps_m_s(1) +  eps_m_array(i,j,k) * (hlagrange_xi * xix_s &
+        eps_m_l_s(1) = eps_m_l_s(1) +  eps_m_array(i,j,k) * (hlagrange_xi * xix_s &
                    + hlagrange_eta * etax_s + hlagrange_gamma * gammax_s)
-        eps_m_s(2) = eps_m_s(2) +  eps_m_array(i,j,k) * (hlagrange_xi * xiy_s &
+        eps_m_l_s(2) = eps_m_l_s(2) +  eps_m_array(i,j,k) * (hlagrange_xi * xiy_s &
                    + hlagrange_eta * etay_s + hlagrange_gamma * gammay_s)
-        eps_m_s(3) = eps_m_s(3) +  eps_m_array(i,j,k) * (hlagrange_xi * xiz_s &
+        eps_m_l_s(3) = eps_m_l_s(3) +  eps_m_array(i,j,k) * (hlagrange_xi * xiz_s &
                    + hlagrange_eta * etaz_s + hlagrange_gamma * gammaz_s)
 
       enddo

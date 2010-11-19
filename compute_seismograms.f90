@@ -200,7 +200,7 @@
                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                    moment_der,sloc_der, &
+                    moment_der,sloc_der,stshift_der,shdur_der,&
                     NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismograms,deltat, &
                     ibool_crust_mantle,ispec_selected_source,number_receiver_global, &
                     NSTEP,it,nit_written)
@@ -240,6 +240,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NDIM,nrec_local) :: moment_der
   real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local) :: sloc_der
+  real(kind=CUSTOM_REAL), dimension(nrec_local) :: stshift_der, shdur_der
 
   integer NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
@@ -259,7 +260,8 @@
   double precision :: eps_loc(NDIM,NDIM), eps_loc_new(NDIM,NDIM)
   double precision :: stf
   real(kind=CUSTOM_REAL) :: displ_s(NDIM,NGLLX,NGLLY,NGLLZ)
-  real(kind=CUSTOM_REAL) :: eps_s(NDIM,NDIM), eps_m_s(NDIM), stf_deltat
+  real(kind=CUSTOM_REAL) :: eps_s(NDIM,NDIM), eps_m_s, &
+        eps_m_l_s(NDIM), stf_deltat, Kp_deltat, Hp_deltat
   integer :: i,j,k,iglob,irec_local,irec,ispec
 
   double precision, external :: comp_source_time_function
@@ -346,7 +348,7 @@
     ispec = ispec_selected_source(irec)
 
     call compute_adj_source_frechet(displ_s,Mxx(irec),Myy(irec),Mzz(irec), &
-                Mxy(irec),Mxz(irec),Myz(irec),eps_s,eps_m_s, &
+                Mxy(irec),Mxz(irec),Myz(irec),eps_s,eps_m_s,eps_m_l_s, &
                 hxir_store(irec_local,:),hetar_store(irec_local,:),hgammar_store(irec_local,:), &
                 hpxir_store(irec_local,:),hpetar_store(irec_local,:),hpgammar_store(irec_local,:), &
                 hprime_xx,hprime_yy,hprime_zz, &
@@ -358,7 +360,15 @@
     stf_deltat = stf * deltat
 
     moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
-    sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_s(:) * stf_deltat
+    sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_l_s(:) * stf_deltat
+
+    Kp_deltat= -1.0d0/sqrt(PI)/hdur_gaussian(irec)*exp(-((dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec))**2) * deltat
+    Hp_deltat= (dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec)*Kp_deltat
+
+    stshift_der(irec_local) = stshift_der(irec_local) + eps_m_s * Kp_deltat
+
+    shdur_der(irec_local) = shdur_der(irec_local) + eps_m_s * Hp_deltat
+
 
   enddo
 
