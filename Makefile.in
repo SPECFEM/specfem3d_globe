@@ -76,6 +76,7 @@ libspecfem_a_OBJECTS_COMMON = \
 	$(EMPTY_MACRO)
 
 libspecfem_a_OBJECTS_AUX = \
+	$O/calendar.o \
 	$O/create_header_file.o \
 	$O/create_movie_AVS_DX.o \
 	$O/create_serial_name_database.o \
