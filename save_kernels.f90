@@ -695,7 +695,7 @@
 !
 
   subroutine save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
-                                nu_source,moment_der,sloc_der,number_receiver_global)
+                                nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
 
   implicit none
 
@@ -706,7 +706,7 @@
   double precision :: scale_displ,scale_t
 
   double precision :: nu_source(NDIM,NDIM,NSOURCES)
-  real(kind=CUSTOM_REAL) :: moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local)
+  real(kind=CUSTOM_REAL) :: moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), stshift_der(nrec_local), shdur_der(nrec_local)
 
   integer, dimension(nrec_local) :: number_receiver_global
 
@@ -725,6 +725,10 @@
     ! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
     moment_der(:,:,irec_local) = matmul(matmul(nu_source(:,:,irec_local),moment_der(:,:,irec_local)),&
                transpose(nu_source(:,:,irec_local))) * scale_t ** 3 / scale_mass
+
+   ! derivatives for time shift and hduration
+    stshift_der(irec_local) = stshift_der(irec_local) * scale_displ**2
+    shdur_der(irec_local) = shdur_der(irec_local) * scale_displ**2
 
     write(outputname,'(a,i5.5)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
     open(unit=27,file=trim(outputname),status='unknown',action='write')
@@ -747,6 +751,8 @@
     write(27,'(g16.5)') sloc_der(2,irec_local)
     write(27,'(g16.5)') sloc_der(1,irec_local)
     write(27,'(g16.5)') -sloc_der(3,irec_local)
+    write(27,'(g16.5)') stshift_der(irec_local)
+    write(27,'(g16.5)') shdur_der(irec_local)
     close(27)
   enddo
 

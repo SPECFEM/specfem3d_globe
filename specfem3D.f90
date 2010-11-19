@@ -676,6 +676,7 @@
 ! source frechet derivatives
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: moment_der
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: sloc_der
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: stshift_der, shdur_der
   double precision, dimension(:,:), allocatable :: hpxir_store,hpetar_store,hpgammar_store
   integer :: nadj_hprec_local
 
@@ -1266,9 +1267,12 @@
       allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
       if(ier /= 0) stop 'error while allocating seismograms'
       ! allocate Frechet derivatives array
-      allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local))
+      allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local),stshift_der(nrec_local),shdur_der(nrec_local))
       moment_der = 0._CUSTOM_REAL
       sloc_der = 0._CUSTOM_REAL
+      stshift_der = 0._CUSTOM_REAL
+      shdur_der = 0._CUSTOM_REAL
+
     endif
     ! initialize seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
@@ -2916,7 +2920,7 @@
                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                    moment_der,sloc_der, &
+                    moment_der,sloc_der,stshift_der,shdur_der, &
                     NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismograms,deltat, &
                     ibool_crust_mantle,ispec_selected_source,number_receiver_global, &
                     NSTEP,it,nit_written)
@@ -3430,7 +3434,7 @@
   ! save source derivatives for adjoint simulations
   if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
     call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
-                                nu_source,moment_der,sloc_der,number_receiver_global)
+                                nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
   endif
 
   ! close the main output file
