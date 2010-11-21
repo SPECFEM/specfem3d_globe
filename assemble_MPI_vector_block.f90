@@ -31,7 +31,7 @@
 !---- to reduce the total number of MPI calls
 !----
 
-  subroutine assemble_MPI_vector(myrank, &
+  subroutine assemble_MPI_vector_block(myrank, &
             accel_crust_mantle,NGLOB_CRUST_MANTLE, &
             accel_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -53,7 +53,7 @@
             NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC, &
             NGLOB2DMAX_XY,NCHUNKS)
 
-! this version of the routine is based on non-blocking MPI calls
+! this version of the routine is based on blocking MPI calls
 
   implicit none
 
@@ -703,5 +703,5 @@
 
   enddo
 
-  end subroutine assemble_MPI_vector
+  end subroutine assemble_MPI_vector_block
 

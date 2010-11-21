@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            March 2010
+!                            December 2010
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -119,7 +119,7 @@
 
   ! ocean load
   if (OCEANS_VAL) then
-    call assemble_MPI_scalar(myrank,rmass_ocean_load,NGLOB_CRUST_MANTLE, &
+    call assemble_MPI_scalar_block(myrank,rmass_ocean_load,NGLOB_CRUST_MANTLE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -134,7 +134,7 @@
   endif
 
   ! crust and mantle
-  call assemble_MPI_scalar(myrank,rmass_crust_mantle,NGLOB_CRUST_MANTLE, &
+  call assemble_MPI_scalar_block(myrank,rmass_crust_mantle,NGLOB_CRUST_MANTLE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -148,7 +148,7 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
 
   ! outer core
-  call assemble_MPI_scalar(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
+  call assemble_MPI_scalar_block(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
@@ -162,7 +162,7 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)
 
   ! inner core
-  call assemble_MPI_scalar(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
+  call assemble_MPI_scalar_block(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
@@ -257,7 +257,7 @@
   ndim_assemble = 1
 
   ! use these buffers to assemble the inner core mass matrix with the central cube
-  call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
+  call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
                npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
                buffer_slices, buffer_slices2, ibool_central_cube, &
                receiver_cube_from_slices, ibool_inner_core, &

@@ -1,14 +1,14 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            March 2010
+!                            December 2010
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -128,7 +128,7 @@ FC_FUNC_(write_character_fd,WRITE_CHARACTER_FD)(int *pfd, char *z, int *lchar) {
 
 /* ---------------------------------------
 
- io performance test
+ IO performance test
 
  Software Optimization for High Performance Computing: Creating Faster Applications
 
@@ -350,7 +350,7 @@ void read_abs_fbin(int *fid, void *buffer, int *length, int *index){
 
 /* ---------------------------------------
 
- io performance test
+ IO performance test
 
 
 A Performance Comparison of "read" and "mmap" in the Solaris 8 OS
