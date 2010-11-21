@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            March 2010
+!                            December 2010
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -1771,7 +1771,7 @@
 ! that is, for an iteration, the register must contain
 ! NDIM * displ_ + NDIM * veloc_ + NDIM * accel + deltat + deltatsq..
 ! in most cases a real (CUSTOM_REAL) value will have 4 bytes,
-! assuming a default cache size of of about 128 bytes, we unroll here in steps of 3, thus 29 reals or 118 bytes,
+! assuming a default cache size of about 128 bytes, we unroll here in steps of 3, thus 29 reals or 118 bytes,
 ! rather than with steps of 4
     do i = 1,mod(NGLOB_CRUST_MANTLE,3)
       displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &

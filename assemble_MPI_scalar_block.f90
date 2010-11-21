@@ -29,7 +29,7 @@
 !---- assemble the contributions between slices and chunks using MPI
 !----
 
-  subroutine assemble_MPI_scalar(myrank,array_val,nglob, &
+  subroutine assemble_MPI_scalar_block(myrank,array_val,nglob, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
             npoin2D_faces,npoin2D_xi,npoin2D_eta, &
@@ -42,7 +42,7 @@
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
             NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS)
 
-! this version of the routine is based on non-blocking MPI calls
+! this version of the routine is based on blocking MPI calls
 
   implicit none
 
@@ -434,5 +434,5 @@
 
   enddo
 
-  end subroutine assemble_MPI_scalar
+  end subroutine assemble_MPI_scalar_block
 

@@ -153,6 +153,9 @@ libspecfem_a_OBJECTS_SOLVER = \
 	$O/assemble_MPI_central_cube.o \
 	$O/assemble_MPI_scalar.o \
 	$O/assemble_MPI_vector.o \
+	$O/assemble_MPI_central_cube_block.o \
+	$O/assemble_MPI_scalar_block.o \
+	$O/assemble_MPI_vector_block.o \
 	$O/auto_ner.o \
 	$O/broadcast_compute_parameters.o \
 	$O/calendar.o \
@@ -715,6 +718,9 @@ $O/write_AVS_DX_global_data.o: constants.h $S/write_AVS_DX_global_data.f90
 $O/assemble_MPI_central_cube.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/assemble_MPI_central_cube.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube.f90
 
+$O/assemble_MPI_central_cube_block.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/assemble_MPI_central_cube_block.f90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_central_cube_block.o ${FCFLAGS_f90} $S/assemble_MPI_central_cube_block.f90
+
 $O/check_simulation_stability.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/check_simulation_stability.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/check_simulation_stability.o ${FCFLAGS_f90} $S/check_simulation_stability.f90
 
@@ -747,8 +753,14 @@ $O/noise_tomography.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/noise_to
 $O/assemble_MPI_scalar.o: constants.h $S/assemble_MPI_scalar.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar.o ${FCFLAGS_f90} $S/assemble_MPI_scalar.f90
 
+$O/assemble_MPI_scalar_block.o: constants.h $S/assemble_MPI_scalar_block.f90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_scalar_block.o ${FCFLAGS_f90} $S/assemble_MPI_scalar_block.f90
+
 $O/assemble_MPI_vector.o: constants.h $S/assemble_MPI_vector.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_vector.o ${FCFLAGS_f90} $S/assemble_MPI_vector.f90
+
+$O/assemble_MPI_vector_block.o: constants.h $S/assemble_MPI_vector_block.f90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/assemble_MPI_vector_block.o ${FCFLAGS_f90} $S/assemble_MPI_vector_block.f90
 
 ###
 ### regular MPI compilation options here
