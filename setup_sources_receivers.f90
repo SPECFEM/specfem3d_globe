@@ -105,8 +105,17 @@
   integer :: yr,jda,ho,mi
   integer :: irec,isource,nrec_tot_found,ier
   integer :: icomp,itime,nadj_files_found,nadj_files_found_tot
-  character(len=3),dimension(NDIM) :: comp = (/ "LHN", "LHE", "LHZ" /)
+! character(len=3),dimension(NDIM) :: comp = (/ "LHN", "LHE", "LHZ" /)
+  character(len=3),dimension(NDIM) :: comp
   character(len=150) :: filename,adj_source_file,system_command,filename_new
+  character(len=2) :: bic
+
+! by Ebru
+  call band_instrument_code(DT,bic)
+  comp(1) = bic(1:2)//'N'
+  comp(2) = bic(1:2)//'E'
+  comp(3) = bic(1:2)//'Z'
+!
 
 ! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the

@@ -123,6 +123,7 @@
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLY) :: yigll
   double precision, dimension(NGLLZ) :: zigll
+  double precision :: DT
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
@@ -172,7 +173,7 @@
         call compute_arrays_source_adjoint(myrank,adj_source_file, &
                   xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec), &
                   nu(:,:,irec),adj_sourcearray, xigll,yigll,zigll,iadjsrc_len(it_sub_adj), &
-                  iadjsrc,it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC)
+                  iadjsrc,it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
         ! stores source array
         ! note: the adj_sourcearrays has a time stepping from 1 to NTSTEP_BETWEEN_READ_ADJSRC

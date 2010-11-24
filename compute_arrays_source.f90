@@ -169,7 +169,7 @@
 subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
       xi_receiver,eta_receiver,gamma_receiver, nu,adj_sourcearray, &
       xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
-      NTSTEP_BETWEEN_READ_ADJSRC)
+      NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
   implicit none
 
@@ -181,6 +181,7 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
   integer myrank, NSTEP_BLOCK
 
   double precision xi_receiver, eta_receiver, gamma_receiver
+  double precision DT
 
   character(len=*) adj_source_file
 
@@ -207,8 +208,17 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
   integer icomp, itime, i, j, k, ios
   integer it_start,it_end,index_i
   real(kind=CUSTOM_REAL) :: junk
-  character(len=3),dimension(NDIM) :: comp = (/ "LHN", "LHE", "LHZ" /)
+  !character(len=3),dimension(NDIM) :: comp = (/ "LHN", "LHE", "LHZ" /)
+  character(len=3),dimension(NDIM) :: comp
   character(len=150) :: filename
+  character(len=2) :: bic
+
+! by Ebru
+  call band_instrument_code(DT,bic)
+  comp(1) = bic(1:2)//'N'
+  comp(2) = bic(1:2)//'E'
+  comp(3) = bic(1:2)//'Z'
+!
 
   ! (sub)trace start and end
   ! reading starts in chunks of NSTEP_BLOCK from the end of the trace,

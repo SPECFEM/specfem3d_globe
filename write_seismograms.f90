@@ -375,6 +375,7 @@
   character(len=8) KNETWK
   character(len=8) KUSER0,KUSER1,KUSER2
   character(len=8), parameter :: str_undef='-12345  '
+  character(len=2) bic
 
   real UNUSED   ! header fields unused by SAC
   real undef    ! undefined values
@@ -400,7 +401,7 @@
   double precision backaz
   real(kind=CUSTOM_REAL) phi,cphi,sphi
   !----------------------------------------------------------------
-
+  call band_instrument_code(DT,bic)
   if (ROTATE_SEISMOGRAMS_RT) then ! iorientation 1=N,2=E,3=Z,4=R,5=T
     ior_start=3    ! starting from Z
     ior_end  =5    ! ending with T => ZRT
@@ -414,15 +415,20 @@
   do iorientation = ior_start,ior_end      ! BS BS changed according to ROTATE_SEISMOGRAMS_RT
 
     if(iorientation == 1) then
-      chn = 'LHN'
+      !chn = 'LHN'
+      chn = bic(1:2)//'N'
     else if(iorientation == 2) then
-      chn = 'LHE'
+      !chn = 'LHE'
+      chn = bic(1:2)//'E'
     else if(iorientation == 3) then
-      chn = 'LHZ'
+      !chn = 'LHZ'
+      chn = bic(1:2)//'Z'
     else if(iorientation == 4) then
-      chn = 'LHR'
+      !chn = 'LHR'
+      chn = bic(1:2)//'R'
     else if(iorientation == 5) then
-      chn = 'LHT'
+      !chn = 'LHT'
+      chn = bic(1:2)//'T'
     else
       call exit_MPI(myrank,'incorrect channel value')
     endif
@@ -693,7 +699,7 @@
       ! indicates SEM synthetics
       ! by Ebru
       KUSER0 = 'SEM'          !  A8
-      KUSER1 = 'v5.0.1'
+      KUSER1 = 'v5.1.0'
       KUSER2 = 'Tiger' ! aka. awesome (princeton) tiger version :)
 
       !KUSER0 = 'PDE_LAT_'          !  A8
@@ -1070,6 +1076,9 @@
 
  character(len=4) chn
  character(len=150) sisname,clean_LOCAL_PATH,final_LOCAL_PATH
+ character(len=2) bic
+
+ call band_instrument_code(DT,bic)
 
  do irec_local = 1,nrec_local
 
@@ -1091,12 +1100,14 @@
      else if(iorientation == 6) then
        chn = 'SEZ'
      else if(iorientation == 7) then
-       chn = 'LHN'
+       !chn = 'LHN'
+       chn = bic(1:2)//'N'
      else if(iorientation == 8) then
-       chn = 'LHE'
+       chn = bic(1:2)//'E'
      else if(iorientation == 9) then
-       chn = 'LHZ'
+       chn = bic(1:2)//'Z'
      endif
+
 
 ! create the name of the seismogram file for each slice
 ! file name includes the name of the station, the network and the component
@@ -1140,3 +1151,24 @@
  enddo
 
  end subroutine write_adj_seismograms
+
+ subroutine band_instrument_code(DT,bic)
+  ! This subroutine is to choose the appropriate band and instrument codes for channel names of seismograms
+  ! based on the IRIS convention (first two letters of channel codes which were LH(Z/E/N) previously). 
+  ! For consistency with observed data, we now use the IRIS convention for band codes (first letter in channel codes)of 
+  ! SEM seismograms governed by their sampling rate.
+  ! Instrument code (second letter in channel codes) is fixed to "X" which is assigned by IRIS for synthetic seismograms.
+  ! See the manual for further explanations!
+  ! Ebru, November 2010  
+  implicit none
+  double precision DT
+  character(len=2) bic
+
+  if (DT .ge. 1.0d0)  bic = 'LX'
+  if (DT .lt. 1.0d0 .and. DT .gt. 0.1d0) bic = 'MX'
+  if (DT .le. 0.1d0 .and. DT .gt. 0.0125d0) bic = 'BX'
+  if (DT .le. 0.0125d0 .and. DT .gt. 0.004d0) bic = 'HX'
+  if (DT .le. 0.004d0 .and. DT .gt. 0.001d0) bic = 'CX'
+  if (DT .le. 0.001d0) bic = 'FX'
+ end subroutine band_instrument_code
+
