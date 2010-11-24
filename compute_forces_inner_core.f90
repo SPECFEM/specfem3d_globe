@@ -50,7 +50,7 @@
 ! for attenuation
 ! memory variables R_ij are stored at the local rather than global level
 ! to allow for optimization of cache access by compiler
-  integer i_sls,i_memory
+  integer i_SLS,i_memory
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
 
 ! variable lengths for factor_common and one_minus_sum_beta
@@ -306,15 +306,15 @@
 
 ! subtract memory variables if attenuation
           if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
-            do i_sls = 1,N_SLS
-              R_xx_val = R_memory(1,i_sls,i,j,k,ispec)
-              R_yy_val = R_memory(2,i_sls,i,j,k,ispec)
+            do i_SLS = 1,N_SLS
+              R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
+              R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
               sigma_xx = sigma_xx - R_xx_val
               sigma_yy = sigma_yy - R_yy_val
               sigma_zz = sigma_zz + R_xx_val + R_yy_val
-              sigma_xy = sigma_xy - R_memory(3,i_sls,i,j,k,ispec)
-              sigma_xz = sigma_xz - R_memory(4,i_sls,i,j,k,ispec)
-              sigma_yz = sigma_yz - R_memory(5,i_sls,i,j,k,ispec)
+              sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
+              sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
+              sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
             enddo
           endif
 
@@ -532,15 +532,15 @@
 
     if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )) then
 
-      do i_sls = 1,N_SLS
-        factor_common_use = factor_common(i_sls,:,:,:,ispec)
+      do i_SLS = 1,N_SLS
+        factor_common_use = factor_common(i_SLS,:,:,:,ispec)
         do i_memory = 1,5
-          R_memory(i_memory,i_sls,:,:,:,ispec) = &
-                  alphaval(i_sls) * &
-                  R_memory(i_memory,i_sls,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
+          R_memory(i_memory,i_SLS,:,:,:,ispec) = &
+                  alphaval(i_SLS) * &
+                  R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
                   factor_common_use * &
-                  (betaval(i_sls) * &
-                  epsilondev(i_memory,:,:,:,ispec) + gammaval(i_sls) * epsilondev_loc(i_memory,:,:,:))
+                  (betaval(i_SLS) * &
+                  epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
         enddo
       enddo
 

@@ -1154,12 +1154,12 @@
 
  subroutine band_instrument_code(DT,bic)
   ! This subroutine is to choose the appropriate band and instrument codes for channel names of seismograms
-  ! based on the IRIS convention (first two letters of channel codes which were LH(Z/E/N) previously). 
-  ! For consistency with observed data, we now use the IRIS convention for band codes (first letter in channel codes)of 
+  ! based on the IRIS convention (first two letters of channel codes which were LH(Z/E/N) previously).
+  ! For consistency with observed data, we now use the IRIS convention for band codes (first letter in channel codes)of
   ! SEM seismograms governed by their sampling rate.
   ! Instrument code (second letter in channel codes) is fixed to "X" which is assigned by IRIS for synthetic seismograms.
   ! See the manual for further explanations!
-  ! Ebru, November 2010  
+  ! Ebru, November 2010
   implicit none
   double precision DT
   character(len=2) bic

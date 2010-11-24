@@ -835,16 +835,13 @@
 
   integer :: i,ier
 
-!<YANGL
+  integer :: imodulo_NGLOB_CRUST_MANTLE
+
 ! NOISE_TOMOGRAPHY
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray
   integer :: irec_master_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
              normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
-!>YANGL
-
-  !daniel: debugging
-  !integer:: indx(1)
 
 ! ************** PROGRAM STARTS HERE **************
 !
@@ -1724,13 +1721,14 @@
     close(IOUT)
   endif
 
-! get MPI starting time
-  time_start = MPI_WTIME()
-
-
 ! initialize variables for writing seismograms
   seismo_offset = it_begin-1
   seismo_current = 0
+
+  imodulo_NGLOB_CRUST_MANTLE = mod(NGLOB_CRUST_MANTLE,3)
+
+! get MPI starting time
+  time_start = MPI_WTIME()
 
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
@@ -1773,7 +1771,8 @@
 ! in most cases a real (CUSTOM_REAL) value will have 4 bytes,
 ! assuming a default cache size of about 128 bytes, we unroll here in steps of 3, thus 29 reals or 118 bytes,
 ! rather than with steps of 4
-    do i = 1,mod(NGLOB_CRUST_MANTLE,3)
+  if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
+    do i = 1,imodulo_NGLOB_CRUST_MANTLE
       displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
         + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
 
@@ -1782,6 +1781,8 @@
 
       accel_crust_mantle(:,i) = 0._CUSTOM_REAL
     enddo
+  endif
+
     do i = mod(NGLOB_CRUST_MANTLE,3)+1,NGLOB_CRUST_MANTLE, 3 ! in steps of 3
       displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
         + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
@@ -1900,13 +1901,16 @@
 !      enddo
 
 ! way 2:
-      do i=1,mod(NGLOB_CRUST_MANTLE,3)
+    if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
+      do i=1,imodulo_NGLOB_CRUST_MANTLE
         b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
           + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
         b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
           + b_deltatover2*b_accel_crust_mantle(:,i)
         b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
       enddo
+    endif
+
       do i=mod(NGLOB_CRUST_MANTLE,3)+1,NGLOB_CRUST_MANTLE,3
         b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
           + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)

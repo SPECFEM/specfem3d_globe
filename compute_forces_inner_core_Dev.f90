@@ -162,14 +162,15 @@
   integer :: int_radius
   integer :: ispec,ispec_strain
   integer :: i,j,k !,l
-  integer :: i_sls,i_memory
+  integer :: i_SLS,i_memory,imodulo_N_SLS
   integer :: iglob1,iglob2,iglob3,iglob4,iglob5
-
 
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
+
+  imodulo_N_SLS = mod(N_SLS,3)
 
   do ispec = 1,NSPEC_INNER_CORE
 
@@ -416,60 +417,64 @@
             if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
 
 ! way 1:
-!              do i_sls = 1,N_SLS
-!                R_xx_val = R_memory(1,i_sls,i,j,k,ispec)
-!                R_yy_val = R_memory(2,i_sls,i,j,k,ispec)
+!              do i_SLS = 1,N_SLS
+!                R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
+!                R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
 !                sigma_xx = sigma_xx - R_xx_val
 !                sigma_yy = sigma_yy - R_yy_val
 !                sigma_zz = sigma_zz + R_xx_val + R_yy_val
-!                sigma_xy = sigma_xy - R_memory(3,i_sls,i,j,k,ispec)
-!                sigma_xz = sigma_xz - R_memory(4,i_sls,i,j,k,ispec)
-!                sigma_yz = sigma_yz - R_memory(5,i_sls,i,j,k,ispec)
+!                sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
+!                sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
+!                sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
 !              enddo
 
 ! way 2:
 ! note: this should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
 !          by default, N_SLS = 3, there for we take steps of 3
-              do i_sls = 1,mod(N_SLS,3)
-                R_xx_val1 = R_memory(1,i_sls,i,j,k,ispec)
-                R_yy_val1 = R_memory(2,i_sls,i,j,k,ispec)
+            if(imodulo_N_SLS >= 1) then
+              do i_SLS = 1,imodulo_N_SLS
+                R_xx_val1 = R_memory(1,i_SLS,i,j,k,ispec)
+                R_yy_val1 = R_memory(2,i_SLS,i,j,k,ispec)
                 sigma_xx = sigma_xx - R_xx_val1
                 sigma_yy = sigma_yy - R_yy_val1
                 sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-                sigma_xy = sigma_xy - R_memory(3,i_sls,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_memory(4,i_sls,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_memory(5,i_sls,i,j,k,ispec)
+                sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
+                sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
+                sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
               enddo
+            endif
 
-              do i_sls = mod(N_SLS,3)+1,N_SLS,3
-                R_xx_val1 = R_memory(1,i_sls,i,j,k,ispec)
-                R_yy_val1 = R_memory(2,i_sls,i,j,k,ispec)
+            if(N_SLS >= imodulo_N_SLS+1) then
+              do i_SLS = imodulo_N_SLS+1,N_SLS,3
+                R_xx_val1 = R_memory(1,i_SLS,i,j,k,ispec)
+                R_yy_val1 = R_memory(2,i_SLS,i,j,k,ispec)
                 sigma_xx = sigma_xx - R_xx_val1
                 sigma_yy = sigma_yy - R_yy_val1
                 sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-                sigma_xy = sigma_xy - R_memory(3,i_sls,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_memory(4,i_sls,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_memory(5,i_sls,i,j,k,ispec)
+                sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
+                sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
+                sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
 
-                R_xx_val2 = R_memory(1,i_sls+1,i,j,k,ispec)
-                R_yy_val2 = R_memory(2,i_sls+1,i,j,k,ispec)
+                R_xx_val2 = R_memory(1,i_SLS+1,i,j,k,ispec)
+                R_yy_val2 = R_memory(2,i_SLS+1,i,j,k,ispec)
                 sigma_xx = sigma_xx - R_xx_val2
                 sigma_yy = sigma_yy - R_yy_val2
                 sigma_zz = sigma_zz + R_xx_val2 + R_yy_val2
-                sigma_xy = sigma_xy - R_memory(3,i_sls+1,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_memory(4,i_sls+1,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_memory(5,i_sls+1,i,j,k,ispec)
+                sigma_xy = sigma_xy - R_memory(3,i_SLS+1,i,j,k,ispec)
+                sigma_xz = sigma_xz - R_memory(4,i_SLS+1,i,j,k,ispec)
+                sigma_yz = sigma_yz - R_memory(5,i_SLS+1,i,j,k,ispec)
 
-                R_xx_val3 = R_memory(1,i_sls+2,i,j,k,ispec)
-                R_yy_val3 = R_memory(2,i_sls+2,i,j,k,ispec)
+                R_xx_val3 = R_memory(1,i_SLS+2,i,j,k,ispec)
+                R_yy_val3 = R_memory(2,i_SLS+2,i,j,k,ispec)
                 sigma_xx = sigma_xx - R_xx_val3
                 sigma_yy = sigma_yy - R_yy_val3
                 sigma_zz = sigma_zz + R_xx_val3 + R_yy_val3
-                sigma_xy = sigma_xy - R_memory(3,i_sls+2,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_memory(4,i_sls+2,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_memory(5,i_sls+2,i,j,k,ispec)
+                sigma_xy = sigma_xy - R_memory(3,i_SLS+2,i,j,k,ispec)
+                sigma_xz = sigma_xz - R_memory(4,i_SLS+2,i,j,k,ispec)
+                sigma_yz = sigma_yz - R_memory(5,i_SLS+2,i,j,k,ispec)
               enddo
+            endif
 
             endif
 
@@ -728,15 +733,15 @@
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
       if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
-        do i_sls = 1,N_SLS
-          factor_common_use = factor_common(i_sls,:,:,:,ispec)
+        do i_SLS = 1,N_SLS
+          factor_common_use = factor_common(i_SLS,:,:,:,ispec)
           do i_memory = 1,5
-             R_memory(i_memory,i_sls,:,:,:,ispec) = &
-                  alphaval(i_sls) * &
-                  R_memory(i_memory,i_sls,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
+             R_memory(i_memory,i_SLS,:,:,:,ispec) = &
+                  alphaval(i_SLS) * &
+                  R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
                   factor_common_use * &
-                  (betaval(i_sls) * &
-                  epsilondev(i_memory,:,:,:,ispec) + gammaval(i_sls) * epsilondev_loc(i_memory,:,:,:))
+                  (betaval(i_SLS) * &
+                  epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
           enddo
         enddo
 
