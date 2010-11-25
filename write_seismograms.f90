@@ -515,7 +515,7 @@
 
 ! Reference markers, (e.g. the o-marker) are not defined relative to this time,
 ! but rather to the begin time (B) of the seismo, so if you adjust B, you also
-! need to adjust KZTIME to match.  l would suggest experimenting with this until
+! need to adjust KZTIME to match. I would suggest experimenting with this until
 ! you understand it. It is a little non-intuitive until you see it for yourself.
 !
 !-----------------------------------------------------------------------------
