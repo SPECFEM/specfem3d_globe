@@ -67,23 +67,23 @@ FC_FUNC_(close_file,CLOSE_FILE)() {
 
 void
 FC_FUNC_(write_integer,WRITE_INTEGER)(int *z) {
-  write(fd, z, sizeof(int));
+  int dummy_unused_variable = write(fd, z, sizeof(int));
 }
 
 void
 FC_FUNC_(write_real,WRITE_REAL)(float *z) {
-  write(fd, z, sizeof(float));
+  int dummy_unused_variable = write(fd, z, sizeof(float));
 }
 
 /* BS BS begin. Added section for writing SAC binary data*/
 void
 FC_FUNC_(write_n_real,WRITE_N_REAL)(float *z,int *n) {
-  write(fd, z, *n*sizeof(float));
+  int dummy_unused_variable = write(fd, z, *n*sizeof(float));
 }
 
 void
 FC_FUNC_(write_character,WRITE_CHARACTER)(char *z, int *lchar) {
-  write(fd, z, *lchar*sizeof(char));
+  int dummy_unused_variable = write(fd, z, *lchar*sizeof(char));
 }
 
 // LQY -- added for combine_vol/surf_data to write multiple binary files simultaneously --
@@ -106,23 +106,23 @@ FC_FUNC_(close_file_fd,CLOSE_FILE_FD)(int *pfd) {
 
 void
 FC_FUNC_(write_integer_fd,WRITE_INTEGER_FD)(int *pfd, int *z) {
-  write(*pfd, z, sizeof(int));
+  int dummy_unused_variable = write(*pfd, z, sizeof(int));
 }
 
 void
 FC_FUNC_(write_real_fd,WRITE_REAL_FD)(int *pfd, float *z) {
-  write(*pfd, z, sizeof(float));
+  int dummy_unused_variable = write(*pfd, z, sizeof(float));
 }
 
 /* BS BS begin. Added section for writing SAC binary data*/
 void
 FC_FUNC_(write_n_real_fd,WRITE_N_REAL_FD)(int *pfd, float *z,int *n) {
-  write(*pfd, z, *n*sizeof(float));
+  int dummy_unused_variable = write(*pfd, z, *n*sizeof(float));
 }
 
 void
 FC_FUNC_(write_character_fd,WRITE_CHARACTER_FD)(int *pfd, char *z, int *lchar) {
-  write(*pfd, z, *lchar*sizeof(char));
+  int dummy_unused_variable = write(*pfd, z, *lchar*sizeof(char));
 }
 
 
