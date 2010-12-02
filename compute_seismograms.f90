@@ -227,7 +227,7 @@
 
   double precision, dimension(NSOURCES) :: t_cmt,hdur_gaussian
   double precision :: DT,t0
-  double precision :: scale_displ
+  double precision :: scale_displ, scale_t
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
@@ -361,8 +361,9 @@
 
     moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
     sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_l_s(:) * stf_deltat
-
-    Kp_deltat= -1.0d0/sqrt(PI)/hdur_gaussian(irec)*exp(-((dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec))**2) * deltat
+ 
+    scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
+    Kp_deltat= -1.0d0/sqrt(PI)/hdur_gaussian(irec)*exp(-((dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec))**2) * deltat * scale_t
     Hp_deltat= (dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec)*Kp_deltat
 
     stshift_der(irec_local) = stshift_der(irec_local) + eps_m_s * Kp_deltat
