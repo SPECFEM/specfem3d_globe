@@ -4,6 +4,8 @@ To-do list for SPECFEM3D_GLOBE, by Dimitri Komatitsch:
 
 Things that could be done in a future version:
 
+- use a better checkpointing/restarting system with CRC-32 as in SPECFEM3D_GLOBE/tags/v4.1.0_beta_merged_mesher_solver_non_blocking_MPI/src
+
 - use a more accurate time scheme: either symplectic schemes (but there could be a problem in the viscoelastic case, see below) or else Runge Kutta RK4, which is non staggered and would thus solve the approximate implementation of the displacement gradient that I used to implement attenuation back in 1999.
 
 Subject: Re: SEM attenuation
