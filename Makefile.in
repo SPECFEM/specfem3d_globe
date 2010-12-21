@@ -56,6 +56,7 @@ S = @srcdir@
 libspecfem_a_OBJECTS_COMMON = \
 	$O/auto_ner.o \
 	$O/broadcast_compute_parameters.o \
+	$O/calendar.o \
 	$O/count_number_of_sources.o \
 	$O/create_name_database.o \
 	$O/get_model_parameters.o \
@@ -347,7 +348,7 @@ xcreate_movie_AVS_DX: $O/create_movie_AVS_DX.o $(XCREATE_HEADER_OBJECTS)
 xcreate_movie_GMT_global: $O/create_movie_GMT_global.o $(XCREATE_HEADER_OBJECTS)
 	${FCCOMPILE_CHECK} -o xcreate_movie_GMT_global $O/create_movie_GMT_global.o $(XCREATE_HEADER_OBJECTS)
 
-xextract_database: $S/UTILS/extract_database/extract_database.f90 
+xextract_database: $S/UTILS/extract_database/extract_database.f90
 	${FCCOMPILE_CHECK} -o xextract_database $S/UTILS/extract_database/extract_database.f90
 
 
@@ -796,7 +797,7 @@ $O/meshfem3D_models.o: constants.h $S/meshfem3D_models.f90
 $O/model_aniso_mantle.o: constants.h $S/model_aniso_mantle.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_aniso_mantle.o ${FCFLAGS_f90} $S/model_aniso_mantle.f90
 
-$O/model_atten3D_QRFSI12.o: constants.h $S/model_atten3D_QRFSI12.f90 
+$O/model_atten3D_QRFSI12.o: constants.h $S/model_atten3D_QRFSI12.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_atten3D_QRFSI12.o ${FCFLAGS_f90} $S/model_atten3D_QRFSI12.f90
 
 $O/model_attenuation.o: constants.h $S/model_attenuation.f90 $O/model_ak135.o $O/model_1066a.o $O/model_1dref.o

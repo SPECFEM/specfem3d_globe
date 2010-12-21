@@ -153,8 +153,9 @@
             end do
 
             ! Check the lagrange polynomial and its derivative
-            if (xmesh /=xstore(i,j,k,ispec).or.ymesh/=ystore(i,j,k,ispec)&
-                        .or.zmesh/=zstore(i,j,k,ispec)) then
+            if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
+              .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
+              .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL ) then
                     call exit_MPI(myrank,'new mesh are wrong in recalc_jacobian_gall3D.f90')
             end if
             if(abs(sumshape-one) >  TINYVAL) then
@@ -312,7 +313,9 @@
 
 
         ! Check the lagrange polynomial
-        if (xmesh/=xelm2D(i,j).or.ymesh/=yelm2D(i,j).or.zmesh/=zelm2D(i,j)) then
+        if ( abs(xmesh - xelm2D(i,j)) > TINYVAL &
+            .or. abs(ymesh - yelm2D(i,j)) > TINYVAL &
+            .or. abs(zmesh - zelm2D(i,j)) > TINYVAL ) then
            call exit_MPI(myrank,'new boundary mesh is wrong in recalc_jacobian_gll2D')
         end if
 
@@ -330,7 +333,7 @@
         uny = zxi*xeta - zeta*xxi
         unz = xxi*yeta - xeta*yxi
         jacobian = dsqrt(unx**2+uny**2+unz**2)
-        if (jacobian == ZERO) call exit_MPI(myrank,'2D Jacobian undefined in recalc_jacobian_gll2D')
+        if (abs(jacobian) < TINYVAL ) call exit_MPI(myrank,'2D Jacobian undefined in recalc_jacobian_gll2D')
 
         if (CUSTOM_REAL == SIZE_REAL) then
            jacobian2D(i,j,ispecb)=sngl(jacobian)

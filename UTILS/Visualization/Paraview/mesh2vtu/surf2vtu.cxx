@@ -13,7 +13,7 @@
 //              Geologial and Planetary Sciences
 //
 //              Qinya Liu, modification from mesh2vtu
-// 
+//
 // Input:       in binary
 //              integer    number of points
 //              4 floats   (x,y,z,s) point 0
@@ -23,7 +23,7 @@
 //              4 integers (1-4) cell 0
 //                ...      define a hexahedron of 8 points
 //              4 integers (1-8) cell n-1
-//              
+//
 // Date:        4  June 2004 ver 1.0 (was ugrid)
 //                 - original version, only read in x,y,z,s points
 //              25 June 2004 ver 2.0 (mesh2vtu)
@@ -31,7 +31,7 @@
 //                 - input is done in binary
 //              29 Sep 2005 modified to quad2vtu
 //                 - to deal with quad elements instead of Hexhedron
-// 
+//
 //-----------------------------------------------------------------------------
 
 #include <stdio.h>
@@ -57,7 +57,7 @@
 int main(int argc, char** argv) {
 
   if (argc < 3) {
-    printf("Usage: ugrid input_file output_file\n");
+    printf("Usage: surf2vtu input_file output_file\n");
     return 0;
   }
 
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
   int pid[8];
 
   int fd;
-  
+
   if((fd = open(argv[1], O_RDONLY)) == -1) {
     printf("Error opening file: %s.\n", argv[1]);
     return 0;
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
   if(read(fd, &npts, sizeof(int)) != sizeof(int)) {
     printf("Bad read on file (in points): %s\n", argv[1]);
   }
-  
+
   vtkUnstructuredGrid *dataSet = vtkUnstructuredGrid::New();
   float *xV = new float[npts];
   float *yV = new float[npts];
@@ -94,8 +94,8 @@ int main(int argc, char** argv) {
       read(fd, &yV[i], sizeof(float));
       read(fd, &zV[i], sizeof(float));
       read(fd, &sV[i], sizeof(float));
-      xyz[0] = xV[i]; 
-      xyz[1] = yV[i]; 
+      xyz[0] = xV[i];
+      xyz[1] = yV[i];
       xyz[2] = zV[i];
       newPts -> InsertPoint(i, xyz);
       newScalars -> InsertValue(i, sV[i]);
@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
   if(read(fd, &ncells, sizeof(int)) != sizeof(int)) {
     printf("Bad read on file (in cells): %s\n", argv[1]);
   }
-  printf("mesh2vtu: Reading in cells: %d\n", ncells);  
+  printf("mesh2vtu: Reading in cells: %d\n", ncells);
   int *cellTypes = new int[ncells];
   vtkQuad *quad = vtkQuad::New();
   quad->GetPointIds()->SetNumberOfIds(4);
@@ -118,13 +118,13 @@ int main(int argc, char** argv) {
     cells->InsertNextCell(quad);
     cellTypes[i] = quad->GetCellType();
   }
-  
+
   close(fd);
-  
+
   dataSet -> SetPoints(newPts);
   dataSet -> GetPointData() -> SetScalars(newScalars);
   dataSet -> SetCells(cellTypes, cells);
-  
+
   vtkXMLUnstructuredGridWriter* writer = vtkXMLUnstructuredGridWriter::New();
   writer -> SetInput(dataSet);
   writer -> SetFileName(argv[2]);
@@ -135,9 +135,9 @@ int main(int argc, char** argv) {
   newScalars -> Delete();
   dataSet -> Delete();
   cells -> Delete();
-  
+
   //  printf("Done.\n");
- 
+
   return 0;
 
 }

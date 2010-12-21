@@ -28,10 +28,16 @@
 !--------------------------------------------------------------------------------------------------
 ! S40rts
 !
-! 3D mantle model S40RTS [Ritsema et al., 1999]
+! 3D mantle model S40RTS [Ritsema et al., 2010]
 !
 ! Note that S40RTS uses transversely isotropic PREM as a background
 ! model, and that we use the PREM radial attenuation model when ATTENUATION is incorporated.
+!
+! reference:
+!     J. Ritsema, A. Deuss, H.J. van Heijst and J.H. Woodhouse, 2010.
+!     S40RTS: a degree-40 shear-velocity model for the mantle from new Rayleigh wave dispersion,
+!     teleseismic traveltime and normal-mode splitting function measurements.
+!     Geophys. J. Int., DOI: 10.1111/j.1365-246X.2010.04884.x
 !--------------------------------------------------------------------------------------------------
 
 
