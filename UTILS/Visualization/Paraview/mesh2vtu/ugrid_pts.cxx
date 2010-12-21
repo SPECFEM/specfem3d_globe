@@ -18,7 +18,7 @@
 int main(int argc, char** argv) {
 
   if (argc < 3) {
-    printf("Usage: ugrid input_file output_file\n");
+    printf("Usage: ugrid_pts input_file output_file\n");
     return 0;
   }
 
@@ -26,13 +26,13 @@ int main(int argc, char** argv) {
   FILE *file;
   int i;
   int npts;
-  
+
   if ((file = fopen(argv[1], "r")) == 0)
     {
       //cerr << "ERROR: Can't read file: " << filename << "\n";
       return 0;
     }
-   
+
   fscanf(file, "%d", &npts);
 
   vtkUnstructuredGrid *dataSet = vtkUnstructuredGrid::New();
@@ -50,8 +50,8 @@ int main(int argc, char** argv) {
       fscanf(file, "%f", &yV[i]);
       fscanf(file, "%f", &zV[i]);
       fscanf(file, "%f", &sV[i]);
-      xyz[0] = xV[i]; 
-      xyz[1] = yV[i]; 
+      xyz[0] = xV[i];
+      xyz[1] = yV[i];
       xyz[2] = zV[i];
       newPts -> InsertPoint(i, xyz);
       newScalars -> InsertValue(i, sV[i]);
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
   newPts -> Delete();
   newScalars -> Delete();
   dataSet -> Delete();
- 
+
   return 0;
 
 }

@@ -956,5 +956,52 @@
 
 !-----------------------------------------------------------------------------
 
+  subroutine compute_kernels_hessian(ibool_crust_mantle, &
+                                    hess_kl_crust_mantle, &
+                                    accel_crust_mantle,b_accel_crust_mantle, &
+                                    deltat)
+
+  implicit none
+
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    hess_kl_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
+     accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
+      b_accel_crust_mantle
+
+  real(kind=CUSTOM_REAL) deltat
+
+  ! local parameters
+  integer :: i,j,k,ispec,iglob
+
+  ! crust_mantle
+  do ispec = 1, NSPEC_CRUST_MANTLE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+
+          ! approximates hessian
+          ! term with adjoint acceleration and backward/reconstructed acceleration
+          hess_kl_crust_mantle(i,j,k,ispec) =  hess_kl_crust_mantle(i,j,k,ispec) &
+             + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
+             + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
+             + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob) )
+
+        enddo
+      enddo
+    enddo
+  enddo
+
+
+  end subroutine compute_kernels_hessian
+
 
 

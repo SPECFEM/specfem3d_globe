@@ -616,6 +616,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core, &
      alpha_kl_outer_core
 
+  ! approximate hessian
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: hess_kl_crust_mantle
+
   ! check for deviatoric kernel for outer core region
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: beta_kl_outer_core
   integer :: nspec_beta_kl_outer_core
@@ -1586,6 +1589,13 @@
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     alpha_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     if (NOISE_TOMOGRAPHY == 3) Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+
+    ! approximate hessian
+    if( APPROXIMATE_HESS_KL ) then
+      allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
+      hess_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+    endif
+
     ! For anisotropic kernels (in crust_mantle only)
     cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
 
@@ -3215,6 +3225,14 @@
       icb_kl = icb_kl + (icb_kl_top - icb_kl_bot) * deltat
     endif
 
+    ! approximate hessian
+    if( APPROXIMATE_HESS_KL ) then
+      call compute_kernels_hessian(ibool_crust_mantle, &
+                          hess_kl_crust_mantle,&
+                          accel_crust_mantle,b_accel_crust_mantle, &
+                          deltat)
+    endif
+
   endif ! end computing kernels
 
 !
@@ -3432,6 +3450,11 @@
                                   LOCAL_PATH,HONOR_1D_SPHERICAL_MOHO)
     endif
 
+    ! approximate hessian
+    if( APPROXIMATE_HESS_KL ) then
+      call save_kernels_hessian(myrank,scale_t,scale_displ, &
+                                            hess_kl_crust_mantle,LOCAL_PATH)
+    endif
   endif
 
   ! save source derivatives for adjoint simulations

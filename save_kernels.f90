@@ -760,4 +760,42 @@
 
   end subroutine save_kernels_source_derivatives
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_kernels_hessian(myrank,scale_t,scale_displ, &
+                  hess_kl_crust_mantle,LOCAL_PATH)
+
+  implicit none
+
+  include "constants.h"
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer myrank
+
+  double precision :: scale_t,scale_displ
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+    hess_kl_crust_mantle
+
+  character(len=150) LOCAL_PATH
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: scale_kl
+  character(len=150) prname
+
+  ! scaling factors
+  scale_kl = scale_t/scale_displ * 1.d9
+
+  ! scales approximate hessian
+  hess_kl_crust_mantle(:,:,:,:) = 2._CUSTOM_REAL * hess_kl_crust_mantle(:,:,:,:) * scale_kl
+
+  ! stores into file
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  open(unit=27,file=trim(prname)//'hess_kernel.bin',status='unknown',form='unformatted',action='write')
+  write(27) hess_kl_crust_mantle
+  close(27)
+
+  end subroutine save_kernels_hessian
 

@@ -1,9 +1,19 @@
+# Makefile
 
+#############################################################
+## modify to match your compiler defaults
 CXX=g++
+
+## modify to match your library paths
+# VTK libraries
 VTK=/opt/seismo-util
-INCLUDES=-I$(VTK)/include
-CPPFLAGS=$(INCLUDES) -Wno-deprecated
 LIBS=-L$(VTK)/lib/vtk -lvtkCommon -lvtkIO -lvtkRendering -lvtkFiltering -lvtkGraphics
+
+INCLUDES=-I$(VTK)/include -I$(VTK)/include/vtk
+CPPFLAGS= -O3 $(INCLUDES) -Wno-deprecated
+
+#############################################################
+
 
 all: mesh2vtu ugrid ugrid_pts
 
@@ -26,4 +36,4 @@ ugrid_pts.o: ugrid_pts.cxx
 	$(CXX) $(CPPFLAGS) -c ugrid_pts.cxx -o ugrid_pts.o
 
 clean:
-	rm -f mesh2vtu cell2vtu ugrid ugrid_pts *.o *~ core
+	rm -f mesh2vtu ugrid ugrid_pts cell2vtu *.o *~ core
