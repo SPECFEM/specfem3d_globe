@@ -361,9 +361,10 @@
 
     moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
     sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_l_s(:) * stf_deltat
- 
+
     scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
-    Kp_deltat= -1.0d0/sqrt(PI)/hdur_gaussian(irec)*exp(-((dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec))**2) * deltat * scale_t
+    Kp_deltat= -1.0d0/sqrt(PI)/hdur_gaussian(irec)*exp(-((dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec))**2) &
+                       * deltat * scale_t
     Hp_deltat= (dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec)*Kp_deltat
 
     stshift_der(irec_local) = stshift_der(irec_local) + eps_m_s * Kp_deltat
