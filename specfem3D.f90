@@ -778,7 +778,8 @@
   double precision DT,ROCEAN,RMIDDLE_CRUST, &
           RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
+          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
+          ANGULAR_WIDTH_XI_IN_DEGREES
 
   logical ONE_CRUST,TOPOGRAPHY,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
           RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
@@ -916,7 +917,7 @@
   call initialize_simulation(myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
                 NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
                 NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
+                NER_TOP_CENTRAL_CUBE_ICB,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,NEX_ETA, &
                 NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
                 NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
                 NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
@@ -2955,7 +2956,7 @@
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       call write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,stbur, &
-            nrec,nrec_local,DT,t0,it_end, &
+            nrec,nrec_local,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,t0,it_end, &
             yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC,t_shift_SAC, &
             elat_SAC,elon_SAC,depth_SAC,event_name_SAC,cmt_lat_SAC,cmt_lon_SAC,&
             cmt_depth_SAC,cmt_hdur_SAC,NPROCTOT_VAL, &
