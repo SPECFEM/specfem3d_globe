@@ -28,7 +28,7 @@
 ! write seismograms to files
   subroutine write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,stbur, &
-            nrec,nrec_local,DT,hdur,it_end, &
+            nrec,nrec_local,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
             yr,jda,ho,mi,sec,t_cmt,t_shift, &
             elat,elon,depth,event_name,cmt_lat,cmt_lon, &
             cmt_depth,cmt_hdur,NPROCTOT, &
@@ -46,14 +46,14 @@
  include "precision.h"
 
 ! parameters
- integer nrec,nrec_local,myrank,it_end,NPROCTOT !,NSOURCES
+ integer nrec,nrec_local,myrank,it_end,NPROCTOT,NEX_XI !,NSOURCES
  character(len=256) sisname
 
  integer :: seismo_offset, seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
  integer, dimension(nrec_local) :: number_receiver_global
 
  real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismograms
- double precision hdur,DT
+ double precision hdur,DT,ANGULAR_WIDTH_XI_IN_DEGREES
 
  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
@@ -144,7 +144,7 @@
       ! write this seismogram
       call write_one_seismogram(one_seismogram,irec, &
                              station_name,network_name,stlat,stlon,stele,stbur,nrec, &
-                             DT,hdur,it_end, &
+                             ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
                              yr,jda,ho,mi,sec,t_cmt,t_shift, &
                              elat,elon,depth,event_name,cmt_lat, &
                              cmt_lon,cmt_depth,cmt_hdur,OUTPUT_FILES, &
@@ -228,7 +228,7 @@
              ! write this seismogram
              call write_one_seismogram(one_seismogram,irec, &
                                        station_name,network_name,stlat,stlon,stele,stbur,nrec, &
-                                       DT,hdur,it_end, &
+                                       ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
                                        yr,jda,ho,mi,sec,t_cmt,t_shift, &
                                        elat,elon,depth,event_name,cmt_lat, &
                                        cmt_lon,cmt_depth,cmt_hdur,OUTPUT_FILES, &
@@ -283,7 +283,7 @@
 
   subroutine write_one_seismogram(one_seismogram,irec, &
               station_name,network_name,stlat,stlon,stele,stbur,nrec, &
-              DT,hdur,it_end, &
+              ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
               yr,jda,ho,mi,sec,t_cmt,t_shift,&
               elat,elon,depth,event_name,cmt_lat,cmt_lon,cmt_depth,cmt_hdur, &
               OUTPUT_FILES, &
@@ -299,7 +299,7 @@
 
   include "constants.h"
 
-  integer nrec,it_end
+  integer nrec,it_end,NEX_XI
 
   integer :: seismo_offset, seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
@@ -308,7 +308,7 @@
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
 
   integer myrank
-  double precision hdur,DT
+  double precision hdur,DT,ANGULAR_WIDTH_XI_IN_DEGREES
 
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
@@ -350,7 +350,7 @@
   real EVLA,EVLO,EVEL,EVDP
   real MAG,DIST,AZ,BAZ,GCARC
   real DEPMEN
-  real USER0 !,USER1,USER2,USER3,USER4
+  real USER0 ,USER1 ,USER2 !,USER3,USER4
   real CMPAZ,CMPINC
 
   integer NZYEAR,NZJDAY,NZHOUR,NZMIN,NZSEC
@@ -398,7 +398,7 @@
   ! rotation of components if ROTATE_SEISMOGRAMS=.true.
 
   integer ior_start,ior_end
-  double precision backaz
+  double precision backaz,shortest_period
   real(kind=CUSTOM_REAL) phi,cphi,sphi
   !----------------------------------------------------------------
   call band_instrument_code(DT,bic)
@@ -562,7 +562,12 @@
       ! by Ebru
       ! SAC headers will have new format
       USER0  = cmt_hdur !half duration from CMT file if not changed to hdur=0.d0 (point source)
-
+       
+      ! USER1 and USER2 slots are used for the shortest and longest periods at which 
+      ! simulations are accurate, respectively.    
+      shortest_period = (256/NEX_XI)*(ANGULAR_WIDTH_XI_IN_DEGREES/90)*17 
+      USER1  = shortest_period
+      USER2  = 500.0d0
       ! we remove any PDE information, since the simulation could also start
       ! with a "pure" CMT solution, without having any PDE infos
       !
@@ -754,7 +759,7 @@
           write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
           write(IOUT_SAC,510) undef,    STLA,    STLO,    STEL,   STDP
           write(IOUT_SAC,510) EVLA,     EVLO,    EVEL,    EVDP,   MAG
-          write(IOUT_SAC,510) USER0,    undef,   undef,   undef,  undef
+          write(IOUT_SAC,510) USER0,    USER1,   USER2,   undef,  undef
           !write(IOUT_SAC,510) USER0,    USER1,   USER2,   USER3,  USER4
           write(IOUT_SAC,510) undef,    undef,   undef,   undef,  undef
           write(IOUT_SAC,510) DIST,     AZ,      BAZ,     GCARC,  INTERNAL
@@ -874,8 +879,8 @@
           call write_real(EVDP)          !(39)
           call write_real(MAG)           !(40)
           call write_real(USER0)         !(41)USER0
-          call write_real(undef)         !(42)USER1
-          call write_real(undef)         !(43)USER2
+          call write_real(USER1)         !(42)USER1
+          call write_real(USER2)         !(43)USER2
           call write_real(undef)         !(44)USER3
           call write_real(undef)          !(45)USER4
           call write_real(undef)          !(46)USER5
