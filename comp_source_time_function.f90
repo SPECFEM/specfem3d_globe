@@ -40,3 +40,25 @@
 
   end function comp_source_time_function
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function comp_source_time_function_rickr(t,f0)
+
+  implicit none
+
+  include "constants.h"
+
+  double precision t,f0
+
+  ! ricker
+  comp_source_time_function_rickr = (1.d0 - 2.d0*PI*PI*f0*f0*t*t ) &
+                                    * exp( -PI*PI*f0*f0*t*t )
+
+  !!! another source time function they have called 'ricker' in some old papers,
+  !!! e.g., 'Finite-Frequency Kernels Based on Adjoint Methods' by Liu & Tromp, BSSA (2006)
+  !!! in order to benchmark those simulations, the following formula is needed.
+  ! comp_source_time_function_rickr = -2.d0*PI*PI*f0*f0*f0*t * exp(-PI*PI*f0*f0*t*t)
+
+  end function comp_source_time_function_rickr

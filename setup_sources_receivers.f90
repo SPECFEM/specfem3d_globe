@@ -59,7 +59,7 @@
 
   logical TOPOGRAPHY
 
-  double precision sec,DT,t0
+  double precision sec,DT,t0,tshift_cmt_original
 
   double precision, dimension(NSOURCES) :: t_cmt,hdur,hdur_gaussian
   double precision, dimension(NSOURCES) :: theta_source,phi_source
@@ -105,17 +105,9 @@
   integer :: yr,jda,ho,mi
   integer :: irec,isource,nrec_tot_found,ier
   integer :: icomp,itime,nadj_files_found,nadj_files_found_tot
-! character(len=3),dimension(NDIM) :: comp = (/ "LHN", "LHE", "LHZ" /)
   character(len=3),dimension(NDIM) :: comp
   character(len=150) :: filename,adj_source_file,system_command,filename_new
   character(len=2) :: bic
-
-! by Ebru
-  call band_instrument_code(DT,bic)
-  comp(1) = bic(1:2)//'N'
-  comp(2) = bic(1:2)//'E'
-  comp(3) = bic(1:2)//'Z'
-!
 
 ! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the
@@ -136,13 +128,13 @@
   call locate_sources(NSOURCES,myrank,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xigll,yigll,zigll,NPROCTOT_VAL,ELLIPTICITY_VAL,TOPOGRAPHY, &
-            sec,t_cmt,yr,jda,ho,mi,theta_source,phi_source, &
+            sec,t_cmt,tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
             NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
             islice_selected_source,ispec_selected_source, &
             xi_source,eta_source,gamma_source, nu_source, &
             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION)
 
-  if(minval(t_cmt) /= 0.) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
+  if(abs(minval(t_cmt)) > TINYVAL) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
 
   ! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
   if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
@@ -153,14 +145,73 @@
         write(IMAIN,*)
      endif
   endif
+
   ! convert the half duration for triangle STF to the one for gaussian STF
-  hdur_gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
+  hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
 
   ! define t0 as the earliest start time
-  t0 = - 1.5d0*minval(t_cmt-hdur)
+  t0 = - 1.5d0*minval( t_cmt(:) - hdur(:) )
 
+  ! point force sources will start depending on the frequency given by hdur
+  if( USE_FORCE_POINT_SOURCE ) then
+    ! note: point force sources will give the dominant frequency in hdur,
+    !          thus the main period is 1/hdur.
+    !          also, these sources use a Ricker source time function instead of a gaussian.
+    !          for a Ricker source time function, a start time ~1.2 * main_period is a good choice
+    t0 = - 1.2d0 * minval(t_cmt(:) - 1.0d0/hdur(:))
+  endif
 
-!  receivers
+  ! checks if user set USER_T0 to fix simulation start time
+  ! note: USER_T0 has to be positive
+  if( USER_T0 > 0.d0 ) then
+    ! user cares about origin time and time shifts of the CMTSOLUTION
+    ! and wants to fix simulation start time to a constant start time
+    ! time 0 on time axis will correspond to given origin time
+
+    ! notifies user
+    if( myrank == 0 ) then
+      write(IMAIN,*) 'USER_T0: ',USER_T0
+      write(IMAIN,*) 't0: ',t0,'tshift_cmt_original: ',tshift_cmt_original
+      write(IMAIN,*)
+    endif
+
+    ! checks if automatically set t0 is too small
+    ! note: tshift_cmt_original can be a positive or negative time shift (minimum from all tshift)
+    if( t0 <= USER_T0 + tshift_cmt_original ) then
+      ! by default, t_cmt(:) holds relative time shifts with a minimum time shift set to zero
+      ! re-adds (minimum) original time shift such that sources will kick in
+      ! according to their absolute time shift
+      t_cmt(:) = t_cmt(:) + tshift_cmt_original
+
+      ! sets new simulation start time such that
+      ! simulation starts at t = - t0 = - USER_T0
+      t0 = USER_T0
+
+      ! notifies user
+      if( myrank == 0 ) then
+        write(IMAIN,*) '  set new simulation start time: ', - t0
+        write(IMAIN,*)
+      endif
+    else
+      ! start time needs to be at least t0 for numerical stability
+      ! notifies user
+      if( myrank == 0 ) then
+        write(IMAIN,*) 'error: USER_T0 is too small'
+        write(IMAIN,*) '       must make one of three adjustements:'
+        write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-tshift_cmt_original
+        write(IMAIN,*) '       - decrease time shift in CMTSOLUTION file'
+        write(IMAIN,*) '       - decrease hdur in CMTSOLUTION file'
+      endif
+      call exit_mpi(myrank,'error USER_T0 is set but too small')
+    endif
+  else if( USER_T0 < 0.d0 ) then
+    if( myrank == 0 ) then
+      write(IMAIN,*) 'error: USER_T0 is negative, must be set zero or positive!'
+    endif
+    call exit_mpi(myrank,'error negative USER_T0 parameter in constants.h')
+  endif
+
+  !  receivers
   if(myrank == 0) then
     write(IMAIN,*)
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
@@ -199,6 +250,12 @@
 
   ! counts receivers for adjoint simulations
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    ! by Ebru
+    call band_instrument_code(DT,bic)
+    comp(1) = bic(1:2)//'N'
+    comp(2) = bic(1:2)//'E'
+    comp(3) = bic(1:2)//'Z'
+
     ! counter for adjoint receiver stations in local slice, used to allocate adjoint source arrays
     nadj_rec_local = 0
     ! temporary counter to check if any files are found at all

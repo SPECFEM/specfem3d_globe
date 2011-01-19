@@ -164,6 +164,18 @@
 ! maximum number of sources to locate simultaneously
   integer, parameter :: NSOURCES_SUBSET_MAX = 1000
 
+! use a force source located exactly at a grid point instead of a CMTSOLUTION source
+! this can be useful e.g. for asteroid impact simulations
+! in which the source is a vertical force, normal force, impact etc.
+  logical, parameter :: USE_FORCE_POINT_SOURCE = .false.
+  double precision, parameter :: FACTOR_FORCE_SOURCE = 1.d15
+  integer, parameter :: COMPONENT_FORCE_SOURCE = 3  ! takes direction in comp E/N/Z = 1/2/3
+
+! use this t0 as earliest starting time rather than the automatically calculated one
+! (must be positive and bigger than the automatically one to be effective;
+!  simulation will start at t = - t0)
+  double precision, parameter :: USER_T0 = 0.0d0
+
 ! distance threshold (in km) above which we consider that a receiver
 ! is located outside the mesh and therefore excluded from the station list
   double precision, parameter :: THRESHOLD_EXCLUDE_STATION = 50.d0

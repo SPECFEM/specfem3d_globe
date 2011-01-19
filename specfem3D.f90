@@ -2490,7 +2490,8 @@
       call compute_add_sources(myrank,NSOURCES, &
                                 accel_crust_mantle,sourcearrays, &
                                 DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,it)
+                                islice_selected_source,ispec_selected_source,it, &
+                                hdur,xi_source,eta_source,gamma_source,nu_source)
 
     ! add adjoint sources
     if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
@@ -2510,7 +2511,8 @@
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,it)
+                                islice_selected_source,ispec_selected_source,it, &
+                                hdur,xi_source,eta_source,gamma_source,nu_source)
 
 !<YANGL
     ! NOISE_TOMOGRAPHY
