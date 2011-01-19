@@ -28,7 +28,8 @@
   subroutine compute_add_sources(myrank,NSOURCES, &
                                 accel_crust_mantle,sourcearrays, &
                                 DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,it)
+                                islice_selected_source,ispec_selected_source,it, &
+                                hdur,xi_source,eta_source,gamma_source,nu_source)
 
   implicit none
 
@@ -51,11 +52,18 @@
   integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
   integer :: it
 
+  ! needed for point force sources
+  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
+  double precision, dimension(NDIM,NDIM,NSOURCES) :: nu_source
+  double precision, dimension(NSOURCES) :: hdur
+
   ! local parameters
   double precision :: stf
   real(kind=CUSTOM_REAL) :: stf_used
   integer :: isource,i,j,k,iglob,ispec
   double precision, external :: comp_source_time_function
+  double precision :: f0
+  double precision, external :: comp_source_time_function_rickr
 
   do isource = 1,NSOURCES
 
@@ -63,28 +71,57 @@
     ! add only if this proc carries the source
     if(myrank == islice_selected_source(isource)) then
 
-      stf = comp_source_time_function(dble(it-1)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
+      if(USE_FORCE_POINT_SOURCE) then
 
-      !     distinguish between single and double precision for reals
-      if(CUSTOM_REAL == SIZE_REAL) then
-        stf_used = sngl(stf)
+        ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
+        iglob = ibool_crust_mantle(nint(xi_source(isource)), &
+                       nint(eta_source(isource)), &
+                       nint(gamma_source(isource)), &
+                       ispec_selected_source(isource))
+
+        f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
+
+        !if (it == 1 .and. myrank == 0) then
+        !  write(IMAIN,*) 'using a source of dominant frequency ',f0
+        !  write(IMAIN,*) 'lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
+        !  write(IMAIN,*) 'lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
+        !endif
+
+        ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
+        stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-t_cmt(isource),f0)
+
+        ! we use a force in a single direction along one of the components:
+        !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
+        ! e.g. nu_source(3,:) here would be a source normal to the surface (z-direction).
+        accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob)  &
+                         + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
+
       else
-        stf_used = stf
-      endif
 
-      !     add source array
-      ispec = ispec_selected_source(isource)
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
-            iglob = ibool_crust_mantle(i,j,k,ispec)
+        stf = comp_source_time_function(dble(it-1)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
 
-            accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-              + sourcearrays(:,i,j,k,isource)*stf_used
+        !     distinguish between single and double precision for reals
+        if(CUSTOM_REAL == SIZE_REAL) then
+          stf_used = sngl(stf)
+        else
+          stf_used = stf
+        endif
 
+        !     add source array
+        ispec = ispec_selected_source(isource)
+        do k=1,NGLLZ
+          do j=1,NGLLY
+            do i=1,NGLLX
+              iglob = ibool_crust_mantle(i,j,k,ispec)
+
+              accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
+                + sourcearrays(:,i,j,k,isource)*stf_used
+
+            enddo
           enddo
         enddo
-      enddo
+
+      endif ! USE_FORCE_POINT_SOURCE
 
     endif
 
@@ -283,7 +320,8 @@
   subroutine compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
                                 DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                islice_selected_source,ispec_selected_source,it)
+                                islice_selected_source,ispec_selected_source,it, &
+                                hdur,xi_source,eta_source,gamma_source,nu_source)
 
   implicit none
 
@@ -304,12 +342,18 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
   integer :: it
+  ! needed for point force sources
+  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
+  double precision, dimension(NDIM,NDIM,NSOURCES) :: nu_source
+  double precision, dimension(NSOURCES) :: hdur
 
   ! local parameters
   double precision :: stf
   real(kind=CUSTOM_REAL) :: stf_used
   integer :: isource,i,j,k,iglob,ispec
   double precision, external :: comp_source_time_function
+  double precision :: f0
+  double precision, external :: comp_source_time_function_rickr
 
   do isource = 1,NSOURCES
 
@@ -327,28 +371,58 @@
 !       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
 !       in the first (it=1) time loop.
 !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-t_cmt for the source time function here
-      stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
 
-      !     distinguish between single and double precision for reals
-      if(CUSTOM_REAL == SIZE_REAL) then
-        stf_used = sngl(stf)
+      if(USE_FORCE_POINT_SOURCE) then
+
+         ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
+         iglob = ibool_crust_mantle(nint(xi_source(isource)), &
+                       nint(eta_source(isource)), &
+                       nint(gamma_source(isource)), &
+                       ispec_selected_source(isource))
+
+         f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
+
+         !if (it == 1 .and. myrank == 0) then
+         !   write(IMAIN,*) 'using a source of dominant frequency ',f0
+         !   write(IMAIN,*) 'lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
+         !   write(IMAIN,*) 'lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
+         !endif
+
+         ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
+         stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it)*DT-t0-t_cmt(isource),f0)
+
+         ! e.g. we use nu_source(3,:) here if we want a source normal to the surface.
+         ! note: time step is now at NSTEP-it
+         b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob)  &
+                            + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
+
       else
-        stf_used = stf
-      endif
 
-      !     add source array
-      ispec = ispec_selected_source(isource)
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
-            iglob = ibool_crust_mantle(i,j,k,ispec)
+        ! see note above: time step corresponds now to NSTEP-it
+        stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
 
-            b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
-              + sourcearrays(:,i,j,k,isource)*stf_used
+        !     distinguish between single and double precision for reals
+        if(CUSTOM_REAL == SIZE_REAL) then
+          stf_used = sngl(stf)
+        else
+          stf_used = stf
+        endif
 
+        !     add source array
+        ispec = ispec_selected_source(isource)
+        do k=1,NGLLZ
+          do j=1,NGLLY
+            do i=1,NGLLX
+              iglob = ibool_crust_mantle(i,j,k,ispec)
+
+              b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
+                + sourcearrays(:,i,j,k,isource)*stf_used
+
+            enddo
           enddo
         enddo
-      enddo
+
+      endif ! USE_FORCE_POINT_SOURCE
 
     endif
 

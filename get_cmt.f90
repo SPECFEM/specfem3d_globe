@@ -25,7 +25,8 @@
 !
 !=====================================================================
 
-  subroutine get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor,DT,NSOURCES)
+  subroutine get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor, &
+                    DT,NSOURCES,tshift_cmt_original)
 
   implicit none
 
@@ -37,7 +38,7 @@
   double precision, intent(in) :: DT
 
   integer, intent(out) :: yr,jda,ho,mi
-  double precision, intent(out) :: sec
+  double precision, intent(out) :: sec,tshift_cmt_original
   double precision, dimension(NSOURCES), intent(out) :: t_cmt,hdur,lat,long,depth
   double precision, dimension(6,NSOURCES), intent(out) :: moment_tensor
 
@@ -47,7 +48,7 @@
   double precision scaleM
   double precision t_shift(NSOURCES)
   character(len=5) datasource
-  character(len=150) string, CMTSOLUTION
+  character(len=256) string, CMTSOLUTION
 
   ! initializes
   lat(:) = 0.d0
@@ -73,61 +74,76 @@
 ! read source number isource
   do isource=1,NSOURCES
 
-! read header with event information
-  read(1,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource,yr,mo,da,ho,mi,sec
-  jda=julian_day(yr,mo,da)
+    read(1,"(a256)") string
+    ! skips empty lines
+    do while( len_trim(string) == 0 )
+      read(1,"(a256)") string
+    enddo
 
-! ignore line with event name
-  read(1,"(a)") string
+    ! read header with event information
+    read(string,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource,yr,mo,da,ho,mi,sec
+    jda=julian_day(yr,mo,da)
 
-! read time shift
-  read(1,"(a)") string
-  !read(string(12:len_trim(string)),*) t_cmt(isource)
-  read(string(12:len_trim(string)),*) t_shift(isource)
+    ! ignore line with event name
+    read(1,"(a)") string
 
-! read half duration
-  read(1,"(a)") string
-  read(string(15:len_trim(string)),*) hdur(isource)
+    ! read time shift
+    read(1,"(a)") string
+    !read(string(12:len_trim(string)),*) t_cmt(isource)
+    read(string(12:len_trim(string)),*) t_shift(isource)
 
-! read latitude
-  read(1,"(a)") string
-  read(string(10:len_trim(string)),*) lat(isource)
+    ! read half duration
+    read(1,"(a)") string
+    read(string(15:len_trim(string)),*) hdur(isource)
 
-! read longitude
-  read(1,"(a)") string
-  read(string(11:len_trim(string)),*) long(isource)
+    ! read latitude
+    read(1,"(a)") string
+    read(string(10:len_trim(string)),*) lat(isource)
 
-! read depth
-  read(1,"(a)") string
-  read(string(7:len_trim(string)),*) depth(isource)
+    ! read longitude
+    read(1,"(a)") string
+    read(string(11:len_trim(string)),*) long(isource)
 
-! read Mrr
-  read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(1,isource)
+    ! read depth
+    read(1,"(a)") string
+    read(string(7:len_trim(string)),*) depth(isource)
 
-! read Mtt
-  read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(2,isource)
+    ! read Mrr
+    read(1,"(a)") string
+    read(string(5:len_trim(string)),*) moment_tensor(1,isource)
 
-! read Mpp
-  read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(3,isource)
+    ! read Mtt
+    read(1,"(a)") string
+    read(string(5:len_trim(string)),*) moment_tensor(2,isource)
 
-! read Mrt
-  read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(4,isource)
+    ! read Mpp
+    read(1,"(a)") string
+    read(string(5:len_trim(string)),*) moment_tensor(3,isource)
 
-! read Mrp
-  read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(5,isource)
+    ! read Mrt
+    read(1,"(a)") string
+    read(string(5:len_trim(string)),*) moment_tensor(4,isource)
 
-! read Mtp
-  read(1,"(a)") string
-  read(string(5:len_trim(string)),*) moment_tensor(6,isource)
+    ! read Mrp
+    read(1,"(a)") string
+    read(string(5:len_trim(string)),*) moment_tensor(5,isource)
 
-! null half-duration indicates a Heaviside
-! replace with very short error function
-  if(hdur(isource) < 5. * DT) hdur(isource) = 5. * DT
+    ! read Mtp
+    read(1,"(a)") string
+    read(string(5:len_trim(string)),*) moment_tensor(6,isource)
+
+    ! checks half-duration
+    if( USE_FORCE_POINT_SOURCE ) then
+      ! half-duration is the dominant frequency of the source
+      ! point forces use a Ricker source time function
+      ! null half-duration indicates a very low-frequency source
+      ! (see constants.h: TINYVAL = 1.d-9 )
+      if( hdur(isource) < TINYVAL ) hdur(isource) = TINYVAL
+    else
+      ! null half-duration indicates a Heaviside
+      ! replace with very short error function
+      if( hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
+    endif
 
   enddo
 
@@ -136,8 +152,10 @@
   ! Sets t_cmt to zero to initiate the simulation!
   if(NSOURCES == 1)then
       t_cmt = 0.d0
+      tshift_cmt_original = t_shift(1)
   else
       t_cmt(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
+      tshift_cmt_original = minval(t_shift)
   endif
 
 !

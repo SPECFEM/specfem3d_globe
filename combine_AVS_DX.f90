@@ -70,7 +70,7 @@
   double precision x_source_trgl2,y_source_trgl2,z_source_trgl2
   double precision x_source_trgl3,y_source_trgl3,z_source_trgl3
   double precision theta,phi,delta_trgl
-  double precision sec !,t_cmt,hdur
+  double precision sec,tshift_cmt_original !,t_cmt,hdur
   !double precision lat,long,depth
   double precision, dimension(1) :: t_cmt,hdur,lat,long,depth
 
@@ -524,7 +524,8 @@
 
 ! get source information for frequency for number of points per lambda
   print *,'reading source duration from the CMTSOLUTION file'
-  call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor,DT,1)
+  call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor, &
+              DT,1,tshift_cmt_original)
 
 ! set global element and point offsets to zero
   iglobpointoffset = 0
@@ -1021,7 +1022,8 @@
 
 !   get source information
     print *,'reading position of the source from the CMTSOLUTION file'
-    call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor,DT,1)
+    call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor, &
+                DT,1,tshift_cmt_original)
 
 !   convert geographic latitude lat (degrees)
 !   to geocentric colatitude theta (radians)

@@ -205,6 +205,8 @@ libspecfem_a_OBJECTS_SOLVER = \
 	$O/write_AVS_DX_surface_data.o \
 	$O/write_c_binary.o \
 	$O/write_seismograms.o \
+	$O/write_output_ASCII.o \
+	$O/write_output_SAC.o \
 	$(EMPTY_MACRO)
 
 # solver objects with statically allocated arrays; dependent upon
@@ -847,6 +849,12 @@ $O/read_arrays_buffers_solver.o: constants.h $S/read_arrays_buffers_solver.f90
 
 $O/write_seismograms.o: constants.h $S/write_seismograms.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/write_seismograms.o ${FCFLAGS_f90} $S/write_seismograms.f90
+
+$O/write_output_ASCII.o: constants.h $S/write_output_ASCII.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/write_output_ASCII.o ${FCFLAGS_f90} $S/write_output_ASCII.f90
+
+$O/write_output_SAC.o: constants.h $S/write_output_SAC.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/write_output_SAC.o ${FCFLAGS_f90} $S/write_output_SAC.f90
 
 
 #######################################
