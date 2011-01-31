@@ -27,10 +27,10 @@ case $FC in
         # check: http://software.intel.com/sites/products/documentation/hpc/compilerpro/en-us/fortran/lin/compiler_f/index.htm
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-O3 -fpe0 -ftz -align sequence -assume byterecl -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage" # -mcmodel=medium
+            FLAGS_CHECK="-O3 -assume byterecl" # -mcmodel=medium
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-O3 -fpe0 -ftz -align sequence -assume byterecl -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage" # -mcmodel=medium
+            FLAGS_NO_CHECK="-O3 -assume byterecl" # -mcmodel=medium
         fi
         # useful for debugging...
         #if test x"$FLAGS_CHECK" = x; then
@@ -44,18 +44,18 @@ case $FC in
         #
         # Intel Nehalem processor architecture, Intel compiler version 10.1
         #if test x"$FLAGS_CHECK" = x; then
-        #    FLAGS_CHECK="-O2 -ftz -xT -assume byterecl -static-intel -implicitnone"
+        #    FLAGS_CHECK="-O2 -ftz -xT -assume byterecl -static-intel -implicitnone" 
         #fi
         #if test x"$FLAGS_NO_CHECK" = x; then
-        #    FLAGS_NO_CHECK="-O2 -ftz -xT -assume byterecl -static-intel -implicitnone"
+        #    FLAGS_NO_CHECK="-O2 -ftz -xT -assume byterecl -static-intel -implicitnone" 
         #fi
         #
         # Intel Nehalem processor architecture, Intel compiler version 11.1
         #if test x"$FLAGS_CHECK" = x; then
-        #    FLAGS_CHECK="-O3 -xSSE4.2 -ftz -funroll-loops -unroll5 -fpe3 "
+        #    FLAGS_CHECK="-O3 -xSSE4.2 -ftz -funroll-loops -unroll5 -fpe3 " 
         #fi
         #if test x"$FLAGS_NO_CHECK" = x; then
-        #    FLAGS_NO_CHECK="-O3 -xSSE4.2 -ftz -funroll-loops -unroll5 -fpe3"
+        #    FLAGS_NO_CHECK="-O3 -xSSE4.2 -ftz -funroll-loops -unroll5 -fpe3" 
         #fi
         #
         #MPI_LIBS = -Vaxlib
@@ -65,16 +65,17 @@ case $FC in
         # GNU gfortran
         #
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math" # -mcmodel=medium
+            FLAGS_NO_CHECK="-O3" #-mcmodel=medium        
         fi
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="\$(FLAGS_NO_CHECK)"
+            FLAGS_CHECK="\$(FLAGS_NO_CHECK)" 
         fi
         # useful for debugging... -ffpe-trap=underflow,overflow,zero -fbacktrace
+        #if test x"$FLAGS_NO_CHECK" = x; then
+        #    FLAGS_NO_CHECK="-std=f95 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math" # -mcmodel=medium
         #
         # older gfortran syntax
-        # note: -std=f95 can lead to problem: undefined reference to `system_'
-        #           FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow -fno-trapping-math" # -mcmodel=medium -std=f95
+        #           FLAGS_NO_CHECK="-std=f95 -fimplicit-none -frange-check -O3 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow -fno-trapping-math" # -mcmodel=medium
         #fi
         #if test x"$FLAGS_CHECK" = x; then
         #    FLAGS_CHECK="\$(FLAGS_NO_CHECK)" # -fbounds-check
@@ -165,44 +166,40 @@ case $FC in
         # or
         #
         # CC = gcc
-        # CFLAGS = -O3 -m64
+        # CFLAGS = -O3 -m64 
         #
         # for the C compiler when using -q64 for the Fortran compiler
         #
         # on IBM xlf90 compiler:
         # when encountering errors: ...relocation truncated to fit: R_PPC_LOCAL24PC...
-        # one should also use additional flags:
+        # one should also use additional flags: 
         # CFLAGS = -Wl,-relax
         #
         if test x"$FLAGS_NO_CHECK" = x; then
-            #FLAGS_NO_CHECK="-O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003pure -qxlf2003=nooldnaninf -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap=xl__trcedump -qxflag=dvz -qfloat=nans -qinitauto=7FBFFFFF -Q -Q+rank,swap_all"
-            FLAGS_NO_CHECK="-O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=95pure -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap=xl__trcedump -qxflag=dvz -qfloat=nans -qinitauto=7FBFFFFF -Q -Q+rank,swap_all"
-        #
-        # to debug with IBM xlf, add this: -g -O0 -C -qddim -qfullpath
-        #
-        # on MareNostrum at the Barcelona SuperComputing Center (Spain) one can use
+            FLAGS_NO_CHECK="-O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003pure -qflttrap=overflow:zerodivide:invalid:enable -qsigtrap -qinitauto=7FBFFFFF -Q -Q+rank,swap_all,mxm_m1_m2_5points,mxm_m1_m1_5points,mxm_m2_m1_5points"
+        # on MareNostrum at the Barcelona SuperComputing Center (Spain) use
         # -qtune=ppc970 -qarch=ppc64v instead of -qtune=auto -qarch=auto
         fi
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="\$(FLAGS_NO_CHECK) -g -C -qddim -qfullpath"
+            FLAGS_CHECK="\$(FLAGS_NO_CHECK) -C -qddim -qfloat=nans -qfullpath"
         fi
         ;;
     pathf90|*/pathf90)
         #
-        # pathscale
+        # pathscale 
         #
-        # one should also set
-        # CC = pathcc
+        # one should also set 
+        # CC = pathcc 
         # CFLAGS = -O2
         #
         if test x"$FLAGS_CHECK" = x; then
             FLAGS_CHECK="-O3 -OPT:Ofast -fno-math-errno -ffast-math -LNO:fusion=2 -LNO:simd=2 -LNO:simd_verbose=ON -msse3 -march=auto -fno-second-underscore -align64"
         fi
         if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-O3 -OPT:Ofast -fno-math-errno -ffast-math -LNO:fusion=2 -LNO:simd=2 -LNO:simd_verbose=ON -msse3 -march=auto -fno-second-underscore -align64"
+            FLAGS_NO_CHECK="-O3 -OPT:Ofast -fno-math-errno -ffast-math -LNO:fusion=2 -LNO:simd=2 -LNO:simd_verbose=ON -msse3 -march=auto -fno-second-underscore -align64" 
         fi
         ;;
-
+        
 esac
 
 case $UNAME_MS in

@@ -78,38 +78,13 @@
   double precision, parameter :: RHOAV = 5514.3d0
 
 ! for topography/bathymetry model
-
-!!--- ETOPO5 5-minute model, smoothed Harvard version
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 4320,NY_BATHY = 2160
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 5
-!! pathname of the topography file
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo5_smoothed_Harvard.dat'
-
-!---  ETOPO4 4-minute model created by subsampling and smoothing etopo-2
-! size of topography and bathymetry file
-  integer, parameter :: NX_BATHY = 5400,NY_BATHY = 2700
-! resolution of topography file in minutes
-  integer, parameter :: RESOLUTION_TOPO_FILE = 4
-! pathname of the topography file
-  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo4_smoothed_window_7.dat'
-
-!!--- ETOPO2 2-minute model, not implemented yet
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 10800,NY_BATHY = 5400
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 2
-!! pathname of the topography file
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/topo_bathy_etopo2_smoothed_window7.dat'
-
 !!--- ETOPO1 1-minute model, implemented now, but data file must be created first
-!! size of topography and bathymetry file
-!  integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
-!! resolution of topography file in minutes
-!  integer, parameter :: RESOLUTION_TOPO_FILE = 1
-!! pathname of the topography file (un-smoothed)
-!  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1.xyz'
+! size of topography and bathymetry file
+  integer, parameter :: NX_BATHY = 21600,NY_BATHY = 10800
+! resolution of topography file in minutes
+  integer, parameter :: RESOLUTION_TOPO_FILE = 1
+! pathname of the topography file
+  character (len=*), parameter :: PATHNAME_TOPO_FILE = 'DATA/topo_bathy/ETOPO1_smoothed.xyz'
 
 ! Use GLL points to capture TOPOGRAPHY and ELLIPTICITY (experimental feature)
   logical,parameter :: USE_GLL = .false.
@@ -129,7 +104,7 @@
   integer, parameter :: ICRUST_CRUSTMAPS = 2
 
 ! increase smoothing for critical regions  (increases mesh stability)
-  logical, parameter :: SMOOTH_CRUST = .true.
+  logical, parameter :: SMOOTH_CRUST = .false.
 
 ! use sedimentary layers in crustal model
   logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.

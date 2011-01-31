@@ -15,13 +15,13 @@ CENTER_LONGITUDE_IN_DEGREES   = 10.d0
 GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
-# (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 240
-NEX_ETA                         = 240
+# (must be multiple of 32 and 16 * multiple of NPROC below)
+NEX_XI                          = 256
+NEX_ETA                         = 256 
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 5
-NPROC_ETA                       = 5
+NPROC_XI                        = 8
+NPROC_ETA                       = 8
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135, 1D_ref, 1D_ref_iso, 1D_jp3d,1D_sea99
@@ -36,7 +36,7 @@ NPROC_ETA                       = 5
 #
 # 3D models with 1D crust: append "_1Dcrust" the the 3D model name
 #                          to take the 1D crustal model from the
-#                          associated reference model rather than the default 3D crustal model 
+#                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
 MODEL                           = s362ani
 
@@ -52,15 +52,15 @@ ATTENUATION                     = .true.
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 15.0d0
+RECORD_LENGTH_IN_MINUTES        = 100.0d0
 
 # save AVS or OpenDX movies
-#MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME) 
+#MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
 #MOVIE_COARSE does not work with create_movie_AVS_DX
 MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
-MOVIE_COARSE                    = .false.
-NTSTEP_BETWEEN_FRAMES           = 100
+MOVIE_COARSE                    = .true.
+NTSTEP_BETWEEN_FRAMES           = 500
 HDUR_MOVIE                      = 0.d0
 
 # save movie in volume.  Will save element if center of element is in prescribed volume
@@ -69,13 +69,13 @@ HDUR_MOVIE                      = 0.d0
 # start/stop: frames will be stored at MOVIE_START + i*NSTEP_BETWEEN_FRAMES, where i=(0,1,2..) and iNSTEP_BETWEEN_FRAMES <= MOVIE_STOP
 # movie_volume_type: 1=strain, 2=time integral of strain, 3=\mu*time integral of strain
 # type 4 saves the trace and deviatoric stress in the whole volume, 5=displacement, 6=velocity
-MOVIE_VOLUME_TYPE               = 2
+MOVIE_VOLUME_TYPE               = 6
 MOVIE_TOP_KM                    = -100.0
 MOVIE_BOTTOM_KM                 = 1000.0
-MOVIE_WEST_DEG                  = -90.0
-MOVIE_EAST_DEG                  = 90.0
+MOVIE_WEST_DEG                  = 0.0
+MOVIE_EAST_DEG                  = 180.0
 MOVIE_NORTH_DEG                 = 90.0
-MOVIE_SOUTH_DEG                 = -90.0
+MOVIE_SOUTH_DEG                 = -30.0
 MOVIE_START                     = 0
 MOVIE_STOP                      = 40000
 
@@ -87,25 +87,25 @@ NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
-LOCAL_PATH                      = ./DATABASES_MPI
+LOCAL_PATH                      = SYN_DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 1000
+NTSTEP_BETWEEN_OUTPUT_INFO      = 100
 
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
-NTSTEP_BETWEEN_READ_ADJSRC      = 1000
+NTSTEP_BETWEEN_READ_ADJSRC      = 100000
 
 # output format for the seismograms (one can use either or all of the three formats)
-OUTPUT_SEISMOS_ASCII_TEXT       = .true.
+OUTPUT_SEISMOS_ASCII_TEXT       = .false.
 OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
-OUTPUT_SEISMOS_SAC_BINARY       = .false.
+OUTPUT_SEISMOS_SAC_BINARY       = .true.
 
 # rotate seismograms to Radial-Transverse-Z or use default North-East-Z reference frame
 ROTATE_SEISMOGRAMS_RT           = .false.
 
 # decide if master process writes all the seismograms or if all processes do it in parallel
-WRITE_SEISMOGRAMS_BY_MASTER     = .true.
+WRITE_SEISMOGRAMS_BY_MASTER     = .false.
 
 # save all seismograms in one large combined file instead of one file per seismogram
 # to avoid overloading shared non-local file systems such as GPFS for instance
