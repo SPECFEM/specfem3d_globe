@@ -983,7 +983,14 @@
 ! define all the layers of the mesh
   if (.not. ADD_4TH_DOUBLING) then
 
+    ! default case:
+    !     no fourth doubling at the bottom of the outer core
+
     if (SUPPRESS_CRUSTAL_MESH) then
+
+      ! suppress the crustal layers
+      ! will be replaced by an extension of the mantle: R_EARTH is not modified,
+      ! but no more crustal doubling
 
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1
@@ -1108,6 +1115,11 @@
       rmins(14) = R_CENTRAL_CUBE / R_EARTH
 
     elseif (ONE_CRUST) then
+
+      ! 1D models:
+      ! in order to increase stability and therefore to allow cheaper
+      ! simulations (larger time step), 1D models can be run with just one average crustal
+      ! layer instead of two.
 
       NUMBER_OF_MESH_LAYERS = 13
       layer_offset = 0
@@ -1234,14 +1246,18 @@
 
     else
 
+      ! default case for 3D models:
+      !   contains the crustal layers
+      !   doubling at the base of the crust
+
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1
       if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
         ner( 1) = ceiling (NER_CRUST / 2.d0)
         ner( 2) = floor (NER_CRUST / 2.d0)
       else
-        ner( 1) = floor (NER_CRUST / 2.d0)
-        ner( 2) = ceiling (NER_CRUST / 2.d0)
+        ner( 1) = floor (NER_CRUST / 2.d0)      ! regional mesh: ner(1) = 1 since NER_CRUST=3
+        ner( 2) = ceiling (NER_CRUST / 2.d0)    !                          ner(2) = 2
       endif
       ner( 3) = NER_80_MOHO
       ner( 4) = NER_220_80
@@ -1364,7 +1380,15 @@
 
     endif
   else
+
+    ! 4th doubling case:
+    !     includes fourth doubling at the bottom of the outer core
+
     if (SUPPRESS_CRUSTAL_MESH) then
+
+      ! suppress the crustal layers
+      ! will be replaced by an extension of the mantle: R_EARTH is not modified,
+      ! but no more crustal doubling
 
       NUMBER_OF_MESH_LAYERS = 15
       layer_offset = 1
@@ -1496,6 +1520,11 @@
 
     elseif (ONE_CRUST) then
 
+      ! 1D models:
+      ! in order to increase stability and therefore to allow cheaper
+      ! simulations (larger time step), 1D models can be run with just one average crustal
+      ! layer instead of two.
+
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 0
 
@@ -1626,6 +1655,10 @@
       rmins(14) = R_CENTRAL_CUBE / R_EARTH
 
     else
+
+      ! for 3D models:
+      !   contains the crustal layers
+      !   doubling at the base of the crust
 
       NUMBER_OF_MESH_LAYERS = 15
       layer_offset = 1
