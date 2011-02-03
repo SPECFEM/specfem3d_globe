@@ -498,8 +498,9 @@
         ! Point Profile Models
         ! the variables read are declared and stored in structure PPM_V
         call model_ppm_broadcast(myrank,PPM_V)
+
         ! could use EUcrust07 Vp crustal structure
-        call model_eucrust_broadcast(myrank,EUCM_V)
+        !call model_eucrust_broadcast(myrank,EUCM_V)
 
       case(THREE_D_MODEL_GAPP2)
         ! GAP model
@@ -1036,7 +1037,7 @@
   double precision :: lat,lon
   double precision :: vpc,vsc,rhoc,vpc_eu
   double precision :: dvs
-  logical :: found_crust,found_eucrust
+  logical :: found_crust !,found_eucrust
 
   ! checks if anything to do, that is, there is nothing to do
   ! for point radius smaller than deepest possible crust radius (~80 km depth)
@@ -1074,11 +1075,12 @@
     case ( THREE_D_MODEL_PPM )
       ! takes vs,rho from default crust
       call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+
       ! takes vp from eucrust07
-      call model_eucrust(lat,lon,r,vpc_eu,found_eucrust,PPM_V)
-      if( found_eucrust) then
-        vpc=vpc_eu
-      endif
+      !call model_eucrust(lat,lon,r,vpc_eu,found_eucrust,EUCM_V)
+      !if( found_eucrust) then
+      !  vpc=vpc_eu
+      !endif
 
     case default
       ! default crust
