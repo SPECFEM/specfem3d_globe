@@ -320,7 +320,7 @@
     eps_loc(3,2) = dyz
 
     eps_loc_new(:,:) = eps_loc(:,:)
-    ! rotate to the local cartesian coordinates (e-n-z):  eps_new=P*eps*P'
+    ! rotate to the local cartesian coordinates (n-e-z):  eps_new=P*eps*P'
     eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
 
     ! distinguish between single and double precision for reals
