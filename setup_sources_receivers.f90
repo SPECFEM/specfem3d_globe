@@ -38,7 +38,7 @@
                       stlat,stlon,stele,stbur,nu, &
                       nrec_local,nadj_rec_local,nrec_simulation, &
                       SIMULATION_TYPE,RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME, &
-                      HDUR_MOVIE,OUTPUT_FILES)
+                      HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH)
 
 
   implicit none
@@ -99,6 +99,7 @@
   double precision HDUR_MOVIE
 
   character(len=150) OUTPUT_FILES
+  character(len=150) LOCAL_PATH
 
   ! local parameters
   double precision :: junk
@@ -132,7 +133,8 @@
             NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
             islice_selected_source,ispec_selected_source, &
             xi_source,eta_source,gamma_source, nu_source, &
-            rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION)
+            rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
+            LOCAL_PATH,SIMULATION_TYPE)
 
   if(abs(minval(t_cmt)) > TINYVAL) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
 

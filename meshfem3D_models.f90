@@ -1035,7 +1035,7 @@
   ! local parameters
   double precision :: r_dummy,theta,phi
   double precision :: lat,lon
-  double precision :: vpc,vsc,rhoc,vpc_eu
+  double precision :: vpc,vsc,rhoc !,vpc_eu
   double precision :: dvs
   logical :: found_crust !,found_eucrust
 

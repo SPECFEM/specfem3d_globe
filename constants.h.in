@@ -205,6 +205,9 @@
 ! output approximate hessian in crust mantle region
   logical, parameter :: APPROXIMATE_HESS_KL = .false.
 
+! output kernel mask to zero out source region
+  logical,parameter :: SAVE_SOURCE_MASK = .false.
+
 ! print date and time estimate of end of run in another country,
 ! in addition to local time.
 ! For instance: the code runs at Caltech in California but the person

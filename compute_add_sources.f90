@@ -140,7 +140,7 @@
                                 xigll,yigll,zigll,ibool_crust_mantle, &
                                 islice_selected_rec,ispec_selected_rec, &
                                 NSTEP_SUB_ADJ,iadjsrc_len,iadjsrc,iadj_vec, &
-                                it,it_begin,station_name,network_name)
+                                it,it_begin,station_name,network_name,DT)
 
   implicit none
 
