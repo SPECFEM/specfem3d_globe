@@ -1190,7 +1190,7 @@
                       stlat,stlon,stele,stbur,nu, &
                       nrec_local,nadj_rec_local,nrec_simulation, &
                       SIMULATION_TYPE,RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME, &
-                      HDUR_MOVIE,OUTPUT_FILES)
+                      HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH)
 
   ! allocates source arrays
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
@@ -2503,7 +2503,7 @@
                                 xigll,yigll,zigll,ibool_crust_mantle, &
                                 islice_selected_rec,ispec_selected_rec, &
                                 NSTEP_SUB_ADJ,iadjsrc_len,iadjsrc,iadj_vec, &
-                                it,it_begin,station_name,network_name)
+                                it,it_begin,station_name,network_name,DT)
     endif
 
     ! add sources for backward/reconstructed wavefield
@@ -3456,7 +3456,7 @@
     ! approximate hessian
     if( APPROXIMATE_HESS_KL ) then
       call save_kernels_hessian(myrank,scale_t,scale_displ, &
-                                            hess_kl_crust_mantle,LOCAL_PATH)
+                                            hess_kl_crust_mantle,LOCAL_PATH)                                            
     endif
   endif
 

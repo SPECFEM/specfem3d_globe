@@ -36,7 +36,8 @@
                  NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                  islice_selected_source,ispec_selected_source, &
                  xi_source,eta_source,gamma_source, nu_source, &
-                 rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION)
+                 rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
+                 LOCAL_PATH,SIMULATION_TYPE)
 
   implicit none
 
@@ -48,46 +49,58 @@
 
   integer NPROCTOT
   integer NSTEP,NSOURCES,NEX_XI
-
+  
   logical ELLIPTICITY,TOPOGRAPHY,PRINT_SOURCE_TIME_FUNCTION
 
   double precision DT
 
-! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-
-! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-  integer nspec,nglob,myrank,isource
+  integer nspec,nglob,myrank
 
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-! arrays containing coordinates of the points
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
+  ! arrays containing coordinates of the points
+  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore  
 
-! Gauss-Lobatto-Legendre points of integration
+  ! Gauss-Lobatto-Legendre points of integration
   double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
 
-  double precision nu_source(NDIM,NDIM,NSOURCES)
-
-  integer yr,jda,ho,mi
-
+  ! moment-tensor source parameters
   double precision sec,tshift_cmt_original
   double precision t_cmt(NSOURCES)
-  double precision t0, hdur_gaussian(NSOURCES)
+  integer yr,jda,ho,mi
+  double precision, dimension(NSOURCES) :: theta_source,phi_source
+  double precision hdur(NSOURCES)
+  double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
 
+  ! source locations
+  integer ispec_selected_source(NSOURCES)
+  integer islice_selected_source(NSOURCES)
+
+  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
+  double precision nu_source(NDIM,NDIM,NSOURCES)
+
+  ! for ellipticity
+  integer nspl
+  double precision rspl(NR),espl(NR),espl2(NR)
+
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+
+  character(len=150) :: LOCAL_PATH
+  integer :: SIMULATION_TYPE
+
+! local parameters
+  integer isource
   integer iprocloop
-
   integer i,j,k,ispec,iglob
   integer ier
+  
+  double precision t0, hdur_gaussian(NSOURCES)
 
   double precision ell
   double precision elevation
   double precision r0,dcost,p20
   double precision theta,phi
-  double precision, dimension(NSOURCES) :: theta_source,phi_source
   double precision dist,typical_size
   double precision xi,eta,gamma,dx,dy,dz,dxi,deta
 
@@ -99,7 +112,6 @@
   double precision xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
 
   integer iter_loop
-
   integer ia
   double precision x,y,z
   double precision xix,xiy,xiz
@@ -113,23 +125,16 @@
   double precision x_target_source,y_target_source,z_target_source
   double precision r_target_source
 
-  integer islice_selected_source(NSOURCES)
-
-! timer MPI
+  ! timer MPI
   double precision time_start,tCPU
 
   integer isources_already_done,isource_in_this_subset
-  integer ispec_selected_source(NSOURCES)
   integer, dimension(:), allocatable :: ispec_selected_source_subset
 
   integer, dimension(:,:), allocatable :: ispec_selected_source_all
   double precision, dimension(:,:), allocatable :: xi_source_all,eta_source_all,gamma_source_all, &
      final_distance_source_all,x_found_source_all,y_found_source_all,z_found_source_all
 
-  double precision hdur(NSOURCES)
-
-  double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
-  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
   double precision, dimension(:), allocatable :: xi_source_subset,eta_source_subset,gamma_source_subset
 
   double precision, dimension(NSOURCES) :: lat,long,depth
@@ -166,6 +171,9 @@
   double precision :: f0,t0_ricker
   double precision t_cmt_used(NSOURCES)
 
+! mask source region (mask values are between 0 and 1, with 0 around sources)
+  real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: mask_source
+
 ! **************
 
 ! make sure we clean the future final array
@@ -198,6 +206,12 @@
 ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
 
+! initializes source mask
+  if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
+    allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC) )
+    mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
+  endif
+  
 ! get MPI starting time for all sources
   time_start = MPI_WTIME()
 
@@ -411,6 +425,13 @@
         enddo
       enddo
     enddo
+
+! calculates a gaussian mask around source point
+    if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
+      call calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
+                            x_target_source,y_target_source,z_target_source, &
+                            ibool,xstore,ystore,zstore,NGLOB)
+    endif
 
 ! end of loop on all the elements in current slice
   enddo
@@ -812,5 +833,94 @@
     write(IMAIN,*)
   endif
 
+! stores source mask
+  if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
+    call save_mask_source(myrank,mask_source,NSPEC,LOCAL_PATH)
+    deallocate( mask_source )
+  endif
+  
   end subroutine locate_sources
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
+                            x_target_source,y_target_source,z_target_source, &
+                            ibool,xstore,ystore,zstore,NGLOB)
+
+! calculate a gaussian function mask in the crust_mantle region 
+! which is 0 around the source locations and 1 everywhere else
+
+  implicit none
+
+  include "constants.h"
+
+  integer :: ispec,NSPEC,NGLOB
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: mask_source
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: xstore,ystore,zstore
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: ibool
+
+  double precision :: typical_size
+  double precision :: x_target_source,y_target_source,z_target_source
+  
+  ! local parameters
+  integer i,j,k,iglob
+  double precision dist_sq,sigma_sq
+  
+  ! standard deviation for gaussian 
+  ! (removes factor 10 added for search radius from typical_size)
+  sigma_sq = typical_size * typical_size / 100.0
+  
+  ! loops over GLL points within this ispec element
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
+      
+        ! gets distance (squared) to source
+        iglob = ibool(i,j,k,ispec)
+        dist_sq = (x_target_source - dble(xstore(iglob)))**2 &
+                  +(y_target_source - dble(ystore(iglob)))**2 &
+                  +(z_target_source - dble(zstore(iglob)))**2
+
+        ! adds gaussian function value to mask 
+        ! (mask value becomes 0 closer to source location, 1 everywhere else )
+        mask_source(i,j,k,ispec) = mask_source(i,j,k,ispec) &
+                  * ( 1.0_CUSTOM_REAL - exp( - dist_sq / sigma_sq ) )
+                  
+      enddo
+    enddo
+  enddo
+  
+  end subroutine calc_mask_source
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_mask_source(myrank,mask_source,NSPEC,LOCAL_PATH)
+
+! saves a mask in the crust_mantle region which is 0 around the source locations 
+! and 1 everywhere else
+
+  implicit none
+
+  include "constants.h"
+
+  integer :: myrank,NSPEC
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: mask_source
+  character(len=150) :: LOCAL_PATH
+
+  ! local parameters
+  character(len=150) :: prname
+  
+  ! stores into file
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  open(unit=27,file=trim(prname)//'mask_source.bin',status='unknown',form='unformatted',action='write')
+  write(27) mask_source
+  close(27)  
+  
+  end subroutine save_mask_source
