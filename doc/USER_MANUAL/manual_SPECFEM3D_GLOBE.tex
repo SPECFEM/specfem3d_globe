@@ -559,6 +559,12 @@ Note that S20RTS uses transversely isotropic PREM as a background
 model, and that we use the PREM radial attenuation model when \texttt{ATTENUATION}
 is incorporated. See Chapter~\ref{cha:-Changing-the} for a discussion
 on how to change 3D models.
+\item [{\texttt{s40rts}}] A global 3D mantle model \citep{RiDeVaWo10} succeeding S20RTS
+with a higher resolution.
+S40RTS uses transversely isotropic PREM as a background
+model and the 3D crustal model Crust2.0 \citep{BaLaMa00}. 
+We use the PREM radial attenuation model when \texttt{ATTENUATION}
+is incorporated. 
 \item [{\texttt{\textcolor{black}{s362ani}}}] A global shear-wave speed
 model developed by \citet{KuDzEk06}. In this model, radial anisotropy
 is confined to the uppermost mantle. The model (and the corresponding
@@ -575,6 +581,10 @@ as the 1D reference model.
 for a discussion on how to specify your own 3D anisotropic model.
 \item [{\texttt{3D\_attenuation}}] See Chapter~\ref{cha:-Changing-the}
 for a discussion on how to specify your own 3D attenuation model.
+\item [{\texttt{PPM}}] For a user-specified 3D model (Point-Profile-Model) 
+given as ASCII-table, specifying Vs-perturbations
+with respect to PREM. See Chapter~\ref{cha:-Changing-the}
+for a discussion on how to specify your own 3D model.
 \end{description}
 \item [{\textmd{NOTE:}}]~\\
 When a 3D mantle model is chosen in \texttt{Par\_file}, the simulations are performed together with the 3D crustal model Crust2.0. Alternatively, Crust2.0 can be combined with a higher resolution European crustal model EUCrust07 \citep{EUCrust07}. This can be done by setting the crustal type to \texttt{ICRUST\_CRUSTMAPS} in the \texttt{constant.h} file.
@@ -2903,6 +2913,33 @@ the coordinate system used in \texttt{SPECFEM3D\_GLOBE}, as discussed
 in Appendix~\ref{cha:Reference-Frame-Convention}.
 
 
+\subsection{{\normalsize \label{sub:Point-Profile-Models}Point-Profile Models}}
+
+In order to facilitate the use of your own specific mantle model, you can choose \texttt{PPM} as model in the \texttt{DATA/Par\_file} file
+and supply your own model as an ASCII-table file. These generic models are given as depth profiles at a specified lon/lat location
+and a perturbation (in percentage) with respect to the shear-wave speed values from PREM. The ASCII-file should have a format like:
+\begin{lyxcode}
+{\footnotesize \#lon(deg), lat(deg), depth(km), Vs-perturbation wrt PREM(\%), Vs-PREM (km/s)}{\footnotesize \par}
+{\footnotesize -10.00000       31.00000       40.00000      -1.775005       4.400000}{\footnotesize \par}
+{\footnotesize -10.00000       32.00000       40.00000      -1.056823       4.400000}{\footnotesize \par}
+{\footnotesize ...}{\footnotesize \par}
+\end{lyxcode}
+where the first line is a comment line and all following ones are specifying the Vs-perturbation at a lon/lat location and a given depth.
+The last entry on each line is specifying the absolute value of Vs (however this value is only given as a supplementary information 
+and not used any further). The background model is PREM with a transverse isotropic layer between Moho and 220~km depth.
+The specified Vs-perturbations are added as isotropic perturbations. Please see the file \texttt{DATA/PPM/README} 
+for more informations how to setup the directory \texttt{DATA/PPM} to use your own ASCII-file.
+
+
+
+To change the code behavior of these PPM-routines, please have a look at the implementation in the source code
+file \texttt{model\_ppm.f90} and set the flags and scaling factors as needed for your purposes.
+Perturbations in density and Vp may be scaled to the given Vs-perturbations with constant scaling factors by setting the appropriate 
+values in this source code file. In case you want to change the format of the input ASCII-file, see more details in the Appendix \ref{cha:Troubleshooting}. 
+
+
+
+
 \section{{\normalsize \label{sec:Anelastic-Models}}Anelastic Models}
 
 Three-dimensional anelastic (attenuation) models may be superimposed
@@ -3333,6 +3370,127 @@ Seismic networks, such as the Global Seismographic Network (GSN), generally invo
 \noindent \textbf{\texttt{Orientation code:}} The third letter in channel codes is an orientation code, which generally describes the physical configuration of the components of instrument packages. SPECFEM uses the traditional orientation code  \texttt{E/N/Z} (East-West, North-South, Vertical) for three components. \\
 
 \noindent \textbf{\texttt{EXAMPLE:}} Depending on the resolution of your simulations, if the sampling rate is greater than $0.1$ s and less than $1$ s, a seismogram recorded on the vertical component of station \texttt{AAK} will be named \texttt{AAK.IU.MXZ.sem.sac}, whereas it will be \texttt{AAK.IU.BXZ.sem.sac}, if the sampling rate is greater than 0.0125 and less equal to 0.1 s.
+
+
+
+\chapter{\label{cha:Troubleshooting}Troubleshooting}
+
+\section*{FAQ}
+
+\begin{description}
+\item [configuration fails:]
+   Examine the log file 'config.log'. It contains detailed informations.
+   In many cases, the path's to these specific compiler commands F90,
+   CC and MPIF90 won't be correct if `./configure` fails.
+
+   Please make sure that you have a working installation of a Fortran compiler,
+   a C compiler and an MPI implementation. You should be able to compile this
+   little program code:
+\begin{lyxcode}
+{\footnotesize      program main }{\footnotesize \par}
+{\footnotesize        include 'mpif.h' }{\footnotesize \par}
+{\footnotesize        integer, parameter :: CUSTOM\_MPI\_TYPE = MPI\_REAL }{\footnotesize \par}
+{\footnotesize        integer ier }{\footnotesize \par}
+{\footnotesize        call MPI\_INIT(ier) }{\footnotesize \par}
+{\footnotesize        call MPI\_BARRIER(MPI\_COMM\_WORLD,ier) }{\footnotesize \par}
+{\footnotesize        call MPI\_FINALIZE(ier) }{\footnotesize \par}
+{\footnotesize      end}{\footnotesize \par}
+\end{lyxcode}
+
+
+\item [compilation fails:] In case a compilation error like the following occurs, stating 
+\begin{lyxcode}
+{\footnotesize    ...  }{\footnotesize \par}
+{\footnotesize    obj/meshfem3D.o: In function `MAIN\_\_':  }{\footnotesize \par}
+{\footnotesize    meshfem3D.f90:(.text+0x14): undefined reference to `\_gfortran\_set\_std'  }{\footnotesize \par}
+{\footnotesize    ...  }{\footnotesize \par}
+\end{lyxcode}
+  make sure you're pointing to the right 'mpif90' wrapper command.
+
+  Normally, this message will appear when you're mixing two different Fortran
+  compilers. That is, using e.g. gfortran to compile non-MPI files
+  and mpif90, wrapper provided for e.g. ifort, to compile MPI-files.
+
+  fix: e.g. specify > ./configure FC=gfortran MPIF90=/usr/local/openmpi-gfortran/bin/mpif90
+
+
+\item [changing PPM model routines fails:]
+  In case you want to modify the PPM-routines in file \texttt{model\_ppm.f90}, please consider the following points:
+  
+  \begin{enumerate}
+  \item Please check in file \texttt{get\_model\_parameter.f90} that the entry for PPM models looks like:
+  \begin{lyxcode}
+{\footnotesize  ... }{\footnotesize \par}
+{\footnotesize  else if(MODEL\_ROOT == 'PPM') then  }{\footnotesize \par}
+{\footnotesize   ! overimposed based on isotropic-prem  }{\footnotesize \par}
+{\footnotesize   CASE\_3D = .true.  }{\footnotesize \par}
+{\footnotesize   CRUSTAL = .true.  }{\footnotesize \par}
+{\footnotesize   ISOTROPIC\_3D\_MANTLE = .true.  }{\footnotesize \par}
+{\footnotesize   ONE\_CRUST = .true.  }{\footnotesize \par}
+{\footnotesize   THREE\_D\_MODEL = THREE\_D\_MODEL\_PPM  }{\footnotesize \par}
+{\footnotesize   TRANSVERSE\_ISOTROPY = .true. ! to use transverse-isotropic prem  }{\footnotesize \par}
+{\footnotesize  ...  }{\footnotesize \par}
+  \end{lyxcode}
+  You can set \texttt{TRANSVERSE\_ISOTROPY} to \texttt{.false.} in case you want to use the isotropic PREM 
+  as 1D background model.
+
+  \item Transverse isotropy would mean different values for horizontal and vertically polarized wave speeds, 
+  i.e. different for vph and   vpv, vsh and vsv, and it includes an additional parameter eta. 
+  By default, we take these wave speeds from PREM and add your model perturbations to them.
+  For the moment, your model perturbations are added as isotropic perturbations, using the same dvp for vph and vpv, 
+  and dvs for vsh   and vsv, see in \texttt{meshfem3D\_models.f90}:
+  \begin{lyxcode}
+{\footnotesize  ... }{\footnotesize \par}
+{\footnotesize     case(THREE\_D\_MODEL\_PPM ) }{\footnotesize \par}
+{\footnotesize       ! point profile model }{\footnotesize \par}
+{\footnotesize       call model\_PPM(r\_used,theta,phi,dvs,dvp,drho,PPM\_V) }{\footnotesize \par}
+{\footnotesize       vpv=vpv*(1.0d0+dvp) }{\footnotesize \par}
+{\footnotesize       vph=vph*(1.0d0+dvp) }{\footnotesize \par}
+{\footnotesize       vsv=vsv*(1.0d0+dvs) }{\footnotesize \par}
+{\footnotesize       vsh=vsh*(1.0d0+dvs) }{\footnotesize \par}
+{\footnotesize       rho=rho*(1.0d0+drho) }{\footnotesize \par}
+{\footnotesize	... }{\footnotesize \par}
+  \end{lyxcode}
+ You could modify this to add different perturbations for vph and vpv, resp. vsh and vsv. 
+ This would basically mean that you add transverse isotropic perturbations.
+ You can see how this is done with e.g. the model \texttt{s362ani}, 
+ following the flag \texttt{THREE\_D\_MODEL\_S362ANI} on how to modify accordingly the file \texttt{meshfem3D\_models.f90}.
+
+  \item In case you modify the structure \texttt{PPM\_V} in file \texttt{model\_ppm.f90}, 
+  also check that in file \texttt{meshfem3D\_models.f90}, you use your updated \texttt{PPM\_V} structure (for example including dvp):
+  \begin{lyxcode}
+{\footnotesize  ... }{\footnotesize \par}
+{\footnotesize! point profile model\_variables }{\footnotesize \par}
+{\footnotesize type model\_ppm\_variables }{\footnotesize \par}
+{\footnotesize   sequence }{\footnotesize \par}
+{\footnotesize   double precision,dimension(:),pointer :: dvs,dvp,lat,lon,depth }{\footnotesize \par}
+{\footnotesize   double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth }{\footnotesize \par}
+{\footnotesize   double precision :: dlat,dlon,ddepth,max\_dvs,min\_dvs,max\_dvp,min\_dvp }{\footnotesize \par}
+{\footnotesize   integer :: num\_v,num\_latperlon,num\_lonperdepth }{\footnotesize \par}
+{\footnotesize   integer :: dummy ! padding 4 bytes to align the structure }{\footnotesize \par}
+{\footnotesize end type model\_ppm\_variables }{\footnotesize \par}
+{\footnotesize type (model\_ppm\_variables) PPM\_V }{\footnotesize \par}
+{\footnotesize  ... }{\footnotesize \par}
+  \end{lyxcode}
+
+  Together with these modifications in file \texttt{meshfem3D\_models.f90}, your code should work fine. 
+  In case you want to add more specific model routines, follow the code sections starting with:
+  \begin{lyxcode}
+{\footnotesize  !--- }{\footnotesize \par}
+{\footnotesize  ! }{\footnotesize \par}
+{\footnotesize  ! ADD YOUR MODEL HERE }{\footnotesize \par}
+{\footnotesize  ! }{\footnotesize \par}
+{\footnotesize  !--- }{\footnotesize \par}
+  \end{lyxcode}
+  to see code sections sensitive to model updates.
+    
+  \end{enumerate}
+
+\end{description}
+
+
+
+
 
 \chapter{\label{cha:License}License}
 

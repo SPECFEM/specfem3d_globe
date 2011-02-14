@@ -249,7 +249,16 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
     ! opens adjoint component file
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
     open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ios)
-    if (ios /= 0) cycle ! cycles to next file
+    
+    ! note: adjoint source files must be available for all three components E/N/Z, even
+    !          if a component is just zeroed out
+    if (ios /= 0) then   
+      ! adjoint source file not found
+      ! stops simulation
+      call exit_MPI(myrank,&
+          'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file') 
+    endif    
+    !if (ios /= 0) cycle ! cycles to next file
 
     ! jumps over unused trace length
     do itime =1,it_start-1
