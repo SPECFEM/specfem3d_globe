@@ -7,7 +7,7 @@
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            December 2010
+!                            February 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -278,7 +278,7 @@
           ! opens adjoint source file for this component
           filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
           open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
-          
+
           if( ier == 0 ) then
             ! checks length of file
             itime = 0
@@ -290,19 +290,19 @@
               call exit_MPI(myrank,&
                 'file '//trim(filename)//' has wrong length, please check with your simulation duration')
 
-            ! updates counter for found files    
+            ! updates counter for found files
             nadj_files_found = nadj_files_found + 1
           else
             ! adjoint source file not found
             ! stops simulation
             call exit_MPI(myrank,&
-                'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')            
+                'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
           endif
           close(IIN)
         enddo
       endif
     enddo
-    
+
     ! checks if any adjoint source files found at all
     call MPI_REDUCE(nadj_files_found,nadj_files_found_tot,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
     if( myrank == 0 ) then

@@ -7,7 +7,7 @@
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            December 2010
+!                            February 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -272,6 +272,10 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! v. 5.1, Dimitri Komatitsch, Ebru Bozdag and Emiljana Jorgji, February 2011: non blocking MPI for much better
+!     scaling on large clusters; new convention for the name of seismograms, to conform to the IRIS standard;
+!     new directory structure
+!
 ! v. 5.0 aka Tiger, many developers some with Princeton Tiger logo on their shirts, February 2010:
 !     new moho mesh stretching honoring crust2.0 moho depths,
 !     new attenuation assignment, new SAC headers, new general crustal models,
@@ -324,7 +328,7 @@
 !
 ! Jeroen Tromp, Harvard, July 1998: first chunk solver using OpenMP on Sun
 !
-! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM5
+! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM-5 Connection Machine
 !
 ! From Dahlen and Tromp (1998):
 ! ----------------------------
@@ -3456,7 +3460,7 @@
     ! approximate hessian
     if( APPROXIMATE_HESS_KL ) then
       call save_kernels_hessian(myrank,scale_t,scale_displ, &
-                                            hess_kl_crust_mantle,LOCAL_PATH)                                            
+                                            hess_kl_crust_mantle,LOCAL_PATH)
     endif
   endif
 
