@@ -7,7 +7,7 @@
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            December 2010
+!                            February 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@
 
   integer NPROCTOT
   integer NSTEP,NSOURCES,NEX_XI
-  
+
   logical ELLIPTICITY,TOPOGRAPHY,PRINT_SOURCE_TIME_FUNCTION
 
   double precision DT
@@ -59,7 +59,7 @@
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   ! arrays containing coordinates of the points
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore  
+  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
 
   ! Gauss-Lobatto-Legendre points of integration
   double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
@@ -94,7 +94,7 @@
   integer iprocloop
   integer i,j,k,ispec,iglob
   integer ier
-  
+
   double precision t0, hdur_gaussian(NSOURCES)
 
   double precision ell
@@ -211,7 +211,7 @@
     allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC) )
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
-  
+
 ! get MPI starting time for all sources
   time_start = MPI_WTIME()
 
@@ -838,7 +838,7 @@
     call save_mask_source(myrank,mask_source,NSPEC,LOCAL_PATH)
     deallocate( mask_source )
   endif
-  
+
   end subroutine locate_sources
 
 !
@@ -850,7 +850,7 @@
                             x_target_source,y_target_source,z_target_source, &
                             ibool,xstore,ystore,zstore,NGLOB)
 
-! calculate a gaussian function mask in the crust_mantle region 
+! calculate a gaussian function mask in the crust_mantle region
 ! which is 0 around the source locations and 1 everywhere else
 
   implicit none
@@ -865,35 +865,35 @@
 
   double precision :: typical_size
   double precision :: x_target_source,y_target_source,z_target_source
-  
+
   ! local parameters
   integer i,j,k,iglob
   double precision dist_sq,sigma_sq
-  
-  ! standard deviation for gaussian 
+
+  ! standard deviation for gaussian
   ! (removes factor 10 added for search radius from typical_size)
   sigma_sq = typical_size * typical_size / 100.0
-  
+
   ! loops over GLL points within this ispec element
   do k = 1,NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
-      
+
         ! gets distance (squared) to source
         iglob = ibool(i,j,k,ispec)
         dist_sq = (x_target_source - dble(xstore(iglob)))**2 &
                   +(y_target_source - dble(ystore(iglob)))**2 &
                   +(z_target_source - dble(zstore(iglob)))**2
 
-        ! adds gaussian function value to mask 
+        ! adds gaussian function value to mask
         ! (mask value becomes 0 closer to source location, 1 everywhere else )
         mask_source(i,j,k,ispec) = mask_source(i,j,k,ispec) &
                   * ( 1.0_CUSTOM_REAL - exp( - dist_sq / sigma_sq ) )
-                  
+
       enddo
     enddo
   enddo
-  
+
   end subroutine calc_mask_source
 
 !
@@ -902,7 +902,7 @@
 
   subroutine save_mask_source(myrank,mask_source,NSPEC,LOCAL_PATH)
 
-! saves a mask in the crust_mantle region which is 0 around the source locations 
+! saves a mask in the crust_mantle region which is 0 around the source locations
 ! and 1 everywhere else
 
   implicit none
@@ -916,11 +916,11 @@
 
   ! local parameters
   character(len=150) :: prname
-  
+
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
   open(unit=27,file=trim(prname)//'mask_source.bin',status='unknown',form='unformatted',action='write')
   write(27) mask_source
-  close(27)  
-  
+  close(27)
+
   end subroutine save_mask_source

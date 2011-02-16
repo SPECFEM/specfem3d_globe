@@ -7,7 +7,7 @@
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            December 2010
+!                            February 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -249,15 +249,15 @@ subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
     ! opens adjoint component file
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
     open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ios)
-    
+
     ! note: adjoint source files must be available for all three components E/N/Z, even
     !          if a component is just zeroed out
-    if (ios /= 0) then   
+    if (ios /= 0) then
       ! adjoint source file not found
       ! stops simulation
       call exit_MPI(myrank,&
-          'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file') 
-    endif    
+          'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
+    endif
     !if (ios /= 0) cycle ! cycles to next file
 
     ! jumps over unused trace length
