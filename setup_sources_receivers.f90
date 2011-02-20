@@ -28,7 +28,7 @@
   subroutine setup_sources_receivers(NSOURCES,myrank,ibool_crust_mantle, &
                       xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                       xigll,yigll,zigll,TOPOGRAPHY, &
-                      sec,t_cmt,theta_source,phi_source, &
+                      sec,tshift_cmt,theta_source,phi_source, &
                       NSTEP,DT,hdur,hdur_gaussian,t0,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                       islice_selected_source,ispec_selected_source, &
                       xi_source,eta_source,gamma_source,nu_source, &
@@ -59,9 +59,9 @@
 
   logical TOPOGRAPHY
 
-  double precision sec,DT,t0,tshift_cmt_original
+  double precision sec,DT,t0,min_tshift_cmt_original
 
-  double precision, dimension(NSOURCES) :: t_cmt,hdur,hdur_gaussian
+  double precision, dimension(NSOURCES) :: tshift_cmt,hdur,hdur_gaussian
   double precision, dimension(NSOURCES) :: theta_source,phi_source
   double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source,nu_source
@@ -129,14 +129,14 @@
   call locate_sources(NSOURCES,myrank,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
             xigll,yigll,zigll,NPROCTOT_VAL,ELLIPTICITY_VAL,TOPOGRAPHY, &
-            sec,t_cmt,tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
+            sec,tshift_cmt,min_tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
             NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
             islice_selected_source,ispec_selected_source, &
             xi_source,eta_source,gamma_source, nu_source, &
             rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
             LOCAL_PATH,SIMULATION_TYPE)
 
-  if(abs(minval(t_cmt)) > TINYVAL) call exit_MPI(myrank,'one t_cmt must be zero, others must be positive')
+  if(abs(minval(tshift_cmt)) > TINYVAL) call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
 
   ! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
   if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
@@ -152,7 +152,7 @@
   hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
 
   ! define t0 as the earliest start time
-  t0 = - 1.5d0*minval( t_cmt(:) - hdur(:) )
+  t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
 
   ! point force sources will start depending on the frequency given by hdur
   if( USE_FORCE_POINT_SOURCE ) then
@@ -160,7 +160,7 @@
     !          thus the main period is 1/hdur.
     !          also, these sources use a Ricker source time function instead of a gaussian.
     !          for a Ricker source time function, a start time ~1.2 * main_period is a good choice
-    t0 = - 1.2d0 * minval(t_cmt(:) - 1.0d0/hdur(:))
+    t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
   endif
 
   ! checks if user set USER_T0 to fix simulation start time
@@ -173,17 +173,17 @@
     ! notifies user
     if( myrank == 0 ) then
       write(IMAIN,*) 'USER_T0: ',USER_T0
-      write(IMAIN,*) 't0: ',t0,'tshift_cmt_original: ',tshift_cmt_original
+      write(IMAIN,*) 't0: ',t0,'min_tshift_cmt_original: ',min_tshift_cmt_original
       write(IMAIN,*)
     endif
 
     ! checks if automatically set t0 is too small
-    ! note: tshift_cmt_original can be a positive or negative time shift (minimum from all tshift)
-    if( t0 <= USER_T0 + tshift_cmt_original ) then
-      ! by default, t_cmt(:) holds relative time shifts with a minimum time shift set to zero
+    ! note: min_tshift_cmt_original can be a positive or negative time shift (minimum from all tshift)
+    if( t0 <= USER_T0 + min_tshift_cmt_original ) then
+      ! by default, tshift_cmt(:) holds relative time shifts with a minimum time shift set to zero
       ! re-adds (minimum) original time shift such that sources will kick in
       ! according to their absolute time shift
-      t_cmt(:) = t_cmt(:) + tshift_cmt_original
+      tshift_cmt(:) = tshift_cmt(:) + min_tshift_cmt_original
 
       ! sets new simulation start time such that
       ! simulation starts at t = - t0 = - USER_T0
@@ -200,7 +200,7 @@
       if( myrank == 0 ) then
         write(IMAIN,*) 'error: USER_T0 is too small'
         write(IMAIN,*) '       must make one of three adjustements:'
-        write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-tshift_cmt_original
+        write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-min_tshift_cmt_original
         write(IMAIN,*) '       - decrease time shift in CMTSOLUTION file'
         write(IMAIN,*) '       - decrease hdur in CMTSOLUTION file'
       endif

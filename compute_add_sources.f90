@@ -27,7 +27,7 @@
 
   subroutine compute_add_sources(myrank,NSOURCES, &
                                 accel_crust_mantle,sourcearrays, &
-                                DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
+                                DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 
@@ -43,7 +43,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES) :: sourcearrays
 
-  double precision, dimension(NSOURCES) :: t_cmt,hdur_gaussian
+  double precision, dimension(NSOURCES) :: tshift_cmt,hdur_gaussian
 
   double precision :: DT,t0
 
@@ -88,7 +88,7 @@
         !endif
 
         ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-        stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-t_cmt(isource),f0)
+        stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
 
         ! we use a force in a single direction along one of the components:
         !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
@@ -98,7 +98,7 @@
 
       else
 
-        stf = comp_source_time_function(dble(it-1)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
+        stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
 
         !     distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then
@@ -319,7 +319,7 @@
 
   subroutine compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
-                                DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
+                                DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 
@@ -335,7 +335,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES) :: sourcearrays
 
-  double precision, dimension(NSOURCES) :: t_cmt,hdur_gaussian
+  double precision, dimension(NSOURCES) :: tshift_cmt,hdur_gaussian
 
   double precision :: DT,t0
 
@@ -370,7 +370,7 @@
 !       the wavefields, that is b_displ( it=1) would correspond to time (NSTEP -1 - 1)*DT - t0.
 !       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
 !       in the first (it=1) time loop.
-!       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-t_cmt for the source time function here
+!       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_cmt for the source time function here
 
       if(USE_FORCE_POINT_SOURCE) then
 
@@ -389,7 +389,7 @@
          !endif
 
          ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-         stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it)*DT-t0-t_cmt(isource),f0)
+         stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),f0)
 
          ! e.g. we use nu_source(3,:) here if we want a source normal to the surface.
          ! note: time step is now at NSTEP-it
@@ -399,7 +399,7 @@
       else
 
         ! see note above: time step corresponds now to NSTEP-it
-        stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-t_cmt(isource),hdur_gaussian(isource))
+        stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
 
         !     distinguish between single and double precision for reals
         if(CUSTOM_REAL == SIZE_REAL) then

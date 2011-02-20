@@ -29,7 +29,7 @@
   subroutine write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,stbur, &
             nrec,nrec_local,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
-            yr,jda,ho,mi,sec,t_cmt,t_shift, &
+            yr,jda,ho,mi,sec,tshift_cmt,t_shift, &
             elat,elon,depth,event_name,cmt_lat,cmt_lon, &
             cmt_depth,cmt_hdur,NPROCTOT, &
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
@@ -57,7 +57,7 @@
 
  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
- double precision t_cmt,t_shift,elat,elon,depth
+ double precision tshift_cmt,t_shift,elat,elon,depth
  double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
  double precision, dimension(nrec) :: stlat,stlon,stele,stbur
  integer yr,jda,ho,mi
@@ -145,7 +145,7 @@
       call write_one_seismogram(one_seismogram,irec, &
                              station_name,network_name,stlat,stlon,stele,stbur,nrec, &
                              ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
-                             yr,jda,ho,mi,sec,t_cmt,t_shift, &
+                             yr,jda,ho,mi,sec,tshift_cmt,t_shift, &
                              elat,elon,depth,event_name,cmt_lat, &
                              cmt_lon,cmt_depth,cmt_hdur,OUTPUT_FILES, &
                              OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
@@ -229,7 +229,7 @@
              call write_one_seismogram(one_seismogram,irec, &
                                        station_name,network_name,stlat,stlon,stele,stbur,nrec, &
                                        ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
-                                       yr,jda,ho,mi,sec,t_cmt,t_shift, &
+                                       yr,jda,ho,mi,sec,tshift_cmt,t_shift, &
                                        elat,elon,depth,event_name,cmt_lat, &
                                        cmt_lon,cmt_depth,cmt_hdur,OUTPUT_FILES, &
                                        OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
@@ -282,7 +282,7 @@
   subroutine write_one_seismogram(one_seismogram,irec, &
               station_name,network_name,stlat,stlon,stele,stbur,nrec, &
               ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
-              yr,jda,ho,mi,sec,t_cmt,t_shift,&
+              yr,jda,ho,mi,sec,tshift_cmt,t_shift,&
               elat,elon,depth,event_name,cmt_lat,cmt_lon,cmt_depth,cmt_hdur, &
               OUTPUT_FILES, &
               OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
@@ -316,7 +316,7 @@
   character(len=150) OUTPUT_FILES
 
   ! section added for SAC
-  double precision t_cmt,t_shift,elat,elon,depth
+  double precision tshift_cmt,t_shift,elat,elon,depth
   double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
 
   double precision, dimension(nrec) :: stlat,stlon,stele,stbur
@@ -446,7 +446,7 @@
       call write_output_SAC(seismogram_tmp,irec, &
               station_name,network_name,stlat,stlon,stele,stbur,nrec, &
               ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
-              yr,jda,ho,mi,sec,t_cmt,t_shift,&
+              yr,jda,ho,mi,sec,tshift_cmt,t_shift,&
               elat,elon,depth,event_name,cmt_lat,cmt_lon,cmt_depth,cmt_hdur, &
               OUTPUT_FILES, &
               OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &

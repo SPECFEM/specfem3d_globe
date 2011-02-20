@@ -659,7 +659,7 @@
   double precision sec
   double precision, dimension(:), allocatable :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
-  double precision, dimension(:), allocatable :: t_cmt,hdur,hdur_gaussian
+  double precision, dimension(:), allocatable :: tshift_cmt,hdur,hdur_gaussian
   double precision, dimension(:), allocatable :: theta_source,phi_source
   double precision, external :: comp_source_time_function
   double precision t0
@@ -1159,7 +1159,7 @@
   allocate(xi_source(NSOURCES))
   allocate(eta_source(NSOURCES))
   allocate(gamma_source(NSOURCES))
-  allocate(t_cmt(NSOURCES))
+  allocate(tshift_cmt(NSOURCES))
   allocate(hdur(NSOURCES))
   allocate(hdur_gaussian(NSOURCES))
   allocate(theta_source(NSOURCES))
@@ -1184,7 +1184,7 @@
   call setup_sources_receivers(NSOURCES,myrank,ibool_crust_mantle, &
                       xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                       xigll,yigll,zigll,TOPOGRAPHY, &
-                      sec,t_cmt,theta_source,phi_source, &
+                      sec,tshift_cmt,theta_source,phi_source, &
                       NSTEP,DT,hdur,hdur_gaussian,t0,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                       islice_selected_source,ispec_selected_source, &
                       xi_source,eta_source,gamma_source,nu_source, &
@@ -2493,7 +2493,7 @@
     if (SIMULATION_TYPE == 1) &
       call compute_add_sources(myrank,NSOURCES, &
                                 accel_crust_mantle,sourcearrays, &
-                                DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
+                                DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 
@@ -2514,7 +2514,7 @@
     if (SIMULATION_TYPE == 3) &
       call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
                                 b_accel_crust_mantle,sourcearrays, &
-                                DT,t0,t_cmt,hdur_gaussian,ibool_crust_mantle, &
+                                DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
                                 islice_selected_source,ispec_selected_source,it, &
                                 hdur,xi_source,eta_source,gamma_source,nu_source)
 
@@ -2936,7 +2936,7 @@
                     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                     hxir_store,hetar_store,hgammar_store, &
                     hpxir_store,hpetar_store,hpgammar_store, &
-                    t_cmt,hdur_gaussian,DT,t0,scale_displ, &
+                    tshift_cmt,hdur_gaussian,DT,t0,scale_displ, &
                     hprime_xx,hprime_yy,hprime_zz, &
                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
