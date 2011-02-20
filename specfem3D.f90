@@ -272,7 +272,7 @@
 ! Evolution of the code:
 ! ---------------------
 !
-! v. 5.1, Dimitri Komatitsch, Ebru Bozdag and Emiljana Jorgji, February 2011: non blocking MPI for much better
+! v. 5.1, Dimitri Komatitsch and Ebru Bozdag, February 2011: non blocking MPI for much better
 !     scaling on large clusters; new convention for the name of seismograms, to conform to the IRIS standard;
 !     new directory structure
 !
