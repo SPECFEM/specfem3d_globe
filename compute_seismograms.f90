@@ -195,7 +195,7 @@
                     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                     hxir_store,hetar_store,hgammar_store, &
                     hpxir_store,hpetar_store,hpgammar_store, &
-                    t_cmt,hdur_gaussian,DT,t0,scale_displ, &
+                    tshift_cmt,hdur_gaussian,DT,t0,scale_displ, &
                     hprime_xx,hprime_yy,hprime_zz, &
                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
@@ -225,7 +225,7 @@
   double precision, dimension(nrec_local,NGLLY) :: hetar_store,hpetar_store
   double precision, dimension(nrec_local,NGLLZ) :: hgammar_store,hpgammar_store
 
-  double precision, dimension(NSOURCES) :: t_cmt,hdur_gaussian
+  double precision, dimension(NSOURCES) :: tshift_cmt,hdur_gaussian
   double precision :: DT,t0
   double precision :: scale_displ, scale_t
 
@@ -356,16 +356,16 @@
                 etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
                 gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec))
 
-    stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-t_cmt(irec),hdur_gaussian(irec))
+    stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-tshift_cmt(irec),hdur_gaussian(irec))
     stf_deltat = stf * deltat
 
     moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
     sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_l_s(:) * stf_deltat
 
     scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
-    Kp_deltat= -1.0d0/sqrt(PI)/hdur_gaussian(irec)*exp(-((dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec))**2) &
+    Kp_deltat= -1.0d0/sqrt(PI)/hdur_gaussian(irec)*exp(-((dble(NSTEP-it)*DT-t0-tshift_cmt(irec))/hdur_gaussian(irec))**2) &
                        * deltat * scale_t
-    Hp_deltat= (dble(NSTEP-it)*DT-t0-t_cmt(irec))/hdur_gaussian(irec)*Kp_deltat
+    Hp_deltat= (dble(NSTEP-it)*DT-t0-tshift_cmt(irec))/hdur_gaussian(irec)*Kp_deltat
 
     stshift_der(irec_local) = stshift_der(irec_local) + eps_m_s * Kp_deltat
 

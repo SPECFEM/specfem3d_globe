@@ -33,11 +33,11 @@
 ! Also, t_shift is added as a new parameter to be written on sac headers!
 ! by Ebru Bozdag
 
-  !subroutine get_event_info_parallel(myrank,yr,jda,ho,mi,sec,t_cmt, &
+  !subroutine get_event_info_parallel(myrank,yr,jda,ho,mi,sec,tshift_cmt, &
   !               elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
   subroutine get_event_info_parallel(myrank,yr,jda,ho,mi,sec,&
-                                    event_name,t_cmt,t_shift, &
+                                    event_name,tshift_cmt,t_shift, &
                                     elat,elon,depth,mb,cmt_lat, &
                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
@@ -54,7 +54,7 @@
 
   integer, intent(out) :: yr,jda,ho,mi
   real, intent(out) :: mb
-  double precision, intent(out) :: t_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,sec
+  double precision, intent(out) :: tshift_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,sec
 
   !character(len=12), intent(out) :: ename
 
@@ -74,11 +74,11 @@
 ! get event information for SAC header on the master
   if(myrank == 0) then
 
-    call get_event_info_serial(yr,jda,ho,mi,sec,event_name,t_cmt,t_shift, &
+    call get_event_info_serial(yr,jda,ho,mi,sec,event_name,tshift_cmt,t_shift, &
                         elat,elon,depth,mb, &
                         cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
-    !call get_event_info_serial(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,region, &
+    !call get_event_info_serial(yr,jda,ho,mi,sec,tshift_cmt,elat,elon,depth,mb,region, &
     !                    cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
 
     ! create the event name
@@ -100,7 +100,7 @@
 
   call MPI_BCAST(NSOURCES,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-  call MPI_BCAST(t_cmt,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(tshift_cmt,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(t_shift,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   ! event location given on first, PDE line
@@ -129,12 +129,12 @@
 ! Time-shifts of all sources can be read and the minimum t_shift is taken to be written in sac headers!
 ! by Ebru
 
-  subroutine get_event_info_serial(yr,jda,ho,mi,sec,event_name,t_cmt,t_shift,&
+  subroutine get_event_info_serial(yr,jda,ho,mi,sec,event_name,tshift_cmt,t_shift,&
                             elat_pde,elon_pde,depth_pde,mb,&
                             cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
 
-  !subroutine get_event_info_serial(yr,jda,ho,mi,sec,t_cmt,elat,elon,depth,mb,region,&
+  !subroutine get_event_info_serial(yr,jda,ho,mi,sec,tshift_cmt,elat,elon,depth,mb,region,&
   !                          cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
 
   implicit none
@@ -147,7 +147,7 @@
 
   real, intent(out) :: mb
 
-  double precision, intent(out) :: sec,t_cmt,t_shift
+  double precision, intent(out) :: sec,tshift_cmt,t_shift
   double precision, intent(out) :: elat_pde,elon_pde,depth_pde,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
 
   !integer, intent(in) :: LENGTH_REGION_NAME
@@ -235,8 +235,8 @@
     read(821,"(a)") string
     read(821,"(a)") string
   enddo
-  ! sets t_cmt to zero
-  t_cmt = 0.
+  ! sets tshift_cmt to zero
+  tshift_cmt = 0.
 
   ! takes first event id as event_name
   event_name = e_n(1)
@@ -271,7 +271,7 @@
 !
 !  ! read time shift
 !  read(821,"(a)") string
-!  read(string(12:len_trim(string)),*) t_cmt
+!  read(string(12:len_trim(string)),*) tshift_cmt
 !
 !  if (NSOURCES == 1) then
 !

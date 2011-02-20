@@ -32,7 +32,7 @@
   subroutine locate_sources(NSOURCES,myrank,nspec,nglob,ibool,&
                  xstore,ystore,zstore,xigll,yigll,zigll, &
                  NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
-                 sec,t_cmt,tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
+                 sec,tshift_cmt,min_tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
                  NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
                  islice_selected_source,ispec_selected_source, &
                  xi_source,eta_source,gamma_source, nu_source, &
@@ -65,8 +65,8 @@
   double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
 
   ! moment-tensor source parameters
-  double precision sec,tshift_cmt_original
-  double precision t_cmt(NSOURCES)
+  double precision sec,min_tshift_cmt_original
+  double precision tshift_cmt(NSOURCES)
   integer yr,jda,ho,mi
   double precision, dimension(NSOURCES) :: theta_source,phi_source
   double precision hdur(NSOURCES)
@@ -183,8 +183,8 @@
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
 ! read all the sources
-  if(myrank == 0) call get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor, &
-                              DT,NSOURCES,tshift_cmt_original)
+  if(myrank == 0) call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
+                              DT,NSOURCES,min_tshift_cmt_original)
 
 ! broadcast the information read on the master to the nodes
   call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -194,14 +194,14 @@
 
   call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-  call MPI_BCAST(t_cmt,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(tshift_cmt,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(hdur,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(lat,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(long,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(depth,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(moment_tensor,6*NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(tshift_cmt_original,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(min_tshift_cmt_original,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
 ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
@@ -650,7 +650,7 @@
       write(IMAIN,*) '  using a source of dominant frequency ',f0
       write(IMAIN,*) '  lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
       write(IMAIN,*) '  lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
-      write(IMAIN,*) '  t0_ricker = ',t0_ricker,'t_cmt = ',t_cmt(isource)
+      write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_cmt = ',tshift_cmt(isource)
       write(IMAIN,*)
       write(IMAIN,*) '  half duration -> frequency: ',hdur(isource),' seconds**(-1)'
     else
@@ -666,7 +666,7 @@
       write(IMAIN,*)
       write(IMAIN,*) ' half duration: ',hdur(isource),' seconds'
     endif
-    write(IMAIN,*) '    time shift: ',t_cmt(isource),' seconds'
+    write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
 
 ! get latitude, longitude and depth of the source that will be used
     call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset),y_found_source(isource_in_this_subset), &
@@ -737,12 +737,12 @@
       ! define t0 as the earliest start time
       ! note: this calculation here is only used for outputting the plot_source_time_function file
       !          (see setup_sources_receivers.f90)
-      t0 = - 1.5d0*minval( t_cmt(:) - hdur(:) )
-      if( USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(t_cmt(:) - 1.0d0/hdur(:))
+      t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
+      if( USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
       t_cmt_used(:) = t_cmt_used(:)
       if( USER_T0 > 0.d0 ) then
-        if( t0 <= USER_T0 + tshift_cmt_original ) then
-          t_cmt_used(:) = t_cmt(:) + tshift_cmt_original
+        if( t0 <= USER_T0 + min_tshift_cmt_original ) then
+          t_cmt_used(:) = tshift_cmt(:) + min_tshift_cmt_original
           t0 = USER_T0
         endif
       endif

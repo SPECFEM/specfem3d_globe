@@ -25,8 +25,8 @@
 !
 !=====================================================================
 
-  subroutine get_cmt(yr,jda,ho,mi,sec,t_cmt,hdur,lat,long,depth,moment_tensor, &
-                    DT,NSOURCES,tshift_cmt_original)
+  subroutine get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
+                    DT,NSOURCES,min_tshift_cmt_original)
 
   implicit none
 
@@ -38,8 +38,8 @@
   double precision, intent(in) :: DT
 
   integer, intent(out) :: yr,jda,ho,mi
-  double precision, intent(out) :: sec,tshift_cmt_original
-  double precision, dimension(NSOURCES), intent(out) :: t_cmt,hdur,lat,long,depth
+  double precision, intent(out) :: sec,min_tshift_cmt_original
+  double precision, dimension(NSOURCES), intent(out) :: tshift_cmt,hdur,lat,long,depth
   double precision, dimension(6,NSOURCES), intent(out) :: moment_tensor
 
 !--- local variables below
@@ -55,7 +55,7 @@
   long(:) = 0.d0
   depth(:) = 0.d0
   t_shift(:) = 0.d0
-  t_cmt(:) = 0.d0
+  tshift_cmt(:) = 0.d0
   hdur(:) = 0.d0
   moment_tensor(:,:) = 0.d0
   yr = 0
@@ -89,7 +89,7 @@
 
     ! read time shift
     read(1,"(a)") string
-    !read(string(12:len_trim(string)),*) t_cmt(isource)
+    !read(string(12:len_trim(string)),*) tshift_cmt(isource)
     read(string(12:len_trim(string)),*) t_shift(isource)
 
     ! read half duration
@@ -149,13 +149,13 @@
 
   close(1)
 
-  ! Sets t_cmt to zero to initiate the simulation!
+  ! Sets tshift_cmt to zero to initiate the simulation!
   if(NSOURCES == 1)then
-      t_cmt = 0.d0
-      tshift_cmt_original = t_shift(1)
+      tshift_cmt = 0.d0
+      min_tshift_cmt_original = t_shift(1)
   else
-      t_cmt(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
-      tshift_cmt_original = minval(t_shift)
+      tshift_cmt(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
+      min_tshift_cmt_original = minval(t_shift)
   endif
 
 !

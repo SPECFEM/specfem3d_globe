@@ -28,7 +28,7 @@
   subroutine write_output_SAC(seismogram_tmp,irec, &
               station_name,network_name,stlat,stlon,stele,stbur,nrec, &
               ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
-              yr,jda,ho,mi,sec,t_cmt,t_shift,&
+              yr,jda,ho,mi,sec,tshift_cmt,t_shift,&
               elat,elon,depth,event_name,cmt_lat,cmt_lon,cmt_depth,cmt_hdur, &
               OUTPUT_FILES, &
               OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
@@ -63,7 +63,7 @@
   character(len=256) sisname
   character(len=150) OUTPUT_FILES
 
-  double precision t_cmt,t_shift,elat,elon,depth
+  double precision tshift_cmt,t_shift,elat,elon,depth
   double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
   double precision, dimension(nrec) :: stlat,stlon,stele,stbur
   integer yr,jda,ho,mi
@@ -171,7 +171,7 @@
   SCALE_F= 1000000000  ! factor for y-value, set to 10e9, so that values are in nm
   ODELTA = undef       ! increment from delta
 
-  B      = sngl((seismo_offset)*DT-hdur + t_cmt) ! [REQUIRED]
+  B      = sngl((seismo_offset)*DT-hdur + tshift_cmt) ! [REQUIRED]
   E      = BYSAC       ! [REQUIRED]
   O      = 0  !
   A      = undef  !###
