@@ -30,7 +30,7 @@ subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_s
   receiver_cube_from_slices, ibool_inner_core, idoubling_inner_core, NSPEC_INNER_CORE, &
   ibelm_bottom_inner_core, NSPEC2D_BOTTOM_INNER_CORE,NGLOB_INNER_CORE,vector_assemble,ndim_assemble)
 
-! this version of the routine is based on non-blocking MPI calls
+! this version of the routine is based on non blocking MPI calls
 
   implicit none
 

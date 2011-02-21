@@ -227,6 +227,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/compute_seismograms.o \
 	$O/compute_stacey_crust_mantle.o \
 	$O/compute_stacey_outer_core.o \
+	$O/fix_non_blocking_flags.o \
 	$O/initialize_simulation.o \
 	$O/prepare_timerun.o \
 	$O/read_arrays_solver.o \
@@ -741,6 +742,9 @@ $O/setup_sources_receivers.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/s
 
 $O/specfem3D.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/specfem3D.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.f90
+
+$O/fix_non_blocking_flags.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/fix_non_blocking_flags.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/fix_non_blocking_flags.o ${FCFLAGS_f90} $S/fix_non_blocking_flags.f90
 
 $O/write_movie_surface.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/write_movie_surface.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/write_movie_surface.o ${FCFLAGS_f90} $S/write_movie_surface.f90

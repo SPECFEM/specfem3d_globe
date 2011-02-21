@@ -6,7 +6,7 @@ Things that could be done in a future version:
 
 - use a better checkpointing/restarting system with CRC-32 as in SPECFEM3D_GLOBE/tags/v4.1.0_beta_merged_mesher_solver_non_blocking_MPI/src
 
-- use a more accurate time scheme: either symplectic schemes (but there could be a problem in the viscoelastic case, see below) or else Runge Kutta RK4, which is non staggered and would thus solve the approximate implementation of the displacement gradient that I used to implement attenuation back in 1999.
+- use a more accurate time scheme: either symplectic schemes (but there could be a problem in the viscoelastic case, see below) or else Runge Kutta RK4, which is non staggered and would thus solve the approximate implementation of the displacement gradient that I used to implement attenuation back in 1999. It is not clear if symplectic schemes could be suitable for viscoelastic media (Tarje implemented them for elastic media only), but RK4 is definitely suitable (Roland Martin used it successfully in 2D viscoelastic).
 
 Subject: Re: SEM attenuation
 Date: Fri, 23 Jul 2010 12:16:40 +0200

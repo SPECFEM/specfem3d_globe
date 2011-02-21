@@ -35,7 +35,7 @@
               c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
               c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
               c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-              ibool,idoubling,rmass,rmass_ocean_load,nspec,nglob, &
+              ibool,idoubling,is_on_a_slice_edge,rmass,rmass_ocean_load,nspec,nglob, &
               READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY, &
               ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
@@ -87,7 +87,10 @@
 ! global addressing
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-  integer idoubling(nspec)
+  integer, dimension(nspec) :: idoubling
+
+! this for non blocking MPI
+  logical, dimension(nspec) :: is_on_a_slice_edge
 
 ! processor identification
   character(len=150) prname
@@ -185,6 +188,8 @@
   read(IIN) ibool
 
   read(IIN) idoubling
+
+  read(IIN) is_on_a_slice_edge
 
   close(IIN)
 

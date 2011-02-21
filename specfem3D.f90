@@ -272,8 +272,9 @@
 ! Evolution of the code:
 ! ---------------------
 !
-! v. 5.1, Dimitri Komatitsch and Ebru Bozdag, February 2011: non blocking MPI for much better
-!     scaling on large clusters; new convention for the name of seismograms, to conform to the IRIS standard;
+! v. 5.1, Dimitri Komatitsch, University of Toulouse, France and Ebru Bozdag, Princeton University, USA, February 2011:
+!     non blocking MPI for much better scaling on large clusters;
+!     new convention for the name of seismograms, to conform to the IRIS standard;
 !     new directory structure
 !
 ! v. 5.0 aka Tiger, many developers some with Princeton Tiger logo on their shirts, February 2010:
@@ -355,7 +356,6 @@
 ! Its first time derivative is called veloc_outer_core.
 ! Its second time derivative is called accel_outer_core.
 
-
 ! memory variables and standard linear solids for attenuation
   real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT4) :: one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
   real(kind=CUSTOM_REAL), dimension(ATT1,ATT2,ATT3,ATT5) :: one_minus_sum_beta_inner_core, factor_scale_inner_core
@@ -408,7 +408,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: muvstore_crust_mantle_3dmovie
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
-  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool_3dmovie
 
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: Iepsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: Ieps_trace_over_3_crust_mantle
@@ -495,10 +494,24 @@
   integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle, &
       iboolfaces_outer_core,iboolfaces_inner_core
 
+! this for non blocking MPI
+
 ! buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY_VAL) :: buffer_send_faces_scalar,buffer_received_faces_scalar
-! size of buffers is multiplied by 2 because we handle two regions in the same MPI call
-  real(kind=CUSTOM_REAL), dimension(NDIM,2*NGLOB2DMAX_XY_VAL) :: buffer_send_faces_vector,buffer_received_faces_vector
+! we use the same buffers to assemble scalars and vectors because vectors are
+! always three times bigger and therefore scalars can use the first part
+! of the vector buffer in memory even if it has an additional index here
+  integer :: npoin2D_max_all_CM_IC
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_faces,buffer_received_faces
+
+! for non blocking communications
+  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
+  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
+  logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
+  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
+  real :: percentage_edge
+
+! assembling phase number for non blocking MPI
+  integer :: iphase,icall
 
 ! -------- arrays specific to each region here -----------
 
@@ -973,13 +986,13 @@
               c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
               c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
               c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-              ibool_crust_mantle,idoubling_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
+              ibool_crust_mantle,idoubling_crust_mantle,is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
               vp_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
               xix_outer_core,xiy_outer_core,xiz_outer_core, &
               etax_outer_core,etay_outer_core,etaz_outer_core, &
               gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
               rhostore_outer_core,kappavstore_outer_core, &
-              ibool_outer_core,idoubling_outer_core,rmass_outer_core, &
+              ibool_outer_core,idoubling_outer_core,is_on_a_slice_edge_outer_core,rmass_outer_core, &
               xstore_inner_core,ystore_inner_core,zstore_inner_core, &
               xix_inner_core,xiy_inner_core,xiz_inner_core, &
               etax_inner_core,etay_inner_core,etaz_inner_core, &
@@ -987,7 +1000,7 @@
               rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
               c11store_inner_core,c12store_inner_core,c13store_inner_core, &
               c33store_inner_core,c44store_inner_core, &
-              ibool_inner_core,idoubling_inner_core,rmass_inner_core, &
+              ibool_inner_core,idoubling_inner_core,is_on_a_slice_edge_inner_core,rmass_inner_core, &
               ABSORBING_CONDITIONS,LOCAL_PATH)
 
   ! read 2-D addressing for summation between slices with MPI
@@ -1041,6 +1054,29 @@
               ibelm_670_top,ibelm_670_bot,normal_moho,normal_400,normal_670, &
               k_top,k_bot,moho_kl,d400_kl,d670_kl,cmb_kl,icb_kl, &
               LOCAL_PATH,SIMULATION_TYPE)
+
+! added this to reduce the size of the buffers
+! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
+  npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
+                        maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
+
+  allocate(buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED))
+  allocate(buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED))
+
+  call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
+         iboolleft_xi_crust_mantle,iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
+         npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle,ibool_crust_mantle, &
+         mask_ibool,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM)
+
+  call fix_non_blocking_slices(is_on_a_slice_edge_outer_core,iboolright_xi_outer_core, &
+         iboolleft_xi_outer_core,iboolright_eta_outer_core,iboolleft_eta_outer_core, &
+         npoin2D_xi_outer_core,npoin2D_eta_outer_core,ibool_outer_core, &
+         mask_ibool,NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC)
+
+  call fix_non_blocking_slices(is_on_a_slice_edge_inner_core,iboolright_xi_inner_core, &
+         iboolleft_xi_inner_core,iboolright_eta_inner_core,iboolleft_eta_inner_core, &
+         npoin2D_xi_inner_core,npoin2D_eta_inner_core,ibool_inner_core, &
+         mask_ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC)
 
   ! absorbing boundaries
   if(ABSORBING_CONDITIONS) then
@@ -1295,7 +1331,6 @@
                               elat_SAC,elon_SAC,depth_SAC,mb_SAC,cmt_lat_SAC,&
                               cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES)
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -1382,10 +1417,10 @@
                       iboolfaces_inner_core,iboolcorner_inner_core, &
                       iprocfrom_faces,iprocto_faces,imsg_type, &
                       iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-                      buffer_send_faces_scalar,buffer_received_faces_scalar, &
+                      buffer_send_faces,buffer_received_faces, &
                       buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
                       NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY)
+                      NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,npoin2D_max_all_CM_IC)
 
   ! mass matrix including central cube
   if(INCLUDE_CENTRAL_CUBE) then
@@ -1425,6 +1460,12 @@
                       npoin2D_cube_from_slices,receiver_cube_from_slices, &
                       sender_from_slices_to_cube,ibool_central_cube, &
                       buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
+
+    call fix_non_blocking_central_cube(is_on_a_slice_edge_inner_core, &
+         ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
+         idoubling_inner_core,npoin2D_cube_from_slices,ibool_central_cube, &
+         NSPEC2D_BOTTOM(IREGION_INNER_CORE),ichunk)
+
   endif
 
   ! check that all the mass matrices are positive
@@ -1515,14 +1556,14 @@
     write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
     call count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
                 zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-                MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool_3dmovie,mask_3dmovie)
+                MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool,mask_3dmovie)
 
 
     allocate(nu_3dmovie(3,3,npoints_3dmovie))
 
     call write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
                            ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
-                           mask_3dmovie,mask_ibool_3dmovie,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
+                           mask_3dmovie,mask_ibool,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
 
     if(myrank == 0) then
       write(IMAIN,*) 'Writing to movie3D files on local disk'
@@ -1568,6 +1609,33 @@
                 deltat,b_deltat,LOCAL_PATH)
   endif
 
+  if(myrank == 0) then
+
+  write(IMAIN,*) 'for overlapping of communications with calculations:'
+  write(IMAIN,*)
+
+  percentage_edge = 100.*count(is_on_a_slice_edge_crust_mantle(:))/real(NSPEC_CRUST_MANTLE)
+  write(IMAIN,*) 'percentage of edge elements in crust/mantle ',percentage_edge,'%'
+  write(IMAIN,*) 'percentage of volume elements in crust/mantle ',100. - percentage_edge,'%'
+  write(IMAIN,*)
+
+  percentage_edge = 100.*count(is_on_a_slice_edge_outer_core(:))/real(NSPEC_OUTER_CORE)
+  write(IMAIN,*) 'percentage of edge elements in outer core ',percentage_edge,'%'
+  write(IMAIN,*) 'percentage of volume elements in outer core ',100. - percentage_edge,'%'
+  write(IMAIN,*)
+
+  percentage_edge = 100.*count(is_on_a_slice_edge_inner_core(:))/real(NSPEC_INNER_CORE)
+  write(IMAIN,*) 'percentage of edge elements in inner core ',percentage_edge,'%'
+  write(IMAIN,*) 'percentage of volume elements in inner core ',100. - percentage_edge,'%'
+  write(IMAIN,*)
+
+  endif
+
+  if(.not. USE_NONBLOCKING_COMMS) then
+    is_on_a_slice_edge_crust_mantle(:) = .true.
+    is_on_a_slice_edge_outer_core(:) = .true.
+    is_on_a_slice_edge_inner_core(:) = .true.
+  endif
 
   ! initialize arrays to zero
   displ_crust_mantle(:,:) = 0._CUSTOM_REAL
@@ -2049,8 +2117,6 @@
                           myrank)
 
 
-
-
     ! ****************************************************
     !   big loop over all spectral elements in the fluid
     ! ****************************************************
@@ -2062,8 +2128,10 @@
       time = (dble(it-1)*DT-t0)*scale_t_inv
     endif
 
+  iphase = 0 ! do not start any non blocking communications at this stage
+  icall = 1  ! compute all the outer elements first in the case of non blocking MPI
     if( USE_DEVILLE_PRODUCTS_VAL ) then
-      ! uses deville et al. (2002) routine
+      ! uses Deville et al. (2002) routine
       call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
            A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
@@ -2071,6 +2139,15 @@
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase,icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME)
@@ -2083,6 +2160,15 @@
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase,icall, &
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME)
@@ -2101,7 +2187,7 @@
       endif
 
       if( USE_DEVILLE_PRODUCTS_VAL ) then
-        ! uses deville et al. (2002) routine
+        ! uses Deville et al. (2002) routine
         call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid,b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
@@ -2109,6 +2195,15 @@
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase,icall, &
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME)
@@ -2120,6 +2215,15 @@
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase,icall, &
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME)
@@ -2187,7 +2291,86 @@
     ! assemble all the contributions between slices using MPI
 
     ! outer core
+  if(USE_NONBLOCKING_COMMS) then
+    iphase = 1 ! start the non blocking communications
     call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+            iboolfaces_outer_core,iboolcorner_outer_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XY,NCHUNKS_VAL,iphase)
+
+    icall = 2 ! compute all the inner elements in the case of non blocking MPI
+    if( USE_DEVILLE_PRODUCTS_VAL ) then
+        ! uses Deville et al. (2002) routine
+      call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
+           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
+           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
+           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+           xix_outer_core,xiy_outer_core,xiz_outer_core, &
+           etax_outer_core,etay_outer_core,etaz_outer_core, &
+           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase,icall, &
+           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           ibool_outer_core,MOVIE_VOLUME)
+    else
+      ! div_displ_outer_core is initialized to zero in the following subroutine.
+      call compute_forces_outer_core(time,deltat,two_omega_earth, &
+           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
+           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
+           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+           xix_outer_core,xiy_outer_core,xiz_outer_core, &
+           etax_outer_core,etay_outer_core,etaz_outer_core, &
+           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase,icall, &
+           hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           ibool_outer_core,MOVIE_VOLUME)
+    endif
+
+    do while (iphase <= 7) ! make sure the last communications are finished and processed
+      call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+            iboolfaces_outer_core,iboolcorner_outer_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XY,NCHUNKS_VAL,iphase)
+    enddo
+
+  else ! if(.not. USE_NONBLOCKING_COMMS) then
+
+    call assemble_MPI_scalar_block(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core, &
             iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -2195,12 +2378,14 @@
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL)
+
+  endif
 
     ! multiply by the inverse of the mass matrix and update velocity
 
@@ -2228,7 +2413,8 @@
     enddo
 
     if (SIMULATION_TYPE == 3) then
-      call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
+!! DK DK 33333333333333333333333 this should be converted to non blocking (and thus should have iphase etc)
+      call assemble_MPI_scalar_block(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core, &
             iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -2236,7 +2422,7 @@
             iboolfaces_outer_core,iboolcorner_outer_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
@@ -2410,7 +2596,7 @@
     endif ! Stacey conditions
 
 
-    ! deville routine
+    ! Deville routine
     if( USE_DEVILLE_PRODUCTS_VAL ) then
       call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
@@ -2606,7 +2792,7 @@
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_vector,buffer_received_faces_vector, &
+            buffer_send_faces,buffer_received_faces, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL, &
@@ -2693,7 +2879,7 @@
             iboolfaces_inner_core,iboolcorner_inner_core, &
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_vector,buffer_received_faces_vector, &
+            buffer_send_faces,buffer_received_faces, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL, &
@@ -3484,13 +3670,6 @@
 
   ! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)
-
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
-!-------------------------------------------------------------------------------------------------
 
   end program xspecfem3D
 

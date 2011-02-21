@@ -46,6 +46,11 @@
 ! set to SIZE_DOUBLE to run in double precision (increases memory size by 2)
   integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
 
+! this for non blocking assembly
+  logical, parameter :: USE_NONBLOCKING_COMMS = .true.
+  integer, parameter :: ELEMENTS_NONBLOCKING_CM_IC = 1500
+  integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
+
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a shared-memory machine with a common file system
 ! set to .false. typically on a cluster of nodes with local disks
