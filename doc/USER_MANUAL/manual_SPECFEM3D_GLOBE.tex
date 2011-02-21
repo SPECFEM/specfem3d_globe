@@ -12,7 +12,6 @@
 \usepackage{float}
 \usepackage{textcomp}
 \usepackage{amsmath}
-\usepackage{color}
 
 % figures
 \usepackage[pdftex]{graphicx}
@@ -78,6 +77,10 @@
 \newcommand{\nprocxi}{\mbox{\texttt{NPROC\_XI}}}
 \newcommand{\nproceta}{\mbox{\texttt{NPROC\_ETA}}}
 \newcommand{\nchunks}{\mbox{\texttt{NCHUNKS}}}
+
+% colors for the text
+\usepackage[dvipsnames,usenames]{color}
+\newcommand{\red}[1]{\textcolor{Red}{#1}}
 
 \usepackage{babel}
 \makeatother
@@ -159,7 +162,7 @@ Note that in most geological models in the context of seismic wave propagation s
 a discontinous mesh is not needed because material property contrasts are not drastic and thus a continuous formulation is sufficient;
 conforming mesh doubling bricks can efficiently handle mesh size variations \citep{KoTr02a,KoLiTrSuStSh04,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09}.
 This is particularly true at the scale of the full Earth.
-Also, without significant modifications in the complexity of the 
+Also, without significant modifications in the complexity of the
 discontinuous technique \citep{CaKaBr10,SmCoObOvSch10},
 usually those methods need to assume constant material properties inside
 each element, while the SEM can handle gradients inside each element.\\
@@ -196,6 +199,9 @@ as well as Convolutional or Auxiliary Differential Equation Perfectly Matched ab
 
 If you use SPECFEM3D\_GLOBE for your own research, please cite at least one
 of the following articles: \cite{TrKoLi08,VaCaSaKoVi99,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,KoMiEr09,KoErGoMi10,KoGoErMi10,WiKoScTr04,KoLiTrSuStSh04,ChKoViCaVaFe07,MaKoDi09,KoViCh10,CaKoLaTiMiLeSnTr08,TrKoHjLiZhPeBoMcFrTrHu10,KoRiTr02,KoTr02a,KoTr02b,KoTr99} or \cite{KoVi98}.\\
+
+\red{If you use this new version 5.1, which has non blocking MPI for much better performance for medium or large runs, please cite at least one of these five articles,
+in which results of 3D non blocking MPI runs are presented: \cite{KoErGoMi10,KoViCh10,Kom11,PeKoLuMaLeCaLeMaLiBlNiBaTr11,CaKoLaTiMiLeSnTr08}.}\\
 
 If you work on geophysical applications, you may be interested in citing some of these application articles as well, among others: \cite{WiKoScTr04,JiTsKoTr05,KrJiKoTr06a,KrJiKoTr06b,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,ChFaKo04,FaChKo04,RiRiKoTrHe02,GoAmTaCaSmSaMaKo09,TrKo00,SaKoTr10}.
 If you use 3D mantle model S20RTS, please cite \citet{RiVaWo99}.\\
@@ -567,9 +573,9 @@ on how to change 3D models.
 \item [{\texttt{s40rts}}] A global 3D mantle model \citep{RiDeVaWo10} succeeding S20RTS
 with a higher resolution.
 S40RTS uses transversely isotropic PREM as a background
-model and the 3D crustal model Crust2.0 \citep{BaLaMa00}. 
+model and the 3D crustal model Crust2.0 \citep{BaLaMa00}.
 We use the PREM radial attenuation model when \texttt{ATTENUATION}
-is incorporated. 
+is incorporated.
 \item [{\texttt{\textcolor{black}{s362ani}}}] A global shear-wave speed
 model developed by \citet{KuDzEk06}. In this model, radial anisotropy
 is confined to the uppermost mantle. The model (and the corresponding
@@ -586,7 +592,7 @@ as the 1D reference model.
 for a discussion on how to specify your own 3D anisotropic model.
 \item [{\texttt{3D\_attenuation}}] See Chapter~\ref{cha:-Changing-the}
 for a discussion on how to specify your own 3D attenuation model.
-\item [{\texttt{PPM}}] For a user-specified 3D model (Point-Profile-Model) 
+\item [{\texttt{PPM}}] For a user-specified 3D model (Point-Profile-Model)
 given as ASCII-table, specifying Vs-perturbations
 with respect to PREM. See Chapter~\ref{cha:-Changing-the}
 for a discussion on how to specify your own 3D model.
@@ -2930,17 +2936,17 @@ and a perturbation (in percentage) with respect to the shear-wave speed values f
 {\footnotesize ...}{\footnotesize \par}
 \end{lyxcode}
 where the first line is a comment line and all following ones are specifying the Vs-perturbation at a lon/lat location and a given depth.
-The last entry on each line is specifying the absolute value of Vs (however this value is only given as a supplementary information 
+The last entry on each line is specifying the absolute value of Vs (however this value is only given as a supplementary information
 and not used any further). The background model is PREM with a transverse isotropic layer between Moho and 220~km depth.
-The specified Vs-perturbations are added as isotropic perturbations. Please see the file \texttt{DATA/PPM/README} 
+The specified Vs-perturbations are added as isotropic perturbations. Please see the file \texttt{DATA/PPM/README}
 for more informations how to setup the directory \texttt{DATA/PPM} to use your own ASCII-file.
 
 
 
 To change the code behavior of these PPM-routines, please have a look at the implementation in the source code
 file \texttt{model\_ppm.f90} and set the flags and scaling factors as needed for your purposes.
-Perturbations in density and Vp may be scaled to the given Vs-perturbations with constant scaling factors by setting the appropriate 
-values in this source code file. In case you want to change the format of the input ASCII-file, see more details in the Appendix \ref{cha:Troubleshooting}. 
+Perturbations in density and Vp may be scaled to the given Vs-perturbations with constant scaling factors by setting the appropriate
+values in this source code file. In case you want to change the format of the input ASCII-file, see more details in the Appendix \ref{cha:Troubleshooting}.
 
 
 
@@ -3403,7 +3409,7 @@ Seismic networks, such as the Global Seismographic Network (GSN), generally invo
 \end{lyxcode}
 
 
-\item [compilation fails:] In case a compilation error like the following occurs, stating 
+\item [compilation fails:] In case a compilation error like the following occurs, stating
 \begin{lyxcode}
 {\footnotesize    ...  }{\footnotesize \par}
 {\footnotesize    obj/meshfem3D.o: In function `MAIN\_\_':  }{\footnotesize \par}
@@ -3421,7 +3427,7 @@ Seismic networks, such as the Global Seismographic Network (GSN), generally invo
 
 \item [changing PPM model routines fails:]
   In case you want to modify the PPM-routines in file \texttt{model\_ppm.f90}, please consider the following points:
-  
+
   \begin{enumerate}
   \item Please check in file \texttt{get\_model\_parameter.f90} that the entry for PPM models looks like:
   \begin{lyxcode}
@@ -3436,13 +3442,13 @@ Seismic networks, such as the Global Seismographic Network (GSN), generally invo
 {\footnotesize   TRANSVERSE\_ISOTROPY = .true. ! to use transverse-isotropic prem  }{\footnotesize \par}
 {\footnotesize  ...  }{\footnotesize \par}
   \end{lyxcode}
-  You can set \texttt{TRANSVERSE\_ISOTROPY} to \texttt{.false.} in case you want to use the isotropic PREM 
+  You can set \texttt{TRANSVERSE\_ISOTROPY} to \texttt{.false.} in case you want to use the isotropic PREM
   as 1D background model.
 
-  \item Transverse isotropy would mean different values for horizontal and vertically polarized wave speeds, 
-  i.e. different for vph and   vpv, vsh and vsv, and it includes an additional parameter eta. 
+  \item Transverse isotropy would mean different values for horizontal and vertically polarized wave speeds,
+  i.e. different for vph and   vpv, vsh and vsv, and it includes an additional parameter eta.
   By default, we take these wave speeds from PREM and add your model perturbations to them.
-  For the moment, your model perturbations are added as isotropic perturbations, using the same dvp for vph and vpv, 
+  For the moment, your model perturbations are added as isotropic perturbations, using the same dvp for vph and vpv,
   and dvs for vsh   and vsv, see in \texttt{meshfem3D\_models.f90}:
   \begin{lyxcode}
 {\footnotesize  ... }{\footnotesize \par}
@@ -3456,12 +3462,12 @@ Seismic networks, such as the Global Seismographic Network (GSN), generally invo
 {\footnotesize       rho=rho*(1.0d0+drho) }{\footnotesize \par}
 {\footnotesize	... }{\footnotesize \par}
   \end{lyxcode}
- You could modify this to add different perturbations for vph and vpv, resp. vsh and vsv. 
+ You could modify this to add different perturbations for vph and vpv, resp. vsh and vsv.
  This would basically mean that you add transverse isotropic perturbations.
- You can see how this is done with e.g. the model \texttt{s362ani}, 
+ You can see how this is done with e.g. the model \texttt{s362ani},
  following the flag \texttt{THREE\_D\_MODEL\_S362ANI} on how to modify accordingly the file \texttt{meshfem3D\_models.f90}.
 
-  \item In case you modify the structure \texttt{PPM\_V} in file \texttt{model\_ppm.f90}, 
+  \item In case you modify the structure \texttt{PPM\_V} in file \texttt{model\_ppm.f90},
   also check that in file \texttt{meshfem3D\_models.f90}, you use your updated \texttt{PPM\_V} structure (for example including dvp):
   \begin{lyxcode}
 {\footnotesize  ... }{\footnotesize \par}
@@ -3478,7 +3484,7 @@ Seismic networks, such as the Global Seismographic Network (GSN), generally invo
 {\footnotesize  ... }{\footnotesize \par}
   \end{lyxcode}
 
-  Together with these modifications in file \texttt{meshfem3D\_models.f90}, your code should work fine. 
+  Together with these modifications in file \texttt{meshfem3D\_models.f90}, your code should work fine.
   In case you want to add more specific model routines, follow the code sections starting with:
   \begin{lyxcode}
 {\footnotesize  !--- }{\footnotesize \par}
@@ -3488,7 +3494,7 @@ Seismic networks, such as the Global Seismographic Network (GSN), generally invo
 {\footnotesize  !--- }{\footnotesize \par}
   \end{lyxcode}
   to see code sections sensitive to model updates.
-    
+
   \end{enumerate}
 
 \end{description}
