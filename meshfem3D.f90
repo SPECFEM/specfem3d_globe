@@ -192,8 +192,9 @@
 ! Evolution of the code:
 ! ---------------------
 !
-! v. 5.1, Dimitri Komatitsch and Ebru Bozdag, February 2011: non blocking MPI for much better
-!     scaling on large clusters; new convention for the name of seismograms, to conform to the IRIS standard;
+! v. 5.1, Dimitri Komatitsch, University of Toulouse, France and Ebru Bozdag, Princeton University, USA, February 2011:
+!     non blocking MPI for much better scaling on large clusters;
+!     new convention for the name of seismograms, to conform to the IRIS standard;
 !     new directory structure
 !
 ! v. 5.0 aka Tiger, many developers some with Princeton Tiger logo on their shirts, February 2010:
@@ -395,6 +396,8 @@
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL_TEMP
 
+! this for non blocking MPI
+  logical, dimension(:), allocatable :: is_on_a_slice_edge
 
 ! ************** PROGRAM STARTS HERE **************
 !-------------------------------------------------------------------------------------------------
@@ -612,8 +615,6 @@
   ! make sure everybody is synchronized
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
-
-
 !----
 !----  loop on all the regions of the mesh
 !----
@@ -649,12 +650,14 @@
     allocate(ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
     allocate(zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
 
+! this for non blocking MPI
+    allocate(is_on_a_slice_edge(NSPEC(iregion_code)))
 
     ! create all the regions of the mesh
     ! perform two passes in this part to be able to save memory
     do ipass = 1,2
 
-      call create_regions_mesh(iregion_code,ibool,idoubling, &
+      call create_regions_mesh(iregion_code,ibool,idoubling,is_on_a_slice_edge, &
                           xstore,ystore,zstore,rmins,rmaxs, &
                           iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
                           volume_local,area_local_bottom,area_local_top, &
@@ -688,7 +691,6 @@
                               volume_local,volume_total, &
                               RCMB,RICB,R_CENTRAL_CUBE)
 
-
     ! create chunk buffers if more than one chunk
     if(NCHUNKS > 1) then
       call create_chunk_buffers(iregion_code,NSPEC(iregion_code),ibool,idoubling, &
@@ -714,6 +716,9 @@
     deallocate(xstore)
     deallocate(ystore)
     deallocate(zstore)
+
+! this for non blocking MPI
+    deallocate(is_on_a_slice_edge)
 
     ! make sure everybody is synchronized
     call MPI_BARRIER(MPI_COMM_WORLD,ier)

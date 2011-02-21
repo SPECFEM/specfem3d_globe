@@ -34,15 +34,13 @@
             iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
             npoin2D_faces,npoin2D_xi,npoin2D_eta, &
             iboolfaces,iboolcorner, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar, &
+            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
-            NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS)
-
-! this version of the routine is based on non-blocking MPI calls
+            NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS,iphase)
 
   implicit none
 
@@ -52,7 +50,7 @@
   include "constants.h"
   include "precision.h"
 
-  integer myrank,nglob,NCHUNKS
+  integer myrank,nglob,NCHUNKS,iphase
 
 ! array to assemble
   real(kind=CUSTOM_REAL), dimension(nglob) :: array_val
@@ -63,7 +61,7 @@
 
   integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY
   integer NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL
-  integer NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS
+  integer NUMMSGS_FACES,NCORNERSCHUNKS
 
 ! for addressing of the slices
   integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
@@ -76,8 +74,9 @@
   integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
   integer icount_corners
 
+  integer :: npoin2D_max_all_CM_IC
   integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
-  real(kind=CUSTOM_REAL), dimension(NGLOB2DMAX_XY) :: buffer_send_faces_scalar,buffer_received_faces_scalar
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: buffer_send_faces_scalar,buffer_received_faces_scalar
 
 ! buffers for send and receive between corners of the chunks
   real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
@@ -85,23 +84,32 @@
 ! ---- arrays to assemble between chunks
 
 ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES) :: iprocfrom_faces,iprocto_faces,imsg_type
+  integer, dimension(NUMMSGS_FACES) :: iprocfrom_faces,iprocto_faces
 
 ! communication pattern for corners between chunks
   integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
 ! MPI status of messages to be received
-  integer msg_status(MPI_STATUS_SIZE)
+  integer, dimension(MPI_STATUS_SIZE) :: msg_status
 
-  integer ipoin,ipoin2D,ipoin1D
-  integer sender,receiver,ier
-  integer imsg,imsg_loop
-  integer icount_faces,npoin2D_chunks
+  integer :: ipoin,ipoin2D,ipoin1D
+  integer :: sender,receiver
+  integer :: imsg
+  integer :: icount_faces,npoin2D_chunks
+
+  integer :: ier
+! do not remove the "save" statement because this routine is non blocking
+  integer, save :: request_send,request_receive
+  integer, dimension(NUMFACES_SHARED), save :: request_send_array,request_receive_array
+  logical :: flag_result_test
 
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 ! check flag to see if we need to assemble (might be turned off when debugging)
-  if (.not. ACTUALLY_ASSEMBLE_MPI_SLICES) return
+  if (.not. ACTUALLY_ASSEMBLE_MPI_SLICES)  then
+    iphase = 9999 ! this means everything is finished
+    return
+  endif
 
 ! here we have to assemble all the contributions between slices using MPI
 
@@ -113,12 +121,11 @@
 !---- first assemble along xi using the 2-D topology
 !----
 
-! assemble along xi only if more than one slice
-  if(NPROC_XI > 1) then
+  if(iphase == 1) then
 
 ! slices copy the right face into the buffer
   do ipoin=1,npoin2D_xi(2)
-    buffer_send_faces_scalar(ipoin) = array_val(iboolright_xi(ipoin))
+    buffer_send_faces_scalar(ipoin,1) = array_val(iboolright_xi(ipoin))
   enddo
 
 ! send messages forward along each row
@@ -132,15 +139,31 @@
   else
     receiver = addressing(ichunk,iproc_xi + 1,iproc_eta)
   endif
-  call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
-        itag2,buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_IRECV(buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
+        itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISSEND(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
+        itag2,MPI_COMM_WORLD,request_send,ier)
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 1
+
+  if(iphase == 2) then
+
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 
 ! all slices add the buffer received to the contributions on the left face
   if(iproc_xi > 0) then
   do ipoin=1,npoin2D_xi(1)
     array_val(iboolleft_xi(ipoin)) = array_val(iboolleft_xi(ipoin)) + &
-                              buffer_received_faces_scalar(ipoin)
+                              buffer_received_faces_scalar(ipoin,1)
   enddo
   endif
 
@@ -148,7 +171,7 @@
 ! now we have to send the result back to the sender
 ! all slices copy the left face into the buffer
   do ipoin=1,npoin2D_xi(1)
-    buffer_send_faces_scalar(ipoin) = array_val(iboolleft_xi(ipoin))
+    buffer_send_faces_scalar(ipoin,1) = array_val(iboolleft_xi(ipoin))
   enddo
 
 ! send messages backward along each row
@@ -162,29 +185,40 @@
   else
     receiver = addressing(ichunk,iproc_xi - 1,iproc_eta)
   endif
-  call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
-        itag2,buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_IRECV(buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
+        itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISSEND(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
+        itag2,MPI_COMM_WORLD,request_send,ier)
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 2
+
+  if(iphase == 3) then
+
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 
 ! all slices copy the buffer received to the contributions on the right face
   if(iproc_xi < NPROC_XI-1) then
   do ipoin=1,npoin2D_xi(2)
-    array_val(iboolright_xi(ipoin)) = buffer_received_faces_scalar(ipoin)
+    array_val(iboolright_xi(ipoin)) = buffer_received_faces_scalar(ipoin,1)
   enddo
-  endif
-
   endif
 
 !----
 !---- then assemble along eta using the 2-D topology
 !----
 
-! assemble along eta only if more than one slice
-  if(NPROC_ETA > 1) then
-
 ! slices copy the right face into the buffer
   do ipoin=1,npoin2D_eta(2)
-    buffer_send_faces_scalar(ipoin) = array_val(iboolright_eta(ipoin))
+    buffer_send_faces_scalar(ipoin,1) = array_val(iboolright_eta(ipoin))
   enddo
 
 ! send messages forward along each row
@@ -198,15 +232,31 @@
   else
     receiver = addressing(ichunk,iproc_xi,iproc_eta + 1)
   endif
-  call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
-    itag2,buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_IRECV(buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
+    itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISSEND(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
+    itag2,MPI_COMM_WORLD,request_send,ier)
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 3
+
+  if(iphase == 4) then
+
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 
 ! all slices add the buffer received to the contributions on the left face
   if(iproc_eta > 0) then
   do ipoin=1,npoin2D_eta(1)
     array_val(iboolleft_eta(ipoin)) = array_val(iboolleft_eta(ipoin)) + &
-                              buffer_received_faces_scalar(ipoin)
+                              buffer_received_faces_scalar(ipoin,1)
   enddo
   endif
 
@@ -214,7 +264,7 @@
 ! now we have to send the result back to the sender
 ! all slices copy the left face into the buffer
   do ipoin=1,npoin2D_eta(1)
-    buffer_send_faces_scalar(ipoin) = array_val(iboolleft_eta(ipoin))
+    buffer_send_faces_scalar(ipoin,1) = array_val(iboolleft_eta(ipoin))
   enddo
 
 ! send messages backward along each row
@@ -228,17 +278,31 @@
   else
     receiver = addressing(ichunk,iproc_xi,iproc_eta - 1)
   endif
-  call MPI_SENDRECV(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
-    itag2,buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_IRECV(buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
+    itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISSEND(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
+    itag2,MPI_COMM_WORLD,request_send,ier)
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 4
+
+  if(iphase == 5) then
+
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 
 ! all slices copy the buffer received to the contributions on the right face
   if(iproc_eta < NPROC_ETA-1) then
   do ipoin=1,npoin2D_eta(2)
-    array_val(iboolright_eta(ipoin)) = buffer_received_faces_scalar(ipoin)
+    array_val(iboolright_eta(ipoin)) = buffer_received_faces_scalar(ipoin,1)
   enddo
-  endif
-
   endif
 
 !----
@@ -247,7 +311,10 @@
 
 ! check flag to see if we need to assemble (might be turned off when debugging)
 ! and do not assemble if only one chunk
-  if (.not. ACTUALLY_ASSEMBLE_MPI_CHUNKS .or. NCHUNKS == 1) return
+  if (.not. ACTUALLY_ASSEMBLE_MPI_CHUNKS .or. NCHUNKS == 1) then
+    iphase = 9999 ! this means everything is finished
+    return
+  endif
 
 ! ***************************************************************
 !  transmit messages in forward direction (iprocfrom -> iprocto)
@@ -256,24 +323,19 @@
 !---- put slices in receive mode
 !---- a given slice can belong to at most two faces
 
-! use three step scheme that can never deadlock
-! scheme for faces cannot deadlock even if NPROC_XI = NPROC_ETA = 1
-  do imsg_loop = 1,NUM_MSG_TYPES
-
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank==iprocfrom_faces(imsg) .or. &
-       myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-  if(myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
     sender = iprocfrom_faces(imsg)
     npoin2D_chunks = npoin2D_faces(icount_faces)
-    call MPI_RECV(buffer_received_faces_scalar, &
+    call MPI_IRECV(buffer_received_faces_scalar(:,icount_faces), &
               npoin2D_chunks,CUSTOM_MPI_TYPE,sender, &
-              itag,MPI_COMM_WORLD,msg_status,ier)
-    do ipoin2D=1,npoin2D_chunks
-      array_val(iboolfaces(ipoin2D,icount_faces)) = &
-         array_val(iboolfaces(ipoin2D,icount_faces)) + buffer_received_faces_scalar(ipoin2D)
-    enddo
+              itag,MPI_COMM_WORLD,request_receive_array(icount_faces),ier)
+!   do ipoin2D=1,npoin2D_chunks
+!     array_val(iboolfaces(ipoin2D,icount_faces)) = &
+!        array_val(iboolfaces(ipoin2D,icount_faces)) + buffer_received_faces_scalar(ipoin2D)
+!   enddo
   endif
   enddo
 
@@ -281,16 +343,51 @@
 !---- a given slice can belong to at most two faces
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank==iprocfrom_faces(imsg) .or. &
-       myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-  if(myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
     receiver = iprocto_faces(imsg)
     npoin2D_chunks = npoin2D_faces(icount_faces)
     do ipoin2D=1,npoin2D_chunks
-      buffer_send_faces_scalar(ipoin2D) = array_val(iboolfaces(ipoin2D,icount_faces))
+      buffer_send_faces_scalar(ipoin2D,icount_faces) = array_val(iboolfaces(ipoin2D,icount_faces))
     enddo
-    call MPI_SEND(buffer_send_faces_scalar,npoin2D_chunks, &
-              CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call MPI_ISSEND(buffer_send_faces_scalar(:,icount_faces),npoin2D_chunks, &
+              CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,request_send_array(icount_faces),ier)
+  endif
+  enddo
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 5
+
+  if(iphase == 6) then
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
+    call MPI_TEST(request_receive_array(icount_faces),flag_result_test,msg_status,ier)
+    if(.not. flag_result_test) return ! exit if message not received yet
+  endif
+  enddo
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
+    call MPI_TEST(request_send_array(icount_faces),flag_result_test,msg_status,ier)
+    if(.not. flag_result_test) return ! exit if message not sent yet
+  endif
+  enddo
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
+    do ipoin2D=1,npoin2D_faces(icount_faces)
+      array_val(iboolfaces(ipoin2D,icount_faces)) = &
+         array_val(iboolfaces(ipoin2D,icount_faces)) + buffer_received_faces_scalar(ipoin2D,icount_faces)
+    enddo
   endif
   enddo
 
@@ -303,17 +400,16 @@
 
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank==iprocfrom_faces(imsg) .or. &
-       myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-  if(myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
     sender = iprocto_faces(imsg)
     npoin2D_chunks = npoin2D_faces(icount_faces)
-    call MPI_RECV(buffer_received_faces_scalar, &
+    call MPI_IRECV(buffer_received_faces_scalar(:,icount_faces), &
               npoin2D_chunks,CUSTOM_MPI_TYPE,sender, &
-              itag,MPI_COMM_WORLD,msg_status,ier)
-    do ipoin2D=1,npoin2D_chunks
-      array_val(iboolfaces(ipoin2D,icount_faces)) = buffer_received_faces_scalar(ipoin2D)
-    enddo
+              itag,MPI_COMM_WORLD,request_receive_array(icount_faces),ier)
+!   do ipoin2D=1,npoin2D_chunks
+!     array_val(iboolfaces(ipoin2D,icount_faces)) = buffer_received_faces_scalar(ipoin2D)
+!   enddo
   endif
   enddo
 
@@ -321,21 +417,57 @@
 !---- a given slice can belong to at most two faces
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank==iprocfrom_faces(imsg) .or. &
-       myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-  if(myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
     receiver = iprocfrom_faces(imsg)
     npoin2D_chunks = npoin2D_faces(icount_faces)
     do ipoin2D=1,npoin2D_chunks
-      buffer_send_faces_scalar(ipoin2D) = array_val(iboolfaces(ipoin2D,icount_faces))
+      buffer_send_faces_scalar(ipoin2D,icount_faces) = array_val(iboolfaces(ipoin2D,icount_faces))
     enddo
-    call MPI_SEND(buffer_send_faces_scalar,npoin2D_chunks, &
-              CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call MPI_ISSEND(buffer_send_faces_scalar(:,icount_faces),npoin2D_chunks, &
+              CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
 
-! end of anti-deadlocking loop
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 6
+
+  if(iphase == 7) then
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
+    call MPI_TEST(request_send_array(icount_faces),flag_result_test,msg_status,ier)
+    if(.not. flag_result_test) return ! exit if message not received yet
+  endif
   enddo
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
+    call MPI_TEST(request_receive_array(icount_faces),flag_result_test,msg_status,ier)
+    if(.not. flag_result_test) return ! exit if message not sent yet
+  endif
+  enddo
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
+    do ipoin2D=1,npoin2D_faces(icount_faces)
+      array_val(iboolfaces(ipoin2D,icount_faces)) = buffer_received_faces_scalar(ipoin2D,icount_faces)
+    enddo
+  endif
+  enddo
+
+! this is the exit condition, to go beyond the last phase number
+  iphase = iphase + 1
+
+!! DK DK do the rest in blocking for now, for simplicity
 
 !----
 !---- start MPI assembling corners
@@ -433,6 +565,8 @@
   endif
 
   enddo
+
+  endif !!!!!!!!! end of iphase 7
 
   end subroutine assemble_MPI_scalar
 

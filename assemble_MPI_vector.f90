@@ -53,7 +53,7 @@
             NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC, &
             NGLOB2DMAX_XY,NCHUNKS)
 
-! this version of the routine is based on non-blocking MPI calls
+! this version of the routine is based on non blocking MPI calls
 
   implicit none
 

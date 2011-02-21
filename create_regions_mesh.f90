@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine create_regions_mesh(iregion_code,ibool,idoubling, &
+  subroutine create_regions_mesh(iregion_code,ibool,idoubling,is_on_a_slice_edge, &
                           xstore,ystore,zstore,rmins,rmaxs, &
                           iproc_xi,iproc_eta,ichunk,nspec,nspec_tiso, &
                           volume_local,area_local_bottom,area_local_top, &
@@ -115,7 +115,10 @@
   double precision, dimension(:,:,:,:), allocatable :: dershape2D_x,dershape2D_y, &
     dershape2D_bottom,dershape2D_top
 
-  integer idoubling(nspec)
+  integer, dimension(nspec) :: idoubling
+
+! this for non blocking MPI
+  logical, dimension(nspec) :: is_on_a_slice_edge
 
   ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision rmin,rmax
@@ -399,8 +402,7 @@
                         NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
                         ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
                         iregion_code,ifirst_region,ilast_region, &
-                        first_layer_aniso,last_layer_aniso,nb_layer_above_aniso)
-
+                        first_layer_aniso,last_layer_aniso,nb_layer_above_aniso,is_on_a_slice_edge)
 
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   allocate (perm_layer(ifirst_region:ilast_region))
@@ -569,6 +571,20 @@
 
   ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
+
+! if any of these flags is true, the element is on a communication edge
+! this is not enough because it can also be in contact by an edge or a corner but not a full face
+! therefore we will have to fix array "is_on_a_slice_edge" later in the solver to take this into account
+  is_on_a_slice_edge(:) = &
+      iMPIcut_xi(1,:) .or. iMPIcut_xi(2,:) .or. &
+      iMPIcut_eta(1,:) .or. iMPIcut_eta(2,:) .or. &
+      iboun(1,:) .or. iboun(2,:) .or. &
+      iboun(3,:) .or. iboun(4,:) .or. &
+      iboun(5,:) .or. iboun(6,:)
+
+! no need to count fictitious elements on the edges
+! for which communications cannot be overlapped with calculations
+  where(idoubling == IFLAG_IN_FICTITIOUS_CUBE) is_on_a_slice_edge = .false.
 
   ! only create global addressing and the MPI buffers in the first pass
   if(ipass == 1) then
@@ -743,7 +759,7 @@
                   nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                   c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                   c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                  ibool,idoubling,rmass,rmass_ocean_load,nglob_oceans, &
+                  ibool,idoubling,is_on_a_slice_edge,rmass,rmass_ocean_load,nglob_oceans, &
                   ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
                   nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
                   normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
@@ -870,7 +886,7 @@
                         NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
                         ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
                         iregion_code,ifirst_region,ilast_region, &
-                        first_layer_aniso,last_layer_aniso,nb_layer_above_aniso)
+                        first_layer_aniso,last_layer_aniso,nb_layer_above_aniso,is_on_a_slice_edge)
 
 ! create the different regions of the mesh
 
@@ -914,6 +930,9 @@
   ! code for the four regions of the mesh
   integer iregion_code,ifirst_region,ilast_region
   integer first_layer_aniso,last_layer_aniso,nb_layer_above_aniso
+
+! this for non blocking MPI
+  logical, dimension(nspec) :: is_on_a_slice_edge
 
 ! set up coordinates of the Gauss-Lobatto-Legendre points
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
@@ -994,6 +1013,7 @@
   iboun(:,:) = .false.
   iMPIcut_xi(:,:) = .false.
   iMPIcut_eta(:,:) = .false.
+  is_on_a_slice_edge(:) = .false.
 
   ! boundary mesh
   ispec2D_moho_top = 0; ispec2D_moho_bot = 0

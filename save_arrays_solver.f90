@@ -33,7 +33,7 @@
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    ibool,idoubling,rmass,rmass_ocean_load,npointot_oceans, &
+                    ibool,idoubling,is_on_a_slice_edge,rmass,rmass_ocean_load,npointot_oceans, &
                     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
                     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
                     normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
@@ -106,7 +106,10 @@
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
 ! doubling mesh flag
-  integer idoubling(nspec)
+  integer, dimension(nspec) :: idoubling
+
+! this for non blocking MPI
+  logical, dimension(nspec) :: is_on_a_slice_edge
 
 ! mass matrix
   real(kind=CUSTOM_REAL) rmass(nglob)
@@ -332,6 +335,8 @@
   write(27) ibool
 
   write(27) idoubling
+
+  write(27) is_on_a_slice_edge
 
   close(27)
 

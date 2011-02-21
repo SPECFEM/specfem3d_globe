@@ -32,6 +32,15 @@
                             div_displfluid, &
                             xstore,ystore,zstore, &
                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase,icall, &
                             hprime_xx,hprime_xxT, &
                             hprimewgll_xx,hprimewgll_xxT, &
                             wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -117,13 +126,74 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     displ_times_grad_x_ln_rho,displ_times_grad_y_ln_rho,displ_times_grad_z_ln_rho
 
+! this for non blocking MPI
+  integer :: ichunk,iproc_xi,iproc_eta,myrank
+
+  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_OC) :: iboolleft_xi_outer_core,iboolright_xi_outer_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
+
+  integer npoin2D_faces_outer_core(NUMFACES_SHARED)
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
+
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+! indirect addressing for each message for faces and corners of the chunks
+! a given slice can belong to at most one corner and at most two faces
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_outer_core
+
+! buffers for send and receive between faces of the slices and the chunks
+! we use the same buffers to assemble scalars and vectors because vectors are
+! always three times bigger and therefore scalars can use the first part
+! of the vector buffer in memory even if it has an additional index here
+! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
+  integer :: npoin2D_max_all_CM_IC
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: buffer_send_faces,buffer_received_faces
+
+  integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_OC) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
+
+  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
+
+  integer :: iphase,icall
+
+  integer :: computed_elements
+
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-  if (NSPEC_OUTER_CORE_ADJOINT /= 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+  if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. icall == 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+
+  computed_elements = 0
 
   do ispec = 1,NSPEC_OUTER_CORE
+
+! hide communications by computing the edges first
+    if((icall == 2 .and. is_on_a_slice_edge_outer_core(ispec)) .or. &
+       (icall == 1 .and. .not. is_on_a_slice_edge_outer_core(ispec))) cycle
+
+! process the communications every ELEMENTS_NONBLOCKING elements
+    computed_elements = computed_elements + 1
+    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_OC) == 0 .and. iphase <= 7) &
+      call assemble_MPI_scalar(myrank,accelfluid,NGLOB_OUTER_CORE, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+            iboolfaces_outer_core,iboolcorner_outer_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_OC, &
+            NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,NGLOB2DMAX_XY_VAL,NCHUNKS_VAL,iphase)
 
     do k=1,NGLLZ
       do j=1,NGLLY
@@ -173,30 +243,30 @@
     do j=1,m2
       do i=1,m1
         C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
-                               hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
-                               hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
-                               hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
-                               hprime_xx(i,5)*B1_m1_m2_5points(5,j)
+                                hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
+                                hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
+                                hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
+                                hprime_xx(i,5)*B1_m1_m2_5points(5,j)
       enddo
     enddo
     do k = 1,NGLLX
       do j=1,m1
         do i=1,m1
           tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
-                           dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
-                           dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
-                           dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
-                           dummyx_loc(i,5,k)*hprime_xxT(5,j)
+                          dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
+                          dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
+                          dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
+                          dummyx_loc(i,5,k)*hprime_xxT(5,j)
         enddo
       enddo
     enddo
     do j=1,m1
       do i=1,m2
         C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                   A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                   A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                   A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                   A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+                                    A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                                    A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                                    A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                                    A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
       enddo
     enddo
 
@@ -351,30 +421,30 @@
     do j=1,m2
       do i=1,m1
         E1_m1_m2_5points(i,j) = hprimewgll_xxT(i,1)*C1_m1_m2_5points(1,j) + &
-                           hprimewgll_xxT(i,2)*C1_m1_m2_5points(2,j) + &
-                           hprimewgll_xxT(i,3)*C1_m1_m2_5points(3,j) + &
-                           hprimewgll_xxT(i,4)*C1_m1_m2_5points(4,j) + &
-                           hprimewgll_xxT(i,5)*C1_m1_m2_5points(5,j)
+                                hprimewgll_xxT(i,2)*C1_m1_m2_5points(2,j) + &
+                                hprimewgll_xxT(i,3)*C1_m1_m2_5points(3,j) + &
+                                hprimewgll_xxT(i,4)*C1_m1_m2_5points(4,j) + &
+                                hprimewgll_xxT(i,5)*C1_m1_m2_5points(5,j)
       enddo
     enddo
     do k = 1,NGLLX
       do j=1,m1
         do i=1,m1
           newtempx2(i,j,k) = tempx2(i,1,k)*hprimewgll_xx(1,j) + &
-                          tempx2(i,2,k)*hprimewgll_xx(2,j) + &
-                          tempx2(i,3,k)*hprimewgll_xx(3,j) + &
-                          tempx2(i,4,k)*hprimewgll_xx(4,j) + &
-                          tempx2(i,5,k)*hprimewgll_xx(5,j)
+                             tempx2(i,2,k)*hprimewgll_xx(2,j) + &
+                             tempx2(i,3,k)*hprimewgll_xx(3,j) + &
+                             tempx2(i,4,k)*hprimewgll_xx(4,j) + &
+                             tempx2(i,5,k)*hprimewgll_xx(5,j)
         enddo
       enddo
     enddo
     do j=1,m1
       do i=1,m2
         E1_mxm_m2_m1_5points(i,j) = C1_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
-                               C1_mxm_m2_m1_5points(i,2)*hprimewgll_xx(2,j) + &
-                               C1_mxm_m2_m1_5points(i,3)*hprimewgll_xx(3,j) + &
-                               C1_mxm_m2_m1_5points(i,4)*hprimewgll_xx(4,j) + &
-                               C1_mxm_m2_m1_5points(i,5)*hprimewgll_xx(5,j)
+                                    C1_mxm_m2_m1_5points(i,2)*hprimewgll_xx(2,j) + &
+                                    C1_mxm_m2_m1_5points(i,3)*hprimewgll_xx(3,j) + &
+                                    C1_mxm_m2_m1_5points(i,4)*hprimewgll_xx(4,j) + &
+                                    C1_mxm_m2_m1_5points(i,5)*hprimewgll_xx(5,j)
       enddo
     enddo
 
