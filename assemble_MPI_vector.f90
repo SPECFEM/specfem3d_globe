@@ -31,9 +31,7 @@
 !---- to reduce the total number of MPI calls
 !----
 
-  subroutine assemble_MPI_vector(myrank, &
-            accel_crust_mantle,NGLOB_CRUST_MANTLE, &
-            accel_inner_core,NGLOB_INNER_CORE, &
+  subroutine assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -41,19 +39,13 @@
             iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
             npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
             iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
+            iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_vector,buffer_received_faces_vector, &
+            buffer_send_faces_vector,buffer_received_faces_vector,npoin2D_max_all_CM_IC, &
             buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA, &
-            NGLOB1D_RADIAL_crust_mantle, &
-            NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM, &
-            NGLOB1D_RADIAL_inner_core, &
-            NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC, &
-            NGLOB2DMAX_XY,NCHUNKS)
-
-! this version of the routine is based on non blocking MPI calls
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL_crust_mantle, &
+            NGLOB1D_RADIAL_inner_core,NCHUNKS,iphase)
 
   implicit none
 
@@ -63,22 +55,24 @@
   include "constants.h"
   include "precision.h"
 
-  integer myrank,NGLOB_CRUST_MANTLE,NGLOB_INNER_CORE,NCHUNKS
+! include values created by the mesher
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer myrank,NCHUNKS,iphase
 
 ! the two arrays to assemble
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: accel_inner_core
 
   integer iproc_xi,iproc_eta,ichunk
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
   integer npoin2D_faces_inner_core(NUMFACES_SHARED)
 
-  integer NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM,NGLOB1D_RADIAL_crust_mantle
-  integer NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC,NGLOB1D_RADIAL_inner_core
-  integer NPROC_XI,NPROC_ETA,NGLOB2DMAX_XY
-  integer NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+        npoin2D_xi_inner_core,npoin2D_eta_inner_core
+
+  integer NGLOB1D_RADIAL_crust_mantle,NGLOB1D_RADIAL_inner_core,NPROC_XI,NPROC_ETA
+  integer NUMMSGS_FACES,NCORNERSCHUNKS
 
 ! for addressing of the slices
   integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
@@ -94,9 +88,11 @@
   integer, dimension(NGLOB1D_RADIAL_inner_core,NUMCORNERS_SHARED) :: iboolcorner_inner_core
   integer icount_corners
 
-  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces_crust_mantle,iboolfaces_inner_core
-! size of buffers is multiplied by 2 because we handle two regions in the same MPI call
-  real(kind=CUSTOM_REAL), dimension(NDIM,2*NGLOB2DMAX_XY) :: buffer_send_faces_vector,buffer_received_faces_vector
+  integer :: npoin2D_max_all_CM_IC
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: &
+      buffer_send_faces_vector,buffer_received_faces_vector
 
 ! buffers for send and receive between corners of the chunks
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
@@ -106,25 +102,40 @@
 ! ---- arrays to assemble between chunks
 
 ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES) :: iprocfrom_faces,iprocto_faces,imsg_type
+  integer, dimension(NUMMSGS_FACES) :: iprocfrom_faces,iprocto_faces
 
 ! communication pattern for corners between chunks
   integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
 ! MPI status of messages to be received
-  integer msg_status(MPI_STATUS_SIZE)
+  integer, dimension(MPI_STATUS_SIZE) :: msg_status
 
-  integer ipoin,ipoin2D,ipoin1D
-  integer sender,receiver,ier
-  integer imsg,imsg_loop
-  integer icount_faces,npoin2D_chunks_all
+  integer :: ipoin,ipoin2D,ipoin1D
+  integer :: sender,receiver
+  integer :: imsg
+  integer :: icount_faces,npoin2D_chunks_all
 
-  integer :: NGLOB1D_RADIAL_all,ioffset
+  integer :: NGLOB1D_RADIAL_all
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_all,npoin2D_eta_all
+
+! do not remove the "save" statement because this routine is non blocking
+! therefore it needs to find the right value of ioffset when it re-enters
+! the routine later to perform the next communication step
+  integer, save :: ioffset
+
+  integer :: ier
+! do not remove the "save" statement because this routine is non blocking
+  integer, save :: request_send,request_receive
+  integer, dimension(NUMFACES_SHARED), save :: request_send_array,request_receive_array
+  logical :: flag_result_test
+
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 ! check flag to see if we need to assemble (might be turned off when debugging)
-  if (.not. ACTUALLY_ASSEMBLE_MPI_SLICES) return
+  if (.not. ACTUALLY_ASSEMBLE_MPI_SLICES) then
+    iphase = 9999 ! this means everything is finished
+    return
+  endif
 
 ! here we have to assemble all the contributions between slices using MPI
 
@@ -140,23 +151,22 @@
 !---- first assemble along xi using the 2-D topology
 !----
 
-! assemble along xi only if more than one slice
-  if(NPROC_XI > 1) then
+  if(iphase == 1) then
 
 ! slices copy the right face into the buffer
+  do ipoin = 1,npoin2D_xi_crust_mantle(2)
+    buffer_send_faces_vector(1,ipoin,1) = accel_crust_mantle(1,iboolright_xi_crust_mantle(ipoin))
+    buffer_send_faces_vector(2,ipoin,1) = accel_crust_mantle(2,iboolright_xi_crust_mantle(ipoin))
+    buffer_send_faces_vector(3,ipoin,1) = accel_crust_mantle(3,iboolright_xi_crust_mantle(ipoin))
+  enddo
+
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_xi_crust_mantle(2)
 
-  do ipoin = 1,npoin2D_xi_crust_mantle(2)
-    buffer_send_faces_vector(1,ipoin) = accel_crust_mantle(1,iboolright_xi_crust_mantle(ipoin))
-    buffer_send_faces_vector(2,ipoin) = accel_crust_mantle(2,iboolright_xi_crust_mantle(ipoin))
-    buffer_send_faces_vector(3,ipoin) = accel_crust_mantle(3,iboolright_xi_crust_mantle(ipoin))
-  enddo
-
   do ipoin = 1,npoin2D_xi_inner_core(2)
-    buffer_send_faces_vector(1,ioffset + ipoin) = accel_inner_core(1,iboolright_xi_inner_core(ipoin))
-    buffer_send_faces_vector(2,ioffset + ipoin) = accel_inner_core(2,iboolright_xi_inner_core(ipoin))
-    buffer_send_faces_vector(3,ioffset + ipoin) = accel_inner_core(3,iboolright_xi_inner_core(ipoin))
+    buffer_send_faces_vector(1,ioffset + ipoin,1) = accel_inner_core(1,iboolright_xi_inner_core(ipoin))
+    buffer_send_faces_vector(2,ioffset + ipoin,1) = accel_inner_core(2,iboolright_xi_inner_core(ipoin))
+    buffer_send_faces_vector(3,ioffset + ipoin,1) = accel_inner_core(3,iboolright_xi_inner_core(ipoin))
   enddo
 
 ! send messages forward along each row
@@ -170,31 +180,48 @@
   else
     receiver = addressing(ichunk,iproc_xi + 1,iproc_eta)
   endif
+  call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_xi_all(1),CUSTOM_MPI_TYPE,sender, &
+        itag,MPI_COMM_WORLD,request_receive,ier)
 
-  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_xi_all(2),CUSTOM_MPI_TYPE,receiver, &
-        itag2,buffer_received_faces_vector,NDIM*npoin2D_xi_all(1),CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_ISSEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all(2),CUSTOM_MPI_TYPE,receiver, &
+        itag2,MPI_COMM_WORLD,request_send,ier)
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 1
+
+  if(iphase == 2) then
+
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 
 ! all slices add the buffer received to the contributions on the left face
   if(iproc_xi > 0) then
 
   do ipoin = 1,npoin2D_xi_crust_mantle(1)
     accel_crust_mantle(1,iboolleft_xi_crust_mantle(ipoin)) = accel_crust_mantle(1,iboolleft_xi_crust_mantle(ipoin)) + &
-                              buffer_received_faces_vector(1,ipoin)
+                              buffer_received_faces_vector(1,ipoin,1)
     accel_crust_mantle(2,iboolleft_xi_crust_mantle(ipoin)) = accel_crust_mantle(2,iboolleft_xi_crust_mantle(ipoin)) + &
-                              buffer_received_faces_vector(2,ipoin)
+                              buffer_received_faces_vector(2,ipoin,1)
     accel_crust_mantle(3,iboolleft_xi_crust_mantle(ipoin)) = accel_crust_mantle(3,iboolleft_xi_crust_mantle(ipoin)) + &
-                              buffer_received_faces_vector(3,ipoin)
+                              buffer_received_faces_vector(3,ipoin,1)
   enddo
 
+! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_xi_crust_mantle(1)
+
   do ipoin = 1,npoin2D_xi_inner_core(1)
     accel_inner_core(1,iboolleft_xi_inner_core(ipoin)) = accel_inner_core(1,iboolleft_xi_inner_core(ipoin)) + &
-                              buffer_received_faces_vector(1,ioffset + ipoin)
+                              buffer_received_faces_vector(1,ioffset + ipoin,1)
     accel_inner_core(2,iboolleft_xi_inner_core(ipoin)) = accel_inner_core(2,iboolleft_xi_inner_core(ipoin)) + &
-                              buffer_received_faces_vector(2,ioffset + ipoin)
+                              buffer_received_faces_vector(2,ioffset + ipoin,1)
     accel_inner_core(3,iboolleft_xi_inner_core(ipoin)) = accel_inner_core(3,iboolleft_xi_inner_core(ipoin)) + &
-                              buffer_received_faces_vector(3,ioffset + ipoin)
+                              buffer_received_faces_vector(3,ioffset + ipoin,1)
   enddo
 
   endif
@@ -202,19 +229,19 @@
 ! the contributions are correctly assembled on the left side of each slice
 ! now we have to send the result back to the sender
 ! all slices copy the left face into the buffer
+  do ipoin = 1,npoin2D_xi_crust_mantle(1)
+    buffer_send_faces_vector(1,ipoin,1) = accel_crust_mantle(1,iboolleft_xi_crust_mantle(ipoin))
+    buffer_send_faces_vector(2,ipoin,1) = accel_crust_mantle(2,iboolleft_xi_crust_mantle(ipoin))
+    buffer_send_faces_vector(3,ipoin,1) = accel_crust_mantle(3,iboolleft_xi_crust_mantle(ipoin))
+  enddo
+
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_xi_crust_mantle(1)
 
-  do ipoin = 1,npoin2D_xi_crust_mantle(1)
-    buffer_send_faces_vector(1,ipoin) = accel_crust_mantle(1,iboolleft_xi_crust_mantle(ipoin))
-    buffer_send_faces_vector(2,ipoin) = accel_crust_mantle(2,iboolleft_xi_crust_mantle(ipoin))
-    buffer_send_faces_vector(3,ipoin) = accel_crust_mantle(3,iboolleft_xi_crust_mantle(ipoin))
-  enddo
-
   do ipoin = 1,npoin2D_xi_inner_core(1)
-    buffer_send_faces_vector(1,ioffset + ipoin) = accel_inner_core(1,iboolleft_xi_inner_core(ipoin))
-    buffer_send_faces_vector(2,ioffset + ipoin) = accel_inner_core(2,iboolleft_xi_inner_core(ipoin))
-    buffer_send_faces_vector(3,ioffset + ipoin) = accel_inner_core(3,iboolleft_xi_inner_core(ipoin))
+    buffer_send_faces_vector(1,ioffset + ipoin,1) = accel_inner_core(1,iboolleft_xi_inner_core(ipoin))
+    buffer_send_faces_vector(2,ioffset + ipoin,1) = accel_inner_core(2,iboolleft_xi_inner_core(ipoin))
+    buffer_send_faces_vector(3,ioffset + ipoin,1) = accel_inner_core(3,iboolleft_xi_inner_core(ipoin))
   enddo
 
 ! send messages backward along each row
@@ -228,27 +255,43 @@
   else
     receiver = addressing(ichunk,iproc_xi - 1,iproc_eta)
   endif
-  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_xi_all(1),CUSTOM_MPI_TYPE,receiver, &
-        itag2,buffer_received_faces_vector,NDIM*npoin2D_xi_all(2),CUSTOM_MPI_TYPE,sender, &
-        itag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_xi_all(2),CUSTOM_MPI_TYPE,sender, &
+        itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISSEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all(1),CUSTOM_MPI_TYPE,receiver, &
+        itag2,MPI_COMM_WORLD,request_send,ier)
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 2
+
+  if(iphase == 3) then
+
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 
 ! all slices copy the buffer received to the contributions on the right face
   if(iproc_xi < NPROC_XI-1) then
 
   do ipoin = 1,npoin2D_xi_crust_mantle(2)
-    accel_crust_mantle(1,iboolright_xi_crust_mantle(ipoin)) = buffer_received_faces_vector(1,ipoin)
-    accel_crust_mantle(2,iboolright_xi_crust_mantle(ipoin)) = buffer_received_faces_vector(2,ipoin)
-    accel_crust_mantle(3,iboolright_xi_crust_mantle(ipoin)) = buffer_received_faces_vector(3,ipoin)
+    accel_crust_mantle(1,iboolright_xi_crust_mantle(ipoin)) = buffer_received_faces_vector(1,ipoin,1)
+    accel_crust_mantle(2,iboolright_xi_crust_mantle(ipoin)) = buffer_received_faces_vector(2,ipoin,1)
+    accel_crust_mantle(3,iboolright_xi_crust_mantle(ipoin)) = buffer_received_faces_vector(3,ipoin,1)
   enddo
 
+! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_xi_crust_mantle(2)
-  do ipoin = 1,npoin2D_xi_inner_core(2)
-    accel_inner_core(1,iboolright_xi_inner_core(ipoin)) = buffer_received_faces_vector(1,ioffset + ipoin)
-    accel_inner_core(2,iboolright_xi_inner_core(ipoin)) = buffer_received_faces_vector(2,ioffset + ipoin)
-    accel_inner_core(3,iboolright_xi_inner_core(ipoin)) = buffer_received_faces_vector(3,ioffset + ipoin)
-  enddo
 
-  endif
+  do ipoin = 1,npoin2D_xi_inner_core(2)
+    accel_inner_core(1,iboolright_xi_inner_core(ipoin)) = buffer_received_faces_vector(1,ioffset + ipoin,1)
+    accel_inner_core(2,iboolright_xi_inner_core(ipoin)) = buffer_received_faces_vector(2,ioffset + ipoin,1)
+    accel_inner_core(3,iboolright_xi_inner_core(ipoin)) = buffer_received_faces_vector(3,ioffset + ipoin,1)
+  enddo
 
   endif
 
@@ -256,23 +299,20 @@
 !---- then assemble along eta using the 2-D topology
 !----
 
-! assemble along eta only if more than one slice
-  if(NPROC_ETA > 1) then
+! slices copy the right face into the buffer
+  do ipoin = 1,npoin2D_eta_crust_mantle(2)
+    buffer_send_faces_vector(1,ipoin,1) = accel_crust_mantle(1,iboolright_eta_crust_mantle(ipoin))
+    buffer_send_faces_vector(2,ipoin,1) = accel_crust_mantle(2,iboolright_eta_crust_mantle(ipoin))
+    buffer_send_faces_vector(3,ipoin,1) = accel_crust_mantle(3,iboolright_eta_crust_mantle(ipoin))
+  enddo
 
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_eta_crust_mantle(2)
 
-! slices copy the right face into the buffer
-  do ipoin = 1,npoin2D_eta_crust_mantle(2)
-    buffer_send_faces_vector(1,ipoin) = accel_crust_mantle(1,iboolright_eta_crust_mantle(ipoin))
-    buffer_send_faces_vector(2,ipoin) = accel_crust_mantle(2,iboolright_eta_crust_mantle(ipoin))
-    buffer_send_faces_vector(3,ipoin) = accel_crust_mantle(3,iboolright_eta_crust_mantle(ipoin))
-  enddo
-
   do ipoin = 1,npoin2D_eta_inner_core(2)
-    buffer_send_faces_vector(1,ioffset + ipoin) = accel_inner_core(1,iboolright_eta_inner_core(ipoin))
-    buffer_send_faces_vector(2,ioffset + ipoin) = accel_inner_core(2,iboolright_eta_inner_core(ipoin))
-    buffer_send_faces_vector(3,ioffset + ipoin) = accel_inner_core(3,iboolright_eta_inner_core(ipoin))
+    buffer_send_faces_vector(1,ioffset + ipoin,1) = accel_inner_core(1,iboolright_eta_inner_core(ipoin))
+    buffer_send_faces_vector(2,ioffset + ipoin,1) = accel_inner_core(2,iboolright_eta_inner_core(ipoin))
+    buffer_send_faces_vector(3,ioffset + ipoin,1) = accel_inner_core(3,iboolright_eta_inner_core(ipoin))
   enddo
 
 ! send messages forward along each row
@@ -286,30 +326,48 @@
   else
     receiver = addressing(ichunk,iproc_xi,iproc_eta + 1)
   endif
-  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_eta_all(2),CUSTOM_MPI_TYPE,receiver, &
-    itag2,buffer_received_faces_vector,NDIM*npoin2D_eta_all(1),CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_eta_all(1),CUSTOM_MPI_TYPE,sender, &
+    itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISSEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all(2),CUSTOM_MPI_TYPE,receiver, &
+    itag2,MPI_COMM_WORLD,request_send,ier)
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 3
+
+  if(iphase == 4) then
+
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 
 ! all slices add the buffer received to the contributions on the left face
   if(iproc_eta > 0) then
 
   do ipoin = 1,npoin2D_eta_crust_mantle(1)
     accel_crust_mantle(1,iboolleft_eta_crust_mantle(ipoin)) = accel_crust_mantle(1,iboolleft_eta_crust_mantle(ipoin)) + &
-                              buffer_received_faces_vector(1,ipoin)
+                              buffer_received_faces_vector(1,ipoin,1)
     accel_crust_mantle(2,iboolleft_eta_crust_mantle(ipoin)) = accel_crust_mantle(2,iboolleft_eta_crust_mantle(ipoin)) + &
-                              buffer_received_faces_vector(2,ipoin)
+                              buffer_received_faces_vector(2,ipoin,1)
     accel_crust_mantle(3,iboolleft_eta_crust_mantle(ipoin)) = accel_crust_mantle(3,iboolleft_eta_crust_mantle(ipoin)) + &
-                              buffer_received_faces_vector(3,ipoin)
+                              buffer_received_faces_vector(3,ipoin,1)
   enddo
 
+! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_eta_crust_mantle(1)
+
   do ipoin = 1,npoin2D_eta_inner_core(1)
     accel_inner_core(1,iboolleft_eta_inner_core(ipoin)) = accel_inner_core(1,iboolleft_eta_inner_core(ipoin)) + &
-                              buffer_received_faces_vector(1,ioffset + ipoin)
+                              buffer_received_faces_vector(1,ioffset + ipoin,1)
     accel_inner_core(2,iboolleft_eta_inner_core(ipoin)) = accel_inner_core(2,iboolleft_eta_inner_core(ipoin)) + &
-                              buffer_received_faces_vector(2,ioffset + ipoin)
+                              buffer_received_faces_vector(2,ioffset + ipoin,1)
     accel_inner_core(3,iboolleft_eta_inner_core(ipoin)) = accel_inner_core(3,iboolleft_eta_inner_core(ipoin)) + &
-                              buffer_received_faces_vector(3,ioffset + ipoin)
+                              buffer_received_faces_vector(3,ioffset + ipoin,1)
   enddo
 
   endif
@@ -317,19 +375,19 @@
 ! the contributions are correctly assembled on the left side of each slice
 ! now we have to send the result back to the sender
 ! all slices copy the left face into the buffer
+  do ipoin = 1,npoin2D_eta_crust_mantle(1)
+    buffer_send_faces_vector(1,ipoin,1) = accel_crust_mantle(1,iboolleft_eta_crust_mantle(ipoin))
+    buffer_send_faces_vector(2,ipoin,1) = accel_crust_mantle(2,iboolleft_eta_crust_mantle(ipoin))
+    buffer_send_faces_vector(3,ipoin,1) = accel_crust_mantle(3,iboolleft_eta_crust_mantle(ipoin))
+  enddo
+
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_eta_crust_mantle(1)
 
-  do ipoin = 1,npoin2D_eta_crust_mantle(1)
-    buffer_send_faces_vector(1,ipoin) = accel_crust_mantle(1,iboolleft_eta_crust_mantle(ipoin))
-    buffer_send_faces_vector(2,ipoin) = accel_crust_mantle(2,iboolleft_eta_crust_mantle(ipoin))
-    buffer_send_faces_vector(3,ipoin) = accel_crust_mantle(3,iboolleft_eta_crust_mantle(ipoin))
-  enddo
-
   do ipoin = 1,npoin2D_eta_inner_core(1)
-    buffer_send_faces_vector(1,ioffset + ipoin) = accel_inner_core(1,iboolleft_eta_inner_core(ipoin))
-    buffer_send_faces_vector(2,ioffset + ipoin) = accel_inner_core(2,iboolleft_eta_inner_core(ipoin))
-    buffer_send_faces_vector(3,ioffset + ipoin) = accel_inner_core(3,iboolleft_eta_inner_core(ipoin))
+    buffer_send_faces_vector(1,ioffset + ipoin,1) = accel_inner_core(1,iboolleft_eta_inner_core(ipoin))
+    buffer_send_faces_vector(2,ioffset + ipoin,1) = accel_inner_core(2,iboolleft_eta_inner_core(ipoin))
+    buffer_send_faces_vector(3,ioffset + ipoin,1) = accel_inner_core(3,iboolleft_eta_inner_core(ipoin))
   enddo
 
 ! send messages backward along each row
@@ -343,27 +401,43 @@
   else
     receiver = addressing(ichunk,iproc_xi,iproc_eta - 1)
   endif
-  call MPI_SENDRECV(buffer_send_faces_vector,NDIM*npoin2D_eta_all(1),CUSTOM_MPI_TYPE,receiver, &
-    itag2,buffer_received_faces_vector,NDIM*npoin2D_eta_all(2),CUSTOM_MPI_TYPE,sender, &
-    itag,MPI_COMM_WORLD,msg_status,ier)
+  call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_eta_all(2),CUSTOM_MPI_TYPE,sender, &
+    itag,MPI_COMM_WORLD,request_receive,ier)
+
+  call MPI_ISSEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all(1),CUSTOM_MPI_TYPE,receiver, &
+    itag2,MPI_COMM_WORLD,request_send,ier)
+
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 4
+
+  if(iphase == 5) then
+
+! call MPI_WAIT(request_send,msg_status,ier)
+! call MPI_WAIT(request_receive,msg_status,ier)
+  call MPI_TEST(request_send,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not sent yet
+  call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
+  if(.not. flag_result_test) return ! exit if message not received yet
 
 ! all slices copy the buffer received to the contributions on the right face
   if(iproc_eta < NPROC_ETA-1) then
 
   do ipoin = 1,npoin2D_eta_crust_mantle(2)
-    accel_crust_mantle(1,iboolright_eta_crust_mantle(ipoin)) = buffer_received_faces_vector(1,ipoin)
-    accel_crust_mantle(2,iboolright_eta_crust_mantle(ipoin)) = buffer_received_faces_vector(2,ipoin)
-    accel_crust_mantle(3,iboolright_eta_crust_mantle(ipoin)) = buffer_received_faces_vector(3,ipoin)
+    accel_crust_mantle(1,iboolright_eta_crust_mantle(ipoin)) = buffer_received_faces_vector(1,ipoin,1)
+    accel_crust_mantle(2,iboolright_eta_crust_mantle(ipoin)) = buffer_received_faces_vector(2,ipoin,1)
+    accel_crust_mantle(3,iboolright_eta_crust_mantle(ipoin)) = buffer_received_faces_vector(3,ipoin,1)
   enddo
 
+! the buffer for the inner core starts right after the buffer for the crust and mantle
   ioffset = npoin2D_eta_crust_mantle(2)
-  do ipoin = 1,npoin2D_eta_inner_core(2)
-    accel_inner_core(1,iboolright_eta_inner_core(ipoin)) = buffer_received_faces_vector(1,ioffset + ipoin)
-    accel_inner_core(2,iboolright_eta_inner_core(ipoin)) = buffer_received_faces_vector(2,ioffset + ipoin)
-    accel_inner_core(3,iboolright_eta_inner_core(ipoin)) = buffer_received_faces_vector(3,ioffset + ipoin)
-  enddo
 
-  endif
+  do ipoin = 1,npoin2D_eta_inner_core(2)
+    accel_inner_core(1,iboolright_eta_inner_core(ipoin)) = buffer_received_faces_vector(1,ioffset + ipoin,1)
+    accel_inner_core(2,iboolright_eta_inner_core(ipoin)) = buffer_received_faces_vector(2,ioffset + ipoin,1)
+    accel_inner_core(3,iboolright_eta_inner_core(ipoin)) = buffer_received_faces_vector(3,ioffset + ipoin,1)
+  enddo
 
   endif
 
@@ -373,7 +447,10 @@
 
 ! check flag to see if we need to assemble (might be turned off when debugging)
 ! and do not assemble if only one chunk
-  if (.not. ACTUALLY_ASSEMBLE_MPI_CHUNKS .or. NCHUNKS == 1) return
+  if (.not. ACTUALLY_ASSEMBLE_MPI_CHUNKS .or. NCHUNKS == 1) then
+    iphase = 9999 ! this means everything is finished
+    return
+  endif
 
 ! ***************************************************************
 !  transmit messages in forward direction (iprocfrom -> iprocto)
@@ -382,43 +459,41 @@
 !---- put slices in receive mode
 !---- a given slice can belong to at most two faces
 
-! use three step scheme that can never deadlock
-! scheme for faces cannot deadlock even if NPROC_XI = NPROC_ETA = 1
-  do imsg_loop = 1,NUM_MSG_TYPES
-
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank==iprocfrom_faces(imsg) .or. &
-       myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-  if(myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
     sender = iprocfrom_faces(imsg)
 
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
     npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
 
+    call MPI_IRECV(buffer_received_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
+              itag,MPI_COMM_WORLD,request_receive_array(icount_faces),ier)
+
+!   do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
+!     accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
+!        accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(1,ipoin2D,icount_faces)
+!     accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
+!        accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(2,ipoin2D,icount_faces)
+!     accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
+!        accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(3,ipoin2D,icount_faces)
+!   enddo
+
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
-    ioffset = npoin2D_faces_crust_mantle(icount_faces)
+!   ioffset = npoin2D_faces_crust_mantle(icount_faces)
 
-    call MPI_RECV(buffer_received_faces_vector,NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
-              itag,MPI_COMM_WORLD,msg_status,ier)
-
-    do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
-      accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
-         accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(1,ipoin2D)
-      accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
-         accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(2,ipoin2D)
-      accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
-         accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(3,ipoin2D)
-    enddo
-
-    do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
-      accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
-         accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces)) + buffer_received_faces_vector(1,ioffset + ipoin2D)
-      accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
-         accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces)) + buffer_received_faces_vector(2,ioffset + ipoin2D)
-      accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
-         accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces)) + buffer_received_faces_vector(3,ioffset + ipoin2D)
-    enddo
+!   do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
+!     accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+!        accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces)) + &
+!          buffer_received_faces_vector(1,ioffset + ipoin2D,icount_faces)
+!     accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+!        accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces)) + &
+!          buffer_received_faces_vector(2,ioffset + ipoin2D,icount_faces)
+!     accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+!        accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces)) + &
+!          buffer_received_faces_vector(3,ioffset + ipoin2D,icount_faces)
+!   enddo
 
   endif
   enddo
@@ -427,34 +502,89 @@
 !---- a given slice can belong to at most two faces
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank==iprocfrom_faces(imsg) .or. &
-       myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-  if(myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
     receiver = iprocto_faces(imsg)
 
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
     npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
 
+    do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
+      buffer_send_faces_vector(1,ipoin2D,icount_faces) = accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(2,ipoin2D,icount_faces) = accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(3,ipoin2D,icount_faces) = accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+    enddo
+
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
     ioffset = npoin2D_faces_crust_mantle(icount_faces)
 
-    do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
-      buffer_send_faces_vector(1,ipoin2D) = accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-      buffer_send_faces_vector(2,ipoin2D) = accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-      buffer_send_faces_vector(3,ipoin2D) = accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-    enddo
-
     do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
-      buffer_send_faces_vector(1,ioffset + ipoin2D) = accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces))
-      buffer_send_faces_vector(2,ioffset + ipoin2D) = accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces))
-      buffer_send_faces_vector(3,ioffset + ipoin2D) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(1,ioffset + ipoin2D,icount_faces) = accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(2,ioffset + ipoin2D,icount_faces) = accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
-    call MPI_SEND(buffer_send_faces_vector,NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
-
+    call MPI_ISSEND(buffer_send_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
+                     MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
 
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 5
+
+  if(iphase == 6) then
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
+    call MPI_TEST(request_receive_array(icount_faces),flag_result_test,msg_status,ier)
+    if(.not. flag_result_test) return ! exit if message not received yet
+  endif
+  enddo
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
+    call MPI_TEST(request_send_array(icount_faces),flag_result_test,msg_status,ier)
+    if(.not. flag_result_test) return ! exit if message not sent yet
+  endif
+  enddo
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
+
+    do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
+      accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
+         accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(1,ipoin2D,icount_faces)
+      accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
+         accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(2,ipoin2D,icount_faces)
+      accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
+         accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(3,ipoin2D,icount_faces)
+    enddo
+
+! the buffer for the inner core starts right after the buffer for the crust and mantle
+    ioffset = npoin2D_faces_crust_mantle(icount_faces)
+
+    do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
+      accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+         accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces)) + &
+           buffer_received_faces_vector(1,ioffset + ipoin2D,icount_faces)
+      accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+         accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces)) + &
+           buffer_received_faces_vector(2,ioffset + ipoin2D,icount_faces)
+      accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+         accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces)) + &
+           buffer_received_faces_vector(3,ioffset + ipoin2D,icount_faces)
+    enddo
+
+  endif
+  enddo
 
 ! *********************************************************************
 !  transmit messages back in opposite direction (iprocto -> iprocfrom)
@@ -465,31 +595,33 @@
 
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank==iprocfrom_faces(imsg) .or. &
-       myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-  if(myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
     sender = iprocto_faces(imsg)
 
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
     npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
 
+    call MPI_IRECV(buffer_received_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
+              itag,MPI_COMM_WORLD,request_receive_array(icount_faces),ier)
+
+!   do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
+!     accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(1,ipoin2D,icount_faces)
+!     accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(2,ipoin2D,icount_faces)
+!     accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(3,ipoin2D,icount_faces)
+!   enddo
+
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
-    ioffset = npoin2D_faces_crust_mantle(icount_faces)
+!   ioffset = npoin2D_faces_crust_mantle(icount_faces)
 
-    call MPI_RECV(buffer_received_faces_vector,NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
-              itag,MPI_COMM_WORLD,msg_status,ier)
-
-    do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
-      accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(1,ipoin2D)
-      accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(2,ipoin2D)
-      accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(3,ipoin2D)
-    enddo
-
-    do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
-      accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces)) = buffer_received_faces_vector(1,ioffset + ipoin2D)
-      accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces)) = buffer_received_faces_vector(2,ioffset + ipoin2D)
-      accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces)) = buffer_received_faces_vector(3,ioffset + ipoin2D)
-    enddo
+!   do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
+!     accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+!       buffer_received_faces_vector(1,ioffset + ipoin2D,icount_faces)
+!     accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+!       buffer_received_faces_vector(2,ioffset + ipoin2D,icount_faces)
+!     accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+!       buffer_received_faces_vector(3,ioffset + ipoin2D,icount_faces)
+!   enddo
 
   endif
   enddo
@@ -498,37 +630,86 @@
 !---- a given slice can belong to at most two faces
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank==iprocfrom_faces(imsg) .or. &
-       myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-  if(myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
     receiver = iprocfrom_faces(imsg)
 
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
     npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
 
+    do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
+      buffer_send_faces_vector(1,ipoin2D,icount_faces) = accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(2,ipoin2D,icount_faces) = accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(3,ipoin2D,icount_faces) = accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+    enddo
+
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
     ioffset = npoin2D_faces_crust_mantle(icount_faces)
 
-    do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
-      buffer_send_faces_vector(1,ipoin2D) = accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-      buffer_send_faces_vector(2,ipoin2D) = accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-      buffer_send_faces_vector(3,ipoin2D) = accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-    enddo
-
     do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
-      buffer_send_faces_vector(1,ioffset + ipoin2D) = accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces))
-      buffer_send_faces_vector(2,ioffset + ipoin2D) = accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces))
-      buffer_send_faces_vector(3,ioffset + ipoin2D) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(1,ioffset + ipoin2D,icount_faces) = accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(2,ioffset + ipoin2D,icount_faces) = accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
-    call MPI_SEND(buffer_send_faces_vector,NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
-
+    call MPI_ISSEND(buffer_send_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
+                     MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
 
-! end of anti-deadlocking loop
+  iphase = iphase + 1
+  return ! exit because we have started some communications therefore we need some time
+
+  endif !!!!!!!!! end of iphase 6
+
+  if(iphase == 7) then
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocto_faces(imsg)) then
+    call MPI_TEST(request_send_array(icount_faces),flag_result_test,msg_status,ier)
+    if(.not. flag_result_test) return ! exit if message not received yet
+  endif
   enddo
 
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
+    call MPI_TEST(request_receive_array(icount_faces),flag_result_test,msg_status,ier)
+    if(.not. flag_result_test) return ! exit if message not sent yet
+  endif
+  enddo
+
+  icount_faces = 0
+  do imsg = 1,NUMMSGS_FACES
+  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+  if(myrank==iprocfrom_faces(imsg)) then
+    do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
+      accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(1,ipoin2D,icount_faces)
+      accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(2,ipoin2D,icount_faces)
+      accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(3,ipoin2D,icount_faces)
+    enddo
+
+! the buffer for the inner core starts right after the buffer for the crust and mantle
+    ioffset = npoin2D_faces_crust_mantle(icount_faces)
+
+    do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
+      accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+        buffer_received_faces_vector(1,ioffset + ipoin2D,icount_faces)
+      accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+        buffer_received_faces_vector(2,ioffset + ipoin2D,icount_faces)
+      accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces)) = &
+        buffer_received_faces_vector(3,ioffset + ipoin2D,icount_faces)
+    enddo
+  endif
+  enddo
+
+! this is the exit condition, to go beyond the last phase number
+  iphase = iphase + 1
+
+!! DK DK do the rest in blocking for now, for simplicity
 
 !----
 !---- start MPI assembling corners
@@ -702,6 +883,8 @@
   endif
 
   enddo
+
+  endif !!!!!!!!! end of iphase 7
 
   end subroutine assemble_MPI_vector
 
