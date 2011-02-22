@@ -46,6 +46,8 @@
                             wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
                             ibool,MOVIE_VOLUME)
 
+! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
+
   implicit none
 
   include "constants.h"

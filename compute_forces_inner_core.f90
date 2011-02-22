@@ -26,8 +26,26 @@
 !=====================================================================
 
   subroutine compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ,accel,xstore,ystore,zstore, &
+          displ_inner_core,accel_inner_core,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+!----------------------
+            is_on_a_slice_edge_inner_core,icall, &
+            accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -45,7 +63,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
 ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ,accel
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core
 
 ! for attenuation
 ! memory variables R_ij are stored at the local rather than global level
@@ -131,14 +149,111 @@
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: xstore,ystore,zstore
 
+! this for non blocking MPI
+  integer :: iphase,icall
+
+  integer :: computed_elements
+
+  logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+
+  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
+
+  integer :: ichunk,iproc_xi,iproc_eta,myrank
+
+  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
+
+  integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
+  integer npoin2D_faces_inner_core(NUMFACES_SHARED)
+
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+       npoin2D_xi_inner_core,npoin2D_eta_inner_core
+
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
+  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
+
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
+
+  integer :: npoin2D_max_all_CM_IC
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC) :: buffer_send_faces,buffer_received_faces
+
+! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
+     buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
+
+! for matching with central cube in inner core
+  integer nb_msgs_theor_in_cube, npoin2D_cube_from_slices,iphase_CC
+  integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
+  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices
+  double precision, dimension(npoin2D_cube_from_slices,NDIM,nb_msgs_theor_in_cube) :: buffer_all_cube_from_slices
+  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
+  integer receiver_cube_from_slices
+  logical :: INCLUDE_CENTRAL_CUBE
+
+! local to global mapping
+  integer NSPEC2D_BOTTOM_INNER_CORE
+  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
 
+  computed_elements = 0
+
   do ispec = 1,NSPEC_INNER_CORE
+
+! hide communications by computing the edges first
+    if((icall == 2 .and. is_on_a_slice_edge_inner_core(ispec)) .or. &
+       (icall == 1 .and. .not. is_on_a_slice_edge_inner_core(ispec))) cycle
 
 ! exclude fictitious elements in central cube
     if(idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+
+! process the communications every ELEMENTS_NONBLOCKING elements
+    computed_elements = computed_elements + 1
+    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
+
+      if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
+            NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
+
+      if(INCLUDE_CENTRAL_CUBE) then
+          if(iphase > 7 .and. iphase_CC <= 4) &
+            call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+                   npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+                   receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+                   ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,accel_inner_core,NDIM,iphase_CC)
+      endif
+
+    endif
 
     do k=1,NGLLZ
       do j=1,NGLLY
@@ -159,25 +274,25 @@
           do l=1,NGLLX
             hp1 = hprime_xx(i,l)
             iglob = ibool(l,j,k,ispec)
-            tempx1l = tempx1l + displ(1,iglob)*hp1
-            tempy1l = tempy1l + displ(2,iglob)*hp1
-            tempz1l = tempz1l + displ(3,iglob)*hp1
+            tempx1l = tempx1l + displ_inner_core(1,iglob)*hp1
+            tempy1l = tempy1l + displ_inner_core(2,iglob)*hp1
+            tempz1l = tempz1l + displ_inner_core(3,iglob)*hp1
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
             hp2 = hprime_yy(j,l)
             iglob = ibool(i,l,k,ispec)
-            tempx2l = tempx2l + displ(1,iglob)*hp2
-            tempy2l = tempy2l + displ(2,iglob)*hp2
-            tempz2l = tempz2l + displ(3,iglob)*hp2
+            tempx2l = tempx2l + displ_inner_core(1,iglob)*hp2
+            tempy2l = tempy2l + displ_inner_core(2,iglob)*hp2
+            tempz2l = tempz2l + displ_inner_core(3,iglob)*hp2
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
             hp3 = hprime_zz(k,l)
             iglob = ibool(i,j,l,ispec)
-            tempx3l = tempx3l + displ(1,iglob)*hp3
-            tempy3l = tempy3l + displ(2,iglob)*hp3
-            tempz3l = tempz3l + displ(3,iglob)*hp3
+            tempx3l = tempx3l + displ_inner_core(1,iglob)*hp3
+            tempy3l = tempy3l + displ_inner_core(2,iglob)*hp3
+            tempz3l = tempz3l + displ_inner_core(3,iglob)*hp3
           enddo
 
 !         get derivatives of ux, uy and uz with respect to x, y and z
@@ -381,9 +496,9 @@
             if(CUSTOM_REAL == SIZE_REAL) then
 
 ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dble(displ(1,iglob))
-              sy_l = rho * dble(displ(2,iglob))
-              sz_l = rho * dble(displ(3,iglob))
+              sx_l = rho * dble(displ_inner_core(1,iglob))
+              sy_l = rho * dble(displ_inner_core(2,iglob))
+              sz_l = rho * dble(displ_inner_core(3,iglob))
 
 ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
@@ -408,9 +523,9 @@
             else
 
 ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * displ(1,iglob)
-              sy_l = rho * displ(2,iglob)
-              sz_l = rho * displ(3,iglob)
+              sx_l = rho * displ_inner_core(1,iglob)
+              sy_l = rho * displ_inner_core(2,iglob)
+              sz_l = rho * displ_inner_core(3,iglob)
 
 ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
@@ -510,7 +625,7 @@
       do j=1,NGLLY
         do i=1,NGLLX
           iglob = ibool(i,j,k,ispec)
-          accel(:,iglob) = accel(:,iglob) + sum_terms(:,i,j,k)
+          accel_inner_core(:,iglob) = accel_inner_core(:,iglob) + sum_terms(:,i,j,k)
         enddo
       enddo
     enddo

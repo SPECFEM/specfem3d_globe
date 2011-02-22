@@ -25,10 +25,27 @@
 !
 !=====================================================================
 
-
   subroutine compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ,accel,xstore,ystore,zstore, &
+          displ_crust_mantle,accel_crust_mantle,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+!----------------------
+            is_on_a_slice_edge_crust_mantle,icall, &
+            accel_inner_core,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -39,8 +56,7 @@
           ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
           alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
 
-
-! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5
+! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
   implicit none
 
@@ -51,7 +67,7 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ,accel
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
   ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
 
@@ -182,13 +198,72 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
-  !real(kind=CUSTOM_REAL), dimension(5) :: dummy
-
   integer :: i_SLS,i_memory,imodulo_N_SLS
   integer :: ispec,ispec_strain
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1,iglob2,iglob3,iglob4,iglob5
+
+! this for non blocking MPI
+  integer :: iphase,icall
+
+  integer :: computed_elements
+
+  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: accel_inner_core
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+
+  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
+
+  integer :: ichunk,iproc_xi,iproc_eta,myrank
+
+  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
+
+  integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
+  integer npoin2D_faces_inner_core(NUMFACES_SHARED)
+
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+       npoin2D_xi_inner_core,npoin2D_eta_inner_core
+
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
+  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
+
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
+
+  integer :: npoin2D_max_all_CM_IC
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC) :: buffer_send_faces,buffer_received_faces
+
+! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
+     buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
+
+! for matching with central cube in inner core
+  integer nb_msgs_theor_in_cube, npoin2D_cube_from_slices,iphase_CC
+  integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
+  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices
+  double precision, dimension(npoin2D_cube_from_slices,NDIM,nb_msgs_theor_in_cube) :: buffer_all_cube_from_slices
+  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
+  integer receiver_cube_from_slices
+  logical :: INCLUDE_CENTRAL_CUBE
+
+! local to global mapping
+  integer NSPEC2D_BOTTOM_INNER_CORE
+  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -196,7 +271,43 @@
 
   imodulo_N_SLS = mod(N_SLS,3)
 
+  computed_elements = 0
+
   do ispec = 1,NSPEC_CRUST_MANTLE
+
+! hide communications by computing the edges first
+    if((icall == 2 .and. is_on_a_slice_edge_crust_mantle(ispec)) .or. &
+       (icall == 1 .and. .not. is_on_a_slice_edge_crust_mantle(ispec))) cycle
+
+! process the communications every ELEMENTS_NONBLOCKING elements
+    computed_elements = computed_elements + 1
+    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
+
+      if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
+            NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
+
+      if(INCLUDE_CENTRAL_CUBE) then
+          if(iphase > 7 .and. iphase_CC <= 4) &
+            call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+                   npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+                   receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+                   ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,accel_inner_core,NDIM,iphase_CC)
+      endif
+
+    endif
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -207,9 +318,9 @@
 ! way 1:
 !        do i=1,NGLLX
 !            iglob = ibool(i,j,k,ispec)
-!            dummyx_loc(i,j,k) = displ(1,iglob)
-!            dummyy_loc(i,j,k) = displ(2,iglob)
-!            dummyz_loc(i,j,k) = displ(3,iglob)
+!            dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob)
+!            dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob)
+!            dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob)
 !        enddo
 
 ! way 2:
@@ -220,25 +331,25 @@
         iglob4 = ibool(4,j,k,ispec)
         iglob5 = ibool(5,j,k,ispec)
 
-        dummyx_loc(1,j,k) = displ(1,iglob1)
-        dummyy_loc(1,j,k) = displ(2,iglob1)
-        dummyz_loc(1,j,k) = displ(3,iglob1)
+        dummyx_loc(1,j,k) = displ_crust_mantle(1,iglob1)
+        dummyy_loc(1,j,k) = displ_crust_mantle(2,iglob1)
+        dummyz_loc(1,j,k) = displ_crust_mantle(3,iglob1)
 
-        dummyx_loc(2,j,k) = displ(1,iglob2)
-        dummyy_loc(2,j,k) = displ(2,iglob2)
-        dummyz_loc(2,j,k) = displ(3,iglob2)
+        dummyx_loc(2,j,k) = displ_crust_mantle(1,iglob2)
+        dummyy_loc(2,j,k) = displ_crust_mantle(2,iglob2)
+        dummyz_loc(2,j,k) = displ_crust_mantle(3,iglob2)
 
-        dummyx_loc(3,j,k) = displ(1,iglob3)
-        dummyy_loc(3,j,k) = displ(2,iglob3)
-        dummyz_loc(3,j,k) = displ(3,iglob3)
+        dummyx_loc(3,j,k) = displ_crust_mantle(1,iglob3)
+        dummyy_loc(3,j,k) = displ_crust_mantle(2,iglob3)
+        dummyz_loc(3,j,k) = displ_crust_mantle(3,iglob3)
 
-        dummyx_loc(4,j,k) = displ(1,iglob4)
-        dummyy_loc(4,j,k) = displ(2,iglob4)
-        dummyz_loc(4,j,k) = displ(3,iglob4)
+        dummyx_loc(4,j,k) = displ_crust_mantle(1,iglob4)
+        dummyy_loc(4,j,k) = displ_crust_mantle(2,iglob4)
+        dummyz_loc(4,j,k) = displ_crust_mantle(3,iglob4)
 
-        dummyx_loc(5,j,k) = displ(1,iglob5)
-        dummyy_loc(5,j,k) = displ(2,iglob5)
-        dummyz_loc(5,j,k) = displ(3,iglob5)
+        dummyx_loc(5,j,k) = displ_crust_mantle(1,iglob5)
+        dummyy_loc(5,j,k) = displ_crust_mantle(2,iglob5)
+        dummyz_loc(5,j,k) = displ_crust_mantle(3,iglob5)
 
       enddo
     enddo
@@ -792,9 +903,9 @@
             if(CUSTOM_REAL == SIZE_REAL) then
 
               ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dble(displ(1,iglob1))
-              sy_l = rho * dble(displ(2,iglob1))
-              sz_l = rho * dble(displ(3,iglob1))
+              sx_l = rho * dble(displ_crust_mantle(1,iglob1))
+              sy_l = rho * dble(displ_crust_mantle(2,iglob1))
+              sz_l = rho * dble(displ_crust_mantle(3,iglob1))
 
               ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sngl(sy_l*gyl + sz_l*gzl)
@@ -819,9 +930,9 @@
             else
 
               ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * displ(1,iglob1)
-              sy_l = rho * displ(2,iglob1)
-              sz_l = rho * displ(3,iglob1)
+              sx_l = rho * displ_crust_mantle(1,iglob1)
+              sy_l = rho * displ_crust_mantle(2,iglob1)
+              sz_l = rho * displ_crust_mantle(3,iglob1)
 
               ! compute G tensor from s . g and add to sigma (not symmetric)
               sigma_xx = sigma_xx + sy_l*gyl + sz_l*gzl
@@ -961,15 +1072,15 @@
 ! way 1:
 !        do i=1,NGLLX
 !          iglob = ibool(i,j,k,ispec)
-!          accel(:,iglob) = accel(:,iglob) + sum_terms(:,i,j,k)
+!          accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) + sum_terms(:,i,j,k)
 !        enddo
 
 ! way 2:
-        accel(:,ibool(1,j,k,ispec)) = accel(:,ibool(1,j,k,ispec)) + sum_terms(:,1,j,k)
-        accel(:,ibool(2,j,k,ispec)) = accel(:,ibool(2,j,k,ispec)) + sum_terms(:,2,j,k)
-        accel(:,ibool(3,j,k,ispec)) = accel(:,ibool(3,j,k,ispec)) + sum_terms(:,3,j,k)
-        accel(:,ibool(4,j,k,ispec)) = accel(:,ibool(4,j,k,ispec)) + sum_terms(:,4,j,k)
-        accel(:,ibool(5,j,k,ispec)) = accel(:,ibool(5,j,k,ispec)) + sum_terms(:,5,j,k)
+        accel_crust_mantle(:,ibool(1,j,k,ispec)) = accel_crust_mantle(:,ibool(1,j,k,ispec)) + sum_terms(:,1,j,k)
+        accel_crust_mantle(:,ibool(2,j,k,ispec)) = accel_crust_mantle(:,ibool(2,j,k,ispec)) + sum_terms(:,2,j,k)
+        accel_crust_mantle(:,ibool(3,j,k,ispec)) = accel_crust_mantle(:,ibool(3,j,k,ispec)) + sum_terms(:,3,j,k)
+        accel_crust_mantle(:,ibool(4,j,k,ispec)) = accel_crust_mantle(:,ibool(4,j,k,ispec)) + sum_terms(:,4,j,k)
+        accel_crust_mantle(:,ibool(5,j,k,ispec)) = accel_crust_mantle(:,ibool(5,j,k,ispec)) + sum_terms(:,5,j,k)
 
       enddo
     enddo

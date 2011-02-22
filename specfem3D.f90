@@ -511,7 +511,9 @@
   real :: percentage_edge
 
 ! assembling phase number for non blocking MPI
-  integer :: iphase,icall
+! iphase is for the crust_mantle, outer_core and inner_core regions
+! iphase_CC is for the central cube
+  integer :: iphase,iphase_CC,icall
 
 ! -------- arrays specific to each region here -----------
 
@@ -2128,8 +2130,9 @@
       time = (dble(it-1)*DT-t0)*scale_t_inv
     endif
 
-  iphase = 0 ! do not start any non blocking communications at this stage
-  icall = 1  ! compute all the outer elements first in the case of non blocking MPI
+    iphase = 0 ! do not start any non blocking communications at this stage
+    icall = 1  ! compute all the outer elements first in the case of non blocking MPI
+
     if( USE_DEVILLE_PRODUCTS_VAL ) then
       ! uses Deville et al. (2002) routine
       call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
@@ -2307,7 +2310,8 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL,iphase)
 
-    icall = 2 ! compute all the inner elements in the case of non blocking MPI
+    icall = 2 ! now compute all the inner elements in the case of non blocking MPI
+
     if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses Deville et al. (2002) routine
       call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
@@ -2462,6 +2466,10 @@
 
     ! for anisotropy and gravity, x y and z contain r theta and phi
 
+    iphase = 0 ! do not start any non blocking communications at this stage
+    iphase_CC = 0 ! do not start any non blocking communications at this stage
+    icall = 1  ! compute all the outer elements first in the case of non blocking MPI
+
     if( USE_DEVILLE_PRODUCTS_VAL ) then
       call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
@@ -2469,6 +2477,24 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!----------------------
+            is_on_a_slice_edge_crust_mantle,icall, &
+            accel_inner_core,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -2494,6 +2520,24 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!----------------------
+            is_on_a_slice_edge_crust_mantle,icall, &
+            accel_inner_core,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -2523,6 +2567,24 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!----------------------
+            is_on_a_slice_edge_crust_mantle,icall, &
+            accel_inner_core,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
           hprime_xx,hprime_xxT, &
           hprimewgll_xx,hprimewgll_xxT, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -2548,6 +2610,24 @@
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
           etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
           gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!----------------------
+            is_on_a_slice_edge_crust_mantle,icall, &
+            accel_inner_core,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
           hprime_xx,hprime_yy,hprime_zz, &
           hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -2567,6 +2647,157 @@
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
 
+      endif
+    endif
+
+    ! Deville routine
+    if( USE_DEVILLE_PRODUCTS_VAL ) then
+      call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          displ_inner_core,accel_inner_core, &
+          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core, &
+          etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+!----------------------
+            is_on_a_slice_edge_inner_core,icall, &
+            accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
+          hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
+          c13store_inner_core,c44store_inner_core, &
+          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+          one_minus_sum_beta_inner_core, &
+          alphaval,betaval,gammaval, &
+          factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+    else
+      call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          displ_inner_core,accel_inner_core, &
+          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core, &
+          etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+!----------------------
+            is_on_a_slice_edge_inner_core,icall, &
+            accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
+          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
+          c13store_inner_core,c44store_inner_core, &
+          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+          one_minus_sum_beta_inner_core, &
+          alphaval,betaval,gammaval, &
+          factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+    endif
+
+    if (SIMULATION_TYPE == 3) then
+      if( USE_DEVILLE_PRODUCTS_VAL ) then
+        call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          b_displ_inner_core,b_accel_inner_core, &
+          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core, &
+          etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+!----------------------
+            is_on_a_slice_edge_inner_core,icall, &
+            accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
+          hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
+          c13store_inner_core,c44store_inner_core, &
+          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
+          one_minus_sum_beta_inner_core, &
+          b_alphaval,b_betaval,b_gammaval, &
+          factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+      else
+        call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          b_displ_inner_core,b_accel_inner_core, &
+          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core, &
+          etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+!----------------------
+            is_on_a_slice_edge_inner_core,icall, &
+            accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
+          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
+          c13store_inner_core,c44store_inner_core, &
+          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
+          one_minus_sum_beta_inner_core, &
+          b_alphaval,b_betaval,b_gammaval, &
+          factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
       endif
     endif
 
@@ -2594,86 +2825,6 @@
                               absorb_xmin_crust_mantle5,absorb_xmax_crust_mantle5, &
                               absorb_ymin_crust_mantle5,absorb_ymax_crust_mantle5)
     endif ! Stacey conditions
-
-
-    ! Deville routine
-    if( USE_DEVILLE_PRODUCTS_VAL ) then
-      call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ_inner_core,accel_inner_core, &
-          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-          xix_inner_core,xiy_inner_core,xiz_inner_core, &
-          etax_inner_core,etay_inner_core,etaz_inner_core, &
-          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-          hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
-          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
-          c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
-          alphaval,betaval,gammaval, &
-          factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
-    else
-      call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ_inner_core,accel_inner_core, &
-          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-          xix_inner_core,xiy_inner_core,xiz_inner_core, &
-          etax_inner_core,etay_inner_core,etaz_inner_core, &
-          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
-          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
-          c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
-          alphaval,betaval,gammaval, &
-          factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
-    endif
-
-    if (SIMULATION_TYPE == 3) then
-      if( USE_DEVILLE_PRODUCTS_VAL ) then
-        call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          b_displ_inner_core,b_accel_inner_core, &
-          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-          xix_inner_core,xiy_inner_core,xiz_inner_core, &
-          etax_inner_core,etay_inner_core,etaz_inner_core, &
-          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-          hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
-          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
-          c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
-          b_alphaval,b_betaval,b_gammaval, &
-          factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
-      else
-        call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          b_displ_inner_core,b_accel_inner_core, &
-          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-          xix_inner_core,xiy_inner_core,xiz_inner_core, &
-          etax_inner_core,etay_inner_core,etaz_inner_core, &
-          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
-          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
-          c13store_inner_core,c44store_inner_core, &
-          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
-          one_minus_sum_beta_inner_core, &
-          b_alphaval,b_betaval,b_gammaval, &
-          factor_common_inner_core, &
-          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
-          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
-      endif
-    endif
 
     ! add the sources
     if (SIMULATION_TYPE == 1) &
@@ -2776,9 +2927,224 @@
 
     ! assemble all the contributions between slices using MPI
 
+! assemble all the contributions between slices using MPI
+! crust/mantle and inner core handled in the same call
+! in order to reduce the number of MPI messages by 2
+  if(USE_NONBLOCKING_COMMS) then
+
+    iphase = 1 ! initialize the non blocking communication counter
+    iphase_CC = 1 ! initialize the non blocking communication counter for the central cube
+
+! start the non blocking communications
+    call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS_VAL,iphase)
+
+    icall = 2 ! now compute all the inner elements in the case of non blocking MPI
+
+    ! compute internal forces in the solid regions
+
+    ! for anisotropy and gravity, x y and z contain r theta and phi
+
+    if( USE_DEVILLE_PRODUCTS_VAL ) then
+      call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          displ_crust_mantle,accel_crust_mantle, &
+          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+          etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!----------------------
+            is_on_a_slice_edge_crust_mantle,icall, &
+            accel_inner_core,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
+          hprime_xx,hprime_xxT, &
+          hprimewgll_xx,hprimewgll_xxT, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
+          muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+          c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+          c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+          c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+          c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+          c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+          c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+          c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+          ibool_crust_mantle,idoubling_crust_mantle, &
+          R_memory_crust_mantle,epsilondev_crust_mantle, &
+          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          alphaval,betaval,gammaval,factor_common_crust_mantle, &
+          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
+    else
+      call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          displ_crust_mantle,accel_crust_mantle, &
+          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+          xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+          etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+          gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!----------------------
+            is_on_a_slice_edge_crust_mantle,icall, &
+            accel_inner_core,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
+          hprime_xx,hprime_yy,hprime_zz, &
+          hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_crust_mantle,kappahstore_crust_mantle,muvstore_crust_mantle, &
+          muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+          c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+          c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+          c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+          c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+          c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+          c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+          c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+          ibool_crust_mantle,idoubling_crust_mantle, &
+          R_memory_crust_mantle,epsilondev_crust_mantle, &
+          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          alphaval,betaval,gammaval,factor_common_crust_mantle, &
+          size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
+          size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
+    endif
+
+    ! Deville routine
+    if( USE_DEVILLE_PRODUCTS_VAL ) then
+      call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          displ_inner_core,accel_inner_core, &
+          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core, &
+          etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+!----------------------
+            is_on_a_slice_edge_inner_core,icall, &
+            accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
+          hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
+          c13store_inner_core,c44store_inner_core, &
+          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+          one_minus_sum_beta_inner_core, &
+          alphaval,betaval,gammaval, &
+          factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+    else
+      call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+          displ_inner_core,accel_inner_core, &
+          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+          xix_inner_core,xiy_inner_core,xiz_inner_core, &
+          etax_inner_core,etay_inner_core,etaz_inner_core, &
+          gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+!----------------------
+            is_on_a_slice_edge_inner_core,icall, &
+            accel_crust_mantle,ibool_inner_core,idoubling_inner_core, &
+            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,INCLUDE_CENTRAL_CUBE,iphase_CC, &
+!----------------------
+          hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+          kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+          c11store_inner_core,c33store_inner_core,c12store_inner_core, &
+          c13store_inner_core,c44store_inner_core, &
+          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+          one_minus_sum_beta_inner_core, &
+          alphaval,betaval,gammaval, &
+          factor_common_inner_core, &
+          size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
+          size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
+    endif
+
+! assemble all the contributions between slices using MPI
+! crust/mantle and inner core handled in the same call
+! in order to reduce the number of MPI messages by 2
+    do while (iphase <= 7) ! make sure the last communications are finished and processed
+      call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+            iboolfaces_inner_core,iboolcorner_inner_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+            NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS_VAL,iphase)
+    enddo
+  else
     ! crust/mantle and inner core handled in the same call
     ! in order to reduce the number of MPI messages by 2
-    call assemble_MPI_vector(myrank, &
+    call assemble_MPI_vector_block(myrank, &
             accel_crust_mantle,NGLOB_CRUST_MANTLE, &
             accel_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2801,20 +3167,27 @@
             NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL)
+  endif
 
     !---
     !---  use buffers to assemble forces with the central cube
     !---
 
-    if(INCLUDE_CENTRAL_CUBE) then
-      call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-                      npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
-                      buffer_slices, buffer_slices2, ibool_central_cube, &
-                      receiver_cube_from_slices, ibool_inner_core, &
-                      idoubling_inner_core, NSPEC_INNER_CORE, &
-                      ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-                      NGLOB_INNER_CORE,accel_inner_core,NDIM)
-    endif   ! end of assembling forces with the central cube
+  if(INCLUDE_CENTRAL_CUBE) then
+    if(USE_NONBLOCKING_COMMS) then
+      do while (iphase_CC <= 4) ! make sure the last communications are finished and processed
+        call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+          npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+          receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+          ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),accel_inner_core,NDIM,iphase_CC)
+      enddo
+    else
+      call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+        npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,buffer_slices2,ibool_central_cube, &
+        receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
+        ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,accel_inner_core,NDIM)
+    endif
+  endif   ! end of assembling forces with the central cube
 
 ! way 1:
 !    do i=1,NGLOB_CRUST_MANTLE
@@ -2865,7 +3238,7 @@
 
       ! crust/mantle and inner core handled in the same call
       ! in order to reduce the number of MPI messages by 2
-      call assemble_MPI_vector(myrank, &
+      call assemble_MPI_vector_block(myrank, &
             b_accel_crust_mantle,NGLOB_CRUST_MANTLE, &
             b_accel_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -2895,7 +3268,8 @@
 
       if(INCLUDE_CENTRAL_CUBE) then
 
-        call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
+!! DK DK 33333333333333333333333 this should be converted to non blocking (and thus should have iphase etc)
+        call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
                          npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
                          buffer_slices, buffer_slices2, ibool_central_cube, &
                          receiver_cube_from_slices, ibool_inner_core, &
