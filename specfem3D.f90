@@ -1468,6 +1468,15 @@
          idoubling_inner_core,npoin2D_cube_from_slices,ibool_central_cube, &
          NSPEC2D_BOTTOM(IREGION_INNER_CORE),ichunk)
 
+  else
+
+    ! allocate fictitious buffers for cube and slices with a dummy size, just to be able to use them as arguments in subroutine calls
+    allocate(sender_from_slices_to_cube(1))
+    allocate(buffer_all_cube_from_slices(1,1,1))
+    allocate(buffer_slices(1,1))
+    allocate(buffer_slices2(1,1))
+    allocate(ibool_central_cube(1,1))
+
   endif
 
   ! check that all the mass matrices are positive
