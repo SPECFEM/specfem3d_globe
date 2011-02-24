@@ -17,10 +17,6 @@ sub Usage {
     For iris data (with -d), the timing part of the name will be ignored
     and only the component part of the name will be changed correspondingly
 
-    Make sure you have sac, saclst in the PATH before execution
-
-    Qinya Liu, Caltech, May 2007
-
 EOF
 exit(1)
 }
@@ -29,11 +25,10 @@ exit(1)
 if (!getopts('l:L:cdts')) {die('Check input arguments\n');}
 @ARGV > 0 or Usage();
 if (!$opt_l) {$opt_l = 0;}
-$saclst = "/opt/seismo-util/bin/saclst";
-if (not -f $saclst) {die("No such file as $saclst\n");}
+$saclst = "saclst";
+if (system("which $saclst >/dev/null") != 0) {die(" No $saclst file\n");}
 $undef=-12345.0;
 $eps=0.1;
-
 
 foreach $file (@ARGV) {
   print "processing $file\n";
@@ -73,16 +68,22 @@ foreach $file (@ARGV) {
 
   if (abs($ninc-$undef)<$eps or abs($einc-$undef)<$eps or abs($naz-$undef)<$eps or abs($eaz-$undef)<$eps ) {die("Check header cmpinc and cmpaz for $north and $east\n");}
 
-  if ($ny != $ey or $nj != $ej or $nh != $eh or $nm != $em or $ns != $es or $nms != $ems)
-    {die(" Not same reference time for $north and $east\n");}
+  # allow n and e component .2 degrees from vertical
+  $daz = abs($naz-$eaz);
+  if ($daz > 180 and abs(abs($daz-270) >= 0.18) or $daz < 180 and abs(abs($daz-90) >=0.18) ) {
+    print "cmpaz not properly set for $north and $east: $naz,$eaz, skip\n";
+   next;}
+
+  if ($ny != $ey or $nj != $ej or $nh != $eh or $nm != $em or $ns != $es or abs($nms-$ems)>1)
+    {die(" Not the same reference time for $north and $east\n");}
 
   if (abs($gcarc_e-$undef)<$eps or abs($gcarc_n-$undef)<$eps )
     {die(" Check to see if GCARC is defined in the header\n");}
 
   # check if the reference time is the same or not!
 
-  if ($opt_c) {open(SAC,"|sac2000");}
-  else {open(SAC,"|sac2000 > /dev/null");}
+  if ($opt_c) {open(SAC,"|sac");}
+  else {open(SAC,"|sac > /dev/null");}
   print SAC "echo on\n";
   print SAC "r $north $east\n ";
   if ($opt_L or $npts_n != $npts_e or abs($nb-$eb) > $eps) { #cut properly
@@ -95,6 +96,7 @@ foreach $file (@ARGV) {
     print SAC "cut %begin% %end%\n r $north $east\n cut off\n";
 
   }
+  print SAC "ch cmpinc 90.0\n";  # make sure both are horizontal comp.
   print SAC "rot\n";           # this is the default rotate to normal
   print SAC "ch file 1 kcmpnm $rcomp\n";
   print SAC "ch file 2 kcmpnm $tcomp\n";

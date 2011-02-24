@@ -193,11 +193,11 @@ main(int argc, char *argv[])
 
         /* creat source time function time series */
         if(min_nhdur * dt / 2 > hdur) {
-            fprintf(stderr,"The half duration %f is too small to convolve\n", hdur);
+            fprintf(stderr,"The half duration %f is too small \n", hdur);
             return 1;
         }
 
-        nstf = (int)ceil(2 * hdur/dt)+1;
+        nstf = (int)ceil(6 * hdur/dt)+1;
         hstf = (nstf-1)*dt/2;
 
         if((stf = (float *) malloc(nstf*sizeof(float))) == NULL) {
@@ -206,21 +206,22 @@ main(int argc, char *argv[])
         }
         if(cstf == 't') {
             /* triangular */
-            for (i=0; i<nstf/2; i++)
-                stf[i] = i * dt / (hstf * hstf);
-            for (i=nstf/2; i<nstf; i++)
-                stf[i] = (2 * hstf - i * dt)/ (hstf*hstf);
-        } else {
-            /* gaussian */
             const float decay_rate = 1.628;
-            float alpha = decay_rate / hdur;
-            float divisor = sqrt(4*atan(1.0) /*pi*/);
-            for (i=0; i<nstf; i++) {
-                float tao_i = fabs(i*dt - hstf);
-                stf[i] = alpha * exp(- alpha*alpha* tao_i*tao_i) / divisor;
-            }
-        }
+            hdur = hdur/decay_rate;
 
+//            for (i=0; i<nstf/2; i++)
+//                stf[i] = i * dt / (hstf * hstf);
+//           for (i=nstf/2; i<nstf; i++)
+//                stf[i] = (2 * hstf - i * dt)/ (hstf*hstf);
+        }
+        printf("convolved by a gaussian function with hdur %f\n",hdur);
+
+        float alpha = 1. / hdur;
+        float divisor = sqrt(pi);
+        for (i=0; i<nstf; i++) {
+           float tao_i = fabs(i*dt - hstf);
+           stf[i] = alpha * exp(- alpha*alpha* tao_i*tao_i) / divisor;
+        }
 
         /* creat convolution time series */
         convolve(&conv,&nconv,data,npts,stf,nstf);
