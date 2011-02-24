@@ -43,7 +43,7 @@
                       iprocfrom_faces,iprocto_faces,imsg_type, &
                       iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
                       buffer_send_faces_scalar,buffer_received_faces_scalar, &
-                      buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+                      buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
                       NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
                       NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,npoin2D_max_all_CM_IC)
 
@@ -100,7 +100,7 @@
 
   ! buffers for send and receive between corners of the chunks
   real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_CM) :: &
-    buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
+    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar
 
   integer NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS
 
@@ -126,7 +126,7 @@
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
@@ -141,7 +141,7 @@
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
@@ -155,7 +155,7 @@
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)
@@ -169,7 +169,7 @@
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)

@@ -506,8 +506,9 @@ $O/combine_vol_data.o: constants.h OUTPUT_FILES/values_from_mesher.h $S/combine_
 $O/comp_source_spectrum.o: constants.h $S/comp_source_spectrum.f90
 	${FCCOMPILE_CHECK} -c -o $O/comp_source_spectrum.o ${FCFLAGS_f90} $S/comp_source_spectrum.f90
 
+## DK DK added -O1 here for now, because compiling compute_arrays_source.f90 with -O3 currently takes forever...
 $O/compute_arrays_source.o: constants.h $S/compute_arrays_source.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} $S/compute_arrays_source.f90
+	${FCCOMPILE_CHECK} -O1 -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} $S/compute_arrays_source.f90
 
 $O/compute_boundary_kernel.o: constants.h $S/compute_boundary_kernel.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_boundary_kernel.o ${FCFLAGS_f90} $S/compute_boundary_kernel.f90

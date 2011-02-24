@@ -40,7 +40,7 @@
           iprocfrom_faces,iprocto_faces, &
           iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
           buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-          buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar,iphase,icall, &
+          buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
                             hprime_xx,hprime_xxT, &
                             hprimewgll_xx,hprimewgll_xxT, &
                             wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
@@ -159,7 +159,7 @@
 
   integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_OC) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
+  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_OC) :: buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar
 
   logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
 
@@ -192,7 +192,7 @@
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_OC, &
             NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,NGLOB2DMAX_XY_VAL,NCHUNKS_VAL,iphase)

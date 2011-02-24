@@ -41,7 +41,7 @@
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector,iphase, &
+            buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector,iphase, &
             nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
             npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
             receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,INCLUDE_CENTRAL_CUBE,iphase_CC, &
@@ -250,7 +250,7 @@
 
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
-     buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
+     buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector
 
 ! for matching with central cube in inner core
   integer nb_msgs_theor_in_cube, npoin2D_cube_from_slices,iphase_CC
@@ -294,7 +294,7 @@
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
             NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
             NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)

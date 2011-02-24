@@ -40,22 +40,24 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
 ! for matching with central cube in inner core
-  integer ichunk, nb_msgs_theor_in_cube, npoin2D_cube_from_slices,iphase_CC
-  integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
-  double precision, dimension(npoin2D_cube_from_slices,ndim_assemble) :: buffer_slices
-  double precision, dimension(npoin2D_cube_from_slices,ndim_assemble,nb_msgs_theor_in_cube) :: buffer_all_cube_from_slices
-  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
-  integer receiver_cube_from_slices
+  integer, intent(in) :: ichunk, nb_msgs_theor_in_cube, npoin2D_cube_from_slices
+  integer, intent(inout) :: iphase_CC
+  integer, dimension(nb_msgs_theor_in_cube), intent(in) :: sender_from_slices_to_cube
+  double precision, dimension(npoin2D_cube_from_slices,ndim_assemble), intent(inout) :: buffer_slices
+  double precision, dimension(npoin2D_cube_from_slices,ndim_assemble,nb_msgs_theor_in_cube), intent(inout) :: &
+                                                                                       buffer_all_cube_from_slices
+  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices), intent(in) :: ibool_central_cube
+  integer, intent(in) :: receiver_cube_from_slices
 
 ! local to global mapping
-  integer NSPEC2D_BOTTOM_INNER_CORE
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
-  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
-  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
+  integer, intent(in) :: NSPEC2D_BOTTOM_INNER_CORE
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), intent(in) :: ibool_inner_core
+  integer, dimension(NSPEC_INNER_CORE), intent(in) :: idoubling_inner_core
+  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE), intent(in) :: ibelm_bottom_inner_core
 
 ! vector
-  integer ndim_assemble
-  real(kind=CUSTOM_REAL), dimension(ndim_assemble,NGLOB_INNER_CORE) :: vector_assemble
+  integer, intent(in) :: ndim_assemble
+  real(kind=CUSTOM_REAL), dimension(ndim_assemble,NGLOB_INNER_CORE), intent(inout) :: vector_assemble
 
   integer ipoin,idimension, ispec2D, ispec
   integer i,j,k
