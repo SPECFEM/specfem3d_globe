@@ -37,7 +37,7 @@
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
             NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS,iphase)
@@ -53,41 +53,43 @@
   integer myrank,nglob,NCHUNKS,iphase
 
 ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(nglob) :: array_val
+  real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val
 
-  integer iproc_xi,iproc_eta,ichunk
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi,npoin2D_eta
-  integer npoin2D_faces(NUMFACES_SHARED)
+  integer, intent(in) :: iproc_xi,iproc_eta,ichunk
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR), intent(in) :: npoin2D_xi,npoin2D_eta
+  integer, intent(in) :: npoin2D_faces(NUMFACES_SHARED)
 
-  integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY
-  integer NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL
-  integer NUMMSGS_FACES,NCORNERSCHUNKS
+  integer, intent(in) :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY
+  integer, intent(in) :: NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL
+  integer, intent(in) :: NUMMSGS_FACES,NCORNERSCHUNKS
 
 ! for addressing of the slices
-  integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
+  integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1), intent(in) :: addressing
 
 ! 2-D addressing and buffers for summation between slices
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX) :: iboolleft_eta,iboolright_eta
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX), intent(in) :: iboolleft_xi,iboolright_xi
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX), intent(in) :: iboolleft_eta,iboolright_eta
 
 ! indirect addressing for each corner of the chunks
-  integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
+  integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED), intent(in) :: iboolcorner
   integer icount_corners
 
-  integer :: npoin2D_max_all_CM_IC
-  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: buffer_send_faces_scalar,buffer_received_faces_scalar
+  integer, intent(in) :: npoin2D_max_all_CM_IC
+  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED), intent(in) :: iboolfaces
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC,NUMFACES_SHARED), intent(inout) :: buffer_send_faces_scalar, &
+                                                                                             buffer_received_faces_scalar
 
 ! buffers for send and receive between corners of the chunks
-  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
+  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL), intent(inout) :: buffer_send_chunkcorn_scalar, &
+                                                                      buffer_recv_chunkcorn_scalar
 
 ! ---- arrays to assemble between chunks
 
 ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES) :: iprocfrom_faces,iprocto_faces
+  integer, dimension(NUMMSGS_FACES), intent(in) :: iprocfrom_faces,iprocto_faces
 
 ! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+  integer, dimension(NCORNERSCHUNKS), intent(in) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
 ! MPI status of messages to be received
   integer, dimension(MPI_STATUS_SIZE) :: msg_status
@@ -492,21 +494,21 @@
 
 ! receive from worker #1 and add to local array
     sender = iproc_worker1_corners(imsg)
-    call MPI_RECV(buffer_recv_chunkcorners_scalar,NGLOB1D_RADIAL, &
+    call MPI_RECV(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
     do ipoin1D=1,NGLOB1D_RADIAL
       array_val(iboolcorner(ipoin1D,icount_corners)) = array_val(iboolcorner(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_scalar(ipoin1D)
+               buffer_recv_chunkcorn_scalar(ipoin1D)
     enddo
 
 ! receive from worker #2 and add to local array
   if(NCHUNKS /= 2) then
     sender = iproc_worker2_corners(imsg)
-    call MPI_RECV(buffer_recv_chunkcorners_scalar,NGLOB1D_RADIAL, &
+    call MPI_RECV(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
     do ipoin1D=1,NGLOB1D_RADIAL
       array_val(iboolcorner(ipoin1D,icount_corners)) = array_val(iboolcorner(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_scalar(ipoin1D)
+               buffer_recv_chunkcorn_scalar(ipoin1D)
     enddo
   endif
 
@@ -518,9 +520,9 @@
 
     receiver = iproc_master_corners(imsg)
     do ipoin1D=1,NGLOB1D_RADIAL
-      buffer_send_chunkcorners_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
     enddo
-    call MPI_SEND(buffer_send_chunkcorners_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
+    call MPI_SEND(buffer_send_chunkcorn_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
               receiver,itag,MPI_COMM_WORLD,ier)
 
   endif
@@ -535,10 +537,10 @@
 
 ! receive from master and copy to local array
     sender = iproc_master_corners(imsg)
-    call MPI_RECV(buffer_recv_chunkcorners_scalar,NGLOB1D_RADIAL, &
+    call MPI_RECV(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
     do ipoin1D=1,NGLOB1D_RADIAL
-      array_val(iboolcorner(ipoin1D,icount_corners)) = buffer_recv_chunkcorners_scalar(ipoin1D)
+      array_val(iboolcorner(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_scalar(ipoin1D)
     enddo
 
   endif
@@ -547,18 +549,18 @@
   if(myrank==iproc_master_corners(imsg)) then
 
     do ipoin1D=1,NGLOB1D_RADIAL
-      buffer_send_chunkcorners_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
     enddo
 
 ! send to worker #1
     receiver = iproc_worker1_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorners_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
+    call MPI_SEND(buffer_send_chunkcorn_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
               receiver,itag,MPI_COMM_WORLD,ier)
 
 ! send to worker #2
   if(NCHUNKS /= 2) then
     receiver = iproc_worker2_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorners_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
+    call MPI_SEND(buffer_send_chunkcorn_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
               receiver,itag,MPI_COMM_WORLD,ier)
   endif
 

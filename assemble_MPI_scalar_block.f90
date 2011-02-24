@@ -37,7 +37,7 @@
             iprocfrom_faces,iprocto_faces,imsg_type, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL, &
             NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NCHUNKS)
@@ -81,7 +81,7 @@
   real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: buffer_send_faces_scalar,buffer_received_faces_scalar
 
 ! buffers for send and receive between corners of the chunks
-  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL) :: buffer_send_chunkcorners_scalar,buffer_recv_chunkcorners_scalar
+  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL) :: buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar
 
 ! ---- arrays to assemble between chunks
 
@@ -361,21 +361,21 @@
 
 ! receive from worker #1 and add to local array
     sender = iproc_worker1_corners(imsg)
-    call MPI_RECV(buffer_recv_chunkcorners_scalar,NGLOB1D_RADIAL, &
+    call MPI_RECV(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
     do ipoin1D=1,NGLOB1D_RADIAL
       array_val(iboolcorner(ipoin1D,icount_corners)) = array_val(iboolcorner(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_scalar(ipoin1D)
+               buffer_recv_chunkcorn_scalar(ipoin1D)
     enddo
 
 ! receive from worker #2 and add to local array
   if(NCHUNKS /= 2) then
     sender = iproc_worker2_corners(imsg)
-    call MPI_RECV(buffer_recv_chunkcorners_scalar,NGLOB1D_RADIAL, &
+    call MPI_RECV(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
     do ipoin1D=1,NGLOB1D_RADIAL
       array_val(iboolcorner(ipoin1D,icount_corners)) = array_val(iboolcorner(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_scalar(ipoin1D)
+               buffer_recv_chunkcorn_scalar(ipoin1D)
     enddo
   endif
 
@@ -387,9 +387,9 @@
 
     receiver = iproc_master_corners(imsg)
     do ipoin1D=1,NGLOB1D_RADIAL
-      buffer_send_chunkcorners_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
     enddo
-    call MPI_SEND(buffer_send_chunkcorners_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
+    call MPI_SEND(buffer_send_chunkcorn_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
               receiver,itag,MPI_COMM_WORLD,ier)
 
   endif
@@ -404,10 +404,10 @@
 
 ! receive from master and copy to local array
     sender = iproc_master_corners(imsg)
-    call MPI_RECV(buffer_recv_chunkcorners_scalar,NGLOB1D_RADIAL, &
+    call MPI_RECV(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
     do ipoin1D=1,NGLOB1D_RADIAL
-      array_val(iboolcorner(ipoin1D,icount_corners)) = buffer_recv_chunkcorners_scalar(ipoin1D)
+      array_val(iboolcorner(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_scalar(ipoin1D)
     enddo
 
   endif
@@ -416,18 +416,18 @@
   if(myrank==iproc_master_corners(imsg)) then
 
     do ipoin1D=1,NGLOB1D_RADIAL
-      buffer_send_chunkcorners_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
     enddo
 
 ! send to worker #1
     receiver = iproc_worker1_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorners_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
+    call MPI_SEND(buffer_send_chunkcorn_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
               receiver,itag,MPI_COMM_WORLD,ier)
 
 ! send to worker #2
   if(NCHUNKS /= 2) then
     receiver = iproc_worker2_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorners_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
+    call MPI_SEND(buffer_send_chunkcorn_scalar,NGLOB1D_RADIAL,CUSTOM_MPI_TYPE, &
               receiver,itag,MPI_COMM_WORLD,ier)
   endif
 

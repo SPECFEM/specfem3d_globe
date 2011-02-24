@@ -42,7 +42,7 @@
             iprocfrom_faces,iprocto_faces, &
             iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
             buffer_send_faces_vector,buffer_received_faces_vector,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector, &
+            buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
             NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL_crust_mantle, &
             NGLOB1D_RADIAL_inner_core,NCHUNKS,iphase)
@@ -61,51 +61,51 @@
   integer myrank,NCHUNKS,iphase
 
 ! the two arrays to assemble
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE), intent(inout) :: accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE), intent(inout) :: accel_inner_core
 
-  integer iproc_xi,iproc_eta,ichunk
-  integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
-  integer npoin2D_faces_inner_core(NUMFACES_SHARED)
+  integer, intent(in) :: iproc_xi,iproc_eta,ichunk
+  integer, intent(in) :: npoin2D_faces_crust_mantle(NUMFACES_SHARED)
+  integer, intent(in) :: npoin2D_faces_inner_core(NUMFACES_SHARED)
 
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR), intent(in) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
         npoin2D_xi_inner_core,npoin2D_eta_inner_core
 
-  integer NGLOB1D_RADIAL_crust_mantle,NGLOB1D_RADIAL_inner_core,NPROC_XI,NPROC_ETA
-  integer NUMMSGS_FACES,NCORNERSCHUNKS
+  integer, intent(in) :: NGLOB1D_RADIAL_crust_mantle,NGLOB1D_RADIAL_inner_core,NPROC_XI,NPROC_ETA
+  integer, intent(in) :: NUMMSGS_FACES,NCORNERSCHUNKS
 
 ! for addressing of the slices
-  integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
+  integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1), intent(in) :: addressing
 
 ! 2-D addressing and buffers for summation between slices
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM), intent(in) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM), intent(in) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC), intent(in) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC), intent(in) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
 
 ! indirect addressing for each corner of the chunks
-  integer, dimension(NGLOB1D_RADIAL_crust_mantle,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
-  integer, dimension(NGLOB1D_RADIAL_inner_core,NUMCORNERS_SHARED) :: iboolcorner_inner_core
+  integer, dimension(NGLOB1D_RADIAL_crust_mantle,NUMCORNERS_SHARED), intent(in) :: iboolcorner_crust_mantle
+  integer, dimension(NGLOB1D_RADIAL_inner_core,NUMCORNERS_SHARED), intent(in) :: iboolcorner_inner_core
   integer icount_corners
 
-  integer :: npoin2D_max_all_CM_IC
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: &
+  integer, intent(in) :: npoin2D_max_all_CM_IC
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED), intent(in) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED), intent(in) :: iboolfaces_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), intent(inout) :: &
       buffer_send_faces_vector,buffer_received_faces_vector
 
 ! buffers for send and receive between corners of the chunks
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_crust_mantle + NGLOB1D_RADIAL_inner_core) :: &
-    buffer_send_chunkcorners_vector,buffer_recv_chunkcorners_vector
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_crust_mantle + NGLOB1D_RADIAL_inner_core), intent(inout) :: &
+    buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector
 
 ! ---- arrays to assemble between chunks
 
 ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES) :: iprocfrom_faces,iprocto_faces
+  integer, dimension(NUMMSGS_FACES), intent(in) :: iprocfrom_faces,iprocto_faces
 
 ! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+  integer, dimension(NCORNERSCHUNKS), intent(in) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
 ! MPI status of messages to be received
   integer, dimension(MPI_STATUS_SIZE) :: msg_status
@@ -741,31 +741,31 @@
 ! receive from worker #1 and add to local array
     sender = iproc_worker1_corners(imsg)
 
-    call MPI_RECV(buffer_recv_chunkcorners_vector,NDIM*NGLOB1D_RADIAL_all, &
+    call MPI_RECV(buffer_recv_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
       accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
                accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(1,ipoin1D)
+               buffer_recv_chunkcorn_vector(1,ipoin1D)
       accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
                accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(2,ipoin1D)
+               buffer_recv_chunkcorn_vector(2,ipoin1D)
       accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
                accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(3,ipoin1D)
+               buffer_recv_chunkcorn_vector(3,ipoin1D)
     enddo
 
     do ipoin1D = 1,NGLOB1D_RADIAL_inner_core
       accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners)) = &
                accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(1,ioffset + ipoin1D)
+               buffer_recv_chunkcorn_vector(1,ioffset + ipoin1D)
       accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners)) = &
                accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(2,ioffset + ipoin1D)
+               buffer_recv_chunkcorn_vector(2,ioffset + ipoin1D)
       accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners)) = &
                accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(3,ioffset + ipoin1D)
+               buffer_recv_chunkcorn_vector(3,ioffset + ipoin1D)
     enddo
 
 ! receive from worker #2 and add to local array
@@ -773,31 +773,31 @@
 
     sender = iproc_worker2_corners(imsg)
 
-    call MPI_RECV(buffer_recv_chunkcorners_vector,NDIM*NGLOB1D_RADIAL_all, &
+    call MPI_RECV(buffer_recv_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
       accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
                accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(1,ipoin1D)
+               buffer_recv_chunkcorn_vector(1,ipoin1D)
       accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
                accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(2,ipoin1D)
+               buffer_recv_chunkcorn_vector(2,ipoin1D)
       accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
                accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(3,ipoin1D)
+               buffer_recv_chunkcorn_vector(3,ipoin1D)
     enddo
 
     do ipoin1D = 1,NGLOB1D_RADIAL_inner_core
       accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners)) = &
                accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(1,ioffset + ipoin1D)
+               buffer_recv_chunkcorn_vector(1,ioffset + ipoin1D)
       accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners)) = &
                accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(2,ioffset + ipoin1D)
+               buffer_recv_chunkcorn_vector(2,ioffset + ipoin1D)
       accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners)) = &
                accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners)) + &
-               buffer_recv_chunkcorners_vector(3,ioffset + ipoin1D)
+               buffer_recv_chunkcorn_vector(3,ioffset + ipoin1D)
     enddo
 
   endif
@@ -811,18 +811,18 @@
     receiver = iproc_master_corners(imsg)
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
-      buffer_send_chunkcorners_vector(1,ipoin1D) = accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners))
-      buffer_send_chunkcorners_vector(2,ipoin1D) = accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners))
-      buffer_send_chunkcorners_vector(3,ipoin1D) = accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(1,ipoin1D) = accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(2,ipoin1D) = accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(3,ipoin1D) = accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners))
     enddo
 
     do ipoin1D = 1,NGLOB1D_RADIAL_inner_core
-      buffer_send_chunkcorners_vector(1,ioffset + ipoin1D) = accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners))
-      buffer_send_chunkcorners_vector(2,ioffset + ipoin1D) = accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners))
-      buffer_send_chunkcorners_vector(3,ioffset + ipoin1D) = accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(1,ioffset + ipoin1D) = accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(2,ioffset + ipoin1D) = accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(3,ioffset + ipoin1D) = accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners))
     enddo
 
-    call MPI_SEND(buffer_send_chunkcorners_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call MPI_SEND(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
 
   endif
 
@@ -837,19 +837,19 @@
 ! receive from master and copy to local array
     sender = iproc_master_corners(imsg)
 
-    call MPI_RECV(buffer_recv_chunkcorners_vector,NDIM*NGLOB1D_RADIAL_all, &
+    call MPI_RECV(buffer_recv_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all, &
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
-      accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorners_vector(1,ipoin1D)
-      accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorners_vector(2,ipoin1D)
-      accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorners_vector(3,ipoin1D)
+      accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(1,ipoin1D)
+      accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(2,ipoin1D)
+      accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(3,ipoin1D)
     enddo
 
     do ipoin1D = 1,NGLOB1D_RADIAL_inner_core
-      accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners)) = buffer_recv_chunkcorners_vector(1,ioffset + ipoin1D)
-      accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners)) = buffer_recv_chunkcorners_vector(2,ioffset + ipoin1D)
-      accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners)) = buffer_recv_chunkcorners_vector(3,ioffset + ipoin1D)
+      accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(1,ioffset + ipoin1D)
+      accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(2,ioffset + ipoin1D)
+      accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(3,ioffset + ipoin1D)
     enddo
 
   endif
@@ -858,25 +858,25 @@
   if(myrank==iproc_master_corners(imsg)) then
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
-      buffer_send_chunkcorners_vector(1,ipoin1D) = accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners))
-      buffer_send_chunkcorners_vector(2,ipoin1D) = accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners))
-      buffer_send_chunkcorners_vector(3,ipoin1D) = accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(1,ipoin1D) = accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(2,ipoin1D) = accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(3,ipoin1D) = accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners))
     enddo
 
     do ipoin1D = 1,NGLOB1D_RADIAL_inner_core
-      buffer_send_chunkcorners_vector(1,ioffset + ipoin1D) = accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners))
-      buffer_send_chunkcorners_vector(2,ioffset + ipoin1D) = accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners))
-      buffer_send_chunkcorners_vector(3,ioffset + ipoin1D) = accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(1,ioffset + ipoin1D) = accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(2,ioffset + ipoin1D) = accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(3,ioffset + ipoin1D) = accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners))
     enddo
 
 ! send to worker #1
     receiver = iproc_worker1_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorners_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call MPI_SEND(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
 
 ! send to worker #2
   if(NCHUNKS /= 2) then
     receiver = iproc_worker2_corners(imsg)
-    call MPI_SEND(buffer_send_chunkcorners_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
+    call MPI_SEND(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
 
   endif
 
