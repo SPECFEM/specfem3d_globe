@@ -9,7 +9,7 @@ print STDERR <<END;
 
 Usage:   process_syn_new.pl
      -S -m CMTFILE -h -o offset -lStart/End -tTmin/Tmax -f -P n/p
-     -i Dir -A amp_factor -p -a STAFILE -s sps -y t0/V0/t1/V1...
+     -i Dir/data-comp -A amp_factor -p -a STAFILE -s sps -y t0/V0/t1/V1...
      -c -d OutDir -x Ext  synthetics_files
 where
     -S already sac file, will not apply ascii2sac.csh
@@ -20,7 +20,8 @@ where
     -t Tmin/Tmax -- shortest/longest period of bandpass filter
     -f -- apply transfer filter instead of butterworth filter for -t
     -P -- number of poles and passes in butterworth filter(default 4/2)
-    -i Dir -- convolve synthetics with instrument response in Dir
+    -i Dir/data-comp -- convolve synthetics with instrument response for
+                        given data channel in Dir
     -A amp_factor -- multiple all files with an amplification factor
     -p -- pick P and S arrivals according to iasp91 model to t1/t2 headers
     -a STAFILE -- add station information from STAFILE, use "-a none"
@@ -57,10 +58,14 @@ else{($poles,$pass)=split(/\//,$opt_P);
      if(not defined $pass or $pass<1){$pass=2;}}
 if ($opt_l) {($lmin,$lmax) = split(/\//,$opt_l);} 
 else {$lmin = 0; $lmax = 3600;}
-if ($opt_a and not -f $opt_a) {$opt_a="/opt/seismo/data/STATIONS_new";}
+if ($opt_a) {$stafile=$opt_a;
+   if (not -f $stafile) {$sta_file="/opt/seismo/data/STATIONS_new";}}
 if ($opt_o and not $opt_m) {die("Specify centroid time first\n");}
 if ($opt_d and not -d $opt_d) {die("No such directory as $opt_d\n");}
-if ($opt_i and not -d $opt_i) {die("No such directory as $opt_i\n");}
+if ($opt_i) {
+  ($ins_dir,$cmpd) = split(/\//,$opt_i);
+  if (not -d $ins_dir) {die("No such resp directory as $ins_dir\n");}
+  if (not defined $cmpd) {$cmpd="LH";}  @cmpd=split(//,$cmpd);}
 if ($opt_A) {if ($opt_A !~ /^\d/) {die("-A option should be numbers\n");}}
 if ($opt_f) {
   if (not $opt_t) {die("-t tmin/tmax has to be specified for -f\n");}
@@ -70,8 +75,9 @@ $undef = -12345;
 $eps = 0.1;
 
 $saclst="saclst";
-$phtimes="./phtimes.csh";
+$phtimes="phtimes.csh";
 $asc2sac="ascii2sac.csh";
+$convolve_stf="convolve_stf";
 
 #if (! -e $saclst)  {die(" No $saclst file\n");}
 #if (! -e $phtimes) {die("No $phtimes file\n");}
@@ -125,7 +131,7 @@ foreach $file (@ARGV) {
   if ($opt_h and $hdur > $min_hdur) { # convolve source time function
     print SAC "quit\n";
     close(SAC);
-    system("/opt/seismo-utils/bin/convolve_stf g $hdur $outfile");
+    system("$convolve_stf t $hdur  $outfile");
     system("mv ${outfile}.conv ${outfile}");
     if ($opt_c) {open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
     print SAC "echo on\n r $outfile\n";}
@@ -137,20 +143,15 @@ foreach $file (@ARGV) {
     if    ($comp=~/E/) {print SAC "ch cmpaz 90 cmpinc 90\n";}
     elsif ($comp=~/N/) {print SAC "ch cmpaz 0 cmpinc 90\n";}
     elsif ($comp=~/Z/) {print SAC "ch cmpaz 0 cmpinc 0 \n";}
-    if (! -f $opt_a ) {die(" No such files: $opt_a");}
-    ($sta_name,$sta_net,$sta_lat,$sta_lon,$sta_ele,$sta_bur)=split(" ",`egrep '$sta +$net' $opt_a`);
+    if (! -f $stafile ) {die(" No such files: $stafile");}
+    ($sta_name,$sta_net,$sta_lat,$sta_lon,$sta_ele,$sta_bur)=split(" ",`egrep '$sta +$net' $stafile`);
     if (not defined $sta_name) {
-      print("No such station $sta+$net in $opt_a file\n");
-      ($sta_name,$sta_net,$sta_lat,$sta_lon,$sta_ele,$sta_bur)=split(" ",`egrep '$sta' $opt_a`);
+      print("No such station $sta+$net in $stafile file\n");
+      ($sta_name,$sta_net,$sta_lat,$sta_lon,$sta_ele,$sta_bur)=split(" ",`egrep '$sta' $stafile`);
       if (not defined $sta_name) {
-         print " No such station as $sta in the $opt_a file\n";
+         print " No such station as $sta in the $stafile  file\n";
          $sta_text .="$sta ";}}
     print SAC "ch stla $sta_lat stlo $sta_lon stel $sta_ele stdp $sta_bur\nwh\n";}
-
-   print SAC "w over\nquit\n";
-   close(SAC);
-   if ($opt_c) { open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
-   print SAC "echo on\n r $outfile\n ";
 
   if ($opt_l) { #cut record
      print SAC "setbb begin ( max &1,b ( &1,o + $lmin ) ) \n";
@@ -160,6 +161,11 @@ foreach $file (@ARGV) {
      print SAC "cut off\n";}
 
   if ($opt_A) {print SAC "mul $opt_A\n";}
+
+   print SAC "w over\nquit\n";
+   close(SAC);
+   if ($opt_c) { open(SAC,"|sac");}else {open(SAC,"|sac > /dev/null");}
+   print SAC "echo on\n r $outfile\n ";
 
   if ($opt_t)  { # filter record
     print "Filtering records...\n";
@@ -172,8 +178,10 @@ foreach $file (@ARGV) {
  
   if ($opt_i) {# convolve with instrument response
     print "Convolving instrument response...\n";
+    @cmpc=split(//,$comp);
+    $comp=$cmpd[0].$cmpd[1].$cmpc[2];
     $pzfile="SAC_PZs_${net}_${sta}_${comp}_";
-    @nfiles=`ls -l $opt_i/${pzfile}* | awk '{print \$9}'`;
+    @nfiles=`ls -l $ins_dir/${pzfile}* | awk '{print \$9}'`;
     if (@nfiles != 1) {die("Pzfile is incorrect: \n@nfiles files\n");}
     $pz=$nfiles[0]; chomp($pz);
     if (! -f $pz) {die("Not a pz file $pz\n");}

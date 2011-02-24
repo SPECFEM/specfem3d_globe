@@ -7,7 +7,8 @@ use POSIX;
 sub Usage{
   print STDERR <<END;
 
-  process_data_new.pl -m CMTFILE -l Start/End -t Ts/Tl -f -i -R resp_dir
+  process_data_new.pl -m CMTFILE -l Start/End 
+                      -t Ts/Tl -h hdur -f -i -R resp_dir
                       -p -s Sps -P n/p -T Taper_width -c -y t1/v1/...
                       -x Ext -d OutDir
                       data_sac_files
@@ -17,9 +18,10 @@ sub Usage{
        -a STAFILE -- add station information from STAFILE, use '-a none' to get
             information from Vala''s station file.
        -l Start/End -- start and end of record from o
-       -t Ts/Tl -- shortest and longest period
-       -f -- do not apply butterworth filter before deconvolution
-       -i -- transfer record to displacement
+       -t Ts/Tl -- shortest and longest period (used in filters and ins transfer)
+       -i -- transfer record to displacement based on instrument response
+       -f -- transfer record only, no extra filtering
+               (possible scenarios: -i/-R -t; -i/-R -t -h; -i/-R -t -f; 
        -R resp_dir -- transfer record using RESP file in resp_dir
        -p -- pick event p and s first arrival into sac headers (t1 and t2)
        -x Ext -- extension of new file name
@@ -35,32 +37,35 @@ sub Usage{
  Notice:
   1. We require that polezero files in the same directory as the sac 
      data files which is generally satisfied. We require that resp dir
-     be specified even if it is current(.). All needed info is
+     be specified even if it is current(.). All the needed info is
      taken from sac headers
   2. Origin time is set to PDE + time_shift (given by the CMTSOLUTION)
   3. The displacement outputs after -i option are in the unit of meters
   4. For BH? components, please set -s 20, otherwise interpolation to
      1 sample/second will be performed
-
- NOTE: Please make sure that SAC, saclst and IASP91 packages are installed properly on 
-       your system, and that all related env variables are set properly before
-       running the script.
  
-  Qinya Liu, originally written in Oct 2002; updated in Jan 2011
+  Qinya Liu, Originally written in Oct, 2002; updated in Nov 2009
 END
   exit(1);
 }
 
+$saclst="saclst";
+$phtimes="./phtimes.csh";
+
 if (@ARGV == 0) { Usage(); }
 
-if (!getopts('m:a:l:t:fiR:px:d:s:P:T:y:c')) {die('Check input arguments\n');}
+if (!getopts('m:a:l:t:iR:px:d:s:P:T:y:ch:f')) {die('Check input arguments\n');}
 
 if ($opt_m and not -f $opt_m) {die("Check if file $opt_m exists\n");}
-if ($opt_a and not -f $opt_a) {$opt_a="/opt/seismo-util/data/STATIONS_new";}
+if ($opt_a and not -f $opt_a) {$opt_a="/opt/seismo/datalib/stations/STATIONS_LH";}
 if ($opt_R and not -d $opt_R) {die("Check if dir $opt_R exists\n");}
 
+# check the use of -h to with -I
+if ($opt_h and !($opt_I or $opt_R)) {die("-h and -I/-R should appear in pairs\n");}
+if ($opt_h) {$hdur_input=$opt_h;}
 if ($opt_t) {($tmin, $tmax) = split(/\//,$opt_t);
 	     $f1 = 1./$tmax;  $f2=1./$tmin;}
+
 if ($opt_d) {
   $out_dir=$opt_d; if (not -d $out_dir) {mkdir($out_dir,0777);}
 }
@@ -72,11 +77,8 @@ else{($poles,$pass)=split(/\//,$opt_P);
 }
 if (!$opt_T) {$opt_T = 0.05;}
 if ($opt_l) {($lmin,$lmax) = split(/\//,$opt_l);} else {$lmin = 0; $lmax = 3600;}
-
 if ($opt_f and not ($opt_R or $opt_i)) {die("-f option goes together with -i or -R\n");}
 
-$saclst="saclst";
-$phtimes="./phtimes.csh";
 
 $eps=1e-5; $undef=-12345.0; $cundef="-12345";
 
@@ -132,7 +134,7 @@ foreach $file (@ARGV) {
      print SAC "echo on\n";
      print SAC "r $outfile\n";}
 
-  if ($opt_l){  # cut record 
+  if ($opt_l){  # cut record and rtrend and rmean
     print "    Cut the record from o+$lmin to o+$lmax\n";
     (undef,$tmp_o)=split(" ",`$saclst o f $outfile`);
     if (abs($tmp_o-$undef) < $eps) {die("O has not been set to cut record\n");}
@@ -146,18 +148,10 @@ foreach $file (@ARGV) {
     print SAC "echo on\n";
     print SAC "r $outfile\n";}
 
-
-  if ($opt_t and not $opt_f) {# filter records
-    print "    Filter record at periods $tmin and $tmax\n";
-    print SAC "rtrend\n rmean\n taper width $opt_T\n";
-    printf SAC ("bp n %4d p $pass cor %12.6f %12.6f\n",$poles,$f1,$f2);
-    printf SAC " rtrend\n rmean\n taper width $opt_T\n";}
-
   if ($opt_i or $opt_R) {  # transfer instrument response
     if (! $opt_t) {die(" Specify bandpass range by -t\n");}
     $f0=$f1*0.8;
     $f3=$f2*1.2;
-    print SAC "rtrend\n rmean\n taper width $opt_T\n";
     (undef,$network,$sta,$comp,$khole)=split(" ",`$saclst knetwk kstnm kcmpnm khole f $outfile`);
     if ($network eq $cundef or $sta eq $cundef or $comp eq $cundef or $khole eq $cundef) {
       die("No network station name or component name or khole defined in $outfile\n");}
@@ -177,11 +171,27 @@ foreach $file (@ARGV) {
 	printf SAC ("trans from evalresp fname $respfile to none freq %12.6f%12.6f%12.6f%12.6f \n",
 		  $f0,$f1,$f2,$f3);
 	printf SAC "mul 1e-9\n"; }}
-    printf SAC " rtrend\n rmean\n taper width $opt_T\n";
   }
 
-  if ($opt_s)  {print SAC "interp delta $dt\n";
-                print SAC "w over\n";}
+  if ($opt_t and not $opt_h and not $opt_f) {# butterworth filter
+    print "    Filter record at periods $tmin and $tmax\n";
+    print SAC "rtrend\n rmean\n taper width $opt_T\n";
+    printf SAC ("bp n %4d p $pass cor %12.6f %12.6f\n",$poles,$f1,$f2);
+    printf SAC " rtrend\n rmean\n taper width $opt_T\n";}
+
+  elsif ($opt_h and not $opt_f) { # gaussian filter
+    print SAC "rtrend\n rmean\n taper width $opt_T\n";
+    print SAC "w $outfile \nquit\n";
+    close(SAC);
+    system("convolve_stf t $hdur_input 1 $outfile");
+    if ($? != 0) {die("Check if |convolve_stf t $hdur_input 1 $outfile| was successfully run\n");}
+    system("mv -f ${outfile}.conv $outfile");
+    if ($opt_c) {open(SAC,"|sac  ") || die("Can't open sac\n");}
+    else {open(SAC,"|sac >sac_out.log ") || die("Can't open sac\n");}
+    print SAC "echo on\n r $outfile\n";
+  }
+
+  if ($opt_s)  {print SAC "interp delta $dt\n";}
 
   if ($opt_p) { # add p and s arrival info
     print "    Add first P and S arrival information\n";
@@ -208,7 +218,6 @@ foreach $file (@ARGV) {
       printf SAC ("ch $h1 %12.2f\n",$v1);
       print SAC "ch $k1 $h1\n";}}
 
-#  print "   write file $outfile\n";
   print SAC "w $outfile\n";
   print SAC "echo off\nquit\n";
   close(SAC);

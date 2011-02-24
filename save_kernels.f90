@@ -741,6 +741,7 @@
   !  Mrt = -Mzn
   !  Mrp =  Mze
   !  Mtp = -Mne
+  ! for consistency, location derivatives are in the order of [Xr,Xt,Xp]
   ! minus sign for sloc_der(3,irec_local) to get derivative for depth instead of radius
 
     write(27,'(g16.5)') moment_der(3,3,irec_local) * 1e-7
