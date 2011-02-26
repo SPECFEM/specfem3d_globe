@@ -1,13 +1,13 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
 #          --------------------------------------------------
 #
 #          Main authors: Dimitri Komatitsch and Jeroen Tromp
 #                        Princeton University, USA
 #             and University of Pau / CNRS / INRIA, France
 # (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-#                            March 2010
+#                            February 2011
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -240,7 +240,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/specfem3D.o \
 	$O/write_movie_volume.o \
 	$O/write_movie_surface.o \
-        $O/noise_tomography.o \
+	$O/noise_tomography.o \
 	$(EMPTY_MACRO)
 
 XCREATE_HEADER_OBJECTS = \
@@ -354,7 +354,6 @@ xcreate_movie_GMT_global: $O/create_movie_GMT_global.o $(XCREATE_HEADER_OBJECTS)
 
 xextract_database: $(S_TOP)/UTILS/extract_database/extract_database.f90
 	${FCCOMPILE_CHECK} -o xextract_database $(S_TOP)/UTILS/extract_database/extract_database.f90
-
 
 clean:
 	rm -f $O/* *.o work.pc* *.mod xmeshfem3D xspecfem3D xcombine_AVS_DX \
@@ -883,3 +882,4 @@ $O/write_c_binary.o: $S/write_c_binary.c $(S_TOP)/setup/config.h
 OUTPUT_FILES/values_from_mesher.h: xcreate_header_file
 	mkdir -p OUTPUT_FILES
 	./xcreate_header_file
+
