@@ -51,8 +51,8 @@ echo starting MPI mesher on $numnodes processors
 echo " "
 
 sleep 2 
-mpirun --hostfile $LSB_DJOB_HOSTFILE -n $numnodes $PWD/xmeshfem3D
-#mpirun.lsf $PWD/xmeshfem3D
+mpirun --hostfile $LSB_DJOB_HOSTFILE -n $numnodes $PWD/bin/xmeshfem3D
+#mpirun.lsf $PWD/bin/xmeshfem3D
 
 # backup important files addressing.txt and list*.txt 
 cp OUTPUT_FILES/*.txt $BASEMPIDIR/

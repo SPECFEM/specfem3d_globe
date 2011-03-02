@@ -55,7 +55,7 @@ make meshfem3D
 # compiler et executer le solver en MPI
 make clean
 make specfem3D
-./xspecfem3D
+./bin/xspecfem3D
 
 # deplacer les sismogrammes dans le repertoire de travail
 mv $TMPDIR/$repertoire_code/$repertoire_database/*.semd $TMPDIR/$repertoire_code

@@ -1103,11 +1103,12 @@
   integer :: ncon,nver
 
 !daniel: original
-!  integer icon(1)
 !
 !  real(kind=4) verlat(1)
 !  real(kind=4) verlon(1)
 !  real(kind=4) verrad(1)
+!
+!  integer icon(1)
 !  real(kind=4) con(1)
 
 !daniel: avoiding out-of-bounds errors
@@ -1115,8 +1116,9 @@
   real(kind=4) verlon(nver)
   real(kind=4) verrad(nver)
 
-  integer icon(1)
-  real(kind=4) con(1)
+  integer, parameter :: maxver=1000  
+  integer icon(maxver)
+  real(kind=4) con(maxver)
 
   double precision dd
   double precision rn
@@ -1133,29 +1135,29 @@
   ncon=0
 
   do iver=1,nver
-  if(xlat > verlat(iver)-2.*verrad(iver)) then
-    if(xlat < verlat(iver)+2.*verrad(iver)) then
-      ver8=xrad*(verlat(iver))
-      xla8=xrad*(xlat)
-      dd=sin(ver8)*sin(xla8)
-      dd=dd+cos(ver8)*cos(xla8)* cos(xrad*(xlon-verlon(iver)))
-      dd=acos(dd)/xrad
-      if(dd > (verrad(iver))*2.d0) then
-      else
-        ncon=ncon+1
-        icon(ncon)=iver
-        rn=dd/(verrad(iver))
-        dr=rn-1.d0
-        if(rn <= 1.d0) then
-          con(ncon)=(0.75d0*rn-1.5d0)*(rn**2)+1.d0
-        else if(rn > 1.d0) then
-          con(ncon)=((-0.25d0*dr+0.75d0)*dr-0.75d0)*dr+0.25d0
+    if(xlat > verlat(iver)-2.*verrad(iver)) then
+      if(xlat < verlat(iver)+2.*verrad(iver)) then
+        ver8=xrad*(verlat(iver))
+        xla8=xrad*(xlat)
+        dd=sin(ver8)*sin(xla8)
+        dd=dd+cos(ver8)*cos(xla8)* cos(xrad*(xlon-verlon(iver)))
+        dd=acos(dd)/xrad
+        if(dd > (verrad(iver))*2.d0) then
         else
-          con(ncon)=0.
+          ncon=ncon+1
+          icon(ncon)=iver
+          rn=dd/(verrad(iver))
+          dr=rn-1.d0
+          if(rn <= 1.d0) then
+            con(ncon)=(0.75d0*rn-1.5d0)*(rn**2)+1.d0
+          else if(rn > 1.d0) then
+            con(ncon)=((-0.25d0*dr+0.75d0)*dr-0.75d0)*dr+0.25d0
+          else
+            con(ncon)=0.
+          endif
         endif
       endif
     endif
-  endif
   enddo
 
   end subroutine splcon
@@ -1408,25 +1410,25 @@
   y=90.0-xcolat
   x=xlon
   do ihpa=1,numhpa
-      if(itypehpa(ihpa) == 1) then
-        lmax=lmxhpa(ihpa)
-        call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
-      else if(itypehpa(ihpa) == 2) then
-        numcof=numcoe(ihpa)
+    if(itypehpa(ihpa) == 1) then
+      lmax=lmxhpa(ihpa)
+      call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
+    else if(itypehpa(ihpa) == 2) then
+      numcof=numcoe(ihpa)
 
 !daniel
 !        call splcon(y,x,numcof,xlaspl(1,ihpa), &
 !              xlospl(1,ihpa),radspl(1,ihpa), &
 !              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
-        call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
+      call splcon(y,x,numcof,xlaspl(1:numcof,ihpa), &
               xlospl(1:numcof,ihpa),radspl(1:numcof,ihpa), &
-              nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
+              nconpt(ihpa),iconpt(1:maxver,ihpa),conpt(1:maxver,ihpa))
 
 
-      else
-        write(6,"('problem 1')")
-      endif
+    else
+      write(6,"('problem 1')")
+    endif
   enddo
 
 !         --- evaluate topography (depression) in km

@@ -11,7 +11,7 @@ dnl You must have recent versions of Autoconf and Automake installed.
 
 AC_PREREQ(2.61)
 AC_INIT([Specfem3D Globe], [5.0.1], [jtromp AT princeton.edu], [Specfem3DGlobe])
-AC_CONFIG_SRCDIR([src/specfem3D.f90])
+AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.f90])
 AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -98,7 +98,7 @@ CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 # Checks for library functions.
 
 
-AC_CONFIG_FILES([Makefile setup/constants.h setup/precision.h DATA/Par_file DATA/CMTSOLUTION DATA/STATIONS])
+AC_CONFIG_FILES([Makefile src/auxiliaries/Makefile src/meshfem3D/Makefile src/specfem3D/Makefile src/create_header_file/Makefile setup/constants.h setup/precision.h DATA/Par_file DATA/CMTSOLUTION DATA/STATIONS])
 AC_OUTPUT
 
 

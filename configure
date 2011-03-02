@@ -556,7 +556,7 @@ PACKAGE_STRING='Specfem3D Globe 5.0.1'
 PACKAGE_BUGREPORT='jtromp AT princeton.edu'
 PACKAGE_URL=''
 
-ac_unique_file="src/specfem3D.f90"
+ac_unique_file="src/specfem3D/specfem3D.f90"
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 LOCAL_PATH_IS_ALSO_GLOBAL
@@ -4366,7 +4366,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 # Checks for library functions.
 
 
-ac_config_files="$ac_config_files Makefile setup/constants.h setup/precision.h DATA/Par_file DATA/CMTSOLUTION DATA/STATIONS"
+ac_config_files="$ac_config_files Makefile src/auxiliaries/Makefile src/meshfem3D/Makefile src/specfem3D/Makefile src/create_header_file/Makefile setup/constants.h setup/precision.h DATA/Par_file DATA/CMTSOLUTION DATA/STATIONS"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5059,6 +5059,10 @@ do
   case $ac_config_target in
     "setup/config.h") CONFIG_HEADERS="$CONFIG_HEADERS setup/config.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "src/auxiliaries/Makefile") CONFIG_FILES="$CONFIG_FILES src/auxiliaries/Makefile" ;;
+    "src/meshfem3D/Makefile") CONFIG_FILES="$CONFIG_FILES src/meshfem3D/Makefile" ;;
+    "src/specfem3D/Makefile") CONFIG_FILES="$CONFIG_FILES src/specfem3D/Makefile" ;;
+    "src/create_header_file/Makefile") CONFIG_FILES="$CONFIG_FILES src/create_header_file/Makefile" ;;
     "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
     "setup/precision.h") CONFIG_FILES="$CONFIG_FILES setup/precision.h" ;;
     "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file" ;;

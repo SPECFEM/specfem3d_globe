@@ -54,8 +54,8 @@ cp $BASEMPIDIR/addr*.txt OUTPUT_FILES/
 cp $BASEMPIDIR/list*.txt OUTPUT_FILES/
 
 sleep 2 
-mpirun --hostfile $LSB_DJOB_HOSTFILE -n $numnodes $PWD/xspecfem3D
-#mpirun.lsf $PWD/xspecfem3D
+mpirun --hostfile $LSB_DJOB_HOSTFILE -n $numnodes $PWD/bin/xspecfem3D
+#mpirun.lsf $PWD/bin/xspecfem3D
 
 # backup important files addressing.txt and list*.txt 
 cp OUTPUT_FILES/*.txt $BASEMPIDIR/
