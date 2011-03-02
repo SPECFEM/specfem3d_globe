@@ -28,7 +28,7 @@ MP_EUILIB=mx
 OBJECT_MODE=64
 MP_RSH=ssh
 
-    srun ./generate_trace_marenostrum.sh ./xspecfem3D
+    srun ./generate_trace_marenostrum.sh ./bin/xspecfem3D
 
 # then merge the trace at the end
     sleep 5

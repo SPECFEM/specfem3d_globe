@@ -10,7 +10,7 @@ echo "Starting compilation $d"
 make clean
 make xmeshfem3D
 make xcreate_header_file
-./xcreate_header_file
+./bin/xcreate_header_file
 make xspecfem3D
 d=`date`
 echo "Finished compilation $d"

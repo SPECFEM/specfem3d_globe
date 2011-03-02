@@ -42,11 +42,11 @@ echo mesh files will be read from directory $my_local_path
 echo " "
 
 #### use this on Beowulf
-mpirun -nolocal -machinefile $machine_file -np $numprocessors $PWD/xspecfem3D 
+mpirun -nolocal -machinefile $machine_file -np $numprocessors $PWD/bin/xspecfem3D 
 
 #### use this on SGI
-#  mpirun -np $numprocessors xspecfem3D
+#  mpirun -np $numprocessors ./bin/xspecfem3D
 
 #### use this on Compaq Dec Alpha
-# dmpirun -np $numprocessors xspecfem3D
+# dmpirun -np $numprocessors ./bin/xspecfem3D
 

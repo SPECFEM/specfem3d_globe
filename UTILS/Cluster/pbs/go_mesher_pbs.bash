@@ -51,7 +51,7 @@ echo starting MPI mesher on $numnodes processors
 echo " "
 
 sleep 2 
-mpiexec -np $numnodes $PWD/xmeshfem3D
+mpiexec -np $numnodes $PWD/bin/xmeshfem3D
 
 # backup important files addressing.txt and list*.txt 
 cp OUTPUT_FILES/*.txt $BASEMPIDIR/

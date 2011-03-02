@@ -53,7 +53,7 @@ cp $BASEMPIDIR/list*.txt OUTPUT_FILES/
 # run in parallel with sge as resource manager
 #set echo
 
-/opt/SUNWhpc/bin/mprun -x sge ./xspecfem3D
+/opt/SUNWhpc/bin/mprun -x sge ./bin/xspecfem3D
 
 # or using mpiexec 
-#/opt/mpich/bin/mpiexec -np $numnodes ./xspecfem3D
+#/opt/mpich/bin/mpiexec -np $numnodes ./bin/xspecfem3D

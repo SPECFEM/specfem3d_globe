@@ -29,5 +29,5 @@ OBJECT_MODE=64
 MP_RSH=ssh
 
     srun ./xgenerate_databases
-#    srun ./xspecfem3D
+#    srun ./bin/xspecfem3D
 

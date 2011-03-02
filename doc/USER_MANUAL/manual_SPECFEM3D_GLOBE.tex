@@ -361,15 +361,19 @@ architecture. In such a case, typing \texttt{``make all''} on the frontend will 
 1/ create a script that runs \texttt{``make all''} on a node instead of on the frontend, if the compiler is also installed on the nodes \\
 
 \noindent
-2/ after running the \texttt{``configure''} script, create two copies of the Makefile:
+2/ after running the \texttt{``configure''} script, create two copies of the Makefiles:
+\\
+\red{TODO: this has not been tested out yet, any feedback is welcomed}
+\\
 
-\begin{verbatim}
-mv Makefile Makefile1
-cp Makefile1 Makefile2
-\end{verbatim}
+%\begin{verbatim}
+%mv Makefile Makefile1
+%cp Makefile1 Makefile2
+%\end{verbatim}
 
 \noindent
-In \texttt{Makefile1} put this instead of the current values:
+%In \texttt{Makefile1} put this instead of the current values:
+In \texttt{src/create\_header\_file/Makefile} put this instead of the current values:
 
 \begin{verbatim}
 FLAGS_CHECK = -O0
@@ -380,37 +384,43 @@ FLAGS_NO_CHECK = -O0
 and replace
 
 \begin{verbatim}
-create_header_file: $O/program_create_header_file.o $(LIBSPECFEM)
- ${FCCOMPILE_CHECK} -o xcreate_header_file $O/program_create_header_file.o $(LIBSPECFEM)
+create_header_file: $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
+ ${FCCOMPILE_CHECK} -o ${E}/xcreate_header_file $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
 \end{verbatim}
 
 \noindent
 with
 
 \begin{verbatim}
-create_header_file: $O/program_create_header_file.o $O/exit_mpi.o $(LIBSPECFEM)
-  ${MPIFCCOMPILE_CHECK} -o xcreate_header_file $O/program_create_header_file.o \
-     $O/exit_mpi.o $(LIBSPECFEM)
+xcreate_header_file: $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
+  ${MPIFCCOMPILE_CHECK} -o ${E}/xcreate_header_file $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
 \end{verbatim}
 
 \noindent
-In \texttt{Makefile2} comment out these two lines:
+%In \texttt{Makefile2} comment out these two lines:
+In \texttt{src/specfem3D/Makefile} comment out these last two lines:
 
 \begin{verbatim}
-#OUTPUT_FILES/values_from_mesher.h: xcreate_header_file
-# ./xcreate_header_file
+#${OUTPUT}/values_from_mesher.h: reqheader
+#       (mkdir -p ${OUTPUT}; cd ${S_TOP}/; ./bin/xcreate_header_file)
 \end{verbatim}
 
 \noindent
 Then:
 
+% make -f Makefile1 clean
+% make -f Makefile1 create_header_file
+% ./xcreate_header_file
+% make -f Makefile2 clean
+% make -f Makefile2 meshfem3D
+% make -f Makefile2 specfem3D
 \begin{verbatim}
- make -f Makefile1 clean
- make -f Makefile1 create_header_file
- ./xcreate_header_file
- make -f Makefile2 clean
- make -f Makefile2 meshfem3D
- make -f Makefile2 specfem3D
+ make clean
+ make create_header_file
+ ./bin/xcreate_header_file
+ make clean
+ make meshfem3D
+ make specfem3D
 \end{verbatim}
 
 \noindent
@@ -421,7 +431,12 @@ should work.
 You are now ready to compile the mesher. In the directory with the
 source code, type `\texttt{make meshfem3D}'. If all paths and flags
 have been set correctly, the mesher should now compile and produce
-the executable \texttt{xmeshfem3D}.
+the executable \texttt{xmeshfem3D}. 
+Note that all compiled executables are placed into the directory \texttt{bin/}.
+To run the executables, you must call them from the root directory,
+for example type `\texttt{mpirun -np 64 ./bin/meshfem3D}` to run the mesher
+in parallel on 64 CPUs. This will allow the executables to find the parameter file
+\texttt{Par\_file} in the relative directory location \texttt{./DATA}.
 
 Input for the mesher (and the solver) is provided through the parameter
 file \texttt{Par\_file}, which resides in the subdirectory \texttt{DATA}.
@@ -431,6 +446,7 @@ the SEM is implemented, and we encourage you to read \citet{KoVi98,KoTr99,Ch00,K
 and \citet{ChVa04}. A detailed theoretical analysis of the dispersion
 and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07}
 and \citet{SeOl07}.
+
 
 In this chapter we will focus on simulations at the scale of the entire
 globe. Regional simulations will be addressed in Chapter~\ref{cha:Regional-Simulations}.
@@ -1953,8 +1969,8 @@ which is automatically doubled in noise simulations; whereas \texttt{dt} is deri
 \item
 A Matlab script is provided to generate the ensemble-averaged noise spectrum.
 
-\texttt{NOISE\_TOMOGRAPHY/EXAMPLES/NOISE\_TOMOGRAPHY.m}  (main program)\\
-\texttt{NOISE\_TOMOGRAPHY/EXAMPLES/PetersonNoiseModel.m}
+\texttt{EXAMPLES/noise\_examples/NOISE\_TOMOGRAPHY.m}  (main program)\\
+\texttt{EXAMPLES/noise\_examples/PetersonNoiseModel.m}
 
 
 In Matlab, simply run:
@@ -2087,9 +2103,10 @@ using different forward and adjoint sources given in {(REF: Tromp et al., 2010)}
 \section{Examples}
 
 In order to illustrate noise simulations in an easy way, three examples are provided in
-\texttt{NOISE\_TOMOGRAPHY/EXAMPLES}. Note however that they are created for a specific cluster (SESAME@PRINCETON).
+\texttt{EXAMPLES/noise\_examples/}. 
+Note however that they are created for a specific cluster (SESAME@PRINCETON).
 
-The three examples are (contained in \texttt{NOISE\_TOMOGRAPHY/EXAMPLES}):\\
+The three examples are (contained in directory \texttt{EXAMPLES/noise\_examples/}):\\
 
 \texttt{./pre-processing regional}
 
@@ -2338,14 +2355,14 @@ the volumetric kernel files from all slices into one mesh file, and
 \begin{lyxcode}
 {\footnotesize make~combine\_vol\_data~}{\footnotesize \par}
 
-{\footnotesize xcombine\_vol\_data}~{\footnotesize slice\_list}~{\footnotesize filename}~{\footnotesize input\_dir}~{\footnotesize output\_dir}~{\footnotesize high/low-resolution}~{\footnotesize {[}region]}{\footnotesize \par}
+{\footnotesize ./bin/xcombine\_vol\_data}~{\footnotesize slice\_list}~{\footnotesize filename}~{\footnotesize input\_dir}~{\footnotesize output\_dir}~{\footnotesize high/low-resolution}~{\footnotesize {[}region]}{\footnotesize \par}
 \end{lyxcode}
 where \texttt{input\_dir} is the directory where all the individual
 kernel files are stored, and \texttt{output\_dir} is where the mesh
 file will be written.
 
 \begin{lyxcode}
-{\footnotesize xcombine\_surf\_data~slice\_list~filename~surfname~input\_dir~output\_dir~hi~gh/low-resolution~2D/3D}{\footnotesize \par}
+{\footnotesize ./bin/xcombine\_surf\_data~slice\_list~filename~surfname~input\_dir~output\_dir~hi~gh/low-resolution~2D/3D}{\footnotesize \par}
 \end{lyxcode}
 where \texttt{surfname} should correspond to the specific kernel file
 name, and can be chosen from \texttt{Moho}, \texttt{400}, \texttt{670},
@@ -2453,7 +2470,7 @@ called \texttt{\small create\_header\_file.f90} can be used to directly
 create\texttt{\small{} OUTPUT\_FILES/values\_from\_mesher.h} using
 the information in the \texttt{\small DATA/Par\_file} without having
 to run the mesher (type \texttt{\small `make}{\small{} }\texttt{\small create\_header\_}~\\
-\texttt{\small file}' to compile it and `\texttt{\small xcreate\_header\_file}'
+\texttt{\small file}' to compile it and `\texttt{\small ./bin/xcreate\_header\_file}'
 to run it; refer to the sample scripts below). The solver can now
 be compiled as explained above.
 \item One feature of schedulers/queuing systems is that they allow submission
@@ -2503,7 +2520,7 @@ make~meshfem3D~
 
 make~create\_header\_file~
 
-xcreate\_header\_file~
+./bin/xcreate\_header\_file~
 
 make~specfem3D~
 
@@ -2592,9 +2609,9 @@ mv~DATA/Par\_file.tmp~DATA/Par\_file
 
 current\_pwd=\$PWD
 
-mpirun.lsf~~-{}-gm-no-shmem~-{}-gm-copy-env~\$current\_pwd/xmeshfem3D
+mpirun.lsf~~-{}-gm-no-shmem~-{}-gm-copy-env~\$current\_pwd/bin/xmeshfem3D
 
-mpirun.lsf~-{}-gm-no-shmem~-{}-gm-copy-env~\$current\_pwd/xspecfem3D
+mpirun.lsf~-{}-gm-no-shmem~-{}-gm-copy-env~\$current\_pwd/bin/xspecfem3D
 
 \#~clean~up
 

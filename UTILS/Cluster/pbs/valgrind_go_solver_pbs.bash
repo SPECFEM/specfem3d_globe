@@ -72,14 +72,14 @@ cp $BASEMPIDIR/list*.txt OUTPUT_FILES/
 sleep 2
 
 # memory leaks
-LD_PRELOAD=$PRELOAD_LIB mpiexec -np $numnodes valgrind --leak-check=full $PWD/xspecfem3D
+LD_PRELOAD=$PRELOAD_LIB mpiexec -np $numnodes valgrind --leak-check=full $PWD/bin/xspecfem3D
 
 cp OUTPUT_FILES/job.o OUTPUT_FILES/job.memory-leaks.o
 
 sleep 2
 
 # cache misses
-LD_PRELOAD=$PRELOAD_LIB mpiexec -np $numnodes valgrind --tool=cachegrind $PWD/xspecfem3D
+LD_PRELOAD=$PRELOAD_LIB mpiexec -np $numnodes valgrind --tool=cachegrind $PWD/bin/xspecfem3D
 
 cp OUTPUT_FILES/job.o OUTPUT_FILES/job.cache-misses.o
 cp cachegrind.out.* OUTPUT_FILES/

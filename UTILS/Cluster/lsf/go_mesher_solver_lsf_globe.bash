@@ -40,10 +40,10 @@ echo starting run in current directory $PWD
 echo " "
 
 sleep 20
-mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/xmeshfem3D
+mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/bin/xmeshfem3D
 
 sleep 20
-mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/xspecfem3D
+mpirun.lsf --gm-no-shmem --gm-copy-env $PWD/bin/xspecfem3D
 
 # cleanup after the run
 sleep 10

@@ -20,7 +20,7 @@ change_simulation_type.pl -b
 make clean
 make meshfem3D
 make create_header_file
-xcreate_header_file
+./bin/xcreate_header_file
 make specfem3D
 d=`date`
 echo "Finished compilation $d"

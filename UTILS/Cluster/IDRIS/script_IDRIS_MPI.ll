@@ -57,12 +57,12 @@ cd $TMPDIR/$repertoire_code
 # compiler le mailleur et l'executer en MPI
 make clean
 make meshfem3D
-./xmeshfem3D
+./bin/xmeshfem3D
 
 # compiler le solver et l'executer en MPI
 make clean
 make specfem3D
-./xspecfem3D
+./bin/xspecfem3D
 
 # deplacer les sismogrammes dans le repertoire de travail
 mv $TMPDIR/$repertoire_code/$repertoire_database/*.semd $TMPDIR/$repertoire_code
