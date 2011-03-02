@@ -1,0 +1,18 @@
+----------------------------------------------------------
+README
+----------------------------------------------------------
+
+This example creates a global mesh using model S263ANI 
+and runs a single forward simulation.
+
+type:
+./process.sh
+
+to setup this directory for the simulation and to submit a corresponding
+PBS-job script "go_mesher_solver_pbs.bash".
+
+The simulation is accurate down to a shortest period of ~ 18 s.
+Reference seismograms for comparions are provided in the directory: REF_SEIS/
+
+Please modify these scripts according to your specifics.
+

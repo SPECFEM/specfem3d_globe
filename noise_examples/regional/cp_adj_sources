@@ -1,0 +1,8 @@
+#!/bin/bash
+for (( ievent=1;ievent<=13;ievent=ievent+1 ))
+do
+    cp A0.II.LHZ.adj A$ievent.II.LHE.adj
+    cp A0.II.LHZ.adj A$ievent.II.LHN.adj
+    cp A0.II.LHZ.adj A$ievent.II.LHZ.adj
+done
+
