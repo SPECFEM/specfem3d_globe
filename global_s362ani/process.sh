@@ -40,7 +40,7 @@ cp $currentdir/DATA/Par_file DATA/Par_file
 make >& tmp.log
 
 # backup of constants setup
-cp constants.h $currentdir/OUTPUT_FILES/
+cp setup/* $currentdir/OUTPUT_FILES/
 cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/
 cp DATA/Par_file $currentdir/OUTPUT_FILES/
 
