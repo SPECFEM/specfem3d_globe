@@ -2155,7 +2155,8 @@
       ! uses Deville et al. (2002) routine
       call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
            A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
-           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
+           minus_rho_g_over_kappa_fluid, &
+           displ_outer_core,accel_outer_core,div_displ_outer_core, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -2176,7 +2177,8 @@
       ! div_displ_outer_core is initialized to zero in the following subroutine.
       call compute_forces_outer_core(time,deltat,two_omega_earth, &
            A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
-           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
+           minus_rho_g_over_kappa_fluid, &
+           displ_outer_core,accel_outer_core,div_displ_outer_core, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -2214,7 +2216,8 @@
         ! uses Deville et al. (2002) routine
         call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
-           minus_rho_g_over_kappa_fluid,b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           minus_rho_g_over_kappa_fluid, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -2234,7 +2237,8 @@
       else
         call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
-           minus_rho_g_over_kappa_fluid,b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
+           minus_rho_g_over_kappa_fluid, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -2462,9 +2466,10 @@
 
     if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses Deville et al. (2002) routine
-      call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
-           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
-           minus_rho_g_over_kappa_fluid,displ_outer_core,b_accel_outer_core,div_displ_outer_core, &
+      call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
+           b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
+           minus_rho_g_over_kappa_fluid, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -2483,9 +2488,10 @@
            ibool_outer_core,MOVIE_VOLUME)
     else
       ! div_displ_outer_core is initialized to zero in the following subroutine.
-      call compute_forces_outer_core(time,deltat,two_omega_earth, &
-           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
-           minus_rho_g_over_kappa_fluid,displ_outer_core,b_accel_outer_core,div_displ_outer_core, &
+      call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
+           b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
+           minus_rho_g_over_kappa_fluid, &
+           b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
            xix_outer_core,xiy_outer_core,xiz_outer_core, &
            etax_outer_core,etay_outer_core,etaz_outer_core, &
@@ -3420,9 +3426,9 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,idoubling_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle, &
-          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
-          alphaval,betaval,gammaval,factor_common_crust_mantle, &
+          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
+          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
     else
@@ -3463,9 +3469,9 @@
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
           ibool_crust_mantle,idoubling_crust_mantle, &
-          R_memory_crust_mantle,epsilondev_crust_mantle, &
-          eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
-          alphaval,betaval,gammaval,factor_common_crust_mantle, &
+          b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
+          b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
+          b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
     endif
@@ -3501,9 +3507,9 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
           one_minus_sum_beta_inner_core, &
-          alphaval,betaval,gammaval, &
+          b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
@@ -3537,9 +3543,9 @@
           kappavstore_inner_core,muvstore_inner_core,ibool_inner_core,idoubling_inner_core, &
           c11store_inner_core,c33store_inner_core,c12store_inner_core, &
           c13store_inner_core,c44store_inner_core, &
-          R_memory_inner_core,epsilondev_inner_core, eps_trace_over_3_inner_core,&
+          b_R_memory_inner_core,b_epsilondev_inner_core, b_eps_trace_over_3_inner_core,&
           one_minus_sum_beta_inner_core, &
-          alphaval,betaval,gammaval, &
+          b_alphaval,b_betaval,b_gammaval, &
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
