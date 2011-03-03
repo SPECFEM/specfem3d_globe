@@ -62,6 +62,7 @@ cp OUTPUT_FILES/*.txt $BASEMPIDIR/
 ## forward simulation
 ## (saving last wavefields)
 ##
+cp DATA/Par_file DATA/Par_file.org
 ./change_simulation_type.pl -F
 sleep 2
 # set up addressing
@@ -101,6 +102,8 @@ mpiexec -np $numnodes $PWD/bin/xspecfem3D.kernel
 echo "  adjoint run done: `date`"
 echo
 
+# restore original Par_file
+mv DATA/Par_file.org DATA/Par_file
 
 echo "finished successfully"
 echo `date`

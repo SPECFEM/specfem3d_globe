@@ -1,6 +1,6 @@
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 3
+SIMULATION_TYPE                 = 1
 NOISE_TOMOGRAPHY                = 0        # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
 SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
 

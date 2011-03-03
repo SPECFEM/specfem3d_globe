@@ -53,7 +53,7 @@ cp DATA/Par_file $currentdir/OUTPUT_FILES/
 cd $currentdir
 
 # copy executables
-mkdir -p bin/
+mkdir -p bin
 cp ../../bin/xmeshfem3D ./bin/
 cp ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
 cp ../../bin/xcombine_vol_data ./bin/
