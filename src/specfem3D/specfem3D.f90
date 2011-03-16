@@ -1697,7 +1697,6 @@
 
     rho_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
     alpha_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
-    beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
 
     rho_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_inner_core(:,:,:,:) = 0._CUSTOM_REAL
@@ -1713,7 +1712,7 @@
       nspec_beta_kl_outer_core = 1
     endif
     allocate(beta_kl_outer_core(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core))
-    beta_kl_outer_core = 0._CUSTOM_REAL
+    beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
   ! initialize to be on the save side for adjoint runs SIMULATION_TYPE==2
