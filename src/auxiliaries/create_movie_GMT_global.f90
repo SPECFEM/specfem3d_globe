@@ -50,17 +50,16 @@
   ! to avoid flickering in movies, the displacement field will get normalized with an
   ! averaged maximum value over the past few, available snapshots
   logical,parameter :: USE_AVERAGED_MAXIMUM = .true.
-
   ! minimum number of frames to average maxima
   integer,parameter :: AVERAGE_MINIMUM = 5
+  ! normalizes output values
+  logical, parameter :: NORMALIZE_VALUES = .true.
 
   ! muting source region
   logical, parameter :: MUTE_SOURCE = .true.
-  real(kind=CUSTOM_REAL) :: RADIUS_TO_MUTE = 1.0    ! start radius in degrees
-  real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 2.0 ! factor times hdur_movie
+  real(kind=CUSTOM_REAL) :: RADIUS_TO_MUTE = 0.5    ! start radius in degrees
+  real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 0.5 ! adds seconds to shift starttime 
 
-  ! normalizes output values
-  logical, parameter :: NORMALIZE_VALUES = .true.
 
 !---------------------
 
@@ -154,9 +153,10 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
 
   real(kind=CUSTOM_REAL) :: LAT_SOURCE,LON_SOURCE,DEP_SOURCE
-  real(kind=CUSTOM_REAL) :: dist_lon,dist_lat,mute_factor
+  real(kind=CUSTOM_REAL) :: dist_lon,dist_lat,distance,mute_factor,val
   character(len=256) line
-
+  real(kind=CUSTOM_REAL) :: cmt_hdur,cmt_t_shift,t0,hdur
+  
 ! ************** PROGRAM STARTS HERE **************
 
   print *
@@ -191,11 +191,14 @@
          NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
          NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
          NSPEC1D_RADIAL,NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
-         ratio_sampling_array, ner, doubling_index,r_bottom,r_top,this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
+         ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
+         this_region_has_a_doubling,rmins,rmaxs,CASE_3D, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
+         ROTATE_SEISMOGRAMS_RT,ratio_divide_central_cube,HONOR_1D_SPHERICAL_MOHO, &
+         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,&
          DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY)
+         WRITE_SEISMOGRAMS_BY_MASTER,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
+         USE_BINARY_FOR_LARGE_FILE,.false.,NOISE_TOMOGRAPHY)
 
   if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
 
@@ -204,7 +207,8 @@
   print *
   if(MOVIE_COARSE) then
     ! note:
-    ! nex_per_proc_xi*nex_per_proc_eta = nex_xi*nex_eta/nproc = nspec2d_top(iregion_crust_mantle) used in specfem3D.f90
+    ! nex_per_proc_xi*nex_per_proc_eta = nex_xi*nex_eta/nproc = nspec2d_top(iregion_crust_mantle) 
+    ! used in specfem3D.f90
     ! and ilocnum = nmovie_points = 2 * 2 * NEX_XI * NEX_ETA / NPROC
     ilocnum = 2 * 2 * NEX_PER_PROC_XI*NEX_PER_PROC_ETA
     NIT =NGLLX-1
@@ -213,7 +217,8 @@
     NIT = 1
   endif
   print *
-  print *,'Allocating arrays for reading data of size ',ilocnum*NPROCTOT,'=',6*ilocnum*NPROCTOT*CUSTOM_REAL/1000000,'MB'
+  print *,'Allocating arrays for reading data of size ',ilocnum*NPROCTOT,'=', &
+                            6*ilocnum*NPROCTOT*CUSTOM_REAL/1000000,'MB'
   print *
 
   ! allocates movie arrays
@@ -293,7 +298,8 @@
 
 
   print *
-  print *,'Allocating 4 outputdata arrays of size 4*CUSTOM_REAL',npointot,'=',4*npointot*CUSTOM_REAL/1000000,' MB'
+  print *,'Allocating 4 outputdata arrays of size 4*CUSTOM_REAL',npointot,'=', &
+                                      4*npointot*CUSTOM_REAL/1000000,' MB'
   print *
 
   allocate(xp(npointot),stat=ierror)
@@ -309,7 +315,7 @@
   if(ierror /= 0) stop 'error while allocating field_display'
 
 
-  ! initializes maxima history
+  ! initializes maxima history  
   if( USE_AVERAGED_MAXIMUM ) then
     ! determines length of history
     nmax_history = AVERAGE_MINIMUM + int( HDUR_MOVIE / (DT*NTSTEP_BETWEEN_FRAMES) * 1.5 )
@@ -318,63 +324,83 @@
     allocate(max_history(nmax_history))
     max_history(:) = 0.0d0
 
+    print *,'averages wavefield maxima'
     print *
     print *,'Movie half-duration: ',HDUR_MOVIE,'(s)'
+    print *,'DT per time step   : ',DT,'(s)'
     print *,'Frame step size    : ',DT*NTSTEP_BETWEEN_FRAMES,'(s)'
     print *,'Normalization by averaged maxima over ',nmax_history,'snapshots'
     print *
-
-    if( MUTE_SOURCE ) then
-      ! initializes
-      LAT_SOURCE = -1000.0
-      LON_SOURCE = -1000.0
-
-      ! reads in source lat/lon
-      open(22,file="DATA/CMTSOLUTION",status='old',action='read',iostat=ierror )
-      if( ierror == 0 ) then
-        ! skip first line, event name,timeshift,half duration
-        read(22,*,iostat=ierror ) line ! PDE line
-        read(22,*,iostat=ierror ) line ! event name
-        read(22,*,iostat=ierror ) line ! timeshift
-        read(22,*,iostat=ierror ) line ! halfduration
-        ! latitude
-        read(22,'(a256)',iostat=ierror ) line
-        if( ierror == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
-        ! longitude
-        read(22,'(a256)',iostat=ierror ) line
-        if( ierror == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
-        ! depth
-        read(22,'(a256)',iostat=ierror ) line
-        if( ierror == 0 ) read(line(11:len_trim(line)),*) DEP_SOURCE
-        close(22)
-      endif
-
-      print *,'muting source lat/lon/dep: ',LAT_SOURCE,LON_SOURCE,DEP_SOURCE
-
-      ! becomes time (s) from hypocenter to reach surface (using average 8 km/s p-wave speed)
-      DEP_SOURCE = DEP_SOURCE / 8.0
-
-      ! time when muting starts
-      STARTTIME_TO_MUTE = STARTTIME_TO_MUTE * HDUR_MOVIE + DEP_SOURCE
-
-      print *,'muting radius: ',RADIUS_TO_MUTE
-      print *,'muting starttime: ',STARTTIME_TO_MUTE,'(s)'
-      print *
-
-      ! colatitude [0, PI]
-      LAT_SOURCE = (90. - LAT_SOURCE)*PI/180.0
-
-      ! longitude [-PI, PI]
-      if( LON_SOURCE < -180.0 ) LON_SOURCE = LON_SOURCE + 360.0
-      if( LON_SOURCE > 180.0 ) LON_SOURCE = LON_SOURCE - 360.0
-      LON_SOURCE = LON_SOURCE *PI/180.0
-
-      ! mute radius in rad
-      RADIUS_TO_MUTE = RADIUS_TO_MUTE*PI/180.0
-    endif
-
-
   endif
+  
+  if( MUTE_SOURCE ) then
+    ! initializes
+    LAT_SOURCE = -1000.0
+    LON_SOURCE = -1000.0
+    DEP_SOURCE = 0.0
+    cmt_t_shift = 0.0
+    cmt_hdur = 0.0
+    
+    ! reads in source lat/lon
+    open(22,file="DATA/CMTSOLUTION",status='old',action='read',iostat=ierror )
+    if( ierror == 0 ) then
+      ! skip first line, event name,timeshift,half duration
+      read(22,*,iostat=ierror ) line ! PDE line
+      read(22,*,iostat=ierror ) line ! event name
+      ! timeshift
+      read(22,'(a256)',iostat=ierror ) line 
+      if( ierror == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
+      ! halfduration
+      read(22,'(a256)',iostat=ierror ) line 
+      if( ierror == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
+      ! latitude
+      read(22,'(a256)',iostat=ierror ) line
+      if( ierror == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
+      ! longitude
+      read(22,'(a256)',iostat=ierror ) line
+      if( ierror == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
+      ! depth
+      read(22,'(a256)',iostat=ierror ) line
+      if( ierror == 0 ) read(line(7:len_trim(line)),*) DEP_SOURCE
+      close(22)
+    endif
+    ! effective half duration in movie runs
+    hdur = sqrt( cmt_hdur**2 + HDUR_MOVIE**2)
+    ! start time of simulation
+    t0 = - 1.5d0*( cmt_t_shift - hdur )
+
+    ! becomes time (s) from hypocenter to reach surface (using average 8 km/s s-wave speed)
+    ! note: especially for deep sources, this helps determine a better starttime to mute
+    DEP_SOURCE = DEP_SOURCE / 8.0
+
+    ! time when muting starts
+    ! note: this starttime is supposed to be the time when displacements at the surface
+    !          can be observed;
+    !          it helps to mute out numerical noise before the source effects actually start showing up
+    STARTTIME_TO_MUTE = STARTTIME_TO_MUTE + DEP_SOURCE 
+    if( STARTTIME_TO_MUTE < 0.0 ) STARTTIME_TO_MUTE = 0.0
+    
+    print *,'mutes source area'
+    print *
+    print *,'source lat/lon/dep: ',LAT_SOURCE,LON_SOURCE,DEP_SOURCE
+    print *,'muting radius: ',RADIUS_TO_MUTE,'(degrees)'
+    print *,'muting starttime: ',STARTTIME_TO_MUTE,'(s)'
+    print *,'simulation starttime: ',-t0,'(s)'
+    print *
+
+    ! converts values into radians
+    ! colatitude [0, PI]
+    LAT_SOURCE = (90. - LAT_SOURCE)*PI/180.0
+
+    ! longitude [-PI, PI]
+    if( LON_SOURCE < -180.0 ) LON_SOURCE = LON_SOURCE + 360.0
+    if( LON_SOURCE > 180.0 ) LON_SOURCE = LON_SOURCE - 360.0
+    LON_SOURCE = LON_SOURCE *PI/180.0
+
+    ! mute radius in rad
+    RADIUS_TO_MUTE = RADIUS_TO_MUTE*PI/180.0
+  endif
+
   print *,'--------'
 
 !--- ****** read data saved by solver ******
@@ -389,46 +415,6 @@
      if(mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
         iframe = iframe + 1
-
-        ! mutes source region
-        if( MUTE_SOURCE ) then
-
-          ! muting radius grows/shrinks with time
-          if( (it-1)*DT > STARTTIME_TO_MUTE  ) then
-
-            ! approximate wavefront travel distance in degrees (~3.5 km/s wave speed for surface waves)
-            mute_factor = 3.5 * (it-1)*DT / 6371. * 180./PI
-
-            ! approximate distance to source (in degrees)
-            do while ( mute_factor > 360. )
-              mute_factor = mute_factor - 360.
-            enddo
-            if( mute_factor > 180. ) mute_factor = 360. - mute_factor
-
-            ! limit size around source (in degrees)
-            !if( mute_factor < 10. ) then
-            !  mute_factor = 0.0
-            !endif
-            if( mute_factor > 80. ) then
-              mute_factor = 80.0
-            endif
-
-            print*,'muting radius: ',0.7 * mute_factor
-
-            RADIUS_TO_MUTE = 0.7 * mute_factor * PI/180.
-
-          else
-            ! mute_factor used at the beginning for scaling displacement values
-            if( STARTTIME_TO_MUTE > TINYVAL ) then
-              ! scales from 1 to 0
-              mute_factor = ( STARTTIME_TO_MUTE - (it-1)*DT ) / STARTTIME_TO_MUTE
-              if( mute_factor < TINYVAL ) mute_factor = TINYVAL
-            else
-              mute_factor = 1.0
-            endif
-          endif
-
-        endif
 
         ! read all the elements from the same file
         write(outputname,"('OUTPUT_FILES/moviedata',i6.6)") it
@@ -451,6 +437,56 @@
 
         close(IOUT)
         !print *, 'finished reading ',outputname
+
+        ! mutes source region
+        if( MUTE_SOURCE ) then
+          ! initialize factor
+          mute_factor = 1.0
+
+          print*,'simulation time: ',(it-1)*DT - t0,'(s)'
+          
+          ! muting radius grows/shrinks with time
+          if( (it-1)*DT - t0 > STARTTIME_TO_MUTE  ) then
+
+            ! approximate wavefront travel distance in degrees 
+            ! (~3.5 km/s wave speed for surface waves)
+            distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * 180./PI
+
+            ! approximate distance to source (in degrees)
+            ! (shrinks if waves travel back from antipode)
+            !do while ( distance > 360. )
+            !  distance = distance - 360.
+            !enddo
+            ! waves are back at origin, no source tapering anymore
+            if( distance > 360.0 ) distance = 0.0
+            ! shrinks when waves reached antipode
+            !if( distance > 180. ) distance = 360. - distance
+            ! shrinks when waves reached half-way to antipode
+            if( distance > 90.0 ) distance = 90.0 - distance            
+
+            ! limit size around source (in degrees)
+            if( distance < 0.0 ) distance = 0.0
+            if( distance > 80.0 ) distance = 80.0
+
+            print*,'muting radius: ',0.7 * distance,'(degrees)'
+
+            ! new radius of mute area (in rad)
+            RADIUS_TO_MUTE = 0.7 * distance * PI/180.
+          else
+            ! mute_factor used at the beginning for scaling displacement values
+            if( STARTTIME_TO_MUTE > TINYVAL ) then
+              ! mute factor 1: no masking out
+              !                     0: masks out values (within mute radius)
+              ! linear scaling between [0,1]:
+              ! from 0 (simulation time equal to zero ) 
+              ! to 1 (simulation time equals starttime_to_mute)
+              mute_factor = 1.0 - ( STARTTIME_TO_MUTE - ((it-1)*DT-t0) ) / (STARTTIME_TO_MUTE+t0)
+              ! threshold value for mute_factor
+              if( mute_factor < TINYVAL ) mute_factor = TINYVAL
+              if( mute_factor > 1.0 ) mute_factor = 1.0
+            endif
+          endif
+        endif
 
         ! clear number of elements kept
         ispec = 0
@@ -519,12 +555,13 @@
                     ! mute values
                     if( MUTE_SOURCE ) then
 
-                      ! distance in colatitude
+                      ! distance in colatitude (in rad)
                       ! note: this mixes geocentric (point location) and geographic (source location) coordinates;
-                      !          since we only need approximate distances here, this should be fine for the muting region
+                      !          since we only need approximate distances here, 
+                      !          this should be fine for the muting region
                       dist_lat = thetaval - LAT_SOURCE
 
-                      ! distance in longitude
+                      ! distance in longitude (in rad)
                       ! checks source longitude range
                       if( LON_SOURCE - RADIUS_TO_MUTE < -PI .or. LON_SOURCE + RADIUS_TO_MUTE > PI ) then
                         ! source close to 180. longitudes, shifts range to [0, 2PI]
@@ -542,13 +579,21 @@
 
                         dist_lon = phival - LON_SOURCE
                       endif
-
+                      ! distance of point to source (in rad)
+                      distance = sqrt(dist_lat**2 + dist_lon**2) 
+                      
                       ! mutes source region values
-                      if ( ( dist_lat**2 + dist_lon**2 ) < RADIUS_TO_MUTE**2 ) then
+                      if ( distance < RADIUS_TO_MUTE ) then
                         ! muting takes account of the event time
-                        if( (it-1)*DT > STARTTIME_TO_MUTE  ) then
-                          displn(i,j) = displn(i,j) * TINYVAL
+                        if( (it-1)*DT-t0 > STARTTIME_TO_MUTE  ) then
+                          ! wavefield will be tapered to mask out noise in source area
+                          ! factor from 0 to 1
+                          mute_factor = ( 0.5*(1.0 - cos(distance/RADIUS_TO_MUTE*PI)) )**6
+                          ! factor from 0.01 to 1
+                          mute_factor = mute_factor * 0.99 + 0.01
+                          displn(i,j) = displn(i,j) * mute_factor
                         else
+                          ! wavefield will initially be scaled down to avoid noise being amplified at beginning
                           displn(i,j) = displn(i,j) * mute_factor
                         endif
                       endif
@@ -642,6 +687,7 @@
         print *,'minimum amplitude in current snapshot = ',min_field_current
         print *,'maximum amplitude in current snapshot = ',max_field_current
 
+
         ! takes average over last few snapshots available and uses it
         ! to normalize field values
         if( USE_AVERAGED_MAXIMUM ) then
@@ -666,19 +712,61 @@
 
           print *,'maximum amplitude over averaged last snapshots = ',max_average
 
+          ! thresholds positive & negative maximum values
+          where( field_display(:) > max_average ) field_display = max_average
+          where( field_display(:) < - max_average ) field_display = -max_average
+          
+          ! updates current wavefield maxima
+          min_field_current = minval(field_display(:))
+          max_field_current = maxval(field_display(:))
+          max_absol = (abs(min_field_current)+abs(max_field_current))/2.0
+
           ! scales field values up to match average
           if( abs(max_absol) > TINYVAL) &
             field_display = field_display * max_average / max_absol
 
-          ! thresholds positive & negative maximum values
-          where( field_display(:) > max_average ) field_display = max_average
-          where( field_display(:) < - max_average ) field_display = -max_average
-
           ! normalizes field values
           if( NORMALIZE_VALUES ) then
-            if( abs(max_average) > TINYVAL ) field_display = field_display / max_average
-          endif
+            if( MUTE_SOURCE ) then
+              ! checks if source wavefield kicked in
+              if( (it-1)*DT - t0 > STARTTIME_TO_MUTE ) then
+                ! wavefield should be visible at surface now
+                ! normalizes wavefield
+                if( abs(max_average) > TINYVAL ) field_display = field_display / max_average              
+              else
+                ! no wavefield yet assumed
 
+                ! we set two single field values (last in array)
+                ! to: +/- 100 * max_average 
+                ! to avoid further amplifying when
+                ! a normalization routine is used for rendering images 
+                ! (which for example is the case for shakemovies)
+                if( STARTTIME_TO_MUTE > TINYVAL ) then 
+                  ! with additional scale factor: 
+                  ! linear scaling between [0,1]:
+                  ! from 0 (simulation time equal to -t0 ) 
+                  ! to 1 (simulation time equals starttime_to_mute)
+                  mute_factor = 1.0 - ( STARTTIME_TO_MUTE - ((it-1)*DT-t0) ) / (STARTTIME_TO_MUTE+t0)
+                  ! takes complement and shifts scale to (1,100)
+                  ! thus, mute factor is 100 at simulation start and 1.0 at starttime_to_mute
+                  mute_factor = abs(1.0 - mute_factor) * 99.0 + 1.0
+                  ! positive and negative maximum reach average when wavefield appears
+                  val = mute_factor * max_average                  
+                else
+                  ! uses a constant factor                
+                  val = 100.0 * max_average
+                endif                  
+                ! positive and negative maximum                
+                field_display(ieoff) = + val
+                field_display(ieoff-1) = - val                
+                if( abs(max_average) > TINYVAL ) field_display = field_display / val
+              endif
+            else
+              ! no source to mute
+              ! normalizes wavefield
+              if( abs(max_average) > TINYVAL ) field_display = field_display / max_average
+            endif
+          endif
         endif
 
         print *
@@ -696,8 +784,10 @@
           elseif(USE_COMPONENT == 3) then
            write(outputname,"('bin_movie_',i6.6,'.E')") it
           endif
-          open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted')
-          if(iframe == 1) open(unit=12,file='OUTPUT_FILES/bin_movie.xy',status='unknown',form='unformatted')
+          open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown', &
+                form='unformatted',action='write')
+          if(iframe == 1) open(unit=12,file='OUTPUT_FILES/bin_movie.xy', &
+                              status='unknown',form='unformatted',action='write')
         else
           if(USE_COMPONENT == 1) then
            write(outputname,"('ascii_movie_',i6.6,'.d')") it
@@ -706,8 +796,10 @@
           elseif(USE_COMPONENT == 3) then
            write(outputname,"('ascii_movie_',i6.6,'.E')") it
           endif
-          open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown')
-          if(iframe == 1) open(unit=12,file='OUTPUT_FILES/ascii_movie.xy',status='unknown')
+          open(unit=11,file='OUTPUT_FILES/'//trim(outputname),status='unknown', &
+                action='write')
+          if(iframe == 1) open(unit=12,file='OUTPUT_FILES/ascii_movie.xy', &
+                                status='unknown',action='write')
         endif
         ! clear number of elements kept
         ispec = 0
