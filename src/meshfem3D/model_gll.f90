@@ -238,23 +238,17 @@
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
   integer :: myrank
 
-  !--------------------------------------------------------------------
-  ! USER PARAMETER
-
-  character(len=150),parameter:: MGLL_path = 'DATA/GLL/'
-  !--------------------------------------------------------------------
-
   ! local parameters
   integer :: ier
   character(len=150) :: prname
 
   if( myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*)'reading in model from ',trim(MGLL_path)
+    write(IMAIN,*)'reading in model from ',trim(PATHNAME_GLL_modeldir)
   endif
 
   ! only crust and mantle
-  write(prname,'(a,i6.6,a)') MGLL_path(1:len_trim(MGLL_path))//'proc',myrank,'_reg1_'
+  write(prname,'(a,i6.6,a)') PATHNAME_GLL_modeldir(1:len_trim(PATHNAME_GLL_modeldir))//'proc',myrank,'_reg1_'
 
   ! reads in model for each partition
   if( .not. TRANSVERSE_ISOTROPY ) then
