@@ -208,7 +208,7 @@
   real(kind=CUSTOM_REAL) :: adj_src(NDIM,NSTEP_BLOCK)  
   double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
 
-  integer icomp, itime, i, j, k, ios
+  integer icomp, itime, ios
   integer it_start,it_end,index_i
   real(kind=CUSTOM_REAL) :: junk
   character(len=3),dimension(NDIM) :: comp

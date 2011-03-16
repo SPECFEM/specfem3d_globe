@@ -471,9 +471,7 @@
   if( THREE_D_MODEL == THREE_D_MODEL_GLL ) then
     MGLL_V%MODEL_GLL = .true.
     ! sets to initial reference model from which iterations started
-    THREE_D_MODEL = THREE_D_MODEL_S29EA
-    ! Hejun Zhu
-    !THREE_D_MODEL = THREE_D_MODEL_S362ANI    
+    THREE_D_MODEL = GLL_REFERENCE_MODEL
   else
     MGLL_V%MODEL_GLL = .false.
   endif

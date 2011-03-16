@@ -1327,6 +1327,13 @@
     ! initialize seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
     nit_written = 0
+  else
+    ! allocate dummy array since we need it to pass as argument e.g. in write_seismograms() routine
+    ! note: nrec_local is zero, fortran 90/95 should allow zero-sized array allocation...
+    allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+    if( ier /= 0) stop 'error while allocating zero seismograms'    
+    allocate(number_receiver_global(nrec_local),stat=ier)
+    if( ier /= 0) stop 'error while allocating zero number_receiver_global'        
   endif
 
   ! get information about event name and location for SAC seismograms

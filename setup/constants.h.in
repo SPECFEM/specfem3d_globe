@@ -82,7 +82,13 @@
 ! average density in the full Earth to normalize equation
   double precision, parameter :: RHOAV = 5514.3d0
 
-! for topography/bathymetry model
+
+!!-----------------------------------------------------------
+!!
+!! for topography/bathymetry model
+!!
+!!-----------------------------------------------------------
+!! (uncomment desired resolution)
 
 !!--- ETOPO5 5-minute model, smoothed Harvard version
 !! size of topography and bathymetry file
@@ -129,7 +135,15 @@
 ! minimum thickness in meters to include the effect of the oceans and topo
   double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 100.d0
 
-!-- crustal models
+
+!!-----------------------------------------------------------
+!!
+!! for crustal model
+!!
+!!-----------------------------------------------------------
+!! (uncomment desired model)
+
+! crustal model constants
   integer, parameter :: ICRUST_CRUST2 = 1
   integer, parameter :: ICRUST_CRUSTMAPS = 2
   integer, parameter :: ICRUST_EPCRUST = 3
@@ -141,17 +155,31 @@
   logical, parameter :: INCLUDE_SEDIMENTS_CRUST = .true.
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
 
-!-- uncomment for using Crust2.0 (used when CRUSTAL flag is set for simulation)
+!!-- uncomment for using Crust2.0 (used as default when CRUSTAL flag is set for simulation)
   integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
 !!-- uncomment for using General Crustmaps instead
-!!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
-!!-- uncomment for using EPcrust instead
-!!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
+!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
+!!-- uncomment for using EPcrust instead (European regional model)
+!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
+
+
+!!-----------------------------------------------------------
+!!
+!! Gauss-Lobatto-Legrendre resolution
+!!
+!!-----------------------------------------------------------
 
 ! number of GLL points in each direction of an element (degree plus one)
   integer, parameter :: NGLLX = 5
   integer, parameter :: NGLLY = NGLLX
   integer, parameter :: NGLLZ = NGLLX
+
+
+!!-----------------------------------------------------------
+!!
+!! source/receiver setup
+!!
+!!-----------------------------------------------------------
 
 ! flag to exclude elements that are too far from target in source detection
   logical, parameter :: USE_DISTANCE_CRITERION = .true.
@@ -188,6 +216,13 @@
 ! is located outside the mesh and therefore excluded from the station list
   double precision, parameter :: THRESHOLD_EXCLUDE_STATION = 50.d0
 
+
+!!-----------------------------------------------------------
+!!
+!! mesh optimization
+!!
+!!-----------------------------------------------------------
+
 ! the first doubling is implemented right below the Moho
 ! it seems optimal to implement the three other doublings at these depths
 ! in the mantle
@@ -200,6 +235,13 @@
 ! Boundary Mesh -- save Moho, 400, 670 km discontinuity topology files (in
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
+
+
+!!-----------------------------------------------------------
+!!
+!! adjoint kernel outputs
+!!
+!!-----------------------------------------------------------
 
 ! this parameter must be set to .true. to compute anisotropic kernels
 ! in crust and mantle (related to the 21 Cij in geographical coordinates)
@@ -216,6 +258,13 @@
 ! output kernel mask to zero out source region
   logical,parameter :: SAVE_SOURCE_MASK = .false.
 
+
+!!-----------------------------------------------------------
+!!
+!! time stamp information 
+!!
+!!-----------------------------------------------------------
+
 ! print date and time estimate of end of run in another country,
 ! in addition to local time.
 ! For instance: the code runs at Caltech in California but the person
@@ -225,9 +274,12 @@
   integer, parameter :: HOURS_TIME_DIFFERENCE = +9
   integer, parameter :: MINUTES_TIME_DIFFERENCE = +0
 
-!
-!--- debugging flags
-!
+
+!!-----------------------------------------------------------
+!!
+!! debugging flags
+!!
+!!-----------------------------------------------------------
 
 ! flags to actually assemble with MPI or not
 ! and to actually match fluid and solid regions of the Earth or not
@@ -241,6 +293,7 @@
 ! the seismic source and the stations; i.e. assume a perfect sphere, which
 ! can be useful for benchmarks of a spherical Earth with fictitious sources and stations
   logical, parameter :: ASSUME_PERFECT_SPHERE = .false.
+
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------
@@ -480,6 +533,11 @@
   integer, parameter :: NRAD_GRAVITY = 70000
 
 !!!!!!!!!!!!!! parameters added for the thread-safe version of the code
+
+!!
+!! model constants
+!! 
+
 ! number of layers in DATA/1066a/1066a.dat
   integer, parameter :: NR_1066A = 160
 
@@ -502,7 +560,7 @@
   integer, parameter :: MPA=42,MRA=48,MHA=21,MPB=42,MRB=48,MHB=18
   integer, parameter :: MKA=2101,MKB=2101
 
-!QRFSI12 constants
+! QRFSI12 constants
   integer,parameter :: NKQ=8,MAXL_Q=12
   integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ=913
 
@@ -541,7 +599,18 @@
   integer, parameter :: NTHETA_EP = 4, NPHI_EP = 20
   double precision, parameter :: cap_degree_EP = 0.2d0 
 
+! parameters for GLL model (used for iterative model inversions)  
+  character(len=*), parameter :: PATHNAME_GLL_modeldir = 'DATA/GLL/'
+  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S29EA
+!!-- uncomment for using S362ANI as reference model  (Hejun Zhu)
+!  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI 
+
+
 !!!!!!!!!!!!!! end of parameters added for the thread-safe version of the code
+
+!!
+!! crustal stretching
+!!
 
 ! for the stretching of crustal elements in the case of 3D models
 ! (values are chosen for 3D models to have RMOHO_FICTICIOUS at 35 km
@@ -556,11 +625,14 @@
   logical, parameter :: REGIONAL_MOHO_MESH_EUROPE = .false. ! used only for fixing time step
   logical, parameter :: REGIONAL_MOHO_MESH_ASIA = .false.   ! used only for fixing time step
   logical, parameter :: HONOR_DEEP_MOHO = .false.
-! uncomment for e.g. Europe case, where deep moho is rare
-!!  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = -15000.d0  ! moho mesh boundary down to 55km
-! uncomment for deep moho cases, e.g. Asia case (Himalayan moho)
-!!  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = -20000.d0  ! moho mesh boundary down to 60km
+!!-- uncomment for e.g. Europe case, where deep moho is rare
+!  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = -15000.d0  ! moho mesh boundary down to 55km
+!!-- uncomment for deep moho cases, e.g. Asia case (Himalayan moho)
+!  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = -20000.d0  ! moho mesh boundary down to 60km
 
+!!
+!! mesh tweaking
+!!
 
 ! to suppress the crustal layers
 ! (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
