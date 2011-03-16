@@ -129,6 +129,7 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/model_attenuation.o \
 	$O/model_crust.o \
 	$O/model_eucrust.o \
+	$O/model_epcrust.o \
 	$O/model_crustmaps.o \
 	$O/model_gll.o \
 	$O/model_heterogen_mantle.o \
@@ -462,6 +463,9 @@ $O/model_crust.o: ${SETUP}/constants.h $S/model_crust.f90
 
 $O/model_eucrust.o: ${SETUP}/constants.h $S/model_eucrust.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_eucrust.o ${FCFLAGS_f90} $S/model_eucrust.f90
+
+$O/model_epcrust.o: ${SETUP}/constants.h $S/model_epcrust.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/model_epcrust.o ${FCFLAGS_f90} $S/model_epcrust.f90
 
 $O/model_crustmaps.o: ${SETUP}/constants.h $S/model_crustmaps.f90
 	${MPIFCCOMPILE_CHECK} -c -o $O/model_crustmaps.o ${FCFLAGS_f90} $S/model_crustmaps.f90

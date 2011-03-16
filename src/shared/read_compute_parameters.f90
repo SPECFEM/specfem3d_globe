@@ -768,7 +768,7 @@
     ! increased stability, empirical
     DT = DT*(1.d0 + 0.5d0)
 
-    if( REGIONAL_MOHO_MESH_EUROPE ) DT = 0.14 ! europe
+    if( REGIONAL_MOHO_MESH_EUROPE ) DT = 0.17 ! europe
     if( REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! asia & middle east
 
   endif
