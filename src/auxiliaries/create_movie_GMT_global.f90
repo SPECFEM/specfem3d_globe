@@ -156,6 +156,8 @@
   real(kind=CUSTOM_REAL) :: dist_lon,dist_lat,distance,mute_factor,val
   character(len=256) line
   real(kind=CUSTOM_REAL) :: cmt_hdur,cmt_t_shift,t0,hdur
+  real(kind=CUSTOM_REAL) :: xmesh,ymesh,zmesh
+  integer :: istamp1,istamp2
   
 ! ************** PROGRAM STARTS HERE **************
 
@@ -406,7 +408,8 @@
 !--- ****** read data saved by solver ******
 
 ! --------------------------------------
-
+  istamp1 = 0
+  istamp2 = 0
   iframe = 0
 
 ! loop on all the time steps in the range entered
@@ -671,6 +674,23 @@
                       field_display(ieoff) = dble(displn(i,j))
                     endif ! MOVIE_COARSE
 
+                    ! determines noth / sourth pole index for stamping maximum values
+                    if( USE_AVERAGED_MAXIMUM .and. NORMALIZE_VALUES ) then
+                      xmesh = xp(ieoff)
+                      ymesh = yp(ieoff)
+                      zmesh = zp(ieoff)
+                      if(zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
+                      if(zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
+                      thetaval = atan2(sqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
+                      ! thetaval between 0 and PI / 2
+                      !print*,'thetaval:',thetaval * 180. / PI                     
+                      ! close to north pole
+                      if( thetaval >= 0.495 * PI ) istamp1 = ieoff
+                      ! close to south pole
+                      if( thetaval <= 0.01 ) istamp2 = ieoff
+                    endif
+
+
                  enddo !i
               enddo  !j
 
@@ -710,20 +730,55 @@
             max_average = max_average / nmax_history
           endif
 
+          print *,'maximum amplitude averaged in current snapshot = ',max_absol
           print *,'maximum amplitude over averaged last snapshots = ',max_average
 
           ! thresholds positive & negative maximum values
-          where( field_display(:) > max_average ) field_display = max_average
-          where( field_display(:) < - max_average ) field_display = -max_average
-          
-          ! updates current wavefield maxima
-          min_field_current = minval(field_display(:))
-          max_field_current = maxval(field_display(:))
-          max_absol = (abs(min_field_current)+abs(max_field_current))/2.0
+          where( field_display(:) > max_absol ) field_display = max_absol
+          where( field_display(:) < - max_absol ) field_display = -max_absol
+
+          ! sets new maxima for decaying wavefield
+          ! this should avoid flickering when normalizing wavefields
+          if( NORMALIZE_VALUES ) then
+            ! checks stamp indices for maximum values
+            if( istamp1 == 0 ) istamp1 = ieoff
+            if( istamp2 == 0 ) istamp2 = ieoff-1
+            !print *, 'stamp: ',istamp1,istamp2
+            
+            if( max_absol < max_average ) then
+              ! distance (in degree) of surface waves travelled
+              distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * 180./PI
+              if( distance > 10.0 .and. distance <= 20.0 ) then
+                ! smooth transition between 10 and 20 degrees
+                ! sets positive and negative maximum 
+                field_display(istamp1) = + max_absol + (max_average-max_absol) * (distance - 10.0)/10.0
+                field_display(istamp2) = - ( max_absol + (max_average-max_absol) * (distance - 10.0)/10.0 )
+              else if( distance > 20.0 ) then
+                ! sets positive and negative maximum                
+                field_display(istamp1) = + max_average
+                field_display(istamp2) = - max_average          
+              endif
+            else
+              ! thresholds positive & negative maximum values
+              where( field_display(:) > max_average ) field_display = max_average
+              where( field_display(:) < - max_average ) field_display = -max_average
+              ! sets positive and negative maximum                
+              field_display(istamp1) = + max_average
+              field_display(istamp2) = - max_average                        
+            endif
+            ! updates current wavefield maxima
+            min_field_current = minval(field_display(:))
+            max_field_current = maxval(field_display(:))
+            max_absol = (abs(min_field_current)+abs(max_field_current))/2.0            
+          endif          
 
           ! scales field values up to match average
           if( abs(max_absol) > TINYVAL) &
             field_display = field_display * max_average / max_absol
+
+          ! thresholds after scaling positive & negative maximum values
+          where( field_display(:) > max_average ) field_display = max_average
+          where( field_display(:) < - max_average ) field_display = -max_average
 
           ! normalizes field values
           if( NORMALIZE_VALUES ) then
@@ -757,8 +812,8 @@
                   val = 100.0 * max_average
                 endif                  
                 ! positive and negative maximum                
-                field_display(ieoff) = + val
-                field_display(ieoff-1) = - val                
+                field_display(istamp1) = + val
+                field_display(istamp2) = - val                
                 if( abs(max_average) > TINYVAL ) field_display = field_display / val
               endif
             else
