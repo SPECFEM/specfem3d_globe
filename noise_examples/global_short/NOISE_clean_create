@@ -1,7 +1,11 @@
-#!/bin/bash
-ulimit -s unlimited
+#!/bin/bash -eu
 
-LOCAL_PATH=$1
+DIR_LOCAL=$1
+iproc=$PBS_VNODENUM
 
-rm -rf $LOCAL_PATH
-mkdir -p $LOCAL_PATH
+##### other files can be collected in the same way
+if [ $(($iproc % 8)) = 0 ]; then
+   rm -rf   $DIR_LOCAL
+   mkdir -p $DIR_LOCAL
+fi
+

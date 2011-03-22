@@ -11,26 +11,20 @@ cd ../../
 
 mkdir -p SEM zzz_job_info NOISE_TOMOGRAPHY
 
-#cp $dir/A0.II.LHZ.adj                    ./SEM/
-#cp $dir/cp_adj_sources                   ./SEM/
-
 cp $dir/adj_traveltime_filter.f90        ./
 cp $dir/NOISE123.submit_atten            ./
 cp $dir/NOISE_clean_create               ./
 cp $dir/NOISE_collect                    ./
 cp $dir/NOISE_transfer                   ./
 
-cp $dir/S_squared                        ./NOISE_TOMOGRAPHY
+cp $dir/S_squared                        ./NOISE_TOMOGRAPHY/
 cp $dir/irec_master_noise                ./NOISE_TOMOGRAPHY/
 cp $dir/nu_master                        ./NOISE_TOMOGRAPHY/
 
 cp $dir/Par_file_NOISE_*                 ./DATA/
-cp $dir/CMTSOLUTION_NOISE                ./DATA/
-cp $dir/STATIONS_NOISE                   ./DATA/
-
-#cd SEM
-#./cp_adj_sources
-#cd ..
+cp $dir/CMTSOLUTION_NOISE                ./DATA/CMTSOLUTION
+cp $dir/STATIONS_NOISE                   ./DATA/STATIONS
+cp $dir/STATIONS_NOISE_ADJOINT           ./DATA/STATIONS_ADJOINT
 
 ifort -o NOISE_adj adj_traveltime_filter.f90
 

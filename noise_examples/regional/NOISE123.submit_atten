@@ -24,26 +24,13 @@ echo "$PBS_JOBID" > zzz_job_info/jobid_all
 d=`date`
 LOCAL_PATH_ALL=`grep LOCAL_PATH DATA/Par_file | cut -d = -f 2 | sed 's/ //g'`
 echo "Start cleaning local disk on nodes, $d"
-for (( ievent=1;ievent<=$numnodes;ievent=ievent+1 ))
-do
-    let line=$ievent
-    machine_all=$(awk 'NR=='$line'{print}' zzz_job_info/compute_nodes_all)
-    mpiexec -np 1 -host $machine_all ./NOISE_clean_create $LOCAL_PATH_ALL < /dev/null &
-done
-wait
-for (( ievent=1;ievent<=$numnodes;ievent=ievent+8 ))
-do
-    let line=$ievent
-    machine_all=$(awk 'NR=='$line'{print}' zzz_job_info/compute_nodes_all)
-    mpiexec -np 1 -host $machine_all ./NOISE_clean_create $LOCAL_PATH_ALL < /dev/null &
-done
-wait
+pbsdsh $PBS_O_WORKDIR/NOISE_clean_create   $LOCAL_PATH_ALL
 d=`date`
 echo "Finish cleaning local disk on nodes, $d"
 
 ## clean OUTPUT_FILES
-rm -rf OUTPUT_FILES
-mkdir  OUTPUT_FILES
+rm -rf   OUTPUT_FILES
+mkdir -p OUTPUT_FILES
 
 #### backup Fortran source files
 ##rm -rf      ZZZ_src
@@ -120,14 +107,7 @@ mpiexec -np $numnodes -hostfile zzz_job_info/compute_nodes_all $PWD/xspecfem3D_n
 ## collect outputs (e.g., kernels, meshes) from local nodes to global disk
 d=`date`
 echo "Start collecting outputs from nodes, $d"
-for (( ievent=1;ievent<=$numnodes;ievent++ ))
-do
-    let line=$ievent
-    machine_all=$(awk 'NR=='$line'{print}' zzz_job_info/compute_nodes_all)
-    let myrank="$ievent-1"
-    mpiexec -np 1 -host $machine_all ./NOISE_collect $machine_all $machine_all $LOCAL_PATH_ALL $LOCAL_PATH_ALL $myrank < /dev/null &
-done
-wait
+pbsdsh $PBS_O_WORKDIR/NOISE_collect  $LOCAL_PATH_ALL      OUTPUT_FILES/
 d=`date`
 echo "Finish collecting outputs from nodes, $d"
 
@@ -140,12 +120,6 @@ cp DATA/CMTSOLUTION ZZZ_3/
 cp DATA/STATIONS    ZZZ_3/
 
 
-for (( ievent=1;ievent<=$numnodes;ievent=ievent+1 ))
-do
-    let line=$ievent
-    machine_all=$(awk 'NR=='$line'{print}' zzz_job_info/compute_nodes_all)
-    mpiexec -np 1 -host $machine_all ./NOISE_clean_create $LOCAL_PATH_ALL < /dev/null &
-done
-wait
+pbsdsh $PBS_O_WORKDIR/NOISE_clean_create   $LOCAL_PATH_ALL
 d=`date`
 echo "Finish cleaning local disk on nodes, $d"

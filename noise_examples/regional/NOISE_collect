@@ -1,13 +1,11 @@
-#!/bin/bash
+#!/bin/bash -eu
 
-machine_new=$1
-machine_old=$2
-LOCAL_PATH_NEW=$3
-LOCAL_PATH_OLD=$4
-let myrank=$5
-myrank_new=`printf "%06d" $myrank`
+DIR_LOCAL=$1
+DIR_GLOBAL=$2
+iproc=`printf "%06d" $PBS_VNODENUM`
 
-##echo "cp $LOCAL_PATH_NEW/proc$myrank_new*kernel* OUTPUT_FILES/"
-mv $LOCAL_PATH_NEW/proc$myrank_new*reg1*kernel*.bin OUTPUT_FILES/
-mv $LOCAL_PATH_NEW/proc$myrank_new*reg1_*array_dims.txt OUTPUT_FILES/
-mv $LOCAL_PATH_NEW/proc$myrank_new*reg1_solver_data*.bin OUTPUT_FILES/
+##### other files can be collected in the same way
+mv $DIR_LOCAL/*$iproc*reg1*kernel*.bin      $DIR_GLOBAL/
+mv $DIR_LOCAL/*$iproc*reg1_*array_dims.txt  $DIR_GLOBAL/
+mv $DIR_LOCAL/*$iproc*reg1_solver_data*.bin $DIR_GLOBAL/
+
