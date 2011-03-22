@@ -54,11 +54,11 @@ adj=0.0d0
 misfit_traveltime = 0.0d0
 !!!! loading data and synthetics !!!!
 do irec = 1,nrec
-   file_data = './ZZZ_2/A7.II.LHZ.sem.ascii'
+   file_data = './ZZZ_2/A7.II.MXZ.sem.ascii'
    open(unit=1001,file=trim(file_data),status='old',action='read')
    do itime = 1,nstep
-           !read(1001,*) t(itime),data_origin(nstep-itime+1,irec)     ! original
-           read(1001,*) t(itime),data_origin(nstep-itime+1,irec)     ! reversed
+           !read(1001,*) t(itime),data_origin(itime,irec)          ! original
+           read(1001,*) t(itime),data_origin(nstep-itime+1,irec)  ! reversed
    end do
    close(1001)
 
@@ -163,14 +163,14 @@ do irec = 1,nrec
    end do  !do ifreq=1,nfreq
 
    !!!! output !!!!
-   file_adj_BHZ      = './SEM/A7.II.LHZ.adj'
+   file_adj_BHZ      = './SEM/A7.II.MXZ.adj'
    open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
    do itime = 1,nstep
       write(1002,*) t(itime), adj(nstep-itime+1,irec)
 !      write(1002,*) t(itime), adj(itime,irec)
    end do
    close(1002)
-   file_adj_BHZ      = './SEM/A7.II.LHZ.adj_reversed'
+   file_adj_BHZ      = './SEM/A7.II.MXZ.adj_reversed'
    open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
    do itime = 1,nstep
 !      write(1002,*) t(itime), adj(nstep-itime+1,irec)

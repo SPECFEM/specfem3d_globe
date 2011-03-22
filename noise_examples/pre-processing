@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eu
 
 example=$1
 dir=$PWD/$example
@@ -9,10 +9,10 @@ echo ""; echo "";
 
 cd ../../
 
-mkdir -p SEM zzz_job_info
+mkdir -p SEM zzz_job_info NOISE_TOMOGRAPHY
 
-cp $dir/A0.II.LHZ.adj                    ./SEM/
-cp $dir/cp_adj_sources                   ./SEM/
+#cp $dir/A0.II.LHZ.adj                    ./SEM/
+#cp $dir/cp_adj_sources                   ./SEM/
 
 cp $dir/adj_traveltime_filter.f90        ./
 cp $dir/NOISE123.submit_atten            ./
@@ -28,9 +28,9 @@ cp $dir/Par_file_NOISE_*                 ./DATA/
 cp $dir/CMTSOLUTION_NOISE                ./DATA/
 cp $dir/STATIONS_NOISE                   ./DATA/
 
-cd SEM
-./cp_adj_sources
-cd ..
+#cd SEM
+#./cp_adj_sources
+#cd ..
 
 ifort -o NOISE_adj adj_traveltime_filter.f90
 
