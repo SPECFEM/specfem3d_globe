@@ -1796,7 +1796,7 @@
        call check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                                   NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
                                   SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
-                                  MOVIE_COARSE)
+                                  MOVIE_COARSE,LOCAL_PATH,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
     endif
 !>YANGL
 
@@ -4305,6 +4305,10 @@
     endif
 
   endif
+
+  ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 21)
+  if (NOISE_TOMOGRAPHY\=0) call close_file_abs(21) 
+
 
   ! synchronize all processes
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
