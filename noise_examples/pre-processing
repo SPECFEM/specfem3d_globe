@@ -29,14 +29,14 @@ cp $dir/STATIONS_NOISE_ADJOINT           ./DATA/STATIONS_ADJOINT
 ifort -o NOISE_adj adj_traveltime_filter.f90
 
 cp DATA/Par_file_NOISE_1_attenuation DATA/Par_file
-rm OUTPUT_FILES/*
+rm -rf OUTPUT_FILES/*
 make xmeshfem3D
 make xspecfem3D
 mv bin/xmeshfem3D xmeshfem3D_attenuation
 mv bin/xspecfem3D xspecfem3D_attenuation
 
 cp DATA/Par_file_NOISE_1_noattenuation DATA/Par_file
-rm OUTPUT_FILES/*
+rm -rf OUTPUT_FILES/*
 make xmeshfem3D
 make xspecfem3D
 mv bin/xmeshfem3D xmeshfem3D_noattenuation

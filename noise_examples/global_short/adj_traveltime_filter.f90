@@ -1,3 +1,7 @@
+!!!!! this subroutine is used for preparing adjoint sources in this example ONLY
+!!!!! generally, you should make your own measuremnts and calculate corresponding adjoint sources 
+!!!!! FLEXWIN could be of help, or you can modify this code a little bit
+
 program adj_traveltime
 
 implicit none
@@ -177,25 +181,22 @@ do irec = 1,nrec
       write(1002,*) t(itime), adj(itime,irec)
    end do
    close(1002)
-!   file_data         = './yang_data/'//trim(station_name)//'.AA.PRE.semp_picked'
-!   file_syn          = './yang_syn/'//trim(station_name)//'.AA.PRE.semp_picked'
-!   file_adj          = './yang_data/'//trim(station_name)//'.AA.PRE.semp_adj'
-!   file_adj_density  = './yang_syn/'//trim(station_name)//'.AA.PRE.semp_adjden'
-!   open(unit=1001,file=trim(file_data),status='unknown')
-!   open(unit=1002,file=trim(file_syn),status='unknown')
-!   open(unit=1003,file=trim(file_adj),status='unknown')
-!   open(unit=1004,file=trim(file_adj_density),status='unknown')
-!   do itime = 1,nstep
-!      write(1001,*) t(itime), data_origin(itime,irec)
-!      write(1002,*) t(itime), syn_origin(itime,irec)
-!      write(1003,*) t(itime), adj(itime,irec)
-!      write(1004,*) t(itime), adj_density(itime,irec)
-!   end do
-!   close(1001)
-!   close(1002)
-!   close(1003)
-!   close(1004)
-   enddo 
+
+
+   file_adj_BHZ      = './SEM/A7.II.MXE.adj'
+   open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
+   do itime = 1,nstep
+      write(1002,*) t(itime), 0.0
+   end do
+   close(1002)
+   file_adj_BHZ      = './SEM/A7.II.MXN.adj'
+   open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
+   do itime = 1,nstep
+      write(1002,*) t(itime), 0.0
+   end do
+   close(1002)
+
+enddo 
 
 
 close(1111)
