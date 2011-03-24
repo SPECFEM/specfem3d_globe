@@ -159,7 +159,8 @@ achieved with 16 KB buffers: */
 // absorbing files: instead of passing file descriptor, we use the array index
 //                          first 0 - 3 indices for crust mantle files
 //                          last 4 - 8 indices for outer core files
-#define ABS_FILEID 9
+//                          index 9 - for NOISE_TOMOGRAPHY (SURFACE_MOVIE)
+#define ABS_FILEID 10
 
 // file points
 static FILE * fp_abs[ABS_FILEID];

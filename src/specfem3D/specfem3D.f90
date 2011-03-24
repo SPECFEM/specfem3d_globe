@@ -4306,8 +4306,8 @@
 
   endif
 
-  ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 21)
-  if (NOISE_TOMOGRAPHY/=0) call close_file_abs(21) 
+  ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
+  if (NOISE_TOMOGRAPHY/=0) call close_file_abs(9) 
 
 
   ! synchronize all processes
