@@ -277,12 +277,12 @@
   endif
 
   if (NOISE_TOMOGRAPHY/=0) then
-     ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 21)
+     ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
      reclen=CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP
      write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
-     if (NOISE_TOMOGRAPHY==1) call open_file_abs_w(21,trim(LOCAL_PATH)//outputname,len_trim(trim(LOCAL_PATH)//outputname),reclen)
-     if (NOISE_TOMOGRAPHY==2) call open_file_abs_r(21,trim(LOCAL_PATH)//outputname,len_trim(trim(LOCAL_PATH)//outputname),reclen)
-     if (NOISE_TOMOGRAPHY==3) call open_file_abs_r(21,trim(LOCAL_PATH)//outputname,len_trim(trim(LOCAL_PATH)//outputname),reclen)
+     if (NOISE_TOMOGRAPHY==1) call open_file_abs_w(9,trim(LOCAL_PATH)//outputname,len_trim(trim(LOCAL_PATH)//outputname),reclen)
+     if (NOISE_TOMOGRAPHY==2) call open_file_abs_r(9,trim(LOCAL_PATH)//outputname,len_trim(trim(LOCAL_PATH)//outputname),reclen)
+     if (NOISE_TOMOGRAPHY==3) call open_file_abs_r(9,trim(LOCAL_PATH)//outputname,len_trim(trim(LOCAL_PATH)//outputname),reclen)
   endif
 
   end subroutine check_parameters_noise
@@ -535,7 +535,7 @@
   ! also note that the surface movie does NOT have to be shared with other nodes/CPUs
   ! change LOCAL_PATH specified in "DATA/Par_file"
   write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
-  call write_abs(21,SURFACE_MOVIE,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
+  call write_abs(9,SURFACE_MOVIE,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
   deallocate(SURFACE_MOVIE)
   end subroutine noise_save_surface_movie
 
@@ -645,7 +645,7 @@
   allocate(SURFACE_MOVIE(NDIM,NGLLX,NGLLY,nspec_top))
   ! read surface movie
   write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
-  call read_abs(21,SURFACE_MOVIE,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
+  call read_abs(9,SURFACE_MOVIE,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
   ! get coordinates of surface mesh and surface displacement
   ipoin = 0
   do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
@@ -777,7 +777,7 @@
   allocate(SURFACE_MOVIE(NDIM,NGLLX,NGLLY,nspec_top))
   ! read surface movie, needed for Sigma_kl_crust_mantle
   write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
-  call read_abs(21,SURFACE_MOVIE,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
+  call read_abs(9,SURFACE_MOVIE,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
   ! noise source strength kernel
   ! to keep similar structure to other kernels, the source strength kernel is saved as a volumetric kernel
   ! but only updated at the surface, because the noise is generated there
