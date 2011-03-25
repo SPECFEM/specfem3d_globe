@@ -1792,11 +1792,10 @@
                                   xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                                   irec_master_noise,normal_x_noise,normal_y_noise,normal_z_noise,mask_noise)
 
-       if (myrank == 0) &
        call check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                                   NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
                                   SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
-                                  MOVIE_COARSE,LOCAL_PATH,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
+                                  MOVIE_COARSE,LOCAL_PATH,NSPEC2D_TOP(IREGION_CRUST_MANTLE),NSTEP)
     endif
 !>YANGL
 
