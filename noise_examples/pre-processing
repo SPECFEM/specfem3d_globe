@@ -9,6 +9,7 @@ echo ""; echo "";
 
 cd ../../
 
+rm -rf   SEM zzz_job_info NOISE_TOMOGRAPHY ZZZ_*
 mkdir -p SEM zzz_job_info NOISE_TOMOGRAPHY
 
 cp $dir/adj_traveltime_filter.f90        ./
