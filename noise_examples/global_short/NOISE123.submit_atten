@@ -42,9 +42,6 @@ mkdir -p OUTPUT_FILES
 ######################################## simulation ###############################################
 ################################################################### step 1: ensemble forward source
 cp DATA/Par_file_NOISE_1_attenuation DATA/Par_file
-cp DATA/STATIONS_NOISE DATA/STATIONS
-cp DATA/STATIONS_NOISE DATA/STATIONS_ADJOINT
-cp DATA/CMTSOLUTION_NOISE DATA/CMTSOLUTION
 sleep 2 
 mpiexec -np $numnodes -hostfile zzz_job_info/compute_nodes_all $PWD/xmeshfem3D_attenuation
 sleep 2 
@@ -107,7 +104,7 @@ mpiexec -np $numnodes -hostfile zzz_job_info/compute_nodes_all $PWD/xspecfem3D_n
 ## collect outputs (e.g., kernels, meshes) from local nodes to global disk
 d=`date`
 echo "Start collecting outputs from nodes, $d"
-pbsdsh $PBS_O_WORKDIR/NOISE_collect  $LOCAL_PATH_ALL      OUTPUT_FILES/
+pbsdsh $PBS_O_WORKDIR/NOISE_collect  $LOCAL_PATH_ALL      $PWD/OUTPUT_FILES/
 d=`date`
 echo "Finish collecting outputs from nodes, $d"
 
