@@ -742,7 +742,6 @@
 !  write(outputname,"('/proc',i6.6,'_surface_movie',i6.6)") myrank, it
 !  open(unit=IIN_NOISE,file=trim(LOCAL_PATH)//outputname,status='old',form='unformatted',action='read',iostat=ios)
 !  if( ios /= 0)  call exit_MPI(myrank,'file '//trim(outputname)//' does NOT exist!')
-!  call read_abs(9,SURFACE_MOVIE,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
 !
 !  read(IIN_NOISE) store_val_ux
 !  read(IIN_NOISE) store_val_uy
