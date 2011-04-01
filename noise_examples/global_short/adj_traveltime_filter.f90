@@ -57,7 +57,7 @@ adj=0.0d0
 misfit_traveltime = 0.0d0
 !!!! loading data and synthetics !!!!
 do irec = 1,nrec
-   file_data = './zzz_global_short/step_2/A7.II.MXZ.sem.ascii'
+   file_data = './SEM/A7.II.MXZ.sem.ascii'
    open(unit=1001,file=trim(file_data),status='old',action='read')
    do itime = 1,nstep
            !read(1001,*) t(itime),data_origin(itime,irec)          ! original

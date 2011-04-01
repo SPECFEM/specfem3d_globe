@@ -32,14 +32,20 @@ cp DATA/Par_file_NOISE_1_attenuation DATA/Par_file
 rm -rf OUTPUT_FILES/*
 make xmeshfem3D
 make xspecfem3D
+make xcreate_movie_AVS_DX
 mv bin/xmeshfem3D xmeshfem3D_attenuation
 mv bin/xspecfem3D xspecfem3D_attenuation
+mv bin/xcreate_movie_AVS_DX xcreate_movie_AVS_DX_attenuation
 
 cp DATA/Par_file_NOISE_1_noattenuation DATA/Par_file
 rm -rf OUTPUT_FILES/*
 make xmeshfem3D
 make xspecfem3D
+make xcreate_movie_AVS_DX
+make xcombine_vol_data
 mv bin/xmeshfem3D xmeshfem3D_noattenuation
 mv bin/xspecfem3D xspecfem3D_noattenuation
+mv bin/xcreate_movie_AVS_DX xcreate_movie_AVS_DX_noattenuation
+mv bin/xcombine_vol_data    xcombine_vol_data
 
 qsub NOISE123.submit_atten

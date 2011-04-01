@@ -6,6 +6,7 @@
 #PBS -l nodes=75:ppn=8,walltime=100:00:00
 
 DIR_RESULT="zzz_global_short"
+NSTEP=31599
 
 cd $PBS_O_WORKDIR
 ######################################## pre-simulation ###########################################
@@ -43,6 +44,8 @@ mkdir -p OUTPUT_FILES
 cp DATA/Par_file_NOISE_1_attenuation DATA/Par_file
 mpiexec $PBS_O_WORKDIR/xmeshfem3D_attenuation
 mpiexec $PBS_O_WORKDIR/xspecfem3D_attenuation
+echo "2" > temp_input_movie; echo "1" >> temp_input_movie; echo "$NSTEP" >> temp_input_movie
+$PBS_O_WORKDIR/xcreate_movie_AVS_DX_attenuation < temp_input_movie
 # backup step 1 results (with attenuation)
 DIR_TEMP=$DIR_RESULT/step_1
 rm   -rf $DIR_TEMP
@@ -55,6 +58,8 @@ cp DATA/STATIONS    $DIR_TEMP/
 cp DATA/Par_file_NOISE_2_attenuation DATA/Par_file
 mpiexec $PBS_O_WORKDIR/xmeshfem3D_attenuation
 mpiexec $PBS_O_WORKDIR/xspecfem3D_attenuation
+echo "2" > temp_input_movie; echo "1" >> temp_input_movie; echo "$NSTEP" >> temp_input_movie
+$PBS_O_WORKDIR/xcreate_movie_AVS_DX_attenuation < temp_input_movie
 # backup step 2 results (with attenuation)
 DIR_TEMP=$DIR_RESULT/step_2
 rm   -rf $DIR_TEMP
@@ -64,11 +69,14 @@ cp DATA/Par_file    $DIR_TEMP/
 cp DATA/CMTSOLUTION $DIR_TEMP/
 cp DATA/STATIONS    $DIR_TEMP/
 ############################################################## prepare adjoint sources ############
+cp $DIR_RESULT/step_2/A7.II.MXZ.sem.ascii ./SEM/
 ./NOISE_adj
 ################################################################### step 1: ensemble forward source
 cp DATA/Par_file_NOISE_1_noattenuation DATA/Par_file
 mpiexec $PBS_O_WORKDIR/xmeshfem3D_noattenuation
 mpiexec $PBS_O_WORKDIR/xspecfem3D_noattenuation
+echo "2" > temp_input_movie; echo "1" >> temp_input_movie; echo "$NSTEP" >> temp_input_movie
+$PBS_O_WORKDIR/xcreate_movie_AVS_DX_noattenuation < temp_input_movie
 # backup step 1 results (without attenuation)
 DIR_TEMP=$DIR_RESULT/step_1_no_attenuation
 rm   -rf $DIR_TEMP
@@ -81,6 +89,8 @@ cp DATA/STATIONS    $DIR_TEMP/
 cp DATA/Par_file_NOISE_2_noattenuation DATA/Par_file
 mpiexec $PBS_O_WORKDIR/xmeshfem3D_noattenuation
 mpiexec $PBS_O_WORKDIR/xspecfem3D_noattenuation
+echo "2" > temp_input_movie; echo "1" >> temp_input_movie; echo "$NSTEP" >> temp_input_movie
+$PBS_O_WORKDIR/xcreate_movie_AVS_DX_noattenuation < temp_input_movie
 # backup step 2 results (without attenuation)
 DIR_TEMP=$DIR_RESULT/step_2_no_attenuation
 rm   -rf $DIR_TEMP
@@ -93,6 +103,8 @@ cp DATA/STATIONS    $DIR_TEMP/
 cp DATA/Par_file_NOISE_3_noattenuation DATA/Par_file
 mpiexec $PBS_O_WORKDIR/xmeshfem3D_noattenuation
 mpiexec $PBS_O_WORKDIR/xspecfem3D_noattenuation
+echo "2" > temp_input_movie; echo "1" >> temp_input_movie; echo "$NSTEP" >> temp_input_movie
+$PBS_O_WORKDIR/xcreate_movie_AVS_DX_noattenuation < temp_input_movie
 
 ## collect outputs (e.g., kernels, meshes) from local nodes to global disk
 d=`date`
@@ -100,6 +112,14 @@ echo "Start collecting outputs from nodes, $d"
 pbsdsh $PBS_O_WORKDIR/NOISE_collect  $LOCAL_PATH      $PBS_O_WORKDIR/OUTPUT_FILES/
 d=`date`
 echo "Finish collecting outputs from nodes, $d"
+## combine_vol_data
+echo "0" > temp_input_movie
+for (( iproc=1;iproc<=$numnodes-1;iproc++ ))
+do
+  echo "$iproc" >> temp_input_movie
+done
+$PBS_O_WORKDIR/xcombine_vol_data temp_input_movie alpha_kernel $PBS_O_WORKDIR/OUTPUT_FILES $PBS_O_WORKDIR/OUTPUT_FILES $PBS_O_WORKDIR/OUTPUT_FILES 0 1
+rm temp_input_movie
 
 ## backup step 3 results (without attenuation)
 DIR_TEMP=$DIR_RESULT/step_3_no_attenuation

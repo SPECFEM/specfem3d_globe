@@ -6,7 +6,7 @@ program adj_traveltime
 
 implicit none
 
-integer, parameter :: nstep = 31599
+integer, parameter :: nstep = 129599
 double precision, parameter :: dt = 0.19d0
 double precision, parameter :: C_crit = 0.5d0
 
@@ -57,7 +57,7 @@ adj=0.0d0
 misfit_traveltime = 0.0d0
 !!!! loading data and synthetics !!!!
 do irec = 1,nrec
-   file_data = './zzz_global_long/step_2/A7.II.MXZ.sem.ascii'
+   file_data = './SEM/A7.II.MXZ.sem.ascii'
    open(unit=1001,file=trim(file_data),status='old',action='read')
    do itime = 1,nstep
            !read(1001,*) t(itime),data_origin(itime,irec)          ! original
