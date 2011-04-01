@@ -9,14 +9,15 @@ echo ""; echo "";
 
 cd ../../
 
-rm -rf   SEM zzz_job_info NOISE_TOMOGRAPHY ZZZ_*
-mkdir -p SEM zzz_job_info NOISE_TOMOGRAPHY
+rm -rf   SEM NOISE_TOMOGRAPHY zzz_$example
+mkdir -p SEM NOISE_TOMOGRAPHY zzz_$example/job_info
 
 cp $dir/adj_traveltime_filter.f90        ./
+ifort adj_traveltime_filter.f90 -o NOISE_adj
+
 cp $dir/NOISE123.submit_atten            ./
 cp $dir/NOISE_clean_create               ./
 cp $dir/NOISE_collect                    ./
-cp $dir/NOISE_transfer                   ./
 
 cp $dir/S_squared                        ./NOISE_TOMOGRAPHY/
 cp $dir/irec_master_noise                ./NOISE_TOMOGRAPHY/
@@ -26,8 +27,6 @@ cp $dir/Par_file_NOISE_*                 ./DATA/
 cp $dir/CMTSOLUTION_NOISE                ./DATA/CMTSOLUTION
 cp $dir/STATIONS_NOISE                   ./DATA/STATIONS
 cp $dir/STATIONS_NOISE_ADJOINT           ./DATA/STATIONS_ADJOINT
-
-ifort -o NOISE_adj adj_traveltime_filter.f90
 
 cp DATA/Par_file_NOISE_1_attenuation DATA/Par_file
 rm -rf OUTPUT_FILES/*
@@ -44,4 +43,3 @@ mv bin/xmeshfem3D xmeshfem3D_noattenuation
 mv bin/xspecfem3D xspecfem3D_noattenuation
 
 qsub NOISE123.submit_atten
-

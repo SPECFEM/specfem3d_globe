@@ -48,7 +48,6 @@ data  freq_high / 3.33d-2 /
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 nfreq=size(freq_low)
-print *, nfreq
 
 file_misfit = './OUTPUT_FILES/misfit_traveltime_delay'
 open(unit=1111,file=trim(file_misfit),status='unknown')
@@ -58,7 +57,7 @@ adj=0.0d0
 misfit_traveltime = 0.0d0
 !!!! loading data and synthetics !!!!
 do irec = 1,nrec
-   file_data = './ZZZ_2/A7.II.MXZ.sem.ascii'
+   file_data = './zzz_global_short/step_2/A7.II.MXZ.sem.ascii'
    open(unit=1001,file=trim(file_data),status='old',action='read')
    do itime = 1,nstep
            !read(1001,*) t(itime),data_origin(itime,irec)          ! original
@@ -102,7 +101,6 @@ do irec = 1,nrec
                    syn_filtered(:,irec)= syn_origin(:,irec)
                   !!!!!!!!!!!!!!!!!! to be implemented !!!!!!!!!!!!!!!!!
                   if (filter_flag .eq. 1) then
-                      print *, 'filtering'
                   ! THIS SECTION CALCULATES THE FILTER AND MUST BE CALLED BEFORE          
                   ! FILTER IS CALLED                                                      
                       F1=freq_low(ifreq)
@@ -281,7 +279,6 @@ SUBROUTINE BNDPAS(F1,F2,DELT,D,G,N)
 
       ENTRY FILTER(X,N,D,G,IG)                                          
                                                                        
-print*, maxval(X), ISW
 !     X = DATA VECTOR OF LENGTH N CONTAINING DATA TO BE FILTERED        
 !     D = FILTER COEFFICIENTS CALCULATED BY BNDPAS                      
 !     G = FILTER GAIN                                                   
