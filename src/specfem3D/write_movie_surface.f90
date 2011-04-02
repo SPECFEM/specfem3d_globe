@@ -26,13 +26,14 @@
 !=====================================================================
 
   subroutine write_movie_surface(myrank,nmovie_points,scale_veloc,veloc_crust_mantle, &
+                    scale_displ,displ_crust_mantle, &
                     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                     store_val_x,store_val_y,store_val_z, &
                     store_val_x_all,store_val_y_all,store_val_z_all, &
                     store_val_ux,store_val_uy,store_val_uz, &
                     store_val_ux_all,store_val_uy_all,store_val_uz_all, &
                     ibelm_top_crust_mantle,ibool_crust_mantle,nspec_top, &
-                    NIT,it,OUTPUT_FILES)
+                    NIT,it,OUTPUT_FILES,MOVIE_VOLUME_TYPE)
 
   implicit none
 
@@ -42,10 +43,10 @@
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer myrank,nmovie_points
-  double precision :: scale_veloc
+  double precision :: scale_veloc,scale_displ
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-     veloc_crust_mantle
+     veloc_crust_mantle,displ_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
         xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
@@ -63,6 +64,8 @@
 
   integer nspec_top,NIT,it
   character(len=150) OUTPUT_FILES
+
+  integer MOVIE_VOLUME_TYPE
 
   ! local parameters
   character(len=150) :: outputname
@@ -90,9 +93,18 @@
         store_val_x(ipoin) = xstore_crust_mantle(iglob)
         store_val_y(ipoin) = ystore_crust_mantle(iglob)
         store_val_z(ipoin) = zstore_crust_mantle(iglob)
-        store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
-        store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
-        store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
+        if(MOVIE_VOLUME_TYPE == 5) then
+          ! stores displacement
+          store_val_ux(ipoin) = displ_crust_mantle(1,iglob)*scale_displ
+          store_val_uy(ipoin) = displ_crust_mantle(2,iglob)*scale_displ
+          store_val_uz(ipoin) = displ_crust_mantle(3,iglob)*scale_displ
+        else
+          ! stores velocity
+          store_val_ux(ipoin) = veloc_crust_mantle(1,iglob)*scale_veloc
+          store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
+          store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
+        endif
+        
       enddo
     enddo
 

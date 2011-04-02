@@ -280,9 +280,12 @@
      ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
      reclen=CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP*NSTEP
      write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
-     if (NOISE_TOMOGRAPHY==1) call open_file_abs_w(9,trim(LOCAL_PATH)//trim(outputname),len_trim(trim(LOCAL_PATH)//trim(outputname)),reclen)
-     if (NOISE_TOMOGRAPHY==2) call open_file_abs_r(9,trim(LOCAL_PATH)//trim(outputname),len_trim(trim(LOCAL_PATH)//trim(outputname)),reclen)
-     if (NOISE_TOMOGRAPHY==3) call open_file_abs_r(9,trim(LOCAL_PATH)//trim(outputname),len_trim(trim(LOCAL_PATH)//trim(outputname)),reclen)
+     if (NOISE_TOMOGRAPHY==1) call open_file_abs_w(9,trim(LOCAL_PATH)//trim(outputname), &
+                                      len_trim(trim(LOCAL_PATH)//trim(outputname)),reclen)
+     if (NOISE_TOMOGRAPHY==2) call open_file_abs_r(9,trim(LOCAL_PATH)//trim(outputname), &
+                                      len_trim(trim(LOCAL_PATH)//trim(outputname)),reclen)
+     if (NOISE_TOMOGRAPHY==3) call open_file_abs_r(9,trim(LOCAL_PATH)//trim(outputname), &
+                                      len_trim(trim(LOCAL_PATH)//trim(outputname)),reclen)
   endif
 
   end subroutine check_parameters_noise
@@ -520,15 +523,19 @@
   character(len=150) :: LOCAL_PATH
   ! output parameters
   ! local parameters
-  integer :: ipoin,ispec2D,ispec,i,j,k,iglob
+  integer :: ispec2D,ispec,i,j,k,iglob 
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: &
       store_val_x,store_val_y,store_val_z, &
       store_val_ux,store_val_uy,store_val_uz
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: SURFACE_MOVIE
-  character(len=150) :: outputname
-
-
+  !integer :: ipoin
+  !character(len=150) :: outputname
+  integer :: idummy
+  real(kind=CUSTOM_REAL) :: rdummy
+  character :: cdummy    
+  
   allocate(SURFACE_MOVIE(NDIM,NGLLX,NGLLY,nspec_top))
+
   ! get coordinates of surface mesh and surface displacement
   do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
@@ -547,6 +554,20 @@
   ! change LOCAL_PATH specified in "DATA/Par_file"
   call write_abs(9,SURFACE_MOVIE,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
   deallocate(SURFACE_MOVIE)
+
+  ! just to avoid compiler warnings
+  idummy = myrank
+  rdummy = xstore_crust_mantle(1)
+  rdummy = ystore_crust_mantle(1)
+  rdummy = zstore_crust_mantle(1)
+  rdummy = store_val_x(1)
+  rdummy = store_val_y(1)
+  rdummy = store_val_z(1)
+  rdummy = store_val_ux(1)
+  rdummy = store_val_uy(1)
+  rdummy = store_val_uz(1)
+  cdummy = LOCAL_PATH(1)
+
   end subroutine noise_save_surface_movie
 
 ! =============================================================================================================
@@ -656,12 +677,14 @@
   character(len=150) :: LOCAL_PATH
   ! output parameters
   ! local parameters
-  integer :: ipoin,ispec2D,ispec,i,j,k,iglob,ios
+  integer :: ipoin,ispec2D,ispec,i,j,k,iglob !,ios
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: store_val_ux,store_val_uy,store_val_uz
   real(kind=CUSTOM_REAL) :: eta
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: SURFACE_MOVIE
-  character(len=150) :: outputname
-
+  !character(len=150) :: outputname
+  integer :: idummy
+  real(kind=CUSTOM_REAL) :: rdummy
+  character :: cdummy
 
   allocate(SURFACE_MOVIE(NDIM,NGLLX,NGLLY,nspec_top))
   ! read surface movie
@@ -694,6 +717,14 @@
 
   enddo
   deallocate(SURFACE_MOVIE)
+
+
+  ! just to avoid compiler warnings
+  idummy = myrank
+  rdummy = store_val_ux(1)
+  rdummy = store_val_uy(1)
+  rdummy = store_val_uz(1)
+  cdummy = LOCAL_PATH(1)
 
   end subroutine noise_read_add_surface_movie
 
@@ -798,13 +829,15 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     Sigma_kl_crust_mantle
   ! local parameters
-  integer :: i,j,k,ispec,iglob,ipoin,ispec2D,ios
+  integer :: i,j,k,ispec,iglob,ipoin,ispec2D !,ios
   real(kind=CUSTOM_REAL) :: eta
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: store_val_ux,store_val_uy,store_val_uz
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: SURFACE_MOVIE
-  character(len=150) :: outputname
-
-
+  !character(len=150) :: outputname
+  integer :: idummy
+  real(kind=CUSTOM_REAL) :: rdummy
+  character :: cdummy
+  
   allocate(SURFACE_MOVIE(NDIM,NGLLX,NGLLY,nspec_top))
   ! read surface movie, needed for Sigma_kl_crust_mantle
   call read_abs(9,SURFACE_MOVIE,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
@@ -835,6 +868,14 @@
     enddo
 
   enddo
+
+  ! just to avoid compiler warnings
+  idummy = myrank
+  rdummy = store_val_ux(1)
+  rdummy = store_val_uy(1)
+  rdummy = store_val_uz(1)
+  cdummy = LOCAL_PATH(1)
+
 
   end subroutine compute_kernels_strength_noise
 

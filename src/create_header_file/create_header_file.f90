@@ -215,9 +215,10 @@
   print *,'time-stepping of the solver will be: ',DT
   print *
   if(MOVIE_SURFACE .or. MOVIE_VOLUME) then
-    print *,'MOVIE_VOLUME:',MOVIE_VOLUME
+    print *,'MOVIE_VOLUME :',MOVIE_VOLUME
     print *,'MOVIE_SURFACE:',MOVIE_SURFACE
     print *,'Saving movie frames every',NTSTEP_BETWEEN_FRAMES
+    print *
   endif
   print *,'on NEC SX, make sure "loopcnt=" parameter'
 ! use fused loops on NEC SX
@@ -229,10 +230,14 @@
   print *
   print *,'size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
   print *
-  print *,'   (should be below and typically equal to 80% or 90%'
-  print *,'    of the memory installed per core)'
-  print *,'   (if significantly more, the job will not run by lack of memory)'
-  print *,'   (if significantly less, you waste a significant amount of memory)'
+  ! note: using less memory becomes only an issue if the code scaling is bad.
+  !          most users will run simulations with an executable using far less than 80% RAM per core
+  !          since they prefer having a faster computational time (and use a higher number of cores).
+  !print *,'   (should be below and typically equal to 80% or 90%'
+  !print *,'    of the memory installed per core)'
+  print *,'   (should be below to 80% or 90% of the memory installed per core)'
+  print *,'   (if significantly more, the job will not run by lack of memory )'
+  !print *,'   (if significantly less, you waste a significant amount of memory)'
   print *
   print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'

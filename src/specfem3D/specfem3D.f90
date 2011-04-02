@@ -1066,11 +1066,13 @@
   npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_crust_mantle(:) + npoin2D_xi_inner_core(:)), &
                         maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
 
-  allocate(buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED))
-  allocate(buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED))
+  allocate(buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
+          buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi buffer')
 
-  allocate(b_buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED))
-  allocate(b_buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED))
+  allocate(b_buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
+          b_buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi b_buffer')
 
   call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
          iboolleft_xi_crust_mantle,iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
@@ -1096,7 +1098,8 @@
     else
       nabs_xmin_cm = 1
     endif
-    allocate(absorb_xmin_crust_mantle5(NDIM,NGLLY,NGLLZ,nabs_xmin_cm,8))
+    allocate(absorb_xmin_crust_mantle5(NDIM,NGLLY,NGLLZ,nabs_xmin_cm,8),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmin')
 
     if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1104,7 +1107,8 @@
     else
       nabs_xmax_cm = 1
     endif
-    allocate(absorb_xmax_crust_mantle5(NDIM,NGLLY,NGLLZ,nabs_xmax_cm,8))
+    allocate(absorb_xmax_crust_mantle5(NDIM,NGLLY,NGLLZ,nabs_xmax_cm,8),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmax')
 
     if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1112,7 +1116,8 @@
     else
       nabs_ymin_cm = 1
     endif
-    allocate(absorb_ymin_crust_mantle5(NDIM,NGLLX,NGLLZ,nabs_ymin_cm,8))
+    allocate(absorb_ymin_crust_mantle5(NDIM,NGLLX,NGLLZ,nabs_ymin_cm,8),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymin')
 
     if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1120,7 +1125,8 @@
     else
       nabs_ymax_cm = 1
     endif
-    allocate(absorb_ymax_crust_mantle5(NDIM,NGLLX,NGLLZ,nabs_ymax_cm,8))
+    allocate(absorb_ymax_crust_mantle5(NDIM,NGLLX,NGLLZ,nabs_ymax_cm,8),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymax')
 
     ! outer_core
     if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
@@ -1129,7 +1135,8 @@
     else
       nabs_xmin_oc = 1
     endif
-    allocate(absorb_xmin_outer_core(NGLLY,NGLLZ,nabs_xmin_oc))
+    allocate(absorb_xmin_outer_core(NGLLY,NGLLZ,nabs_xmin_oc),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmin')
 
     if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1137,7 +1144,8 @@
     else
       nabs_xmax_oc = 1
     endif
-    allocate(absorb_xmax_outer_core(NGLLY,NGLLZ,nabs_xmax_oc))
+    allocate(absorb_xmax_outer_core(NGLLY,NGLLZ,nabs_xmax_oc),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmax')
 
     if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1145,7 +1153,8 @@
     else
       nabs_ymin_oc = 1
     endif
-    allocate(absorb_ymin_outer_core(NGLLX,NGLLZ,nabs_ymin_oc))
+    allocate(absorb_ymin_outer_core(NGLLX,NGLLZ,nabs_ymin_oc),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymin')
 
     if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1153,7 +1162,8 @@
     else
       nabs_ymax_oc = 1
     endif
-    allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nabs_ymax_oc))
+    allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nabs_ymax_oc),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymax')
 
     if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. &
        (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1161,7 +1171,8 @@
     else
       nabs_zmin_oc = 1
     endif
-    allocate(absorb_zmin_outer_core(NGLLX,NGLLY,nabs_zmin_oc))
+    allocate(absorb_zmin_outer_core(NGLLX,NGLLY,nabs_zmin_oc),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb zmin')
 
     ! read arrays for Stacey conditions
     call read_mesh_databases_stacey(myrank, &
@@ -1193,37 +1204,39 @@
 ! source and receivers
 
   ! allocate arrays for source
-  allocate(islice_selected_source(NSOURCES))
-  allocate(ispec_selected_source(NSOURCES))
-  allocate(Mxx(NSOURCES))
-  allocate(Myy(NSOURCES))
-  allocate(Mzz(NSOURCES))
-  allocate(Mxy(NSOURCES))
-  allocate(Mxz(NSOURCES))
-  allocate(Myz(NSOURCES))
-  allocate(xi_source(NSOURCES))
-  allocate(eta_source(NSOURCES))
-  allocate(gamma_source(NSOURCES))
-  allocate(tshift_cmt(NSOURCES))
-  allocate(hdur(NSOURCES))
-  allocate(hdur_gaussian(NSOURCES))
-  allocate(theta_source(NSOURCES))
-  allocate(phi_source(NSOURCES))
-  allocate(nu_source(NDIM,NDIM,NSOURCES))
+  allocate(islice_selected_source(NSOURCES), &
+          ispec_selected_source(NSOURCES), &
+          Mxx(NSOURCES), &
+          Myy(NSOURCES), &
+          Mzz(NSOURCES), &
+          Mxy(NSOURCES), &
+          Mxz(NSOURCES), &
+          Myz(NSOURCES), &
+          xi_source(NSOURCES), &
+          eta_source(NSOURCES), &
+          gamma_source(NSOURCES), &
+          tshift_cmt(NSOURCES), &
+          hdur(NSOURCES), &
+          hdur_gaussian(NSOURCES), &
+          theta_source(NSOURCES), &
+          phi_source(NSOURCES), &
+          nu_source(NDIM,NDIM,NSOURCES),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
 
   ! allocate memory for receiver arrays
-  allocate(islice_selected_rec(nrec))
-  allocate(ispec_selected_rec(nrec))
-  allocate(xi_receiver(nrec))
-  allocate(eta_receiver(nrec))
-  allocate(gamma_receiver(nrec))
-  allocate(station_name(nrec))
-  allocate(network_name(nrec))
-  allocate(stlat(nrec))
-  allocate(stlon(nrec))
-  allocate(stele(nrec))
-  allocate(stbur(nrec))
-  allocate(nu(NDIM,NDIM,nrec))
+  allocate(islice_selected_rec(nrec), &
+          ispec_selected_rec(nrec), &
+          xi_receiver(nrec), &
+          eta_receiver(nrec), &
+          gamma_receiver(nrec), &
+          station_name(nrec), &
+          network_name(nrec), &
+          stlat(nrec), &
+          stlon(nrec), &
+          stele(nrec), &
+          stbur(nrec), &
+          nu(NDIM,NDIM,nrec),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
 
   ! locates sources and receivers
   call setup_sources_receivers(NSOURCES,myrank,ibool_crust_mantle, &
@@ -1243,7 +1256,8 @@
 
   ! allocates source arrays
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
-    allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES))
+    allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating sourcearrays')
 
     ! stores source arrays
     call setup_sources_receivers_srcarr(NSOURCES,myrank, &
@@ -1259,7 +1273,9 @@
 
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
-    allocate(iadj_vec(NSTEP))
+    allocate(iadj_vec(NSTEP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating iadj_vec')
+    
     ! initializes iadj_vec
     do it=1,NSTEP
        iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record
@@ -1267,12 +1283,14 @@
 
     if(nadj_rec_local > 0) then
       ! allocate adjoint source arrays
-      allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC))
+      allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint sourcearrays')
       adj_sourcearrays = 0._CUSTOM_REAL
 
       ! allocate indexing arrays
-      allocate(iadjsrc(NSTEP_SUB_ADJ,2))
-      allocate(iadjsrc_len(NSTEP_SUB_ADJ))
+      allocate(iadjsrc(NSTEP_SUB_ADJ,2), &
+              iadjsrc_len(NSTEP_SUB_ADJ),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint indexing arrays')
       ! initializes iadjsrc, iadjsrc_len and iadj_vec
       call setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
                       NTSTEP_BETWEEN_READ_ADJSRC, &
@@ -1283,20 +1301,23 @@
   ! allocates receiver interpolators
   if (nrec_local > 0) then
     ! allocate Lagrange interpolators for receivers
-    allocate(hxir_store(nrec_local,NGLLX))
-    allocate(hetar_store(nrec_local,NGLLY))
-    allocate(hgammar_store(nrec_local,NGLLZ))
+    allocate(hxir_store(nrec_local,NGLLX), &
+            hetar_store(nrec_local,NGLLY), &
+            hgammar_store(nrec_local,NGLLZ),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver interpolators')
     ! define local to global receiver numbering mapping
-    allocate(number_receiver_global(nrec_local))
+    allocate(number_receiver_global(nrec_local),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating global receiver numbering')
     ! define and store Lagrange interpolators at all the receivers
     if (SIMULATION_TYPE == 2) then
       nadj_hprec_local = nrec_local
     else
       nadj_hprec_local = 1
     endif
-    allocate(hpxir_store(nadj_hprec_local,NGLLX))
-    allocate(hpetar_store(nadj_hprec_local,NGLLY))
-    allocate(hpgammar_store(nadj_hprec_local,NGLLZ))
+    allocate(hpxir_store(nadj_hprec_local,NGLLX), &
+            hpetar_store(nadj_hprec_local,NGLLY), &
+            hpgammar_store(nadj_hprec_local,NGLLZ),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating derivative interpolators')
 
     ! stores interpolators for receiver positions
     call setup_sources_receivers_intp(NSOURCES,myrank, &
@@ -1317,7 +1338,10 @@
       allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
       if(ier /= 0) stop 'error while allocating seismograms'
       ! allocate Frechet derivatives array
-      allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local),stshift_der(nrec_local),shdur_der(nrec_local))
+      allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
+              stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating frechet derivatives arrays')
+      
       moment_der = 0._CUSTOM_REAL
       sloc_der = 0._CUSTOM_REAL
       stshift_der = 0._CUSTOM_REAL
@@ -1456,13 +1480,14 @@
     endif
 
     ! allocate buffers for cube and slices
-    allocate(sender_from_slices_to_cube(non_zero_nb_msgs_theor_in_cube))
-    allocate(buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM))
-    allocate(b_buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM))
-    allocate(buffer_slices(npoin2D_cube_from_slices,NDIM))
-    allocate(b_buffer_slices(npoin2D_cube_from_slices,NDIM))
-    allocate(buffer_slices2(npoin2D_cube_from_slices,NDIM))
-    allocate(ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices))
+    allocate(sender_from_slices_to_cube(non_zero_nb_msgs_theor_in_cube), &
+            buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
+            b_buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
+            buffer_slices(npoin2D_cube_from_slices,NDIM), &
+            b_buffer_slices(npoin2D_cube_from_slices,NDIM), &
+            buffer_slices2(npoin2D_cube_from_slices,NDIM), &
+            ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating cube buffers')
 
     ! handles the communications with the central cube if it was included in the mesh
     call prepare_timerun_centralcube(myrank,rmass_inner_core, &
@@ -1488,13 +1513,14 @@
 
     ! allocate fictitious buffers for cube and slices with a dummy size
     ! just to be able to use them as arguments in subroutine calls
-    allocate(sender_from_slices_to_cube(1))
-    allocate(buffer_all_cube_from_slices(1,1,1))
-    allocate(b_buffer_all_cube_from_slices(1,1,1))
-    allocate(buffer_slices(1,1))
-    allocate(b_buffer_slices(1,1))
-    allocate(buffer_slices2(1,1))
-    allocate(ibool_central_cube(1,1))
+    allocate(sender_from_slices_to_cube(1), &
+            buffer_all_cube_from_slices(1,1,1), &
+            b_buffer_all_cube_from_slices(1,1,1), &
+            buffer_slices(1,1), &
+            b_buffer_slices(1,1), &
+            buffer_slices2(1,1), &
+            ibool_central_cube(1,1),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating dummy buffers')
 
   endif
 
@@ -1557,19 +1583,33 @@
        nmovie_points = NGLLX * NGLLY * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
        NIT = 1
     endif
-    allocate(store_val_x(nmovie_points))
-    allocate(store_val_y(nmovie_points))
-    allocate(store_val_z(nmovie_points))
-    allocate(store_val_ux(nmovie_points))
-    allocate(store_val_uy(nmovie_points))
-    allocate(store_val_uz(nmovie_points))
+    allocate(store_val_x(nmovie_points), &
+            store_val_y(nmovie_points), &
+            store_val_z(nmovie_points), &
+            store_val_ux(nmovie_points), &
+            store_val_uy(nmovie_points), &
+            store_val_uz(nmovie_points),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface arrays')
+  
     if (MOVIE_SURFACE) then  ! those arrays are not neccessary for noise tomography, so only allocate them in MOVIE_SURFACE case
-       allocate(store_val_x_all(nmovie_points,0:NPROCTOT_VAL-1))
-       allocate(store_val_y_all(nmovie_points,0:NPROCTOT_VAL-1))
-       allocate(store_val_z_all(nmovie_points,0:NPROCTOT_VAL-1))
-       allocate(store_val_ux_all(nmovie_points,0:NPROCTOT_VAL-1))
-       allocate(store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1))
-       allocate(store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1))
+       allocate(store_val_x_all(nmovie_points,0:NPROCTOT_VAL-1), &
+              store_val_y_all(nmovie_points,0:NPROCTOT_VAL-1), &
+              store_val_z_all(nmovie_points,0:NPROCTOT_VAL-1), &
+              store_val_ux_all(nmovie_points,0:NPROCTOT_VAL-1), &
+              store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1), &
+              store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
+       if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+    endif
+    if(myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'Movie surface:'
+      write(IMAIN,*) '  Writing to moviedata*** files in output directory'
+      if(MOVIE_VOLUME_TYPE == 5) then
+        write(IMAIN,*) '  movie output: displacement'
+      else
+        write(IMAIN,*) '  movie output: velocity'
+      endif
+      write(IMAIN,*) '  time steps every: ',NTSTEP_BETWEEN_FRAMES
     endif
   endif
 
@@ -1589,18 +1629,34 @@
                 MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool,mask_3dmovie)
 
 
-    allocate(nu_3dmovie(3,3,npoints_3dmovie))
+    allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating nu for 3d movie')
 
     call write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
                            ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
                            mask_3dmovie,mask_ibool,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
 
     if(myrank == 0) then
-      write(IMAIN,*) 'Writing to movie3D files on local disk'
-      write(IMAIN,*) 'depth(T,B):',MOVIE_TOP,MOVIE_BOTTOM
-      write(IMAIN,*) 'lon(W,E)  :',MOVIE_WEST,MOVIE_EAST
-      write(IMAIN,*) 'lat(S,N)  :',MOVIE_SOUTH,MOVIE_NORTH
-      write(IMAIN,*) 'Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
+      write(IMAIN,*)
+      write(IMAIN,*) 'Movie volume:'    
+      write(IMAIN,*) '  Writing to movie3D*** files on local disk databases directory'
+      if(MOVIE_VOLUME_TYPE == 1) then
+        write(IMAIN,*) '  movie output: strain'
+      else if(MOVIE_VOLUME_TYPE == 2) then
+        write(IMAIN,*) '  movie output: time integral of strain'
+      else if(MOVIE_VOLUME_TYPE == 3) then
+        write(IMAIN,*) '  movie output: potency or integral of strain'
+      else if(MOVIE_VOLUME_TYPE == 4) then
+        write(IMAIN,*) '  movie output: divergence and curl'  
+      else if(MOVIE_VOLUME_TYPE == 5) then
+        write(IMAIN,*) '  movie output: displacement'
+      else if(MOVIE_VOLUME_TYPE == 6) then
+        write(IMAIN,*) '  movie output: velocity'
+      endif
+      write(IMAIN,*) '  depth(T,B):',MOVIE_TOP,MOVIE_BOTTOM
+      write(IMAIN,*) '  lon(W,E)  :',MOVIE_WEST,MOVIE_EAST
+      write(IMAIN,*) '  lat(S,N)  :',MOVIE_SOUTH,MOVIE_NORTH
+      write(IMAIN,*) '  Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
     endif
 
   endif ! MOVIE_VOLUME
@@ -1695,7 +1751,8 @@
 
     ! approximate hessian
     if( APPROXIMATE_HESS_KL ) then
-      allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
+      allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating hessian')
       hess_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
@@ -1718,7 +1775,8 @@
     else
       nspec_beta_kl_outer_core = 1
     endif
-    allocate(beta_kl_outer_core(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core))
+    allocate(beta_kl_outer_core(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating beta outercore')
     beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
@@ -1774,11 +1832,13 @@
 !<YANGL
     ! NOISE TOMOGRAPHY
     if ( NOISE_TOMOGRAPHY /= 0 ) then
-       allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP))
-       allocate(normal_x_noise(nmovie_points))
-       allocate(normal_y_noise(nmovie_points))
-       allocate(normal_z_noise(nmovie_points))
-       allocate(mask_noise(nmovie_points))
+      allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
+              normal_x_noise(nmovie_points), &
+              normal_y_noise(nmovie_points), &
+              normal_z_noise(nmovie_points), &
+              mask_noise(nmovie_points),stat=ier)
+       if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise arrays')
+  
        noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
        normal_x_noise(:)            = 0._CUSTOM_REAL
        normal_y_noise(:)            = 0._CUSTOM_REAL
@@ -4177,6 +4237,7 @@
     if( mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
       ! save velocity here to avoid static offset on displacement for movies
       call write_movie_surface(myrank,nmovie_points,scale_veloc,veloc_crust_mantle, &
+                    scale_displ,displ_crust_mantle, &
                     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                     store_val_x,store_val_y,store_val_z, &
                     store_val_x_all,store_val_y_all,store_val_z_all, &
@@ -4184,7 +4245,7 @@
                     store_val_ux_all,store_val_uy_all,store_val_uz_all, &
                     ibelm_top_crust_mantle,ibool_crust_mantle, &
                     NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-                    NIT,it,OUTPUT_FILES)
+                    NIT,it,OUTPUT_FILES,MOVIE_VOLUME_TYPE)
     endif
   endif
 

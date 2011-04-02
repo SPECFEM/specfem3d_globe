@@ -261,10 +261,14 @@
   write(IOUT,*) '!'
   write(IOUT,*) '! size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
   write(IOUT,*) '!'
-  write(IOUT,*) '!   (should be below and typically equal to 80% or 90%'
-  write(IOUT,*) '!    of the memory installed per core)'
-  write(IOUT,*) '!   (if significantly more, the job will not run by lack of memory)'
-  write(IOUT,*) '!   (if significantly less, you waste a significant amount of memory)'
+  ! note: using less memory becomes only an issue if the code scaling is bad.
+  !          most users will run simulations with an executable using far less than 80% RAM per core
+  !          since they prefer having a faster computational time (and use a higher number of cores).
+  !write(IOUT,*) '!   (should be below and typically equal to 80% or 90%'
+  !write(IOUT,*) '!    of the memory installed per core)'
+  write(IOUT,*) '!   (should be below to 80% or 90% of the memory installed per core)'
+  write(IOUT,*) '!   (if significantly more, the job will not run by lack of memory )'
+  !write(IOUT,*) '!   (if significantly less, you waste a significant amount of memory)'
   write(IOUT,*) '!'
   write(IOUT,*) '! size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
   write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
