@@ -175,26 +175,26 @@
   endif
 
 ! allocate memory for arrays using number of stations
-  allocate(epidist(nrec))
-  allocate(ix_initial_guess(nrec))
-  allocate(iy_initial_guess(nrec))
-  allocate(iz_initial_guess(nrec))
-  allocate(x_target(nrec))
-  allocate(y_target(nrec))
-  allocate(z_target(nrec))
-  allocate(x_found(nrec))
-  allocate(y_found(nrec))
-  allocate(z_found(nrec))
-  allocate(final_distance(nrec))
-
-  allocate(ispec_selected_rec_all(nrec,0:NPROCTOT-1))
-  allocate(xi_receiver_all(nrec,0:NPROCTOT-1))
-  allocate(eta_receiver_all(nrec,0:NPROCTOT-1))
-  allocate(gamma_receiver_all(nrec,0:NPROCTOT-1))
-  allocate(x_found_all(nrec,0:NPROCTOT-1))
-  allocate(y_found_all(nrec,0:NPROCTOT-1))
-  allocate(z_found_all(nrec,0:NPROCTOT-1))
-  allocate(final_distance_all(nrec,0:NPROCTOT-1))
+  allocate(epidist(nrec), &
+          ix_initial_guess(nrec), &
+          iy_initial_guess(nrec), &
+          iz_initial_guess(nrec), &
+          x_target(nrec), &
+          y_target(nrec), &
+          z_target(nrec), &
+          x_found(nrec), &
+          y_found(nrec), &
+          z_found(nrec), &
+          final_distance(nrec), &
+          ispec_selected_rec_all(nrec,0:NPROCTOT-1), &
+          xi_receiver_all(nrec,0:NPROCTOT-1), &
+          eta_receiver_all(nrec,0:NPROCTOT-1), &
+          gamma_receiver_all(nrec,0:NPROCTOT-1), &
+          x_found_all(nrec,0:NPROCTOT-1), &
+          y_found_all(nrec,0:NPROCTOT-1), &
+          z_found_all(nrec,0:NPROCTOT-1), &
+          final_distance_all(nrec,0:NPROCTOT-1),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary receiver arrays')
 
   ! read that STATIONS file on the master
   if(myrank == 0) then
@@ -319,7 +319,8 @@
     y_target(irec) = r0*sin(theta)*sin(phi)
     z_target(irec) = r0*cos(theta)
 
-    if (myrank == 0) write(IOVTK,*) sngl(x_target(irec)), sngl(y_target(irec)), sngl(z_target(irec))
+    ! would write out desired target locations of receivers
+    !if (myrank == 0) write(IOVTK,*) sngl(x_target(irec)), sngl(y_target(irec)), sngl(z_target(irec))
 
 ! examine top of the elements only (receivers always at the surface)
 !      k = NGLLZ
@@ -541,21 +542,28 @@
   ispec_selected_rec_all(:,:) = -1
   call MPI_GATHER(ispec_selected_rec,nrec,MPI_INTEGER,ispec_selected_rec_all,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-  call MPI_GATHER(xi_receiver,nrec,MPI_DOUBLE_PRECISION,xi_receiver_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(eta_receiver,nrec,MPI_DOUBLE_PRECISION,eta_receiver_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,gamma_receiver_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(final_distance,nrec,MPI_DOUBLE_PRECISION,final_distance_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(x_found,nrec,MPI_DOUBLE_PRECISION,x_found_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(y_found,nrec,MPI_DOUBLE_PRECISION,y_found_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(z_found,nrec,MPI_DOUBLE_PRECISION,z_found_all,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(xi_receiver,nrec,MPI_DOUBLE_PRECISION,xi_receiver_all,nrec, &
+                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(eta_receiver,nrec,MPI_DOUBLE_PRECISION,eta_receiver_all,nrec, &
+                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(gamma_receiver,nrec,MPI_DOUBLE_PRECISION,gamma_receiver_all,nrec, &
+                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(final_distance,nrec,MPI_DOUBLE_PRECISION,final_distance_all,nrec, &
+                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(x_found,nrec,MPI_DOUBLE_PRECISION,x_found_all,nrec, &
+                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(y_found,nrec,MPI_DOUBLE_PRECISION,y_found_all,nrec, &
+                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_GATHER(z_found,nrec,MPI_DOUBLE_PRECISION,z_found_all,nrec, &
+                  MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
 ! this is executed by main process only
   if(myrank == 0) then
 
-! check that the gather operation went well
+    ! check that the gather operation went well
     if(any(ispec_selected_rec_all(:,:) == -1)) call exit_MPI(myrank,'gather operation failed for receivers')
 
-! MPI loop on all the results to determine the best slice
+    ! MPI loop on all the results to determine the best slice
     islice_selected_rec(:) = -1
     do irec = 1,nrec
       distmin = HUGEVAL
@@ -591,8 +599,8 @@
         write(IMAIN,*) ' at xi,eta,gamma coordinates = ',xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec)
       endif
 
-! add warning if estimate is poor
-! (usually means receiver outside the mesh given by the user)
+      ! add warning if estimate is poor
+      ! (usually means receiver outside the mesh given by the user)
       if(final_distance(irec) > THRESHOLD_EXCLUDE_STATION) then
         write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
         write(IMAIN,*) '*****************************************************************'
@@ -604,6 +612,7 @@
         write(IMAIN,*) '*****************************************************************'
       else
         nrec_found = nrec_found + 1
+        
         islice_selected_rec_found(nrec_found) = islice_selected_rec(irec)
         ispec_selected_rec_found(nrec_found) = ispec_selected_rec(irec)
         xi_receiver_found(nrec_found) = xi_receiver(irec)
@@ -617,19 +626,22 @@
         stbur_found(nrec_found) = stbur(irec)
         nu_found(:,:,nrec_found) = nu(:,:,irec)
         epidist_found(nrec_found) = epidist(irec)
+        
+        ! writes out actual receiver location to vtk file
+        write(IOVTK,*) sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))        
       endif
 
     enddo
 
-! compute maximal distance for all the receivers
+    ! compute maximal distance for all the receivers
     final_distance_max = maxval(final_distance(:))
 
-! display maximum error for all the receivers
+    ! display maximum error for all the receivers
     write(IMAIN,*)
     write(IMAIN,*) 'maximum error in location of all the receivers: ',sngl(final_distance_max),' km'
 
-! add warning if estimate is poor
-! (usually means receiver outside the mesh given by the user)
+    ! add warning if estimate is poor
+    ! (usually means receiver outside the mesh given by the user)
     if(final_distance_max > THRESHOLD_EXCLUDE_STATION) then
       write(IMAIN,*)
       write(IMAIN,*) '************************************************************'
@@ -679,9 +691,7 @@
       close(27)
     endif
 
-
-
-! elapsed time since beginning of mesh generation
+    ! elapsed time since beginning of mesh generation
     tCPU = MPI_WTIME() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for receiver detection in seconds = ',tCPU
@@ -710,7 +720,7 @@
   call MPI_BCAST(stbur,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(nu,nrec*3*3,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-! deallocate arrays
+  ! deallocate arrays
   deallocate(epidist)
   deallocate(ix_initial_guess)
   deallocate(iy_initial_guess)

@@ -91,19 +91,28 @@
 
   include "constants.h"
 
+!---------------------
+! threshold and normalization parameters
+
+! single parameter to turn off all thresholding
+  logical, parameter :: ALL_THRESHOLD_OFF = .true.
+
 ! threshold in percent of the maximum below which we cut the amplitude
   real(kind=CUSTOM_REAL), parameter :: THRESHOLD = 1._CUSTOM_REAL / 100._CUSTOM_REAL
 
 ! flag to apply non linear scaling to normalized norm of displacement
   logical, parameter :: NONLINEAR_SCALING = .false.
-  logical, parameter :: FIX_SCALING = .false.  ! uses fixed max_value to normalize instead of max of current wavefield
-  real,parameter:: MAX_VALUE = 6.77e-4
+! uses fixed max_value to normalize instead of max of current wavefield
+  logical, parameter :: FIX_SCALING = .true. 
+  real,parameter:: MAX_VALUE = 1.0
 
 ! coefficient of power law used for non linear scaling
   real(kind=CUSTOM_REAL), parameter :: POWER_SCALING = 0.30_CUSTOM_REAL
 
 ! flag to cut amplitude below a certain threshold
-  logical, parameter :: APPLY_THRESHOLD = .true.
+  logical, parameter :: APPLY_THRESHOLD = .false.
+
+!---------------------
 
   integer i,j,it
   integer it1,it2
@@ -398,63 +407,69 @@
 
   enddo
 
-! compute min and max of data value to normalize
-  min_field_current = minval(field_display(:))
-  max_field_current = maxval(field_display(:))
+!---------------------------------
+! apply normalization and thresholding, if desired
 
-! make sure range is always symmetric and center is in zero
-! this assumption works only for fields that can be negative
-! would not work for norm of vector for instance
-! (we would lose half of the color palette if no negative values)
-  max_absol = max(abs(min_field_current),abs(max_field_current))
-  min_field_current = - max_absol
-  max_field_current = + max_absol
+  if (.not. ALL_THRESHOLD_OFF) then
 
-! print minimum and maximum amplitude in current snapshot
-  print *
-  print *,'minimum amplitude in current snapshot = ',min_field_current
-  print *,'maximum amplitude in current snapshot = ',max_field_current
-  if( FIX_SCALING ) then
-    print *,'  to be normalized by : ',MAX_VALUE
-    if( max_field_current > MAX_VALUE ) stop 'increase MAX_VALUE'
+    ! compute min and max of data value to normalize
+    min_field_current = minval(field_display(:))
+    max_field_current = maxval(field_display(:))
+
+    ! make sure range is always symmetric and center is in zero
+    ! this assumption works only for fields that can be negative
+    ! would not work for norm of vector for instance
+    ! (we would lose half of the color palette if no negative values)
+    max_absol = max(abs(min_field_current),abs(max_field_current))
+    min_field_current = - max_absol
+    max_field_current = + max_absol
+
+    ! print minimum and maximum amplitude in current snapshot
+    print *
+    print *,'minimum amplitude in current snapshot = ',min_field_current
+    print *,'maximum amplitude in current snapshot = ',max_field_current
+    if( FIX_SCALING ) then
+      print *,'  to be normalized by : ',MAX_VALUE
+      if( max_field_current > MAX_VALUE ) stop 'increase MAX_VALUE'
+    endif
+    print *
+
+    ! normalize field to [0:1]
+    print *,'normalizing... '
+    if( FIX_SCALING ) then
+      field_display(:) = (field_display(:) + MAX_VALUE) / (2.0*MAX_VALUE)
+    else
+      field_display(:) = (field_display(:) - min_field_current) / (max_field_current - min_field_current)
+    endif
+    ! rescale to [-1,1]
+    field_display(:) = 2.*field_display(:) - 1.
+
+    ! apply threshold to normalized field
+    if(APPLY_THRESHOLD) then
+      print *,'thresholding... '
+      where(abs(field_display(:)) <= THRESHOLD) field_display = 0.
+    endif
+
+    ! apply non linear scaling to normalized field if needed
+    if(NONLINEAR_SCALING) then
+      print *,'nonlinear scaling... '
+      where(field_display(:) >= 0.)
+        field_display = field_display ** POWER_SCALING
+      elsewhere
+        field_display = - abs(field_display) ** POWER_SCALING
+      endwhere
+    endif
+
+    print *,'color scaling... '
+    ! map back to [0,1]
+    field_display(:) = (field_display(:) + 1.) / 2.
+
+    ! map field to [0:255] for AVS color scale
+    field_display(:) = 255. * field_display(:)
+
   endif
-  print *
 
-
-
-! normalize field to [0:1]
-  print *,'normalizing... '
-  if( FIX_SCALING ) then
-    field_display(:) = (field_display(:) + MAX_VALUE) / (2.0*MAX_VALUE)
-  else
-    field_display(:) = (field_display(:) - min_field_current) / (max_field_current - min_field_current)
-  endif
-! rescale to [-1,1]
-  field_display(:) = 2.*field_display(:) - 1.
-
-! apply threshold to normalized field
-  if(APPLY_THRESHOLD) then
-    print *,'thresholding... '
-    where(abs(field_display(:)) <= THRESHOLD) field_display = 0.
-  endif
-
-! apply non linear scaling to normalized field if needed
-  if(NONLINEAR_SCALING) then
-    print *,'nonlinear scaling... '
-    where(field_display(:) >= 0.)
-      field_display = field_display ** POWER_SCALING
-    elsewhere
-      field_display = - abs(field_display) ** POWER_SCALING
-    endwhere
-  endif
-
-  print *,'color scaling... '
-! map back to [0,1]
-  field_display(:) = (field_display(:) + 1.) / 2.
-
-! map field to [0:255] for AVS color scale
-  field_display(:) = 255. * field_display(:)
-
+!---------------------------------
 
 ! copy coordinate arrays since the sorting routine does not preserve them
   print *,'sorting... '

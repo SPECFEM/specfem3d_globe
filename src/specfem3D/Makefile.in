@@ -313,6 +313,9 @@ $O/model_topo_bathy.o: ${SETUP}/constants.h ${SHARED}/model_topo_bathy.f90
 $O/compute_add_sources.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_add_sources.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_add_sources.o ${FCFLAGS_f90} $S/compute_add_sources.f90
 
+$O/compute_boundary_kernel.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_boundary_kernel.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_boundary_kernel.o ${FCFLAGS_f90} $S/compute_boundary_kernel.f90
+
 $O/compute_coupling.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_coupling.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_coupling.o ${FCFLAGS_f90} $S/compute_coupling.f90
 
@@ -333,6 +336,9 @@ $O/compute_forces_inner_core.o: ${SETUP}/constants.h ${OUTPUT}/values_from_meshe
 
 $O/compute_forces_inner_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core_Dev.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_inner_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_inner_core_Dev.f90
+
+$O/compute_kernels.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_kernels.f90
+	${FCCOMPILE_NO_CHECK} -c -o $O/compute_kernels.o ${FCFLAGS_f90} $S/compute_kernels.f90
 
 $O/compute_seismograms.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_seismograms.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_seismograms.o ${FCFLAGS_f90} $S/compute_seismograms.f90
@@ -370,12 +376,6 @@ $O/compute_adj_source_frechet.o: ${SETUP}/constants.h $S/compute_adj_source_frec
 $O/compute_arrays_source.o: ${SETUP}/constants.h $S/compute_arrays_source.f90
 	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} $S/compute_arrays_source.f90
 
-$O/compute_boundary_kernel.o: ${SETUP}/constants.h $S/compute_boundary_kernel.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_boundary_kernel.o ${FCFLAGS_f90} $S/compute_boundary_kernel.f90
-
-$O/compute_kernels.o: ${SETUP}/constants.h $S/compute_kernels.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_kernels.o ${FCFLAGS_f90} $S/compute_kernels.f90
-
 $O/convert_time.o: $S/convert_time.f90
 	${FCCOMPILE_CHECK} -c -o $O/convert_time.o ${FCFLAGS_f90} $S/convert_time.f90
 
@@ -409,8 +409,14 @@ $O/assemble_MPI_central_cube_block.o: ${SETUP}/constants.h ${OUTPUT}/values_from
 $O/check_simulation_stability.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/check_simulation_stability.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/check_simulation_stability.o ${FCFLAGS_f90} $S/check_simulation_stability.f90
 
+$O/fix_non_blocking_flags.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/fix_non_blocking_flags.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/fix_non_blocking_flags.o ${FCFLAGS_f90} $S/fix_non_blocking_flags.f90
+
 $O/initialize_simulation.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/initialize_simulation.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/initialize_simulation.o ${FCFLAGS_f90} $S/initialize_simulation.f90
+
+$O/noise_tomography.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/noise_tomography.f90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/noise_tomography.o ${FCFLAGS_f90} $S/noise_tomography.f90
 
 $O/prepare_timerun.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/prepare_timerun.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/prepare_timerun.o ${FCFLAGS_f90} $S/prepare_timerun.f90
@@ -424,17 +430,12 @@ $O/setup_sources_receivers.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.
 $O/specfem3D.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/specfem3D.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.f90
 
-$O/fix_non_blocking_flags.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/fix_non_blocking_flags.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/fix_non_blocking_flags.o ${FCFLAGS_f90} $S/fix_non_blocking_flags.f90
-
 $O/write_movie_surface.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/write_movie_surface.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/write_movie_surface.o ${FCFLAGS_f90} $S/write_movie_surface.f90
 
 $O/write_movie_volume.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/write_movie_volume.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/write_movie_volume.o ${FCFLAGS_f90} $S/write_movie_volume.f90
 
-$O/noise_tomography.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/noise_tomography.f90
-	${MPIFCCOMPILE_NO_CHECK} -c -o $O/noise_tomography.o ${FCFLAGS_f90} $S/noise_tomography.f90
 
 ##
 ## specfem3D - non-dependent on values from mesher here

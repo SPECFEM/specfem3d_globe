@@ -226,29 +226,23 @@
   NSOURCES_SUBSET_current_size = min(NSOURCES_SUBSET_MAX, NSOURCES - isources_already_done)
 
 ! allocate arrays specific to each subset
-  allocate(final_distance_source_subset(NSOURCES_SUBSET_current_size))
-
-  allocate(ispec_selected_source_subset(NSOURCES_SUBSET_current_size))
-
-  allocate(ispec_selected_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-
-  allocate(xi_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-  allocate(eta_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-  allocate(gamma_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-
-  allocate(final_distance_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-
-  allocate(x_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-  allocate(y_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-  allocate(z_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1))
-
-  allocate(xi_source_subset(NSOURCES_SUBSET_current_size))
-  allocate(eta_source_subset(NSOURCES_SUBSET_current_size))
-  allocate(gamma_source_subset(NSOURCES_SUBSET_current_size))
-
-  allocate(x_found_source(NSOURCES_SUBSET_current_size))
-  allocate(y_found_source(NSOURCES_SUBSET_current_size))
-  allocate(z_found_source(NSOURCES_SUBSET_current_size))
+  allocate(final_distance_source_subset(NSOURCES_SUBSET_current_size), &
+    ispec_selected_source_subset(NSOURCES_SUBSET_current_size), &
+    ispec_selected_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+    xi_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+    eta_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+    gamma_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+    final_distance_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+    x_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+    y_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+    z_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT-1), &
+    xi_source_subset(NSOURCES_SUBSET_current_size), &
+    eta_source_subset(NSOURCES_SUBSET_current_size), &
+    gamma_source_subset(NSOURCES_SUBSET_current_size), &
+    x_found_source(NSOURCES_SUBSET_current_size), &
+    y_found_source(NSOURCES_SUBSET_current_size), &
+    z_found_source(NSOURCES_SUBSET_current_size),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary source arrays')
 
 ! make sure we clean the subset array before the gather
   ispec_selected_source_subset(:) = 0
@@ -355,7 +349,8 @@
   y_target_source = r_target_source*dsin(theta)*dsin(phi)
   z_target_source = r_target_source*dcos(theta)
 
-  if(myrank == 0) write(IOVTK,*) sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
+  ! would only output desired target locations
+  !if(myrank == 0) write(IOVTK,*) sngl(x_target_source),sngl(y_target_source),sngl(z_target_source)
 
 ! set distance to huge initial value
   distmin = HUGEVAL
@@ -595,205 +590,210 @@
 ! this is executed by main process only
   if(myrank == 0) then
 
-! check that the gather operation went well
+    ! check that the gather operation went well
     if(minval(ispec_selected_source_all) <= 0) call exit_MPI(myrank,'gather operation failed for source')
 
-! loop on all the sources within subsets
+    ! loop on all the sources within subsets
     do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
 
-! mapping from source number in current subset to real source number in all the subsets
-    isource = isources_already_done + isource_in_this_subset
+      ! mapping from source number in current subset to real source number in all the subsets
+      isource = isources_already_done + isource_in_this_subset
 
-! loop on all the results to determine the best slice
-    distmin = HUGEVAL
-    do iprocloop = 0,NPROCTOT-1
-      if(final_distance_source_all(isource_in_this_subset,iprocloop) < distmin) then
-        distmin = final_distance_source_all(isource_in_this_subset,iprocloop)
-        islice_selected_source(isource) = iprocloop
-        ispec_selected_source(isource) = ispec_selected_source_all(isource_in_this_subset,iprocloop)
-        xi_source(isource) = xi_source_all(isource_in_this_subset,iprocloop)
-        eta_source(isource) = eta_source_all(isource_in_this_subset,iprocloop)
-        gamma_source(isource) = gamma_source_all(isource_in_this_subset,iprocloop)
-        x_found_source(isource_in_this_subset) = x_found_source_all(isource_in_this_subset,iprocloop)
-        y_found_source(isource_in_this_subset) = y_found_source_all(isource_in_this_subset,iprocloop)
-        z_found_source(isource_in_this_subset) = z_found_source_all(isource_in_this_subset,iprocloop)
-      endif
-    enddo
-    final_distance_source(isource) = distmin
+      ! loop on all the results to determine the best slice
+      distmin = HUGEVAL
+      do iprocloop = 0,NPROCTOT-1
+        if(final_distance_source_all(isource_in_this_subset,iprocloop) < distmin) then
+          distmin = final_distance_source_all(isource_in_this_subset,iprocloop)
+          islice_selected_source(isource) = iprocloop
+          ispec_selected_source(isource) = ispec_selected_source_all(isource_in_this_subset,iprocloop)
+          xi_source(isource) = xi_source_all(isource_in_this_subset,iprocloop)
+          eta_source(isource) = eta_source_all(isource_in_this_subset,iprocloop)
+          gamma_source(isource) = gamma_source_all(isource_in_this_subset,iprocloop)
+          x_found_source(isource_in_this_subset) = x_found_source_all(isource_in_this_subset,iprocloop)
+          y_found_source(isource_in_this_subset) = y_found_source_all(isource_in_this_subset,iprocloop)
+          z_found_source(isource_in_this_subset) = z_found_source_all(isource_in_this_subset,iprocloop)
+        endif
+      enddo
+      final_distance_source(isource) = distmin
 
-    write(IMAIN,*)
-    write(IMAIN,*) '*************************************'
-    write(IMAIN,*) ' locating source ',isource
-    write(IMAIN,*) '*************************************'
-    write(IMAIN,*)
-    write(IMAIN,*) 'source located in slice ',islice_selected_source(isource_in_this_subset)
-    write(IMAIN,*) '               in element ',ispec_selected_source(isource_in_this_subset)
-    write(IMAIN,*)
-    ! different output for force point sources
-    if(USE_FORCE_POINT_SOURCE) then
-      write(IMAIN,*) '  i index of source in that element: ',nint(xi_source(isource))
-      write(IMAIN,*) '  j index of source in that element: ',nint(eta_source(isource))
-      write(IMAIN,*) '  k index of source in that element: ',nint(gamma_source(isource))
       write(IMAIN,*)
-      write(IMAIN,*) '  component direction: ',COMPONENT_FORCE_SOURCE
+      write(IMAIN,*) '*************************************'
+      write(IMAIN,*) ' locating source ',isource
+      write(IMAIN,*) '*************************************'
       write(IMAIN,*)
-      write(IMAIN,*) '  nu1 = ',nu_source(1,:,isource)
-      write(IMAIN,*) '  nu2 = ',nu_source(2,:,isource)
-      write(IMAIN,*) '  nu3 = ',nu_source(3,:,isource)
+      write(IMAIN,*) 'source located in slice ',islice_selected_source(isource_in_this_subset)
+      write(IMAIN,*) '               in element ',ispec_selected_source(isource_in_this_subset)
       write(IMAIN,*)
-      write(IMAIN,*) '  at (x,y,z) coordinates = ',x_found_source(isource_in_this_subset),&
-        y_found_source(isource_in_this_subset),z_found_source(isource_in_this_subset)
-
-      ! prints frequency content for point forces
-      f0 = hdur(isource)
-      t0_ricker = 1.2d0/f0
-      write(IMAIN,*) '  using a source of dominant frequency ',f0
-      write(IMAIN,*) '  lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
-      write(IMAIN,*) '  lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
-      write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_cmt = ',tshift_cmt(isource)
-      write(IMAIN,*)
-      write(IMAIN,*) '  half duration -> frequency: ',hdur(isource),' seconds**(-1)'
-    else
-      write(IMAIN,*) '   xi coordinate of source in that element: ',xi_source(isource)
-      write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
-      write(IMAIN,*) 'gamma coordinate of source in that element: ',gamma_source(isource)
-      ! add message if source is a Heaviside
-      if(hdur(isource) <= 5.*DT) then
+      ! different output for force point sources
+      if(USE_FORCE_POINT_SOURCE) then
+        write(IMAIN,*) '  i index of source in that element: ',nint(xi_source(isource))
+        write(IMAIN,*) '  j index of source in that element: ',nint(eta_source(isource))
+        write(IMAIN,*) '  k index of source in that element: ',nint(gamma_source(isource))
         write(IMAIN,*)
-        write(IMAIN,*) 'Source time function is a Heaviside, convolve later'
+        write(IMAIN,*) '  component direction: ',COMPONENT_FORCE_SOURCE
         write(IMAIN,*)
-      endif
-      write(IMAIN,*)
-      write(IMAIN,*) ' half duration: ',hdur(isource),' seconds'
-    endif
-    write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
+        write(IMAIN,*) '  nu1 = ',nu_source(1,:,isource)
+        write(IMAIN,*) '  nu2 = ',nu_source(2,:,isource)
+        write(IMAIN,*) '  nu3 = ',nu_source(3,:,isource)
+        write(IMAIN,*)
+        write(IMAIN,*) '  at (x,y,z) coordinates = ',x_found_source(isource_in_this_subset),&
+          y_found_source(isource_in_this_subset),z_found_source(isource_in_this_subset)
 
-! get latitude, longitude and depth of the source that will be used
-    call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset),y_found_source(isource_in_this_subset), &
+        ! prints frequency content for point forces
+        f0 = hdur(isource)
+        t0_ricker = 1.2d0/f0
+        write(IMAIN,*) '  using a source of dominant frequency ',f0
+        write(IMAIN,*) '  lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
+        write(IMAIN,*) '  lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
+        write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_cmt = ',tshift_cmt(isource)
+        write(IMAIN,*)
+        write(IMAIN,*) '  half duration -> frequency: ',hdur(isource),' seconds**(-1)'
+      else
+        write(IMAIN,*) '   xi coordinate of source in that element: ',xi_source(isource)
+        write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
+        write(IMAIN,*) 'gamma coordinate of source in that element: ',gamma_source(isource)
+        ! add message if source is a Heaviside
+        if(hdur(isource) <= 5.*DT) then
+          write(IMAIN,*)
+          write(IMAIN,*) 'Source time function is a Heaviside, convolve later'
+          write(IMAIN,*)
+        endif
+        write(IMAIN,*)
+        write(IMAIN,*) ' half duration: ',hdur(isource),' seconds'
+      endif
+      write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
+
+      ! writes out actual source position to vtk file
+      write(IOVTK,*) sngl(x_found_source(isource_in_this_subset)), &
+                    sngl(y_found_source(isource_in_this_subset)), &
+                    sngl(z_found_source(isource_in_this_subset))
+
+      ! get latitude, longitude and depth of the source that will be used
+      call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset),y_found_source(isource_in_this_subset), &
            z_found_source(isource_in_this_subset),r_found_source,theta_source(isource),phi_source(isource))
-    call reduce(theta_source(isource),phi_source(isource))
+      call reduce(theta_source(isource),phi_source(isource))
 
-! convert geocentric to geographic colatitude
-    colat_source = PI/2.0d0 &
+      ! convert geocentric to geographic colatitude
+      colat_source = PI/2.0d0 &
       - datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
-    if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
-
-    write(IMAIN,*)
-    write(IMAIN,*) 'original (requested) position of the source:'
-    write(IMAIN,*)
-    write(IMAIN,*) '      latitude: ',lat(isource)
-    write(IMAIN,*) '     longitude: ',long(isource)
-    write(IMAIN,*) '         depth: ',depth(isource),' km'
-    write(IMAIN,*)
-
-! compute real position of the source
-    write(IMAIN,*) 'position of the source that will be used:'
-    write(IMAIN,*)
-    write(IMAIN,*) '      latitude: ',(PI/2.0d0-colat_source)*180.0d0/PI
-    write(IMAIN,*) '     longitude: ',phi_source(isource)*180.0d0/PI
-    write(IMAIN,*) '         depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
-    write(IMAIN,*)
-
-! display error in location estimate
-    write(IMAIN,*) 'error in location of the source: ',sngl(final_distance_source(isource)),' km'
-
-! add warning if estimate is poor
-! (usually means source outside the mesh given by the user)
-    if(final_distance_source(isource) > 50.d0) then
-      write(IMAIN,*)
-      write(IMAIN,*) '*****************************************************'
-      write(IMAIN,*) '*****************************************************'
-      write(IMAIN,*) '***** WARNING: source location estimate is poor *****'
-      write(IMAIN,*) '*****************************************************'
-      write(IMAIN,*) '*****************************************************'
-    endif
-
-! print source time function and spectrum
-    if(PRINT_SOURCE_TIME_FUNCTION) then
+      if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
       write(IMAIN,*)
-      write(IMAIN,*) 'printing the source-time function'
-
-      ! print the source-time function
-      if(NSOURCES == 1) then
-        plot_file = '/plot_source_time_function.txt'
-      else
-       if(isource < 10) then
-          write(plot_file,"('/plot_source_time_function',i1,'.txt')") isource
-        elseif(isource < 100) then
-          write(plot_file,"('/plot_source_time_function',i2,'.txt')") isource
-        else
-          write(plot_file,"('/plot_source_time_function',i3,'.txt')") isource
-        endif
-      endif
-      open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown')
-
-      scalar_moment = 0.
-      do i = 1,6
-        scalar_moment = scalar_moment + moment_tensor(i,isource)**2
-      enddo
-      scalar_moment = dsqrt(scalar_moment/2.)
-
-      ! define t0 as the earliest start time
-      ! note: this calculation here is only used for outputting the plot_source_time_function file
-      !          (see setup_sources_receivers.f90)
-      t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
-      if( USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
-      t_cmt_used(:) = t_cmt_used(:)
-      if( USER_T0 > 0.d0 ) then
-        if( t0 <= USER_T0 + min_tshift_cmt_original ) then
-          t_cmt_used(:) = tshift_cmt(:) + min_tshift_cmt_original
-          t0 = USER_T0
-        endif
-      endif
-      ! convert the half duration for triangle STF to the one for gaussian STF
-      ! note: this calculation here is only used for outputting the plot_source_time_function file
-      !          (see setup_sources_receivers.f90)
-      hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
-
-      ! writes out source time function to file
-      do it=1,NSTEP
-        time_source = dble(it-1)*DT-t0-t_cmt_used(isource)
-        if( USE_FORCE_POINT_SOURCE ) then
-          ! Ricker source time function
-          f0 = hdur(isource)
-          write(27,*) sngl(dble(it-1)*DT-t0), &
-            sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
-        else
-          ! Gaussian source time function
-          write(27,*) sngl(dble(it-1)*DT-t0), &
-            sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
-        endif
-      enddo
-      close(27)
-
+      write(IMAIN,*) 'original (requested) position of the source:'
       write(IMAIN,*)
-      write(IMAIN,*) 'printing the source spectrum'
+      write(IMAIN,*) '      latitude: ',lat(isource)
+      write(IMAIN,*) '     longitude: ',long(isource)
+      write(IMAIN,*) '         depth: ',depth(isource),' km'
+      write(IMAIN,*)
 
-      ! print the spectrum of the derivative of the source from 0 to 1/8 Hz
-      if(NSOURCES == 1) then
-        plot_file = '/plot_source_spectrum.txt'
-      else
-       if(isource < 10) then
-          write(plot_file,"('/plot_source_spectrum',i1,'.txt')") isource
-        elseif(isource < 100) then
-          write(plot_file,"('/plot_source_spectrum',i2,'.txt')") isource
-        else
-          write(plot_file,"('/plot_source_spectrum',i3,'.txt')") isource
-        endif
+      ! compute real position of the source
+      write(IMAIN,*) 'position of the source that will be used:'
+      write(IMAIN,*)
+      write(IMAIN,*) '      latitude: ',(PI/2.0d0-colat_source)*180.0d0/PI
+      write(IMAIN,*) '     longitude: ',phi_source(isource)*180.0d0/PI
+      write(IMAIN,*) '         depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
+      write(IMAIN,*)
+
+      ! display error in location estimate
+      write(IMAIN,*) 'error in location of the source: ',sngl(final_distance_source(isource)),' km'
+
+      ! add warning if estimate is poor
+      ! (usually means source outside the mesh given by the user)
+      if(final_distance_source(isource) > 50.d0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '*****************************************************'
+        write(IMAIN,*) '*****************************************************'
+        write(IMAIN,*) '***** WARNING: source location estimate is poor *****'
+        write(IMAIN,*) '*****************************************************'
+        write(IMAIN,*) '*****************************************************'
       endif
-      open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown')
 
-      do iom=1,NSAMP_PLOT_SOURCE
-        om=TWO_PI*(1.0d0/8.0d0)*(iom-1)/dble(NSAMP_PLOT_SOURCE-1)
-        write(27,*) sngl(om/TWO_PI), &
-          sngl(scalar_moment*om*comp_source_spectrum(om,hdur(isource)))
-      enddo
-      close(27)
+      ! print source time function and spectrum
+      if(PRINT_SOURCE_TIME_FUNCTION) then
 
-    endif !PRINT_SOURCE_TIME_FUNCTION
+        write(IMAIN,*)
+        write(IMAIN,*) 'printing the source-time function'
 
-  enddo ! end of loop on all the sources within current source subset
+        ! print the source-time function
+        if(NSOURCES == 1) then
+          plot_file = '/plot_source_time_function.txt'
+        else
+         if(isource < 10) then
+            write(plot_file,"('/plot_source_time_function',i1,'.txt')") isource
+          elseif(isource < 100) then
+            write(plot_file,"('/plot_source_time_function',i2,'.txt')") isource
+          else
+            write(plot_file,"('/plot_source_time_function',i3,'.txt')") isource
+          endif
+        endif
+        open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown')
+
+        scalar_moment = 0.
+        do i = 1,6
+          scalar_moment = scalar_moment + moment_tensor(i,isource)**2
+        enddo
+        scalar_moment = dsqrt(scalar_moment/2.)
+
+        ! define t0 as the earliest start time
+        ! note: this calculation here is only used for outputting the plot_source_time_function file
+        !          (see setup_sources_receivers.f90)
+        t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
+        if( USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
+        t_cmt_used(:) = t_cmt_used(:)
+        if( USER_T0 > 0.d0 ) then
+          if( t0 <= USER_T0 + min_tshift_cmt_original ) then
+            t_cmt_used(:) = tshift_cmt(:) + min_tshift_cmt_original
+            t0 = USER_T0
+          endif
+        endif
+        ! convert the half duration for triangle STF to the one for gaussian STF
+        ! note: this calculation here is only used for outputting the plot_source_time_function file
+        !          (see setup_sources_receivers.f90)
+        hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
+
+        ! writes out source time function to file
+        do it=1,NSTEP
+          time_source = dble(it-1)*DT-t0-t_cmt_used(isource)
+          if( USE_FORCE_POINT_SOURCE ) then
+            ! Ricker source time function
+            f0 = hdur(isource)
+            write(27,*) sngl(dble(it-1)*DT-t0), &
+              sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
+          else
+            ! Gaussian source time function
+            write(27,*) sngl(dble(it-1)*DT-t0), &
+              sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
+          endif
+        enddo
+        close(27)
+
+        write(IMAIN,*)
+        write(IMAIN,*) 'printing the source spectrum'
+
+        ! print the spectrum of the derivative of the source from 0 to 1/8 Hz
+        if(NSOURCES == 1) then
+          plot_file = '/plot_source_spectrum.txt'
+        else
+         if(isource < 10) then
+            write(plot_file,"('/plot_source_spectrum',i1,'.txt')") isource
+          elseif(isource < 100) then
+            write(plot_file,"('/plot_source_spectrum',i2,'.txt')") isource
+          else
+            write(plot_file,"('/plot_source_spectrum',i3,'.txt')") isource
+          endif
+        endif
+        open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown')
+
+        do iom=1,NSAMP_PLOT_SOURCE
+          om=TWO_PI*(1.0d0/8.0d0)*(iom-1)/dble(NSAMP_PLOT_SOURCE-1)
+          write(27,*) sngl(om/TWO_PI), &
+            sngl(scalar_moment*om*comp_source_spectrum(om,hdur(isource)))
+        enddo
+        close(27)
+
+      endif !PRINT_SOURCE_TIME_FUNCTION
+
+    enddo ! end of loop on all the sources within current source subset
 
   endif ! end of section executed by main process only
 
