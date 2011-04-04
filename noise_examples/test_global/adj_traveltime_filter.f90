@@ -6,11 +6,11 @@ program adj_traveltime
 
 implicit none
 
-integer, parameter :: nstep = 31599
+integer, parameter :: nstep = 799
 double precision, parameter :: dt = 0.19d0
 double precision, parameter :: C_crit = 0.5d0
 
-double precision, parameter :: length_time_window = 2000.0d0
+double precision, parameter :: length_time_window = 60.0d0
 integer, parameter :: taper_type = 1
 integer, parameter :: i_skip_window =1
 double precision, parameter :: factor = 5d-2
@@ -36,7 +36,7 @@ integer :: I_final(100), index_final(100)
 double precision, allocatable :: taper(:),corre(:), adj_temp(:),data_trace_temp(:),syn_trace_temp(:)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-integer,parameter :: filter_flag = 1 
+integer,parameter :: filter_flag = 0
 integer :: ifreq, nfreq
 real :: F1,F2,D(8),G,DELT
 !real  freq_low(2),freq_high(2)
