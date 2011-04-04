@@ -678,13 +678,15 @@
 
     enddo
 
-    ! store number of anisotropic elements found in the mantle
-    if(nspec_tiso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
+    ! checks number of anisotropic elements found in the mantle
+    if(iregion_code /= IREGION_CRUST_MANTLE .and. nspec_tiso /= 0 ) &
       call exit_MPI(myrank,'found anisotropic elements outside of the mantle')
 
-    if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_tiso == 0) &
-      call exit_MPI(myrank,'found no anisotropic elements in the mantle')
-
+    if( TRANSVERSE_ISOTROPY ) then
+      if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_tiso == 0) &
+        call exit_MPI(myrank,'found no anisotropic elements in the mantle')
+    endif
+    
     ! computes total area and volume
     call meshfem3D_compute_area(myrank,NCHUNKS,iregion_code, &
                               area_local_bottom,area_local_top,&
