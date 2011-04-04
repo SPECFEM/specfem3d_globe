@@ -33,7 +33,8 @@
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,idoubling_crust_mantle, &
+                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
+              ! --idoubling_crust_mantle, &
                   LOCAL_PATH)
 
   implicit none
@@ -60,7 +61,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
         kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
 
-  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+!  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
@@ -154,9 +156,10 @@
 
               ! Get A,C,F,L,N,eta from kappa,mu
               ! element can have transverse isotropy if between d220 and Moho
-              if( .not. (TRANSVERSE_ISOTROPY_VAL .and. &
-                  (idoubling_crust_mantle(ispec) == IFLAG_80_MOHO .or. &
-                   idoubling_crust_mantle(ispec) == IFLAG_220_80))) then
+              !if( .not. (TRANSVERSE_ISOTROPY_VAL .and. &
+              !    (idoubling_crust_mantle(ispec) == IFLAG_80_MOHO .or. &
+              !     idoubling_crust_mantle(ispec) == IFLAG_220_80))) then
+              if( .not. ispec_is_tiso_crust_mantle(ispec) ) then
 
                 ! layer with no transverse isotropy
                 ! A,C,L,N,F from isotropic model

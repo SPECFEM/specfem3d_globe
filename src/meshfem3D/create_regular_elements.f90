@@ -51,8 +51,9 @@
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
-                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot)
+                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
+                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
+                    ispec_is_tiso)
 
 
 ! adds a regular spectral element to the different regions of the mesh
@@ -160,6 +161,8 @@
   integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
 
+  logical, dimension(nspec) :: ispec_is_tiso  
+
   ! local parameters
   double precision, dimension(NGNOD) :: offset_x,offset_y,offset_z
   double precision, dimension(NGNOD) :: xelm,yelm,zelm
@@ -263,7 +266,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
-                         xigll,yigll,zigll)
+                         xigll,yigll,zigll,ispec_is_tiso)                         
 
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then

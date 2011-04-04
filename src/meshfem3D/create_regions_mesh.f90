@@ -226,6 +226,9 @@
     ispec2D_670_top,ispec2D_670_bot
   double precision r_moho,r_400,r_670
 
+  ! flags for transverse isotropic elements
+  logical, dimension(:), allocatable :: ispec_is_tiso  
+
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
@@ -238,44 +241,54 @@
   else
     nspec_att = 1
   end if
-  allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att))
-  allocate(tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att))
-
+  allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
+          tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
+  if(ier /= 0) stop 'error in allocate 1'
+  
   ! Gauss-Lobatto-Legendre points of integration
-  allocate(xigll(NGLLX))
-  allocate(yigll(NGLLY))
-  allocate(zigll(NGLLZ))
+  allocate(xigll(NGLLX), &
+          yigll(NGLLY), &
+          zigll(NGLLZ),stat=ier)
+  if(ier /= 0) stop 'error in allocate 2'
 
   ! Gauss-Lobatto-Legendre weights of integration
-  allocate(wxgll(NGLLX))
-  allocate(wygll(NGLLY))
-  allocate(wzgll(NGLLZ))
+  allocate(wxgll(NGLLX), &
+          wygll(NGLLY), &
+          wzgll(NGLLZ),stat=ier)
+  if(ier /= 0) stop 'error in allocate 3'
 
   ! 3D shape functions and their derivatives
-  allocate(shape3D(NGNOD,NGLLX,NGLLY,NGLLZ))
-  allocate(dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ))
+  allocate(shape3D(NGNOD,NGLLX,NGLLY,NGLLZ), &
+          dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ),stat=ier)
+  if(ier /= 0) stop 'error in allocat 4'
 
   ! 2D shape functions and their derivatives
-  allocate(shape2D_x(NGNOD2D,NGLLY,NGLLZ))
-  allocate(shape2D_y(NGNOD2D,NGLLX,NGLLZ))
-  allocate(shape2D_bottom(NGNOD2D,NGLLX,NGLLY))
-  allocate(shape2D_top(NGNOD2D,NGLLX,NGLLY))
-  allocate(dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ))
-  allocate(dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ))
-  allocate(dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY))
-  allocate(dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY))
+  allocate(shape2D_x(NGNOD2D,NGLLY,NGLLZ), &
+          shape2D_y(NGNOD2D,NGLLX,NGLLZ), &
+          shape2D_bottom(NGNOD2D,NGLLX,NGLLY), &
+          shape2D_top(NGNOD2D,NGLLX,NGLLY), &
+          dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ), &
+          dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ), &
+          dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY), &
+          dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY),stat=ier)
+  if(ier /= 0) stop 'error in allocate 5'
 
   ! array with model density
-  allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(dvpstore(NGLLX,NGLLY,NGLLZ,nspec))
+  allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec), &
+          dvpstore(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  if(ier /= 0) stop 'error in allocate 6'
 
   ! for anisotropy
-  allocate(kappavstore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(muvstore(NGLLX,NGLLY,NGLLZ,nspec))
-
-  allocate(kappahstore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(muhstore(NGLLX,NGLLY,NGLLZ,nspec))
-  allocate(eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec))
+  allocate(kappavstore(NGLLX,NGLLY,NGLLZ,nspec), &
+          muvstore(NGLLX,NGLLY,NGLLZ,nspec), &
+          kappahstore(NGLLX,NGLLY,NGLLZ,nspec), &
+          muhstore(NGLLX,NGLLY,NGLLZ,nspec), &
+          eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec), &
+          ispec_is_tiso(nspec),stat=ier)
+  if(ier /= 0) stop 'error in allocate 7'
+  
+  ! initializes flags for transverse isotropic elements
+  ispec_is_tiso(:) = .false.
 
   ! Stacey absorbing boundaries
   if(NCHUNKS /= 6) then
@@ -283,8 +296,9 @@
   else
     nspec_stacey = 1
   endif
-  allocate(rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey))
-  allocate(rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey))
+  allocate(rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey), &
+          rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey),stat=ier)
+  if(ier /= 0) stop 'error in allocate 8'
 
   ! anisotropy
   if((ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) .or. &
@@ -293,65 +307,72 @@
   else
     nspec_ani = 1
   endif
-  allocate(c11store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c12store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c13store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c14store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c15store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c16store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c22store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c23store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c24store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c25store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c26store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c33store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c34store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c35store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c36store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c44store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c45store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c46store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c55store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c56store(NGLLX,NGLLY,NGLLZ,nspec_ani))
-  allocate(c66store(NGLLX,NGLLY,NGLLZ,nspec_ani))
+  allocate(c11store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c12store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c13store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c14store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c15store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c16store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c22store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c23store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c24store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c25store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c26store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c33store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c34store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c35store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c36store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c44store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c45store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c46store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c55store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c56store(NGLLX,NGLLY,NGLLZ,nspec_ani), &
+          c66store(NGLLX,NGLLY,NGLLZ,nspec_ani),stat=ier)
+  if(ier /= 0) stop 'error in allocate 9'
 
   ! boundary locator
-  allocate(iboun(6,nspec))
+  allocate(iboun(6,nspec),stat=ier)
+  if(ier /= 0) stop 'error in allocate 10'
 
   ! boundary parameters locator
-  allocate(ibelm_xmin(NSPEC2DMAX_XMIN_XMAX))
-  allocate(ibelm_xmax(NSPEC2DMAX_XMIN_XMAX))
-  allocate(ibelm_ymin(NSPEC2DMAX_YMIN_YMAX))
-  allocate(ibelm_ymax(NSPEC2DMAX_YMIN_YMAX))
-  allocate(ibelm_bottom(NSPEC2D_BOTTOM))
-  allocate(ibelm_top(NSPEC2D_TOP))
+  allocate(ibelm_xmin(NSPEC2DMAX_XMIN_XMAX), &
+          ibelm_xmax(NSPEC2DMAX_XMIN_XMAX), &
+          ibelm_ymin(NSPEC2DMAX_YMIN_YMAX), &
+          ibelm_ymax(NSPEC2DMAX_YMIN_YMAX), &
+          ibelm_bottom(NSPEC2D_BOTTOM), &
+          ibelm_top(NSPEC2D_TOP),stat=ier)
+  if(ier /= 0) stop 'error in allocate 11'
 
   ! 2-D jacobians and normals
-  allocate(jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX))
-  allocate(jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX))
-  allocate(jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX))
-  allocate(jacobian2D_ymax(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX))
-  allocate(jacobian2D_bottom(NGLLX,NGLLY,NSPEC2D_BOTTOM))
-  allocate(jacobian2D_top(NGLLX,NGLLY,NSPEC2D_TOP))
+  allocate(jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
+          jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
+          jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
+          jacobian2D_ymax(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
+          jacobian2D_bottom(NGLLX,NGLLY,NSPEC2D_BOTTOM), &
+          jacobian2D_top(NGLLX,NGLLY,NSPEC2D_TOP),stat=ier)
+  if(ier /= 0) stop 'error in allocate 12'
 
-  allocate(normal_xmin(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX))
-  allocate(normal_xmax(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX))
-  allocate(normal_ymin(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX))
-  allocate(normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX))
-  allocate(normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM))
-  allocate(normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP))
+  allocate(normal_xmin(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
+          normal_xmax(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX), &
+          normal_ymin(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
+          normal_ymax(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX), &
+          normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM), &
+          normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP),stat=ier)
+  if(ier /= 0) stop 'error in allocate 13'
 
   ! Stacey
-  allocate(nimin(2,NSPEC2DMAX_YMIN_YMAX))
-  allocate(nimax(2,NSPEC2DMAX_YMIN_YMAX))
-  allocate(njmin(2,NSPEC2DMAX_XMIN_XMAX))
-  allocate(njmax(2,NSPEC2DMAX_XMIN_XMAX))
-  allocate(nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX))
-  allocate(nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX))
+  allocate(nimin(2,NSPEC2DMAX_YMIN_YMAX), &
+          nimax(2,NSPEC2DMAX_YMIN_YMAX), &
+          njmin(2,NSPEC2DMAX_XMIN_XMAX), &
+          njmax(2,NSPEC2DMAX_XMIN_XMAX), &
+          nkmin_xi(2,NSPEC2DMAX_XMIN_XMAX), &
+          nkmin_eta(2,NSPEC2DMAX_YMIN_YMAX),stat=ier)
+  if(ier /= 0) stop 'error in allocate 14'
 
   ! MPI cut-planes parameters along xi and along eta
-  allocate(iMPIcut_xi(2,nspec))
-  allocate(iMPIcut_eta(2,nspec))
+  allocate(iMPIcut_xi(2,nspec), &
+          iMPIcut_eta(2,nspec),stat=ier)
+  if(ier /= 0) stop 'error in allocate 15'
 
   ! store and save the final arrays only in the second pass
   ! therefore in the first pass some arrays can be allocated with a dummy size
@@ -362,16 +383,17 @@
     ACTUALLY_STORE_ARRAYS = .true.
     nspec_actually = nspec
   endif
-  allocate(xixstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(xiystore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(xizstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(etaxstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(etaystore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(etazstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(gammaxstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(gammaystore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier); if(ier /= 0) stop 'error in allocate'
-  allocate(gammazstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier); if(ier /= 0) stop 'error in allocate'
-
+  allocate(xixstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+          xiystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+          xizstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+          etaxstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+          etaystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+          etazstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+          gammaxstore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+          gammaystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
+          gammazstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier)
+  if(ier /= 0) stop 'error in allocate 16'
+  
   ! boundary mesh
   if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
     NSPEC2D_MOHO = NSPEC2D_TOP
@@ -382,15 +404,16 @@
     NSPEC2D_400 = 1
     NSPEC2D_670 = 1
   endif
-  allocate(ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO))
-  allocate(ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400))
-  allocate(ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670))
-  allocate(normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO))
-  allocate(normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400))
-  allocate(normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670))
-  allocate(jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO))
-  allocate(jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400))
-  allocate(jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670))
+  allocate(ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO), &
+          ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400), &
+          ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670), &
+          normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO), &
+          normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400), &
+          normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670), &
+          jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO), &
+          jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400), &
+          jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670),stat=ier)
+  if(ier /= 0) stop 'error in allocate 17'
 
   ! initialize number of layers
   call crm_initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
@@ -405,7 +428,8 @@
                         first_layer_aniso,last_layer_aniso,nb_layer_above_aniso,is_on_a_slice_edge)
 
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
-  allocate (perm_layer(ifirst_region:ilast_region))
+  allocate (perm_layer(ifirst_region:ilast_region),stat=ier)
+  if(ier /= 0) stop 'error in allocate 18'
   perm_layer = (/ (i, i=ilast_region,ifirst_region,-1) /)
 
   if(iregion_code == IREGION_CRUST_MANTLE) then
@@ -422,7 +446,8 @@
 
   ! crustal layer stretching: element layer's top and bottom radii will get stretched when in crust
   ! (number of element layers in crust can vary for different resolutions and 1chunk simulations)
-  allocate(stretch_tab(2,ner(1)))
+  allocate(stretch_tab(2,ner(1)),stat=ier)
+  if(ier /= 0) stop 'error in allocate 19'
   if (CASE_3D .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. SUPPRESS_CRUSTAL_MESH) then
     ! stretching function determines top and bottom of each element layer in the
     ! crust region (between r_top(1) and r_bottom(1)), where ner(1) is the
@@ -514,7 +539,8 @@
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
-                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot)
+                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot,&
+                    ispec_is_tiso)
 
 
     ! mesh doubling elements
@@ -545,7 +571,8 @@
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                    CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta)
+                    CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
+                    ispec_is_tiso)
 
   enddo !ilayer_loop
 
@@ -566,7 +593,8 @@
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
-                        rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll)
+                        rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
+                        ispec_is_tiso)
 
 
   ! check total number of spectral elements created
@@ -602,12 +630,13 @@
     !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS,PPM_V )
 
     ! allocate memory for arrays
-    allocate(locval(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
-    allocate(ifseg(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
-    allocate(xp(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
-    allocate(yp(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
-    allocate(zp(npointot),stat=ier); if(ier /= 0) stop 'error in allocate'
-
+    allocate(locval(npointot), &
+            ifseg(npointot), &
+            xp(npointot), &
+            yp(npointot), &
+            zp(npointot),stat=ier)
+    if(ier /= 0) stop 'error in allocate 20'
+    
     locval = 0
     ifseg = .false.
     xp = 0.d0
@@ -714,8 +743,11 @@
 
     ! count number of anisotropic elements in current region
     ! should be zero in all the regions except in the mantle
-    nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
-
+    ! (used only for checks in meshfem3D() routine)
+    !nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
+    nspec_tiso = count(ispec_is_tiso(:))
+    
+    ! precomputes jacobian for 2d absorbing boundary surfaces
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
               dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
               ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
@@ -731,7 +763,8 @@
               xigll,yigll,zigll)
 
     ! allocates mass matrix in this slice (will be fully assembled in the solver)
-    allocate(rmass(nglob),stat=ier); if(ier /= 0) stop 'error in allocate'
+    allocate(rmass(nglob),stat=ier)
+    if(ier /= 0) stop 'error in allocate 21'
     ! allocates ocean load mass matrix as well if oceans
     if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
       nglob_oceans = nglob
@@ -739,7 +772,8 @@
       ! allocate dummy array if no oceans
       nglob_oceans = 1
     endif
-    allocate(rmass_ocean_load(nglob_oceans))
+    allocate(rmass_ocean_load(nglob_oceans),stat=ier)
+    if(ier /= 0) stop 'error in allocate 22'
 
     ! creating mass matrix in this slice (will be fully assembled in the solver)
     call create_mass_matrices(myrank,nspec,idoubling,wxgll,wygll,wzgll,ibool, &
@@ -770,7 +804,7 @@
                   ANISOTROPIC_INNER_CORE,OCEANS, &
                   tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION, &
                   size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
-                  ABSORBING_CONDITIONS,SAVE_MESH_FILES)
+                  ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
 
     deallocate(rmass,stat=ier); if(ier /= 0) stop 'error in deallocate'
     deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate'
@@ -826,6 +860,7 @@
   deallocate(rhostore,dvpstore,kappavstore,kappahstore)
   deallocate(muvstore,muhstore)
   deallocate(eta_anisostore)
+  deallocate(ispec_is_tiso)
   deallocate(c11store)
   deallocate(c12store)
   deallocate(c13store)

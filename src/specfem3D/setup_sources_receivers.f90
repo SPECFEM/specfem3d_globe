@@ -107,7 +107,7 @@
   integer :: irec,isource,nrec_tot_found,ier
   integer :: icomp,itime,nadj_files_found,nadj_files_found_tot
   character(len=3),dimension(NDIM) :: comp
-  character(len=150) :: filename,adj_source_file,system_command,filename_new
+  character(len=256) :: filename,adj_source_file,system_command,filename_new
   character(len=2) :: bic
 
 ! sources

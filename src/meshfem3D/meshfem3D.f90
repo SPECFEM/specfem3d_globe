@@ -278,7 +278,7 @@
 
 
 ! correct number of spectral elements in each block depending on chunk type
-  integer nspec_aniso,npointot
+  integer nspec_tiso,npointot
 
 ! parameters needed to store the radii of the grid points
 ! in the spherically symmetric Earth
@@ -659,7 +659,7 @@
 
       call create_regions_mesh(iregion_code,ibool,idoubling,is_on_a_slice_edge, &
                           xstore,ystore,zstore,rmins,rmaxs, &
-                          iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_aniso, &
+                          iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
                           volume_local,area_local_bottom,area_local_top, &
                           nglob(iregion_code),npointot, &
                           NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -679,10 +679,10 @@
     enddo
 
     ! store number of anisotropic elements found in the mantle
-    if(nspec_aniso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
+    if(nspec_tiso /= 0 .and. iregion_code /= IREGION_CRUST_MANTLE) &
       call exit_MPI(myrank,'found anisotropic elements outside of the mantle')
 
-    if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_aniso == 0) &
+    if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_tiso == 0) &
       call exit_MPI(myrank,'found no anisotropic elements in the mantle')
 
     ! computes total area and volume

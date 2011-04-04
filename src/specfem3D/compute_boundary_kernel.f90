@@ -26,7 +26,8 @@
 !=====================================================================
 
 subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
-           ystore,zstore,ibool,idoubling, &
+           ystore,zstore,ibool,ispec_is_tiso, &
+        !--- idoubling, &
            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
            hprime_xx,hprime_yy,hprime_zz, &
            rhostore,kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
@@ -42,7 +43,8 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
   real(kind=CUSTOM_REAL), dimension(NDIM,*) :: displ,accel,b_displ
   integer nspec, iregion_code
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  integer, dimension(*) :: idoubling
+!  integer, dimension(*) :: idoubling
+  logical, dimension(*) :: ispec_is_tiso
   real(kind=CUSTOM_REAL), dimension(*) :: ystore,zstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -128,7 +130,7 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                     ystore,zstore,ibool,idoubling)
+                     ystore,zstore,ibool,ispec_is_tiso) !idoubling)
 
           ! ----- forward strain -------
           temp1(:) = matmul(b_displl(:,:,j,k), hprime_xx(i,:))
@@ -153,7 +155,7 @@ subroutine compute_boundary_kernel(displ,accel,b_displ,nspec,iregion_code, &
                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                     ystore,zstore,ibool,idoubling)
+                     ystore,zstore,ibool,ispec_is_tiso) !-- idoubling)
 
           ! ---- precompute K_d for F-S boundaries ----
           if (fluid_solid_boundary) then
@@ -236,7 +238,7 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-           ystore,zstore,ibool,idoubling)
+           ystore,zstore,ibool,ispec_is_tiso) !--idoubling)
 
 
   implicit none
@@ -254,8 +256,9 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
         c36store,c44store,c45store,c46store,c55store,c56store,c66store
   real(kind=CUSTOM_REAL), dimension(*) :: ystore,zstore
   integer, dimension(NGLLX,NGLLY,NGLLZ,*) :: ibool
-  integer, dimension(*) :: idoubling
-
+!  integer, dimension(*) :: idoubling
+  logical, dimension(*) :: ispec_is_tiso
+  
 ! --- local variables ---
   real(kind=CUSTOM_REAL) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -332,8 +335,11 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
      sigma(2,3) = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl + &
                c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
-   else  if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec) == IFLAG_80_MOHO .or. idoubling(ispec) == IFLAG_220_80))) then
+   else if( .not. ispec_is_tiso(ispec) ) then
+!else if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec) == IFLAG_80_MOHO .or. idoubling(ispec) == IFLAG_220_80))) then
 
+     ! isotropic elements
+     
      kappal = kappavstore(i,j,k,ispec)
      mul = muvstore(i,j,k,ispec)
 
@@ -349,6 +355,8 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
      sigma(2,3) = mul*duzdyl_plus_duydzl
 
    else
+
+     ! transverse isotropic elements
 
      kappavl = kappavstore(i,j,k,ispec)
      muvl = muvstore(i,j,k,ispec)

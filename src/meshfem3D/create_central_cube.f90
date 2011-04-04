@@ -39,8 +39,9 @@
                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                        nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
-                        rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll)
+                        nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source, &
+                        rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
+                        ispec_is_tiso)
 
 ! creates the inner core cube of the mesh
 
@@ -119,6 +120,8 @@
   double precision  T_c_source
 
   logical :: ACTUALLY_STORE_ARRAYS,ABSORBING_CONDITIONS
+
+  logical, dimension(nspec) :: ispec_is_tiso  
 
   !local parameters
   double precision, dimension(NGNOD) :: xelm,yelm,zelm
@@ -267,7 +270,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
-                         xigll,yigll,zigll)
+                         xigll,yigll,zigll,ispec_is_tiso)
       enddo
     enddo
   enddo
