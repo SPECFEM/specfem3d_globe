@@ -869,9 +869,10 @@
 
 ! NOISE_TOMOGRAPHY
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray
-  integer :: irec_master_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
              normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie  
+  integer :: irec_master_noise
 
 ! ************** PROGRAM STARTS HERE **************
 !
@@ -1837,33 +1838,35 @@
                     b_A_array_rotation,b_B_array_rotation,LOCAL_PATH)
 
 !<YANGL
-    ! NOISE TOMOGRAPHY
-    if ( NOISE_TOMOGRAPHY /= 0 ) then
-      allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
-              normal_x_noise(nmovie_points), &
-              normal_y_noise(nmovie_points), &
-              normal_z_noise(nmovie_points), &
-              mask_noise(nmovie_points),stat=ier)
-       if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise arrays')
+  ! NOISE TOMOGRAPHY
+  if ( NOISE_TOMOGRAPHY /= 0 ) then
+    allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
+            normal_x_noise(nmovie_points), &
+            normal_y_noise(nmovie_points), &
+            normal_z_noise(nmovie_points), &
+            mask_noise(nmovie_points), &
+            noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC2D_TOP(IREGION_CRUST_MANTLE)),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise arrays')
   
-       noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
-       normal_x_noise(:)            = 0._CUSTOM_REAL
-       normal_y_noise(:)            = 0._CUSTOM_REAL
-       normal_z_noise(:)            = 0._CUSTOM_REAL
-       mask_noise(:)                = 0._CUSTOM_REAL
+    noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
+    normal_x_noise(:)            = 0._CUSTOM_REAL
+    normal_y_noise(:)            = 0._CUSTOM_REAL
+    normal_z_noise(:)            = 0._CUSTOM_REAL
+    mask_noise(:)                = 0._CUSTOM_REAL
+    noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
+    
+    call read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
+                              islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
+                              noise_sourcearray,xigll,yigll,zigll,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+                              NIT, ibool_crust_mantle, ibelm_top_crust_mantle, &
+                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                              irec_master_noise,normal_x_noise,normal_y_noise,normal_z_noise,mask_noise)
 
-       call read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
-                                  islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
-                                  noise_sourcearray,xigll,yigll,zigll,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-                                  NIT, ibool_crust_mantle, ibelm_top_crust_mantle, &
-                                  xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                                  irec_master_noise,normal_x_noise,normal_y_noise,normal_z_noise,mask_noise)
-
-       call check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
-                                  NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
-                                  SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
-                                  MOVIE_COARSE,LOCAL_PATH,NSPEC2D_TOP(IREGION_CRUST_MANTLE),NSTEP)
-    endif
+    call check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
+                              NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
+                              SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
+                              MOVIE_COARSE,LOCAL_PATH,NSPEC2D_TOP(IREGION_CRUST_MANTLE),NSTEP)
+  endif
 !>YANGL
 
 !
@@ -3067,7 +3070,8 @@
        call noise_read_add_surface_movie(myrank,nmovie_points,accel_crust_mantle, &
                               normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
                               store_val_ux,store_val_uy,store_val_uz, &
-                              ibelm_top_crust_mantle,ibool_crust_mantle,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+                              ibelm_top_crust_mantle,ibool_crust_mantle, &
+                              NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
                               NIT,NSTEP-it+1,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)
         ! be careful, since ensemble forward sources are reversals of generating wavefield "eta"
         ! hence the "NSTEP-it+1", i.e., start reading from the last timestep
@@ -3082,7 +3086,8 @@
         call noise_read_add_surface_movie(myrank,nmovie_points,b_accel_crust_mantle, &
                               normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
                               store_val_ux,store_val_uy,store_val_uz, &
-                              ibelm_top_crust_mantle,ibool_crust_mantle,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+                              ibelm_top_crust_mantle,ibool_crust_mantle, &
+                              NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
                               NIT,it,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)
     endif
 !>YANGL
@@ -4019,7 +4024,8 @@
        call compute_kernels_strength_noise(myrank,ibool_crust_mantle, &
                           Sigma_kl_crust_mantle,displ_crust_mantle,deltat,it, &
                           nmovie_points,normal_x_noise,normal_y_noise,normal_z_noise, &
-                          NSPEC2D_TOP(IREGION_CRUST_MANTLE),ibelm_top_crust_mantle,LOCAL_PATH)
+                          NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
+                          ibelm_top_crust_mantle,LOCAL_PATH)
 !>YANGL
 
     ! --- boundary kernels ------
@@ -4252,7 +4258,7 @@
                             store_val_x,store_val_y,store_val_z, &
                             store_val_ux,store_val_uy,store_val_uz, &
                             ibelm_top_crust_mantle,ibool_crust_mantle, &
-                            NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+                            NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
                             NIT,it,LOCAL_PATH)
   endif
 !>YANGL
@@ -4392,7 +4398,10 @@
   endif
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
-  if (NOISE_TOMOGRAPHY/=0) call close_file_abs(9) 
+  if (NOISE_TOMOGRAPHY/=0) then
+    call close_file_abs(9) 
+    deallocate(noise_surface_movie)
+  endif
 
 
   ! synchronize all processes
