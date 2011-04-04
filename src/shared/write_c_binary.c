@@ -289,6 +289,7 @@ void write_abs_fbin(int *fid, void *buffer, int *length, int *index){
     if (ret > 0){
       donelen = donelen + ret;
       remlen = remlen - MAX_B;
+      // this shifts the pointer position, thus is used in arithmetic, compilers might warn about this...
       buf += MAX_B;
     }
     else{
@@ -334,6 +335,7 @@ void read_abs_fbin(int *fid, void *buffer, int *length, int *index){
     if (ret > 0){
       donelen = donelen + ret;
       remlen = remlen - MAX_B;
+      // this shifts the pointer position, thus is used in arithmetic, compilers might warn about this...
       buf += MAX_B;
     }
     else{
