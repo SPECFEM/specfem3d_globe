@@ -40,13 +40,16 @@
             c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
             c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-            ibool_crust_mantle,idoubling_crust_mantle,is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
+            ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+         ! -- idoubling_crust_mantle   
+            is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
             vp_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
             xix_outer_core,xiy_outer_core,xiz_outer_core, &
             etax_outer_core,etay_outer_core,etaz_outer_core, &
             gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
             rhostore_outer_core,kappavstore_outer_core, &
-            ibool_outer_core,idoubling_outer_core,is_on_a_slice_edge_outer_core,rmass_outer_core, &
+            ibool_outer_core,idoubling_outer_core,ispec_is_tiso_outer_core, &
+            is_on_a_slice_edge_outer_core,rmass_outer_core, &
             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
             xix_inner_core,xiy_inner_core,xiz_inner_core, &
             etax_inner_core,etay_inner_core,etaz_inner_core, &
@@ -54,7 +57,8 @@
             rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
             c11store_inner_core,c12store_inner_core,c13store_inner_core, &
             c33store_inner_core,c44store_inner_core, &
-            ibool_inner_core,idoubling_inner_core,is_on_a_slice_edge_inner_core,rmass_inner_core, &
+            ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
+            is_on_a_slice_edge_inner_core,rmass_inner_core, &
             ABSORBING_CONDITIONS,LOCAL_PATH)
 
   implicit none
@@ -93,7 +97,10 @@
         c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+  
+!  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
+  
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
   ! additional mass matrix for ocean load
@@ -112,6 +119,8 @@
         rhostore_outer_core,kappavstore_outer_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
   integer, dimension(NSPEC_OUTER_CORE) :: idoubling_outer_core
+  logical, dimension(NSPEC_OUTER_CORE) :: ispec_is_tiso_outer_core
+  
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
@@ -126,6 +135,8 @@
         c13store_inner_core,c44store_inner_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
+  logical, dimension(NSPEC_INNER_CORE) :: ispec_is_tiso_inner_core
+
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
 
   logical ABSORBING_CONDITIONS
@@ -134,7 +145,8 @@
   !local parameters
   logical READ_KAPPA_MU,READ_TISO
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
-
+  integer, dimension(NSPEC_CRUST_MANTLE) :: dummy_i
+  
 ! this for non blocking MPI
   logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
   logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
@@ -177,7 +189,10 @@
             c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
             c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-            ibool_crust_mantle,idoubling_crust_mantle,is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
+            ibool_crust_mantle,dummy_i, &
+          ! --idoubling_crust_mantle,
+            ispec_is_tiso_crust_mantle, &
+            is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
             NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
             ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
@@ -206,7 +221,8 @@
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
-            ibool_outer_core,idoubling_outer_core,is_on_a_slice_edge_outer_core,rmass_outer_core,rmass_ocean_load, &
+            ibool_outer_core,idoubling_outer_core,ispec_is_tiso_outer_core, &
+            is_on_a_slice_edge_outer_core,rmass_outer_core,rmass_ocean_load, &
             NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
             ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
@@ -239,7 +255,8 @@
             dummy_array,dummy_array,dummy_array, &
             c44store_inner_core,dummy_array,dummy_array, &
             dummy_array,dummy_array,dummy_array, &
-            ibool_inner_core,idoubling_inner_core,is_on_a_slice_edge_inner_core,rmass_inner_core,rmass_ocean_load, &
+            ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
+            is_on_a_slice_edge_inner_core,rmass_inner_core,rmass_ocean_load, &
             NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
             ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)

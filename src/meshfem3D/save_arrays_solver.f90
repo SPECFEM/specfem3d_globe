@@ -43,7 +43,7 @@
                     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
                     ANISOTROPIC_INNER_CORE,OCEANS, &
                     tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,vx,vy,vz,vnspec, &
-                    ABSORBING_CONDITIONS,SAVE_MESH_FILES)
+                    ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
 
 
   implicit none
@@ -151,6 +151,8 @@
   double precision, dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
 
   logical ABSORBING_CONDITIONS,SAVE_MESH_FILES
+
+  logical, dimension(nspec) :: ispec_is_tiso  
 
   ! local parameters
   integer i,j,k,ispec,iglob,nspec1, nglob1
@@ -338,6 +340,8 @@
 
   write(27) is_on_a_slice_edge
 
+  write(27) ispec_is_tiso
+  
   close(27)
 
 ! absorbing boundary parameters

@@ -53,7 +53,9 @@
           c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
           c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
           c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-          ibool,idoubling,R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
+          ibool,ispec_is_tiso, &
+        !-- idoubling,
+          R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
           alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
 
   implicit none
@@ -85,7 +87,8 @@
 !  end type model_attenuation_variables
 
 ! array with the local to global mapping per slice
-  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling
+!  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling
+  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso
 
 ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
@@ -456,8 +459,8 @@
           else
 
         ! do not use transverse isotropy except if element is between d220 and Moho
-            if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO))) then
-
+!            if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO))) then
+            if( .not. ispec_is_tiso(ispec) ) then
         ! layer with no transverse isotropy, use kappav and muv
               kappal = kappavstore(i,j,k,ispec)
               mul = muvstore(i,j,k,ispec)

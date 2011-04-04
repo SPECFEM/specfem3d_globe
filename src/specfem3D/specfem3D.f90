@@ -551,7 +551,8 @@
         c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
 
 ! local to global mapping
-  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+!  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
 
 ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
@@ -577,6 +578,7 @@
 
 ! local to global mapping
   integer, dimension(NSPEC_OUTER_CORE) :: idoubling_outer_core
+  logical, dimension(NSPEC_OUTER_CORE) :: ispec_is_tiso_outer_core ! only needed for compute_boundary_kernel()
 
 ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
@@ -605,6 +607,7 @@
 
 ! local to global mapping
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
+  logical, dimension(NSPEC_INNER_CORE) :: ispec_is_tiso_inner_core ! only needed for computer_boundary_kernel() routine
 
 ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
@@ -992,13 +995,16 @@
               c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
               c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
               c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-              ibool_crust_mantle,idoubling_crust_mantle,is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
+              ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+            ! -- idoubling_crust_mantle,  
+              is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
               vp_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
               xix_outer_core,xiy_outer_core,xiz_outer_core, &
               etax_outer_core,etay_outer_core,etaz_outer_core, &
               gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
               rhostore_outer_core,kappavstore_outer_core, &
-              ibool_outer_core,idoubling_outer_core,is_on_a_slice_edge_outer_core,rmass_outer_core, &
+              ibool_outer_core,idoubling_outer_core,ispec_is_tiso_outer_core, &
+              is_on_a_slice_edge_outer_core,rmass_outer_core, &
               xstore_inner_core,ystore_inner_core,zstore_inner_core, &
               xix_inner_core,xiy_inner_core,xiz_inner_core, &
               etax_inner_core,etay_inner_core,etaz_inner_core, &
@@ -1006,7 +1012,8 @@
               rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
               c11store_inner_core,c12store_inner_core,c13store_inner_core, &
               c33store_inner_core,c44store_inner_core, &
-              ibool_inner_core,idoubling_inner_core,is_on_a_slice_edge_inner_core,rmass_inner_core, &
+              ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
+              is_on_a_slice_edge_inner_core,rmass_inner_core, &
               ABSORBING_CONDITIONS,LOCAL_PATH)
 
   ! read 2-D addressing for summation between slices with MPI
@@ -1686,7 +1693,7 @@
                 c22store_crust_mantle,c23store_crust_mantle, &
                 c33store_crust_mantle,c44store_crust_mantle, &
                 c55store_crust_mantle,c66store_crust_mantle, &
-                muvstore_crust_mantle,muhstore_crust_mantle,idoubling_crust_mantle, &
+                muvstore_crust_mantle,muhstore_crust_mantle,ispec_is_tiso_crust_mantle, &
                 muvstore_inner_core, &
                 SIMULATION_TYPE,MOVIE_VOLUME,muvstore_crust_mantle_3dmovie, &
                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &
@@ -2686,7 +2693,8 @@
           c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
+          ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+      ! --idoubling_crust_mantle, &
           R_memory_crust_mantle,epsilondev_crust_mantle, &
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
@@ -2729,7 +2737,8 @@
           c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
+          ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+        ! --idoubling_crust_mantle, &
           R_memory_crust_mantle,epsilondev_crust_mantle, &
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
@@ -2781,7 +2790,8 @@
           c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
+          ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+     ! --     idoubling_crust_mantle, &
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
@@ -2824,7 +2834,8 @@
           c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
+          ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+      ! --idoubling_crust_mantle, &
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
@@ -3179,7 +3190,8 @@
           c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
+          ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+      !---idoubling_crust_mantle, &
           R_memory_crust_mantle,epsilondev_crust_mantle, &
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
@@ -3222,7 +3234,8 @@
           c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
+          ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+      ! --idoubling_crust_mantle, &
           R_memory_crust_mantle,epsilondev_crust_mantle, &
           eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
@@ -3490,7 +3503,8 @@
           c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
+          ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+      ! --idoubling_crust_mantle, &
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
@@ -3533,7 +3547,8 @@
           c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
           c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
           c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-          ibool_crust_mantle,idoubling_crust_mantle, &
+          ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+      !--idoubling_crust_mantle, &
           b_R_memory_crust_mantle,b_epsilondev_crust_mantle, &
           b_eps_trace_over_3_crust_mantle,one_minus_sum_beta_crust_mantle, &
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
@@ -4016,7 +4031,8 @@
       if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
         call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+            ! -- idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4032,7 +4048,8 @@
 
         call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+              ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4052,7 +4069,8 @@
       ! 400
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+            ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4068,7 +4086,8 @@
 
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+              ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4087,7 +4106,8 @@
       ! 670
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+              ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4103,7 +4123,8 @@
 
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+              ! --idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4124,7 +4145,8 @@
       iregion_code = IREGION_CRUST_MANTLE
       call compute_boundary_kernel(displ_crust_mantle,accel_crust_mantle, &
                  b_displ_crust_mantle,nspec_crust_mantle,iregion_code, &
-                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,idoubling_crust_mantle, &
+                 ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+              ! -- idoubling_crust_mantle, &
                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,hprime_xx,hprime_yy,hprime_zz, &
@@ -4142,7 +4164,8 @@
       iregion_code = IREGION_OUTER_CORE
       call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core, &
                  b_vector_displ_outer_core,nspec_outer_core, &
-                 iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,idoubling_outer_core, &
+                 iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,ispec_is_tiso_outer_core, &
+              ! --idoubling_outer_core, &
                  xix_outer_core,xiy_outer_core,xiz_outer_core, &
                  etax_outer_core,etay_outer_core,etaz_outer_core,&
                  gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
@@ -4163,7 +4186,8 @@
       fluid_solid_boundary = .true.
       call compute_boundary_kernel(vector_displ_outer_core,vector_accel_outer_core, &
                  b_vector_displ_outer_core,nspec_outer_core, &
-                 iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,idoubling_outer_core, &
+                 iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,ispec_is_tiso_outer_core, &
+              ! --idoubling_outer_core, &
                  xix_outer_core,xiy_outer_core,xiz_outer_core, &
                  etax_outer_core,etay_outer_core,etaz_outer_core,&
                  gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
@@ -4181,7 +4205,8 @@
       iregion_code = IREGION_INNER_CORE
       call compute_boundary_kernel(displ_inner_core,accel_inner_core, &
                  b_displ_inner_core,nspec_inner_core,iregion_code, &
-                 ystore_inner_core,zstore_inner_core,ibool_inner_core,idoubling_inner_core, &
+                 ystore_inner_core,zstore_inner_core,ibool_inner_core,ispec_is_tiso_inner_core, &
+              ! -- idoubling_inner_core, &
                  xix_inner_core,xiy_inner_core,xiz_inner_core, &
                  etax_inner_core,etay_inner_core,etaz_inner_core,&
                  gammax_inner_core,gammay_inner_core,gammaz_inner_core,hprime_xx,hprime_yy,hprime_zz, &
@@ -4399,7 +4424,8 @@
                   rhostore_crust_mantle,muvstore_crust_mantle, &
                   kappavstore_crust_mantle,ibool_crust_mantle, &
                   kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,idoubling_crust_mantle, &
+                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
+              ! --idoubling_crust_mantle, &
                   LOCAL_PATH)
 
 !<YANGL

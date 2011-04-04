@@ -51,7 +51,8 @@
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
                     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                    CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta)
+                    CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
+                    ispec_is_tiso)
 
 
 ! adds doubling elements to the different regions of the mesh
@@ -153,6 +154,8 @@
 
   integer :: offset_proc_xi,offset_proc_eta
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+
+  logical, dimension(nspec) :: ispec_is_tiso  
 
   ! local parameters
   double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick
@@ -344,7 +347,7 @@
                          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                          nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                          rho_vp,rho_vs,ACTUALLY_STORE_ARRAYS,&
-                         xigll,yigll,zigll)
+                         xigll,yigll,zigll,ispec_is_tiso)
 
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then

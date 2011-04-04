@@ -256,8 +256,11 @@
   logical, parameter :: APPROXIMATE_HESS_KL = .false.
 
 ! output kernel mask to zero out source region
-  logical,parameter :: SAVE_SOURCE_MASK = .false.
+  logical, parameter :: SAVE_SOURCE_MASK = .false.
 
+! forces transverse isotropy for all mantle elements 
+! (default is to use transverse isotropy only between MOHO and 220 )
+  logical, parameter :: USE_FULL_TISO_MANTLE = .false.
 
 !!-----------------------------------------------------------
 !!

@@ -502,7 +502,8 @@
                 c22store_crust_mantle,c23store_crust_mantle, &
                 c33store_crust_mantle,c44store_crust_mantle, &
                 c55store_crust_mantle,c66store_crust_mantle, &
-                muvstore_crust_mantle,muhstore_crust_mantle,idoubling_crust_mantle, &
+                muvstore_crust_mantle,muhstore_crust_mantle,ispec_is_tiso_crust_mantle, &
+ !----- idoubling_crust_mantle, &                
                 muvstore_inner_core, &
                 SIMULATION_TYPE,MOVIE_VOLUME,muvstore_crust_mantle_3dmovie, &
                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &
@@ -535,7 +536,8 @@
         muvstore_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
         muhstore_crust_mantle
-  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+!  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
+  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
         muvstore_inner_core
@@ -644,9 +646,13 @@
               muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
             endif
             muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
-            if(TRANSVERSE_ISOTROPY_VAL .and. (idoubling_crust_mantle(ispec) == IFLAG_220_80 &
-                .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO)) &
+            
+            ! scales transverse isotropic values for mu_h 
+            !if(TRANSVERSE_ISOTROPY_VAL .and. (idoubling_crust_mantle(ispec) == IFLAG_220_80 &
+            !    .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO)) &
+            if( ispec_is_tiso_crust_mantle(ispec) ) then
               muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
+            endif
           endif
 
         enddo
