@@ -10,7 +10,3 @@ echo "> make"
 echo
 echo
 
-# obsolete...
-#gcc -c -o rw_ascfile_c.o rw_ascfile_c.c
-#gcc -c -o rw_fortran_wrapper.o rw_fortran_wrapper.c
-#ifort -O3 -o xcreate_adjsrc_traveltime create_adjsrc_traveltime.f90 rw_ascfile_f.f90 rw_ascfile_c.o rw_fortran_wrapper.o

@@ -129,6 +129,11 @@
     close(IOUT_NOISE)
   endif
 
+  ! checks master irec
+  if( irec_master_noise < 1 .or. irec_master_noise > nrec ) then
+    call exit_MPI(myrank,'error noise tomography: irec_master_noise is not in range of given number of receivers')
+  endif
+
   ! compute source arrays for "ensemble forward source", which is source of "ensemble forward wavefield"
   if(myrank == islice_selected_rec(irec_master_noise) .OR. myrank == 0) then ! myrank == 0 is used for output only
     call compute_arrays_source_noise(myrank, &
