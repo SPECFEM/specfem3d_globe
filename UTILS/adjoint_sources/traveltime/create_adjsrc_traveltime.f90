@@ -3,6 +3,7 @@ program create_adjsrc_traveltime
 ! this program cuts certain portion of the seismograms and converts them into 
 ! the adjoint sources for generating banana-dougnut kernels.
 ! Qinya Liu, Caltech, May 2007
+! (renamed from cut_velocity.f90 (2011)
 !
 ! call by: ./xcreate_adjsrc_traveltime t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]
 !
