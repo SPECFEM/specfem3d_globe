@@ -1,10 +1,10 @@
-program cut_velocity
+program create_adjsrc_traveltime
 
 ! this program cuts certain portion of the seismograms and converts them into 
 ! the adjoint sources for generating banana-dougnut kernels.
 ! Qinya Liu, Caltech, May 2007
 !
-! call by: ./xcut_velocity t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]
+! call by: ./xcreate_adjsrc_traveltime t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]
 !
   implicit none
 
@@ -26,7 +26,7 @@ program cut_velocity
     call getarg(i,arg(i))
     if (i < 6 .and. trim(arg(i)) == '') then
       print*,'Usage: '
-      print*,'  xcut_velocity t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
+      print*,'  xcreate_adjsrc_traveltime t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
       print*,'with'
       print*,'  t1: window start time'
       print*,'  t2: window end time'
@@ -38,7 +38,7 @@ program cut_velocity
       print*,'  ifile: 5 = adjoint source given by rotated radial component (requires baz)'     
       print*,'  E/N/Z-ascii-files : displacement traces stored as ascii files'
       print*,'  [baz]: (optional) back-azimuth, requires ifile = 4 or ifile = 5'
-      stop 'cut_velocity t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
+      stop 'create_adjsrc_traveltime t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
     endif
     if (trim(arg(i)) == '') exit
     if (i == 1) then 
@@ -57,7 +57,7 @@ program cut_velocity
       if (ios /= 0) stop 'Error reading baz'
       lrot = .true.
     else if (i > 7) then
-      stop 'Error: cut_velocity t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
+      stop 'Error: create_adjsrc_traveltime t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
     endif
     i = i + 1
   enddo
@@ -65,14 +65,14 @@ program cut_velocity
   ! checks rotation baz and ifile parameter
   i = i - 1
   if (lrot) then
-    if (i /= 7) stop 'cut_velocity t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
+    if (i /= 7) stop 'create_adjsrc_traveltime t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
     if (ifile /= 4 .and. ifile /= 5) stop 'ifile = 4 or 5 when baz is present'
     th = (baz - 180.0) / 180.0 * PI
     costh = cos(th)
     sinth = sin(th)
   else
     if (ifile > 3 .or. ifile < 0) stop 'Error ifile should be between 0 - 3 when baz is not present'
-    if (i /= 6) stop 'cut_velocity t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
+    if (i /= 6) stop 'create_adjsrc_traveltime t1 t2 ifile[0-5] E/N/Z-ascii-files [baz]'
   endif
   
   ! user output
@@ -104,8 +104,8 @@ program cut_velocity
   if (lrot) then
     data(4,:) = costh * data(1,:) - sinth * data(2,:)
     data(5,:) = sinth * data(1,:) + costh * data(2,:)
-    call dwrite_ascfile_c('t.txt',t0,dt,nstep,data(4,:))
-    call dwrite_ascfile_c('r.txt',t0,dt,nstep,data(5,:))
+    call dwrite_ascfile_c(trim('t.txt')//char(0),t0,dt,nstep,data(4,:))
+    call dwrite_ascfile_c(trim('r.txt')//char(0),t0,dt,nstep,data(5,:))
     i1 = 3; i2 = 5
   else
     i1 = 1; i2 = 3
@@ -155,8 +155,8 @@ program cut_velocity
   
   ! component rotation back to cartesian x-y-z
   if (lrot) then
-    call dwrite_ascfile_c('t-cut.txt',t0,dt,nstep,data(4,:))
-    call dwrite_ascfile_c('r-cut.txt',t0,dt,nstep,data(5,:))
+    call dwrite_ascfile_c(trim('t-cut.txt')//char(0),t0,dt,nstep,data(4,:))
+    call dwrite_ascfile_c(trim('r-cut.txt')//char(0),t0,dt,nstep,data(5,:))
     data(1,:) = costh * data(4,:) + sinth * data(5,:)
     data(2,:) = -sinth * data(4,:) + costh * data(5,:)
   endif
@@ -168,6 +168,6 @@ program cut_velocity
     call dwrite_ascfile_c(trim(filename)//char(0),t0,dt,nstep,data(i,:))
   enddo
 
-end program cut_velocity
+end program create_adjsrc_traveltime
 
 
