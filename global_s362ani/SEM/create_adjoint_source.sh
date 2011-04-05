@@ -14,7 +14,7 @@ t1="734.5"
 t2="755.0"
 
 #window out single phase arrival on vertical component between t1 to t2 :
-~/SPECFEM3D_GLOBE/UTILS/cut_velocity/xcut_velocity $t1 $t2 3 ../REF_SEIS/$station.$network.MX*
+~/SPECFEM3D_GLOBE/UTILS/adjoint_sources/traveltime/xcreate_adjsrc_traveltime $t1 $t2 3 ../REF_SEIS/$station.$network.MX*
 mv ../REF_SEIS/$station.$network.MX*adj ./
 
 # rename adjoint source files:
