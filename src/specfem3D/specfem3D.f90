@@ -3067,12 +3067,11 @@
     elseif ( NOISE_TOMOGRAPHY == 2 ) then
        ! second step of noise tomography, i.e., read the surface movie saved at every timestep
        ! use the movie to drive the ensemble forward wavefield
-       call noise_read_add_surface_movie(myrank,nmovie_points,accel_crust_mantle, &
+       call noise_read_add_surface_movie(nmovie_points,accel_crust_mantle, &
                               normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
-                              store_val_ux,store_val_uy,store_val_uz, &
                               ibelm_top_crust_mantle,ibool_crust_mantle, &
                               NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
-                              NIT,NSTEP-it+1,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)
+                              NSTEP-it+1,jacobian2D_top_crust_mantle,wgllwgll_xy)
         ! be careful, since ensemble forward sources are reversals of generating wavefield "eta"
         ! hence the "NSTEP-it+1", i.e., start reading from the last timestep
         ! note the ensemble forward sources are generally distributed on the surface of the earth
@@ -3083,12 +3082,11 @@
         ! use the movie to reconstruct the ensemble forward wavefield
         ! the ensemble adjoint wavefield is done as usual
         ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
-        call noise_read_add_surface_movie(myrank,nmovie_points,b_accel_crust_mantle, &
+        call noise_read_add_surface_movie(nmovie_points,b_accel_crust_mantle, &
                               normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
-                              store_val_ux,store_val_uy,store_val_uz, &
                               ibelm_top_crust_mantle,ibool_crust_mantle, &
                               NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
-                              NIT,it,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)
+                              it,jacobian2D_top_crust_mantle,wgllwgll_xy)
     endif
 !>YANGL
 
@@ -4021,11 +4019,11 @@
 !<YANGL
     ! NOISE TOMOGRAPHY --- source strength kernel
     if (NOISE_TOMOGRAPHY == 3)  &
-       call compute_kernels_strength_noise(myrank,ibool_crust_mantle, &
+       call compute_kernels_strength_noise(nmovie_points,ibool_crust_mantle, &
                           Sigma_kl_crust_mantle,displ_crust_mantle,deltat,it, &
-                          nmovie_points,normal_x_noise,normal_y_noise,normal_z_noise, &
+                          normal_x_noise,normal_y_noise,normal_z_noise, &
                           NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
-                          ibelm_top_crust_mantle,LOCAL_PATH)
+                          ibelm_top_crust_mantle)
 !>YANGL
 
     ! --- boundary kernels ------
@@ -4253,13 +4251,9 @@
   ! first step of noise tomography, i.e., save a surface movie at every time step
   ! modified from the subroutine 'write_movie_surface'
   if ( NOISE_TOMOGRAPHY == 1 ) then
-        call noise_save_surface_movie(myrank,nmovie_points,displ_crust_mantle, &
-                            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                            store_val_x,store_val_y,store_val_z, &
-                            store_val_ux,store_val_uy,store_val_uz, &
+        call noise_save_surface_movie(displ_crust_mantle, &
                             ibelm_top_crust_mantle,ibool_crust_mantle, &
-                            NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
-                            NIT,it,LOCAL_PATH)
+                            NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie,it)
   endif
 !>YANGL
 
