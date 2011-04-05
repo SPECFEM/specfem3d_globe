@@ -224,8 +224,6 @@
                                     SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
                                     MOVIE_COARSE,LOCAL_PATH,NSPEC_TOP,NSTEP)
   implicit none
-!  include 'mpif.h'
-!  include "precision.h"
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
@@ -512,47 +510,29 @@
 !    close(IOUT_NOISE)
 !  end subroutine noise_save_surface_movie_original
 
-!!!!! the improved version, with some dummy variables (i.e., variables that are NOT used in the this improved version)
-  subroutine noise_save_surface_movie(myrank,nmovie_points,displ_crust_mantle, &
-                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                    store_val_x,store_val_y,store_val_z, &
-                    store_val_ux,store_val_uy,store_val_uz, &
+!!!!! the improved version
+  subroutine noise_save_surface_movie(displ_crust_mantle, &
                     ibelm_top_crust_mantle,ibool_crust_mantle, &
-                    nspec_top,noise_surface_movie, &
-                    NIT,it,LOCAL_PATH)
+                    nspec_top,noise_surface_movie,it)
   implicit none
-!  include 'mpif.h'
-!  include "precision.h"
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
-  integer :: myrank,nmovie_points,nspec_top,NIT,it
+  integer :: nspec_top,it
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) ::  displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
-        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-  character(len=150) :: LOCAL_PATH
   ! output parameters
   ! local parameters
   integer :: ispec2D,ispec,i,j,k,iglob 
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: &
-      store_val_x,store_val_y,store_val_z, &
-      store_val_ux,store_val_uy,store_val_uz
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
-  
-  !integer :: ipoin
-  !character(len=150) :: outputname
-  integer :: idummy
-  real(kind=CUSTOM_REAL) :: rdummy
-  character :: cdummy    
 
   ! get coordinates of surface mesh and surface displacement
   do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
     k = NGLLZ
-    do j = 1,NGLLY,NIT
-      do i = 1,NGLLX,NIT
+    do j = 1,NGLLY
+      do i = 1,NGLLX
         iglob = ibool_crust_mantle(i,j,k,ispec)
         noise_surface_movie(:,i,j,ispec2D) = displ_crust_mantle(:,iglob)
       enddo
@@ -560,23 +540,7 @@
   enddo
 
   ! save surface motion to disk
-  ! LOCAL storage is better than GLOBAL, because we have to save the 'movie' at every time step
-  ! also note that the surface movie does NOT have to be shared with other nodes/CPUs
-  ! change LOCAL_PATH specified in "DATA/Par_file"
   call write_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
-
-  ! just to avoid compiler warnings
-  idummy = myrank
-  rdummy = xstore_crust_mantle(1)
-  rdummy = ystore_crust_mantle(1)
-  rdummy = zstore_crust_mantle(1)
-  rdummy = store_val_x(1)
-  rdummy = store_val_y(1)
-  rdummy = store_val_z(1)
-  rdummy = store_val_ux(1)
-  rdummy = store_val_uy(1)
-  rdummy = store_val_uz(1)
-  cdummy = LOCAL_PATH(1:1)
 
   end subroutine noise_save_surface_movie
 
@@ -665,38 +629,28 @@
 !
 !  end subroutine noise_read_add_surface_movie_original
 
-!!!!! the improved version, with some dummy variables (i.e., variables that are NOT used in the this improved version)
-  subroutine noise_read_add_surface_movie(myrank,nmovie_points,accel_crust_mantle, &
+!!!!! the improved version
+  subroutine noise_read_add_surface_movie(nmovie_points,accel_crust_mantle, &
                   normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
-                  store_val_ux,store_val_uy,store_val_uz, &
                   ibelm_top_crust_mantle,ibool_crust_mantle, &
                   nspec_top,noise_surface_movie, &
-                  NIT,it,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)
+                  it,jacobian2D_top_crust_mantle,wgllwgll_xy)
   implicit none
-!  include 'mpif.h'
-!  include "precision.h"
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
-  integer :: myrank,nmovie_points,nspec_top,NIT,it
+  integer :: nspec_top,it,nmovie_points
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: jacobian2D_top_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle ! both input and output
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  character(len=150) :: LOCAL_PATH
   ! output parameters
   ! local parameters
-  integer :: ipoin,ispec2D,ispec,i,j,k,iglob !,ios
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: store_val_ux,store_val_uy,store_val_uz
+  integer :: ipoin,ispec2D,ispec,i,j,k,iglob
   real(kind=CUSTOM_REAL) :: eta
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
-
-  !character(len=150) :: outputname
-  integer :: idummy
-  real(kind=CUSTOM_REAL) :: rdummy
-  character :: cdummy
 
   ! read surface movie
   call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
@@ -709,8 +663,8 @@
     k = NGLLZ
 
     ! loop on all the points inside the element
-    do j = 1,NGLLY,NIT
-      do i = 1,NGLLX,NIT
+    do j = 1,NGLLY
+      do i = 1,NGLLX
         ipoin = ipoin + 1
         iglob = ibool_crust_mantle(i,j,k,ispec)
 
@@ -729,13 +683,6 @@
     enddo
 
   enddo
-
-  ! just to avoid compiler warnings
-  idummy = myrank
-  rdummy = store_val_ux(1)
-  rdummy = store_val_uy(1)
-  rdummy = store_val_uz(1)
-  cdummy = LOCAL_PATH(1:1)
 
   end subroutine noise_read_add_surface_movie
 
@@ -820,36 +767,29 @@
 !
 !  end subroutine compute_kernels_strength_noise_original
 
-!!!!! the improved version, with some dummy variables (i.e., variables that are NOT used in the this improved version)
-  subroutine compute_kernels_strength_noise(myrank,ibool_crust_mantle, &
+!!!!! the improved version
+  subroutine compute_kernels_strength_noise(nmovie_points,ibool_crust_mantle, &
                           Sigma_kl_crust_mantle,displ_crust_mantle,deltat,it, &
-                          nmovie_points,normal_x_noise,normal_y_noise,normal_z_noise, &
+                          normal_x_noise,normal_y_noise,normal_z_noise, &
                           nspec_top,noise_surface_movie, &
-                          ibelm_top_crust_mantle,LOCAL_PATH)
+                          ibelm_top_crust_mantle)
   implicit none
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
-  integer :: myrank,nmovie_points,it,nspec_top
+  integer :: it,nspec_top,nmovie_points
   integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
   real(kind=CUSTOM_REAL) :: deltat
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise
-  character(len=150) :: LOCAL_PATH
   ! output parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     Sigma_kl_crust_mantle
   ! local parameters
-  integer :: i,j,k,ispec,iglob,ipoin,ispec2D !,ios
+  integer :: i,j,k,ispec,iglob,ipoin,ispec2D
   real(kind=CUSTOM_REAL) :: eta
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: store_val_ux,store_val_uy,store_val_uz
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
-  
-  !character(len=150) :: outputname
-  integer :: idummy
-  real(kind=CUSTOM_REAL) :: rdummy
-  character :: cdummy
   
   ! read surface movie, needed for Sigma_kl_crust_mantle
   call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
@@ -881,13 +821,6 @@
     enddo
 
   enddo
-
-  ! just to avoid compiler warnings
-  idummy = myrank
-  rdummy = store_val_ux(1)
-  rdummy = store_val_uy(1)
-  rdummy = store_val_uz(1)
-  cdummy = LOCAL_PATH(1:1)
 
   end subroutine compute_kernels_strength_noise
 
