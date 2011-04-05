@@ -10,20 +10,20 @@ CC = gcc
 #############################################################
 
 
-LIB_OBJS = cut_velocity.o rw_ascfile_c.o 
+LIB_OBJS = create_adjsrc_amplitude.o rw_ascfile_c.o 
 
 # targets
-all: xcut_velocity
+all: xcreate_adjsrc_amplitude
 
-xcut_velocity: $(LIB_OBJS)
-	${F90} -Wall -o xcut_velocity $(LIB_OBJS)
+xcreate_adjsrc_amplitude: $(LIB_OBJS)
+	${F90} -Wall -o xcreate_adjsrc_amplitude $(LIB_OBJS)
 
-cut_velocity.o: cut_velocity.f90
-	${F90} -Wall -c cut_velocity.f90
+create_adjsrc_amplitude.o: create_adjsrc_amplitude.f90
+	${F90} -Wall -c create_adjsrc_amplitude.f90
 
 rw_ascfile_c.o: ../lib/rw_ascfile_c.c
 	${CC} -c -o rw_ascfile_c.o ../lib/rw_ascfile_c.c
 
 
 clean:
-	rm -f *.o xcut_velocity
+	rm -f *.o xcreate_adjsrc_amplitude
