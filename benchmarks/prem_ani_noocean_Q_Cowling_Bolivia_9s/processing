@@ -1,0 +1,10 @@
+./process_syn.pl -m CMTSOLUTION -a STATIONS -l 0/2900 -t 10/250 QMXD/*.qmxd
+./process_syn.pl -m CMTSOLUTION -a STATIONS -l 0/2900 -t 10/250 SEMD/*.semd.ascii
+./rotate.pl -l 0 -L 2900 QMXD/*.LHE.qmxd.sac
+./rotate.pl -l 0 -L 2900 SEMD/*.LHE.semd.ascii.sac
+mv QMXD/*LHZ*sac QMXD_SAC/
+mv QMXD/*LHT*sac QMXD_SAC/
+mv SEMD/*LHZ*sac SEMD_SAC/
+mv SEMD/*LHT*sac SEMD_SAC/
+tar cvf QMXD_SAC.tar QMXD_SAC/
+tar cvf SEMD_SAC.tar SEMD_SAC/
