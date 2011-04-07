@@ -200,8 +200,8 @@ as well as Convolutional or Auxiliary Differential Equation Perfectly Matched ab
 If you use SPECFEM3D\_GLOBE for your own research, please cite at least one
 of the following articles: \cite{TrKoLi08,VaCaSaKoVi99,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,KoMiEr09,KoErGoMi10,KoGoErMi10,WiKoScTr04,KoLiTrSuStSh04,ChKoViCaVaFe07,MaKoDi09,KoViCh10,CaKoLaTiMiLeSnTr08,TrKoHjLiZhPeBoMcFrTrHu10,KoRiTr02,KoTr02a,KoTr02b,KoTr99} or \cite{KoVi98}.\\
 
-\red{If you use this new version 5.1, which has non blocking MPI for much better performance for medium or large runs, please cite at least one of these five articles,
-in which results of 3D non blocking MPI runs are presented: \cite{KoErGoMi10,KoViCh10,Kom11,PeKoLuMaLeCaLeMaLiBlNiBaTr11,CaKoLaTiMiLeSnTr08}.}\\
+If you use this new version 5.1, which has non blocking MPI for much better performance for medium or large runs, please cite at least one of these five articles,
+in which results of 3D non blocking MPI runs are presented: \cite{KoErGoMi10,KoViCh10,Kom11,PeKoLuMaLeCaLeMaLiBlNiBaTr11,CaKoLaTiMiLeSnTr08}.\\
 
 If you work on geophysical applications, you may be interested in citing some of these application articles as well, among others: \cite{WiKoScTr04,JiTsKoTr05,KrJiKoTr06a,KrJiKoTr06b,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09,ChFaKo04,FaChKo04,RiRiKoTrHe02,GoAmTaCaSmSaMaKo09,TrKo00,SaKoTr10}.
 If you use 3D mantle model S20RTS, please cite \citet{RiVaWo99}.\\
@@ -1765,15 +1765,15 @@ The adjoint sources need to be prepared the same way as described
 in Section~\ref{sec:Adjoint-simulation-sources}, item~\ref{enu:Prepare-the-adjoint}.
 
 \begin{itemize}
-\item In the case of travel-time finite-frequency kernel for one source-receiver
+\item In the case of traveltime finite-frequency kernel for one source-receiver
 pair, i.e., point source from the \texttt{CMTSOLUTION}, and one station
 in the \texttt{STATIONS\_ADJOINT} list, we supply a sample program
-in \texttt{UTILS/cut\_velocity} to cut a certain portion of the original
+in \texttt{UTILS/adjoint\_sources/traveltime} to cut a certain portion of the original
 displacement seismograms and convert them into the proper adjoint
 source to compute the finite-frequency kernel.
 
 \begin{lyxcode}
-cut\_velocity~t1~t2~ifile{[}0-5]~E/N/Z-ascii-files~{[}baz]
+xcreate\_adjsrc\_traveltime~t1~t2~ifile{[}0-5]~E/N/Z-ascii-files~{[}baz]
 \end{lyxcode}
 where \texttt{t1} and \texttt{t2} are the start and end time of the
 portion you are interested in, \texttt{ifile} denotes the component
@@ -1782,9 +1782,15 @@ of the seismograms to be used (0 for all three components, 1 for east,
 component), \texttt{E/N/Z-ascii-files} indicate the three-component
 displacement seismograms in the right order, and \texttt{baz} is the
 back-azimuth of the station from the event location. Note that \texttt{baz}
-is only supplied when \texttt{ifile} = 4 or 5.
+is only supplied when \texttt{ifile} = 4 or 5. 
 
+\item Similarly, a sample program to compute adjoint sources for amplitude finite-frequency kernels may be found in \texttt{UTILS/adjoint\_sources/amplitude} and used in the same way as described for traveltime measurement
+
+\begin{lyxcode}
+xcreate\_adjsrc\_amplitude~t1~t2~ifile{[}0-5]~E/N/Z-ascii-files~{[}baz].
+\end{lyxcode}
 \end{itemize}
+
 \item \textbf{Run the kernel simulation}
 
 
@@ -1916,14 +1922,6 @@ i.e., when \texttt{NOISE\_TOMOGRAPHY} equals 2.
 The third step is for kernel constructions. Hence \texttt{SIMULATION\_TYPE} should be 3, whereas
 \texttt{SAVE\_FORWARD} must be \texttt{.false.}.\\
 
-Finally, for most system architectures,
-please make sure that the \texttt{LOCAL\_PATH} in \texttt{DATA/Par\_file} is in fact local,
-not globally shared. Because we have to save the wavefields at the earth's surface at every time step,
-it is quite problematic to have a globally shared \texttt{LOCAL\_PATH}, in terms of both disk storage and
-I/O speed. {\color{red}(the new implementation uses the same way we save absorbing boundaries, and thus may be
-more effective and less architecture demanding. ask Qinya to test the new version on her cluster, which has a
-global storage system)}
-
 
 \section{Noise Simulations: Step by Step}
 
@@ -2042,15 +2040,7 @@ that you always re-compile the code before you run simulations)
 
 \end{itemize}
 
-
-
 \subsection{Simulations}
-
-When all of the above is done, we can launch our simulations.
-However, please make sure that the \texttt{LOCAL\_PATH} in \texttt{DATA/Par\_file} is in fact local,
-not globally shared.
-It is quite problematic to have a globally shared \texttt{LOCAL\_PATH}, in terms of both disk storage and
-speed of I/O (we have to save the wavefields at the earth's surface at every time step).
 
 As discussed in \citet{trompetal2010}, it takes three simulations to obtain one contribution
 of the ensemble sensitivity kernels:
@@ -2272,7 +2262,7 @@ The finite-frequency kernels computed as explained in Section \ref{sec:Adjoint-s
 are saved in the \texttt{LOCAL\_PATH} at the end of the simulation.
 Therefore, we first need to collect these files on the front end,
 combine them into one mesh file, and visualize them with some auxilliary
-programs.
+programs. Examples of kernel simulations may be found in the \texttt{EXAMPLES} directory. 
 
 \begin{enumerate}
 \item \textbf{Create slice files}
@@ -2443,16 +2433,15 @@ Glyph}, and represent the points by `\textsf{spheres}'.
 \end{enumerate}
 \end{enumerate}
 For illustration purposes, Figure \ref{fig:P-wave-speed-finite-frequency}
-shows the P-wave speed finite-frequency kernel for a P arrival recorded
-at an epicental distance of $60^{\circ}$ for a deep event.
+shows P-wave speed finite-frequency kernels from cross-correlation traveltime and amplitude measurements for a P arrival recorded at an epicentral distance of $60^{\circ}$ for a deep event. 
 
 %
 \begin{figure}[H]
-\includegraphics[clip,scale=0.9]{figures/P_alpha_60d_18s}
-
+\noindent \begin{centering}
+\includegraphics[clip,scale=1.2]{figures/P_alpha_60d_17s}
 \caption{\label{fig:P-wave-speed-finite-frequency}P-wave speed finite-frequency
-kernel for a P arrival recorded at an epicentral distance of $60^{\circ}$.}
-
+kernels from cross-correlation traveltime (top) and amplitude (bottom) measurements for a P arrival recorded at an epicentral distance of $60^{\circ}$. The kernels together with the associated files and routines to reproduce them may be found in \texttt{EXAMPLES/global\_PREM\_kernels/}.}
+\par\end{centering}
 \end{figure}
 
 
@@ -2632,8 +2621,8 @@ cleanbase\_jobid.pl~OUTPUT\_FILES/machines~DATA/Par\_file
 For kernel simulations, you can use the sample run scripts \texttt{run\_lsf.kernel}
 and \texttt{go\_mesher\_solver\_globe}~\\
 \texttt{.kernel} provided in \texttt{UTILS/Cluster} directory, and modify
-the command-line arguments of \texttt{xcut\_velocity} in \texttt{go\_mesher\_}~\\
-\texttt{solver\_globe.kernel }according to the start and end time
+the command-line arguments of \texttt{xcreate\_adjsrc\_traveltime} in 
+\texttt{go\_mesher\_solver\_globe.kernel} according to the start and end time
 of the specific portion of the forward seismograms you are interested
 in.
 
