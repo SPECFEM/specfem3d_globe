@@ -2,10 +2,10 @@
 #
 # regional simulation example
 #
-# script runs mesher and solver using mpirun  
+# script runs mesher and solver using mpirun
 # on 4 CPUs
 #
-# synthetics have an approximate shortest period ~ 17 s
+# synthetics have an approximate shortest period ~ 15 s
 #
 # modify accordingly for your own system specifics
 ##################################################
