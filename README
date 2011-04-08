@@ -10,6 +10,12 @@ The following examples are provided:
 
 - basic usage:
 
+  * regional_Greece_small/
+
+  contains an example for a small regional simulation and an event located in southern Greece;
+  the example can be run as a small test on a single desktop machine
+  (4 CPUs, forward simulation lasts ~15min, kernel simulation lasts ~40min) 
+
   * regional_MiddleEast/
 
   contains an example for a regional simulation for the Middle East region
