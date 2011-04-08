@@ -107,13 +107,13 @@
   double precision:: yigll(NGLLY)
   double precision:: zigll(NGLLZ)
 
-  logical, dimension(nspec) :: ispec_is_tiso  
+  logical, dimension(nspec) :: ispec_is_tiso
 
   ! Parameter used to decide whether this element is in the crust or not
   logical:: elem_in_crust,elem_in_mantle
   ! flag for transverse isotropic elements
   logical:: elem_is_tiso
-  
+
   ! add topography of the Moho *before* adding the 3D crustal velocity model so that the streched
   ! mesh gets assigned the right model values
   elem_in_crust = .false.
@@ -136,7 +136,7 @@
           call moho_stretching_honor_crust(myrank, &
                               xelm,yelm,zelm,RMOHO_FICTITIOUS_IN_MESHER,&
                               R220,RMIDDLE_CRUST,elem_in_crust,elem_in_mantle)
-        endif      
+        endif
       else
         ! element below 220km
         ! sets element flag for mantle
@@ -148,37 +148,46 @@
       if( idoubling(ispec) == IFLAG_CRUST ) then
         elem_in_crust = .true.
       else
-        elem_in_mantle = .true.  
-      endif      
+        elem_in_mantle = .true.
+      endif
     endif
-    
+
     ! sets transverse isotropic flag for elements in mantle
     if( TRANSVERSE_ISOTROPY ) then
-      ! modifies tiso to have it for all mantle elements 
+      ! modifies tiso to have it for all mantle elements
       ! preferred for example, when using 1Dref (STW model)
-      ! note: this will increase the computation time by ~ 45 %
       if( USE_FULL_TISO_MANTLE ) then
-        ! fully transverse isotropic mantle 
+        ! all elements below the actual moho will be used for transverse isotropy
+        ! note: this will increase the computation time by ~ 45 %
+        if( elem_in_mantle ) then
+          elem_is_tiso = .true.
+        endif
+      else if( REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF ) then
+        ! transverse isotropic mantle between fictitious moho to 670km depth
         ! preferred for harvard (kustowski's) models using STW 1D reference, i.e.
-        ! THREE_D_MODEL_S362ANI 
-        ! THREE_D_MODEL_S362WMANI 
+        ! THREE_D_MODEL_S362ANI
+        ! THREE_D_MODEL_S362WMANI
         ! THREE_D_MODEL_S29EA
         ! THREE_D_MODEL_GLL
-        if( elem_in_mantle ) elem_is_tiso = .true.
+        ! which show significant transverse isotropy also below 220km depth
+        if( idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO &
+          .or. idoubling(ispec)==IFLAG_670_220 ) then
+          elem_is_tiso = .true.
+        endif
       else if( idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO ) then
-        ! default case: 
+        ! default case for PREM reference models:
         ! models use only transverse isotropy between moho and 220 km depth
         elem_is_tiso = .true.
         ! checks mantle flag to be sure
-        if( elem_in_mantle .eqv. .false. ) stop 'error mantle flag confused between moho and 220'
+        !if( elem_in_mantle .eqv. .false. ) stop 'error mantle flag confused between moho and 220'
       endif
     endif
-    
+
   endif ! IREGION_CRUST_MANTLE
-  
+
   ! sets element tiso flag
   ispec_is_tiso(ispec) = elem_is_tiso
-  
+
   ! interpolates and stores GLL point locations
   call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                     xstore,ystore,zstore,shape3D)

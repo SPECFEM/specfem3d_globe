@@ -612,7 +612,7 @@
         write(IMAIN,*) '*****************************************************************'
       else
         nrec_found = nrec_found + 1
-        
+
         islice_selected_rec_found(nrec_found) = islice_selected_rec(irec)
         ispec_selected_rec_found(nrec_found) = ispec_selected_rec(irec)
         xi_receiver_found(nrec_found) = xi_receiver(irec)
@@ -626,9 +626,9 @@
         stbur_found(nrec_found) = stbur(irec)
         nu_found(:,:,nrec_found) = nu(:,:,irec)
         epidist_found(nrec_found) = epidist(irec)
-        
+
         ! writes out actual receiver location to vtk file
-        write(IOVTK,*) sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))        
+        write(IOVTK,*) sngl(x_found(irec)), sngl(y_found(irec)), sngl(z_found(irec))
       endif
 
     enddo

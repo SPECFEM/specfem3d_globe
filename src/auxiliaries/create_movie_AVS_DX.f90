@@ -103,7 +103,7 @@
 ! flag to apply non linear scaling to normalized norm of displacement
   logical, parameter :: NONLINEAR_SCALING = .false.
 ! uses fixed max_value to normalize instead of max of current wavefield
-  logical, parameter :: FIX_SCALING = .true. 
+  logical, parameter :: FIX_SCALING = .true.
   real,parameter:: MAX_VALUE = 1.0
 
 ! coefficient of power law used for non linear scaling

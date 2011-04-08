@@ -204,8 +204,8 @@
   double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
         hgammar(NGLLZ), hpgammar(NGLLZ)
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
-  
-  real(kind=CUSTOM_REAL) :: adj_src(NDIM,NSTEP_BLOCK)  
+
+  real(kind=CUSTOM_REAL) :: adj_src(NDIM,NSTEP_BLOCK)
   double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
 
   integer icomp, itime, ios
@@ -313,16 +313,16 @@
   ! adds interpolated source contribution to all GLL points within this element
   do itime = 1, NSTEP_BLOCK
 
-    ! multiply with interpolators        
-    call multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_u(:,itime))      
-          
+    ! multiply with interpolators
+    call multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_u(:,itime))
+
     ! distinguish between single and double precision for reals
     if(CUSTOM_REAL == SIZE_REAL) then
       adj_sourcearray(:,:,:,:,itime) = sngl(sourcearrayd(:,:,:,:))
     else
       adj_sourcearray(:,:,:,:,itime) = sourcearrayd(:,:,:,:)
     endif
-          
+
   enddo
 !  do k = 1, NGLLZ
 !    do j = 1, NGLLY
@@ -352,9 +352,9 @@
   double precision, dimension(NGLLY) :: hetar
   double precision, dimension(NGLLZ) :: hgammar
   double precision, dimension(NDIM) :: adj_src_ud
-  
+
   integer :: i,j,k
-  
+
   ! adds interpolated source contribution to all GLL points within this element
   do k = 1, NGLLZ
     do j = 1, NGLLY

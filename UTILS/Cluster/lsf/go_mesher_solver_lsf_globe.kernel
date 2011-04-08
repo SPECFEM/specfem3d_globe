@@ -32,7 +32,9 @@ cd $current_pwd/SEM
 mv ../OUTPUT_FILES/*.ascii .
 rename .semd.ascii .for *.semd.ascii
 # P waves
-/home/lqy/bin/utils_bin/xcut_velocity 460 525 3 T60*.for
+#/home/lqy/bin/utils_bin/xcut_velocity 460 525 3 T60*.for
+~/SPECFEM3D_GLOBE/UTILS/adjoint_sources/traveltime/xcreate_adjsrc_traveltime 460. 535. 3 T60*.for
+
 rename .for.ad .adj *.for.ad
 cd $current_pwd
 ##########################################################################

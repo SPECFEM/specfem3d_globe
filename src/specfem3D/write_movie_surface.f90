@@ -104,7 +104,7 @@
           store_val_uy(ipoin) = veloc_crust_mantle(2,iglob)*scale_veloc
           store_val_uz(ipoin) = veloc_crust_mantle(3,iglob)*scale_veloc
         endif
-        
+
       enddo
     enddo
 

@@ -41,7 +41,7 @@
             c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
             c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
             ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-         ! -- idoubling_crust_mantle   
+         ! -- idoubling_crust_mantle
             is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
             vp_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
             xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -97,10 +97,10 @@
         c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  
+
 !  integer, dimension(NSPEC_CRUST_MANTLE) :: idoubling_crust_mantle
   logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
-  
+
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
   ! additional mass matrix for ocean load
@@ -120,7 +120,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
   integer, dimension(NSPEC_OUTER_CORE) :: idoubling_outer_core
   logical, dimension(NSPEC_OUTER_CORE) :: ispec_is_tiso_outer_core
-  
+
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
@@ -146,7 +146,7 @@
   logical READ_KAPPA_MU,READ_TISO
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
   integer, dimension(NSPEC_CRUST_MANTLE) :: dummy_i
-  
+
 ! this for non blocking MPI
   logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
   logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core

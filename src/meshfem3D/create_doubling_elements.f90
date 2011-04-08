@@ -155,7 +155,7 @@
   integer :: offset_proc_xi,offset_proc_eta
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
 
-  logical, dimension(nspec) :: ispec_is_tiso  
+  logical, dimension(nspec) :: ispec_is_tiso
 
   ! local parameters
   double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick

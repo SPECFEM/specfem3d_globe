@@ -1771,7 +1771,6 @@ in the \texttt{STATIONS\_ADJOINT} list, we supply a sample program
 in \texttt{UTILS/adjoint\_sources/traveltime} to cut a certain portion of the original
 displacement seismograms and convert them into the proper adjoint
 source to compute the finite-frequency kernel.
-
 \begin{lyxcode}
 xcreate\_adjsrc\_traveltime~t1~t2~ifile{[}0-5]~E/N/Z-ascii-files~{[}baz]
 \end{lyxcode}
@@ -1784,8 +1783,8 @@ displacement seismograms in the right order, and \texttt{baz} is the
 back-azimuth of the station from the event location. Note that \texttt{baz}
 is only supplied when \texttt{ifile} = 4 or 5. 
 
-\item Similarly, a sample program to compute adjoint sources for amplitude finite-frequency kernels may be found in \texttt{UTILS/adjoint\_sources/amplitude} and used in the same way as described for traveltime measurement
-
+\item Similarly, a sample program to compute adjoint sources for amplitude finite-frequency kernels may be found in \texttt{UTILS/adjoint\_sources/amplitude} and used in the same way as described 
+for traveltime measurements
 \begin{lyxcode}
 xcreate\_adjsrc\_amplitude~t1~t2~ifile{[}0-5]~E/N/Z-ascii-files~{[}baz].
 \end{lyxcode}

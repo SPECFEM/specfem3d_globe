@@ -686,7 +686,7 @@
       if(iregion_code == IREGION_CRUST_MANTLE .and. nspec_tiso == 0) &
         call exit_MPI(myrank,'found no anisotropic elements in the mantle')
     endif
-    
+
     ! computes total area and volume
     call meshfem3D_compute_area(myrank,NCHUNKS,iregion_code, &
                               area_local_bottom,area_local_top,&

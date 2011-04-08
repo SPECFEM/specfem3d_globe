@@ -121,7 +121,7 @@
 
   logical :: ACTUALLY_STORE_ARRAYS,ABSORBING_CONDITIONS
 
-  logical, dimension(nspec) :: ispec_is_tiso  
+  logical, dimension(nspec) :: ispec_is_tiso
 
   !local parameters
   double precision, dimension(NGNOD) :: xelm,yelm,zelm

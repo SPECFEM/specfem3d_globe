@@ -548,7 +548,7 @@
 !            if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec)==IFLAG_220_80 &
 !                  .or. idoubling(ispec)==IFLAG_80_MOHO))) then
             if( .not. ispec_is_tiso(ispec) ) then
-            
+
               ! layer with no transverse isotropy, use kappav and muv
               kappal = kappavstore(i,j,k,ispec)
               mul = muvstore(i,j,k,ispec)

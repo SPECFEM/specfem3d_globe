@@ -227,7 +227,7 @@
   double precision r_moho,r_400,r_670
 
   ! flags for transverse isotropic elements
-  logical, dimension(:), allocatable :: ispec_is_tiso  
+  logical, dimension(:), allocatable :: ispec_is_tiso
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
@@ -244,7 +244,7 @@
   allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
           tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
   if(ier /= 0) stop 'error in allocate 1'
-  
+
   ! Gauss-Lobatto-Legendre points of integration
   allocate(xigll(NGLLX), &
           yigll(NGLLY), &
@@ -286,7 +286,7 @@
           eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec), &
           ispec_is_tiso(nspec),stat=ier)
   if(ier /= 0) stop 'error in allocate 7'
-  
+
   ! initializes flags for transverse isotropic elements
   ispec_is_tiso(:) = .false.
 
@@ -393,7 +393,7 @@
           gammaystore(NGLLX,NGLLY,NGLLZ,nspec_actually), &
           gammazstore(NGLLX,NGLLY,NGLLZ,nspec_actually),stat=ier)
   if(ier /= 0) stop 'error in allocate 16'
-  
+
   ! boundary mesh
   if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
     NSPEC2D_MOHO = NSPEC2D_TOP
@@ -636,7 +636,7 @@
             yp(npointot), &
             zp(npointot),stat=ier)
     if(ier /= 0) stop 'error in allocate 20'
-    
+
     locval = 0
     ifseg = .false.
     xp = 0.d0
@@ -746,7 +746,7 @@
     ! (used only for checks in meshfem3D() routine)
     !nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
     nspec_tiso = count(ispec_is_tiso(:))
-    
+
     ! precomputes jacobian for 2d absorbing boundary surfaces
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
               dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &

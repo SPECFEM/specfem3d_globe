@@ -124,7 +124,7 @@
     open(unit=IOUT_NOISE,file='OUTPUT_FILES/irec_master_noise', &
           status='unknown',action='write',iostat=ios)
     if( ios /= 0 ) call exit_MPI(myrank,'error opening output file irec_master_noise')
-     
+
     WRITE(IOUT_NOISE,*) 'The master receiver is: (RECEIVER ID)', irec_master_noise
     close(IOUT_NOISE)
   endif
@@ -204,14 +204,14 @@
     open(unit=IOUT_NOISE,file='OUTPUT_FILES/mask_noise', &
               status='unknown',form='unformatted',action='write',iostat=ios)
     if( ios /= 0 ) call exit_MPI(myrank,'error opening output file mask_noise')
-        
+
     write(IOUT_NOISE) store_val_x_all
     write(IOUT_NOISE) store_val_y_all
     write(IOUT_NOISE) store_val_z_all
     write(IOUT_NOISE) store_val_ux_all
     write(IOUT_NOISE) store_val_uy_all
     write(IOUT_NOISE) store_val_uz_all
-    
+
     close(IOUT_NOISE)
   endif
   !!!END!!! save mask_noise for check, a file called "mask_noise" is saved in "./OUTPUT_FIELS/"
@@ -246,7 +246,7 @@
      open(unit=IOUT_NOISE,file='OUTPUT_FILES/NOISE_SIMULATION', &
           status='unknown',action='write',iostat=ier)
      if( ier /= 0 ) call exit_MPI(myrank,'error opening output file NOISE_SIMULATION')
-     
+
      WRITE(IOUT_NOISE,*) '*******************************************************************************'
      WRITE(IOUT_NOISE,*) '*******************************************************************************'
      WRITE(IOUT_NOISE,*) 'WARNING!!!!!!!!!!!!'
@@ -465,7 +465,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) ::  displ_crust_mantle
   ! output parameters
   ! local parameters
-  integer :: ispec2D,ispec,i,j,k,iglob 
+  integer :: ispec2D,ispec,i,j,k,iglob
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
 
   ! get coordinates of surface mesh and surface displacement
@@ -729,7 +729,7 @@
   integer :: i,j,k,ispec,iglob,ipoin,ispec2D
   real(kind=CUSTOM_REAL) :: eta
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
-  
+
   ! read surface movie, needed for Sigma_kl_crust_mantle
   call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
 
@@ -853,10 +853,10 @@
   open(unit=IOUT_NOISE,file=trim(prname)//'Sigma_kernel.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error opening file Sigma_kernel.bin')
-  
+
   write(IOUT_NOISE) Sigma_kl_crust_mantle     ! need to put dimensions back (not done yet)
   close(IOUT_NOISE)
-  
+
   end subroutine save_kernels_strength_noise
 
 ! =============================================================================================================
