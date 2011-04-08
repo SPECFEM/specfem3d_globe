@@ -147,7 +147,7 @@
   integer, parameter :: ICRUST_CRUST2 = 1
   integer, parameter :: ICRUST_CRUSTMAPS = 2
   integer, parameter :: ICRUST_EPCRUST = 3
-  
+
 ! increase smoothing for critical regions  (increases mesh stability)
   logical, parameter :: SMOOTH_CRUST = .true.
 
@@ -258,13 +258,13 @@
 ! output kernel mask to zero out source region
   logical, parameter :: SAVE_SOURCE_MASK = .false.
 
-! forces transverse isotropy for all mantle elements 
+! forces transverse isotropy for all mantle elements
 ! (default is to use transverse isotropy only between MOHO and 220 )
   logical, parameter :: USE_FULL_TISO_MANTLE = .false.
 
 !!-----------------------------------------------------------
 !!
-!! time stamp information 
+!! time stamp information
 !!
 !!-----------------------------------------------------------
 
@@ -539,7 +539,7 @@
 
 !!
 !! model constants
-!! 
+!!
 
 ! number of layers in DATA/1066a/1066a.dat
   integer, parameter :: NR_1066A = 160
@@ -588,7 +588,7 @@
   integer, parameter :: CRUSTMAP_RESOLUTION = 4 !means 1/4 degrees
   integer, parameter :: NLAYERS_CRUSTMAP = 5
 
-! parameters for EPCRUST , from Molinari & Morelli model(2011) 
+! parameters for EPCRUST , from Molinari & Morelli model(2011)
 !       latitude :  9.0N - 89.5N
 !       longitude:  56.0W - 70.0E
   character(len=*), parameter :: PATHNAME_EPCRUST = 'DATA/epcrust/EPcrust_0_5.txt'
@@ -596,17 +596,17 @@
   double precision, parameter :: EPCRUST_LON_MIN = -56.0d0
   double precision, parameter :: EPCRUST_LON_MAX =  70.0d0
   double precision, parameter :: EPCRUST_LAT_MIN =   9.0d0
-  double precision, parameter :: EPCRUST_LAT_MAX =  89.5d0 
-  double precision, parameter :: EPCRUST_SAMPLE = 0.5d0 
+  double precision, parameter :: EPCRUST_LAT_MAX =  89.5d0
+  double precision, parameter :: EPCRUST_SAMPLE = 0.5d0
   logical, parameter :: flag_smooth_epcrust = .true.
   integer, parameter :: NTHETA_EP = 4, NPHI_EP = 20
-  double precision, parameter :: cap_degree_EP = 0.2d0 
+  double precision, parameter :: cap_degree_EP = 0.2d0
 
-! parameters for GLL model (used for iterative model inversions)  
+! parameters for GLL model (used for iterative model inversions)
   character(len=*), parameter :: PATHNAME_GLL_modeldir = 'DATA/GLL/'
   integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S29EA
 !!-- uncomment for using S362ANI as reference model  (Hejun Zhu)
-!  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI 
+!  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI
 
 
 !!!!!!!!!!!!!! end of parameters added for the thread-safe version of the code

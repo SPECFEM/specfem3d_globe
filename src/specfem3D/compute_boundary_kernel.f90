@@ -258,7 +258,7 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
   integer, dimension(NGLLX,NGLLY,NGLLZ,*) :: ibool
 !  integer, dimension(*) :: idoubling
   logical, dimension(*) :: ispec_is_tiso
-  
+
 ! --- local variables ---
   real(kind=CUSTOM_REAL) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -339,7 +339,7 @@ subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
 !else if(.not. (TRANSVERSE_ISOTROPY_VAL .and. (idoubling(ispec) == IFLAG_80_MOHO .or. idoubling(ispec) == IFLAG_220_80))) then
 
      ! isotropic elements
-     
+
      kappal = kappavstore(i,j,k,ispec)
      mul = muvstore(i,j,k,ispec)
 

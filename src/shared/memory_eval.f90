@@ -243,11 +243,11 @@
 
 ! idoubling_crust_mantle (not needed anymore..)
 !  static_memory_size = static_memory_size + NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_INTEGER)
-! idoubling_outer_core 
+! idoubling_outer_core
   static_memory_size = static_memory_size + NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
 ! idoubling_inner_core
   static_memory_size = static_memory_size + NSPEC(IREGION_INNER_CORE)*dble(SIZE_INTEGER)
-  
+
 ! ispec_is_tiso_crust_mantle
   static_memory_size = static_memory_size + NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
 ! ispec_is_tiso_outer_core

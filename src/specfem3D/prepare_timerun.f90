@@ -503,7 +503,7 @@
                 c33store_crust_mantle,c44store_crust_mantle, &
                 c55store_crust_mantle,c66store_crust_mantle, &
                 muvstore_crust_mantle,muhstore_crust_mantle,ispec_is_tiso_crust_mantle, &
- !----- idoubling_crust_mantle, &                
+ !----- idoubling_crust_mantle, &
                 muvstore_inner_core, &
                 SIMULATION_TYPE,MOVIE_VOLUME,muvstore_crust_mantle_3dmovie, &
                 c11store_inner_core,c12store_inner_core,c13store_inner_core, &
@@ -646,8 +646,8 @@
               muvstore_crust_mantle_3dmovie(i,j,k,ispec)=muvstore_crust_mantle(i,j,k,ispec)
             endif
             muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
-            
-            ! scales transverse isotropic values for mu_h 
+
+            ! scales transverse isotropic values for mu_h
             !if(TRANSVERSE_ISOTROPY_VAL .and. (idoubling_crust_mantle(ispec) == IFLAG_220_80 &
             !    .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO)) &
             if( ispec_is_tiso_crust_mantle(ispec) ) then

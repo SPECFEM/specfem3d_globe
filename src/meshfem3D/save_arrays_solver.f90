@@ -152,7 +152,7 @@
 
   logical ABSORBING_CONDITIONS,SAVE_MESH_FILES
 
-  logical, dimension(nspec) :: ispec_is_tiso  
+  logical, dimension(nspec) :: ispec_is_tiso
 
   ! local parameters
   integer i,j,k,ispec,iglob,nspec1, nglob1
@@ -341,7 +341,7 @@
   write(27) is_on_a_slice_edge
 
   write(27) ispec_is_tiso
-  
+
   close(27)
 
 ! absorbing boundary parameters

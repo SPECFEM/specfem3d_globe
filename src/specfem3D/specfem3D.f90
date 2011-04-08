@@ -871,7 +871,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
              normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie  
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
   integer :: irec_master_noise
 
 ! ************** PROGRAM STARTS HERE **************
@@ -997,7 +997,7 @@
               c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
               c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
               ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
-            ! -- idoubling_crust_mantle,  
+            ! -- idoubling_crust_mantle,
               is_on_a_slice_edge_crust_mantle,rmass_crust_mantle,rmass_ocean_load, &
               vp_outer_core,xstore_outer_core,ystore_outer_core,zstore_outer_core, &
               xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -1283,7 +1283,7 @@
     NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
     allocate(iadj_vec(NSTEP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating iadj_vec')
-    
+
     ! initializes iadj_vec
     do it=1,NSTEP
        iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record
@@ -1349,7 +1349,7 @@
       allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
               stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating frechet derivatives arrays')
-      
+
       moment_der = 0._CUSTOM_REAL
       sloc_der = 0._CUSTOM_REAL
       stshift_der = 0._CUSTOM_REAL
@@ -1363,9 +1363,9 @@
     ! allocate dummy array since we need it to pass as argument e.g. in write_seismograms() routine
     ! note: nrec_local is zero, fortran 90/95 should allow zero-sized array allocation...
     allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-    if( ier /= 0) stop 'error while allocating zero seismograms'    
+    if( ier /= 0) stop 'error while allocating zero seismograms'
     allocate(number_receiver_global(nrec_local),stat=ier)
-    if( ier /= 0) stop 'error while allocating zero number_receiver_global'        
+    if( ier /= 0) stop 'error while allocating zero number_receiver_global'
   endif
 
   ! get information about event name and location for SAC seismograms
@@ -1598,7 +1598,7 @@
             store_val_uy(nmovie_points), &
             store_val_uz(nmovie_points),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface arrays')
-  
+
     if (MOVIE_SURFACE) then  ! those arrays are not neccessary for noise tomography, so only allocate them in MOVIE_SURFACE case
        allocate(store_val_x_all(nmovie_points,0:NPROCTOT_VAL-1), &
               store_val_y_all(nmovie_points,0:NPROCTOT_VAL-1), &
@@ -1646,7 +1646,7 @@
 
     if(myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'Movie volume:'    
+      write(IMAIN,*) 'Movie volume:'
       write(IMAIN,*) '  Writing to movie3D*** files on local disk databases directory'
       if(MOVIE_VOLUME_TYPE == 1) then
         write(IMAIN,*) '  movie output: strain'
@@ -1655,7 +1655,7 @@
       else if(MOVIE_VOLUME_TYPE == 3) then
         write(IMAIN,*) '  movie output: potency or integral of strain'
       else if(MOVIE_VOLUME_TYPE == 4) then
-        write(IMAIN,*) '  movie output: divergence and curl'  
+        write(IMAIN,*) '  movie output: divergence and curl'
       else if(MOVIE_VOLUME_TYPE == 5) then
         write(IMAIN,*) '  movie output: displacement'
       else if(MOVIE_VOLUME_TYPE == 6) then
@@ -1847,14 +1847,14 @@
             mask_noise(nmovie_points), &
             noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC2D_TOP(IREGION_CRUST_MANTLE)),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise arrays')
-  
+
     noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
     normal_x_noise(:)            = 0._CUSTOM_REAL
     normal_y_noise(:)            = 0._CUSTOM_REAL
     normal_z_noise(:)            = 0._CUSTOM_REAL
     mask_noise(:)                = 0._CUSTOM_REAL
     noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
-    
+
     call read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
                               islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
                               noise_sourcearray,xigll,yigll,zigll,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
@@ -4393,7 +4393,7 @@
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
   if (NOISE_TOMOGRAPHY/=0) then
-    call close_file_abs(9) 
+    call close_file_abs(9)
     deallocate(noise_surface_movie)
   endif
 

@@ -93,7 +93,7 @@
 ! this for non blocking MPI
   logical, dimension(nspec) :: is_on_a_slice_edge
 
-  logical, dimension(nspec) :: ispec_is_tiso  
+  logical, dimension(nspec) :: ispec_is_tiso
 
 ! processor identification
   character(len=150) prname
@@ -195,7 +195,7 @@
   read(IIN) is_on_a_slice_edge
 
   read(IIN) ispec_is_tiso
-  
+
   close(IIN)
 
   end subroutine read_arrays_solver

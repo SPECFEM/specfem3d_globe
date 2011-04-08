@@ -286,17 +286,17 @@
   end type model_eucrust_variables
   type (model_eucrust_variables) EUCM_V
 
-! type for EPCRUST 1.0 
-  type model_epcrust_variables 
+! type for EPCRUST 1.0
+  type model_epcrust_variables
     sequence
-    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT):: lon_ep,lat_ep,topo_ep 
+    double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT):: lon_ep,lat_ep,topo_ep
     double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: thickness_ep
     double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: vp_ep
     double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: vs_ep
     double precision,dimension(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER):: rho_ep
-  end type model_epcrust_variables 
+  end type model_epcrust_variables
   type (model_epcrust_variables) EPCRUST
-  
+
 ! model_crustmaps_variables combined crustal maps
   type model_crustmaps_variables
     sequence
@@ -620,7 +620,7 @@
 
     case (ICRUST_EPCRUST)
       ! EPcrust
-      call model_epcrust_broadcast(myrank,EPCRUST)      
+      call model_epcrust_broadcast(myrank,EPCRUST)
 
     case default
       stop 'crustal model type not defined'
@@ -1188,17 +1188,17 @@
       call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,GC_V,elem_in_crust)
 
     case (ICRUST_EPCRUST)
-!      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V,elem_in_crust)  
-      ! within EPCRUST region 
+!      call model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,CM_V,elem_in_crust)
+      ! within EPCRUST region
 !      if (lat >= EPCRUST_LAT_MIN .and. lat <= EPCRUST_LAT_MAX &
 !          .and. lon >= EPCRUST_LON_MIN .and. lon<=EPCRUST_LON_MAX ) then
 !          vpc=0.0d0
 !          vsc=0.0d0
 !          rhoc=0.0d0
 !          moho=0.0d0
-!          found_crust = .false. 
-          call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,EPCRUST,elem_in_crust) 
-!      end if             
+!          found_crust = .false.
+          call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,EPCRUST,elem_in_crust)
+!      end if
 
     case default
       stop 'crustal model type not defined'

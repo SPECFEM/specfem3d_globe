@@ -58,7 +58,7 @@
   ! muting source region
   logical, parameter :: MUTE_SOURCE = .true.
   real(kind=CUSTOM_REAL) :: RADIUS_TO_MUTE = 0.5    ! start radius in degrees
-  real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 0.5 ! adds seconds to shift starttime 
+  real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 0.5 ! adds seconds to shift starttime
 
 
 !---------------------
@@ -158,7 +158,7 @@
   real(kind=CUSTOM_REAL) :: cmt_hdur,cmt_t_shift,t0,hdur
   real(kind=CUSTOM_REAL) :: xmesh,ymesh,zmesh
   integer :: istamp1,istamp2
-  
+
 ! ************** PROGRAM STARTS HERE **************
 
   print *
@@ -209,7 +209,7 @@
   print *
   if(MOVIE_COARSE) then
     ! note:
-    ! nex_per_proc_xi*nex_per_proc_eta = nex_xi*nex_eta/nproc = nspec2d_top(iregion_crust_mantle) 
+    ! nex_per_proc_xi*nex_per_proc_eta = nex_xi*nex_eta/nproc = nspec2d_top(iregion_crust_mantle)
     ! used in specfem3D.f90
     ! and ilocnum = nmovie_points = 2 * 2 * NEX_XI * NEX_ETA / NPROC
     ilocnum = 2 * 2 * NEX_PER_PROC_XI*NEX_PER_PROC_ETA
@@ -317,7 +317,7 @@
   if(ierror /= 0) stop 'error while allocating field_display'
 
 
-  ! initializes maxima history  
+  ! initializes maxima history
   if( USE_AVERAGED_MAXIMUM ) then
     ! determines length of history
     nmax_history = AVERAGE_MINIMUM + int( HDUR_MOVIE / (DT*NTSTEP_BETWEEN_FRAMES) * 1.5 )
@@ -334,7 +334,7 @@
     print *,'Normalization by averaged maxima over ',nmax_history,'snapshots'
     print *
   endif
-  
+
   if( MUTE_SOURCE ) then
     ! initializes
     LAT_SOURCE = -1000.0
@@ -342,7 +342,7 @@
     DEP_SOURCE = 0.0
     cmt_t_shift = 0.0
     cmt_hdur = 0.0
-    
+
     ! reads in source lat/lon
     open(22,file="DATA/CMTSOLUTION",status='old',action='read',iostat=ierror )
     if( ierror == 0 ) then
@@ -350,10 +350,10 @@
       read(22,*,iostat=ierror ) line ! PDE line
       read(22,*,iostat=ierror ) line ! event name
       ! timeshift
-      read(22,'(a256)',iostat=ierror ) line 
+      read(22,'(a256)',iostat=ierror ) line
       if( ierror == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
       ! halfduration
-      read(22,'(a256)',iostat=ierror ) line 
+      read(22,'(a256)',iostat=ierror ) line
       if( ierror == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
       ! latitude
       read(22,'(a256)',iostat=ierror ) line
@@ -379,9 +379,9 @@
     ! note: this starttime is supposed to be the time when displacements at the surface
     !          can be observed;
     !          it helps to mute out numerical noise before the source effects actually start showing up
-    STARTTIME_TO_MUTE = STARTTIME_TO_MUTE + DEP_SOURCE 
+    STARTTIME_TO_MUTE = STARTTIME_TO_MUTE + DEP_SOURCE
     if( STARTTIME_TO_MUTE < 0.0 ) STARTTIME_TO_MUTE = 0.0
-    
+
     print *,'mutes source area'
     print *
     print *,'source lat/lon/dep: ',LAT_SOURCE,LON_SOURCE,DEP_SOURCE
@@ -447,11 +447,11 @@
           mute_factor = 1.0
 
           print*,'simulation time: ',(it-1)*DT - t0,'(s)'
-          
+
           ! muting radius grows/shrinks with time
           if( (it-1)*DT - t0 > STARTTIME_TO_MUTE  ) then
 
-            ! approximate wavefront travel distance in degrees 
+            ! approximate wavefront travel distance in degrees
             ! (~3.5 km/s wave speed for surface waves)
             distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * 180./PI
 
@@ -465,7 +465,7 @@
             ! shrinks when waves reached antipode
             !if( distance > 180. ) distance = 360. - distance
             ! shrinks when waves reached half-way to antipode
-            if( distance > 90.0 ) distance = 90.0 - distance            
+            if( distance > 90.0 ) distance = 90.0 - distance
 
             ! limit size around source (in degrees)
             if( distance < 0.0 ) distance = 0.0
@@ -481,7 +481,7 @@
               ! mute factor 1: no masking out
               !                     0: masks out values (within mute radius)
               ! linear scaling between [0,1]:
-              ! from 0 (simulation time equal to zero ) 
+              ! from 0 (simulation time equal to zero )
               ! to 1 (simulation time equals starttime_to_mute)
               mute_factor = 1.0 - ( STARTTIME_TO_MUTE - ((it-1)*DT-t0) ) / (STARTTIME_TO_MUTE+t0)
               ! threshold value for mute_factor
@@ -560,7 +560,7 @@
 
                       ! distance in colatitude (in rad)
                       ! note: this mixes geocentric (point location) and geographic (source location) coordinates;
-                      !          since we only need approximate distances here, 
+                      !          since we only need approximate distances here,
                       !          this should be fine for the muting region
                       dist_lat = thetaval - LAT_SOURCE
 
@@ -583,8 +583,8 @@
                         dist_lon = phival - LON_SOURCE
                       endif
                       ! distance of point to source (in rad)
-                      distance = sqrt(dist_lat**2 + dist_lon**2) 
-                      
+                      distance = sqrt(dist_lat**2 + dist_lon**2)
+
                       ! mutes source region values
                       if ( distance < RADIUS_TO_MUTE ) then
                         ! muting takes account of the event time
@@ -683,7 +683,7 @@
                       if(zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
                       thetaval = atan2(sqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
                       ! thetaval between 0 and PI / 2
-                      !print*,'thetaval:',thetaval * 180. / PI                     
+                      !print*,'thetaval:',thetaval * 180. / PI
                       ! close to north pole
                       if( thetaval >= 0.495 * PI ) istamp1 = ieoff
                       ! close to south pole
@@ -744,33 +744,33 @@
             if( istamp1 == 0 ) istamp1 = ieoff
             if( istamp2 == 0 ) istamp2 = ieoff-1
             !print *, 'stamp: ',istamp1,istamp2
-            
+
             if( max_absol < max_average ) then
               ! distance (in degree) of surface waves travelled
               distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * 180./PI
               if( distance > 10.0 .and. distance <= 20.0 ) then
                 ! smooth transition between 10 and 20 degrees
-                ! sets positive and negative maximum 
+                ! sets positive and negative maximum
                 field_display(istamp1) = + max_absol + (max_average-max_absol) * (distance - 10.0)/10.0
                 field_display(istamp2) = - ( max_absol + (max_average-max_absol) * (distance - 10.0)/10.0 )
               else if( distance > 20.0 ) then
-                ! sets positive and negative maximum                
+                ! sets positive and negative maximum
                 field_display(istamp1) = + max_average
-                field_display(istamp2) = - max_average          
+                field_display(istamp2) = - max_average
               endif
             else
               ! thresholds positive & negative maximum values
               where( field_display(:) > max_average ) field_display = max_average
               where( field_display(:) < - max_average ) field_display = -max_average
-              ! sets positive and negative maximum                
+              ! sets positive and negative maximum
               field_display(istamp1) = + max_average
-              field_display(istamp2) = - max_average                        
+              field_display(istamp2) = - max_average
             endif
             ! updates current wavefield maxima
             min_field_current = minval(field_display(:))
             max_field_current = maxval(field_display(:))
-            max_absol = (abs(min_field_current)+abs(max_field_current))/2.0            
-          endif          
+            max_absol = (abs(min_field_current)+abs(max_field_current))/2.0
+          endif
 
           ! scales field values up to match average
           if( abs(max_absol) > TINYVAL) &
@@ -787,33 +787,33 @@
               if( (it-1)*DT - t0 > STARTTIME_TO_MUTE ) then
                 ! wavefield should be visible at surface now
                 ! normalizes wavefield
-                if( abs(max_average) > TINYVAL ) field_display = field_display / max_average              
+                if( abs(max_average) > TINYVAL ) field_display = field_display / max_average
               else
                 ! no wavefield yet assumed
 
                 ! we set two single field values (last in array)
-                ! to: +/- 100 * max_average 
+                ! to: +/- 100 * max_average
                 ! to avoid further amplifying when
-                ! a normalization routine is used for rendering images 
+                ! a normalization routine is used for rendering images
                 ! (which for example is the case for shakemovies)
-                if( STARTTIME_TO_MUTE > TINYVAL ) then 
-                  ! with additional scale factor: 
+                if( STARTTIME_TO_MUTE > TINYVAL ) then
+                  ! with additional scale factor:
                   ! linear scaling between [0,1]:
-                  ! from 0 (simulation time equal to -t0 ) 
+                  ! from 0 (simulation time equal to -t0 )
                   ! to 1 (simulation time equals starttime_to_mute)
                   mute_factor = 1.0 - ( STARTTIME_TO_MUTE - ((it-1)*DT-t0) ) / (STARTTIME_TO_MUTE+t0)
                   ! takes complement and shifts scale to (1,100)
                   ! thus, mute factor is 100 at simulation start and 1.0 at starttime_to_mute
                   mute_factor = abs(1.0 - mute_factor) * 99.0 + 1.0
                   ! positive and negative maximum reach average when wavefield appears
-                  val = mute_factor * max_average                  
+                  val = mute_factor * max_average
                 else
-                  ! uses a constant factor                
+                  ! uses a constant factor
                   val = 100.0 * max_average
-                endif                  
-                ! positive and negative maximum                
+                endif
+                ! positive and negative maximum
                 field_display(istamp1) = + val
-                field_display(istamp2) = - val                
+                field_display(istamp2) = - val
                 if( abs(max_average) > TINYVAL ) field_display = field_display / val
               endif
             else

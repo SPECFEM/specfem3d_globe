@@ -1116,7 +1116,7 @@
   real(kind=4) verlon(nver)
   real(kind=4) verrad(nver)
 
-  integer, parameter :: maxver=1000  
+  integer, parameter :: maxver=1000
   integer icon(maxver)
   real(kind=4) con(maxver)
 
