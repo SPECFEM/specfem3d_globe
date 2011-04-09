@@ -320,16 +320,17 @@
 ! v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
 !                       gravity, rotation, oceans and 3-D models
 !
-! v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, March 2001:
+! v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, USA, March 2001:
 !                       final MPI package
 !
-! v. 2.0 Dimitri Komatitsch, Harvard, January 2000: MPI code for the globe
+! v. 2.0 Dimitri Komatitsch, Harvard, USA, January 2000: MPI code for the globe
 !
-! v. 1.0 Dimitri Komatitsch, Mexico, June 1999: first MPI code for a chunk
+! v. 1.0 Dimitri Komatitsch, UNAM, Mexico, June 1999: first MPI code for a chunk
 !
-! Jeroen Tromp, Harvard, July 1998: first chunk solver using OpenMP on Sun
+! Jeroen Tromp and Dimitri Komatitsch, Harvard, USA, July 1998: first chunk solver using OpenMP on a Sun machine
 !
-! Dimitri Komatitsch, IPG Paris, December 1996: first 3-D solver for the CM-5 Connection Machine
+! Dimitri Komatitsch, IPG Paris, France, December 1996: first 3-D solver for the CM-5 Connection Machine,
+!    parallelized using Connection Machine Fortran
 !
 ! From Dahlen and Tromp (1998):
 ! ----------------------------
