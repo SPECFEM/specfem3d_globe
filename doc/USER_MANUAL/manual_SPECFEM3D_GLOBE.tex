@@ -236,9 +236,11 @@ In the directory in which you want to install the package, type
 tar~-zxvf~SPECFEM3D\_GLOBE\_V5.1.0.tar.gz
 \end{lyxcode}
 The directory \texttt{SPECFEM3D\_GLOBE\_V5.1.0} will then contain
-the source code.
+the source code.\\
 
-To configure the software for your system, run the \texttt{configure}
+We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
+
+Then, to configure the software for your system, run the \texttt{configure}
 shell script. This script will attempt to guess the appropriate configuration
 values for your system. However, at a minimum, it is recommended that
 you explicitly specify the appropriate command names for your Fortran90
