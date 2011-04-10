@@ -3196,7 +3196,69 @@ $\copyright$ Princeton University / California Institute of Technology and Unive
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
-by the Free Software Foundation (see Appendix \ref{cha:License}).
+by the Free Software Foundation (see Appendix \ref{cha:License}).\\
+
+\textbf{\underline{Evolution of the code:}}\\
+
+ v. 5.1, Dimitri Komatitsch, University of Toulouse, France and Ebru Bozdag, Princeton University, USA, February 2011:
+     non blocking MPI for much better scaling on large clusters;
+     new convention for the name of seismograms, to conform to the IRIS standard;
+     new directory structure.\\
+
+ v. 5.0, many developers, some with Princeton Tiger logo on their shirts, February 2010:
+     new moho mesh stretching honoring crust2.0 moho depths,
+     new attenuation assignment, new SAC headers, new general crustal models,
+     faster performance due to Deville routines and enhanced loop unrolling,
+     slight changes in code structure (see also trivia at program start).\\
+
+ v. 4.0 David Mich\'ea and Dimitri Komatitsch, University of Pau, France, February 2008:
+      new doubling brick in the mesh, new perfectly load-balanced mesh,
+      more flexible routines for mesh design, new inflated central cube
+      with optimized shape, far fewer mesh files saved by the mesher,
+      global arrays sorted to speed up the simulation, seismograms can be
+      written by the master, one more doubling level at the bottom
+      of the outer core if needed (off by default).\\
+
+ v. 3.6 Many people, many affiliations, September 2006:
+      adjoint and kernel calculations, fixed IASP91 model,
+      added AK135 and 1066a, fixed topography/bathymetry routine,
+      new attenuation routines, faster and better I/Os on very large
+      systems, many small improvements and bug fixes, new `configure'
+      script, new Pyre version, new user's manual etc..\\
+
+ v. 3.5 Dimitri Komatitsch, Brian Savage and Jeroen Tromp, Caltech, July 2004:
+      any size of chunk, 3D attenuation, case of two chunks,
+      more precise topography/bathymetry model, new Par\_file structure.\\
+
+ v. 3.4 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2003:
+      merged global and regional codes, no iterations in fluid, better movies.\\
+
+ v. 3.3 Dimitri Komatitsch, Caltech, September 2002:
+      flexible mesh doubling in outer core, inlined code, OpenDX support.\\
+
+ v. 3.2 Jeroen Tromp, Caltech, July 2002:
+      multiple sources and flexible PREM reading.\\
+
+ v. 3.1 Dimitri Komatitsch, Caltech, June 2002:
+      vectorized loops in solver and merged central cube.\\
+
+ v. 3.0 Dimitri Komatitsch and Jeroen Tromp, Caltech, May 2002:
+   ported to SGI and Compaq, double precision solver, more general anisotropy.\\
+
+ v. 2.3 Dimitri Komatitsch and Jeroen Tromp, Caltech, August 2001:
+                       gravity, rotation, oceans and 3-D models.\\
+
+ v. 2.2 Dimitri Komatitsch and Jeroen Tromp, Caltech, USA, March 2001:
+                       final MPI package.\\
+
+ v. 2.0 Dimitri Komatitsch, Harvard, USA, January 2000: MPI code for the globe.\\
+
+ v. 1.0 Dimitri Komatitsch, UNAM, Mexico, June 1999: first MPI code for a chunk.\\
+
+ Jeroen Tromp and Dimitri Komatitsch, Harvard, USA, July 1998: first chunk solver using OpenMP on a Sun machine.\\
+
+ Dimitri Komatitsch, IPG Paris, France, December 1996: first 3-D solver for the CM-5 Connection Machine,
+    parallelized on 128 processors using Connection Machine Fortran.\\
 
 {\small \bibliography{bibliography}
 }{\small \par}
