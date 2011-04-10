@@ -374,7 +374,8 @@ $O/compute_adj_source_frechet.o: ${SETUP}/constants.h $S/compute_adj_source_frec
 	${FCCOMPILE_CHECK} -c -o $O/compute_adj_source_frechet.o ${FCFLAGS_f90} $S/compute_adj_source_frechet.f90
 
 $O/compute_arrays_source.o: ${SETUP}/constants.h $S/compute_arrays_source.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} $S/compute_arrays_source.f90
+## DK DK hardwired -O1 for that particular routine, otherwise it takes forever to compile with some versions of Intel ifort
+	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} -O1 $S/compute_arrays_source.f90
 
 $O/convert_time.o: $S/convert_time.f90
 	${FCCOMPILE_CHECK} -c -o $O/convert_time.o ${FCFLAGS_f90} $S/convert_time.f90
