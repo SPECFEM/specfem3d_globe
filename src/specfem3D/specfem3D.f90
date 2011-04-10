@@ -330,7 +330,7 @@
 ! Jeroen Tromp and Dimitri Komatitsch, Harvard, USA, July 1998: first chunk solver using OpenMP on a Sun machine
 !
 ! Dimitri Komatitsch, IPG Paris, France, December 1996: first 3-D solver for the CM-5 Connection Machine,
-!    parallelized using Connection Machine Fortran
+!    parallelized on 128 processors using Connection Machine Fortran
 !
 ! From Dahlen and Tromp (1998):
 ! ----------------------------
