@@ -23,12 +23,11 @@ if (!getopts('l:L:cdts')) {die('Check input arguments\n');}
 
 
 #######################################################
-## region
-# global
-$R = "-Rd";
+# region around Japan
+$R = "-R110/170/6/66";
 
-#plate carré projection (centered at 0 meridian, parallel to equator, plot width 15 inches)
-$JM = "-JQ0/0/15"; 
+# projection centered at 135 meridian, parallel to equator, plot width 6 inch
+$JM = "-JQ135/0/6"; 
 
 # use white as transparent color
 $transparency = 0;
@@ -65,7 +64,7 @@ foreach $file (@ARGV) {
   print CSH "grdimage $grdfile.1 $JM $R  -Cgrd.cpt $B -K -O -V -P >> $ps_file\n";
   
   # coast 
-####  print CSH "pscoast $JM $R -W0.1 -Dl  -A10000 -K -O -P -V >> $ps_file \n";  
+#####  print CSH "pscoast $JM $R -W0.1 -Dl  -A10000 -K -O -P -V >> $ps_file \n";  
   print CSH "pscoast $JM $R -W0.1 -Dh -A1000 -K -O -P -V >> $ps_file \n";  
   # color scale
   print CSH "psscale -D3/-0.5/3/0.2h -Ba50:'': -Cgrd.cpt -K -O -V -P >> $ps_file\n";
