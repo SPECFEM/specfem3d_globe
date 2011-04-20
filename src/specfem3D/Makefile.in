@@ -7,7 +7,7 @@
 #                        Princeton University, USA
 #             and University of Pau / CNRS / INRIA, France
 # (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-#                            February 2011
+#                            April 2011
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -102,6 +102,7 @@ libspecfem_a_OBJECTS_SOLVER = \
 	$O/make_gravity.o \
 	$O/model_prem.o \
 	$O/model_topo_bathy.o \
+	$O/multiply_arrays_source.o \
 	$O/param_reader.o \
 	$O/spline_routines.o \
 	$O/netlib_specfun_erf.o \
@@ -374,8 +375,7 @@ $O/compute_adj_source_frechet.o: ${SETUP}/constants.h $S/compute_adj_source_frec
 	${FCCOMPILE_CHECK} -c -o $O/compute_adj_source_frechet.o ${FCFLAGS_f90} $S/compute_adj_source_frechet.f90
 
 $O/compute_arrays_source.o: ${SETUP}/constants.h $S/compute_arrays_source.f90
-## DK DK hardwired -O1 for that particular routine, otherwise it takes forever to compile with some versions of Intel ifort
-	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} -O1 $S/compute_arrays_source.f90
+	${FCCOMPILE_CHECK} -c -o $O/compute_arrays_source.o ${FCFLAGS_f90} $S/compute_arrays_source.f90
 
 $O/convert_time.o: $S/convert_time.f90
 	${FCCOMPILE_CHECK} -c -o $O/convert_time.o ${FCFLAGS_f90} $S/convert_time.f90
@@ -391,6 +391,9 @@ $O/get_backazimuth.o: ${SETUP}/constants.h $S/get_backazimuth.f90
 
 $O/get_cmt.o: ${SETUP}/constants.h $S/get_cmt.f90
 	${FCCOMPILE_CHECK} -c -o $O/get_cmt.o ${FCFLAGS_f90} $S/get_cmt.f90
+
+$O/multiply_arrays_source.o: ${SETUP}/constants.h $S/multiply_arrays_source.f90
+	${FCCOMPILE_CHECK} -c -o $O/multiply_arrays_source.o ${FCFLAGS_f90} $S/multiply_arrays_source.f90
 
 $O/netlib_specfun_erf.o: $S/netlib_specfun_erf.f90
 	${FCCOMPILE_CHECK} -c -o $O/netlib_specfun_erf.o ${FCFLAGS_f90} $S/netlib_specfun_erf.f90

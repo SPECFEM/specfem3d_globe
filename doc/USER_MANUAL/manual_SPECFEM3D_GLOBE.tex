@@ -237,9 +237,9 @@ The SPECFEM3D\_GLOBE software package comes in a gzipped tar ball.
 In the directory in which you want to install the package, type
 
 \begin{lyxcode}
-tar~-zxvf~SPECFEM3D\_GLOBE\_V5.1.0.tar.gz
+tar~-zxvf~SPECFEM3D\_GLOBE\_V5.1.1.tar.gz
 \end{lyxcode}
-The directory \texttt{SPECFEM3D\_GLOBE\_V5.1.0} will then contain
+The directory \texttt{SPECFEM3D\_GLOBE\_V5.1.1} will then contain
 the source code.\\
 
 We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
@@ -352,7 +352,7 @@ on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \textt
 
 Finally, before compiling, make sure that the subdirectories \texttt{obj},
 \texttt{bak} and \texttt{OUTPUT\_FILES} exist within the directory
-with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.0}). The \texttt{go\_mesher}
+with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.1}). The \texttt{go\_mesher}
 script discussed below automatically takes care of creating the \texttt{OUTPUT\_FILES}
 directory.
 
@@ -437,7 +437,7 @@ should work.
 You are now ready to compile the mesher. In the directory with the
 source code, type `\texttt{make meshfem3D}'. If all paths and flags
 have been set correctly, the mesher should now compile and produce
-the executable \texttt{xmeshfem3D}. 
+the executable \texttt{xmeshfem3D}.
 Note that all compiled executables are placed into the directory \texttt{bin/}.
 To run the executables, you must call them from the root directory,
 for example type `\texttt{mpirun -np 64 ./bin/meshfem3D}` to run the mesher
@@ -1787,9 +1787,9 @@ of the seismograms to be used (0 for all three components, 1 for east,
 component), \texttt{E/N/Z-ascii-files} indicate the three-component
 displacement seismograms in the right order, and \texttt{baz} is the
 back-azimuth of the station from the event location. Note that \texttt{baz}
-is only supplied when \texttt{ifile} = 4 or 5. 
+is only supplied when \texttt{ifile} = 4 or 5.
 
-\item Similarly, a sample program to compute adjoint sources for amplitude finite-frequency kernels may be found in \texttt{UTILS/adjoint\_sources/amplitude} and used in the same way as described 
+\item Similarly, a sample program to compute adjoint sources for amplitude finite-frequency kernels may be found in \texttt{UTILS/adjoint\_sources/amplitude} and used in the same way as described
 for traveltime measurements
 \begin{lyxcode}
 xcreate\_adjsrc\_amplitude~t1~t2~ifile{[}0-5]~E/N/Z-ascii-files~{[}baz].
@@ -1876,7 +1876,7 @@ Visualization of the finite-frequency kernels is discussed in Section~\ref{sec:F
 %<YANGL
 \chapter{Noise Cross-correlation Simulations}
 
-As of Version 5.1.0, SPECFEM3D\_GLOBE includes functionality for seismic noise tomography.
+The new version of SPECFEM3D\_GLOBE includes functionality for seismic noise tomography.
 Users are recommended to familiarize themselves first with the procedures for running regular earthquake
 simulations (Chapters \ref{cha:Running-the-Mesher}--\ref{cha:Regional-Simulations}) and
 adjoint simulations (Chapter \ref{cha:Adjoint-Simulations}).
@@ -1902,7 +1902,7 @@ which is generated when you run your simulations. (e.g., in regional simulations
 region of our interests in \texttt{DATA/STATIONS}, so we have to get rid of them.)\\
 
 \texttt{DATA/Par\_file} also requires careful attention.
-New to Version 5.1.0, a parameter called \texttt{NOISE\_TOMOGRAPHY} has been added that specifies the type of simulation to be run.
+New to this version of SPECFEM3D\_GLOBE, a parameter called \texttt{NOISE\_TOMOGRAPHY} has been added that specifies the type of simulation to be run.
 \texttt{NOISE\_TOMOGRAPHY} is an integer with possible values 0, 1, 2 and 3.
 For example, when \texttt{NOISE\_TOMOGRAPHY} equals 0, a regular earthquake simulation will be run.
 When \texttt{NOISE\_TOMOGRAPHY} is equal to 1/2/3, you are about to run
@@ -1956,7 +1956,7 @@ Next, we need to compile the source code using:
 Before compilation, the \texttt{DATA/Par\_file} must be specified correctly, e.g.,
 \texttt{NOISE\_TOMOGRAPHY} shouldn't be zero; \texttt{RECORD\_LENGTH\_IN\_MINUTES},
 \texttt{NEX\_XI} and \texttt{NEX\_ETA} must be what you want in your real simulations.
-Otherwise you may get wrong informations which will cause problems later. 
+Otherwise you may get wrong informations which will cause problems later.
 (it is good to always re-complie the code before you run simulations)\\
 
 \item
@@ -1968,7 +1968,7 @@ After compiling, you will find two important numbers besides the needed executab
 
 The first number will be denoted as \texttt{NSTEP} from now on, and the second one as \texttt{dt}.
 The two numbers are essential to calculate the ensemble-averaged noise spectrum from either Peterson's noise
-model or just a simple flat power spectrum (corresponding to 1-bit preprocessing). 
+model or just a simple flat power spectrum (corresponding to 1-bit preprocessing).
 Should you miss the two numbers, you can run
 \texttt{./xcreate\_header\_file} to bring them up again (with correct \texttt{DATA/Par\_file}!).
 FYI, \texttt{NSTEP} is determined by \texttt{RECORD\_LENGTH\_IN\_MINUTES} in \texttt{DATA/Par\_file},
@@ -2106,7 +2106,7 @@ using different forward and adjoint sources given in \citet{trompetal2010}.
 \section{Examples}
 
 In order to illustrate noise simulations in an easy way, three examples are provided in
-\texttt{EXAMPLES/noise\_examples/}. 
+\texttt{EXAMPLES/noise\_examples/}.
 Note however that they are created for a specific cluster (SESAME@PRINCETON).
 You have to modify them to fit your own cluster.
 
@@ -2269,7 +2269,7 @@ The finite-frequency kernels computed as explained in Section \ref{sec:Adjoint-s
 are saved in the \texttt{LOCAL\_PATH} at the end of the simulation.
 Therefore, we first need to collect these files on the front end,
 combine them into one mesh file, and visualize them with some auxilliary
-programs. Examples of kernel simulations may be found in the \texttt{EXAMPLES} directory. 
+programs. Examples of kernel simulations may be found in the \texttt{EXAMPLES} directory.
 
 \begin{enumerate}
 \item \textbf{Create slice files}
@@ -2440,7 +2440,7 @@ Glyph}, and represent the points by `\textsf{spheres}'.
 \end{enumerate}
 \end{enumerate}
 For illustration purposes, Figure \ref{fig:P-wave-speed-finite-frequency}
-shows P-wave speed finite-frequency kernels from cross-correlation traveltime and amplitude measurements for a P arrival recorded at an epicentral distance of $60^{\circ}$ for a deep event. 
+shows P-wave speed finite-frequency kernels from cross-correlation traveltime and amplitude measurements for a P arrival recorded at an epicentral distance of $60^{\circ}$ for a deep event.
 
 %
 \begin{figure}[H]
@@ -2628,7 +2628,7 @@ cleanbase\_jobid.pl~OUTPUT\_FILES/machines~DATA/Par\_file
 For kernel simulations, you can use the sample run scripts \texttt{run\_lsf.kernel}
 and \texttt{go\_mesher\_solver\_globe}~\\
 \texttt{.kernel} provided in \texttt{UTILS/Cluster} directory, and modify
-the command-line arguments of \texttt{xcreate\_adjsrc\_traveltime} in 
+the command-line arguments of \texttt{xcreate\_adjsrc\_traveltime} in
 \texttt{go\_mesher\_solver\_globe.kernel} according to the start and end time
 of the specific portion of the forward seismograms you are interested
 in.

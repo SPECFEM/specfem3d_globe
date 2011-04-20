@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            March 2010
+!                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 !
 !=====================================================================
 
+
   program create_slice_VTK
 
 ! this programs creates a vtk file that specifies the (velocity) model values on each element point,
@@ -39,7 +40,7 @@
 ! cd to your SPECFEM3D_GLOBE root directory:
 !   > cd SPECFEM3D_GLOBE/
 ! create symbolic link:
-!   > ln -s UTILS/Visualization/Paraview/create_slice_VTK.f90 
+!   > ln -s UTILS/Visualization/Paraview/create_slice_VTK.f90
 ! compile with:
 !   > f90 -o xcreate_slice_VTK create_slice_VTK.f90
 ! run :
@@ -69,7 +70,7 @@
   real x, y, z, dat
   integer numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
   integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
-    
+
 
   ! starts here--------------------------------------------------------------------------------------------------
   do i = 1, 6
@@ -114,7 +115,7 @@
     print*,'no file: ',trim(arg(1))
     stop 'Error opening slices file'
   endif
-  
+
   do while (1 == 1)
     read(20,'(a)',iostat=ios) sline
     if (ios /= 0) exit
@@ -155,11 +156,11 @@
        print*,'error ',ios
        print*,'file:',trim(dimension_file)
        stop 'Error opening file'
-      endif      
+      endif
       read(27,*) nspec(it)
       read(27,*) nglob(it)
       close(27)
-      
+
 
     enddo
 
@@ -173,8 +174,8 @@
     do it = 1, num_node
 
       iproc = node_list(it)
-      
-      
+
+
       print *, ' '
       print *, 'Reading slice ', iproc
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
@@ -192,11 +193,11 @@
       data(:,:,:,:) = -1.e10
       read(27) data(:,:,:,1:nspec(it))
       close(27)
-      
+
       print *,trim(data_file)
       print *,'  min/max value: ',minval(data(:,:,:,1:nspec(it))),maxval(data(:,:,:,1:nspec(it)))
       print *
-      
+
       ! topology file
       topo_file = trim(prname_topo) // 'solver_data_2' // '.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
@@ -214,7 +215,7 @@
       read(28) zstore(1:nglob(it))
       read(28) ibool(:,:,:,1:nspec(it))
       close(28)
-      
+
 
       write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)
       print *, trim(mesh_file)
@@ -250,12 +251,12 @@
   include "constants.h"
 
   integer :: nspec,nglob
-  
-! global coordinates  
+
+! global coordinates
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
 
-! gll data values array  
+! gll data values array
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: gll_data
 
 ! file name
@@ -266,81 +267,81 @@
 ! write source and receiver VTK files for Paraview
   write(IMAIN,*) '  vtk file: '
   write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
-  
+
   open(IOVTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
   write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
   write(IOVTK,'(a)') 'material model VTK file'
   write(IOVTK,'(a)') 'ASCII'
   write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-  
+
   ! writes out all points for each element, not just global ones
   write(IOVTK, '(a,i12,a)') 'POINTS ', nspec*8, ' float'
   do ispec=1,nspec
-    i = ibool(1,1,1,ispec)    
+    i = ibool(1,1,1,ispec)
     write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
-    
+
     i = ibool(NGLLX,1,1,ispec)
     write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
-    
+
     i = ibool(NGLLX,NGLLY,1,ispec)
     write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
-    
+
     i = ibool(1,NGLLY,1,ispec)
-    write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)    
-          
+    write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+
     i = ibool(1,1,NGLLZ,ispec)
     write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
-    
+
     i = ibool(NGLLX,1,NGLLZ,ispec)
     write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
-    
+
     i = ibool(NGLLX,NGLLY,NGLLZ,ispec)
     write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
-    
+
     i = ibool(1,NGLLY,NGLLZ,ispec)
-    write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)  
+    write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
   enddo
   write(IOVTK,*) ""
 
   ! note: indices for vtk start at 0
-  write(IOVTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9  
+  write(IOVTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec=1,nspec
     write(IOVTK,'(9i12)') 8,(ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3,&
           (ispec-1)*8+4,(ispec-1)*8+5,(ispec-1)*8+6,(ispec-1)*8+7
   enddo
   write(IOVTK,*) ""
-  
+
   ! type: hexahedrons
   write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec
   write(IOVTK,*) (12,ispec=1,nspec)
   write(IOVTK,*) ""
-    
+
   ! writes out gll-data (velocity) for each element point
   write(IOVTK,'(a,i12)') "POINT_DATA ",nspec*8
   write(IOVTK,'(a)') "SCALARS gll_data float"
   write(IOVTK,'(a)') "LOOKUP_TABLE default"
   do ispec = 1,nspec
-    i = ibool(1,1,1,ispec)    
+    i = ibool(1,1,1,ispec)
     write(IOVTK,'(3e18.6)') gll_data(1,1,1,ispec)
-    
+
     i = ibool(NGLLX,1,1,ispec)
     write(IOVTK,'(3e18.6)') gll_data(NGLLX,1,1,ispec)
-    
+
     i = ibool(NGLLX,NGLLY,1,ispec)
     write(IOVTK,'(3e18.6)') gll_data(NGLLX,NGLLY,1,ispec)
-    
+
     i = ibool(1,NGLLY,1,ispec)
-    write(IOVTK,'(3e18.6)') gll_data(1,NGLLY,1,ispec)   
-          
+    write(IOVTK,'(3e18.6)') gll_data(1,NGLLY,1,ispec)
+
     i = ibool(1,1,NGLLZ,ispec)
     write(IOVTK,'(3e18.6)') gll_data(1,1,NGLLZ,ispec)
-    
+
     i = ibool(NGLLX,1,NGLLZ,ispec)
     write(IOVTK,'(3e18.6)') gll_data(NGLLX,1,NGLLZ,ispec)
-    
+
     i = ibool(NGLLX,NGLLY,NGLLZ,ispec)
     write(IOVTK,'(3e18.6)') gll_data(NGLLX,NGLLY,NGLLZ,ispec)
-    
+
     i = ibool(1,NGLLY,NGLLZ,ispec)-1
     write(IOVTK,'(3e18.6)') gll_data(1,NGLLY,NGLLZ,ispec)
   enddo

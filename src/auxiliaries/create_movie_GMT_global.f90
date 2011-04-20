@@ -7,7 +7,7 @@
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2011
+!                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -532,7 +532,7 @@
                        normal_y = ycoord / RRval
                        normal_z = zcoord / RRval
 
-                       displn(i,j) = displx*normal_x   + disply*normal_y   + displz*normal_z
+                       displn(i,j) = displx*normal_x + disply*normal_y + displz*normal_z
 
                     elseif(USE_COMPONENT == 2) then
 
@@ -551,7 +551,7 @@
                        phihat_x = -ycoord / rhoval
                        phihat_y = xcoord / rhoval
 
-                       displn(i,j) = displx*phihat_x   + disply*phihat_y
+                       displn(i,j) = displx*phihat_x + disply*phihat_y
                     endif
 
 

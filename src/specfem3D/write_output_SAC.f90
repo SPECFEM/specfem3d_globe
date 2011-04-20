@@ -7,7 +7,7 @@
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2011
+!                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -335,7 +335,7 @@
   ! indicates SEM synthetics
   ! by Ebru
   KUSER0 = 'SEM'          !  A8
-  KUSER1 = 'v5.1.0'
+  KUSER1 = 'v5.1.1'
   KUSER2 = 'Tiger' ! aka. awesome (princeton) tiger version :)
 
   !KUSER0 = 'PDE_LAT_'          !  A8
