@@ -1,5 +1,0 @@
-NameService=corbaloc:iiop:dmc.iris.washington.edu:6371/NameService
-NetworkDNS=edu/iris/dmc
-NetworkDC=IRIS_NetworkDC
-SeismogramDNS=edu/iris/dmc
-SeismogramDC=IRIS_DataCenter
