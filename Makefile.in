@@ -7,7 +7,7 @@
 #                        Princeton University, USA
 #             and University of Pau / CNRS / INRIA, France
 # (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-#                            February 2011
+#                            April 2011
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -77,13 +77,13 @@ obj:
 	mkdir -p obj
 
 
-xmeshfem3D:  required 
+xmeshfem3D:  required
 	     (cd src/meshfem3D; make)
 
-xspecfem3D:  required 
+xspecfem3D:  required
 	     (cd src/specfem3D; make)
 
-xcreate_header_file:  required 
+xcreate_header_file:  required
 	     (cd src/create_header_file; make)
 
 xcheck_buffers_1D: required
@@ -101,10 +101,10 @@ xcheck_buffers_faces_chunks: required
 xcombine_AVS_DX: required
 	(cd src/auxiliaries ; make xcombine_AVS_DX)
 
-xcombine_vol_data: required 
+xcombine_vol_data: required
 	(cd src/auxiliaries ; make xcombine_vol_data)
 
-xcombine_surf_data: required 
+xcombine_surf_data: required
 	(cd src/auxiliaries ; make xcombine_surf_data)
 
 xconvolve_source_timefunction: required

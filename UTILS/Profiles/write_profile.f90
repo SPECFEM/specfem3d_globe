@@ -1,13 +1,13 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !             and University of Pau / CNRS / INRIA, France
 ! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            March 2010
+!                            April 2011
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -24,8 +24,6 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
-!
-! United States Government Sponsorship Acknowledged.
 
 !=====================================================================
 ! write_profile.f90
@@ -35,13 +33,13 @@
 ! intervals, with discontinuities honored by the mesh and those of the MOHO and
 ! crust/ocean indicated by repeating points with different values.
 
-! The code shortcuts through meshfem3D -> create_regions_mesh -> 
-! create_regular_elements -> compute_element_properties -> compute_element_properties -> 
-! get_model, cutting and pasting the relevant parts.  
+! The code shortcuts through meshfem3D -> create_regions_mesh ->
+! create_regular_elements -> compute_element_properties -> compute_element_properties ->
+! get_model, cutting and pasting the relevant parts.
 
 ! This code IS NOT MAINTAINED and most likely will not work without modification as
 ! it calls functions that may have changed since it was last updated.
-! 
+!
 ! I have tried to indicate where different parts come from to facilitate updates.
 !   - vala hjorleifsdottir (vala@geofisica.unam.mx)
 !=====================================================================
@@ -123,7 +121,7 @@
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
- 
+
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
@@ -160,7 +158,7 @@
   logical:: elem_in_crust,elem_in_mantle
 !---
 
-!--- from 
+!--- from
   ! local parameters
   double precision xmesh,ymesh,zmesh
 !---
@@ -284,7 +282,7 @@
        if(ilayer == 1) then
          rmin = 0.0d0
          rmax = rmins(NUMBER_OF_MESH_LAYERS-1)
-         idoubling = IFLAG_INNER_CORE_NORMAL 
+         idoubling = IFLAG_INNER_CORE_NORMAL
        else
          rmin = rmins(NUMBER_OF_MESH_LAYERS-ilayer+1)
          rmax = rmaxs(NUMBER_OF_MESH_LAYERS-ilayer+1)
@@ -368,7 +366,7 @@
         if(r >= rmax*0.999999d0) r_prem = rmax*0.999999d0
 
         ! convert from rthetaphi to xyz to use in function calls.
- 
+
         call rthetaphi_2_xyz(xmesh,ymesh,zmesh,r_prem,theta,phi)
 
 !!!!-------------------------------------

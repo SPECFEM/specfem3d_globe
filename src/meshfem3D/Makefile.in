@@ -7,7 +7,7 @@
 #                        Princeton University, USA
 #             and University of Pau / CNRS / INRIA, France
 # (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-#                            February 2011
+#                            April 2011
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
 FLAGS_CHECK = @FLAGS_CHECK@
 FLAGS_NO_CHECK = @FLAGS_NO_CHECK@
-FCFLAGS_f90 = @FCFLAGS_f90@ -I../../setup 
+FCFLAGS_f90 = @FCFLAGS_f90@ -I../../setup
 
 FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
 FCCOMPILE_NO_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK)
