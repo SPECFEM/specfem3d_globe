@@ -35,7 +35,7 @@ program combine_vol_data
   include 'constants.h'
   include 'OUTPUT_FILES/values_from_mesher.h'
 
-  integer,parameter :: MAX_NUM_NODES = 1000
+  integer,parameter :: MAX_NUM_NODES = 2000
   integer  iregion, ir, irs, ire, ires, pfd, efd
   character(len=256) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
   character(len=256) :: prname_topo, prname_file, dimension_file
@@ -73,6 +73,7 @@ program combine_vol_data
   double precision :: rspl(NR),espl(NR),espl2(NR)
   logical,parameter :: ONE_CRUST = .false. ! if you want to correct a model with one layer only in PREM crust
 
+  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core ! to get rid of fictitious elements in central cube
 
   ! starts here--------------------------------------------------------------------------------------------------
   do i = 1, 7
@@ -257,6 +258,7 @@ program combine_vol_data
       read(28) ystore(1:nglob(it))
       read(28) zstore(1:nglob(it))
       read(28) ibool(:,:,:,1:nspec(it))
+      if (ir==3) read(28) idoubling_inner_core(1:nspec(it)) ! flag that can indicate fictitious elements
       close(28)
 
       print *, trim(topo_file)
@@ -294,6 +296,7 @@ program combine_vol_data
 
       ! write point file
       do ispec=1,nspec(it)
+       if (ir/=3 .or. (ir==3 .and. idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE)) then
         do k = 1, NGLLZ, dk
           do j = 1, NGLLY, dj
             do i = 1, NGLLX, di
@@ -344,6 +347,7 @@ program combine_vol_data
             enddo ! i
           enddo ! j
         enddo ! k
+       endif ! fictitious elements in central cube
       enddo !ispec
 
       ! no way to check the number of points for low-res
@@ -357,6 +361,7 @@ program combine_vol_data
 
       ! write elements file
       do ispec = 1, nspec(it)
+       if (ir/=3 .or. (ir==3 .and. idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE)) then
         do k = 1, NGLLZ-1, dk
           do j = 1, NGLLY-1, dj
             do i = 1, NGLLX-1, di
@@ -384,10 +389,11 @@ program combine_vol_data
               call write_integer_fd(efd,n6)
               call write_integer_fd(efd,n7)
               call write_integer_fd(efd,n8)
-            enddo
-          enddo
-        enddo
-      enddo
+            enddo ! i
+          enddo ! j
+        enddo ! k
+       endif ! fictitious elements in central cube
+      enddo ! ispec
 
       np = np + npoint(it)
       ne = ne + nelement(it)
