@@ -269,6 +269,7 @@ program combine_vol_data
       ibool_dat(:) = 0.0
       if( AVERAGE_GLOBALPOINTS ) then
         do ispec=1,nspec(it)
+         if (ir/=3 .or. (ir==3 .and. idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE)) then
           do k = 1, NGLLZ, dk
             do j = 1, NGLLY, dj
               do i = 1, NGLLX, di
@@ -281,6 +282,7 @@ program combine_vol_data
               enddo
             enddo
           enddo
+         endif
         enddo
         do iglob=1,nglob(it)
           if( ibool_count(iglob) > 0 ) then
