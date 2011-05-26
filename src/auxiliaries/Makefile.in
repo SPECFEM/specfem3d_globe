@@ -72,6 +72,7 @@ libspecfem_a_OBJECTS_COMMON = \
 	$O/calendar.o \
 	$O/count_number_of_sources.o \
 	$O/create_name_database.o \
+	$O/force_ftz.o \
 	$O/get_model_parameters.o \
 	$O/get_value_parameters.o \
 	$O/gll_library.o \
@@ -246,6 +247,9 @@ $O/make_gravity.o: ${SETUP}/constants.h ${SHARED}/make_gravity.f90
 	${FCCOMPILE_CHECK} -c -o $O/make_gravity.o ${FCFLAGS_f90} ${SHARED}/make_gravity.f90
 
 ### C compilation
+$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
+
 $O/param_reader.o: ${SHARED}/param_reader.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
 

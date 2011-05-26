@@ -72,6 +72,7 @@ libspecfem_a_OBJECTS_COMMON = \
 	$O/calendar.o \
 	$O/count_number_of_sources.o \
 	$O/create_name_database.o \
+	$O/force_ftz.o \
 	$O/get_model_parameters.o \
 	$O/get_value_parameters.o \
 	$O/gll_library.o \
@@ -272,6 +273,9 @@ $O/memory_eval.o: ${SETUP}/constants.h ${SHARED}/memory_eval.f90
 
 $O/model_prem.o: ${SETUP}/constants.h ${SHARED}/model_prem.f90
 	${FCCOMPILE_CHECK} -c -o $O/model_prem.o ${FCFLAGS_f90} ${SHARED}/model_prem.f90
+
+$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
 
 $O/param_reader.o: ${SHARED}/param_reader.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
