@@ -70,6 +70,7 @@ XCREATE_HEADER_OBJECTS = \
 	$O/auto_ner.o \
 	$O/count_number_of_sources.o \
 	$O/euler_angles.o \
+	$O/force_ftz.o \
 	$O/get_model_parameters.o \
 	$O/get_value_parameters.o \
 	$O/memory_eval.o \
@@ -147,6 +148,9 @@ $O/get_value_parameters.o: ${SETUP}/constants.h ${SHARED}/get_value_parameters.f
 
 $O/memory_eval.o: ${SETUP}/constants.h ${SHARED}/memory_eval.f90
 	${FCCOMPILE_CHECK} -c -o $O/memory_eval.o ${FCFLAGS_f90} ${SHARED}/memory_eval.f90
+
+$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
 
 $O/param_reader.o: ${SHARED}/param_reader.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c

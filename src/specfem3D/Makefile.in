@@ -86,6 +86,7 @@ libspecfem_a_OBJECTS_SOLVER = \
 	$O/count_number_of_sources.o \
 	$O/define_derivation_matrices.o \
 	$O/euler_angles.o \
+	$O/force_ftz.o \
 	$O/get_attenuation.o \
 	$O/get_backazimuth.o \
 	$O/get_cmt.o \
@@ -270,6 +271,9 @@ $O/model_prem.o: ${SETUP}/constants.h ${SHARED}/model_prem.f90
 	${FCCOMPILE_CHECK} -c -o $O/model_prem.o ${FCFLAGS_f90} ${SHARED}/model_prem.f90
 
 ### C compilation
+$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
+
 $O/param_reader.o: ${SHARED}/param_reader.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
 
