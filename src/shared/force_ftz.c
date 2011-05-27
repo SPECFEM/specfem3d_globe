@@ -27,19 +27,16 @@
  !=====================================================================
  */
 
-
-/* Dimitri Komatitsch, May 2011: */
+/* Dimitri Komatitsch, University of Toulouse, May 2011: */
 
 /* added code to force Flush-To-Zero (FTZ) on Intel processors */
-/* otherwise Gradual Underflow can be extremely slow.  With Intel */
+/* otherwise Gradual Underflow can be extremely slow. With Intel */
 /* ifort one can use compiler option -ftz, but no such option exists */
-/* in gcc and gfortran therefore we call an assembler routine directly */
-/* here very good description at */
+/* in gcc and gfortran therefore we call an assembler routine directly here. */
+/* Very precise description available at */
 /* http://software.intel.com/en-us/articles/x87-and-sse-floating-point-assists-in-ia-32-flush-to-zero-ftz-and-denormals-are-zero-daz/ */
-/* and at */
-/* http://www.rz.uni-karlsruhe.de/rz/docs/VTune/reference/vc148.htm */
-/* from */
-/* http://software.intel.com/en-us/articles/x87-and-sse-floating-point-assists-in-ia-32-flush-to-zero-ftz-and-denormals-are-zero-daz/ */
+/* and at http://www.rz.uni-karlsruhe.de/rz/docs/VTune/reference/vc148.htm */
+/* from http://software.intel.com/en-us/articles/x87-and-sse-floating-point-assists-in-ia-32-flush-to-zero-ftz-and-denormals-are-zero-daz : */
 
 /* Flush-To-Zero (FTZ) mode */
 
