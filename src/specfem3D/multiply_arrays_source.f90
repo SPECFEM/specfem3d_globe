@@ -25,8 +25,12 @@
 !
 !=====================================================================
 
-! we put these multiplications in a separate routine because otherwise
+! we put these multiplications in a separate routine AND IN A SEPARATE FILE because otherwise
 ! some compilers try to unroll the six loops above and take forever to compile
+
+! we leave this in a separate file otherwise many compilers perform subroutine inlining when
+! two subroutines are in the same file and one calls the other
+
   subroutine multiply_arrays_source(sourcearrayd,G11,G12,G13,G21,G22,G23, &
                   G31,G32,G33,hxis,hpxis,hetas,hpetas,hgammas,hpgammas,k,l,m)
 
