@@ -941,6 +941,7 @@
   ! initialize the MPI communicator and start the NPROCTOT MPI processes.
   call MPI_INIT(ier)
 
+  ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
   call force_ftz()
 
   ! initializes simulation parameters
