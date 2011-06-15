@@ -40,7 +40,7 @@
                           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
                           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                           ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
-                          this_region_has_a_doubling,ipass,ratio_divide_central_cube,&
+                          this_region_has_a_doubling,ipass,ratio_divide_central_cube, &
                           CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta)
 
 ! creates the different regions of the mesh
@@ -48,6 +48,15 @@
   use meshfem3D_models_par
 
   implicit none
+
+!****************************************************************************************************
+! Mila
+
+!  include "constants.h"
+! standard include of the MPI library
+  include 'mpif.h'
+
+!****************************************************************************************************
 
   ! this to cut the doubling brick
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
@@ -215,6 +224,20 @@
   integer :: ipass
 
   logical :: ACTUALLY_STORE_ARRAYS
+
+!****************************************************************************************************
+! Mila
+
+! added for color permutation
+  integer :: nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer
+  integer, dimension(:), allocatable :: perm
+  integer, dimension(:), allocatable :: first_elem_number_in_this_color
+  integer, dimension(:), allocatable :: num_of_elems_in_this_color
+
+  integer :: icolor,ispec_counter
+  integer :: nspec_outer_min_global,nspec_outer_max_global
+
+!****************************************************************************************************
 
   ! Boundary Mesh
   integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
@@ -746,6 +769,126 @@
     ! (used only for checks in meshfem3D() routine)
     !nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
     nspec_tiso = count(ispec_is_tiso(:))
+
+!****************************************************************************************************
+! Mila
+
+  if(SORT_MESH_INNER_OUTER) then
+
+!!!! David Michea: detection of the edges, coloring and permutation separately
+  allocate(perm(nspec))
+
+! implement mesh coloring for GPUs if needed, to create subsets of disconnected elements
+! to remove dependencies and the need for atomic operations in the sum of elemental contributions in the solver
+  if(USE_MESH_COLORING_GPU) then
+
+    allocate(first_elem_number_in_this_color(MAX_NUMBER_OF_COLORS + 1))
+
+    call get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
+      nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer,first_elem_number_in_this_color,myrank)
+
+! for the last color, the next color is fictitious and its first (fictitious) element number is nspec + 1
+    first_elem_number_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements + 1) = nspec + 1
+
+    allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements))
+
+! save mesh coloring
+    open(unit=99,file=prname(1:len_trim(prname))//'num_of_elems_in_this_color.dat',status='unknown')
+
+! number of colors for outer elements
+    write(99,*) nb_colors_outer_elements
+
+! number of colors for inner elements
+    write(99,*) nb_colors_inner_elements
+
+! number of elements in each color
+    do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
+      num_of_elems_in_this_color(icolor) = first_elem_number_in_this_color(icolor+1) - first_elem_number_in_this_color(icolor)
+      write(99,*) num_of_elems_in_this_color(icolor)
+    enddo
+    close(99)
+
+! check that the sum of all the numbers of elements found in each color is equal
+! to the total number of elements in the mesh
+    if(sum(num_of_elems_in_this_color) /= nspec) then
+      print *,'nspec = ',nspec
+      print *,'total number of elements in all the colors of the mesh = ',sum(num_of_elems_in_this_color)
+      stop 'incorrect total number of elements in all the colors of the mesh'
+    endif
+
+! check that the sum of all the numbers of elements found in each color for the outer elements is equal
+! to the total number of outer elements found in the mesh
+    if(sum(num_of_elems_in_this_color(1:nb_colors_outer_elements)) /= nspec_outer) then
+      print *,'nspec_outer = ',nspec_outer
+      print *,'total number of elements in all the colors of the mesh for outer elements = ',sum(num_of_elems_in_this_color)
+      stop 'incorrect total number of elements in all the colors of the mesh for outer elements'
+    endif
+
+    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
+    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+    deallocate(first_elem_number_in_this_color)
+    deallocate(num_of_elems_in_this_color)
+
+  else
+
+!! DK DK for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
+!! DK DK first in order to be able to overlap non-blocking MPI communications with calculations
+
+!! DK DK nov 2010, for Rosa Badia / StarSs:
+!! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
+    ispec_counter = 0
+    perm(:) = 0
+
+! first generate all the outer elements
+    do ispec = 1,nspec
+      if(is_on_a_slice_edge(ispec)) then
+        ispec_counter = ispec_counter + 1
+        perm(ispec) = ispec_counter
+      endif
+    enddo
+
+! make sure we have detected some outer elements
+    if(ispec_counter <= 0) stop 'fatal error: no outer elements detected!'
+
+! store total number of outer elements
+    nspec_outer = ispec_counter
+
+! then generate all the inner elements
+    do ispec = 1,nspec
+      if(.not. is_on_a_slice_edge(ispec)) then
+        ispec_counter = ispec_counter + 1
+        perm(ispec) = ispec_counter
+      endif
+    enddo
+
+! test that all the elements have been used once and only once
+  if(ispec_counter /= nspec) stop 'fatal error: ispec_counter not equal to nspec'
+
+! do basic checks
+  if(minval(perm) /= 1) stop 'minval(perm) should be 1'
+  if(maxval(perm) /= nspec) stop 'maxval(perm) should be nspec'
+
+    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
+    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+  endif
+
+  else
+!
+    print *,'SORT_MESH_INNER_OUTER must always been set to .true. even for the regular C version for CPUs'
+    print *,'in order to be able to use non blocking MPI to overlap communications'
+!   print *,'generating identity permutation'
+!   do ispec = 1,nspec
+!     perm(ispec) = ispec
+!   enddo
+    stop 'please set SORT_MESH_INNER_OUTER to .true. and recompile the whole code'
+
+  endif
+
+!!!! David Michea: end of mesh coloring
+
+!****************************************************************************************************
 
     ! precomputes jacobian for 2d absorbing boundary surfaces
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &

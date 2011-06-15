@@ -105,6 +105,7 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/create_doubling_elements.o \
 	$O/create_mass_matrices.o \
 	$O/create_regions_mesh.o \
+	$O/get_perm_color.o \
 	$O/create_regular_elements.o \
 	$O/define_superbrick.o \
 	$O/euler_angles.o \
@@ -346,7 +347,10 @@ $O/create_mass_matrices.o: ${SETUP}/constants.h $S/create_mass_matrices.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_mass_matrices.o ${FCFLAGS_f90} $S/create_mass_matrices.f90
 
 $O/create_regions_mesh.o: ${SETUP}/constants.h $S/create_regions_mesh.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_regions_mesh.o ${FCFLAGS_f90} $S/create_regions_mesh.f90
+	${MPIFCCOMPILE_CHECK} -c -o $O/create_regions_mesh.o ${FCFLAGS_f90} $S/create_regions_mesh.f90
+
+$O/get_perm_color.o: ${SETUP}/constants.h $S/get_perm_color.f90
+	${FCCOMPILE_CHECK} -c -o $O/get_perm_color.o ${FCFLAGS_f90} $S/get_perm_color.f90
 
 $O/create_regular_elements.o: ${SETUP}/constants.h $S/create_regular_elements.f90
 	${FCCOMPILE_CHECK} -c -o $O/create_regular_elements.o ${FCFLAGS_f90} $S/create_regular_elements.f90
