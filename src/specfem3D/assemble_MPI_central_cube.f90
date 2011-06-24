@@ -111,7 +111,7 @@
     enddo
 ! send buffer to central cube
     receiver = receiver_cube_from_slices
-    call MPI_ISSEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
+    call MPI_ISEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
               MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,request_send,ier)
  endif  ! end sending info to central cube
 
@@ -158,7 +158,7 @@
 !! DK DK this merged with previous statement
 !   buffer_all_cube_from_slices(:,:,nb_msgs_theor_in_cube) = buffer_slices2(:,:)
 
-    call MPI_ISSEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
+    call MPI_ISEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
         itag,MPI_COMM_WORLD,request_send,ier)
   endif
 
@@ -273,7 +273,7 @@
     do imsg = 1,nb_msgs_theor_in_cube-1
 ! send buffers to slices
       receiver = sender_from_slices_to_cube(imsg)
-      call MPI_ISSEND(buffer_all_cube_from_slices(:,:,imsg),ndim_assemble*npoin2D_cube_from_slices, &
+      call MPI_ISEND(buffer_all_cube_from_slices(:,:,imsg),ndim_assemble*npoin2D_cube_from_slices, &
               MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,request_send_array(imsg),ier)
     enddo
   endif

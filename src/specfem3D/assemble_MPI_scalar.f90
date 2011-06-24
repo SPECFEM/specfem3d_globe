@@ -144,7 +144,7 @@
   call MPI_IRECV(buffer_received_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,sender, &
         itag,MPI_COMM_WORLD,request_receive,ier)
 
-  call MPI_ISSEND(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
+  call MPI_ISEND(buffer_send_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,receiver, &
         itag2,MPI_COMM_WORLD,request_send,ier)
 
   iphase = iphase + 1
@@ -190,7 +190,7 @@
   call MPI_IRECV(buffer_received_faces_scalar,npoin2D_xi(2),CUSTOM_MPI_TYPE,sender, &
         itag,MPI_COMM_WORLD,request_receive,ier)
 
-  call MPI_ISSEND(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
+  call MPI_ISEND(buffer_send_faces_scalar,npoin2D_xi(1),CUSTOM_MPI_TYPE,receiver, &
         itag2,MPI_COMM_WORLD,request_send,ier)
 
   iphase = iphase + 1
@@ -237,7 +237,7 @@
   call MPI_IRECV(buffer_received_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,sender, &
     itag,MPI_COMM_WORLD,request_receive,ier)
 
-  call MPI_ISSEND(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
+  call MPI_ISEND(buffer_send_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,receiver, &
     itag2,MPI_COMM_WORLD,request_send,ier)
 
   iphase = iphase + 1
@@ -283,7 +283,7 @@
   call MPI_IRECV(buffer_received_faces_scalar,npoin2D_eta(2),CUSTOM_MPI_TYPE,sender, &
     itag,MPI_COMM_WORLD,request_receive,ier)
 
-  call MPI_ISSEND(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
+  call MPI_ISEND(buffer_send_faces_scalar,npoin2D_eta(1),CUSTOM_MPI_TYPE,receiver, &
     itag2,MPI_COMM_WORLD,request_send,ier)
 
   iphase = iphase + 1
@@ -352,7 +352,7 @@
     do ipoin2D=1,npoin2D_chunks
       buffer_send_faces_scalar(ipoin2D,icount_faces) = array_val(iboolfaces(ipoin2D,icount_faces))
     enddo
-    call MPI_ISSEND(buffer_send_faces_scalar(:,icount_faces),npoin2D_chunks, &
+    call MPI_ISEND(buffer_send_faces_scalar(:,icount_faces),npoin2D_chunks, &
               CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
@@ -426,7 +426,7 @@
     do ipoin2D=1,npoin2D_chunks
       buffer_send_faces_scalar(ipoin2D,icount_faces) = array_val(iboolfaces(ipoin2D,icount_faces))
     enddo
-    call MPI_ISSEND(buffer_send_faces_scalar(:,icount_faces),npoin2D_chunks, &
+    call MPI_ISEND(buffer_send_faces_scalar(:,icount_faces),npoin2D_chunks, &
               CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo

@@ -183,7 +183,7 @@
   call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_xi_all(1),CUSTOM_MPI_TYPE,sender, &
         itag,MPI_COMM_WORLD,request_receive,ier)
 
-  call MPI_ISSEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all(2),CUSTOM_MPI_TYPE,receiver, &
+  call MPI_ISEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all(2),CUSTOM_MPI_TYPE,receiver, &
         itag2,MPI_COMM_WORLD,request_send,ier)
 
   iphase = iphase + 1
@@ -258,7 +258,7 @@
   call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_xi_all(2),CUSTOM_MPI_TYPE,sender, &
         itag,MPI_COMM_WORLD,request_receive,ier)
 
-  call MPI_ISSEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all(1),CUSTOM_MPI_TYPE,receiver, &
+  call MPI_ISEND(buffer_send_faces_vector,NDIM*npoin2D_xi_all(1),CUSTOM_MPI_TYPE,receiver, &
         itag2,MPI_COMM_WORLD,request_send,ier)
 
   iphase = iphase + 1
@@ -329,7 +329,7 @@
   call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_eta_all(1),CUSTOM_MPI_TYPE,sender, &
     itag,MPI_COMM_WORLD,request_receive,ier)
 
-  call MPI_ISSEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all(2),CUSTOM_MPI_TYPE,receiver, &
+  call MPI_ISEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all(2),CUSTOM_MPI_TYPE,receiver, &
     itag2,MPI_COMM_WORLD,request_send,ier)
 
   iphase = iphase + 1
@@ -404,7 +404,7 @@
   call MPI_IRECV(buffer_received_faces_vector,NDIM*npoin2D_eta_all(2),CUSTOM_MPI_TYPE,sender, &
     itag,MPI_COMM_WORLD,request_receive,ier)
 
-  call MPI_ISSEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all(1),CUSTOM_MPI_TYPE,receiver, &
+  call MPI_ISEND(buffer_send_faces_vector,NDIM*npoin2D_eta_all(1),CUSTOM_MPI_TYPE,receiver, &
     itag2,MPI_COMM_WORLD,request_send,ier)
 
   iphase = iphase + 1
@@ -524,7 +524,7 @@
       buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
-    call MPI_ISSEND(buffer_send_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
+    call MPI_ISEND(buffer_send_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
                      MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
@@ -652,7 +652,7 @@
       buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
-    call MPI_ISSEND(buffer_send_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
+    call MPI_ISEND(buffer_send_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
                      MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
