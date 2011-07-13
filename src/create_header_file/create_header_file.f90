@@ -230,14 +230,16 @@
   print *
   print *,'size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
   print *
-  ! note: using less memory becomes only an issue if the code scaling is bad.
-  !          most users will run simulations with an executable using far less than 80% RAM per core
-  !          since they prefer having a faster computational time (and use a higher number of cores).
-  !print *,'   (should be below and typically equal to 80% or 90%'
-  !print *,'    of the memory installed per core)'
-  print *,'   (should be below to 80% or 90% of the memory installed per core)'
-  print *,'   (if significantly more, the job will not run by lack of memory )'
-  !print *,'   (if significantly less, you waste a significant amount of memory)'
+! note: using less memory becomes only an issue if the code scaling is bad.
+!          most users will run simulations with an executable using far less than 80% RAM per core
+!          since they prefer having a faster computational time (and use a higher number of cores).
+!! DK DK reply to note: yes, but that is not "green computing" at all!
+!! DK DK Thus one day people will probably need to worry about not wasting resources...
+! print *,'   (should be below and typically equal to 80% or 90% of the memory installed per core)'
+  print *,'   (should be below 80% or 90% of the memory installed per core)'
+  print *,'   (if significantly more, the job will not run by lack of memory)'
+  print *,'   (note that if significantly less, you waste a significant amount of memory per processor core)'
+  print *,'   (but that can be perfectly acceptable if you can afford it and want faster results by using more cores)'
   print *
   print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
