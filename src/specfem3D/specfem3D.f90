@@ -866,7 +866,7 @@
 
   integer :: i,ier
 
-  integer :: imodulo_NGLOB_CRUST_MANTLE
+  integer :: imodulo_NGLOB_CRUST_MANTLE,imodulo_NGLOB_OUTER_CORE,imodulo_NGLOB_INNER_CORE
 
 ! NOISE_TOMOGRAPHY
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray
@@ -1908,6 +1908,8 @@
   seismo_current = 0
 
   imodulo_NGLOB_CRUST_MANTLE = mod(NGLOB_CRUST_MANTLE,3)
+  imodulo_NGLOB_OUTER_CORE = mod(NGLOB_OUTER_CORE,4)
+  imodulo_NGLOB_INNER_CORE = mod(NGLOB_INNER_CORE,3)
 
 ! get MPI starting time
   time_start = MPI_WTIME()
@@ -1965,7 +1967,7 @@
     enddo
   endif
 
-    do i = mod(NGLOB_CRUST_MANTLE,3)+1,NGLOB_CRUST_MANTLE, 3 ! in steps of 3
+    do i = imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE, 3 ! in steps of 3
       displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
         + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
       displ_crust_mantle(:,i+1) = displ_crust_mantle(:,i+1) &
@@ -1992,7 +1994,8 @@
 
 
     ! outer core
-    do i = 1,mod(NGLOB_OUTER_CORE,4)
+  if(imodulo_NGLOB_OUTER_CORE >= 1) then
+    do i = 1,imodulo_NGLOB_OUTER_CORE
       displ_outer_core(i) = displ_outer_core(i) &
         + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
 
@@ -2001,7 +2004,8 @@
 
       accel_outer_core(i) = 0._CUSTOM_REAL
     enddo
-    do i = mod(NGLOB_OUTER_CORE,4)+1,NGLOB_OUTER_CORE, 4 ! in steps of 4
+  endif
+    do i = imodulo_NGLOB_OUTER_CORE+1,NGLOB_OUTER_CORE, 4 ! in steps of 4
       displ_outer_core(i) = displ_outer_core(i) &
         + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
       displ_outer_core(i+1) = displ_outer_core(i+1) &
@@ -2028,7 +2032,8 @@
 
 
     ! inner core
-    do i = 1,mod(NGLOB_INNER_CORE,3)
+  if(imodulo_NGLOB_INNER_CORE >= 1) then
+    do i = 1,imodulo_NGLOB_INNER_CORE
       displ_inner_core(:,i) = displ_inner_core(:,i) &
         + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
 
@@ -2037,7 +2042,8 @@
 
       accel_inner_core(:,i) = 0._CUSTOM_REAL
     enddo
-    do i = mod(NGLOB_INNER_CORE,3)+1,NGLOB_INNER_CORE, 3 ! in steps of 3
+  endif
+    do i = imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE, 3 ! in steps of 3
       displ_inner_core(:,i) = displ_inner_core(:,i) &
         + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
       displ_inner_core(:,i+1) = displ_inner_core(:,i+1) &
@@ -2093,7 +2099,7 @@
       enddo
     endif
 
-      do i=mod(NGLOB_CRUST_MANTLE,3)+1,NGLOB_CRUST_MANTLE,3
+      do i=imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE,3
         b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
           + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
         b_displ_crust_mantle(:,i+1) = b_displ_crust_mantle(:,i+1) &
@@ -2115,14 +2121,16 @@
       enddo
 
 
-      do i=1,mod(NGLOB_OUTER_CORE,4)
+    if(imodulo_NGLOB_OUTER_CORE >= 1) then
+      do i=1,imodulo_NGLOB_OUTER_CORE
         b_displ_outer_core(i) = b_displ_outer_core(i) &
           + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
         b_veloc_outer_core(i) = b_veloc_outer_core(i) &
           + b_deltatover2*b_accel_outer_core(i)
         b_accel_outer_core(i) = 0._CUSTOM_REAL
       enddo
-      do i=mod(NGLOB_OUTER_CORE,4)+1,NGLOB_OUTER_CORE,4
+    endif
+      do i=imodulo_NGLOB_OUTER_CORE+1,NGLOB_OUTER_CORE,4
         b_displ_outer_core(i) = b_displ_outer_core(i) &
           + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
         b_displ_outer_core(i+1) = b_displ_outer_core(i+1) &
@@ -2148,14 +2156,16 @@
       enddo
 
 
-      do i=1,mod(NGLOB_INNER_CORE,3)
+    if(imodulo_NGLOB_INNER_CORE >= 1) then
+      do i=1,imodulo_NGLOB_INNER_CORE
         b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
           + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
         b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
           + b_deltatover2*b_accel_inner_core(:,i)
         b_accel_inner_core(:,i) = 0._CUSTOM_REAL
       enddo
-      do i=mod(NGLOB_INNER_CORE,3)+1,NGLOB_INNER_CORE,3
+    endif
+      do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
         b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
           + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
         b_displ_inner_core(:,i+1) = b_displ_inner_core(:,i+1) &
@@ -2504,11 +2514,13 @@
 !    enddo
 
 ! way 2:
-    do i=1,mod(NGLOB_OUTER_CORE,4)
-      accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-      veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-    enddo
-    do i=mod(NGLOB_OUTER_CORE,4)+1,NGLOB_OUTER_CORE,4
+    if(imodulo_NGLOB_OUTER_CORE >= 1) then
+      do i=1,imodulo_NGLOB_OUTER_CORE
+        accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
+        veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
+      enddo
+    endif
+    do i=imodulo_NGLOB_OUTER_CORE+1,NGLOB_OUTER_CORE,4
       accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
       accel_outer_core(i+1) = accel_outer_core(i+1)*rmass_outer_core(i+1)
       accel_outer_core(i+2) = accel_outer_core(i+2)*rmass_outer_core(i+2)
@@ -2633,11 +2645,13 @@
 !      enddo
 
 ! way 2:
-      do i=1,mod(NGLOB_OUTER_CORE,4)
+    if(imodulo_NGLOB_OUTER_CORE >= 1) then
+      do i=1,imodulo_NGLOB_OUTER_CORE
         b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
         b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
       enddo
-      do i=mod(NGLOB_OUTER_CORE,4)+1,NGLOB_OUTER_CORE,4
+    endif
+      do i=imodulo_NGLOB_OUTER_CORE+1,NGLOB_OUTER_CORE,4
         b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
         b_accel_outer_core(i+1) = b_accel_outer_core(i+1)*rmass_outer_core(i+1)
         b_accel_outer_core(i+2) = b_accel_outer_core(i+2)*rmass_outer_core(i+2)
@@ -3797,16 +3811,18 @@
       veloc_crust_mantle(:,i+3) = veloc_crust_mantle(:,i+3) + deltatover2*accel_crust_mantle(:,i+3)
     enddo
 
-    do i=1,mod(NGLOB_INNER_CORE,3)
-      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-             + two_omega_earth*veloc_inner_core(2,i)
-      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-             - two_omega_earth*veloc_inner_core(1,i)
-      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
+    if(imodulo_NGLOB_INNER_CORE >= 1) then
+      do i=1,imodulo_NGLOB_INNER_CORE
+        accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
+               + two_omega_earth*veloc_inner_core(2,i)
+        accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
+               - two_omega_earth*veloc_inner_core(1,i)
+        accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
 
-      veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
+        veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
     enddo
-    do i=mod(NGLOB_INNER_CORE,3)+1,NGLOB_INNER_CORE,3
+    endif
+    do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
       accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
              + two_omega_earth*veloc_inner_core(2,i)
       accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
@@ -3857,7 +3873,8 @@
         b_veloc_crust_mantle(:,i+3) = b_veloc_crust_mantle(:,i+3) + b_deltatover2*b_accel_crust_mantle(:,i+3)
       enddo
 
-      do i=1,mod(NGLOB_INNER_CORE,3)
+    if(imodulo_NGLOB_INNER_CORE >= 1) then
+      do i=1,imodulo_NGLOB_INNER_CORE
         b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
          + b_two_omega_earth*b_veloc_inner_core(2,i)
         b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
@@ -3866,7 +3883,8 @@
 
         b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
       enddo
-      do i=mod(NGLOB_INNER_CORE,3)+1,NGLOB_INNER_CORE,3
+    endif
+      do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
         b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
          + b_two_omega_earth*b_veloc_inner_core(2,i)
         b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
