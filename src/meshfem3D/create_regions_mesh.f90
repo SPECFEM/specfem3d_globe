@@ -874,6 +874,8 @@
 
   endif
 
+  deallocate(perm)
+
   else
 !
     print *,'SORT_MESH_INNER_OUTER must always been set to .true. even for the regular C version for CPUs'
