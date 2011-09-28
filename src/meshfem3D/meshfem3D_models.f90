@@ -429,6 +429,9 @@
 
   logical ANISOTROPIC_INNER_CORE
 
+! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
+  logical,parameter :: USE_1D_REFERENCE = .false.
+  
   end module meshfem3D_models_par
 
 
@@ -895,6 +898,16 @@
                     lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
                     nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
                     coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
+
+        ! to use speed values from the 1D reference model but with 3D mesh variations
+        if( USE_1D_REFERENCE ) then
+          ! sets all 3D variations in the mantle to zero
+          dvpv = 0.d0
+          dvph = 0.d0
+          dvsv = 0.d0
+          dvsh = 0.d0          
+        endif
+        
         if(TRANSVERSE_ISOTROPY) then
           vpv=vpv*(1.0d0+dble(dvpv))
           vph=vph*(1.0d0+dble(dvph))

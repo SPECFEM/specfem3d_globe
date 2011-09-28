@@ -339,8 +339,11 @@ with the following options:\\
 \noindent\texttt{./configure FC=xlf90\_r MPIFC=mpif90 CC=xlc\_r CFLAGS="-O3 -q64" FCFLAGS="-O3 -q64"}.\\
 
 On SGI systems, \texttt{flags.guess} automatically informs \texttt{configure}
-to insert `\texttt{`TRAP\_FPE=OFF}'' into the generated \texttt{Makefile}
+to insert ``\texttt{TRAP\_FPE=OFF}'' into the generated \texttt{Makefile}
 in order to turn underflow trapping off.\\
+
+Some do-loops have been modified using a common technique to help compilers enhance pipelining and make better use
+of the cache. If you want to use these hand-optimized loops, add an additional flag ``\texttt{-D\_HANDOPT}'' to your compiler options.\\
 
 If you run very large meshes on a relatively small number
 of processors, the memory size needed on each processor might become
@@ -2253,7 +2256,7 @@ the points within each element for \texttt{\small MOVIE\_VOLUME\_TYPE}
 
 To make the code output your favorite ``value'' simply add a new \texttt{\small MOVIE\_VOLUME\_TYPE},
 a new subroutine to \texttt{\small write\_movie\_volume.f90} and a
-subroutine call to \texttt{\small specfem3D.f90}.
+subroutine call to \texttt{\small specfem3D.F90}.
 
 A utility program to combine the files produced by \texttt{\small MOVIE\_VOLUME\_TYPE}
 \texttt{\small =} \texttt{\small 1,2,3} is provided in \texttt{\small combine\_paraview}~\\

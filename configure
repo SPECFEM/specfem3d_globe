@@ -557,7 +557,7 @@ PACKAGE_STRING='Specfem3D Globe 5.1.1'
 PACKAGE_BUGREPORT='jtromp AT princeton.edu'
 PACKAGE_URL=''
 
-ac_unique_file="src/specfem3D/specfem3D.f90"
+ac_unique_file="src/specfem3D/specfem3D.F90"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>

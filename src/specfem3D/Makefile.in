@@ -128,6 +128,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/compute_add_sources.o \
 	$O/compute_boundary_kernel.o \
 	$O/compute_coupling.o \
+	$O/compute_element.o \
 	$O/compute_forces_crust_mantle.o \
 	$O/compute_forces_crust_mantle_Dev.o \
 	$O/compute_forces_inner_core.o \
@@ -324,11 +325,14 @@ $O/compute_boundary_kernel.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.
 $O/compute_coupling.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_coupling.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_coupling.o ${FCFLAGS_f90} $S/compute_coupling.f90
 
+$O/compute_element.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_element.F90
+	${FCCOMPILE_NO_CHECK} -c -o $O/compute_element.o ${FCFLAGS_f90} $S/compute_element.F90
+
 $O/compute_forces_crust_mantle.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_crust_mantle.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_crust_mantle.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle.f90
 
-$O/compute_forces_crust_mantle_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_crust_mantle_Dev.f90
-	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_crust_mantle_Dev.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle_Dev.f90
+$O/compute_forces_crust_mantle_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_crust_mantle_Dev.F90
+	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_crust_mantle_Dev.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle_Dev.F90
 
 $O/compute_forces_outer_core.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_outer_core.o ${FCFLAGS_f90} $S/compute_forces_outer_core.f90
@@ -339,8 +343,8 @@ $O/compute_forces_outer_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_m
 $O/compute_forces_inner_core.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_inner_core.o ${FCFLAGS_f90} $S/compute_forces_inner_core.f90
 
-$O/compute_forces_inner_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core_Dev.f90
-	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_inner_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_inner_core_Dev.f90
+$O/compute_forces_inner_core_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_inner_core_Dev.F90
+	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_inner_core_Dev.o ${FCFLAGS_f90} $S/compute_forces_inner_core_Dev.F90
 
 $O/compute_kernels.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_kernels.f90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_kernels.o ${FCFLAGS_f90} $S/compute_kernels.f90
@@ -435,8 +439,8 @@ $O/read_mesh_databases.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S
 $O/setup_sources_receivers.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/setup_sources_receivers.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/setup_sources_receivers.o ${FCFLAGS_f90} $S/setup_sources_receivers.f90
 
-$O/specfem3D.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/specfem3D.f90
-	${MPIFCCOMPILE_NO_CHECK} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.f90
+$O/specfem3D.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/specfem3D.F90
+	${MPIFCCOMPILE_NO_CHECK} -c -o $O/specfem3D.o ${FCFLAGS_f90} $S/specfem3D.F90
 
 $O/write_movie_surface.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/write_movie_surface.f90
 	${MPIFCCOMPILE_NO_CHECK} -c -o $O/write_movie_surface.o ${FCFLAGS_f90} $S/write_movie_surface.f90
