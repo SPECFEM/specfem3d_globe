@@ -25,6 +25,15 @@
 !
 !=====================================================================
 
+! preprocessing definition: #define _HANDOPT :  turns hand-optimized code on
+!                                         #undef _HANDOPT :  turns hand-optimized code off
+! or compile with: -D_HANDOPT
+!#define _HANDOPT
+ 
+! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
+!          depending on compilers, it can further decrease the computation time by ~ 30%.
+!          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
+
   subroutine compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core,xstore,ystore,zstore, &
           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
@@ -81,7 +90,6 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
@@ -148,7 +156,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
-  real(kind=CUSTOM_REAL) R_xx_val1,R_yy_val1,R_xx_val2,R_yy_val2,R_xx_val3,R_yy_val3
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
@@ -177,9 +184,8 @@
 
   integer :: int_radius
   integer :: ispec,ispec_strain
-  integer :: i,j,k !,l
-  integer :: i_SLS,i_memory,imodulo_N_SLS
-  integer :: iglob1,iglob2,iglob3,iglob4,iglob5
+  integer :: i,j,k
+  integer :: iglob1
 
 ! this for non blocking MPI
   integer :: iphase,icall
@@ -242,11 +248,13 @@
   integer NSPEC2D_BOTTOM_INNER_CORE
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
 
+#ifdef _HANDOPT
+  integer, dimension(5) :: iglobv5
+#endif
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
-
-  imodulo_N_SLS = mod(N_SLS,3)
 
   computed_elements = 0
 
@@ -260,10 +268,10 @@
     if(idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
 
 ! process the communications every ELEMENTS_NONBLOCKING elements
-    computed_elements = computed_elements + 1
-    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
+      computed_elements = computed_elements + 1
+      if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
 
-      if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+        if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -279,60 +287,59 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
             NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
 
-      if(INCLUDE_CENTRAL_CUBE) then
+        if(INCLUDE_CENTRAL_CUBE) then
           if(iphase > 7 .and. iphase_CC <= 4) &
             call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
                    npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
                    receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
                    ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,accel_inner_core,NDIM,iphase_CC)
-      endif
+        endif
 
-    endif
+      endif
 
       ! subroutines adapted from Deville, Fischer and Mund, High-order methods
       ! for incompressible fluid flow, Cambridge University Press (2002),
       ! pages 386 and 389 and Figure 8.3.1
+      
       do k=1,NGLLZ
         do j=1,NGLLY
-! way 1:
-!          do i=1,NGLLX
-!              iglob = ibool(i,j,k,ispec)
-!              dummyx_loc(i,j,k) = displ_inner_core(1,iglob)
-!              dummyy_loc(i,j,k) = displ_inner_core(2,iglob)
-!              dummyz_loc(i,j,k) = displ_inner_core(3,iglob)
-!          enddo
-
+#ifdef _HANDOPT        
 ! way 2:
-        ! since we know that NGLLX = 5, this should help pipelining
-        iglob1 = ibool(1,j,k,ispec)
-        iglob2 = ibool(2,j,k,ispec)
-        iglob3 = ibool(3,j,k,ispec)
-        iglob4 = ibool(4,j,k,ispec)
-        iglob5 = ibool(5,j,k,ispec)
+        ! since we know that NGLLX = 5, this should help pipelining          
+        iglobv5(:) = ibool(:,j,k,ispec)
+        
+        dummyx_loc(1,j,k) = displ_inner_core(1,iglobv5(1))
+        dummyy_loc(1,j,k) = displ_inner_core(2,iglobv5(1))
+        dummyz_loc(1,j,k) = displ_inner_core(3,iglobv5(1))
 
-        dummyx_loc(1,j,k) = displ_inner_core(1,iglob1)
-        dummyy_loc(1,j,k) = displ_inner_core(2,iglob1)
-        dummyz_loc(1,j,k) = displ_inner_core(3,iglob1)
+        dummyx_loc(2,j,k) = displ_inner_core(1,iglobv5(2))
+        dummyy_loc(2,j,k) = displ_inner_core(2,iglobv5(2))
+        dummyz_loc(2,j,k) = displ_inner_core(3,iglobv5(2))
 
-        dummyx_loc(2,j,k) = displ_inner_core(1,iglob2)
-        dummyy_loc(2,j,k) = displ_inner_core(2,iglob2)
-        dummyz_loc(2,j,k) = displ_inner_core(3,iglob2)
+        dummyx_loc(3,j,k) = displ_inner_core(1,iglobv5(3))
+        dummyy_loc(3,j,k) = displ_inner_core(2,iglobv5(3))
+        dummyz_loc(3,j,k) = displ_inner_core(3,iglobv5(3))
 
-        dummyx_loc(3,j,k) = displ_inner_core(1,iglob3)
-        dummyy_loc(3,j,k) = displ_inner_core(2,iglob3)
-        dummyz_loc(3,j,k) = displ_inner_core(3,iglob3)
+        dummyx_loc(4,j,k) = displ_inner_core(1,iglobv5(4))
+        dummyy_loc(4,j,k) = displ_inner_core(2,iglobv5(4))
+        dummyz_loc(4,j,k) = displ_inner_core(3,iglobv5(4))
 
-        dummyx_loc(4,j,k) = displ_inner_core(1,iglob4)
-        dummyy_loc(4,j,k) = displ_inner_core(2,iglob4)
-        dummyz_loc(4,j,k) = displ_inner_core(3,iglob4)
-
-        dummyx_loc(5,j,k) = displ_inner_core(1,iglob5)
-        dummyy_loc(5,j,k) = displ_inner_core(2,iglob5)
-        dummyz_loc(5,j,k) = displ_inner_core(3,iglob5)
-
-
+        dummyx_loc(5,j,k) = displ_inner_core(1,iglobv5(5))
+        dummyy_loc(5,j,k) = displ_inner_core(2,iglobv5(5))
+        dummyz_loc(5,j,k) = displ_inner_core(3,iglobv5(5))
+          
+#else
+! way 1:
+          do i=1,NGLLX
+            iglob1 = ibool(i,j,k,ispec)
+            dummyx_loc(i,j,k) = displ_inner_core(1,iglob1)
+            dummyy_loc(i,j,k) = displ_inner_core(2,iglob1)
+            dummyz_loc(i,j,k) = displ_inner_core(3,iglob1)
+          enddo
+#endif
         enddo
       enddo
+      
       do j=1,m2
         do i=1,m1
           C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
@@ -528,65 +535,9 @@
             ! subtract memory variables if attenuation
             if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
 
-! way 1:
-!              do i_SLS = 1,N_SLS
-!                R_xx_val = R_memory(1,i_SLS,i,j,k,ispec)
-!                R_yy_val = R_memory(2,i_SLS,i,j,k,ispec)
-!                sigma_xx = sigma_xx - R_xx_val
-!                sigma_yy = sigma_yy - R_yy_val
-!                sigma_zz = sigma_zz + R_xx_val + R_yy_val
-!                sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
-!                sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
-!                sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
-!              enddo
-
-! way 2:
-! note: this should help compilers to pipeline the code and make better use of the cache;
-!          depending on compilers, it can further decrease the computation time by ~ 30%.
-!          by default, N_SLS = 3, there for we take steps of 3
-            if(imodulo_N_SLS >= 1) then
-              do i_SLS = 1,imodulo_N_SLS
-                R_xx_val1 = R_memory(1,i_SLS,i,j,k,ispec)
-                R_yy_val1 = R_memory(2,i_SLS,i,j,k,ispec)
-                sigma_xx = sigma_xx - R_xx_val1
-                sigma_yy = sigma_yy - R_yy_val1
-                sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-                sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
-              enddo
-            endif
-
-            if(N_SLS >= imodulo_N_SLS+1) then
-              do i_SLS = imodulo_N_SLS+1,N_SLS,3
-                R_xx_val1 = R_memory(1,i_SLS,i,j,k,ispec)
-                R_yy_val1 = R_memory(2,i_SLS,i,j,k,ispec)
-                sigma_xx = sigma_xx - R_xx_val1
-                sigma_yy = sigma_yy - R_yy_val1
-                sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-                sigma_xy = sigma_xy - R_memory(3,i_SLS,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_memory(4,i_SLS,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_memory(5,i_SLS,i,j,k,ispec)
-
-                R_xx_val2 = R_memory(1,i_SLS+1,i,j,k,ispec)
-                R_yy_val2 = R_memory(2,i_SLS+1,i,j,k,ispec)
-                sigma_xx = sigma_xx - R_xx_val2
-                sigma_yy = sigma_yy - R_yy_val2
-                sigma_zz = sigma_zz + R_xx_val2 + R_yy_val2
-                sigma_xy = sigma_xy - R_memory(3,i_SLS+1,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_memory(4,i_SLS+1,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_memory(5,i_SLS+1,i,j,k,ispec)
-
-                R_xx_val3 = R_memory(1,i_SLS+2,i,j,k,ispec)
-                R_yy_val3 = R_memory(2,i_SLS+2,i,j,k,ispec)
-                sigma_xx = sigma_xx - R_xx_val3
-                sigma_yy = sigma_yy - R_yy_val3
-                sigma_zz = sigma_zz + R_xx_val3 + R_yy_val3
-                sigma_xy = sigma_xy - R_memory(3,i_SLS+2,i,j,k,ispec)
-                sigma_xz = sigma_xz - R_memory(4,i_SLS+2,i,j,k,ispec)
-                sigma_yz = sigma_yz - R_memory(5,i_SLS+2,i,j,k,ispec)
-              enddo
-            endif
+              ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
+              call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
+                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
             endif
 
@@ -795,8 +746,8 @@
 
       do k=1,NGLLZ
         do j=1,NGLLY
+          fac1 = wgllwgll_yz(j,k)
           do i=1,NGLLX
-            fac1 = wgllwgll_yz(j,k)
             fac2 = wgllwgll_xz(i,k)
             fac3 = wgllwgll_xy(i,j)
 
@@ -814,19 +765,23 @@
       ! sum contributions from each element to the global mesh and add gravity terms
       do k=1,NGLLZ
         do j=1,NGLLY
-! way 1:
-!          do i=1,NGLLX
-!            iglob = ibool(i,j,k,ispec)
-!            accel_inner_core(:,iglob) = accel_inner_core(:,iglob) + sum_terms(:,i,j,k)
-!          enddo
-
+#ifdef _HANDOPT        
 ! way 2:
-          accel_inner_core(:,ibool(1,j,k,ispec)) = accel_inner_core(:,ibool(1,j,k,ispec)) + sum_terms(:,1,j,k)
-          accel_inner_core(:,ibool(2,j,k,ispec)) = accel_inner_core(:,ibool(2,j,k,ispec)) + sum_terms(:,2,j,k)
-          accel_inner_core(:,ibool(3,j,k,ispec)) = accel_inner_core(:,ibool(3,j,k,ispec)) + sum_terms(:,3,j,k)
-          accel_inner_core(:,ibool(4,j,k,ispec)) = accel_inner_core(:,ibool(4,j,k,ispec)) + sum_terms(:,4,j,k)
-          accel_inner_core(:,ibool(5,j,k,ispec)) = accel_inner_core(:,ibool(5,j,k,ispec)) + sum_terms(:,5,j,k)
+          iglobv5(:) = ibool(:,j,k,ispec)
 
+          accel_inner_core(:,iglobv5(1)) = accel_inner_core(:,iglobv5(1)) + sum_terms(:,1,j,k)
+          accel_inner_core(:,iglobv5(2)) = accel_inner_core(:,iglobv5(2)) + sum_terms(:,2,j,k)
+          accel_inner_core(:,iglobv5(3)) = accel_inner_core(:,iglobv5(3)) + sum_terms(:,3,j,k)
+          accel_inner_core(:,iglobv5(4)) = accel_inner_core(:,iglobv5(4)) + sum_terms(:,4,j,k)
+          accel_inner_core(:,iglobv5(5)) = accel_inner_core(:,iglobv5(5)) + sum_terms(:,5,j,k)
+          
+#else        
+! way 1:
+          do i=1,NGLLX
+            iglob1 = ibool(i,j,k,ispec)
+            accel_inner_core(:,iglob1) = accel_inner_core(:,iglob1) + sum_terms(:,i,j,k)
+          enddo
+#endif
         enddo
       enddo
 
@@ -845,36 +800,19 @@
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
       if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
-        do i_SLS = 1,N_SLS
-          factor_common_use = factor_common(i_SLS,:,:,:,ispec)
-          do i_memory = 1,5
-             R_memory(i_memory,i_SLS,:,:,:,ispec) = &
-                  alphaval(i_SLS) * &
-                  R_memory(i_memory,i_SLS,:,:,:,ispec) + muvstore(:,:,:,ispec) * &
-                  factor_common_use * &
-                  (betaval(i_SLS) * &
-                  epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-          enddo
-        enddo
-
+              
+        ! updates R_memory
+        call compute_element_att_memory_ic(ispec,R_memory, &
+                                      vx,vy,vz,vnspec,factor_common, &
+                                      alphaval,betaval,gammaval, &
+                                      muvstore, &
+                                      epsilondev,epsilondev_loc)
+      
       endif
 
       ! save deviatoric strain for Runge-Kutta scheme
       if(COMPUTE_AND_STORE_STRAIN) then
-! way 1:
-        !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-! way 2:
-        do k=1,NGLLZ
-          do j=1,NGLLY
-              !dummy(:) = epsilondev_loc(:,1,j,k)
-
-              epsilondev(:,1,j,k,ispec) = epsilondev_loc(:,1,j,k)
-              epsilondev(:,2,j,k,ispec) = epsilondev_loc(:,2,j,k)
-              epsilondev(:,3,j,k,ispec) = epsilondev_loc(:,3,j,k)
-              epsilondev(:,4,j,k,ispec) = epsilondev_loc(:,4,j,k)
-              epsilondev(:,5,j,k,ispec) = epsilondev_loc(:,5,j,k)
-          enddo
-        enddo
+        epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
       endif
 
     endif   ! end test to exclude fictitious elements in central cube

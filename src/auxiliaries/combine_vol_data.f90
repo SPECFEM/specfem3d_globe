@@ -269,7 +269,13 @@ program combine_vol_data
       ibool_dat(:) = 0.0
       if( AVERAGE_GLOBALPOINTS ) then
         do ispec=1,nspec(it)
-         if (ir/=3 .or. (ir==3 .and. idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE)) then
+          ! checks if element counts
+          if (ir==3 ) then
+            ! inner core
+            ! nothing to do for fictitious elements in central cube
+            if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+          endif
+          ! counts and sums global point data
           do k = 1, NGLLZ, dk
             do j = 1, NGLLY, dj
               do i = 1, NGLLX, di
@@ -282,7 +288,6 @@ program combine_vol_data
               enddo
             enddo
           enddo
-         endif
         enddo
         do iglob=1,nglob(it)
           if( ibool_count(iglob) > 0 ) then
@@ -298,7 +303,14 @@ program combine_vol_data
 
       ! write point file
       do ispec=1,nspec(it)
-       if (ir/=3 .or. (ir==3 .and. idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE)) then
+        ! checks if element counts
+        if (ir==3 ) then
+          ! inner core
+          ! nothing to do for fictitious elements in central cube
+          if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+        endif
+       
+        ! writes out global point data
         do k = 1, NGLLZ, dk
           do j = 1, NGLLY, dj
             do i = 1, NGLLX, di
@@ -349,21 +361,52 @@ program combine_vol_data
             enddo ! i
           enddo ! j
         enddo ! k
-       endif ! fictitious elements in central cube
       enddo !ispec
 
       ! no way to check the number of points for low-res
-      if (HIGH_RESOLUTION_MESH .and. numpoin /= npoint(it)) then
-        print*,'region:',ir
-        print*,'error number of points:',numpoin,npoint(it)
-        stop 'different number of points (high-res)'
+      if (HIGH_RESOLUTION_MESH ) then
+        if( ir==3 ) then
+          npoint(it) = numpoin
+        elseif( numpoin /= npoint(it)) then
+          print*,'region:',ir
+          print*,'error number of points:',numpoin,npoint(it)
+          stop 'different number of points (high-res)'
+        endif
       else if (.not. HIGH_RESOLUTION_MESH) then
         npoint(it) = numpoin
       endif
 
       ! write elements file
+      numpoin = 0
       do ispec = 1, nspec(it)
-       if (ir/=3 .or. (ir==3 .and. idoubling_inner_core(ispec) /= IFLAG_IN_FICTITIOUS_CUBE)) then
+        ! checks if element counts
+        if (ir==3 ) then
+          ! inner core          
+          ! fictitious elements in central cube
+          if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) then
+            ! connectivity must be given, otherwise element count would be wrong
+            ! maps "fictitious" connectivity, element is all with iglob = 1
+            do k = 1, NGLLZ-1, dk
+              do j = 1, NGLLY-1, dj
+                do i = 1, NGLLX-1, di
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                  call write_integer_fd(efd,1)
+                enddo ! i
+              enddo ! j
+            enddo ! k                 
+            ! takes next element
+            cycle
+          endif          
+        endif
+      
+        ! writes out element connectivity
+        numpoin = numpoin + 1 ! counts elements
         do k = 1, NGLLZ-1, dk
           do j = 1, NGLLY-1, dj
             do i = 1, NGLLX-1, di
@@ -393,8 +436,7 @@ program combine_vol_data
               call write_integer_fd(efd,n8)
             enddo ! i
           enddo ! j
-        enddo ! k
-       endif ! fictitious elements in central cube
+        enddo ! k        
       enddo ! ispec
 
       np = np + npoint(it)

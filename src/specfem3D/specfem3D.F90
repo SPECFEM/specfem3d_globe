@@ -27,6 +27,15 @@
 !
 ! United States and French Government Sponsorship Acknowledged.
 
+! preprocessing definition: #define _HANDOPT :  turns hand-optimized code on
+!                                         #undef _HANDOPT :  turns hand-optimized code off
+! or compile with: -D_HANDOPT
+!#define _HANDOPT
+ 
+! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
+!          depending on compilers, it can further decrease the computation time by ~ 30%.
+!          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
+
   program xspecfem3D
 
   implicit none
@@ -834,6 +843,10 @@
 
   character(len=150) prname
 
+!daniel: debugging
+!  character(len=256) :: filename
+!  logical, parameter :: SNAPSHOT_INNER_CORE = .true.
+
 ! lookup table every km for gravity
   real(kind=CUSTOM_REAL) minus_g_cmb,minus_g_icb
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table, &
@@ -866,14 +879,17 @@
 
   integer :: i,ier
 
-  integer :: imodulo_NGLOB_CRUST_MANTLE,imodulo_NGLOB_OUTER_CORE,imodulo_NGLOB_INNER_CORE
-
 ! NOISE_TOMOGRAPHY
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
              normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
   integer :: irec_master_noise
+
+#ifdef _HANDOPT
+  integer :: imodulo_NGLOB_CRUST_MANTLE,imodulo_NGLOB_CRUST_MANTLE4, &
+            imodulo_NGLOB_INNER_CORE 
+#endif
 
 ! ************** PROGRAM STARTS HERE **************
 !
@@ -926,7 +942,8 @@
 !             For most compilers and hardware, will result in a significant speedup (> 30% or more, sometimes twice faster).
 !
 ! note 5: a common technique to help compilers enhance pipelining is loop unrolling. We do this here in a simple
-!             and straigthforward way, so don't be confused about the do-loop writing.
+!             and straigthforward way, so don't be confused about the do-loop writing. For this to take effect, 
+!             you have to turn the hand-optimization flag on: compile with additional flag -D_HANDOPT
 !
 ! note 6: whenever adding some new code, please make sure to use
 !             spaces rather than tabs. Tabulators are in principle not allowed in Fortran95.
@@ -1297,7 +1314,7 @@
       ! allocate adjoint source arrays
       allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint sourcearrays')
-      adj_sourcearrays = 0._CUSTOM_REAL
+      adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
       ! allocate indexing arrays
       allocate(iadjsrc(NSTEP_SUB_ADJ,2), &
@@ -1354,10 +1371,10 @@
               stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error allocating frechet derivatives arrays')
 
-      moment_der = 0._CUSTOM_REAL
-      sloc_der = 0._CUSTOM_REAL
-      stshift_der = 0._CUSTOM_REAL
-      shdur_der = 0._CUSTOM_REAL
+      moment_der(:,:,:) = 0._CUSTOM_REAL
+      sloc_der(:,:) = 0._CUSTOM_REAL
+      stshift_der(:) = 0._CUSTOM_REAL
+      shdur_der(:) = 0._CUSTOM_REAL
 
     endif
     ! initialize seismograms
@@ -1521,6 +1538,7 @@
          idoubling_inner_core,npoin2D_cube_from_slices,ibool_central_cube, &
          NSPEC2D_BOTTOM(IREGION_INNER_CORE),ichunk)
 
+
   else
 
     ! allocate fictitious buffers for cube and slices with a dummy size
@@ -1670,6 +1688,9 @@
       write(IMAIN,*) '  lat(S,N)  :',MOVIE_SOUTH,MOVIE_NORTH
       write(IMAIN,*) '  Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
     endif
+
+    if( MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 6) &
+        call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be 1,2,3,4,5 or 6')
 
   endif ! MOVIE_VOLUME
 
@@ -1907,9 +1928,11 @@
   seismo_offset = it_begin-1
   seismo_current = 0
 
+#ifdef _HANDOPT
   imodulo_NGLOB_CRUST_MANTLE = mod(NGLOB_CRUST_MANTLE,3)
-  imodulo_NGLOB_OUTER_CORE = mod(NGLOB_OUTER_CORE,4)
+  imodulo_NGLOB_CRUST_MANTLE4 = mod(NGLOB_CRUST_MANTLE,4)
   imodulo_NGLOB_INNER_CORE = mod(NGLOB_INNER_CORE,3)
+#endif
 
 ! get MPI starting time
   time_start = MPI_WTIME()
@@ -1923,29 +1946,8 @@
     ! update position in seismograms
     seismo_current = seismo_current + 1
 
-! way 1:
-!    ! mantle
-!    do i=1,NGLOB_CRUST_MANTLE
-!      displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
-!        + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
-!      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
-!        + deltatover2*accel_crust_mantle(:,i)
-!    enddo
-!    ! outer core
-!    do i=1,NGLOB_OUTER_CORE
-!      displ_outer_core(i) = displ_outer_core(i) &
-!        + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
-!      veloc_outer_core(i) = veloc_outer_core(i) &
-!        + deltatover2*accel_outer_core(i)
-!    enddo
-!    ! inner core
-!    do i=1,NGLOB_INNER_CORE
-!      displ_inner_core(:,i) = displ_inner_core(:,i) &
-!        + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
-!      veloc_inner_core(:,i) = veloc_inner_core(:,i) &
-!        + deltatover2*accel_inner_core(:,i)
-!    enddo
-
+    ! Newark time scheme update    
+#ifdef _HANDOPT
 ! way 2:
 ! One common technique in computational science to help enhance pipelining is loop unrolling
 !
@@ -1955,18 +1957,18 @@
 ! in most cases a real (CUSTOM_REAL) value will have 4 bytes,
 ! assuming a default cache size of about 128 bytes, we unroll here in steps of 3, thus 29 reals or 118 bytes,
 ! rather than with steps of 4
-  if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
-    do i = 1,imodulo_NGLOB_CRUST_MANTLE
-      displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
-        + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
+    ! mantle
+    if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
+      do i = 1,imodulo_NGLOB_CRUST_MANTLE
+        displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
+          + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
 
-      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
-        + deltatover2*accel_crust_mantle(:,i)
+        veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
+          + deltatover2*accel_crust_mantle(:,i)
 
-      accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-    enddo
-  endif
-
+        accel_crust_mantle(:,i) = 0._CUSTOM_REAL
+      enddo
+    endif
     do i = imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE, 3 ! in steps of 3
       displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
         + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
@@ -1992,10 +1994,8 @@
       accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
     enddo
 
-
-    ! outer core
-  if(imodulo_NGLOB_OUTER_CORE >= 1) then
-    do i = 1,imodulo_NGLOB_OUTER_CORE
+    ! outer core 
+    do i=1,NGLOB_OUTER_CORE
       displ_outer_core(i) = displ_outer_core(i) &
         + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
 
@@ -2004,45 +2004,19 @@
 
       accel_outer_core(i) = 0._CUSTOM_REAL
     enddo
-  endif
-    do i = imodulo_NGLOB_OUTER_CORE+1,NGLOB_OUTER_CORE, 4 ! in steps of 4
-      displ_outer_core(i) = displ_outer_core(i) &
-        + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
-      displ_outer_core(i+1) = displ_outer_core(i+1) &
-        + deltat*veloc_outer_core(i+1) + deltatsqover2*accel_outer_core(i+1)
-      displ_outer_core(i+2) = displ_outer_core(i+2) &
-        + deltat*veloc_outer_core(i+2) + deltatsqover2*accel_outer_core(i+2)
-      displ_outer_core(i+3) = displ_outer_core(i+3) &
-        + deltat*veloc_outer_core(i+3) + deltatsqover2*accel_outer_core(i+3)
-
-      veloc_outer_core(i) = veloc_outer_core(i) &
-        + deltatover2*accel_outer_core(i)
-      veloc_outer_core(i+1) = veloc_outer_core(i+1) &
-        + deltatover2*accel_outer_core(i+1)
-      veloc_outer_core(i+2) = veloc_outer_core(i+2) &
-        + deltatover2*accel_outer_core(i+2)
-      veloc_outer_core(i+3) = veloc_outer_core(i+3) &
-        + deltatover2*accel_outer_core(i+3)
-
-      accel_outer_core(i) = 0._CUSTOM_REAL
-      accel_outer_core(i+1) = 0._CUSTOM_REAL
-      accel_outer_core(i+2) = 0._CUSTOM_REAL
-      accel_outer_core(i+3) = 0._CUSTOM_REAL
-    enddo
-
 
     ! inner core
-  if(imodulo_NGLOB_INNER_CORE >= 1) then
-    do i = 1,imodulo_NGLOB_INNER_CORE
-      displ_inner_core(:,i) = displ_inner_core(:,i) &
-        + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
+    if(imodulo_NGLOB_INNER_CORE >= 1) then
+      do i = 1,imodulo_NGLOB_INNER_CORE
+        displ_inner_core(:,i) = displ_inner_core(:,i) &
+          + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
 
-      veloc_inner_core(:,i) = veloc_inner_core(:,i) &
-        + deltatover2*accel_inner_core(:,i)
+        veloc_inner_core(:,i) = veloc_inner_core(:,i) &
+          + deltatover2*accel_inner_core(:,i)
 
-      accel_inner_core(:,i) = 0._CUSTOM_REAL
-    enddo
-  endif
+        accel_inner_core(:,i) = 0._CUSTOM_REAL
+      enddo
+    endif
     do i = imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE, 3 ! in steps of 3
       displ_inner_core(:,i) = displ_inner_core(:,i) &
         + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
@@ -2062,43 +2036,54 @@
       accel_inner_core(:,i) = 0._CUSTOM_REAL
       accel_inner_core(:,i+1) = 0._CUSTOM_REAL
       accel_inner_core(:,i+2) = 0._CUSTOM_REAL
+    enddo    
+    
+#else
+! way 1:
+    ! mantle
+    do i=1,NGLOB_CRUST_MANTLE
+      displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
+        + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
+      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
+        + deltatover2*accel_crust_mantle(:,i)
+      accel_crust_mantle(:,i) = 0._CUSTOM_REAL
     enddo
+    ! outer core
+    do i=1,NGLOB_OUTER_CORE
+      displ_outer_core(i) = displ_outer_core(i) &
+        + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
+      veloc_outer_core(i) = veloc_outer_core(i) &
+        + deltatover2*accel_outer_core(i)
+      accel_outer_core(i) = 0._CUSTOM_REAL
+    enddo
+    ! inner core
+    do i=1,NGLOB_INNER_CORE
+      displ_inner_core(:,i) = displ_inner_core(:,i) &
+        + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
+      veloc_inner_core(:,i) = veloc_inner_core(:,i) &
+        + deltatover2*accel_inner_core(:,i)
+      accel_inner_core(:,i) = 0._CUSTOM_REAL
+    enddo
+#endif
+
 
 
 
     ! backward field
     if (SIMULATION_TYPE == 3) then
-! way 1:
-!      do i=1,NGLOB_CRUST_MANTLE
-!        b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
-!          + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
-!        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
-!          + b_deltatover2*b_accel_crust_mantle(:,i)
-!      enddo
-!      do i=1,NGLOB_OUTER_CORE
-!        b_displ_outer_core(i) = b_displ_outer_core(i) &
-!          + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
-!        b_veloc_outer_core(i) = b_veloc_outer_core(i) &
-!          + b_deltatover2*b_accel_outer_core(i)
-!      enddo
-!      do i=1,NGLOB_INNER_CORE
-!        b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
-!          + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
-!        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
-!          + b_deltatover2*b_accel_inner_core(:,i)
-!      enddo
 
+#ifdef _HANDOPT
 ! way 2:
-    if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
-      do i=1,imodulo_NGLOB_CRUST_MANTLE
-        b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
-          + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
-        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
-          + b_deltatover2*b_accel_crust_mantle(:,i)
-        b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-      enddo
-    endif
-
+      ! mantle
+      if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
+        do i=1,imodulo_NGLOB_CRUST_MANTLE
+          b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
+            + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
+          b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
+            + b_deltatover2*b_accel_crust_mantle(:,i)
+          b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
+        enddo
+      endif
       do i=imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE,3
         b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
           + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
@@ -2120,51 +2105,25 @@
         b_accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
       enddo
 
-
-    if(imodulo_NGLOB_OUTER_CORE >= 1) then
-      do i=1,imodulo_NGLOB_OUTER_CORE
+      ! outer core
+      do i=1,NGLOB_OUTER_CORE
         b_displ_outer_core(i) = b_displ_outer_core(i) &
           + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
         b_veloc_outer_core(i) = b_veloc_outer_core(i) &
           + b_deltatover2*b_accel_outer_core(i)
         b_accel_outer_core(i) = 0._CUSTOM_REAL
       enddo
-    endif
-      do i=imodulo_NGLOB_OUTER_CORE+1,NGLOB_OUTER_CORE,4
-        b_displ_outer_core(i) = b_displ_outer_core(i) &
-          + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
-        b_displ_outer_core(i+1) = b_displ_outer_core(i+1) &
-          + b_deltat*b_veloc_outer_core(i+1) + b_deltatsqover2*b_accel_outer_core(i+1)
-        b_displ_outer_core(i+2) = b_displ_outer_core(i+2) &
-          + b_deltat*b_veloc_outer_core(i+2) + b_deltatsqover2*b_accel_outer_core(i+2)
-        b_displ_outer_core(i+3) = b_displ_outer_core(i+3) &
-          + b_deltat*b_veloc_outer_core(i+3) + b_deltatsqover2*b_accel_outer_core(i+3)
 
-        b_veloc_outer_core(i) = b_veloc_outer_core(i) &
-          + b_deltatover2*b_accel_outer_core(i)
-        b_veloc_outer_core(i+1) = b_veloc_outer_core(i+1) &
-          + b_deltatover2*b_accel_outer_core(i+1)
-        b_veloc_outer_core(i+2) = b_veloc_outer_core(i+2) &
-          + b_deltatover2*b_accel_outer_core(i+2)
-        b_veloc_outer_core(i+3) = b_veloc_outer_core(i+3) &
-          + b_deltatover2*b_accel_outer_core(i+3)
-
-        b_accel_outer_core(i) = 0._CUSTOM_REAL
-        b_accel_outer_core(i+1) = 0._CUSTOM_REAL
-        b_accel_outer_core(i+2) = 0._CUSTOM_REAL
-        b_accel_outer_core(i+3) = 0._CUSTOM_REAL
-      enddo
-
-
-    if(imodulo_NGLOB_INNER_CORE >= 1) then
-      do i=1,imodulo_NGLOB_INNER_CORE
-        b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
-          + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
-        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
-          + b_deltatover2*b_accel_inner_core(:,i)
-        b_accel_inner_core(:,i) = 0._CUSTOM_REAL
-      enddo
-    endif
+      ! inner core  
+      if(imodulo_NGLOB_INNER_CORE >= 1) then
+        do i=1,imodulo_NGLOB_INNER_CORE
+          b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
+            + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
+          b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
+            + b_deltatover2*b_accel_inner_core(:,i)
+          b_accel_inner_core(:,i) = 0._CUSTOM_REAL
+        enddo
+      endif
       do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
         b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
           + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
@@ -2184,8 +2143,34 @@
         b_accel_inner_core(:,i+1) = 0._CUSTOM_REAL
         b_accel_inner_core(:,i+2) = 0._CUSTOM_REAL
       enddo
-
-    endif
+#else    
+! way 1:
+      ! mantle
+      do i=1,NGLOB_CRUST_MANTLE
+        b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
+          + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
+        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
+          + b_deltatover2*b_accel_crust_mantle(:,i)
+        b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
+      enddo
+      ! outer core
+      do i=1,NGLOB_OUTER_CORE
+        b_displ_outer_core(i) = b_displ_outer_core(i) &
+          + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
+        b_veloc_outer_core(i) = b_veloc_outer_core(i) &
+          + b_deltatover2*b_accel_outer_core(i)
+        b_accel_outer_core(i) = 0._CUSTOM_REAL
+      enddo
+      ! inner core
+      do i=1,NGLOB_INNER_CORE
+        b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
+          + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
+        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
+          + b_deltatover2*b_accel_inner_core(:,i)
+        b_accel_inner_core(:,i) = 0._CUSTOM_REAL
+      enddo
+#endif
+    endif ! SIMULATION_TYPE == 3
 
     ! integral of strain for adjoint movie volume
     if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
@@ -2408,69 +2393,8 @@
     ! assemble all the contributions between slices using MPI
 
     ! outer core
-  if(USE_NONBLOCKING_COMMS) then
-    iphase = 1 ! start the non blocking communications
-    call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-            iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XY,NCHUNKS_VAL,iphase)
-
-    icall = 2 ! now compute all the inner elements in the case of non blocking MPI
-
-    if( USE_DEVILLE_PRODUCTS_VAL ) then
-        ! uses Deville et al. (2002) routine
-      call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
-           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
-           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
-           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-           xix_outer_core,xiy_outer_core,xiz_outer_core, &
-           etax_outer_core,etay_outer_core,etaz_outer_core, &
-           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-          is_on_a_slice_edge_outer_core, &
-          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
-          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-          iboolfaces_outer_core,iboolcorner_outer_core, &
-          iprocfrom_faces,iprocto_faces, &
-          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-          buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
-           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
-           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
-    else
-      ! div_displ_outer_core is initialized to zero in the following subroutine.
-      call compute_forces_outer_core(time,deltat,two_omega_earth, &
-           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
-           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
-           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-           xix_outer_core,xiy_outer_core,xiz_outer_core, &
-           etax_outer_core,etay_outer_core,etaz_outer_core, &
-           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-          is_on_a_slice_edge_outer_core, &
-          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
-          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-          iboolfaces_outer_core,iboolcorner_outer_core, &
-          iprocfrom_faces,iprocto_faces, &
-          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-          buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
-           hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-           ibool_outer_core,MOVIE_VOLUME)
-    endif
-
-    do while (iphase <= 7) ! make sure the last communications are finished and processed
+    if(USE_NONBLOCKING_COMMS) then
+      iphase = 1 ! start the non blocking communications
       call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -2484,11 +2408,72 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL,iphase)
-    enddo
 
-  else ! if(.not. USE_NONBLOCKING_COMMS) then
+      icall = 2 ! now compute all the inner elements in the case of non blocking MPI
 
-    call assemble_MPI_scalar_block(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
+      if( USE_DEVILLE_PRODUCTS_VAL ) then
+        ! uses Deville et al. (2002) routine
+        call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
+           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
+           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
+           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+           xix_outer_core,xiy_outer_core,xiz_outer_core, &
+           etax_outer_core,etay_outer_core,etaz_outer_core, &
+           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+          buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
+           hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           ibool_outer_core,MOVIE_VOLUME)
+      else
+        ! div_displ_outer_core is initialized to zero in the following subroutine.
+        call compute_forces_outer_core(time,deltat,two_omega_earth, &
+           A_array_rotation,B_array_rotation,d_ln_density_dr_table, &
+           minus_rho_g_over_kappa_fluid,displ_outer_core,accel_outer_core,div_displ_outer_core, &
+           xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+           xix_outer_core,xiy_outer_core,xiz_outer_core, &
+           etax_outer_core,etay_outer_core,etaz_outer_core, &
+           gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+          is_on_a_slice_edge_outer_core, &
+          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+          iboolfaces_outer_core,iboolcorner_outer_core, &
+          iprocfrom_faces,iprocto_faces, &
+          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+          buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
+           hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
+           wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+           ibool_outer_core,MOVIE_VOLUME)
+      endif
+
+      do while (iphase <= 7) ! make sure the last communications are finished and processed
+        call assemble_MPI_scalar(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
+            iproc_xi,iproc_eta,ichunk,addressing, &
+            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+            iboolfaces_outer_core,iboolcorner_outer_core, &
+            iprocfrom_faces,iprocto_faces, &
+            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
+            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+            NUMMSGS_FACES,NCORNERSCHUNKS, &
+            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
+            NGLOB2DMAX_XY,NCHUNKS_VAL,iphase)
+      enddo
+
+    else ! if(.not. USE_NONBLOCKING_COMMS) then
+
+      call assemble_MPI_scalar_block(myrank,accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core, &
             iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -2503,33 +2488,12 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL)
 
-  endif
+    endif
 
     ! multiply by the inverse of the mass matrix and update velocity
-
-! way 1:
-!    do i=1,NGLOB_OUTER_CORE
-!      accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-!      veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-!    enddo
-
-! way 2:
-    if(imodulo_NGLOB_OUTER_CORE >= 1) then
-      do i=1,imodulo_NGLOB_OUTER_CORE
-        accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-        veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-      enddo
-    endif
-    do i=imodulo_NGLOB_OUTER_CORE+1,NGLOB_OUTER_CORE,4
+    do i=1,NGLOB_OUTER_CORE
       accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
-      accel_outer_core(i+1) = accel_outer_core(i+1)*rmass_outer_core(i+1)
-      accel_outer_core(i+2) = accel_outer_core(i+2)*rmass_outer_core(i+2)
-      accel_outer_core(i+3) = accel_outer_core(i+3)*rmass_outer_core(i+3)
-
       veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
-      veloc_outer_core(i+1) = veloc_outer_core(i+1) + deltatover2*accel_outer_core(i+1)
-      veloc_outer_core(i+2) = veloc_outer_core(i+2) + deltatover2*accel_outer_core(i+2)
-      veloc_outer_core(i+3) = veloc_outer_core(i+3) + deltatover2*accel_outer_core(i+3)
     enddo
 
     if (SIMULATION_TYPE == 3) then
@@ -2537,9 +2501,9 @@
 ! ------------------- new non blocking implementation -------------------
 
     ! outer core
-  if(USE_NONBLOCKING_COMMS) then
-    b_iphase = 1 ! start the non blocking communications
-    call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
+      if(USE_NONBLOCKING_COMMS) then
+        b_iphase = 1 ! start the non blocking communications
+        call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
@@ -2553,11 +2517,11 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL,b_iphase)
 
-    b_icall = 2 ! now compute all the inner elements in the case of non blocking MPI
+        b_icall = 2 ! now compute all the inner elements in the case of non blocking MPI
 
-    if( USE_DEVILLE_PRODUCTS_VAL ) then
-        ! uses Deville et al. (2002) routine
-      call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
+        if( USE_DEVILLE_PRODUCTS_VAL ) then
+          ! uses Deville et al. (2002) routine
+          call compute_forces_outer_core_Dev(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
            b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
@@ -2577,9 +2541,9 @@
            hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME)
-    else
-      ! div_displ_outer_core is initialized to zero in the following subroutine.
-      call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
+        else
+          ! div_displ_outer_core is initialized to zero in the following subroutine.
+          call compute_forces_outer_core(time,b_deltat,b_two_omega_earth, &
            b_A_array_rotation,b_B_array_rotation,d_ln_density_dr_table, &
            minus_rho_g_over_kappa_fluid, &
            b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
@@ -2599,10 +2563,10 @@
            hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
            ibool_outer_core,MOVIE_VOLUME)
-    endif
+        endif
 
-    do while (b_iphase <= 7) ! make sure the last communications are finished and processed
-      call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
+        do while (b_iphase <= 7) ! make sure the last communications are finished and processed
+          call assemble_MPI_scalar(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
             npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
@@ -2615,11 +2579,11 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL,b_iphase)
-    enddo
+        enddo
 
-  else ! if(.not. USE_NONBLOCKING_COMMS) then
+      else ! if(.not. USE_NONBLOCKING_COMMS) then
 
-    call assemble_MPI_scalar_block(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
+        call assemble_MPI_scalar_block(myrank,b_accel_outer_core,NGLOB_OUTER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_outer_core,iboolright_xi_outer_core, &
             iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -2634,33 +2598,14 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL)
 
-  endif
+      endif
 
 ! ------------------- new non blocking implementation -------------------
 
-! way 1:
-!      do i=1,NGLOB_OUTER_CORE
-!        b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
-!        b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
-!      enddo
-
-! way 2:
-    if(imodulo_NGLOB_OUTER_CORE >= 1) then
-      do i=1,imodulo_NGLOB_OUTER_CORE
+      ! Newmark time scheme - corrector for fluid parts
+      do i=1,NGLOB_OUTER_CORE
         b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
         b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
-      enddo
-    endif
-      do i=imodulo_NGLOB_OUTER_CORE+1,NGLOB_OUTER_CORE,4
-        b_accel_outer_core(i) = b_accel_outer_core(i)*rmass_outer_core(i)
-        b_accel_outer_core(i+1) = b_accel_outer_core(i+1)*rmass_outer_core(i+1)
-        b_accel_outer_core(i+2) = b_accel_outer_core(i+2)*rmass_outer_core(i+2)
-        b_accel_outer_core(i+3) = b_accel_outer_core(i+3)*rmass_outer_core(i+3)
-
-        b_veloc_outer_core(i) = b_veloc_outer_core(i) + b_deltatover2*b_accel_outer_core(i)
-        b_veloc_outer_core(i+1) = b_veloc_outer_core(i+1) + b_deltatover2*b_accel_outer_core(i+1)
-        b_veloc_outer_core(i+2) = b_veloc_outer_core(i+2) + b_deltatover2*b_accel_outer_core(i+2)
-        b_veloc_outer_core(i+3) = b_veloc_outer_core(i+3) + b_deltatover2*b_accel_outer_core(i+3)
       enddo
 
     endif
@@ -3146,13 +3091,13 @@
 ! assemble all the contributions between slices using MPI
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
-  if(USE_NONBLOCKING_COMMS) then
+    if(USE_NONBLOCKING_COMMS) then
 
-    iphase = 1 ! initialize the non blocking communication counter
-    iphase_CC = 1 ! initialize the non blocking communication counter for the central cube
+      iphase = 1 ! initialize the non blocking communication counter
+      iphase_CC = 1 ! initialize the non blocking communication counter for the central cube
 
 ! start the non blocking communications
-    call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+      call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -3168,14 +3113,14 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS_VAL,iphase)
 
-    icall = 2 ! now compute all the inner elements in the case of non blocking MPI
+      icall = 2 ! now compute all the inner elements in the case of non blocking MPI
 
-    ! compute internal forces in the solid regions
+      ! compute internal forces in the solid regions
 
-    ! for anisotropy and gravity, x y and z contain r theta and phi
+      ! for anisotropy and gravity, x y and z contain r theta and phi
 
-    if( USE_DEVILLE_PRODUCTS_VAL ) then
-      call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+      if( USE_DEVILLE_PRODUCTS_VAL ) then
+        call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -3218,8 +3163,8 @@
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
-    else
-      call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+      else
+        call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_crust_mantle,accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -3262,11 +3207,11 @@
           alphaval,betaval,gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
-    endif
+      endif
 
-    ! Deville routine
-    if( USE_DEVILLE_PRODUCTS_VAL ) then
-      call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+      ! Deville routine
+      if( USE_DEVILLE_PRODUCTS_VAL ) then
+        call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
@@ -3301,8 +3246,8 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
-    else
-      call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+      else
+        call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           displ_inner_core,accel_inner_core, &
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
@@ -3337,13 +3282,13 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
-    endif
+      endif
 
 ! assemble all the contributions between slices using MPI
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
-    do while (iphase <= 7) ! make sure the last communications are finished and processed
-      call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
+      do while (iphase <= 7) ! make sure the last communications are finished and processed
+        call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -3358,11 +3303,11 @@
             NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS_VAL,iphase)
-    enddo
-  else
-    ! crust/mantle and inner core handled in the same call
-    ! in order to reduce the number of MPI messages by 2
-    call assemble_MPI_vector_block(myrank, &
+      enddo
+    else
+      ! crust/mantle and inner core handled in the same call
+      ! in order to reduce the number of MPI messages by 2
+      call assemble_MPI_vector_block(myrank, &
             accel_crust_mantle,NGLOB_CRUST_MANTLE, &
             accel_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3385,46 +3330,40 @@
             NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL)
-  endif
+    endif
 
     !---
     !---  use buffers to assemble forces with the central cube
     !---
 
-  if(INCLUDE_CENTRAL_CUBE) then
-    if(USE_NONBLOCKING_COMMS) then
-      do while (iphase_CC <= 4) ! make sure the last communications are finished and processed
-        call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-          npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
-          receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
-          ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),accel_inner_core,NDIM,iphase_CC)
-      enddo
-    else
-      call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-        npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,buffer_slices2,ibool_central_cube, &
-        receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
-        ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,accel_inner_core,NDIM)
-    endif
-  endif   ! end of assembling forces with the central cube
+    if(INCLUDE_CENTRAL_CUBE) then
+      if(USE_NONBLOCKING_COMMS) then
+        do while (iphase_CC <= 4) ! make sure the last communications are finished and processed
+          call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
+            receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+            ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),accel_inner_core,NDIM,iphase_CC)
+        enddo
+      else
+        call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+          npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,buffer_slices2,ibool_central_cube, &
+          receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
+          ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,accel_inner_core,NDIM)
+      endif
+    endif   ! end of assembling forces with the central cube
 
-! way 1:
-!    do i=1,NGLOB_CRUST_MANTLE
-!      accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
-!               + two_omega_earth*veloc_crust_mantle(2,i)
-!      accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
-!               - two_omega_earth*veloc_crust_mantle(1,i)
-!      accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-!    enddo
-
+#ifdef _HANDOPT
 ! way 2:
-    do i=1,mod(NGLOB_CRUST_MANTLE,4)
-      accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+    if(imodulo_NGLOB_CRUST_MANTLE4 >= 1) then
+      do i=1,imodulo_NGLOB_CRUST_MANTLE4
+        accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
                + two_omega_earth*veloc_crust_mantle(2,i)
-      accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+        accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
                - two_omega_earth*veloc_crust_mantle(1,i)
-      accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-    enddo
-    do i=mod(NGLOB_CRUST_MANTLE,4)+1,NGLOB_CRUST_MANTLE,4
+        accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
+      enddo
+    endif
+    do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
       accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
                + two_omega_earth*veloc_crust_mantle(2,i)
       accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
@@ -3449,23 +3388,33 @@
                - two_omega_earth*veloc_crust_mantle(1,i+3)
       accel_crust_mantle(3,i+3) = accel_crust_mantle(3,i+3)*rmass_crust_mantle(i+3)
     enddo
+#else
+! way 1:
+    do i=1,NGLOB_CRUST_MANTLE
+      accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+               + two_omega_earth*veloc_crust_mantle(2,i)
+      accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+               - two_omega_earth*veloc_crust_mantle(1,i)
+      accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
+    enddo
+#endif
 
     if (SIMULATION_TYPE == 3) then
 
 ! ------------------- new non blocking implementation -------------------
 
-    ! assemble all the contributions between slices using MPI
+      ! assemble all the contributions between slices using MPI
 
 ! assemble all the contributions between slices using MPI
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
-  if(USE_NONBLOCKING_COMMS) then
+      if(USE_NONBLOCKING_COMMS) then
 
-    b_iphase = 1 ! initialize the non blocking communication counter
-    b_iphase_CC = 1 ! initialize the non blocking communication counter for the central cube
+        b_iphase = 1 ! initialize the non blocking communication counter
+        b_iphase_CC = 1 ! initialize the non blocking communication counter for the central cube
 
 ! start the non blocking communications
-    call assemble_MPI_vector(myrank,b_accel_crust_mantle,b_accel_inner_core, &
+        call assemble_MPI_vector(myrank,b_accel_crust_mantle,b_accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -3481,14 +3430,14 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS_VAL,b_iphase)
 
-    b_icall = 2 ! now compute all the inner elements in the case of non blocking MPI
+        b_icall = 2 ! now compute all the inner elements in the case of non blocking MPI
 
-    ! compute internal forces in the solid regions
+        ! compute internal forces in the solid regions
 
-    ! for anisotropy and gravity, x y and z contain r theta and phi
+        ! for anisotropy and gravity, x y and z contain r theta and phi
 
-    if( USE_DEVILLE_PRODUCTS_VAL ) then
-      call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+        if( USE_DEVILLE_PRODUCTS_VAL ) then
+          call compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -3531,8 +3480,8 @@
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
-    else
-      call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+        else
+          call compute_forces_crust_mantle(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_crust_mantle,b_accel_crust_mantle, &
           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
           xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -3575,11 +3524,11 @@
           b_alphaval,b_betaval,b_gammaval,factor_common_crust_mantle, &
           size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
           size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
-    endif
+        endif
 
-    ! Deville routine
-    if( USE_DEVILLE_PRODUCTS_VAL ) then
-      call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+        ! Deville routine
+        if( USE_DEVILLE_PRODUCTS_VAL ) then
+          call compute_forces_inner_core_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
@@ -3614,8 +3563,8 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
-    else
-      call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
+        else
+          call compute_forces_inner_core(minus_gravity_table,density_table,minus_deriv_gravity_table, &
           b_displ_inner_core,b_accel_inner_core, &
           xstore_inner_core,ystore_inner_core,zstore_inner_core, &
           xix_inner_core,xiy_inner_core,xiz_inner_core, &
@@ -3650,13 +3599,13 @@
           factor_common_inner_core, &
           size(factor_common_inner_core,2), size(factor_common_inner_core,3), &
           size(factor_common_inner_core,4), size(factor_common_inner_core,5) )
-    endif
+        endif
 
 ! assemble all the contributions between slices using MPI
 ! crust/mantle and inner core handled in the same call
 ! in order to reduce the number of MPI messages by 2
-    do while (b_iphase <= 7) ! make sure the last communications are finished and processed
-      call assemble_MPI_vector(myrank,b_accel_crust_mantle,b_accel_inner_core, &
+        do while (b_iphase <= 7) ! make sure the last communications are finished and processed
+          call assemble_MPI_vector(myrank,b_accel_crust_mantle,b_accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -3671,11 +3620,11 @@
             NUMMSGS_FACES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB1D_RADIAL(IREGION_INNER_CORE),NCHUNKS_VAL,b_iphase)
-    enddo
-  else
-    ! crust/mantle and inner core handled in the same call
-    ! in order to reduce the number of MPI messages by 2
-    call assemble_MPI_vector_block(myrank, &
+        enddo
+      else
+        ! crust/mantle and inner core handled in the same call
+        ! in order to reduce the number of MPI messages by 2
+        call assemble_MPI_vector_block(myrank, &
             b_accel_crust_mantle,NGLOB_CRUST_MANTLE, &
             b_accel_inner_core,NGLOB_INNER_CORE, &
             iproc_xi,iproc_eta,ichunk,addressing, &
@@ -3698,48 +3647,42 @@
             NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL)
-  endif
+      endif
 
-    !---
-    !---  use buffers to assemble forces with the central cube
-    !---
+      !---
+      !---  use buffers to assemble forces with the central cube
+      !---
 
-  if(INCLUDE_CENTRAL_CUBE) then
-    if(USE_NONBLOCKING_COMMS) then
-      do while (b_iphase_CC <= 4) ! make sure the last communications are finished and processed
-        call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-          npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
-          receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
-          ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),b_accel_inner_core,NDIM,b_iphase_CC)
-      enddo
-    else
-      call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-        npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,buffer_slices2,ibool_central_cube, &
-        receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
-        ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,b_accel_inner_core,NDIM)
-    endif
-  endif   ! end of assembling forces with the central cube
+      if(INCLUDE_CENTRAL_CUBE) then
+        if(USE_NONBLOCKING_COMMS) then
+          do while (b_iphase_CC <= 4) ! make sure the last communications are finished and processed
+            call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+              npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,ibool_central_cube, &
+              receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+              ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),b_accel_inner_core,NDIM,b_iphase_CC)
+          enddo
+        else
+          call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+            npoin2D_cube_from_slices,b_buffer_all_cube_from_slices,b_buffer_slices,buffer_slices2,ibool_central_cube, &
+            receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core,NSPEC_INNER_CORE, &
+            ibelm_bottom_inner_core,NSPEC2D_BOTTOM(IREGION_INNER_CORE),NGLOB_INNER_CORE,b_accel_inner_core,NDIM)
+        endif
+      endif   ! end of assembling forces with the central cube
 
 ! ------------------- new non blocking implementation -------------------
 
-! way 1:
-!      do i=1,NGLOB_CRUST_MANTLE
-!        b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
-!                 + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-!        b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
-!                 - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-!        b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-!      enddo
-
+#ifdef _HANDOPT
 ! way 2:
-      do i=1,mod(NGLOB_CRUST_MANTLE,4)
-        b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+      if( imodulo_NGLOB_CRUST_MANTLE4 >=1 ) then
+        do i=1,imodulo_NGLOB_CRUST_MANTLE4
+          b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
-        b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+          b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i)
-        b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
-      enddo
-      do i=mod(NGLOB_CRUST_MANTLE,4)+1,NGLOB_CRUST_MANTLE,4
+          b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
+        enddo
+      endif
+      do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
         b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
                  + b_two_omega_earth*b_veloc_crust_mantle(2,i)
         b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
@@ -3764,8 +3707,18 @@
                  - b_two_omega_earth*b_veloc_crust_mantle(1,i+3)
         b_accel_crust_mantle(3,i+3) = b_accel_crust_mantle(3,i+3)*rmass_crust_mantle(i+3)
       enddo
+#else
+! way 1:
+      do i=1,NGLOB_CRUST_MANTLE
+        b_accel_crust_mantle(1,i) = b_accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
+                 + b_two_omega_earth*b_veloc_crust_mantle(2,i)
+        b_accel_crust_mantle(2,i) = b_accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
+                 - b_two_omega_earth*b_veloc_crust_mantle(1,i)
+        b_accel_crust_mantle(3,i) = b_accel_crust_mantle(3,i)*rmass_crust_mantle(i)
+      enddo
+#endif
 
-    endif
+    endif ! SIMULATION_TYPE == 3
 
     ! couples ocean with crust mantle
     if(OCEANS_VAL) &
@@ -3784,33 +3737,23 @@
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
 !
-
-! way 1:
-!    do i=1,NGLOB_CRUST_MANTLE
-!      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-!    enddo
-!
-!    do i=1,NGLOB_INNER_CORE
-!      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
-!             + two_omega_earth*veloc_inner_core(2,i)
-!      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
-!             - two_omega_earth*veloc_inner_core(1,i)
-!      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
-!
-!      veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-!    enddo
-
+    ! Newmark time scheme - corrector for elastic parts
+#ifdef _HANDOPT
 ! way 2:
-    do i=1,mod(NGLOB_CRUST_MANTLE,4)
-      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
-    enddo
-    do i=mod(NGLOB_CRUST_MANTLE,4)+1,NGLOB_CRUST_MANTLE,4
+    ! mantle
+    if( imodulo_NGLOB_CRUST_MANTLE4 >= 1 ) then
+      do i=1,imodulo_NGLOB_CRUST_MANTLE4
+        veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
+      enddo
+    endif
+    do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
       veloc_crust_mantle(:,i+1) = veloc_crust_mantle(:,i+1) + deltatover2*accel_crust_mantle(:,i+1)
       veloc_crust_mantle(:,i+2) = veloc_crust_mantle(:,i+2) + deltatover2*accel_crust_mantle(:,i+2)
       veloc_crust_mantle(:,i+3) = veloc_crust_mantle(:,i+3) + deltatover2*accel_crust_mantle(:,i+3)
     enddo
 
+    ! inner core  
     if(imodulo_NGLOB_INNER_CORE >= 1) then
       do i=1,imodulo_NGLOB_INNER_CORE
         accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
@@ -3820,7 +3763,7 @@
         accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
 
         veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
-    enddo
+      enddo
     endif
     do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
       accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
@@ -3845,45 +3788,51 @@
       veloc_inner_core(:,i+1) = veloc_inner_core(:,i+1) + deltatover2*accel_inner_core(:,i+1)
       veloc_inner_core(:,i+2) = veloc_inner_core(:,i+2) + deltatover2*accel_inner_core(:,i+2)
     enddo
+#else
+! way 1:
+    ! mantle
+    do i=1,NGLOB_CRUST_MANTLE
+      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
+    enddo
+    ! inner core
+    do i=1,NGLOB_INNER_CORE
+      accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
+             + two_omega_earth*veloc_inner_core(2,i)
+      accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
+             - two_omega_earth*veloc_inner_core(1,i)
+      accel_inner_core(3,i) = accel_inner_core(3,i)*rmass_inner_core(i)
+
+      veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
+    enddo
+#endif
 
     if (SIMULATION_TYPE == 3) then
-! way 1:
-!      do i=1,NGLOB_CRUST_MANTLE
-!        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-!      enddo
-!
-!      do i=1,NGLOB_INNER_CORE
-!        b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
-!         + b_two_omega_earth*b_veloc_inner_core(2,i)
-!        b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
-!         - b_two_omega_earth*b_veloc_inner_core(1,i)
-!        b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
-!
-!        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
-!      enddo
-
+#ifdef _HANDOPT
 ! way 2:
-      do i=1,mod(NGLOB_CRUST_MANTLE,4)
-        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
-      enddo
-      do i=mod(NGLOB_CRUST_MANTLE,4)+1,NGLOB_CRUST_MANTLE,4
+      ! mantle
+      if( imodulo_NGLOB_CRUST_MANTLE4 >= 1 ) then
+        do i=1,imodulo_NGLOB_CRUST_MANTLE4
+          b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
+        enddo
+      endif
+      do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
         b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
         b_veloc_crust_mantle(:,i+1) = b_veloc_crust_mantle(:,i+1) + b_deltatover2*b_accel_crust_mantle(:,i+1)
         b_veloc_crust_mantle(:,i+2) = b_veloc_crust_mantle(:,i+2) + b_deltatover2*b_accel_crust_mantle(:,i+2)
         b_veloc_crust_mantle(:,i+3) = b_veloc_crust_mantle(:,i+3) + b_deltatover2*b_accel_crust_mantle(:,i+3)
       enddo
+      ! inner core
+      if(imodulo_NGLOB_INNER_CORE >= 1) then
+        do i=1,imodulo_NGLOB_INNER_CORE
+          b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
+            + b_two_omega_earth*b_veloc_inner_core(2,i)
+          b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
+            - b_two_omega_earth*b_veloc_inner_core(1,i)
+          b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
 
-    if(imodulo_NGLOB_INNER_CORE >= 1) then
-      do i=1,imodulo_NGLOB_INNER_CORE
-        b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
-         + b_two_omega_earth*b_veloc_inner_core(2,i)
-        b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
-         - b_two_omega_earth*b_veloc_inner_core(1,i)
-        b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
-
-        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
-      enddo
-    endif
+          b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
+        enddo
+      endif
       do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
         b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
          + b_two_omega_earth*b_veloc_inner_core(2,i)
@@ -3906,9 +3855,27 @@
         b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
         b_veloc_inner_core(:,i+1) = b_veloc_inner_core(:,i+1) + b_deltatover2*b_accel_inner_core(:,i+1)
         b_veloc_inner_core(:,i+2) = b_veloc_inner_core(:,i+2) + b_deltatover2*b_accel_inner_core(:,i+2)
-      enddo
 
-    endif
+      enddo
+#else    
+! way 1:
+      ! mantle
+      do i=1,NGLOB_CRUST_MANTLE
+        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) + b_deltatover2*b_accel_crust_mantle(:,i)
+      enddo
+      ! inner core
+      do i=1,NGLOB_INNER_CORE
+        b_accel_inner_core(1,i) = b_accel_inner_core(1,i)*rmass_inner_core(i) &
+         + b_two_omega_earth*b_veloc_inner_core(2,i)
+        b_accel_inner_core(2,i) = b_accel_inner_core(2,i)*rmass_inner_core(i) &
+         - b_two_omega_earth*b_veloc_inner_core(1,i)
+        b_accel_inner_core(3,i) = b_accel_inner_core(3,i)*rmass_inner_core(i)
+
+        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) + b_deltatover2*b_accel_inner_core(:,i)
+      enddo
+#endif
+
+    endif ! SIMULATION_TYPE == 3
 
 
     ! restores last time snapshot saved for backward/reconstruction of wavefields
@@ -4321,8 +4288,15 @@
       else if (MOVIE_VOLUME_TYPE == 4) then ! output divergence and curl in whole volume
 
         call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
-                    div_displ_outer_core,eps_trace_over_3_inner_core,epsilondev_crust_mantle,&
-                    epsilondev_inner_core)
+                        div_displ_outer_core, &
+                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
+                        eps_trace_over_3_inner_core, &
+                        epsilondev_crust_mantle,epsilondev_inner_core, &
+                        LOCAL_PATH, &
+                        displ_crust_mantle,displ_inner_core,displ_outer_core, &
+                        veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
+                        accel_crust_mantle,accel_inner_core, &                        
+                        ibool_crust_mantle,ibool_inner_core)
 
       else if (MOVIE_VOLUME_TYPE == 5) then !output displacement
         scalingval = scale_displ
@@ -4340,11 +4314,32 @@
 
       else
 
-        stop 'MOVIE_VOLUME_TYPE has to be 1,2,3,4'
+        call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be 1,2,3,4,5 or 6')
 
       endif ! MOVIE_VOLUME_TYPE
     endif
   endif ! MOVIE_VOLUME
+
+!daniel: debugging
+!  if( SNAPSHOT_INNER_CORE .and. mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0  &
+!      .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
+!    ! VTK file output
+!    ! displacement values
+!    !write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
+!    !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
+!    !call write_VTK_data_cr(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+!    !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
+!    !                    displ_inner_core,filename)
+!
+!    write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
+!    write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
+!    call write_VTK_data_cr_all(myrank,idoubling_inner_core, &
+!                        NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+!                        xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
+!                        displ_inner_core,filename)
+!
+!  endif
+
 
 !---- end of time iteration loop
 !
