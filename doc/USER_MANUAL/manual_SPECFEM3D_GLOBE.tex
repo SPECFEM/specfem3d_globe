@@ -358,10 +358,36 @@ with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.1}). The \texttt{go\_mesher
 script discussed below automatically takes care of creating the \texttt{OUTPUT\_FILES}
 directory.
 
+\section{Compiling on an IBM BlueGene}
+
+To compile the code on an IBM BlueGene, Laurent L\'eger from IDRIS, France, suggests the following: compile the code with
+
+\texttt{   FLAGS\_NO\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \\}
+\texttt{   -qfree=f90 -qsuffix=f=f90 -g -qlanglvl=95pure -qhalt=w -Q -Q+rank,swap\_all -Wl,-relax"}
+
+Option "-Wl,-relax" must be added to be able to link the binaries \texttt{xmeshfem3D}
+and \texttt{xspecfem3D} because on BlueGene the final link step is done by the \texttt{gcc} compiler even if
+one uses \texttt{FC=bgxlf90\_r, MPIFC=mpixlf90\_r} and \texttt{CC=bgxlc\_r} to create all the object files.
+
+Also, \texttt{AR=ar, ARFLAGS=cru} and \texttt{RANLIB=ranlib} are hardwired in all \texttt{Makefile.in} files by default, but to cross-compile on BlueGene/P one needs to change
+these values to \texttt{AR=bgar, ARFLAGS=cru} and \texttt{RANLIB=bgranlib}. Thus the easiest thing to do is to modify
+all \texttt{Makefile.in} files and the \texttt{configure} script to set them automatically by \texttt{configure}.
+One then just needs to pass the right commands to the \texttt{configure} script:
+
+\texttt{   ./configure --prefix=/path/to/SPECFEM3DG\_SP --host=Babel --build=BGP \\}
+\texttt{      FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r AR=bgar ARFLAGS=cru \\}
+\texttt{      RANLIB=bgranlib LOCAL\_PATH\_IS\_ALSO\_GLOBAL=false}
+
+This trick can be useful for all hosts on which one needs to cross-compile.
+
+On BlueGene, one also needs to run the \texttt{xcreate\_header\_file} binary file manually rather than in the Makefile:
+
+   \texttt{bgrun -np 1 -mode VN -exe ./bin/xcreate\_header\_file}
+
 \section{Using a cross compiler}
 
 The \texttt{``configure''} script assumes that you will compile the code on the same kind of hardware
-as the machine on which you will run it. On some systems (for instance IBM Blue Gene) this might not be the case
+as the machine on which you will run it. On some systems (for instance IBM BlueGene, see also the previous section) this might not be the case
 and you may compile the code using a cross compiler on a frontend computer that does not have the same
 architecture. In such a case, typing \texttt{``make all''} on the frontend will fail, but you can use one of these two solutions: \\
 
