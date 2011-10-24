@@ -331,7 +331,7 @@
   if(myrank==iprocto_faces(imsg)) then
     sender = iprocfrom_faces(imsg)
     npoin2D_chunks = npoin2D_faces(icount_faces)
-    call MPI_IRECV(buffer_received_faces_scalar(:,icount_faces), &
+    call MPI_IRECV(buffer_received_faces_scalar(1,icount_faces), &
               npoin2D_chunks,CUSTOM_MPI_TYPE,sender, &
               itag,MPI_COMM_WORLD,request_receive_array(icount_faces),ier)
 !   do ipoin2D=1,npoin2D_chunks
@@ -352,7 +352,7 @@
     do ipoin2D=1,npoin2D_chunks
       buffer_send_faces_scalar(ipoin2D,icount_faces) = array_val(iboolfaces(ipoin2D,icount_faces))
     enddo
-    call MPI_ISEND(buffer_send_faces_scalar(:,icount_faces),npoin2D_chunks, &
+    call MPI_ISEND(buffer_send_faces_scalar(1,icount_faces),npoin2D_chunks, &
               CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
@@ -406,7 +406,7 @@
   if(myrank==iprocfrom_faces(imsg)) then
     sender = iprocto_faces(imsg)
     npoin2D_chunks = npoin2D_faces(icount_faces)
-    call MPI_IRECV(buffer_received_faces_scalar(:,icount_faces), &
+    call MPI_IRECV(buffer_received_faces_scalar(1,icount_faces), &
               npoin2D_chunks,CUSTOM_MPI_TYPE,sender, &
               itag,MPI_COMM_WORLD,request_receive_array(icount_faces),ier)
 !   do ipoin2D=1,npoin2D_chunks
@@ -426,7 +426,7 @@
     do ipoin2D=1,npoin2D_chunks
       buffer_send_faces_scalar(ipoin2D,icount_faces) = array_val(iboolfaces(ipoin2D,icount_faces))
     enddo
-    call MPI_ISEND(buffer_send_faces_scalar(:,icount_faces),npoin2D_chunks, &
+    call MPI_ISEND(buffer_send_faces_scalar(1,icount_faces),npoin2D_chunks, &
               CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
