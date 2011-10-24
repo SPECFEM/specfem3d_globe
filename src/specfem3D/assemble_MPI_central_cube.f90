@@ -88,7 +88,7 @@
     do imsg = 1,nb_msgs_theor_in_cube-1
 ! receive buffers from slices
       sender = sender_from_slices_to_cube(imsg)
-      call MPI_IRECV(buffer_all_cube_from_slices(:,:,imsg), &
+      call MPI_IRECV(buffer_all_cube_from_slices(1,1,imsg), &
                 ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
                 itag,MPI_COMM_WORLD,request_receive_array(imsg),ier)
     enddo
@@ -153,7 +153,7 @@
 !       itag,buffer_slices2,ndim_assemble*npoin2D_cube_from_slices,&
 !       MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,msg_status,ier)
 
-    call MPI_IRECV(buffer_all_cube_from_slices(:,:,nb_msgs_theor_in_cube), &
+    call MPI_IRECV(buffer_all_cube_from_slices(1,1,nb_msgs_theor_in_cube), &
         ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,request_receive,ier)
 !! DK DK this merged with previous statement
 !   buffer_all_cube_from_slices(:,:,nb_msgs_theor_in_cube) = buffer_slices2(:,:)
@@ -273,7 +273,7 @@
     do imsg = 1,nb_msgs_theor_in_cube-1
 ! send buffers to slices
       receiver = sender_from_slices_to_cube(imsg)
-      call MPI_ISEND(buffer_all_cube_from_slices(:,:,imsg),ndim_assemble*npoin2D_cube_from_slices, &
+      call MPI_ISEND(buffer_all_cube_from_slices(1,1,imsg),ndim_assemble*npoin2D_cube_from_slices, &
               MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,request_send_array(imsg),ier)
     enddo
   endif

@@ -468,7 +468,7 @@
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
     npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
 
-    call MPI_IRECV(buffer_received_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
+    call MPI_IRECV(buffer_received_faces_vector(1,1,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
               itag,MPI_COMM_WORLD,request_receive_array(icount_faces),ier)
 
 !   do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
@@ -524,7 +524,7 @@
       buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
-    call MPI_ISEND(buffer_send_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
+    call MPI_ISEND(buffer_send_faces_vector(1,1,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
                      MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
@@ -602,7 +602,7 @@
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
     npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
 
-    call MPI_IRECV(buffer_received_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
+    call MPI_IRECV(buffer_received_faces_vector(1,1,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
               itag,MPI_COMM_WORLD,request_receive_array(icount_faces),ier)
 
 !   do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
@@ -652,7 +652,7 @@
       buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
-    call MPI_ISEND(buffer_send_faces_vector(:,:,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
+    call MPI_ISEND(buffer_send_faces_vector(1,1,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
                      MPI_COMM_WORLD,request_send_array(icount_faces),ier)
   endif
   enddo
