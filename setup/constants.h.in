@@ -551,9 +551,11 @@
 
 !!!!!!!!!!!!!! parameters added for the thread-safe version of the code
 
+!!-----------------------------------------------------------
 !!
 !! model constants
 !!
+!!-----------------------------------------------------------
 
 ! number of layers in DATA/1066a/1066a.dat
   integer, parameter :: NR_1066A = 160
@@ -581,7 +583,7 @@
   integer,parameter :: NKQ=8,MAXL_Q=12
   integer,parameter :: NSQ=(MAXL_Q+1)**2,NDEPTHS_REFQ=913
 
-! The meaningful range of Zhao et al.'s model (1994) is as follows:
+! The meaningful range of Zhao et al. (1994) model is as follows:
 !        latitude : 32 - 45 N
 !        longitude: 130-145 E
 !        depth    : 0  - 500 km
@@ -625,9 +627,11 @@
 
 !!!!!!!!!!!!!! end of parameters added for the thread-safe version of the code
 
+!!-----------------------------------------------------------
 !!
 !! crustal stretching
 !!
+!!-----------------------------------------------------------
 
 ! for the stretching of crustal elements in the case of 3D models
 ! (values are chosen for 3D models to have RMOHO_FICTICIOUS at 35 km
@@ -647,9 +651,11 @@
 !!-- uncomment for deep moho cases, e.g. Asia case (Himalayan moho)
 !  double precision, parameter :: RMOHO_STRETCH_ADJUSTEMENT = -20000.d0  ! moho mesh boundary down to 60km
 
+!!-----------------------------------------------------------
 !!
 !! mesh tweaking
 !!
+!!-----------------------------------------------------------
 
 ! to suppress the crustal layers
 ! (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)

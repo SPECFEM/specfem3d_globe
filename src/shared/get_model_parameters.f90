@@ -348,9 +348,13 @@
 
   else if(MODEL_ROOT == '3D_anisotropic') then
     ANISOTROPIC_3D_MANTLE = .true.
-    CASE_3D = .true.
-    ONE_CRUST = .true.
-    TRANSVERSE_ISOTROPY = .true.
+    CASE_3D = .true. ! crustal moho stretching
+    ONE_CRUST = .true. ! 1 element layer in top crust region
+    TRANSVERSE_ISOTROPY = .true. ! to use transverse isotropic PREM 1D ref model
+    ! CRUSTAL = .true. ! with 3D crust: depends on 3D mantle reference model
+    ! THREE_D_MODEL = 0 ! for default crustal model
+    ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135 
+    ! TRANSVERSE_ISOTROPY = .false. ! for AK135 ref model
 
   else if(MODEL_ROOT == 'heterogen') then
     CASE_3D = .true.

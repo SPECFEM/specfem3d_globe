@@ -1084,7 +1084,8 @@
 ! ADD YOUR MODEL HERE
 !
 !---
-
+  found_crust = .false.
+  
   ! crustal model can vary for different 3-D models
   select case (THREE_D_MODEL )
 
