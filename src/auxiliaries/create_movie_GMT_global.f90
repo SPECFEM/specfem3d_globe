@@ -26,7 +26,7 @@
 !=====================================================================
 
 !
-!---  create a movie of radial component of surface displacement in GMT format
+!---  create a movie of radial component of surface displacement/velocity in GMT format
 !
 
   program create_movie_GMT_global
@@ -47,7 +47,7 @@
 !---------------------
 ! USER PARAMETER
 
-  ! to avoid flickering in movies, the displacement field will get normalized with an
+  ! to avoid flickering in movies, the displacement/velocity field will get normalized with an
   ! averaged maximum value over the past few, available snapshots
   logical,parameter :: USE_AVERAGED_MAXIMUM = .true.
   ! minimum number of frames to average maxima
@@ -433,7 +433,7 @@
         read(IOUT) store_val_y
         read(IOUT) store_val_z
 
-        ! reads in associated values (velocity..)
+        ! reads in associated values (displacement or velocity..)
         read(IOUT) store_val_ux
         read(IOUT) store_val_uy
         read(IOUT) store_val_uz
@@ -528,6 +528,7 @@
                     if(USE_COMPONENT == 1) then
                        ! compute unit normal vector to the surface
                        RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
+                       if( RRval < 1.e-10 ) stop 'error unit normal vector'
                        normal_x = xcoord / RRval
                        normal_y = ycoord / RRval
                        normal_z = zcoord / RRval
@@ -538,9 +539,16 @@
 
                        ! compute unit tangent vector to the surface (N-S)
                        RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
+                       if( RRval < 1.e-10 ) stop 'error unit normal vector'
                        rhoval = sqrt(xcoord**2 + ycoord**2)
-                       thetahat_x = (zcoord*xcoord) / (rhoval*RRval)
-                       thetahat_y = (zcoord*ycoord) / (rhoval*RRval)
+                       if( rhoval < 1.e-10 ) then
+                        ! location at pole
+                        thetahat_x = 0.0
+                        thetahat_y = 0.0
+                       else
+                        thetahat_x = (zcoord*xcoord) / (rhoval*RRval)
+                        thetahat_y = (zcoord*ycoord) / (rhoval*RRval)
+                       endif
                        thetahat_z = - rhoval/RRval
 
                        displn(i,j) = - (displx*thetahat_x + disply*thetahat_y + displz*thetahat_z)
@@ -548,9 +556,15 @@
 
                        ! compute unit tangent to the surface (E-W)
                        rhoval = sqrt(xcoord**2 + ycoord**2)
-                       phihat_x = -ycoord / rhoval
-                       phihat_y = xcoord / rhoval
-
+                       if( rhoval < 1.e-10 ) then
+                        ! location at pole
+                        phihat_x = 0.0
+                        phihat_y = 0.0
+                       else
+                        phihat_x = -ycoord / rhoval
+                        phihat_y = xcoord / rhoval
+                       endif
+                       
                        displn(i,j) = displx*phihat_x + disply*phihat_y
                     endif
 

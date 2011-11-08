@@ -71,8 +71,7 @@
   character(len=150) :: outputname
   integer :: ipoin,ispec2D,ispec,i,j,k,ier,iglob
 
-  ! save velocity here to avoid static offset on displacement for movies
-
+  ! by default: save velocity here to avoid static offset on displacement for movies
 
   ! get coordinates of surface mesh and surface displacement
   ipoin = 0
@@ -90,9 +89,9 @@
       do i = 1,NGLLX,NIT
         ipoin = ipoin + 1
         iglob = ibool_crust_mantle(i,j,k,ispec)
-        store_val_x(ipoin) = xstore_crust_mantle(iglob)
-        store_val_y(ipoin) = ystore_crust_mantle(iglob)
-        store_val_z(ipoin) = zstore_crust_mantle(iglob)
+        store_val_x(ipoin) = xstore_crust_mantle(iglob) ! <- radius r (normalized)
+        store_val_y(ipoin) = ystore_crust_mantle(iglob) ! <- colatitude theta (in radian)
+        store_val_z(ipoin) = zstore_crust_mantle(iglob) ! <- longitude phi (in radian)
         if(MOVIE_VOLUME_TYPE == 5) then
           ! stores displacement
           store_val_ux(ipoin) = displ_crust_mantle(1,iglob)*scale_displ
