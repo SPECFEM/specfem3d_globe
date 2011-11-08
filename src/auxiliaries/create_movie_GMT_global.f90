@@ -267,6 +267,7 @@
 
   print *,'enter component (e.g. 1=Z, 2=N, 3=E)'
   read(5,*) USE_COMPONENT
+  if( USE_COMPONENT < 1 .or. USE_COMPONENT > 3 ) stop 'component must be 1, 2 or 3'
 
   print *,'enter output ascii (F) or binary (T)'
   read(5,*) OUTPUT_BINARY
@@ -524,7 +525,7 @@
                     y(i,j) = ycoord
                     z(i,j) = zcoord
 
-
+                    ! saves the desired component
                     if(USE_COMPONENT == 1) then
                        ! compute unit normal vector to the surface
                        RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
@@ -552,6 +553,7 @@
                        thetahat_z = - rhoval/RRval
 
                        displn(i,j) = - (displx*thetahat_x + disply*thetahat_y + displz*thetahat_z)
+
                     elseif(USE_COMPONENT == 3) then
 
                        ! compute unit tangent to the surface (E-W)
