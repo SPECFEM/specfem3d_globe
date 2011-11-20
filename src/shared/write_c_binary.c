@@ -183,7 +183,7 @@ void open_file_abs_r_fbin(int *fid, char *filename,int *length, long long *files
   char * blank;
   FILE *ft;
   int ret;
-  
+
   // checks filesize
   if( *filesize == 0 ){
     perror("Error file size for reading");
@@ -206,9 +206,9 @@ void open_file_abs_r_fbin(int *fid, char *filename,int *length, long long *files
   ret = setvbuf( ft, work_buffer[*fid], _IOFBF, (size_t)MAX_B );
   if( ret != 0 ){
     perror("Error setting working buffer");
-    exit(EXIT_FAILURE);  
+    exit(EXIT_FAILURE);
   }
-  
+
   // stores file index id fid: from 0 to 8
   fp_abs[*fid] = ft;
 
@@ -227,7 +227,7 @@ void open_file_abs_w_fbin(int *fid, char *filename, int *length, long long *file
   char * blank;
   FILE *ft;
   int ret;
-  
+
   // checks filesize
   if( *filesize == 0 ){
     perror("Error file size for writing");
@@ -250,9 +250,9 @@ void open_file_abs_w_fbin(int *fid, char *filename, int *length, long long *file
   ret = setvbuf( ft, work_buffer[*fid], _IOFBF, (size_t)MAX_B );
   if( ret != 0 ){
     perror("Error setting working buffer");
-    exit(EXIT_FAILURE);  
+    exit(EXIT_FAILURE);
   }
-  
+
   // stores file index id fid: from 0 to 8
   fp_abs[*fid] = ft;
 
@@ -330,7 +330,7 @@ void read_abs_fbin(int *fid, char *buffer, int *length, int *index){
     perror("Error fseek");
     exit(EXIT_FAILURE);
   }
-  
+
   donelen = 0;
   remlen = *length;
   buf = buffer;

@@ -29,7 +29,7 @@
 !                                         #undef _HANDOPT :  turns hand-optimized code off
 ! or compile with: -D_HANDOPT
 !#define _HANDOPT
- 
+
 ! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
 !          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
@@ -169,8 +169,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc  
-  real(kind=CUSTOM_REAL) fac1,fac2,fac3 
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
+  real(kind=CUSTOM_REAL) fac1,fac2,fac3
 
   ! for gravity
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
@@ -297,7 +297,7 @@
 ! way 2:
         ! since we know that NGLLX = 5, this should help pipelining
         iglobv5(:) = ibool(:,j,k,ispec)
-        
+
         dummyx_loc(1,j,k) = displ_crust_mantle(1,iglobv5(1))
         dummyy_loc(1,j,k) = displ_crust_mantle(2,iglobv5(1))
         dummyz_loc(1,j,k) = displ_crust_mantle(3,iglobv5(1))
@@ -317,7 +317,7 @@
         dummyx_loc(5,j,k) = displ_crust_mantle(1,iglobv5(5))
         dummyy_loc(5,j,k) = displ_crust_mantle(2,iglobv5(5))
         dummyz_loc(5,j,k) = displ_crust_mantle(3,iglobv5(5))
-        
+
 #else
 ! way 1:
         do i=1,NGLLX
@@ -413,22 +413,22 @@
                     R_memory,epsilon_trace_over_3, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)    
-    else 
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
+    else
       if( .not. ispec_is_tiso(ispec) ) then
         ! isotropic element
         call compute_element_iso(ispec, &
                     minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                    xstore,ystore,zstore, &          
+                    xstore,ystore,zstore, &
                     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
                     wgll_cube, &
                     kappavstore,muvstore, &
                     ibool, &
                     R_memory,epsilon_trace_over_3, &
-                    one_minus_sum_beta,vx,vy,vz,vnspec, &          
+                    one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H) 
-      else      
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
+      else
         ! transverse isotropic element
         call compute_element_tiso(ispec, &
                     minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -440,10 +440,10 @@
                     R_memory,epsilon_trace_over_3, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)                
-      endif ! .not. ispec_is_tiso      
-    endif 
-            
+                    dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
+      endif ! .not. ispec_is_tiso
+    endif
+
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
@@ -526,7 +526,7 @@
           sum_terms(2,i,j,k) = - (fac1*newtempy1(i,j,k) + fac2*newtempy2(i,j,k) + fac3*newtempy3(i,j,k))
           sum_terms(3,i,j,k) = - (fac1*newtempz1(i,j,k) + fac2*newtempz2(i,j,k) + fac3*newtempz3(i,j,k))
 
-          if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k) 
+          if(GRAVITY_VAL) sum_terms(:,i,j,k) = sum_terms(:,i,j,k) + rho_s_H(:,i,j,k)
 
         enddo ! NGLLX
 
@@ -538,7 +538,7 @@
       do j=1,NGLLY
 
 #ifdef _HANDOPT
-! way 2: 
+! way 2:
         iglobv5(:) = ibool(:,j,k,ispec)
 
         accel_crust_mantle(:,iglobv5(1)) = accel_crust_mantle(:,iglobv5(1)) + sum_terms(:,1,j,k)
@@ -546,8 +546,8 @@
         accel_crust_mantle(:,iglobv5(3)) = accel_crust_mantle(:,iglobv5(3)) + sum_terms(:,3,j,k)
         accel_crust_mantle(:,iglobv5(4)) = accel_crust_mantle(:,iglobv5(4)) + sum_terms(:,4,j,k)
         accel_crust_mantle(:,iglobv5(5)) = accel_crust_mantle(:,iglobv5(5)) + sum_terms(:,5,j,k)
-        
-#else      
+
+#else
 ! way 1:
         do i=1,NGLLX
           iglob1 = ibool(i,j,k,ispec)
@@ -580,7 +580,7 @@
                                       alphaval,betaval,gammaval, &
                                       c44store,muvstore, &
                                       epsilondev,epsilondev_loc)
-          
+
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme

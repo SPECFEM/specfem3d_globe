@@ -298,7 +298,7 @@
      ! total file size
      filesize = reclen
      filesize = filesize*NSTEP
-     
+
      write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
      if (NOISE_TOMOGRAPHY==1) call open_file_abs_w(9,trim(LOCAL_PATH)//trim(outputname), &
                                       len_trim(trim(LOCAL_PATH)//trim(outputname)), &

@@ -29,20 +29,20 @@
 !                                         #undef _HANDOPT :  turns hand-optimized code off
 ! or compile with: -D_HANDOPT
 !#define _HANDOPT
- 
+
 ! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
 !          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
 
   subroutine compute_element_iso(ispec, &
                     minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                    xstore,ystore,zstore, &          
+                    xstore,ystore,zstore, &
                     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
                     wgll_cube, &
                     kappavstore,muvstore, &
                     ibool, &
                     R_memory,epsilon_trace_over_3, &
-                    one_minus_sum_beta,vx,vy,vz,vnspec, &          
+                    one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
 
@@ -93,7 +93,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
-  
+
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
@@ -121,11 +121,11 @@
 
   integer :: ispec_strain
   integer :: i,j,k
-  integer :: int_radius 
-  integer :: iglob1 
-  
+  integer :: int_radius
+  integer :: iglob1
+
   ! isotropic element
-  
+
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -260,7 +260,7 @@
 
             ! Cartesian components of gradient of gravitational acceleration
             ! obtained from spherical components
-            minus_g_over_radius = minus_g / radius            
+            minus_g_over_radius = minus_g / radius
             minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
 
             Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
@@ -330,9 +330,9 @@
         endif  ! end of section with gravity terms
 
         ! form dot product with test vector, non-symmetric form
-        tempx1(i,j,k) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl) 
-        tempy1(i,j,k) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl) 
-        tempz1(i,j,k) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl) 
+        tempx1(i,j,k) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl)
+        tempy1(i,j,k) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl)
+        tempz1(i,j,k) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl)
 
         tempx2(i,j,k) = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl)
         tempy2(i,j,k) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl)
@@ -353,10 +353,10 @@
 !
 !--------------------------------------------------------------------------------------------------
 !
-  
-  
-  
-  
+
+
+
+
   subroutine compute_element_tiso(ispec, &
                     minus_gravity_table,density_table,minus_deriv_gravity_table, &
                     xstore,ystore,zstore, &
@@ -466,7 +466,7 @@
   integer :: iglob1
 
   ! transverse isotropic element
-  
+
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -566,12 +566,12 @@
         ! use mesh coordinates to get theta and phi
         ! ystore and zstore contain theta and phi
         iglob1 = ibool(i,j,k,ispec)
-        
+
         theta = ystore(iglob1)
         phi = zstore(iglob1)
 
          ! precompute some products to reduce the CPU time
-        
+
         costheta = cos(theta)
         sintheta = sin(theta)
         cosphi = cos(phi)
@@ -616,11 +616,11 @@
 
         ! way 2: pre-compute temporary values
         templ1 = four_rhovsvsq - rhovpvsq + twoetaminone*rhovphsq - four_eta_aniso*rhovsvsq
-        templ1_cos = rhovphsq - rhovpvsq + costwotheta*templ1              
+        templ1_cos = rhovphsq - rhovpvsq + costwotheta*templ1
         templ2 = four_rhovsvsq - rhovpvsq - rhovphsq + two_eta_aniso*rhovphsq - four_eta_aniso*rhovsvsq
-        templ2_cos = rhovpvsq - rhovphsq + costwotheta*templ2              
+        templ2_cos = rhovpvsq - rhovphsq + costwotheta*templ2
         templ3 = rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + four_eta_aniso*rhovsvsq
-        templ3_two = templ3 - two_rhovshsq - two_rhovsvsq   
+        templ3_two = templ3 - two_rhovshsq - two_rhovsvsq
         templ3_cos = templ3_two + costwotheta*templ2
 
         ! way 2: reordering operations to facilitate compilation, avoiding divisions, using locality for temporary values
@@ -652,7 +652,7 @@
               ( 0.5*cosphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) &
                 + sinphisq*(etaminone*rhovphsq + 2.0*(rhovshsq - eta_aniso*rhovsvsq)) )
 
-        ! uses temporary templ2_cos from c14              
+        ! uses temporary templ2_cos from c14
         c16 = 0.5*cosphi*sinphi*sinthetasq* &
               ( cosphisq*templ2_cos &
                 + 2.0*etaminone*sinphisq*(rhovphsq - two_rhovsvsq) )
@@ -662,18 +662,18 @@
               + sinphifour* &
               (rhovphsq*costhetafour + 2.0*costhetasq*sinthetasq*(eta_aniso*rhovphsq  &
                     + two_rhovsvsq - two_eta_aniso*rhovsvsq) + rhovpvsq*sinthetafour)
-        
+
         ! uses temporary templ1 from c13
         c23 = 0.125*sinphisq*(rhovphsq + six_eta_aniso*rhovphsq &
                 + rhovpvsq - four_rhovsvsq - 12.0*eta_aniso*rhovsvsq + cosfourtheta*templ1) &
               + cosphisq*(eta_aniso*costhetasq*(rhovphsq - two_rhovsvsq) + sinthetasq*(rhovphsq - two_rhovshsq))
-    
-        ! uses temporary templ1 from c13 
+
+        ! uses temporary templ1 from c13
         c24 = costheta*sinphi*sintheta* &
               ( etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
                 + 0.5*sinphisq*(rhovpvsq - rhovphsq + costwotheta*templ1) )
 
-        ! uses temporary templ2_cos from c14  
+        ! uses temporary templ2_cos from c14
         c25 = cosphi*costheta*sintheta* &
               ( cosphisq*(etaminone*rhovphsq + 2.0*(rhovshsq - eta_aniso*rhovsvsq)) &
                 + 0.5*sinphisq*(templ2_cos + four_rhovshsq - four_rhovsvsq) )
@@ -681,39 +681,39 @@
         ! uses temporary templ2_cos from c14
         c26 = 0.5*cosphi*sinphi*sinthetasq* &
               ( 2.0*etaminone*cosphisq*(rhovphsq - two_rhovsvsq) &
-                + sinphisq*templ2_cos ) 
+                + sinphisq*templ2_cos )
 
         c33 = rhovpvsq*costhetafour &
               + 2.0*costhetasq*sinthetasq*(two_rhovsvsq + eta_aniso*(rhovphsq - two_rhovsvsq)) &
-              + rhovphsq*sinthetafour            
-        
-        ! uses temporary templ1_cos from c13
-        c34 = - 0.25*sinphi*sintwotheta*templ1_cos              
+              + rhovphsq*sinthetafour
 
-        ! uses temporary templ1_cos from c34      
-        c35 = - 0.25*cosphi*sintwotheta*templ1_cos
-        
+        ! uses temporary templ1_cos from c13
+        c34 = - 0.25*sinphi*sintwotheta*templ1_cos
+
         ! uses temporary templ1_cos from c34
-        c36 = - 0.25*sintwophi*sinthetasq*(templ1_cos - four_rhovshsq + four_rhovsvsq)              
+        c35 = - 0.25*cosphi*sintwotheta*templ1_cos
+
+        ! uses temporary templ1_cos from c34
+        c36 = - 0.25*sintwophi*sinthetasq*(templ1_cos - four_rhovshsq + four_rhovsvsq)
 
         c44 = cosphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
               + sinphisq*(rhovsvsq*costwothetasq + costhetasq*sinthetasq*templ3)
-                      
-        ! uses temporary templ3 from c44     
+
+        ! uses temporary templ3 from c44
         c46 = - cosphi*costheta*sintheta* &
                 ( cosphisq*(rhovshsq - rhovsvsq) - 0.5*sinphisq*templ3_cos  )
 
-        ! uses templ3 from c46 
+        ! uses templ3 from c46
         c45 = 0.25*sintwophi*sinthetasq* &
               (templ3_two + costwotheta*(rhovphsq + rhovpvsq - two_eta_aniso*rhovphsq + 4.0*etaminone*rhovsvsq))
-      
+
         c55 = sinphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) &
               + cosphisq*(rhovsvsq*costwothetasq &
                   + costhetasq*sinthetasq*(rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + four_eta_aniso*rhovsvsq) )
-                      
+
         ! uses temporary templ3_cos from c46
         c56 = costheta*sinphi*sintheta* &
-              ( 0.5*cosphisq*templ3_cos + sinphisq*(rhovsvsq - rhovshsq) )                            
+              ( 0.5*cosphisq*templ3_cos + sinphisq*(rhovsvsq - rhovshsq) )
 
         c66 = rhovshsq*costwophisq*costhetasq &
               - 2.0*cosphisq*costhetasq*sinphisq*(rhovphsq - two_rhovshsq) &
@@ -722,7 +722,7 @@
                         + cos(4.0*phi - 2.0*theta) + cos(2.0*(2.0*phi + theta)) ) &
               + rhovpvsq*cosphisq*sinphisq*sinthetafour &
               - 0.5*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
-        
+
 
         ! general expression of stress tensor for full Cijkl with 21 coefficients
         sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
@@ -745,11 +745,11 @@
 
         ! subtract memory variables if attenuation
         if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
-        
+
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
           call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
                     sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
-        
+
         endif ! ATTENUATION_VAL
 
         ! define symmetric components of sigma for gravity
@@ -879,10 +879,10 @@
       enddo ! NGLLX
     enddo ! NGLLY
   enddo ! NGLLZ
-  
-        
+
+
   end subroutine compute_element_tiso
-  
+
 !
 !--------------------------------------------------------------------------------------------
 !
@@ -901,7 +901,7 @@
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
-          
+
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -984,7 +984,7 @@
   integer :: i,j,k
   integer :: int_radius
   integer :: iglob1
-  
+
   !  anisotropic elements
 
   do k=1,NGLLZ
@@ -1239,8 +1239,8 @@
         tempz3(i,j,k) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl)
       enddo ! NGLLX
     enddo ! NGLLY
-  enddo ! NGLLZ    
-        
+  enddo ! NGLLZ
+
   end subroutine compute_element_aniso
 
 !
@@ -1250,7 +1250,7 @@
 
   subroutine compute_element_att_stress( R_memory_loc, &
                     sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
-          
+
   implicit none
 
   include "constants.h"
@@ -1274,7 +1274,7 @@
   integer :: imodulo_N_SLS
   integer :: i_SLS1,i_SLS2
 #endif
-  
+
 #ifdef _HANDOPT
 ! way 2:
 ! note: this should help compilers to pipeline the code and make better use of the cache;
@@ -1284,50 +1284,50 @@
 
   if(imodulo_N_SLS >= 1) then
     do i_SLS = 1,imodulo_N_SLS
-      R_xx_val1 = R_memory_loc(1,i_SLS) 
-      R_yy_val1 = R_memory_loc(2,i_SLS) 
+      R_xx_val1 = R_memory_loc(1,i_SLS)
+      R_yy_val1 = R_memory_loc(2,i_SLS)
       sigma_xx = sigma_xx - R_xx_val1
       sigma_yy = sigma_yy - R_yy_val1
       sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS) 
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS) 
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS) 
+      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS)
+      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS)
+      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS)
     enddo
   endif
   if(N_SLS >= imodulo_N_SLS+1) then
-    ! note: another possibility would be using a reduction example for this loop; was tested but it does not improve, 
-    ! probably since N_SLS == 3 is too small for a loop benefit  
+    ! note: another possibility would be using a reduction example for this loop; was tested but it does not improve,
+    ! probably since N_SLS == 3 is too small for a loop benefit
     do i_SLS = imodulo_N_SLS+1,N_SLS,3
-      R_xx_val1 = R_memory_loc(1,i_SLS) 
-      R_yy_val1 = R_memory_loc(2,i_SLS) 
+      R_xx_val1 = R_memory_loc(1,i_SLS)
+      R_yy_val1 = R_memory_loc(2,i_SLS)
       sigma_xx = sigma_xx - R_xx_val1
       sigma_yy = sigma_yy - R_yy_val1
       sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS) 
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS) 
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS) 
+      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS)
+      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS)
+      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS)
 
       i_SLS1=i_SLS+1
-      R_xx_val2 = R_memory_loc(1,i_SLS1) 
-      R_yy_val2 = R_memory_loc(2,i_SLS1) 
+      R_xx_val2 = R_memory_loc(1,i_SLS1)
+      R_yy_val2 = R_memory_loc(2,i_SLS1)
       sigma_xx = sigma_xx - R_xx_val2
       sigma_yy = sigma_yy - R_yy_val2
       sigma_zz = sigma_zz + R_xx_val2 + R_yy_val2
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS1) 
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS1) 
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS1) 
+      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS1)
+      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS1)
+      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS1)
 
       i_SLS2 =i_SLS+2
-      R_xx_val3 = R_memory_loc(1,i_SLS2) 
-      R_yy_val3 = R_memory_loc(2,i_SLS2) 
+      R_xx_val3 = R_memory_loc(1,i_SLS2)
+      R_yy_val3 = R_memory_loc(2,i_SLS2)
       sigma_xx = sigma_xx - R_xx_val3
       sigma_yy = sigma_yy - R_yy_val3
       sigma_zz = sigma_zz + R_xx_val3 + R_yy_val3
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS2) 
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS2) 
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS2)                                          
-    enddo    
-  endif     
+      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS2)
+      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS2)
+      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS2)
+    enddo
+  endif
 #else
 ! way 1:
   do i_SLS = 1,N_SLS
@@ -1354,7 +1354,7 @@
                                         alphaval,betaval,gammaval, &
                                         c44store,muvstore, &
                                         epsilondev,epsilondev_loc)
-! crust mantle          
+! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
 
 ! convention for attenuation
@@ -1381,7 +1381,7 @@
 
   ! element id
   integer :: ispec
-  
+
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
 
   integer :: vx,vy,vz,vnspec
@@ -1390,14 +1390,14 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: muvstore
-    
+
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
-! local parameters  
+! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
-  
+
 #ifdef _HANDOPT
   real(kind=CUSTOM_REAL) :: alphal,betal,gammal
   integer :: i,j,k
@@ -1412,12 +1412,12 @@
   ! IMPROVE we should probably use an average value instead
 
 #ifdef _HANDOPT
-! way 2:    
+! way 2:
   do i_SLS = 1,N_SLS
 
     alphal = alphaval(i_SLS)
     betal = betaval(i_SLS)
-    gammal = gammaval(i_SLS)        
+    gammal = gammaval(i_SLS)
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
     factor_common_c44_muv(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
@@ -1451,7 +1451,7 @@
       factor_common_c44_muv(:,:,:) = factor_common_c44_muv(:,:,:) * muvstore(:,:,:,ispec)
     endif
 
-    do i_memory = 1,5 
+    do i_memory = 1,5
       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
                 + factor_common_c44_muv(:,:,:) &
                 * (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
@@ -1461,7 +1461,7 @@
 
 
   end subroutine compute_element_att_memory_cr
-  
+
 !
 !--------------------------------------------------------------------------------------------
 !
@@ -1471,7 +1471,7 @@
                                         alphaval,betaval,gammaval, &
                                         muvstore, &
                                         epsilondev,epsilondev_loc)
-! inner core          
+! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
 ! convention for attenuation
@@ -1498,7 +1498,7 @@
 
   ! element id
   integer :: ispec
-  
+
   real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
 
   integer :: vx,vy,vz,vnspec
@@ -1506,15 +1506,15 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
-    
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev  
+
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
-! local parameters  
+! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
-  
+
   integer :: i_SLS
-  
+
 #ifdef _HANDOPT
   real(kind=CUSTOM_REAL) :: alphal,betal,gammal
   integer :: i,j,k
@@ -1534,11 +1534,11 @@
 
     alphal = alphaval(i_SLS)
     betal = betaval(i_SLS)
-    gammal = gammaval(i_SLS)        
+    gammal = gammaval(i_SLS)
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec) 
-    
+    factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
+
     factor_common_use(:,:,:) = factor_common_use(:,:,:) * muvstore(:,:,:,ispec)
 
     ! this helps to vectorize the inner most loop
@@ -1551,7 +1551,7 @@
         enddo
       enddo
     enddo
-    
+
   enddo ! i_SLS
 #else
 ! way 1:
@@ -1566,5 +1566,5 @@
 #endif
 
   end subroutine compute_element_att_memory_ic
-      
-    
+
+

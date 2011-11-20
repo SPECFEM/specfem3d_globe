@@ -41,13 +41,14 @@
 
 ! for matching with central cube in inner core
   integer, intent(in) :: ichunk, nb_msgs_theor_in_cube, npoin2D_cube_from_slices
+  integer, intent(in) :: ndim_assemble
+  integer, intent(in) :: receiver_cube_from_slices
   integer, intent(inout) :: iphase_CC
   integer, dimension(nb_msgs_theor_in_cube), intent(in) :: sender_from_slices_to_cube
   double precision, dimension(npoin2D_cube_from_slices,ndim_assemble), intent(inout) :: buffer_slices
   double precision, dimension(npoin2D_cube_from_slices,ndim_assemble,nb_msgs_theor_in_cube), intent(inout) :: &
                                                                                        buffer_all_cube_from_slices
   integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices), intent(in) :: ibool_central_cube
-  integer, intent(in) :: receiver_cube_from_slices
 
 ! local to global mapping
   integer, intent(in) :: NSPEC2D_BOTTOM_INNER_CORE
@@ -56,7 +57,6 @@
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE), intent(in) :: ibelm_bottom_inner_core
 
 ! vector
-  integer, intent(in) :: ndim_assemble
   real(kind=CUSTOM_REAL), dimension(ndim_assemble,NGLOB_INNER_CORE), intent(inout) :: vector_assemble
 
   integer ipoin,idimension, ispec2D, ispec

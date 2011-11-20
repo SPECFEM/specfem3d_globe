@@ -663,6 +663,7 @@
                           iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
                           volume_local,area_local_bottom,area_local_top, &
                           nglob(iregion_code),npointot, &
+                          NSTEP,DT,NGLOB2DMAX_XMIN_XMAX(iregion_code),NGLOB2DMAX_YMIN_YMAX(iregion_code), &
                           NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                           NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
                           NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &

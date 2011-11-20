@@ -31,7 +31,7 @@
 !                                         #undef _HANDOPT :  turns hand-optimized code off
 ! or compile with: -D_HANDOPT
 !#define _HANDOPT
- 
+
 ! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
 !          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
@@ -888,7 +888,7 @@
 
 #ifdef _HANDOPT
   integer :: imodulo_NGLOB_CRUST_MANTLE,imodulo_NGLOB_CRUST_MANTLE4, &
-            imodulo_NGLOB_INNER_CORE 
+            imodulo_NGLOB_INNER_CORE
 #endif
 
 ! ************** PROGRAM STARTS HERE **************
@@ -942,7 +942,7 @@
 !             For most compilers and hardware, will result in a significant speedup (> 30% or more, sometimes twice faster).
 !
 ! note 5: a common technique to help compilers enhance pipelining is loop unrolling. We do this here in a simple
-!             and straigthforward way, so don't be confused about the do-loop writing. For this to take effect, 
+!             and straigthforward way, so don't be confused about the do-loop writing. For this to take effect,
 !             you have to turn the hand-optimization flag on: compile with additional flag -D_HANDOPT
 !
 ! note 6: whenever adding some new code, please make sure to use
@@ -1946,7 +1946,7 @@
     ! update position in seismograms
     seismo_current = seismo_current + 1
 
-    ! Newark time scheme update    
+    ! Newark time scheme update
 #ifdef _HANDOPT
 ! way 2:
 ! One common technique in computational science to help enhance pipelining is loop unrolling
@@ -1994,7 +1994,7 @@
       accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
     enddo
 
-    ! outer core 
+    ! outer core
     do i=1,NGLOB_OUTER_CORE
       displ_outer_core(i) = displ_outer_core(i) &
         + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
@@ -2036,8 +2036,8 @@
       accel_inner_core(:,i) = 0._CUSTOM_REAL
       accel_inner_core(:,i+1) = 0._CUSTOM_REAL
       accel_inner_core(:,i+2) = 0._CUSTOM_REAL
-    enddo    
-    
+    enddo
+
 #else
 ! way 1:
     ! mantle
@@ -2114,7 +2114,7 @@
         b_accel_outer_core(i) = 0._CUSTOM_REAL
       enddo
 
-      ! inner core  
+      ! inner core
       if(imodulo_NGLOB_INNER_CORE >= 1) then
         do i=1,imodulo_NGLOB_INNER_CORE
           b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
@@ -2143,7 +2143,7 @@
         b_accel_inner_core(:,i+1) = 0._CUSTOM_REAL
         b_accel_inner_core(:,i+2) = 0._CUSTOM_REAL
       enddo
-#else    
+#else
 ! way 1:
       ! mantle
       do i=1,NGLOB_CRUST_MANTLE
@@ -3753,7 +3753,7 @@
       veloc_crust_mantle(:,i+3) = veloc_crust_mantle(:,i+3) + deltatover2*accel_crust_mantle(:,i+3)
     enddo
 
-    ! inner core  
+    ! inner core
     if(imodulo_NGLOB_INNER_CORE >= 1) then
       do i=1,imodulo_NGLOB_INNER_CORE
         accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
@@ -3857,7 +3857,7 @@
         b_veloc_inner_core(:,i+2) = b_veloc_inner_core(:,i+2) + b_deltatover2*b_accel_inner_core(:,i+2)
 
       enddo
-#else    
+#else
 ! way 1:
       ! mantle
       do i=1,NGLOB_CRUST_MANTLE
@@ -4295,7 +4295,7 @@
                         LOCAL_PATH, &
                         displ_crust_mantle,displ_inner_core,displ_outer_core, &
                         veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
-                        accel_crust_mantle,accel_inner_core, &                        
+                        accel_crust_mantle,accel_inner_core, &
                         ibool_crust_mantle,ibool_inner_core)
 
       else if (MOVIE_VOLUME_TYPE == 5) then !output displacement

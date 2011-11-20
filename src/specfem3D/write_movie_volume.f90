@@ -478,11 +478,11 @@
                         veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
                         accel_crust_mantle,accel_inner_core, &
                         ibool_crust_mantle,ibool_inner_core)
-  
+
   implicit none
   include "constants.h"
   include "OUTPUT_FILES/values_from_mesher.h"
-  
+
   integer :: myrank,it
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displ_outer_core
@@ -492,7 +492,7 @@
         rhostore_outer_core,kappavstore_outer_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core  
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: eps_trace_over_3_inner_core
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: epsilondev_inner_core
 
@@ -517,26 +517,26 @@
   character(len=150) outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
   real(kind=CUSTOM_REAL) :: scale_displ,scale_veloc,scale_accel
-  
+
   ! output parameters
   logical,parameter :: MOVIE_OUTPUT_DIV = .true.          ! divergence
-  logical,parameter :: MOVIE_OUTPUT_CURL = .false.        ! curl 
+  logical,parameter :: MOVIE_OUTPUT_CURL = .false.        ! curl
   logical,parameter :: MOVIE_OUTPUT_CURLNORM = .true.     ! frobenius norm of curl
   logical,parameter :: MOVIE_OUTPUT_DISPLNORM = .false.   ! norm of displacement
   logical,parameter :: MOVIE_OUTPUT_VELOCNORM = .false.   ! norm of velocity
   logical,parameter :: MOVIE_OUTPUT_ACCELNORM = .false.   ! norm of acceleration
 
   ! outputs divergence
-  if( MOVIE_OUTPUT_DIV ) then  
+  if( MOVIE_OUTPUT_DIV ) then
     ! crust_mantle region
     ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     ! old name format:     write(outputname,"('proc',i6.6,'_crust_mantle_div_displ_it',i6.6,'.bin')") myrank,it
     write(outputname,"('proc',i6.6,'_reg1_div_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))  
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) eps_trace_over_3_crust_mantle
     close(27)
-    
+
     ! outer core
     if (NSPEC_OUTER_CORE_ADJOINT /= 1 ) then
       write(outputname,"('proc',i6.6,'_reg2_div_displ_it',i6.6,'.bin')") myrank,it
@@ -559,7 +559,7 @@
           enddo
         enddo
       enddo
-      
+
       ! old name format: write(outputname,"('proc',i6.6,'_outer_core_div_displ_it',i6.6,'.bin')") myrank,it
       write(outputname,"('proc',i6.6,'_reg2_div_displ_it',i6.6,'.bin')") myrank,it
       open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
@@ -569,7 +569,7 @@
 
       deallocate(div_s_outer_core)
     endif
-    
+
     ! inner core
     ! old name format: write(outputname,"('proc',i6.6,'_inner_core_div_displ_proc_it',i6.6,'.bin')") myrank,it
     write(outputname,"('proc',i6.6,'_reg3_div_displ_it',i6.6,'.bin')") myrank,it
@@ -595,10 +595,10 @@
     write(27) epsilondev_inner_core
     close(27)
   endif
-  
+
   ! outputs norm of epsilondev
   if( MOVIE_OUTPUT_CURLNORM ) then
-    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data    
+    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     ! crust_mantle region
     write(outputname,"('proc',i6.6,'_reg1_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
@@ -608,12 +608,12 @@
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
         do j = 1, NGLLY
-          do i = 1, NGLLX    
+          do i = 1, NGLLX
             tmp_data(i,j,k,ispec) = sqrt( epsilondev_crust_mantle(1,i,j,k,ispec)**2 &
                                           + epsilondev_crust_mantle(2,i,j,k,ispec)**2 &
                                           + epsilondev_crust_mantle(3,i,j,k,ispec)**2 &
                                           + epsilondev_crust_mantle(4,i,j,k,ispec)**2 &
-                                          + epsilondev_crust_mantle(5,i,j,k,ispec)**2)                                          
+                                          + epsilondev_crust_mantle(5,i,j,k,ispec)**2)
           enddo
         enddo
       enddo
@@ -621,7 +621,7 @@
     write(27) tmp_data
     close(27)
     deallocate(tmp_data)
-    
+
     ! alternative: e.g. first component only
     !write(27) epsilondev_crust_mantle(1,:,:,:,:)
     !close(27)
@@ -635,12 +635,12 @@
     do ispec = 1, NSPEC_INNER_CORE
       do k = 1, NGLLZ
         do j = 1, NGLLY
-          do i = 1, NGLLX    
+          do i = 1, NGLLX
             tmp_data(i,j,k,ispec) = sqrt( epsilondev_inner_core(1,i,j,k,ispec)**2 &
                                           + epsilondev_inner_core(2,i,j,k,ispec)**2 &
                                           + epsilondev_inner_core(3,i,j,k,ispec)**2 &
                                           + epsilondev_inner_core(4,i,j,k,ispec)**2 &
-                                          + epsilondev_inner_core(5,i,j,k,ispec)**2)                                          
+                                          + epsilondev_inner_core(5,i,j,k,ispec)**2)
           enddo
         enddo
       enddo
@@ -658,11 +658,11 @@
   scale_displ = R_EARTH
   scale_veloc = scale_displ * sqrt(PI*GRAV*RHOAV)
   scale_accel = scale_veloc * dsqrt(PI*GRAV*RHOAV)
-    
-  ! outputs norm of displacement 
+
+  ! outputs norm of displacement
   if( MOVIE_OUTPUT_DISPLNORM ) then
     ! crust mantle
-    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data        
+    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
@@ -691,8 +691,8 @@
         do j = 1, NGLLY
           do i = 1, NGLLX
             iglob = ibool_outer_core(i,j,k,ispec)
-            ! norm 
-            ! note: disp_outer_core is potential, this just outputs the potential, 
+            ! norm
+            ! note: disp_outer_core is potential, this just outputs the potential,
             !          not the actual displacement u = grad(rho * Chi) / rho
             tmp_data(i,j,k,ispec) = abs(displ_outer_core(iglob))
           enddo
@@ -713,7 +713,7 @@
         do j = 1, NGLLY
           do i = 1, NGLLX
             iglob = ibool_inner_core(i,j,k,ispec)
-            ! norm 
+            ! norm
             tmp_data(i,j,k,ispec) = scale_displ * sqrt( displ_inner_core(1,iglob)**2 &
                                           + displ_inner_core(2,iglob)**2 &
                                           + displ_inner_core(3,iglob)**2 )
@@ -730,10 +730,10 @@
   endif
 
 
-  ! outputs norm of velocity 
+  ! outputs norm of velocity
   if( MOVIE_OUTPUT_VELOCNORM ) then
     ! crust mantle
-    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data        
+    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
@@ -799,18 +799,18 @@
     close(27)
     deallocate(tmp_data)
   endif
-  
+
   ! outputs norm of acceleration
-  if( MOVIE_OUTPUT_ACCELNORM ) then    
+  if( MOVIE_OUTPUT_ACCELNORM ) then
     ! acceleration
-    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data        
+    ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
         do j = 1, NGLLY
           do i = 1, NGLLX
             iglob = ibool_crust_mantle(i,j,k,ispec)
-            ! norm 
+            ! norm
             tmp_data(i,j,k,ispec) = scale_accel * sqrt( accel_crust_mantle(1,iglob)**2 &
                                           + accel_crust_mantle(2,iglob)**2 &
                                           + accel_crust_mantle(3,iglob)**2 )
@@ -832,9 +832,9 @@
         do j = 1, NGLLY
           do i = 1, NGLLX
             iglob = ibool_outer_core(i,j,k,ispec)
-            ! norm 
+            ! norm
             ! note: this outputs only the second time derivative of the potential,
-            !          not the actual acceleration or pressure p = - rho * Chi_dot_dot 
+            !          not the actual acceleration or pressure p = - rho * Chi_dot_dot
             tmp_data(i,j,k,ispec) = abs(accel_outer_core(iglob))
           enddo
         enddo
