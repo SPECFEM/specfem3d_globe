@@ -43,7 +43,7 @@
   integer NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
   logical MOVIE_SURFACE
   integer USE_COMPONENT
-  
+
 ! ************** PROGRAM STARTS HERE **************
 
   call read_AVS_DX_parameters(NEX_XI,NEX_ETA, &
@@ -75,7 +75,7 @@
   print *,'enter component (e.g. 1=Z, 2=N, 3=E)'
   read(5,*) USE_COMPONENT
   if( USE_COMPONENT < 1 .or. USE_COMPONENT > 3 ) stop 'component must be 1, 2 or 3'
-  
+
 ! run the main program
   call create_movie_AVS_DX(iformat,it1,it2, &
                           NEX_XI,NEX_ETA, &
@@ -134,12 +134,12 @@
   real(kind=CUSTOM_REAL) RRval,rhoval
   real(kind=CUSTOM_REAL) thetahat_x,thetahat_y,thetahat_z
   real(kind=CUSTOM_REAL) phihat_x,phihat_y
-  
+
   double precision min_field_current,max_field_current,max_absol
 
   logical USE_OPENDX,UNIQUE_FILE,USE_GMT,USE_AVS
   integer USE_COMPONENT
-  
+
   integer iformat,nframes,iframe
 
   character(len=150) outputname
@@ -340,12 +340,12 @@
   read(IOUT) store_val_x
   read(IOUT) store_val_y
   read(IOUT) store_val_z
-  
-  ! reads in associated values (displacement or velocity..)  
+
+  ! reads in associated values (displacement or velocity..)
   read(IOUT) store_val_ux
   read(IOUT) store_val_uy
   read(IOUT) store_val_uz
-  
+
   close(IOUT)
 
 ! clear number of elements kept
@@ -425,7 +425,7 @@
               phihat_x = -ycoord / rhoval
               phihat_y = xcoord / rhoval
              endif
-             
+
              displn(i,j) = displx*phihat_x + disply*phihat_y
           endif
 
@@ -557,7 +557,7 @@
     elseif( USE_COMPONENT == 2) then
       write(outputname,"('/DX_movie_',i6.6,'.N.dx')") it
     elseif( USE_COMPONENT == 3) then
-      write(outputname,"('/DX_movie_',i6.6,'.E.dx')") it          
+      write(outputname,"('/DX_movie_',i6.6,'.E.dx')") it
     endif
     open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',nglob,' data follows'
@@ -569,31 +569,31 @@
         outputname = '/AVS_movie_all.N.inp'
       elseif( USE_COMPONENT == 3) then
         outputname = '/AVS_movie_all.E.inp'
-      endif        
+      endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
       write(11,*) nframes
       write(11,*) 'data'
       write(11,"('step',i1,' image',i1)") 1,1
       write(11,*) nglob,' ',nspectot_AVS_max
     else if(.not. UNIQUE_FILE) then
-      if( USE_COMPONENT == 1) then    
+      if( USE_COMPONENT == 1) then
         write(outputname,"('/AVS_movie_',i6.6,'.Z.inp')") it
       elseif( USE_COMPONENT == 2) then
         write(outputname,"('/AVS_movie_',i6.6,'.N.inp')") it
       elseif( USE_COMPONENT == 3) then
         write(outputname,"('/AVS_movie_',i6.6,'.E.inp')") it
-      endif        
+      endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
       write(11,*) nglob,' ',nspectot_AVS_max,' 1 0 0'
     endif
   else if(USE_GMT) then
-    if( USE_COMPONENT == 1) then    
+    if( USE_COMPONENT == 1) then
       write(outputname,"('/gmt_movie_',i6.6,'.Z.xyz')") it
     elseif( USE_COMPONENT == 2) then
       write(outputname,"('/gmt_movie_',i6.6,'.N.xyz')") it
     elseif( USE_COMPONENT == 3) then
       write(outputname,"('/gmt_movie_',i6.6,'.E.xyz')") it
-    endif        
+    endif
     open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
   else
     stop 'wrong output format selected'

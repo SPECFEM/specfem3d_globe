@@ -111,7 +111,7 @@
   character(len=2) :: bic
   ! makes smaller hdur for movies
   logical,parameter :: USE_SMALLER_HDUR_MOVIE = .false.
-  
+
 ! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
@@ -141,14 +141,14 @@
   if(abs(minval(tshift_cmt)) > TINYVAL) call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
 
   ! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
-  if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then     
+  if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
     ! smaller hdur_movie will do
     if( USE_SMALLER_HDUR_MOVIE ) then
       ! hdur_movie gets assigned an automatic value based on the simulation resolution
       ! this will make that a bit smaller to have a higher-frequency movie output
       HDUR_MOVIE = 0.5* HDUR_MOVIE
     endif
-    
+
     ! new hdur for simulation
     hdur = sqrt(hdur**2 + HDUR_MOVIE**2)
     if(myrank == 0) then

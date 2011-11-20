@@ -566,7 +566,7 @@
                         phihat_x = -ycoord / rhoval
                         phihat_y = xcoord / rhoval
                        endif
-                       
+
                        displn(i,j) = displx*phihat_x + disply*phihat_y
                     endif
 

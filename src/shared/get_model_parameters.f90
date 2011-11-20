@@ -353,7 +353,7 @@
     TRANSVERSE_ISOTROPY = .true. ! to use transverse isotropic PREM 1D ref model
     ! CRUSTAL = .true. ! with 3D crust: depends on 3D mantle reference model
     ! THREE_D_MODEL = 0 ! for default crustal model
-    ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135 
+    ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135
     ! TRANSVERSE_ISOTROPY = .false. ! for AK135 ref model
 
   else if(MODEL_ROOT == 'heterogen') then

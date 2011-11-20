@@ -60,7 +60,7 @@
 
 ! add mesh coloring for the GPU + MPI implementation
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
-  integer, parameter :: MAX_NUMBER_OF_COLORS = 10000
+  integer, parameter :: MAX_NUMBER_OF_COLORS = 1000
   integer, parameter :: NGNOD_HEXAHEDRA = 8
 
 !*********************************************************************************************************

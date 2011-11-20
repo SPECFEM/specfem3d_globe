@@ -14,6 +14,9 @@ subroutine get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
 
   include "constants.h"
 
+! local variables
+  integer nspec, nglob
+
   logical, dimension(nspec) :: is_on_a_slice_edge
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
@@ -21,9 +24,6 @@ subroutine get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
   integer, dimension(nspec) :: color
   integer, dimension(MAX_NUMBER_OF_COLORS) :: first_elem_number_in_this_color
   integer :: nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer,myrank
-
-! local variables
-  integer nspec, nglob
 
   call get_color_faster(ibool, is_on_a_slice_edge, myrank, nspec, nglob, &
                         color, nb_colors_outer_elements, nb_colors_inner_elements, nspec_outer)
@@ -52,14 +52,14 @@ subroutine get_color_faster(ibool, is_on_a_slice_edge, myrank, nspec, nglob, &
 
   include "constants.h"
 
+! local variables
+  integer nspec,nglob
+
   logical, dimension(nspec) :: is_on_a_slice_edge
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: color
   integer :: nb_colors_outer_elements,nb_colors_inner_elements,myrank,nspec_outer
-
-! local variables
-  integer nspec,nglob
 
   integer :: ispec
 
@@ -248,6 +248,9 @@ end subroutine get_color_faster
 
   include "constants.h"
 
+! local variables
+  integer nspec,nglob_GLL_full
+
   logical, dimension(nspec) :: is_on_a_slice_edge
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
@@ -256,11 +259,10 @@ end subroutine get_color_faster
   integer, dimension(MAX_NUMBER_OF_COLORS) :: first_elem_number_in_this_color
   integer :: nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer,myrank
 
-! local variables
-  integer nspec,nglob_GLL_full
-
 ! a neighbor of a hexahedral node is a hexahedron that shares a face with it -> max degree of a node = 6
   integer, parameter :: MAX_NUMBER_OF_NEIGHBORS = 100
+
+  integer nglob_eight_corners_only,nglob
 
 ! global corner numbers that need to be created
   integer, dimension(nglob) :: global_corner_number
@@ -269,11 +271,7 @@ end subroutine get_color_faster
   integer, dimension(:), allocatable :: ne,np,adj
   integer xadj(nspec+1)
 
-  !logical maskel(nspec)
-
   integer i,istart,istop,number_of_neighbors
-
-  integer nglob_eight_corners_only,nglob
 
 ! only count the total size of the array that will be created, or actually create it
   logical count_only
@@ -672,14 +670,14 @@ nspec,count_only,total_size_ne)
 
   integer nglob_eight_corners_only
 
+  integer nspec,iad,ispec,istart,istop,ino,node,jstart,jstop,nelem,jel
+
   integer, intent(in) :: mn(nspec*NGNOD_HEXAHEDRA),mp(nspec+1),ne(total_size_ne),np(nglob_eight_corners_only+1)
 
   integer, intent(out) :: adj(total_size_adj),xadj(nspec+1)
 
   logical maskel(nspec)
   integer countel(nspec)
-
-  integer nspec,iad,ispec,istart,istop,ino,node,jstart,jstop,nelem,jel
 
   xadj(1) = 1
   iad = 1

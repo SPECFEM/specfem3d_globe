@@ -30,6 +30,7 @@
                           iproc_xi,iproc_eta,ichunk,nspec,nspec_tiso, &
                           volume_local,area_local_bottom,area_local_top, &
                           nglob_theor,npointot, &
+                          NSTEP,DT,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                           NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                           NSPEC2D_BOTTOM,NSPEC2D_TOP, &
@@ -238,6 +239,16 @@
   integer :: nspec_outer_min_global,nspec_outer_max_global
 
 !****************************************************************************************************
+
+!///////////////////////////////////////////////////////////////////////////////
+!   Manh Ha - 18-11-2011
+!   Adding new variables
+
+  integer :: NSTEP
+  double precision :: DT
+  integer :: NGLOB2DMAX_XMIN_XMAX, NGLOB2DMAX_YMIN_YMAX
+
+!///////////////////////////////////////////////////////////////////////////////
 
   ! Boundary Mesh
   integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
@@ -873,6 +884,80 @@
     call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
 
   endif
+
+!! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
+
+  if (myrank == 0 .and. iregion_code == IREGION_CRUST_MANTLE) then
+
+! write a header file for the Fortran version of the solver
+    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h',status='unknown')
+    write(99,*) 'integer, parameter :: NSPEC = ',nspec
+    write(99,*) 'integer, parameter :: NGLOB = ',nglob
+!!! DK DK use 1000 time steps only for the scaling tests
+    write(99,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
+    write(99,*) 'real(kind=4), parameter :: deltat = ',DT
+    write(99,*)
+    write(99,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',NGLOB2DMAX_XMIN_XMAX
+    write(99,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',NGLOB2DMAX_YMIN_YMAX
+    write(99,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(NGLOB2DMAX_XMIN_XMAX, NGLOB2DMAX_YMIN_YMAX)
+    write(99,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
+    write(99,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
+    write(99,*)
+    write(99,*) '! element number of the source and of the station'
+    write(99,*) '! after permutation of the elements by mesh coloring'
+    write(99,*) '! and inner/outer set splitting in the mesher'
+    write(99,*) 'integer, parameter :: NSPEC_SOURCE = ',perm(NSPEC/3)
+    write(99,*) 'integer, parameter :: RANK_SOURCE = 0'
+    write(99,*)
+    write(99,*) 'integer, parameter :: RANK_STATION = (NPROC_XI*NPROC_ETA - 1)'
+    write(99,*) 'integer, parameter :: NSPEC_STATION = ',perm(2*NSPEC/3)
+
+! save coordinates of the seismic source
+!   write(99,*) xstore(2,2,2,10);
+!   write(99,*) ystore(2,2,2,10);
+!   write(99,*) zstore(2,2,2,10);
+
+! save coordinates of the seismic station
+!   write(99,*) xstore(2,2,2,nspec-10);
+!   write(99,*) ystore(2,2,2,nspec-10);
+!   write(99,*) zstore(2,2,2,nspec-10);
+    close(99)
+
+!! write a header file for the C version of the solver
+    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_C.h',status='unknown')
+    write(99,*) '#define NSPEC ',nspec
+    write(99,*) '#define NGLOB ',nglob
+!!    write(99,*) '#define NSTEP ',nstep
+!!! DK DK use 1000 time steps only for the scaling tests
+    write(99,*) '// #define NSTEP ',nstep
+    write(99,*) '#define NSTEP 1000'
+! put an "f" at the end to force single precision
+    write(99,"('#define deltat ',e18.10,'f')") DT
+    write(99,*) '#define NGLOB2DMAX_XMIN_XMAX ',NGLOB2DMAX_XMIN_XMAX
+    write(99,*) '#define NGLOB2DMAX_YMIN_YMAX ',NGLOB2DMAX_YMIN_YMAX
+    write(99,*) '#define NGLOB2DMAX_ALL ',max(NGLOB2DMAX_XMIN_XMAX, NGLOB2DMAX_YMIN_YMAX)
+    write(99,*) '#define NPROC_XI ',NPROC_XI
+    write(99,*) '#define NPROC_ETA ',NPROC_ETA
+    write(99,*)
+    write(99,*) '// element and MPI slice number of the source and the station'
+    write(99,*) '// after permutation of the elements by mesh coloring'
+    write(99,*) '// and inner/outer set splitting in the mesher'
+    write(99,*) '#define RANK_SOURCE 0'
+    write(99,*) '#define NSPEC_SOURCE ',perm(NSPEC/3)
+    write(99,*)
+    write(99,*) '#define RANK_STATION (NPROC_XI*NPROC_ETA - 1)'
+    write(99,*) '#define NSPEC_STATION ',perm(2*NSPEC/3)
+    close(99)
+
+    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h',status='unknown')
+    write(99,*) '#define NSPEC_OUTER ',nspec_outer_max_global
+    write(99,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
+    write(99,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global
+    close(99)
+
+  endif
+
+!! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
 
   deallocate(perm)
 

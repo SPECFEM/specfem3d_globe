@@ -809,7 +809,7 @@
   integer NSTEP
 
   ! local parameters
-  integer(kind=8) :: filesize  
+  integer(kind=8) :: filesize
   character(len=150) prname
 
 
@@ -830,14 +830,14 @@
 
   if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-    
+
     ! size of single record
     reclen_xmin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmin_crust_mantle)
 
     ! total file size
     filesize = reclen_xmin_crust_mantle
     filesize = filesize*NSTEP
-    
+
     if (SIMULATION_TYPE == 3) then
 !      open(unit=51,file=trim(prname)//'absorb_xmin.bin', &
 !            status='old',action='read',form='unformatted',access='direct', &
@@ -857,14 +857,14 @@
 
   if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-    
+
     ! size of single record
     reclen_xmax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmax_crust_mantle)
-    
+
     ! total file size
     filesize = reclen_xmax_crust_mantle
     filesize = filesize*NSTEP
-    
+
     if (SIMULATION_TYPE == 3) then
 !      open(unit=52,file=trim(prname)//'absorb_xmax.bin', &
 !            status='old',action='read',form='unformatted',access='direct', &
@@ -884,7 +884,7 @@
 
   if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-    
+
     ! size of single record
     reclen_ymin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymin_crust_mantle)
 
@@ -892,7 +892,7 @@
     filesize = reclen_ymin_crust_mantle
     filesize = filesize*NSTEP
 
-    
+
     if (SIMULATION_TYPE == 3) then
 !      open(unit=53,file=trim(prname)//'absorb_ymin.bin', &
 !            status='old',action='read',form='unformatted',access='direct',&
@@ -912,14 +912,14 @@
 
   if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-    
+
     ! size of single record
     reclen_ymax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymax_crust_mantle)
 
     ! total file size
     filesize = reclen_ymax_crust_mantle
     filesize = filesize*NSTEP
-    
+
     if (SIMULATION_TYPE == 3) then
 !      open(unit=54,file=trim(prname)//'absorb_ymax.bin', &
 !            status='old',action='read',form='unformatted',access='direct',&
@@ -955,14 +955,14 @@
 
   if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-    
+
     ! size of single record
     reclen_xmin_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmin_outer_core)
-    
+
     ! total file size
     filesize = reclen_xmin_outer_core
     filesize = filesize*NSTEP
-    
+
     if (SIMULATION_TYPE == 3) then
 !      open(unit=61,file=trim(prname)//'absorb_xmin.bin', &
 !            status='old',action='read',form='unformatted',access='direct', &
@@ -982,14 +982,14 @@
 
   if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-    
+
     ! size of single record
     reclen_xmax_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmax_outer_core)
 
     ! total file size
     filesize = reclen_xmax_outer_core
     filesize = filesize*NSTEP
-    
+
     if (SIMULATION_TYPE == 3) then
 !      open(unit=62,file=trim(prname)//'absorb_xmax.bin', &
 !            status='old',action='read',form='unformatted',access='direct', &
@@ -1010,14 +1010,14 @@
 
   if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-    
+
     ! size of single record
     reclen_ymin_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymin_outer_core)
 
     ! total file size
     filesize = reclen_ymin_outer_core
     filesize = filesize*NSTEP
-    
+
     if (SIMULATION_TYPE == 3) then
 !      open(unit=63,file=trim(prname)//'absorb_ymin.bin', &
 !            status='old',action='read',form='unformatted',access='direct',&
@@ -1038,14 +1038,14 @@
 
   if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-      
+
     ! size of single record
     reclen_ymax_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymax_outer_core)
 
     ! total file size
     filesize = reclen_ymax_outer_core
     filesize = filesize*NSTEP
-    
+
     if (SIMULATION_TYPE == 3) then
 !      open(unit=64,file=trim(prname)//'absorb_ymax.bin', &
 !            status='old',action='read',form='unformatted',access='direct',&
@@ -1066,14 +1066,14 @@
 
   if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. &
      (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
-     
+
     ! size of single record
     reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
 
     ! total file size
     filesize = reclen_zmin
     filesize = filesize*NSTEP
-    
+
     if (SIMULATION_TYPE == 3) then
 !      open(unit=65,file=trim(prname)//'absorb_zmin.bin', &
 !            status='old',action='read',form='unformatted',access='direct',&

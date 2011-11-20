@@ -29,7 +29,7 @@
 !                                         #undef _HANDOPT :  turns hand-optimized code off
 ! or compile with: -D_HANDOPT
 !#define _HANDOPT
- 
+
 ! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
 !          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
@@ -300,14 +300,14 @@
       ! subroutines adapted from Deville, Fischer and Mund, High-order methods
       ! for incompressible fluid flow, Cambridge University Press (2002),
       ! pages 386 and 389 and Figure 8.3.1
-      
+
       do k=1,NGLLZ
         do j=1,NGLLY
-#ifdef _HANDOPT        
+#ifdef _HANDOPT
 ! way 2:
-        ! since we know that NGLLX = 5, this should help pipelining          
+        ! since we know that NGLLX = 5, this should help pipelining
         iglobv5(:) = ibool(:,j,k,ispec)
-        
+
         dummyx_loc(1,j,k) = displ_inner_core(1,iglobv5(1))
         dummyy_loc(1,j,k) = displ_inner_core(2,iglobv5(1))
         dummyz_loc(1,j,k) = displ_inner_core(3,iglobv5(1))
@@ -327,7 +327,7 @@
         dummyx_loc(5,j,k) = displ_inner_core(1,iglobv5(5))
         dummyy_loc(5,j,k) = displ_inner_core(2,iglobv5(5))
         dummyz_loc(5,j,k) = displ_inner_core(3,iglobv5(5))
-          
+
 #else
 ! way 1:
           do i=1,NGLLX
@@ -339,7 +339,7 @@
 #endif
         enddo
       enddo
-      
+
       do j=1,m2
         do i=1,m1
           C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
@@ -765,7 +765,7 @@
       ! sum contributions from each element to the global mesh and add gravity terms
       do k=1,NGLLZ
         do j=1,NGLLY
-#ifdef _HANDOPT        
+#ifdef _HANDOPT
 ! way 2:
           iglobv5(:) = ibool(:,j,k,ispec)
 
@@ -774,8 +774,8 @@
           accel_inner_core(:,iglobv5(3)) = accel_inner_core(:,iglobv5(3)) + sum_terms(:,3,j,k)
           accel_inner_core(:,iglobv5(4)) = accel_inner_core(:,iglobv5(4)) + sum_terms(:,4,j,k)
           accel_inner_core(:,iglobv5(5)) = accel_inner_core(:,iglobv5(5)) + sum_terms(:,5,j,k)
-          
-#else        
+
+#else
 ! way 1:
           do i=1,NGLLX
             iglob1 = ibool(i,j,k,ispec)
@@ -800,14 +800,14 @@
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
       if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
-              
+
         ! updates R_memory
         call compute_element_att_memory_ic(ispec,R_memory, &
                                       vx,vy,vz,vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       muvstore, &
                                       epsilondev,epsilondev_loc)
-      
+
       endif
 
       ! save deviatoric strain for Runge-Kutta scheme

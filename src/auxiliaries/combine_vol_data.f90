@@ -309,7 +309,7 @@ program combine_vol_data
           ! nothing to do for fictitious elements in central cube
           if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
         endif
-       
+
         ! writes out global point data
         do k = 1, NGLLZ, dk
           do j = 1, NGLLY, dj
@@ -381,7 +381,7 @@ program combine_vol_data
       do ispec = 1, nspec(it)
         ! checks if element counts
         if (ir==3 ) then
-          ! inner core          
+          ! inner core
           ! fictitious elements in central cube
           if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) then
             ! connectivity must be given, otherwise element count would be wrong
@@ -399,12 +399,12 @@ program combine_vol_data
                   call write_integer_fd(efd,1)
                 enddo ! i
               enddo ! j
-            enddo ! k                 
+            enddo ! k
             ! takes next element
             cycle
-          endif          
+          endif
         endif
-      
+
         ! writes out element connectivity
         numpoin = numpoin + 1 ! counts elements
         do k = 1, NGLLZ-1, dk
@@ -436,7 +436,7 @@ program combine_vol_data
               call write_integer_fd(efd,n8)
             enddo ! i
           enddo ! j
-        enddo ! k        
+        enddo ! k
       enddo ! ispec
 
       np = np + npoint(it)

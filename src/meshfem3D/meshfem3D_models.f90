@@ -431,7 +431,7 @@
 
 ! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
   logical,parameter :: USE_1D_REFERENCE = .false.
-  
+
   end module meshfem3D_models_par
 
 
@@ -905,9 +905,9 @@
           dvpv = 0.d0
           dvph = 0.d0
           dvsv = 0.d0
-          dvsh = 0.d0          
+          dvsh = 0.d0
         endif
-        
+
         if(TRANSVERSE_ISOTROPY) then
           vpv=vpv*(1.0d0+dble(dvpv))
           vph=vph*(1.0d0+dble(dvph))
@@ -1085,7 +1085,7 @@
 !
 !---
   found_crust = .false.
-  
+
   ! crustal model can vary for different 3-D models
   select case (THREE_D_MODEL )
 
