@@ -28,8 +28,10 @@
 ! United States and French Government Sponsorship Acknowledged.
 
 ! preprocessing definition: #define _HANDOPT :  turns hand-optimized code on
-!                                         #undef _HANDOPT :  turns hand-optimized code off
+!                           #undef  _HANDOPT :  turns hand-optimized code off
 ! or compile with: -D_HANDOPT
+! (with the IBM xlf compiler, change this to -WF,-D_HANDOPT )
+!
 !#define _HANDOPT
 
 ! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
