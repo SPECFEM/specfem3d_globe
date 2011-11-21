@@ -286,19 +286,18 @@ accepts the following options:
 
 \begin{description}
 \item [{\texttt{-{}-enable-double-precision}}] The package can run either
-in single or in double precision. The default is single precision
-mode because this requires exactly half as much memory. To specify
+in single or in double precision mode. The default is single precision
+because for almost all calculations performed using the spectral-element method
+using single precision is sufficient and gives the same results (i.e. the same seismograms);
+and the single precision code is faster and requires exactly half as much memory. To specify
 double precision mode, simply provide \texttt{-{}-enable-double-precision}
-as a command-line argument to \texttt{configure}. On a new system,
-it is definitely worth experimenting with single versus double precision
-simulations to determine which is faster. Note that on many current
-processors (e.g., Intel, AMD, IBM Power), single precision calculations
-are often significantly faster; the difference can typically be 10\%
-to 25\%. It is therefore worth trying single precision if you can.
-We recommend running the same calculation once in single precision
-and in double precision on your system and comparing the seismograms.
-If they are identical, you should probably select single precision
-for your future runs.
+as a command-line argument to \texttt{configure}.
+On many current processors (e.g., Intel, AMD, IBM Power), single precision calculations
+are significantly faster; the difference can typically be 10\%
+to 25\%. It is therefore better to use single precision.
+What you can do once for the physical problem you want to study is run the same calculation in single precision
+and in double precision on your system and compare the seismograms.
+If they are identical (and in most cases they will), you can select single precision for your future runs.
 \item [{\texttt{-{}-help}}] Directs \texttt{configure} to print a usage
 screen which provides a short description of all configuration variables
 and options. Note that the options relating to installation directories
