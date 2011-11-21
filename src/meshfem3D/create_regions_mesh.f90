@@ -30,7 +30,7 @@
                           iproc_xi,iproc_eta,ichunk,nspec,nspec_tiso, &
                           volume_local,area_local_bottom,area_local_top, &
                           nglob_theor,npointot, &
-                          NSTEP,DT,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+                          NSTEP,DT, &
                           NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                           NSPEC2D_BOTTOM,NSPEC2D_TOP, &
@@ -245,8 +245,8 @@
 !   Adding new variables
 
   integer :: NSTEP
+  integer, save :: npoin2D_xi,npoin2D_eta
   double precision :: DT
-  integer :: NGLOB2DMAX_XMIN_XMAX, NGLOB2DMAX_YMIN_YMAX
 
 !///////////////////////////////////////////////////////////////////////////////
 
@@ -719,11 +719,11 @@
     ! arrays locval(npointot) and ifseg(npointot) used to save memory
     call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
                     xstore,ystore,zstore,ifseg,npointot, &
-                    NSPEC2D_ETA_FACE,iregion_code)
+                    NSPEC2D_ETA_FACE,iregion_code,npoin2D_xi)
 
     call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
                     xstore,ystore,zstore,ifseg,npointot, &
-                    NSPEC2D_XI_FACE,iregion_code)
+                    NSPEC2D_XI_FACE,iregion_code,npoin2D_eta)
 
     call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
                     xstore,ystore,zstore,ifseg,npointot, &
@@ -897,9 +897,9 @@
     write(99,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
     write(99,*) 'real(kind=4), parameter :: deltat = ',DT
     write(99,*)
-    write(99,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',NGLOB2DMAX_XMIN_XMAX
-    write(99,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',NGLOB2DMAX_YMIN_YMAX
-    write(99,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(NGLOB2DMAX_XMIN_XMAX, NGLOB2DMAX_YMIN_YMAX)
+    write(99,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',npoin2D_xi
+    write(99,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',npoin2D_eta
+    write(99,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(npoin2D_xi,npoin2D_eta)
     write(99,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
     write(99,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
     write(99,*)
@@ -933,9 +933,9 @@
     write(99,*) '#define NSTEP 1000'
 ! put an "f" at the end to force single precision
     write(99,"('#define deltat ',e18.10,'f')") DT
-    write(99,*) '#define NGLOB2DMAX_XMIN_XMAX ',NGLOB2DMAX_XMIN_XMAX
-    write(99,*) '#define NGLOB2DMAX_YMIN_YMAX ',NGLOB2DMAX_YMIN_YMAX
-    write(99,*) '#define NGLOB2DMAX_ALL ',max(NGLOB2DMAX_XMIN_XMAX, NGLOB2DMAX_YMIN_YMAX)
+    write(99,*) '#define NGLOB2DMAX_XMIN_XMAX ',npoin2D_xi
+    write(99,*) '#define NGLOB2DMAX_YMIN_YMAX ',npoin2D_eta
+    write(99,*) '#define NGLOB2DMAX_ALL ',max(npoin2D_xi,npoin2D_eta)
     write(99,*) '#define NPROC_XI ',NPROC_XI
     write(99,*) '#define NPROC_ETA ',NPROC_ETA
     write(99,*)

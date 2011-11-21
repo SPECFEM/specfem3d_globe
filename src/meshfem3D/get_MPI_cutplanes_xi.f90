@@ -27,7 +27,7 @@
 
   subroutine get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
                         xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC2D_ETA_FACE,iregion)
+                        NSPEC2D_ETA_FACE,iregion,npoin2D_xi)
 
 ! this routine detects cut planes along xi
 ! In principle the left cut plane of the first slice
