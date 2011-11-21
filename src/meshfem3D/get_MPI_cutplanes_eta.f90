@@ -27,7 +27,7 @@
 
   subroutine get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
                         xstore,ystore,zstore,mask_ibool,npointot, &
-                        NSPEC2D_XI_FACE,iregion)
+                        NSPEC2D_XI_FACE,iregion,npoin2D_eta)
 
 ! this routine detects cut planes along eta
 ! In principle the left cut plane of the first slice
