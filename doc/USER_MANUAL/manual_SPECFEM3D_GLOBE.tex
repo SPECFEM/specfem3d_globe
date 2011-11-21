@@ -351,6 +351,9 @@ to the compiler options otherwise the compiler will display an error
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
 on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.\\
 
+If you run scaling benchmarks of the code, for instance to measure its performance on a new machine, and are not interested in the physical results
+(the seismograms) for these runs, you can set \texttt{DO\_BENCHMARK\_RUN\_ONLY} to \texttt{.true.} in file \texttt{setup/constants.h.in} before running the \texttt{configure} script.
+
 Finally, before compiling, make sure that the subdirectories \texttt{obj},
 \texttt{bak} and \texttt{OUTPUT\_FILES} exist within the directory
 with the source code (\texttt{SPECFEM3D\_GLOBE\_V5.1.1}). The \texttt{go\_mesher}

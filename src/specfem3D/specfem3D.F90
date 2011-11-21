@@ -1778,6 +1778,22 @@
     displ_inner_core(:,:) = VERYSMALLVAL
   endif
 
+! if doing benchmark runs to measure scaling of the code,
+! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
+  if (DO_BENCHMARK_RUN_ONLY) then
+    displ_crust_mantle(:,:) = 1._CUSTOM_REAL
+    veloc_crust_mantle(:,:) = 1._CUSTOM_REAL
+    accel_crust_mantle(:,:) = 1._CUSTOM_REAL
+
+    displ_outer_core(:) = 1._CUSTOM_REAL
+    veloc_outer_core(:) = 1._CUSTOM_REAL
+    accel_outer_core(:) = 1._CUSTOM_REAL
+
+    displ_inner_core(:,:) = 1._CUSTOM_REAL
+    veloc_inner_core(:,:) = 1._CUSTOM_REAL
+    accel_inner_core(:,:) = 1._CUSTOM_REAL
+  endif
+
   if (SIMULATION_TYPE == 3) then
     rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
