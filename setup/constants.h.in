@@ -311,12 +311,17 @@
 ! can be useful for benchmarks of a spherical Earth with fictitious sources and stations
   logical, parameter :: ASSUME_PERFECT_SPHERE = .false.
 
+! flags to do benchmark runs to measure scaling of the code
+! for a limited number of time steps only, setting the initial field to 1
+! to make sure gradual underflow trapping does not slow down the code
+  logical, parameter :: DO_BENCHMARK_RUN_ONLY = .false.
+  integer, parameter :: NSTEP_FOR_BENCHMARK = 300
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------
 !------------------------------------------------------
 
-! on some processors (e.g. Pentiums) it is necessary to suppress underflows
+! on some processors (e.g. some Intel chips) it is necessary to suppress underflows
 ! by using a small initial field instead of zero
   logical, parameter :: FIX_UNDERFLOW_PROBLEM = .true.
 

@@ -225,15 +225,16 @@
   ! compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
 
+! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
+  if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
+
 !<YANGL
   if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1   ! time steps needs to be doubled, due to +/- branches
 !>YANGL
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
-  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) then
-    NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-  endif
+  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
 
   ! computes a default hdur_movie that creates nice looking movies.
   ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
