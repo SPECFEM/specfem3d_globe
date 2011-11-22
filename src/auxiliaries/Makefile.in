@@ -44,9 +44,12 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = -I../../setup @CPPFLAGS@
 
-AR = ar
-ARFLAGS = cru
-RANLIB = ranlib
+#AR = ar
+#ARFLAGS = cru
+#RANLIB = ranlib
+AR = @AR@
+ARFLAGS = @ARFLAGS@
+RANLIB = @RANLIB@
 
 ## compilation directories
 # E : executables directory

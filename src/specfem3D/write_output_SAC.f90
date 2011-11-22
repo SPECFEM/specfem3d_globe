@@ -74,6 +74,7 @@
   logical OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY
 
   real(kind=CUSTOM_REAL) phi
+  double precision :: phi_dble
 
 ! local parameters
   integer time_sec,isample
@@ -251,10 +252,11 @@
     CMPAZ  = 0.00
     CMPINC = 0.00
   else if(iorientation == 4) then !R
-    CMPAZ = modulo(phi,360.) ! phi is calculated above (see call distaz())
+    phi_dble = phi
+    CMPAZ = sngl(modulo(phi_dble,360.d0)) ! phi is calculated above (see call distaz())
     CMPINC =90.00
   else if(iorientation == 5) then !T
-    CMPAZ = modulo(phi+90.,360.) ! phi is calculated above (see call distaz())
+    CMPAZ = sngl(modulo(phi_dble+90.d0,360.d0)) ! phi is calculated above (see call distaz())
     CMPINC =90.00
   endif
   !----------------end format G15.7--------
