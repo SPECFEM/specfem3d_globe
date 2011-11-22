@@ -177,9 +177,11 @@ case $FC in
         #
         if test x"$FLAGS_NO_CHECK" = x; then
 # deleted -qxflag=dvz because it requires handler function __xl_dzx and thus linking will fail 
-            FLAGS_NO_CHECK="-O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=90pure -qsuppress=1518-317 -qflttrap=overflow:zerodivide:invalid:enable -qfloat=nans -qinitauto=7FBFFFFF -Q -Q+rank,swap_all"
-        # on MareNostrum at the Barcelona SuperComputing Center (Spain) one can use
+            FLAGS_NO_CHECK="-O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=90pure -qsuppress=1518-317 -qflttrap=overflow:zerodivide:invalid:enable -qfloat=nans -qinitauto=7FBFFFFF -Q -Q+rank,swap_all -Wl,-relax"
+        # on "MareNostrum" IBM at the Barcelona SuperComputing Center (Spain) use:
         # -qtune=ppc970 -qarch=ppc64v instead of -qtune=auto -qarch=auto
+        # on "Babel" IBM BlueGene at IDRIS (France) use:
+        # -qtune=auto -qarch=450d instead of -qtune=auto -qarch=auto
         fi
         if test x"$FLAGS_CHECK" = x; then
         #
@@ -221,5 +223,15 @@ echo MPILIBS=\"$MPILIBS\" | sed 's/\$/\\\$/g'
 echo FLAGS_CHECK=\"$FLAGS_CHECK\" | sed 's/\$/\\\$/g'
 echo FLAGS_NO_CHECK=\"$FLAGS_NO_CHECK\" | sed 's/\$/\\\$/g'
 echo FCENV=\"$FCENV\" | sed 's/\$/\\\$/g'
+
+# added by DK to make the IDRIS modifications below work
+AR="ar"
+RANLIB="ranlib"
+ARFLAGS="cru"
+
+# Added by IDRIS to crosscompile on BlueGene/P.
+echo AR=\"$AR\" | sed 's/\$/\\\$/g'
+echo ARFLAGS=\"$ARFLAGS\" | sed 's/\$/\\\$/g'
+echo RANLIB=\"$RANLIB\" | sed 's/\$/\\\$/g'
 
 # end of file
