@@ -1780,7 +1780,7 @@
 
 ! if doing benchmark runs to measure scaling of the code,
 ! set the initial field to 1 to make sure gradual underflow trapping does not slow down the code
-  if (DO_BENCHMARK_RUN_ONLY) then
+  if (DO_BENCHMARK_RUN_ONLY .and. SET_INITIAL_FIELD_TO_1_IN_BENCH) then
     displ_crust_mantle(:,:) = 1._CUSTOM_REAL
     veloc_crust_mantle(:,:) = 1._CUSTOM_REAL
     accel_crust_mantle(:,:) = 1._CUSTOM_REAL
