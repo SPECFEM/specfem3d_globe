@@ -341,7 +341,8 @@ to insert ``\texttt{TRAP\_FPE=OFF}'' into the generated \texttt{Makefile}
 in order to turn underflow trapping off.\\
 
 Some do-loops have been modified using a common technique to help compilers enhance pipelining and make better use
-of the cache. If you want to use these hand-optimized loops, add an additional flag ``\texttt{-D\_HANDOPT}'' to your compiler options.\\
+of the cache. If you want to use these hand-optimized loops, add an additional flag ``\texttt{-D\_HANDOPT}'' to your compiler options
+(with the IBM xlf compiler, change this to ``\texttt{-WF,-D\_HANDOPT}'').\\
 
 If you run very large meshes on a relatively small number
 of processors, the memory size needed on each processor might become
