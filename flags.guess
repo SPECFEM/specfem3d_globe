@@ -224,12 +224,12 @@ echo FLAGS_CHECK=\"$FLAGS_CHECK\" | sed 's/\$/\\\$/g'
 echo FLAGS_NO_CHECK=\"$FLAGS_NO_CHECK\" | sed 's/\$/\\\$/g'
 echo FCENV=\"$FCENV\" | sed 's/\$/\\\$/g'
 
-# added by DK to make the IDRIS modifications below work
-AR="ar"
-RANLIB="ranlib"
-ARFLAGS="cru"
+# Added by IDRIS: set to default values if not passed as arguments
+if [ "X${AR}" == "X" ]; then AR="ar"; fi
+if [ "X${RANLIB}" == "X" ]; then RANLIB="ranlib"; fi
+if [ "X${ARFLAGS}" == "X" ]; then ARFLAGS="cru"; fi
 
-# Added by IDRIS to crosscompile on BlueGene/P.
+# Added by IDRIS to crosscompile on BlueGene/P
 echo AR=\"$AR\" | sed 's/\$/\\\$/g'
 echo ARFLAGS=\"$ARFLAGS\" | sed 's/\$/\\\$/g'
 echo RANLIB=\"$RANLIB\" | sed 's/\$/\\\$/g'
