@@ -33,7 +33,7 @@ case $FC in
             FLAGS_NO_CHECK="-O3 -xSSE4.2 -ftz -funroll-loops -unroll5 -fpe0 -ftz -align sequence -assume byterecl -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds" # -mcmodel=medium
         fi
         # useful for debugging...
-            # for debugging: change -check nobounds to -check all and add -debug -g -O0 -fp-stack-check -traceback -ftrapuv
+            # for debugging: change -check nobounds to -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
         #if test x"$FLAGS_CHECK" = x; then
         #    # without -e95
         #    FLAGS_CHECK="-O3 -check nobounds -fpe0 -ftz -traceback -ftrapuv -align sequence -assume byterecl -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage" # -mcmodel=medium
