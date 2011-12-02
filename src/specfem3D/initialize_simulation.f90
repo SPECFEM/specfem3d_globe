@@ -44,7 +44,7 @@
                 SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT, &
                 OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                 ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
-                LOCAL_PATH,OUTPUT_FILES, &
+                LOCAL_PATH,MODEL,OUTPUT_FILES, &
                 ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
                 this_region_has_a_doubling,rmins,rmaxs, &
                 TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST, &
@@ -149,7 +149,6 @@
     HETEROGEN_3D_MANTLE,CRUSTAL,INFLATE_CENTRAL_CUBE
   character(len=150) :: MODEL,dummystring
   integer, external :: err_occurred
-
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
   ! as usual in MPI, process 0 is in charge of coordinating everything
@@ -233,7 +232,6 @@
                 HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
                 ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY)
-
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 

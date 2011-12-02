@@ -826,7 +826,7 @@
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
 
 !  logical COMPUTE_AND_STORE_STRAIN
 
@@ -982,7 +982,7 @@
                 SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT, &
                 OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                 ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
-                LOCAL_PATH,OUTPUT_FILES, &
+                LOCAL_PATH,MODEL,OUTPUT_FILES, &
                 ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
                 this_region_has_a_doubling,rmins,rmaxs, &
                 TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST, &
@@ -994,7 +994,6 @@
                 hprimewgll_xx,hprimewgll_yy,hprimewgll_zz,hprimewgll_xxT, &
                 wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
                 rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY)
-
 !
 !-------------------------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------------------------
@@ -3961,7 +3960,7 @@
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
             OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
             seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
-            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL)
       if(myrank==0) then
         write(IMAIN,*)
         write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1

@@ -35,7 +35,7 @@
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
             OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
             seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER,&
-            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE)
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL)
 
  implicit none
 
@@ -75,7 +75,7 @@
 
  integer msg_status(MPI_STATUS_SIZE)
 
- character(len=150) OUTPUT_FILES
+ character(len=150) OUTPUT_FILES, MODEL
 
 ! new flags to decide on seismogram type BS BS 06/2007
   logical OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
@@ -151,7 +151,7 @@
                              OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
                              OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
                              NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
-                             SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
+                             SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL,myrank)
 
     enddo
 
@@ -235,7 +235,7 @@
                                        OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
                                        OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
                                        NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,&
-                                       SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
+                                       SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL,myrank)
            enddo
          endif
        enddo
@@ -288,7 +288,7 @@
               OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
               OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT, &
               NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
-              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,myrank)
+              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL,myrank)
 
   implicit none
 
@@ -325,6 +325,7 @@
   integer yr,jda,ho,mi
   double precision sec
   character(len=20) event_name
+  character(len=150) MODEL
 
   ! flags to determine seismogram type
   logical OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
@@ -449,7 +450,7 @@
               yr,jda,ho,mi,sec,tshift_cmt,t_shift,&
               elat,elon,depth,event_name,cmt_lat,cmt_lon,cmt_depth,cmt_hdur, &
               OUTPUT_FILES, &
-              OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+              OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,MODEL, &
               NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
               iorientation,phi,chn,sisname)
 
