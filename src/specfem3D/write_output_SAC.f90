@@ -31,7 +31,7 @@
               yr,jda,ho,mi,sec,tshift_cmt,t_shift,&
               elat,elon,depth,event_name,cmt_lat,cmt_lon,cmt_depth,cmt_hdur, &
               OUTPUT_FILES, &
-              OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+              OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, MODEL, &
               NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current, &
               iorientation,phi,chn,sisname)
 
@@ -61,7 +61,7 @@
 
   character(len=4) chn
   character(len=256) sisname
-  character(len=150) OUTPUT_FILES
+  character(len=150) OUTPUT_FILES,MODEL
 
   double precision tshift_cmt,t_shift,elat,elon,depth
   double precision cmt_lat,cmt_lon,cmt_depth,cmt_hdur
@@ -112,6 +112,7 @@
   character(len=16) KEVNM
   character(len=8) KCMPNM
   character(len=8) KNETWK
+  character(len=8) KHOLE
   character(len=8) KUSER0,KUSER1,KUSER2
   character(len=8), parameter :: str_undef='-12345  '
 
@@ -334,10 +335,18 @@
   KCMPNM = chn(1:3)           ! 3A8
   KNETWK = network_name(irec) !  A6
 
+  ! KHOLE slot represents SEED location IDs. Based on the IRIS convention, S1 and S3 are assigned to 1D and 3D seismograms, respectively.
+  ! If a model is a combination of 1D and 3D models (e.g., 3D mantle with 1D crust), it will be considered as 3D. 
+  ! Currently, the decision is made based on model names given in Par_file assuming that all 1D model names start with "1D". 
+  ! Ebru, December 1, 2011  
+
+  KHOLE = 'S3'
+  if(trim(MODEL(1:2)) == "1D") KHOLE = 'S1'
+
   ! indicates SEM synthetics
   ! by Ebru
-  KUSER0 = 'SEM'          !  A8
-  KUSER1 = 'v5.1.1'
+  KUSER0 = 'SY'          ! Network code assigned by IRIS for synthetic seismograms 
+  KUSER1 = 'SEM5.1.1'
   KUSER2 = 'Tiger' ! aka. awesome (princeton) tiger version :)
 
   !KUSER0 = 'PDE_LAT_'          !  A8
@@ -426,7 +435,7 @@
       !                                   KUSER1     KUSER2       KCMPNM
       !                                   KNETWK   KDATRD   KINST
       !
-      write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
+      write(IOUT_SAC,540) KHOLE,'-12345  ','-12345  '
       write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
       write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
       write(IOUT_SAC,540) '-12345  ','-12345  ','-12345  '
@@ -590,7 +599,7 @@
       ! write character header variables 111:302
       call write_character(KSTNM,8)         !(111:118)
       call write_character(KEVNM,16)         !(119:134)
-      call write_character(str_undef,8)      !(135:142)KHOLE
+      call write_character(KHOLE,8)          !(135:142)KHOLE
       call write_character(str_undef,8)      !(143:150)KO
       call write_character(str_undef,8)      !(151:158)KA
       call write_character(str_undef,8)      !(159:166)KT0
