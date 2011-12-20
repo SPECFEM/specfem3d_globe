@@ -459,6 +459,11 @@
   ! total number of messages corresponding to these common faces
   NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
 
+  ! debug checks with compiled value
+  !if( NUMMSGS_FACES /= NUMMSGS_FACES_VAL ) then
+  !  print*,'check: NUMMSGS_FACES',NUMMSGS_FACES,NUMMSGS_FACES_VAL
+  !  stop 'error NUMMSGS_FACES_VAL, please recompile solver'
+  !endif
 
   ! read 2-D addressing for summation between slices with MPI
 

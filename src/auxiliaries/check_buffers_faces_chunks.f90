@@ -236,17 +236,17 @@
 
 ! check all the points based upon their coordinates
   do ipoin2D = 1,npoin2D_sender
-  read(34,*) iboolsend,xsend,ysend,zsend
-  read(35,*) iboolreceive,xreceive,yreceive,zreceive
+    read(34,*) iboolsend,xsend,ysend,zsend
+    read(35,*) iboolreceive,xreceive,yreceive,zreceive
 
-  diff = dmax1(dabs(xsend-xreceive),dabs(ysend-yreceive),dabs(zsend-zreceive))
-  if(diff > 0.0000001d0) then
-    print *,'different : ',ipoin2D,iboolsend,iboolreceive,diff
-    print *,'xsend,xreceive = ',xsend,xreceive
-    print *,'ysend,yreceive = ',ysend,yreceive
-    print *,'zsend,zreceive = ',zsend,zreceive
-    stop 'error: different'
-  endif
+    diff = dmax1(dabs(xsend-xreceive),dabs(ysend-yreceive),dabs(zsend-zreceive))
+    if(diff > 0.0000001d0) then
+      print *,'different : ',ipoin2D,iboolsend,iboolreceive,diff
+      print *,'xsend,xreceive = ',xsend,xreceive
+      print *,'ysend,yreceive = ',ysend,yreceive
+      print *,'zsend,zreceive = ',zsend,zreceive
+      stop 'error: different'
+    endif
 
   enddo
 
