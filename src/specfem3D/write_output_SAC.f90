@@ -335,19 +335,21 @@
   KCMPNM = chn(1:3)           ! 3A8
   KNETWK = network_name(irec) !  A6
 
-  ! KHOLE slot represents SEED location IDs. Based on the IRIS convention, S1 and S3 are assigned to 1D and 3D seismograms, respectively.
-  ! If a model is a combination of 1D and 3D models (e.g., 3D mantle with 1D crust), it will be considered as 3D. 
-  ! Currently, the decision is made based on model names given in Par_file assuming that all 1D model names start with "1D". 
-  ! Ebru, December 1, 2011  
+  ! KHOLE slot represents SEED location IDs.
+  ! Based on the IRIS convention, S1 and S3 are assigned to 1D and 3D seismograms, respectively.
+  ! If a model is a combination of 1D and 3D models (e.g., 3D mantle with 1D crust), it will be considered as 3D.
+  ! Currently, the decision is made based on model names given in Par_file assuming that
+  ! all 1D model names start with "1D".
+  ! Ebru, December 1, 2011
 
   KHOLE = 'S3'
   if(trim(MODEL(1:2)) == "1D") KHOLE = 'S1'
 
   ! indicates SEM synthetics
   ! by Ebru
-  KUSER0 = 'SY'          ! Network code assigned by IRIS for synthetic seismograms 
-  KUSER1 = 'SEM5.1.1'
-  KUSER2 = 'Tiger' ! aka. awesome (princeton) tiger version :)
+  KUSER0 = 'SY'          ! Network code assigned by IRIS for synthetic seismograms
+  KUSER1 = 'SEM5.1.2'
+  KUSER2 = 'Tiger'       ! year of the tiger version :)
 
   !KUSER0 = 'PDE_LAT_'          !  A8
   !KUSER1 = 'PDE_LON_'          !  A8

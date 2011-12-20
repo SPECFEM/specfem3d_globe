@@ -461,14 +461,15 @@
 
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-  if(myrank==iprocto_faces(imsg)) then
-    sender = iprocfrom_faces(imsg)
+    if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+
+    if(myrank==iprocto_faces(imsg)) then
+      sender = iprocfrom_faces(imsg)
 
 ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-    npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
+      npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
 
-    call MPI_IRECV(buffer_received_faces_vector(1,1,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
+      call MPI_IRECV(buffer_received_faces_vector(1,1,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,sender, &
               itag,MPI_COMM_WORLD,request_receive_array(icount_faces),ier)
 
 !   do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
@@ -495,7 +496,7 @@
 !          buffer_received_faces_vector(3,ioffset + ipoin2D,icount_faces)
 !   enddo
 
-  endif
+    endif
   enddo
 
 !---- put slices in send mode
@@ -503,6 +504,7 @@
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
   if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
+
   if(myrank==iprocfrom_faces(imsg)) then
     receiver = iprocto_faces(imsg)
 
@@ -510,18 +512,24 @@
     npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
 
     do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
-      buffer_send_faces_vector(1,ipoin2D,icount_faces) = accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-      buffer_send_faces_vector(2,ipoin2D,icount_faces) = accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-      buffer_send_faces_vector(3,ipoin2D,icount_faces) = accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(1,ipoin2D,icount_faces) = &
+        accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(2,ipoin2D,icount_faces) = &
+        accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(3,ipoin2D,icount_faces) = &
+        accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces))
     enddo
 
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
     ioffset = npoin2D_faces_crust_mantle(icount_faces)
 
     do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
-      buffer_send_faces_vector(1,ioffset + ipoin2D,icount_faces) = accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces))
-      buffer_send_faces_vector(2,ioffset + ipoin2D,icount_faces) = accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces))
-      buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(1,ioffset + ipoin2D,icount_faces) = &
+        accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(2,ioffset + ipoin2D,icount_faces) = &
+        accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = &
+        accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
     call MPI_ISEND(buffer_send_faces_vector(1,1,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
@@ -561,11 +569,14 @@
 
     do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
       accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
-         accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(1,ipoin2D,icount_faces)
+         accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) &
+         + buffer_received_faces_vector(1,ipoin2D,icount_faces)
       accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
-         accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(2,ipoin2D,icount_faces)
+         accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) &
+         + buffer_received_faces_vector(2,ipoin2D,icount_faces)
       accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
-         accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) + buffer_received_faces_vector(3,ipoin2D,icount_faces)
+         accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) &
+         + buffer_received_faces_vector(3,ipoin2D,icount_faces)
     enddo
 
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
@@ -638,18 +649,24 @@
     npoin2D_chunks_all = npoin2D_faces_crust_mantle(icount_faces) + npoin2D_faces_inner_core(icount_faces)
 
     do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
-      buffer_send_faces_vector(1,ipoin2D,icount_faces) = accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-      buffer_send_faces_vector(2,ipoin2D,icount_faces) = accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces))
-      buffer_send_faces_vector(3,ipoin2D,icount_faces) = accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(1,ipoin2D,icount_faces) = &
+        accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(2,ipoin2D,icount_faces) = &
+        accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces))
+      buffer_send_faces_vector(3,ipoin2D,icount_faces) = &
+        accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces))
     enddo
 
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
     ioffset = npoin2D_faces_crust_mantle(icount_faces)
 
     do ipoin2D = 1,npoin2D_faces_inner_core(icount_faces)
-      buffer_send_faces_vector(1,ioffset + ipoin2D,icount_faces) = accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces))
-      buffer_send_faces_vector(2,ioffset + ipoin2D,icount_faces) = accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces))
-      buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(1,ioffset + ipoin2D,icount_faces) = &
+        accel_inner_core(1,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(2,ioffset + ipoin2D,icount_faces) = &
+        accel_inner_core(2,iboolfaces_inner_core(ipoin2D,icount_faces))
+      buffer_send_faces_vector(3,ioffset + ipoin2D,icount_faces) = &
+        accel_inner_core(3,iboolfaces_inner_core(ipoin2D,icount_faces))
     enddo
 
     call MPI_ISEND(buffer_send_faces_vector(1,1,icount_faces),NDIM*npoin2D_chunks_all,CUSTOM_MPI_TYPE,receiver,itag, &
@@ -687,9 +704,12 @@
   if(myrank==iprocfrom_faces(imsg) .or. myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
   if(myrank==iprocfrom_faces(imsg)) then
     do ipoin2D = 1,npoin2D_faces_crust_mantle(icount_faces)
-      accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(1,ipoin2D,icount_faces)
-      accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(2,ipoin2D,icount_faces)
-      accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = buffer_received_faces_vector(3,ipoin2D,icount_faces)
+      accel_crust_mantle(1,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
+        buffer_received_faces_vector(1,ipoin2D,icount_faces)
+      accel_crust_mantle(2,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
+        buffer_received_faces_vector(2,ipoin2D,icount_faces)
+      accel_crust_mantle(3,iboolfaces_crust_mantle(ipoin2D,icount_faces)) = &
+        buffer_received_faces_vector(3,ipoin2D,icount_faces)
     enddo
 
 ! the buffer for the inner core starts right after the buffer for the crust and mantle
@@ -811,15 +831,21 @@
     receiver = iproc_master_corners(imsg)
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
-      buffer_send_chunkcorn_vector(1,ipoin1D) = accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners))
-      buffer_send_chunkcorn_vector(2,ipoin1D) = accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners))
-      buffer_send_chunkcorn_vector(3,ipoin1D) = accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(1,ipoin1D) = &
+        accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(2,ipoin1D) = &
+        accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(3,ipoin1D) = &
+        accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners))
     enddo
 
     do ipoin1D = 1,NGLOB1D_RADIAL_inner_core
-      buffer_send_chunkcorn_vector(1,ioffset + ipoin1D) = accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners))
-      buffer_send_chunkcorn_vector(2,ioffset + ipoin1D) = accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners))
-      buffer_send_chunkcorn_vector(3,ioffset + ipoin1D) = accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(1,ioffset + ipoin1D) = &
+        accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(2,ioffset + ipoin1D) = &
+        accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(3,ioffset + ipoin1D) = &
+        accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners))
     enddo
 
     call MPI_SEND(buffer_send_chunkcorn_vector,NDIM*NGLOB1D_RADIAL_all,CUSTOM_MPI_TYPE,receiver,itag,MPI_COMM_WORLD,ier)
@@ -841,15 +867,21 @@
           CUSTOM_MPI_TYPE,sender,itag,MPI_COMM_WORLD,msg_status,ier)
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
-      accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(1,ipoin1D)
-      accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(2,ipoin1D)
-      accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(3,ipoin1D)
+      accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
+        buffer_recv_chunkcorn_vector(1,ipoin1D)
+      accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
+        buffer_recv_chunkcorn_vector(2,ipoin1D)
+      accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners)) = &
+        buffer_recv_chunkcorn_vector(3,ipoin1D)
     enddo
 
     do ipoin1D = 1,NGLOB1D_RADIAL_inner_core
-      accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(1,ioffset + ipoin1D)
-      accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(2,ioffset + ipoin1D)
-      accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_vector(3,ioffset + ipoin1D)
+      accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners)) = &
+        buffer_recv_chunkcorn_vector(1,ioffset + ipoin1D)
+      accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners)) = &
+        buffer_recv_chunkcorn_vector(2,ioffset + ipoin1D)
+      accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners)) = &
+        buffer_recv_chunkcorn_vector(3,ioffset + ipoin1D)
     enddo
 
   endif
@@ -858,15 +890,21 @@
   if(myrank==iproc_master_corners(imsg)) then
 
     do ipoin1D = 1,NGLOB1D_RADIAL_crust_mantle
-      buffer_send_chunkcorn_vector(1,ipoin1D) = accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners))
-      buffer_send_chunkcorn_vector(2,ipoin1D) = accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners))
-      buffer_send_chunkcorn_vector(3,ipoin1D) = accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(1,ipoin1D) = &
+        accel_crust_mantle(1,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(2,ipoin1D) = &
+        accel_crust_mantle(2,iboolcorner_crust_mantle(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(3,ipoin1D) = &
+        accel_crust_mantle(3,iboolcorner_crust_mantle(ipoin1D,icount_corners))
     enddo
 
     do ipoin1D = 1,NGLOB1D_RADIAL_inner_core
-      buffer_send_chunkcorn_vector(1,ioffset + ipoin1D) = accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners))
-      buffer_send_chunkcorn_vector(2,ioffset + ipoin1D) = accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners))
-      buffer_send_chunkcorn_vector(3,ioffset + ipoin1D) = accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(1,ioffset + ipoin1D) = &
+        accel_inner_core(1,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(2,ioffset + ipoin1D) = &
+        accel_inner_core(2,iboolcorner_inner_core(ipoin1D,icount_corners))
+      buffer_send_chunkcorn_vector(3,ioffset + ipoin1D) = &
+        accel_inner_core(3,iboolcorner_inner_core(ipoin1D,icount_corners))
     enddo
 
 ! send to worker #1

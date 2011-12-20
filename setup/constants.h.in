@@ -54,7 +54,7 @@
 !*********************************************************************************************************
 ! added these parameters for the future GPU version of the solver with mesh coloring
 
-! sort outer elements first and then inner elements 
+! sort outer elements first and then inner elements
 ! in order to use non blocking MPI to overlap communications
   logical, parameter :: SORT_MESH_INNER_OUTER = .true.
 
