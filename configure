@@ -5043,7 +5043,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 # Checks for library functions.
 
 
-ac_config_files="$ac_config_files Makefile src/auxiliaries/Makefile src/meshfem3D/Makefile src/specfem3D/Makefile src/create_header_file/Makefile setup/constants.h setup/precision.h DATA/Par_file DATA/CMTSOLUTION DATA/STATIONS"
+ac_config_files="$ac_config_files Makefile src/auxiliaries/Makefile src/meshfem3D/Makefile src/specfem3D/Makefile src/create_header_file/Makefile setup/constants.h setup/precision.h"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5742,9 +5742,6 @@ do
     "src/create_header_file/Makefile") CONFIG_FILES="$CONFIG_FILES src/create_header_file/Makefile" ;;
     "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
     "setup/precision.h") CONFIG_FILES="$CONFIG_FILES setup/precision.h" ;;
-    "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file" ;;
-    "DATA/CMTSOLUTION") CONFIG_FILES="$CONFIG_FILES DATA/CMTSOLUTION" ;;
-    "DATA/STATIONS") CONFIG_FILES="$CONFIG_FILES DATA/STATIONS" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5 ;;
   esac
