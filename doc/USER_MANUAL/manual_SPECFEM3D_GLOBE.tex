@@ -272,14 +272,15 @@ MPI compiler command for your system:
 \item [{\texttt{FLAGS\_CHECK}}] Compiler flags for non-critical subroutines.
 \item [{\texttt{FLAGS\_NO\_CHECK}}] Compiler flags for creating fast, production-run
 code for critical subroutines.
-\item [{\texttt{LOCAL\_PATH\_IS\_ALSO\_GLOBAL}}] Set to \texttt{.false.}
-on most cluster applications. For reasons of speed, the (parallel)
-mesher typically writes a (parallel) database for the solver on the
-local disks of the compute nodes. Some systems have no local disks
-(e.g., BlueGene or the Earth Simulator) and other systems have a fast
-parallel file system, in which case this variable should be set to
-\texttt{.true.}. Note that this flag is not used by the mesher or
-the solver; it is only used for some of the post-processing.
+\item [{\texttt{LOCAL\_PATH\_IS\_ALSO\_GLOBAL}}] 
+If you want the parallel mesher to write a parallel (i.e., split) database for the solver on the
+local disks of each of the compute nodes, set this flag to \texttt{.false.}.
+Some systems have no local disks
+(e.g., BlueGene) and other systems have a fast
+parallel file system (LUSTRE, GPFS) that is easy and reliable to use, in which case this variable should be set to
+\texttt{.true.}. Note that this flag is not used by the mesher nor
+the solver; it is only used for some of the (optional) post-processing.
+If you do not know what is best on your system, setting it to \texttt{.true.} is usually fine; or else, ask your system administrator.
 \end{description}
 In addition to reading configuration variables, \texttt{configure}
 accepts the following options:
