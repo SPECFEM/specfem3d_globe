@@ -66,8 +66,8 @@
 !*********************************************************************************************************
 
 ! if files on a local path on each node are also seen as global with same path
-! set to .true. typically on a shared-memory machine with a common file system
-! set to .false. typically on a cluster of nodes with local disks
+! set to .true. typically on a machine with a common (shared) file system, e.g. LUSTRE, GPFS or NFS-mounted /home
+! set to .false. typically on a cluster of nodes with local disks used to store the mesh (not very common these days)
 ! if running on a cluster of nodes with local disks, also customize global path
 ! to local files in create_serial_name_database.f90 ("20 format ...")
 ! Flag is used only when one checks the mesh with the serial codes
