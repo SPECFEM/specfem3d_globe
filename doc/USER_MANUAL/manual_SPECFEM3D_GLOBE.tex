@@ -274,8 +274,13 @@ in order to turn underflow trapping off.\\
 
 Some do-loops have been modified using a common technique to help compilers enhance pipelining and make better use
 of the cache. If you want to use these hand-optimized loops, add an additional flag ``\texttt{-D\_HANDOPT}'' to your compiler options
-(with the IBM xlf compiler, change this to ``\texttt{-WF,-D\_HANDOPT}''). Use this option only if you know what you are doing, i.e., compare the seismograms
-obtained with and without this option on your machine and make sure they are all identical down to roundoff noise.\\
+(with the IBM xlf compiler, change this to ``\texttt{-WF,-D\_HANDOPT}'').
+BEWARE: we have observed that using \_HANDOPT in combination with -O3 or higher can lead to problems on some machines;
+Thus, use this option only if you know what you are doing.
+At the very least, run the same test simulation once with \_HANDOPT and once without
+and make sure that all the seismograms you get (after convolution with a source time function, otherwise the raw seismograms before
+convolution are too sensitive to roundoff noise) are the same down to roundoff noise.
+You can do this for instance with the example given in EXAMPLES/small\_benchmark\_run\_to\_test\_a\_new\_machine.
 
 If you run very large meshes on a relatively small number
 of processors, the memory size needed on each processor might become
