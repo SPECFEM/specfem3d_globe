@@ -34,6 +34,12 @@
 !
 !#define _HANDOPT
 
+! BEWARE:
+! BEWARE: we have observed that using _HANDOPT in combination with -O3 or higher can lead to problems on some machines;
+! BEWARE: thus, be careful when using it. At the very least, run the same test simulation once with _HANDOPT and once without
+! BEWARE: and make sure that all the seismograms you get are the same down to roundoff noise.
+! BEWARE:
+
 ! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
 !          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
