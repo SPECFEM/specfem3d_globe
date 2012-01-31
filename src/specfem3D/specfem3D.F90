@@ -4429,12 +4429,21 @@
       call close_file_abs(8)
     endif
 
+    ! frees memory
+    deallocate(absorb_xmin_crust_mantle5, &
+              absorb_xmax_crust_mantle5, &
+              absorb_ymin_crust_mantle5, &
+              absorb_ymax_crust_mantle5, &
+              absorb_xmin_outer_core, &
+              absorb_xmax_outer_core, &
+              absorb_ymin_outer_core, &
+              absorb_ymax_outer_core, &
+              absorb_zmin_outer_core)    
   endif
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
   if (NOISE_TOMOGRAPHY/=0) then
     call close_file_abs(9)
-    deallocate(noise_surface_movie)
   endif
 
 
@@ -4509,6 +4518,111 @@
   if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
     call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
                                 nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
+  endif
+
+  ! frees dynamically allocated memory
+  ! mpi buffers
+  deallocate(buffer_send_faces, &
+            buffer_received_faces, &
+            b_buffer_send_faces, &
+            b_buffer_received_faces)
+
+  ! central cube buffers
+  deallocate(sender_from_slices_to_cube, &
+            buffer_all_cube_from_slices, &
+            b_buffer_all_cube_from_slices, &
+            buffer_slices, &
+            b_buffer_slices, &
+            buffer_slices2, &
+            ibool_central_cube)
+
+  ! sources
+  deallocate(islice_selected_source, &
+          ispec_selected_source, &
+          Mxx, &
+          Myy, &
+          Mzz, &
+          Mxy, &
+          Mxz, &
+          Myz, &
+          xi_source, &
+          eta_source, &
+          gamma_source, &
+          tshift_cmt, &
+          hdur, &
+          hdur_gaussian, &
+          theta_source, &
+          phi_source, &
+          nu_source)
+  if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    deallocate(iadj_vec)
+    if(nadj_rec_local > 0) then
+      deallocate(adj_sourcearrays)
+      deallocate(iadjsrc,iadjsrc_len)
+    endif
+  endif
+  
+  ! receivers
+  deallocate(islice_selected_rec, &
+          ispec_selected_rec, &
+          xi_receiver, &
+          eta_receiver, &
+          gamma_receiver, &
+          station_name, &
+          network_name, &
+          stlat, &
+          stlon, &
+          stele, &
+          stbur, &
+          nu, &
+          number_receiver_global)
+  if( nrec_local > 0 ) then
+    deallocate(hxir_store, &
+              hetar_store, &
+              hgammar_store)
+    if( SIMULATION_TYPE == 2 ) then
+      deallocate(moment_der,stshift_der)
+    endif
+  endif
+  deallocate(seismograms)
+
+  if (SIMULATION_TYPE == 3) then
+    if( APPROXIMATE_HESS_KL ) then
+      deallocate(hess_kl_crust_mantle)
+    endif
+    deallocate(beta_kl_outer_core)
+  endif
+  
+  ! movies
+  if(MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0 ) then
+    deallocate(store_val_x, &
+              store_val_y, &
+              store_val_z, &
+              store_val_ux, &
+              store_val_uy, &
+              store_val_uz)
+    if (MOVIE_SURFACE) then
+      deallocate(store_val_x_all, &
+            store_val_y_all, &
+            store_val_z_all, &
+            store_val_ux_all, &
+            store_val_uy_all, &
+            store_val_uz_all)
+    endif
+  endif
+  if(MOVIE_VOLUME) then
+    deallocate(nu_3dmovie)
+  endif
+  
+  ! noise simulations
+  if ( NOISE_TOMOGRAPHY /= 0 ) then
+    deallocate(noise_sourcearray, &
+            normal_x_noise, &
+            normal_y_noise, &
+            normal_z_noise, &
+            mask_noise, &
+            noise_surface_movie)
   endif
 
   ! close the main output file
