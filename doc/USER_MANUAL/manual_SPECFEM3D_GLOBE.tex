@@ -253,7 +253,7 @@ compiler and MPI package:
 ./configure~FC=ifort~MPIFC=mpif90
 \end{lyxcode}
 
-Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known problems or things to check are:
+Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 
 \begin{description}
 \item [{\texttt{Intel ifort compiler}}] See if you need to add \texttt{-assume byterecl} for your machine.
@@ -280,7 +280,7 @@ Thus, use this option only if you know what you are doing.
 At the very least, run the same test simulation once with \_HANDOPT and once without
 and make sure that all the seismograms you get (after convolution with a source time function, otherwise the raw seismograms before
 convolution are too sensitive to roundoff noise) are the same down to roundoff noise.
-You can do this for instance with the example given in EXAMPLES/small\_benchmark\_run\_to\_test\_a\_new\_machine.
+You can do this for instance with the example given in EXAMPLES/small\_benchmark\_run\_to\_test\_a\_new\_machine.\\
 
 If you run very large meshes on a relatively small number
 of processors, the memory size needed on each processor might become
