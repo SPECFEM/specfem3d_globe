@@ -27,6 +27,7 @@
 #include "sacio.h"
 #include "config.h"
 
+double const Pi= M_PI; // or: = 4*atan(1);
 
 /* defined in libsac */
 void fft(float *xreal, float *ximag, sac_int_t n, sac_int_t idir);
@@ -217,7 +218,7 @@ main(int argc, char *argv[])
         printf("convolved by a gaussian function with hdur %f\n",hdur);
 
         float alpha = 1. / hdur;
-        float divisor = sqrt(pi);
+        float divisor = sqrt(Pi);
         for (i=0; i<nstf; i++) {
            float tao_i = fabs(i*dt - hstf);
            stf[i] = alpha * exp(- alpha*alpha* tao_i*tao_i) / divisor;
