@@ -33,7 +33,7 @@
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    ibool,idoubling,is_on_a_slice_edge,rmass,rmass_ocean_load,npointot_oceans, &
+                    ibool,idoubling,is_on_a_slice_edge,rmass_and_also_temporary_array,rmass_ocean_load,npointot_oceans, &
                     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
                     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
                     normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
@@ -112,7 +112,10 @@
   logical, dimension(nspec) :: is_on_a_slice_edge
 
 ! mass matrix
-  real(kind=CUSTOM_REAL) rmass(nglob)
+! use rmass_and_also_temporary_array as temporary storage for the rest of this routine
+! once it is written to disk and thus not needed any more;
+! thus use a variable name that underlines this
+  real(kind=CUSTOM_REAL) rmass_and_also_temporary_array(nglob)
 
 ! additional ocean load mass matrix
   real(kind=CUSTOM_REAL) rmass_ocean_load(npointot_oceans)
@@ -265,7 +268,7 @@
   endif
 
 ! mass matrix
-  write(27) rmass
+  write(27) rmass_and_also_temporary_array
 
 ! additional ocean load mass matrix if oceans and if we are in the crust
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(27) rmass_ocean_load
@@ -275,10 +278,10 @@
   open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin',status='unknown',form='unformatted',action='write')
 ! mesh arrays used in the solver to locate source and receivers
 ! and for anisotropy and gravity, save in single precision
-! use rmass for temporary storage to perform conversion, since already saved
+! use rmass_and_also_temporary_array for temporary storage to perform conversion, since already saved
 
 !--- x coordinate
-  rmass(:) = 0._CUSTOM_REAL
+  rmass_and_also_temporary_array(:) = 0._CUSTOM_REAL
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -286,18 +289,18 @@
           iglob = ibool(i,j,k,ispec)
 ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
-            rmass(iglob) = sngl(xstore(i,j,k,ispec))
+            rmass_and_also_temporary_array(iglob) = sngl(xstore(i,j,k,ispec))
           else
-            rmass(iglob) = xstore(i,j,k,ispec)
+            rmass_and_also_temporary_array(iglob) = xstore(i,j,k,ispec)
           endif
         enddo
       enddo
     enddo
   enddo
-  write(27) rmass
+  write(27) rmass_and_also_temporary_array
 
 !--- y coordinate
-  rmass(:) = 0._CUSTOM_REAL
+  rmass_and_also_temporary_array(:) = 0._CUSTOM_REAL
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -305,18 +308,18 @@
           iglob = ibool(i,j,k,ispec)
 ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
-            rmass(iglob) = sngl(ystore(i,j,k,ispec))
+            rmass_and_also_temporary_array(iglob) = sngl(ystore(i,j,k,ispec))
           else
-            rmass(iglob) = ystore(i,j,k,ispec)
+            rmass_and_also_temporary_array(iglob) = ystore(i,j,k,ispec)
           endif
         enddo
       enddo
     enddo
   enddo
-  write(27) rmass
+  write(27) rmass_and_also_temporary_array
 
 !--- z coordinate
-  rmass(:) = 0._CUSTOM_REAL
+  rmass_and_also_temporary_array(:) = 0._CUSTOM_REAL
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -324,15 +327,15 @@
           iglob = ibool(i,j,k,ispec)
 ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
-            rmass(iglob) = sngl(zstore(i,j,k,ispec))
+            rmass_and_also_temporary_array(iglob) = sngl(zstore(i,j,k,ispec))
           else
-            rmass(iglob) = zstore(i,j,k,ispec)
+            rmass_and_also_temporary_array(iglob) = zstore(i,j,k,ispec)
           endif
         enddo
       enddo
     enddo
   enddo
-  write(27) rmass
+  write(27) rmass_and_also_temporary_array
 
   write(27) ibool
 
