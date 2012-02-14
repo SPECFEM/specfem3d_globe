@@ -30,12 +30,6 @@
 ! or compile with: -D_HANDOPT
 !#define _HANDOPT
 
-! BEWARE:
-! BEWARE: we have observed that using _HANDOPT in combination with -O3 or higher can lead to problems on some machines;
-! BEWARE: thus, be careful when using it. At the very least, run the same test simulation once with _HANDOPT and once without
-! BEWARE: and make sure that all the seismograms you get are the same down to roundoff noise.
-! BEWARE:
-
 ! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
 !          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
@@ -47,7 +41,8 @@
                     wgll_cube, &
                     kappavstore,muvstore, &
                     ibool, &
-                    R_memory,epsilon_trace_over_3, &
+                    R_xx,R_yy,R_xy,R_xz,R_yz, &
+                    epsilon_trace_over_3, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -86,7 +81,11 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
+
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   integer :: vx,vy,vz,vnspec
@@ -219,8 +218,12 @@
         if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
 
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-          call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
-                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+          call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
+                                         R_yy(1,i,j,k,ispec), &
+                                         R_xy(1,i,j,k,ispec), &
+                                         R_xz(1,i,j,k,ispec), &
+                                         R_yz(1,i,j,k,ispec), &
+                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
         endif ! ATTENUATION_VAL
 
@@ -370,7 +373,8 @@
                     wgll_cube, &
                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     ibool, &
-                    R_memory,epsilon_trace_over_3, &
+                    R_xx,R_yy,R_xy,R_xz,R_yz, &
+                    epsilon_trace_over_3, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -411,7 +415,10 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
+
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   integer vx,vy,vz,vnspec
@@ -753,8 +760,12 @@
         if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
 
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-          call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
-                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+          call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
+                                         R_yy(1,i,j,k,ispec), &
+                                         R_xy(1,i,j,k,ispec), &
+                                         R_xz(1,i,j,k,ispec), &
+                                         R_yz(1,i,j,k,ispec), &
+                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
         endif ! ATTENUATION_VAL
 
@@ -903,7 +914,8 @@
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                     ibool, &
-                    R_memory,epsilon_trace_over_3, &
+                    R_xx,R_yy,R_xy,R_xz,R_yz, &
+                    epsilon_trace_over_3, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -944,7 +956,10 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
+
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   integer vx,vy,vz,vnspec
@@ -1116,8 +1131,12 @@
         if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. )  ) then
 
           ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-          call compute_element_att_stress( R_memory(1,1,i,j,k,ispec), &
-                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+          call compute_element_att_stress(R_xx(1,i,j,k,ispec), &
+                                         R_yy(1,i,j,k,ispec), &
+                                         R_xy(1,i,j,k,ispec), &
+                                         R_xz(1,i,j,k,ispec), &
+                                         R_yz(1,i,j,k,ispec), &
+                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
         endif ! ATTENUATION_VAL
 
@@ -1254,8 +1273,8 @@
 !
 
 
-  subroutine compute_element_att_stress( R_memory_loc, &
-                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+  subroutine compute_element_att_stress(R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
+                                       sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
   implicit none
 
@@ -1269,19 +1288,25 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS) :: R_memory_loc
+!  real(kind=CUSTOM_REAL), dimension(5,N_SLS) :: R_memory_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xx_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yy_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xy_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_xz_loc
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: R_yz_loc
+
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
 ! local parameters
   real(kind=CUSTOM_REAL) R_xx_val1,R_yy_val1
   integer :: i_SLS
-#ifdef _HANDOPT
+#ifdef _HANDOPT_ATT
   real(kind=CUSTOM_REAL) R_xx_val2,R_yy_val2,R_xx_val3,R_yy_val3
   integer :: imodulo_N_SLS
   integer :: i_SLS1,i_SLS2
 #endif
 
-#ifdef _HANDOPT
+#ifdef __HANDOPT_ATT
 ! way 2:
 ! note: this should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
@@ -1290,61 +1315,61 @@
 
   if(imodulo_N_SLS >= 1) then
     do i_SLS = 1,imodulo_N_SLS
-      R_xx_val1 = R_memory_loc(1,i_SLS)
-      R_yy_val1 = R_memory_loc(2,i_SLS)
+      R_xx_val1 = R_xx_loc(i_SLS)
+      R_yy_val1 = R_yy_loc(i_SLS)
       sigma_xx = sigma_xx - R_xx_val1
       sigma_yy = sigma_yy - R_yy_val1
       sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS)
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS)
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS)
+      sigma_xy = sigma_xy - R_xy_loc(i_SLS)
+      sigma_xz = sigma_xz - R_xz_loc(i_SLS)
+      sigma_yz = sigma_yz - R_yz_loc(i_SLS)
     enddo
   endif
   if(N_SLS >= imodulo_N_SLS+1) then
     ! note: another possibility would be using a reduction example for this loop; was tested but it does not improve,
     ! probably since N_SLS == 3 is too small for a loop benefit
     do i_SLS = imodulo_N_SLS+1,N_SLS,3
-      R_xx_val1 = R_memory_loc(1,i_SLS)
-      R_yy_val1 = R_memory_loc(2,i_SLS)
+      R_xx_val1 = R_xx_loc(i_SLS)
+      R_yy_val1 = R_yy_loc(i_SLS)
       sigma_xx = sigma_xx - R_xx_val1
       sigma_yy = sigma_yy - R_yy_val1
       sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS)
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS)
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS)
+      sigma_xy = sigma_xy - R_xy_loc(i_SLS)
+      sigma_xz = sigma_xz - R_xz_loc(i_SLS)
+      sigma_yz = sigma_yz - R_yz_loc(i_SLS)
 
       i_SLS1=i_SLS+1
-      R_xx_val2 = R_memory_loc(1,i_SLS1)
-      R_yy_val2 = R_memory_loc(2,i_SLS1)
+      R_xx_val2 = R_xx_loc(i_SLS1)
+      R_yy_val2 = R_yy_loc(i_SLS1)
       sigma_xx = sigma_xx - R_xx_val2
       sigma_yy = sigma_yy - R_yy_val2
       sigma_zz = sigma_zz + R_xx_val2 + R_yy_val2
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS1)
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS1)
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS1)
+      sigma_xy = sigma_xy - R_xy_loc(i_SLS1)
+      sigma_xz = sigma_xz - R_xz_loc(i_SLS1)
+      sigma_yz = sigma_yz - R_yz_loc(i_SLS1)
 
       i_SLS2 =i_SLS+2
-      R_xx_val3 = R_memory_loc(1,i_SLS2)
-      R_yy_val3 = R_memory_loc(2,i_SLS2)
+      R_xx_val3 = R_xx_loc(i_SLS2)
+      R_yy_val3 = R_yy_loc(i_SLS2)
       sigma_xx = sigma_xx - R_xx_val3
       sigma_yy = sigma_yy - R_yy_val3
       sigma_zz = sigma_zz + R_xx_val3 + R_yy_val3
-      sigma_xy = sigma_xy - R_memory_loc(3,i_SLS2)
-      sigma_xz = sigma_xz - R_memory_loc(4,i_SLS2)
-      sigma_yz = sigma_yz - R_memory_loc(5,i_SLS2)
+      sigma_xy = sigma_xy - R_xy_loc(i_SLS2)
+      sigma_xz = sigma_xz - R_xz_loc(i_SLS2)
+      sigma_yz = sigma_yz - R_yz_loc(i_SLS2)
     enddo
   endif
 #else
 ! way 1:
   do i_SLS = 1,N_SLS
-    R_xx_val1 = R_memory_loc(1,i_SLS) ! R_memory(1,i_SLS,i,j,k,ispec)
-    R_yy_val1 = R_memory_loc(2,i_SLS) ! R_memory(2,i_SLS,i,j,k,ispec)
+    R_xx_val1 = R_xx_loc(i_SLS) ! R_memory(1,i_SLS,i,j,k,ispec)
+    R_yy_val1 = R_yy_loc(i_SLS) ! R_memory(2,i_SLS,i,j,k,ispec)
     sigma_xx = sigma_xx - R_xx_val1
     sigma_yy = sigma_yy - R_yy_val1
     sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
-    sigma_xy = sigma_xy - R_memory_loc(3,i_SLS) ! R_memory(3,i_SLS,i,j,k,ispec)
-    sigma_xz = sigma_xz - R_memory_loc(4,i_SLS) ! R_memory(4,i_SLS,i,j,k,ispec)
-    sigma_yz = sigma_yz - R_memory_loc(5,i_SLS) ! R_memory(5,i_SLS,i,j,k,ispec)
+    sigma_xy = sigma_xy - R_xy_loc(i_SLS) ! R_memory(3,i_SLS,i,j,k,ispec)
+    sigma_xz = sigma_xz - R_xz_loc(i_SLS) ! R_memory(4,i_SLS,i,j,k,ispec)
+    sigma_yz = sigma_yz - R_yz_loc(i_SLS) ! R_memory(5,i_SLS,i,j,k,ispec)
   enddo
 #endif
 
@@ -1355,11 +1380,13 @@
 !--------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_element_att_memory_cr(ispec,R_memory, &
+  subroutine compute_element_att_memory_cr(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         c44store,muvstore, &
-                                        epsilondev,epsilondev_loc)
+                                        epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                        epsilondev_xz,epsilondev_yz, &
+                                        epsilondev_loc)
 ! crust mantle
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1388,7 +1415,9 @@
   ! element id
   integer :: ispec
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
 
   integer :: vx,vy,vz,vnspec
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
@@ -1397,18 +1426,19 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: c44store
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: muvstore
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
+!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+    epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
+
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
 ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
 
-#ifdef _HANDOPT
+#ifdef __HANDOPT_ATT
   real(kind=CUSTOM_REAL) :: alphal,betal,gammal
   integer :: i,j,k
-#else
-  integer :: i_memory
 #endif
 
   ! use Runge-Kutta scheme to march in time
@@ -1417,7 +1447,7 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-#ifdef _HANDOPT
+#ifdef __HANDOPT_ATT
 ! way 2:
   do i_SLS = 1,N_SLS
 
@@ -1438,9 +1468,31 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          R_memory(:,i_SLS,i,j,k,ispec) = alphal * R_memory(:,i_SLS,i,j,k,ispec) &
+!          R_memory(:,i_SLS,i,j,k,ispec) = alphal * R_memory(:,i_SLS,i,j,k,ispec) &
+!                  + factor_common_c44_muv(i,j,k) &
+!                  *( betal * epsilondev(:,i,j,k,ispec) + gammal * epsilondev_loc(:,i,j,k))
+
+          R_xx(i_SLS,i,j,k,ispec) = alphal * R_xx(i_SLS,i,j,k,ispec) &
                   + factor_common_c44_muv(i,j,k) &
-                  *( betal * epsilondev(:,i,j,k,ispec) + gammal * epsilondev_loc(:,i,j,k))
+                  *( betal * epsilondev_xx(i,j,k,ispec) + gammal * epsilondev_loc(1,i,j,k))
+
+          R_yy(i_SLS,i,j,k,ispec) = alphal * R_yy(i_SLS,i,j,k,ispec) &
+                  + factor_common_c44_muv(i,j,k) &
+                  *( betal * epsilondev_yy(i,j,k,ispec) + gammal * epsilondev_loc(2,i,j,k))
+
+          R_xy(i_SLS,i,j,k,ispec) = alphal * R_xy(i_SLS,i,j,k,ispec) &
+                  + factor_common_c44_muv(i,j,k) &
+                  *( betal * epsilondev_xy(i,j,k,ispec) + gammal * epsilondev_loc(3,i,j,k))
+
+          R_xz(i_SLS,i,j,k,ispec) = alphal * R_xz(i_SLS,i,j,k,ispec) &
+                  + factor_common_c44_muv(i,j,k) &
+                  *( betal * epsilondev_xz(i,j,k,ispec) + gammal * epsilondev_loc(4,i,j,k))
+
+          R_yz(i_SLS,i,j,k,ispec) = alphal * R_yz(i_SLS,i,j,k,ispec) &
+                  + factor_common_c44_muv(i,j,k) &
+                  *( betal * epsilondev_yz(i,j,k,ispec) + gammal * epsilondev_loc(5,i,j,k))
+
+
         enddo
       enddo
     enddo
@@ -1457,11 +1509,33 @@
       factor_common_c44_muv(:,:,:) = factor_common_c44_muv(:,:,:) * muvstore(:,:,:,ispec)
     endif
 
-    do i_memory = 1,5
-      R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+!    do i_memory = 1,5
+!      R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+!                + factor_common_c44_muv(:,:,:) &
+!                * (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
+!    enddo
+
+    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) &
                 + factor_common_c44_muv(:,:,:) &
-                * (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-    enddo
+                * (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
+
+    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) &
+                + factor_common_c44_muv(:,:,:) &
+                * (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
+
+    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) &
+                + factor_common_c44_muv(:,:,:) &
+                * (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
+
+    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) &
+                + factor_common_c44_muv(:,:,:) &
+                * (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
+
+    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) &
+                + factor_common_c44_muv(:,:,:) &
+                * (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
+
+
   enddo ! i_SLS
 #endif
 
@@ -1472,11 +1546,13 @@
 !--------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_element_att_memory_ic(ispec,R_memory, &
+  subroutine compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                         vx,vy,vz,vnspec,factor_common, &
                                         alphaval,betaval,gammaval, &
                                         muvstore, &
-                                        epsilondev,epsilondev_loc)
+                                        epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                        epsilondev_xz,epsilondev_yz, &
+                                        epsilondev_loc)
 ! inner core
 ! update memory variables based upon the Runge-Kutta scheme
 
@@ -1505,7 +1581,10 @@
   ! element id
   integer :: ispec
 
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
+!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
+
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
 
   integer :: vx,vy,vz,vnspec
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
@@ -1513,7 +1592,10 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: muvstore
 
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
+!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+    epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
+
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
 ! local parameters
@@ -1521,11 +1603,9 @@
 
   integer :: i_SLS
 
-#ifdef _HANDOPT
+#ifdef __HANDOPT_ATT
   real(kind=CUSTOM_REAL) :: alphal,betal,gammal
   integer :: i,j,k
-#else
-  integer :: i_memory
 #endif
 
   ! use Runge-Kutta scheme to march in time
@@ -1534,7 +1614,7 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-#ifdef _HANDOPT
+#ifdef __HANDOPT_ATT
 ! way 2:
   do i_SLS = 1,N_SLS
 
@@ -1551,9 +1631,26 @@
     do k=1,NGLLZ
       do j=1,NGLLY
         do i=1,NGLLX
-          R_memory(:,i_SLS,i,j,k,ispec) = alphal * R_memory(:,i_SLS,i,j,k,ispec) &
+!          R_memory(:,i_SLS,i,j,k,ispec) = alphal * R_memory(:,i_SLS,i,j,k,ispec) &
+!                  + factor_common_use(i,j,k) &
+!                  *( betal * epsilondev(:,i,j,k,ispec) + gammal * epsilondev_loc(:,i,j,k))
+
+          R_xx(i_SLS,i,j,k,ispec) = alphal * R_xx(i_SLS,i,j,k,ispec) &
                   + factor_common_use(i,j,k) &
-                  *( betal * epsilondev(:,i,j,k,ispec) + gammal * epsilondev_loc(:,i,j,k))
+                  *( betal * epsilondev_xx(i,j,k,ispec) + gammal * epsilondev_loc(1,i,j,k))
+          R_yy(i_SLS,i,j,k,ispec) = alphal * R_yy(i_SLS,i,j,k,ispec) &
+                  + factor_common_use(i,j,k) &
+                  *( betal * epsilondev_yy(i,j,k,ispec) + gammal * epsilondev_loc(2,i,j,k))
+          R_xy(i_SLS,i,j,k,ispec) = alphal * R_xy(i_SLS,i,j,k,ispec) &
+                  + factor_common_use(i,j,k) &
+                  *( betal * epsilondev_xy(i,j,k,ispec) + gammal * epsilondev_loc(3,i,j,k))
+          R_xz(i_SLS,i,j,k,ispec) = alphal * R_xz(i_SLS,i,j,k,ispec) &
+                  + factor_common_use(i,j,k) &
+                  *( betal * epsilondev_xz(i,j,k,ispec) + gammal * epsilondev_loc(4,i,j,k))
+          R_yz(i_SLS,i,j,k,ispec) = alphal * R_yz(i_SLS,i,j,k,ispec) &
+                  + factor_common_use(i,j,k) &
+                  *( betal * epsilondev_yz(i,j,k,ispec) + gammal * epsilondev_loc(5,i,j,k))
+
         enddo
       enddo
     enddo
@@ -1563,11 +1660,32 @@
 ! way 1:
   do i_SLS = 1,N_SLS
     factor_common_use(:,:,:) = factor_common(i_SLS,:,:,:,ispec)
-    do i_memory = 1,5
-       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+!    do i_memory = 1,5
+!       R_memory(i_memory,i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_memory(i_memory,i_SLS,:,:,:,ispec) &
+!            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
+!            (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
+!    enddo
+
+    R_xx(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xx(i_SLS,:,:,:,ispec) &
             + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
-            (betaval(i_SLS) * epsilondev(i_memory,:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(i_memory,:,:,:))
-    enddo
+            (betaval(i_SLS) * epsilondev_xx(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(1,:,:,:))
+
+    R_yy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yy(i_SLS,:,:,:,ispec) &
+            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
+            (betaval(i_SLS) * epsilondev_yy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(2,:,:,:))
+
+    R_xy(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xy(i_SLS,:,:,:,ispec) &
+            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
+            (betaval(i_SLS) * epsilondev_xy(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(3,:,:,:))
+
+    R_xz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_xz(i_SLS,:,:,:,ispec) &
+            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
+            (betaval(i_SLS) * epsilondev_xz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(4,:,:,:))
+
+    R_yz(i_SLS,:,:,:,ispec) = alphaval(i_SLS) * R_yz(i_SLS,:,:,:,ispec) &
+            + muvstore(:,:,:,ispec) * factor_common_use(:,:,:) * &
+            (betaval(i_SLS) * epsilondev_yz(:,:,:,ispec) + gammaval(i_SLS) * epsilondev_loc(5,:,:,:))
+
   enddo
 #endif
 

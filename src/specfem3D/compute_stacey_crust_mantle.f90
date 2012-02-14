@@ -25,80 +25,36 @@
 !
 !=====================================================================
 
-  subroutine compute_stacey_crust_mantle(ichunk,SIMULATION_TYPE, &
-                              NSTEP,it,SAVE_FORWARD,ibool_crust_mantle, &
-                              veloc_crust_mantle,accel_crust_mantle,b_accel_crust_mantle, &
-                              jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
-                              jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
-                              wgllwgll_xz,wgllwgll_yz, &
-                              normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
-                              normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
-                              rho_vp_crust_mantle,rho_vs_crust_mantle, &
-                              ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
-                              ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
-                              nimin_crust_mantle,nimax_crust_mantle, &
-                              njmin_crust_mantle,njmax_crust_mantle, &
-                              nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
-                              nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-                              nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
-                              reclen_xmin_crust_mantle,reclen_xmax_crust_mantle, &
-                              reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
-                              nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
-                              absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
-                              absorb_ymin_crust_mantle,absorb_ymax_crust_mantle)
+  subroutine compute_stacey_crust_mantle()
+
+  use constants
+
+  use specfem_par,only: &
+    ichunk,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
+    wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
+
+  use specfem_par_crustmantle, only: &
+    veloc_crust_mantle,accel_crust_mantle,b_accel_crust_mantle, &
+    ibool_crust_mantle, &
+    jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
+    jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
+    normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
+    normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+    rho_vp_crust_mantle,rho_vs_crust_mantle, &
+    ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
+    ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+    nimin_crust_mantle,nimax_crust_mantle, &
+    njmin_crust_mantle,njmax_crust_mantle, &
+    nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
+    nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+    reclen_xmin_crust_mantle,reclen_xmax_crust_mantle, &
+    reclen_ymin_crust_mantle,reclen_ymax_crust_mantle, &
+    nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm, &
+    absorb_xmin_crust_mantle,absorb_xmax_crust_mantle, &
+    absorb_ymin_crust_mantle,absorb_ymax_crust_mantle
 
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer ichunk,SIMULATION_TYPE
-  integer NSTEP,it
-  logical SAVE_FORWARD
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-    veloc_crust_mantle,accel_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
-    b_accel_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: &
-    jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_CM) :: &
-    jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: &
-  normal_xmin_crust_mantle,normal_xmax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2DMAX_YMIN_YMAX_CM) :: &
-  normal_ymin_crust_mantle,normal_ymax_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: &
-    rho_vp_crust_mantle,rho_vs_crust_mantle
-
-  integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
-  integer, dimension(NSPEC2DMAX_YMIN_YMAX_CM) :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
-
-  integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_CM) :: &
-    nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
-  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_CM) :: &
-    njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
-
-  integer nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
-    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
-
-  integer reclen_xmin_crust_mantle,reclen_xmax_crust_mantle,&
-    reclen_ymin_crust_mantle,reclen_ymax_crust_mantle
-
-  integer nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,nabs_xmin_cm) :: absorb_xmin_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,nabs_xmax_cm) :: absorb_xmax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,nabs_ymin_cm) :: absorb_ymin_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,nabs_ymax_cm) :: absorb_ymax_crust_mantle
-
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: weight

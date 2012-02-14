@@ -34,6 +34,8 @@
 !     Univeristy of Rhode Island
 !
 !  <savage@uri.edu>.
+!  <savage13@gps.caltech.edu>
+!  <savage13@dtm.ciw.edu>
 !
 !   It is based upon formulation in the following references:
 !
@@ -44,22 +46,10 @@
 !      Velocity dispersion due to anelasticity: implications for seismology and mantle composition
 !      Geophys, J. R. asts. Soc, Vol 47, pp. 41-58
 !
-!   The methodology can be found in Brian Savage, Dimitri Komatitsch and Jeroen Tromp,
-!   Effects of 3D attenuation on seismic wave amplitude and phase measurements, Bulletin of the Seismological Society of America,
-!   vol. 100(3), p. 1241-1251, doi: 10.1785/0120090263 (2010).
-!
-! @ARTICLE{SaKoTr10,
-!   author = {Brian Savage and Dimitri Komatitsch and Jeroen Tromp},
-!   title = {Effects of {3D} attenuation on seismic wave amplitude and phase measurements},
-!   journal = {Bull. Seismol. Soc. Am.},
-!   year = {2010},
-!   volume = {100},
-!   pages = {1241-1251},
-!   number = {3},
-!   doi = {10.1785/0120090263}}
-!
+!   The methodology can be found in Savage and Tromp, 2006, unpublished
 !
 !--------------------------------------------------------------------------------------------------
+
 
   subroutine model_attenuation_broadcast(myrank,AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 

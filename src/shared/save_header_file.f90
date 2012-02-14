@@ -134,7 +134,7 @@
   endif
 
   write(IOUT,*) '!'
-  write(IOUT,*) '! number of processors = ',NPROCTOT
+  write(IOUT,*) '! number of processors = ',NPROCTOT ! should be = NPROC
   write(IOUT,*) '!'
   write(IOUT,*) '! maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
   write(IOUT,*) '!'
@@ -147,16 +147,16 @@
   write(IOUT,*) '! total points per slice = ',sum(nglob)
   write(IOUT,*) '!'
 
-  write(IOUT,*) '! total for full 6-chunk mesh:'
+  write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'
   write(IOUT,*) '! ---------------------------'
   write(IOUT,*) '!'
   write(IOUT,*) '! exact total number of spectral elements in entire mesh = '
-  write(IOUT,*) '! ',6.d0*dble(NPROC)*dble(sum(NSPEC)) - subtract_central_cube_elems
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(NSPEC)) - subtract_central_cube_elems
   write(IOUT,*) '! approximate total number of points in entire mesh = '
-  write(IOUT,*) '! ',2.d0*dble(NPROC)*(3.d0*dble(sum(nglob))) - subtract_central_cube_points
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*dble(sum(nglob)) - subtract_central_cube_points
 ! there are 3 DOFs in solid regions, but only 1 in fluid outer core
   write(IOUT,*) '! approximate total number of degrees of freedom in entire mesh = '
-  write(IOUT,*) '! ',6.d0*dble(NPROC)*(3.d0*(dble(sum(nglob))) &
+  write(IOUT,*) '! ',dble(NCHUNKS)*dble(NPROC)*(3.d0*(dble(sum(nglob))) &
     - 2.d0*dble(nglob(IREGION_OUTER_CORE))) &
     - 3.d0*subtract_central_cube_points
   write(IOUT,*) '!'

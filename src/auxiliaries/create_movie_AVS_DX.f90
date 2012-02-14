@@ -758,47 +758,48 @@
 !
 !=====================================================================
 !
-
-  subroutine read_params_and_create_movie
-
 !
-! This routine is called by the Pyrized version.
+!  subroutine read_params_and_create_movie
 !
-
-  implicit none
-
-  integer it1,it2
-  integer iformat
-
-! parameters read from parameter file
-  integer NEX_XI,NEX_ETA
-  integer NSTEP,NTSTEP_BETWEEN_FRAMES,NCHUNKS
-  integer NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
-  logical MOVIE_SURFACE
-
-  integer, external :: err_occurred
-
-  call read_AVS_DX_parameters(NEX_XI,NEX_ETA, &
-           NSTEP,NTSTEP_BETWEEN_FRAMES, &
-           NCHUNKS,MOVIE_SURFACE, &
-           NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA)
-
-! read additional parameters for making movies
-  call read_value_integer(iformat, 'format')
-  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_integer(it1, 'beginning')
-  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-  call read_value_integer(it2, 'end')
-  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
-
-! run the main program
-  call create_movie_AVS_DX(iformat,it1,it2, &
-           NEX_XI,NEX_ETA, &
-           NSTEP,NTSTEP_BETWEEN_FRAMES, &
-           NCHUNKS, &
-           NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA)
-
-  end subroutine read_params_and_create_movie
+!!
+!! This routine is called by the Pyrized version.
+!!
+!
+!  implicit none
+!
+!  integer it1,it2
+!  integer iformat
+!
+!! parameters read from parameter file
+!  integer NEX_XI,NEX_ETA
+!  integer NSTEP,NTSTEP_BETWEEN_FRAMES,NCHUNKS
+!  integer NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+!  logical MOVIE_SURFACE
+!
+!  integer, external :: err_occurred
+!
+!  call read_AVS_DX_parameters(NEX_XI,NEX_ETA, &
+!           NSTEP,NTSTEP_BETWEEN_FRAMES, &
+!           NCHUNKS,MOVIE_SURFACE, &
+!           NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA)
+!
+!! read additional parameters for making movies
+!  call read_value_integer(iformat, 'format')
+!  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+!  call read_value_integer(it1, 'beginning')
+!  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+!  call read_value_integer(it2, 'end')
+!  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file'
+!
+!! run the main program
+!  call create_movie_AVS_DX(iformat,it1,it2, &
+!           NEX_XI,NEX_ETA, &
+!           NSTEP,NTSTEP_BETWEEN_FRAMES, &
+!           NCHUNKS, &
+!           NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+!           USE_COMPONENT)
+!
+!  end subroutine read_params_and_create_movie
 
 ! ------------------------------------------------------------------
 

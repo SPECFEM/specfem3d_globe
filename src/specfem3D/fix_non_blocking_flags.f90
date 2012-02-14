@@ -102,7 +102,8 @@
 ! a full face are missing, therefore let us add them
   subroutine fix_non_blocking_central_cube(is_on_a_slice_edge, &
          ibool,nspec,nglob,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
-         idoubling_inner_core,npoin2D_cube_from_slices,ibool_central_cube,NSPEC2D_BOTTOM_INNER_CORE,ichunk)
+         idoubling_inner_core,npoin2D_cube_from_slices, &
+         ibool_central_cube,NSPEC2D_BOTTOM_INNER_CORE,ichunk)
 
   implicit none
 
@@ -144,8 +145,8 @@
 
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
-! clean the mask
-  mask_ibool(:) = .false.
+    ! clean the mask
+    mask_ibool(:) = .false.
 
     do imsg = 1,nb_msgs_theor_in_cube
       do ipoin = 1,npoin2D_cube_from_slices
@@ -153,24 +154,24 @@
       enddo
     enddo
 
-! now label all the elements that have at least one corner belonging
-! to any of these buffers as elements that must contribute to the
-! first step of the calculations (performed on the edges before starting
-! the non blocking communications); there is no need to examine the inside
-! of the elements, checking their eight corners is sufficient
-  do ispec = 1,nspec
-    do k = 1,NGLLZ,NGLLZ-1
-      do j  = 1,NGLLY,NGLLY-1
-        do i = 1,NGLLX,NGLLX-1
-          if(mask_ibool(ibool(i,j,k,ispec))) then
-            is_on_a_slice_edge(ispec) = .true.
-            goto 888
-          endif
+    ! now label all the elements that have at least one corner belonging
+    ! to any of these buffers as elements that must contribute to the
+    ! first step of the calculations (performed on the edges before starting
+    ! the non blocking communications); there is no need to examine the inside
+    ! of the elements, checking their eight corners is sufficient
+    do ispec = 1,nspec
+      do k = 1,NGLLZ,NGLLZ-1
+        do j  = 1,NGLLY,NGLLY-1
+          do i = 1,NGLLX,NGLLX-1
+            if(mask_ibool(ibool(i,j,k,ispec))) then
+              is_on_a_slice_edge(ispec) = .true.
+              goto 888
+            endif
+          enddo
         enddo
       enddo
+    888 continue
     enddo
-  888 continue
-  enddo
 
   endif
 

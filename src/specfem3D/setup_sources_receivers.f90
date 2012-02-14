@@ -25,94 +25,79 @@
 !
 !=====================================================================
 
-  subroutine setup_sources_receivers(NSOURCES,myrank,ibool_crust_mantle, &
-                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                      xigll,yigll,zigll,TOPOGRAPHY, &
-                      sec,tshift_cmt,theta_source,phi_source, &
-                      NSTEP,DT,hdur,hdur_gaussian,t0,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                      islice_selected_source,ispec_selected_source, &
-                      xi_source,eta_source,gamma_source,nu_source, &
-                      rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
-                      rec_filename,nrec,islice_selected_rec,ispec_selected_rec, &
-                      xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
-                      stlat,stlon,stele,stbur,nu, &
-                      nrec_local,nadj_rec_local,nrec_simulation, &
-                      SIMULATION_TYPE,RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME, &
-                      HDUR_MOVIE,OUTPUT_FILES,LOCAL_PATH)
+  subroutine setup_sources_receivers()
 
-
+  use specfem_par
   implicit none
 
-  include 'mpif.h'
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+  ! locates sources and determines simulation start time t0
+  call setup_sources()
 
-  integer NSOURCES,myrank
+  ! reads in stations file and locates receivers
+  call setup_receivers()
+  
+  ! write source and receiver VTK files for Paraview
+  call setup_sources_receivers_VTKfile()
+  
+  ! pre-compute source arrays
+  call setup_sources_precompute_arrays()
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
-        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+  ! pre-compute receiver interpolation factors
+  call setup_receivers_precompute_intp()
 
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLY) :: yigll
-  double precision, dimension(NGLLZ) :: zigll
+  ! user output
+  if(myrank == 0) then  
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of samples for seismograms = ',NSTEP
+    write(IMAIN,*)
+    if(NSOURCES > 1) write(IMAIN,*) 'Using ',NSOURCES,' point sources'
+  endif
 
-  logical TOPOGRAPHY
+  end subroutine setup_sources_receivers
 
-  double precision sec,DT,t0,min_tshift_cmt_original
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-  double precision, dimension(NSOURCES) :: tshift_cmt,hdur,hdur_gaussian
-  double precision, dimension(NSOURCES) :: theta_source,phi_source
-  double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
-  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source,nu_source
+  subroutine setup_sources()
 
-  integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
-  integer NSTEP
-
-  ! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-
-  integer NEX_XI
-  logical PRINT_SOURCE_TIME_FUNCTION
-
-  character(len=150) rec_filename
-
-  integer nrec
-  integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
-
-  double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
-  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
-  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
-
-  double precision, dimension(nrec) :: stlat,stlon,stele,stbur
-  double precision, dimension(NDIM,NDIM,nrec) :: nu
-
-  integer nrec_local,nadj_rec_local,nrec_simulation
-
-  integer SIMULATION_TYPE
-
-  logical RECEIVERS_CAN_BE_BURIED,MOVIE_SURFACE,MOVIE_VOLUME
-
-  double precision HDUR_MOVIE
-
-  character(len=150) OUTPUT_FILES
-  character(len=150) LOCAL_PATH
+  use specfem_par
+  use specfem_par_crustmantle  
+  use specfem_par_movie
+  implicit none
 
   ! local parameters
-  double precision :: junk
+  double precision :: min_tshift_cmt_original
+  double precision :: sec
   integer :: yr,jda,ho,mi
-  integer :: irec,isource,nrec_tot_found,ier
-  integer :: icomp,itime,nadj_files_found,nadj_files_found_tot
-  character(len=3),dimension(NDIM) :: comp
-  character(len=256) :: filename,adj_source_file,system_command,filename_new
-  character(len=2) :: bic
+  integer :: isource 
+  character(len=256) :: filename
+  integer :: ier
+
   ! makes smaller hdur for movies
   logical,parameter :: USE_SMALLER_HDUR_MOVIE = .false.
 
-! sources
+  ! allocate arrays for source
+  allocate(islice_selected_source(NSOURCES), &
+          ispec_selected_source(NSOURCES), &
+          Mxx(NSOURCES), &
+          Myy(NSOURCES), &
+          Mzz(NSOURCES), &
+          Mxy(NSOURCES), &
+          Mxz(NSOURCES), &
+          Myz(NSOURCES), &
+          xi_source(NSOURCES), &
+          eta_source(NSOURCES), &
+          gamma_source(NSOURCES), &
+          tshift_cmt(NSOURCES), &
+          hdur(NSOURCES), &
+          hdur_gaussian(NSOURCES), &
+          theta_source(NSOURCES), &
+          phi_source(NSOURCES), &
+          nu_source(NDIM,NDIM,NSOURCES),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+
+  ! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
   if(myrank == 0) then
@@ -139,6 +124,15 @@
             LOCAL_PATH,SIMULATION_TYPE)
 
   if(abs(minval(tshift_cmt)) > TINYVAL) call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
+
+  ! count number of sources located in this slice
+  nsources_local = 0
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+    do isource = 1,NSOURCES
+      if(myrank == islice_selected_source(isource)) nsources_local = nsources_local + 1
+    enddo
+  endif
+
 
   ! filter source time function by Gaussian with hdur = HDUR_MOVIE when outputing movies or shakemaps
   if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
@@ -222,6 +216,57 @@
     endif
     call exit_mpi(myrank,'error negative USER_T0 parameter in constants.h')
   endif
+
+  ! get information about event name and location for SAC seismograms
+
+  ! The following line is added for get_event_info subroutine.
+  ! Because the way NSOURCES_SAC was declared has been changed.
+  ! The rest of the changes in this program is just the updates of the subroutines that
+  ! I did changes, e.g., adding/removing parameters. by Ebru Bozdag
+  call get_event_info_parallel(myrank,yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,&
+                              event_name_SAC,t_cmt_SAC,t_shift_SAC, &
+                              elat_SAC,elon_SAC,depth_SAC,mb_SAC,cmt_lat_SAC,&
+                              cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES)
+
+  end subroutine setup_sources
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_receivers()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  implicit none
+
+  include 'mpif.h'
+
+  ! local parameters
+  double precision :: sec
+  double precision :: junk
+  integer :: yr,jda,ho,mi
+  integer :: irec,isource,nrec_tot_found
+  integer :: icomp,itime,nadj_files_found,nadj_files_found_tot
+  character(len=3),dimension(NDIM) :: comp
+  character(len=256) :: filename,adj_source_file 
+  character(len=2) :: bic
+  integer :: ier
+
+  ! allocate memory for receiver arrays
+  allocate(islice_selected_rec(nrec), &
+          ispec_selected_rec(nrec), &
+          xi_receiver(nrec), &
+          eta_receiver(nrec), &
+          gamma_receiver(nrec), &
+          station_name(nrec), &
+          network_name(nrec), &
+          stlat(nrec), &
+          stlon(nrec), &
+          stele(nrec), &
+          stbur(nrec), &
+          nu(NDIM,NDIM,nrec),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
 
   !  receivers
   if(myrank == 0) then
@@ -334,6 +379,21 @@
       write(IMAIN,*) 'this total is okay'
     endif
   endif
+  
+  end subroutine setup_receivers
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_sources_receivers_VTKfile()
+
+  use specfem_par
+  implicit none
+
+  ! local parameters
+  character(len=256) :: filename,system_command,filename_new
 
   ! user output
   if(myrank == 0) then
@@ -365,21 +425,72 @@
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
     call system(system_command)
 
-
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total number of samples for seismograms = ',NSTEP
-    write(IMAIN,*)
-
-
-    if(NSOURCES > 1) write(IMAIN,*) 'Using ',NSOURCES,' point sources'
   endif
 
-  end subroutine setup_sources_receivers
+  end subroutine setup_sources_receivers_VTKfile
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine setup_sources_precompute_arrays()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  implicit none
+
+  ! local parameters
+  integer :: ier
+  
+  ! allocates source arrays
+  if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
+    allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating sourcearrays')
+
+    ! stores source arrays
+    call setup_sources_receivers_srcarr(NSOURCES,myrank, &
+                      ispec_selected_source,islice_selected_source, &
+                      xi_source,eta_source,gamma_source, &
+                      Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                      xigll,yigll,zigll,sourcearrays)
+  endif
+
+  ! adjoint source arrays
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
+    allocate(iadj_vec(NSTEP),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating iadj_vec')
+
+    ! initializes iadj_vec
+    do it=1,NSTEP
+       iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record
+    enddo
+
+    if(nadj_rec_local > 0) then
+      ! allocate adjoint source arrays
+      allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint sourcearrays')
+      adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
+
+      ! allocate indexing arrays
+      allocate(iadjsrc(NSTEP_SUB_ADJ,2), &
+              iadjsrc_len(NSTEP_SUB_ADJ),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint indexing arrays')
+      ! initializes iadjsrc, iadjsrc_len and iadj_vec
+      call setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
+                      NTSTEP_BETWEEN_READ_ADJSRC, &
+                      iadjsrc,iadjsrc_len,iadj_vec)
+    endif
+  endif
+
+  end subroutine setup_sources_precompute_arrays  
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine setup_sources_receivers_srcarr(NSOURCES,myrank, &
                       ispec_selected_source,islice_selected_source, &
@@ -516,6 +627,84 @@
   enddo
 
   end subroutine setup_sources_receivers_adjindx
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_receivers_precompute_intp()
+
+  use specfem_par
+  implicit none
+
+  ! local parameters
+  integer :: ier
+  
+  ! define local to global receiver numbering mapping
+  ! needs to be allocate for subroutine calls (even if nrec_local == 0)
+  allocate(number_receiver_global(nrec_local),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating global receiver numbering')
+
+  ! allocates receiver interpolators
+  if (nrec_local > 0) then
+    ! allocate Lagrange interpolators for receivers
+    allocate(hxir_store(nrec_local,NGLLX), &
+            hetar_store(nrec_local,NGLLY), &
+            hgammar_store(nrec_local,NGLLZ),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver interpolators')
+
+    ! define and store Lagrange interpolators at all the receivers
+    if (SIMULATION_TYPE == 2) then
+      nadj_hprec_local = nrec_local
+    else
+      nadj_hprec_local = 1
+    endif
+    allocate(hpxir_store(nadj_hprec_local,NGLLX), &
+            hpetar_store(nadj_hprec_local,NGLLY), &
+            hpgammar_store(nadj_hprec_local,NGLLZ),stat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating derivative interpolators')
+
+    ! stores interpolators for receiver positions
+    call setup_sources_receivers_intp(NSOURCES,myrank, &
+                      islice_selected_source, &
+                      xi_source,eta_source,gamma_source, &
+                      xigll,yigll,zigll, &
+                      SIMULATION_TYPE,nrec,nrec_local, &
+                      islice_selected_rec,number_receiver_global, &
+                      xi_receiver,eta_receiver,gamma_receiver, &
+                      hxir_store,hetar_store,hgammar_store, &
+                      nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
+
+    ! allocate seismogram array
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+      allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      if(ier /= 0) stop 'error while allocating seismograms'
+    else
+      allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+      if(ier /= 0) stop 'error while allocating seismograms'
+      ! allocate Frechet derivatives array
+      allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
+              stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error allocating frechet derivatives arrays')
+
+      moment_der(:,:,:) = 0._CUSTOM_REAL
+      sloc_der(:,:) = 0._CUSTOM_REAL
+      stshift_der(:) = 0._CUSTOM_REAL
+      shdur_der(:) = 0._CUSTOM_REAL
+
+    endif
+    ! initialize seismograms
+    seismograms(:,:,:) = 0._CUSTOM_REAL
+    nit_written = 0
+  else
+    ! allocate dummy array since we need it to pass as argument e.g. in write_seismograms() routine
+    ! note: nrec_local is zero, fortran 90/95 should allow zero-sized array allocation...
+    allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
+    if( ier /= 0) stop 'error while allocating zero seismograms'
+  endif
+
+  end subroutine setup_receivers_precompute_intp
 
 !
 !-------------------------------------------------------------------------------------------------

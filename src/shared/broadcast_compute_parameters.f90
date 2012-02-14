@@ -317,3 +317,26 @@
   endif
 
   end subroutine broadcast_compute_parameters
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine broadcast_gpu_parameters(myrank,GPU_MODE)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+  include "constants.h"
+  include "precision.h"
+
+  integer:: myrank
+  logical:: GPU_MODE
+  ! local parameters
+  integer :: ier
+
+  call MPI_BCAST(GPU_MODE,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error broadcasting GPU_MODE')
+
+  end subroutine broadcast_gpu_parameters

@@ -47,7 +47,6 @@
   integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
 
 ! this for non blocking assembly
-  logical, parameter :: USE_NONBLOCKING_COMMS = .true.
   integer, parameter :: ELEMENTS_NONBLOCKING_CM_IC = 1500
   integer, parameter :: ELEMENTS_NONBLOCKING_OC = 3000
 

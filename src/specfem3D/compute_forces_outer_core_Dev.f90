@@ -26,81 +26,69 @@
 !=====================================================================
 
   subroutine compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
-                            A_array_rotation,B_array_rotation, &
-                            d_ln_density_dr_table, &
-                            minus_rho_g_over_kappa_fluid,displfluid,accelfluid, &
-                            div_displfluid, &
-                            xstore,ystore,zstore, &
-                            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-          is_on_a_slice_edge_outer_core, &
-          myrank,iproc_xi,iproc_eta,ichunk,addressing, &
-          iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-          npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-          iboolfaces_outer_core,iboolcorner_outer_core, &
-          iprocfrom_faces,iprocto_faces, &
-          iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-          buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-          buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar,iphase,icall, &
-                            hprime_xx,hprime_xxT, &
-                            hprimewgll_xx,hprimewgll_xxT, &
-                            wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-                            ibool,MOVIE_VOLUME)
+                                          A_array_rotation,B_array_rotation, &
+                                          displfluid,accelfluid,div_displfluid, &
+                                          phase_is_inner)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
+  use constants
+
+  use specfem_par,only: &
+    hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+    minus_rho_g_over_kappa_fluid,d_ln_density_dr_table, &
+    MOVIE_VOLUME, &
+    myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+    iprocfrom_faces,iprocto_faces, &
+    iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+    npoin2D_max_all_CM_IC
+
+  use specfem_par_outercore,only: &
+    xstore => xstore_outer_core,ystore => ystore_outer_core,zstore => zstore_outer_core, &
+    xix => xix_outer_core,xiy => xiy_outer_core,xiz => xiz_outer_core, &
+    etax => etax_outer_core,etay => etay_outer_core,etaz => etaz_outer_core, &
+    gammax => gammax_outer_core,gammay => gammay_outer_core,gammaz => gammaz_outer_core, &
+    ibool => ibool_outer_core, &
+    iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+    npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+    iboolfaces_outer_core,iboolcorner_outer_core, &
+    phase_ispec_inner => phase_ispec_inner_outer_core, &
+    nspec_outer => nspec_outer_outer_core, &
+    nspec_inner => nspec_inner_outer_core
+
+
   implicit none
 
-  include "constants.h"
-
-! include values created by the mesher
-! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displfluid,accelfluid
-
-! divergence of displacement
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displfluid
-
-! arrays with mesh parameters per slice
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: ibool
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_outer_core) :: xix,xiy,xiz, &
-                      etax,etay,etaz,gammax,gammay,gammaz
-
-! array with derivatives of Lagrange polynomials and precalculated products
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
-
-  logical MOVIE_VOLUME
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: newtempx1,newtempx2,newtempx3
-
-! for gravity
-  integer int_radius
-  double precision radius,theta,phi,gxl,gyl,gzl
-  double precision cos_theta,sin_theta,cos_phi,sin_phi
-  double precision, dimension(NRAD_GRAVITY) :: minus_rho_g_over_kappa_fluid
-  double precision, dimension(NRAD_GRAVITY) :: d_ln_density_dr_table
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: gravity_term
-  real(kind=CUSTOM_REAL), dimension(nglob_outer_core) :: xstore,ystore,zstore
-
-! for the Euler scheme for rotation
+  ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL) time,deltat,two_omega_earth
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
     A_array_rotation,B_array_rotation
 
+  ! displacement and acceleration
+  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displfluid,accelfluid
+
+  ! divergence of displacement
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displfluid
+
+  ! inner/outer element run flag
+  logical :: phase_is_inner
+
+  ! local parameters
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: newtempx1,newtempx2,newtempx3
+  ! for gravity
+  integer int_radius
+  double precision radius,theta,phi,gxl,gyl,gzl
+  double precision cos_theta,sin_theta,cos_phi,sin_phi
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: gravity_term
+  ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL) two_omega_deltat,cos_two_omega_t,sin_two_omega_t,A_rotation,B_rotation, &
        ux_rotation,uy_rotation,dpotentialdx_with_rot,dpotentialdy_with_rot
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: source_euler_A,source_euler_B
 
   integer ispec,iglob
   integer i,j,k
-
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) dpotentialdxl,dpotentialdyl,dpotentialdzl
   real(kind=CUSTOM_REAL) sum_terms
@@ -128,74 +116,30 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     displ_times_grad_x_ln_rho,displ_times_grad_y_ln_rho,displ_times_grad_z_ln_rho
 
-! this for non blocking MPI
-  integer :: ichunk,iproc_xi,iproc_eta,myrank
-
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
-
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_OC) :: iboolleft_xi_outer_core,iboolright_xi_outer_core
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
-
-  integer npoin2D_faces_outer_core(NUMFACES_SHARED)
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
-
-! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
-
-! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
-
-! indirect addressing for each message for faces and corners of the chunks
-! a given slice can belong to at most one corner and at most two faces
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_outer_core
-
-! buffers for send and receive between faces of the slices and the chunks
-! we use the same buffers to assemble scalars and vectors because vectors are
-! always three times bigger and therefore scalars can use the first part
-! of the vector buffer in memory even if it has an additional index here
-! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
-  integer :: npoin2D_max_all_CM_IC
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: buffer_send_faces,buffer_received_faces
-
-  integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_OC) :: buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar
-
-  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
-
-  integer :: iphase,icall
-
-  integer :: computed_elements
+!  integer :: computed_elements
+  integer :: num_elements,ispec_p
+  integer :: iphase
 
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-  if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. icall == 1) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
+  if (NSPEC_OUTER_CORE_ADJOINT /= 1 .and. (.not. phase_is_inner) ) div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
 
-  computed_elements = 0
+!  computed_elements = 0
+  if( .not. phase_is_inner ) then
+    iphase = 1
+    num_elements = nspec_outer
+  else
+    iphase = 2
+    num_elements = nspec_inner
+  endif
 
-  do ispec = 1,NSPEC_OUTER_CORE
+  do ispec_p = 1,num_elements
 
-! hide communications by computing the edges first
-    if((icall == 2 .and. is_on_a_slice_edge_outer_core(ispec)) .or. &
-       (icall == 1 .and. .not. is_on_a_slice_edge_outer_core(ispec))) cycle
+    ispec = phase_ispec_inner(ispec_p,iphase)
 
-! process the communications every ELEMENTS_NONBLOCKING elements
-    computed_elements = computed_elements + 1
-    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_OC) == 0 .and. iphase <= 7) &
-      call assemble_MPI_scalar(myrank,accelfluid,NGLOB_OUTER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-            iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_OC, &
-            NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,NGLOB2DMAX_XY_VAL,NCHUNKS_VAL,iphase)
+    ! only compute element which belong to current phase (inner or outer elements)
 
     do k=1,NGLLZ
       do j=1,NGLLY

@@ -25,8 +25,93 @@
 !
 !=====================================================================
 
+  subroutine write_seismograms()
+
+! computes the maximum of the norm of the displacement
+! in all the slices using an MPI reduction
+! and output timestamp file to check that simulation is running fine
+
+  use specfem_par
+  use specfem_par_crustmantle
+  implicit none
+
+  ! update position in seismograms
+  seismo_current = seismo_current + 1
+
+  ! compute & store the seismograms only if there is at least one receiver located in this slice
+  if (nrec_local > 0) then
+    if (SIMULATION_TYPE == 1) then
+      call compute_seismograms(nrec_local,nrec,displ_crust_mantle, &
+                                nu,hxir_store,hetar_store,hgammar_store, &
+                                scale_displ,ibool_crust_mantle, &
+                                ispec_selected_rec,number_receiver_global, &
+                                seismo_current,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+                                seismograms)
+
+    else if (SIMULATION_TYPE == 2) then
+      call compute_seismograms_adjoint(NSOURCES,nrec_local,displ_crust_mantle, &
+                    eps_trace_over_3_crust_mantle, &
+                    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                    epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                    nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+                    hxir_store,hetar_store,hgammar_store, &
+                    hpxir_store,hpetar_store,hpgammar_store, &
+                    tshift_cmt,hdur_gaussian,DT,t0,scale_displ, &
+                    hprime_xx,hprime_yy,hprime_zz, &
+                    xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                    etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                    moment_der,sloc_der,stshift_der,shdur_der, &
+                    NTSTEP_BETWEEN_OUTPUT_SEISMOS,seismograms,deltat, &
+                    ibool_crust_mantle,ispec_selected_source,number_receiver_global, &
+                    NSTEP,it,nit_written)
+
+    else if (SIMULATION_TYPE == 3) then
+      call compute_seismograms_backward(nrec_local,nrec,b_displ_crust_mantle, &
+                                nu,hxir_store,hetar_store,hgammar_store, &
+                                scale_displ,ibool_crust_mantle, &
+                                ispec_selected_rec,number_receiver_global, &
+                                seismo_current,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+                                seismograms)
+
+    endif
+  endif ! nrec_local
+
+  ! write the current or final seismograms
+  if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+      call write_seismograms_to_file(myrank,seismograms,number_receiver_global,station_name, &
+            network_name,stlat,stlon,stele,stbur, &
+            nrec,nrec_local,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,t0,it_end, &
+            yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC,t_cmt_SAC,t_shift_SAC, &
+            elat_SAC,elon_SAC,depth_SAC,event_name_SAC,cmt_lat_SAC,cmt_lon_SAC,&
+            cmt_depth_SAC,cmt_hdur_SAC,NPROCTOT_VAL, &
+            OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM, &
+            OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+            seismo_offset,seismo_current,WRITE_SEISMOGRAMS_BY_MASTER, &
+            SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,MODEL)
+      if(myrank==0) then
+        write(IMAIN,*)
+        write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
+        write(IMAIN,*)
+      endif
+    else
+      if( nrec_local > 0 ) &
+        call write_adj_seismograms(seismograms,number_receiver_global, &
+                                  nrec_local,it,nit_written,DT, &
+                                  NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
+        nit_written = it
+    endif
+    seismo_offset = seismo_offset + seismo_current
+    seismo_current = 0
+  endif
+
+  end subroutine write_seismograms
+
+!=====================================================================
+
 ! write seismograms to files
-  subroutine write_seismograms(myrank,seismograms,number_receiver_global,station_name, &
+  subroutine write_seismograms_to_file(myrank,seismograms,number_receiver_global,station_name, &
             network_name,stlat,stlon,stele,stbur, &
             nrec,nrec_local,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,DT,hdur,it_end, &
             yr,jda,ho,mi,sec,tshift_cmt,t_shift, &
@@ -275,7 +360,7 @@
 
   deallocate(one_seismogram)
 
-  end subroutine write_seismograms
+  end subroutine write_seismograms_to_file
 
 !=====================================================================
 

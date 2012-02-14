@@ -26,129 +26,33 @@
 !=====================================================================
 
 
-  subroutine initialize_simulation(myrank,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-                NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-                NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                NER_TOP_CENTRAL_CUBE_ICB,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,NEX_ETA, &
-                NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-                NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
-                DT,ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R220,R400,R600,R670,R771,&
-                RTOPDDOUBLEPRIME,RCMB,RICB, &
-                RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
-                MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
-                HDUR_MOVIE,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST, &
-                MOVIE_NORTH,MOVIE_SOUTH,MOVIE_SURFACE,MOVIE_VOLUME, &
-                RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-                SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,SAVE_FORWARD, &
-                SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT, &
-                OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-                ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
-                LOCAL_PATH,MODEL,OUTPUT_FILES, &
-                ratio_sampling_array, ner, doubling_index,r_bottom,r_top, &
-                this_region_has_a_doubling,rmins,rmaxs, &
-                TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST, &
-                nspl,rspl,espl,espl2,ibathy_topo, &
-                NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-                xigll,yigll,zigll,wxgll,wygll,wzgll,wgll_cube, &
-                hprime_xx,hprime_yy,hprime_zz,hprime_xxT, &
-                hprimewgll_xx,hprimewgll_yy,hprimewgll_zz,hprimewgll_xxT, &
-                wgllwgll_xy,wgllwgll_xz,wgllwgll_yz, &
-                rec_filename,STATIONS,nrec,NOISE_TOMOGRAPHY)
+  subroutine initialize_simulation()
 
+  use specfem_par
   implicit none
 
   include 'mpif.h'
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  ! parameters read from parameter file
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,NER_CRUST, &
-          NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
-          NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-          NER_TOP_CENTRAL_CUBE_ICB,NEX_XI,NEX_ETA, &
-          NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-          NTSTEP_BETWEEN_READ_ADJSRC,NSTEP,NSOURCES,NTSTEP_BETWEEN_FRAMES, &
-          NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN,SIMULATION_TYPE, &
-          MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP,NOISE_TOMOGRAPHY
-
-  double precision DT,ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS,HDUR_MOVIE, &
-          MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
-
-  logical   MOVIE_SURFACE,MOVIE_VOLUME,RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-          SAVE_MESH_FILES,ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,SAVE_FORWARD, &
-          SAVE_ALL_SEISMOS_IN_ONE_FILE,MOVIE_COARSE,OUTPUT_SEISMOS_ASCII_TEXT,&
-          OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
-          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE
-
-  character(len=150) LOCAL_PATH,OUTPUT_FILES
-
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ratio_sampling_array,ner
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
-
-
-  ! mesh model parameters
-  logical TOPOGRAPHY,HONOR_1D_SPHERICAL_MOHO,ONE_CRUST
-  !logical COMPUTE_AND_STORE_STRAIN
-
-  ! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-  ! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
-               NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-               NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
-
-  ! Gauss-Lobatto-Legendre points of integration and weights
-  double precision, dimension(NGLLX) :: xigll,wxgll
-  double precision, dimension(NGLLY) :: yigll,wygll
-  double precision, dimension(NGLLZ) :: zigll,wzgll
-  ! product of weights for gravity term
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
-  ! array with derivatives of Lagrange polynomials and precalculated products
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy,hprimewgll_yy
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
-
-  character(len=150) rec_filename,STATIONS
-  integer nrec
 
   ! local parameters
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC_computed,NGLOB_computed, &
-               NSPEC2D_XI,NSPEC2D_ETA,NSPEC1D_RADIAL
+    NSPEC2D_XI,NSPEC2D_ETA,NSPEC1D_RADIAL
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   integer, dimension(NB_SQUARE_CORNERS,NB_CUT_CASE) :: DIFF_NSPEC1D_RADIAL
   integer, dimension(NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE) :: DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA
   integer :: ratio_divide_central_cube
   integer :: sizeprocs
-  integer :: ier,i,j,ios
+  integer :: ier,ios
   integer :: NPROC,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS,NPROC_XI,NPROC_ETA
   double precision :: RMOHO_FICTITIOUS_IN_MESHER,R120,R_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES,&
-   CENTER_LATITUDE_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES,&
-   GAMMA_ROTATION_AZIMUTH
+    CENTER_LATITUDE_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
+    GAMMA_ROTATION_AZIMUTH
   integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
   logical :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
     ATTENUATION,ATTENUATION_3D,ROTATION,ELLIPTICITY,GRAVITY,CASE_3D,ISOTROPIC_3D_MANTLE, &
     HETEROGEN_3D_MANTLE,CRUSTAL,INFLATE_CENTRAL_CUBE
-  character(len=150) :: MODEL,dummystring
+  character(len=150) :: dummystring
   integer, external :: err_occurred
+
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
   ! as usual in MPI, process 0 is in charge of coordinating everything
@@ -196,6 +100,10 @@
       call exit_MPI(myrank,'an error occurred while reading the parameter file')
     endif
 
+    ! GPU_MODE is in par_file
+    ! parameter is optional, may not be in the Par_file
+    call read_gpu_mode(GPU_MODE)
+
   endif
 
   ! distributes parameters from master to all processes
@@ -232,6 +140,10 @@
                 HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
                 ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
                 ATTENUATION,ATTENUATION_3D,ANISOTROPIC_INNER_CORE,NOISE_TOMOGRAPHY)
+
+  ! broadcasts GPU_MODE
+  call broadcast_gpu_parameters(myrank,GPU_MODE)
+
   ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
 
@@ -326,6 +238,59 @@
 
   endif
 
+  ! checks flags
+  call initialize_simulation_check(sizeprocs,NPROCTOT,NSPEC_COMPUTED, &
+                                  ATTENUATION,ATTENUATION_3D,NCHUNKS,GRAVITY,ROTATION, &
+                                  ELLIPTICITY,OCEANS,NPROC_XI,NPROC_ETA, &
+                                  TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+                                  ANISOTROPIC_INNER_CORE)
+
+  ! counts receiver stations
+  if (SIMULATION_TYPE == 1) then
+    rec_filename = 'DATA/STATIONS'
+  else
+    rec_filename = 'DATA/STATIONS_ADJOINT'
+  endif
+  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
+
+  ! get total number of receivers
+  if(myrank == 0) then
+    open(unit=IIN,file=STATIONS,iostat=ios,status='old',action='read')
+    nrec = 0
+    do while(ios == 0)
+      read(IIN,"(a)",iostat=ios) dummystring
+      if(ios == 0) nrec = nrec + 1
+    enddo
+    close(IIN)
+  endif
+
+  ! broadcast the information read on the master to the nodes
+  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  if(nrec < 1) call exit_MPI(myrank,trim(STATIONS)//': need at least one receiver')
+
+  end subroutine initialize_simulation
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine initialize_simulation_check(sizeprocs,NPROCTOT,NSPEC_COMPUTED, &
+                                        ATTENUATION,ATTENUATION_3D,NCHUNKS,GRAVITY,ROTATION, &
+                                        ELLIPTICITY,OCEANS,NPROC_XI,NPROC_ETA, &
+                                        TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
+                                        ANISOTROPIC_INNER_CORE)
+
+  use specfem_par
+  implicit none
+
+  integer :: sizeprocs
+  integer :: NPROCTOT,NCHUNKS,NPROC_XI,NPROC_ETA
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_computed
+
+  logical :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS, &
+    ATTENUATION,ATTENUATION_3D,ROTATION,ELLIPTICITY,GRAVITY
+
+
   ! check that the code is running with the requested nb of processes
   if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes(initialization specfem)')
 
@@ -336,71 +301,71 @@
   endif
   if (NSPEC_computed(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE) then
       write(IMAIN,*) 'NSPEC_OUTER_CORE:',NSPEC_computed(IREGION_OUTER_CORE),NSPEC_OUTER_CORE
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 2')
+      call exit_MPI(myrank,'error in compiled parameters, please recompile solver 2')
   endif
   if (NSPEC_computed(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) then
       write(IMAIN,*) 'NSPEC_INNER_CORE:',NSPEC_computed(IREGION_INNER_CORE),NSPEC_INNER_CORE
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 3')
+      call exit_MPI(myrank,'error in compiled parameters, please recompile solver 3')
   endif
   if (ATTENUATION_3D .NEQV. ATTENUATION_3D_VAL) then
       write(IMAIN,*) 'ATTENUATION_3D:',ATTENUATION_3D,ATTENUATION_3D_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 4')
+      call exit_MPI(myrank,'error in compiled parameters ATTENUATION_3D, please recompile solver')
   endif
   if (NCHUNKS /= NCHUNKS_VAL) then
       write(IMAIN,*) 'NCHUNKS:',NCHUNKS,NCHUNKS_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 6')
+      call exit_MPI(myrank,'error in compiled parameters NCHUNKS, please recompile solver')
   endif
   if (GRAVITY .NEQV. GRAVITY_VAL) then
       write(IMAIN,*) 'GRAVITY:',GRAVITY,GRAVITY_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 7')
+      call exit_MPI(myrank,'error in compiled parameters GRAVITY, please recompile solver')
   endif
   if (ROTATION .NEQV. ROTATION_VAL) then
       write(IMAIN,*) 'ROTATION:',ROTATION,ROTATION_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 8')
+      call exit_MPI(myrank,'error in compiled parameters ROTATION, please recompile solver')
   endif
   if (ATTENUATION .NEQV. ATTENUATION_VAL) then
       write(IMAIN,*) 'ATTENUATION:',ATTENUATION,ATTENUATION_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 9')
+      call exit_MPI(myrank,'error in compiled parameters ATTENUATION, please recompile solver')
   endif
   if (ELLIPTICITY .NEQV. ELLIPTICITY_VAL) then
       write(IMAIN,*) 'ELLIPTICITY:',ELLIPTICITY,ELLIPTICITY_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 10')
+      call exit_MPI(myrank,'error in compiled parameters ELLIPTICITY, please recompile solver')
   endif
   if (OCEANS .NEQV. OCEANS_VAL) then
       write(IMAIN,*) 'OCEANS:',OCEANS,OCEANS_VAL
-      call exit_MPI(myrank,'error in compiled parameters, please recompile solver 10')
-  endif
-  if (NPROCTOT /= NPROCTOT_VAL) then
-      write(IMAIN,*) 'NPROCTOT:',NPROCTOT,NPROCTOT_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 11')
+      call exit_MPI(myrank,'error in compiled parameters OCEANS, please recompile solver')
   endif
   if (NPROC_XI /= NPROC_XI_VAL) then
       write(IMAIN,*) 'NPROC_XI:',NPROC_XI,NPROC_XI_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 11')
+      call exit_MPI(myrank,'error in compiled parameters NPROC_XI, please recompile solver')
   endif
   if (NPROC_ETA /= NPROC_ETA_VAL) then
       write(IMAIN,*) 'NPROC_ETA:',NPROC_ETA,NPROC_ETA_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 11')
+      call exit_MPI(myrank,'error in compiled parameters NPROC_ETA, please recompile solver')
+  endif
+  if (NPROCTOT /= NPROCTOT_VAL) then
+      write(IMAIN,*) 'NPROCTOT:',NPROCTOT,NPROCTOT_VAL
+      call exit_MPI(myrank,'error in compiled parameters NPROCTOT, please recompile solver')
   endif
   if (NEX_XI /= NEX_XI_VAL) then
       write(IMAIN,*) 'NEX_XI:',NEX_XI,NEX_XI_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 12')
+      call exit_MPI(myrank,'error in compiled parameters NEX_XI, please recompile solver')
   endif
   if (NEX_ETA /= NEX_ETA_VAL) then
       write(IMAIN,*) 'NEX_ETA:',NEX_ETA,NEX_ETA_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 13')
+      call exit_MPI(myrank,'error in compiled parameters NEX_ETA, please recompile solver')
   endif
   if (TRANSVERSE_ISOTROPY .NEQV. TRANSVERSE_ISOTROPY_VAL) then
       write(IMAIN,*) 'TRANSVERSE_ISOTROPY:',TRANSVERSE_ISOTROPY,TRANSVERSE_ISOTROPY_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 14')
+      call exit_MPI(myrank,'error in compiled parameters, please recompile solver 14')
   endif
   if (ANISOTROPIC_3D_MANTLE .NEQV. ANISOTROPIC_3D_MANTLE_VAL) then
       write(IMAIN,*) 'ANISOTROPIC_3D_MANTLE:',ANISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 15')
+      call exit_MPI(myrank,'error in compiled parameters, please recompile solver 15')
   endif
   if (ANISOTROPIC_INNER_CORE .NEQV. ANISOTROPIC_INNER_CORE_VAL) then
       write(IMAIN,*) 'ANISOTROPIC_INNER_CORE:',ANISOTROPIC_INNER_CORE,ANISOTROPIC_INNER_CORE_VAL
-       call exit_MPI(myrank,'error in compiled parameters, please recompile solver 16')
+      call exit_MPI(myrank,'error in compiled parameters, please recompile solver 16')
   endif
 
   ! check simulation pararmeters
@@ -464,57 +429,21 @@
     endif
   endif
 
-  ! make ellipticity
-  if(ELLIPTICITY_VAL) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
-
-  ! read topography and bathymetry file
-  if(myrank == 0 .and. (TOPOGRAPHY .or. OCEANS_VAL)) call read_topo_bathy_file(ibathy_topo)
-  ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-  ! set up GLL points, weights and derivation matrices
-  call define_derivation_matrices(xigll,yigll,zigll,wxgll,wygll,wzgll, &
-         hprime_xx,hprime_yy,hprime_zz, &
-         hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
-         wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube)
-
-  if( USE_DEVILLE_PRODUCTS_VAL ) then
-
-  ! check that optimized routines from Deville et al. (2002) can be used
-    if(NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5) &
-      stop 'Deville et al. (2002) routines can only be used if NGLLX = NGLLY = NGLLZ = 5'
-
-    ! define transpose of derivation matrix
-    do j = 1,NGLLY
-      do i = 1,NGLLX
-        hprime_xxT(j,i) = hprime_xx(i,j)
-        hprimewgll_xxT(j,i) = hprimewgll_xx(i,j)
-      enddo
-    enddo
+  ! check that buffer size is valid when defining/using buffer_send_chunkcorn_scalar
+  if( NGLOB1D_RADIAL_CM < NGLOB1D_RADIAL_OC .or. NGLOB1D_RADIAL_CM < NGLOB1D_RADIAL_IC ) then
+    call exit_MPI(myrank, 'NGLOB1D_RADIAL_CM must be larger than for outer core or inner core, please check mesh')
   endif
 
-  ! counts receiver stations
-  if (SIMULATION_TYPE == 1) then
-    rec_filename = 'DATA/STATIONS'
-  else
-    rec_filename = 'DATA/STATIONS_ADJOINT'
+  ! check for GPU runs
+  if( GPU_MODE ) then
+    if( NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5 ) &
+      call exit_mpi(myrank,'GPU mode can only be used if NGLLX == NGLLY == NGLLZ == 5')
+    if( CUSTOM_REAL /= 4 ) &
+      call exit_mpi(myrank,'GPU mode runs only with CUSTOM_REAL == 4')
+    if( ATTENUATION_VAL ) then
+      if( N_SLS /= 3 ) &
+        call exit_mpi(myrank,'GPU mode does not support N_SLS /= 3 yet')
+    endif
   endif
-  call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
-  ! get total number of receivers
-  if(myrank == 0) then
-    open(unit=IIN,file=STATIONS,iostat=ios,status='old',action='read')
-    nrec = 0
-    do while(ios == 0)
-      read(IIN,"(a)",iostat=ios) dummystring
-      if(ios == 0) nrec = nrec + 1
-    enddo
-    close(IIN)
-  endif
-  ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  if(nrec < 1) call exit_MPI(myrank,trim(STATIONS)//': need at least one receiver')
 
-
-  end subroutine initialize_simulation
-
-
+  end subroutine initialize_simulation_check
