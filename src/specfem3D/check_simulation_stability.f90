@@ -27,7 +27,9 @@
 
   subroutine check_simulation_stability(it,displ_crust_mantle,displ_inner_core,displ_outer_core, &
                           b_displ_crust_mantle,b_displ_inner_core,b_displ_outer_core, &
-                          eps_trace_over_3_crust_mantle,epsilondev_crust_mantle, &
+                          eps_trace_over_3_crust_mantle, &
+                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                          epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           myrank) !COMPUTE_AND_STORE_STRAIN,myrank)
 
@@ -52,8 +54,12 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
     eps_trace_over_3_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) ::  &
-    epsilondev_crust_mantle
+
+!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) ::  &
+!    epsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) ::  &
+    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+    epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
   integer SIMULATION_TYPE
   character(len=150) OUTPUT_FILES
@@ -124,7 +130,9 @@
 
   if (COMPUTE_AND_STORE_STRAIN) then
     Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
-    strain2_norm= maxval(abs(epsilondev_crust_mantle))
+    strain2_norm= max( maxval(abs(epsilondev_xx_crust_mantle)),maxval(abs(epsilondev_yy_crust_mantle)), &
+                       maxval(abs(epsilondev_xy_crust_mantle)),maxval(abs(epsilondev_xz_crust_mantle)), &
+                       maxval(abs(epsilondev_yz_crust_mantle)) )
     call MPI_REDUCE(Strain_norm,Strain_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
              MPI_COMM_WORLD,ier)
     call MPI_REDUCE(Strain2_norm,Strain2_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &

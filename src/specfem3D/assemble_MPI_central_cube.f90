@@ -26,38 +26,55 @@
 !=====================================================================
 
   subroutine assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-    npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
-    receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
-    ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,vector_assemble,ndim_assemble,iphase_CC)
+                                      npoin2D_cube_from_slices, &
+                                      buffer_all_cube_from_slices,buffer_slices, &
+                                      request_send_cc,request_receive_cc, &
+                                      request_send_array_cc,request_receive_array_cc, &
+                                      ibool_central_cube, &
+                                      receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
+                                      ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE, &
+                                      vector_assemble,ndim_assemble, &
+                                      iphase_comm_CC)
 
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
   include 'constants.h'
 
-! include values created by the mesher
+  ! include values created by the mesher
   include "OUTPUT_FILES/values_from_mesher.h"
 
-! for matching with central cube in inner core
+  ! for matching with central cube in inner core
   integer, intent(in) :: ichunk, nb_msgs_theor_in_cube, npoin2D_cube_from_slices
   integer, intent(in) :: ndim_assemble
   integer, intent(in) :: receiver_cube_from_slices
-  integer, intent(inout) :: iphase_CC
+  integer, intent(inout) :: iphase_comm_CC
   integer, dimension(nb_msgs_theor_in_cube), intent(in) :: sender_from_slices_to_cube
+
   double precision, dimension(npoin2D_cube_from_slices,ndim_assemble), intent(inout) :: buffer_slices
   double precision, dimension(npoin2D_cube_from_slices,ndim_assemble,nb_msgs_theor_in_cube), intent(inout) :: &
-                                                                                       buffer_all_cube_from_slices
+                                                                                      buffer_all_cube_from_slices
+
+  ! note: these parameters are "saved" now as global parameters
+  ! MPI status of messages to be received
+  integer, intent(inout) :: request_send_cc,request_receive_cc
+  ! maximum value of nb_msgs_theor_in_cube is 5 (when NPROC_XI == 1)
+  ! therefore NPROC_XI+4 is always large enough
+  integer, dimension(NPROC_XI_VAL+4), intent(inout) :: request_send_array_cc,request_receive_array_cc
+
   integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices), intent(in) :: ibool_central_cube
 
-! local to global mapping
+  ! local to global mapping
   integer, intent(in) :: NSPEC2D_BOTTOM_INNER_CORE
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), intent(in) :: ibool_inner_core
   integer, dimension(NSPEC_INNER_CORE), intent(in) :: idoubling_inner_core
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE), intent(in) :: ibelm_bottom_inner_core
 
-! vector
+  ! vector
   real(kind=CUSTOM_REAL), dimension(ndim_assemble,NGLOB_INNER_CORE), intent(inout) :: vector_assemble
+
+! local parameters
 
   integer ipoin,idimension, ispec2D, ispec
   integer i,j,k
@@ -65,80 +82,44 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: array_central_cube
 
-! MPI status of messages to be received
-  integer, save :: request_send,request_receive
-! maximum value of nb_msgs_theor_in_cube is 5 (when NPROC_XI == 1)
-! therefore NPROC_XI+4 is always large enough
-  integer, dimension(NPROC_XI_VAL+4), save :: request_send_array,request_receive_array
   logical :: flag_result_test
   integer, dimension(MPI_STATUS_SIZE) :: msg_status
   integer :: ier
 
-! mask
+  ! mask
   logical, dimension(NGLOB_INNER_CORE) :: mask
 
-!---
-!---  use buffers to assemble mass matrix with central cube once and for all
-!---
+  !---
+  !---  use buffers to assemble mass matrix with central cube once and for all
+  !---
 
-  if(iphase_CC == 1) then
+  select case( iphase_comm_CC )
 
-! on chunks AB and AB_ANTIPODE, receive all the messages from slices
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-    do imsg = 1,nb_msgs_theor_in_cube-1
-! receive buffers from slices
-      sender = sender_from_slices_to_cube(imsg)
-      call MPI_IRECV(buffer_all_cube_from_slices(1,1,imsg), &
-                ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-                itag,MPI_COMM_WORLD,request_receive_array(imsg),ier)
-    enddo
-  endif
+  case( 1 )
 
-! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
-  if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
-! for bottom elements in contact with central cube from the slices side
-    ipoin = 0
-    do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
-      ispec = ibelm_bottom_inner_core(ispec2D)
-! only for DOFs exactly on surface of central cube (bottom of these elements)
-      k = 1
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          ipoin = ipoin + 1
-          buffer_slices(ipoin,:) = dble(vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)))
-        enddo
+    ! non-central-cube chunks send values to receiver central cube chunks AB or AB_ANTIPODE
+
+    ! note: only chunks AB and AB_ANTIPODE contain valid central cube elements,
+    !          all other have only fictitious central cube elements
+
+    ! on chunks AB and AB_ANTIPODE, receive all the messages from slices
+    if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+      do imsg = 1,nb_msgs_theor_in_cube-1
+        ! receive buffers from slices
+        sender = sender_from_slices_to_cube(imsg)
+        call MPI_IRECV(buffer_all_cube_from_slices(1,1,imsg), &
+                  ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
+                  itag,MPI_COMM_WORLD,request_receive_array_cc(imsg),ier)
       enddo
-    enddo
-! send buffer to central cube
-    receiver = receiver_cube_from_slices
-    call MPI_ISEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,request_send,ier)
- endif  ! end sending info to central cube
+    endif
 
-  iphase_CC = iphase_CC + 1
-  return ! exit because we have started some communications therefore we need some time
-
-  endif !!!!!!!!! end of iphase_CC 1
-
-  if(iphase_CC == 2) then
-
-  if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
-    call MPI_TEST(request_send,flag_result_test,msg_status,ier)
-    if(.not. flag_result_test) return ! exit if message not sent yet
-  endif
-
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-    do imsg = 1,nb_msgs_theor_in_cube-1
-      call MPI_TEST(request_receive_array(imsg),flag_result_test,msg_status,ier)
-      if(.not. flag_result_test) return ! exit if message not received yet
-    enddo
-  endif
-
-! exchange of their bottom faces between chunks AB and AB_ANTIPODE
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-    ipoin = 0
-    do ispec = NSPEC_INNER_CORE, 1, -1
-      if (idoubling_inner_core(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE) then
+    ! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
+    if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
+      ! for bottom elements in contact with central cube from the slices side
+      ipoin = 0
+      do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
+        ispec = ibelm_bottom_inner_core(ispec2D)
+        ! only for DOFs exactly on surface of central cube (bottom of these elements)
         k = 1
         do j = 1,NGLLY
           do i = 1,NGLLX
@@ -146,183 +127,226 @@
             buffer_slices(ipoin,:) = dble(vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)))
           enddo
         enddo
-      endif
-    enddo
-    sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
-!   call MPI_SENDRECV(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
-!       itag,buffer_slices2,ndim_assemble*npoin2D_cube_from_slices,&
-!       MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,msg_status,ier)
+      enddo
+      ! send buffer to central cube
+      receiver = receiver_cube_from_slices
+      call MPI_ISEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
+                MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,request_send_cc,ier)
+    endif  ! end sending info to central cube
 
-    call MPI_IRECV(buffer_all_cube_from_slices(1,1,nb_msgs_theor_in_cube), &
-        ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,request_receive,ier)
-!! DK DK this merged with previous statement
-!   buffer_all_cube_from_slices(:,:,nb_msgs_theor_in_cube) = buffer_slices2(:,:)
+    iphase_comm_CC = iphase_comm_CC + 1
+    return ! exit because we have started some communications therefore we need some time
 
-    call MPI_ISEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
-        itag,MPI_COMM_WORLD,request_send,ier)
-  endif
+  case( 2 )
 
-  iphase_CC = iphase_CC + 1
-  return ! exit because we have started some communications therefore we need some time
+    ! central cube chunks AB and AB_ANTIPODE send values to each other
 
-  endif !!!!!!!!! end of iphase_CC 2
+    ! checks that chunks have sent out messages
+    if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
+      call MPI_TEST(request_send_cc,flag_result_test,msg_status,ier)
+      if(.not. flag_result_test) return ! exit if message not sent yet
+    endif
 
-  if(iphase_CC == 3) then
-
-!--- now we need to assemble the contributions
-
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-
-    call MPI_TEST(request_send,flag_result_test,msg_status,ier)
-    if(.not. flag_result_test) return ! exit if message not sent yet
-    call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
-    if(.not. flag_result_test) return ! exit if message not received yet
-
-    do idimension = 1,ndim_assemble
-! erase contributions to central cube array
-      array_central_cube(:) = 0._CUSTOM_REAL
-
-! use indirect addressing to store contributions only once
-! distinguish between single and double precision for reals
+    ! checks that central cube chunks have received all (requested) messages
+    if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
       do imsg = 1,nb_msgs_theor_in_cube-1
-        do ipoin = 1,npoin2D_cube_from_slices
-          if(CUSTOM_REAL == SIZE_REAL) then
-            array_central_cube(ibool_central_cube(imsg,ipoin)) = sngl(buffer_all_cube_from_slices(ipoin,idimension,imsg))
-          else
-            array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(ipoin,idimension,imsg)
-          endif
-        enddo
+        call MPI_TEST(request_receive_array_cc(imsg),flag_result_test,msg_status,ier)
+        if(.not. flag_result_test) return ! exit if message not received yet
       enddo
-! add the constribution of AB or AB_ANTIPODE to sum with the external slices on the edges
-! use a mask to avoid taking the same point into account several times.
-      mask(:) = .false.
-      do ipoin = 1,npoin2D_cube_from_slices
-        if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
-          if(CUSTOM_REAL == SIZE_REAL) then
-            array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-            array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-            sngl(buffer_all_cube_from_slices(ipoin,idimension,nb_msgs_theor_in_cube))
-          else
-            array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-            array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-            buffer_all_cube_from_slices(ipoin,idimension,nb_msgs_theor_in_cube)
-          endif
-          mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = .true.
-        endif
-      enddo
+    endif
 
-! suppress degrees of freedom already assembled at top of cube on edges
-      do ispec = 1,NSPEC_INNER_CORE
-        if(idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) then
-          k = NGLLZ
+    ! exchange of their bottom faces between chunks AB and AB_ANTIPODE
+    if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+      ipoin = 0
+      do ispec = NSPEC_INNER_CORE, 1, -1
+        if (idoubling_inner_core(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE) then
+          k = 1
           do j = 1,NGLLY
             do i = 1,NGLLX
-              array_central_cube(ibool_inner_core(i,j,k,ispec)) = 0._CUSTOM_REAL
+              ipoin = ipoin + 1
+              buffer_slices(ipoin,:) = dble(vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)))
             enddo
           enddo
         endif
       enddo
+      sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
+    !   call MPI_SENDRECV(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
+    !       itag,buffer_slices2,ndim_assemble*npoin2D_cube_from_slices,&
+    !       MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,msg_status,ier)
 
-! assemble contributions
-      vector_assemble(idimension,:) = vector_assemble(idimension,:) + array_central_cube(:)
+      call MPI_IRECV(buffer_all_cube_from_slices(1,1,nb_msgs_theor_in_cube), &
+          ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender,itag,MPI_COMM_WORLD,request_receive_cc,ier)
+    !! DK DK this merged with previous statement
+    !   buffer_all_cube_from_slices(:,:,nb_msgs_theor_in_cube) = buffer_slices2(:,:)
 
-! copy sum back
-      do imsg = 1,nb_msgs_theor_in_cube-1
-        do ipoin = 1,npoin2D_cube_from_slices
-          buffer_all_cube_from_slices(ipoin,idimension,imsg) = vector_assemble(idimension,ibool_central_cube(imsg,ipoin))
-        enddo
-      enddo
+      call MPI_ISEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,receiver_cube_from_slices, &
+          itag,MPI_COMM_WORLD,request_send_cc,ier)
+    endif
 
-    enddo
+    iphase_comm_CC = iphase_comm_CC + 1
+    return ! exit because we have started some communications therefore we need some time
 
-  endif
+  case( 3 )
 
-!----------
+    !--- now we need to assemble the contributions
 
-! receive info from central cube on all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
-  if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
-! receive buffers from slices
-  sender = receiver_cube_from_slices
-  call MPI_IRECV(buffer_slices, &
-              ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-              itag,MPI_COMM_WORLD,request_receive,ier)
-! for bottom elements in contact with central cube from the slices side
-!   ipoin = 0
-!   do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
-!     ispec = ibelm_bottom_inner_core(ispec2D)
-! only for DOFs exactly on surface of central cube (bottom of these elements)
-!     k = 1
-!     do j = 1,NGLLY
-!       do i = 1,NGLLX
-!         ipoin = ipoin + 1
-! distinguish between single and double precision for reals
-!         if(CUSTOM_REAL == SIZE_REAL) then
-!           vector_assemble(:,ibool_inner_core(i,j,k,ispec)) = sngl(buffer_slices(ipoin,:))
-!         else
-!           vector_assemble(:,ibool_inner_core(i,j,k,ispec)) = buffer_slices(ipoin,:)
-!         endif
-!       enddo
-!     enddo
-!   enddo
- endif  ! end receiving info from central cube
+    ! central cube chunks AB and AB_ANTIPODE assemble values and send them out to others
 
-!------- send info back from central cube to slices
+    if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
-! on chunk AB & CHUNK_AB_ANTIPODE, send all the messages to slices
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-    do imsg = 1,nb_msgs_theor_in_cube-1
-! send buffers to slices
-      receiver = sender_from_slices_to_cube(imsg)
-      call MPI_ISEND(buffer_all_cube_from_slices(1,1,imsg),ndim_assemble*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,request_send_array(imsg),ier)
-    enddo
-  endif
-
-  iphase_CC = iphase_CC + 1
-  return ! exit because we have started some communications therefore we need some time
-
-  endif !!!!!!!!! end of iphase_CC 3
-
-  if(iphase_CC == 4) then
-
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-    do imsg = 1,nb_msgs_theor_in_cube-1
-      call MPI_TEST(request_send_array(imsg),flag_result_test,msg_status,ier)
+      ! checks that messages between AB and AB_ANTIPODE have been sent and received
+      call MPI_TEST(request_send_cc,flag_result_test,msg_status,ier)
       if(.not. flag_result_test) return ! exit if message not sent yet
-    enddo
-  endif
+      call MPI_TEST(request_receive_cc,flag_result_test,msg_status,ier)
+      if(.not. flag_result_test) return ! exit if message not received yet
 
-  if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
-    call MPI_TEST(request_receive,flag_result_test,msg_status,ier)
-    if(.not. flag_result_test) return ! exit if message not received yet
-  endif
+      do idimension = 1,ndim_assemble
+        ! erase contributions to central cube array
+        array_central_cube(:) = 0._CUSTOM_REAL
 
-! receive info from central cube on all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
-  if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
-! for bottom elements in contact with central cube from the slices side
-    ipoin = 0
-    do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
-      ispec = ibelm_bottom_inner_core(ispec2D)
-! only for DOFs exactly on surface of central cube (bottom of these elements)
-      k = 1
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          ipoin = ipoin + 1
-! distinguish between single and double precision for reals
-          if(CUSTOM_REAL == SIZE_REAL) then
-            vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)) = sngl(buffer_slices(ipoin,:))
-          else
-            vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)) = buffer_slices(ipoin,:)
+        ! use indirect addressing to store contributions only once
+        ! distinguish between single and double precision for reals
+        do imsg = 1,nb_msgs_theor_in_cube-1
+          do ipoin = 1,npoin2D_cube_from_slices
+            if(CUSTOM_REAL == SIZE_REAL) then
+              array_central_cube(ibool_central_cube(imsg,ipoin)) = sngl(buffer_all_cube_from_slices(ipoin,idimension,imsg))
+            else
+              array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(ipoin,idimension,imsg)
+            endif
+          enddo
+        enddo
+        ! add the constribution of AB or AB_ANTIPODE to sum with the external slices on the edges
+        ! use a mask to avoid taking the same point into account several times.
+        mask(:) = .false.
+        do ipoin = 1,npoin2D_cube_from_slices
+          if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
+            if(CUSTOM_REAL == SIZE_REAL) then
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+              sngl(buffer_all_cube_from_slices(ipoin,idimension,nb_msgs_theor_in_cube))
+            else
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+              buffer_all_cube_from_slices(ipoin,idimension,nb_msgs_theor_in_cube)
+            endif
+            mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = .true.
           endif
         enddo
+
+        ! suppress degrees of freedom already assembled at top of cube on edges
+        do ispec = 1,NSPEC_INNER_CORE
+          if(idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) then
+            k = NGLLZ
+            do j = 1,NGLLY
+              do i = 1,NGLLX
+                array_central_cube(ibool_inner_core(i,j,k,ispec)) = 0._CUSTOM_REAL
+              enddo
+            enddo
+          endif
+        enddo
+
+        ! assemble contributions
+        vector_assemble(idimension,:) = vector_assemble(idimension,:) + array_central_cube(:)
+
+        ! copy sum back
+        do imsg = 1,nb_msgs_theor_in_cube-1
+          do ipoin = 1,npoin2D_cube_from_slices
+            buffer_all_cube_from_slices(ipoin,idimension,imsg) = vector_assemble(idimension,ibool_central_cube(imsg,ipoin))
+          enddo
+        enddo
+
       enddo
-    enddo
- endif  ! end receiving info from central cube
 
-! this is the exit condition, to go beyond the last phase number
-  iphase_CC = iphase_CC + 1
+    endif
 
-  endif !!!!!!!!! end of iphase_CC 4
+    !----------
+
+    ! receive info from central cube on all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
+    if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
+      ! receive buffers from slices
+      sender = receiver_cube_from_slices
+      call MPI_IRECV(buffer_slices, &
+                  ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
+                  itag,MPI_COMM_WORLD,request_receive_cc,ier)
+      ! for bottom elements in contact with central cube from the slices side
+      !   ipoin = 0
+      !   do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
+      !     ispec = ibelm_bottom_inner_core(ispec2D)
+      ! only for DOFs exactly on surface of central cube (bottom of these elements)
+      !     k = 1
+      !     do j = 1,NGLLY
+      !       do i = 1,NGLLX
+      !         ipoin = ipoin + 1
+      ! distinguish between single and double precision for reals
+      !         if(CUSTOM_REAL == SIZE_REAL) then
+      !           vector_assemble(:,ibool_inner_core(i,j,k,ispec)) = sngl(buffer_slices(ipoin,:))
+      !         else
+      !           vector_assemble(:,ibool_inner_core(i,j,k,ispec)) = buffer_slices(ipoin,:)
+      !         endif
+      !       enddo
+      !     enddo
+      !   enddo
+    endif  ! end receiving info from central cube
+
+    !------- send info back from central cube to slices
+
+    ! on chunk AB & CHUNK_AB_ANTIPODE, send all the messages to slices
+    if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+      do imsg = 1,nb_msgs_theor_in_cube-1
+        ! send buffers to slices
+        receiver = sender_from_slices_to_cube(imsg)
+        call MPI_ISEND(buffer_all_cube_from_slices(1,1,imsg),ndim_assemble*npoin2D_cube_from_slices, &
+                MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,request_send_array_cc(imsg),ier)
+      enddo
+    endif
+
+    iphase_comm_CC = iphase_comm_CC + 1
+    return ! exit because we have started some communications therefore we need some time
+
+  case( 4 )
+
+    ! all non-central cube chunks set the values at the common points with central cube
+
+    ! checks that messages were sent out by central cube chunks AB and AB_ANTIPODE
+    if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+      do imsg = 1,nb_msgs_theor_in_cube-1
+        call MPI_TEST(request_send_array_cc(imsg),flag_result_test,msg_status,ier)
+        if(.not. flag_result_test) return ! exit if message not sent yet
+      enddo
+    endif
+
+    ! checks that messages have been received
+    if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
+      call MPI_TEST(request_receive_cc,flag_result_test,msg_status,ier)
+      if(.not. flag_result_test) return ! exit if message not received yet
+    endif
+
+    ! receive info from central cube on all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
+    if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
+      ! for bottom elements in contact with central cube from the slices side
+      ipoin = 0
+      do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
+        ispec = ibelm_bottom_inner_core(ispec2D)
+        ! only for DOFs exactly on surface of central cube (bottom of these elements)
+        k = 1
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            ipoin = ipoin + 1
+            ! distinguish between single and double precision for reals
+            if(CUSTOM_REAL == SIZE_REAL) then
+              vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)) = sngl(buffer_slices(ipoin,:))
+            else
+              vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)) = buffer_slices(ipoin,:)
+            endif
+          enddo
+        enddo
+      enddo
+    endif  ! end receiving info from central cube
+
+    ! this is the exit condition, to go beyond the last phase number
+    iphase_comm_CC = iphase_comm_CC + 1
+
+  end select
 
   end subroutine assemble_MPI_central_cube
 

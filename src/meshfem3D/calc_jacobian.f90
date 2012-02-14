@@ -177,9 +177,13 @@
                  xgamma*(yxi*zeta-yeta*zxi)
 
             ! Check the jacobian
+            ! note: when honoring the moho, we squeeze and stretch elements
+            !          thus, it can happen that with a coarse mesh resolution, the jacobian encounters problems
             if(jacobian <= ZERO) then
               call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-              print*,'r/lat/lon:',r*R_EARTH_KM,90.0-theta*180./PI,phi*180./PI
+              print*,'error jacobian rank:',myrank
+              print*,'  location r/lat/lon: ',r*R_EARTH_KM,90.0-theta*180./PI,phi*180./PI
+              print*,'  jacobian: ',jacobian
               call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
             end if
 

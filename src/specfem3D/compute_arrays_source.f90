@@ -183,7 +183,7 @@
   it_end = iadjsrc(it_sub_adj,1)+NSTEP_BLOCK-1
 
 
-  ! unfortunately, things become more tricky because of the Newark time scheme at
+  ! unfortunately, things become more tricky because of the Newmark time scheme at
   ! the very beginning of the time loop. however, when we read in the backward/reconstructed
   ! wavefields at the end of the first time loop, we can use the adjoint source index from 3000 down to 1.
   !

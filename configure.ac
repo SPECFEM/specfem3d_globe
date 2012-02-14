@@ -33,6 +33,13 @@ fi
 AC_SUBST([CUSTOM_REAL])
 AC_SUBST([CUSTOM_MPI_TYPE])
 
+AC_ARG_WITH([cuda],
+    [AC_HELP_STRING([--with-cuda],
+        [build cuda GPU enabled version @<:@default=no@:>@])],
+    [want_cuda="$withval"],
+    [want_cuda=no])
+AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" = yes])
+
 
 # Checks for programs.
 
@@ -76,6 +83,13 @@ AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
 AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
+AC_ARG_VAR(CUDA_LIB,[Location of CUDA library libcudart])
+AC_ARG_VAR(CUDA_INC,[Location of CUDA include files])
+AC_ARG_VAR(MPI_INC,[Location of MPI include mpi.h, which is needed by nvcc when compiling cuda files])
+AC_ARG_VAR(AR, [ar library creation])
+AC_ARG_VAR(ARFLAGS, [ar flag library creation])
+AC_ARG_VAR(RANLIB, [ranlib library creation])
+
 if test x"$MPIFC" = x; then
     MPIFC=mpif90
 fi
@@ -101,7 +115,7 @@ CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 # Checks for library functions.
 
 
-AC_CONFIG_FILES([Makefile src/auxiliaries/Makefile src/meshfem3D/Makefile src/specfem3D/Makefile src/create_header_file/Makefile setup/constants.h setup/precision.h DATA/Par_file DATA/CMTSOLUTION DATA/STATIONS])
+AC_CONFIG_FILES([Makefile src/auxiliaries/Makefile src/meshfem3D/Makefile src/specfem3D/Makefile src/create_header_file/Makefile setup/constants.h setup/precision.h])
 AC_OUTPUT
 
 

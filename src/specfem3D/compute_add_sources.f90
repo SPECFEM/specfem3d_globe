@@ -274,10 +274,10 @@
             !           the file at NSTEP corresponds to -t0 + (NSTEP-1)*DT
             !
             !           the same time step is saved for the forward wavefields to reconstruct them;
-            !           however, the Newark time scheme acts at the very beginning of this time loop
+            !           however, the Newmark time scheme acts at the very beginning of this time loop
             !           such that we have the backward/reconstructed wavefield updated by
             !           a single time step into the direction -DT and b_displ(it=1) would  corresponds to -t0 + (NSTEP-1)*DT - DT
-            !           after the Newark (predictor) time step update.
+            !           after the Newmark (predictor) time step update.
             !           however, we will read the backward/reconstructed wavefield at the end of the first time loop,
             !           such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT (which is the one saved in the files).
             !

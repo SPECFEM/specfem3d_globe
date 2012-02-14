@@ -26,13 +26,13 @@
 !=====================================================================
 
   subroutine read_arrays_buffers_solver(iregion_code,myrank, &
-     iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
-     npoin2D_xi,npoin2D_eta, &
-     iprocfrom_faces,iprocto_faces,imsg_type, &
-     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-     iboolfaces,npoin2D_faces,iboolcorner, &
-     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
-     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
+                               iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
+                               npoin2D_xi,npoin2D_eta, &
+                               iprocfrom_faces,iprocto_faces,imsg_type, &
+                               iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                               iboolfaces,npoin2D_faces,iboolcorner, &
+                               NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
+                               NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
 
   implicit none
 
@@ -117,10 +117,9 @@
   close(IIN)
 
   if(myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) '# max of points in MPI buffers along xi npoin2D_xi = ', &
+    write(IMAIN,*) '  #max of points in MPI buffers along xi npoin2D_xi = ', &
                                 maxval(npoin2D_xi(:))
-    write(IMAIN,*) '# max of array elements transferred npoin2D_xi*NDIM = ', &
+    write(IMAIN,*) '  #max of array elements transferred npoin2D_xi*NDIM = ', &
                                 maxval(npoin2D_xi(:))*NDIM
     write(IMAIN,*)
   endif
@@ -164,10 +163,9 @@
   close(IIN)
 
   if(myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) '#max of points in MPI buffers along eta npoin2D_eta = ', &
+    write(IMAIN,*) '  #max of points in MPI buffers along eta npoin2D_eta = ', &
                                 maxval(npoin2D_eta(:))
-    write(IMAIN,*) '#max of array elements transferred npoin2D_eta*NDIM = ', &
+    write(IMAIN,*) '  #max of array elements transferred npoin2D_eta*NDIM = ', &
                                 maxval(npoin2D_eta(:))*NDIM
     write(IMAIN,*)
   endif
@@ -182,34 +180,34 @@
 
   if(myrank == 0) then
 
-! file with the list of processors for each message for faces
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old',action='read')
-  do imsg = 1,NUMMSGS_FACES
-  read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
-  if      (iprocfrom_faces(imsg) < 0 &
-      .or. iprocto_faces(imsg) < 0 &
-      .or. iprocfrom_faces(imsg) > NPROCTOT-1 &
-      .or. iprocto_faces(imsg) > NPROCTOT-1) &
-    call exit_MPI(myrank,'incorrect chunk faces numbering')
-  if (imsg_type(imsg) < 1 .or. imsg_type(imsg) > 3) &
-    call exit_MPI(myrank,'incorrect message type labeling')
-  enddo
-  close(IIN)
+    ! file with the list of processors for each message for faces
+    open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old',action='read')
+    do imsg = 1,NUMMSGS_FACES
+      read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
+      if      (iprocfrom_faces(imsg) < 0 &
+          .or. iprocto_faces(imsg) < 0 &
+          .or. iprocfrom_faces(imsg) > NPROCTOT-1 &
+          .or. iprocto_faces(imsg) > NPROCTOT-1) &
+        call exit_MPI(myrank,'incorrect chunk faces numbering')
+      if (imsg_type(imsg) < 1 .or. imsg_type(imsg) > 3) &
+        call exit_MPI(myrank,'incorrect message type labeling')
+    enddo
+    close(IIN)
 
-! file with the list of processors for each message for corners
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
-  do imsg = 1,NCORNERSCHUNKS
-  read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
-                          iproc_worker2_corners(imsg)
-  if    (iproc_master_corners(imsg) < 0 &
-    .or. iproc_worker1_corners(imsg) < 0 &
-    .or. iproc_worker2_corners(imsg) < 0 &
-    .or. iproc_master_corners(imsg) > NPROCTOT-1 &
-    .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
-    .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
-      call exit_MPI(myrank,'incorrect chunk corner numbering')
-  enddo
-  close(IIN)
+    ! file with the list of processors for each message for corners
+    open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
+    do imsg = 1,NCORNERSCHUNKS
+      read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
+                            iproc_worker2_corners(imsg)
+      if    (iproc_master_corners(imsg) < 0 &
+        .or. iproc_worker1_corners(imsg) < 0 &
+        .or. iproc_worker2_corners(imsg) < 0 &
+        .or. iproc_master_corners(imsg) > NPROCTOT-1 &
+        .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
+        .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
+        call exit_MPI(myrank,'incorrect chunk corner numbering')
+    enddo
+    close(IIN)
 
   endif
 
@@ -254,33 +252,33 @@
 !---- a given slice can belong to at most one corner
   icount_corners = 0
   do imsg = 1,NCORNERSCHUNKS
-  if(myrank == iproc_master_corners(imsg) .or. &
-       myrank == iproc_worker1_corners(imsg) .or. &
-       myrank == iproc_worker2_corners(imsg)) then
-    icount_corners = icount_corners + 1
-    if(icount_corners>1 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) &
-      call exit_MPI(myrank,'more than one corner for this slice')
-    if(icount_corners>4) call exit_MPI(myrank,'more than four corners for this slice')
+    if(myrank == iproc_master_corners(imsg) .or. &
+         myrank == iproc_worker1_corners(imsg) .or. &
+         myrank == iproc_worker2_corners(imsg)) then
+      icount_corners = icount_corners + 1
+      if(icount_corners>1 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) &
+        call exit_MPI(myrank,'more than one corner for this slice')
+      if(icount_corners>4) call exit_MPI(myrank,'more than four corners for this slice')
 
-! read file with 1D buffer for corner
-    if(myrank == iproc_master_corners(imsg)) then
-      write(filename,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
-    else if(myrank == iproc_worker1_corners(imsg)) then
-      write(filename,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
-    else if(myrank == iproc_worker2_corners(imsg)) then
-      write(filename,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
+      ! read file with 1D buffer for corner
+      if(myrank == iproc_master_corners(imsg)) then
+        write(filename,"('buffer_corners_chunks_master_msg',i6.6,'.txt')") imsg
+      else if(myrank == iproc_worker1_corners(imsg)) then
+        write(filename,"('buffer_corners_chunks_worker1_msg',i6.6,'.txt')") imsg
+      else if(myrank == iproc_worker2_corners(imsg)) then
+        write(filename,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
+      endif
+
+      ! matching codes
+      open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
+      read(IIN,*) npoin1D_corner
+      if(npoin1D_corner /= NGLOB1D_RADIAL) &
+        call exit_MPI(myrank,'incorrect nb of points in corner buffer')
+      do ipoin1D = 1,npoin1D_corner
+        read(IIN,*) iboolcorner(ipoin1D,icount_corners),xdummy,ydummy,zdummy
+      enddo
+      close(IIN)
     endif
-
-! matching codes
-    open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
-    read(IIN,*) npoin1D_corner
-    if(npoin1D_corner /= NGLOB1D_RADIAL) &
-      call exit_MPI(myrank,'incorrect nb of points in corner buffer')
-    do ipoin1D = 1,npoin1D_corner
-      read(IIN,*) iboolcorner(ipoin1D,icount_corners),xdummy,ydummy,zdummy
-    enddo
-    close(IIN)
-  endif
   enddo
 
   endif

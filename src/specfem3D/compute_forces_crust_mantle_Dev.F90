@@ -30,112 +30,96 @@
 ! or compile with: -D_HANDOPT
 !#define _HANDOPT
 
-! BEWARE:
-! BEWARE: we have observed that using _HANDOPT in combination with -O3 or higher can lead to problems on some machines;
-! BEWARE: thus, be careful when using it. At the very least, run the same test simulation once with _HANDOPT and once without
-! BEWARE: and make sure that all the seismograms you get are the same down to roundoff noise.
-! BEWARE:
-
 ! note: these hand optimizations should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
 !          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
 
-  subroutine compute_forces_crust_mantle_Dev(minus_gravity_table,density_table,minus_deriv_gravity_table, &
-          displ_crust_mantle,accel_crust_mantle,xstore,ystore,zstore, &
-          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
-!----------------------
-            is_on_a_slice_edge_crust_mantle,icall, &
-            accel_inner_core,ibool_inner_core,idoubling_inner_core, &
-            myrank,iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector,iphase, &
-            nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-            npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
-            receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_INNER_CORE,INCLUDE_CENTRAL_CUBE,iphase_CC, &
-!----------------------
-          hprime_xx,hprime_xxT, &
-          hprimewgll_xx,hprimewgll_xxT, &
-          wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-          c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-          c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-          c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-          ibool,ispec_is_tiso, &
-        ! --idoubling,
-          R_memory,epsilondev,epsilon_trace_over_3,one_minus_sum_beta, &
-          alphaval,betaval,gammaval,factor_common,vx,vy,vz,vnspec)
+  subroutine compute_forces_crust_mantle_Dev( displ_crust_mantle,accel_crust_mantle, &
+                                              phase_is_inner, &
+                                              R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                              epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                              epsilondev_xz,epsilondev_yz, &
+                                              epsilon_trace_over_3, &
+                                              alphaval,betaval,gammaval, &
+                                              factor_common,vx,vy,vz,vnspec)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
+  use constants
+
+  use specfem_par,only: &
+    hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
+    minus_gravity_table,density_table,minus_deriv_gravity_table, &
+    myrank,iproc_xi,iproc_eta,ichunk,addressing, &
+    iprocfrom_faces,iprocto_faces, &
+    iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+    npoin2D_max_all_CM_IC,INCLUDE_CENTRAL_CUBE
+
+  use specfem_par_crustmantle,only: &
+    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle, &
+    xix => xix_crust_mantle,xiy => xiy_crust_mantle,xiz => xiz_crust_mantle, &
+    etax => etax_crust_mantle,etay => etay_crust_mantle,etaz => etaz_crust_mantle, &
+    gammax => gammax_crust_mantle,gammay => gammay_crust_mantle,gammaz => gammaz_crust_mantle, &
+    kappavstore => kappavstore_crust_mantle,kappahstore => kappahstore_crust_mantle, &
+    muvstore => muvstore_crust_mantle,muhstore => muhstore_crust_mantle, &
+    eta_anisostore => eta_anisostore_crust_mantle, &
+    c11store => c11store_crust_mantle,c12store => c12store_crust_mantle,c13store => c13store_crust_mantle, &
+    c14store => c14store_crust_mantle,c15store => c15store_crust_mantle,c16store => c16store_crust_mantle, &
+    c22store => c22store_crust_mantle,c23store => c23store_crust_mantle,c24store => c24store_crust_mantle, &
+    c25store => c25store_crust_mantle,c26store => c26store_crust_mantle,c33store => c33store_crust_mantle, &
+    c34store => c34store_crust_mantle,c35store => c35store_crust_mantle,c36store => c36store_crust_mantle, &
+    c44store => c44store_crust_mantle,c45store => c45store_crust_mantle,c46store => c46store_crust_mantle, &
+    c55store => c55store_crust_mantle,c56store => c56store_crust_mantle,c66store => c66store_crust_mantle, &
+    ibool => ibool_crust_mantle, &
+    ispec_is_tiso => ispec_is_tiso_crust_mantle, &
+    one_minus_sum_beta => one_minus_sum_beta_crust_mantle, &
+    iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+    npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+    iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+    phase_ispec_inner => phase_ispec_inner_crust_mantle, &
+    nspec_outer => nspec_outer_crust_mantle, &
+    nspec_inner => nspec_inner_crust_mantle
+
+  use specfem_par_innercore,only: &
+    ibool_inner_core,idoubling_inner_core, &
+    iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+    npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+    iboolfaces_inner_core,iboolcorner_inner_core, &
+    nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+    npoin2D_cube_from_slices, &
+    ibool_central_cube, &
+    receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC
+
   implicit none
-
-  include "constants.h"
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! displacement and acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
-  ! arrays with mesh parameters per slice
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
-
-  ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-
-  ! array with derivatives of Lagrange polynomials and precalculated products
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xxT,hprimewgll_xxT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: wgllwgll_xz
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ) :: wgllwgll_yz
-
-  ! store anisotropic properties only where needed to save memory
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
-        kappahstore,muhstore,eta_anisostore
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
-        kappavstore,muvstore
-
-  ! arrays for full anisotropy only when needed
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
-        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-        c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
   ! attenuation
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
+!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
+
+!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+    epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
 
   integer :: vx,vy,vz,vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
   real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: factor_common
-  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec) :: one_minus_sum_beta
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
-  ! array with the local to global mapping per slice
-  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso
+  ! inner/outer element run flag
+  logical :: phase_is_inner
 
-  ! gravity
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
+  ! local parameters
 
-! local parameters
   ! Deville
   ! manually inline the calls to the Deville et al. (2002) routines
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
@@ -181,71 +165,10 @@
   ! for gravity
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
 
-  integer :: ispec
-  integer :: i,j,k
-  integer :: iglob1
-
-
-! this for non blocking MPI
-  integer :: iphase,icall
-
-  integer :: computed_elements
-
-  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: accel_inner_core
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
-
-  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
-
-  integer :: ichunk,iproc_xi,iproc_eta,myrank
-
-  integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing
-
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
-
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
-
-  integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
-  integer npoin2D_faces_inner_core(NUMFACES_SHARED)
-
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-       npoin2D_xi_inner_core,npoin2D_eta_inner_core
-
-! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces
-
-! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
-
-  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
-  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
-
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
-
-  integer :: npoin2D_max_all_CM_IC
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC) :: buffer_send_faces,buffer_received_faces
-
-! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
-     buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector
-
-! for matching with central cube in inner core
-  integer nb_msgs_theor_in_cube, npoin2D_cube_from_slices,iphase_CC
-  integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
-  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices
-  double precision, dimension(npoin2D_cube_from_slices,NDIM,nb_msgs_theor_in_cube) :: buffer_all_cube_from_slices
-  integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
-  integer receiver_cube_from_slices
-  logical :: INCLUDE_CENTRAL_CUBE
-
-! local to global mapping
-  integer NSPEC2D_BOTTOM_INNER_CORE
-  integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
+  integer :: ispec,i,j,k,iglob1
+!  integer :: computed_elements
+  integer :: num_elements,ispec_p
+  integer :: iphase
 
 #ifdef _HANDOPT
   integer, dimension(5) :: iglobv5
@@ -255,43 +178,20 @@
 !   big loop over all spectral elements in the solid
 ! ****************************************************
 
-  computed_elements = 0
+!  computed_elements = 0
+  if( .not. phase_is_inner ) then
+    iphase = 1
+    num_elements = nspec_outer
+  else
+    iphase = 2
+    num_elements = nspec_inner
+  endif
 
-  do ispec = 1,NSPEC_CRUST_MANTLE
+  do ispec_p = 1,num_elements
 
-! hide communications by computing the edges first
-    if((icall == 2 .and. is_on_a_slice_edge_crust_mantle(ispec)) .or. &
-       (icall == 1 .and. .not. is_on_a_slice_edge_crust_mantle(ispec))) cycle
+    ispec = phase_ispec_inner(ispec_p,iphase)
 
-! process the communications every ELEMENTS_NONBLOCKING elements
-    computed_elements = computed_elements + 1
-    if (USE_NONBLOCKING_COMMS .and. icall == 2 .and. mod(computed_elements,ELEMENTS_NONBLOCKING_CM_IC) == 0) then
-
-      if(iphase <= 7) call assemble_MPI_vector(myrank,accel_crust_mantle,accel_inner_core, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces,buffer_received_faces,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
-            NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_CM, &
-            NGLOB1D_RADIAL_IC,NCHUNKS_VAL,iphase)
-
-      if(INCLUDE_CENTRAL_CUBE) then
-          if(iphase > 7 .and. iphase_CC <= 4) &
-            call assemble_MPI_central_cube(ichunk,nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-                   npoin2D_cube_from_slices,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
-                   receiver_cube_from_slices,ibool_inner_core,idoubling_inner_core, &
-                   ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC,accel_inner_core,NDIM,iphase_CC)
-      endif
-
-    endif
+    ! only compute element which belong to current phase (inner or outer elements)
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
     ! for incompressible fluid flow, Cambridge University Press (2002),
@@ -416,7 +316,8 @@
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                     ibool, &
-                    R_memory,epsilon_trace_over_3, &
+                    R_xx,R_yy,R_xy,R_xz,R_yz, &
+                    epsilon_trace_over_3, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -430,7 +331,8 @@
                     wgll_cube, &
                     kappavstore,muvstore, &
                     ibool, &
-                    R_memory,epsilon_trace_over_3, &
+                    R_xx,R_yy,R_xy,R_xz,R_yz, &
+                    epsilon_trace_over_3, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -443,7 +345,8 @@
                     wgll_cube, &
                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                     ibool, &
-                    R_memory,epsilon_trace_over_3, &
+                    R_xx,R_yy,R_xy,R_xz,R_yz, &
+                    epsilon_trace_over_3, &
                     one_minus_sum_beta,vx,vy,vz,vnspec, &
                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                     dummyx_loc,dummyy_loc,dummyz_loc,epsilondev_loc,rho_s_H)
@@ -581,17 +484,23 @@
     if(ATTENUATION_VAL .and. ( USE_ATTENUATION_MIMIC .eqv. .false. ) ) then
 
       ! updates R_memory
-      call compute_element_att_memory_cr(ispec,R_memory, &
+      call compute_element_att_memory_cr(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                       vx,vy,vz,vnspec,factor_common, &
                                       alphaval,betaval,gammaval, &
                                       c44store,muvstore, &
-                                      epsilondev,epsilondev_loc)
+                                      epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                      epsilondev_xz,epsilondev_yz, &
+                                      epsilondev_loc)
 
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme
     if(COMPUTE_AND_STORE_STRAIN) then
-      epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
+      epsilondev_xx(:,:,:,ispec) = epsilondev_loc(1,:,:,:)
+      epsilondev_yy(:,:,:,ispec) = epsilondev_loc(2,:,:,:)
+      epsilondev_xy(:,:,:,ispec) = epsilondev_loc(3,:,:,:)
+      epsilondev_xz(:,:,:,ispec) = epsilondev_loc(4,:,:,:)
+      epsilondev_yz(:,:,:,ispec) = epsilondev_loc(5,:,:,:)
     endif
 
   enddo   ! spectral element loop NSPEC_CRUST_MANTLE
