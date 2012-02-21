@@ -547,7 +547,8 @@ module specfem_par_crustmantle
     normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
   integer :: irec_master_noise
-
+  integer :: nspec_top
+  
   ! inner / outer elements crust/mantle region
   integer :: num_phase_ispec_crust_mantle
   integer :: nspec_inner_crust_mantle,nspec_outer_crust_mantle

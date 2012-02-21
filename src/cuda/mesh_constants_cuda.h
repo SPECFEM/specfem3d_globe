@@ -402,7 +402,7 @@ typedef struct mesh_ {
 
   // simulation type: 1 = forward, 2 = adjoint, 3 = kernel
   int simulation_type;
-
+  
   // mesh coloring flag
   int use_mesh_coloring_gpu;
 
@@ -417,8 +417,6 @@ typedef struct mesh_ {
   int rotation;
   int anisotropic_inner_core;
   int save_boundary_mesh;
-
-  int myrank;
   
   // ------------------------------------------------------------------ //
   // gravity
@@ -473,6 +471,7 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------ //
   // assembly
   // ------------------------------------------------------------------ //
+  int myrank;
 
   int num_interfaces_crust_mantle;
   int max_nibool_interfaces_crust_mantle;
@@ -540,7 +539,26 @@ typedef struct mesh_ {
   
   realw* d_vp_outer_core;
   
+  // ------------------------------------------------------------------ //
+  // noise tomography
+  // ------------------------------------------------------------------ //
+  int noise_tomography;
+  
+  int nspec_top;
+  int* d_ibelm_top_crust_mantle;
 
+  realw* d_noise_surface_movie;
+  realw* d_noise_sourcearray;
+
+  realw* d_normal_x_noise;
+  realw* d_normal_y_noise;
+  realw* d_normal_z_noise;
+  realw* d_mask_noise;
+  realw* d_jacobian2D_top_crust_mantle;
+  // noise sensitivity kernel
+  realw* d_Sigma_kl;
+
+  
 // ------------------------------------------------------------------ //
 //daniel: TODO - former code...
 
@@ -621,7 +639,7 @@ typedef struct mesh_ {
   int num_free_surface_faces;
 
   // surface movie elements to save for noise tomography
-  realw* d_noise_surface_movie;
+  //realw* d_noise_surface_movie;
 
   // attenuation
   realw* d_R_xx;
@@ -665,13 +683,7 @@ typedef struct mesh_ {
   realw* d_c66store;
 
   // noise
-  realw* d_normal_x_noise;
-  realw* d_normal_y_noise;
-  realw* d_normal_z_noise;
-  realw* d_mask_noise;
   realw* d_free_surface_jacobian2Dw;
-
-  realw* d_noise_sourcearray;
 
   // attenuation & kernel backward fields
   realw* d_b_R_xx;
@@ -691,9 +703,6 @@ typedef struct mesh_ {
   realw* d_rho_kl;
   realw* d_mu_kl;
   realw* d_kappa_kl;
-
-  // noise sensitivity kernel
-  realw* d_Sigma_kl;
 
   // approximative hessian for preconditioning kernels
   realw* d_hess_el_kl;
