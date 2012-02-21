@@ -133,7 +133,6 @@ module specfem_par
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
   double precision, dimension(:), allocatable :: tshift_cmt,hdur,hdur_gaussian
   double precision, dimension(:), allocatable :: theta_source,phi_source
-  double precision, external :: comp_source_time_function
   double precision :: t0
 
   !-----------------------------------------------------------------
@@ -504,8 +503,6 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
     absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle
 
-  integer :: nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm
-
   integer :: reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, &
             reclen_ymin_crust_mantle,reclen_ymax_crust_mantle
 
@@ -722,14 +719,14 @@ module specfem_par_outercore
   ! Stacey
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY) :: vp_outer_core
   integer :: nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
-            nspec2D_ymin_outer_core,nspec2D_ymax_outer_core
+            nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
+            nspec2D_zmin_outer_core
   integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_OC) :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
   integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_OC) :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_xmin_outer_core, &
      absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, &
      absorb_zmin_outer_core
-  integer :: nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc,nabs_zmin_oc
 
   integer :: reclen_xmin_outer_core, reclen_xmax_outer_core, &
             reclen_ymin_outer_core, reclen_ymax_outer_core

@@ -122,78 +122,32 @@ void FC_FUNC_(get_norm_elastic_from_device,
 
 
 //
-// src/cuda/compute_add_sources_acoustic_cuda.cu
-//
-
-void FC_FUNC_(compute_add_sources_ac_cuda,
-              COMPUTE_ADD_SOURCES_AC_CUDA)(long* Mesh_pointer_f,
-                                                 int* phase_is_innerf,
-                                                 int* NSOURCESf,
-                                                 int* SIMULATION_TYPEf,
-                                                 double* h_stf_pre_compute,
-                                                 int* myrankf) {} 
-
-void FC_FUNC_(compute_add_sources_ac_s3_cuda,
-              COMPUTE_ADD_SOURCES_AC_s3_CUDA)(long* Mesh_pointer_f,
-                                                      int* phase_is_innerf,
-                                                      int* NSOURCESf,
-                                                      int* SIMULATION_TYPEf,
-                                                      double* h_stf_pre_compute,
-                                                      int* myrankf) {} 
-
-void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
-              ADD_SOURCES_AC_SIM_2_OR_3_CUDA)(long* Mesh_pointer,
-                                               realw* h_adj_sourcearrays,
-                                               int* phase_is_inner,
-                                               int* h_ispec_is_inner,
-                                               int* h_ispec_is_acoustic,
-                                               int* h_ispec_selected_rec,
-                                               int* myrank,
-                                               int* nrec,
-                                               int* time_index,
-                                               int* h_islice_selected_rec,
-                                               int* nadj_rec_local,
-                                               int* NTSTEP_BETWEEN_READ_ADJSRC) {} 
-
-
-//
 // src/cuda/compute_add_sources_elastic_cuda.cu
 //
 
 void FC_FUNC_(compute_add_sources_el_cuda,
               COMPUTE_ADD_SOURCES_EL_CUDA)(long* Mesh_pointer_f,
-                                            int* phase_is_innerf,
-                                            int* NSOURCESf,
-                                            double* h_stf_pre_compute,
-                                            int* myrankf) {} 
+                                           int* NSOURCESf,
+                                           double* h_stf_pre_compute) {} 
 
 void FC_FUNC_(compute_add_sources_el_s3_cuda,
-              COMPUTE_ADD_SOURCES_EL_S3_CUDA)(long* Mesh_pointer,
-                                              double* h_stf_pre_compute,
+              COMPUTE_ADD_SOURCES_EL_S3_CUDA)(long* Mesh_pointer_f,
                                               int* NSOURCESf,
-                                              int* phase_is_inner,
-                                              int* myrank) {} 
+                                              double* h_stf_pre_compute) {} 
 
 void FC_FUNC_(add_source_master_rec_noise_cu,
               ADD_SOURCE_MASTER_REC_NOISE_CU)(long* Mesh_pointer_f,
-                                                int* myrank_f,
                                                 int* it_f,
                                                 int* irec_master_noise_f,
                                                 int* islice_selected_rec) {} 
 
 void FC_FUNC_(add_sources_el_sim_type_2_or_3,
               ADD_SOURCES_EL_SIM_TYPE_2_OR_3)(long* Mesh_pointer,
-                                               realw* h_adj_sourcearrays,
-                                               int* phase_is_inner,
-                                               int* h_ispec_is_inner,
-                                               int* h_ispec_is_elastic,
-                                               int* h_ispec_selected_rec,
-                                               int* myrank,
-                                               int* nrec,
-                                               int* time_index,
-                                               int* h_islice_selected_rec,
-                                               int* nadj_rec_local,
-                                               int* NTSTEP_BETWEEN_READ_ADJSRC) {} 
+                                              int* nrec,
+                                              realw* h_adj_sourcearrays,
+                                              int* h_islice_selected_rec,
+                                              int* h_ispec_selected_rec,
+                                              int* time_index) {} 
 
 
 //
@@ -278,12 +232,9 @@ void FC_FUNC_(compute_kernels_hess_cuda,
 //
 
 void FC_FUNC_(compute_stacey_acoustic_cuda,
-              COMPUTE_STACEY_ACOUSTIC_CUDA)(
-                                    long* Mesh_pointer_f,
-                                    int* phase_is_innerf,
-                                    int* SIMULATION_TYPEf,
-                                    int* SAVE_FORWARDf,
-                                    realw* h_b_absorb_potential) {} 
+              COMPUTE_STACEY_ACOUSTIC_CUDA)(long* Mesh_pointer_f,
+                                            realw* absorb_potential,
+                                            int* itype) {} 
 
 
 //
@@ -292,10 +243,8 @@ void FC_FUNC_(compute_stacey_acoustic_cuda,
 
 void FC_FUNC_(compute_stacey_elastic_cuda,
               COMPUTE_STACEY_ELASTIC_CUDA)(long* Mesh_pointer_f,
-                                           int* phase_is_innerf,
-                                           int* SIMULATION_TYPEf,
-                                           int* SAVE_FORWARDf,
-                                           realw* h_b_absorb_field) {} 
+                                                realw* absorb_field,
+                                                int* itype) {} 
 
 
 //
@@ -381,17 +330,17 @@ void FC_FUNC_(prepare_cuda_device,
 
 void FC_FUNC_(prepare_constants_device,
               PREPARE_CONSTANTS_DEVICE)(long* Mesh_pointer,
+                                        int* myrank_f,
                                         int* h_NGLLX,
                                         realw* h_hprime_xx,realw* h_hprime_yy,realw* h_hprime_zz,
                                         realw* h_hprimewgll_xx,realw* h_hprimewgll_yy,realw* h_hprimewgll_zz,
                                         realw* h_wgllwgll_xy,realw* h_wgllwgll_xz,realw* h_wgllwgll_yz,
                                         int* NSOURCES,int* nsources_local,
                                         realw* h_sourcearrays,
-                                        int* h_islice_selected_source,
-                                        int* h_ispec_selected_source,
+                                        int* h_islice_selected_source,int* h_ispec_selected_source,
                                         int* h_number_receiver_global,
-                                        int* h_ispec_selected_rec,
-                                        int* nrec,int* nrec_local,
+                                        int* h_islice_selected_rec,int* h_ispec_selected_rec,
+                                        int* nrec,int* nrec_local, int* nadj_rec_local,
                                         int* NSPEC_CRUST_MANTLE, int* NGLOB_CRUST_MANTLE,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
@@ -478,6 +427,38 @@ void FC_FUNC_(prepare_fields_strain_device,
                                             realw* b_epsilondev_yz_inner_core,
                                             realw* eps_trace_over_3_inner_core,
                                             realw* b_eps_trace_over_3_inner_core
+                                            ) {} 
+
+void FC_FUNC_(prepare_fields_absorb_device,
+              PREPARE_FIELDS_ABSORB_DEVICE)(long* Mesh_pointer_f,
+                                            int* nspec2D_xmin_crust_mantle,int* nspec2D_xmax_crust_mantle,
+                                            int* nspec2D_ymin_crust_mantle,int* nspec2D_ymax_crust_mantle,
+                                            int* NSPEC2DMAX_XMIN_XMAX_CM,int* NSPEC2DMAX_YMIN_YMAX_CM,
+                                            int* nimin_crust_mantle,int* nimax_crust_mantle,
+                                            int* njmin_crust_mantle,int* njmax_crust_mantle,
+                                            int* nkmin_xi_crust_mantle,int* nkmin_eta_crust_mantle,
+                                            int* ibelm_xmin_crust_mantle,int* ibelm_xmax_crust_mantle,
+                                            int* ibelm_ymin_crust_mantle,int* ibelm_ymax_crust_mantle,
+                                            realw* normal_xmin_crust_mantle,realw* normal_xmax_crust_mantle,
+                                            realw* normal_ymin_crust_mantle,realw* normal_ymax_crust_mantle,
+                                            realw* jacobian2D_xmin_crust_mantle, realw* jacobian2D_xmax_crust_mantle,
+                                            realw* jacobian2D_ymin_crust_mantle, realw* jacobian2D_ymax_crust_mantle,
+                                            realw* rho_vp_crust_mantle,
+                                            realw* rho_vs_crust_mantle,
+                                            int* nspec2D_xmin_outer_core,int* nspec2D_xmax_outer_core,
+                                            int* nspec2D_ymin_outer_core,int* nspec2D_ymax_outer_core,
+                                            int* nspec2D_zmin_outer_core,
+                                            int* NSPEC2DMAX_XMIN_XMAX_OC,int* NSPEC2DMAX_YMIN_YMAX_OC,
+                                            int* nimin_outer_core,int* nimax_outer_core,
+                                            int* njmin_outer_core,int* njmax_outer_core,
+                                            int* nkmin_xi_outer_core,int* nkmin_eta_outer_core,
+                                            int* ibelm_xmin_outer_core,int* ibelm_xmax_outer_core,
+                                            int* ibelm_ymin_outer_core,int* ibelm_ymax_outer_core,
+                                            int* ibelm_bottom_outer_core,
+                                            realw* jacobian2D_xmin_outer_core, realw* jacobian2D_xmax_outer_core,
+                                            realw* jacobian2D_ymin_outer_core, realw* jacobian2D_ymax_outer_core,
+                                            realw* jacobian2D_bottom_outer_core,
+                                            realw* vp_outer_core
                                             ) {} 
 
 void FC_FUNC_(prepare_mpi_buffers_device,

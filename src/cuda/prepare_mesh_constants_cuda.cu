@@ -168,7 +168,7 @@ void FC_FUNC_(prepare_cuda_device,
     // outputs initial memory infos via cudaMemGetInfo()
     double free_db,used_db,total_db;
     get_free_memory(&free_db,&used_db,&total_db);
-    fprintf(fp,"%d: GPU memory usage: used = %f MB, free = %f MB, total = %f MB\n", myrank,
+    fprintf(fp,"%d: GPU memory usage: used = %f MB, free = %f MB, total = %f MB\n",myrank,
             used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
 
     fclose(fp);
@@ -183,18 +183,18 @@ void FC_FUNC_(prepare_cuda_device,
 
 extern "C"
 void FC_FUNC_(prepare_constants_device,
-              PREPARE_CONSTANTS_DEVICE)(long* Mesh_pointer,
+              PREPARE_CONSTANTS_DEVICE)(long* Mesh_pointer, 
+                                        int* myrank_f,
                                         int* h_NGLLX,
                                         realw* h_hprime_xx,realw* h_hprime_yy,realw* h_hprime_zz,
                                         realw* h_hprimewgll_xx,realw* h_hprimewgll_yy,realw* h_hprimewgll_zz,
                                         realw* h_wgllwgll_xy,realw* h_wgllwgll_xz,realw* h_wgllwgll_yz,
                                         int* NSOURCES,int* nsources_local,
                                         realw* h_sourcearrays,
-                                        int* h_islice_selected_source,
-                                        int* h_ispec_selected_source,
+                                        int* h_islice_selected_source,int* h_ispec_selected_source,
                                         int* h_number_receiver_global,
-                                        int* h_ispec_selected_rec,
-                                        int* nrec,int* nrec_local,
+                                        int* h_islice_selected_rec,int* h_ispec_selected_rec,
+                                        int* nrec,int* nrec_local, int* nadj_rec_local,
                                         int* NSPEC_CRUST_MANTLE, int* NGLOB_CRUST_MANTLE,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
@@ -257,6 +257,7 @@ TRACE("prepare_constants_device");
   mp->anisotropic_inner_core = *ANISOTROPIC_INNER_CORE_f;
   mp->save_boundary_mesh = *SAVE_BOUNDARY_MESH_f;
 
+  mp->myrank = *myrank_f;
 
   // mesh coloring flag
 #ifdef USE_MESH_COLORING_GPU
@@ -277,7 +278,7 @@ TRACE("prepare_constants_device");
                                        sizeof(realw)* *NSOURCES*3*NGLL3),1301);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_sourcearrays, h_sourcearrays,
                                        sizeof(realw)* *NSOURCES*3*NGLL3,cudaMemcpyHostToDevice),1302);
-
+    // buffer for source time function values
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_stf_pre_compute,
                                        *NSOURCES*sizeof(double)),1303);
   }
@@ -306,8 +307,42 @@ TRACE("prepare_constants_device");
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_ispec_selected_rec),(*nrec)*sizeof(int)),1513);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_ispec_selected_rec,h_ispec_selected_rec,
                                      (*nrec)*sizeof(int),cudaMemcpyHostToDevice),1514);
-
-
+                                     
+  // receiver adjoint source arrays only used for noise and adjoint simulations
+  // adjoint source arrays
+  mp->nadj_rec_local = *nadj_rec_local;
+  if( mp->nadj_rec_local > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_adj_sourcearrays,
+                                       (mp->nadj_rec_local)*3*NGLL3*sizeof(realw)),6003);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_pre_computed_irec,
+                                       (mp->nadj_rec_local)*sizeof(int)),6004);
+    
+    // prepares local irec array:
+    // the irec_local variable needs to be precomputed (as
+    // h_pre_comp..), because normally it is in the loop updating accel,
+    // and due to how it's incremented, it cannot be parallelized
+    int* h_pre_computed_irec = (int*) malloc( (mp->nadj_rec_local)*sizeof(int) );
+    if( h_pre_computed_irec == NULL ) exit_on_error("h_pre_computed_irec not allocated\n");
+    
+    int irec_local = 0;
+    for(int irec = 0; irec < *nrec; irec++) {
+      if(mp->myrank == h_islice_selected_rec[irec]) {
+        irec_local++;
+        h_pre_computed_irec[irec_local-1] = irec;
+      }
+    }
+    if( irec_local != mp->nadj_rec_local ) exit_on_error("prepare_sim2_or_3_const_device: irec_local not equal\n");
+    // copies values onto GPU
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_pre_computed_irec,h_pre_computed_irec,
+                                       (mp->nadj_rec_local)*sizeof(int),cudaMemcpyHostToDevice),6010);
+    free(h_pre_computed_irec);
+    
+    // temporary array to prepare extracted source array values
+    mp->h_adj_sourcearrays_slice = (realw*) malloc( (mp->nadj_rec_local)*3*NGLL3*sizeof(realw) );
+    if( mp->h_adj_sourcearrays_slice == NULL ) exit_on_error("h_adj_sourcearrays_slice not allocated\n");    
+  }
+  
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_constants_device");
 #endif
@@ -761,6 +796,341 @@ void FC_FUNC_(prepare_fields_strain_device,
   }
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// STRAIN simulations
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(prepare_fields_absorb_device,
+              PREPARE_FIELDS_ABSORB_DEVICE)(long* Mesh_pointer_f,
+                                            int* nspec2D_xmin_crust_mantle,int* nspec2D_xmax_crust_mantle,
+                                            int* nspec2D_ymin_crust_mantle,int* nspec2D_ymax_crust_mantle,
+                                            int* NSPEC2DMAX_XMIN_XMAX_CM,int* NSPEC2DMAX_YMIN_YMAX_CM,
+                                            int* nimin_crust_mantle,int* nimax_crust_mantle,
+                                            int* njmin_crust_mantle,int* njmax_crust_mantle,
+                                            int* nkmin_xi_crust_mantle,int* nkmin_eta_crust_mantle,                                     
+                                            int* ibelm_xmin_crust_mantle,int* ibelm_xmax_crust_mantle,
+                                            int* ibelm_ymin_crust_mantle,int* ibelm_ymax_crust_mantle,                                       
+                                            realw* normal_xmin_crust_mantle,realw* normal_xmax_crust_mantle,
+                                            realw* normal_ymin_crust_mantle,realw* normal_ymax_crust_mantle,                                     
+                                            realw* jacobian2D_xmin_crust_mantle, realw* jacobian2D_xmax_crust_mantle,
+                                            realw* jacobian2D_ymin_crust_mantle, realw* jacobian2D_ymax_crust_mantle,
+                                            realw* rho_vp_crust_mantle,
+                                            realw* rho_vs_crust_mantle,
+                                            int* nspec2D_xmin_outer_core,int* nspec2D_xmax_outer_core,
+                                            int* nspec2D_ymin_outer_core,int* nspec2D_ymax_outer_core,
+                                            int* nspec2D_zmin_outer_core,
+                                            int* NSPEC2DMAX_XMIN_XMAX_OC,int* NSPEC2DMAX_YMIN_YMAX_OC,
+                                            int* nimin_outer_core,int* nimax_outer_core,
+                                            int* njmin_outer_core,int* njmax_outer_core,
+                                            int* nkmin_xi_outer_core,int* nkmin_eta_outer_core,                                     
+                                            int* ibelm_xmin_outer_core,int* ibelm_xmax_outer_core,
+                                            int* ibelm_ymin_outer_core,int* ibelm_ymax_outer_core,
+                                            int* ibelm_bottom_outer_core,
+                                            realw* jacobian2D_xmin_outer_core, realw* jacobian2D_xmax_outer_core,
+                                            realw* jacobian2D_ymin_outer_core, realw* jacobian2D_ymax_outer_core,
+                                            realw* jacobian2D_bottom_outer_core,                                            
+                                            realw* vp_outer_core
+                                            ) {
+  
+  TRACE("prepare_fields_absorb_device");
+  int size;
+  
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f);
+  
+  // checks flag
+  if( ! mp->absorbing_conditions ){ exit_on_cuda_error("prepare_fields_absorb_device absorbing_conditions not properly initialized"); }
+  
+  // crust_mantle
+  mp->nspec2D_xmin_crust_mantle = *nspec2D_xmin_crust_mantle;
+  mp->nspec2D_xmax_crust_mantle = *nspec2D_xmax_crust_mantle;
+  mp->nspec2D_ymin_crust_mantle = *nspec2D_ymin_crust_mantle;
+  mp->nspec2D_ymax_crust_mantle = *nspec2D_ymax_crust_mantle;
+
+  // vp & vs 
+  size = NGLL3*(mp->NSPEC_CRUST_MANTLE);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_rho_vp_crust_mantle,
+                                     size*sizeof(realw)),2201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_rho_vp_crust_mantle,rho_vp_crust_mantle,
+                                     size*sizeof(realw),cudaMemcpyHostToDevice),2202);
+
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_rho_vs_crust_mantle,
+                                     size*sizeof(realw)),2201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_rho_vs_crust_mantle,rho_vs_crust_mantle,
+                                     size*sizeof(realw),cudaMemcpyHostToDevice),2202);
+
+  // ijk index arrays
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_nkmin_xi_crust_mantle,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_CM)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_nkmin_xi_crust_mantle,nkmin_xi_crust_mantle,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_CM)*sizeof(int),cudaMemcpyHostToDevice),1202);
+
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_nkmin_eta_crust_mantle,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_CM)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_nkmin_eta_crust_mantle,nkmin_eta_crust_mantle,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_CM)*sizeof(int),cudaMemcpyHostToDevice),1202);
+  
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_njmin_crust_mantle,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_CM)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_njmin_crust_mantle,njmin_crust_mantle,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_CM)*sizeof(int),cudaMemcpyHostToDevice),1202);
+  
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_njmax_crust_mantle,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_CM)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_njmax_crust_mantle,njmax_crust_mantle,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_CM)*sizeof(int),cudaMemcpyHostToDevice),1202);
+
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_nimin_crust_mantle,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_CM)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_nimin_crust_mantle,nimin_crust_mantle,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_CM)*sizeof(int),cudaMemcpyHostToDevice),1202);
+
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_nimax_crust_mantle,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_CM)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_nimax_crust_mantle,nimax_crust_mantle,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_CM)*sizeof(int),cudaMemcpyHostToDevice),1202);
+  
+  
+  // xmin  
+  if( mp->nspec2D_xmin_crust_mantle > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_xmin_crust_mantle,
+                                       (mp->nspec2D_xmin_crust_mantle)*sizeof(int)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_xmin_crust_mantle,ibelm_xmin_crust_mantle,
+                                       (mp->nspec2D_xmin_crust_mantle)*sizeof(int),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_normal_xmin_crust_mantle,
+                            NDIM*NGLL2*(mp->nspec2D_xmin_crust_mantle)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_xmin_crust_mantle,normal_xmin_crust_mantle,
+                            NDIM*NGLL2*(mp->nspec2D_xmin_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_jacobian2D_xmin_crust_mantle,
+                            NGLL2*(mp->nspec2D_xmin_crust_mantle)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_xmin_crust_mantle,jacobian2D_xmin_crust_mantle,
+                            NGLL2*(mp->nspec2D_xmin_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    // boundary buffer
+    if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){    
+      print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_xmin_crust_mantle,
+                              NDIM*NGLL2*(mp->nspec2D_xmin_crust_mantle)*sizeof(realw)),1202);
+    }    
+  }
+
+  // xmax
+  if( mp->nspec2D_xmax_crust_mantle > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_xmax_crust_mantle,
+                                       (mp->nspec2D_xmax_crust_mantle)*sizeof(int)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_xmax_crust_mantle,ibelm_xmax_crust_mantle,
+                                       (mp->nspec2D_xmax_crust_mantle)*sizeof(int),cudaMemcpyHostToDevice),1202);
+        
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_normal_xmax_crust_mantle,
+                                       NDIM*NGLL2*(mp->nspec2D_xmax_crust_mantle)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_xmax_crust_mantle,normal_xmax_crust_mantle,
+                                       NDIM*NGLL2*(mp->nspec2D_xmax_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_jacobian2D_xmax_crust_mantle,
+                                       NGLL2*(mp->nspec2D_xmax_crust_mantle)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_xmax_crust_mantle,jacobian2D_xmax_crust_mantle,
+                                       NGLL2*(mp->nspec2D_xmax_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    // boundary buffer
+    if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){    
+      print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_xmax_crust_mantle,
+                                         NDIM*NGLL2*(mp->nspec2D_xmax_crust_mantle)*sizeof(realw)),1202);
+    }    
+  }
+
+  // ymin
+  if( mp->nspec2D_ymin_crust_mantle > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_ymin_crust_mantle,
+                                       (mp->nspec2D_ymin_crust_mantle)*sizeof(int)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_ymin_crust_mantle,ibelm_ymin_crust_mantle,
+                                       (mp->nspec2D_ymin_crust_mantle)*sizeof(int),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_normal_ymin_crust_mantle,
+                                       NDIM*NGLL2*(mp->nspec2D_ymin_crust_mantle)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_ymin_crust_mantle,normal_ymin_crust_mantle,
+                                       NDIM*NGLL2*(mp->nspec2D_ymin_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_jacobian2D_ymin_crust_mantle,
+                                       NGLL2*(mp->nspec2D_ymin_crust_mantle)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_ymin_crust_mantle,jacobian2D_ymin_crust_mantle,
+                                       NGLL2*(mp->nspec2D_ymin_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    // boundary buffer
+    if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){    
+      print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_ymin_crust_mantle,
+                                         NDIM*NGLL2*(mp->nspec2D_ymin_crust_mantle)*sizeof(realw)),1202);
+    }    
+  }
+
+  // ymax
+  if( mp->nspec2D_ymax_crust_mantle > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_ymax_crust_mantle,
+                                       (mp->nspec2D_ymax_crust_mantle)*sizeof(int)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_ymax_crust_mantle,ibelm_ymax_crust_mantle,
+                                       (mp->nspec2D_ymax_crust_mantle)*sizeof(int),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_normal_ymax_crust_mantle,
+                                       NDIM*NGLL2*(mp->nspec2D_ymax_crust_mantle)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_ymax_crust_mantle,normal_ymax_crust_mantle,
+                                       NDIM*NGLL2*(mp->nspec2D_ymax_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_jacobian2D_ymax_crust_mantle,
+                                       NGLL2*(mp->nspec2D_ymax_crust_mantle)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_ymax_crust_mantle,jacobian2D_ymax_crust_mantle,
+                                       NGLL2*(mp->nspec2D_ymax_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    // boundary buffer
+    if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){    
+      print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_ymax_crust_mantle,
+                                         NDIM*NGLL2*(mp->nspec2D_ymax_crust_mantle)*sizeof(realw)),1202);
+    }    
+  }
+  
+
+  // outer_core
+  mp->nspec2D_xmin_outer_core = *nspec2D_xmin_outer_core;
+  mp->nspec2D_xmax_outer_core = *nspec2D_xmax_outer_core;
+  mp->nspec2D_ymin_outer_core = *nspec2D_ymin_outer_core;
+  mp->nspec2D_ymax_outer_core = *nspec2D_ymax_outer_core;
+  mp->nspec2D_zmin_outer_core = *nspec2D_zmin_outer_core;
+  
+  // vp 
+  size = NGLL3*(mp->NSPEC_OUTER_CORE);
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_vp_outer_core,
+                                     size*sizeof(realw)),2201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_vp_outer_core,vp_outer_core,
+                                     size*sizeof(realw),cudaMemcpyHostToDevice),2202);
+  
+  // ijk index arrays
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_nkmin_xi_outer_core,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_OC)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_nkmin_xi_outer_core,nkmin_xi_outer_core,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_OC)*sizeof(int),cudaMemcpyHostToDevice),1202);
+  
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_nkmin_eta_outer_core,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_OC)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_nkmin_eta_outer_core,nkmin_eta_outer_core,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_OC)*sizeof(int),cudaMemcpyHostToDevice),1202);
+  
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_njmin_outer_core,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_OC)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_njmin_outer_core,njmin_outer_core,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_OC)*sizeof(int),cudaMemcpyHostToDevice),1202);
+  
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_njmax_outer_core,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_OC)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_njmax_outer_core,njmax_outer_core,
+                                     2*(*NSPEC2DMAX_XMIN_XMAX_OC)*sizeof(int),cudaMemcpyHostToDevice),1202);
+  
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_nimin_outer_core,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_OC)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_nimin_outer_core,nimin_outer_core,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_OC)*sizeof(int),cudaMemcpyHostToDevice),1202);
+  
+  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_nimax_outer_core,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_OC)*sizeof(int)),1201);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_nimax_outer_core,nimax_outer_core,
+                                     2*(*NSPEC2DMAX_YMIN_YMAX_OC)*sizeof(int),cudaMemcpyHostToDevice),1202);
+  
+  // xmin  
+  if( mp->nspec2D_xmin_outer_core > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_xmin_outer_core,
+                                       (mp->nspec2D_xmin_outer_core)*sizeof(int)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_xmin_outer_core,ibelm_xmin_outer_core,
+                                       (mp->nspec2D_xmin_outer_core)*sizeof(int),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_jacobian2D_xmin_outer_core,
+                                       NGLL2*(mp->nspec2D_xmin_outer_core)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_xmin_outer_core,jacobian2D_xmin_outer_core,
+                                       NGLL2*(mp->nspec2D_xmin_outer_core)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    // boundary buffer
+    if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){    
+      print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_xmin_outer_core,
+                                         NGLL2*(mp->nspec2D_xmin_outer_core)*sizeof(realw)),1202);
+    }    
+  }
+
+  // xmax
+  if( mp->nspec2D_xmax_outer_core > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_xmax_outer_core,
+                                       (mp->nspec2D_xmax_outer_core)*sizeof(int)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_xmax_outer_core,ibelm_xmax_outer_core,
+                                       (mp->nspec2D_xmax_outer_core)*sizeof(int),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_jacobian2D_xmax_outer_core,
+                                       NGLL2*(mp->nspec2D_xmax_outer_core)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_xmax_outer_core,jacobian2D_xmax_outer_core,
+                                       NGLL2*(mp->nspec2D_xmax_outer_core)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    // boundary buffer
+    if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){    
+      print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_xmax_outer_core,
+                                         NGLL2*(mp->nspec2D_xmax_outer_core)*sizeof(realw)),1202);
+    }    
+  }
+  
+  // ymin
+  if( mp->nspec2D_ymin_outer_core > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_ymin_outer_core,
+                                       (mp->nspec2D_ymin_outer_core)*sizeof(int)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_ymin_outer_core,ibelm_ymin_outer_core,
+                                       (mp->nspec2D_ymin_outer_core)*sizeof(int),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_jacobian2D_ymin_outer_core,
+                                       NGLL2*(mp->nspec2D_ymin_outer_core)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_ymin_outer_core,jacobian2D_ymin_outer_core,
+                                       NGLL2*(mp->nspec2D_ymin_outer_core)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    // boundary buffer
+    if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){    
+      print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_ymin_outer_core,
+                                         NGLL2*(mp->nspec2D_ymin_outer_core)*sizeof(realw)),1202);
+    }    
+  }
+  
+  // ymax
+  if( mp->nspec2D_ymax_outer_core > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_ymax_outer_core,
+                                       (mp->nspec2D_ymax_outer_core)*sizeof(int)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_ymax_outer_core,ibelm_ymax_outer_core,
+                                       (mp->nspec2D_ymax_outer_core)*sizeof(int),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_jacobian2D_ymax_outer_core,
+                                       NGLL2*(mp->nspec2D_ymax_outer_core)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_ymax_outer_core,jacobian2D_ymax_outer_core,
+                                       NGLL2*(mp->nspec2D_ymax_outer_core)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    // boundary buffer
+    if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){    
+      print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_ymax_outer_core,
+                                         NGLL2*(mp->nspec2D_ymax_outer_core)*sizeof(realw)),1202);
+    }    
+  }
+
+  // zmin
+  if( mp->nspec2D_zmin_outer_core > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_zmin_outer_core,
+                                       (mp->nspec2D_zmin_outer_core)*sizeof(int)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_zmin_outer_core,ibelm_bottom_outer_core,
+                                       (mp->nspec2D_zmin_outer_core)*sizeof(int),cudaMemcpyHostToDevice),1202);
+    
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_jacobian2D_zmin_outer_core,
+                                       NGLL2*(mp->nspec2D_zmin_outer_core)*sizeof(realw)),1201);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_zmin_outer_core,jacobian2D_bottom_outer_core,
+                                       NGLL2*(mp->nspec2D_zmin_outer_core)*sizeof(realw),cudaMemcpyHostToDevice),1202);
+    
+    // boundary buffer
+    if( (mp->simulation_type == 1 && mp->save_forward ) || (mp->simulation_type == 3) ){    
+      print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_absorb_zmin_outer_core,
+                                         NGLL2*(mp->nspec2D_zmin_outer_core)*sizeof(realw)),1202);
+    }    
+  }
+  
+}  
 
 /* ----------------------------------------------------------------------------------------------- */
 

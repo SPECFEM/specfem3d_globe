@@ -187,7 +187,6 @@ CUDA_OBJECTS = \
   $O/assemble_MPI_scalar_cuda.cuda.o \
 	$O/assemble_MPI_vector_cuda.cuda.o \
   $O/check_fields_cuda.cuda.o \
-	$O/compute_add_sources_acoustic_cuda.cuda.o \
 	$O/compute_add_sources_elastic_cuda.cuda.o \
 	$O/compute_coupling_cuda.cuda.o \
 	$O/compute_forces_crust_mantle_cuda.cuda.o \

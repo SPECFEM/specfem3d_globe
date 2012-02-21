@@ -374,6 +374,8 @@
   read(27) njunk1
   read(27) njunk2
 
+  nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+
   read(27) ibelm_xmin_outer_core
   read(27) ibelm_xmax_outer_core
   read(27) ibelm_ymin_outer_core
@@ -1867,6 +1869,8 @@
   ! local parameters
   integer(kind=8) :: filesize
   integer :: ier
+  integer :: nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm
+  integer :: nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc,nabs_zmin_oc
 
   ! sets up absorbing boundary buffer arrays
 
@@ -1952,9 +1956,9 @@
   allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nabs_ymax_oc),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymax')
 
-  if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. &
-     (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
-    nabs_zmin_oc = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    nabs_zmin_oc = nspec2D_zmin_outer_core
   else
     nabs_zmin_oc = 1
   endif
@@ -2215,11 +2219,11 @@
     endif
   endif
 
-  if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. &
-     (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
+  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
+    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
 
     ! size of single record
-    reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
+    reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * nspec2D_zmin_outer_core)
 
     ! total file size
     filesize = reclen_zmin

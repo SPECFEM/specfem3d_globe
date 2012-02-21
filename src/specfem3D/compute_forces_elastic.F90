@@ -207,34 +207,17 @@
       if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_crust_mantle()
 
       ! add the sources
-      if (SIMULATION_TYPE == 1) &
-        call compute_add_sources(myrank,NSOURCES, &
-                                  accel_crust_mantle,sourcearrays, &
-                                  DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                  islice_selected_source,ispec_selected_source,it, &
-                                  hdur,xi_source,eta_source,gamma_source,nu_source)
+      if (SIMULATION_TYPE == 1 .and. NOISE_TOMOGRAPHY == 0 .and. nsources_local > 0) &
+        call compute_add_sources()
 
       ! add adjoint sources
       if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-        if( nadj_rec_local > 0 ) &
-          call compute_add_sources_adjoint(myrank,nrec, &
-                                  nadj_rec_local,NSTEP,NTSTEP_BETWEEN_READ_ADJSRC, &
-                                  accel_crust_mantle,adj_sourcearrays, &
-                                  nu,xi_receiver,eta_receiver,gamma_receiver, &
-                                  xigll,yigll,zigll,ibool_crust_mantle, &
-                                  islice_selected_rec,ispec_selected_rec, &
-                                  NSTEP_SUB_ADJ,iadjsrc_len,iadjsrc,iadj_vec, &
-                                  it,it_begin,station_name,network_name,DT)
+        if( nadj_rec_local > 0 ) call compute_add_sources_adjoint()
       endif
 
       ! add sources for backward/reconstructed wavefield
-      if (SIMULATION_TYPE == 3) &
-        call compute_add_sources_backward(myrank,NSOURCES,NSTEP, &
-                                  b_accel_crust_mantle,sourcearrays, &
-                                  DT,t0,tshift_cmt,hdur_gaussian,ibool_crust_mantle, &
-                                  islice_selected_source,ispec_selected_source,it, &
-                                  hdur,xi_source,eta_source,gamma_source,nu_source)
-
+      if (SIMULATION_TYPE == 3 .and. NOISE_TOMOGRAPHY == 0 .and. nsources_local > 0) &
+        call compute_add_sources_backward()
 
       ! NOISE_TOMOGRAPHY
       if ( NOISE_TOMOGRAPHY == 1 ) then
