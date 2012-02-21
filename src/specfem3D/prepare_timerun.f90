@@ -989,12 +989,14 @@
 
   ! NOISE TOMOGRAPHY
   if ( NOISE_TOMOGRAPHY /= 0 ) then
+    nspec_top = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+
     allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
             normal_x_noise(nmovie_points), &
             normal_y_noise(nmovie_points), &
             normal_z_noise(nmovie_points), &
             mask_noise(nmovie_points), &
-            noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC2D_TOP(IREGION_CRUST_MANTLE)),stat=ier)
+            noise_surface_movie(NDIM,NGLLX,NGLLY,nspec_top),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise arrays')
 
     noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
@@ -1006,7 +1008,7 @@
 
     call read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
                               islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
-                              noise_sourcearray,xigll,yigll,zigll,NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+                              noise_sourcearray,xigll,yigll,zigll,nspec_top, &
                               NIT, ibool_crust_mantle, ibelm_top_crust_mantle, &
                               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                               irec_master_noise,normal_x_noise,normal_y_noise,normal_z_noise,mask_noise)
@@ -1014,7 +1016,7 @@
     call check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                               NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
                               SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
-                              MOVIE_COARSE,LOCAL_PATH,NSPEC2D_TOP(IREGION_CRUST_MANTLE),NSTEP)
+                              MOVIE_COARSE,LOCAL_PATH,nspec_top,NSTEP)
   endif
 
   end subroutine prepare_timerun_noise
@@ -1071,6 +1073,7 @@
                                   NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                   SIMULATION_TYPE, &
+                                  NOISE_TOMOGRAPHY, &
                                   SAVE_FORWARD, &
                                   ABSORBING_CONDITIONS, &
                                   GRAVITY_VAL,ROTATION_VAL, &
@@ -1220,6 +1223,17 @@
                                 nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
                                 nibool_interfaces_outer_core,ibool_interfaces_outer_core)
+
+  ! prepares fields on GPU for noise simulations
+  if ( NOISE_TOMOGRAPHY > 0 ) then
+    if(myrank == 0 ) write(IMAIN,*) "  loading noise arrays"
+
+    call prepare_fields_noise_device(Mesh_pointer,nspec_top,ibelm_top_crust_mantle, &
+                                    NSTEP,noise_sourcearray, &
+                                    normal_x_noise,normal_y_noise,normal_z_noise, &
+                                    mask_noise,jacobian2D_top_crust_mantle)
+
+  endif
 
   ! crust/mantle region
   if(myrank == 0 ) write(IMAIN,*) "  loading crust/mantle region"

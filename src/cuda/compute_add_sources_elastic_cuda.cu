@@ -131,6 +131,10 @@ void FC_FUNC_(compute_add_sources_el_cuda,
 
 /* ----------------------------------------------------------------------------------------------- */
 
+// backward sources
+
+/* ----------------------------------------------------------------------------------------------- */
+
 extern "C"
 void FC_FUNC_(compute_add_sources_el_s3_cuda,
               COMPUTE_ADD_SOURCES_EL_S3_CUDA)(long* Mesh_pointer_f,
@@ -172,64 +176,6 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
 #endif
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-// NOISE sources
-
-/* ----------------------------------------------------------------------------------------------- */
-
-__global__ void add_source_master_rec_noise_cuda_kernel(int* ibool,
-                                                        int* ispec_selected_rec,
-                                                        int irec_master_noise,
-                                                        realw* accel,
-                                                        realw* noise_sourcearray,
-                                                        int it) {
-  int tx = threadIdx.x;
-  int iglob = ibool[tx + NGLL3*(ispec_selected_rec[irec_master_noise-1]-1)]-1;
-
-  // not sure if we need atomic operations but just in case...
-  // accel[3*iglob] += noise_sourcearray[3*tx + 3*125*it];
-  // accel[1+3*iglob] += noise_sourcearray[1+3*tx + 3*125*it];
-  // accel[2+3*iglob] += noise_sourcearray[2+3*tx + 3*125*it];
-
-  atomicAdd(&accel[iglob*3],noise_sourcearray[3*tx + 3*NGLL3*it]);
-  atomicAdd(&accel[iglob*3+1],noise_sourcearray[1+3*tx + 3*NGLL3*it]);
-  atomicAdd(&accel[iglob*3+2],noise_sourcearray[2+3*tx + 3*NGLL3*it]);
-
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-
-extern "C"
-void FC_FUNC_(add_source_master_rec_noise_cu,
-              ADD_SOURCE_MASTER_REC_NOISE_CU)(long* Mesh_pointer_f,
-                                                int* it_f,
-                                                int* irec_master_noise_f,
-                                                int* islice_selected_rec) {
-
-TRACE("add_source_master_rec_noise_cu");
-
-  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-
-  int it = *it_f-1; // -1 for Fortran -> C indexing differences
-  int irec_master_noise = *irec_master_noise_f;
-
-  dim3 grid(1,1,1);
-  dim3 threads(NGLL3,1,1);
-
-  if(mp->myrank == islice_selected_rec[irec_master_noise-1]) {
-    add_source_master_rec_noise_cuda_kernel<<<grid,threads>>>(mp->d_ibool,
-                                                              mp->d_ispec_selected_rec,
-                                                              irec_master_noise,
-                                                              mp->d_accel,
-                                                              mp->d_noise_sourcearray,
-                                                              it);
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("add_source_master_rec_noise_cuda_kernel");
-#endif
-  }
-}
 
 /* ----------------------------------------------------------------------------------------------- */
 

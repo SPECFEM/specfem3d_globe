@@ -410,39 +410,46 @@
 ! subroutine for NOISE TOMOGRAPHY
 ! step 1: calculate the "ensemble forward source"
 ! add noise spectrum to the location of master receiver
-  subroutine add_source_master_rec_noise(myrank,nrec, &
-                                NSTEP,accel_crust_mantle,noise_sourcearray, &
-                                ibool_crust_mantle,islice_selected_rec,ispec_selected_rec, &
-                                it,irec_master_noise)
-  implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-  ! input parameters
-  integer :: myrank,nrec,NSTEP, irec_master_noise
-  integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP) :: noise_sourcearray
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle  ! both input and output
-  ! output parameters
-  ! local parameters
-  integer :: i,j,k,iglob,it
+  subroutine noise_add_source_master_rec()
 
+! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
+! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
+! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
+! now this must be manually set in DATA/CMTSOLUTION, by USERS.
+
+  use specfem_par  
+  use specfem_par_crustmantle
+  implicit none
+  
+  ! local parameters
+  integer :: i,j,k,iglob
 
   ! adds noise source (only if this proc carries the noise)
-  if(myrank == islice_selected_rec(irec_master_noise)) then
-    ! adds nosie source contributions
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
-          iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec_master_noise))
-          accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-                        + noise_sourcearray(:,i,j,k,it)
+  if( .not. GPU_MODE ) then
+    ! on CPU
+    if(myrank == islice_selected_rec(irec_master_noise)) then
+      ! adds noise source contributions
+      do k=1,NGLLZ
+        do j=1,NGLLY
+          do i=1,NGLLX
+            iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec_master_noise))
+            accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
+                                          + noise_sourcearray(:,i,j,k,it)
+          enddo
         enddo
       enddo
-    enddo
+    endif
+
+  else
+    ! on GPU
+    call load_GPU_elastic()
+    
+    call noise_add_source_master_rec_cu(Mesh_pointer,it,irec_master_noise,islice_selected_rec)  
+    
+    call load_CPU_elastic()
   endif
 
-  end subroutine add_source_master_rec_noise
+  end subroutine noise_add_source_master_rec
 
 ! =============================================================================================================
 ! =============================================================================================================
@@ -460,103 +467,38 @@
 ! by this modification, the efficiency is greatly improved
 ! and now, it should be OK to run NOISE_TOMOGRAPHY on a cluster with global storage
 
-!!!!! improved version !!!!!
-  subroutine noise_save_surface_movie(displ_crust_mantle, &
-                    ibelm_top_crust_mantle,ibool_crust_mantle, &
-                    nspec_top,noise_surface_movie,it)
+  subroutine noise_save_surface_movie()
+
+  use specfem_par
+  use specfem_par_crustmantle
   implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-  ! input parameters
-  integer :: nspec_top,it
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) ::  displ_crust_mantle
-  ! output parameters
+
   ! local parameters
   integer :: ispec2D,ispec,i,j,k,iglob
-  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
-
+  
   ! get coordinates of surface mesh and surface displacement
-  do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-    ispec = ibelm_top_crust_mantle(ispec2D)
-    k = NGLLZ
-    do j = 1,NGLLY
-      do i = 1,NGLLX
-        iglob = ibool_crust_mantle(i,j,k,ispec)
-        noise_surface_movie(:,i,j,ispec2D) = displ_crust_mantle(:,iglob)
+  if( .not. GPU_MODE ) then
+    ! on CPU
+    do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+      ispec = ibelm_top_crust_mantle(ispec2D)
+      k = NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          noise_surface_movie(:,i,j,ispec2D) = displ_crust_mantle(:,iglob)
+        enddo
       enddo
     enddo
-  enddo
-
+  else
+    ! on GPU
+    call noise_transfer_surface_to_host(Mesh_pointer,noise_surface_movie)
+  endif
+  
   ! save surface motion to disk
   call write_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
 
   end subroutine noise_save_surface_movie
 
-!!!!! original implementation, not used anymore (but kept here for references) !!!!!
-!  subroutine noise_save_surface_movie_original(myrank,nmovie_points,displ_crust_mantle, &
-!                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-!                    store_val_x,store_val_y,store_val_z, &
-!                    store_val_ux,store_val_uy,store_val_uz, &
-!                    ibelm_top_crust_mantle,ibool_crust_mantle,nspec_top, &
-!                    NIT,it,LOCAL_PATH)
-!  implicit none
-!  include 'mpif.h'
-!  include "precision.h"
-!  include "constants.h"
-!  include "OUTPUT_FILES/values_from_mesher.h"
-!  ! input parameters
-!  integer :: myrank,nmovie_points,nspec_top,NIT,it
-!  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-!  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) ::  displ_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
-!        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-!  character(len=150) :: LOCAL_PATH
-!  ! output parameters
-!  ! local parameters
-!  integer :: ipoin,ispec2D,ispec,i,j,k,iglob
-!  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: &
-!      store_val_x,store_val_y,store_val_z, &
-!      store_val_ux,store_val_uy,store_val_uz
-!  character(len=150) :: outputname
-!
-!
-!  ! get coordinates of surface mesh and surface displacement
-!  ipoin = 0
-!  do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-!    ispec = ibelm_top_crust_mantle(ispec2D)
-!
-!    k = NGLLZ
-!
-!    ! loop on all the points inside the element
-!    do j = 1,NGLLY,NIT
-!      do i = 1,NGLLX,NIT
-!        ipoin = ipoin + 1
-!        iglob = ibool_crust_mantle(i,j,k,ispec)
-!        store_val_x(ipoin) = xstore_crust_mantle(iglob)
-!        store_val_y(ipoin) = ystore_crust_mantle(iglob)
-!        store_val_z(ipoin) = zstore_crust_mantle(iglob)
-!        store_val_ux(ipoin) = displ_crust_mantle(1,iglob)
-!        store_val_uy(ipoin) = displ_crust_mantle(2,iglob)
-!        store_val_uz(ipoin) = displ_crust_mantle(3,iglob)
-!      enddo
-!    enddo
-!
-!  enddo
-!
-!  ! save surface motion to disk
-!  ! LOCAL storage is better than GLOBAL, because we have to save the 'movie' at every time step
-!  ! also note that the surface movie does NOT have to be shared with other nodes/CPUs
-!  ! change LOCAL_PATH specified in "DATA/Par_file"
-!    write(outputname,"('/proc',i6.6,'_surface_movie',i6.6)") myrank, it
-!    open(unit=IOUT_NOISE,file=trim(LOCAL_PATH)//outputname,status='unknown',form='unformatted',action='write')
-!    write(IOUT_NOISE) store_val_ux
-!    write(IOUT_NOISE) store_val_uy
-!    write(IOUT_NOISE) store_val_uz
-!    close(IOUT_NOISE)
-!  end subroutine noise_save_surface_movie_original
 
 ! =============================================================================================================
 ! =============================================================================================================
@@ -576,129 +518,65 @@
 ! by this modification, the efficiency is greatly improved
 ! and now, it should be OK to run NOISE_TOMOGRAPHY on a cluster with global storage
 
-!!!!! improved version !!!!!
-  subroutine noise_read_add_surface_movie(nmovie_points,accel_crust_mantle, &
-                  normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
-                  ibelm_top_crust_mantle,ibool_crust_mantle, &
-                  nspec_top,noise_surface_movie, &
-                  it,jacobian2D_top_crust_mantle,wgllwgll_xy)
+  subroutine noise_read_add_surface_movie(accel,it_index)
+
+  use specfem_par
+  use specfem_par_crustmantle
+  
   implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-  ! input parameters
-  integer :: nspec_top,it,nmovie_points
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: jacobian2D_top_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle ! both input and output
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-  ! output parameters
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE),intent(inout) :: accel
+  integer,intent(in) :: it_index
+  
   ! local parameters
   integer :: ipoin,ispec2D,ispec,i,j,k,iglob
   real(kind=CUSTOM_REAL) :: eta
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
-
+  
+  
   ! read surface movie
-  call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
+  call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it_index)
 
   ! get coordinates of surface mesh and surface displacement
-  ipoin = 0
-  do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-    ispec = ibelm_top_crust_mantle(ispec2D)
+  if( .not. GPU_MODE ) then
+    ! on CPU
+    ipoin = 0
+    do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+      ispec = ibelm_top_crust_mantle(ispec2D)
 
-    k = NGLLZ
+      k = NGLLZ
 
-    ! loop on all the points inside the element
-    do j = 1,NGLLY
-      do i = 1,NGLLX
-        ipoin = ipoin + 1
-        iglob = ibool_crust_mantle(i,j,k,ispec)
+      ! loop on all the points inside the element
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ipoin = ipoin + 1
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-        eta = noise_surface_movie(1,i,j,ispec2D) * normal_x_noise(ipoin) + &
-              noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
-              noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
+          eta = noise_surface_movie(1,i,j,ispec2D) * normal_x_noise(ipoin) + &
+                noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
+                noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
 
 
-        accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + eta * mask_noise(ipoin) * normal_x_noise(ipoin) &
-                                                      * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
-        accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + eta * mask_noise(ipoin) * normal_y_noise(ipoin) &
-                                                      * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
-        accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + eta * mask_noise(ipoin) * normal_z_noise(ipoin) &
-                                                      * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
+          accel(1,iglob) = accel(1,iglob) &
+                            + eta * mask_noise(ipoin) * normal_x_noise(ipoin) &
+                              * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
+          accel(2,iglob) = accel(2,iglob) &
+                            + eta * mask_noise(ipoin) * normal_y_noise(ipoin) &
+                              * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
+          accel(3,iglob) = accel(3,iglob) &
+                            + eta * mask_noise(ipoin) * normal_z_noise(ipoin) &
+                              * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
+        enddo
       enddo
+
     enddo
 
-  enddo
+  else
+    ! on GPU
+    call noise_add_surface_movie_cuda(Mesh_pointer,noise_surface_movie)    
+  endif
 
   end subroutine noise_read_add_surface_movie
 
-!!!!! original implementation, not used anymore (but kept here for references) !!!!!
-!  subroutine noise_read_add_surface_movie_original(myrank,nmovie_points,accel_crust_mantle, &
-!                  normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
-!                  store_val_ux,store_val_uy,store_val_uz, &
-!                  ibelm_top_crust_mantle,ibool_crust_mantle,nspec_top, &
-!                  NIT,it,LOCAL_PATH,jacobian2D_top_crust_mantle,wgllwgll_xy)
-!  implicit none
-!  include 'mpif.h'
-!  include "precision.h"
-!  include "constants.h"
-!  include "OUTPUT_FILES/values_from_mesher.h"
-!  ! input parameters
-!  integer :: myrank,nmovie_points,nspec_top,NIT,it
-!  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-!  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: jacobian2D_top_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle ! both input and output
-!  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY) :: wgllwgll_xy
-!  character(len=150) :: LOCAL_PATH
-!  ! output parameters
-!  ! local parameters
-!  integer :: ipoin,ispec2D,ispec,i,j,k,iglob,ios
-!  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: store_val_ux,store_val_uy,store_val_uz
-!  real(kind=CUSTOM_REAL) :: eta
-!  character(len=150) :: outputname
-!
-!
-!  ! read surface movie
-!  write(outputname,"('/proc',i6.6,'_surface_movie',i6.6)") myrank, it
-!  open(unit=IIN_NOISE,file=trim(LOCAL_PATH)//outputname,status='old',form='unformatted',action='read',iostat=ios)
-!  if( ios /= 0)  call exit_MPI(myrank,'file '//trim(outputname)//' does NOT exist!')
-!  read(IIN_NOISE) store_val_ux
-!  read(IIN_NOISE) store_val_uy
-!  read(IIN_NOISE) store_val_uz
-!  close(IIN_NOISE)
-!
-!  ! get coordinates of surface mesh and surface displacement
-!  ipoin = 0
-!  do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-!    ispec = ibelm_top_crust_mantle(ispec2D)
-!
-!    k = NGLLZ
-!
-!    ! loop on all the points inside the element
-!    do j = 1,NGLLY,NIT
-!      do i = 1,NGLLX,NIT
-!        ipoin = ipoin + 1
-!        iglob = ibool_crust_mantle(i,j,k,ispec)
-!
-!        eta = store_val_ux(ipoin) * normal_x_noise(ipoin) + &
-!              store_val_uy(ipoin) * normal_y_noise(ipoin) + &
-!              store_val_uz(ipoin) * normal_z_noise(ipoin)
-!
-!        accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + eta * mask_noise(ipoin) * normal_x_noise(ipoin) &
-!                                                      * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
-!        accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + eta * mask_noise(ipoin) * normal_y_noise(ipoin) &
-!                                                      * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
-!        accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + eta * mask_noise(ipoin) * normal_z_noise(ipoin) &
-!                                                      * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
-!      enddo
-!    enddo
-!
-!  enddo
-!
-!  end subroutine noise_read_add_surface_movie_original
 
 ! =============================================================================================================
 ! =============================================================================================================

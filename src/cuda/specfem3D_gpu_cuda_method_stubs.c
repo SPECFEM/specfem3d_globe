@@ -135,12 +135,6 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
                                               int* NSOURCESf,
                                               double* h_stf_pre_compute) {} 
 
-void FC_FUNC_(add_source_master_rec_noise_cu,
-              ADD_SOURCE_MASTER_REC_NOISE_CU)(long* Mesh_pointer_f,
-                                                int* it_f,
-                                                int* irec_master_noise_f,
-                                                int* islice_selected_rec) {} 
-
 void FC_FUNC_(add_sources_el_sim_type_2_or_3,
               ADD_SOURCES_EL_SIM_TYPE_2_OR_3)(long* Mesh_pointer,
                                               int* nrec,
@@ -308,14 +302,19 @@ void FC_FUNC_(fortranprintd,FORTRANPRINTD)(double* val) {}
 
 void FC_FUNC_(make_displ_rand,MAKE_DISPL_RAND)(long* Mesh_pointer_f,realw* h_displ) {} 
 
-void FC_FUNC_(transfer_surface_to_host,
-              TRANSFER_SURFACE_TO_HOST)(long* Mesh_pointer_f,
-                                        realw* h_noise_surface_movie) {} 
+void FC_FUNC_(noise_transfer_surface_to_host,
+              NOISE_TRANSFER_SURFACE_TO_HOST)(long* Mesh_pointer_f,
+                                              realw* h_noise_surface_movie) {} 
 
-void FC_FUNC_(noise_read_add_surface_movie_cu,
-              NOISE_READ_ADD_SURFACE_MOVIE_CU)(long* Mesh_pointer_f,
-                                               realw* h_noise_surface_movie,
-                                               int* NOISE_TOMOGRAPHYf) {} 
+void FC_FUNC_(noise_add_source_master_rec_cu,
+              NOISE_ADD_SOURCE_MASTER_REC_CU)(long* Mesh_pointer_f,
+                                              int* it_f,
+                                              int* irec_master_noise_f,
+                                              int* islice_selected_rec) {} 
+
+void FC_FUNC_(noise_add_surface_movie_cuda,
+              NOISE_ADD_SURFACE_MOVIE_CUDA)(long* Mesh_pointer_f,
+                                            realw* h_noise_surface_movie) {} 
 
 
 //
@@ -345,6 +344,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
                                         int* SIMULATION_TYPE,
+                                        int* NOISE_TOMOGRAPHY,
                                         int* SAVE_FORWARD_f,
                                         int* ABSORBING_CONDITIONS_f,
                                         int* GRAVITY_f,
@@ -650,19 +650,15 @@ void FC_FUNC_(prepare_sim2_or_3_const_device,
 
 void FC_FUNC_(prepare_fields_noise_device,
               PREPARE_FIELDS_NOISE_DEVICE)(long* Mesh_pointer_f,
-                                           int* NSPEC_AB, int* NGLOB_AB,
-                                           int* free_surface_ispec,
-                                           int* free_surface_ijk,
-                                           int* num_free_surface_faces,
-                                           int* SIMULATION_TYPE,
-                                           int* NOISE_TOMOGRAPHY,
+                                           int* nspec_top,
+                                           int* ibelm_top_crust_mantle,
                                            int* NSTEP,
                                            realw* noise_sourcearray,
                                            realw* normal_x_noise,
                                            realw* normal_y_noise,
                                            realw* normal_z_noise,
                                            realw* mask_noise,
-                                           realw* free_surface_jacobian2Dw) {} 
+                                           realw* jacobian2D_top_crust_mantle) {} 
 
 void FC_FUNC_(prepare_cleanup_device,
               PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer_f) {} 

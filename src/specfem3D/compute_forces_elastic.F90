@@ -220,39 +220,29 @@
         call compute_add_sources_backward()
 
       ! NOISE_TOMOGRAPHY
-      if ( NOISE_TOMOGRAPHY == 1 ) then
-         ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
-         ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
-         ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
-         ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
-         call add_source_master_rec_noise(myrank,nrec, &
-                                  NSTEP,accel_crust_mantle,noise_sourcearray, &
-                                  ibool_crust_mantle,islice_selected_rec,ispec_selected_rec, &
-                                  it,irec_master_noise)
-      elseif ( NOISE_TOMOGRAPHY == 2 ) then
-         ! second step of noise tomography, i.e., read the surface movie saved at every timestep
-         ! use the movie to drive the ensemble forward wavefield
-         call noise_read_add_surface_movie(nmovie_points,accel_crust_mantle, &
-                                normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
-                                ibelm_top_crust_mantle,ibool_crust_mantle, &
-                                NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
-                                NSTEP-it+1,jacobian2D_top_crust_mantle,wgllwgll_xy)
-          ! be careful, since ensemble forward sources are reversals of generating wavefield "eta"
-          ! hence the "NSTEP-it+1", i.e., start reading from the last timestep
-          ! note the ensemble forward sources are generally distributed on the surface of the earth
-          ! that's to say, the ensemble forward source is kind of a surface force density, not a body force density
-          ! therefore, we must add it here, before applying the inverse of mass matrix
-      elseif ( NOISE_TOMOGRAPHY == 3 ) then
-          ! third step of noise tomography, i.e., read the surface movie saved at every timestep
-          ! use the movie to reconstruct the ensemble forward wavefield
-          ! the ensemble adjoint wavefield is done as usual
-          ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
-          call noise_read_add_surface_movie(nmovie_points,b_accel_crust_mantle, &
-                                normal_x_noise,normal_y_noise,normal_z_noise,mask_noise, &
-                                ibelm_top_crust_mantle,ibool_crust_mantle, &
-                                NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie, &
-                                it,jacobian2D_top_crust_mantle,wgllwgll_xy)
-      endif
+      select case( NOISE_TOMOGRAPHY )
+      case( 1 )
+        ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
+        ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
+        ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
+        ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
+        call noise_add_source_master_rec()         
+      case( 2 )
+        ! second step of noise tomography, i.e., read the surface movie saved at every timestep
+        ! use the movie to drive the ensemble forward wavefield
+        call noise_read_add_surface_movie(accel_crust_mantle,NSTEP-it+1)
+        ! be careful, since ensemble forward sources are reversals of generating wavefield "eta"
+        ! hence the "NSTEP-it+1", i.e., start reading from the last timestep
+        ! note the ensemble forward sources are generally distributed on the surface of the earth
+        ! that's to say, the ensemble forward source is kind of a surface force density, not a body force density
+        ! therefore, we must add it here, before applying the inverse of mass matrix
+      case( 3 )
+        ! third step of noise tomography, i.e., read the surface movie saved at every timestep
+        ! use the movie to reconstruct the ensemble forward wavefield
+        ! the ensemble adjoint wavefield is done as usual
+        ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
+        call noise_read_add_surface_movie(b_accel_crust_mantle,it)                                
+      end select
 
 
       ! ****************************************************

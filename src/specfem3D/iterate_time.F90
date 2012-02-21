@@ -115,9 +115,10 @@
     ! first step of noise tomography, i.e., save a surface movie at every time step
     ! modified from the subroutine 'write_movie_surface'
     if ( NOISE_TOMOGRAPHY == 1 ) then
-      call noise_save_surface_movie(displ_crust_mantle, &
-                              ibelm_top_crust_mantle,ibool_crust_mantle, &
-                              NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie,it)
+      call noise_save_surface_movie()
+!                              displ_crust_mantle, &
+!                              ibelm_top_crust_mantle,ibool_crust_mantle, &
+!                              NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie,it)
     endif
 
   enddo   ! end of main time loop

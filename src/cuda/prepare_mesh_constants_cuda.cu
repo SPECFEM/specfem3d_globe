@@ -199,6 +199,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
                                         int* SIMULATION_TYPE,
+                                        int* NOISE_TOMOGRAPHY,
                                         int* SAVE_FORWARD_f,
                                         int* ABSORBING_CONDITIONS_f,
                                         int* GRAVITY_f,
@@ -244,7 +245,8 @@ TRACE("prepare_constants_device");
 
   // simulation type
   mp->simulation_type = *SIMULATION_TYPE;
-
+  mp->noise_tomography = *NOISE_TOMOGRAPHY;
+  
   // simulation flags initialization
   mp->save_forward = *SAVE_FORWARD_f;
   mp->absorbing_conditions = *ABSORBING_CONDITIONS_f;
@@ -380,29 +382,29 @@ void FC_FUNC_(prepare_fields_rotation_device,
   mp->d_deltat = *deltat;
 
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_A_array_rotation,
-                                     (*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw)),9000);
+                                     NGLL3*(*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw)),9000);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_A_array_rotation, A_array_rotation,
-                                     (*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw),cudaMemcpyHostToDevice),9001);
+                                     NGLL3*(*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw),cudaMemcpyHostToDevice),9001);
 
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_B_array_rotation,
-                                     (*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw)),9000);
+                                     NGLL3*(*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw)),9002);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_B_array_rotation, B_array_rotation,
-                                     (*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw),cudaMemcpyHostToDevice),9001);
-
+                                     NGLL3*(*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw),cudaMemcpyHostToDevice),9003);
+    
   // backward/reconstructed fields
   if( mp->simulation_type == 3 ){
     mp->d_b_two_omega_earth = *b_two_omega_earth;
     mp->d_b_deltat = *b_deltat;
 
     print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_b_A_array_rotation,
-                                       (*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw)),9000);
+                                       NGLL3*(*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw)),9000);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_b_A_array_rotation, b_A_array_rotation,
-                                       (*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw),cudaMemcpyHostToDevice),9001);
+                                       NGLL3*(*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw),cudaMemcpyHostToDevice),9001);
 
     print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_b_B_array_rotation,
-                                       (*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw)),9000);
+                                       NGLL3*(*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw)),9002);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_b_B_array_rotation, b_B_array_rotation,
-                                       (*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw),cudaMemcpyHostToDevice),9001);
+                                       NGLL3*(*NSPEC_OUTER_CORE_ROTATION)*sizeof(realw),cudaMemcpyHostToDevice),9003);
   }
 }
 
@@ -515,11 +517,6 @@ void FC_FUNC_(prepare_fields_attenuat_device,
                                      R_size2*sizeof(realw),cudaMemcpyHostToDevice),4431);
 
   if( ! mp->use_attenuation_mimic ){
-
-    //daniel: TODO - re-add the ones below, for now too little memory...
-    printf("skipping R_memory arrays, memory too small...\n");
-    if( 0 == 1 ){
-
     // common factor
     print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_factor_common_crust_mantle,
                                          R_size3*sizeof(realw)),4432);
@@ -548,9 +545,6 @@ void FC_FUNC_(prepare_fields_attenuat_device,
                                          R_size1*sizeof(realw),cudaMemcpyHostToDevice),4800);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_R_yz_crust_mantle,R_yz_crust_mantle,
                                          R_size1*sizeof(realw),cudaMemcpyHostToDevice),4800);
-
-
-    }
   }
 
   // inner_core
@@ -2585,96 +2579,91 @@ void FC_FUNC_(prepare_sim2_or_3_const_device,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-/*
+
 extern "C"
 void FC_FUNC_(prepare_fields_noise_device,
               PREPARE_FIELDS_NOISE_DEVICE)(long* Mesh_pointer_f,
-                                           int* NSPEC_AB, int* NGLOB_AB,
-                                           int* free_surface_ispec,
-                                           int* free_surface_ijk,
-                                           int* num_free_surface_faces,
-                                           int* SIMULATION_TYPE,
-                                           int* NOISE_TOMOGRAPHY,
+                                           int* nspec_top,
+                                           int* ibelm_top_crust_mantle,
                                            int* NSTEP,
                                            realw* noise_sourcearray,
                                            realw* normal_x_noise,
                                            realw* normal_y_noise,
                                            realw* normal_z_noise,
                                            realw* mask_noise,
-                                           realw* free_surface_jacobian2Dw) {
+                                           realw* jacobian2D_top_crust_mantle) {
 
   TRACE("prepare_fields_noise_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f);
 
   // free surface
-  mp->num_free_surface_faces = *num_free_surface_faces;
+  mp->nspec_top = *nspec_top;
+  if( mp->nspec_top > 0 ){
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_ibelm_top_crust_mantle,
+                                       mp->nspec_top*sizeof(int)),7001);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_top_crust_mantle,ibelm_top_crust_mantle,
+                                       mp->nspec_top*sizeof(int),cudaMemcpyHostToDevice),7002);
 
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_free_surface_ispec,
-                                     mp->num_free_surface_faces*sizeof(int)),7001);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_free_surface_ispec, free_surface_ispec,
-                                     mp->num_free_surface_faces*sizeof(int),cudaMemcpyHostToDevice),7002);
-
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_free_surface_ijk,
-                                     3*NGLL2*mp->num_free_surface_faces*sizeof(int)),7003);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_free_surface_ijk,free_surface_ijk,
-                                     3*NGLL2*mp->num_free_surface_faces*sizeof(int),cudaMemcpyHostToDevice),7004);
-
-  // alloc storage for the surface buffer to be copied
-  print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_noise_surface_movie,
-                                     3*NGLL2*mp->num_free_surface_faces*sizeof(realw)),7005);
+    // alloc storage for the surface buffer to be copied
+    print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_noise_surface_movie,
+                                       NDIM*NGLL2*(mp->nspec_top)*sizeof(realw)),7005);    
+  }
+  
 
   // prepares noise source array
-  if( *NOISE_TOMOGRAPHY == 1 ){
+  if( mp->noise_tomography == 1 ){
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_noise_sourcearray,
-                                       3*NGLL3*(*NSTEP)*sizeof(realw)),7101);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_noise_sourcearray, noise_sourcearray,
-                                       3*NGLL3*(*NSTEP)*sizeof(realw),cudaMemcpyHostToDevice),7102);
+                                       NDIM*NGLL3*(*NSTEP)*sizeof(realw)),7101);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_noise_sourcearray,noise_sourcearray,
+                                       NDIM*NGLL3*(*NSTEP)*sizeof(realw),cudaMemcpyHostToDevice),7102);
   }
 
   // prepares noise directions
-  if( *NOISE_TOMOGRAPHY > 1 ){
-    int nface_size = NGLL2*(*num_free_surface_faces);
+  if( mp->noise_tomography > 1 ){
+    int nface_size = NGLL2*(mp->nspec_top);
     // allocates memory on GPU
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_normal_x_noise,
                                        nface_size*sizeof(realw)),7301);
-    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_normal_y_noise,
-                                       nface_size*sizeof(realw)),7302);
-    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_normal_z_noise,
-                                       nface_size*sizeof(realw)),7303);
-    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_mask_noise,
-                                       nface_size*sizeof(realw)),7304);
-    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_free_surface_jacobian2Dw,
-                                       nface_size*sizeof(realw)),7305);
-    // transfers data onto GPU
     print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_x_noise, normal_x_noise,
                                        nface_size*sizeof(realw),cudaMemcpyHostToDevice),7306);
+
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_normal_y_noise,
+                                       nface_size*sizeof(realw)),7302);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_y_noise, normal_y_noise,
                                        nface_size*sizeof(realw),cudaMemcpyHostToDevice),7307);
+
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_normal_z_noise,
+                                       nface_size*sizeof(realw)),7303);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_z_noise, normal_z_noise,
                                        nface_size*sizeof(realw),cudaMemcpyHostToDevice),7308);
+                                       
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_mask_noise,
+                                       nface_size*sizeof(realw)),7304);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_mask_noise, mask_noise,
                                        nface_size*sizeof(realw),cudaMemcpyHostToDevice),7309);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_free_surface_jacobian2Dw, free_surface_jacobian2Dw,
+                                       
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_jacobian2D_top_crust_mantle,
+                                       nface_size*sizeof(realw)),7305);
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_jacobian2D_top_crust_mantle, jacobian2D_top_crust_mantle,
                                        nface_size*sizeof(realw),cudaMemcpyHostToDevice),7310);
   }
 
   // prepares noise strength kernel
-  if( *NOISE_TOMOGRAPHY == 3 ){
+  if( mp->noise_tomography == 3 ){
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_Sigma_kl),
-                                       NGLL3*(mp->NSPEC_AB)*sizeof(realw)),7401);
+                                       NGLL3*(mp->NSPEC_CRUST_MANTLE)*sizeof(realw)),7401);
     // initializes kernel values to zero
     print_CUDA_error_if_any(cudaMemset(mp->d_Sigma_kl,0,
-                                       NGLL3*mp->NSPEC_AB*sizeof(realw)),7403);
+                                       NGLL3*mp->NSPEC_CRUST_MANTLE*sizeof(realw)),7403);
 
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  //printf("jacobian_size = %d\n",25*(*num_free_surface_faces));
   exit_on_cuda_error("prepare_fields_noise_device");
 #endif
 }
-*/
+
 
 
 /* ----------------------------------------------------------------------------------------------- */
