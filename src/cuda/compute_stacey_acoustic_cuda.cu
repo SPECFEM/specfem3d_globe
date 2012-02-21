@@ -41,29 +41,27 @@
 
 __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
                                                realw* potential_dot_dot_acoustic,
-                                               int* abs_boundary_ispec,
-                                               int* abs_boundary_ijk,
-                                               realw* abs_boundary_jacobian2Dw,
-                                               int* ibool,
-                                               realw* rhostore,
-                                               realw* kappastore,
-                                               int* ispec_is_inner,
-                                               int* ispec_is_acoustic,
-                                               int phase_is_inner,
-                                               int SIMULATION_TYPE, int SAVE_FORWARD,
+                                               int interface_type,
                                                int num_abs_boundary_faces,
-                                               realw* b_potential_dot_acoustic,
+                                               int* abs_boundary_ispec,
+                                               int* nkmin_xi, int* nkmin_eta,
+                                               int* njmin, int* njmax,
+                                               int* nimin, int* nimax,                                               
+                                               realw* abs_boundary_jacobian2D,
+                                               realw* wgllwgll,
+                                               int* ibool,
+                                               realw* vpstore,
+                                               int SIMULATION_TYPE, 
+                                               int SAVE_FORWARD,
                                                realw* b_potential_dot_dot_acoustic,
-                                               realw* b_absorb_potential,
-                                               int gravity) {
+                                               realw* b_absorb_potential) {
 
   int igll = threadIdx.x;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
 
   int i,j,k,iglob,ispec;
-  realw rhol,kappal,cpl;
-  realw jacobianw;
-  realw vel;
+  realw sn;
+  realw jacobianw,fac1;
 
   // don't compute points outside NGLLSQUARE==NGLL2==25
   // way 2: no further check needed since blocksize = 25
@@ -74,46 +72,99 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = abs_boundary_ispec[iface]-1;
 
-    if(ispec_is_inner[ispec] == phase_is_inner && ispec_is_acoustic[ispec] ) {
+    // determines indices i,j,k depending on absorbing boundary type
+    switch( interface_type ){
+      case 4:
+        // xmin
+        if( nkmin_xi[INDEX2(2,0,iface)] == 0 || njmin[INDEX2(2,0,iface)] == 0 ) return;
+        
+        i = 0; // index -1
+        k = (igll/NGLLX);
+        j = (igll-k*NGLLX);
+        
+        if( k < nkmin_xi[INDEX2(2,0,iface)]-1 || k > NGLLX-1 ) return;
+        if( j < njmin[INDEX2(2,0,iface)]-1 || j > njmax[INDEX2(2,0,iface)]-1 ) return;
+        
+        fac1 = wgllwgll[k*NGLLX+j];
+        break;
+        
+      case 5:
+        // xmax
+        if( nkmin_xi[INDEX2(2,1,iface)] == 0 || njmin[INDEX2(2,1,iface)] == 0 ) return;
+        
+        i = NGLLX-1;
+        k = (igll/NGLLX);
+        j = (igll-k*NGLLX);
+        
+        if( k < nkmin_xi[INDEX2(2,1,iface)]-1 || k > NGLLX-1 ) return;
+        if( j < njmin[INDEX2(2,1,iface)]-1 || j > njmax[INDEX2(2,1,iface)]-1 ) return;
+        
+        fac1 = wgllwgll[k*NGLLX+j];
+        break;
+        
+      case 6:
+        // ymin
+        if( nkmin_eta[INDEX2(2,0,iface)] == 0 || nimin[INDEX2(2,0,iface)] == 0 ) return;
+        
+        j = 0;
+        k = (igll/NGLLX);        
+        i = (igll-k*NGLLX);
+        
+        if( k < nkmin_eta[INDEX2(2,0,iface)]-1 || k > NGLLX-1 ) return;
+        if( i < nimin[INDEX2(2,0,iface)]-1 || i > nimax[INDEX2(2,0,iface)]-1 ) return;
+        
+        fac1 = wgllwgll[k*NGLLX+i];
+        break;
+        
+      case 7:
+        // ymax
+        if( nkmin_eta[INDEX2(2,1,iface)] == 0 || nimin[INDEX2(2,1,iface)] == 0 ) return;
+        
+        j = NGLLX-1;
+        k = (igll/NGLLX);        
+        i = (igll-k*NGLLX);
+        
+        if( k < nkmin_eta[INDEX2(2,1,iface)]-1 || k > NGLLX-1 ) return;
+        if( i < nimin[INDEX2(2,1,iface)]-1 || i > nimax[INDEX2(2,1,iface)]-1 ) return;
+        
+        fac1 = wgllwgll[k*NGLLX+i];
+        break;
 
-      i = abs_boundary_ijk[INDEX3(NDIM,NGLL2,0,igll,iface)]-1;
-      j = abs_boundary_ijk[INDEX3(NDIM,NGLL2,1,igll,iface)]-1;
-      k = abs_boundary_ijk[INDEX3(NDIM,NGLL2,2,igll,iface)]-1;
-      iglob = ibool[INDEX4(5,5,5,i,j,k,ispec)]-1;
-
-      // determines bulk sound speed
-      rhol = rhostore[INDEX4_PADDED(NGLLX,NGLLX,NGLLX,i,j,k,ispec)];
-
-      kappal = kappastore[INDEX4(5,5,5,i,j,k,ispec)];
-
-      cpl = sqrt( kappal / rhol );
-
-      // velocity
-      if( gravity ){
-        // daniel: TODO - check gravity and stacey condition here...
-        // uses a potential definition of: s = grad(chi)
-        vel = potential_dot_acoustic[iglob] / rhol ;
-      }else{
-        // uses a potential definition of: s = 1/rho grad(chi)
-        vel = potential_dot_acoustic[iglob] / rhol;
-      }
-
-      // gets associated, weighted jacobian
-      jacobianw = abs_boundary_jacobian2Dw[INDEX2(NGLL2,igll,iface)];
-
-      // Sommerfeld condition
-      atomicAdd(&potential_dot_dot_acoustic[iglob],-vel*jacobianw/cpl);
-
-      // adjoint simulations
-      if( SIMULATION_TYPE == 3 ){
-        // Sommerfeld condition
-        atomicAdd(&b_potential_dot_dot_acoustic[iglob],-b_absorb_potential[INDEX2(NGLL2,igll,iface)]);
-      }else if( SIMULATION_TYPE == 1 && SAVE_FORWARD ){
-        // saves boundary values
-        b_absorb_potential[INDEX2(NGLL2,igll,iface)] = vel*jacobianw/cpl;
-      }
+      case 8:
+        // zmin        
+        k = 0;
+        j = (igll/NGLLX);        
+        i = (igll-j*NGLLX);
+        
+        if( j < 0 || j > NGLLX-1 ) return;
+        if( i < 0 || i > NGLLX-1 ) return;
+        
+        fac1 = wgllwgll[j*NGLLX+i];
+        break;
+        
     }
-//  }
+    
+    iglob = ibool[INDEX4(5,5,5,i,j,k,ispec)]-1;
+
+    // determines bulk sound speed
+    // velocity
+    sn = potential_dot_acoustic[iglob] / vpstore[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] ;
+
+    // gets associated, weighted jacobian
+    jacobianw = abs_boundary_jacobian2D[INDEX2(NGLL2,igll,iface)]*fac1;
+
+    // Sommerfeld condition
+    atomicAdd(&potential_dot_dot_acoustic[iglob],-sn*jacobianw);
+
+    // adjoint simulations
+    if( SIMULATION_TYPE == 3 ){
+      // Sommerfeld condition
+      atomicAdd(&b_potential_dot_dot_acoustic[iglob],-b_absorb_potential[INDEX2(NGLL2,igll,iface)]);
+    }else if( SIMULATION_TYPE == 1 && SAVE_FORWARD ){
+      // saves boundary values
+      b_absorb_potential[INDEX2(NGLL2,igll,iface)] = sn*jacobianw;
+    }
+
   }
 }
 
@@ -121,20 +172,76 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
 
 extern "C"
 void FC_FUNC_(compute_stacey_acoustic_cuda,
-              COMPUTE_STACEY_ACOUSTIC_CUDA)(
-                                    long* Mesh_pointer_f,
-                                    int* phase_is_innerf,
-                                    int* SIMULATION_TYPEf,
-                                    int* SAVE_FORWARDf,
-                                    realw* h_b_absorb_potential) {
+              COMPUTE_STACEY_ACOUSTIC_CUDA)(long* Mesh_pointer_f,
+                                            realw* absorb_potential,
+                                            int* itype) {
 TRACE("compute_stacey_acoustic_cuda");
   //double start_time = get_time();
 
+  int num_abs_boundary_faces;
+  int* d_abs_boundary_ispec;
+  realw* d_abs_boundary_jacobian2D;
+  realw* d_wgllwgll;
+  realw* d_b_absorb_potential;
+  
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-  int phase_is_inner          = *phase_is_innerf;
-  int SIMULATION_TYPE         = *SIMULATION_TYPEf;
-  int SAVE_FORWARD            = *SAVE_FORWARDf;
+  
+  // absorbing boundary type
+  int interface_type = *itype;
+  switch( interface_type ){
+    case 4:
+      // xmin
+      num_abs_boundary_faces = mp->nspec2D_xmin_outer_core;
+      d_abs_boundary_ispec = mp->d_ibelm_xmin_outer_core;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmin_outer_core;
+      d_b_absorb_potential = mp->d_absorb_xmin_outer_core;
+      d_wgllwgll = mp->d_wgllwgll_yz;
+      break;
+      
+    case 5:
+      // xmax
+      num_abs_boundary_faces = mp->nspec2D_xmax_outer_core;
+      d_abs_boundary_ispec = mp->d_ibelm_xmax_outer_core;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmax_outer_core;
+      d_b_absorb_potential = mp->d_absorb_xmax_outer_core;
+      d_wgllwgll = mp->d_wgllwgll_yz;
+      break;
+      
+    case 6:
+      // ymin
+      num_abs_boundary_faces = mp->nspec2D_ymin_outer_core;
+      d_abs_boundary_ispec = mp->d_ibelm_ymin_outer_core;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymin_outer_core;
+      d_b_absorb_potential = mp->d_absorb_ymin_outer_core; 
+      d_wgllwgll = mp->d_wgllwgll_xz;
+      break;
+      
+    case 7:
+      // ymax
+      num_abs_boundary_faces = mp->nspec2D_ymax_outer_core;
+      d_abs_boundary_ispec = mp->d_ibelm_ymax_outer_core;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymax_outer_core;
+      d_b_absorb_potential = mp->d_absorb_ymax_outer_core; 
+      d_wgllwgll = mp->d_wgllwgll_xz;
+      break;
 
+    case 8:
+      // zmin
+      num_abs_boundary_faces = mp->nspec2D_zmin_outer_core;
+      d_abs_boundary_ispec = mp->d_ibelm_zmin_outer_core;
+      d_abs_boundary_jacobian2D = mp->d_jacobian2D_zmin_outer_core;
+      d_b_absorb_potential = mp->d_absorb_zmin_outer_core; 
+      d_wgllwgll = mp->d_wgllwgll_xy;
+      break;
+      
+    default:
+      exit_on_cuda_error("compute_stacey_acoustic_cuda: unknown interface type");
+      break;
+  }
+
+  // checks if anything to do  
+  if( num_abs_boundary_faces == 0 ) return;
+  
   // way 1: Elapsed time: 4.385948e-03
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
   //  int blocksize = 32;
@@ -143,46 +250,47 @@ TRACE("compute_stacey_acoustic_cuda");
   // > NGLLSQUARE==NGLL2==25, no further check inside kernel
   int blocksize = NGLL2;
 
-  int num_blocks_x = mp->d_num_abs_boundary_faces;
+  int num_blocks_x = num_abs_boundary_faces;
   int num_blocks_y = 1;
   while(num_blocks_x > 65535) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
     num_blocks_y = num_blocks_y*2;
   }
-
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  //  adjoint simulations: reads in absorbing boundary
-  if (SIMULATION_TYPE == 3 && mp->d_num_abs_boundary_faces > 0 ){
+  //  adjoint simulations: needs absorbing boundary buffer
+  if (mp->simulation_type == 3 && num_abs_boundary_faces > 0 ){
     // copies array to GPU
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_potential,h_b_absorb_potential,
-                                       mp->d_b_reclen_potential,cudaMemcpyHostToDevice),7700);
+    print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_potential,absorb_potential,
+                            NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyHostToDevice),7700);
   }
 
-  compute_stacey_acoustic_kernel<<<grid,threads>>>(mp->d_potential_dot_acoustic,
-                                                   mp->d_potential_dot_dot_acoustic,
-                                                   mp->d_abs_boundary_ispec,
-                                                   mp->d_abs_boundary_ijk,
-                                                   mp->d_abs_boundary_jacobian2Dw,
-                                                   mp->d_ibool,
-                                                   mp->d_rhostore,
-                                                   mp->d_kappastore,
-                                                   mp->d_ispec_is_inner,
-                                                   mp->d_ispec_is_acoustic,
-                                                   phase_is_inner,
-                                                   SIMULATION_TYPE,SAVE_FORWARD,
-                                                   mp->d_num_abs_boundary_faces,
-                                                   mp->d_b_potential_dot_acoustic,
-                                                   mp->d_b_potential_dot_dot_acoustic,
-                                                   mp->d_b_absorb_potential,
-                                                   mp->gravity);
+  compute_stacey_acoustic_kernel<<<grid,threads>>>(mp->d_veloc_outer_core,
+                                                   mp->d_accel_outer_core,
+                                                   interface_type,
+                                                   num_abs_boundary_faces,
+                                                   d_abs_boundary_ispec,
+                                                   mp->d_nkmin_xi_outer_core,
+                                                   mp->d_nkmin_eta_outer_core,                                                  
+                                                   mp->d_njmin_outer_core,
+                                                   mp->d_njmax_outer_core,
+                                                   mp->d_nimin_outer_core,
+                                                   mp->d_nimax_outer_core,                                                  
+                                                   d_abs_boundary_jacobian2D,
+                                                   d_wgllwgll,
+                                                   mp->d_ibool_outer_core,
+                                                   mp->d_vp_outer_core,
+                                                   mp->simulation_type,
+                                                   mp->save_forward,
+                                                   mp->d_b_accel_outer_core,
+                                                   d_b_absorb_potential);
 
   //  adjoint simulations: stores absorbed wavefield part
-  if (SIMULATION_TYPE == 1 && SAVE_FORWARD && mp->d_num_abs_boundary_faces > 0 ){
+  if (mp->simulation_type == 1 && mp->save_forward && num_abs_boundary_faces > 0 ){
     // copies array to CPU
-    print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_potential,mp->d_b_absorb_potential,
-                                       mp->d_b_reclen_potential,cudaMemcpyDeviceToHost),7701);
+    print_CUDA_error_if_any(cudaMemcpy(absorb_potential,d_b_absorb_potential,
+                            NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyDeviceToHost),7701);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

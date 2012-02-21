@@ -81,7 +81,7 @@
       call close_file_abs(7)
     endif
 
-    if (NSPEC2D_BOTTOM(IREGION_OUTER_CORE) > 0 .and. (SIMULATION_TYPE == 3 &
+    if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
       call close_file_abs(8)
     endif

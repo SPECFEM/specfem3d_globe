@@ -305,6 +305,9 @@
     enddo
   endif
 
+  ! counter for adjoint receiver stations in local slice, used to allocate adjoint source arrays
+  nadj_rec_local = 0
+  
   ! counts receivers for adjoint simulations
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     ! by Ebru
@@ -313,8 +316,6 @@
     comp(2) = bic(1:2)//'E'
     comp(3) = bic(1:2)//'Z'
 
-    ! counter for adjoint receiver stations in local slice, used to allocate adjoint source arrays
-    nadj_rec_local = 0
     ! temporary counter to check if any files are found at all
     nadj_files_found = 0
     do irec = 1,nrec
@@ -444,6 +445,7 @@
   
   ! allocates source arrays
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
+    ! source interpolated on all GLL points in source element
     allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating sourcearrays')
 
@@ -460,6 +462,7 @@
 
   ! adjoint source arrays
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    ! adjoint source buffer length
     NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
     allocate(iadj_vec(NSTEP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating iadj_vec')
@@ -492,40 +495,44 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine setup_sources_receivers_srcarr(NSOURCES,myrank, &
-                      ispec_selected_source,islice_selected_source, &
-                      xi_source,eta_source,gamma_source, &
-                      Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                      xigll,yigll,zigll,sourcearrays)
+  subroutine setup_sources_receivers_srcarr()
+!                      NSOURCES,myrank, &
+!                      ispec_selected_source,islice_selected_source, &
+!                      xi_source,eta_source,gamma_source, &
+!                      Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+!                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+!                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+!                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!                      xigll,yigll,zigll,sourcearrays)
 
+  use specfem_par
+  use specfem_par_crustmantle
+  
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer NSOURCES,myrank
-
-  integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
-  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
-  double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
-        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
-
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLY) :: yigll
-  double precision, dimension(NGLLZ) :: zigll
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES) :: sourcearrays
+!  include "constants.h"
+!  include "OUTPUT_FILES/values_from_mesher.h"
+!
+!  integer NSOURCES,myrank
+!
+!  integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
+!  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
+!  double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+!
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+!        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+!        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+!        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
+!
+!  double precision, dimension(NGLLX) :: xigll
+!  double precision, dimension(NGLLY) :: yigll
+!  double precision, dimension(NGLLZ) :: zigll
+!
+!  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES) :: sourcearrays
 
 
   ! local parameters
-  integer :: isource
+  integer :: isource,iglob,ispec,i,j,k
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
 
   do isource = 1,NSOURCES
@@ -544,8 +551,30 @@
              gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
              xigll,yigll,zigll,NSPEC_CRUST_MANTLE)
 
-      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
+      ! point forces, initializes sourcearray, used for simplified CUDA routines
+      if(USE_FORCE_POINT_SOURCE) then
+        ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
+        iglob = ibool_crust_mantle(nint(xi_source(isource)), &
+                                   nint(eta_source(isource)), &
+                                   nint(gamma_source(isource)), &
+                                   ispec_selected_source(isource))
+        ! sets sourcearrays
+        sourcearray(:,:,:,:) = 0.0
+        ispec = ispec_selected_source(isource)
+        do k=1,NGLLZ
+          do j=1,NGLLY
+            do i=1,NGLLX
+              if( ibool_crust_mantle(i,j,k,ispec) == iglob ) then
+                ! elastic source components
+                sourcearray(:,i,j,k) = nu_source(COMPONENT_FORCE_SOURCE,:,isource)
+              endif
+            enddo
+          enddo
+        enddo
+      endif
 
+      ! stores source excitations
+      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
     endif
   enddo
 
@@ -621,7 +650,7 @@
     ! e.g.: first block 1 has iadjsrc_len = 1000 with start at 2001 and end at 3000
     !         so iadj_vec(1) = 1000 - 0, iadj_vec(2) = 1000 - 1, ..., to iadj_vec(1000) = 1000 - 999 = 1
     !         then for block 2, iadjsrc_len = 1000 with start at 1001 and end at 2000
-    !         so iadj_vec(1001) = 1000 - 0, iad_vec(1002) = 1000 - 1, .. and so on again down to 1
+    !         so iadj_vec(1001) = 1000 - 0, iadj_vec(1002) = 1000 - 1, .. and so on again down to 1
     !         then block 3 and your guess is right now... iadj_vec(2001) to iadj_vec(3000) is 1000 down to 1. :)
     iadj_vec(it) = iadjsrc_len(it_sub_adj) - mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC)
   enddo

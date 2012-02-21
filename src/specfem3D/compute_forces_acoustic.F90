@@ -356,7 +356,7 @@
   use specfem_par_outercore
   implicit none
   
-  ! daniel: TODO - temporary transfers to the GPU
+  ! daniel: TODO - temporary transfers to the CPU
   call transfer_fields_oc_from_device(NGLOB_OUTER_CORE,displ_outer_core, &
                                 veloc_outer_core,accel_outer_core,Mesh_pointer)
 

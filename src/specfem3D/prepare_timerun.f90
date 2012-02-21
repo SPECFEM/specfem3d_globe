@@ -1059,14 +1059,14 @@
   call MPI_REDUCE(ncuda_devices,ncuda_devices_max,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
 
   ! prepares general fields on GPU
-  call prepare_constants_device(Mesh_pointer,NGLLX, &
+  call prepare_constants_device(Mesh_pointer,myrank,NGLLX, &
                                   hprime_xx, hprime_yy, hprime_zz, &
                                   hprimewgll_xx, hprimewgll_yy, hprimewgll_zz, &
                                   wgllwgll_xy, wgllwgll_xz, wgllwgll_yz, &
                                   NSOURCES, nsources_local, &
-                                  sourcearrays, islice_selected_source, ispec_selected_source, &
-                                  number_receiver_global, ispec_selected_rec, &
-                                  nrec, nrec_local, &
+                                  sourcearrays,islice_selected_source,ispec_selected_source, &
+                                  number_receiver_global,islice_selected_rec,ispec_selected_rec, &
+                                  nrec, nrec_local, nadj_rec_local, &
                                   NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                   NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
@@ -1174,7 +1174,42 @@
   endif
   call sync_all()
 
+  ! prepares absorbing arrays
+  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+    if(myrank == 0 ) write(IMAIN,*) "  loading absorbing boundaries"
 
+    call prepare_fields_absorb_device(Mesh_pointer, &
+                                    nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
+                                    nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle, &
+                                    NSPEC2DMAX_XMIN_XMAX_CM,NSPEC2DMAX_YMIN_YMAX_CM, &
+                                    nimin_crust_mantle,nimax_crust_mantle, &
+                                    njmin_crust_mantle,njmax_crust_mantle, &
+                                    nkmin_xi_crust_mantle,nkmin_eta_crust_mantle, &
+                                    ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle, &
+                                    ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle, &
+                                    normal_xmin_crust_mantle,normal_xmax_crust_mantle, &
+                                    normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
+                                    jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
+                                    jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
+                                    rho_vp_crust_mantle,rho_vs_crust_mantle,  &
+                                    nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
+                                    nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
+                                    nspec2D_zmin_outer_core, &
+                                    NSPEC2DMAX_XMIN_XMAX_OC,NSPEC2DMAX_YMIN_YMAX_OC, &
+                                    nimin_outer_core,nimax_outer_core, &
+                                    njmin_outer_core,njmax_outer_core, &
+                                    nkmin_xi_outer_core,nkmin_eta_outer_core, &
+                                    ibelm_xmin_outer_core,ibelm_xmax_outer_core, &
+                                    ibelm_ymin_outer_core,ibelm_ymax_outer_core, &
+                                    ibelm_bottom_outer_core, &
+                                    jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
+                                    jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core, &
+                                    jacobian2D_bottom_outer_core, &
+                                    vp_outer_core)
+    
+  endif
+  call sync_all()
+  
   ! prepares MPI interfaces
   if(myrank == 0 ) write(IMAIN,*) "  loading mpi interfaces"
   
