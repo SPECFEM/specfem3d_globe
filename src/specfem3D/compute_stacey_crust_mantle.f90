@@ -32,7 +32,7 @@
   use specfem_par,only: &
     ichunk,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
     wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
-  
+
   use specfem_par,only: GPU_MODE,Mesh_pointer
 
   use specfem_par_crustmantle, only: &
@@ -73,8 +73,6 @@
 
 
   ! crust & mantle
-  if( GPU_MODE ) call load_GPU_elastic()   
-  
   !   xmin
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
@@ -130,19 +128,19 @@
           enddo
         enddo
       enddo
-      
+
     else
       ! on GPU
       if( nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
                                                                 absorb_xmin_crust_mantle, &
-                                                                0) ! <= xmin              
+                                                                0) ! <= xmin
     endif
-    
+
     ! writes absorbing boundary values
     if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0 ) then
       call write_abs(0,absorb_xmin_crust_mantle, reclen_xmin_crust_mantle,it)
     endif
-    
+
   endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC
 
   !   xmax
@@ -204,15 +202,15 @@
       ! on GPU
       if( nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
                                                                 absorb_xmax_crust_mantle, &
-                                                                1) ! <= xmin              
+                                                                1) ! <= xmin
     endif
 
-  
+
     ! writes absorbing boundary values
     if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0 ) then
       call write_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,it)
     endif
-    
+
   endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB
 
   !   ymin
@@ -272,7 +270,7 @@
     ! on GPU
     if( nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
                                                               absorb_ymin_crust_mantle, &
-                                                              2) ! <= ymin              
+                                                              2) ! <= ymin
   endif
 
 
@@ -340,15 +338,13 @@
     ! on GPU
     if( nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_cuda(Mesh_pointer, &
                                                               absorb_ymax_crust_mantle, &
-                                                              3) ! <= ymax              
+                                                              3) ! <= ymax
   endif
 
   ! writes absorbing boundary values
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0 ) then
     call write_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,it)
   endif
-
-  if( GPU_MODE ) call load_CPU_elastic()   
 
   end subroutine compute_stacey_crust_mantle
 

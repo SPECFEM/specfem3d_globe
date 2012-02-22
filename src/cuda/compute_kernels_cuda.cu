@@ -473,109 +473,26 @@ TRACE("compute_kernels_acoustic_cuda");
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void compute_kernels_hess_el_cudakernel(int* ispec_is_elastic,
-                                                   int* ibool,
-                                                   realw* accel,
-                                                   realw* b_accel,
-                                                   realw* hess_kl,
-                                                   realw deltat,
-                                                   int NSPEC_AB) {
+__global__ void compute_kernels_hess_cudakernel(int* ibool,
+                                                realw* accel,
+                                                realw* b_accel,
+                                                realw* hess_kl,
+                                                realw deltat,
+                                                int NSPEC_AB) {
 
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
 
   // handles case when there is 1 extra block (due to rectangular grid)
   if(ispec < NSPEC_AB) {
 
-    // elastic elements only
-    if( ispec_is_elastic[ispec] ) {
+    int ijk = threadIdx.x;
+    int ijk_ispec = ijk + NGLL3*ispec;
+    int iglob = ibool[ijk_ispec] - 1 ;
 
-      int ijk = threadIdx.x;
-      int ijk_ispec = ijk + NGLL3*ispec;
-      int iglob = ibool[ijk_ispec] - 1 ;
-
-      // approximate hessian
-      hess_kl[ijk_ispec] += deltat * (accel[3*iglob]*b_accel[3*iglob]+
-                                      accel[3*iglob+1]*b_accel[3*iglob+1]+
-                                      accel[3*iglob+2]*b_accel[3*iglob+2]);
-    }
-  }
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-
-__global__ void compute_kernels_hess_ac_cudakernel(int* ispec_is_acoustic,
-                                                   int* ibool,
-                                                   realw* potential_dot_dot_acoustic,
-                                                   realw* b_potential_dot_dot_acoustic,
-                                                   realw* rhostore,
-                                                   realw* hprime_xx,
-                                                   realw* hprime_yy,
-                                                   realw* hprime_zz,
-                                                   realw* d_xix,
-                                                   realw* d_xiy,
-                                                   realw* d_xiz,
-                                                   realw* d_etax,
-                                                   realw* d_etay,
-                                                   realw* d_etaz,
-                                                   realw* d_gammax,
-                                                   realw* d_gammay,
-                                                   realw* d_gammaz,
-                                                   realw* hess_kl,
-                                                   realw deltat,
-                                                   int NSPEC_AB,
-                                                   int gravity) {
-
-  int ispec = blockIdx.x + blockIdx.y*gridDim.x;
-
-  // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC_AB) {
-
-    // acoustic elements only
-    if( ispec_is_acoustic[ispec] ){
-
-      // local and global indices
-      int ijk = threadIdx.x;
-      int ijk_ispec = ijk + NGLL3*ispec;
-      int iglob = ibool[ijk_ispec] - 1 ;
-
-      int ijk_ispec_padded = ijk + NGLL3_PADDED*ispec;
-
-      realw accel_elm[3];
-      realw b_accel_elm[3];
-      realw rhol;
-
-      // shared memory between all threads within this block
-      __shared__ realw scalar_field_accel[NGLL3];
-      __shared__ realw scalar_field_b_accel[NGLL3];
-
-      // copy field values
-      scalar_field_accel[ijk] = potential_dot_dot_acoustic[iglob];
-      scalar_field_b_accel[ijk] = b_potential_dot_dot_acoustic[iglob];
-      __syncthreads();
-
-      // gets material parameter
-      rhol = rhostore[ijk_ispec_padded];
-
-      // acceleration vector
-      compute_gradient_kernel(ijk,ispec,
-                              scalar_field_accel,accel_elm,
-                              hprime_xx,hprime_yy,hprime_zz,
-                              d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz,
-                              rhol,gravity);
-
-      // acceleration vector from backward field
-      compute_gradient_kernel(ijk,ispec,
-                              scalar_field_b_accel,b_accel_elm,
-                              hprime_xx,hprime_yy,hprime_zz,
-                              d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz,
-                              rhol,gravity);
-      // approximates hessian
-      hess_kl[ijk_ispec] += deltat * (accel_elm[0]*b_accel_elm[0] +
-                                      accel_elm[1]*b_accel_elm[1] +
-                                      accel_elm[2]*b_accel_elm[2]);
-
-    } // ispec_is_acoustic
-
+    // approximate hessian
+    hess_kl[ijk_ispec] += deltat * (accel[3*iglob]*b_accel[3*iglob]+
+                                    accel[3*iglob+1]*b_accel[3*iglob+1]+
+                                    accel[3*iglob+2]*b_accel[3*iglob+2]);
   }
 }
 
@@ -584,9 +501,7 @@ __global__ void compute_kernels_hess_ac_cudakernel(int* ispec_is_acoustic,
 extern "C"
 void FC_FUNC_(compute_kernels_hess_cuda,
               COMPUTE_KERNELS_HESS_CUDA)(long* Mesh_pointer,
-                                         realw* deltat_f,
-                                         int* ELASTIC_SIMULATION,
-                                         int* ACOUSTIC_SIMULATION) {
+                                         realw* deltat_f) {
   TRACE("compute_kernels_hess_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
@@ -594,7 +509,7 @@ void FC_FUNC_(compute_kernels_hess_cuda,
   int blocksize = NGLL3; // NGLLX*NGLLY*NGLLZ
   realw deltat = *deltat_f;
 
-  int num_blocks_x = mp->NSPEC_AB;
+  int num_blocks_x = mp->NSPEC_CRUST_MANTLE;
   int num_blocks_y = 1;
   while(num_blocks_x > 65535) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
@@ -604,40 +519,12 @@ void FC_FUNC_(compute_kernels_hess_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  if( *ELASTIC_SIMULATION ) {
-    compute_kernels_hess_el_cudakernel<<<grid,threads>>>(mp->d_ispec_is_elastic,
-                                                         mp->d_ibool,
-                                                         mp->d_accel,
-                                                         mp->d_b_accel,
-                                                         mp->d_hess_el_kl,
-                                                         deltat,
-                                                         mp->NSPEC_AB);
-  }
-
-  if( *ACOUSTIC_SIMULATION ) {
-    compute_kernels_hess_ac_cudakernel<<<grid,threads>>>(mp->d_ispec_is_acoustic,
-                                                         mp->d_ibool,
-                                                         mp->d_potential_dot_dot_acoustic,
-                                                         mp->d_b_potential_dot_dot_acoustic,
-                                                         mp->d_rhostore,
-                                                         mp->d_hprime_xx,
-                                                         mp->d_hprime_yy,
-                                                         mp->d_hprime_zz,
-                                                         mp->d_xix,
-                                                         mp->d_xiy,
-                                                         mp->d_xiz,
-                                                         mp->d_etax,
-                                                         mp->d_etay,
-                                                         mp->d_etaz,
-                                                         mp->d_gammax,
-                                                         mp->d_gammay,
-                                                         mp->d_gammaz,
-                                                         mp->d_hess_ac_kl,
-                                                         deltat,
-                                                         mp->NSPEC_AB,
-                                                         mp->gravity);
-  }
-
+  compute_kernels_hess_cudakernel<<<grid,threads>>>(mp->d_ibool_crust_mantle,
+                                                       mp->d_accel_crust_mantle,
+                                                       mp->d_b_accel_crust_mantle,
+                                                       mp->d_hess_kl_crust_mantle,
+                                                       deltat,
+                                                       mp->NSPEC_CRUST_MANTLE);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_kernels_hess_cuda");

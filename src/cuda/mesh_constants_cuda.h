@@ -249,6 +249,9 @@ typedef struct mesh_ {
   realw* d_eps_trace_over_3_crust_mantle;
   realw* d_b_eps_trace_over_3_crust_mantle;
 
+  // kernels
+  realw* d_hess_kl_crust_mantle;
+
   // inner / outer elements
   int* d_phase_ispec_inner_crust_mantle;
   int num_phase_ispec_crust_mantle;
@@ -402,7 +405,7 @@ typedef struct mesh_ {
 
   // simulation type: 1 = forward, 2 = adjoint, 3 = kernel
   int simulation_type;
-  
+
   // mesh coloring flag
   int use_mesh_coloring_gpu;
 
@@ -417,7 +420,8 @@ typedef struct mesh_ {
   int rotation;
   int anisotropic_inner_core;
   int save_boundary_mesh;
-  
+  int approximate_hess_kl;
+
   // ------------------------------------------------------------------ //
   // gravity
   // ------------------------------------------------------------------ //
@@ -490,60 +494,60 @@ typedef struct mesh_ {
   int* d_nibool_interfaces_outer_core;
   int* d_ibool_interfaces_outer_core;
   realw* d_send_accel_buffer_outer_core;
-  
+
   // ------------------------------------------------------------------ //
   // absorbing boundaries
   // ------------------------------------------------------------------ //
-  
+
   int nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle;
-  int nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle;      
+  int nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle;
 
   int* d_nimin_crust_mantle, *d_nimax_crust_mantle;
   int* d_njmin_crust_mantle, *d_njmax_crust_mantle;
   int* d_nkmin_xi_crust_mantle, *d_nkmin_eta_crust_mantle;
 
   int* d_ibelm_xmin_crust_mantle, *d_ibelm_xmax_crust_mantle;
-  int* d_ibelm_ymin_crust_mantle, *d_ibelm_ymax_crust_mantle;  
-  
+  int* d_ibelm_ymin_crust_mantle, *d_ibelm_ymax_crust_mantle;
+
   realw* d_normal_xmin_crust_mantle, *d_normal_xmax_crust_mantle;
   realw* d_normal_ymin_crust_mantle, *d_normal_ymax_crust_mantle;
-  
+
   realw* d_jacobian2D_xmin_crust_mantle, *d_jacobian2D_xmax_crust_mantle;
   realw* d_jacobian2D_ymin_crust_mantle, *d_jacobian2D_ymax_crust_mantle;
-      
+
   realw* d_absorb_xmin_crust_mantle, *d_absorb_xmax_crust_mantle;
   realw* d_absorb_ymin_crust_mantle, *d_absorb_ymax_crust_mantle;
-  
+
   realw* d_rho_vp_crust_mantle;
   realw* d_rho_vs_crust_mantle;
 
   int nspec2D_xmin_outer_core,nspec2D_xmax_outer_core;
-  int nspec2D_ymin_outer_core,nspec2D_ymax_outer_core;      
+  int nspec2D_ymin_outer_core,nspec2D_ymax_outer_core;
   int nspec2D_zmin_outer_core;
-  
+
   int* d_nimin_outer_core, *d_nimax_outer_core;
   int* d_njmin_outer_core, *d_njmax_outer_core;
   int* d_nkmin_xi_outer_core, *d_nkmin_eta_outer_core;
-  
+
   int* d_ibelm_xmin_outer_core, *d_ibelm_xmax_outer_core;
-  int* d_ibelm_ymin_outer_core, *d_ibelm_ymax_outer_core;  
+  int* d_ibelm_ymin_outer_core, *d_ibelm_ymax_outer_core;
   int* d_ibelm_zmin_outer_core;
-  
+
   realw* d_jacobian2D_xmin_outer_core, *d_jacobian2D_xmax_outer_core;
   realw* d_jacobian2D_ymin_outer_core, *d_jacobian2D_ymax_outer_core;
   realw* d_jacobian2D_zmin_outer_core;
-  
+
   realw* d_absorb_xmin_outer_core, *d_absorb_xmax_outer_core;
   realw* d_absorb_ymin_outer_core, *d_absorb_ymax_outer_core;
   realw* d_absorb_zmin_outer_core;
-  
+
   realw* d_vp_outer_core;
-  
+
   // ------------------------------------------------------------------ //
   // noise tomography
   // ------------------------------------------------------------------ //
   int noise_tomography;
-  
+
   int nspec_top;
   int* d_ibelm_top_crust_mantle;
 
@@ -558,7 +562,7 @@ typedef struct mesh_ {
   // noise sensitivity kernel
   realw* d_Sigma_kl;
 
-  
+
 // ------------------------------------------------------------------ //
 //daniel: TODO - former code...
 

@@ -956,10 +956,10 @@
 
   integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbours_ext_mesh
   integer, dimension(num_interfaces_ext_mesh) :: request_send_vector_ext_mesh,request_recv_vector_ext_mesh
-  
+
   integer :: IREGION
   integer :: FORWARD_OR_ADJOINT
-  
+
   ! local parameters
   integer iinterface
 
@@ -1068,7 +1068,7 @@
 ! waits for data to receive and assembles
   use constants
   use specfem_par,only: Mesh_pointer
-  
+
   implicit none
 
   integer :: NPROC
@@ -1083,7 +1083,7 @@
   integer :: FORWARD_OR_ADJOINT
 
   ! local parameters
-  
+
   integer iinterface
 
 ! here we have to assemble all the contributions between partitions using MPI
@@ -1098,7 +1098,7 @@
 
     ! adding contributions of neighbours
     call transfer_asmbl_accel_to_device(Mesh_pointer, &
-                                      buffer_recv_vector_ext_mesh, &                                      
+                                      buffer_recv_vector_ext_mesh, &
                                       IREGION,FORWARD_OR_ADJOINT)
 
     ! This step is done via previous function transfer_and_assemble...

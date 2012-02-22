@@ -60,33 +60,33 @@ __constant__ realw d_wgll_cube[NGLL3]; // needed only for gravity case
 /* note:
  constant arrays when used in other compute_forces_***_cuda.cu routines stay zero,
  constant declaration and cudaMemcpyToSymbol would have to be in the same file...
- 
+
  extern keyword doesn't work for __constant__ declarations.
- 
+
  also:
  cudaMemcpyToSymbol("deviceCaseParams", caseParams, sizeof(CaseParams));
  ..
  and compile with -arch=sm_20
- 
+
  see also: http://stackoverflow.com/questions/4008031/how-to-use-cuda-constant-memory-in-a-programmer-pleasant-way
  doesn't seem to work.
- 
+
  we could keep arrays separated for acoustic and elastic routines...
- 
+
  workaround:
- 
+
     for now, we store pointers with cudaGetSymbolAddress() function calls.
     we pass those pointers in all other compute_forces_..() routines
-    
+
     in this file, we can use the above constant array declarations without need of the pointers.
-    
+
  */
 
 // constant arrays
 
 void setConst_hprime_xx(realw* array,Mesh* mp)
 {
-  
+
   cudaError_t err = cudaMemcpyToSymbol(d_hprime_xx, array, NGLL2*sizeof(realw));
   if (err != cudaSuccess)
   {
@@ -94,7 +94,7 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
     fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
     exit(1);
   }
-  
+
   err = cudaGetSymbolAddress((void**)&(mp->d_hprime_xx),"d_hprime_xx");
   if(err != cudaSuccess) {
     fprintf(stderr, "Error with d_hprime_xx: %s\n", cudaGetErrorString(err));
@@ -104,7 +104,7 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
 
 void setConst_hprime_yy(realw* array,Mesh* mp)
 {
-  
+
   cudaError_t err = cudaMemcpyToSymbol(d_hprime_yy, array, NGLL2*sizeof(realw));
   if (err != cudaSuccess)
   {
@@ -112,7 +112,7 @@ void setConst_hprime_yy(realw* array,Mesh* mp)
     fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
     exit(1);
   }
-  
+
   err = cudaGetSymbolAddress((void**)&(mp->d_hprime_yy),"d_hprime_yy");
   if(err != cudaSuccess) {
     fprintf(stderr, "Error with d_hprime_yy: %s\n", cudaGetErrorString(err));
@@ -122,7 +122,7 @@ void setConst_hprime_yy(realw* array,Mesh* mp)
 
 void setConst_hprime_zz(realw* array,Mesh* mp)
 {
-  
+
   cudaError_t err = cudaMemcpyToSymbol(d_hprime_zz, array, NGLL2*sizeof(realw));
   if (err != cudaSuccess)
   {
@@ -130,7 +130,7 @@ void setConst_hprime_zz(realw* array,Mesh* mp)
     fprintf(stderr, "The problem is maybe -arch sm_13 instead of -arch sm_11 in the Makefile, please doublecheck\n");
     exit(1);
   }
-  
+
   err = cudaGetSymbolAddress((void**)&(mp->d_hprime_zz),"d_hprime_zz");
   if(err != cudaSuccess) {
     fprintf(stderr, "Error with d_hprime_zz: %s\n", cudaGetErrorString(err));
@@ -147,7 +147,7 @@ void setConst_hprimewgll_xx(realw* array,Mesh* mp)
     fprintf(stderr, "Error in setConst_hprimewgll_xx: %s\n", cudaGetErrorString(err));
     exit(1);
   }
-  
+
   err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_xx),"d_hprimewgll_xx");
   if(err != cudaSuccess) {
     fprintf(stderr, "Error with d_hprimewgll_xx: %s\n", cudaGetErrorString(err));
@@ -163,7 +163,7 @@ void setConst_hprimewgll_yy(realw* array,Mesh* mp)
     fprintf(stderr, "Error in setConst_hprimewgll_yy: %s\n", cudaGetErrorString(err));
     exit(1);
   }
-  
+
   err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_yy),"d_hprimewgll_yy");
   if(err != cudaSuccess) {
     fprintf(stderr, "Error with d_hprimewgll_yy: %s\n", cudaGetErrorString(err));
@@ -179,7 +179,7 @@ void setConst_hprimewgll_zz(realw* array,Mesh* mp)
     fprintf(stderr, "Error in setConst_hprimewgll_zz: %s\n", cudaGetErrorString(err));
     exit(1);
   }
-  
+
   err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_zz),"d_hprimewgll_zz");
   if(err != cudaSuccess) {
     fprintf(stderr, "Error with d_hprimewgll_zz: %s\n", cudaGetErrorString(err));
@@ -201,7 +201,7 @@ void setConst_wgllwgll_xy(realw* array,Mesh* mp)
     fprintf(stderr, "Error with d_wgllwgll_xy: %s\n", cudaGetErrorString(err));
     exit(1);
   }
-  
+
 }
 
 void setConst_wgllwgll_xz(realw* array,Mesh* mp)
@@ -218,7 +218,7 @@ void setConst_wgllwgll_xz(realw* array,Mesh* mp)
     fprintf(stderr, "Error with d_wgllwgll_xz: %s\n", cudaGetErrorString(err));
     exit(1);
   }
-  
+
 }
 
 void setConst_wgllwgll_yz(realw* array,Mesh* mp)
@@ -235,7 +235,7 @@ void setConst_wgllwgll_yz(realw* array,Mesh* mp)
     fprintf(stderr, "Error with d_wgllwgll_yz: %s\n", cudaGetErrorString(err));
     exit(1);
   }
-  
+
 }
 
 void setConst_wgll_cube(realw* array,Mesh* mp)
@@ -252,7 +252,7 @@ void setConst_wgll_cube(realw* array,Mesh* mp)
     fprintf(stderr, "Error with d_wgll_cube: %s\n", cudaGetErrorString(err));
     exit(1);
   }
-  
+
 }
 
 
@@ -413,7 +413,7 @@ __device__ void compute_element_cm_gravity(int tx,int working_element,
   reald cos_theta,sin_theta,cos_phi,sin_phi;
   reald minus_g,minus_dg;
   reald rho;
-  reald gxl,gyl,gzl; 
+  reald gxl,gyl,gzl;
   reald minus_g_over_radius,minus_dg_plus_g_over_radius;
   reald cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq;
   reald Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl;
@@ -424,50 +424,50 @@ __device__ void compute_element_cm_gravity(int tx,int working_element,
   const reald R_EARTH_KM = 6371.0f;
   // uncomment line below for PREM with oceans
   //const reald R_EARTH_KM = 6368.0f;
-  
+
   // compute non-symmetric terms for gravity
 
   // use mesh coordinates to get theta and phi
   // x y z contain r theta phi
   int iglob = d_ibool[working_element*NGLL3 + tx]-1;
-  
+
   radius = d_xstore[iglob];
   theta = d_ystore[iglob];
   phi = d_zstore[iglob];
-  
+
   cos_theta = cos(theta);
   sin_theta = sin(theta);
   cos_phi = cos(phi);
   sin_phi = sin(phi);
-  
+
   // for efficiency replace with lookup table every 100 m in radial direction
   // note: radius in crust mantle should never be zero,
   //          and arrays in C start from 0, thus we need to subtract -1
   int int_radius = rint(radius * R_EARTH_KM * 10.0f ) - 1;
-  
+
   // get g, rho and dg/dr=dg
   // spherical components of the gravitational acceleration
   // for efficiency replace with lookup table every 100 m in radial direction
   minus_g = d_minus_gravity_table[int_radius];
   minus_dg = d_minus_deriv_gravity_table[int_radius];
   rho = d_density_table[int_radius];
-    
+
   // Cartesian components of the gravitational acceleration
   gxl = minus_g*sin_theta*cos_phi;
   gyl = minus_g*sin_theta*sin_phi;
   gzl = minus_g*cos_theta;
-  
+
   // Cartesian components of gradient of gravitational acceleration
   // obtained from spherical components
-  
+
   minus_g_over_radius = minus_g / radius;
   minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius;
-  
+
   cos_theta_sq = cos_theta*cos_theta;
   sin_theta_sq = sin_theta*sin_theta;
   cos_phi_sq = cos_phi*cos_phi;
   sin_phi_sq = sin_phi*sin_phi;
-  
+
   Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq;
   Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq;
   Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq;
@@ -479,21 +479,21 @@ __device__ void compute_element_cm_gravity(int tx,int working_element,
   sx_l = rho * s_dummyx_loc[tx];
   sy_l = rho * s_dummyy_loc[tx];
   sz_l = rho * s_dummyz_loc[tx];
-  
+
   // compute G tensor from s . g and add to sigma (not symmetric)
   *sigma_xx = *sigma_xx + sy_l*gyl + sz_l*gzl;
   *sigma_yy = *sigma_yy + sx_l*gxl + sz_l*gzl;
   *sigma_zz = *sigma_zz + sx_l*gxl + sy_l*gyl;
-  
+
   *sigma_xy = *sigma_xy - sx_l * gyl;
   *sigma_yx = *sigma_yx - sy_l * gxl;
-  
+
   *sigma_xz = *sigma_xz - sx_l * gzl;
   *sigma_zx = *sigma_zx - sz_l * gxl;
-  
+
   *sigma_yz = *sigma_yz - sy_l * gzl;
   *sigma_zy = *sigma_zy - sz_l * gyl;
-  
+
   // precompute vector
   factor = jacobianl * wgll_cube[tx];
   *rho_s_H1 = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl);
@@ -635,7 +635,7 @@ __device__ void compute_element_cm_tiso(int offset,
                                         realw* d_ystore, realw* d_zstore,
                                         reald* sigma_xx,reald* sigma_yy,reald* sigma_zz,
                                         reald* sigma_xy,reald* sigma_xz,reald* sigma_yz){
-                                        
+
   reald kappavl,muvl,kappahl,muhl;
   reald rhovpvsq,rhovphsq,rhovsvsq,rhovshsq,eta_aniso;
   reald costheta,sintheta,cosphi,sinphi;
@@ -649,8 +649,8 @@ __device__ void compute_element_cm_tiso(int offset,
   reald c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
 
   // cosine and sine function in CUDA only supported for float
-  reald theta,phi; 
-  
+  reald theta,phi;
+
   // use Kappa and mu from transversely isotropic model
   kappavl = d_kappavstore[offset];
   muvl = d_muvstore[offset];
@@ -676,7 +676,7 @@ __device__ void compute_element_cm_tiso(int offset,
   // use mesh coordinates to get theta and phi
   //ystore and zstore contain theta and phi
   theta = d_ystore[iglob];
-  phi = d_zstore[iglob];    
+  phi = d_zstore[iglob];
 
   if( sizeof( theta ) == sizeof( float ) ){
     // float operations
@@ -685,9 +685,9 @@ __device__ void compute_element_cm_tiso(int offset,
     // or: sincosf(theta, &sintheta, &costheta);
     // or with loss of accuracy:  __sincosf(theta, &sintheta, &costheta);
     // or compile with: -use_fast_math
-    
+
     costheta = cosf(theta);
-    sintheta = sinf(theta);   
+    sintheta = sinf(theta);
 
     cosphi = cosf(phi);
     sinphi = sinf(phi);
@@ -697,14 +697,14 @@ __device__ void compute_element_cm_tiso(int offset,
     costwophi = cosf(2.0f * phi);
     sintwophi = sinf(2.0f * phi);
     cosfourtheta = cosf(4.0f * theta);
-    cosfourphi = cosf(4.0f * phi);    
+    cosfourphi = cosf(4.0f * phi);
   }else{
     // double operations
     costheta = cos(theta);
-    sintheta = sin(theta);   
+    sintheta = sin(theta);
 
     cosphi = cos(phi);
-    sinphi = sin(phi);      
+    sinphi = sin(phi);
 
     costwotheta = cos(2.0f * theta);
     sintwotheta = sin(2.0f * theta);
@@ -712,9 +712,9 @@ __device__ void compute_element_cm_tiso(int offset,
     sintwophi = sin(2.0f * phi);
 
     cosfourtheta = cos(4.0f * theta);
-    cosfourphi = cos(4.0f * phi);    
+    cosfourphi = cos(4.0f * phi);
   }
-  
+
   costhetasq = costheta * costheta;
   sinthetasq = sintheta * sintheta;
   cosphisq = cosphi * cosphi;
@@ -1023,7 +1023,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
 // synchronize all the threads (one thread for each of the NGLL grid points of the
 // current spectral element) because we need the whole element to be ready in order
 // to be able to compute the matrix products along cut planes of the 3D element below
-    __syncthreads();  
+    __syncthreads();
 
 #ifndef MAKE_KERNEL2_BECOME_STUPID_FOR_TESTS
 
@@ -1175,7 +1175,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
         // use unrelaxed parameters if attenuation
         one_minus_sum_beta_use = one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
         minus_sum_beta = one_minus_sum_beta_use - 1.0f;
-      }      
+      }
 
       // computes stresses
       if(ANISOTROPY){
@@ -1204,7 +1204,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                               duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl,
                               &sigma_xx,&sigma_yy,&sigma_zz,
                               &sigma_xy,&sigma_xz,&sigma_yz);
-        }else{        
+        }else{
           // transverse isotropy
           compute_element_cm_tiso(offset,
                                 d_kappavstore,d_muvstore,
@@ -1222,7 +1222,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                 &sigma_xy,&sigma_xz,&sigma_yz);
         }
       } // ! end of test whether isotropic or anisotropic element
-      
+
 
       if(ATTENUATION && (! USE_ATTENUATION_MIMIC ) ){
         // subtracts memory variables if attenuation
@@ -1249,7 +1249,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                    wgll_cube,jacobianl,
                                    s_dummyx_loc,s_dummyy_loc,s_dummyz_loc,
                                    &sigma_xx,&sigma_yy,&sigma_zz,&sigma_xy,&sigma_yx,
-                                   &sigma_xz,&sigma_zx,&sigma_yz,&sigma_zy,                                   
+                                   &sigma_xz,&sigma_zx,&sigma_yz,&sigma_zy,
                                    &rho_s_H1,&rho_s_H2,&rho_s_H3);
       }
 
@@ -1822,5 +1822,5 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
   exit_on_cuda_error("compute_forces_crust_mantle_cuda");
-#endif  
+#endif
 }

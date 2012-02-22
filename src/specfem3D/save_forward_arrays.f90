@@ -41,7 +41,7 @@
   if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
     write(outputname,"('dump_all_arrays',i6.6)") myrank
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write')
-    
+
     write(55) displ_crust_mantle
     write(55) veloc_crust_mantle
     write(55) accel_crust_mantle
@@ -86,7 +86,7 @@
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
     open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='unknown',form='unformatted',action='write')
-    
+
     write(55) displ_crust_mantle
     write(55) veloc_crust_mantle
     write(55) accel_crust_mantle

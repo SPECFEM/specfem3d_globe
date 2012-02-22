@@ -101,7 +101,7 @@
   logical :: phase_is_inner
 
   ! local parameters
-  
+
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_use
   real(kind=CUSTOM_REAL) R_xx_val,R_yy_val

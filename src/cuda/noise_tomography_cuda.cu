@@ -193,10 +193,10 @@ __global__ void noise_add_source_master_rec_cuda_kernel(int* ibool,
   int tx = threadIdx.x;
   int ispec = ispec_selected_rec[irec_master_noise]-1;
   int iglob = ibool[tx + NGLL3*ispec]-1;
-  
+
   atomicAdd(&accel[iglob*3  ],noise_sourcearray[  3*tx + 3*NGLL3*it]);
   atomicAdd(&accel[iglob*3+1],noise_sourcearray[1+3*tx + 3*NGLL3*it]);
-  atomicAdd(&accel[iglob*3+2],noise_sourcearray[2+3*tx + 3*NGLL3*it]);  
+  atomicAdd(&accel[iglob*3+2],noise_sourcearray[2+3*tx + 3*NGLL3*it]);
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -207,18 +207,18 @@ void FC_FUNC_(noise_add_source_master_rec_cu,
                                               int* it_f,
                                               int* irec_master_noise_f,
                                               int* islice_selected_rec) {
-  
+
   TRACE("noise_add_source_master_rec_cu");
-  
+
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-  
+
   int it = *it_f - 1; // -1 for Fortran -> C indexing differences
   int irec_master_noise = *irec_master_noise_f-1;
-  
+
   dim3 grid(1,1,1);
   dim3 threads(NGLL3,1,1);
 
-  // adds noise source at master location  
+  // adds noise source at master location
   if(mp->myrank == islice_selected_rec[irec_master_noise]) {
     noise_add_source_master_rec_cuda_kernel<<<grid,threads>>>(mp->d_ibool_crust_mantle,
                                                               mp->d_ispec_selected_rec,
@@ -227,10 +227,10 @@ void FC_FUNC_(noise_add_source_master_rec_cu,
                                                               mp->d_noise_sourcearray,
                                                               it);
   }
-  
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("noise_add_source_master_rec_cuda_kernel");
-#endif  
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -239,7 +239,7 @@ void FC_FUNC_(noise_add_source_master_rec_cu,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void noise_add_surface_movie_cuda_kernel(realw* accel, 
+__global__ void noise_add_surface_movie_cuda_kernel(realw* accel,
                                                     int* ibool,
                                                     int* ibelm_top,
                                                     int nspec_top,
@@ -257,8 +257,8 @@ __global__ void noise_add_surface_movie_cuda_kernel(realw* accel,
   // when nspec_top > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
   if(iface < nspec_top) {
 
-    int ispec = ibelm_top[iface]-1;    
-    
+    int ispec = ibelm_top[iface]-1;
+
     int k = NGLLX - 1;
     int j = (igll/NGLLX);
     int i = (igll-j*NGLLX);
@@ -276,7 +276,7 @@ __global__ void noise_add_surface_movie_cuda_kernel(realw* accel,
 
     // weighted jacobian
     realw jacobianw = wgllwgll[k*NGLLX+i]*jacobian2D[igll+NGLL2*iface];
-    
+
     // note: check error from cuda-memcheck and ddt seems "incorrect", because we
     //          are passing a __constant__ variable pointer around like it was
     //          made using cudaMalloc, which *may* be "incorrect", but produces
@@ -298,7 +298,7 @@ extern "C"
 void FC_FUNC_(noise_add_surface_movie_cuda,
               NOISE_ADD_SURFACE_MOVIE_CUDA)(long* Mesh_pointer_f,
                                             realw* h_noise_surface_movie) {
-                                            
+
   TRACE("noise_add_surface_movie_cuda");
 
 
@@ -318,7 +318,7 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
              NDIM*NGLL2*(mp->nspec_top)*sizeof(realw),cudaMemcpyHostToDevice);
 
   switch(mp->noise_tomography) {
-  case 2: 
+  case 2:
     // adds surface source to forward field
     noise_add_surface_movie_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
                                                           mp->d_ibool_crust_mantle,
@@ -332,8 +332,8 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
                                                           mp->d_jacobian2D_top_crust_mantle,
                                                           mp->d_wgllwgll_xy);
     break;
-    
-  case 3: 
+
+  case 3:
     // adds surface source to adjoint (backward) field
     noise_add_surface_movie_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                           mp->d_ibool_crust_mantle,
@@ -343,7 +343,7 @@ void FC_FUNC_(noise_add_surface_movie_cuda,
                                                           mp->d_normal_x_noise,
                                                           mp->d_normal_y_noise,
                                                           mp->d_normal_z_noise,
-                                                          mp->d_mask_noise,                                                          
+                                                          mp->d_mask_noise,
                                                           mp->d_jacobian2D_top_crust_mantle,
                                                           mp->d_wgllwgll_xy);
     break;

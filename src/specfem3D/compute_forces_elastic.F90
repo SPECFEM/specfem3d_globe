@@ -185,20 +185,15 @@
       endif !SIMULATION_TYPE == 3
 
     else
-      ! on GPU      
-      call load_GPU_elastic()      
-      
+      ! on GPU
       ! contains both forward SIM_TYPE==1 and backward SIM_TYPE==3 simulations
       ! for crust/mantle
       call compute_forces_crust_mantle_cuda(Mesh_pointer,iphase)
       ! for inner core
       call compute_forces_inner_core_cuda(Mesh_pointer,iphase)
-            
-      call load_CPU_elastic()      
     endif ! GPU_MODE
 
 
-    
     ! computes additional contributions to acceleration field
     if( iphase == 1 ) then
 
@@ -226,7 +221,7 @@
         ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
         ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
         ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
-        call noise_add_source_master_rec()         
+        call noise_add_source_master_rec()
       case( 2 )
         ! second step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to drive the ensemble forward wavefield
@@ -241,13 +236,15 @@
         ! use the movie to reconstruct the ensemble forward wavefield
         ! the ensemble adjoint wavefield is done as usual
         ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
-        call noise_read_add_surface_movie(b_accel_crust_mantle,it)                                
+        call noise_read_add_surface_movie(b_accel_crust_mantle,it)
       end select
 
 
       ! ****************************************************
       ! **********  add matching with fluid part  **********
       ! ****************************************************
+      call load_CPU_elastic()
+      call load_CPU_acoustic()
 
       ! only for elements in first matching layer in the solid
 
@@ -277,18 +274,20 @@
                               RHO_BOTTOM_OC,minus_g_icb, &
                               SIMULATION_TYPE,NSPEC2D_TOP(IREGION_INNER_CORE))
 
+      call load_GPU_elastic()
+
     endif ! iphase == 1
 
-    
+
     ! assemble all the contributions between slices using MPI
 
     ! crust/mantle and inner core handled in the same call
     ! in order to reduce the number of MPI messages by 2
 
     if( iphase == 1 ) then
-      ! sends out MPI interface data      
+      ! sends out MPI interface data
       if(.NOT. GPU_MODE) then
-        ! on CPU      
+        ! on CPU
         ! sends accel values to corresponding MPI interface neighbors
         ! crust mantle
         call assemble_MPI_vector_ext_mesh_s(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
@@ -307,8 +306,7 @@
                       my_neighbours_inner_core, &
                       request_send_vector_inner_core,request_recv_vector_inner_core)
       else
-        ! on GPU    
-        call load_GPU_elastic()
+        ! on GPU
         ! crust mantle
         call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
@@ -332,7 +330,7 @@
       ! adjoint / kernel runs
       if (SIMULATION_TYPE == 3) then
         if(.NOT. GPU_MODE) then
-          ! on CPU          
+          ! on CPU
           ! sends accel values to corresponding MPI interface neighbors
           ! crust mantle
           call assemble_MPI_vector_ext_mesh_s(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
@@ -350,9 +348,8 @@
                         nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
                         my_neighbours_inner_core, &
                         b_request_send_vector_inner_core,b_request_recv_vector_inner_core)
-        else 
+        else
           ! on GPU
-          call load_GPU_elastic()
           ! crust mantle
           call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       b_buffer_send_vector_crust_mantle,b_buffer_recv_vector_crust_mantle, &
@@ -361,7 +358,7 @@
                       my_neighbours_crust_mantle, &
                       b_request_send_vector_crust_mantle,b_request_recv_vector_crust_mantle, &
                       IREGION_CRUST_MANTLE, &
-                      3) ! <-- 3 == adjoint b_accel 
+                      3) ! <-- 3 == adjoint b_accel
           ! inner core
           call assemble_MPI_vector_send_cuda(NPROCTOT_VAL, &
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
@@ -375,7 +372,7 @@
       endif ! SIMULATION_TYPE == 3
 
     else
-      ! waits for send/receive requests to be completed and assembles values      
+      ! waits for send/receive requests to be completed and assembles values
       if(.NOT. GPU_MODE) then
         ! on CPU
         ! crust mantle
@@ -394,7 +391,7 @@
                               request_send_vector_inner_core,request_recv_vector_inner_core)
       else
         ! on GPU
-        ! crust mantle  
+        ! crust mantle
         call assemble_MPI_vector_write_cuda(NPROCTOT_VAL, &
                             buffer_recv_vector_crust_mantle, &
                             num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
@@ -407,14 +404,13 @@
                             num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
                             request_send_vector_inner_core,request_recv_vector_inner_core, &
                             IREGION_INNER_CORE, &
-                            1) 
-        call load_CPU_elastic()
+                            1)
       endif
-      
+
 
       ! adjoint / kernel runs
       if (SIMULATION_TYPE == 3) then
-        ! waits for send/receive requests to be completed and assembles values      
+        ! waits for send/receive requests to be completed and assembles values
         if(.NOT. GPU_MODE) then
           ! on CPU
           ! crust mantle
@@ -431,7 +427,7 @@
                               max_nibool_interfaces_inner_core, &
                               nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                               b_request_send_vector_inner_core,b_request_recv_vector_inner_core)
-                            
+
         else
           ! on GPU
           ! crust mantle
@@ -440,16 +436,15 @@
                             num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                             b_request_send_vector_crust_mantle,b_request_recv_vector_crust_mantle, &
                             IREGION_CRUST_MANTLE, &
-                            3) ! <-- 3 == adjoint b_accel 
+                            3) ! <-- 3 == adjoint b_accel
           ! inner core
           call assemble_MPI_vector_write_cuda(NPROCTOT_VAL,&
                             b_buffer_recv_vector_inner_core, &
                             num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
                             b_request_send_vector_inner_core,b_request_recv_vector_inner_core, &
                             IREGION_INNER_CORE, &
-                            3) 
-          call load_CPU_elastic()
-        endif                            
+                            3)
+        endif
       endif ! SIMULATION_TYPE == 3
     endif ! iphase == 1
 
@@ -466,20 +461,22 @@
                                       b_two_omega_earth,rmass_crust_mantle)
   else
     ! on GPU
-    call load_GPU_elastic()    
     call kernel_3_a_cuda(Mesh_pointer, &
                         deltatover2,SIMULATION_TYPE,b_deltatover2,OCEANS_VAL)
-    call load_CPU_elastic()
   endif
-  
+
   ! couples ocean with crust mantle
   ! (updates acceleration with ocean load approximation)
-  if(OCEANS_VAL) &
+  if(OCEANS_VAL) then
+    call load_CPU_elastic()
+
     call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
                           rmass_crust_mantle,rmass_ocean_load,normal_top_crust_mantle, &
                           ibool_crust_mantle,ibelm_top_crust_mantle, &
                           updated_dof_ocean_load, &
                           SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
+    call load_GPU_elastic()
+  endif
 
   ! Newmark time scheme:
   ! corrector terms for elastic parts
@@ -496,12 +493,10 @@
                                         b_deltatover2,b_two_omega_earth,rmass_inner_core)
   else
     ! on GPU
-    call load_GPU_elastic()
     call kernel_3_b_cuda(Mesh_pointer, &
                         deltatover2,SIMULATION_TYPE,b_deltatover2,OCEANS_VAL)
-    call load_CPU_elastic()    
   endif
-  
+
   end subroutine compute_forces_elastic
 
 
@@ -694,12 +689,12 @@
 !=====================================================================
 
   subroutine load_GPU_elastic
-  
+
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
   implicit none
-  
+
   ! daniel: TODO - temporary transfers to the GPU
   call transfer_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle, &
                                   veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
@@ -712,29 +707,29 @@
     call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core, &
                                   b_veloc_inner_core,b_accel_inner_core,Mesh_pointer)
   endif
-    
-  end subroutine 
+
+  end subroutine
 
 !=====================================================================
 
   subroutine load_CPU_elastic
-  
+
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
   implicit none
-  
+
   ! daniel: TODO - temporary transfers back to the CPU
   call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle, &
-                                  veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)                                  
+                                  veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
   call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core, &
                                   veloc_inner_core,accel_inner_core,Mesh_pointer)
 
   if( SIMULATION_TYPE == 3 ) then
     call transfer_b_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle, &
-                                  b_veloc_crust_mantle,b_accel_crust_mantle,Mesh_pointer)                                  
+                                  b_veloc_crust_mantle,b_accel_crust_mantle,Mesh_pointer)
     call transfer_b_fields_ic_from_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core, &
-                                  b_veloc_inner_core,b_accel_inner_core,Mesh_pointer)  
+                                  b_veloc_inner_core,b_accel_inner_core,Mesh_pointer)
   endif
-    
+
   end subroutine

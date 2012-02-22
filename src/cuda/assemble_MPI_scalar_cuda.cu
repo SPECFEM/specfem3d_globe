@@ -156,7 +156,7 @@ void FC_FUNC_(transfer_asmbl_pot_to_device,
 
   // copies scalar buffer onto GPU
   cudaMemcpy(mp->d_send_accel_buffer_outer_core, buffer_recv_scalar,
-             (mp->max_nibool_interfaces_outer_core)*(mp->num_interfaces_outer_core)*sizeof(realw), 
+             (mp->max_nibool_interfaces_outer_core)*(mp->num_interfaces_outer_core)*sizeof(realw),
              cudaMemcpyHostToDevice);
 
   // assembles on GPU

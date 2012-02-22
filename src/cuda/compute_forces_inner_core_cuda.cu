@@ -184,101 +184,101 @@ __device__ void compute_element_ic_gravity(int tx,int working_element,
   reald cos_theta,sin_theta,cos_phi,sin_phi;
   reald minus_g,minus_dg;
   reald rho;
-  reald gxl,gyl,gzl; 
+  reald gxl,gyl,gzl;
   reald minus_g_over_radius,minus_dg_plus_g_over_radius;
   reald cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq;
   reald Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl;
   reald sx_l,sy_l,sz_l;
   reald factor;
-  
+
   // R_EARTH_KM is the radius of the bottom of the oceans
   const reald R_EARTH = 6371000.0f; // in m
   const reald R_EARTH_KM = 6371.0f; // in km
   // uncomment line below for PREM with oceans
   //const reald R_EARTH = 6368000.0f;
   //const reald R_EARTH_KM = 6368.0f;
-  
+
   // compute non-symmetric terms for gravity
-  
+
   // use mesh coordinates to get theta and phi
   // x y z contain r theta phi
   int iglob = d_ibool[working_element*NGLL3 + tx]-1;
-  
-  radius = d_xstore[iglob];  
+
+  radius = d_xstore[iglob];
   // make sure radius is never zero even for points at center of cube
   // because we later divide by radius
   if(radius < 100.f / R_EARTH){ radius = 100.f / R_EARTH; }
-      
+
   theta = d_ystore[iglob];
   phi = d_zstore[iglob];
-  
+
   cos_theta = cos(theta);
   sin_theta = sin(theta);
   cos_phi = cos(phi);
   sin_phi = sin(phi);
-  
+
   // for efficiency replace with lookup table every 100 m in radial direction
   // note: radius in crust mantle should never be zero,
   //          and arrays in C start from 0, thus we need to subtract -1
   int int_radius = rint(radius * R_EARTH_KM * 10.0f ) - 1;
   //make sure we never use below zero for point exactly at the center of the Earth
   if( int_radius < 0 ){int_radius = 0;}
-  
+
   // get g, rho and dg/dr=dg
   // spherical components of the gravitational acceleration
   // for efficiency replace with lookup table every 100 m in radial direction
   minus_g = d_minus_gravity_table[int_radius];
   minus_dg = d_minus_deriv_gravity_table[int_radius];
   rho = d_density_table[int_radius];
-  
+
   // Cartesian components of the gravitational acceleration
   gxl = minus_g*sin_theta*cos_phi;
   gyl = minus_g*sin_theta*sin_phi;
   gzl = minus_g*cos_theta;
-  
+
   // Cartesian components of gradient of gravitational acceleration
   // obtained from spherical components
-  
+
   minus_g_over_radius = minus_g / radius;
   minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius;
-  
+
   cos_theta_sq = cos_theta*cos_theta;
   sin_theta_sq = sin_theta*sin_theta;
   cos_phi_sq = cos_phi*cos_phi;
   sin_phi_sq = sin_phi*sin_phi;
-  
+
   Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq;
   Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq;
   Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq;
   Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq;
   Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta;
   Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta;
-  
+
   // get displacement and multiply by density to compute G tensor
   sx_l = rho * s_dummyx_loc[tx];
   sy_l = rho * s_dummyy_loc[tx];
   sz_l = rho * s_dummyz_loc[tx];
-  
+
   // compute G tensor from s . g and add to sigma (not symmetric)
   *sigma_xx = *sigma_xx + sy_l*gyl + sz_l*gzl;
   *sigma_yy = *sigma_yy + sx_l*gxl + sz_l*gzl;
   *sigma_zz = *sigma_zz + sx_l*gxl + sy_l*gyl;
-  
+
   *sigma_xy = *sigma_xy - sx_l * gyl;
   *sigma_yx = *sigma_yx - sy_l * gxl;
-  
+
   *sigma_xz = *sigma_xz - sx_l * gzl;
   *sigma_zx = *sigma_zx - sz_l * gxl;
-  
+
   *sigma_yz = *sigma_yz - sy_l * gzl;
   *sigma_zy = *sigma_zy - sz_l * gyl;
-  
+
   // precompute vector
   factor = jacobianl * wgll_cube[tx];
   *rho_s_H1 = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl);
   *rho_s_H2 = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl);
   *rho_s_H3 = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl);
-  
+
   return;
 }
 
@@ -299,7 +299,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                         int num_phase_ispec,
                                         int d_iphase,
                                         int use_mesh_coloring_gpu,
-                                        realw* d_displ, 
+                                        realw* d_displ,
                                         realw* d_accel,
                                         realw* d_xix, realw* d_xiy, realw* d_xiz,
                                         realw* d_etax, realw* d_etay, realw* d_etaz,
@@ -671,7 +671,7 @@ __global__ void Kernel_2_inner_core_impl(int nb_blocks_to_compute,
                                    wgll_cube,jacobianl,
                                    s_dummyx_loc,s_dummyy_loc,s_dummyz_loc,
                                    &sigma_xx,&sigma_yy,&sigma_zz,&sigma_xy,&sigma_yx,
-                                   &sigma_xz,&sigma_zx,&sigma_yz,&sigma_zy,                                   
+                                   &sigma_xz,&sigma_zx,&sigma_yz,&sigma_zy,
                                    &rho_s_H1,&rho_s_H2,&rho_s_H3);
       }
 
@@ -1212,6 +1212,6 @@ void FC_FUNC_(compute_forces_inner_core_cuda,
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
   exit_on_cuda_error("compute_forces_inner_core_cuda");
-#endif    
+#endif
 }
 

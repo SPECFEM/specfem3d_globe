@@ -37,7 +37,7 @@
 
   ! local parameters
   integer :: ier
-  
+
   ! get MPI starting time
   time_start = MPI_WTIME()
 

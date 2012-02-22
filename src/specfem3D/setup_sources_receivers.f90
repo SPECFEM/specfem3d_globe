@@ -35,10 +35,10 @@
 
   ! reads in stations file and locates receivers
   call setup_receivers()
-  
+
   ! write source and receiver VTK files for Paraview
   call setup_sources_receivers_VTKfile()
-  
+
   ! pre-compute source arrays
   call setup_sources_precompute_arrays()
 
@@ -46,7 +46,7 @@
   call setup_receivers_precompute_intp()
 
   ! user output
-  if(myrank == 0) then  
+  if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Total number of samples for seismograms = ',NSTEP
     write(IMAIN,*)
@@ -62,7 +62,7 @@
   subroutine setup_sources()
 
   use specfem_par
-  use specfem_par_crustmantle  
+  use specfem_par_crustmantle
   use specfem_par_movie
   implicit none
 
@@ -70,7 +70,7 @@
   double precision :: min_tshift_cmt_original
   double precision :: sec
   integer :: yr,jda,ho,mi
-  integer :: isource 
+  integer :: isource
   character(len=256) :: filename
   integer :: ier
 
@@ -249,7 +249,7 @@
   integer :: irec,isource,nrec_tot_found
   integer :: icomp,itime,nadj_files_found,nadj_files_found_tot
   character(len=3),dimension(NDIM) :: comp
-  character(len=256) :: filename,adj_source_file 
+  character(len=256) :: filename,adj_source_file
   character(len=2) :: bic
   integer :: ier
 
@@ -307,7 +307,7 @@
 
   ! counter for adjoint receiver stations in local slice, used to allocate adjoint source arrays
   nadj_rec_local = 0
-  
+
   ! counts receivers for adjoint simulations
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     ! by Ebru
@@ -380,7 +380,13 @@
       write(IMAIN,*) 'this total is okay'
     endif
   endif
-  
+
+  ! check that the sum of the number of receivers in each slice is nrec
+  if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
+    if(myrank == 0 .and. nrec_tot_found /= nrec) &
+      call exit_MPI(myrank,'total number of receivers is incorrect')
+  endif
+
   end subroutine setup_receivers
 
 
@@ -442,7 +448,7 @@
 
   ! local parameters
   integer :: ier
-  
+
   ! allocates source arrays
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
     ! source interpolated on all GLL points in source element
@@ -489,7 +495,7 @@
     endif
   endif
 
-  end subroutine setup_sources_precompute_arrays  
+  end subroutine setup_sources_precompute_arrays
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -507,7 +513,7 @@
 
   use specfem_par
   use specfem_par_crustmantle
-  
+
   implicit none
 
 !  include "constants.h"
@@ -669,7 +675,7 @@
 
   ! local parameters
   integer :: ier
-  
+
   ! define local to global receiver numbering mapping
   ! needs to be allocate for subroutine calls (even if nrec_local == 0)
   allocate(number_receiver_global(nrec_local),stat=ier)
