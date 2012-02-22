@@ -74,7 +74,7 @@ void FC_FUNC_(transfer_boun_accel_from_device,
                                                   int* FORWARD_OR_ADJOINT){
   TRACE("transfer_boun_accel_from_device");
   int blocksize,size_padded,num_blocks_x,num_blocks_y;
-  
+
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
   // crust/mantle region
@@ -113,14 +113,14 @@ void FC_FUNC_(transfer_boun_accel_from_device,
       cudaMemcpy(send_accel_buffer,mp->d_send_accel_buffer_crust_mantle,
                  3*mp->max_nibool_interfaces_crust_mantle*mp->num_interfaces_crust_mantle*sizeof(realw),
                  cudaMemcpyDeviceToHost);
-               
+
     }
   }
-  
+
   // inner core region
   if( *IREGION == IREGION_INNER_CORE ){
     if( mp->num_interfaces_inner_core > 0 ){
-      
+
       blocksize = BLOCKSIZE_TRANSFER;
       size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_inner_core)/((double)blocksize)))*blocksize;
       num_blocks_x = size_padded/blocksize;
@@ -128,10 +128,10 @@ void FC_FUNC_(transfer_boun_accel_from_device,
       while(num_blocks_x > 65535) {
         num_blocks_x = (int) ceil(num_blocks_x*0.5f);
         num_blocks_y = num_blocks_y*2;
-      }    
+      }
       dim3 grid(num_blocks_x,num_blocks_y);
       dim3 threads(blocksize,1,1);
-      
+
       if(*FORWARD_OR_ADJOINT == 1) {
         prepare_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_inner_core,
                                                            mp->d_send_accel_buffer_inner_core,
@@ -148,12 +148,12 @@ void FC_FUNC_(transfer_boun_accel_from_device,
                                                            mp->d_nibool_interfaces_inner_core,
                                                            mp->d_ibool_interfaces_inner_core);
       }
-      
+
       // copies buffer to CPU
       cudaMemcpy(send_accel_buffer,mp->d_send_accel_buffer_inner_core,
                  3*mp->max_nibool_interfaces_inner_core*mp->num_interfaces_inner_core*sizeof(realw),
                  cudaMemcpyDeviceToHost);
-      
+
     }
   }
 
@@ -172,7 +172,7 @@ __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
   int iinterface=0;
-  
+
   for( iinterface=0; iinterface < num_interfaces_ext_mesh; iinterface++) {
     if(id < d_nibool_interfaces_ext_mesh[iinterface]) {
       atomicAdd(&d_accel[3*(d_ibool_interfaces_ext_mesh[id+max_nibool_interfaces_ext_mesh*iinterface]-1)],
@@ -222,7 +222,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
       dim3 threads(blocksize,1,1);
 
       if(*FORWARD_OR_ADJOINT == 1) { //assemble forward accel
-        assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_crust_mantle, 
+        assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_crust_mantle,
                                                             mp->d_send_accel_buffer_crust_mantle,
                                                             mp->num_interfaces_crust_mantle,
                                                             mp->max_nibool_interfaces_crust_mantle,
@@ -230,7 +230,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
                                                             mp->d_ibool_interfaces_crust_mantle);
       }
       else if(*FORWARD_OR_ADJOINT == 3) { //assemble adjoint accel
-        assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_crust_mantle, 
+        assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                             mp->d_send_accel_buffer_crust_mantle,
                                                             mp->num_interfaces_crust_mantle,
                                                             mp->max_nibool_interfaces_crust_mantle,
@@ -247,7 +247,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
       cudaMemcpy(mp->d_send_accel_buffer_inner_core, buffer_recv_vector,
                  3*(mp->max_nibool_interfaces_inner_core)*(mp->num_interfaces_inner_core)*sizeof(realw),
                  cudaMemcpyHostToDevice);
-      
+
       // assembles values
       blocksize = BLOCKSIZE_TRANSFER;
       size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_inner_core)/((double)blocksize)))*blocksize;
@@ -257,12 +257,12 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
         num_blocks_x = (int) ceil(num_blocks_x*0.5f);
         num_blocks_y = num_blocks_y*2;
       }
-      
+
       dim3 grid(num_blocks_x,num_blocks_y);
       dim3 threads(blocksize,1,1);
-      
+
       if(*FORWARD_OR_ADJOINT == 1) { //assemble forward accel
-        assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_inner_core, 
+        assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_accel_inner_core,
                                                             mp->d_send_accel_buffer_inner_core,
                                                             mp->num_interfaces_inner_core,
                                                             mp->max_nibool_interfaces_inner_core,
@@ -270,7 +270,7 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
                                                             mp->d_ibool_interfaces_inner_core);
       }
       else if(*FORWARD_OR_ADJOINT == 3) { //assemble adjoint accel
-        assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_inner_core, 
+        assemble_boundary_accel_on_device<<<grid,threads>>>(mp->d_b_accel_inner_core,
                                                             mp->d_send_accel_buffer_inner_core,
                                                             mp->num_interfaces_inner_core,
                                                             mp->max_nibool_interfaces_inner_core,
@@ -279,8 +279,8 @@ void FC_FUNC_(transfer_asmbl_accel_to_device,
       }
     }
   }
-  
-  
+
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("transfer_asmbl_accel_to_device");
 #endif

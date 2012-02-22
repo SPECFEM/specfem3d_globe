@@ -417,10 +417,10 @@
 ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
 ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
 
-  use specfem_par  
+  use specfem_par
   use specfem_par_crustmantle
   implicit none
-  
+
   ! local parameters
   integer :: i,j,k,iglob
 
@@ -442,11 +442,7 @@
 
   else
     ! on GPU
-    call load_GPU_elastic()
-    
-    call noise_add_source_master_rec_cu(Mesh_pointer,it,irec_master_noise,islice_selected_rec)  
-    
-    call load_CPU_elastic()
+    call noise_add_source_master_rec_cu(Mesh_pointer,it,irec_master_noise,islice_selected_rec)
   endif
 
   end subroutine noise_add_source_master_rec
@@ -475,7 +471,7 @@
 
   ! local parameters
   integer :: ispec2D,ispec,i,j,k,iglob
-  
+
   ! get coordinates of surface mesh and surface displacement
   if( .not. GPU_MODE ) then
     ! on CPU
@@ -493,7 +489,7 @@
     ! on GPU
     call noise_transfer_surface_to_host(Mesh_pointer,noise_surface_movie)
   endif
-  
+
   ! save surface motion to disk
   call write_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
 
@@ -522,17 +518,17 @@
 
   use specfem_par
   use specfem_par_crustmantle
-  
+
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE),intent(inout) :: accel
   integer,intent(in) :: it_index
-  
+
   ! local parameters
   integer :: ipoin,ispec2D,ispec,i,j,k,iglob
   real(kind=CUSTOM_REAL) :: eta
-  
-  
+
+
   ! read surface movie
   call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it_index)
 
@@ -572,7 +568,7 @@
 
   else
     ! on GPU
-    call noise_add_surface_movie_cuda(Mesh_pointer,noise_surface_movie)    
+    call noise_add_surface_movie_cuda(Mesh_pointer,noise_surface_movie)
   endif
 
   end subroutine noise_read_add_surface_movie

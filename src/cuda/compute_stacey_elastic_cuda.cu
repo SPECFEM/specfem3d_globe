@@ -73,71 +73,71 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
   // and don't compute points outside NGLLSQUARE==NGLL2==25
   //if(igll < NGLL2 && iface < num_abs_boundary_faces) {
 
-  // way 2: only check face, no further check needed since blocksize = 25  
+  // way 2: only check face, no further check needed since blocksize = 25
   if( iface < num_abs_boundary_faces){
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = abs_boundary_ispec[iface]-1;
-    
+
     // determines indices i,j,k depending on absorbing boundary type
     switch( interface_type ){
       case 0:
         // xmin
         if( nkmin_xi[INDEX2(2,0,iface)] == 0 || njmin[INDEX2(2,0,iface)] == 0 ) return;
-        
+
         i = 0; // index -1
         k = (igll/NGLLX);
         j = (igll-k*NGLLX);
-        
+
         if( k < nkmin_xi[INDEX2(2,0,iface)]-1 || k > NGLLX-1 ) return;
         if( j < njmin[INDEX2(2,0,iface)]-1 || j > NGLLX-1 ) return;
-        
+
         fac1 = wgllwgll[k*NGLLX+j];
         break;
-        
+
       case 1:
         // xmax
         if( nkmin_xi[INDEX2(2,1,iface)] == 0 || njmin[INDEX2(2,1,iface)] == 0 ) return;
-        
+
         i = NGLLX-1;
         k = (igll/NGLLX);
         j = (igll-k*NGLLX);
-        
+
         if( k < nkmin_xi[INDEX2(2,1,iface)]-1 || k > NGLLX-1 ) return;
         if( j < njmin[INDEX2(2,1,iface)]-1 || j > njmax[INDEX2(2,1,iface)]-1 ) return;
 
         fac1 = wgllwgll[k*NGLLX+j];
         break;
-        
+
       case 2:
         // ymin
         if( nkmin_eta[INDEX2(2,0,iface)] == 0 || nimin[INDEX2(2,0,iface)] == 0 ) return;
-        
+
         j = 0;
-        k = (igll/NGLLX);        
+        k = (igll/NGLLX);
         i = (igll-k*NGLLX);
-        
+
         if( k < nkmin_eta[INDEX2(2,0,iface)]-1 || k > NGLLX-1 ) return;
         if( i < nimin[INDEX2(2,0,iface)]-1 || i > nimax[INDEX2(2,0,iface)]-1 ) return;
-        
+
         fac1 = wgllwgll[k*NGLLX+i];
         break;
 
       case 3:
         // ymax
         if( nkmin_eta[INDEX2(2,1,iface)] == 0 || nimin[INDEX2(2,1,iface)] == 0 ) return;
-        
+
         j = NGLLX-1;
-        k = (igll/NGLLX);        
+        k = (igll/NGLLX);
         i = (igll-k*NGLLX);
-        
+
         if( k < nkmin_eta[INDEX2(2,1,iface)]-1 || k > NGLLX-1 ) return;
         if( i < nimin[INDEX2(2,1,iface)]-1 || i > nimax[INDEX2(2,1,iface)]-1 ) return;
-        
+
         fac1 = wgllwgll[k*NGLLX+i];
         break;
     }
-    
+
     iglob = ibool[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)]-1;
 
     // gets associated velocity
@@ -176,7 +176,7 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
       b_absorb_field[INDEX3(NDIM,NGLL2,1,igll,iface)] = ty*jacobianw;
       b_absorb_field[INDEX3(NDIM,NGLL2,2,igll,iface)] = tz*jacobianw;
     } // SIMULATION_TYPE
-    
+
   } // num_abs_boundary_faces
 }
 
@@ -197,7 +197,7 @@ TRACE("compute_stacey_elastic_cuda");
   realw* d_abs_boundary_jacobian2D;
   realw* d_wgllwgll;
   realw* d_b_absorb_field;
-  
+
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
   // absorbing boundary type
@@ -212,7 +212,7 @@ TRACE("compute_stacey_elastic_cuda");
       d_b_absorb_field = mp->d_absorb_xmin_crust_mantle;
       d_wgllwgll = mp->d_wgllwgll_yz;
       break;
-      
+
     case 1:
       // xmax
       num_abs_boundary_faces = mp->nspec2D_xmax_crust_mantle;
@@ -222,33 +222,33 @@ TRACE("compute_stacey_elastic_cuda");
       d_b_absorb_field = mp->d_absorb_xmax_crust_mantle;
       d_wgllwgll = mp->d_wgllwgll_yz;
       break;
-      
+
     case 2:
       // ymin
       num_abs_boundary_faces = mp->nspec2D_ymin_crust_mantle;
       d_abs_boundary_ispec = mp->d_ibelm_ymin_crust_mantle;
       d_abs_boundary_normal = mp->d_normal_ymin_crust_mantle;
       d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymin_crust_mantle;
-      d_b_absorb_field = mp->d_absorb_ymin_crust_mantle; 
+      d_b_absorb_field = mp->d_absorb_ymin_crust_mantle;
       d_wgllwgll = mp->d_wgllwgll_xz;
       break;
-      
+
     case 3:
       // ymax
       num_abs_boundary_faces = mp->nspec2D_ymax_crust_mantle;
       d_abs_boundary_ispec = mp->d_ibelm_ymax_crust_mantle;
       d_abs_boundary_normal = mp->d_normal_ymax_crust_mantle;
       d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymax_crust_mantle;
-      d_b_absorb_field = mp->d_absorb_ymax_crust_mantle; 
+      d_b_absorb_field = mp->d_absorb_ymax_crust_mantle;
       d_wgllwgll = mp->d_wgllwgll_xz;
       break;
-      
+
     default:
       exit_on_cuda_error("compute_stacey_elastic_cuda: unknown interface type");
       break;
   }
-  
-  // checks if anything to do  
+
+  // checks if anything to do
   if( num_abs_boundary_faces == 0 ) return;
 
   // way 1
@@ -258,7 +258,7 @@ TRACE("compute_stacey_elastic_cuda");
   // way 2: seems sligthly faster
   // > NGLLSQUARE==NGLL2==25, no further check inside kernel
   int blocksize = NGLL2;
-  
+
   int num_blocks_x = num_abs_boundary_faces;
   int num_blocks_y = 1;
   while(num_blocks_x > 65535) {
@@ -270,7 +270,7 @@ TRACE("compute_stacey_elastic_cuda");
 
   // adjoint simulations: needs absorbing boundary buffer
   if(mp->simulation_type == 3 && num_abs_boundary_faces > 0) {
-    // copies array to GPU  
+    // copies array to GPU
     print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_field,absorb_field,
                             NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyHostToDevice),7700);
   }
@@ -279,14 +279,14 @@ TRACE("compute_stacey_elastic_cuda");
   compute_stacey_elastic_kernel<<<grid,threads>>>(mp->d_veloc_crust_mantle,
                                                   mp->d_accel_crust_mantle,
                                                   interface_type,
-                                                  num_abs_boundary_faces,                                                  
+                                                  num_abs_boundary_faces,
                                                   d_abs_boundary_ispec,
                                                   mp->d_nkmin_xi_crust_mantle,
-                                                  mp->d_nkmin_eta_crust_mantle,                                                  
+                                                  mp->d_nkmin_eta_crust_mantle,
                                                   mp->d_njmin_crust_mantle,
                                                   mp->d_njmax_crust_mantle,
                                                   mp->d_nimin_crust_mantle,
-                                                  mp->d_nimax_crust_mantle,                                                  
+                                                  mp->d_nimax_crust_mantle,
                                                   d_abs_boundary_normal,
                                                   d_abs_boundary_jacobian2D,
                                                   d_wgllwgll,
@@ -301,7 +301,7 @@ TRACE("compute_stacey_elastic_cuda");
 
   // adjoint simulations: stores absorbed wavefield part
   if(mp->simulation_type == 1 && mp->save_forward && num_abs_boundary_faces > 0 ) {
-    // copies array to CPU  
+    // copies array to CPU
     print_CUDA_error_if_any(cudaMemcpy(absorb_field,d_b_absorb_field,
                             NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyDeviceToHost),7701);
   }

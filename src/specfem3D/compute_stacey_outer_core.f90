@@ -32,7 +32,7 @@
 
   use specfem_par,only: &
     ichunk,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
-    wgllwgll_xz,wgllwgll_yz,wgllwgll_xy    
+    wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
 
   use specfem_par,only: GPU_MODE,Mesh_pointer
 
@@ -70,8 +70,7 @@
   !           file access (by process rank modulo 8) showed that the following,
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
-  if( GPU_MODE ) call load_GPU_acoustic()   
-
+  ! outer core
   !   xmin
   ! if two chunks exclude this face for one of them
   if(NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
@@ -116,7 +115,7 @@
       ! on GPU
       if( nspec2D_xmin_outer_core > 0 ) call compute_stacey_acoustic_cuda(Mesh_pointer, &
                                                                 absorb_xmin_outer_core, &
-                                                                4) ! <= xmin              
+                                                                4) ! <= xmin
     endif
 
     ! writes absorbing boundary values
@@ -311,11 +310,8 @@
                                                               8) ! <= zmin
   endif
 
-
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. nspec2D_zmin_outer_core > 0 ) then
     call write_abs(8,absorb_zmin_outer_core,reclen_zmin,it)
   endif
-
-  if( GPU_MODE) call load_CPU_acoustic()
 
   end subroutine compute_stacey_outer_core

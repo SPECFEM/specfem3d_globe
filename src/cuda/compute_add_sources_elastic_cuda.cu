@@ -71,7 +71,7 @@ __global__ void compute_add_sources_kernel(realw* accel,
       stf = (realw) stf_pre_compute[isource];
       iglob = ibool[INDEX4(5,5,5,i,j,k,ispec)]-1;
 
-      // note: for global version, sourcearrays has dimensions 
+      // note: for global version, sourcearrays has dimensions
       //            sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES)
       atomicAdd(&accel[iglob*3],
                 sourcearrays[INDEX5(3,5,5,5, 0,i,j,k,isource)]*stf);
@@ -161,7 +161,7 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
   // copies source time function buffer values to GPU
   print_CUDA_error_if_any(cudaMemcpy(mp->d_stf_pre_compute,h_stf_pre_compute,
                                      NSOURCES*sizeof(double),cudaMemcpyHostToDevice),19);
-  
+
   compute_add_sources_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
                                                mp->d_ibool_crust_mantle,
                                                mp->d_sourcearrays,
@@ -193,7 +193,7 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
 
   int ispec,iglob;
   int irec,i,j,k;
-  
+
   int irec_local = blockIdx.x + gridDim.x*blockIdx.y;
 
   if(irec_local < nadj_rec_local) { // when nrec > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.

@@ -25,10 +25,10 @@
 !
 !=====================================================================
 
-  subroutine compute_add_sources() 
+  subroutine compute_add_sources()
 
   use specfem_par
-  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle  
+  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
   implicit none
 
   ! local parameters
@@ -106,8 +106,6 @@
 
   else
     ! on GPU
-    call load_GPU_elastic()
-    
     ! prepares buffer with source time function values, to be copied onto GPU
     if(USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
@@ -117,13 +115,11 @@
     else
       do isource = 1,NSOURCES
         stf_pre_compute(isource) = &
-          comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))      
+          comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
       enddo
     endif
     ! adds sources: only implements SIMTYPE=1 and NOISE_TOM=0
     call compute_add_sources_el_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
-
-    call load_CPU_elastic()    
   endif
 
 
@@ -136,7 +132,7 @@
   subroutine compute_add_sources_adjoint()
 
   use specfem_par
-  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle  
+  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
   implicit none
 
   ! local parameters
@@ -278,13 +274,9 @@
 
   else
     ! on GPU
-    call load_GPU_elastic()
-    
     call add_sources_el_sim_type_2_or_3(Mesh_pointer,nrec,adj_sourcearrays, &
                                        islice_selected_rec,ispec_selected_rec, &
-                                       iadj_vec(it))    
-
-    call load_CPU_elastic()                                       
+                                       iadj_vec(it))
   endif
 
   end subroutine compute_add_sources_adjoint
@@ -386,8 +378,6 @@
 
   else
     ! on GPU
-    call load_GPU_elastic()
-    
     ! prepares buffer with source time function values, to be copied onto GPU
     if(USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
@@ -397,13 +387,11 @@
     else
       do isource = 1,NSOURCES
         stf_pre_compute(isource) = &
-          comp_source_time_function(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))      
+          comp_source_time_function(dble(NSTEP-it)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
       enddo
     endif
     ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM=0)
     call compute_add_sources_el_s3_cuda(Mesh_pointer,NSOURCES,stf_pre_compute)
-
-    call load_CPU_elastic()    
   endif
 
   end subroutine compute_add_sources_backward

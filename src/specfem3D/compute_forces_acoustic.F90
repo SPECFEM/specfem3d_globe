@@ -81,7 +81,7 @@
     endif
 
     if( .not. GPU_MODE ) then
-      ! on CPU    
+      ! on CPU
       if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses Deville et al. (2002) routine
         call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
@@ -114,12 +114,8 @@
 
     else
       ! on GPU
-      call load_GPU_acoustic()
-      
       ! includes both forward and adjoint/kernel simulations
       call compute_forces_outer_core_cuda(Mesh_pointer,iphase,time,b_time)
-
-      call load_CPU_acoustic()
     endif
 
 
@@ -135,6 +131,9 @@
       !---
       !--- couple with mantle at the top of the outer core
       !---
+      call load_CPU_acoustic()
+      call load_CPU_elastic()
+
       if(ACTUALLY_COUPLE_FLUID_CMB) &
         call compute_coupling_fluid_CMB(displ_crust_mantle,b_displ_crust_mantle, &
                               ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
@@ -153,6 +152,9 @@
                               normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                               wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                               SIMULATION_TYPE,NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
+
+      call load_GPU_acoustic()
+
     endif
 
 
@@ -160,7 +162,7 @@
     ! in outer core
     if( iphase == 1 ) then
       ! sends out MPI interface data (non-blocking)
-      
+
       if(.NOT. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_ext_mesh_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
@@ -172,7 +174,6 @@
                                 request_send_scalar_outer_core,request_recv_scalar_outer_core)
       else
         ! on GPU
-        call load_GPU_acoustic()
         ! outer core
         call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                 buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
@@ -196,7 +197,6 @@
                                 b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core)
         else
           ! on GPU
-          call load_GPU_acoustic()
           ! outer core
           call assemble_MPI_scalar_send_cuda(NPROCTOT_VAL, &
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
@@ -207,10 +207,10 @@
                                 3) ! <-- 3 == adjoint b_accel
         endif ! GPU
       endif ! SIMULATION_TYPE == 3
-      
+
     else
       ! make sure the last communications are finished and processed
-      ! waits for send/receive requests to be completed and assembles values      
+      ! waits for send/receive requests to be completed and assembles values
       if(.NOT. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_ext_mesh_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
@@ -226,7 +226,6 @@
                                 num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
                                 request_send_scalar_outer_core,request_recv_scalar_outer_core, &
                                 1) ! <-- 1 == fwd accel
-        call load_CPU_acoustic()
       endif
 
       ! adjoint simulations
@@ -245,8 +244,7 @@
                                 b_buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
                                 b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core, &
-                                3) ! <-- 3 == adjoint b_accel 
-          call load_CPU_acoustic()
+                                3) ! <-- 3 == adjoint b_accel
         endif
       endif ! SIMULATION_TYPE == 3
     endif ! iphase == 1
@@ -264,14 +262,12 @@
     if (SIMULATION_TYPE == 3) &
       call compute_forces_ac_update_veloc(b_veloc_outer_core,b_accel_outer_core, &
                                          b_deltatover2,rmass_outer_core)
-  else    
+  else
     ! on GPU
-    call load_GPU_acoustic()
     call kernel_3_outer_core_cuda(Mesh_pointer, &
                                 deltatover2,SIMULATION_TYPE,b_deltatover2)
-    call load_CPU_acoustic()
   endif
-  
+
   end subroutine compute_forces_acoustic
 
 !=====================================================================
@@ -332,30 +328,30 @@
 !=====================================================================
 
   subroutine load_GPU_acoustic
-  
+
   use specfem_par
   use specfem_par_outercore
   implicit none
-  
+
   ! daniel: TODO - temporary transfers to the GPU
   call transfer_fields_oc_to_device(NGLOB_OUTER_CORE,displ_outer_core, &
                                 veloc_outer_core,accel_outer_core,Mesh_pointer)
 
   if( SIMULATION_TYPE == 3 ) then
     call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE,b_displ_outer_core, &
-                                b_veloc_outer_core,b_accel_outer_core,Mesh_pointer)  
+                                b_veloc_outer_core,b_accel_outer_core,Mesh_pointer)
   endif
-    
-  end subroutine 
+
+  end subroutine
 
 !=====================================================================
 
   subroutine load_CPU_acoustic
-  
+
   use specfem_par
   use specfem_par_outercore
   implicit none
-  
+
   ! daniel: TODO - temporary transfers to the CPU
   call transfer_fields_oc_from_device(NGLOB_OUTER_CORE,displ_outer_core, &
                                 veloc_outer_core,accel_outer_core,Mesh_pointer)
@@ -364,5 +360,5 @@
     call transfer_b_fields_oc_from_device(NGLOB_OUTER_CORE,b_displ_outer_core, &
                                 b_veloc_outer_core,b_accel_outer_core,Mesh_pointer)
   endif
-    
+
   end subroutine

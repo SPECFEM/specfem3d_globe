@@ -34,7 +34,7 @@
   implicit none
 
   include 'mpif.h'
-  
+
   ! local parameters
   integer :: ier
 
@@ -53,16 +53,16 @@
 
   ! reads "solver_data_1.bin" & "solver_data_2.bin" files for crust and mantle
   call read_mesh_databases_CM()
-  
+
   ! reads "solver_data_1.bin" & "solver_data_2.bin" files for outer core
   call read_mesh_databases_OC()
-  
+
   ! reads "solver_data_1.bin" & "solver_data_2.bin" files for inner core
   call read_mesh_databases_IC()
 
   ! reads "boundary.bin" files to couple mantle with outer core and inner core boundaries
   call read_mesh_databases_coupling()
-  
+
   ! reads "addressing.txt" 2-D addressing for summation between slices with MPI
   call read_mesh_databases_addressing()
 
@@ -89,7 +89,7 @@
     write(IMAIN,*) 'Elapsed time for reading mesh in seconds = ',sngl(tCPU)
     write(IMAIN,*)
   endif
-  
+
   ! frees temporary allocated arrays
   deallocate(is_on_a_slice_edge_crust_mantle, &
             is_on_a_slice_edge_outer_core, &
@@ -134,7 +134,7 @@
     READ_KAPPA_MU = .true.
     READ_TISO = .true.
   endif
-  
+
   call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
             rho_vp_crust_mantle,rho_vs_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -181,13 +181,13 @@
   ! local parameters
   integer :: nspec_iso,nspec_tiso,nspec_ani
   logical :: READ_KAPPA_MU,READ_TISO
-  
+
   ! dummy array that does not need to be actually read
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
 
   logical, dimension(:),allocatable:: dummy_ispec_is_tiso
   integer, dimension(:),allocatable :: dummy_idoubling_outer_core
-  
+
   ! outer core (no anisotropy nor S velocity)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the outer core
   READ_KAPPA_MU = .false.
@@ -195,7 +195,7 @@
   nspec_iso = NSPEC_OUTER_CORE
   nspec_tiso = 1
   nspec_ani = 1
-  
+
   ! dummy allocation
   allocate(dummy_ispec_is_tiso(NSPEC_OUTER_CORE))
   allocate(dummy_idoubling_outer_core(NSPEC_OUTER_CORE))
@@ -251,7 +251,7 @@
   ! dummy array that does not need to be actually read
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,1) :: dummy_array
   logical, dimension(:),allocatable:: dummy_ispec_is_tiso
-  
+
   ! inner core (no anisotropy)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the inner core
   READ_KAPPA_MU = .true.
@@ -263,10 +263,10 @@
   else
     nspec_ani = 1
   endif
-  
+
   ! dummy allocation
   allocate(dummy_ispec_is_tiso(NSPEC_INNER_CORE))
-  
+
   call read_arrays_solver(IREGION_INNER_CORE,myrank, &
             dummy_array,dummy_array, &
             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
@@ -313,7 +313,7 @@
   implicit none
 
   include 'mpif.h'
-  
+
   ! local parameters
   integer njunk1,njunk2,njunk3
 
@@ -595,7 +595,7 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
-  use specfem_par_outercore  
+  use specfem_par_outercore
   implicit none
 
   ! local parameters
@@ -606,7 +606,7 @@
 
   ! mantle and crust
   if(myrank == 0) write(IMAIN,*) 'crust/mantle region:'
-  
+
   call read_arrays_buffers_solver(IREGION_CRUST_MANTLE,myrank,iboolleft_xi_crust_mantle, &
      iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
      npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -634,7 +634,7 @@
 
   ! inner core
   if(myrank == 0) write(IMAIN,*) 'inner core region:'
-  
+
   call read_arrays_buffers_solver(IREGION_INNER_CORE,myrank, &
      iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
      npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
@@ -721,11 +721,11 @@
 
   ! note: fix_... routines below update is_on_a_slice_edge_.. arrays:
   !          assign flags for each element which is on a rim of the slice
-  !          thus, they include elements on top and bottom not shared with other MPI partitions  
+  !          thus, they include elements on top and bottom not shared with other MPI partitions
   !
   !          we will re-set these flags when setting up inner/outer elements, but will
-  !          use these arrays for now as initial guess for the search for elements which share a global point 
-  !          between different MPI processes  
+  !          use these arrays for now as initial guess for the search for elements which share a global point
+  !          between different MPI processes
   call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
          iboolleft_xi_crust_mantle,iboolright_eta_crust_mantle,iboolleft_eta_crust_mantle, &
          npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle,ibool_crust_mantle, &
@@ -748,31 +748,31 @@
          idoubling_inner_core,npoin2D_cube_from_slices,ibool_central_cube, &
          NSPEC2D_BOTTOM(IREGION_INNER_CORE),ichunk)
   endif
-  
+
   ! debug: saves element flags
   ! crust mantle
-  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_crust_mantle_proc',myrank  
+  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_crust_mantle_proc',myrank
   !call write_VTK_data_elem_l(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
   !                          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
   !                          ibool_crust_mantle, &
-  !                          is_on_a_slice_edge_crust_mantle,filename)  
+  !                          is_on_a_slice_edge_crust_mantle,filename)
   ! outer core
-  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_outer_core_proc',myrank  
+  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_outer_core_proc',myrank
   !call write_VTK_data_elem_l(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
   !                          xstore_outer_core,ystore_outer_core,zstore_outer_core, &
   !                          ibool_outer_core, &
   !                          is_on_a_slice_edge_outer_core,filename)
-!daniel  
+!daniel
   ! inner core
-  write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_inner_core_proc',myrank  
+  write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_inner_core_proc',myrank
   call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                             ibool_inner_core, &
                             is_on_a_slice_edge_inner_core,filename)
-  
+
   end subroutine read_mesh_databases_MPIbuffers
-  
-  
+
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -784,29 +784,29 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
-  use specfem_par_outercore  
+  use specfem_par_outercore
   implicit none
 
   include 'mpif.h'
-  
-  ! local parameters  
+
+  ! local parameters
   integer :: ier,ndim_assemble
   character(len=150) :: filename
 
   ! temporary buffers for send and receive between faces of the slices and the chunks
   real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
     buffer_send_faces_scalar,buffer_received_faces_scalar
-  
+
   ! assigns initial maximum arrays
   ! for global slices, maximum number of neighbor is around 17 ( 8 horizontal, max of 8 on bottom )
   integer, parameter :: MAX_NEIGHBOURS = 8 + NCORNERSCHUNKS_VAL
   integer, dimension(MAX_NEIGHBOURS) :: my_neighbours,nibool_neighbours
   integer, dimension(:,:),allocatable :: ibool_neighbours
-  integer :: max_nibool  
+  integer :: max_nibool
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag_cc
   integer :: i,j,k,ispec,iglob
-  
+
   ! estimates initial maximum ibool array
   max_nibool = npoin2D_max_all_CM_IC * NUMFACES_SHARED &
                + non_zero_nb_msgs_theor_in_cube*npoin2D_cube_from_slices
@@ -815,13 +815,13 @@
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating ibool_neighbours')
 
 
-! sets up MPI interfaces  
-! crust mantle region  
+! sets up MPI interfaces
+! crust mantle region
   if( myrank == 0 ) write(IMAIN,*) 'crust mantle mpi:'
   allocate(test_flag(NGLOB_CRUST_MANTLE), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag')
-  
+
   ! sets flag to rank id (+1 to avoid problems with zero rank)
   test_flag(:) = myrank + 1.0
 
@@ -839,7 +839,7 @@
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
-    
+
   ! removes own myrank id (+1)
   test_flag(:) = test_flag(:) - ( myrank + 1.0)
 
@@ -848,21 +848,21 @@
   !call write_VTK_glob_points(NGLOB_CRUST_MANTLE, &
   !                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
   !                      test_flag,filename)
-  
-  ! determines neighbor rank for shared faces 
+
+  ! determines neighbor rank for shared faces
   call rmd_get_MPI_interfaces(myrank,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
                             test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
                             num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                             max_nibool,MAX_NEIGHBOURS, &
                             ibool_crust_mantle,&
                             is_on_a_slice_edge_crust_mantle, &
-                            IREGION_CRUST_MANTLE,.false.)  
+                            IREGION_CRUST_MANTLE,.false.)
 
   deallocate(test_flag)
-    
+
   ! stores MPI interfaces informations
   allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
-          nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &          
+          nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array my_neighbours_crust_mantle etc.')
 
@@ -877,13 +877,13 @@
     ! number of global ibool entries on each interface
     nibool_interfaces_crust_mantle(:) = nibool_neighbours(1:num_interfaces_crust_mantle)
     ! global iglob point ids on each interface
-    ibool_interfaces_crust_mantle(:,:) = ibool_neighbours(1:max_nibool_interfaces_crust_mantle,1:num_interfaces_crust_mantle)    
+    ibool_interfaces_crust_mantle(:,:) = ibool_neighbours(1:max_nibool_interfaces_crust_mantle,1:num_interfaces_crust_mantle)
   else
     ! dummy allocation (fortran90 should allow allocate statement with zero array size)
     max_nibool_interfaces_crust_mantle = 0
     allocate(ibool_interfaces_crust_mantle(0,0),stat=ier)
   endif
-  
+
   ! debug: saves 1. MPI interface
   !if( num_interfaces_crust_mantle >= 1 ) then
   !  write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_1_points_crust_mantle_proc',myrank
@@ -894,13 +894,13 @@
   !endif
 
 
-! outer core region  
+! outer core region
   if( myrank == 0 ) write(IMAIN,*) 'outer core mpi:'
 
   allocate(test_flag(NGLOB_OUTER_CORE), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag outer core')
-  
+
   ! sets flag to rank id (+1 to avoid problems with zero rank)
   test_flag(:) = myrank + 1.0
 
@@ -919,7 +919,7 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)
 
-    
+
   ! removes own myrank id (+1)
   test_flag(:) = test_flag(:) - ( myrank + 1.0)
 
@@ -929,21 +929,21 @@
   !                      xstore_outer_core,ystore_outer_core,zstore_outer_core, &
   !                      test_flag,filename)
 
-  
-  ! determines neighbor rank for shared faces 
+
+  ! determines neighbor rank for shared faces
   call rmd_get_MPI_interfaces(myrank,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
                             test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
                             num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
                             max_nibool,MAX_NEIGHBOURS, &
                             ibool_outer_core,&
                             is_on_a_slice_edge_outer_core, &
-                            IREGION_OUTER_CORE,.false.)  
+                            IREGION_OUTER_CORE,.false.)
 
   deallocate(test_flag)
-    
+
   ! stores MPI interfaces informations
   allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
-          nibool_interfaces_outer_core(num_interfaces_outer_core), &          
+          nibool_interfaces_outer_core(num_interfaces_outer_core), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array my_neighbours_outer_core etc.')
 
@@ -958,7 +958,7 @@
     ! number of global ibool entries on each interface
     nibool_interfaces_outer_core(:) = nibool_neighbours(1:num_interfaces_outer_core)
     ! global iglob point ids on each interface
-    ibool_interfaces_outer_core(:,:) = ibool_neighbours(1:max_nibool_interfaces_outer_core,1:num_interfaces_outer_core)    
+    ibool_interfaces_outer_core(:,:) = ibool_neighbours(1:max_nibool_interfaces_outer_core,1:num_interfaces_outer_core)
   else
     ! dummy allocation (fortran90 should allow allocate statement with zero array size)
     max_nibool_interfaces_outer_core = 0
@@ -980,16 +980,16 @@
   allocate(test_flag(NGLOB_INNER_CORE), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag inner core')
-  
+
   ! sets flag to rank id (+1 to avoid problems with zero rank)
   test_flag(:) = 0.0
   do ispec=1,NSPEC_INNER_CORE
     ! suppress fictitious elements in central cube
-    if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle    
+    if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          iglob = ibool_inner_core(i,j,k,ispec)          
+          iglob = ibool_inner_core(i,j,k,ispec)
           test_flag(iglob) = myrank + 1.0
         enddo
       enddo
@@ -1012,7 +1012,7 @@
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)
 
   ! removes own myrank id (+1)
-  test_flag(:) = test_flag(:) - ( myrank + 1.0)  
+  test_flag(:) = test_flag(:) - ( myrank + 1.0)
   where( test_flag(:) < 0.0 ) test_flag(:) = 0.0
 
   ! debug: saves array
@@ -1022,14 +1022,14 @@
                         test_flag,filename)
 
 !  ! gets new interfaces for inner_core without central cube yet
-!  ! determines neighbor rank for shared faces 
+!  ! determines neighbor rank for shared faces
 !  call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
 !                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
 !                            num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
 !                            max_nibool,MAX_NEIGHBOURS, &
 !                            ibool_inner_core,&
 !                            is_on_a_slice_edge_inner_core, &
-!                            IREGION_INNER_CORE,.false.,idoubling_inner_core)  
+!                            IREGION_INNER_CORE,.false.,idoubling_inner_core)
 
   ! including central cube
   if(INCLUDE_CENTRAL_CUBE) then
@@ -1038,22 +1038,22 @@
     allocate(test_flag_cc(NGLOB_INNER_CORE), &
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag_cc inner core')
-  
+
     ! re-sets flag to rank id (+1 to avoid problems with zero rank)
     test_flag_cc(:) = 0.0
     do ispec=1,NSPEC_INNER_CORE
       ! suppress fictitious elements in central cube
-      if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle    
+      if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            iglob = ibool_inner_core(i,j,k,ispec)          
+            iglob = ibool_inner_core(i,j,k,ispec)
             test_flag_cc(iglob) = myrank + 1.0
           enddo
         enddo
       enddo
-    enddo  
-  
+    enddo
+
     ! test_flag is a scalar, not a vector
     ndim_assemble = 1
     ! use central cube buffers to assemble the inner core mass matrix with the central cube
@@ -1065,12 +1065,12 @@
                  ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
                  NGLOB_INNER_CORE, &
                  test_flag_cc,ndim_assemble)
-                 
+
 
     ! removes own myrank id (+1)
-    test_flag_cc(:) = test_flag_cc(:) - ( myrank + 1.0)  
+    test_flag_cc(:) = test_flag_cc(:) - ( myrank + 1.0)
     where( test_flag_cc(:) < 0.0 ) test_flag_cc(:) = 0.0
-                 
+
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_B_proc',myrank
     call write_VTK_glob_points(NGLOB_INNER_CORE, &
                         xstore_inner_core,ystore_inner_core,zstore_inner_core, &
@@ -1084,35 +1084,35 @@
 !                            ibool_inner_core,&
 !                            is_on_a_slice_edge_inner_core, &
 !                            IREGION_INNER_CORE,.true.,idoubling_inner_core)
-     
-    ! adds both together 
+
+    ! adds both together
     test_flag(:) = test_flag(:) + test_flag_cc(:)
 
-    deallocate(test_flag_cc)    
+    deallocate(test_flag_cc)
 
     ! debug: saves array
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_C_proc',myrank
     call write_VTK_glob_points(NGLOB_INNER_CORE, &
                               xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                               test_flag,filename)
-  
+
   endif
 
   ! gets new interfaces for inner_core without central cube yet
-  ! determines neighbor rank for shared faces 
+  ! determines neighbor rank for shared faces
   call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
                             test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
                             num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
                             max_nibool,MAX_NEIGHBOURS, &
                             ibool_inner_core,&
                             is_on_a_slice_edge_inner_core, &
-                            IREGION_INNER_CORE,.false.,idoubling_inner_core)  
-      
+                            IREGION_INNER_CORE,.false.,idoubling_inner_core)
+
   deallocate(test_flag)
-  
+
   ! stores MPI interfaces informations
   allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
-          nibool_interfaces_inner_core(num_interfaces_inner_core), &          
+          nibool_interfaces_inner_core(num_interfaces_inner_core), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array my_neighbours_inner_core etc.')
 
@@ -1127,7 +1127,7 @@
     ! number of global ibool entries on each interface
     nibool_interfaces_inner_core(:) = nibool_neighbours(1:num_interfaces_inner_core)
     ! global iglob point ids on each interface
-    ibool_interfaces_inner_core(:,:) = ibool_neighbours(1:max_nibool_interfaces_inner_core,1:num_interfaces_inner_core)    
+    ibool_interfaces_inner_core(:,:) = ibool_neighbours(1:max_nibool_interfaces_inner_core,1:num_interfaces_inner_core)
   else
     ! dummy allocation (fortran90 should allow allocate statement with zero array size)
     max_nibool_interfaces_inner_core = 0
@@ -1136,19 +1136,19 @@
 
   ! debug: saves 1. MPI interface
   if( myrank == 0 .and. num_interfaces_inner_core >= 1 ) then
-    write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_1_points_inner_core_proc',myrank  
+    write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_1_points_inner_core_proc',myrank
     call write_VTK_data_points(NGLOB_INNER_CORE, &
                         xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                         ibool_interfaces_inner_core(1:nibool_interfaces_inner_core(1),1), &
                         nibool_interfaces_inner_core(1),filename)
     !print*,'saved: ',trim(filename)//'.vtk'
-  endif  
+  endif
 
   ! synchronizes MPI processes
   call sync_all()
 
   ! frees temporary array
-  deallocate(ibool_neighbours)  
+  deallocate(ibool_neighbours)
 
 
   ! allocates MPI buffers
@@ -1183,7 +1183,7 @@
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_outer_core etc.')
   endif
-  
+
   ! inner core
   allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
           buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
@@ -1199,7 +1199,7 @@
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_inner_core etc.')
   endif
-  
+
   end subroutine read_mesh_databases_MPIinter
 
 
@@ -1216,7 +1216,7 @@
                                     IREGION,add_central_cube,idoubling)
 
   use constants
-  
+
   implicit none
 
   include 'mpif.h'
@@ -1233,14 +1233,14 @@
   integer,intent(out) :: num_interfaces,max_nibool_interfaces
 
   integer,dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
-  
+
   logical,dimension(NSPEC),intent(inout) :: is_on_a_slice_edge
-  
-  integer,intent(in) :: IREGION  
+
+  integer,intent(in) :: IREGION
   logical,intent(in) :: add_central_cube
   integer,dimension(NSPEC),optional:: idoubling
-  
-  ! local parameters  
+
+  ! local parameters
   integer :: ispec,iglob,j,k
   integer :: iface,iedge,icorner
   integer :: ii,iinterface,icurrent,rank
@@ -1248,12 +1248,12 @@
   logical :: is_done,ispec_is_outer
   integer,dimension(NGLOB) :: work_test_flag
   logical,dimension(NSPEC) :: work_ispec_is_outer
-  
-  ! initializes 
+
+  ! initializes
   if( add_central_cube) then
     ! adds points to existing inner_core interfaces
     iinterface = num_interfaces
-    work_ispec_is_outer(:) = is_on_a_slice_edge(:)    
+    work_ispec_is_outer(:) = is_on_a_slice_edge(:)
   else
     ! creates new interfaces
     iinterface = 0
@@ -1264,7 +1264,7 @@
     ibool_neighbours(:,:) = 0
     work_ispec_is_outer(:) = .false.
   endif
-  
+
   ! makes working copy (converted to nearest integers)
   work_test_flag(:) = nint( test_flag(:) )
 
@@ -1279,44 +1279,44 @@
       if( idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) cycle
     endif
 
-    ! sets flag if element has global points shared with other processes    
-    ispec_is_outer = .false.    
+    ! sets flag if element has global points shared with other processes
+    ispec_is_outer = .false.
 
     ! 1. finds neighbours which share a whole face with this process
     ! (faces are shared only with 1 other neighbour process)
-        
+
     ! loops over all faces of element
     do iface = 1, 6
-    
+
       ! chooses a point inside face
       select case( iface )
       case( 1 )
-        ! face I == 1    
-        iglob = ibool(1,2,2,ispec) 
+        ! face I == 1
+        iglob = ibool(1,2,2,ispec)
       case( 2 )
         ! face I == NGLLX
-        iglob = ibool(NGLLX,2,2,ispec) 
+        iglob = ibool(NGLLX,2,2,ispec)
       case( 3 )
         ! face J == 1
-        iglob = ibool(2,1,2,ispec) 
+        iglob = ibool(2,1,2,ispec)
       case( 4 )
         ! face J == NGLLY
-        iglob = ibool(2,NGLLY,2,ispec) 
+        iglob = ibool(2,NGLLY,2,ispec)
       case( 5 )
         ! face K == 1
         iglob = ibool(2,2,1,ispec)
       case( 6 )
         ! face K == NGLLZ
         iglob = ibool(2,2,NGLLZ,ispec)
-      end select      
+      end select
 
       ! checks assembled flag on global point
       if( work_test_flag(iglob) > 0 ) then
         ispec_is_outer = .true.
-        
+
         ! rank of neighbor process
         rank = work_test_flag(iglob) - 1
-        
+
         ! checks ranks range
         if( rank < 0 .or. rank >= NPROCTOT_VAL ) then
           print*,'error face rank: ',myrank,'ispec=',ispec
@@ -1324,18 +1324,18 @@
           print*,'  face ',iface
           call exit_mpi(myrank,'error face neighbor mpi rank')
         endif
-        
+
         ! checks if already stored
         icurrent = 0
         is_done = .false.
         do ii = 1,iinterface
-          if( rank == my_neighbours(ii) ) then 
+          if( rank == my_neighbours(ii) ) then
             icurrent = ii
             is_done = .true.
             exit
           endif
         enddo
-        
+
         ! updates interfaces array
         if( .not. is_done ) then
           iinterface = iinterface + 1
@@ -1347,43 +1347,43 @@
         endif
         if( icurrent == 0 ) &
           call exit_mpi(myrank,'could not find current interface for this neighbor, please check my_neighbours')
-        
+
         ! adds interface points and removes neighbor flag from face
         ! assumes NGLLX == NGLLY == NGLLZ
         do k=1,NGLLX
           do j=1,NGLLX
             select case( iface )
             case( 1 )
-              ! face I == 1    
-              iglob = ibool(1,j,k,ispec) 
+              ! face I == 1
+              iglob = ibool(1,j,k,ispec)
             case( 2 )
               ! face I == NGLLX
-              iglob = ibool(NGLLX,j,k,ispec) 
+              iglob = ibool(NGLLX,j,k,ispec)
             case( 3 )
               ! face J == 1
-              iglob = ibool(j,1,k,ispec) 
+              iglob = ibool(j,1,k,ispec)
             case( 4 )
               ! face J == NGLLY
-              iglob = ibool(j,NGLLY,k,ispec) 
+              iglob = ibool(j,NGLLY,k,ispec)
             case( 5 )
               ! face K == 1
               iglob = ibool(j,k,1,ispec)
             case( 6 )
               ! face K == NGLLZ
               iglob = ibool(j,k,NGLLZ,ispec)
-            end select      
-            
+            end select
+
             ! checks that we take each global point (on edges and corners) only once
             if( work_test_flag(iglob) <= 0 ) cycle ! continues to next point
-            
+
             ! increases number of total points on this interface
             nibool_neighbours(icurrent) = nibool_neighbours(icurrent) + 1
             if( nibool_neighbours(icurrent) > max_nibool) &
               call exit_mpi(myrank,'interface face exceeds max_nibool range')
-              
+
             ! stores interface iglob index
             ibool_neighbours( nibool_neighbours(icurrent),icurrent ) = iglob
-            
+
             ! re-sets flag
             work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )
             ! debug
@@ -1394,7 +1394,7 @@
             endif
           enddo
         enddo
-      endif    
+      endif
     enddo ! iface
 
     ! 2. finds neighbours which share a single edge with this process
@@ -1402,12 +1402,12 @@
 
     ! loops over all edges of element
     do iedge = 1, 12
-    
+
       ! chooses a point inside edge but not corner
       select case( iedge )
       case( 1 )
         ! face I == 1, J == 1
-        iglob = ibool(1,1,2,ispec) 
+        iglob = ibool(1,1,2,ispec)
       case( 2 )
         ! face I == 1, J == NGLLY
         iglob = ibool(1,NGLLY,2,ispec)
@@ -1446,10 +1446,10 @@
       ! checks assembled flag on global point
       if( work_test_flag(iglob) > 0 ) then
         ispec_is_outer = .true.
-        
+
         ! rank of neighbor process
         rank = work_test_flag(iglob) - 1
-        
+
         ! checks ranks range
         if( rank < 0 .or. rank >= NPROCTOT_VAL ) then
           print*,'error egde rank: ',myrank
@@ -1457,18 +1457,18 @@
           print*,'  edge ',iedge
           call exit_mpi(myrank,'error edge neighbor mpi rank')
         endif
-        
+
         ! checks if already stored
         icurrent = 0
         is_done = .false.
         do ii = 1,iinterface
-          if( rank == my_neighbours(ii) ) then 
+          if( rank == my_neighbours(ii) ) then
             icurrent = ii
             is_done = .true.
             exit
           endif
         enddo
-        
+
         ! updates interfaces array
         if( .not. is_done ) then
           iinterface = iinterface + 1
@@ -1480,14 +1480,14 @@
         endif
         if( icurrent == 0 ) &
           call exit_mpi(myrank,'could not find current interface for this neighbor, please check my_neighbours')
-        
+
         ! adds interface points and removes neighbor flag from edge
         ! assumes NGLLX == NGLLY == NGLLZ
         do k = 1,NGLLX
           select case( iedge )
           case( 1 )
             ! face I == 1, J == 1
-            iglob = ibool(1,1,k,ispec) 
+            iglob = ibool(1,1,k,ispec)
           case( 2 )
             ! face I == 1, J == NGLLY
             iglob = ibool(1,NGLLY,k,ispec)
@@ -1530,18 +1530,18 @@
           nibool_neighbours(icurrent) = nibool_neighbours(icurrent) + 1
           if( nibool_neighbours(icurrent) > max_nibool) &
             call exit_mpi(myrank,'interface edge exceeds max_nibool range')
-            
-          ! stores interface iglob index          
+
+          ! stores interface iglob index
           ibool_neighbours( nibool_neighbours(icurrent),icurrent ) = iglob
-            
+
           ! re-sets flag
           work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )
 
           ! debug
           if( work_test_flag(iglob) < 0 ) call exit_mpi(myrank,'error edge flag')
-          
-        enddo        
-      endif    
+
+        enddo
+      endif
     enddo ! iedge
 
 
@@ -1550,7 +1550,7 @@
 
     ! loops over all corners of element
     do icorner = 1, 8
-    
+
       ! chooses a corner point
       select case( icorner )
       case( 1 )
@@ -1584,7 +1584,7 @@
       ! note: there can be elements which have an edge or corner shared with
       !          other mpi partitions, but have the work_test_flag value already set to zero
       !          since the iglob point was found before.
-      !          also, this check here would suffice to determine the outer flag, but we also include the 
+      !          also, this check here would suffice to determine the outer flag, but we also include the
       !          check everywhere we encounter it too
       if( test_flag(iglob) > 0.5 ) then
         ispec_is_outer = .true.
@@ -1593,10 +1593,10 @@
       ! checks assembled flag on global point
       if( work_test_flag(iglob) > 0 ) then
         ispec_is_outer = .true.
-        
+
         ! rank of neighbor process
         rank = work_test_flag(iglob) - 1
-        
+
         ! checks ranks range
         if( rank < 0 .or. rank >= NPROCTOT_VAL ) then
           print*,'error corner: ',myrank
@@ -1604,18 +1604,18 @@
           print*,'  corner ',icorner
           call exit_mpi(myrank,'error corner neighbor mpi rank')
         endif
-        
+
         ! checks if already stored
         icurrent = 0
         is_done = .false.
         do ii = 1,iinterface
-          if( rank == my_neighbours(ii) ) then 
+          if( rank == my_neighbours(ii) ) then
             icurrent = ii
             is_done = .true.
             exit
           endif
         enddo
-        
+
         ! updates interfaces array
         if( .not. is_done ) then
           iinterface = iinterface + 1
@@ -1627,41 +1627,41 @@
         endif
         if( icurrent == 0 ) &
           call exit_mpi(myrank,'could not find current interface for this neighbor, please check my_neighbours')
-        
+
         ! adds this corner as interface point and removes neighbor flag from face
         ! increases number of total points on this interface
         nibool_neighbours(icurrent) = nibool_neighbours(icurrent) + 1
         if( nibool_neighbours(icurrent) > max_nibool) &
           call exit_mpi(myrank,'interface corner exceeds max_nibool range')
-          
-        ! stores interface iglob index        
+
+        ! stores interface iglob index
         ibool_neighbours( nibool_neighbours(icurrent),icurrent ) = iglob
-            
+
         ! re-sets flag
         work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )
 
         ! debug
         if( work_test_flag(iglob) < 0 ) call exit_mpi(myrank,'error corner flag')
-        
+
       endif
-      
+
     enddo ! icorner
-        
-    ! stores flags for outer elements when recognized as such 
+
+    ! stores flags for outer elements when recognized as such
     ! (inner/outer elements separated for non-blocking mpi communications)
     if( ispec_is_outer ) then
       work_ispec_is_outer(ispec) = .true.
     endif
-    
-  enddo 
+
+  enddo
 
   ! number of outer elements (on MPI interfaces)
   npoin = count( work_ispec_is_outer )
-    
+
   ! debug: user output
   if( myrank == 0 ) then
     write(IMAIN,*) '  interfaces : ',iinterface
-    write(IMAIN,*) '  my_neighbours: ',my_neighbours(1:iinterface)  
+    write(IMAIN,*) '  my_neighbours: ',my_neighbours(1:iinterface)
     write(IMAIN,*) '  nibool_neighbours: ',nibool_neighbours(1:iinterface)
     write(IMAIN,*) '  test flag min/max: ',minval(work_test_flag),maxval(work_test_flag)
     write(IMAIN,*) '  outer elements: ',npoin
@@ -1688,13 +1688,13 @@
   max_nibool_interfaces = maxval( nibool_neighbours(1:num_interfaces) )
 
   ! optional: ibool usually is already sorted,
-  !                this makes sure ibool_neighbours arrays are still sorted 
-  !               (iglob indices in increasing order; we will access acceleration fields accel(:,iglob), 
+  !                this makes sure ibool_neighbours arrays are still sorted
+  !               (iglob indices in increasing order; we will access acceleration fields accel(:,iglob),
   !                thus it helps if iglob strides are short and accesses are close-by)
   do iinterface = 1,num_interfaces
-    npoin = nibool_neighbours(iinterface)    
+    npoin = nibool_neighbours(iinterface)
     call heap_sort( npoin, ibool_neighbours(1:npoin,iinterface) )
-    
+
     ! debug: checks if unique set of iglob values
     do j=1,npoin-1
       if( ibool_neighbours(j,iinterface) == ibool_neighbours(j+1,iinterface) ) then
@@ -1722,9 +1722,9 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
-  use specfem_par_outercore  
+  use specfem_par_outercore
   implicit none
-  
+
   ! local parameters
   real :: percentage_edge
   integer :: ier,ispec,iinner,iouter
@@ -1734,16 +1734,16 @@
   !
   ! note: arrays is_on_a_slice_edge_.. have flags set for elements which need to
   !         communicate with other MPI processes
-  
+
   ! crust_mantle
   nspec_outer_crust_mantle = count( is_on_a_slice_edge_crust_mantle )
   nspec_inner_crust_mantle = NSPEC_CRUST_MANTLE - nspec_outer_crust_mantle
-  
+
   num_phase_ispec_crust_mantle = max(nspec_inner_crust_mantle,nspec_outer_crust_mantle)
-  
+
   allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array phase_ispec_inner_crust_mantle')
-  
+
   phase_ispec_inner_crust_mantle(:,:) = 0
   iinner = 0
   iouter = 0
@@ -1764,10 +1764,10 @@
   nspec_inner_outer_core = NSPEC_OUTER_CORE - nspec_outer_outer_core
 
   num_phase_ispec_outer_core = max(nspec_inner_outer_core,nspec_outer_outer_core)
-  
+
   allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array phase_ispec_inner_outer_core')
-  
+
   phase_ispec_inner_outer_core(:,:) = 0
   iinner = 0
   iouter = 0
@@ -1788,10 +1788,10 @@
   nspec_inner_inner_core = NSPEC_INNER_CORE - nspec_outer_inner_core
 
   num_phase_ispec_inner_core = max(nspec_inner_inner_core,nspec_outer_inner_core)
-  
+
   allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array phase_ispec_inner_inner_core')
-  
+
   phase_ispec_inner_inner_core(:,:) = 0
   iinner = 0
   iouter = 0
@@ -1806,7 +1806,7 @@
       phase_ispec_inner_inner_core(iinner,2) = ispec
     endif
   enddo
-  
+
   ! user output
   if(myrank == 0) then
 
@@ -1832,19 +1832,19 @@
 
   ! debug: saves element flags
   ! crust mantle
-  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_crust_mantle_proc',myrank  
+  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_crust_mantle_proc',myrank
   !call write_VTK_data_elem_l(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
   !                          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
   !                          ibool_crust_mantle, &
-  !                          is_on_a_slice_edge_crust_mantle,filename)  
+  !                          is_on_a_slice_edge_crust_mantle,filename)
   ! outer core
-  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_outer_core_proc',myrank  
+  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_outer_core_proc',myrank
   !call write_VTK_data_elem_l(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
   !                          xstore_outer_core,ystore_outer_core,zstore_outer_core, &
   !                          ibool_outer_core, &
   !                          is_on_a_slice_edge_outer_core,filename)
   ! inner core
-  write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_inner_core_proc',myrank  
+  write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_inner_core_proc',myrank
   call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                             ibool_inner_core, &
@@ -1967,7 +1967,7 @@
 
 
   ! crust and mantle
-  
+
   ! create name of database
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
@@ -2093,7 +2093,7 @@
 
 
   ! outer core
-  
+
   ! create name of database
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
@@ -2261,23 +2261,23 @@
 
 ! heap sort algorithm
 ! sorts integer array (in increasing order, like 1 - 5 - 6 - 9 - 12 - 13 - 14 -...)
-  
+
   implicit none
   integer,intent(in) :: N
   integer,dimension(N),intent(inout) :: array
-  
+
   ! local parameters
   integer :: tmp
   integer :: i
-  
+
   ! checks if anything to do
   if( N < 2 ) return
-  
+
   ! builds heap
-  do i = N/2, 1, -1  
+  do i = N/2, 1, -1
     call heap_sort_siftdown(N,array,i,N)
   enddo
-    
+
   ! sorts array
   do i = N, 2, -1
     ! swaps last and first entry in this section
@@ -2286,45 +2286,45 @@
     array(i) = tmp
     call heap_sort_siftdown(N,array,1,i-1)
   enddo
-  
+
   end subroutine heap_sort
 
 !
 !----
-!  
+!
 
   subroutine heap_sort_siftdown(N,array,start,bottom)
 
   implicit none
-  
+
   integer,intent(in):: N
   integer,dimension(N),intent(inout) :: array
   integer :: start,bottom
-  
+
   ! local parameters
   integer :: i,j
   integer :: tmp
-  
+
   i = start
-  tmp = array(i)  
+  tmp = array(i)
   j = 2*i
   do while( j <= bottom )
     ! chooses larger value first in this section
     if( j < bottom ) then
       if( array(j) <= array(j+1) ) j = j + 1
     endif
-    
+
     ! checks if section already smaller than inital value
     if( array(j) < tmp ) exit
-        
+
     array(i) = array(j)
     i = j
     j = 2*i
   enddo
-  
-  array(i) = tmp      
+
+  array(i) = tmp
   return
-  
+
   end subroutine heap_sort_siftdown
 
 !
@@ -2381,7 +2381,7 @@
     write(IOVTK,'(3e18.6)') xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
   enddo
   write(IOVTK,*) ""
-  
+
   close(IOVTK)
 
   end subroutine write_VTK_data_points
@@ -2438,7 +2438,7 @@
     write(IOVTK,*) glob_values(iglob)
   enddo
   write(IOVTK,*) ""
-  
+
   close(IOVTK)
 
   end subroutine write_VTK_glob_points

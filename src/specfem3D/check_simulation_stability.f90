@@ -31,14 +31,15 @@
                           epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                           epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
-                          myrank) !COMPUTE_AND_STORE_STRAIN,myrank)
+                          myrank)
+
+  use constants
+  use specfem_par,only: GPU_MODE,Mesh_pointer
 
   implicit none
 
   include 'mpif.h'
-  include "constants.h"
   include "precision.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! time step
   integer it,NSTEP,myrank
@@ -71,7 +72,7 @@
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) Usolidnorm,Usolidnorm_all,Ufluidnorm,Ufluidnorm_all
-  real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,strain2_norm,strain2_norm_all
+  real(kind=CUSTOM_REAL) Strain_norm,Strain_norm_all,Strain2_norm,Strain2_norm_all
   real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
   ! names of the data files for all the processors in MPI
   character(len=150) outputname
@@ -98,12 +99,24 @@
 
 
   ! compute maximum of norm of displacement in each slice
-  Usolidnorm = max( &
-      maxval(sqrt(displ_crust_mantle(1,:)**2 + &
-                  displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2)), &
-      maxval(sqrt(displ_inner_core(1,:)**2 + displ_inner_core(2,:)**2 + displ_inner_core(3,:)**2)))
+  if( .not. GPU_MODE) then
+    ! on CPU
+    Usolidnorm = max( &
+        maxval(sqrt(displ_crust_mantle(1,:)**2 + &
+                    displ_crust_mantle(2,:)**2 + &
+                    displ_crust_mantle(3,:)**2)), &
+        maxval(sqrt(displ_inner_core(1,:)**2 + &
+                    displ_inner_core(2,:)**2 + &
+                    displ_inner_core(3,:)**2)))
 
-  Ufluidnorm = maxval(abs(displ_outer_core))
+    Ufluidnorm = maxval(abs(displ_outer_core))
+
+  else
+    ! on GPU
+    ! way 2: just get maximum of fields from GPU
+    call check_norm_elastic_from_device(Usolidnorm,Mesh_pointer,1)
+    call check_norm_acoustic_from_device(Ufluidnorm,Mesh_pointer,1)
+  endif
 
   ! compute the maximum of the maxima for all the slices using an MPI reduction
   call MPI_REDUCE(Usolidnorm,Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
@@ -112,14 +125,21 @@
                       MPI_COMM_WORLD,ier)
 
   if (SIMULATION_TYPE == 3) then
-    b_Usolidnorm = max( &
+    if( .not. GPU_MODE) then
+      ! on CPU
+      b_Usolidnorm = max( &
              maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
                           b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
              maxval(sqrt(b_displ_inner_core(1,:)**2  &
                         + b_displ_inner_core(2,:)**2 &
                         + b_displ_inner_core(3,:)**2)))
 
-    b_Ufluidnorm = maxval(abs(b_displ_outer_core))
+      b_Ufluidnorm = maxval(abs(b_displ_outer_core))
+    else
+      ! on GPU
+      call check_norm_elastic_from_device(b_Usolidnorm,Mesh_pointer,3)
+      call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
+    endif
 
     ! compute the maximum of the maxima for all the slices using an MPI reduction
     call MPI_REDUCE(b_Usolidnorm,b_Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
@@ -129,10 +149,19 @@
   endif
 
   if (COMPUTE_AND_STORE_STRAIN) then
-    Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
-    strain2_norm= max( maxval(abs(epsilondev_xx_crust_mantle)),maxval(abs(epsilondev_yy_crust_mantle)), &
-                       maxval(abs(epsilondev_xy_crust_mantle)),maxval(abs(epsilondev_xz_crust_mantle)), &
-                       maxval(abs(epsilondev_yz_crust_mantle)) )
+    if( .not. GPU_MODE) then
+      ! on CPU
+      Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
+      Strain2_norm= max( maxval(abs(epsilondev_xx_crust_mantle)), &
+                         maxval(abs(epsilondev_yy_crust_mantle)), &
+                         maxval(abs(epsilondev_xy_crust_mantle)), &
+                         maxval(abs(epsilondev_xz_crust_mantle)), &
+                         maxval(abs(epsilondev_yz_crust_mantle)) )
+    else
+      ! on GPU
+      call check_norm_strain_from_device(Strain_norm,Strain2_norm,Mesh_pointer)
+    endif
+
     call MPI_REDUCE(Strain_norm,Strain_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
              MPI_COMM_WORLD,ier)
     call MPI_REDUCE(Strain2_norm,Strain2_norm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &

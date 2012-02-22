@@ -46,12 +46,12 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
                                                int* abs_boundary_ispec,
                                                int* nkmin_xi, int* nkmin_eta,
                                                int* njmin, int* njmax,
-                                               int* nimin, int* nimax,                                               
+                                               int* nimin, int* nimax,
                                                realw* abs_boundary_jacobian2D,
                                                realw* wgllwgll,
                                                int* ibool,
                                                realw* vpstore,
-                                               int SIMULATION_TYPE, 
+                                               int SIMULATION_TYPE,
                                                int SAVE_FORWARD,
                                                realw* b_potential_dot_dot_acoustic,
                                                realw* b_absorb_potential) {
@@ -77,73 +77,73 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
       case 4:
         // xmin
         if( nkmin_xi[INDEX2(2,0,iface)] == 0 || njmin[INDEX2(2,0,iface)] == 0 ) return;
-        
+
         i = 0; // index -1
         k = (igll/NGLLX);
         j = (igll-k*NGLLX);
-        
+
         if( k < nkmin_xi[INDEX2(2,0,iface)]-1 || k > NGLLX-1 ) return;
         if( j < njmin[INDEX2(2,0,iface)]-1 || j > njmax[INDEX2(2,0,iface)]-1 ) return;
-        
+
         fac1 = wgllwgll[k*NGLLX+j];
         break;
-        
+
       case 5:
         // xmax
         if( nkmin_xi[INDEX2(2,1,iface)] == 0 || njmin[INDEX2(2,1,iface)] == 0 ) return;
-        
+
         i = NGLLX-1;
         k = (igll/NGLLX);
         j = (igll-k*NGLLX);
-        
+
         if( k < nkmin_xi[INDEX2(2,1,iface)]-1 || k > NGLLX-1 ) return;
         if( j < njmin[INDEX2(2,1,iface)]-1 || j > njmax[INDEX2(2,1,iface)]-1 ) return;
-        
+
         fac1 = wgllwgll[k*NGLLX+j];
         break;
-        
+
       case 6:
         // ymin
         if( nkmin_eta[INDEX2(2,0,iface)] == 0 || nimin[INDEX2(2,0,iface)] == 0 ) return;
-        
+
         j = 0;
-        k = (igll/NGLLX);        
+        k = (igll/NGLLX);
         i = (igll-k*NGLLX);
-        
+
         if( k < nkmin_eta[INDEX2(2,0,iface)]-1 || k > NGLLX-1 ) return;
         if( i < nimin[INDEX2(2,0,iface)]-1 || i > nimax[INDEX2(2,0,iface)]-1 ) return;
-        
+
         fac1 = wgllwgll[k*NGLLX+i];
         break;
-        
+
       case 7:
         // ymax
         if( nkmin_eta[INDEX2(2,1,iface)] == 0 || nimin[INDEX2(2,1,iface)] == 0 ) return;
-        
+
         j = NGLLX-1;
-        k = (igll/NGLLX);        
+        k = (igll/NGLLX);
         i = (igll-k*NGLLX);
-        
+
         if( k < nkmin_eta[INDEX2(2,1,iface)]-1 || k > NGLLX-1 ) return;
         if( i < nimin[INDEX2(2,1,iface)]-1 || i > nimax[INDEX2(2,1,iface)]-1 ) return;
-        
+
         fac1 = wgllwgll[k*NGLLX+i];
         break;
 
       case 8:
-        // zmin        
+        // zmin
         k = 0;
-        j = (igll/NGLLX);        
+        j = (igll/NGLLX);
         i = (igll-j*NGLLX);
-        
+
         if( j < 0 || j > NGLLX-1 ) return;
         if( i < 0 || i > NGLLX-1 ) return;
-        
+
         fac1 = wgllwgll[j*NGLLX+i];
         break;
-        
+
     }
-    
+
     iglob = ibool[INDEX4(5,5,5,i,j,k,ispec)]-1;
 
     // determines bulk sound speed
@@ -183,9 +183,9 @@ TRACE("compute_stacey_acoustic_cuda");
   realw* d_abs_boundary_jacobian2D;
   realw* d_wgllwgll;
   realw* d_b_absorb_potential;
-  
+
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-  
+
   // absorbing boundary type
   int interface_type = *itype;
   switch( interface_type ){
@@ -197,7 +197,7 @@ TRACE("compute_stacey_acoustic_cuda");
       d_b_absorb_potential = mp->d_absorb_xmin_outer_core;
       d_wgllwgll = mp->d_wgllwgll_yz;
       break;
-      
+
     case 5:
       // xmax
       num_abs_boundary_faces = mp->nspec2D_xmax_outer_core;
@@ -206,22 +206,22 @@ TRACE("compute_stacey_acoustic_cuda");
       d_b_absorb_potential = mp->d_absorb_xmax_outer_core;
       d_wgllwgll = mp->d_wgllwgll_yz;
       break;
-      
+
     case 6:
       // ymin
       num_abs_boundary_faces = mp->nspec2D_ymin_outer_core;
       d_abs_boundary_ispec = mp->d_ibelm_ymin_outer_core;
       d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymin_outer_core;
-      d_b_absorb_potential = mp->d_absorb_ymin_outer_core; 
+      d_b_absorb_potential = mp->d_absorb_ymin_outer_core;
       d_wgllwgll = mp->d_wgllwgll_xz;
       break;
-      
+
     case 7:
       // ymax
       num_abs_boundary_faces = mp->nspec2D_ymax_outer_core;
       d_abs_boundary_ispec = mp->d_ibelm_ymax_outer_core;
       d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymax_outer_core;
-      d_b_absorb_potential = mp->d_absorb_ymax_outer_core; 
+      d_b_absorb_potential = mp->d_absorb_ymax_outer_core;
       d_wgllwgll = mp->d_wgllwgll_xz;
       break;
 
@@ -230,18 +230,18 @@ TRACE("compute_stacey_acoustic_cuda");
       num_abs_boundary_faces = mp->nspec2D_zmin_outer_core;
       d_abs_boundary_ispec = mp->d_ibelm_zmin_outer_core;
       d_abs_boundary_jacobian2D = mp->d_jacobian2D_zmin_outer_core;
-      d_b_absorb_potential = mp->d_absorb_zmin_outer_core; 
+      d_b_absorb_potential = mp->d_absorb_zmin_outer_core;
       d_wgllwgll = mp->d_wgllwgll_xy;
       break;
-      
+
     default:
       exit_on_cuda_error("compute_stacey_acoustic_cuda: unknown interface type");
       break;
   }
 
-  // checks if anything to do  
+  // checks if anything to do
   if( num_abs_boundary_faces == 0 ) return;
-  
+
   // way 1: Elapsed time: 4.385948e-03
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
   //  int blocksize = 32;
@@ -272,11 +272,11 @@ TRACE("compute_stacey_acoustic_cuda");
                                                    num_abs_boundary_faces,
                                                    d_abs_boundary_ispec,
                                                    mp->d_nkmin_xi_outer_core,
-                                                   mp->d_nkmin_eta_outer_core,                                                  
+                                                   mp->d_nkmin_eta_outer_core,
                                                    mp->d_njmin_outer_core,
                                                    mp->d_njmax_outer_core,
                                                    mp->d_nimin_outer_core,
-                                                   mp->d_nimax_outer_core,                                                  
+                                                   mp->d_nimax_outer_core,
                                                    d_abs_boundary_jacobian2D,
                                                    d_wgllwgll,
                                                    mp->d_ibool_outer_core,

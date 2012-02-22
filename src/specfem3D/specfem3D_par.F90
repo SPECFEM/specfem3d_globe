@@ -360,11 +360,11 @@ module specfem_par
   integer :: num_interfaces_outer_core
   integer :: max_nibool_interfaces_outer_core
   integer, dimension(:), allocatable :: my_neighbours_outer_core,nibool_interfaces_outer_core
-  integer, dimension(:,:), allocatable :: ibool_interfaces_outer_core  
+  integer, dimension(:,:), allocatable :: ibool_interfaces_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core
-  
+
   integer, dimension(:), allocatable :: request_send_scalar_outer_core,request_recv_scalar_outer_core
   integer, dimension(:), allocatable :: b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core
 
@@ -548,7 +548,7 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
   integer :: irec_master_noise
   integer :: nspec_top
-  
+
   ! inner / outer elements crust/mantle region
   integer :: num_phase_ispec_crust_mantle
   integer :: nspec_inner_crust_mantle,nspec_outer_crust_mantle

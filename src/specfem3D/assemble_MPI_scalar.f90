@@ -736,7 +736,7 @@
 
   use constants
   use specfem_par,only: Mesh_pointer
-  
+
   implicit none
 
   integer :: NPROC
@@ -799,7 +799,7 @@
 
   use constants
   use specfem_par,only: Mesh_pointer
-  
+
   implicit none
 
   integer :: NPROC
@@ -813,7 +813,7 @@
   integer :: FORWARD_OR_ADJOINT
 
   ! local parameters
-  integer :: iinterface 
+  integer :: iinterface
 
 ! assemble only if more than one partition
   if(NPROC > 1) then

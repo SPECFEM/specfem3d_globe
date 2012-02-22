@@ -94,6 +94,20 @@
 
   ! --- boundary kernels ------
   if (SAVE_BOUNDARY_MESH) then
+
+    ! transfers wavefields onto CPU
+    if( GPU_MODE ) then
+      ! crust/mantle
+      call transfer_accel_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,accel_crust_mantle,Mesh_pointer)
+      call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
+      call transfer_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,Mesh_pointer)
+      ! inner core
+      call transfer_accel_ic_from_device(NDIM*NGLOB_CRUST_MANTLE,accel_inner_core,Mesh_pointer)
+      call transfer_displ_ic_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_inner_core,Mesh_pointer)
+      call transfer_b_displ_ic_from_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_inner_core,Mesh_pointer)
+    endif
+
+    ! updates kernels on CPU
     fluid_solid_boundary = .false.
     iregion_code = IREGION_CRUST_MANTLE
 
@@ -1294,10 +1308,9 @@
                                     accel_crust_mantle,b_accel_crust_mantle, &
                                     deltat)
 
+  use constants
+  use specfem_par,only: GPU_MODE,Mesh_pointer
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
@@ -1314,25 +1327,33 @@
   ! local parameters
   integer :: i,j,k,ispec,iglob
 
-  ! crust_mantle
-  do ispec = 1, NSPEC_CRUST_MANTLE
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool_crust_mantle(i,j,k,ispec)
+  if( .not. GPU_MODE ) then
+    ! on CPU
+    ! crust_mantle
+    do ispec = 1, NSPEC_CRUST_MANTLE
+      do k = 1, NGLLZ
+        do j = 1, NGLLY
+          do i = 1, NGLLX
+            iglob = ibool_crust_mantle(i,j,k,ispec)
 
-          ! approximates hessian
-          ! term with adjoint acceleration and backward/reconstructed acceleration
-          hess_kl_crust_mantle(i,j,k,ispec) =  hess_kl_crust_mantle(i,j,k,ispec) &
-             + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
-             + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
-             + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob) )
+            ! approximates hessian
+            ! term with adjoint acceleration and backward/reconstructed acceleration
+            hess_kl_crust_mantle(i,j,k,ispec) =  hess_kl_crust_mantle(i,j,k,ispec) &
+               + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
+               + accel_crust_mantle(2,iglob) * b_accel_crust_mantle(2,iglob) &
+               + accel_crust_mantle(3,iglob) * b_accel_crust_mantle(3,iglob) )
 
+          enddo
         enddo
       enddo
     enddo
-  enddo
 
+  else
+    ! updates kernels on GPU
+
+    ! computes contribution to density and bulk modulus kernel
+    call compute_kernels_hess_cuda(Mesh_pointer,deltat)
+  endif
 
   end subroutine compute_kernels_hessian
 

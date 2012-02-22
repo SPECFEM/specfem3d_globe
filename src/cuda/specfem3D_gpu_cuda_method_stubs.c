@@ -110,15 +110,20 @@ void FC_FUNC_(check_error_vectors,
 void FC_FUNC_(get_max_accel,
               GET_MAX_ACCEL)(int* itf,int* sizef,long* Mesh_pointer) {} 
 
-void FC_FUNC_(get_norm_acoustic_from_device,
-              GET_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,
+void FC_FUNC_(check_norm_acoustic_from_device,
+              CHECK_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,
                                                   long* Mesh_pointer_f,
                                                   int* SIMULATION_TYPE) {} 
 
-void FC_FUNC_(get_norm_elastic_from_device,
-              GET_NORM_ELASTIC_FROM_DEVICE)(realw* norm,
-                                                 long* Mesh_pointer_f,
-                                                 int* SIMULATION_TYPE) {} 
+void FC_FUNC_(check_norm_elastic_from_device,
+              CHECK_NORM_ELASTIC_FROM_DEVICE)(realw* norm,
+                                              long* Mesh_pointer_f,
+                                              int* SIMULATION_TYPE) {} 
+
+void FC_FUNC_(check_norm_strain_from_device,
+              CHECK_NORM_STRAIN_FROM_DEVICE)(realw* norm_strain,
+                                             realw* norm_strain2,
+                                             long* Mesh_pointer_f) {} 
 
 
 //
@@ -216,9 +221,7 @@ void FC_FUNC_(compute_kernels_acoustic_cuda,
 
 void FC_FUNC_(compute_kernels_hess_cuda,
               COMPUTE_KERNELS_HESS_CUDA)(long* Mesh_pointer,
-                                         realw* deltat_f,
-                                         int* ELASTIC_SIMULATION,
-                                         int* ACOUSTIC_SIMULATION) {} 
+                                         realw* deltat_f) {} 
 
 
 //
@@ -245,24 +248,29 @@ void FC_FUNC_(compute_stacey_elastic_cuda,
 // src/cuda/it_update_displacement_cuda.cu
 //
 
-void FC_FUNC_(it_update_displacement_cuda,
-              IT_UPDATE_DISPLACMENT_CUDA)(long* Mesh_pointer_f,
-                                                 int* size_F,
-                                                 realw* deltat_F,
-                                                 realw* deltatsqover2_F,
-                                                 realw* deltatover2_F,
-                                                 int* SIMULATION_TYPE,
-                                                 realw* b_deltat_F,
-                                                 realw* b_deltatsqover2_F,
-                                                 realw* b_deltatover2_F) {} 
+void FC_FUNC_(it_update_displacement_ic_cuda,
+              IT_UPDATE_DISPLACMENT_IC_CUDA)(long* Mesh_pointer_f,
+                                             realw* deltat_F,
+                                             realw* deltatsqover2_F,
+                                             realw* deltatover2_F,
+                                             realw* b_deltat_F,
+                                             realw* b_deltatsqover2_F,
+                                             realw* b_deltatover2_F) {} 
 
-void FC_FUNC_(it_update_displacement_ac_cuda,
-              it_update_displacement_ac_cuda)(long* Mesh_pointer_f,
-                                               int* size_F,
+void FC_FUNC_(it_update_displacement_cm_cuda,
+              IT_UPDATE_DISPLACMENT_CM_CUDA)(long* Mesh_pointer_f,
+                                             realw* deltat_F,
+                                             realw* deltatsqover2_F,
+                                             realw* deltatover2_F,
+                                             realw* b_deltat_F,
+                                             realw* b_deltatsqover2_F,
+                                             realw* b_deltatover2_F) {} 
+
+void FC_FUNC_(it_update_displacement_oc_cuda,
+              IT_UPDATE_DISPLACEMENT_OC_cuda)(long* Mesh_pointer_f,
                                                realw* deltat_F,
                                                realw* deltatsqover2_F,
                                                realw* deltatover2_F,
-                                               int* SIMULATION_TYPE,
                                                realw* b_deltat_F,
                                                realw* b_deltatsqover2_F,
                                                realw* b_deltatover2_F) {} 
@@ -355,7 +363,8 @@ void FC_FUNC_(prepare_constants_device,
                                         int* ANISOTROPIC_3D_MANTLE_f,
                                         int* ANISOTROPIC_INNER_CORE_f,
                                         int* SAVE_BOUNDARY_MESH_f,
-                                        int* USE_MESH_COLORING_GPU_f) {} 
+                                        int* USE_MESH_COLORING_GPU_f,
+                                        int* APPROXIMATE_HESS_KL_f) {} 
 
 void FC_FUNC_(prepare_fields_rotation_device,
               PREPARE_FIELDS_ROTATION_DEVICE)(long* Mesh_pointer_f,
@@ -713,11 +722,81 @@ void FC_FUNC_(transfer_b_fields_oc_from_device,
 void FC_FUNC_(transfer_accel_cm_to_device,
               TRNASFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
 
+void FC_FUNC_(transfer_displ_cm_from_device,
+              TRANSFER_DISPL_CM_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_b_displ_cm_from_device,
+              TRANSFER_B_DISPL_CM_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_displ_ic_from_device,
+              TRANSFER_DISPL_IC_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_b_displ_ic_from_device,
+              TRANSFER_B_DISPL_IC_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_veloc_cm_from_device,
+              TRANSFER_DISPL_CM_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {} 
+
 void FC_FUNC_(transfer_accel_cm_from_device,
               TRANSFER_ACCEL_CM_FROM_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_b_accel_cm_from_device,
               TRNASFER_B_ACCEL_CM_FROM_DEVICE)(int* size, realw* b_accel,long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_accel_ic_from_device,
+              TRANSFER_ACCEL_IC_FROM_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_strain_cm_from_device,
+              TRANSFER_STRAIN_CM_FROM_DEVICE)(long* Mesh_pointer,
+                                                  realw* eps_trace_over_3,
+                                                  realw* epsilondev_xx,
+                                                  realw* epsilondev_yy,
+                                                  realw* epsilondev_xy,
+                                                  realw* epsilondev_xz,
+                                                  realw* epsilondev_yz) {} 
+
+void FC_FUNC_(transfer_b_strain_cm_to_device,
+              TRANSFER_B_STRAIN_CM_TO_DEVICE)(long* Mesh_pointer,
+                                              realw* epsilondev_xx,
+                                              realw* epsilondev_yy,
+                                              realw* epsilondev_xy,
+                                              realw* epsilondev_xz,
+                                              realw* epsilondev_yz) {} 
+
+void FC_FUNC_(transfer_strain_ic_from_device,
+              TRANSFER_STRAIN_IC_FROM_DEVICE)(long* Mesh_pointer,
+                                              realw* eps_trace_over_3,
+                                              realw* epsilondev_xx,
+                                              realw* epsilondev_yy,
+                                              realw* epsilondev_xy,
+                                              realw* epsilondev_xz,
+                                              realw* epsilondev_yz) {} 
+
+void FC_FUNC_(transfer_b_strain_ic_to_device,
+              TRANSFER_B_STRAIN_IC_TO_DEVICE)(long* Mesh_pointer,
+                                              realw* epsilondev_xx,
+                                              realw* epsilondev_yy,
+                                              realw* epsilondev_xy,
+                                              realw* epsilondev_xz,
+                                              realw* epsilondev_yz) {} 
+
+void FC_FUNC_(transfer_rotation_from_device,
+              TRANSFER_ROTATION_FROM_DEVICE)(long* Mesh_pointer,
+                                             realw* A_array_rotation,
+                                             realw* B_array_rotation) {} 
+
+void FC_FUNC_(transfer_b_rotation_to_device,
+              TRANSFER_B_ROTATION_TO_DEVICE)(long* Mesh_pointer,
+                                              realw* A_array_rotation,
+                                              realw* B_array_rotation) {} 
+
+void FC_FUNC_(transfer_b_att_cm_to_device,
+              TRANSFER_B_ATT_CM_TO_DEVICE)(long* Mesh_pointer,
+                                           realw* R_xx,
+                                           realw* R_yy,
+                                           realw* R_xy,
+                                           realw* R_xz,
+                                           realw* R_yz) {} 
 
 void FC_FUNC_(transfer_sigma_from_device,
               TRANSFER_SIGMA_FROM_DEVICE)(int* size, realw* sigma_kl,long* Mesh_pointer_f) {} 
@@ -834,10 +913,10 @@ void FC_FUNC_(transfer_kernels_ac_to_host,
                                                              realw* h_kappa_ac_kl,
                                                              int* NSPEC_AB) {} 
 
-void FC_FUNC_(transfer_kernels_hess_el_tohost,
-              TRANSFER_KERNELS_HESS_EL_TOHOST)(long* Mesh_pointer,
+void FC_FUNC_(transfer_kernels_hess_cm_tohost,
+              TRANSFER_KERNELS_HESS_CM_TOHOST)(long* Mesh_pointer,
                                               realw* h_hess_kl,
-                                              int* NSPEC_AB) {} 
+                                              int* NSPEC) {} 
 
 void FC_FUNC_(transfer_kernels_hess_ac_tohost,
               TRANSFER_KERNELS_HESS_AC_TOHOST)(long* Mesh_pointer,
@@ -849,12 +928,20 @@ void FC_FUNC_(transfer_kernels_hess_ac_tohost,
 // src/cuda/write_seismograms_cuda.cu
 //
 
-void FC_FUNC_(transfer_station_el_from_device,
-              TRANSFER_STATION_EL_FROM_DEVICE)(realw* displ,realw* veloc,realw* accel,
-                                                   realw* b_displ, realw* b_veloc, realw* b_accel,
-                                                   long* Mesh_pointer_f,int* number_receiver_global,
-                                                   int* ispec_selected_rec,int* ispec_selected_source,
-                                                   int* ibool,int* SIMULATION_TYPEf) {} 
+void FC_FUNC_(write_seismograms_transfer_cuda,
+              WRITE_SEISMOGRAMS_TRANSFER_CUDA)(realw* displ,
+                                               realw* b_displ,
+                                               realw* eps_trace_over_3,
+                                               realw* epsilondev_xx,
+                                               realw* epsilondev_yy,
+                                               realw* epsilondev_xy,
+                                               realw* epsilondev_xz,
+                                               realw* epsilondev_yz,
+                                               long* Mesh_pointer_f,
+                                               int* number_receiver_global,
+                                               int* ispec_selected_rec,
+                                               int* ispec_selected_source,
+                                               int* ibool) {} 
 
 void FC_FUNC_(transfer_station_ac_from_device,
               TRANSFER_STATION_AC_FROM_DEVICE)(

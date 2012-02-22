@@ -409,7 +409,7 @@ void FC_FUNC_(get_free_device_memory,
 // Check functions
 
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(check_max_norm_displ_gpu,
               CHECK_MAX_NORM_DISPL_GPU)(int* size, realw* displ,long* Mesh_pointer_f,int* announceID) {
@@ -426,9 +426,9 @@ TRACE("check_max_norm_displ_gpu");
   }
   printf("%d: maxnorm of forward displ = %e\n",*announceID,maxnorm);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(check_max_norm_vector,
               CHECK_MAX_NORM_VECTOR)(int* size, realw* vector1, int* announceID) {
@@ -451,9 +451,9 @@ TRACE("check_max_norm_vector");
   }
   printf("%d:maxnorm of vector %d [%d] = %e\n",procid,*announceID,maxloc,maxnorm);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(check_max_norm_displ,
               CHECK_MAX_NORM_DISPL)(int* size, realw* displ, int* announceID) {
@@ -467,9 +467,9 @@ TRACE("check_max_norm_displ");
   }
   printf("%d: maxnorm of forward displ = %e\n",*announceID,maxnorm);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(check_max_norm_b_displ_gpu,
               CHECK_MAX_NORM_B_DISPL_GPU)(int* size, realw* b_displ,long* Mesh_pointer_f,int* announceID) {
@@ -494,9 +494,9 @@ TRACE("check_max_norm_b_displ_gpu");
   printf("%d: maxnorm of backward displ = %e\n",*announceID,maxnorm);
   printf("%d: maxnorm of backward accel = %e\n",*announceID,maxnorm_accel);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(check_max_norm_b_accel_gpu,
               CHECK_MAX_NORM_B_ACCEL_GPU)(int* size, realw* b_accel,long* Mesh_pointer_f,int* announceID) {
@@ -514,9 +514,9 @@ TRACE("check_max_norm_b_accel_gpu");
   }
   printf("%d: maxnorm of backward accel = %e\n",*announceID,maxnorm);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(check_max_norm_b_veloc_gpu,
               CHECK_MAX_NORM_B_VELOC_GPU)(int* size, realw* b_veloc,long* Mesh_pointer_f,int* announceID) {
@@ -534,9 +534,9 @@ TRACE("check_max_norm_b_veloc_gpu");
   }
   printf("%d: maxnorm of backward veloc = %e\n",*announceID,maxnorm);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(check_max_norm_b_displ,
               CHECK_MAX_NORM_B_DISPL)(int* size, realw* b_displ,int* announceID) {
@@ -550,9 +550,9 @@ TRACE("check_max_norm_b_displ");
   }
   printf("%d:maxnorm of backward displ = %e\n",*announceID,maxnorm);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(check_max_norm_b_accel,
               CHECK_MAX_NORM_B_ACCEL)(int* size, realw* b_accel,int* announceID) {
@@ -566,9 +566,9 @@ TRACE("check_max_norm_b_accel");
   }
   printf("%d:maxnorm of backward accel = %e\n",*announceID,maxnorm);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(check_error_vectors,
               CHECK_ERROR_VECTORS)(int* sizef, realw* vector1,realw* vector2) {
@@ -607,7 +607,7 @@ TRACE("check_error_vectors");
   }
 
 }
-
+*/
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -617,7 +617,7 @@ TRACE("check_error_vectors");
 
 
 /* ----------------------------------------------------------------------------------------------- */
-
+/*
 extern "C"
 void FC_FUNC_(get_max_accel,
               GET_MAX_ACCEL)(int* itf,int* sizef,long* Mesh_pointer) {
@@ -642,14 +642,14 @@ TRACE("get_max_accel");
   printf("%d/%d: max=%e\n",it,procid,maxval);
   free(accel_cpy);
 }
-
+*/
 /* ----------------------------------------------------------------------------------------------- */
 
 // ACOUSTIC simulations
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void get_maximum_kernel(realw* array, int size, realw* d_max){
+__global__ void get_maximum_scalar_kernel(realw* array, int size, realw* d_max){
 
   /* simplest version: uses only 1 thread
    realw max;
@@ -696,12 +696,12 @@ __global__ void get_maximum_kernel(realw* array, int size, realw* d_max){
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(get_norm_acoustic_from_device,
-              GET_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,
+void FC_FUNC_(check_norm_acoustic_from_device,
+              CHECK_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,
                                                   long* Mesh_pointer_f,
                                                   int* SIMULATION_TYPE) {
 
-TRACE("get_norm_acoustic_from_device");
+TRACE("check_norm_acoustic_from_device");
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
@@ -745,25 +745,19 @@ TRACE("get_norm_acoustic_from_device");
   realw* h_max;
   int blocksize = 256;
 
-  int num_blocks_x = (int) ceil(mp->NGLOB_AB/blocksize);
-  //printf("num_blocks_x %i \n",num_blocks_x);
+  // outer core
+  int size = mp->NGLOB_OUTER_CORE;
+  int num_blocks_x = (int) ceil(size/blocksize);
 
   h_max = (realw*) calloc(num_blocks_x,sizeof(realw));
   cudaMalloc((void**)&d_max,num_blocks_x*sizeof(realw));
-
   dim3 grid(num_blocks_x,1);
   dim3 threads(blocksize,1,1);
 
   if(*SIMULATION_TYPE == 1 ){
-    get_maximum_kernel<<<grid,threads>>>(mp->d_potential_dot_dot_acoustic,
-                                         mp->NGLOB_AB,
-                                         d_max);
-  }
-
-  if(*SIMULATION_TYPE == 3 ){
-    get_maximum_kernel<<<grid,threads>>>(mp->d_b_potential_dot_dot_acoustic,
-                                         mp->NGLOB_AB,
-                                         d_max);
+    get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_displ_outer_core,size,d_max);
+  }else if(*SIMULATION_TYPE == 3 ){
+    get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_b_displ_outer_core,size,d_max);
   }
 
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),222);
@@ -819,7 +813,7 @@ TRACE("get_norm_acoustic_from_device");
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("after get_norm_acoustic_from_device");
+  exit_on_cuda_error("after check_norm_acoustic_from_device");
 #endif
 }
 
@@ -865,45 +859,42 @@ __global__ void get_maximum_vector_kernel(realw* array, int size, realw* d_max){
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(get_norm_elastic_from_device,
-              GET_NORM_ELASTIC_FROM_DEVICE)(realw* norm,
-                                                 long* Mesh_pointer_f,
-                                                 int* SIMULATION_TYPE) {
+void FC_FUNC_(check_norm_elastic_from_device,
+              CHECK_NORM_ELASTIC_FROM_DEVICE)(realw* norm,
+                                              long* Mesh_pointer_f,
+                                              int* SIMULATION_TYPE) {
 
-  TRACE("get_norm_elastic_from_device");
+  TRACE("check_norm_elastic_from_device");
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-  realw max;
-  realw *d_max;
 
-  max = 0;
+  realw max,max_crust_mantle,max_inner_core;
+  realw *d_max;
+  int num_blocks_x,size;
+
 
   // launch simple reduction kernel
   realw* h_max;
   int blocksize = 256;
 
-  int num_blocks_x = (int) ceil(mp->NGLOB_AB/blocksize);
-  //printf("num_blocks_x %i \n",num_blocks_x);
+  // crust_mantle
+  max = 0;
+  size = mp->NGLOB_CRUST_MANTLE;
 
+  num_blocks_x = (int) ceil(size/blocksize);
   h_max = (realw*) calloc(num_blocks_x,sizeof(realw));
   cudaMalloc((void**)&d_max,num_blocks_x*sizeof(realw));
 
-  dim3 grid(num_blocks_x,1);
-  dim3 threads(blocksize,1,1);
-
+  dim3 grid1(num_blocks_x,1);
+  dim3 threads1(blocksize,1,1);
   if(*SIMULATION_TYPE == 1 ){
-    get_maximum_vector_kernel<<<grid,threads>>>(mp->d_displ,
-                                                mp->NGLOB_AB,
-                                                d_max);
+    get_maximum_vector_kernel<<<grid1,threads1>>>(mp->d_displ_crust_mantle,size,d_max);
+  }else if(*SIMULATION_TYPE == 3 ){
+    get_maximum_vector_kernel<<<grid1,threads1>>>(mp->d_b_displ_crust_mantle,size,d_max);
   }
 
-  if(*SIMULATION_TYPE == 3 ){
-    get_maximum_vector_kernel<<<grid,threads>>>(mp->d_b_displ,
-                                                mp->NGLOB_AB,
-                                                d_max);
-  }
-
+  // copies to CPU
   print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),222);
 
   // determines max for all blocks
@@ -911,17 +902,152 @@ void FC_FUNC_(get_norm_elastic_from_device,
   for(int i=1;i<num_blocks_x;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
+  max_crust_mantle = max;
+
+  cudaFree(d_max);
+  free(h_max);
+
+  // inner_core
+  max = 0;
+  size = mp->NGLOB_INNER_CORE;
+
+  num_blocks_x = (int) ceil(size/blocksize);
+  h_max = (realw*) calloc(num_blocks_x,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*sizeof(realw));
+
+  dim3 grid2(num_blocks_x,1);
+  dim3 threads2(blocksize,1,1);
+  if(*SIMULATION_TYPE == 1 ){
+    get_maximum_vector_kernel<<<grid2,threads2>>>(mp->d_displ_inner_core,size,d_max);
+  }else if(*SIMULATION_TYPE == 3 ){
+    get_maximum_vector_kernel<<<grid2,threads2>>>(mp->d_b_displ_inner_core,size,d_max);
+  }
+
+  // copies to CPU
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),222);
+
+  // determines max for all blocks
+  max = h_max[0];
+  for(int i=1;i<num_blocks_x;i++) {
+    if( max < h_max[i]) max = h_max[i];
+  }
+  max_inner_core = max;
 
   cudaFree(d_max);
   free(h_max);
 
   // return result
+  max = MAX(max_inner_core,max_crust_mantle);
   *norm = max;
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("after get_norm_elastic_from_device");
+  exit_on_cuda_error("after check_norm_elastic_from_device");
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(check_norm_strain_from_device,
+              CHECK_NORM_STRAIN_FROM_DEVICE)(realw* norm_strain,
+                                             realw* norm_strain2,
+                                             long* Mesh_pointer_f) {
+
+  TRACE("check_norm_strain_from_device");
+  //double start_time = get_time();
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  realw max,max_eps;
+  realw *d_max;
+  int num_blocks_x,size;
+
+
+  // launch simple reduction kernel
+  realw* h_max;
+  int blocksize = 256;
+
+  // crust_mantle strain arrays
+  size = NGLL3*(mp->NSPEC_CRUST_MANTLE);
+
+  num_blocks_x = (int) ceil(size/blocksize);
+  h_max = (realw*) calloc(num_blocks_x,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*sizeof(realw));
+
+  dim3 grid(num_blocks_x,1);
+  dim3 threads(blocksize,1,1);
+
+  // determines max for: eps_trace_over_3_crust_mantle
+  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_eps_trace_over_3_crust_mantle,size,d_max);
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),221);
+  max = h_max[0];
+  for(int i=1;i<num_blocks_x;i++) {
+    if( max < h_max[i]) max = h_max[i];
+  }
+  // strain trace maximum
+  *norm_strain = max;
+
+  // initializes
+  max_eps = 0.0f;
+
+  // determines max for: epsilondev_xx_crust_mantle
+  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_xx_crust_mantle,size,d_max);
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),222);
+  max = h_max[0];
+  for(int i=1;i<num_blocks_x;i++) {
+    if( max < h_max[i]) max = h_max[i];
+  }
+  max_eps = MAX(max_eps,max);
+
+  // determines max for: epsilondev_yy_crust_mantle
+  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_yy_crust_mantle,size,d_max);
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),223);
+  max = h_max[0];
+  for(int i=1;i<num_blocks_x;i++) {
+    if( max < h_max[i]) max = h_max[i];
+  }
+  max_eps = MAX(max_eps,max);
+
+  // determines max for: epsilondev_xy_crust_mantle
+  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_xy_crust_mantle,size,d_max);
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),224);
+  max = h_max[0];
+  for(int i=1;i<num_blocks_x;i++) {
+    if( max < h_max[i]) max = h_max[i];
+  }
+  max_eps = MAX(max_eps,max);
+
+  // determines max for: epsilondev_xz_crust_mantle
+  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_xz_crust_mantle,size,d_max);
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),225);
+  max = h_max[0];
+  for(int i=1;i<num_blocks_x;i++) {
+    if( max < h_max[i]) max = h_max[i];
+  }
+  max_eps = MAX(max_eps,max);
+
+  // determines max for: epsilondev_yz_crust_mantle
+  get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_yz_crust_mantle,size,d_max);
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),226);
+  max = h_max[0];
+  for(int i=1;i<num_blocks_x;i++) {
+    if( max < h_max[i]) max = h_max[i];
+  }
+  max_eps = MAX(max_eps,max);
+
+  // strain maximum
+  *norm_strain2 = max_eps;
+
+  // frees arrays
+  cudaFree(d_max);
+  free(h_max);
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  //double end_time = get_time();
+  //printf("Elapsed time: %e\n",end_time-start_time);
+  exit_on_cuda_error("after check_norm_strain_from_device");
 #endif
 }
 

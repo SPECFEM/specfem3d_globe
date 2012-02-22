@@ -663,11 +663,11 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
                         );
 
   }
-  
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
   exit_on_cuda_error("compute_forces_outer_core_cuda");
-#endif    
+#endif
 }
 

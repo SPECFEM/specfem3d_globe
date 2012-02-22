@@ -30,12 +30,12 @@
   use specfem_par
   use specfem_par_movie
   implicit none
-  
+
   include 'mpif.h'
 
   ! get MPI starting time
   time_start = MPI_WTIME()
-  
+
   ! user output infos
   call prepare_timerun_user_output()
 
@@ -44,7 +44,7 @@
 
   ! convert x/y/z into r/theta/phi spherical coordinates
   call prepare_timerun_convert_coord()
-  
+
   ! allocate files to save movies
   ! for noise tomography, store_val_x/y/z/ux/uy/uz needed for 'surface movie'
   if(MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0 ) then
@@ -310,13 +310,13 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
-  use specfem_par_outercore  
+  use specfem_par_outercore
   implicit none
 
   ! local parameters
   integer :: i
   real(kind=CUSTOM_REAL) :: rval,thetaval,phival
-  
+
   ! change x, y, z to r, theta and phi once and for all
   ! IMPROVE dangerous: old name kept (xstore ystore zstore) for new values
 
@@ -361,7 +361,7 @@
   use specfem_par
   use specfem_par_movie
   implicit none
-  
+
   ! local parameters
   integer :: ier
 
@@ -415,7 +415,7 @@
   use specfem_par_crustmantle
   use specfem_par_movie
   implicit none
-  
+
   ! local parameters
   integer :: ier
 
@@ -815,7 +815,7 @@
   subroutine prepare_timerun_init_wavefield()
 
 ! initializes arrays
- 
+
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
@@ -1082,7 +1082,8 @@
                                   ANISOTROPIC_3D_MANTLE_VAL, &
                                   ANISOTROPIC_INNER_CORE_VAL, &
                                   SAVE_BOUNDARY_MESH, &
-                                  USE_MESH_COLORING_GPU)
+                                  USE_MESH_COLORING_GPU, &
+                                  APPROXIMATE_HESS_KL)
   call sync_all()
 
   ! prepares rotation arrays
@@ -1209,13 +1210,13 @@
                                     jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core, &
                                     jacobian2D_bottom_outer_core, &
                                     vp_outer_core)
-    
+
   endif
   call sync_all()
-  
+
   ! prepares MPI interfaces
   if(myrank == 0 ) write(IMAIN,*) "  loading mpi interfaces"
-  
+
   call prepare_mpi_buffers_device(Mesh_pointer, &
                                 num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
                                 nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &

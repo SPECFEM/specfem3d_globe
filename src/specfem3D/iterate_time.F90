@@ -100,7 +100,9 @@
     endif
 
     ! write the seismograms with time shift
-    call write_seismograms()
+    if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) ) then
+      call write_seismograms()
+    endif
 
     ! adjoint simulations: kernels
     if( SIMULATION_TYPE == 3 ) then
@@ -116,9 +118,6 @@
     ! modified from the subroutine 'write_movie_surface'
     if ( NOISE_TOMOGRAPHY == 1 ) then
       call noise_save_surface_movie()
-!                              displ_crust_mantle, &
-!                              ibelm_top_crust_mantle,ibool_crust_mantle, &
-!                              NSPEC2D_TOP(IREGION_CRUST_MANTLE),noise_surface_movie,it)
     endif
 
   enddo   ! end of main time loop
@@ -175,7 +174,11 @@
   ! local parameters
   integer :: i
 
-  ! Newmark time scheme update
+  ! updates wavefields
+  if( .not. GPU_MODE) then
+  ! on CPU
+
+    ! Newmark time scheme update
 #ifdef _HANDOPT_NEWMARK
 ! way 2:
 ! One common technique in computational science to help enhance pipelining is loop unrolling
@@ -186,239 +189,262 @@
 ! in most cases a real (CUSTOM_REAL) value will have 4 bytes,
 ! assuming a default cache size of about 128 bytes, we unroll here in steps of 3, thus 29 reals or 118 bytes,
 ! rather than with steps of 4
-  ! mantle
-  if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
-    do i = 1,imodulo_NGLOB_CRUST_MANTLE
+    ! mantle
+    if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
+      do i = 1,imodulo_NGLOB_CRUST_MANTLE
+        displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
+          + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
+
+        veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
+          + deltatover2*accel_crust_mantle(:,i)
+
+        accel_crust_mantle(:,i) = 0._CUSTOM_REAL
+      enddo
+    endif
+    do i = imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE, 3 ! in steps of 3
       displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
         + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
+      displ_crust_mantle(:,i+1) = displ_crust_mantle(:,i+1) &
+        + deltat*veloc_crust_mantle(:,i+1) + deltatsqover2*accel_crust_mantle(:,i+1)
+      displ_crust_mantle(:,i+2) = displ_crust_mantle(:,i+2) &
+        + deltat*veloc_crust_mantle(:,i+2) + deltatsqover2*accel_crust_mantle(:,i+2)
+
 
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
         + deltatover2*accel_crust_mantle(:,i)
+      veloc_crust_mantle(:,i+1) = veloc_crust_mantle(:,i+1) &
+        + deltatover2*accel_crust_mantle(:,i+1)
+      veloc_crust_mantle(:,i+2) = veloc_crust_mantle(:,i+2) &
+        + deltatover2*accel_crust_mantle(:,i+2)
 
+      ! set acceleration to zero
+      ! note: we do initialize acceleration in this loop since it is read already into the cache,
+      !           otherwise it would have to be read in again for this explicitly,
+      !           which would make this step more expensive
       accel_crust_mantle(:,i) = 0._CUSTOM_REAL
+      accel_crust_mantle(:,i+1) = 0._CUSTOM_REAL
+      accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
     enddo
-  endif
-  do i = imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE, 3 ! in steps of 3
-    displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
-      + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
-    displ_crust_mantle(:,i+1) = displ_crust_mantle(:,i+1) &
-      + deltat*veloc_crust_mantle(:,i+1) + deltatsqover2*accel_crust_mantle(:,i+1)
-    displ_crust_mantle(:,i+2) = displ_crust_mantle(:,i+2) &
-      + deltat*veloc_crust_mantle(:,i+2) + deltatsqover2*accel_crust_mantle(:,i+2)
 
+    ! outer core
+    do i=1,NGLOB_OUTER_CORE
+      displ_outer_core(i) = displ_outer_core(i) &
+        + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
 
-    veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
-      + deltatover2*accel_crust_mantle(:,i)
-    veloc_crust_mantle(:,i+1) = veloc_crust_mantle(:,i+1) &
-      + deltatover2*accel_crust_mantle(:,i+1)
-    veloc_crust_mantle(:,i+2) = veloc_crust_mantle(:,i+2) &
-      + deltatover2*accel_crust_mantle(:,i+2)
+      veloc_outer_core(i) = veloc_outer_core(i) &
+        + deltatover2*accel_outer_core(i)
 
-    ! set acceleration to zero
-    ! note: we do initialize acceleration in this loop since it is read already into the cache,
-    !           otherwise it would have to be read in again for this explicitly,
-    !           which would make this step more expensive
-    accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-    accel_crust_mantle(:,i+1) = 0._CUSTOM_REAL
-    accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
-  enddo
+      accel_outer_core(i) = 0._CUSTOM_REAL
+    enddo
 
-  ! outer core
-  do i=1,NGLOB_OUTER_CORE
-    displ_outer_core(i) = displ_outer_core(i) &
-      + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
+    ! inner core
+    if(imodulo_NGLOB_INNER_CORE >= 1) then
+      do i = 1,imodulo_NGLOB_INNER_CORE
+        displ_inner_core(:,i) = displ_inner_core(:,i) &
+          + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
 
-    veloc_outer_core(i) = veloc_outer_core(i) &
-      + deltatover2*accel_outer_core(i)
+        veloc_inner_core(:,i) = veloc_inner_core(:,i) &
+          + deltatover2*accel_inner_core(:,i)
 
-    accel_outer_core(i) = 0._CUSTOM_REAL
-  enddo
-
-  ! inner core
-  if(imodulo_NGLOB_INNER_CORE >= 1) then
-    do i = 1,imodulo_NGLOB_INNER_CORE
+        accel_inner_core(:,i) = 0._CUSTOM_REAL
+      enddo
+    endif
+    do i = imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE, 3 ! in steps of 3
       displ_inner_core(:,i) = displ_inner_core(:,i) &
         + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
+      displ_inner_core(:,i+1) = displ_inner_core(:,i+1) &
+        + deltat*veloc_inner_core(:,i+1) + deltatsqover2*accel_inner_core(:,i+1)
+      displ_inner_core(:,i+2) = displ_inner_core(:,i+2) &
+        + deltat*veloc_inner_core(:,i+2) + deltatsqover2*accel_inner_core(:,i+2)
+
 
       veloc_inner_core(:,i) = veloc_inner_core(:,i) &
         + deltatover2*accel_inner_core(:,i)
+      veloc_inner_core(:,i+1) = veloc_inner_core(:,i+1) &
+        + deltatover2*accel_inner_core(:,i+1)
+      veloc_inner_core(:,i+2) = veloc_inner_core(:,i+2) &
+        + deltatover2*accel_inner_core(:,i+2)
 
       accel_inner_core(:,i) = 0._CUSTOM_REAL
+      accel_inner_core(:,i+1) = 0._CUSTOM_REAL
+      accel_inner_core(:,i+2) = 0._CUSTOM_REAL
     enddo
-  endif
-  do i = imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE, 3 ! in steps of 3
-    displ_inner_core(:,i) = displ_inner_core(:,i) &
-      + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
-    displ_inner_core(:,i+1) = displ_inner_core(:,i+1) &
-      + deltat*veloc_inner_core(:,i+1) + deltatsqover2*accel_inner_core(:,i+1)
-    displ_inner_core(:,i+2) = displ_inner_core(:,i+2) &
-      + deltat*veloc_inner_core(:,i+2) + deltatsqover2*accel_inner_core(:,i+2)
-
-
-    veloc_inner_core(:,i) = veloc_inner_core(:,i) &
-      + deltatover2*accel_inner_core(:,i)
-    veloc_inner_core(:,i+1) = veloc_inner_core(:,i+1) &
-      + deltatover2*accel_inner_core(:,i+1)
-    veloc_inner_core(:,i+2) = veloc_inner_core(:,i+2) &
-      + deltatover2*accel_inner_core(:,i+2)
-
-    accel_inner_core(:,i) = 0._CUSTOM_REAL
-    accel_inner_core(:,i+1) = 0._CUSTOM_REAL
-    accel_inner_core(:,i+2) = 0._CUSTOM_REAL
-  enddo
-
 #else
 ! way 1:
-  ! mantle
-  do i=1,NGLOB_CRUST_MANTLE
-    displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
-      + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
-    veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
-      + deltatover2*accel_crust_mantle(:,i)
-    accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-  enddo
-  ! outer core
-  do i=1,NGLOB_OUTER_CORE
-    displ_outer_core(i) = displ_outer_core(i) &
-      + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
-    veloc_outer_core(i) = veloc_outer_core(i) &
-      + deltatover2*accel_outer_core(i)
-    accel_outer_core(i) = 0._CUSTOM_REAL
-  enddo
-  ! inner core
-  do i=1,NGLOB_INNER_CORE
-    displ_inner_core(:,i) = displ_inner_core(:,i) &
-      + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
-    veloc_inner_core(:,i) = veloc_inner_core(:,i) &
-      + deltatover2*accel_inner_core(:,i)
-    accel_inner_core(:,i) = 0._CUSTOM_REAL
-  enddo
+    ! mantle
+    do i=1,NGLOB_CRUST_MANTLE
+      displ_crust_mantle(:,i) = displ_crust_mantle(:,i) &
+        + deltat*veloc_crust_mantle(:,i) + deltatsqover2*accel_crust_mantle(:,i)
+      veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) &
+        + deltatover2*accel_crust_mantle(:,i)
+      accel_crust_mantle(:,i) = 0._CUSTOM_REAL
+    enddo
+    ! outer core
+    do i=1,NGLOB_OUTER_CORE
+      displ_outer_core(i) = displ_outer_core(i) &
+        + deltat*veloc_outer_core(i) + deltatsqover2*accel_outer_core(i)
+      veloc_outer_core(i) = veloc_outer_core(i) &
+        + deltatover2*accel_outer_core(i)
+      accel_outer_core(i) = 0._CUSTOM_REAL
+    enddo
+    ! inner core
+    do i=1,NGLOB_INNER_CORE
+      displ_inner_core(:,i) = displ_inner_core(:,i) &
+        + deltat*veloc_inner_core(:,i) + deltatsqover2*accel_inner_core(:,i)
+      veloc_inner_core(:,i) = veloc_inner_core(:,i) &
+        + deltatover2*accel_inner_core(:,i)
+      accel_inner_core(:,i) = 0._CUSTOM_REAL
+    enddo
 #endif
 
-
-
-
-  ! backward field
-  if (SIMULATION_TYPE == 3) then
+    ! backward field
+    if (SIMULATION_TYPE == 3) then
 
 #ifdef _HANDOPT_NEWMARK
 ! way 2:
-    ! mantle
-    if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
-      do i=1,imodulo_NGLOB_CRUST_MANTLE
+      ! mantle
+      if(imodulo_NGLOB_CRUST_MANTLE >= 1) then
+        do i=1,imodulo_NGLOB_CRUST_MANTLE
+          b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
+            + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
+          b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
+            + b_deltatover2*b_accel_crust_mantle(:,i)
+          b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
+        enddo
+      endif
+      do i=imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE,3
+        b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
+          + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
+        b_displ_crust_mantle(:,i+1) = b_displ_crust_mantle(:,i+1) &
+          + b_deltat*b_veloc_crust_mantle(:,i+1) + b_deltatsqover2*b_accel_crust_mantle(:,i+1)
+        b_displ_crust_mantle(:,i+2) = b_displ_crust_mantle(:,i+2) &
+          + b_deltat*b_veloc_crust_mantle(:,i+2) + b_deltatsqover2*b_accel_crust_mantle(:,i+2)
+
+
+        b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
+          + b_deltatover2*b_accel_crust_mantle(:,i)
+        b_veloc_crust_mantle(:,i+1) = b_veloc_crust_mantle(:,i+1) &
+          + b_deltatover2*b_accel_crust_mantle(:,i+1)
+        b_veloc_crust_mantle(:,i+2) = b_veloc_crust_mantle(:,i+2) &
+          + b_deltatover2*b_accel_crust_mantle(:,i+2)
+
+        b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
+        b_accel_crust_mantle(:,i+1) = 0._CUSTOM_REAL
+        b_accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
+      enddo
+
+      ! outer core
+      do i=1,NGLOB_OUTER_CORE
+        b_displ_outer_core(i) = b_displ_outer_core(i) &
+          + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
+        b_veloc_outer_core(i) = b_veloc_outer_core(i) &
+          + b_deltatover2*b_accel_outer_core(i)
+        b_accel_outer_core(i) = 0._CUSTOM_REAL
+      enddo
+
+      ! inner core
+      if(imodulo_NGLOB_INNER_CORE >= 1) then
+        do i=1,imodulo_NGLOB_INNER_CORE
+          b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
+            + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
+          b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
+            + b_deltatover2*b_accel_inner_core(:,i)
+          b_accel_inner_core(:,i) = 0._CUSTOM_REAL
+        enddo
+      endif
+      do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
+        b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
+          + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
+        b_displ_inner_core(:,i+1) = b_displ_inner_core(:,i+1) &
+          + b_deltat*b_veloc_inner_core(:,i+1) + b_deltatsqover2*b_accel_inner_core(:,i+1)
+        b_displ_inner_core(:,i+2) = b_displ_inner_core(:,i+2) &
+          + b_deltat*b_veloc_inner_core(:,i+2) + b_deltatsqover2*b_accel_inner_core(:,i+2)
+
+        b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
+          + b_deltatover2*b_accel_inner_core(:,i)
+        b_veloc_inner_core(:,i+1) = b_veloc_inner_core(:,i+1) &
+          + b_deltatover2*b_accel_inner_core(:,i+1)
+        b_veloc_inner_core(:,i+2) = b_veloc_inner_core(:,i+2) &
+          + b_deltatover2*b_accel_inner_core(:,i+2)
+
+        b_accel_inner_core(:,i) = 0._CUSTOM_REAL
+        b_accel_inner_core(:,i+1) = 0._CUSTOM_REAL
+        b_accel_inner_core(:,i+2) = 0._CUSTOM_REAL
+      enddo
+#else
+! way 1:
+      ! mantle
+      do i=1,NGLOB_CRUST_MANTLE
         b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
           + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
         b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
           + b_deltatover2*b_accel_crust_mantle(:,i)
         b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
       enddo
-    endif
-    do i=imodulo_NGLOB_CRUST_MANTLE+1,NGLOB_CRUST_MANTLE,3
-      b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
-        + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
-      b_displ_crust_mantle(:,i+1) = b_displ_crust_mantle(:,i+1) &
-        + b_deltat*b_veloc_crust_mantle(:,i+1) + b_deltatsqover2*b_accel_crust_mantle(:,i+1)
-      b_displ_crust_mantle(:,i+2) = b_displ_crust_mantle(:,i+2) &
-        + b_deltat*b_veloc_crust_mantle(:,i+2) + b_deltatsqover2*b_accel_crust_mantle(:,i+2)
-
-
-      b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
-        + b_deltatover2*b_accel_crust_mantle(:,i)
-      b_veloc_crust_mantle(:,i+1) = b_veloc_crust_mantle(:,i+1) &
-        + b_deltatover2*b_accel_crust_mantle(:,i+1)
-      b_veloc_crust_mantle(:,i+2) = b_veloc_crust_mantle(:,i+2) &
-        + b_deltatover2*b_accel_crust_mantle(:,i+2)
-
-      b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-      b_accel_crust_mantle(:,i+1) = 0._CUSTOM_REAL
-      b_accel_crust_mantle(:,i+2) = 0._CUSTOM_REAL
-    enddo
-
-    ! outer core
-    do i=1,NGLOB_OUTER_CORE
-      b_displ_outer_core(i) = b_displ_outer_core(i) &
-        + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
-      b_veloc_outer_core(i) = b_veloc_outer_core(i) &
-        + b_deltatover2*b_accel_outer_core(i)
-      b_accel_outer_core(i) = 0._CUSTOM_REAL
-    enddo
-
-    ! inner core
-    if(imodulo_NGLOB_INNER_CORE >= 1) then
-      do i=1,imodulo_NGLOB_INNER_CORE
+      ! outer core
+      do i=1,NGLOB_OUTER_CORE
+        b_displ_outer_core(i) = b_displ_outer_core(i) &
+          + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
+        b_veloc_outer_core(i) = b_veloc_outer_core(i) &
+          + b_deltatover2*b_accel_outer_core(i)
+        b_accel_outer_core(i) = 0._CUSTOM_REAL
+      enddo
+      ! inner core
+      do i=1,NGLOB_INNER_CORE
         b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
           + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
         b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
           + b_deltatover2*b_accel_inner_core(:,i)
         b_accel_inner_core(:,i) = 0._CUSTOM_REAL
       enddo
-    endif
-    do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
-      b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
-        + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
-      b_displ_inner_core(:,i+1) = b_displ_inner_core(:,i+1) &
-        + b_deltat*b_veloc_inner_core(:,i+1) + b_deltatsqover2*b_accel_inner_core(:,i+1)
-      b_displ_inner_core(:,i+2) = b_displ_inner_core(:,i+2) &
-        + b_deltat*b_veloc_inner_core(:,i+2) + b_deltatsqover2*b_accel_inner_core(:,i+2)
-
-      b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
-        + b_deltatover2*b_accel_inner_core(:,i)
-      b_veloc_inner_core(:,i+1) = b_veloc_inner_core(:,i+1) &
-        + b_deltatover2*b_accel_inner_core(:,i+1)
-      b_veloc_inner_core(:,i+2) = b_veloc_inner_core(:,i+2) &
-        + b_deltatover2*b_accel_inner_core(:,i+2)
-
-      b_accel_inner_core(:,i) = 0._CUSTOM_REAL
-      b_accel_inner_core(:,i+1) = 0._CUSTOM_REAL
-      b_accel_inner_core(:,i+2) = 0._CUSTOM_REAL
-    enddo
-#else
-! way 1:
-    ! mantle
-    do i=1,NGLOB_CRUST_MANTLE
-      b_displ_crust_mantle(:,i) = b_displ_crust_mantle(:,i) &
-        + b_deltat*b_veloc_crust_mantle(:,i) + b_deltatsqover2*b_accel_crust_mantle(:,i)
-      b_veloc_crust_mantle(:,i) = b_veloc_crust_mantle(:,i) &
-        + b_deltatover2*b_accel_crust_mantle(:,i)
-      b_accel_crust_mantle(:,i) = 0._CUSTOM_REAL
-    enddo
-    ! outer core
-    do i=1,NGLOB_OUTER_CORE
-      b_displ_outer_core(i) = b_displ_outer_core(i) &
-        + b_deltat*b_veloc_outer_core(i) + b_deltatsqover2*b_accel_outer_core(i)
-      b_veloc_outer_core(i) = b_veloc_outer_core(i) &
-        + b_deltatover2*b_accel_outer_core(i)
-      b_accel_outer_core(i) = 0._CUSTOM_REAL
-    enddo
-    ! inner core
-    do i=1,NGLOB_INNER_CORE
-      b_displ_inner_core(:,i) = b_displ_inner_core(:,i) &
-        + b_deltat*b_veloc_inner_core(:,i) + b_deltatsqover2*b_accel_inner_core(:,i)
-      b_veloc_inner_core(:,i) = b_veloc_inner_core(:,i) &
-        + b_deltatover2*b_accel_inner_core(:,i)
-      b_accel_inner_core(:,i) = 0._CUSTOM_REAL
-    enddo
 #endif
-  endif ! SIMULATION_TYPE == 3
+    endif ! SIMULATION_TYPE == 3
+  else
+    ! on GPU
+    ! Includes SIM_TYPE 1 & 3
+
+    ! outer core region
+    call it_update_displacement_oc_cuda(Mesh_pointer, &
+                                       deltat, deltatsqover2, deltatover2, &
+                                       b_deltat, b_deltatsqover2, b_deltatover2)
+    ! inner core region
+    call it_update_displacement_ic_cuda(Mesh_pointer, &
+                                       deltat, deltatsqover2, deltatover2, &
+                                       b_deltat, b_deltatsqover2, b_deltatover2)
+
+    ! crust/mantle region
+    call it_update_displacement_cm_cuda(Mesh_pointer, &
+                                       deltat, deltatsqover2, deltatover2, &
+                                       b_deltat, b_deltatsqover2, b_deltatover2)
+  endif
 
   ! integral of strain for adjoint movie volume
   if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
-!    Iepsilondev_crust_mantle(:,:,:,:,:) = Iepsilondev_crust_mantle(:,:,:,:,:)  &
-!                                            + deltat*epsilondev_crust_mantle(:,:,:,:,:)
+    if( GPU_MODE ) then
+      ! transfers strain arrays onto CPU
+      call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
+                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                         epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                         epsilondev_yz_crust_mantle)
+    endif
+
+    ! updates integral values
     Iepsilondev_crust_mantle(1,:,:,:,:) = Iepsilondev_crust_mantle(1,:,:,:,:)  &
-                                            + deltat*epsilondev_xx_crust_mantle(:,:,:,:)
+                                              + deltat*epsilondev_xx_crust_mantle(:,:,:,:)
     Iepsilondev_crust_mantle(2,:,:,:,:) = Iepsilondev_crust_mantle(2,:,:,:,:)  &
-                                            + deltat*epsilondev_yy_crust_mantle(:,:,:,:)
+                                              + deltat*epsilondev_yy_crust_mantle(:,:,:,:)
     Iepsilondev_crust_mantle(3,:,:,:,:) = Iepsilondev_crust_mantle(3,:,:,:,:)  &
-                                            + deltat*epsilondev_xy_crust_mantle(:,:,:,:)
+                                              + deltat*epsilondev_xy_crust_mantle(:,:,:,:)
     Iepsilondev_crust_mantle(4,:,:,:,:) = Iepsilondev_crust_mantle(4,:,:,:,:)  &
-                                            + deltat*epsilondev_xz_crust_mantle(:,:,:,:)
+                                              + deltat*epsilondev_xz_crust_mantle(:,:,:,:)
     Iepsilondev_crust_mantle(5,:,:,:,:) = Iepsilondev_crust_mantle(5,:,:,:,:)  &
-                                            + deltat*epsilondev_yz_crust_mantle(:,:,:,:)
+                                              + deltat*epsilondev_yz_crust_mantle(:,:,:,:)
 
     Ieps_trace_over_3_crust_mantle(:,:,:,:) = Ieps_trace_over_3_crust_mantle(:,:,:,:) &
-                                            + deltat*eps_trace_over_3_crust_mantle(:,:,:,:)
+                                              + deltat*eps_trace_over_3_crust_mantle(:,:,:,:)
   endif
+
+
 
   end subroutine it_update_displacement_scheme
 
@@ -477,7 +503,61 @@
 ! transfers fields on GPU back onto CPU
 
   use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
   implicit none
+
+  ! to store forward wave fields
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+
+    call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+                                    Mesh_pointer)
+    call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
+                                    displ_inner_core,veloc_inner_core,accel_inner_core, &
+                                    Mesh_pointer)
+    call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
+                                    displ_outer_core,veloc_outer_core,accel_outer_core, &
+                                    Mesh_pointer)
+
+    call transfer_strain_cm_from_device(Mesh_pointer, &
+                                    epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                    epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                    epsilondev_yz_crust_mantle)
+    call transfer_strain_ic_from_device(Mesh_pointer, &
+                                    epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
+                                    epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
+                                    epsilondev_yz_inner_core)
+
+    if (ROTATION_VAL) then
+      call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
+    endif
+
+    ! note: for kernel simulations (SIMULATION_TYPE == 3), attenuation is
+    !          only mimicking effects on phase shifts, but not on amplitudes.
+    !          flag USE_ATTENUATION_MIMIC will have to be set to true in this case.
+    !
+    ! arrays b_R_xx, ... are not used when USE_ATTENUATION_MIMIC is set,
+    ! therefore no need to transfer arrays from GPU to CPU
+    !if (ATTENUATION) then
+    !endif
+
+  else if (SIMULATION_TYPE == 3) then
+    ! to store kernels
+    !call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
+    !call transfer_kernels_el_to_host(Mesh_pointer,rho_kl,mu_kl,kappa_kl,NSPEC_AB)
+
+    ! specific noise strength kernel
+    if( NOISE_TOMOGRAPHY == 3 ) then
+      !call transfer_kernels_noise_to_host(Mesh_pointer,Sigma_kl,NSPEC_AB)
+    endif
+
+    ! approximative hessian for preconditioning kernels
+    if ( APPROXIMATE_HESS_KL ) then
+      call transfer_kernels_hess_cm_tohost(Mesh_pointer,hess_kl_crust_mantle,NSPEC_CRUST_MANTLE)
+    endif
+  endif
 
   ! frees allocated memory on GPU
   call prepare_cleanup_device(Mesh_pointer)

@@ -42,6 +42,14 @@
   ! save movie on surface
   if( MOVIE_SURFACE ) then
     if( mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
+
+      ! gets resulting array values onto CPU
+      if( GPU_MODE ) then
+        ! transfers whole fields
+        call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
+        call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
+      endif
+
       ! save velocity here to avoid static offset on displacement for movies
       call write_movie_surface(myrank,nmovie_points,scale_veloc,veloc_crust_mantle, &
                     scale_displ,displ_crust_mantle, &
@@ -62,7 +70,18 @@
     if( mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0  &
       .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 
-      if (MOVIE_VOLUME_TYPE == 1) then  ! output strains
+      select case( MOVIE_VOLUME_TYPE )
+      case( 1 )
+        ! output strains
+
+        ! gets resulting array values onto CPU
+        if( GPU_MODE ) then
+          call transfer_strain_cm_from_device(Mesh_pointer, &
+                                eps_trace_over_3_crust_mantle, &
+                                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                epsilondev_yz_crust_mantle)
+        endif
 
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
@@ -72,7 +91,7 @@
                     muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
-      else if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then
+      case( 2, 3 )
         ! output the Time Integral of Strain, or \mu*TIS
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
@@ -80,7 +99,30 @@
                     muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
-      else if (MOVIE_VOLUME_TYPE == 4) then ! output divergence and curl in whole volume
+      case( 4 )
+        ! output divergence and curl in whole volume
+
+        ! gets resulting array values onto CPU
+        if( GPU_MODE ) then
+          ! strains
+          call transfer_strain_cm_from_device(Mesh_pointer, &
+                                eps_trace_over_3_crust_mantle, &
+                                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                epsilondev_yz_crust_mantle)
+          call transfer_strain_ic_from_device(Mesh_pointer, &
+                                eps_trace_over_3_inner_core, &
+                                epsilondev_xx_inner_core,epsilondev_yy_inner_core, &
+                                epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
+                                epsilondev_yz_inner_core)
+          ! wavefields
+          call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
+                                displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
+          call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
+                                displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
+          call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
+                                displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
+        endif
 
         call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
                         div_displ_outer_core, &
@@ -96,25 +138,34 @@
                         accel_crust_mantle,accel_inner_core, &
                         ibool_crust_mantle,ibool_inner_core)
 
-      else if (MOVIE_VOLUME_TYPE == 5) then !output displacement
+      case( 5 )
+        !output displacement
+        if( GPU_MODE ) then
+          call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
+        endif
+
         scalingval = scale_displ
         call write_movie_volume_vector(myrank,it,npoints_3dmovie, &
                     LOCAL_PATH,MOVIE_VOLUME_TYPE, &
                     MOVIE_COARSE,ibool_crust_mantle,displ_crust_mantle, &
                     scalingval,mask_3dmovie,nu_3dmovie)
 
-      else if (MOVIE_VOLUME_TYPE == 6) then !output velocity
+      case( 6 )
+        !output velocity
+        if( GPU_MODE ) then
+          call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
+        endif
+
         scalingval = scale_veloc
         call write_movie_volume_vector(myrank,it,npoints_3dmovie, &
                     LOCAL_PATH,MOVIE_VOLUME_TYPE, &
                     MOVIE_COARSE,ibool_crust_mantle,veloc_crust_mantle, &
                     scalingval,mask_3dmovie,nu_3dmovie)
 
-      else
-
+      case default
         call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be 1,2,3,4,5 or 6')
+      end select ! MOVIE_VOLUME_TYPE
 
-      endif ! MOVIE_VOLUME_TYPE
     endif
   endif ! MOVIE_VOLUME
 
