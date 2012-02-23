@@ -1072,18 +1072,15 @@
                                   NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                   NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                                  SIMULATION_TYPE, &
-                                  NOISE_TOMOGRAPHY, &
-                                  SAVE_FORWARD, &
-                                  ABSORBING_CONDITIONS, &
+                                  SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
+                                  SAVE_FORWARD,ABSORBING_CONDITIONS, &
                                   GRAVITY_VAL,ROTATION_VAL, &
                                   ATTENUATION_VAL,USE_ATTENUATION_MIMIC, &
                                   COMPUTE_AND_STORE_STRAIN, &
-                                  ANISOTROPIC_3D_MANTLE_VAL, &
-                                  ANISOTROPIC_INNER_CORE_VAL, &
+                                  ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
                                   SAVE_BOUNDARY_MESH, &
                                   USE_MESH_COLORING_GPU, &
-                                  APPROXIMATE_HESS_KL)
+                                  ANISOTROPIC_KL,APPROXIMATE_HESS_KL)
   call sync_all()
 
   ! prepares rotation arrays

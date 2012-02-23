@@ -250,6 +250,10 @@ typedef struct mesh_ {
   realw* d_b_eps_trace_over_3_crust_mantle;
 
   // kernels
+  realw* d_rho_kl_crust_mantle;
+  realw* d_alpha_kl_crust_mantle;
+  realw* d_beta_kl_crust_mantle;
+  realw* d_cijkl_kl_crust_mantle;
   realw* d_hess_kl_crust_mantle;
 
   // inner / outer elements
@@ -290,6 +294,10 @@ typedef struct mesh_ {
   realw* d_displ_outer_core; realw* d_veloc_outer_core; realw* d_accel_outer_core;
   // backward/reconstructed elastic wavefield
   realw* d_b_displ_outer_core; realw* d_b_veloc_outer_core; realw* d_b_accel_outer_core;
+
+  // kernels
+  realw* d_rho_kl_outer_core;
+  realw* d_alpha_kl_outer_core;
 
   // inner / outer elements
   int* d_phase_ispec_inner_outer_core;
@@ -371,6 +379,11 @@ typedef struct mesh_ {
   realw* d_eps_trace_over_3_inner_core;
   realw* d_b_eps_trace_over_3_inner_core;
 
+  // kernels
+  realw* d_rho_kl_inner_core;
+  realw* d_alpha_kl_inner_core;
+  realw* d_beta_kl_inner_core;
+
   // inner / outer elements
   int* d_phase_ispec_inner_inner_core;
   int num_phase_ispec_inner_core;
@@ -420,6 +433,8 @@ typedef struct mesh_ {
   int rotation;
   int anisotropic_inner_core;
   int save_boundary_mesh;
+
+  int anisotropic_kl;
   int approximate_hess_kl;
 
   // ------------------------------------------------------------------ //
