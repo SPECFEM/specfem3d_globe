@@ -205,19 +205,19 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
 // src/cuda/compute_kernels_cuda.cu
 //
 
-void FC_FUNC_(compute_kernels_elastic_cuda,
-              COMPUTE_KERNELS_ELASTIC_CUDA)(long* Mesh_pointer,
-                                            realw* deltat_f) {} 
+void FC_FUNC_(compute_kernels_cm_cuda,
+              COMPUTE_KERNELS_CM_CUDA)(long* Mesh_pointer,realw* deltat_f) {} 
+
+void FC_FUNC_(compute_kernels_ic_cuda,
+              COMPUTE_KERNELS_IC_CUDA)(long* Mesh_pointer,realw* deltat_f) {} 
+
+void FC_FUNC_(compute_kernels_oc_cuda,
+              COMPUTE_KERNELS_OC_CUDA)(long* Mesh_pointer,realw* deltat_f) {} 
 
 void FC_FUNC_(compute_kernels_strgth_noise_cu,
               COMPUTE_KERNELS_STRGTH_NOISE_CU)(long* Mesh_pointer,
-                                                    realw* h_noise_surface_movie,
-                                                    realw* deltat) {} 
-
-void FC_FUNC_(compute_kernels_acoustic_cuda,
-              COMPUTE_KERNELS_ACOUSTIC_CUDA)(
-                                             long* Mesh_pointer,
-                                             realw* deltat_f) {} 
+                                               realw* h_noise_surface_movie,
+                                               realw* deltat_f) {} 
 
 void FC_FUNC_(compute_kernels_hess_cuda,
               COMPUTE_KERNELS_HESS_CUDA)(long* Mesh_pointer,
@@ -364,6 +364,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* ANISOTROPIC_INNER_CORE_f,
                                         int* SAVE_BOUNDARY_MESH_f,
                                         int* USE_MESH_COLORING_GPU_f,
+                                        int* ANISOTROPIC_KL_f,
                                         int* APPROXIMATE_HESS_KL_f) {} 
 
 void FC_FUNC_(prepare_fields_rotation_device,
@@ -486,6 +487,18 @@ void FC_FUNC_(prepare_mpi_buffers_device,
                                           int* ibool_interfaces_outer_core
                                           ){} 
 
+void FC_FUNC_(prepare_fields_noise_device,
+              PREPARE_FIELDS_NOISE_DEVICE)(long* Mesh_pointer_f,
+                                           int* nspec_top,
+                                           int* ibelm_top_crust_mantle,
+                                           int* NSTEP,
+                                           realw* noise_sourcearray,
+                                           realw* normal_x_noise,
+                                           realw* normal_y_noise,
+                                           realw* normal_z_noise,
+                                           realw* mask_noise,
+                                           realw* jacobian2D_top_crust_mantle) {} 
+
 void FC_FUNC_(prepare_crust_mantle_device,
               PREPARE_CRUST_MANTLE_DEVICE)(long* Mesh_pointer_f,
                                         realw* h_xix, realw* h_xiy, realw* h_xiz,
@@ -542,41 +555,7 @@ void FC_FUNC_(prepare_inner_core_device,
                                            int* num_phase_ispec,
                                            int* phase_ispec_inner,
                                            int* nspec_outer,
-                                           int* nspec_inner
-                                           //int* iboolleft_xi, int* iboolright_xi,
-                                           //int* iboolleft_eta, int* iboolright_eta,
-                                           //int* npoin2D_xi, int* npoin2D_eta
-                                           ) {} 
-
-void FC_FUNC_(prepare_fields_acoustic_device,
-              PREPARE_FIELDS_ACOUSTIC_DEVICE)(long* Mesh_pointer_f,
-                                              realw* rmass_acoustic,
-                                              realw* rhostore,
-                                              realw* kappastore,
-                                              int* num_phase_ispec_acoustic,
-                                              int* phase_ispec_inner_acoustic,
-                                              int* ispec_is_acoustic,
-                                              int* NOISE_TOMOGRAPHY,
-                                              int* num_free_surface_faces,
-                                              int* free_surface_ispec,
-                                              int* free_surface_ijk,
-                                              int* ABSORBING_CONDITIONS,
-                                              int* b_reclen_potential,
-                                              realw* b_absorb_potential,
-                                              int* ELASTIC_SIMULATION,
-                                              int* num_coupling_ac_el_faces,
-                                              int* coupling_ac_el_ispec,
-                                              int* coupling_ac_el_ijk,
-                                              realw* coupling_ac_el_normal,
-                                              realw* coupling_ac_el_jacobian2Dw,
-                                              int* num_colors_outer_acoustic,
-                                              int* num_colors_inner_acoustic,
-                                              int* num_elem_colors_acoustic) {} 
-
-void FC_FUNC_(prepare_fields_acoustic_adj_dev,
-              PREPARE_FIELDS_ACOUSTIC_ADJ_DEV)(long* Mesh_pointer_f,
-                                              int* SIMULATION_TYPE,
-                                              int* APPROXIMATE_HESS_KL) {} 
+                                           int* nspec_inner) {} 
 
 void FC_FUNC_(prepare_fields_elastic_device,
               PREPARE_FIELDS_ELASTIC_DEVICE)(long* Mesh_pointer_f,
@@ -632,42 +611,6 @@ void FC_FUNC_(prepare_fields_elastic_device,
                                              realw *c55store,
                                              realw *c56store,
                                              realw *c66store){} 
-
-void FC_FUNC_(prepare_fields_elastic_adj_dev,
-              PREPARE_FIELDS_ELASTIC_ADJ_DEV)(long* Mesh_pointer_f,
-                                             int* size,
-                                             int* SIMULATION_TYPE,
-                                             int* COMPUTE_AND_STORE_STRAIN,
-                                             realw* epsilon_trace_over_3,
-                                             realw* b_epsilondev_xx,realw* b_epsilondev_yy,realw* b_epsilondev_xy,
-                                             realw* b_epsilondev_xz,realw* b_epsilondev_yz,
-                                             realw* b_epsilon_trace_over_3,
-                                             int* ATTENUATION,
-                                             int* R_size,
-                                             realw* b_R_xx,realw* b_R_yy,realw* b_R_xy,realw* b_R_xz,realw* b_R_yz,
-                                             realw* b_alphaval,realw* b_betaval,realw* b_gammaval,
-                                             int* APPROXIMATE_HESS_KL){} 
-
-void FC_FUNC_(prepare_sim2_or_3_const_device,
-              PREPARE_SIM2_OR_3_CONST_DEVICE)(
-                                              long* Mesh_pointer_f,
-                                              int* islice_selected_rec,
-                                              int* islice_selected_rec_size,
-                                              int* nadj_rec_local,
-                                              int* nrec,
-                                              int* myrank) {} 
-
-void FC_FUNC_(prepare_fields_noise_device,
-              PREPARE_FIELDS_NOISE_DEVICE)(long* Mesh_pointer_f,
-                                           int* nspec_top,
-                                           int* ibelm_top_crust_mantle,
-                                           int* NSTEP,
-                                           realw* noise_sourcearray,
-                                           realw* normal_x_noise,
-                                           realw* normal_y_noise,
-                                           realw* normal_z_noise,
-                                           realw* mask_noise,
-                                           realw* jacobian2D_top_crust_mantle) {} 
 
 void FC_FUNC_(prepare_cleanup_device,
               PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer_f) {} 
@@ -734,6 +677,12 @@ void FC_FUNC_(transfer_displ_ic_from_device,
 void FC_FUNC_(transfer_b_displ_ic_from_device,
               TRANSFER_B_DISPL_IC_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
 
+void FC_FUNC_(transfer_displ_oc_from_device,
+              TRANSFER_DISPL_OC_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_b_displ_oc_from_device,
+              TRANSFER_B_DISPL_OC_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
+
 void FC_FUNC_(transfer_veloc_cm_from_device,
               TRANSFER_DISPL_CM_FROM_DEVICE)(int* size, realw* veloc, long* Mesh_pointer_f) {} 
 
@@ -745,6 +694,9 @@ void FC_FUNC_(transfer_b_accel_cm_from_device,
 
 void FC_FUNC_(transfer_accel_ic_from_device,
               TRANSFER_ACCEL_IC_FROM_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_accel_oc_from_device,
+              TRANSFER_ACCEL_OC_FROM_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_strain_cm_from_device,
               TRANSFER_STRAIN_CM_FROM_DEVICE)(long* Mesh_pointer,
@@ -790,138 +742,36 @@ void FC_FUNC_(transfer_b_rotation_to_device,
                                               realw* A_array_rotation,
                                               realw* B_array_rotation) {} 
 
-void FC_FUNC_(transfer_b_att_cm_to_device,
-              TRANSFER_B_ATT_CM_TO_DEVICE)(long* Mesh_pointer,
-                                           realw* R_xx,
-                                           realw* R_yy,
-                                           realw* R_xy,
-                                           realw* R_xz,
-                                           realw* R_yz) {} 
+void FC_FUNC_(transfer_kernels_cm_to_host,
+              TRANSFER_KERNELS_CM_TO_HOST)(long* Mesh_pointer,
+                                           realw* h_rho_kl,
+                                           realw* h_alpha_kl,
+                                           realw* h_beta_kl,
+                                           realw* h_cijkl_kl,
+                                           int* NSPEC) {} 
 
-void FC_FUNC_(transfer_sigma_from_device,
-              TRANSFER_SIGMA_FROM_DEVICE)(int* size, realw* sigma_kl,long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_b_displ_from_device,
-              TRANSFER_B_DISPL_FROM_DEVICE)(int* size, realw* displ,long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_displ_from_device,
-              TRANSFER_DISPL_FROM_DEVICE)(int* size, realw* displ,long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_compute_kernel_answers_from_device,
-              TRANSFER_COMPUTE_KERNEL_ANSWERS_FROM_DEVICE)(long* Mesh_pointer,
-                                                           realw* rho_kl,int* size_rho,
-                                                           realw* mu_kl, int* size_mu,
-                                                           realw* kappa_kl, int* size_kappa) {} 
-
-void FC_FUNC_(transfer_compute_kernel_fields_from_device,
-              TRANSFER_COMPUTE_KERNEL_FIELDS_FROM_DEVICE)(long* Mesh_pointer,
-                                                          realw* accel, int* size_accel,
-                                                          realw* b_displ, int* size_b_displ,
-                                                          realw* epsilondev_xx,
-                                                          realw* epsilondev_yy,
-                                                          realw* epsilondev_xy,
-                                                          realw* epsilondev_xz,
-                                                          realw* epsilondev_yz,
-                                                          int* size_epsilondev,
-                                                          realw* b_epsilondev_xx,
-                                                          realw* b_epsilondev_yy,
-                                                          realw* b_epsilondev_xy,
-                                                          realw* b_epsilondev_xz,
-                                                          realw* b_epsilondev_yz,
-                                                          int* size_b_epsilondev,
-                                                          realw* rho_kl,int* size_rho,
-                                                          realw* mu_kl, int* size_mu,
-                                                          realw* kappa_kl, int* size_kappa,
-                                                          realw* epsilon_trace_over_3,
-                                                          realw* b_epsilon_trace_over_3,
-                                                          int* size_epsilon_trace_over_3) {} 
-
-void FC_FUNC_(transfer_b_fields_att_to_device,
-              TRANSFER_B_FIELDS_ATT_TO_DEVICE)(long* Mesh_pointer,
-                                             realw* b_R_xx,realw* b_R_yy,realw* b_R_xy,realw* b_R_xz,realw* b_R_yz,
-                                             int* size_R,
-                                             realw* b_epsilondev_xx,
-                                             realw* b_epsilondev_yy,
-                                             realw* b_epsilondev_xy,
-                                             realw* b_epsilondev_xz,
-                                             realw* b_epsilondev_yz,
-                                             int* size_epsilondev) {} 
-
-void FC_FUNC_(transfer_fields_att_from_device,
-              TRANSFER_FIELDS_ATT_FROM_DEVICE)(long* Mesh_pointer,
-                                               realw* R_xx,realw* R_yy,realw* R_xy,realw* R_xz,realw* R_yz,
-                                               int* size_R,
-                                               realw* epsilondev_xx,
-                                               realw* epsilondev_yy,
-                                               realw* epsilondev_xy,
-                                               realw* epsilondev_xz,
-                                               realw* epsilondev_yz,
-                                               int* size_epsilondev) {} 
-
-void FC_FUNC_(transfer_kernels_el_to_host,
-              TRANSFER_KERNELS_EL_TO_HOST)(long* Mesh_pointer,
+void FC_FUNC_(transfer_kernels_ic_to_host,
+              TRANSFER_KERNELS_IC_TO_HOST)(long* Mesh_pointer,
                                                     realw* h_rho_kl,
-                                                    realw* h_mu_kl,
-                                                    realw* h_kappa_kl,
-                                                    int* NSPEC_AB) {} 
+                                                    realw* h_alpha_kl,
+                                                    realw* h_beta_kl,
+                                                    int* NSPEC) {} 
+
+void FC_FUNC_(transfer_kernels_oc_to_host,
+              TRANSFER_KERNELS_OC_TO_HOST)(long* Mesh_pointer,
+                                           realw* h_rho_kl,
+                                           realw* h_alpha_kl,
+                                           int* NSPEC) {} 
 
 void FC_FUNC_(transfer_kernels_noise_to_host,
               TRANSFER_KERNELS_NOISE_TO_HOST)(long* Mesh_pointer,
-                                                          realw* h_Sigma_kl,
-                                                          int* NSPEC_AB) {} 
-
-void FC_FUNC_(transfer_fields_ac_to_device,
-              TRANSFER_FIELDS_AC_TO_DEVICE)(
-                                                  int* size,
-                                                  realw* potential_acoustic,
-                                                  realw* potential_dot_acoustic,
-                                                  realw* potential_dot_dot_acoustic,
-                                                  long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_b_fields_ac_to_device,
-              TRANSFER_B_FIELDS_AC_TO_DEVICE)(
-                                                    int* size,
-                                                    realw* b_potential_acoustic,
-                                                    realw* b_potential_dot_acoustic,
-                                                    realw* b_potential_dot_dot_acoustic,
-                                                    long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_fields_ac_from_device,TRANSFER_FIELDS_AC_FROM_DEVICE)(
-                                                                                         int* size,
-                                                                                         realw* potential_acoustic,
-                                                                                         realw* potential_dot_acoustic,
-                                                                                         realw* potential_dot_dot_acoustic,
-                                                                                         long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_b_fields_ac_from_device,
-              TRANSFER_B_FIELDS_AC_FROM_DEVICE)(
-                                                      int* size,
-                                                      realw* b_potential_acoustic,
-                                                      realw* b_potential_dot_acoustic,
-                                                      realw* b_potential_dot_dot_acoustic,
-                                                      long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_dot_dot_from_device,
-              TRNASFER_DOT_DOT_FROM_DEVICE)(int* size, realw* potential_dot_dot_acoustic,long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_b_dot_dot_from_device,
-              TRNASFER_B_DOT_DOT_FROM_DEVICE)(int* size, realw* b_potential_dot_dot_acoustic,long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_kernels_ac_to_host,
-              TRANSFER_KERNELS_AC_TO_HOST)(long* Mesh_pointer,
-                                                             realw* h_rho_ac_kl,
-                                                             realw* h_kappa_ac_kl,
-                                                             int* NSPEC_AB) {} 
+                                              realw* h_Sigma_kl,
+                                              int* NSPEC) {} 
 
 void FC_FUNC_(transfer_kernels_hess_cm_tohost,
               TRANSFER_KERNELS_HESS_CM_TOHOST)(long* Mesh_pointer,
                                               realw* h_hess_kl,
                                               int* NSPEC) {} 
-
-void FC_FUNC_(transfer_kernels_hess_ac_tohost,
-              TRANSFER_KERNELS_HESS_AC_TOHOST)(long* Mesh_pointer,
-                                             realw* h_hess_ac_kl,
-                                             int* NSPEC_AB) {} 
 
 
 //

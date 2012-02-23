@@ -545,12 +545,22 @@
 
   else if (SIMULATION_TYPE == 3) then
     ! to store kernels
-    !call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
-    !call transfer_kernels_el_to_host(Mesh_pointer,rho_kl,mu_kl,kappa_kl,NSPEC_AB)
+    call transfer_kernels_oc_to_host(Mesh_pointer, &
+                                    rho_kl_outer_core,&
+                                    alpha_kl_outer_core,NSPEC_OUTER_CORE)
+    call transfer_kernels_cm_to_host(Mesh_pointer, &
+                                    rho_kl_crust_mantle, &
+                                    alpha_kl_crust_mantle, &
+                                    beta_kl_crust_mantle, &
+                                    cijkl_kl_crust_mantle,NSPEC_CRUST_MANTLE)
+    call transfer_kernels_ic_to_host(Mesh_pointer, &
+                                    rho_kl_inner_core, &
+                                    alpha_kl_inner_core, &
+                                    beta_kl_inner_core,NSPEC_INNER_CORE)
 
     ! specific noise strength kernel
     if( NOISE_TOMOGRAPHY == 3 ) then
-      !call transfer_kernels_noise_to_host(Mesh_pointer,Sigma_kl,NSPEC_AB)
+      call transfer_kernels_noise_to_host(Mesh_pointer,Sigma_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
 
     ! approximative hessian for preconditioning kernels

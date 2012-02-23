@@ -25,15 +25,12 @@
 !
 !=====================================================================
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
-
 ! subroutine for NOISE TOMOGRAPHY
 ! chracterize noise statistics
 ! for a given point (xcoord,ycoord,zcoord), specify the noise direction "normal_x/y/z_noise"
 !     and noise distribution "mask_noise"
 ! USERS need to modify this subroutine for their own noise characteristics
+
   subroutine noise_distribution_direction(xcoord_in,ycoord_in,zcoord_in, &
                   normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
                   mask_noise_out)
@@ -69,12 +66,13 @@
 
   end subroutine noise_distribution_direction
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! read parameters
+
   subroutine read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
                                    islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
                                    noise_sourcearray,xigll,yigll,zigll,nspec_top, &
@@ -218,12 +216,13 @@
 
   end subroutine read_parameters_noise
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! check for consistency of the parameters
+
   subroutine check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                                     NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
                                     SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
@@ -313,12 +312,14 @@
 
   end subroutine check_parameters_noise
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
-! read and construct the "source" (source time function based upon noise spectrum) for "ensemble forward source"
+! read and construct the "source" (source time function based upon noise spectrum)
+! for "ensemble forward source"
+
   subroutine compute_arrays_source_noise(myrank, &
                                          xi_noise,eta_noise,gamma_noise,nu_single,noise_sourcearray, &
                                          xigll,yigll,zigll,NSTEP)
@@ -403,13 +404,14 @@
 
   end subroutine compute_arrays_source_noise
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 1: calculate the "ensemble forward source"
 ! add noise spectrum to the location of master receiver
+
   subroutine noise_add_source_master_rec()
 
 ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
@@ -447,9 +449,9 @@
 
   end subroutine noise_add_source_master_rec
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 1: calculate the "ensemble forward source"
@@ -496,9 +498,9 @@
   end subroutine noise_save_surface_movie
 
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 2/3: calculate/reconstructe the "ensemble forward wavefield"
@@ -518,7 +520,6 @@
 
   use specfem_par
   use specfem_par_crustmantle
-
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE),intent(inout) :: accel
@@ -574,9 +575,9 @@
   end subroutine noise_read_add_surface_movie
 
 
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 3: constructing noise source strength kernel
@@ -589,29 +590,28 @@
 ! by this modification, the efficiency is greatly improved
 ! and now, it should be OK to run NOISE_TOMOGRAPHY on a cluster with global storage
 
-!!!!! improved version !!!!!
-  subroutine compute_kernels_strength_noise(nmovie_points,ibool_crust_mantle, &
-                          Sigma_kl_crust_mantle,displ_crust_mantle,deltat,it, &
-                          normal_x_noise,normal_y_noise,normal_z_noise, &
-                          nspec_top,noise_surface_movie, &
-                          ibelm_top_crust_mantle)
+  subroutine compute_kernels_strength_noise()
+
+  use specfem_par
+  use specfem_par_crustmantle
+
   implicit none
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
+!  include "constants.h"
+!  include "OUTPUT_FILES/values_from_mesher.h"
   ! input parameters
-  integer :: it,nspec_top,nmovie_points
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL) :: deltat
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: displ_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise
+!  integer :: it,nspec_top,nmovie_points
+!  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
+!  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+!  real(kind=CUSTOM_REAL) :: deltat
+!  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: displ_crust_mantle
+!  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise
   ! output parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    Sigma_kl_crust_mantle
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+!    Sigma_kl_crust_mantle
   ! local parameters
   integer :: i,j,k,ispec,iglob,ipoin,ispec2D
   real(kind=CUSTOM_REAL) :: eta
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
+!  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,nspec_top) :: noise_surface_movie
 
   ! read surface movie, needed for Sigma_kl_crust_mantle
   call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
@@ -619,105 +619,46 @@
   ! noise source strength kernel
   ! to keep similar structure to other kernels, the source strength kernel is saved as a volumetric kernel
   ! but only updated at the surface, because the noise is generated there
-  ipoin = 0
-  do ispec2D = 1, nspec_top
-    ispec = ibelm_top_crust_mantle(ispec2D)
+  if( .not. GPU_MODE ) then
+    ! on CPU
+    ipoin = 0
+    do ispec2D = 1, nspec_top
+      ispec = ibelm_top_crust_mantle(ispec2D)
 
-    k = NGLLZ
+      k = NGLLZ
 
-    ! loop on all the points inside the element
-    do j = 1,NGLLY
-      do i = 1,NGLLX
-        ipoin = ipoin + 1
-        iglob = ibool_crust_mantle(i,j,k,ispec)
+      ! loop on all the points inside the element
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          ipoin = ipoin + 1
+          iglob = ibool_crust_mantle(i,j,k,ispec)
 
-        eta = noise_surface_movie(1,i,j,ispec2D) * normal_x_noise(ipoin) + &
-              noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
-              noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
+          eta = noise_surface_movie(1,i,j,ispec2D) * normal_x_noise(ipoin) + &
+                noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
+                noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
 
-        Sigma_kl_crust_mantle(i,j,k,ispec) =  Sigma_kl_crust_mantle(i,j,k,ispec) &
-           + deltat * eta * ( normal_x_noise(ipoin) * displ_crust_mantle(1,iglob) &
-                            + normal_y_noise(ipoin) * displ_crust_mantle(2,iglob) &
-                            + normal_z_noise(ipoin) * displ_crust_mantle(3,iglob) )
+          Sigma_kl_crust_mantle(i,j,k,ispec) =  Sigma_kl_crust_mantle(i,j,k,ispec) &
+             + deltat * eta * ( normal_x_noise(ipoin) * displ_crust_mantle(1,iglob) &
+                              + normal_y_noise(ipoin) * displ_crust_mantle(2,iglob) &
+                              + normal_z_noise(ipoin) * displ_crust_mantle(3,iglob) )
+        enddo
       enddo
     enddo
 
-  enddo
+  else
+    ! on GPU
+    call compute_kernels_strgth_noise_cu(Mesh_pointer,noise_surface_movie,deltat)
+  endif
 
   end subroutine compute_kernels_strength_noise
 
-!!!!! original implementation, not used anymore (but kept here for references) !!!!!
-!  subroutine compute_kernels_strength_noise_original(myrank,ibool_crust_mantle, &
-!                          Sigma_kl_crust_mantle,displ_crust_mantle,deltat,it, &
-!                          nmovie_points,normal_x_noise,normal_y_noise,normal_z_noise, &
-!                          nspec_top,ibelm_top_crust_mantle,LOCAL_PATH)
-!  implicit none
-!  include "constants.h"
-!  include "OUTPUT_FILES/values_from_mesher.h"
-!  ! input parameters
-!  integer :: myrank,nmovie_points,it,nspec_top
-!  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-!  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-!  real(kind=CUSTOM_REAL) :: deltat
-!  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: displ_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: normal_x_noise,normal_y_noise,normal_z_noise
-!  character(len=150) :: LOCAL_PATH
-!  ! output parameters
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-!    Sigma_kl_crust_mantle
-!  ! local parameters
-!  integer :: i,j,k,ispec,iglob,ipoin,ispec2D,ios
-!  real(kind=CUSTOM_REAL) :: eta
-!  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: store_val_ux,store_val_uy,store_val_uz
-!  character(len=150) :: outputname
 !
+!-------------------------------------------------------------------------------------------------
 !
-!  ! read surface movie, needed for Sigma_kl_crust_mantle
-!  write(outputname,"('/proc',i6.6,'_surface_movie',i6.6)") myrank, it
-!  open(unit=IIN_NOISE,file=trim(LOCAL_PATH)//outputname,status='old',form='unformatted',action='read',iostat=ios)
-!  if( ios /= 0)  call exit_MPI(myrank,'file '//trim(outputname)//' does NOT exist!')
-!
-!  read(IIN_NOISE) store_val_ux
-!  read(IIN_NOISE) store_val_uy
-!  read(IIN_NOISE) store_val_uz
-!  close(IIN_NOISE)
-!
-!  ! noise source strength kernel
-!  ! to keep similar structure to other kernels, the source strength kernel is saved as a volumetric kernel
-!  ! but only updated at the surface, because the noise is generated there
-!  ipoin = 0
-!  do ispec2D = 1, nspec_top
-!    ispec = ibelm_top_crust_mantle(ispec2D)
-!
-!    k = NGLLZ
-!
-!    ! loop on all the points inside the element
-!    do j = 1,NGLLY
-!      do i = 1,NGLLX
-!        ipoin = ipoin + 1
-!        iglob = ibool_crust_mantle(i,j,k,ispec)
-!
-!        eta = store_val_ux(ipoin) * normal_x_noise(ipoin) + &
-!              store_val_uy(ipoin) * normal_y_noise(ipoin) + &
-!              store_val_uz(ipoin) * normal_z_noise(ipoin)
-!
-!        Sigma_kl_crust_mantle(i,j,k,ispec) =  Sigma_kl_crust_mantle(i,j,k,ispec) &
-!           + deltat * eta * ( normal_x_noise(ipoin) * displ_crust_mantle(1,iglob) &
-!                            + normal_y_noise(ipoin) * displ_crust_mantle(2,iglob) &
-!                            + normal_z_noise(ipoin) * displ_crust_mantle(3,iglob) )
-!      enddo
-!    enddo
-!
-!  enddo
-!
-!  end subroutine compute_kernels_strength_noise_original
-
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
 
 ! subroutine for NOISE TOMOGRAPHY
 ! step 3: save noise source strength kernel
+
   subroutine save_kernels_strength_noise(myrank,LOCAL_PATH,Sigma_kl_crust_mantle)
   implicit none
   include "constants.h"
@@ -741,7 +682,3 @@
   close(IOUT_NOISE)
 
   end subroutine save_kernels_strength_noise
-
-! =============================================================================================================
-! =============================================================================================================
-! =============================================================================================================
