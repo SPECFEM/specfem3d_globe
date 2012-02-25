@@ -143,20 +143,20 @@ libspecfem_a_OBJECTS_SOLVER = \
 # values_from_mesher.h
 
 SOLVER_ARRAY_OBJECTS = \
-	$O/specfem3D_par.Solver.o \
+	$O/specfem3D_par.solver.o \
 	$O/assemble_MPI_central_cube_block.mpisolver.o \
 	$O/assemble_MPI_central_cube.mpisolver.o \
 	$O/check_simulation_stability.mpisolver.o \
 	$O/compute_add_sources.solver.o \
 	$O/compute_boundary_kernel.solvercheck.o \
 	$O/compute_coupling.solver.o \
-	$O/compute_element.Solver.o \
-	$O/compute_forces_acoustic.Solver.o \
-	$O/compute_forces_elastic.Solver.o \
+	$O/compute_element.solver.o \
+	$O/compute_forces_acoustic.solver.o \
+	$O/compute_forces_elastic.solver.o \
 	$O/compute_forces_crust_mantle.solver.o \
-	$O/compute_forces_crust_mantle_Dev.Solver.o \
+	$O/compute_forces_crust_mantle_Dev.solver.o \
 	$O/compute_forces_inner_core.solver.o \
-	$O/compute_forces_inner_core_Dev.Solver.o \
+	$O/compute_forces_inner_core_Dev.solver.o \
 	$O/compute_forces_outer_core.solver.o \
 	$O/compute_forces_outer_core_Dev.solver.o \
 	$O/compute_kernels.solver.o \
@@ -166,7 +166,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/fix_non_blocking_flags.mpisolvercheck.o \
 	$O/finalize_simulation.mpisolver.o \
 	$O/initialize_simulation.mpisolver.o \
-	$O/iterate_time.mpiSolver.o \
+	$O/iterate_time.mpisolver.o \
 	$O/noise_tomography.mpisolver.o \
 	$O/prepare_timerun.mpisolver.o \
 	$O/read_arrays_solver.solver.o \
@@ -177,7 +177,7 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/save_kernels.solver.o \
 	$O/setup_GLL_points.mpisolver.o \
 	$O/setup_sources_receivers.mpisolver.o \
-	$O/specfem3D.mpiSolver.o \
+	$O/specfem3D.mpisolver.o \
 	$O/write_movie_output.mpisolver.o \
 	$O/write_movie_volume.mpisolver.o \
 	$O/write_movie_surface.mpisolver.o \
@@ -293,7 +293,7 @@ $O/%.cc.o: ${SHARED}/%.c ${SETUP}/config.h
 $O/%.solver.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
 	${FCCOMPILE_NO_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.Solver.o: $S/%.F90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
+$O/%.solver.o: $S/%.F90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
 	${FCCOMPILE_NO_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.solvercheck.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
@@ -302,7 +302,7 @@ $O/%.solvercheck.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
 $O/%.mpisolver.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
 	${MPIFCCOMPILE_NO_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.mpiSolver.o: $S/%.F90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
+$O/%.mpisolver.o: $S/%.F90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
 	${MPIFCCOMPILE_NO_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.mpisolvercheck.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
