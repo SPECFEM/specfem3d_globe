@@ -56,7 +56,7 @@ extern "C"
 void FC_FUNC_(transfer_fields_cm_to_device,
               TRANSFER_FIELDS_CM_TO_DEVICE)(int* size, realw* displ, realw* veloc, realw* accel,long* Mesh_pointer_f) {
 
-TRACE("transfer_fields_cm_to_device_");
+TRACE("transfer_fields_cm_to_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
@@ -71,7 +71,7 @@ extern "C"
 void FC_FUNC_(transfer_fields_ic_to_device,
               TRANSFER_FIELDS_IC_TO_DEVICE)(int* size, realw* displ, realw* veloc, realw* accel,long* Mesh_pointer_f) {
 
-  TRACE("transfer_fields_ic_to_device_");
+  TRACE("transfer_fields_ic_to_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
@@ -86,13 +86,64 @@ extern "C"
 void FC_FUNC_(transfer_fields_oc_to_device,
               TRANSFER_FIELDS_OC_TO_DEVICE)(int* size, realw* displ, realw* veloc, realw* accel,long* Mesh_pointer_f) {
 
-  TRACE("transfer_fields_oc_to_device_");
+  TRACE("transfer_fields_oc_to_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
   print_CUDA_error_if_any(cudaMemcpy(mp->d_displ_outer_core,displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_veloc_outer_core,veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_outer_core,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
+
+}
+
+// coupling fluid_CMB_ICB
+extern "C"
+void FC_FUNC_(transfer_coupling_fields_fluid_cmb_icb_to_device,
+              TRANSFER_COUPLING_FIELDS_FLUID_CMB_ICB_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* displ_cm, realw* displ_ic, realw* accel, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_fields_fluid_cmb_icb_to_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_outer_core,accel,sizeof(realw)*(*size_oc),cudaMemcpyHostToDevice),40009);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_displ_crust_mantle,displ_cm,sizeof(realw)*(*size_cm),cudaMemcpyHostToDevice),40010);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_displ_inner_core,displ_ic,sizeof(realw)*(*size_ic),cudaMemcpyHostToDevice),40011);
+
+}
+
+// coupling CMB_ICB_fluid
+extern "C"
+void FC_FUNC_(transfer_coupling_fields_cmb_icb_fluid_to_device,
+              TRANSFER_COUPLING_FIELDS_CMB_ICB_FLUID_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* displ_cm, realw* displ_ic, realw* accel_cm, realw* accel_ic, realw* accel_oc, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_fields_cmb_icb_fluid_to_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_outer_core,accel_oc,sizeof(realw)*(*size_oc),cudaMemcpyHostToDevice),40009);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_crust_mantle,accel_cm,sizeof(realw)*(*size_cm),cudaMemcpyHostToDevice),40010);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_inner_core,accel_ic,sizeof(realw)*(*size_ic),cudaMemcpyHostToDevice),40010);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_displ_crust_mantle,displ_cm,sizeof(realw)*(*size_cm),cudaMemcpyHostToDevice),40012);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_displ_inner_core,displ_ic,sizeof(realw)*(*size_ic),cudaMemcpyHostToDevice),40013);
+
+}
+
+// coupling CMB_ocean
+extern "C"
+void FC_FUNC_(transfer_coupling_fields_cmb_ocean_to_device,
+	      TRANSFER_COUPLING_FIELDS_CMB_OCEAN_TO_DEVICE)(int* size, realw* accel, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_fields_cmb_ocean_to_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_crust_mantle,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40009);
 
 }
 
@@ -106,12 +157,12 @@ void FC_FUNC_(transfer_b_fields_cm_to_device,
               TRANSFER_FIELDS_B_CM_TO_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                               long* Mesh_pointer_f) {
 
-  TRACE("transfer_fields_b_cm_to_device_");
+  TRACE("transfer_fields_b_cm_to_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-  cudaMemcpy(mp->d_b_displ_crust_mantle,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice);
-  cudaMemcpy(mp->d_b_veloc_crust_mantle,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice);
-  cudaMemcpy(mp->d_b_accel_crust_mantle,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_crust_mantle,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_veloc_crust_mantle,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_crust_mantle,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
 
 }
 
@@ -121,12 +172,12 @@ void FC_FUNC_(transfer_b_fields_ic_to_device,
               TRANSFER_FIELDS_B_IC_TO_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                               long* Mesh_pointer_f) {
 
-  TRACE("transfer_fields_b_ic_to_device_");
+  TRACE("transfer_fields_b_ic_to_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-  cudaMemcpy(mp->d_b_displ_inner_core,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice);
-  cudaMemcpy(mp->d_b_veloc_inner_core,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice);
-  cudaMemcpy(mp->d_b_accel_inner_core,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_inner_core,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_veloc_inner_core,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_inner_core,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
 
 }
 
@@ -136,16 +187,64 @@ void FC_FUNC_(transfer_b_fields_oc_to_device,
               TRANSFER_FIELDS_B_OC_TO_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                               long* Mesh_pointer_f) {
 
-  TRACE("transfer_fields_b_oc_to_device_");
+  TRACE("transfer_fields_b_oc_to_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-  cudaMemcpy(mp->d_b_displ_outer_core,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice);
-  cudaMemcpy(mp->d_b_veloc_outer_core,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice);
-  cudaMemcpy(mp->d_b_accel_outer_core,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_outer_core,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_veloc_outer_core,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_outer_core,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
 
 }
 
+// coupling fluid_CMB_ICB
+extern "C"
+void FC_FUNC_(transfer_coupling_b_fields_fluid_cmb_icb_to_device,
+              TRANSFER_COUPLING_B_FIELDS_FLUID_CMB_ICB_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* b_displ_cm, realw* b_displ_ic, realw* b_accel, long* Mesh_pointer_f) {
 
+  TRACE("transfer_coupling_b_fields_fluid_cmb_icb_to_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_outer_core,b_accel,sizeof(realw)*(*size_oc),cudaMemcpyHostToDevice),40009);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_crust_mantle,b_displ_cm,sizeof(realw)*(*size_cm),cudaMemcpyHostToDevice),40010);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_inner_core,b_displ_ic,sizeof(realw)*(*size_ic),cudaMemcpyHostToDevice),40011);
+
+}
+
+// coupling CMB_ICB_fluid
+extern "C"
+void FC_FUNC_(transfer_coupling_b_fields_cmb_icb_fluid_to_device,
+              TRANSFER_COUPLING_B_FIELDS_CMB_ICB_FLUID_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* b_displ_cm, realw* b_displ_ic, realw* b_accel_cm, realw* b_accel_ic, realw* b_accel_oc, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_b_fields_cmb_icb_fluid_to_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_outer_core,b_accel_oc,sizeof(realw)*(*size_oc),cudaMemcpyHostToDevice),40009);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_crust_mantle,b_accel_cm,sizeof(realw)*(*size_cm),cudaMemcpyHostToDevice),40010);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_inner_core,b_accel_ic,sizeof(realw)*(*size_ic),cudaMemcpyHostToDevice),40011);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_crust_mantle,b_displ_cm,sizeof(realw)*(*size_cm),cudaMemcpyHostToDevice),40012);
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_inner_core,b_displ_ic,sizeof(realw)*(*size_ic),cudaMemcpyHostToDevice),40013);
+}
+
+// coupling CMB_ocean
+extern "C"
+void FC_FUNC_(transfer_coupling_b_fields_cmb_ocean_to_device,
+	      TRANSFER_COUPLING_B_FIELDS_CMB_OCEAN_TO_DEVICE)(int* size, realw* b_accel, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_b_fields_cmb_ocean_to_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_crust_mantle,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40009);
+
+}
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -158,7 +257,7 @@ extern "C"
 void FC_FUNC_(transfer_fields_cm_from_device,
               TRANSFER_FIELDS_CM_FROM_DEVICE)(int* size, realw* displ, realw* veloc, realw* accel,long* Mesh_pointer_f) {
 
-  TRACE("transfer_fields_cm_from_device_");
+  TRACE("transfer_fields_cm_from_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
@@ -175,7 +274,7 @@ extern "C"
 void FC_FUNC_(transfer_fields_ic_from_device,
               TRANSFER_FIELDS_IC_FROM_DEVICE)(int* size, realw* displ, realw* veloc, realw* accel,long* Mesh_pointer_f) {
 
-  TRACE("transfer_fields_ic_from_device_");
+  TRACE("transfer_fields_ic_from_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
@@ -192,7 +291,7 @@ extern "C"
 void FC_FUNC_(transfer_fields_oc_from_device,
               TRANSFER_FIELDS_OC_FROM_DEVICE)(int* size, realw* displ, realw* veloc, realw* accel,long* Mesh_pointer_f) {
 
-  TRACE("transfer_fields_oc_from_device_");
+  TRACE("transfer_fields_oc_from_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
@@ -202,9 +301,60 @@ void FC_FUNC_(transfer_fields_oc_from_device,
 
 }
 
+// coupling fluid_CMB_IMB
+extern "C"
+void FC_FUNC_(transfer_coupling_fields_fluid_cmb_icb_from_device,
+              TRANSFER_COUPLING_FIELDS_FLUID_CMB_ICB_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* displ_cm, realw* displ_ic, realw* accel, long* Mesh_pointer_f) {
 
+  TRACE("transfer_coupling_fields_fluid_cmb_icb_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(accel,mp->d_accel_outer_core,sizeof(realw)*(*size_oc),cudaMemcpyDeviceToHost),40014);
+
+  print_CUDA_error_if_any(cudaMemcpy(displ_cm,mp->d_displ_crust_mantle,sizeof(realw)*(*size_cm),cudaMemcpyDeviceToHost),40015);
+
+  print_CUDA_error_if_any(cudaMemcpy(displ_ic,mp->d_displ_inner_core,sizeof(realw)*(*size_ic),cudaMemcpyDeviceToHost),40016);
+
+}
+
+// coupling CMB_ICB_fluid
+extern "C"
+void FC_FUNC_(transfer_coupling_fields_cmb_icb_fluid_from_device,
+              TRANSFER_COUPLING_FIELDS_CMB_ICB_FLUID_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* displ_cm, realw* displ_ic, realw* accel_cm, realw* accel_ic, realw* accel_oc, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_fields_cmb_icb_fluid_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(accel_oc,mp->d_accel_outer_core,sizeof(realw)*(*size_oc),cudaMemcpyDeviceToHost),40014);
+
+  print_CUDA_error_if_any(cudaMemcpy(accel_cm,mp->d_accel_crust_mantle,sizeof(realw)*(*size_cm),cudaMemcpyDeviceToHost),40015);
+
+  print_CUDA_error_if_any(cudaMemcpy(accel_ic,mp->d_accel_inner_core,sizeof(realw)*(*size_ic),cudaMemcpyDeviceToHost),40016);
+
+  print_CUDA_error_if_any(cudaMemcpy(displ_cm,mp->d_displ_crust_mantle,sizeof(realw)*(*size_cm),cudaMemcpyDeviceToHost),40017);
+
+  print_CUDA_error_if_any(cudaMemcpy(displ_ic,mp->d_displ_inner_core,sizeof(realw)*(*size_ic),cudaMemcpyDeviceToHost),40018);
+
+}
+
+// coupling CMB_ocean
+extern "C"
+void FC_FUNC_(transfer_coupling_fields_cmb_ocean_from_device,
+	      TRANSFER_COUPLING_FIELDS_CMB_OCEAN_FROM_DEVICE)(int* size, realw* accel, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_fields_cmb_ocean_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(accel,mp->d_accel_crust_mantle,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40014);
+
+}
 
 /* ----------------------------------------------------------------------------------------------- */
+
+// backward/reconstructed fields
 
 // crust_mantle
 extern "C"
@@ -212,13 +362,13 @@ void FC_FUNC_(transfer_b_fields_cm_from_device,
               TRANSFER_B_FIELDS_CM_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                                 long* Mesh_pointer_f) {
 
-TRACE("transfer_b_fields_cm_from_device_");
+TRACE("transfer_b_fields_cm_from_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
-  cudaMemcpy(b_displ,mp->d_b_displ_crust_mantle,sizeof(realw)*(*size),cudaMemcpyDeviceToHost);
-  cudaMemcpy(b_veloc,mp->d_b_veloc_crust_mantle,sizeof(realw)*(*size),cudaMemcpyDeviceToHost);
-  cudaMemcpy(b_accel,mp->d_b_accel_crust_mantle,sizeof(realw)*(*size),cudaMemcpyDeviceToHost);
+  print_CUDA_error_if_any(cudaMemcpy(b_displ,mp->d_b_displ_crust_mantle,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
+  print_CUDA_error_if_any(cudaMemcpy(b_veloc,mp->d_b_veloc_crust_mantle,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40007);
+  print_CUDA_error_if_any(cudaMemcpy(b_accel,mp->d_b_accel_crust_mantle,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40008);
 
 }
 
@@ -229,9 +379,8 @@ extern "C"
 void FC_FUNC_(transfer_b_fields_ic_from_device,
               TRANSFER_B_FIELDS_IC_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                                 long* Mesh_pointer_f) {
-
-  TRACE("transfer_fields_b_ic_from_device_");
-
+  TRACE("transfer_fields_b_ic_from_device");
+  
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
   print_CUDA_error_if_any(cudaMemcpy(b_displ,mp->d_b_displ_inner_core,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
@@ -247,9 +396,9 @@ extern "C"
 void FC_FUNC_(transfer_b_fields_oc_from_device,
               TRANSFER_B_FIELDS_OC_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                                 long* Mesh_pointer_f) {
-
-  TRACE("transfer_b_fields_oc_from_device_");
-
+  
+  TRACE("transfer_b_fields_oc_from_device");
+  
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
   print_CUDA_error_if_any(cudaMemcpy(b_displ,mp->d_b_displ_outer_core,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
@@ -258,12 +407,60 @@ void FC_FUNC_(transfer_b_fields_oc_from_device,
 
 }
 
+// coupling fluid_CMB_ICB
+extern "C"
+void FC_FUNC_(transfer_coupling_b_fields_fluid_cmb_icb_from_device,
+              TRANSFER_COUPLING_B_FIELDS_FLUID_CMB_icb_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* b_displ_cm, realw* b_displ_ic, realw* b_accel, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_b_fields_fluid_cmb_icb_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(b_accel,mp->d_b_accel_outer_core,sizeof(realw)*(*size_oc),cudaMemcpyDeviceToHost),40014);
+
+  print_CUDA_error_if_any(cudaMemcpy(b_displ_cm,mp->d_b_displ_crust_mantle,sizeof(realw)*(*size_cm),cudaMemcpyDeviceToHost),40015);
+
+  print_CUDA_error_if_any(cudaMemcpy(b_displ_ic,mp->d_b_displ_inner_core,sizeof(realw)*(*size_ic),cudaMemcpyDeviceToHost),40016);
+}
+
+// coupling CMB_fluid
+extern "C"
+void FC_FUNC_(transfer_coupling_b_fields_cmb_icb_fluid_from_device,
+              TRANSFER_COUPLING_B_FIELDS_CMB_ICB_FLUID_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* b_displ_cm, realw* b_displ_ic, realw* b_accel_cm, realw* b_accel_ic, realw* b_accel_oc, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_b_fields_cmb_icb_fluid_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(b_accel_oc,mp->d_b_accel_outer_core,sizeof(realw)*(*size_oc),cudaMemcpyDeviceToHost),40014);
+
+  print_CUDA_error_if_any(cudaMemcpy(b_accel_cm,mp->d_b_accel_crust_mantle,sizeof(realw)*(*size_cm),cudaMemcpyDeviceToHost),40015);
+
+  print_CUDA_error_if_any(cudaMemcpy(b_accel_ic,mp->d_b_accel_inner_core,sizeof(realw)*(*size_ic),cudaMemcpyDeviceToHost),40016);
+
+  print_CUDA_error_if_any(cudaMemcpy(b_displ_cm,mp->d_b_displ_crust_mantle,sizeof(realw)*(*size_cm),cudaMemcpyDeviceToHost),40017);
+
+  print_CUDA_error_if_any(cudaMemcpy(b_displ_ic,mp->d_b_displ_inner_core,sizeof(realw)*(*size_ic),cudaMemcpyDeviceToHost),40018);
+}
+
+// coupling CMB_ocean
+extern "C"
+void FC_FUNC_(transfer_coupling_b_fields_cmb_ocean_from_device,
+	      TRANSFER_COUPLING_B_FIELDS_CMB_OCEAN_FROM_DEVICE)(int* size, realw* b_accel, long* Mesh_pointer_f) {
+
+  TRACE("transfer_coupling_b_fields_cmb_ocean_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(b_accel,mp->d_b_accel_crust_mantle,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40014);
+
+}
 
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
 void FC_FUNC_(transfer_accel_cm_to_device,
-              TRNASFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {
+              TRANSFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {
 
 TRACE("transfer_accel_cm_to_device");
 

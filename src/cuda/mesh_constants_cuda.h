@@ -169,6 +169,7 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------ //
   int NSPEC_CRUST_MANTLE;
   int NGLOB_CRUST_MANTLE;
+  int NGLOB_CRUST_MANTLE_OCEANS;
 
   // interpolators
   realw* d_xix_crust_mantle; realw* d_xiy_crust_mantle; realw* d_xiz_crust_mantle;
@@ -262,11 +263,18 @@ typedef struct mesh_ {
 
   int nspec_outer_crust_mantle;
   int nspec_inner_crust_mantle;
+  int nspec2D_top_crust_mantle;
+  int nspec2D_bottom_crust_mantle;
 
   int num_colors_inner_crust_mantle;
   int num_colors_outer_crust_mantle;
   int* h_num_elem_colors_crust_mantle;
 
+  int* d_ibelm_top_crust_mantle;
+  int* d_ibelm_bottom_crust_mantle;
+
+  // normal definition for coupling regions
+  realw* d_normal_top_crust_mantle;
 
   // ------------------------------------------------------------------ //
   // outer_core
@@ -305,11 +313,23 @@ typedef struct mesh_ {
 
   int nspec_outer_outer_core;
   int nspec_inner_outer_core;
+  int nspec2D_top_outer_core;
+  int nspec2D_bottom_outer_core;
 
   int num_colors_inner_outer_core;
   int num_colors_outer_outer_core;
   int* h_num_elem_colors_outer_core;
 
+  int* d_ibelm_top_outer_core;
+  int* d_ibelm_bottom_outer_core;
+
+  // normals definitions for coupling regions
+  realw* d_normal_top_outer_core;
+  realw* d_normal_bottom_outer_core;
+
+  // jacobian definitions
+  realw* d_jacobian2D_top_outer_core;
+  realw* d_jacobian2D_bottom_outer_core;
 
   // ------------------------------------------------------------------ //
   // inner_core
@@ -390,10 +410,13 @@ typedef struct mesh_ {
 
   int nspec_outer_inner_core;
   int nspec_inner_inner_core;
+  int nspec2D_top_inner_core;
 
   int num_colors_inner_inner_core;
   int num_colors_outer_inner_core;
   int* h_num_elem_colors_inner_core;
+
+  int* d_ibelm_top_inner_core;
 
   // ------------------------------------------------------------------ //
   // attenuation

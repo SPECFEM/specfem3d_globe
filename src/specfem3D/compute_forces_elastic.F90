@@ -197,87 +197,105 @@
     ! computes additional contributions to acceleration field
     if( iphase == 1 ) then
 
-      ! absorbing boundaries
-      ! Stacey
-      if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_crust_mantle()
+       ! absorbing boundaries
+       ! Stacey
+       if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_crust_mantle()
 
-      ! add the sources
-      if (SIMULATION_TYPE == 1 .and. NOISE_TOMOGRAPHY == 0 .and. nsources_local > 0) &
-        call compute_add_sources()
+       ! add the sources
+       if (SIMULATION_TYPE == 1 .and. NOISE_TOMOGRAPHY == 0 .and. nsources_local > 0) &
+            call compute_add_sources()
 
-      ! add adjoint sources
-      if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
-        if( nadj_rec_local > 0 ) call compute_add_sources_adjoint()
-      endif
+       ! add adjoint sources
+       if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+          if( nadj_rec_local > 0 ) call compute_add_sources_adjoint()
+       endif
 
-      ! add sources for backward/reconstructed wavefield
-      if (SIMULATION_TYPE == 3 .and. NOISE_TOMOGRAPHY == 0 .and. nsources_local > 0) &
-        call compute_add_sources_backward()
+       ! add sources for backward/reconstructed wavefield
+       if (SIMULATION_TYPE == 3 .and. NOISE_TOMOGRAPHY == 0 .and. nsources_local > 0) &
+            call compute_add_sources_backward()
 
-      ! NOISE_TOMOGRAPHY
-      select case( NOISE_TOMOGRAPHY )
-      case( 1 )
-        ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
-        ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
-        ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
-        ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
-        call noise_add_source_master_rec()
-      case( 2 )
-        ! second step of noise tomography, i.e., read the surface movie saved at every timestep
-        ! use the movie to drive the ensemble forward wavefield
-        call noise_read_add_surface_movie(accel_crust_mantle,NSTEP-it+1)
-        ! be careful, since ensemble forward sources are reversals of generating wavefield "eta"
-        ! hence the "NSTEP-it+1", i.e., start reading from the last timestep
-        ! note the ensemble forward sources are generally distributed on the surface of the earth
-        ! that's to say, the ensemble forward source is kind of a surface force density, not a body force density
-        ! therefore, we must add it here, before applying the inverse of mass matrix
-      case( 3 )
-        ! third step of noise tomography, i.e., read the surface movie saved at every timestep
-        ! use the movie to reconstruct the ensemble forward wavefield
-        ! the ensemble adjoint wavefield is done as usual
-        ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
-        call noise_read_add_surface_movie(b_accel_crust_mantle,it)
-      end select
+       ! NOISE_TOMOGRAPHY
+       select case( NOISE_TOMOGRAPHY )
+       case( 1 )
+          ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
+          ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
+          ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
+          ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
+          call noise_add_source_master_rec()
+       case( 2 )
+          ! second step of noise tomography, i.e., read the surface movie saved at every timestep
+          ! use the movie to drive the ensemble forward wavefield
+          call noise_read_add_surface_movie(accel_crust_mantle,NSTEP-it+1)
+          ! be careful, since ensemble forward sources are reversals of generating wavefield "eta"
+          ! hence the "NSTEP-it+1", i.e., start reading from the last timestep
+          ! note the ensemble forward sources are generally distributed on the surface of the earth
+          ! that's to say, the ensemble forward source is kind of a surface force density, not a body force density
+          ! therefore, we must add it here, before applying the inverse of mass matrix
+       case( 3 )
+          ! third step of noise tomography, i.e., read the surface movie saved at every timestep
+          ! use the movie to reconstruct the ensemble forward wavefield
+          ! the ensemble adjoint wavefield is done as usual
+          ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
+          call noise_read_add_surface_movie(b_accel_crust_mantle,it)
+       end select
 
 
-      ! ****************************************************
-      ! **********  add matching with fluid part  **********
-      ! ****************************************************
-      call load_CPU_elastic()
-      call load_CPU_acoustic()
+       ! ****************************************************
+       ! **********  add matching with fluid part  **********
+       ! ****************************************************
+       ! only for elements in first matching layer in the solid
+       if( .not. GPU_MODE ) then
+          ! on CPU   
+          call load_CPU_elastic()
+          call load_CPU_acoustic()
+          !---
+          !--- couple with outer core at the bottom of the mantle
+          !---
+          if(ACTUALLY_COUPLE_FLUID_CMB) &
+               call compute_coupling_CMB_fluid(displ_crust_mantle,b_displ_crust_mantle, &
+               accel_crust_mantle,b_accel_crust_mantle, &
+               ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+               accel_outer_core,b_accel_outer_core, &
+               normal_top_outer_core,jacobian2D_top_outer_core, &
+               wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
+               RHO_TOP_OC,minus_g_cmb, &
+               SIMULATION_TYPE,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
 
-      ! only for elements in first matching layer in the solid
+          !---
+          !--- couple with outer core at the top of the inner core
+          !---
+          if(ACTUALLY_COUPLE_FLUID_ICB) &
+               call compute_coupling_ICB_fluid(displ_inner_core,b_displ_inner_core, &
+               accel_inner_core,b_accel_inner_core, &
+               ibool_inner_core,ibelm_top_inner_core,  &
+               accel_outer_core,b_accel_outer_core, &
+               normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
+               wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
+               RHO_BOTTOM_OC,minus_g_icb, &
+               SIMULATION_TYPE,NSPEC2D_TOP(IREGION_INNER_CORE))
 
-      !---
-      !--- couple with outer core at the bottom of the mantle
-      !---
-      if(ACTUALLY_COUPLE_FLUID_CMB) &
-        call compute_coupling_CMB_fluid(displ_crust_mantle,b_displ_crust_mantle, &
-                              accel_crust_mantle,b_accel_crust_mantle, &
-                              ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                              accel_outer_core,b_accel_outer_core, &
-                              normal_top_outer_core,jacobian2D_top_outer_core, &
-                              wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                              RHO_TOP_OC,minus_g_cmb, &
-                              SIMULATION_TYPE,NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
+          call load_GPU_elastic()
 
-      !---
-      !--- couple with outer core at the top of the inner core
-      !---
-      if(ACTUALLY_COUPLE_FLUID_ICB) &
-        call compute_coupling_ICB_fluid(displ_inner_core,b_displ_inner_core, &
-                              accel_inner_core,b_accel_inner_core, &
-                              ibool_inner_core,ibelm_top_inner_core,  &
-                              accel_outer_core,b_accel_outer_core, &
-                              normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
-                              wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
-                              RHO_BOTTOM_OC,minus_g_icb, &
-                              SIMULATION_TYPE,NSPEC2D_TOP(IREGION_INNER_CORE))
+       else
+          ! on GPU
+          call load_GPU_elastic_coupling_fluid()
 
-      call load_GPU_elastic()
+          !---
+          !--- couple with outer core at the bottom of the mantle
+          !---
+          if( ACTUALLY_COUPLE_FLUID_CMB ) &
+               call compute_coupling_cmb_fluid_cuda(Mesh_pointer, &
+               RHO_TOP_OC,minus_g_cmb,GRAVITY_VAL)
+          !---
+          !--- couple with outer core at the top of the inner core
+          !---
+          if( ACTUALLY_COUPLE_FLUID_ICB ) &
+               call compute_coupling_icb_fluid_cuda(Mesh_pointer, &
+               RHO_BOTTOM_OC,minus_g_icb,GRAVITY_VAL)
 
+          call load_CPU_elastic_coupling_fluid()
+       endif
     endif ! iphase == 1
-
 
     ! assemble all the contributions between slices using MPI
 
@@ -468,6 +486,7 @@
   ! couples ocean with crust mantle
   ! (updates acceleration with ocean load approximation)
   if(OCEANS_VAL) then
+<<<<<<< HEAD
     call load_CPU_elastic()
 
     call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
@@ -476,6 +495,24 @@
                           updated_dof_ocean_load, &
                           SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
     call load_GPU_elastic()
+=======
+     if(.NOT. GPU_MODE) then
+        ! on CPU
+        call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
+             rmass_crust_mantle,rmass_ocean_load,normal_top_crust_mantle, &
+             ibool_crust_mantle,ibelm_top_crust_mantle, &
+             updated_dof_ocean_load, &
+             SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
+        
+     else
+        ! on GPU
+        call load_GPU_elastic_coupling_ocean()
+
+        call compute_coupling_ocean_cuda(Mesh_pointer)
+        
+        call load_CPU_elastic_coupling_ocean()
+     endif
+>>>>>>> adds cuda code for coupling inner_core/outer_core, outer_core/crust_mantle and crust_mantle/ocean
   endif
 
   ! Newmark time scheme:
@@ -733,3 +770,95 @@
   endif
 
   end subroutine
+
+!=====================================================================
+
+  subroutine load_GPU_elastic_coupling_fluid
+  
+  use specfem_par
+  use specfem_par_outercore,only: accel_outer_core,b_accel_outer_core
+  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core, &
+       accel_inner_core,b_accel_inner_core
+  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
+       accel_crust_mantle,b_accel_crust_mantle
+  implicit none
+  
+  ! daniel: TODO - temporary transfers to the GPU
+  call transfer_coupling_fields_cmb_icb_fluid_to_device( &
+       NGLOB_OUTER_CORE,NDIM*NGLOB_CRUST_MANTLE,NDIM*NGLOB_INNER_CORE, &
+       displ_crust_mantle,displ_inner_core,accel_crust_mantle,accel_inner_core, &
+       accel_outer_core,Mesh_pointer)
+
+  if( SIMULATION_TYPE == 3 ) then
+     call transfer_coupling_b_fields_cmb_icb_fluid_to_device( &
+          NGLOB_OUTER_CORE_ADJOINT,NDIM*NGLOB_CRUST_MANTLE_ADJOINT,NDIM*NGLOB_INNER_CORE_ADJOINT, &
+          b_displ_crust_mantle,b_displ_inner_core,b_accel_crust_mantle,b_accel_inner_core, &
+          b_accel_outer_core,Mesh_pointer)  
+  endif
+    
+  end subroutine 
+
+!=====================================================================
+
+  subroutine load_CPU_elastic_coupling_fluid
+  
+  use specfem_par
+  use specfem_par_outercore,only: accel_outer_core,b_accel_outer_core
+  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core, &
+       accel_inner_core,b_accel_inner_core
+  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
+       accel_crust_mantle,b_accel_crust_mantle
+  implicit none
+  
+  ! daniel: TODO - temporary transfers to the CPU
+  call transfer_coupling_fields_cmb_icb_fluid_from_device( &
+       NGLOB_OUTER_CORE,NDIM*NGLOB_CRUST_MANTLE,NDIM*NGLOB_INNER_CORE, &
+       displ_crust_mantle,displ_inner_core,accel_crust_mantle,accel_inner_core, &
+       accel_outer_core,Mesh_pointer)
+
+  if( SIMULATION_TYPE == 3 ) then
+     call transfer_coupling_b_fields_cmb_icb_fluid_from_device( &
+          NGLOB_OUTER_CORE_ADJOINT,NDIM*NGLOB_CRUST_MANTLE_ADJOINT,NDIM*NGLOB_INNER_CORE_ADJOINT, &
+          b_displ_crust_mantle,b_displ_inner_core,b_accel_crust_mantle,b_accel_inner_core, &
+          b_accel_outer_core,Mesh_pointer)  
+  endif
+    
+  end subroutine
+
+!=====================================================================
+
+  subroutine load_GPU_elastic_coupling_ocean
+  
+  use specfem_par
+  use specfem_par_crustmantle,only: accel_crust_mantle,b_accel_crust_mantle
+  implicit none
+  
+  ! daniel: TODO - temporary transfers to the GPU
+  call transfer_coupling_fields_cmb_ocean_to_device( &
+       NDIM*NGLOB_CRUST_MANTLE,accel_crust_mantle,Mesh_pointer)
+
+  if( SIMULATION_TYPE == 3 ) then
+     call transfer_coupling_b_fields_cmb_ocean_to_device( &
+          NDIM*NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,Mesh_pointer)  
+  endif
+    
+  end subroutine 
+
+!=====================================================================
+
+  subroutine load_CPU_elastic_coupling_ocean
+  
+  use specfem_par
+  use specfem_par_crustmantle,only: accel_crust_mantle,b_accel_crust_mantle
+  implicit none
+  
+  ! daniel: TODO - temporary transfers to the GPU
+  call transfer_coupling_fields_cmb_ocean_from_device( &
+       NDIM*NGLOB_CRUST_MANTLE,accel_crust_mantle,Mesh_pointer)
+
+  if( SIMULATION_TYPE == 3 ) then
+     call transfer_coupling_b_fields_cmb_ocean_from_device( &
+          NDIM*NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,Mesh_pointer)  
+  endif
+    
+  end subroutine 

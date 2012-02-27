@@ -121,42 +121,61 @@
 
     ! computes additional contributions to acceleration field
     if( iphase == 1 ) then
-      ! Stacey absorbing boundaries
-      if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_outer_core()
+       <<<<<<< HEAD
+       ! Stacey absorbing boundaries
+       if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_outer_core()
 
-      ! ****************************************************
-      ! **********  add matching with solid part  **********
-      ! ****************************************************
-      ! only for elements in first matching layer in the fluid
-      !---
-      !--- couple with mantle at the top of the outer core
-      !---
-      call load_CPU_acoustic()
-      call load_CPU_elastic()
+       ! ****************************************************
+       ! **********  add matching with solid part  **********
+       ! ****************************************************
+       ! only for elements in first matching layer in the fluid
+       if( .not. GPU_MODE ) then
+          ! on CPU    
+          !---
+          !--- couple with mantle at the top of the outer core
+          !---
+          call load_CPU_acoustic()
+          call load_CPU_elastic()
 
-      if(ACTUALLY_COUPLE_FLUID_CMB) &
-        call compute_coupling_fluid_CMB(displ_crust_mantle,b_displ_crust_mantle, &
-                              ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
-                              accel_outer_core,b_accel_outer_core, &
-                              normal_top_outer_core,jacobian2D_top_outer_core, &
-                              wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
-                              SIMULATION_TYPE,NSPEC2D_TOP(IREGION_OUTER_CORE))
+          if(ACTUALLY_COUPLE_FLUID_CMB) &
+               call compute_coupling_fluid_CMB(displ_crust_mantle,b_displ_crust_mantle, &
+               ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+               accel_outer_core,b_accel_outer_core, &
+               normal_top_outer_core,jacobian2D_top_outer_core, &
+               wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
+               SIMULATION_TYPE,NSPEC2D_TOP(IREGION_OUTER_CORE))
 
-      !---
-      !--- couple with inner core at the bottom of the outer core
-      !---
-      if(ACTUALLY_COUPLE_FLUID_ICB) &
-        call compute_coupling_fluid_ICB(displ_inner_core,b_displ_inner_core, &
-                              ibool_inner_core,ibelm_top_inner_core,  &
-                              accel_outer_core,b_accel_outer_core, &
-                              normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
-                              wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
-                              SIMULATION_TYPE,NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
+          !---
+          !--- couple with inner core at the bottom of the outer core
+          !---
+          if(ACTUALLY_COUPLE_FLUID_ICB) &
+               call compute_coupling_fluid_ICB(displ_inner_core,b_displ_inner_core, &
+               ibool_inner_core,ibelm_top_inner_core,  &
+               accel_outer_core,b_accel_outer_core, &
+               normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
+               wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
+               SIMULATION_TYPE,NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
 
-      call load_GPU_acoustic()
+          call load_GPU_acoustic()
 
-    endif
+       else
+          ! on GPU
+          call load_GPU_acoustic_coupling_fluid()
 
+          !---
+          !--- couple with mantle at the top of the outer core
+          !---
+          if( ACTUALLY_COUPLE_FLUID_CMB ) &
+               call compute_coupling_fluid_cmb_cuda(Mesh_pointer)
+          !---
+          !--- couple with inner core at the bottom of the outer core
+          !---
+          if( ACTUALLY_COUPLE_FLUID_ICB ) &
+               call compute_coupling_fluid_icb_cuda(Mesh_pointer)
+
+          call load_CPU_acoustic_coupling_fluid()
+       endif
+    endif ! iphase == 1
 
     ! assemble all the contributions between slices using MPI
     ! in outer core
@@ -362,3 +381,50 @@
   endif
 
   end subroutine
+
+!=====================================================================
+
+  subroutine load_GPU_acoustic_coupling_fluid
+  
+  use specfem_par
+  use specfem_par_outercore,only: accel_outer_core,b_accel_outer_core
+  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core
+  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle
+  implicit none
+  
+  ! daniel: TODO - temporary transfers to the GPU
+  call transfer_coupling_fields_fluid_cmb_icb_to_device( &
+       NGLOB_OUTER_CORE,NDIM*NGLOB_CRUST_MANTLE,NDIM*NGLOB_INNER_CORE, &
+       displ_crust_mantle,displ_inner_core,accel_outer_core,Mesh_pointer)
+
+  if( SIMULATION_TYPE == 3 ) then
+     call transfer_coupling_b_fields_fluid_cmb_icb_to_device( &
+          NGLOB_OUTER_CORE_ADJOINT,NDIM*NGLOB_CRUST_MANTLE_ADJOINT,NDIM*NGLOB_INNER_CORE_ADJOINT, &
+          b_displ_crust_mantle,b_displ_inner_core,b_accel_outer_core,Mesh_pointer)  
+  endif
+    
+  end subroutine 
+
+!=====================================================================
+
+  subroutine load_CPU_acoustic_coupling_fluid
+  
+  use specfem_par
+  use specfem_par_outercore,only: accel_outer_core,b_accel_outer_core
+  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core
+  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle
+  implicit none
+  
+  ! daniel: TODO - temporary transfers to the CPU
+  call transfer_coupling_fields_fluid_cmb_icb_from_device( &
+       NGLOB_OUTER_CORE,NDIM*NGLOB_CRUST_MANTLE,NDIM*NGLOB_INNER_CORE, &
+       displ_crust_mantle,displ_inner_core,accel_outer_core,Mesh_pointer)
+
+  if( SIMULATION_TYPE == 3 ) then
+     call transfer_coupling_b_fields_fluid_cmb_icb_from_device( &
+          NGLOB_OUTER_CORE_ADJOINT,NDIM*NGLOB_CRUST_MANTLE_ADJOINT,NDIM*NGLOB_INNER_CORE_ADJOINT, &
+          b_displ_crust_mantle,b_displ_inner_core,b_accel_outer_core,Mesh_pointer)  
+  endif
+    
+  end subroutine
+
