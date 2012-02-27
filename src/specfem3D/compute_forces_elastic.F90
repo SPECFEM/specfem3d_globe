@@ -486,33 +486,25 @@
   ! couples ocean with crust mantle
   ! (updates acceleration with ocean load approximation)
   if(OCEANS_VAL) then
-<<<<<<< HEAD
-    call load_CPU_elastic()
-
-    call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
-                          rmass_crust_mantle,rmass_ocean_load,normal_top_crust_mantle, &
-                          ibool_crust_mantle,ibelm_top_crust_mantle, &
-                          updated_dof_ocean_load, &
-                          SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
-    call load_GPU_elastic()
-=======
      if(.NOT. GPU_MODE) then
         ! on CPU
+        call load_CPU_elastic()
+
         call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
              rmass_crust_mantle,rmass_ocean_load,normal_top_crust_mantle, &
              ibool_crust_mantle,ibelm_top_crust_mantle, &
              updated_dof_ocean_load, &
              SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
-        
+        call load_GPU_elastic()
+
      else
         ! on GPU
         call load_GPU_elastic_coupling_ocean()
 
         call compute_coupling_ocean_cuda(Mesh_pointer)
-        
+
         call load_CPU_elastic_coupling_ocean()
      endif
->>>>>>> adds cuda code for coupling inner_core/outer_core, outer_core/crust_mantle and crust_mantle/ocean
   endif
 
   ! Newmark time scheme:
