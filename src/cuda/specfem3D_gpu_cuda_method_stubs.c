@@ -153,19 +153,63 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
 // src/cuda/compute_coupling_cuda.cu
 //
 
-void FC_FUNC_(compute_coupling_ac_el_cuda,
-              COMPUTE_COUPLING_AC_EL_CUDA)(
-                                            long* Mesh_pointer_f,
-                                            int* phase_is_innerf,
-                                            int* num_coupling_ac_el_facesf,
-                                            int* SIMULATION_TYPEf) {} 
+void FC_FUNC_(compute_coupling_fluid_cmb_cuda,
+              COMPUTE_COUPLING_FLUID_CMB_CUDA)(
+					       long* Mesh_pointer_f,
+					       int* ibool_crust_mantle,
+					       int* ibelm_bottom_crust_mantle,
+					       realw* normal_top_outer_core,
+					       realw* jacobian2D_top_outer_core,
+					       realw* wgllwgll_xy,
+					       int* ibool_outer_core,
+					       int* ibelm_top_outer_core,
+					       int* SIMULATION_TYPE,
+					       int* NSPEC_TOP) {} 
 
-void FC_FUNC_(compute_coupling_el_ac_cuda,
-              COMPUTE_COUPLING_EL_AC_CUDA)(
-                                                 long* Mesh_pointer_f,
-                                                 int* phase_is_innerf,
-                                                 int* num_coupling_ac_el_facesf,
-                                                 int* SIMULATION_TYPEf) {} 
+void FC_FUNC_(compute_coupling_fluid_icb_cuda,
+              COMPUTE_COUPLING_FLUID_ICB_CUDA)(
+					       long* Mesh_pointer_f,
+					       int* ibool_inner_core,
+					       int* ibelm_top_inner_core,
+					       realw* normal_bottom_outer_core,
+					       realw* jacobian2D_bottom_outer_core,
+					       realw* wgllwgll_xy,
+					       int* ibool_outer_core,
+					       int* ibelm_bottom_outer_core,
+					       int* SIMULATION_TYPE,
+					       int* NSPEC_BOTTOM) {} 
+
+void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
+              COMPUTE_COUPLING_CMB_FLUID_CUDA)(
+					       long* Mesh_pointer_f,
+					       int* ibool_crust_mantle,
+					       int* ibelm_bottom_crust_mantle,
+					       realw* normal_top_outer_core,
+					       realw* jacobian2D_top_outer_core,
+					       realw* wgllwgll_xy,
+					       int* ibool_outer_core,
+					       int* ibelm_top_outer_core,
+					       double* RHO_TOP_OC,
+					       realw* minus_g_cmb,
+					       int* GRAVITY_VAL,
+					       int* SIMULATION_TYPE,
+					       int* NSPEC_BOTTOM) {} 
+
+void FC_FUNC_(compute_coupling_icb_fluid_cuda,
+              COMPUTE_COUPLING_ICB_fluid_CUDA)(
+					       long* Mesh_pointer_f,
+					       int* ibool_inner_core,
+					       int* ibelm_top_inner_core,
+					       realw* normal_bottom_outer_core,
+					       realw* jacobian2D_bottom_outer_core,
+					       realw* wgllwgll_xy,
+					       int* ibool_outer_core,
+					       int* ibelm_bottom_outer_core,
+					       double* RHO_BOTTOM_OC,
+					       realw* minus_g_icb,
+					       int* GRAVITY_VAL,
+					       int* SIMULATION_TYPE,
+					       int* NSPEC_TOP) {} 
 
 void FC_FUNC_(compute_coupling_ocean_cuda,
               COMPUTE_COUPLING_OCEAN_CUDA)(long* Mesh_pointer_f,
@@ -662,8 +706,48 @@ void FC_FUNC_(transfer_b_fields_oc_from_device,
               TRANSFER_B_FIELDS_OC_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                                 long* Mesh_pointer_f) {} 
 
+void FC_FUNC_(transfer_coupling_fields_fluid_cmb_icb_to_device,
+              TRANSFER_COUPLING_FIELDS_FLUID_CMB_ICB_TO_DEVICE)(int* size_oc, int* size_cm, int* size_cm, 
+								realw* displ_cm, realw* displ_ic, realw* accel,
+								long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_coupling_b_fields_fluid_cmb_icb_to_device,
+              TRANSFER_COUPLING_B_FIELDS_FLUID_CMB_ICB_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic,
+								  realw* b_displ_cm, realw* b_displ_ic, realw* b_accel,
+								  long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_coupling_fields_fluid_cmb_icb_from_device,
+              TRANSFER_COUPLING_FIELDS_FLUID_CMB_ICB_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, 
+								  realw* displ_cm, realw* displ_ic, realw* accel,
+								  long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_coupling_b_fields_fluid_cmb_icb_from_device,
+              TRANSFER_COUPLING_B_FIELDS_FLUID_CMB_ICB_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, 
+								    realw* b_displ_cm, realw* b_displ_ic, realw* b_accel,
+								    long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_coupling_fields_cmb_icb_fluid_to_device,
+	      TRANSFER_COUPLING_FIELDS_CMB_ICB_FLUID_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic, 
+								realw* displ_cm, realw* displ_ic, realw* accel_cm, 
+								realw* accel_ic, realw* accel_oc, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_coupling_b_fields_cmb_icb_fluid_to_device,
+	      TRANSFER_COUPLING_B_FIELDS_CMB_ICB_FLUID_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic,
+								  realw* b_displ_cm, realw* b_displ_ic, realw* b_accel_cm, 
+								  realw* b_accel_ic, realw* b_accel_oc, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_coupling_fields_cmb_icb_fluid_from_device,
+	      TRANSFER_COUPLING_FIELDS_CMB_ICB_FLUID_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic,
+								  realw* displ_cm, realw* displ_ic, realw* accel_cm, 
+								  realw* accel_ic, realw* accel_oc, long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_coupling_b_fields_cmb_icb_fluid_from_device,
+	      TRANSFER_COUPLING_B_FIELDS_CMB_ICB_FLUID_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic,
+								    realw* b_displ_cm, realw* b_displ_ic, realw* b_accel_cm, 
+								    realw* b_accel_ic, realw* b_accel_oc, long* Mesh_pointer_f) {} 
+
 void FC_FUNC_(transfer_accel_cm_to_device,
-              TRNASFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
+              TRANSFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_displ_cm_from_device,
               TRANSFER_DISPL_CM_FROM_DEVICE)(int* size, realw* displ, long* Mesh_pointer_f) {} 
@@ -690,7 +774,7 @@ void FC_FUNC_(transfer_accel_cm_from_device,
               TRANSFER_ACCEL_CM_FROM_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_b_accel_cm_from_device,
-              TRNASFER_B_ACCEL_CM_FROM_DEVICE)(int* size, realw* b_accel,long* Mesh_pointer_f) {} 
+              TRANSFER_B_ACCEL_CM_FROM_DEVICE)(int* size, realw* b_accel,long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_accel_ic_from_device,
               TRANSFER_ACCEL_IC_FROM_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
@@ -765,8 +849,56 @@ void FC_FUNC_(transfer_kernels_oc_to_host,
 
 void FC_FUNC_(transfer_kernels_noise_to_host,
               TRANSFER_KERNELS_NOISE_TO_HOST)(long* Mesh_pointer,
-                                              realw* h_Sigma_kl,
-                                              int* NSPEC) {} 
+					      realw* h_Sigma_kl,
+					      int* NSPEC_AB) {} 
+
+void FC_FUNC_(transfer_fields_ac_to_device,
+              TRANSFER_FIELDS_AC_TO_DEVICE)(
+					    int* size,
+					    realw* potential_acoustic,
+					    realw* potential_dot_acoustic,
+					    realw* potential_dot_dot_acoustic,
+					    long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_b_fields_ac_to_device,
+              TRANSFER_B_FIELDS_AC_TO_DEVICE)(
+					      int* size,
+					      realw* b_potential_acoustic,
+					      realw* b_potential_dot_acoustic,
+					      realw* b_potential_dot_dot_acoustic,
+					      long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_fields_ac_from_device,TRANSFER_FIELDS_AC_FROM_DEVICE)(
+									     int* size,
+									     realw* potential_acoustic,
+									     realw* potential_dot_acoustic,
+									     realw* potential_dot_dot_acoustic,
+									     long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_b_fields_ac_from_device,
+              TRANSFER_B_FIELDS_AC_FROM_DEVICE)(
+						int* size,
+						realw* b_potential_acoustic,
+						realw* b_potential_dot_acoustic,
+						realw* b_potential_dot_dot_acoustic,
+						long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_dot_dot_from_device,
+              TRANSFER_DOT_DOT_FROM_DEVICE)(int* size, realw* potential_dot_dot_acoustic,long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_b_dot_dot_from_device,
+              TRANSFER_B_DOT_DOT_FROM_DEVICE)(int* size, realw* b_potential_dot_dot_acoustic,long* Mesh_pointer_f) {} 
+
+void FC_FUNC_(transfer_kernels_ac_to_host,
+              TRANSFER_KERNELS_AC_TO_HOST)(long* Mesh_pointer,
+					   realw* h_rho_ac_kl,
+					   realw* h_kappa_ac_kl,
+					   int* NSPEC_AB) {} 
+
+void FC_FUNC_(transfer_kernels_hess_el_tohost,
+              TRANSFER_KERNELS_HESS_EL_TOHOST)(long* Mesh_pointer,
+					       realw* h_hess_kl,
+					       int* NSPEC_AB) {} 
 
 void FC_FUNC_(transfer_kernels_hess_cm_tohost,
               TRANSFER_KERNELS_HESS_CM_TOHOST)(long* Mesh_pointer,

@@ -208,7 +208,6 @@
 
           displ_n = displ_x*nx + displ_y*ny + displ_z*nz
 
-
           ! update fluid acceleration/pressure
           iglob_oc = ibool_outer_core(i,j,k,ispec)
           b_accel_outer_core(iglob_oc) = b_accel_outer_core(iglob_oc) - weight*displ_n

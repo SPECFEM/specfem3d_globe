@@ -43,94 +43,146 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void compute_coupling_acoustic_el_kernel(realw* displ,
-                                                    realw* potential_dot_dot_acoustic,
-                                                    int num_coupling_ac_el_faces,
-                                                    int* coupling_ac_el_ispec,
-                                                    int* coupling_ac_el_ijk,
-                                                    realw* coupling_ac_el_normal,
-                                                    realw* coupling_ac_el_jacobian2Dw,
-                                                    int* ibool,
-                                                    int* ispec_is_inner,
-                                                    int phase_is_inner) {
+__global__ void compute_coupling_fluid_CMB_kernel(realw* displ_crust_mantle,
+						  realw* accel_outer_core,
+						  int* ibool_crust_mantle,
+						  int* ibelm_bottom_crust_mantle,
+						  realw* normal_top_outer_core,
+						  realw* jacobian2D_top_outer_core,
+						  realw* wgllwgll_xy,
+						  int* ibool_outer_core,
+						  int* ibelm_top_outer_core,
+						  int NSPEC2D_TOP_OC) {
 
-  int igll = threadIdx.x;
+  int i = threadIdx.x;
+  int j = threadIdx.y;    
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
 
-  int i,j,k,iglob,ispec;
+  int k,k_corresp,iglob_cm,iglob_oc,ispec,ispec_selected;
   realw displ_x,displ_y,displ_z,displ_n;
   realw nx,ny,nz;
-  realw jacobianw;
+  realw weight;
 
-  if( iface < num_coupling_ac_el_faces){
-
-    // don't compute points outside NGLLSQUARE==NGLL2==25
-    // way 2: no further check needed since blocksize = 25
-    //  if(igll<NGLL2) {
+  // for surfaces elements exactly at the top of the outer core (crust mantle bottom)
+  if( iface < NSPEC2D_TOP_OC ){
 
     // "-1" from index values to convert from Fortran-> C indexing
-    ispec = coupling_ac_el_ispec[iface] - 1;
+    ispec = ibelm_top_outer_core[iface] - 1;
 
-    if(ispec_is_inner[ispec] == phase_is_inner ) {
+    // only for DOFs exactly on the CMB (top of these elements)
+    k = NGLLX - 1;
 
-      i = coupling_ac_el_ijk[INDEX3(NDIM,NGLL2,0,igll,iface)] - 1;
-      j = coupling_ac_el_ijk[INDEX3(NDIM,NGLL2,1,igll,iface)] - 1;
-      k = coupling_ac_el_ijk[INDEX3(NDIM,NGLL2,2,igll,iface)] - 1;
-      iglob = ibool[INDEX4(5,5,5,i,j,k,ispec)] - 1;
+    // get displacement on the solid side using pointwise matching
+    ispec_selected = ibelm_bottom_crust_mantle[iface] - 1;
+	
+    // get global point number 
+    // corresponding points are located at the bottom of the mantle
+    k_corresp = 0;
+    iglob_cm = ibool_crust_mantle[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
 
-      // elastic displacement on global point
-      displ_x = displ[iglob*3] ; // (1,iglob)
-      displ_y = displ[iglob*3+1] ; // (2,iglob)
-      displ_z = displ[iglob*3+2] ; // (3,iglob)
+    // elastic displacement on global point
+    displ_x = displ_crust_mantle[iglob_cm*3]; // (1,iglob)
+    displ_y = displ_crust_mantle[iglob_cm*3+1]; // (2,iglob)
+    displ_z = displ_crust_mantle[iglob_cm*3+2]; // (3,iglob)
 
-      // gets associated normal on GLL point
-      nx = coupling_ac_el_normal[INDEX3(NDIM,NGLL2,0,igll,iface)]; // (1,igll,iface)
-      ny = coupling_ac_el_normal[INDEX3(NDIM,NGLL2,1,igll,iface)]; // (2,igll,iface)
-      nz = coupling_ac_el_normal[INDEX3(NDIM,NGLL2,2,igll,iface)]; // (3,igll,iface)
+    // get normal on the CMB
+    nx = normal_top_outer_core[INDEX4(NDIM,NGLLX,NGLLX,0,i,j,iface)]; // (1,i,j,iface)
+    ny = normal_top_outer_core[INDEX4(NDIM,NGLLX,NGLLX,1,i,j,iface)]; // (2,i,j,iface)
+    nz = normal_top_outer_core[INDEX4(NDIM,NGLLX,NGLLX,2,i,j,iface)]; // (3,i,j,iface)
 
-      // calculates displacement component along normal
-      // (normal points outwards of acoustic element)
-      displ_n = displ_x*nx + displ_y*ny + displ_z*nz;
+    // calculates displacement component along normal
+    // (normal points outwards of acoustic element)
+    displ_n = displ_x*nx + displ_y*ny + displ_z*nz;
 
-      // gets associated, weighted jacobian
-      jacobianw = coupling_ac_el_jacobian2Dw[INDEX2(NGLL2,igll,iface)];
+    // formulation with generalized potential: gets associated, weighted jacobian
+    weight = jacobian2D_top_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
-      // continuity of pressure and normal displacement on global point
+    // get global point number
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] - 1;
 
-      // note: Newmark time scheme together with definition of scalar potential:
-      //          pressure = - chi_dot_dot
-      //          requires that this coupling term uses the updated displacement at time step [t+delta_t],
-      //          which is done at the very beginning of the time loop
-      //          (see e.g. Chaljub & Vilotte, Nissen-Meyer thesis...)
-      //          it also means you have to calculate and update this here first before
-      //          calculating the coupling on the elastic side for the acceleration...
-      atomicAdd(&potential_dot_dot_acoustic[iglob],+ jacobianw*displ_n);
+    // update fluid acceleration/pressure
+    atomicAdd(&accel_outer_core[iglob_oc],+weight*displ_n);
+    
+  // }
+  }
+}
 
-    }
-  //  }
+__global__ void compute_coupling_fluid_ICB_kernel(realw* displ_inner_core,
+						  realw* accel_outer_core,
+						  int* ibool_inner_core,
+						  int* ibelm_top_inner_core,
+						  realw* normal_bottom_outer_core,
+						  realw* jacobian2D_bottom_outer_core,
+						  realw* wgllwgll_xy,
+						  int* ibool_outer_core,
+						  int* ibelm_bottom_outer_core,
+						  int NSPEC2D_BOTTOM_OC) {
+
+  int i = threadIdx.x;
+  int j = threadIdx.y;    
+  int iface = blockIdx.x + gridDim.x*blockIdx.y;
+
+  int k,k_corresp,iglob_ic,iglob_oc,ispec,ispec_selected;
+  realw displ_x,displ_y,displ_z,displ_n;
+  realw nx,ny,nz;
+  realw weight;
+
+  // for surfaces elements exactly at the bottom of the outer core (inner core top)
+  if( iface < NSPEC2D_BOTTOM_OC ){
+
+    // "-1" from index values to convert from Fortran-> C indexing
+    ispec = ibelm_bottom_outer_core[iface] - 1;
+
+    // only for DOFs exactly on the ICB (bottom of these elements)
+    k = 0;
+
+    // get displacement on the solid side using pointwise matching
+    ispec_selected = ibelm_top_inner_core[iface] - 1;
+	
+    // get global point number 			       
+    // corresponding points are located at the bottom of the mantle
+    k_corresp = NGLLX - 1;
+    iglob_ic = ibool_inner_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
+
+    // elastic displacement on global point
+    displ_x = displ_inner_core[iglob_ic*3]; // (1,iglob)
+    displ_y = displ_inner_core[iglob_ic*3+1]; // (2,iglob)
+    displ_z = displ_inner_core[iglob_ic*3+2]; // (3,iglob)
+
+    // get normal on the ICB
+    nx = normal_bottom_outer_core[INDEX4(NDIM,NGLLX,NGLLX,0,i,j,iface)]; // (1,i,j,iface)
+    ny = normal_bottom_outer_core[INDEX4(NDIM,NGLLX,NGLLX,1,i,j,iface)]; // (2,i,j,iface)
+    nz = normal_bottom_outer_core[INDEX4(NDIM,NGLLX,NGLLX,2,i,j,iface)]; // (3,i,j,iface)
+
+    // calculates displacement component along normal
+    // (normal points outwards of acoustic element)
+    displ_n = displ_x*nx + displ_y*ny + displ_z*nz;
+
+    // formulation with generalized potential: gets associated, weighted jacobian
+    weight = jacobian2D_bottom_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
+
+    // get global point number
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] - 1;
+
+    // update fluid acceleration/pressure
+    atomicAdd(&accel_outer_core[iglob_oc],+ weight*displ_n);
+
+  // }
   }
 }
 
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(compute_coupling_ac_el_cuda,
-              COMPUTE_COUPLING_AC_EL_CUDA)(
-                                            long* Mesh_pointer_f,
-                                            int* phase_is_innerf,
-                                            int* num_coupling_ac_el_facesf,
-                                            int* SIMULATION_TYPEf) {
-  TRACE("compute_coupling_ac_el_cuda");
+void FC_FUNC_(compute_coupling_fluid_cmb_cuda,
+              COMPUTE_COUPLING_FLUID_CMB_CUDA)(long* Mesh_pointer_f) {
+
+  TRACE("compute_coupling_fluid_cmb_cuda");
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-  int phase_is_inner            = *phase_is_innerf;
-  int num_coupling_ac_el_faces  = *num_coupling_ac_el_facesf;
-  int SIMULATION_TYPE           = *SIMULATION_TYPEf;
 
-  // way 1: exact blocksize to match NGLLSQUARE
-  int blocksize = NGLL2;
-  int num_blocks_x = num_coupling_ac_el_faces;
+  int num_blocks_x = mp->nspec2D_top_outer_core;
   int num_blocks_y = 1;
   while(num_blocks_x > 65535) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
@@ -138,42 +190,93 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
   }
 
   dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(blocksize,1,1);
+  dim3 threads(5,5,1);
 
   // launches GPU kernel
-  compute_coupling_acoustic_el_kernel<<<grid,threads>>>(mp->d_displ,
-                                                       mp->d_potential_dot_dot_acoustic,
-                                                       num_coupling_ac_el_faces,
-                                                       mp->d_coupling_ac_el_ispec,
-                                                       mp->d_coupling_ac_el_ijk,
-                                                       mp->d_coupling_ac_el_normal,
-                                                       mp->d_coupling_ac_el_jacobian2Dw,
-                                                       mp->d_ibool,
-                                                       mp->d_ispec_is_inner,
-                                                       phase_is_inner);
+  compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
+						      mp->d_accel_outer_core,
+						      mp->d_ibool_crust_mantle,
+						      mp->d_ibelm_bottom_crust_mantle,
+						      mp->d_normal_top_outer_core,
+						      mp->d_jacobian2D_top_outer_core,
+						      mp->d_wgllwgll_xy,
+						      mp->d_ibool_outer_core,
+						      mp->d_ibelm_top_outer_core,
+						      mp->nspec2D_top_outer_core);
 
-  //  adjoint simulations
-  if (SIMULATION_TYPE == 3 ){
-    compute_coupling_acoustic_el_kernel<<<grid,threads>>>(mp->d_b_displ,
-                                                          mp->d_b_potential_dot_dot_acoustic,
-                                                          num_coupling_ac_el_faces,
-                                                          mp->d_coupling_ac_el_ispec,
-                                                          mp->d_coupling_ac_el_ijk,
-                                                          mp->d_coupling_ac_el_normal,
-                                                          mp->d_coupling_ac_el_jacobian2Dw,
-                                                          mp->d_ibool,
-                                                          mp->d_ispec_is_inner,
-                                                          phase_is_inner);
-
+  // adjoint simulations
+  if ( mp->simulation_type == 3 ){
+    compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
+							mp->d_b_accel_outer_core,
+							mp->d_ibool_crust_mantle,
+							mp->d_ibelm_bottom_crust_mantle,
+							mp->d_normal_top_outer_core,
+							mp->d_jacobian2D_top_outer_core,
+							mp->d_wgllwgll_xy,
+							mp->d_ibool_outer_core,
+							mp->d_ibelm_top_outer_core,
+							mp->nspec2D_top_outer_core);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("compute_coupling_acoustic_el_kernel");
+  exit_on_cuda_error("compute_coupling_fluid_CMB_kernel");
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(compute_coupling_fluid_icb_cuda,
+              COMPUTE_COUPLING_FLUID_ICB_CUDA)(long* Mesh_pointer_f) {
+
+  TRACE("compute_coupling_fluid_icb_cuda");
+  //double start_time = get_time();
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  int num_blocks_x = mp->nspec2D_bottom_outer_core;
+  int num_blocks_y = 1;
+  while(num_blocks_x > 65535) {
+    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
+    num_blocks_y = num_blocks_y*2;
+  }
+
+  dim3 grid(num_blocks_x,num_blocks_y);
+  dim3 threads(5,5,1);
+
+  // launches GPU kernel
+  compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
+						      mp->d_accel_outer_core,
+						      mp->d_ibool_inner_core,
+						      mp->d_ibelm_top_inner_core,
+						      mp->d_normal_bottom_outer_core,
+						      mp->d_jacobian2D_bottom_outer_core,
+						      mp->d_wgllwgll_xy,
+						      mp->d_ibool_outer_core,
+						      mp->d_ibelm_bottom_outer_core,
+						      mp->nspec2D_bottom_outer_core);
+
+  // adjoint simulations
+  if ( mp->simulation_type == 3 ){
+    compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
+							mp->d_b_accel_outer_core,
+							mp->d_ibool_inner_core,
+							mp->d_ibelm_top_inner_core,
+							mp->d_normal_bottom_outer_core,
+							mp->d_jacobian2D_bottom_outer_core,
+							mp->d_wgllwgll_xy,
+							mp->d_ibool_outer_core,
+							mp->d_ibelm_bottom_outer_core,
+							mp->nspec2D_bottom_outer_core);
+  }
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  //double end_time = get_time();
+  //printf("Elapsed time: %e\n",end_time-start_time);
+  exit_on_cuda_error("compute_coupling_fluid_ICB_kernel");
+#endif
+}
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -181,95 +284,140 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acoustic,
-                                                    realw* accel,
-                                                    int num_coupling_ac_el_faces,
-                                                    int* coupling_ac_el_ispec,
-                                                    int* coupling_ac_el_ijk,
-                                                    realw* coupling_ac_el_normal,
-                                                    realw* coupling_ac_el_jacobian2Dw,
-                                                    int* ibool,
-                                                    int* ispec_is_inner,
-                                                    int phase_is_inner,
-                                                    int gravity,
-                                                    realw* minus_g,
-                                                    realw* rhostore,
-                                                    realw* displ) {
+__global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
+						  realw* accel_crust_mantle,
+						  realw* accel_outer_core,
+						  int* ibool_crust_mantle,
+						  int* ibelm_bottom_crust_mantle,
+						  realw* normal_top_outer_core,
+						  realw* jacobian2D_top_outer_core,
+						  realw* wgllwgll_xy,
+						  int* ibool_outer_core,
+						  int* ibelm_top_outer_core,
+						  double RHO_TOP_OC,
+						  realw minus_g_cmb,
+						  int GRAVITY_VAL,
+						  int NSPEC_BOTTOM_CM) {
 
-  int igll = threadIdx.x;
+  int i = threadIdx.x;
+  int j = threadIdx.y;    
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
 
-  int i,j,k,iglob,ispec;
+  int k,k_corresp,iglob_cm,iglob_oc,ispec,ispec_selected;
   realw pressure;
   realw nx,ny,nz;
-  realw jacobianw;
-  realw rhol;
+  realw weight;
 
-  if( iface < num_coupling_ac_el_faces){
-
-    // don't compute points outside NGLLSQUARE==NGLL2==25
-    // way 2: no further check needed since blocksize = 25
-    //  if(igll<NGLL2) {
+  // for surfaces elements exactly at the bottom of the crust mantle (outer core top)
+  if( iface < NSPEC_BOTTOM_CM ){
 
     // "-1" from index values to convert from Fortran-> C indexing
-    ispec = coupling_ac_el_ispec[iface] - 1;
+    ispec = ibelm_bottom_crust_mantle[iface] - 1;
 
-    if(ispec_is_inner[ispec] == phase_is_inner ) {
+    // only for DOFs exactly on the CMB (bottom of these elements)
+    k = 0;
 
-      i = coupling_ac_el_ijk[INDEX3(NDIM,NGLL2,0,igll,iface)] - 1;
-      j = coupling_ac_el_ijk[INDEX3(NDIM,NGLL2,1,igll,iface)] - 1;
-      k = coupling_ac_el_ijk[INDEX3(NDIM,NGLL2,2,igll,iface)] - 1;
-      iglob = ibool[INDEX4(5,5,5,i,j,k,ispec)] - 1;
+    // get velocity potential on the fluid side using pointwise matching
+    ispec_selected = ibelm_top_outer_core[iface] - 1;
 
-      // gets associated normal on GLL point
-      // note: normal points away from acoustic element
-      nx = coupling_ac_el_normal[INDEX3(NDIM,NGLL2,0,igll,iface)]; // (1,igll,iface)
-      ny = coupling_ac_el_normal[INDEX3(NDIM,NGLL2,1,igll,iface)]; // (2,igll,iface)
-      nz = coupling_ac_el_normal[INDEX3(NDIM,NGLL2,2,igll,iface)]; // (3,igll,iface)
+    // get normal on the CMB
+    nx = normal_top_outer_core[INDEX4(NDIM,NGLLX,NGLLX,0,i,j,iface)]; // (1,i,j,iface)
+    ny = normal_top_outer_core[INDEX4(NDIM,NGLLX,NGLLX,1,i,j,iface)]; // (2,i,j,iface)
+    nz = normal_top_outer_core[INDEX4(NDIM,NGLLX,NGLLX,2,i,j,iface)]; // (3,i,j,iface)
 
-      // gets associated, weighted jacobian
-      jacobianw = coupling_ac_el_jacobian2Dw[INDEX2(NGLL2,igll,iface)];
+    // get global point number 
+    // corresponding points are located at the top of the outer core
+    k_corresp = NGLLX - 1;
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
+    iglob_cm = ibool_crust_mantle[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] - 1;
 
-      // acoustic pressure on global point
-      if( gravity ){
-        // takes density (from acoustic? element)
-        rhol = rhostore[INDEX4_PADDED(NGLLX,NGLLX,NGLLX,i,j,k,ispec)];
-
-        // note: uses potential chi such that displacement s = grad(chi),
-        //         pressure becomes: p = - kappa ( div( s ) ) = rho ( - dot_dot_chi + g * s )
-        //  g only acting in negative z-direction
-
-        // daniel: TODO - check gravity and coupling would be displ * nz  correct?
-        pressure = rhol*( - potential_dot_dot_acoustic[iglob]
-                         + minus_g[iglob] * displ[iglob*3+2] );
-
-        //daniel: TODO - check gravity and coupling
-        //pressure = - potential_dot_dot_acoustic[iglob] ;
-        //if( iface == 128 && igll == 5 ){
-        //  printf("coupling acoustic: %f %f \n",potential_dot_dot_acoustic[iglob],
-        //             minus_g[iglob] * displ[iglob*3+2]);
-        //}
-
-      }else{
-        // no gravity: uses potential chi such that displacement s = 1/rho grad(chi)
-        //                  pressure p = - kappa ( div( s ) ) then becomes: p = - dot_dot_chi
-        //                  ( multiplied with factor 1/kappa due to setup of equation of motion )
-        pressure = - potential_dot_dot_acoustic[iglob];
-      }
-
-      // continuity of displacement and pressure on global point
-      //
-      // note: Newmark time scheme together with definition of scalar potential:
-      //          pressure = - chi_dot_dot
-      //          requires that this coupling term uses the *UPDATED* pressure (chi_dot_dot), i.e.
-      //          pressure at time step [t + delta_t]
-      //          (see e.g. Chaljub & Vilotte, Nissen-Meyer thesis...)
-      //          it means you have to calculate and update the acoustic pressure first before
-      //          calculating this term...
-      atomicAdd(&accel[iglob*3],+ jacobianw*nx*pressure);
-      atomicAdd(&accel[iglob*3+1],+ jacobianw*ny*pressure);
-      atomicAdd(&accel[iglob*3+2],+ jacobianw*nz*pressure);
+    // compute pressure, taking gravity into account
+    if( GRAVITY_VAL ){
+      pressure = RHO_TOP_OC * ( - accel_outer_core[iglob_oc] + minus_g_cmb 
+				 * (displ_crust_mantle[iglob_cm*3]*nx 
+				    + displ_crust_mantle[iglob_cm*3+1]*ny
+				    + displ_crust_mantle[iglob_cm*3+2]*nz) );
+    }else{
+      pressure = - RHO_TOP_OC * accel_outer_core[iglob_oc];
     }
+      
+    // formulation with generalized potential: gets associated, weighted jacobian
+    weight = jacobian2D_top_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
+
+    // update fluid acceleration/pressure
+    atomicAdd(&accel_crust_mantle[iglob_cm*3],+ weight*nx*pressure);
+    atomicAdd(&accel_crust_mantle[iglob_cm*3+1],+ weight*ny*pressure);
+    atomicAdd(&accel_crust_mantle[iglob_cm*3+2],+ weight*nz*pressure);
+
+    //  }
+  }
+}
+
+__global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
+						  realw* accel_inner_core,
+						  realw* accel_outer_core,
+						  int* ibool_inner_core,
+						  int* ibelm_top_inner_core,
+						  realw* normal_bottom_outer_core,
+						  realw* jacobian2D_bottom_outer_core,
+						  realw* wgllwgll_xy,
+						  int* ibool_outer_core,
+						  int* ibelm_bottom_outer_core,
+						  double RHO_BOTTOM_OC,
+						  realw minus_g_icb,
+						  int GRAVITY_VAL,
+						  int NSPEC_TOP_IC) {
+
+  int i = threadIdx.x;
+  int j = threadIdx.y;    
+  int iface = blockIdx.x + gridDim.x*blockIdx.y;
+
+  int k,k_corresp,iglob_ic,iglob_oc,ispec,ispec_selected;
+  realw pressure;
+  realw nx,ny,nz;
+  realw weight;
+
+  // for surfaces elements exactly at the top of the inner core (outer core bottom)
+  if( iface < NSPEC_TOP_IC ){
+
+    // "-1" from index values to convert from Fortran-> C indexing
+    ispec = ibelm_top_inner_core[iface] - 1;
+
+    // only for DOFs exactly on the ICB (top of these elements)
+    k = NGLLX - 1;
+
+    // get velocity potential on the fluid side using pointwise matching
+    ispec_selected = ibelm_bottom_outer_core[iface] - 1;
+
+    // get normal on the ICB
+    nx = normal_bottom_outer_core[INDEX4(NDIM,NGLLX,NGLLX,0,i,j,iface)]; // (1,i,j,iface)
+    ny = normal_bottom_outer_core[INDEX4(NDIM,NGLLX,NGLLX,1,i,j,iface)]; // (2,i,j,iface)
+    nz = normal_bottom_outer_core[INDEX4(NDIM,NGLLX,NGLLX,2,i,j,iface)]; // (3,i,j,iface)
+
+    // get global point number 
+    // corresponding points are located at the bottom of the outer core
+    k_corresp = 0;
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
+    iglob_ic = ibool_inner_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] - 1;
+
+    // compute pressure, taking gravity into account
+    if( GRAVITY_VAL ){
+      pressure = RHO_BOTTOM_OC * ( - accel_outer_core[iglob_oc] + minus_g_icb
+				 * (displ_inner_core[iglob_ic*3]*nx 
+				    + displ_inner_core[iglob_ic*3+1]*ny
+				    + displ_inner_core[iglob_ic*3+2]*nz) );
+    }else{
+      pressure = - RHO_BOTTOM_OC * accel_outer_core[iglob_oc];
+    }
+      
+    // formulation with generalized potential: gets associated, weighted jacobian
+    weight = jacobian2D_bottom_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
+
+    // update fluid acceleration/pressure
+    atomicAdd(&accel_inner_core[iglob_ic*3],+ weight*nx*pressure);
+    atomicAdd(&accel_inner_core[iglob_ic*3+1],+ weight*ny*pressure);
+    atomicAdd(&accel_inner_core[iglob_ic*3+2],+ weight*nz*pressure);
+
     //  }
   }
 }
@@ -277,24 +425,18 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(compute_coupling_el_ac_cuda,
-              COMPUTE_COUPLING_EL_AC_CUDA)(
-                                                 long* Mesh_pointer_f,
-                                                 int* phase_is_innerf,
-                                                 int* num_coupling_ac_el_facesf,
-                                                 int* SIMULATION_TYPEf) {
-  TRACE("compute_coupling_el_ac_cuda");
+void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
+              COMPUTE_COUPLING_CMB_FLUID_CUDA)(long* Mesh_pointer_f,
+					       double RHO_TOP_OC,
+					       realw minus_g_cmb,
+					       int GRAVITY_VAL) {
+
+  TRACE("compute_coupling_cmb_fluid_cuda");
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
-  int phase_is_inner            = *phase_is_innerf;
-  int num_coupling_ac_el_faces  = *num_coupling_ac_el_facesf;
-  int SIMULATION_TYPE           = *SIMULATION_TYPEf;
 
-  // way 1: exact blocksize to match NGLLSQUARE
-  int blocksize = 25;
-
-  int num_blocks_x = num_coupling_ac_el_faces;
+  int num_blocks_x = mp->nspec2D_bottom_crust_mantle;
   int num_blocks_y = 1;
   while(num_blocks_x > 65535) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
@@ -302,50 +444,113 @@ void FC_FUNC_(compute_coupling_el_ac_cuda,
   }
 
   dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(blocksize,1,1);
+  dim3 threads(5,5,1);
 
   // launches GPU kernel
-  compute_coupling_elastic_ac_kernel<<<grid,threads>>>(mp->d_potential_dot_dot_acoustic,
-                                                       mp->d_accel,
-                                                       num_coupling_ac_el_faces,
-                                                       mp->d_coupling_ac_el_ispec,
-                                                       mp->d_coupling_ac_el_ijk,
-                                                       mp->d_coupling_ac_el_normal,
-                                                       mp->d_coupling_ac_el_jacobian2Dw,
-                                                       mp->d_ibool,
-                                                       mp->d_ispec_is_inner,
-                                                       phase_is_inner,
-                                                       mp->gravity,
-                                                       mp->d_minus_g,
-                                                       mp->d_rhostore,
-                                                       mp->d_displ);
+  compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
+						      mp->d_accel_crust_mantle,
+						      mp->d_accel_outer_core,
+						      mp->d_ibool_crust_mantle,
+						      mp->d_ibelm_bottom_crust_mantle,
+						      mp->d_normal_top_outer_core,
+						      mp->d_jacobian2D_top_outer_core,
+						      mp->d_wgllwgll_xy,
+						      mp->d_ibool_outer_core,
+						      mp->d_ibelm_top_outer_core,
+						      RHO_TOP_OC,
+						      minus_g_cmb,
+						      GRAVITY_VAL,
+						      mp->nspec2D_bottom_crust_mantle);
 
   //  adjoint simulations
-  if (SIMULATION_TYPE == 3 ){
-    compute_coupling_elastic_ac_kernel<<<grid,threads>>>(mp->d_b_potential_dot_dot_acoustic,
-                                                         mp->d_b_accel,
-                                                         num_coupling_ac_el_faces,
-                                                         mp->d_coupling_ac_el_ispec,
-                                                         mp->d_coupling_ac_el_ijk,
-                                                         mp->d_coupling_ac_el_normal,
-                                                         mp->d_coupling_ac_el_jacobian2Dw,
-                                                         mp->d_ibool,
-                                                         mp->d_ispec_is_inner,
-                                                         phase_is_inner,
-                                                         mp->gravity,
-                                                         mp->d_minus_g,
-                                                         mp->d_rhostore,
-                                                         mp->d_b_displ);
-
+  if ( mp->simulation_type == 3 ){
+    compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
+							mp->d_b_accel_crust_mantle,
+							mp->d_b_accel_outer_core,
+							mp->d_ibool_crust_mantle,
+							mp->d_ibelm_bottom_crust_mantle,
+							mp->d_normal_top_outer_core,
+							mp->d_jacobian2D_top_outer_core,
+							mp->d_wgllwgll_xy,
+							mp->d_ibool_outer_core,
+							mp->d_ibelm_top_outer_core,
+							RHO_TOP_OC,
+							minus_g_cmb,
+							GRAVITY_VAL,
+							mp->nspec2D_bottom_crust_mantle);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
   //printf("Elapsed time: %e\n",end_time-start_time);
-  exit_on_cuda_error("compute_coupling_el_ac_cuda");
+  exit_on_cuda_error("compute_coupling_CMB_fluid_cuda");
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(compute_coupling_icb_fluid_cuda,
+              COMPUTE_COUPLING_ICB_FLUID_CUDA)(long* Mesh_pointer_f,
+					       double RHO_BOTTOM_OC,
+					       realw minus_g_icb,
+					       int GRAVITY_VAL) {
+
+  TRACE("compute_coupling_icb_fluid_cuda");
+  //double start_time = get_time();
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
+
+  int num_blocks_x = mp->nspec2D_top_inner_core;
+  int num_blocks_y = 1;
+  while(num_blocks_x > 65535) {
+    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
+    num_blocks_y = num_blocks_y*2;
+  }
+
+  dim3 grid(num_blocks_x,num_blocks_y);
+  dim3 threads(5,5,1);
+
+  // launches GPU kernel
+  compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
+						      mp->d_accel_inner_core,
+						      mp->d_accel_outer_core,
+						      mp->d_ibool_inner_core,
+						      mp->d_ibelm_top_inner_core,
+						      mp->d_normal_bottom_outer_core,
+						      mp->d_jacobian2D_bottom_outer_core,
+						      mp->d_wgllwgll_xy,
+						      mp->d_ibool_outer_core,
+						      mp->d_ibelm_bottom_outer_core,
+						      RHO_BOTTOM_OC,
+						      minus_g_icb,
+						      GRAVITY_VAL,
+						      mp->nspec2D_top_inner_core);
+
+  //  adjoint simulations
+  if ( mp->simulation_type == 3 ){
+    compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
+							mp->d_b_accel_inner_core,
+							mp->d_b_accel_outer_core,
+							mp->d_ibool_inner_core,
+							mp->d_ibelm_top_inner_core,
+							mp->d_normal_bottom_outer_core,
+							mp->d_jacobian2D_bottom_outer_core,
+							mp->d_wgllwgll_xy,
+							mp->d_ibool_outer_core,
+							mp->d_ibelm_bottom_outer_core,
+							RHO_BOTTOM_OC,
+							minus_g_icb,
+							GRAVITY_VAL,
+							mp->nspec2D_top_inner_core);
+  }
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  //double end_time = get_time();
+  //printf("Elapsed time: %e\n",end_time-start_time);
+  exit_on_cuda_error("compute_coupling_ICB_fluid_cuda");
+#endif
+}
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -354,59 +559,61 @@ void FC_FUNC_(compute_coupling_el_ac_cuda,
 /* ----------------------------------------------------------------------------------------------- */
 
 
-__global__ void compute_coupling_ocean_cuda_kernel(realw* accel,
-                                               realw* rmass,
-                                               realw* rmass_ocean_load,
-                                               int num_free_surface_faces,
-                                               int* free_surface_ispec,
-                                               int* free_surface_ijk,
-                                               realw* free_surface_normal,
-                                               int* ibool,
-                                               int* updated_dof_ocean_load) {
-  // gets spectral element face id
-  int igll = threadIdx.x ;  //  threadIdx.y*blockDim.x will be always = 0 for thread block (25,1,1)
+__global__ void compute_coupling_ocean_cuda_kernel(realw* accel_crust_mantle,
+						   realw* rmass_crust_mantle,
+						   realw* rmass_ocean_load,
+						   realw* normal_top_crust_mantle,
+						   int* ibool_crust_mantle,
+						   int* ibelm_top_crust_mantle,
+						   int* updated_dof_ocean_load,
+						   int NSPEC2D_TOP_CM) {
+
+  int i = threadIdx.x;
+  int j = threadIdx.y;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
+
+  int k,iglob,ispec;
   realw nx,ny,nz;
   realw force_normal_comp,additional_term;
 
-  // for all faces on free surface
-  if( iface < num_free_surface_faces ){
+  // for surfaces elements exactly at the top of the crust mantle (ocean bottom)
+  if( iface < NSPEC2D_TOP_CM ){
 
-    int ispec = free_surface_ispec[iface]-1;
+    // "-1" from index values to convert from Fortran-> C indexing
+    ispec = ibelm_top_crust_mantle[iface] - 1;
 
-    // gets global point index
-    int i = free_surface_ijk[INDEX3(NDIM,NGLL2,0,igll,iface)] - 1; // (1,igll,iface)
-    int j = free_surface_ijk[INDEX3(NDIM,NGLL2,1,igll,iface)] - 1;
-    int k = free_surface_ijk[INDEX3(NDIM,NGLL2,2,igll,iface)] - 1;
+    // only for DOFs exactly on the CMB (top of these elements)
+    k = NGLLX - 1;
 
-    int iglob = ibool[INDEX4(5,5,5,i,j,k,ispec)] - 1;
-
-    //if(igll == 0 ) printf("igll %d %d %d %d\n",igll,i,j,k,iglob);
+    // get global point number
+    iglob = ibool_crust_mantle[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] - 1;
 
     // only update this global point once
 
     // daniel: TODO - there might be better ways to implement a mutex like below,
     //            and find a workaround to not use the temporary update array.
-    //            atomicExch: returns the old value, i.e. 0 indicates that we still have to do this point
+    //            As a reminder, atomicExch atomically sets the value of the memory 
+    //            location stored in address to val and returns the old value.
+    //            0 indicates that we still have to do this point
 
     if( atomicExch(&updated_dof_ocean_load[iglob],1) == 0){
 
-      // get normal
-      nx = free_surface_normal[INDEX3(NDIM,NGLL2,0,igll,iface)]; //(1,igll,iface)
-      ny = free_surface_normal[INDEX3(NDIM,NGLL2,1,igll,iface)];
-      nz = free_surface_normal[INDEX3(NDIM,NGLL2,2,igll,iface)];
+      // get normal on the CMB 
+      nx = normal_top_crust_mantle[INDEX4(NDIM,NGLLX,NGLLX,0,i,j,iface)]; // (1,i,j,iface)
+      ny = normal_top_crust_mantle[INDEX4(NDIM,NGLLX,NGLLX,1,i,j,iface)]; // (2,i,j,iface)
+      nz = normal_top_crust_mantle[INDEX4(NDIM,NGLLX,NGLLX,2,i,j,iface)]; // (3,i,j,iface)
 
       // make updated component of right-hand side
       // we divide by rmass() which is 1 / M
       // we use the total force which includes the Coriolis term above
-      force_normal_comp = ( accel[iglob*3]*nx + accel[iglob*3+1]*ny + accel[iglob*3+2]*nz ) / rmass[iglob];
+      force_normal_comp = ( accel_crust_mantle[iglob*3]*nx + accel_crust_mantle[iglob*3+1]*ny + accel_crust_mantle[iglob*3+2]*nz ) / rmass_crust_mantle[iglob];
 
-      additional_term = (rmass_ocean_load[iglob] - rmass[iglob]) * force_normal_comp;
+      additional_term = (rmass_ocean_load[iglob] - rmass_crust_mantle[iglob]) * force_normal_comp;
 
       // probably wouldn't need atomicAdd anymore, but just to be sure...
-      atomicAdd(&accel[iglob*3], + additional_term * nx);
-      atomicAdd(&accel[iglob*3+1], + additional_term * ny);
-      atomicAdd(&accel[iglob*3+2], + additional_term * nz);
+      atomicAdd(&accel_crust_mantle[iglob*3], + additional_term * nx);
+      atomicAdd(&accel_crust_mantle[iglob*3+1], + additional_term * ny);
+      atomicAdd(&accel_crust_mantle[iglob*3+2], + additional_term * nz);
     }
   }
 }
@@ -415,20 +622,13 @@ __global__ void compute_coupling_ocean_cuda_kernel(realw* accel,
 
 extern "C"
 void FC_FUNC_(compute_coupling_ocean_cuda,
-              COMPUTE_COUPLING_OCEAN_CUDA)(long* Mesh_pointer_f,
-                                       int* SIMULATION_TYPE) {
+              COMPUTE_COUPLING_OCEAN_CUDA)(long* Mesh_pointer_f) {
 
   TRACE("compute_coupling_ocean_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
-  // checks if anything to do
-  if( mp->num_free_surface_faces == 0 ) return;
-
-  // block sizes: exact blocksize to match NGLLSQUARE
-  int blocksize = NGLL2;
-
-  int num_blocks_x = mp->num_free_surface_faces;
+  int num_blocks_x = mp->nspec2D_top_crust_mantle;
   int num_blocks_y = 1;
   while(num_blocks_x > 65535) {
     num_blocks_x = (int) ceil(num_blocks_x*0.5f);
@@ -436,7 +636,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
   }
 
   dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(blocksize,1,1);
+  dim3 threads(5,5,1);
 
 
   // initializes temporary array to zero
@@ -447,36 +647,32 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
   exit_on_cuda_error("before kernel compute_coupling_ocean_cuda");
 #endif
 
-  compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel,
-                                                       mp->d_rmass,
+  compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
+                                                       mp->d_rmass_crust_mantle,
                                                        mp->d_rmass_ocean_load,
-                                                       mp->num_free_surface_faces,
-                                                       mp->d_free_surface_ispec,
-                                                       mp->d_free_surface_ijk,
-                                                       mp->d_free_surface_normal,
-                                                       mp->d_ibool,
-                                                       mp->d_updated_dof_ocean_load);
+						       mp->d_normal_top_crust_mantle,
+						       mp->d_ibool_crust_mantle,
+						       mp->d_ibelm_top_crust_mantle,
+						       mp->d_updated_dof_ocean_load,
+						       mp->nspec2D_top_crust_mantle);
+
   // for backward/reconstructed potentials
-  if(*SIMULATION_TYPE == 3) {
+  if( mp->simulation_type == 3 ) {
     // re-initializes array
     print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,
                                        sizeof(int)*mp->NGLOB_AB),88502);
 
-    compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel,
-                                                         mp->d_rmass,
-                                                         mp->d_rmass_ocean_load,
-                                                         mp->num_free_surface_faces,
-                                                         mp->d_free_surface_ispec,
-                                                         mp->d_free_surface_ijk,
-                                                         mp->d_free_surface_normal,
-                                                         mp->d_ibool,
-                                                         mp->d_updated_dof_ocean_load);
-
+    compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
+							 mp->d_rmass_crust_mantle,
+							 mp->d_rmass_ocean_load,
+							 mp->d_normal_top_crust_mantle,
+							 mp->d_ibool_crust_mantle,
+							 mp->d_ibelm_top_crust_mantle,
+							 mp->d_updated_dof_ocean_load,
+							 mp->nspec2D_top_crust_mantle);
   }
-
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_coupling_ocean_cuda");
 #endif
 }
-

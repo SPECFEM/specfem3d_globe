@@ -1070,6 +1070,7 @@
                                   number_receiver_global,islice_selected_rec,ispec_selected_rec, &
                                   nrec, nrec_local, nadj_rec_local, &
                                   NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+                                  NGLOB_CRUST_MANTLE_OCEANS, &
                                   NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                   SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
@@ -1244,6 +1245,9 @@
                                   kappahstore_crust_mantle,muhstore_crust_mantle, &
                                   eta_anisostore_crust_mantle, &
                                   rmass_crust_mantle, &
+                                  normal_top_crust_mantle, &
+                                  ibelm_top_crust_mantle, &
+                                  ibelm_bottom_crust_mantle, &
                                   ibool_crust_mantle, &
                                   xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                                   ispec_is_tiso_crust_mantle, &
@@ -1255,7 +1259,9 @@
                                   c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
                                   c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
                                   num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-                                  nspec_outer_crust_mantle,nspec_inner_crust_mantle)
+                                  nspec_outer_crust_mantle,nspec_inner_crust_mantle, &
+                                  NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
+                                  NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE))
   call sync_all()
 
 
@@ -1267,10 +1273,18 @@
                                   gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
                                   rhostore_outer_core,kappavstore_outer_core, &
                                   rmass_outer_core, &
+                                  normal_top_outer_core, &
+                                  normal_bottom_outer_core, &
+                                  jacobian2D_top_outer_core, &
+                                  jacobian2D_bottom_outer_core, &
+                                  ibelm_top_outer_core, &
+                                  ibelm_bottom_outer_core, &
                                   ibool_outer_core, &
                                   xstore_outer_core,ystore_outer_core,zstore_outer_core, &
                                   num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
-                                  nspec_outer_outer_core,nspec_inner_outer_core)
+                                  nspec_outer_outer_core,nspec_inner_outer_core, &
+                                  NSPEC2D_TOP(IREGION_OUTER_CORE), &
+                                  NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
   call sync_all()
 
 
@@ -1282,13 +1296,15 @@
                                   gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
                                   rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
                                   rmass_inner_core, &
+                                  ibelm_top_inner_core, &
                                   ibool_inner_core, &
                                   xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                                   c11store_inner_core,c12store_inner_core,c13store_inner_core, &
                                   c33store_inner_core,c44store_inner_core, &
                                   idoubling_inner_core, &
                                   num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-                                  nspec_outer_inner_core,nspec_inner_inner_core)
+                                  nspec_outer_inner_core,nspec_inner_inner_core, &
+                                  NSPEC2D_TOP(IREGION_INNER_CORE))
   call sync_all()
 
 
