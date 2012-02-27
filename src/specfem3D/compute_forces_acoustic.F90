@@ -121,7 +121,7 @@
 
     ! computes additional contributions to acceleration field
     if( iphase == 1 ) then
-       <<<<<<< HEAD
+
        ! Stacey absorbing boundaries
        if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_outer_core()
 
