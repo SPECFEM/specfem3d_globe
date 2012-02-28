@@ -203,6 +203,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* NOISE_TOMOGRAPHY,
                                         int* SAVE_FORWARD_f,
                                         int* ABSORBING_CONDITIONS_f,
+					int* OCEANS_f,
                                         int* GRAVITY_f,
                                         int* ROTATION_f,
                                         int* ATTENUATION_f,
@@ -254,6 +255,7 @@ TRACE("prepare_constants_device");
   // simulation flags initialization
   mp->save_forward = *SAVE_FORWARD_f;
   mp->absorbing_conditions = *ABSORBING_CONDITIONS_f;
+  mp->oceans = *OCEANS_f;
   mp->gravity = *GRAVITY_f;
   mp->rotation = *ROTATION_f;
   mp->attenuation = *ATTENUATION_f;
@@ -2017,9 +2019,36 @@ void FC_FUNC_(prepare_inner_core_device,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
 
+// OCEANS
 
+/* ----------------------------------------------------------------------------------------------- */
 
+extern "C"
+void FC_FUNC_(prepare_oceans_device,
+              PREPARE_OCEANS_DEVICE)(long* Mesh_pointer_f,
+				     realw* h_rmass_ocean_load) {
+
+  TRACE("prepare_oceans_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer_f);
+
+  // mass matrix
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rmass_ocean_load),
+				     sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS),4501);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_rmass_ocean_load,h_rmass_ocean_load,
+				     sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS,cudaMemcpyHostToDevice),4502);
+
+  // temporary global array: used to synchronize updates on global accel array
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_updated_dof_ocean_load),
+				     sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),4502);
+  
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("prepare_oceans_device");
+#endif
+}
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -2776,6 +2805,11 @@ TRACE("prepare_cleanup_device");
 
   cudaFree(mp->d_muvstore_inner_core);
   cudaFree(mp->d_ibool_inner_core);
+
+  if( mp->oceans ){
+    cudaFree(mp->d_rmass_ocean_load);
+    cudaFree(mp->d_updated_dof_ocean_load);
+  }
 
   if( mp->gravity ){
     cudaFree(mp->d_xstore_inner_core);
