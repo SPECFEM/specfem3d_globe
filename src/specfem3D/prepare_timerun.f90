@@ -1075,7 +1075,7 @@
                                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                   SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
                                   SAVE_FORWARD,ABSORBING_CONDITIONS, &
-                                  GRAVITY_VAL,ROTATION_VAL, &
+                                  OCEANS_VAL,GRAVITY_VAL,ROTATION_VAL, &
                                   ATTENUATION_VAL,USE_ATTENUATION_MIMIC, &
                                   COMPUTE_AND_STORE_STRAIN, &
                                   ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
@@ -1234,6 +1234,14 @@
 
   endif
 
+  ! prepares oceans arrays
+  if ( OCEANS_VAL ) then
+     if(myrank == 0 ) write(IMAIN,*) "  loading oceans arrays"
+
+     call prepare_oceans_device(Mesh_pointer,rmass_ocean_load)
+
+  endif
+
   ! crust/mantle region
   if(myrank == 0 ) write(IMAIN,*) "  loading crust/mantle region"
   call prepare_crust_mantle_device(Mesh_pointer, &
@@ -1306,7 +1314,6 @@
                                   nspec_outer_inner_core,nspec_inner_inner_core, &
                                   NSPEC2D_TOP(IREGION_INNER_CORE))
   call sync_all()
-
 
   ! transfer forward and backward fields to device with initial values
   if(myrank == 0 ) write(IMAIN,*) "  transfering initial wavefield"

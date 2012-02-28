@@ -169,7 +169,6 @@ typedef struct mesh_ {
   // ------------------------------------------------------------------ //
   int NSPEC_CRUST_MANTLE;
   int NGLOB_CRUST_MANTLE;
-  int NGLOB_CRUST_MANTLE_OCEANS;
 
   // interpolators
   realw* d_xix_crust_mantle; realw* d_xiy_crust_mantle; realw* d_xiz_crust_mantle;
@@ -419,6 +418,17 @@ typedef struct mesh_ {
   int* d_ibelm_top_inner_core;
 
   // ------------------------------------------------------------------ //
+  // oceans
+  // ------------------------------------------------------------------ //
+  int NGLOB_CRUST_MANTLE_OCEANS;
+
+  // model parameter
+  realw* d_rmass_ocean_load;
+
+  // temporary global array: used to synchronize updates on global accel array
+  int* d_updated_dof_ocean_load;
+
+  // ------------------------------------------------------------------ //
   // attenuation
   // ------------------------------------------------------------------ //
   realw* d_alphaval;
@@ -454,6 +464,7 @@ typedef struct mesh_ {
   int anisotropic_3D_mantle;
   int gravity;
   int rotation;
+  int oceans;
   int anisotropic_inner_core;
   int save_boundary_mesh;
 
@@ -587,7 +598,6 @@ typedef struct mesh_ {
   int noise_tomography;
 
   int nspec_top;
-  int* d_ibelm_top_crust_mantle;
 
   realw* d_noise_surface_movie;
   realw* d_noise_sourcearray;
@@ -748,11 +758,6 @@ typedef struct mesh_ {
 
   // approximative hessian for preconditioning kernels
   realw* d_hess_el_kl;
-
-  // oceans
-  realw* d_rmass_ocean_load;
-  realw* d_free_surface_normal;
-  int* d_updated_dof_ocean_load;
 
   // ------------------------------------------------------------------ //
   // acoustic wavefield

@@ -637,11 +637,9 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(5,5,1);
-
-
+               
   // initializes temporary array to zero
-  print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,
-                                     sizeof(int)*mp->NGLOB_AB),88501);
+  print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88501);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before kernel compute_coupling_ocean_cuda");
@@ -660,7 +658,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
   if( mp->simulation_type == 3 ) {
     // re-initializes array
     print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,
-                                       sizeof(int)*mp->NGLOB_AB),88502);
+                                       sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88502);
 
     compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
 							 mp->d_rmass_crust_mantle,

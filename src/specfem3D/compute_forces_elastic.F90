@@ -246,8 +246,6 @@
        ! only for elements in first matching layer in the solid
        if( .not. GPU_MODE ) then
           ! on CPU   
-          call load_CPU_elastic()
-          call load_CPU_acoustic()
           !---
           !--- couple with outer core at the bottom of the mantle
           !---
@@ -274,12 +272,8 @@
                RHO_BOTTOM_OC,minus_g_icb, &
                SIMULATION_TYPE,NSPEC2D_TOP(IREGION_INNER_CORE))
 
-          call load_GPU_elastic()
-
        else
           ! on GPU
-          call load_GPU_elastic_coupling_fluid()
-
           !---
           !--- couple with outer core at the bottom of the mantle
           !---
@@ -293,7 +287,6 @@
                call compute_coupling_icb_fluid_cuda(Mesh_pointer, &
                RHO_BOTTOM_OC,minus_g_icb,GRAVITY_VAL)
 
-          call load_CPU_elastic_coupling_fluid()
        endif
     endif ! iphase == 1
 
@@ -488,22 +481,18 @@
   if(OCEANS_VAL) then
      if(.NOT. GPU_MODE) then
         ! on CPU
-        call load_CPU_elastic()
 
         call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
              rmass_crust_mantle,rmass_ocean_load,normal_top_crust_mantle, &
              ibool_crust_mantle,ibelm_top_crust_mantle, &
              updated_dof_ocean_load, &
              SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
-        call load_GPU_elastic()
 
      else
         ! on GPU
-        call load_GPU_elastic_coupling_ocean()
 
         call compute_coupling_ocean_cuda(Mesh_pointer)
 
-        call load_CPU_elastic_coupling_ocean()
      endif
   endif
 
@@ -714,143 +703,3 @@
 #endif
 
   end subroutine compute_forces_el_update_veloc
-
-!=====================================================================
-
-  subroutine load_GPU_elastic
-
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-  implicit none
-
-  ! daniel: TODO - temporary transfers to the GPU
-  call transfer_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle, &
-                                  veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
-  call transfer_fields_ic_to_device(NDIM*NGLOB_INNER_CORE,displ_inner_core, &
-                                  veloc_inner_core,accel_inner_core,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-    call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle, &
-                                  b_veloc_crust_mantle,b_accel_crust_mantle,Mesh_pointer)
-    call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core, &
-                                  b_veloc_inner_core,b_accel_inner_core,Mesh_pointer)
-  endif
-
-  end subroutine
-
-!=====================================================================
-
-  subroutine load_CPU_elastic
-
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-  implicit none
-
-  ! daniel: TODO - temporary transfers back to the CPU
-  call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle, &
-                                  veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
-  call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core, &
-                                  veloc_inner_core,accel_inner_core,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-    call transfer_b_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle, &
-                                  b_veloc_crust_mantle,b_accel_crust_mantle,Mesh_pointer)
-    call transfer_b_fields_ic_from_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core, &
-                                  b_veloc_inner_core,b_accel_inner_core,Mesh_pointer)
-  endif
-
-  end subroutine
-
-!=====================================================================
-
-  subroutine load_GPU_elastic_coupling_fluid
-  
-  use specfem_par
-  use specfem_par_outercore,only: accel_outer_core,b_accel_outer_core
-  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core, &
-       accel_inner_core,b_accel_inner_core
-  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
-       accel_crust_mantle,b_accel_crust_mantle
-  implicit none
-  
-  ! daniel: TODO - temporary transfers to the GPU
-  call transfer_coupling_fields_cmb_icb_fluid_to_device( &
-       NGLOB_OUTER_CORE,NDIM*NGLOB_CRUST_MANTLE,NDIM*NGLOB_INNER_CORE, &
-       displ_crust_mantle,displ_inner_core,accel_crust_mantle,accel_inner_core, &
-       accel_outer_core,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-     call transfer_coupling_b_fields_cmb_icb_fluid_to_device( &
-          NGLOB_OUTER_CORE_ADJOINT,NDIM*NGLOB_CRUST_MANTLE_ADJOINT,NDIM*NGLOB_INNER_CORE_ADJOINT, &
-          b_displ_crust_mantle,b_displ_inner_core,b_accel_crust_mantle,b_accel_inner_core, &
-          b_accel_outer_core,Mesh_pointer)  
-  endif
-    
-  end subroutine 
-
-!=====================================================================
-
-  subroutine load_CPU_elastic_coupling_fluid
-  
-  use specfem_par
-  use specfem_par_outercore,only: accel_outer_core,b_accel_outer_core
-  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core, &
-       accel_inner_core,b_accel_inner_core
-  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
-       accel_crust_mantle,b_accel_crust_mantle
-  implicit none
-  
-  ! daniel: TODO - temporary transfers to the CPU
-  call transfer_coupling_fields_cmb_icb_fluid_from_device( &
-       NGLOB_OUTER_CORE,NDIM*NGLOB_CRUST_MANTLE,NDIM*NGLOB_INNER_CORE, &
-       displ_crust_mantle,displ_inner_core,accel_crust_mantle,accel_inner_core, &
-       accel_outer_core,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-     call transfer_coupling_b_fields_cmb_icb_fluid_from_device( &
-          NGLOB_OUTER_CORE_ADJOINT,NDIM*NGLOB_CRUST_MANTLE_ADJOINT,NDIM*NGLOB_INNER_CORE_ADJOINT, &
-          b_displ_crust_mantle,b_displ_inner_core,b_accel_crust_mantle,b_accel_inner_core, &
-          b_accel_outer_core,Mesh_pointer)  
-  endif
-    
-  end subroutine
-
-!=====================================================================
-
-  subroutine load_GPU_elastic_coupling_ocean
-  
-  use specfem_par
-  use specfem_par_crustmantle,only: accel_crust_mantle,b_accel_crust_mantle
-  implicit none
-  
-  ! daniel: TODO - temporary transfers to the GPU
-  call transfer_coupling_fields_cmb_ocean_to_device( &
-       NDIM*NGLOB_CRUST_MANTLE,accel_crust_mantle,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-     call transfer_coupling_b_fields_cmb_ocean_to_device( &
-          NDIM*NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,Mesh_pointer)  
-  endif
-    
-  end subroutine 
-
-!=====================================================================
-
-  subroutine load_CPU_elastic_coupling_ocean
-  
-  use specfem_par
-  use specfem_par_crustmantle,only: accel_crust_mantle,b_accel_crust_mantle
-  implicit none
-  
-  ! daniel: TODO - temporary transfers to the GPU
-  call transfer_coupling_fields_cmb_ocean_from_device( &
-       NDIM*NGLOB_CRUST_MANTLE,accel_crust_mantle,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-     call transfer_coupling_b_fields_cmb_ocean_from_device( &
-          NDIM*NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,Mesh_pointer)  
-  endif
-    
-  end subroutine 

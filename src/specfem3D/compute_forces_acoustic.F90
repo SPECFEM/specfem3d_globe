@@ -134,9 +134,6 @@
           !---
           !--- couple with mantle at the top of the outer core
           !---
-          call load_CPU_acoustic()
-          call load_CPU_elastic()
-
           if(ACTUALLY_COUPLE_FLUID_CMB) &
                call compute_coupling_fluid_CMB(displ_crust_mantle,b_displ_crust_mantle, &
                ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
@@ -156,12 +153,8 @@
                wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
                SIMULATION_TYPE,NSPEC2D_BOTTOM(IREGION_OUTER_CORE))
 
-          call load_GPU_acoustic()
-
        else
           ! on GPU
-          call load_GPU_acoustic_coupling_fluid()
-
           !---
           !--- couple with mantle at the top of the outer core
           !---
@@ -173,7 +166,6 @@
           if( ACTUALLY_COUPLE_FLUID_ICB ) &
                call compute_coupling_fluid_icb_cuda(Mesh_pointer)
 
-          call load_CPU_acoustic_coupling_fluid()
        endif
     endif ! iphase == 1
 
@@ -343,88 +335,4 @@
 #endif
 
   end subroutine compute_forces_ac_update_veloc
-
-!=====================================================================
-
-  subroutine load_GPU_acoustic
-
-  use specfem_par
-  use specfem_par_outercore
-  implicit none
-
-  ! daniel: TODO - temporary transfers to the GPU
-  call transfer_fields_oc_to_device(NGLOB_OUTER_CORE,displ_outer_core, &
-                                veloc_outer_core,accel_outer_core,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-    call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE,b_displ_outer_core, &
-                                b_veloc_outer_core,b_accel_outer_core,Mesh_pointer)
-  endif
-
-  end subroutine
-
-!=====================================================================
-
-  subroutine load_CPU_acoustic
-
-  use specfem_par
-  use specfem_par_outercore
-  implicit none
-
-  ! daniel: TODO - temporary transfers to the CPU
-  call transfer_fields_oc_from_device(NGLOB_OUTER_CORE,displ_outer_core, &
-                                veloc_outer_core,accel_outer_core,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-    call transfer_b_fields_oc_from_device(NGLOB_OUTER_CORE,b_displ_outer_core, &
-                                b_veloc_outer_core,b_accel_outer_core,Mesh_pointer)
-  endif
-
-  end subroutine
-
-!=====================================================================
-
-  subroutine load_GPU_acoustic_coupling_fluid
-  
-  use specfem_par
-  use specfem_par_outercore,only: accel_outer_core,b_accel_outer_core
-  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core
-  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle
-  implicit none
-  
-  ! daniel: TODO - temporary transfers to the GPU
-  call transfer_coupling_fields_fluid_cmb_icb_to_device( &
-       NGLOB_OUTER_CORE,NDIM*NGLOB_CRUST_MANTLE,NDIM*NGLOB_INNER_CORE, &
-       displ_crust_mantle,displ_inner_core,accel_outer_core,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-     call transfer_coupling_b_fields_fluid_cmb_icb_to_device( &
-          NGLOB_OUTER_CORE_ADJOINT,NDIM*NGLOB_CRUST_MANTLE_ADJOINT,NDIM*NGLOB_INNER_CORE_ADJOINT, &
-          b_displ_crust_mantle,b_displ_inner_core,b_accel_outer_core,Mesh_pointer)  
-  endif
-    
-  end subroutine 
-
-!=====================================================================
-
-  subroutine load_CPU_acoustic_coupling_fluid
-  
-  use specfem_par
-  use specfem_par_outercore,only: accel_outer_core,b_accel_outer_core
-  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core
-  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle
-  implicit none
-  
-  ! daniel: TODO - temporary transfers to the CPU
-  call transfer_coupling_fields_fluid_cmb_icb_from_device( &
-       NGLOB_OUTER_CORE,NDIM*NGLOB_CRUST_MANTLE,NDIM*NGLOB_INNER_CORE, &
-       displ_crust_mantle,displ_inner_core,accel_outer_core,Mesh_pointer)
-
-  if( SIMULATION_TYPE == 3 ) then
-     call transfer_coupling_b_fields_fluid_cmb_icb_from_device( &
-          NGLOB_OUTER_CORE_ADJOINT,NDIM*NGLOB_CRUST_MANTLE_ADJOINT,NDIM*NGLOB_INNER_CORE_ADJOINT, &
-          b_displ_crust_mantle,b_displ_inner_core,b_accel_outer_core,Mesh_pointer)  
-  endif
-    
-  end subroutine
 
