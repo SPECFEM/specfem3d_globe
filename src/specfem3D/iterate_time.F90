@@ -126,6 +126,8 @@
 !---- end of time iteration loop
 !
 
+  call it_print_elapsed_time()
+
   ! Transfer fields from GPU card to host for further analysis
   if(GPU_MODE) call it_transfer_from_GPU()
 
@@ -448,6 +450,29 @@
 
   end subroutine it_update_displacement_scheme
 
+!=====================================================================
+
+  subroutine it_print_elapsed_time()
+    use specfem_par
+    implicit none
+
+    include 'mpif.h'
+
+    ! local parameters
+    integer :: ihours,iminutes,iseconds,int_tCPU
+
+    if(myrank == 0) then
+       ! elapsed time since beginning of the simulation
+       tCPU = MPI_WTIME() - time_start
+       int_tCPU = int(tCPU)
+       ihours = int_tCPU / 3600
+       iminutes = (int_tCPU - 3600*ihours) / 60
+       iseconds = int_tCPU - 3600*ihours - 60*iminutes
+       write(IMAIN,*) 'Time-Loop Complete. Timing info:'
+       write(IMAIN,*) 'Total elapsed time in seconds = ',tCPU
+       write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    endif
+  end subroutine it_print_elapsed_time
 
 !=====================================================================
 
