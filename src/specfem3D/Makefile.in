@@ -192,6 +192,8 @@ XSPECFEM_OBJECTS = $(SOLVER_ARRAY_OBJECTS) $O/exit_mpi.o $(LIBSPECFEM_SOLVER)
 
 xspecfem3D: $(XSPECFEM_OBJECTS)
 ## use MPI here
+## DK DK add OpenMP compiler flag here if needed
+#	${MPIFCCOMPILE_NO_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
 	${MPIFCCOMPILE_NO_CHECK} -o ${E}/xspecfem3D $(XSPECFEM_OBJECTS) $(MPILIBS)
 
 reqheader:
@@ -335,6 +337,8 @@ $O/compute_forces_crust_mantle.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mes
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_crust_mantle.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle.f90
 
 $O/compute_forces_crust_mantle_Dev.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_crust_mantle_Dev.F90
+## DK DK add OpenMP compiler flag here if needed
+#	${FCCOMPILE_NO_CHECK} -c -qsmp=omp -o $O/compute_forces_crust_mantle_Dev.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle_Dev.F90
 	${FCCOMPILE_NO_CHECK} -c -o $O/compute_forces_crust_mantle_Dev.o ${FCFLAGS_f90} $S/compute_forces_crust_mantle_Dev.F90
 
 $O/compute_forces_outer_core.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/compute_forces_outer_core.f90
