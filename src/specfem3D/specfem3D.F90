@@ -34,6 +34,9 @@
 !
 !#define _HANDOPT
 
+!! DK DK to turn OpenMP on
+!#define USE_OPENMP
+
 ! BEWARE:
 ! BEWARE: we have observed that using _HANDOPT in combination with -O3 or higher can lead to problems on some machines;
 ! BEWARE: thus, be careful when using it. At the very least, run the same test simulation once with _HANDOPT and once without
@@ -964,7 +967,16 @@
 !-------------------------------------------------------------------------------------------------
 !
   ! initialize the MPI communicator and start the NPROCTOT MPI processes.
+!! DK DK when turning OpenMP on, use this instead:
+!! DK DK from http://mpi.deino.net/mpi_functions/MPI_Init_thread.html
+!! DK DK MPI_THREAD_FUNNELED: the process may be multi-threaded, but only the main thread will make MPI calls
+!! DK DK (all MPI calls are funneled to the main thread). 
+#ifdef USE_OPENMP
+  integer :: iprovided
+  call MPI_INIT_THREAD(MPI_THREAD_FUNNELED,iprovided,ier)
+#else
   call MPI_INIT(ier)
+#endif
 
   ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
   call force_ftz()
