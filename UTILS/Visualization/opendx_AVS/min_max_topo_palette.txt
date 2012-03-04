@@ -1,4 +1,0 @@
-
-Max in topo file (to enforce in color palette): +5606
-Min in topo file (to enforce in color palette): -8180
-
