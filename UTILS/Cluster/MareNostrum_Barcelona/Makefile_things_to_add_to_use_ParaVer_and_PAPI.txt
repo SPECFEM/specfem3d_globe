@@ -1,9 +1,0 @@
-
-May 2009: there is no need to add tracing libraries to the Makefile any more
-to generate some ParaVer traces. Just type on MareNostrum:
-
-./configure FC=xlf_r
-
-and then edit the Makefile to use
--qtune=ppc970 -qarch=ppc64v instead of -qtune=auto -qarch=auto
-
