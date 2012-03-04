@@ -1,0 +1,1787 @@
+DLV      AD      11.9520   108.4815  Dalat Central Vietnam                   
+SIM      AD      20.1332    92.8852  Sittwe Myanmar                          
+SLV      AD      21.3338   103.9050  Son La Vietnam                          
+SZP      AD      17.5520   120.4550  Santa Ilocos Sur                        
+CNG      AF     -26.2917    32.1883  Changalane, Mozambique                  
+CVNA     AF     -31.4821    19.7617  Calvinia, South Africa                  
+GRM      AF     -33.3133    26.5733  Grahamstown, South Africa               
+GSN      AF     -22.5667    17.1000  Windhoek, Namibia                       
+HVD      AF     -30.6050    25.4967  Gariep Dam, South Africa                
+KIG      AF      -1.9634    30.0633  Kigali, Rwanda                          
+MOPA     AF     -23.5173    31.3977  Mopani, South Africa                    
+PKA      AF     -29.6700    22.7570  Prieska, South Africa                   
+POGA     AF     -27.3460    31.7070  Pongola, South Africa                   
+SEK      AF     -28.3233    27.6250  Senekal, South Africa                   
+SWZ      AF     -27.1817    25.3250  Schweizer Reneke, South Africa          
+UPI      AF     -28.3619    21.2527  Upington, South Africa                  
+WIN      AF     -22.5667    17.1000  Windhoek, Namibia (formerly called GSN) 
+BVA2     AZ      33.3265  -116.3655  Borrego Valley (UCSB) 2, San Diego, CA, USA
+BVDA2    AZ      33.3265  -116.3655  Borrego Valley (UCSB) 2, San Diego, CA, USA
+BZN      AZ      33.4915  -116.6670  Buzz Northern's Place, Terwilliger, CA, USA
+CPE      AZ      32.8889  -117.1051  Camp Elliot, Miramar, CA, USA           
+CRON     AZ      33.6118  -116.4597  Test site, Pinon Flat, CA, USA          
+CRY      AZ      33.5654  -116.7373  Cary Ranch, Anza, CA, USA               
+FLV2     AZ      32.9114  -117.0619  Frank Vernon's Place 2, San Diego, CA, USA
+FRD      AZ      33.4947  -116.6022  Ford Ranch, Terwillger, CA, USA         
+FSE      AZ      33.0057  -116.5926  Frieder Seibol's Place, San Diego, CA, USA
+GLA      AZ      33.0512  -114.8270  Glamis, CA, USA                         
+HWB      AZ      33.0262  -116.9596  Hans Werver Braun's Place, San Diego, CA, USA
+JOHN     AZ      33.6118  -116.4597  Test site, Pinon Flat, CA, USA          
+JOSE     AZ      33.6118  -116.4597  Test site, Pinon Flat, CA, USA          
+KNW      AZ      33.7141  -116.7119  Keenwild Fire Station, Mountain Center, CA, USA
+LVA2     AZ      33.3516  -116.5615  Lost Valley Boy Scout Camp, San Diego Co., CA, USA
+MONP2    AZ      32.8920  -116.4223  Monument Peak TA Vault, Anza, CA, USA   
+MONP     AZ      32.8927  -116.4225  Monument Peak, CA, USA                  
+PFO      AZ      33.6117  -116.4594  Pinon Flats Observatory, CA, USA        
+RDM      AZ      33.6300  -116.8478  Red Mountain, Riverside Co., CA, USA    
+SCV1     AZ      33.6118  -116.4597  Super Conducting Vault #1 Test site, Pinon Flat, CA, USA
+SCV2     AZ      33.6118  -116.4597  Super Conducting Vault #2 Test site, Pinon Flat, CA, USA
+SMER2    AZ      33.4577  -117.1708  Santa Margarita Ecological Reserve 2, San Diego, CA, USA
+SMER     AZ      33.4577  -117.1708  Santa Margarita Ecological Reserve, San Diego, CA, USA
+SMTC     AZ      32.9449  -115.7999  Superstition Mountain, CA, USA          
+SND      AZ      33.5519  -116.6129  Jim Saunders Place, Anza, CA, USA       
+SOL      AZ      32.8410  -117.2480  MPL Laboratory, Mt. Soledad, La Jolla, CA, USA
+ST2C     AZ      33.6118  -116.4597  Test STS2, Pinon Flat, CA, USA          
+STS2     AZ      33.6118  -116.4597  Test STS2, Pinon Flat, CA, USA          
+TRIL     AZ      33.6118  -116.4597  Test TRIL, Pinon Flat, CA, USA          
+TRO      AZ      33.5234  -116.4257  Toro Peak, Riverside Co., CA, USA       
+WMC      AZ      33.5736  -116.6747  Walmic Ranch, Anza, CA, USA             
+YAQ      AZ      33.1666  -116.3539  Yaqui Meadows, CA, USA                  
+MEM      BE      50.6092     6.0067  Membach, Belgium                        
+ARC      BK      40.8777  -124.0774  Humboldt State University, Arcata, CA, USA
+BDM      BK      37.9540  -121.8655  Black Diamond Mines Park, Antioch, CA, USA
+BKS      BK      37.8762  -122.2356  Byerly Seismographic Vault, Berkeley, CA, USA
+BRIB     BK      37.9189  -122.1518  Briones Reserve, Orinda, CA, USA        
+BRK      BK      37.8735  -122.2610  Haviland Hall, Berkeley, CA, USA        
+CMB      BK      38.0346  -120.3865  Columbia College, Columbia, CA, USA     
+CVS      BK      38.3453  -122.4584  Carmenet Vineyards, Sonoma, CA, USA     
+ELFS     BK      40.6183  -120.7279  Eagle Lake Biol. Field Stn., Susanville, CA, USA
+FARB     BK      37.6978  -123.0011  Farallon Islands, CA, USA               
+GASB     BK      39.6547  -122.7160  Alder Springs, CA, USA                  
+HAST     BK      36.3887  -121.5514  UC Hastings Preserve, Carmel Valley, CA, USA
+HATC     BK      40.8161  -121.4612  Hat Creek Radio Astronomy Obs., Cassel, CA, USA
+HELL     BK      36.6801  -119.0228  Rademacher Property, Miramonte, CA, USA 
+HOPS     BK      38.9935  -123.0723  Hopland Field Station, Hopland, CA, USA 
+HUMO     BK      42.6071  -122.9567  Hull Mountain, OR, USA                  
+JAS1     BK      37.9266  -120.4210  Jamestown, CA, USA                      
+JAS      BK      37.9466  -120.4393  Jamestown, CA, USA                      
+JCC      BK      40.8175  -124.0296  Jacoby Creek, Bayside, CA, USA          
+JRSC     BK      37.4037  -122.2387  Jasper Ridge Biol. Preserve, Stanford, CA, USA
+KCC      BK      37.3236  -119.3187  Kaiser Creek, CA, USA                   
+MCCM     BK      38.1448  -122.8802  Marconi Conference Center, Marshall, CA, USA
+MHC      BK      37.3416  -121.6426  Lick Observatory, Mt. Hamiliton, CA, USA
+MIN      BK      40.3460  -121.6066  Mt. Lassen Park Hdqts, Mineral, CA, USA 
+MNRC     BK      38.8787  -122.4428  McLaughlin Mine, CA, USA                
+MOD      BK      41.9025  -120.3029  Modoc Plateau, CA, USA                  
+ORV      BK      39.5545  -121.5004  Oroville Dam, Oroville, CA, USA         
+PACP     BK      37.0080  -121.2870  Pacheco Peak, CA, USA                   
+PKD1     BK      35.8894  -120.4261  Haliburton House, Parkfield, CA, USA    
+PKD      BK      35.9452  -120.5416  Bear Valley Ranch, Parkfield, CA, USA   
+POTR     BK      38.2026  -121.9353  Potrero Hills, Fairfield, CA, USA       
+RAMR     BK      35.6360  -120.8698  Ramage Ranch, Paso Robles, CA, USA      
+SAO      BK      36.7640  -121.4472  San Andreas Geophysical Obs., Hollister, CA, USA
+STAN     BK      37.4039  -122.1751  Stanford, CA, USA                       
+SUTB     BK      39.2291  -121.7861  Sutter Buttes, CA, USA                  
+WDC      BK      40.5799  -122.5411  Whiskeytown Dam, Whiskeytown, CA, USA   
+WENL     BK      37.6221  -121.7570  Wente Vineyards, Livermore, CA, USA     
+YBH      BK      41.7320  -122.7104  Yreka Blue Horn Mine, Yreka, CA, USA    
+ADO      CI      34.5505  -117.4339  Adelanto Receiving Station, Adelanto, CA, USA
+AGA      CI      33.6384  -116.4011  Agave Hill, Palm Desert, CA, USA        
+ALP      CI      34.6871  -118.2995  Antelope, Lake Hughes, CA, USA          
+ARV      CI      35.1269  -118.8301  Arvin, Arvin, CA, USA                   
+BAK      CI      35.3444  -119.1044  Calstate Bakersfield, Bakersfield, CA, USA
+BAR      CI      32.6801  -116.6722  Barrett, Jamul, CA, USA                 
+BBR      CI      34.2623  -116.9207  Big Bear Solar Observatory, Big Bear Lake, CA, USA
+BBS      CI      33.9214  -116.9806  Beaumont Base, Beaumont, CA, USA        
+BC3      CI      33.6551  -115.4537  Big Chuckawalla Mtns, Desert Center, CA, USA
+BCC      CI      33.5751  -117.2612  Bear Creek Country Club, Murrieta, CA, USA
+BCW      CI      34.9401  -119.4131  Bitter Creek Wildlife, Maricopa, CA, USA
+BEL      CI      34.0006  -115.9982  Belle Mountain Joshua Tree, Twentynine Palms, CA, USA
+BFS      CI      34.2388  -117.6585  Mt. Baldy Ranger Station, Mount Baldy, CA, USA
+BHP      CI      33.9905  -118.3617  Baldwin Hills Oil, Los Angeles, CA, USA 
+BKR      CI      35.2693  -116.0703  Baker, Baker, CA, USA                   
+BLA2     CI      34.0693  -116.3899  Black Rock Canyon Campground 2, Yucca Valley, CA, USA
+BLA      CI      34.0695  -116.3890  Blackrock Canyon Campground, Yucca Valley, CA, USA
+BLY      CI      33.7503  -114.5238  Blythe, Blythe, CA, USA                 
+BOM      CI      33.3646  -115.7296  Bombay Beach, Bombay Beach, CA, USA     
+BOR      CI      33.2682  -116.4172  Borrego Springs, Borrego Springs, CA, USA
+BRE      CI      33.8078  -117.9812  Barre Substation, Stanton, CA, USA      
+BTC      CI      33.0121  -115.2199  Brunts Corner, Glamis, CA, USA          
+BTP      CI      34.6822  -118.5740  Burnt Peak, Lake Hughes, CA, USA        
+CAP      CI      33.3882  -117.1950  Capra Ranch, Fallbrook, CA, USA         
+CAR      CI      35.3082  -119.8458  Carrizo Plain, Carrizo Plain, CA, USA   
+CCC      CI      35.5249  -117.3645  Christmas Canyon China Lake, Trona, CA, USA
+CGO      CI      36.5504  -117.8029  Cerro Gordo, Keeler, CA, USA            
+CHF      CI      34.3334  -118.0259  Chilao Flat Rngr Sta, Altadena, CA, USA 
+CHN      CI      33.9988  -117.6804  Chino, Chino, CA, USA                   
+CIA      CI      33.4019  -118.4150  Catalina Island Airport, Avalon, CA, USA
+CIU      CI      33.4458  -118.4830  Catalina Island, Avalon, CA, USA        
+CLC      CI      35.8157  -117.5975  China Lake, Trona, CA, USA              
+CLT      CI      34.0928  -117.3169  Calectric, Colton, CA, USA              
+CPP      CI      34.0602  -117.8090  Cal Poly Pomona, Pomona, CA, USA        
+CRP      CI      34.1362  -118.1270  Caltech Robinson Pit, Pasadena, CA, USA 
+CTC      CI      33.6552  -115.9901  Cactus City, Mecca, CA, USA             
+CWC      CI      36.4399  -118.0802  Cottonwood Creek, Lone Pine, CA, USA    
+DAN      CI      34.6375  -115.3812  Danby, Needles, CA, USA                 
+DEC      CI      34.2535  -118.3338  Green Verdugo Microwave Site, Sunland, CA, USA
+DEV      CI      33.9360  -116.5779  Devers, Desert Hot Springs, CA, USA     
+DGR      CI      33.6500  -117.0095  Domenigoni Reservoir, Winchester, CA, USA
+DJJ      CI      34.1062  -118.4550  Donna Jones Jenkins, Sherman Oaks, CA, USA
+DLA      CI      33.8482  -118.0962  Del Amo, Artesia, CA, USA               
+DNR      CI      33.5667  -116.6306  Dunn Ranch, Anza, CA, USA               
+DPP      CI      32.9986  -116.9415  Dos Picos County Park, Ramona, CA, USA  
+DRC      CI      32.8054  -115.4465  Desert Research Center, Holtville, CA, USA
+DRE      CI      32.8053  -115.4468  Desert Research Extended Center, Holtville, CA, USA
+DSC      CI      35.1425  -116.1039  Desert Studies Center, Baker, CA, USA   
+DVT      CI      32.6591  -116.1006  Desert View Tower, Jacumba, CA, USA     
+EDW2     CI      34.8811  -117.9939  Edwards Air Force Base 2, Rosamond, CA, USA
+EDW      CI      34.8830  -117.9911  Edwards Air Force Base, Rosamond, CA, USA
+EML      CI      32.8908  -116.8457  El Monte County Park, EL Cajon, CA, USA 
+ERR      CI      33.1168  -115.8227  Elmore'S Ranch, Westmorland, CA, USA    
+FIG      CI      34.7283  -119.9880  Figueroa Mountain, Los Olivos, CA, USA  
+FMP      CI      33.7126  -118.2938  Fort Macarthur Park, San Pedro, CA, USA 
+FPC      CI      35.0820  -117.5827  Federal Prison Camp, Boron, CA, USA     
+FUR      CI      36.4670  -116.8632  Furnace Creek, Death Valley, CA, USA    
+GATR     CI      34.5527  -120.5024  Ground to Air Transmit and Receive Compound, Lompoc, CA, USA
+GLA      CI      33.0515  -114.8271  Glamis, Glamis, CA, USA                 
+GMR      CI      34.7846  -115.6599  Granite Mountains Research Center, Essex, CA, USA
+GOR      CI      33.1537  -117.2292  Green Oak Ranch, Vista, CA, USA         
+GPO      CI      35.6494  -117.6619  Geothermal Program Office, California, USA
+GR2      CI      34.1182  -118.3002  Griffith Observatory, Los Angeles, CA, USA
+GRA      CI      36.9961  -117.3662  Grapevine Ranger Station, Death Valley, CA, USA
+GSC      CI      35.3018  -116.8057  Goldstone, Barstow, CA, USA             
+HEC      CI      34.8294  -116.3350  Hector, Ludlow, CA, USA                 
+HLL      CI      34.1764  -118.3597  North Hollywood, Burbank, CA, USA       
+IRM      CI      34.1574  -115.1451  Iron Mountain Pumping Station, Desert Center, CA, USA
+ISA      CI      35.6628  -118.4740  Isabella, Lake Isabella, CA, USA        
+JCS      CI      33.0859  -116.5959  Julian Camp Stevens, Julian, CA, USA    
+JEM      CI      33.0810  -116.5975  Julian Eagle Mine, Julian, CA, USA      
+JRC2     CI      35.9825  -117.8089  Joshua Ridge: China Lake, Little Lake, CA, USA
+JRC      CI      35.9823  -117.8076  Joshua Ridge, Little Lake, CA, USA      
+JVA      CI      34.3662  -116.6127  Johnson Valley, Johnson Valley, CA, USA 
+LAF      CI      33.8689  -118.3314  La Fresa, Gardena, CA, USA              
+LCG      CI      34.0003  -118.3779  La Cienega, Culver City, CA, USA        
+LCP      CI      34.7355  -120.2800  Los Alamos County Park, Los Alamos, CA, USA
+LDF      CI      35.1307  -115.1842  Lanfair, Essex, CA, USA                 
+LDR      CI      34.9906  -118.3416  Leduc Ranch, Tehachapi, CA, USA         
+LFP      CI      34.3053  -118.4881  Los Angeles Filtration Plant, San Fernando, CA, USA
+LGB      CI      33.9753  -118.1492  Laguna Bell, Bell Gardens, CA, USA      
+LGU      CI      34.1082  -119.0659  Laguna Peak, Port Hueneme, CA, USA      
+LJR      CI      34.8076  -118.8678  Lone Juniper Ranch, Gorman, CA, USA     
+LKL      CI      34.6159  -117.8249  Lake Los Angeles, Pearblossom, CA, USA  
+LLS      CI      33.6845  -117.9430  Ellis, Fountain Valley, CA, USA         
+LMR2     CI      34.9344  -117.6963  Leuhmann Ridge Extension, Boron, CA, USA
+LMR      CI      34.9343  -117.6966  Leuhmann Ridge, Boron, CA, USA          
+LPC      CI      34.3148  -117.5464  Lone Pine Canyon, Lytle Creek, CA, USA  
+LRL      CI      35.4795  -117.6821  Laurel Mtn Radio Fac, Ridgecrest, CA, USA
+LTP      CI      33.8811  -118.1757  Lighthipe, Paramount, CA, USA           
+LUG      CI      34.3656  -117.3668  Lugo, Hesperia, CA, USA                 
+MCT      CI      34.2264  -116.0407  Marine Combat Center 29palms, Twentynine Palms, CA, USA
+MGE      CI      33.8184  -116.3687  Mirage, Thousand Palms, CA, USA         
+MLAC     CI      37.6302  -118.8361  Mammoth, Mammoth Lakes, CA, USA         
+MLS      CI      34.0046  -117.5616  Mira Loma Substation, Mira Loma, CA, USA
+MOP      CI      34.2809  -118.9049  Moorpark, Moorpark, CA, USA             
+MPI      CI      34.8126  -119.1453  Mount Pinos, Frazier Park, CA, USA      
+MPM      CI      36.0580  -117.4890  Manuel Prospect Mine, Trona, CA, USA    
+MPP      CI      34.8885  -119.8136  Mcpherson Peak, Los Olivos, CA, USA     
+MSC      CI      34.0385  -116.6479  Mission Creek, Morongo Valley, CA, USA  
+MSJ      CI      33.8080  -116.9679  Mt. San Jacinto Campus, San Jacinto, CA, USA
+MTL      CI      34.2688  -118.2374  Mount Lukens, California, USA           
+MTP      CI      35.4843  -115.5532  Mountain Pass, Nipton, CA, USA          
+MUR      CI      33.6000  -117.1954  Murrieta, Murrieta, CA, USA             
+MWC      CI      34.2236  -118.0583  Mount Wilson Obsv, Altadena, CA, USA    
+NBS      CI      34.7803  -116.5580  Newberry Springs, Newberry Springs, CA, USA
+NEE2     CI      34.7676  -114.6188  Needles Airport, Needles, CA, USA       
+NEE      CI      34.8249  -114.5994  Needles, Needles, CA, USA               
+NJQ      CI      34.5341  -120.1774  Nojoqui County Park, Las Cruces, CA, USA
+NSS2     CI      33.5555  -115.9459  North Shore Salton Sea 2, North Shore, CA, USA
+NSS      CI      33.5561  -115.9465  North Shore Salton Sea, Mecca, CA, USA  
+OLI      CI      33.9454  -117.9237  Olinda, La Habra, CA, USA               
+OLP      CI      32.6078  -116.9304  Otay Lakes Park, Chula Vista, CA, USA   
+OSI      CI      34.6145  -118.7235  Osito Audit: Castaic Lake Dam, Castaic, CA, USA
+PASA     CI      34.1484  -118.1711  Pasadena, Pasadena, CA, USA             
+PASC     CI      34.1714  -118.1852  Pasadena Art Center, College of Design, Pasadena, CA, USA
+PAS      CI      34.1484  -118.1712  Pasadena, Pasadena, CA, USA             
+PDE      CI      34.4420  -118.5821  Pardee, Santa Clarita, CA, USA          
+PDM      CI      34.3034  -114.1415  Parker Dam, Lake Havasu City, AZ, USA   
+PDR      CI      33.9627  -118.4370  Playa Del Rey, El Segundo, CA, USA      
+PDU      CI      34.1207  -117.6381  Padua, Upland, CA, USA                  
+PER      CI      33.8616  -117.2053  Lake Perris, Moreno Valley, CA, USA     
+PFO      CI      33.6116  -116.4586  Pinyon Flats Observatory, , CA, USA     
+PHL      CI      35.4077  -120.5456  Park Hill, Santa Margarita, CA, USA     
+PLC      CI      33.8244  -116.5119  Palm Spgs City Hall, Palm Springs, CA, USA
+PLM      CI      33.3536  -116.8627  Palomar, Palomar Mountain, CA, USA      
+PLS      CI      33.7953  -117.6091  Pleasants Peak, Silverado, CA, USA      
+PMD      CI      33.6478  -116.3777  Palm Desert, Palm Desert, CA, USA       
+PSD      CI      33.8239  -116.5503  Palm Springs Desert Museum, Palm Springs, CA, USA
+PSR      CI      34.0918  -117.8071  Puddingstone Reservoir, San Dimas, CA, USA
+RCT      CI      36.3052  -119.2438  Rector, Farmersville, CA, USA           
+RIN      CI      34.2820  -118.4792  Rinaldi, San Fernando, CA, USA          
+RIO      CI      34.1047  -117.9796  Rio Hondo, Baldwin Park, CA, USA        
+RPV      CI      33.7435  -118.4041  Rancho Palos Verdes, Rancho Palos Verdes, CA, USA
+RRX      CI      34.8753  -116.9968  Edison Barstow Service Cntr 30553 Rimrock , Barstow, CA, USA
+RSS      CI      33.9733  -117.3267  Riverside Surface, Riverside, CA, USA   
+RUS      CI      34.0507  -118.0808  Rush, Rosemead, CA, USA                 
+RVR      CI      33.9935  -117.3755  Riverside, Riverside, CA, USA           
+RXH      CI      33.1831  -115.6226  Rock Hill, Niland, CA, USA              
+SAL      CI      33.2801  -115.9858  Salton City, Mecca, CA, USA             
+SBB2     CI      34.6885  -117.8245  Saddle Butte State Park, Pearblossom, CA, USA
+SBC      CI      34.4408  -119.7149  Santa Barbara, Santa Barbara, CA, USA   
+SBI      CI      33.4805  -119.0299  Santa Barbara Island, , CA, USA         
+SBPX     CI      34.2324  -117.2348  Strawberry Peak, Twin Peaks, CA, USA    
+SCI2     CI      32.9799  -118.5470  San Clemente Island 2, , CA, USA        
+SCI      CI      32.9799  -118.5470  San Clemente Island, , CA, USA          
+SCZ2     CI      33.9954  -119.6351  Santa Cruz Island 2, , CA, USA          
+SCZ      CI      33.9953  -119.6343  Santa Cruz Island, , CA, USA            
+SDD      CI      33.5526  -117.6617  Saddleback, Mission Viejo, CA, USA      
+SDG      CI      32.7840  -117.1381  San Diego Mission Control, San Diego, CA, USA
+SDP      CI      34.5655  -120.5014  Sudden Peak, Lompoc, CA, USA            
+SDR      CI      32.7356  -116.9424  San Diego Road Dept, El Cajon, CA, USA  
+SES      CI      34.4369  -119.1375  Summit Elementary School, Ojai, CA, USA 
+SHO      CI      35.8995  -116.2753  Shoshone, Tecopa, CA, USA               
+SLA      CI      35.8909  -117.2833  Slate Mountain, Trona, CA, USA          
+SLB      CI      33.4852  -115.8664  Salton Beach, North Shore, CA, USA      
+SLR      CI      33.8336  -116.7974  Skyland Ranch, Cabazon, CA, USA         
+SMB      CI      34.9022  -120.4471  Santa Maria Base, Santa Maria, CA, USA  
+SMM      CI      35.3142  -119.9958  Simmler, Simmler, CA, USA               
+SMR      CI      35.3770  -120.6125  Santa Margarita Ranch, Santa Margarita, CA, USA
+SMS      CI      34.0144  -118.4562  Santa Monica Fire St, Santa Monica, CA, USA
+SMW      CI      35.0111  -120.4100  Santa Maria Wineman, Nipomo, CA, USA    
+SNCC     CI      33.2479  -119.5244  San Nicolas Island, , CA, USA           
+SNO      CI      34.0352  -116.8078  Snow Peak, Banning, CA, USA             
+SOT      CI      34.4160  -118.4490  Solamint, Newhall, CA, USA              
+SPF      CI      34.0593  -118.6461  Saddle Peak Fire Camp 8, Malibu, CA, USA
+SPG2     CI      36.2006  -118.7662  Springville 2, Springville, CA, USA     
+SPG      CI      36.1355  -118.8110  Springville, Springville, CA, USA       
+SRN      CI      33.8285  -117.7894  Serrano, Villa Park, CA, USA            
+SSW      CI      33.1775  -115.6156  Salton Sea Wildlife, , ,                
+STC      CI      34.3030  -119.1868  Santa Clara, Ventura, CA, USA           
+STG      CI      33.6640  -117.7686  Santiago, Irvine, CA, USA               
+STS      CI      33.7903  -118.1988  State Street, Long Beach, CA, USA       
+SVD      CI      34.1065  -117.0982  Seven Oaks Dam, Redlands, CA, USA       
+SWS      CI      32.9408  -115.7958  Sam W. Stewart, Westmorland, CA, USA    
+SYP      CI      34.5277  -119.9783  Santa Ynez Peak, Santa Ynez, CA, USA    
+TA2      CI      34.3820  -117.6782  Table Mountain, Wrightwood, CA, USA     
+TEH      CI      35.2913  -118.4208  Cattani Ranch, Tehachapi, CA, USA       
+TFT      CI      35.1459  -119.4195  Taft Base, Taft, CA, USA                
+THM      CI      33.6507  -116.0773  Thermal Canyon, Thermal, CA, USA        
+THX      CI      33.6350  -116.1640  Thermal Airport, Thermal, CA, USA       
+TIN      CI      37.0542  -118.2301  Tinemaha, Big Pine, CA, USA             
+TOR      CI      33.5753  -116.2258  Toro Canyon, Thermal, CA, USA           
+TOV      CI      34.1561  -118.8204  Thousand Oaks Ventura, Thousand Oaks, CA, USA
+TUQ      CI      35.4358  -115.9239  Turquoise Mountain, Baker, CA, USA      
+USC      CI      34.0192  -118.2863  Univ Southern Ca, Los Angeles, CA, USA  
+VCS      CI      34.4836  -118.1178  Vincent Substation, Palmdale, CA, USA   
+VES      CI      35.8409  -119.0847  Vestal, Richgrove, CA, USA              
+VTV      CI      34.5607  -117.3296  Victorville, Victorville, CA, USA       
+WBS      CI      35.5366  -118.1403  Bird Spring, Onyx, CA, USA              
+WER      CI      35.0605  -119.0271  Wheeler Ridge, Wheeler Ridge, CA, USA   
+WES      CI      32.7590  -115.7316  Westside Elementary School, Seeley, CA, USA
+WGR      CI      34.5108  -119.2741  Wheeler Gorge Ranger Station, Wheeler Springs, CA, USA
+WLT      CI      34.0095  -117.9508  Walnut, La Puente, CA, USA              
+WSS      CI      34.1717  -118.6497  West Side Station, Calabasas, CA, USA   
+WTT      CI      33.9487  -118.2555  Watts, South Gate, CA, USA              
+WWC      CI      33.9407  -116.4088  West Wide Canyon, Desert Hot Springs, CA, USA
+BBB      CN      52.1847  -128.1133  Bella Bella, British Columbia, Canada   
+DRLN     CN      49.2560   -57.5042  Deer Lake, Newfoundland, Canada         
+FRB      CN      63.7467   -68.5467  Iqaluit (Frobisher), Nunavut Territory, Canada
+GAC      CN      45.7033   -75.4783  Glen Almond, Quebec, Canada             
+INK      CN      68.3067  -133.5200  Inuvik, Northwest Territories, Canada   
+LLLB     CN      50.6090  -121.8815  Lillooet, British Columbia, Canada      
+RES      CN      74.6870   -94.9000  Resolute, Nunavut Territory, Canada     
+SADO     CN      44.7694   -79.1417  Sadowa, Ontario, Canada                 
+SCHQ     CN      54.8319   -66.8336  Schefferville, Quebec, Canada           
+ULM      CN      50.2503   -95.8750  Lac Du Bonnet, Manitoba, Canada         
+WHY      CN      60.6597  -134.8806  Whitehorse, Yukon Territory, Canada     
+YKW1     CN      62.4822  -114.4843  Yellowknife Array Element, Northwest Territories, Canada
+YKW2     CN      62.4337  -114.6038  Yellowknife Array Element, Northwest Territories, Canada
+YKW3     CN      62.5616  -114.6099  Yellowknife Array Element, Northwest Territories, Canada
+YKW4     CN      62.4925  -114.7432  Yellowknife Array Element, Northwest Territories, Canada
+YKW5     CN      62.4822  -114.4843  Yellowknife Array Element, Northwest Territories, Canada
+ANWB     CU      17.6685   -61.7856  Willy Bob, Antigua and Barbuda          
+BBGH     CU      13.1434   -59.5588  Gun Hill, Barbados                      
+BCIP     CU       9.1665   -79.8373  Isla Barro Colorado, Panama             
+GRGR     CU      12.1324   -61.6540  Grenville, Grenada                      
+GRTK     CU      21.5115   -71.1327  Grand Turk, Turks and Caicos Islands    
+GTBY     CU      19.9268   -75.1108  Guantanamo Bay, Cuba                    
+MTDJ     CU      18.2261   -77.5345  Mount Denham, Jamaica                   
+SDDR     CU      18.9821   -71.2878  Presa de Sabenta, Dominican Republic    
+TGUH     CU      14.0570   -87.2730  Tegucigalpa, Honduras                   
+ILULI    DK      69.2121   -51.1048  Illulissat, Greenland                   
+KULLO    DK      74.5805   -57.2201  Illulissat, Greenland                   
+AIS      G      -37.7970    77.5690  Nouvelle-Amsterdam - TAAF, France       
+ATD      G       11.5300    42.8470  Arta Cave - Arta, Republic of Djibouti  
+BNG      G        4.4350    18.5470  Bangui, Republique Centrafricaine       
+CAN      G      -35.3210   148.9990  Canberra, Australia                     
+CLF      G       48.0258     2.2600  Chambon la Foret Observatory, France    
+CRZF     G      -46.4300    51.8610  Port Alfred - Ile de la Possession - Crozet Islands, France
+0001     GD      45.4030   141.7504  Wakkanai, Japan                         
+0011     GD      43.0286   143.4592  Ikeda, Japan                            
+0012     GD      42.9805   142.4020  Simukappu, Japan                        
+0015     GD      42.3216   143.3310  Hiroh, Japan                            
+0016     GD      42.3569   142.3646  Shizunai, Japan                         
+0019     GD      42.0059   143.1565  Erimoi, Japan                           
+0105     GD      44.7285   142.2652  Otoineppu, Japan                        
+0107     GD      44.2946   142.6256  Shimokawa, Japan                        
+0109     GD      44.0192   145.1861  Rausu, Japan                            
+0110     GD      44.0068   142.1517  Horokanai, Japan                        
+0111     GD      44.0056   143.3337  Maruseppu, Japan                        
+0112     GD      42.8945   143.9269  Onbetsu, Japan                          
+0119     GD      43.3669   145.8011  Nemuro2, Japan                          
+0120     GD      43.2926   140.5971  Shakotan, Japan                         
+0121     GD      43.2895   143.5624  Ashoro, Japan                           
+0124     GD      43.1206   144.1265  Akani, Japan                            
+0125     GD      43.0576   144.8430  Akkeshi, Japan                          
+0133     GD      42.7272   142.2958  Biratori, Japan                         
+0134     GD      42.6993   143.1033  Nakasatsunai, Japan                     
+0135     GD      42.6679   141.0750  Ootaki, Japan                           
+0136     GD      42.6555   141.6023  Tomakomai, Japan                        
+0138     GD      42.5516   143.4611  Taiki, Japan                            
+0141     GD      42.4813   142.0602  Monbetsu, Japan                         
+0142     GD      42.2477   142.5675  Mitsuishi, Japan                        
+0144     GD      42.1309   142.9354  Samani, Japan                           
+0147     GD      42.0430   140.8055  Shikabe, Japan                          
+0505     GD      43.9888   144.2933  Abasiri, Japan                          
+0510     GD      43.7714   142.9030  Kamikawa, Japan                         
+0516     GD      43.2484   141.8909  Mikasa, Japan                           
+0521     GD      42.9389   143.1706  Obihiro, Japan                          
+0532     GD      42.1256   143.3157  Erimo2, Japan                           
+0533     GD      41.4047   141.4476  Higasidoori, Japan                      
+ALBH     GD      48.3897  -123.4875  Alberthead, British Columbia, CANADA    
+AMC2     GD      38.8031  -104.5246  Alternate Master Clock (USNO), Schriever AFB, CO, USA
+BREW     GD      48.1315  -119.6827  Brewster, WA, USA                       
+DRA2     GD      49.3226  -119.6250  Dominion Radio Astrophysical Observatory, Penticton,CANADA
+DSLK     GD      58.4357  -129.9890  Dease Lake, British Columbia, CANADA    
+ELDD     GD      58.9720  -135.2223  UNKNOWN                                 
+ESQM     GD      48.4292  -123.4288  Esquimalt, British Columbia, CANADA     
+FAIR     GD      64.9779  -147.4993  Gilmore Creek Observatory, Fairbanks, AK, USA
+FNEL     GD      58.8052  -122.7321  Fort Nelson, British Columbia, CANADA   
+FS32     GD      59.1487  -135.3470  Haines, AK, USA                         
+FTSJ     GD      56.2549  -120.8487  Fort St. John, British Columbia, CANADA 
+GODE     GD      39.0216   -76.8269  Greenbelt, Maryland, USA                
+HNSC     GD      59.2420  -135.5178  Haines, AK, USA                         
+INVM     GD      50.5092  -116.0287  Invermere, British Columbia, CANADA     
+MSOL     GD      46.9293  -114.1089  Missoula, MT, USA                       
+PGC4     GD      48.6484  -123.4510  Pacific Geoscience Center, Sidney, British Columbia, CANADA
+PRDS     GD      50.8713  -114.2935  Priddis, Alberta, CANADA                
+PTHY     GD      50.6855  -127.3754  Port Hardy, Vancouver Island, British Columbia, CANADA
+DRV      G      -66.6641   140.0016  Dumont d'Urville - Terre Adelie, Antarctica
+SMLD     GD      49.5654  -119.6443  Summerland, British Columbia, CANADA    
+TEM1     GD      59.4502  -135.3301  Skagway Airport, AK, USA                
+TNK1     GD      59.2722  -135.4406  Tank 1, Haines, AK, USA                 
+TRRC     GD      54.5148  -128.6267  Terrace, British Columbia, CANADA       
+TSEA     GD      61.1873  -149.8950  The Surveyors Ex, Anchorage, AK, USA    
+WHIT     GD      60.7505  -135.2222  Whitehorse, Yukon, CANADA               
+WLBC     GD      52.1305  -122.1369  Williams Lake, British Columbia, CANADA 
+YELL     GD      62.4808  -114.4807  Yellowknife, Northwest Territories, CANADA
+APE      GE      37.0689    25.5306  GEOFON/NOA Station Apirathos, Naxos, Greece
+APEZ     GE      34.9777    24.8859  GEOFON Station Moni Apezanon, Greece    
+BGIO     GE      31.7219    35.0877  GII/GEOFON Station Bar Giyyora, Israel  
+BKB      GE      -1.2558   116.9155  Permanent GEOFON network                
+BOAB     GE      12.4493   -85.6659  INETER/GEOFON Station Boaco, Nicaragua  
+BOA      GE      12.4493   -85.6659  GEOFON Station Boaco, Nicaragua         
+BRNL     GE      52.4278    13.3580  GRSN Station Berlin-Lankwitz, Germany   
+CART     GE      37.5868    -1.0012  ROA/UCM/GEOFON Station Cartagena, Spain 
+CEU      GE      35.8987    -5.3731  ROA/UCM/GEOFON Station Ceuta Spain      
+ECH      G       48.2160     7.1580  Echery - Sainte Marie aux Mines, France 
+CSS      GE      34.9611    33.3310  GEOFON/GII Station Mathiatis, Cyprus    
+DAG      GE      76.7713   -18.6550  GEOFON/AWI Station Danmarkshavn, Greenland
+DSB      GE      53.2452    -6.3762  GEOFON Station Dublin, Ireland          
+EIL      GE      29.6699    34.9512  GEOFON Station Eilat, Israel            
+FODE     GE      35.3797    24.9576  GEOFON Station Fodele, Crete, Greece    
+GHAR     GE      32.1224    13.0885  GEOFON/ETHZ Station Gharyan, Libya      
+GSI      GE       1.3039    97.5755  GEOFON Station                          
+GVD      GE      34.8392    24.0873  GEOFON Station Gavdos Island, Greece    
+HLG      GE      54.1847     7.8839  UKiel/GEOFON Station Helgoland, Germany 
+IBBN     GE      52.3072     7.7566  RUB/GEOFON Station Ibbenbueren, Germany 
+ISP      GE      37.8433    30.5093  GEOFON/MedNet Station Isparta, Turkey   
+JER      GE      31.7719    35.1972  GII Station Jerusalem, Israel           
+KARN     GE      35.4019    23.9174  Karanos, Crete, Greece                  
+KBS      GE      78.9256    11.9417  IRIS/GEOFON/AWI Station Ny Alesund, Spitsbergen
+KBU      GE      34.5151    69.1347  GEOFON Station Kabul, Afghanistan       
+KERA     GE      35.3692    23.5577  Keramoti, Crete, Greece                 
+KMBO     GE      -1.1268    37.2523  IRIS/GEOFON Station                     
+KRIS     GE      35.1780    25.5030  Temp GEOFON Station Kristallenia, Greece
+KSDI     GE      33.1920    35.6590  GII Station Kfar Sold, Israel           
+KWP      GE      49.6305    22.7078  GEOFON Station Kalwaria Paclawska, Poland
+LAST     GE      35.1611    25.4786  GEOFON Station Lasithi, Greece          
+LID      GE      54.5481    13.3664  GRSN/GEOFON Station Liddow, Germany     
+LVC      GE     -22.6182   -68.9113  IRIS/GEOFON/ Station                    
+MAHO     GE      39.8959     4.2665  UCM/ROA/GEOFON Station Mahon, Menorca, Spain
+MALT     GE      38.3134    38.4273  GEOFON/MedNet Station Malatya, Turkey   
+MARJ     GE      32.5226    20.8776  GEOFON Station Al Marj, Libya,          
+MATE     GE      40.6491    16.7044  U Basilicata/GEOFON Station Matera, Italy
+MAUI     GE      20.7668  -156.2448  GEOFON Station Haleakala, Maui, Hawaii, USA
+MELI     GE      35.2938    -2.9350  ROA/UCM/GEOFON Station Melilla, Spain   
+MHV      GE      54.9595    37.7664  GEOFON Station Michnevo, Russia         
+MLR      GE      45.4912    25.9456  GEOFON Station Muntele Rosu, Romania    
+MMRI     GE      -8.6357   122.2376  Permanent GEOFON network                
+MNAI     GE      -4.4500   102.9170  Permanent GEOFON network                
+MORC     GE      49.7766    17.5428  GEOFON Station Moravsky Beroun, Czech Republic
+MRNI     GE      33.1178    35.3920  GII Station Mount Meron, Israel         
+MTE      GE      40.3997    -7.5442  GEOFON Station Manteigas, Portugal      
+MNAI     GE      -4.4500   102.9170  Permanent GEOFON network                
+PMBI     GE      -2.9270   104.7720  GEOFON Station Palembang, Sumatra, Indonesia
+PMG      GE      -9.4092   147.1539  IRIS/GEOFON/PACIFIC21 Station           
+PSZ      GE      47.9184    19.8944  GKKI/GEOFON Station Piszkes, Hungary    
+PUL      GE      59.7670    30.3170  GEOFON Station Pulkovo, Russia          
+PVLZ     GE      35.1730    -4.3010  ROA/UCM/GEOFON Station Penon de Velez-Gomera, Spain
+RGN      GE      54.5477    13.3214  GRSN/GEOFON Station Ruegen, Germany     
+RIOB     GE     -10.1501   -67.7470  GEOFON Station Rio Branco, Brazil       
+RUE      GE      52.4759    13.7800  GRSN/GEOFON Station Ruedersdorf, Germany
+SANT     GE      36.3710    25.4590  Temp GEOFON Station Santorini, Greece   
+SELV     GE      37.2383    -3.7277  IAG Station Sierra Elvira, Spain        
+SFJD     GE      66.9967   -50.6156  IRIS/GEOFON Station                     
+SFJ      GE      66.9967   -50.6156  IRIS/GEOFON Station Sondre Stromfjord, Greenland
+SFS      GE      36.4656    -6.2055  ROA/UCM/GEOFON Station San Fernando, Spain
+SFUC     GE      36.6370    -6.1750  ROA/UCM/GEOFON Station San Fernando, Spain
+SIVA     GE      35.0175    24.8100  GEOFON Station Sivas, Crete, Greece     
+SKD      GE      35.4120    23.9280  GEOFON Station Skordalos, Greece        
+SLIT     GE      57.6300    22.2900  LEGMA/GEOFON Station Slitere, Latvia    
+SMRI     GE      -7.0492   110.4407  Permanent GEOFON network                
+SNAA     GE     -71.6707    -2.8379  GEOFON/AWI Station Sanae, Antarctica    
+STU      GE      48.7719     9.1950  VBB Station Stuttgart, Germany          
+SUMG     GE      72.5763   -38.4539  GEOFON Station Summit Camp, Greenland   
+SUW      GE      54.0125    23.1808  GEOFON Station Suwalki, Poland          
+TIRR     GE      44.4581    28.4128  GEOFON Station                          
+TNTI     GE       0.7718   127.3667  Permanent GEOFON network                
+TRTE     GE      58.3786    26.7205  GEOFON Station Tartu, Estonia           
+UGM      GE      -7.9125   110.5231  GEOFON Station                          
+EVO      G       38.5320    -8.0130  Evora, Portugal                         
+VSU      GE      58.4620    26.7347  GEOFON Station Vasula, Estonia          
+WLF      GE      49.6646     6.1526  GEOFON Station Walferdange, Luxembourg  
+YOGI     GE      -7.8166   110.2949  GEOFON Station Yogyakarta, Java, Indonesia
+ZKR      GE      35.1147    26.2170  GEOFON Station Zakros, Crete, Greece    
+FDF      G       14.7350   -61.1430  Fort de France - Martinique island, France
+FOMA     G      -24.9756    46.9788  Nahampoana reservation - Fort Dauphin, Madagascar
+GRC      G       47.2955     3.0736  Garchy, France                          
+HDC      G       10.0020   -84.1114  Heredia, Costa Rica                     
+HYB      G       17.4187    78.5521  Hyderabad, India                        
+INU      G       35.3500   137.0290  Inuyama, Japan                          
+KIP      G       21.4230  -158.0150  Kipapa - Hawaii, USA                    
+KOG      G        5.2070   -52.7320  Kourou - French Guiana, France          
+MBO      G       14.3910   -16.9550  M'Bour, Senegal                         
+MPG      G        5.1108   -52.6444  Montagne des Peres - French Guiana, France
+NOC      G      -22.2840   166.4320  Noumea - New Caledonia, France          
+NOUC     G      -22.1010   166.3030  Port Laguerre - New Caledonia, France   
+PAF      G      -49.3510    70.2130  Port aux Francais - Kerguelen - TAAF, France
+PEL      G      -33.1436   -70.6749  Peldehue, Chile                         
+PPTF     G      -17.5896  -149.5652  Pamatai - Papeete - Tahiti island - French Polynesia, France
+PPT      G      -17.5690  -149.5760  Pamatai - Papeete - Tahiti island - French Polynesia, France
+PVC      G      -17.7400   168.3120  Port Vila - Efate island, Vanuatu       
+RER      G      -21.1710    55.7400  Riviere de l'Est - Sainte Rose - La Reunion island, France
+SCZ      G       36.5980  -121.4048  Chualar Canyon - Santa Cruz - California, USA
+SEY      G       62.9330   152.3730  Seymchan, Russia                        
+SPB      G      -23.5920   -47.4320  Sao Paulo, Brazil                       
+SSB2     G       45.2790     4.5420  Tunnel de Badole - Saint Sauveur en Rue, France
+SSB3     G       45.2790     4.5420  Tunnel de Badole - Saint Sauveur en Rue, France
+SSB      G       45.2790     4.5420  Tunnel de Badole - Saint Sauveur en Rue, France
+TAM      G       22.7915     8.5284  Tamanrasset, Algeria                    
+BDFB     GT     -15.6418   -48.0148  Brasilia, Brazil                        
+BGCA     GT       5.1764    18.4242  Bogoin, Central African Republic        
+BOSA     GT     -28.6141    25.2555  Boshof, South Africa                    
+CPUP     GT     -26.3306   -57.3309  Villa Florida, Paraguay                 
+DBIC     GT       6.6702    -4.8566  Dimbokro, Cote d'Ivoire                 
+LBTB     GT     -25.0151    25.5967  Lobatse, Botswana, Africa               
+LPAZ     GT     -16.2879   -68.1307  La Paz , Bolivia                        
+PLCA     GT     -40.7328   -70.5508  Paso Flores, Argentina                  
+TRIS     G      -37.0682   -12.3152  Tristan da Cunha - Atlantic Ocean, Great Britain
+SBA      GT     -77.8491   166.7573  Scott Base, Antarctica                  
+VNDA     GT     -77.5172   161.8528  Wright Valley (Bull Pass) Antarctica    
+UNM      G       19.3290   -99.1780  Unam - Mexico, Mexico                   
+WUS      G       41.1990    79.2180  Wushi - Xinjiang Uygur, China           
+LIT      HT      40.1008    22.4900  Litochoro, Greece, HT-Net               
+LKD      HT      38.7072    20.6506  Lefkada, Greece, HT-Net                 
+SOH      HT      40.8217    23.3539  Sohos, Greece, HT-Net                   
+CCRK     HW      46.5585  -119.8548  Sunnyside, WA, USA                      
+DDRF     HW      46.4911  -119.0595  Dider Farm, Eltopia, WA, USA            
+PHIN     HW      45.8951  -119.9278  Phinny Hill Vineyards, Prosser, WA, USA 
+BJT      IC      40.0183   116.1679  Baijiatuan, Beijing, China              
+ENH      IC      30.2762   109.4944  Enshi, Hubei Province, China            
+HIA      IC      49.2704   119.7414  Hailar, Neimenggu Province, China       
+KMI      IC      25.1233   102.7400  Kunming, Yunnan Province, China         
+LSA      IC      29.7031    91.1270  Tibet, China                            
+MDJ      IC      44.6170   129.5908  Mudanjiang, Heilongjiang Province, China
+SSE      IC      31.0948   121.1908  Shanghai, China                         
+WMQ      IC      43.8138    87.7049  Urumqi, Xinjiang Province, China        
+XAN      IC      34.0313   108.9237  Xi'an, China                            
+AAK      II      42.6390    74.4940  Ala Archa, Kyrgyzstan                   
+ABKT     II      37.9304    58.1189  Alibek, Turkmenistan                    
+ABPO     II     -19.0180    47.2290  Ambohimpanompo, Madagascar              
+ALE      II      82.5033   -62.3500  Alert, N.W.T., Canada                   
+ARU      II      56.4302    58.5625  Arti, Russia                            
+ASCN     II      -7.9327   -14.3601  Butt Crater, Ascension Island           
+BFO      II      48.3319     8.3311  Black Forest Observatory, Schiltach, Germany
+BORG     II      64.7474   -21.3268  Borgarfjordur, Asbjarnarstadir, Iceland 
+BRVK     II      53.0581    70.2828  Borovoye, Kazakhstan                    
+CMLA     II      37.7637   -25.5243  Cha de Macela, Sao Miguel Island, Azores
+COCO     II     -12.1901    96.8349  West Island, Cocos (Keeling) Islands    
+DGAR     II      -7.4121    72.4525  Diego Garcia, Chagos Islands, Indian Ocean
+EFI      II     -51.6753   -58.0637  Mount Kent, East Falkland Island        
+ERM      II      42.0150   143.1572  Erimo, Hokkaido Island, Japan           
+ESK      II      55.3167    -3.2050  Eskdalemuir, Scotland, UK               
+FFC      II      54.7250  -101.9783  Flin Flon, Canada                       
+DGAR     II      -7.4121    72.4525  Diego Garcia, Chagos Islands, Indian Ocean
+HOPE     II     -54.2836   -36.4879  Hope Point, South Georgia Island        
+JTS      II      10.2908   -84.9525  Las Juntas de Abangares, Costa Rica     
+KAPI     II      -5.0142   119.7517  Kappang, Sulawesi, Indonesia            
+KDAK     II      57.7828  -152.5835  Kodiak Island, Alaska, USA              
+KIV      II      43.9553    42.6863  Kislovodsk, Russia                      
+KURK     II      50.7154    78.6202  Kurchatov, Kazakhstan                   
+KWAJ     II       8.8019   167.6130  Kwajalein Atoll, Pacific Ocean          
+LVZ      II      67.8979    34.6514  Lovozero, Russia                        
+MBAR     II      -0.6019    30.7382  Mbarara, Uganda                         
+MSEY     II      -4.6737    55.4792  Mahe, Seychelles                        
+MSVF     II     -17.7448   178.0528  Monasavu, Fiji                          
+NIL      II      33.6506    73.2686  Nilore, Pakistan                        
+NNA      II     -11.9875   -76.8422  Nana, Peru                              
+NRIL     II      69.5049    88.4414  Norilsk, Russia                         
+NVS      II      54.8404    83.2346  Novosibirsk, Russia                     
+OBN      II      55.1146    36.5674  Obninsk, Russia                         
+PALK     II       7.2728    80.7022  Pallekele, Sri Lanka                    
+PFO      II      33.6107  -116.4555  Pinon Flat, California, USA             
+RAYN     II      23.5225    45.5032  Ar Rayn, Saudi Arabia                   
+RPN      II     -27.1267  -109.3344  Rapanui, Easter Island, Chile           
+SACV     II      14.9702   -23.6085  Santiago Island, Cape Verde             
+SHEL     II     -15.9588    -5.7457  Horse Pasture, St. Helena Island        
+SUR      II     -32.3797    20.8117  Sutherland, South Africa                
+TAU      II     -42.9099   147.3204  Hobart, Tasmania, Australia             
+TLY      II      51.6807   103.6438  Talaya, Russia                          
+UOSS     II      24.9453    56.2042  Univ. of Sharjah, Sharjah, United Arab Emirates
+WRAB     II     -19.9336   134.3600  Tennant Creek, NT, Australia            
+XPF      II      33.6107  -116.4555  Pinon Flat, California, USA             
+XPFO     II      33.6107  -116.4555  Pinon Flat, California, USA             
+VNDA     IM     -77.5139   161.8456  Vanda, Antarctica                       
+AAE      IU       9.0292    38.7656  Addis Ababa, Ethiopia                   
+ADK      IU      51.8823  -176.6842  Adak, Aleutian Islands, Alaska          
+AFI      IU     -13.9093  -171.7773  Afiamalu, Samoa                         
+ANMO     IU      34.9502  -106.4602  Albuquerque, New Mexico, USA            
+ANTO     IU      39.8680    32.7934  Ankara, Turkey                          
+BBSR     IU      32.3713   -64.6963  Bermuda Biological Station for Research, St George's Bermuda
+BILL     IU      68.0653   166.4531  Bilibino, Russia                        
+BOCO     IU       4.5869   -74.0432  Bogota, Colombia                        
+CASY     IU     -66.2792   110.5354  Casey, Antarctica                       
+CCM      IU      38.0557   -91.2446  Cathedral Cave, Missouri, USA           
+CHTO     IU      18.8141    98.9443  Chiang Mai, Thailand                    
+COLA     IU      64.8736  -147.8616  College Outpost, Alaska, USA            
+COL      IU      64.9000  -147.7933  College Outpost, Alaska, USA            
+COR      IU      44.5855  -123.3046  Corvallis, Oregon, USA                  
+CTAO     IU     -20.0882   146.2545  Charters Towers, Australia              
+DAV      IU       7.0697   125.5791  Davao, Philippines                      
+DWPF     IU      28.1103   -81.4327  Disney Wilderness Preserve, Florida, USA
+FUNA     IU      -8.5259   179.1966  Funafuti, Tuvalu                        
+FURI     IU       8.8952    38.6798  Mt. Furi, Ethiopia                      
+GNI      IU      40.1480    44.7410  Garni, Armenia                          
+GRFO     IU      49.6909    11.2203  Grafenberg, Germany                     
+GUMO     IU      13.5893   144.8684  Guam, Mariana Islands                   
+HKT      IU      29.9618   -95.8384  Hockley, Texas                          
+HNR      IU      -9.4387   159.9475  Honiara, Solomon Islands                
+HRV      IU      42.5064   -71.5583  Adam Dziewonski Observatory (Oak Ridge), Massachusetts, USA
+INCN     IU      37.4776   126.6239  Inchon, Republic of Korea               
+JOHN     IU      16.7329  -169.5292  Johnston Island, USA                    
+KBS      IU      78.9154    11.9385  Ny-Alesund, Spitzbergen, Norway         
+KEV      IU      69.7565    27.0035  Kevo, Finland                           
+KIEV     IU      50.7012    29.2242  Kiev, Ukraine                           
+KIP      IU      21.4200  -158.0112  Kipapa, Hawaii, USA                     
+KMBO     IU      -1.1271    37.2525  Kilima Mbogo, Kenya                     
+KNTN     IU      -2.7744  -171.7186  Kanton, Kiritibati                      
+KONO     IU      59.6491     9.5982  Kongsberg, Norway                       
+KOWA     IU      14.4967    -4.0140  Kowa, Mali                              
+LCO      IU     -29.0110   -70.7004  Las Campanas Astronomical Observatory, Chile
+LSZ      IU     -15.2779    28.1882  Lusaka, Zambia                          
+LVC      IU     -22.6127   -68.9111  Limon Verde, Chile                      
+MA2      IU      59.5756   150.7700  Magadan, Russia                         
+MAJO     IU      36.5457   138.2041  Matsushiro, Japan                       
+MAKZ     IU      46.8080    81.9770  Makanchi, Kazakhstan                    
+MBWA     IU     -21.1590   119.7313  Marble Bar, Western Australia           
+MIDW     IU      28.2156  -177.3698  Midway Island, USA                      
+MSKU     IU      -1.6557    13.6116  Masuku, Gabon                           
+NAI      IU      -1.2739    36.8037  Nairobi, Kenya                          
+NWAO     IU     -32.9277   117.2390  Narrogin, Australia                     
+OTAV     IU       0.2376   -78.4508  Otavalo, Ecuador                        
+PAB      IU      39.5446    -4.3499  San Pablo, Spain                        
+PAYG     IU      -0.6742   -90.2861  Puerto Ayora, Galapagos Islands         
+PET      IU      53.0233   158.6499  Petropavlovsk, Russia                   
+PMG      IU      -9.4047   147.1597  Port Moresby, New Guinea                
+PMSA     IU     -64.7744   -64.0489  Palmer Station, Antarctica              
+POHA     IU      19.7573  -155.5326  Pohakuloa, Hawaii, USA                  
+PTCN     IU     -25.0713  -130.0953  Pitcairn Island, South Pacific          
+PTGA     IU      -0.7308   -59.9666  Pitinga, Brazil                         
+QSPA     IU     -89.9289   144.4382  South Pole Remote Earth Science Observatory (Quiet Zone)
+RAIO     IU      46.0403  -122.8851  Rainier, Oregon, USA                    
+RAO      IU     -29.2450  -177.9290  Raoul, Kermadec Islands                 
+RAR      IU     -21.2125  -159.7733  Rarotonga, Cook Islands                 
+RCBR     IU      -5.8274   -35.9014  Riachuelo, Brazil                       
+RSSD     IU      44.1212  -104.0359  Black Hills, South Dakota, USA          
+SAML     IU      -8.9489   -63.1831  Samuel, Brazil                          
+SBA      IU     -77.8492   166.7572  Scott Base, Antarctica                  
+SDV      IU       8.8839   -70.6340  Santo Domingo, Venezuela                
+SFJD     IU      66.9961   -50.6208  Sondre Stromfjord, Greenland            
+SFJ      IU      66.9967   -50.6156  Sondre Stromfjord, Greenland            
+SJG      IU      18.1091   -66.1500  San Juan, Puerto Rico                   
+SLBS     IU      23.6858  -109.9443  Sierra la Laguna Baja California Sur, Mexico
+SNZO     IU     -41.3087   174.7043  South Karori, New Zealand               
+SSPA     IU      40.6358   -77.8876  Standing Stone, Pennsylvania            
+SSPA     IU      40.6358   -77.8876  Standing Stone, Pennsylvania            
+TARA     IU       1.3549   172.9229  Tarawa Island, Republic of Kiribati     
+TATO     IU      24.9735   121.4971  Taipei, Taiwan                          
+TBT      IU      28.6794   -17.9145  Taburiente, Canary Islands, Spain       
+TEIG     IU      20.2263   -88.2763  Tepich, Yucatan, Mexico                 
+TIXI     IU      71.6341   128.8667  Tiksi, Russia                           
+TOL      IU      39.8814    -4.0485  Toledo, Spain                           
+TRIS     IU     -37.0681   -12.3152  Tristan da Cunha                        
+TRQA     IU     -38.0568   -61.9787  Tornquist, Argentina                    
+TSUM     IU     -19.2022    17.5838  Tsumeb, Namibia                         
+TUC      IU      32.3098  -110.7847  Tucson, Arizona                         
+ULN      IU      47.8651   107.0532  Ulaanbaatar, Mongolia                   
+WAKE     IU      19.2834   166.6520  Wake Island                             
+WCI      IU      38.2289   -86.2939  Wyandotte Cave, Indiana, USA            
+WVT      IU      36.1297   -87.8300  Waverly, Tennessee, USA                 
+XMAS     IU       2.0448  -157.4457  Kiritimati Island, Republic of Kiribati 
+YAK      IU      62.0310   129.6805  Yakutsk, Russia                         
+YSS      IU      46.9587   142.7604  Yuzhno Sakhalinsk, Russia               
+AAK      KN      42.6333    74.4944  -                                       
+AML      KN      42.1311    73.6941  -                                       
+CHM      KN      42.9986    74.7513  -                                       
+EKS2     KN      42.6615    73.7772  -                                       
+ERPT     KN      42.6011    76.0735  -                                       
+KBK      KN      42.6564    74.9478  -                                       
+KZA      KN      42.0778    75.2496  -                                       
+NRPT     KN      42.6011    76.0735  -                                       
+TKM2     KN      42.9208    75.5966  -                                       
+UCH      KN      42.2275    74.5134  -                                       
+ULHL     KN      42.2456    76.2417  -                                       
+USP      KN      43.2669    74.4997  -                                       
+BMN      LB      40.4315  -117.2218  Battle Mountain, Nevada, USA            
+DAC      LB      36.2770  -117.5937  Inyo County, Darwin, CA, USA            
+LDS      LB      37.2425  -113.3514  Leeds, Washington County, Utah, USA     
+MVU      LB      38.5037  -112.2123  Piute County, Marysvale, UT, USA        
+TPH      LB      38.0750  -117.2225  Tonopah, NV, USA                        
+MMNY     LD      42.7319   -77.9066  Mount Morris Dam, NY                    
+NPNY     LD      41.7546   -74.1435  Mohonk Preserve, New Paltz, NY          
+PAL      LD      41.0056   -73.9079  Palisades, New York                     
+PANJ     LD      40.3769   -74.7029  Princeton, NJ                           
+AIO      MN      37.9712    15.2330  Antillo, Italy                          
+AQU      MN      42.3540    13.4050  L'Aquila, Italy                         
+BGY      MN      44.8026    20.5158  Beograd, Serbia                         
+BLY      MN      44.7488    17.1839  Banja Luka, Bosnia and Herzegovina      
+BNI      MN      45.0520     6.6780  Bardonecchia, Italy                     
+CEL      MN      38.2603    15.8939  Celeste, Italy                          
+CII      MN      41.7230    14.3050  Isernia, Italy                          
+CLTB     MN      37.5780    13.2160  Caltabellotta, Italy                    
+CUC      MN      39.9938    15.8155  Castrocucco, Italy                      
+DIVS     MN      44.0981    19.9917  Divcibare,Serbia                        
+GFA      MN      34.3380     9.0730  Gafsa, Tunisia                          
+IDI      MN      35.2880    24.8900  Anogia, Greece                          
+ISP      MN      37.8430    30.5090  Isparta, Turkey                         
+KEG      MN      29.9275    31.8292  Kottamya, Egypt                         
+MDT      MN      32.8170    -4.6140  Midelt, Morocco                         
+MEB      MN      36.3030     2.7300  Medea, Algeria                          
+PDG      MN      42.4297    19.2608  Podgorica, Crna Gora                    
+RTC      MN      33.9881    -6.8569  Rabat, Morocco                          
+TIP      MN      39.1794    16.7583  Timpagrande, Italy                      
+TIR      MN      41.3472    19.8631  Tirana, Albania                         
+TNV      MN     -74.7000   164.1200  Terra Nova Bay, Antarctica              
+TRI      MN      45.7090    13.7640  Trieste, Italy                          
+TTE      MN      45.6600    13.7900  Trieste, Italy                          
+TUE      MN      46.4722     9.3473  Stuetta, Italy                          
+VAE      MN      37.4690    14.3533  Valguarnera, Italy                      
+VLC      MN      44.1594    10.3864  Villacollemandina, Italy                
+VSL      MN      39.4960     9.3780  Villasalto, Italy                       
+VTS      MN      42.6180    23.2350  Vitosha, Bulgary                        
+WDD      MN      35.8373    14.5242  Wied Dalam                              
+BTDF     MS       1.3608   103.7729  Bukit Timah Dairy Farm, Singapore       
+IPM      MY       4.4795   101.0255  Ipoh                                    
+KKM      MY       6.0443   116.2147  Kota Kinabalu                           
+KOM      MY       1.7922   103.8467  Kota Tinggi                             
+KSM      MY       1.4733   110.3083  Kuching                                 
+KUM      MY       5.2902   100.6492  Kulim                                   
+LDM      MY       5.1777   118.4980  Lahad Datu                              
+SBM      MY       2.4529   112.2140  Sibu                                    
+BLO      NM      39.1719   -86.5222  Bloomington, IN                         
+FVM      NM      37.9812   -90.4273  French Village, MO                      
+MGMO     NM      37.1540   -92.2687  Mountain Grove, MO                      
+MPH      NM      35.1230   -89.9320  Memphis, TN                             
+OLIL     NM      38.7338   -88.0991  Olney Central College Olney, IL         
+PBMO     NM      36.7785   -90.4297  Three Rivers Community College, Poplar Bluff, MO
+PLAL     NM      34.9824   -88.0755  Pickwick Lake, AR                       
+PVMO     NM      36.4137   -89.6997  UM Delta Research Portageville, MO      
+SIUC     NM      37.7148   -89.2174  Carbondale, IL                          
+SLM      NM      38.6361   -90.2364  St. Louis, MO                           
+UALR     NM      34.7751   -92.3429  University of Arkansas, Little Rock     
+USIN     NM      37.9650   -87.6660  Univ. of Southern Indiana, Evansville, IN
+UTMT     NM      36.3424   -88.8654  Martin, TN                              
+BEK      NN      39.8667  -120.3586  Beckworth, CA, USA                      
+OMM      NN      37.6214  -118.9994  Old Mammoth Mine, Mammoth Lakes, CA, USA
+WCN      NN      39.3017  -119.7563  Washoe City, NV, USA                    
+NE70     NR      32.4209  -115.2608  Mexicali, Mexico                        
+NE71     NR      31.6897  -115.9053  Agua Blanca, Mexico                     
+NE72     NR      30.8484  -116.0586  Camalu, Mexico                          
+NE73     NR      30.0651  -115.3485  Turquesa, Mexico                        
+NE74     NR      28.0075  -114.0138  Guerrero Negro, Mexico                  
+NE75     NR      27.2933  -112.8565  San Ignacio, Mexico                     
+NE76     NR      26.8889  -111.9990  Mulege, Mexico                          
+NE77     NR      26.0158  -111.3613  Loreto, Mexico                          
+NE78     NR      24.3982  -111.1064  Las Pocitas, Mexico                     
+NE79     NR      23.1194  -109.7561  San Jose del Cabo, Mexico               
+NE80     NR      30.5000  -112.3199  Caborca, Mexico                         
+NE81     NR      28.9183  -109.6363  Novillo, Mexico                         
+NE82     NR      26.9157  -109.2308  Navajoa, Mexico                         
+NE83     NR      24.7309  -107.7393  Navolato, Mexico                        
+NE84     NR      24.9135  -111.5452  El Toro, Mexico                         
+NE85     NR      24.1296  -110.4368  La Paz, Mexico                          
+BFZ      NZ     -40.6814   176.2461  Birch Farm                              
+BKZ      NZ     -39.1674   176.4923  Black Stump Farm                        
+CTZ      NZ     -43.7355  -176.6172  Chatham Island                          
+HIZ      NZ     -38.5147   174.8555  Hauiti                                  
+KHZ      NZ     -42.4160   173.5390  Kahutara                                
+ODZ      NZ     -45.0456   170.6445  Otahua Downs                            
+OUZ      NZ     -35.2215   173.5960  Omahuta                                 
+QRZ      NZ     -40.8272   172.5290  Quartz Range                            
+RPZ      NZ     -43.7163   171.0538  Rata Peaks                              
+URZ      NZ     -38.2610   177.1107  Urewera                                 
+WPVZ     NZ     -39.2058   175.5457  Whakapapa                               
+ARSA     OE      47.2505    15.5232  Arzberg, Steiermark, Austria            
+DAVA     OE      47.2867     9.8803  Damuels, Vorarlberg, Austria            
+KBA      OE      47.0784    13.3447  Koelnbreinsperre, Kaernten, Austria     
+HDC3     OV      10.0010   -84.0660  Heredia, Costa Rica                     
+B001     PB      48.0431  -123.1314  golbeck01bwa2005, Sequim, WA, USA       
+B003     PB      48.0624  -124.1409  floequarybwa2005, FloeQuarry, WA, USA   
+B004     PB      48.2019  -124.4270  hokofallsbwa2005, Sekiu, WA, USA        
+B005     PB      48.0595  -123.5033  shoresnw1bwa2005, Port Angeles, WA, USA 
+B006     PB      48.0588  -123.5008  shoresne2bwa2005, Port Angeles, WA, USA 
+B007     PB      48.0576  -123.5041  shoresso3bwa2005, Shores, WA, USA       
+B009     PB      48.6487  -123.4512  pacgeosi1bbc2005, Sidney, BC, CA        
+B010     PB      48.6502  -123.4513  pacgeosi2bbc2005, Sidney, BC, CA        
+B011     PB      48.6495  -123.4482  pacgeosi3bbc2005, Sidney, BC, CA        
+B012     PB      48.9246  -125.5420  ucluelet1bbc2005, Ucluelet, BC, CA      
+B013     PB      47.8130  -122.9108  pnycrk013bwa2007, Quilcene, WA, USA     
+B014     PB      47.5133  -123.8125  quinlt014bwa2008, Olympic NP, WA, USA   
+B017     PB      46.9960  -123.5575  flinkm017bwa2007, Montesano, WA, USA    
+B018     PB      46.9795  -123.0203  delphi018bor2006, Delphi, OR, USA       
+B019     PB      46.6527  -123.6518  waldrf019bwa2008, Raymond, WA, USA      
+B020     PB      46.3828  -123.8445  wirkla020bwa2008, Naselle, WA, USA      
+B022     PB      45.9546  -123.9310  seaside22bor2006, OR, USA               
+B023     PB      46.1112  -123.0787  cataln023bor2008, Claskanie, OR, USA    
+B024     PB      45.6340  -123.8630  kuntza024bor2006, Portland, OR, USA     
+B026     PB      45.3094  -123.8230  roosbc026bor2007, Portland, OR, USA     
+B027     PB      44.4973  -122.9622  lester027bor2007, Albany, OR, USA       
+B028     PB      44.4937  -122.9638  lester028bor2007, Albany, OR, USA       
+B030     PB      43.9713  -122.7717  pattrs030bor2007, Springfield, OR, USA  
+B031     PB      43.6643  -123.3967  hergrt031bor2007, Hergert, OR, USA      
+B032     PB      43.6680  -123.3923  hergrt032bor2007, Hergert, OR, USA      
+B033     PB      43.2917  -123.1245  vanvlk033bor2007, Glide, OR, USA        
+B035     PB      42.5035  -123.3834  grants035bor2006, OR, USA               
+B036     PB      42.5058  -123.3817  grants036bor2007, Grant's Pass, OR, USA 
+B039     PB      41.4667  -122.4847  cofflt039bcn2007, Weed, CA, USA         
+B040     PB      41.8308  -122.4205  yorkmn040bcn2007, Montague, CA, USA     
+B045     PB      40.4360  -123.9965  rdcrst045bcn2008, Pepperwood, CA, USA   
+B046     PB      40.3220  -124.2843  mattol046scn2008, Petrolia, CA, USA     
+B047     PB      40.2505  -124.1713  chapmn047scn2008, Mendocino, CA, USA    
+B049     PB      40.2375  -123.8197  mirand049scn2008, Mendocino, CA, USA    
+B054     PB      37.8602  -122.1995  sibley054bcn2008 , Orinda, CA, USA      
+B057     PB      38.0273  -122.5655  lucasv057bcn2008, Lucas Valley, CA, USA 
+B058     PB      36.7995  -121.5808  sjgrad058bcn2007, San Juan Bautista, CA, USA
+B065     PB      36.7437  -121.4742  gabiln065bcn2007, San Juan Bautista, CA, USA
+B066     PB      36.8573  -121.5922  rockrd066bcn2007, San Juan Bautista, CA, USA
+B067     PB      36.7650  -121.5655  stoney067bcn2007, San Juan Bautista, CA, USA
+B072     PB      35.8310  -120.3450  goldhl072bcn2007, Parkfield, CA, USA    
+B073     PB      35.9467  -120.4717  varian073bcs2006, Parkfield, CA, USA    
+B075     PB      35.9292  -120.5153  flengt075bcs2006, Parkfield, CA, USA    
+B076     PB      35.9398  -120.4248  donnal076bcs2006, Parkfield, CA, USA    
+B078     PB      35.8376  -120.3443  goldhl078bcs2006, Parkfield, CA, USA    
+B079     PB      35.7160  -120.2047  jackcn079bcs2006, Parkfield, CA, USA    
+B081     PB      33.7112  -116.7142  keenwi081bcs2006, Anza, CA, USA         
+B082     PB      33.5982  -116.5960  pathfi082bcs2006, Anza, CA, USA         
+B084     PB      33.6116  -116.4564  pinyon084bcs2006, Anza, CA, USA         
+B086     PB      33.5575  -116.5300  santar086bcs2006, Anza, CA, USA         
+B087     PB      33.4955  -116.6027  fordra087bcs2006, Anza, CA, USA         
+B088     PB      33.3749  -116.6205  skyoks088bcs2007, Anza, CA, USA         
+B093     PB      33.5937  -116.7641  trippf093bcs2007, Anza, CA, USA         
+B201     PB      46.3033  -122.2648  coldwt201bwa2007, Mt St Helens, WA, USA 
+B202     PB      46.2447  -122.1367  windyr202bwa2007, Mt St Helens, WA, USA 
+B203     PB      46.1690  -122.3337  quarry203bwa2007, Mount Saint Helens, WA, USA
+B204     PB      46.1360  -122.1690  marble204bwa2007, Mt St Helens, WA, USA 
+B205     PB      44.7135  -110.6783  norris205bwy2008, Yellowstone, WY, USA  
+B206     PB      44.7177  -110.5117  canyon206bwy2008, Yellowstone, WY, USA  
+B207     PB      44.6190  -110.8485  madisn207bwy2007, Yellowstone, Wy, USA  
+B208     PB      44.5602  -110.4015  lakejn208bwy2007, Yellowstone, Wy, USA  
+B900     PB      35.6300  -120.0150  blacka900bcn2007, Parkfield, CA, USA    
+B901     PB      35.6900  -120.1420  indspr901bcn2007, Parkfield, CA, USA    
+B916     PB      36.1925  -117.6685  marips916bcs2008, China Lake, CA, USA   
+B917     PB      35.3892  -117.2587  tonyso917bcs2008, China Lake, CA, USA   
+B918     PB      35.9372  -117.5906  mtsprn918bcs2008, China Lake, CA, USA   
+B921     PB      35.5865  -117.4622  randsb921bcs2008, China Lake, CA, USA   
+B926     PB      48.8202  -124.1312  cowich926bbc2007, Port Renfrew, BC, Canada
+B927     PB      49.2188  -124.8113  albern927bbc2007, Port Alberni, BC, USA 
+B928     PB      48.8337  -125.1345  bamfld928bbc2007, Bamfield, BC, Canada  
+B932     PB      40.2750  -124.2212  burogh932scn2008, Petrolia, CA, USA     
+B933     PB      40.0600  -123.9690  mckeem933bcn2008, Thorn Junction, CA, USA
+B934     PB      39.8445  -123.6913  legget934bcn2008, Leggett, CA, USA      
+B935     PB      40.4787  -123.5732  dinsmr935bcn2008, Dinsmore, CA, USA     
+B941     PB      46.9868  -122.2190  kapows941bwa2008, Kapowsin, WA, USA     
+B943     PB      47.8132  -122.9113  pnycrk943bwa2008, Seattle, WA, USA      
+B944     PB      44.3897  -110.5438  grantt944bwy2008, Yellowstone, WY, USA  
+B945     PB      44.8940  -110.7441  panthr945swy2008, Yellowstone, WY, USA  
+P403     PB      48.0624  -124.1409  floequarybwa2005, FloeQuarry, WA, USA   
+B1       PI      34.0730   106.9190  Pier B1                                 
+B3       PI      34.0736  -106.9189  Adjacent to B1 (PIC)                    
+B4       PI      34.0736  -106.9189  Adjacent to B2 (PIC)                    
+B7       PI      34.0736  -106.9189  Adjacent to B5 (PIC)                    
+B6       PI      34.0736  -106.9189  Pier Station B6                         
+B7       PI      34.0736  -106.9189  Adjacent to B5 (PIC)                    
+B8       PI      34.0736  -106.9189  Pier Station B8                         
+B9       PI      34.0736  -106.9188  SE Corner of Pier                       
+NP00     PI      34.0740  -106.9190  Pier2_P0                                
+NP01     PI      34.0740  -106.9191  Pier2_P1                                
+NP02     PI      34.0740  -106.9190  Pier2_P2                                
+NP03     PI      34.0740  -106.9190  Pier2_P3                                
+NP04     PI      34.0740  -106.9191  Pier2_P4                                
+NP05     PI      34.0740  -106.9190  Pier2_P5                                
+NP06     PI      34.0740  -106.9191  Pier2_P6                                
+NP07     PI      34.0740  -106.9190  Pier2_P7                                
+NP08     PI      34.0740  -106.9191  Pier2_P8                                
+NP09     PI      34.0740  -106.9190  Pier2_P9                                
+SP00     PI      34.0740  -106.9190  Pier1_B0                                
+SP01     PI      34.0740  -106.9190  Pier1_B1                                
+SP02     PI      34.0740  -106.9190  Pier1_B2                                
+SP03     PI      34.0740  -106.9190  Pier1_B3                                
+SP04     PI      34.0740  -106.9190  Pier1_B4                                
+SP05     PI      34.0740  -106.9190  Pier1_B5                                
+SP06     PI      34.0740  -106.9190  Pier1_B6                                
+SP07     PI      34.0740  -106.9190  Pier1_B7                                
+SP08     PI      34.0740  -106.9190  Pier1_B8                                
+SP09     PI      34.0740  -106.9190  Pier1_B9                                
+PESTR    PM      38.8672    -7.5902  Estremoz, Portugal                      
+PFVI     PM      37.1328    -8.8268                                          
+PMOZ     PM      32.8230   -17.1972                                          
+PVAQ     PM      37.4037    -7.7173  Vaqueiros, Portugal                     
+ROSA     PM      38.7208   -28.2470                                          
+BAG      PS      16.4108   120.5797  Baguio City, Luzon, Philippines         
+OGS      PS      27.0570   142.2030  Ogasawara, Bonin Islands, Japan         
+PATS     PS       6.8367   158.3152  Pohnpei, Micronesia                     
+PSI      PS       2.6938    98.9237  Prapat, Sumatera, Indonesia             
+SYO      PS     -69.0067    39.5850  Syowa Station, Antarctica               
+PH008    SF      35.9743  -120.5521  SAFOD Pilot Hole, Parkfield, CA         
+109C     TA      32.8889  -117.1051  Camp Elliot, Miramar, CA, USA           
+112A     TA      32.5356  -114.5804  Yuma, AZ, USA                           
+113A     TA      32.7683  -113.7667  Mohawk Valley, Roll, AZ, USA            
+114A     TA      32.7513  -112.8830  Black Gap (USAF), Gila Bend, AZ, USA    
+115A     TA      32.7006  -112.2279  Sonoran Desert, Stanfield, AZ, USA      
+116A     TA      32.5618  -111.7042  Eloy, AZ, USA                           
+117A     TA      32.5716  -110.7393  Oracle, AZ, USA                         
+118A     TA      32.6399  -109.9697  Homack Ranch, Wilcox, AZ, USA           
+119A     TA      32.7663  -109.3029  Ashpeak Ranch, Duncan, AZ, USA          
+120A     TA      32.5466  -108.6330  U Bar Ranch, Lordsburg, NM, USA         
+121A     TA      32.5324  -107.7851  Cookes Peak, Deming, NM, USA            
+122A     TA      32.6995  -107.0005  Conniff Cattle Co., Rinco, NM, USA      
+123A     TA      32.6349  -106.2622  Bell Site, White Sands Missle Range, NM, USA
+124A     TA      32.7001  -105.4544  Stringfield Ranch, Weed, NM, USA        
+125A     TA      32.6588  -104.6573  Gardner Draw, Artesia, NM, USA          
+126A     TA      32.6462  -104.0204  Clayton Basin, Artesia, NM, USA         
+127A     TA      32.6764  -103.3575  Arkansas Junction, Hobbs, NM, USA       
+128A     TA      32.6213  -102.4850  Castleberry Farm, Seminole, TX, USA     
+129A     TA      32.6309  -101.8662  Stewart Farms, Lamesa, TX, USA          
+130A     TA      32.5961  -100.9652  Snyder, TX, USA                         
+131A     TA      32.6737  -100.3888  Roby, TX, USA                           
+214A     TA      31.9559  -112.8115  Organ Pipe National Monument, Ajo, AZ, USA
+216A     TA      32.0022  -111.4574  Three Points, Tucson, AZ, USA           
+217A     TA      31.7748  -110.8162  Green Valley, AZ, USA                   
+218A     TA      31.9737  -110.0464  Dragoon, AZ, USA                        
+219A     TA      31.9989  -109.2592  White Tail Canyon, San Simon, AZ, USA   
+220A     TA      31.9041  -108.5266  Playas Peak, Playas, NM, USA            
+221A     TA      32.0094  -107.7782  Mesquite Ranch, Deming, NM, USA         
+222A     TA      32.1046  -107.1013  Williams Family Ranch, Las Cruces, NM, USA
+223A     TA      32.0062  -106.4276  Chaparral, Anthony, NM, USA             
+224A     TA      32.0760  -105.5226  Cornudas Mountain, Dell City, TX, USA   
+225A     TA      32.1101  -104.8229  Deer Hill, Carlsbad, NM, USA            
+226A     TA      32.0618  -104.1014  Malaga, Loving, NM, USA                 
+226B     TA      32.0778  -104.1654  Tecolote Peak, Malaga, NM, USA          
+227A     TA      32.0120  -103.2924  Bennet, Jal, NM, USA                    
+228A     TA      32.1180  -102.5918  UT Block 9, Goldsmith, TX, USA          
+229A     TA      31.9671  -101.8107  Bryant Ranch, Stanton, TX, USA          
+230A     TA      31.8878  -101.1124  Sterling City, TX, USA                  
+231A     TA      31.9353  -100.3163  Bronte, TX, USA                         
+232A     TA      31.8880   -99.6469  Coleman, TX, USA                        
+318A     TA      31.4390  -109.9907  Bisbee, AZ, USA                         
+319A     TA      31.3757  -109.2809  Douglas, AZ, USA                        
+320A     TA      31.3369  -108.5284  Kipp Ranch, Antelope Well, NM, USA      
+324A     TA      31.4425  -105.4828  Moseley Ranch, Sierra Blanca, TX, USA   
+325A     TA      31.3711  -104.9712  Bean Ranch, Sierra Blanca, TX, USA      
+326A     TA      31.3165  -103.9786  Caldwell Ranch, Toyah, TX, USA          
+327A     TA      31.3691  -103.4923  Balmorhea Ranch, Pecos, TX, USA         
+328A     TA      31.3818  -102.8097  Wristen Ranch, Grandfalls, TX, USA      
+329A     TA      31.4870  -101.9808  Wagon Wheel Ranch, Midkiff, TX, USA     
+330A     TA      31.4063  -101.1752  Mertzon, TX, USA                        
+331A     TA      31.3085  -100.4266  San Angelo, TX, USA                     
+332A     TA      31.3829   -99.7423  Millersview, TX, USA                    
+425A     TA      30.7862  -104.9857  Indio Mountain, Van Horn, TX, USA       
+426A     TA      30.6689  -104.0293  McDonald Observatory, Fort Davis, TX, USA
+427A     TA      30.8498  -103.4018  Hayter Ranch, Fort Stockton, TX, USA    
+428A     TA      30.7263  -102.6847  Kincaid Ranch, Fort Stockton, TX, USA   
+429A     TA      30.6248  -101.8938  Davenport Ranch, Sheffield, TX, USA     
+430A     TA      30.7866  -101.2362  Baggett Ranch, Ozona, TX, USA           
+431A     TA      30.6824  -100.6079  Sonora, TX, USA                         
+432A     TA      30.8755   -99.7937  Menard, TX, USA                         
+526A     TA      30.0609  -104.0898  Mary Lane Ranch, Marfa, TX, USA         
+527A     TA      30.1456  -103.6119  Woodward Ranch, Alpine, TX, USA         
+528A     TA      30.1615  -102.7880  Cox Ranch, Sanderson, TX, USA           
+529A     TA      30.1246  -102.2204  Stev Forest Ranch, Sanderson, TX, USA   
+530A     TA      30.1489  -101.3379  J-C Ranch, Comstock, TX, USA            
+531A     TA      30.1645  -100.5464  Rocksprings, TX, USA                    
+532A     TA      30.1278   -99.9049  Rocksprings, TX, USA                    
+626A     TA      29.5540  -104.1335  Big Bend Ranch, Presidio, TX, USA       
+627A     TA      29.4528  -103.3887  Terlingua Ranch, Terlingua, TX, USA     
+628A     TA      29.4862  -102.8885  Black Gap, Marathon, TX, USA            
+631A     TA      29.4123  -100.5759  Perdido Creek Ranch, Del Rio, TX, USA   
+632A     TA      29.5071   -99.7863  Uvalde, TX, USA                         
+732A     TA      28.7292   -99.9707  Laxson Ranch, Crystal City, TX, USA     
+A04A     TA      48.7197  -122.7070  Legoe Bay, Lummi Island, WA, USA        
+A05A     TA      48.9983  -122.0852  Maple Falls, WA, USA                    
+A06A     TA      49.0983  -121.4804  Chilliwack, BC, Canada                  
+A07A     TA      49.0480  -120.3837  Ashnola River, Keremeos, BC, Canada     
+A08A     TA      48.9534  -119.2725  Turner Farm, Oroville, WA, USA          
+A09A     TA      48.9752  -118.5851  Danville, WA, USA                       
+A10A     TA      48.9813  -117.5586  Northport, WA, USA                      
+A11A     TA      48.9580  -116.3631  Hall Mountain, Copeland, ID, USA        
+A12A     TA      48.9339  -115.6526  Yaak River Ranch, Troy, MT, USA         
+A13A     TA      48.9330  -114.4135  Flathead National Forest, Polebridge, MT, USA
+A14A     TA      48.9725  -113.4218  Double T Ranch, Babb, MT, USA           
+A15A     TA      48.9777  -112.7327  Johnson Ranch, Cut Bank, MT, USA        
+A16A     TA      48.9482  -111.5968  West Butte Ranch, Sweetgrass, MT, USA   
+A17A     TA      48.9448  -110.6994  Triple J Farms, Joplin, MT, USA         
+A18A     TA      48.9198  -109.8459  Metzger Ranch, Havre, MT, USA           
+A19A     TA      48.9286  -108.7429  Klindworth Farms, Hogeland, MT, USA     
+A20A     TA      48.8799  -107.9257  Cobblestone Ranch, Loring, MT, USA      
+A21A     TA      48.9912  -106.9254  Bergtoll Ranch, Theony, MT, USA         
+A22A     TA      48.9926  -105.9153  Carney Farms, Richland, MT, USA         
+A23A     TA      48.9592  -104.8786  Redstone, MT, USA                       
+A24A     TA      48.9239  -104.0018  Westby, ND, USA                         
+A25A     TA      48.9388  -103.1128  Svangstu Ranch, Noonan, ND, USA         
+A26A     TA      48.8973  -102.0380  Wade Farm, Kenmare, ND, USA             
+A27A     TA      48.9533  -101.2407  Ledoux Ranch, Antler, ND, USA           
+A28A     TA      48.9096  -100.2669  Rude Farm, Bottineau, ND, USA           
+A29A     TA      48.9228   -99.2321  Manning Farm, Rocklake, ND, USA         
+A30A     TA      48.9402   -98.3009  Hoffart Farm, Langdon, ND, USA          
+ABTX     TA      32.6238   -99.6431  Abilene, Hawley, TX, USA                
+B04A     TA      48.0575  -123.5040  Port Angeles, WA, USA                   
+B05A     TA      48.2641  -122.0960  Bryant, WA, USA                         
+B06A     TA      48.5183  -121.4845  Marblemount, WA, USA                    
+B07A     TA      48.4607  -120.1197  Winthrop, WA, USA                       
+B08A     TA      48.3584  -119.3332  Colville Reservation, Omak, WA, USA     
+B09A     TA      48.4226  -118.1488  Rice, WA, USA                           
+B10A     TA      48.2995  -117.2252  Chitwood Farm, Usk, WA, USA             
+B11A     TA      48.4366  -116.3674  Sandpoint, ID, USA                      
+B12A     TA      48.4694  -115.5889  Libby, MT, USA                          
+B13A     TA      48.3739  -114.4676  Whitefish, MT, USA                      
+B14A     TA      48.3609  -113.2729  Marquette Ranch, East Glacier, MT, USA  
+B15A     TA      48.3129  -112.5619  Bradely Ranch, Valier, MT, USA          
+B16A     TA      48.4128  -111.7073  M & M Farms, Shelby, MT, USA            
+B17A     TA      48.2921  -110.7988  L&G Farms, Chester, MT, USA             
+B18A     TA      48.3943  -109.7775  Beardsley Farm, Havre, MT, USA          
+B19A     TA      48.4551  -108.9443  Brinkman Farms, Chinook, MT, USA        
+B20A     TA      48.4389  -108.0209  Solberg Farm, Malta, MT, USA            
+B21A     TA      48.4278  -107.0166  Ellsworth Farm, Hinsdale, MT, USA       
+B22A     TA      48.3008  -105.9964  Reddig Ranch South, Frazer, MT, USA     
+B23A     TA      48.4643  -104.9909  Brockton, MT, USA                       
+B25A     TA      48.2716  -103.1613  Knox Farm, Ray, ND, USA                 
+B26A     TA      48.3762  -102.2341  Jensen Ranch, Palermo, ND, USA          
+B27A     TA      48.4044  -101.2600  Peters Farms, Glenburn, ND, USA         
+B28A     TA      48.4492  -100.3616  Dugan Ranch, Towner, ND, USA            
+B29A     TA      48.4649   -99.3535  Wagenman Farm, Cando, ND, USA           
+B30A     TA      48.4505   -98.3286  Myrvik Farm, Edmore, ND, USA            
+BGNE     TA      41.4083   -98.1502  Belgrade, NE, USA                       
+BNLO     TA      37.1311  -122.1729  Ben Lomond (Santa Cruz Mountains), CA, USA
+BRSD     TA      44.4430   -98.9563  Miller, SD, USA                         
+C03A     TA      47.9475  -124.5662  Quillayute Airport, Forks, WA, USA      
+C04A     TA      47.7172  -122.9718  Brinnon, WA, USA                        
+C05A     TA      47.6947  -121.6895  Tolt Reservoir, WA, USA                 
+C06A     TA      47.9230  -120.8944  Tall Timber Ranch, Leavenworth, WA, USA 
+C07A     TA      47.6902  -120.0613  Waterville, WA, USA                     
+C08A     TA      47.7849  -119.0454  Higginbotham Farm, Almira, WA, USA      
+C09A     TA      47.8006  -118.2741  Chrisman Ranch, Davenport, WA, USA      
+C10A     TA      47.8192  -117.3077  Spilker Farm, Colbert, WA, USA          
+C11A     TA      47.8397  -116.2557  Tepee Creek (NFS), Magee, ID, USA       
+C12A     TA      47.7039  -115.4811  Trout Creek, MT, USA                    
+C12B     TA      47.7092  -115.4750  Naegeli Ranch, Trout Creek, MT, USA     
+C13A     TA      47.6795  -114.5735  Hot Springs, MT, USA                    
+C14A     TA      47.7687  -113.7468  Swan Lake, MT, USA                      
+C15A     TA      47.7750  -112.6072  Salmond Ranch, Choteau, MT, USA         
+C16A     TA      47.8012  -111.7458  Fuhringer Ranch, Dutton, MT, USA        
+C17A     TA      47.6327  -110.7626  Wharram Farm, Highwood, MT, USA         
+C19A     TA      47.7343  -109.0489  Slack Wire Ranch, Winifred, MT, USA     
+C20A     TA      47.7133  -108.0042  Veseth Ranch, Zortman, MT, USA          
+C21A     TA      47.8264  -107.0960  Desert Coulee Ranch, Glasgow, MT, USA   
+C22A     TA      47.7456  -105.8841  Vida, MT, USA                           
+C23A     TA      47.8026  -105.1844  Lambert, MT, USA                        
+C24A     TA      47.5302  -104.4252  Savage, MT, USA                         
+C25A     TA      47.7124  -103.2558  Freed Ranch, Watford, ND, USA           
+C26A     TA      47.8259  -102.0957  Wahner Farm, Parshall, ND, USA          
+C27A     TA      47.7139  -101.5029  Sayler Ranch, Douglas, ND, USA          
+C28A     TA      47.7157  -100.3871  Hausauer Farms, Kief, ND, USA           
+C30A     TA      47.7026   -98.4783  Mose, Pekin, ND, USA                    
+D03A     TA      47.1161  -123.7714  Wishkah Elem. School, Wishkah, WA, USA  
+D04A     TA      47.1109  -122.8035  Dobbs Creek Ranch, Lacey, WA, USA       
+D05A     TA      47.1881  -121.9888  Enumclaw, WA, USA                       
+D06A     TA      47.1935  -120.8445  Cle Elum, WA, USA                       
+D07A     TA      47.1936  -119.9732  Quincy, WA, USA                         
+D08A     TA      47.0573  -118.9210  Wollman Farm, Schrag, WA, USA           
+D09A     TA      47.0615  -118.3092  Jones Farm, Ritzville, WA, USA          
+D10A     TA      47.0547  -117.2759  Wagner Farm, Oakesdale, WA, USA         
+D11A     TA      47.0477  -116.3353  Klaveano Farm, Fernwood, ID, USA        
+D12A     TA      47.0528  -115.3525  Red Ives Forest Station, Avery, ID, USA 
+D13A     TA      47.0943  -114.4587  Huson, MT, USA                          
+D14A     TA      47.0816  -113.5062  Greenough, MT, USA                      
+D15A     TA      47.0418  -112.5204  Lincoln, MT, USA                        
+D16A     TA      47.0308  -111.5492  Dana Ranch, Cascade, MT, USA            
+D17A     TA      47.1523  -110.6873  Six Diamond Ranch, Ranyesford, MT, USA  
+D18A     TA      47.1961  -109.8023  Linhart Farms, Moccasin, MT, USA        
+D19A     TA      47.1646  -108.8800  Cripps Ranch, Grass Range, MT, USA      
+D20A     TA      47.0911  -108.1362  Manuel Ranch, Winnett, MT, USA          
+D21A     TA      47.0658  -106.9939  La Casta Ranch, Jordon, MT, USA         
+D22A     TA      47.1498  -106.1797  Cohagen, MT, USA                        
+D23A     TA      47.1730  -105.2071  Lindsay, MT, USA                        
+D24A     TA      47.1152  -104.3270  Glendive, MT, USA                       
+D25A     TA      47.1508  -103.3203  Fairfield, ND, USA                      
+D26A     TA      47.0301  -102.4357  Manning, ND, USA                        
+D27A     TA      47.1081  -101.5254  Center, ND, USA                         
+D28A     TA      47.1929  -100.5692  Regan, ND, USA                          
+D29A     TA      47.0605   -99.5957  Pettibone, Tappen, ND, USA              
+D30A     TA      47.1082   -98.7576  Buchanan, ND, USA                       
+E03A     TA      46.5459  -123.5632  Lebam, WA, USA                          
+E04A     TA      46.5934  -122.7204  Onalaska, WA, USA                       
+E05A     TA      46.5605  -121.7608  Randle, WA, USA                         
+E06A     TA      46.5433  -120.9791  Yakima, WA, USA                         
+E07A     TA      46.5585  -119.8548  Sunnyside, WA, USA                      
+E08A     TA      46.4911  -119.0595  Dider Farm, Eltopia, WA, USA            
+E09A     TA      46.5139  -118.1455  Wood Farm, Starbuck, WA, USA            
+E10A     TA      46.4850  -117.1102  Myers Farm, Uniontown, WA, USA          
+E11A     TA      46.3559  -116.2092  Bogner Ranch, Nez Perce, ID, USA        
+E12A     TA      46.4151  -115.5705  Beaver Dam Saddle, Pierce, ID, USA      
+E13A     TA      46.4423  -114.1880  Victor, MT, USA                         
+E14A     TA      46.4162  -113.4926  Clinton, MT, USA                        
+E15A     TA      46.4246  -112.6412  Deer Lodge, MT, USA                     
+E16A     TA      46.5336  -111.6764  East Helena, MT, USA                    
+E17A     TA      46.4620  -110.8576  Martinsdale, MT, USA                    
+E18A     TA      46.5663  -109.9137  Harlowton, MT, USA                      
+E19A     TA      46.4611  -108.7860  Rath Farm, Roundup, MT, USA             
+E20A     TA      46.5038  -108.1301  Meyer Farm, Musselshell, MT, USA        
+E21A     TA      46.5408  -107.0757  Keefer Ranch, Vananda, MT, USA          
+E22A     TA      46.4386  -105.9488  Miles City, MT, USA                     
+E23A     TA      46.4978  -105.3062  Ismay, MT, USA                          
+E24A     TA      46.5608  -104.3073  Baker, MT, USA                          
+E25A     TA      46.5009  -103.4013  Miller Ranch, Amidon, ND, USA           
+E26A     TA      46.4712  -102.4621  Carlson Angus Ranch, Regent, ND, USA    
+E27A     TA      46.4293  -101.5645  Carson, ND, USA                         
+E28A     TA      46.5748  -100.6934  Huff, ND, USA                           
+E29A     TA      46.5682   -99.6420  Napoleon, ND, USA                       
+E30A     TA      46.5021   -98.9098  Jud, ND, USA                            
+ELFS     TA      40.6183  -120.7279  Eagle Lake Field Station, Susanville, CA, USA
+F03A     TA      45.9306  -123.5591  Seaside, OR, USA                        
+F04A     TA      45.9325  -122.4193  Amboy, WA, USA                          
+F05A     TA      45.8839  -121.4588  White Salmon, WA, USA                   
+F06A     TA      45.7664  -120.7817  Goldendale, WA, USA                     
+F07A     TA      45.8951  -119.9278  Phinny Hill Vineyards, Prosser, WA, USA 
+F08A     TA      45.7971  -118.7768  Pendleton, OR, USA                      
+F09A     TA      45.7087  -117.9094  S2 Ranch, Elgin, OR, USA                
+F10A     TA      45.9734  -117.2277  Beach Ranch, Enterprise, OR, USA        
+F11A     TA      45.8883  -116.1549  Grangeville, ID, USA                    
+F12A     TA      45.7565  -115.2547  Elk City, ID, USA                       
+F13A     TA      45.7893  -114.3317  Darby, MT, USA                          
+F14A     TA      45.8122  -113.3699  Wisdom, MT, USA                         
+F15A     TA      45.8409  -112.4929  Butte, MT, USA                          
+F16A     TA      45.7843  -111.6262  Kennard Place, Willow Creek, MT, USA    
+F17A     TA      45.9054  -110.6590  Fitzpatrick Place, Clyde Park, MT, USA  
+F18A     TA      45.9046  -109.7158  Big Timber, MT, USA                     
+F19A     TA      45.8538  -108.9437  Roth Fram, Molt, MT, USA                
+F20A     TA      45.8006  -108.1488  Billings, MT, USA                       
+F21A     TA      45.8231  -107.1233  Absaloka Mine, Hardin, MT, USA          
+F22A     TA      45.7794  -106.2569  Rosebud, MT, USA                        
+F23A     TA      45.7212  -105.4056  Volborg, MT, USA                        
+F24A     TA      45.8452  -104.4448  Ekalaka, MT, USA                        
+F25A     TA      45.9256  -103.4576  Bowman, SD, USA                         
+F26A     TA      45.8512  -102.6697  Lodgepole, SD, USA                      
+F27A     TA      45.8727  -102.0203  Lemmon, SD, USA                         
+F28A     TA      45.8485  -100.8005  McLaughlin, SD, USA                     
+F29A     TA      45.8336   -99.8273  Eureka, SD, USA                         
+F30A     TA      45.8356   -99.0250  Leola, SD, USA                          
+G03A     TA      45.3153  -123.2811  Yamhill, OR, USA                        
+G04A     TA      45.2059  -122.4784  Mulino, OR, USA                         
+G05A     TA      45.2422  -121.3167  Wamic, OR, USA                          
+G06A     TA      45.2357  -120.6351  Carlson Farm, Grass Valley, OR, USA     
+G07A     TA      45.2664  -119.6692  Ruggs Ranch, Heppner, OR, USA           
+G08A     TA      45.2904  -118.9595  Pilot Rock, OR, USA                     
+G09A     TA      45.2781  -117.7802  Cove, OR, USA                           
+G10A     TA      45.2925  -117.1204  Bishop Farm, Joseph, OR, USA            
+G11A     TA      45.3997  -116.2680  Walters Elk Ranch, Riggins, ID, USA     
+G12A     TA      45.1285  -115.3257  Big Creek, Yellow Pine, ID, USA         
+G13A     TA      45.0931  -114.2329  Cobalt, ID, USA                         
+G14A     TA      45.2432  -113.4604  Jackson, MT, USA                        
+G15A     TA      45.1660  -112.4887  Dillon, MT, USA                         
+G16A     TA      45.2285  -111.8046  Moss Hill, Ennis, MT, USA               
+G17A     TA      45.3212  -110.7398  Pierce Place, Pray, MT, USA             
+G18A     TA      45.3171  -109.5631  Lazy EL Ranch, Roscoe, MT, USA          
+G20A     TA      45.2202  -108.2141  Bridger, MT, USA                        
+G21A     TA      45.2250  -107.2070  Lodge Grass, MT, USA                    
+G22A     TA      45.2189  -106.2924  Birney, MT, USA                         
+G23A     TA      45.2012  -105.3907  Biddle, MT, USA                         
+G24A     TA      45.3280  -104.4163  Alzada, MT, USA                         
+G25A     TA      45.1935  -103.4173  Newell, SD, USA                         
+G26A     TA      45.2937  -102.5990  Maurine, SD, USA                        
+G27A     TA      45.3791  -102.9310  Dupree, SD, USA                         
+G28A     TA      45.0749  -100.9161  Parade, SD, USA                         
+G29A     TA      45.1926   -99.9234  Hoven, SD, USA                          
+G30A     TA      45.1293   -99.1446  Faulkton, SD, USA                       
+H02A     TA      44.6764  -123.9997  Toledo, OR, USA                         
+H03A     TA      44.6765  -123.2923  Soap Creek Ranch, Albany, OR, USA       
+H04A     TA      44.6837  -122.1862  Detroit Lake, OR, USA                   
+H05A     TA      44.6473  -121.2271  Madras, OR, USA                         
+H06A     TA      44.7344  -120.3346  Lindquist Farm, Mitchell, OR, USA       
+H07A     TA      44.5913  -119.5646  Lands Inn, Kimberly, OR, USA            
+H08A     TA      44.5191  -118.6704  Prairie City, OR, USA                   
+H09A     TA      44.6653  -117.6643  Durkee, OR, USA                         
+H10A     TA      44.5890  -116.7474  Noah's Angus Ranch, Cambridge, ID, USA  
+H11A     TA      44.7035  -116.0127  Donnelly, ID, USA                       
+H12A     TA      44.5494  -114.8554  Diamond D Ranch, Stanley, ID, USA       
+H13A     TA      44.5642  -114.2545  Challis, ID, USA                        
+H14A     TA      44.6165  -113.3674  Leadore, ID, USA                        
+H15A     TA      44.6173  -112.6439  Lima, MT, USA                           
+H16A     TA      44.7038  -111.2478  Russell Place, West Yellowstone, MT, USA
+H17A     TA      44.3951  -110.5762  Grant Village (NPS), Yellowstone Nt. Park, WY, USA
+H18A     TA      44.6769  -109.6641  Shoshone NF, Cody, WY, USA              
+H19A     TA      44.6704  -108.9857  Powell, WY, USA                         
+H20A     TA      44.4868  -107.9990  Greybull, WY, USA                       
+H21A     TA      44.6277  -107.0423  Big Horn, Sheridan, WY, USA             
+H22A     TA      44.5943  -106.3521  Lovato Ranch, Clearmont, WY, USA        
+H23A     TA      44.5620  -105.4007  Clabaugh Cattle Company, Gillette, WY, USA
+H24A     TA      44.7473  -104.5524  Dirks Ranch, Alva, WY, USA              
+H25A     TA      44.6215  -103.5981  Fruitdale, SD, USA                      
+H26A     TA      44.6168  -102.7739  Fairpoint, SD, USA                      
+H27A     TA      44.6329  -102.0775  Howes, SD, USA                          
+H28A     TA      44.6751  -101.0206  Mission Ridge, SD, USA                  
+H29A     TA      44.6261  -100.2125  Onida, SD, USA                          
+HAST     TA      36.3887  -121.5514  UC Hastings Reserve, Carmel Valley, CA, USA
+HATC     TA      40.8161  -121.4612  Hat Creek Radio Observatory, Hat Creek, CA, USA
+HELL     TA      36.6801  -119.0228  Mitchell Peak, Miramonte, CA, USA       
+I02A     TA      44.0035  -123.8299  Mapleton, OR, USA                       
+I03A     TA      43.9726  -123.2777  Eugene, OR, USA                         
+I04A     TA      43.7941  -122.4113  Tendick Farm, Oakridge, OR, USA         
+I05A     TA      44.1626  -121.2675  Bend, OR, USA                           
+I06A     TA      43.9437  -120.2107  Prineville, OR, USA                     
+I07A     TA      44.0820  -119.5042  Izee, OR, USA                           
+I08A     TA      43.9104  -118.5692  Drewsey, OR, USA                        
+I09A     TA      43.9733  -117.7407  Lost Marbles Ranch, Westfall, OR, USA   
+I10A     TA      44.0860  -116.8029  Payette, ID, USA                        
+I11A     TA      43.9121  -115.9578  Placerville, ID, USA                    
+I12A     TA      43.7945  -115.1328  Atlanta, ID, USA                        
+I13A     TA      43.9146  -114.1169  Wildhorse Creek, Mackay, ID, USA        
+I14A     TA      43.9286  -113.4518  Mackay, ID, USA                         
+I15A     TA      43.9997  -112.4850  Monteview, ID, USA                      
+I16A     TA      43.8756  -111.4868  Newdale, ID, USA                        
+I17A     TA      43.9200  -110.5759  Pilgram Creek (NPS), Teton National Park, WY, USA
+I18A     TA      43.7013  -109.8171  Diamond G Ranch, Dubois, WY, USA        
+I19A     TA      44.0363  -108.9943  Meeteetse, WY, USA                      
+I20A     TA      43.9496  -108.1283  Worland, WY, USA                        
+I21A     TA      43.8122  -107.2920  Big Trails, Ten Sleep, WY, USA          
+I22A     TA      43.8924  -106.4840  9 Mile Ranch, Kaycee, WY, USA           
+I23A     TA      43.9605  -105.4629  Meade Ranch, Gillette, WY, USA          
+I24A     TA      43.8594  -104.6263  Kuemmerle Ranch, Upton, WY, USA         
+I25A     TA      44.0196  -103.7324  Rochford, SD, USA                       
+I26A     TA      44.0309  -102.8596  New Underwood, SD, USA                  
+I27A     TA      44.0690  -102.0525  Quinn, SD, USA                          
+I28A     TA      43.9996  -101.1692  Midland, SD, USA                        
+I29A     TA      44.0215  -100.3034  Vivian, Onida, SD, USA                  
+I30A     TA      43.9143   -99.4262  Oacoma, SD, USA                         
+J02A     TA      43.3654  -123.5747  Umpqua, OR, USA                         
+J03A     TA      43.3717  -122.9646  Ideyld Park, OR, USA                    
+J04A     TA      43.2406  -122.1093  Umpqua National Forest, Toketee, OR, USA
+J05A     TA      43.2843  -121.2357  Fort Rock, OR, USA                      
+J06A     TA      43.2515  -120.1528  Christmas Valley, OR, USA               
+J07A     TA      43.3736  -119.3105  Hines, OR, USA                          
+J08A     TA      43.3580  -118.4743  Circle Bar Ranch, Crane, OR, USA        
+J09A     TA      43.3471  -117.7542  Fry Pan Ranch, Harper, OR, USA          
+J10A     TA      43.4275  -116.7670  Berg Farm, Melba ID, USA                
+J11A     TA      43.4151  -115.8278  Camas Ranch, Mayfield, ID, USA          
+J12A     TA      43.2500  -115.0980  Stokes Ranch, Hill City, ID, USA        
+J13A     TA      43.3979  -114.1742  Cove Ranch, Picabo, ID, USA             
+J14A     TA      43.3234  -113.5178  Carey, ID, USA                          
+J15A     TA      43.3998  -112.4334  Blackfoot, ID, USA                      
+J16A     TA      43.2741  -111.6119  Bone, ID, USA                           
+J17A     TA      43.3629  -110.7118  Brown Place, Jackson, WY, USA           
+J18A     TA      43.2112  -110.0200  Kendall Valley, Cora, WY, USA           
+J19A     TA      43.2649  -109.0531  Crowheart, WY, USA                      
+J20A     TA      43.3531  -108.0842  Shoshoni, WY, USA                       
+J21A     TA      43.3459  -107.4459  Lysite, WY, USA                         
+J22A     TA      43.4126  -106.4785  Midwest, WY, USA                        
+J23A     TA      43.4036  -105.5524  Dilts Ranch, Bill, WY, USA              
+J24A     TA      43.3305  -104.6613  Dixon Ranch, Lance Creek, WY, USA       
+J25A     TA      43.3901  -103.8026  Sunshine Ranch, Edgemont, SD, USA       
+J26A     TA      43.3126  -103.0752  Sides Ranch, Smithwick, SD, USA         
+J27A     TA      43.2526  -102.0069  Elkhorn Farm, Martin, SD, USA           
+J28A     TA      43.4239  -101.2359  Allard Ranch, Norris, SD, USA           
+J29A     TA      43.4061  -100.3253  Okreek, SD, USA                         
+J30A     TA      43.3248   -99.4922  Dallas, SD, USA                         
+K01A     TA      42.8088  -124.4692  Sixes, OR, USA                          
+K02A     TA      42.7667  -123.4898  Glendale, OR, USA                       
+K04A     TA      42.6133  -121.7307  Chilquin, OR, USA                       
+K05A     TA      42.7258  -120.8934  Summer Lake, OR, USA                    
+K06A     TA      42.7991  -120.2510  Valley Falls, OR, USA                   
+K07A     TA      42.6912  -119.2469  Rock Creek Ranch, Frenchglen, OR, USA   
+K08A     TA      42.7308  -118.4864  Mann Creek Ranch, Princeton, OR, USA    
+K09A     TA      42.6996  -117.7251  Rome, OR, USA                           
+K10A     TA      42.7779  -116.8705  MacKenzie Ranch, Jordan Valley, OR, USA 
+K11A     TA      42.7713  -116.0323  Parker Ranch, Bruneau, ID, USA          
+K12A     TA      42.6360  -114.9029  Draper Farm, Castleford, ID, USA        
+K13A     TA      42.6493  -114.0840  Stover Farm, Hazelton, ID, USA          
+K14A     TA      42.5452  -113.1760  Jones Ranch, Declo, ID, USA             
+K15A     TA      42.6852  -112.5305  Arbon, ID, USA                          
+K16A     TA      42.8321  -111.5884  Soda Springs, ID, USA                   
+K17A     TA      42.7507  -110.9201  Gardner Place, Afton, WY, USA           
+K18A     TA      42.6372  -110.0417  Toltan Ranch, Big Piney, WY, USA        
+K19A     TA      42.8247  -108.8466  Absolon Red Butte, Lander, WY, USA      
+K20A     TA      42.6579  -108.3418  Yellowstone Ranch, Lander, WY, USA      
+K21A     TA      42.6332  -107.2510  Alcova, Casper, WY, USA                 
+K22A     TA      42.6507  -106.5240  Casper, WY, USA                         
+K23A     TA      42.7546  -105.6251  Bowen Ranch, Douglas, WY, USA           
+K24A     TA      42.7225  -104.8152  Anderson Ranch, Keeline, WY, USA        
+K25A     TA      42.6120  -103.8705  Mack Ranch, Harrison, NE, USA           
+K26A     TA      42.7016  -103.1783  Motz Farm, Whitney, NE, USA             
+K27A     TA      42.7036  -102.2364  Flueckinger Farm, Gordon, NE, USA       
+K28A     TA      42.7136  -101.3665  Ten Mile Ranch, Cody, NE, USA           
+K29A     TA      42.7612  -100.3182  Lazy Trails Angus Ranch, Wood Lake, NE, USA
+K30A     TA      42.6742   -99.6131  Basset, NE, USA                         
+KMSC     TA      35.1420   -81.3333  Kings Mountain, Blacksburg, SC, USA     
+KSCO     TA      39.0112  -102.6273  Kaye Shedlock's, Cheyenne Wells, CO, USA
+L02A     TA      42.1560  -123.6018  Cave Junction, OR, USA                  
+L04A     TA      42.1750  -121.8910  Klamath Falls, OR, USA                  
+L05A     TA      42.0472  -120.8336  Lakeview, OR, USA                       
+L07A     TA      42.0187  -119.3398  Adell, OR, USA                          
+L08A     TA      42.1901  -118.3445  Fields, OR, USA                         
+L09A     TA      42.0192  -117.6667  Wilkinson Ranch, McDermitt, NV, USA     
+L10A     TA      42.0773  -116.4711  Juniper Basin Ranch, Riddle, ID, USA    
+L11A     TA      42.1669  -115.7541  Cat Creek Ranch, Riddle, ID, USA        
+L12A     TA      42.1460  -115.0162  House Creek Ranch, Rogerson, ID, USA    
+L13A     TA      42.0886  -113.9444  Double Diamond Ranch, Oakley, ID, USA   
+L14A     TA      42.0343  -113.2398  Malta, ID, USA                          
+L15A     TA      42.0041  -112.3860  Malad City, ID, USA                     
+L16A     TA      42.0149  -111.4319  Fish Haven, ID, USA                     
+L17A     TA      42.0995  -110.8727  Cokeville, WY, USA                      
+L18A     TA      41.9243  -110.0364  Fontenelle, Green River, WY, USA        
+L19A     TA      42.1012  -109.3575  Farson, WY, USA                         
+L20A     TA      42.0073  -108.3398  Wamsutter, WY, USA                      
+L21A     TA      41.9641  -107.3695  Rawlins, WY, USA                        
+L22A     TA      42.0310  -106.4338  Ellis Ranch, Medicine Bow, WY, USA      
+L23A     TA      42.1143  -105.7012  Garrett, WY, USA                        
+L24A     TA      42.0432  -104.9326  Wheatland, WY, USA                      
+L25A     TA      42.1548  -103.9657  Engebretsen Ranch, Morrill, NE, USA     
+L26A     TA      42.0367  -103.0795  Underwood Farm, Alliance, NE, USA       
+L27A     TA      42.0837  -102.3154  T5 Ranch, Ellsworth, NE, USA            
+L28A     TA      42.0073  -101.5196  Connealy Angus Ranch, Whitman, NE, USA  
+L29A     TA      42.0641  -100.4779  Maesberg Ranch, Thedford, NE, USA       
+L30A     TA      41.9492   -99.7196  Spencer Herefords Ranch, Brewster, NE, USA
+L31A     TA      42.1760   -98.8387  Butterfield Farm, Chambers, NE, USA     
+LAVA     TA      38.7552  -120.7395  Lava Cap Winery, Placerville, CA, USA   
+M01C     TA      41.8473  -124.1221  Crescent City, CA, USA                  
+M02C     TA      41.3920  -122.8538  Callahan, CA, USA                       
+M03C     TA      41.2742  -122.1220  McCloud, CA, USA                        
+M04C     TA      41.7826  -121.8393  Macdoel, CA, USA                        
+M05C     TA      41.3593  -121.1457  Lookout, CA, USA                        
+M06C     TA      41.2047  -120.4772  Likely Place Golf, Likely, CA, USA      
+M07A     TA      41.3884  -119.1711  Soldier Meadows, NV, USA                
+M08A     TA      41.4483  -118.3792  Happy Creek Ranch, Winnemucca, NV, USA  
+M09A     TA      41.4230  -117.4497  Marrel Ranch, Paradise Valley, NV, USA  
+M10A     TA      41.5220  -116.5396  I.L. Ranch, Tuscararo, NV, USA          
+M11A     TA      41.4311  -115.7912  Holland Ranch, North Fork, NV, USA      
+M12A     TA      41.4157  -114.9151  Wells, NV, USA                          
+M13A     TA      41.3602  -114.1655  Montello, NV, USA                       
+M14A     TA      41.5030  -113.3471  Sheep Mountain BLM, Rosette, UT, USA    
+M15A     TA      41.4632  -112.4477  Larsen Ranch, Promontory, UT, USA       
+M16A     TA      41.3146  -111.6298  Huntsville, UT, USA                     
+M17A     TA      41.4729  -110.6664  Scullys Gap (BLM), Evanston, WY, USA    
+M18A     TA      41.4272  -110.0674  Lyman, WY, USA                          
+M19A     TA      41.5047  -109.1569  Rock Springs, WY, USA                   
+M20A     TA      41.4906  -108.1865  Sweetwater, Wamsutter, WY, USA          
+M21A     TA      41.6067  -107.3635  Separation Peak, Rawlins, WY, USA       
+M22A     TA      41.4033  -106.5958  Cedar Creek Ranch, Saratoga, WY, USA    
+M23A     TA      41.4680  -105.7221  Laramie, WY, USA                        
+M24A     TA      41.4676  -104.8248  Cheyenne, WY, USA                       
+M25A     TA      41.4347  -104.0551  Palm-Egli Farm, Albin, WY, USA          
+M26A     TA      41.4661  -103.1427  McRoberts Ranch, Bridgeport, NE, USA    
+M27A     TA      41.5281  -102.3872  Reverse DX Ranch, Oshkosh, NE, USA      
+M28A     TA      41.3956  -101.3715  Bar X Bar Ranch, Keystone, NE, USA      
+M29A     TA      41.4441  -100.6892  Burnside Ranch, Stapleton, NE, USA      
+M30A     TA      41.5371   -99.8723  Dale-Ortello Valley, Anselmo, NE, USA   
+M31A     TA      41.3440   -98.9766  Lambtecht Ranch, Loup City, NE, USA     
+MDND     TA      47.8481   -99.6029  Maddock, ND, USA                        
+MSTX     TA      33.9696  -102.7724  Muleshoe, TX, USA                       
+N02C     TA      40.8220  -123.3057  Big Bar, CA, USA                        
+N06A     TA      40.7484  -119.8346  Buffalo Meadows, Empire, NV, USA        
+N07A     TA      40.7721  -118.9716  Gerlach, NV, USA                        
+N07B     TA      40.7797  -118.9711  Gerlach, NV, USA                        
+N08A     TA      40.7811  -118.1337  GE Springer Mine, Mill City, NV, USA    
+N09A     TA      40.8520  -117.5244  Rock Creek Ranch, Golconda, NV, USA     
+N10A     TA      40.7186  -116.5080  Dunphy, NV, USA                         
+N11A     TA      40.8167  -115.7360  Elko Archery Club, Elko, NV, USA        
+N12A     TA      40.8522  -115.0387  Clover Valley, Wells, NV, USA           
+N13A     TA      40.8556  -114.2045  Wendover, West Wendover, NV, USA        
+N14A     TA      40.8513  -113.1867  Grayback Hills BLM, Clive, UT, USA      
+N15A     TA      40.8903  -112.5201  Stansbury Island BLM, Grantsville, UT, USA
+N16A     TA      40.8869  -111.4370  Rees Ranch, Coalville, UT, USA          
+N17A     TA      40.9425  -110.8335  Moffit Pass, UT, USA                    
+N18A     TA      40.9763  -109.6731  Larsen Ranch, Manila, UT, USA           
+N19A     TA      40.8936  -109.1772  John Jarvie Ranch (BLM), Flaming Gorge, UT, USA
+N20A     TA      40.8338  -108.2626  Spence Gulch, Sunbeam, CO, USA          
+N21A     TA      40.7600  -107.5196  Black Mountain, Craig, CO, USA          
+N22A     TA      40.8023  -106.4544  Wattenberg Ranch, Walden, CO, USA       
+N23A     TA      40.8947  -105.9440  Red Feather Lakes, CO, USA              
+N24A     TA      40.8271  -104.8824  Carr, CO, USA                           
+N25A     TA      40.8132  -104.0873  Grover, CO, USA                         
+N26A     TA      40.8289  -103.2221  Koester Ranch, Padroni, CO, USA         
+N27A     TA      40.8063  -102.5367  Anderson Farm, Haxtun, CO, USA          
+N28A     TA      40.6873  -101.5406  Pribbeno Ranch, Imperial, NE, USA       
+N29A     TA      40.8189  -100.6264  Votaw Ranch, Wellfleet, NE, USA         
+N30A     TA      40.7957  -100.1001  Hueftle Ranch, Cozad, NE, USA           
+N31A     TA      40.8235   -98.9544  Bailey Ranch, Gibbon, NE, USA           
+N32A     TA      40.7639   -98.2955  Stulken Farm, Doniphan, NE, USA         
+O01C     TA      40.1398  -123.8195  Eel River Conservation Camp, Redway, CA, USA
+O02C     TA      40.1767  -122.7883  Red Bluff, CA, USA                      
+O03C     TA      39.9971  -122.0319  Acorn Hollow, Los Molinos, CA, USA      
+O04C     TA      40.3200  -121.0860  Chester, CA, USA                        
+O05C     TA      39.9620  -120.9176  Quincy, CA, USA                         
+O06A     TA      40.1650  -119.8275  Flanigan, NV, USA                       
+O07A     TA      40.1614  -118.8772  Toulon, NV, USA                         
+O08A     TA      40.2903  -118.1550  Rochester Mine, Lovelock, NV, USA       
+O09A     TA      40.1697  -117.1899  Fish Creek Ranch, Battle Mountain, NV, USA
+O10A     TA      40.2917  -116.4999  Cortez Mining, Crescent City, NV, USA   
+O11A     TA      40.1313  -115.6570  Cowboy Ranch, Jiggs, NV, USA            
+O12A     TA      40.2679  -114.7454  Currie, NV, USA                         
+O13A     TA      40.1314  -113.9814  Hicks Ranch, Ibapah, UT, USA            
+O15A     TA      40.2807  -112.4694  The Old Anderson's Place, Rush Valley, UT, USA
+O16A     TA      40.2067  -111.5024  Springville, UT, USA                    
+O17A     TA      40.1948  -110.7378  Robinson Place, Fruitland, UT, USA      
+O18A     TA      40.2655  -110.0082  Roosevelt, UT, USA                      
+O19A     TA      40.2982  -109.1236  Miners Draw (BLM), Jensen, UT, USA      
+O20A     TA      40.1348  -108.2416  White River City, CO, USA               
+O21A     TA      40.2149  -107.4705  Pagoda, CO, USA                         
+O22A     TA      40.1618  -106.5470  Kremmling, CO, USA                      
+O23A     TA      40.2109  -105.9178  Lake Granby, Granby, CO, USA            
+O24A     TA      40.1227  -105.0729  Longmont, CO, USA                       
+O25A     TA      40.1129  -104.1201  Wiggins, CO, USA                        
+O26A     TA      40.2422  -103.3128  Horse Wrangler Ranch, Akron, CO, USA    
+O27A     TA      40.1900  -102.4794  Beecher Island, Eckley, CO, USA         
+O28A     TA      40.1262  -101.7735  Krutsinger Ranch, Parks, NE, USA        
+O29A     TA      40.1253  -100.7977  4D Ranch, Culbertson, NE, USA           
+O30A     TA      40.1791  -100.0571  M W Ranch, Wilsonville, NE, USA         
+O31A     TA      40.1521   -99.3261  Woollen Ranch, Alma, NE, USA            
+O32A     TA      40.2610   -98.2764  Brockman Farm, Red Cloud, NE, USA       
+P01C     TA      39.4690  -123.3375  Double 8 Ranch, Willits, CA, USA        
+P05C     TA      39.3028  -120.6077  Yuba Gap, Truckee, CA, USA              
+P06A     TA      39.6785  -119.8983  Stead Airport, Stead, NV, USA           
+P07A     TA      39.5399  -118.8893  Fallon, NV, USA                         
+P08A     TA      39.6946  -118.0800  Dixie Valley, NV, USA                   
+P09A     TA      39.5516  -117.1395  Austin, NV, USA                         
+P10A     TA      39.6202  -116.4639  Eureka, NV, USA                         
+P11A     TA      39.5530  -115.7536  Circle Ranch, Eureka, NV, USA           
+P12A     TA      39.4731  -114.9075  McGill, NV, USA                         
+P13A     TA      39.4550  -114.0156  Bates Ranch, Gandy, UT, USA             
+P14A     TA      39.5906  -113.0687  Drum Mountains (BLM), Topaz, UT, USA    
+P15A     TA      39.5708  -112.2786  Leamington, UT, USA                     
+P16A     TA      39.6092  -111.6595  Fountain Green, UT, USA                 
+P17A     TA      39.4730  -110.7400  Butcher Ranch, Price, UT, USA           
+P18A     TA      39.6279  -110.2457  Preston Nutter Ranch, Sunnyside, UT, USA
+P19A     TA      39.6333  -108.9812  Cripple Cowboy Ranch, Baxter Pass, CO, USA
+P20A     TA      39.4998  -108.3912  De Beque, CO, USA                       
+P21A     TA      39.5240  -107.4493  Newcastle, CO, USA                      
+P22A     TA      39.5952  -106.7589  Eagle, CO, USA                          
+P23A     TA      39.3741  -105.8388  Jefferson, CO, USA                      
+P24A     TA      39.5144  -104.9082  Kohler Place, Littleton, CO, USA        
+P25A     TA      39.5125  -104.1680  Willow Gulch Bison Ranch, Deer Trail, CO, USA
+P26A     TA      39.5602  -103.3465  Davis Ranch, Arriba, CO, USA            
+P27A     TA      39.5559  -102.5782  Ficken Ranch, Kirk, CO, USA             
+P28A     TA      39.5732  -101.7548  Satin Francis, KS, USA                  
+P29A     TA      39.6021  -100.9316  Atwood, KS, USA                         
+P30A     TA      39.5442  -100.2468  Selden, KS, USA                         
+P31A     TA      39.5211   -99.3783  Stockton, KS, USA                       
+P32A     TA      39.6223   -98.6011  Huiting Farm, Downs, KS, USA            
+P33A     TA      39.4363   -97.6946  Williams Farm, Concordia, KS, USA       
+Q03C     TA      38.6333  -122.0145  Winters, CA, USA                        
+Q04C     TA      38.8390  -121.3769  Lincoln, CA, USA                        
+Q07A     TA      38.9383  -118.8078  Schurz, NV, USA                         
+Q08A     TA      38.8606  -117.9316  Gabbs, NV, USA                          
+Q09A     TA      38.8340  -117.1816  Carvers, NV, USA                        
+Q10A     TA      38.8247  -116.3999  Clear Creek Ranch, Tonopah, NV, USA     
+Q11A     TA      38.8455  -115.6541  Duckwater, NV, USA                      
+Q12A     TA      39.0400  -114.8299  Willow Creek Ranch, Ely, NV, USA        
+Q13A     TA      38.9551  -114.0202  Wheeler Ranch, Garrison, UT, USA        
+Q14A     TA      38.9882  -113.2769  Sevier Lake (BLM), Delta, UT, USA       
+Q15A     TA      38.9995  -112.3793  Fillmore, UT, USA                       
+Q16A     TA      38.9176  -111.1716  Castle Valley Ranch, Emery, UT, USA     
+Q18A     TA      39.1025  -110.1328  Rafter H Ranch, Green River, UT, USA    
+Q19A     TA      38.9553  -109.2630  Hogan Spring (BLM), Cisco, UT, USA      
+Q20A     TA      38.9541  -108.2956  Ridgley Place, Grand Junction, CO, USA  
+Q21A     TA      38.8347  -107.5738  Lamborn Mesa, Paonia, CO, USA           
+Q22A     TA      38.8627  -106.9096  Crested Butte, Gunnison, CO, USA        
+Q23A     TA      38.9045  -105.8337  Hartsel, CO, USA                        
+Q24A     TA      38.9641  -105.1492  Divide, CO, USA                         
+Q25A     TA      38.9145  -104.2472  Bedland, Calhan, CO, USA                
+Q26A     TA      38.9234  -103.5195  Hugo, CO, USA                           
+Q28A     TA      39.0623  -101.8309  Sharon Springs, KS, USA                 
+Q29A     TA      38.8905  -100.9787  Oakley, KS, USA                         
+Q30A     TA      38.9772  -100.2207  Quinter, KS, USA                        
+Q31A     TA      39.0048   -99.3950  Ellis, KS, USA                          
+R04C     TA      38.2571  -120.9363  Big Horse Ranch, Ione, CA, USA          
+R05C     TA      38.7028  -120.0755  Kirkwood Meadows Resort, Kirkwood, CA, USA
+R06C     TA      38.5226  -119.4509  Coleville, CA, USA                      
+R07C     TA      38.0890  -119.0469  Lee Vining, CA, USA                     
+R08A     TA      38.3489  -118.1064  Mina, NV, USA                           
+R09A     TA      38.2397  -117.0718  Tonopah, NV, USA                        
+R10A     TA      38.2886  -116.3021  Warm Springs, NV, USA                   
+R11A     TA      38.3489  -115.5854  Troy Canyon, Currant, NV, USA           
+R12A     TA      38.3281  -114.6076  Pony Springs, Pioche, NV, USA           
+R13A     TA      38.1802  -113.9691  O'Grain Ranch, Modena, UT, USA          
+R14A     TA      38.2987  -113.0213  James Farms, Milford, UT, USA           
+R15A     TA      38.2108  -112.2767  Junction, UT, USA                       
+R16A     TA      38.2843  -111.4827  Teasdale, UT, USA                       
+R17A     TA      38.4187  -110.7109  Hanksville Airport, Hanksville, UT, USA 
+R18A     TA      38.3862  -109.8942  Canyonlands National Park, Moab, UT, USA
+R19A     TA      38.2916  -109.2607  Curley Farm, La Sal, UT, USA            
+R20A     TA      38.1888  -108.3792  Redvale, CO, USA                        
+R21A     TA      38.3685  -107.5501  Cimarron, CO, USA                       
+R22A     TA      38.2289  -106.7561  Saguache, Gunnison, CO, USA             
+R23A     TA      38.1907  -105.8264  Moffat, CO, USA                         
+R24A     TA      38.2315  -105.1075  Sanders Place, Florence, CO, USA        
+R25A     TA      38.1474  -104.2834  Fountain Ranch, Boone, CO, USA          
+R26A     TA      38.3009  -103.4470  Arlington, CO, USA                      
+R27A     TA      38.2859  -102.7980  Eads, CO, USA                           
+R28A     TA      38.3423  -101.8106  Tribune, KS, USA                        
+R29A     TA      38.4243  -101.1383  Marienthal, KS, USA                     
+R30A     TA      38.2844  -100.2769  Dighton, KS, USA                        
+R31A     TA      38.2888   -99.5271  Burdett, KS, USA                        
+S04C     TA      37.5049  -121.3278  Ingram Canyon, Westley, CA, USA         
+S05C     TA      37.3460  -120.3296  Merced, CA, USA                         
+S06C     TA      37.8817  -119.8488  San Francisco Camp Mather, Mather, CA, USA
+S08C     TA      37.4993  -118.1711  White Mtn Res Sta-Crooked Creek, Bishop, CA, USA
+S09A     TA      37.7243  -117.2246  Goldfield, NV, USA                      
+S10A     TA      37.9230  -116.5948  Tonopah Range, Tonopah, NV, USA         
+S11A     TA      37.6444  -115.7472  Rachel, NV, USA                         
+S12A     TA      37.6083  -114.8489  Delamar Landing Field, Caliente, NV, USA
+S13A     TA      37.5808  -113.8604  Holt Ranch, Enterprise, UT, USA         
+S14A     TA      37.7601  -113.1684  Cedar City, UT, USA                     
+S15A     TA      37.6761  -112.3627  Panguitch, UT, USA                      
+S16A     TA      37.7222  -111.5961  Weppner Ranch, Escalante, UT, USA       
+S17A     TA      37.6354  -110.8018  Black Ridge (BLM), Bullfrog Basin, UT, USA
+S18A     TA      37.6903  -109.9948  Hurst Farm, Blanding, UT, USA           
+S19A     TA      37.7459  -109.1366  Harvey Farm, Monticello, UT, USA        
+S20A     TA      37.8300  -108.3605  Disappointment Valley, Cahone, CO, USA  
+S21A     TA      37.6620  -107.7917  Coal Bank Pass, Durango, CO, USA        
+S22A     TA      37.7461  -106.8293  4UR Ranch, Creede, CO, USA              
+S23A     TA      37.7059  -106.0023  Nye Farm, Monte Vista, CO, USA          
+S24A     TA      37.6407  -105.2126  Houchin Ranch, La Veta, CO, USA         
+S25A     TA      37.6606  -104.4349  Robets Cordova Ranch, Walsenberg, CO, USA
+S26A     TA      37.6216  -103.4711  Kim, CO, USA                            
+S27A     TA      37.6837  -102.8982  Los Animas, CO, USA                     
+S28A     TA      37.5899  -101.8979  Manter, KS, USA                         
+S29A     TA      37.6199  -101.1180  Ulysses, KS, USA                        
+S30A     TA      37.6402  -100.4640  Montezuma, KS, USA                      
+S31A     TA      37.6193   -99.4845  Mullinville, KS, USA                    
+S32A     TA      37.7001   -98.9363  Newby Ranch, Pratt, KS, USA             
+SFIN     TA      40.3790   -87.0967  Lafayette, IN, USA                      
+SPMN     TA      45.2246   -92.8037  Marine on St. Croix, MN, USA            
+SUTB     TA      39.2291  -121.7861  Sutter Butte, CA, USA                   
+T05C     TA      36.8953  -120.6737  Eagle Field, Dos Palos, CA, USA         
+T06C     TA      37.0069  -119.7089  Millerton Lake Dam, Friant, CA, USA     
+T11A     TA      37.2408  -115.2202  Corn Creek, Alamo, NV, USA              
+T12A     TA      36.7256  -114.7147  Moapa, NV, USA                          
+T13A     TA      37.0195  -113.9073  Saint George, UT, USA                   
+T14A     TA      37.0615  -113.0840  Hurricane, UT, USA                      
+T15A     TA      37.0183  -112.3824  Red Dirt Ranch, Kanab, UT, USA          
+T16A     TA      36.9839  -111.5060  Glen Canyon Dam (NPS), Page, AZ, USA    
+T17A     TA      36.9969  -110.8041  Navajo Res., Navajo Mountain, AZ, USA   
+T18A     TA      37.1364  -109.8741  Mexican Hat, UT, USA                    
+T19A     TA      36.8299  -109.0249  Beclabito, NM, USA                      
+T21A     TA      36.9914  -107.5342  Navajo Lake, Ignacio, CO, USA           
+T22A     TA      37.0138  -106.9030  Edith, CO, USA                          
+T23A     TA      37.0361  -106.0372  Casias Ranch, Antonito, CO, USA         
+T24A     TA      37.0738  -105.0521  Torres, Weston, CO, USA                 
+T24B     TA      37.0624  -105.3817  San Luis, CO, USA                       
+T25A     TA      37.1388  -104.4108  Trinidad, CO, USA                       
+T26A     TA      37.1747  -103.5933  Comanche National Grassland Park, Kim, CO, USA
+T27A     TA      37.0614  -102.7214  Campo, CO, USA                          
+T28A     TA      37.1204  -102.1136  Walsh, CO, USA                          
+T29A     TA      37.1565  -101.2942  Hugoton, KS, USA                        
+T30A     TA      37.0526  -100.5274  Plains, KS, USA                         
+T31A     TA      37.0977   -99.6771  Randall Ranch, Ashland, KS, USA         
+TIGA     TA      31.4389   -83.5898  Tifton, GA, USA                         
+TUL1     TA      35.9104   -95.7919  Leonard, OK, USA                        
+U04C     TA      36.3627  -120.7828  Hernandez Reservoir, Idria, CA, USA     
+U05C     TA      36.3356  -120.1205  Westside ANR, Five Points, CA, USA      
+U10A     TA      36.4193  -116.3297  Ash Meadows, Armagosa, NV, USA          
+U11A     TA      36.4230  -115.3835  Corn Creek, NV, USA                     
+U12A     TA      36.4321  -114.5388  Valley of Fire, Overton, NV, USA        
+U13A     TA      36.4151  -113.9653  Pakoon Wash, AZ, USA                    
+U14A     TA      36.4182  -113.1805  Mt Trumbull, AZ, USA                    
+U15A     TA      36.4280  -112.2915  North Rim, AZ, USA                      
+U16A     TA      36.1428  -111.1297  Tuba City, AZ, USA                      
+U17A     TA      36.5996  -110.6624  Shonto, AZ, USA                         
+U18A     TA      36.4199  -109.8696  Rough Rock, Chinle, AZ, USA             
+U19A     TA      36.2925  -109.2076  Dine' College, Tsaile, AZ, USA          
+U20A     TA      36.3758  -108.5204  Newcomb, NM, USA                        
+U21A     TA      36.4277  -107.6578  Nageezi, NM, USA                        
+U22A     TA      36.3773  -106.8546  Llaves, NM, USA                         
+U23A     TA      36.3289  -106.1919  El Rito, NM, USA                        
+U24A     TA      36.4093  -105.2784  Moreno Valley High School, Angel Fire, NM, USA
+U25A     TA      36.3998  -104.4081  Circle Dot Ranch, Maxwell, NM, USA      
+U26A     TA      36.3945  -103.7439  Atchley Ranch, Grenville, NM, USA       
+U27A     TA      36.4213  -102.8246  Thompson Grove, Rita Blanca Nat Grassland, TX, USA
+U28A     TA      36.3793  -102.2243  Mallet, Rita Blanca National Grassland, TX, USA
+U29A     TA      36.4519  -101.2702  Oasis Ranch, Spearman, TX, USA          
+U30A     TA      36.5304  -100.6509  WK&E Inc., Balko, OK, USA               
+U31A     TA      36.3695   -99.8508  Nine Bar Ranch, Gage, OK, USA           
+V03C     TA      36.0214  -121.2356  Hunter Liggett MR Jolon, CA, USA        
+V04C     TA      35.6360  -120.8699  Ramage Ranch, Paso Robles, CA, USA      
+V05C     TA      35.8667  -119.9028  Boulder Hill, Kettleman City, CA, USA   
+V11A     TA      35.8384  -115.4305  Goodsprings, NV, USA                    
+V12A     TA      35.7266  -114.8511  Nelson, NV, USA                         
+V13A     TA      35.8522  -113.9840  Grand Canyon West Ranch, Meadview, AZ, USA
+V14A     TA      35.6339  -113.1053  Boquillas Ranch, Navajo N., Peach Springs, AZ, USA
+V15A     TA      35.8191  -112.1731  Kaibab National Forest USFS, William, AZ, USA
+V17A     TA      35.6218  -110.7938  Tonalea, Kykotsmovi, AZ, USA            
+V18A     TA      35.7113  -109.9327  Ganado, AZ, USA                         
+V19A     TA      35.7147  -109.0456  Window Rock, AZ, USA                    
+V20A     TA      35.7992  -108.4662  Brimhall, NM, USA                       
+V21A     TA      35.8054  -107.6378  Milan, NM, USA                          
+V22A     TA      35.9138  -106.9094  San Miguel Ranch, Cuba, NM, USA         
+V23A     TA      35.7452  -106.1833  Ortiz Mt. (NFS), Santa Fe National Forest, NM, USA
+V24A     TA      35.7259  -105.2716  Rampart Ranch, Las Vegas, NM, USA       
+V25A     TA      35.8383  -104.6164  Rancho No Tengo, Wagon Mound, NM, USA   
+V26A     TA      35.7964  -103.7860  Tequesquite Ranch, Mosquero, NM, USA    
+V27A     TA      35.7569  -102.8361  Dan Oppilter Farms, Dalhart, TX, USA    
+V28A     TA      35.7505  -102.2243  Channing, TX, USA                       
+V29A     TA      35.8734  -101.5209  Stinnett, TX, USA                       
+V30A     TA      35.7623  -100.6892  Spur Ranch, Miami, TX, USA              
+V31A     TA      35.7739   -99.8425  Spring Creek Lake, Blk. Kettle Nat Grslnd, OK, USA
+W12A     TA      35.3010  -114.8701  Cal Nev Ari, NV, USA                    
+W13A     TA      35.0990  -113.8854  Hualapai Mountain Park, Kingman, AZ, USA
+W14A     TA      35.2127  -113.0834  Seligman, AZ, USA                       
+W15A     TA      35.1787  -112.2666  Williams, AZ, USA                       
+W16A     TA      35.0951  -111.5318  Flagstaff, AZ, USA                      
+W17A     TA      35.0789  -110.7127  Winslow, AZ, USA                        
+W18A     TA      35.1181  -109.7357  Petrified Forest, AZ, USA               
+W19A     TA      35.1118  -109.3879  Sanders, AZ, USA                        
+W20A     TA      35.1259  -108.5001  Ramah, NM, USA                          
+W21A     TA      35.1170  -107.6476  San Fidel, NM, USA                      
+W22A     TA      35.0719  -106.8674  Albuquerque, NM, USA                    
+W23A     TA      35.1605  -106.1503  Werner Place, Edgewood, NM, USA         
+W24A     TA      35.2106  -105.4075  Lazy 6 Ranch, Villanueva, NM, USA       
+W25A     TA      35.2177  -104.4606  X Bar L Ranch, Newkirk, NM, USA         
+W26A     TA      35.0891  -103.7656  Owens Ranch, Tucumcari, NM, USA         
+W27A     TA      35.0637  -103.0627  Bowe Ranch, Endee, NM, USA              
+W28A     TA      35.2574  -102.2063  Vega, TX, USA                           
+W29A     TA      35.1212  -101.6476  Amraillo, TX, USA                       
+W30A     TA      35.1818  -100.5770  Crockett Farms Inc., McLean, TX, USA    
+W31A     TA      35.1864   -99.9435  Holland Ranch, Erick, OK, USA           
+WHTX     TA      31.9913   -97.4561  Lake Whitney, Meridian, TX, USA         
+X13A     TA      34.5935  -113.8302  Yucca, AZ, USA                          
+X14A     TA      34.4692  -112.8906  Yava, AZ, USA                           
+X15A     TA      34.4866  -112.2368  Humboldt, AZ, USA                       
+X16A     TA      34.4178  -111.4411  Lo Mia Camp, Pine, AZ, USA              
+X17A     TA      34.3371  -110.8058  Forest Lakes, AZ, USA                   
+X18A     TA      34.5293  -109.9501  Snowflake, AZ, USA                      
+X19A     TA      34.4275  -109.2901  St. Johns, AZ, USA                      
+X20A     TA      34.5421  -108.4980  Quemado, NM, USA                        
+X21A     TA      34.4457  -107.7857  Alamocita Creek, Datil, NM, USA         
+X22A     TA      34.5058  -107.0102  Bernardo, NM, USA                       
+X23A     TA      34.5810  -106.1881  Hourglass Bar Ranch, Mountainair, NM, USA
+X24A     TA      34.5646  -105.4349  Lazy VL Ranch, Encino, NM, USA          
+X25A     TA      34.5271  -104.6621  Clemmons Ranch, Yeso, NM, USA           
+X26A     TA      34.5508  -103.8103  CR and CF Franklin Farms, Melrose, NM, USA
+X27A     TA      34.6469  -103.0974  F and S Farms, Texico, NM, USA          
+X28A     TA      34.5185  -102.1973  Dimmitt, TX, USA                        
+X29A     TA      34.4452  -101.7008  Tulia, tX, USA                          
+X30A     TA      34.4461  -100.8740  Coker Ranch, Turkey, TX, USA            
+X31A     TA      34.6309   -99.9793  McDonald Ranch, Hollis, OK, USA         
+Y12C     TA      33.7503  -114.5238  Blythe, CA, USA                         
+Y13A     TA      33.8142  -113.8287  Salome, AZ, USA                         
+Y14A     TA      33.9383  -113.0048  Wickenburg, AZ, USA                     
+Y15A     TA      33.9535  -112.3331  Casa Rosa Ranch, Morristown, AZ, USA    
+Y16A     TA      33.8798  -111.4783  Circle Bar Ranch, Sunflower, AZ, USA    
+Y17A     TA      33.6953  -110.8444  Roosevelt, AZ, USA                      
+Y18A     TA      33.7776  -110.0341  Canyon Day Junior High, Whiteriver, AZ, USA
+Y19A     TA      33.9571  -109.2541  Nutrioso, AZ, USA                       
+Y20A     TA      33.9085  -108.3769  Horse Springs, Datil, NM, USA           
+Y21A     TA      34.0087  -107.6740  Point of Rocks Canyon, Magdalena, NM, USA
+Y22A     TA      33.9370  -106.9652  Socorro, NM, USA                        
+Y22C     TA      34.0741  -106.9211  IRIS PASSCAL Instrument Center, Socorro, NM, USA
+Y22D     TA      34.0739  -106.9210  IRIS PASSCAL Instrument Center, Socorro, NM, USA
+Y23A     TA      33.9315  -106.0549  Lovelace Mesa, Carrizozo, NM, USA       
+Y24A     TA      33.9257  -105.4361  Capitan, NM, USA                        
+Y25A     TA      33.9229  -104.6928  Mesa, Roswell, NM, USA                  
+Y26A     TA      33.9232  -103.8246  Elida, NM, USA                          
+Y27A     TA      33.8839  -103.1633  Causey, NM, USA                         
+Y28A     TA      33.9086  -102.2479  McKinney Farm, Littlefield, TX, USA     
+Y29A     TA      33.8602  -101.6712  Porterfield Farm, Petersburg, TX, USA   
+Y30A     TA      33.8766  -100.8978  Stafford Cattle Company, Roaring Springs, TX, USA
+Y31A     TA      33.9629  -100.2615  Rekieta Farm, Paducah, TX, USA          
+Y32A     TA      34.0036   -99.4420  R-V Farms, Vernon, TX, USA              
+Z13A     TA      33.1999  -113.6568  Yuma Proving Gounds (US Army), Dateland, AZ, USA
+Z14A     TA      33.3627  -112.9458  Wintersburg, AZ, USA                    
+Z15A     TA      33.2893  -112.1581  Gila River Indian Community, Laveen, AZ, USA
+Z16A     TA      33.3410  -111.4273  Peralta Trail, Apache Junction, AZ, USA 
+Z17A     TA      33.2969  -110.4723  San Carlos High School, San Carlos, AZ, USA
+Z18A     TA      33.0851  -110.0362  Geronimo, AZ, USA                       
+Z19A     TA      33.2921  -109.2657  T-Link Ranch, Clifton, AZ, USA          
+Z20A     TA      33.1132  -108.5922  Nine Sixteen Ranch, Cliff, NM, USA      
+Z21A     TA      33.3086  -107.6712  St. Cloud Mine, Winston, NM, USA        
+Z22A     TA      33.2555  -106.9639  Elephant Butte, Truth or Consequences, NM, USA
+Z23A     TA      33.2621  -106.2319  Rita Site, White Sands Missle Range, NM, USA
+Z24A     TA      33.3298  -105.3649  Sheeppen Canyon, Tinnie, NM, USA        
+Z25A     TA      33.2797  -104.7171  Roswell, NM, USA                        
+Z26A     TA      33.2716  -103.9798  Caprock, NM, USA                        
+Z27A     TA      33.3150  -103.2145  Tatum, NM, USA                          
+Z28A     TA      33.2884  -102.3866  Tucker Farm, Meadow, TX, USA            
+Z29A     TA      33.2595  -101.7062  Hungry Hill Ranch, Wilson, TX, USA      
+Z30A     TA      33.2861  -101.1282  Sanderson Ranch, Post, TX, USA          
+Z31A     TA      33.3183  -100.1435  Sharp Cattle Ranch, Aspermont, TX, USA  
+Z32A     TA      33.3066   -99.4783  Haskell, TX, USA                        
+BAR      TS      32.6800  -116.6720  Barrett Dam, California, USA            
+CALB     TS      34.1430  -118.6270  Calabasas, California, USA              
+CWC      TS      36.4399  -118.0802  Cottonwood Creek Canyon, California, USA
+DGR      TS      33.6500  -117.0090  Domenigoni Valley Reservior, California, USA
+GLA      TS      33.0520  -114.8270  Glamis, California, USA                 
+GPO      TS      35.6494  -117.6619  China Lake , California, USA            
+GSC      TS      35.3028  -116.8083  Goldston, California, USA               
+ISA      TS      35.6630  -118.4733  Isabella, California, USA               
+MLAC     TS      37.6310  -118.8340  Mammoth Lakes, California, USA          
+NEE      TS      34.8230  -114.5960  Needles, California, USA                
+OSI      TS      34.6145  -118.7235  Osito Adit, California, USA             
+PAS      TS      34.1484  -118.1712  Pasadena, California, USA               
+PFO      TS      33.6092  -116.4553  Pinon Flat, California, USA             
+RPV      TS      33.7438  -118.4035  Rancho Palos Verde California, USA      
+SBC      TS      34.4417  -119.7133  Santa Barbara, California, USA          
+SMTC     TS      32.9490  -115.7200  Superstition Mountain, California, USA  
+SNCC     TS      33.2480  -119.5240  San Nicolas Island, California, USA     
+SVD      TS      34.1045  -117.0970  Seven Oaks Dam, California, USA         
+USC      TS      34.0210  -118.2870  USC, Los Angeles, California, USA       
+VTV      TS      34.5670  -117.3330  Victorville, California, USA            
+ANPB     TW      25.1865   121.5202  AN-PU                                   
+HWAB     TW      23.9770   121.6050  HUA-LIEA                                
+KMNB     TW      24.4638   118.3882  KING-MEN                                
+LYUB     TW      22.0017   121.5840  LAN-YU                                  
+MATB     TW      26.1515   119.9456  MA-TSU                                  
+NACB     TW      24.1738   121.5947  NING-AN-CHIAO                           
+SSLB     TW      23.7875   120.9540  SUANG-LONG                              
+TATO     TW      24.9754   121.4881  TAI-PEI                                 
+TDCB     TW      24.2520   121.1583  TE-CHI                                  
+TPUB     TW      23.3005   120.6296  TA-PU                                   
+TWGB     TW      22.8176   121.0799  TAI-TUNG                                
+TWKB     TW      21.9406   120.8125  KEN-DING                                
+WFSB     TW      25.0716   121.7806  WU-FENG-SHAN                            
+YHNB     TW      24.6698   121.3748  YE-HENG, Taoyuan                        
+YULB     TW      23.3924   121.2973  YU-LI                                   
+AAM      US      42.3012   -83.6567  Ann Arbor, Michigan, USA                
+ACSO     US      40.2319   -82.9820  Alum Creek State Park, Ohio, USA        
+AGMN     US      48.2977   -95.8619  Agassiz National Wildlife Refuge, Minnesota, USA
+AHID     US      42.7654  -111.1004  Auburn Hatchery, Idaho, USA             
+AMTX     US      34.8837  -101.6808  Amarillo, Texas, USA                    
+BINY     US      42.1993   -75.9861  Binghamton, New York, USA               
+BLA      US      37.2113   -80.4210  Blacksburg, Virginia, USA               
+BMN      US      40.4315  -117.2218  Battle Mountain, Nevada, USA            
+BMO      US      44.8525  -117.3060  Blue Mountains Array (Baker), Oregon, USA
+BOZ      US      45.6470  -111.6296  Bozeman, Montana, USA                   
+BRAL     US      31.1687   -87.0506  Brewton, Alabama, USA                   
+BW06     US      42.7667  -109.5583  Boulder Array Site 6 (Pinedale Array Site 6), Wyoming, USA
+CBKS     US      38.8140   -99.7374  Cedar Bluff, Kansas, USA                
+CBM      US      46.9325   -68.1208  Caribou, Maine, USA                     
+CBN      US      38.2046   -77.3732  Corbin (Fredericksburg Observatory), Virginia, USA
+CCM      US      38.0557   -91.2446  Cathedral Cave, Missouri, USA           
+CEH      US      35.8908   -79.0928  Chapel Hill, North Carolina, USA        
+CMB      US      38.0350  -120.3850  Columbia College, California, USA       
+CNNC     US      35.2393   -77.8901  Cliffs of the Neuse, North Carolina, USA
+COR      US      44.5857  -123.3032  Corvallis, Oregon, USA                  
+COWI     US      46.1003   -89.1369  Conover, Wisconsin, USA                 
+DGMT     US      48.4702  -104.1959  Dagmar, Montana, USA                    
+DUG      US      40.1950  -112.8133  Dugway, Tooele County, Utah, USA        
+DWPF     US      28.1103   -81.4328  Disney Wilderness Preserve, Florida, USA
+ECSD     US      43.7337   -96.6141  EROS Data Center, Sioux Falls, South Dakota, USA
+EGAK     US      64.7774  -141.1581  Eagle, Central Alaska, Alaska, USA      
+EGMT     US      48.0240  -109.7547  Eagleton, Montana, USA                  
+ELK      US      40.7448  -115.2388  Elko, Nevada, USA                       
+ERPA     US      42.1175   -79.9891  Erie, Pennsylvania, USA                 
+EYMN     US      47.9462   -91.4950  Ely, Minnesota, USA                     
+GLMI     US      44.8245   -84.6174  Grayling, Michigan, USA                 
+GOGA     US      33.4112   -83.4666  Godfrey, Georgia, USA                   
+GOL      US      39.7003  -105.3711  Golden (Bergen Park), Colorado, USA     
+GWDE     US      38.8256   -75.6171  Greenwood, Delaware, USA                
+HAWA     US      46.3925  -119.5326  Hanford, Washington, USA                
+HDIL     US      40.5560   -89.2940  Hopedale, Illinois, USA                 
+HKT      US      29.9500   -95.8333  Hockley, Texas, USA                     
+HLID     US      43.5625  -114.4138  Hailey, Idaho, USA                      
+HRV      US      42.5064   -71.5583  Harvard--Oak Ridge, Massachusetts, USA  
+HWUT     US      41.6069  -111.5652  Hardware Ranch, Cache County, Utah, USA 
+ISA      US      35.6628  -118.4740  Isabella, Kern County, California, USA  
+ISCO     US      39.7997  -105.6134  Idaho Springs, Colorado, USA            
+JCT      US      30.4794   -99.8022  Junction, Texas, USA                    
+JFWS     US      42.9142   -90.2481  Jewell Farm, Wisconsin, USA             
+KNB      US      37.0166  -112.8224  Kanab, Kane County, Utah, USA           
+KSU1     US      39.1009   -96.6094  Kansas State University--Konza Prairie, Kansas, USA
+KVTX     US      27.5459   -97.8929  Kingsville, Texas, USA                  
+LAO      US      46.6885  -106.2231  LASA Array, Montana, USA                
+LBNH     US      44.2401   -71.9259  Lisbon, New Hampshire, USA              
+LKWY     US      44.5652  -110.4000  Lake (Yellowstone--Lake), Yellowstone National Park, Wyoming
+LONY     US      44.6197   -74.5829  Lake Ozonia, New York, USA              
+LRAL     US      33.0348   -86.9978  Lakeview Retreat, Alabama, USA          
+LSCT     US      41.6784   -73.2244  Lakeside, Connecticut, USA              
+LTX      US      29.3339  -103.6669  Lajitas, Texas, USA                     
+MCWV     US      39.6581   -79.8456  Mont Chateau, West Virginia, USA        
+MIAR     US      34.5454   -93.5765  Mount Ida, Arkansas, USA                
+MNTX     US      31.6985  -105.3821  Cornudas Mountains, Texas, USA          
+MNV      US      38.4328  -118.1531  Mina, Nevada, USA                       
+MSO      US      46.8292  -113.9406  Missoula, Montana, USA                  
+MVCO     US      37.2103  -108.4986  Mesa Verde, Colorado, USA               
+MYNC     US      35.0739   -84.1279  Murphy, North Carolina, USA             
+NATX     US      31.7598   -94.6610  Nacogdoches, Texas, USA                 
+NCB      US      43.9708   -74.2236  Newcomb, New York, USA                  
+NEW      US      48.2633  -117.1200  Newport, Washington, USA                
+NHSC     US      33.1067   -80.1778  New Hope, South Carolina, USA           
+NLWA     US      47.3917  -123.8691  Neilton Lookout, Washington, USA        
+OCWA     US      47.7489  -124.1781  Octopus Mountain, Washington, USA       
+OGNE     US      40.9451  -102.0330  Ogallala, Nebraska, USA                 
+OXF      US      34.5118   -89.4092  Oxford, Mississippi, USA                
+PKME     US      45.2644   -69.2917  Peaks-Kenny State Park, Maine, USA      
+RLMT     US      45.1221  -109.2673  Red Lodge, Montana, USA                 
+RSNY     US      44.5483   -74.5300  Adirondack, New York, USA               
+RSSD     US      44.1204  -104.0360  Black Hills, South Dakota, USA          
+SAO      US      36.7650  -121.4450  San Andreas Geological Observatory, San Benito County, Calif
+SCIA     US      41.9069   -93.2153  State Center, Iowa, USA                 
+SDCO     US      37.7456  -105.5012  Great Sand Dunes National Park, Colorado, USA
+SSPA     US      40.6358   -77.8880  Standing Stone, Pennsylvania, USA       
+TPNV     US      36.9488  -116.2495  Topopah Spring, Nevada, USA             
+TUC      US      32.3097  -110.7842  Tucson, Arizona, USA                    
+TZTN     US      36.5439   -83.5490  Tazewell, Tennessee, USA                
+VBMS     US      32.2185   -90.5177  Vicksburg, Mississippi                  
+WCI      US      38.2290   -86.2938  Wyandotte Cave, Indiana, USA            
+WDC      US      40.5800  -122.5397  Whiskeytown Dam, Shasta County, California, USA
+WMOK     US      34.7379   -98.7810  Wichita Mountains, Oklahoma, USA        
+WRAK     US      56.4191  -132.3466  Wrangell Island, Southeastern Alaska, Alaska, USA
+WUAZ     US      35.5169  -111.3739  Wupatki, Arizona, USA                   
+WVOR     US      42.4339  -118.6367  Wild Horse Valley, Oregon, USA          
+WVT      US      36.1300   -87.8300  Waverly, Tennessee, USA                 
+YSNY     US      42.4758   -78.5375  Yorkshire, New York, USA                
+BLOW     UW      44.6837  -122.1862  Detroit Lake, OR, USA                   
+BRAN     UW      45.9734  -117.2277  Beach Ranch, Enterprise, OR, USA        
+DAVN     UW      47.8006  -118.2741  Chrisman Ranch, Davenport, WA, USA      
+FISH     UW      45.9306  -123.5591  Seaside, OR, USA                        
+IRON     UW      43.3580  -118.4743  Circle Bar Ranch, Crane, OR, USA        
+IZEE     UW      44.0820  -119.5042  Izee, OR, USA                           
+KENT     UW      45.2357  -120.6351  Carlson Farm, Grass Valley, OR, USA     
+LCCR     UW      45.2059  -122.4784  Mulino, OR, USA                         
+LEBA     UW      46.5459  -123.5632  Lebam, WA, USA                          
+MRBL     UW      48.5183  -121.4845  Marblemount, WA, USA                    
+OMAK     UW      48.3584  -119.3332  Colville Reservation, Omak, WA, USA     
+PASS     UW      48.9983  -122.0852  Maple Falls, WA, USA                    
+STOR     UW      47.1881  -121.9888  Enumclaw, WA, USA                       
+TREE     UW      42.7258  -120.8934  Summer Lake, OR, USA                    
+TUCA     UW      46.5139  -118.1455  Wood Farm, Starbuck, WA, USA            
+UMAT     UW      45.2904  -118.9595  Pilot Rock, OR, USA                     
+WOLL     UW      47.0573  -118.9210  Wollman Farm, Schrag, WA, USA           
+YACT     UW      45.9325  -122.4193  Amboy, WA, USA                          

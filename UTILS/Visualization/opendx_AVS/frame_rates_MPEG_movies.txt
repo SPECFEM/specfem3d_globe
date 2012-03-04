@@ -1,0 +1,27 @@
+
+https://www.fzd.de/FKTI/MITARB/schmei/doc/Video/mpeg2enc.html
+
+ /* frame_rate_code */
+
+  Defines the frame rate (for interlaced sequences: field rate is twice 
+  the frame rate). Legal values are:
+
+  Code  Frames/sec    Meaning
+  ----  ----------    -----------------------------------------------
+  1     24000/1001    23.976 fps -- NTSC encapsulated film rate 
+  2     24            Standard international cinema film rate
+  3     25            PAL (625/50) video frame rate                    !!!! DK DK this is the default when called from ImageMagick
+  4     30000/1001    29.97 -- NTSC video frame rate 
+  5     30            NTSC drop-frame (525/60) video frame rate
+  6     50            double frame rate/progressive PAL 
+  7     60000/1001    double frame rate NTSC
+  8     60            double frame rate drop-frame NTSC
+
+ /* bit_rate */
+
+  A positive floating point value specifying the target bitrate.
+  In units of bits/sec.
+
+
+
+
