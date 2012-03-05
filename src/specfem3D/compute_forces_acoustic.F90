@@ -85,15 +85,17 @@
       if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses Deville et al. (2002) routine
         call compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
+                                      NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
                                       A_array_rotation,B_array_rotation, &
-                                      displ_outer_core,accel_outer_core,div_displ_outer_core, &
-                                      phase_is_inner)
+                                      displ_outer_core,accel_outer_core, &
+                                      div_displ_outer_core,phase_is_inner)
       else
         ! div_displ_outer_core is initialized to zero in the following subroutine.
         call compute_forces_outer_core(time,deltat,two_omega_earth, &
+                                      NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
                                       A_array_rotation,B_array_rotation, &
-                                      displ_outer_core,accel_outer_core,div_displ_outer_core, &
-                                      phase_is_inner)
+                                      displ_outer_core,accel_outer_core, &
+                                      div_displ_outer_core,phase_is_inner)
       endif
 
       ! adjoint / kernel runs
@@ -101,14 +103,16 @@
         if( USE_DEVILLE_PRODUCTS_VAL ) then
           ! uses Deville et al. (2002) routine
           call compute_forces_outer_core_Dev(b_time,b_deltat,b_two_omega_earth, &
+                                      NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                                       b_A_array_rotation,b_B_array_rotation, &
-                                      b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
-                                      phase_is_inner)
+                                      b_displ_outer_core,b_accel_outer_core, &
+                                      b_div_displ_outer_core,phase_is_inner)
         else
           call compute_forces_outer_core(b_time,b_deltat,b_two_omega_earth, &
+                                      NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &  
                                       b_A_array_rotation,b_B_array_rotation, &
-                                      b_displ_outer_core,b_accel_outer_core,b_div_displ_outer_core, &
-                                      phase_is_inner)
+                                      b_displ_outer_core,b_accel_outer_core, &
+                                      b_div_displ_outer_core,phase_is_inner)
         endif
       endif
 
@@ -267,11 +271,11 @@
   ! (multiply by the inverse of the mass matrix and update velocity)
   if(.NOT. GPU_MODE) then
     ! on CPU
-    call compute_forces_ac_update_veloc(veloc_outer_core,accel_outer_core, &
+    call compute_forces_ac_update_veloc(NGLOB_OUTER_CORE,veloc_outer_core,accel_outer_core, &
                                        deltatover2,rmass_outer_core)
     ! adjoint / kernel runs
     if (SIMULATION_TYPE == 3) &
-      call compute_forces_ac_update_veloc(b_veloc_outer_core,b_accel_outer_core, &
+      call compute_forces_ac_update_veloc(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
                                          b_deltatover2,rmass_outer_core)
   else
     ! on GPU
@@ -283,9 +287,10 @@
 
 !=====================================================================
 
-  subroutine compute_forces_ac_update_veloc(veloc_outer_core,accel_outer_core,deltatover2,rmass_outer_core)
+  subroutine compute_forces_ac_update_veloc(NGLOB,veloc_outer_core,accel_outer_core, &
+                                          deltatover2,rmass_outer_core)
 
-  use specfem_par,only: CUSTOM_REAL,NGLOB_OUTER_CORE
+  use constants,only: CUSTOM_REAL
 
 #ifdef _HANDOPT
   use specfem_par,only: imodulo_NGLOB_OUTER_CORE
@@ -293,11 +298,13 @@
 
   implicit none
 
+  integer :: NGLOB
+  
   ! velocity potential
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: veloc_outer_core,accel_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: veloc_outer_core,accel_outer_core
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass_outer_core
 
   real(kind=CUSTOM_REAL) :: deltatover2
 
@@ -316,7 +323,7 @@
       veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
     enddo
   endif
-  do i=imodulo_NGLOB_OUTER_CORE+1,NGLOB_OUTER_CORE,3
+  do i=imodulo_NGLOB_OUTER_CORE+1,NGLOB,3
     accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
 
@@ -328,7 +335,7 @@
   enddo
 #else
 ! way 1:
-  do i=1,NGLOB_OUTER_CORE
+  do i=1,NGLOB
     accel_outer_core(i) = accel_outer_core(i)*rmass_outer_core(i)
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2*accel_outer_core(i)
   enddo

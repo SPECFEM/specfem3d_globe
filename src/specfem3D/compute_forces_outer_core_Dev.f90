@@ -26,9 +26,10 @@
 !=====================================================================
 
   subroutine compute_forces_outer_core_Dev(time,deltat,two_omega_earth, &
+                                          NSPEC,NGLOB, &
                                           A_array_rotation,B_array_rotation, &
-                                          displfluid,accelfluid,div_displfluid, &
-                                          phase_is_inner)
+                                          displfluid,accelfluid, &
+                                          div_displfluid,phase_is_inner)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -59,13 +60,15 @@
 
   implicit none
 
+  integer :: NSPEC,NGLOB
+
   ! for the Euler scheme for rotation
   real(kind=CUSTOM_REAL) time,deltat,two_omega_earth
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     A_array_rotation,B_array_rotation
 
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: displfluid,accelfluid
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: displfluid,accelfluid
 
   ! divergence of displacement
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: div_displfluid

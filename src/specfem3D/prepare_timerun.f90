@@ -937,7 +937,11 @@
 
   if (COMPUTE_AND_STORE_STRAIN) then
     if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
-      Iepsilondev_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+      Iepsilondev_xx_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      Iepsilondev_yy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      Iepsilondev_xy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      Iepsilondev_xz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      Iepsilondev_yz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
       Ieps_trace_over_3_crust_mantle(:,:,:,:)=0._CUSTOM_REAL
     endif
   endif

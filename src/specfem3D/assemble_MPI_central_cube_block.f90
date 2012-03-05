@@ -45,8 +45,10 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 ! for matching with central cube in inner core
   integer ichunk, nb_msgs_theor_in_cube, npoin2D_cube_from_slices
   integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
-  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: buffer_slices,buffer_slices2
-  double precision, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM) :: buffer_all_cube_from_slices
+  double precision, dimension(npoin2D_cube_from_slices,NDIM) :: &
+    buffer_slices,buffer_slices2
+  double precision, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM) :: &
+    buffer_all_cube_from_slices
   integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
   integer receiver_cube_from_slices
 

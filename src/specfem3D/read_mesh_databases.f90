@@ -82,6 +82,7 @@
   endif
 
   ! user output
+  call sync_all()
   if( myrank == 0 ) then
     ! elapsed time since beginning of mesh generation
     tCPU = MPI_WTIME() - time_start
@@ -90,6 +91,7 @@
     write(IMAIN,*)
   endif
 
+  
   ! frees temporary allocated arrays
   deallocate(is_on_a_slice_edge_crust_mantle, &
             is_on_a_slice_edge_outer_core, &
@@ -805,8 +807,9 @@
   integer :: max_nibool
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag_cc
+  integer,dimension(:),allocatable :: dummy_i
   integer :: i,j,k,ispec,iglob
-
+  
   ! estimates initial maximum ibool array
   max_nibool = npoin2D_max_all_CM_IC * NUMFACES_SHARED &
                + non_zero_nb_msgs_theor_in_cube*npoin2D_cube_from_slices
@@ -849,6 +852,9 @@
   !                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
   !                      test_flag,filename)
 
+  allocate(dummy_i(NSPEC_CRUST_MANTLE),stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i')
+  
   ! determines neighbor rank for shared faces
   call rmd_get_MPI_interfaces(myrank,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
                             test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
@@ -856,22 +862,26 @@
                             max_nibool,MAX_NEIGHBOURS, &
                             ibool_crust_mantle,&
                             is_on_a_slice_edge_crust_mantle, &
-                            IREGION_CRUST_MANTLE,.false.)
+                            IREGION_CRUST_MANTLE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE)
 
   deallocate(test_flag)
-
+  deallocate(dummy_i)
+  
   ! stores MPI interfaces informations
   allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array my_neighbours_crust_mantle etc.')
-
+  my_neighbours_crust_mantle = -1
+  nibool_interfaces_crust_mantle = 0
+  
   ! copies interfaces arrays
   if( num_interfaces_crust_mantle > 0 ) then
     allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
            stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_crust_mantle')
-
+    ibool_interfaces_crust_mantle = 0
+    
     ! ranks of neighbour processes
     my_neighbours_crust_mantle(:) = my_neighbours(1:num_interfaces_crust_mantle)
     ! number of global ibool entries on each interface
@@ -893,7 +903,30 @@
   !                      nibool_interfaces_crust_mantle(1),filename)
   !endif
 
+  ! checks addressing
+  call rmd_test_MPI_neighbours(num_interfaces_crust_mantle,my_neighbours_crust_mantle,nibool_interfaces_crust_mantle)
 
+  ! allocates MPI buffers
+  ! crust mantle
+  allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
+          buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
+          request_send_vector_crust_mantle(num_interfaces_crust_mantle), &
+          request_recv_vector_crust_mantle(num_interfaces_crust_mantle), &
+          stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_crust_mantle etc.')
+  if( SIMULATION_TYPE == 3 ) then
+    allocate(b_buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
+            b_buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
+            b_request_send_vector_crust_mantle(num_interfaces_crust_mantle), &
+            b_request_recv_vector_crust_mantle(num_interfaces_crust_mantle), &
+            stat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_crust_mantle etc.')
+  endif
+
+  ! checks with assembly of test fields  
+  call rmd_test_MPI_cm()
+
+  
 ! outer core region
   if( myrank == 0 ) write(IMAIN,*) 'outer core mpi:'
 
@@ -929,6 +962,8 @@
   !                      xstore_outer_core,ystore_outer_core,zstore_outer_core, &
   !                      test_flag,filename)
 
+  allocate(dummy_i(NSPEC_OUTER_CORE),stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i')
 
   ! determines neighbor rank for shared faces
   call rmd_get_MPI_interfaces(myrank,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
@@ -937,22 +972,26 @@
                             max_nibool,MAX_NEIGHBOURS, &
                             ibool_outer_core,&
                             is_on_a_slice_edge_outer_core, &
-                            IREGION_OUTER_CORE,.false.)
+                            IREGION_OUTER_CORE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE)
 
   deallocate(test_flag)
-
+  deallocate(dummy_i)
+  
   ! stores MPI interfaces informations
   allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
           nibool_interfaces_outer_core(num_interfaces_outer_core), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array my_neighbours_outer_core etc.')
-
+  my_neighbours_outer_core = -1
+  nibool_interfaces_outer_core = 0
+  
   ! copies interfaces arrays
   if( num_interfaces_outer_core > 0 ) then
     allocate(ibool_interfaces_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
            stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_outer_core')
-
+    ibool_interfaces_outer_core = 0
+    
     ! ranks of neighbour processes
     my_neighbours_outer_core(:) = my_neighbours(1:num_interfaces_outer_core)
     ! number of global ibool entries on each interface
@@ -974,6 +1013,30 @@
   !                      nibool_interfaces_outer_core(1),filename)
   !endif
 
+  ! checks addressing
+  call rmd_test_MPI_neighbours(num_interfaces_outer_core,my_neighbours_outer_core,nibool_interfaces_outer_core)
+
+  ! allocates MPI buffers
+  ! outer core
+  allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
+          buffer_recv_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
+          request_send_scalar_outer_core(num_interfaces_outer_core), &
+          request_recv_scalar_outer_core(num_interfaces_outer_core), &
+          stat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_outer_core etc.')
+  if( SIMULATION_TYPE == 3 ) then
+    allocate(b_buffer_send_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
+            b_buffer_recv_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
+            b_request_send_scalar_outer_core(num_interfaces_outer_core), &
+            b_request_recv_scalar_outer_core(num_interfaces_outer_core), &
+            stat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_outer_core etc.')
+  endif
+
+  ! checks with assembly of test fields  
+  call rmd_test_MPI_oc()
+
+
 ! inner core
   if( myrank == 0 ) write(IMAIN,*) 'inner core mpi:'
 
@@ -986,6 +1049,15 @@
   do ispec=1,NSPEC_INNER_CORE
     ! suppress fictitious elements in central cube
     if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    
+    ! suppress central cube, will be handled afterwards
+    if( INCLUDE_CENTRAL_CUBE ) then
+      if(idoubling_inner_core(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+        idoubling_inner_core(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+        idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) cycle
+    endif
+    
+    ! sets flags  
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
@@ -1021,29 +1093,53 @@
                         xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                         test_flag,filename)
 
-!  ! gets new interfaces for inner_core without central cube yet
-!  ! determines neighbor rank for shared faces
-!  call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-!                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
-!                            num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
-!                            max_nibool,MAX_NEIGHBOURS, &
-!                            ibool_inner_core,&
-!                            is_on_a_slice_edge_inner_core, &
-!                            IREGION_INNER_CORE,.false.,idoubling_inner_core)
+  ! in sequential order, for testing purpose
+  do i=0,NPROCTOT_VAL - 1  
+    if( myrank == i ) then
+
+    ! gets new interfaces for inner_core without central cube yet
+    ! determines neighbor rank for shared faces
+    call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
+                            num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                            max_nibool,MAX_NEIGHBOURS, &
+                            ibool_inner_core,&
+                            is_on_a_slice_edge_inner_core, &
+                            IREGION_INNER_CORE,.false.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE)
+
+    endif
+    call sync_all()
+  enddo
+
+  ! intermediate check
+  call rmd_test_MPI_neighbours(num_interfaces_inner_core, &
+                              my_neighbours(1:num_interfaces_inner_core), &
+                              nibool_neighbours(1:num_interfaces_inner_core))
+
 
   ! including central cube
   if(INCLUDE_CENTRAL_CUBE) then
     if( myrank == 0 ) write(IMAIN,*) 'inner core with central cube mpi:'
+
+    ! test_flag is a scalar, not a vector
+    ndim_assemble = 1
 
     allocate(test_flag_cc(NGLOB_INNER_CORE), &
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag_cc inner core')
 
     ! re-sets flag to rank id (+1 to avoid problems with zero rank)
-    test_flag_cc(:) = 0.0
+    test_flag_cc = 0.0
     do ispec=1,NSPEC_INNER_CORE
       ! suppress fictitious elements in central cube
       if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+      
+      ! only takes central cube
+      if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
+
+      ! sets flags    
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
@@ -1054,8 +1150,6 @@
       enddo
     enddo
 
-    ! test_flag is a scalar, not a vector
-    ndim_assemble = 1
     ! use central cube buffers to assemble the inner core mass matrix with the central cube
     call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
                  npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
@@ -1068,59 +1162,77 @@
 
 
     ! removes own myrank id (+1)
-    test_flag_cc(:) = test_flag_cc(:) - ( myrank + 1.0)
-    where( test_flag_cc(:) < 0.0 ) test_flag_cc(:) = 0.0
+    test_flag_cc = test_flag_cc - ( myrank + 1.0)
+    where( test_flag_cc < 0.0 ) test_flag_cc = 0.0
 
+    ! debug: saves array
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_B_proc',myrank
     call write_VTK_glob_points(NGLOB_INNER_CORE, &
                         xstore_inner_core,ystore_inner_core,zstore_inner_core, &
                         test_flag_cc,filename)
 
-!    ! adds additional inner core points
-!    call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+    ! in sequential order, for testing purpose
+    do i=0,NPROCTOT_VAL - 1  
+      if( myrank == i ) then
+        ! adds additional inner core points
+        call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+                            test_flag_cc,my_neighbours,nibool_neighbours,ibool_neighbours, &
+                            num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                            max_nibool,MAX_NEIGHBOURS, &
+                            ibool_inner_core,&
+                            is_on_a_slice_edge_inner_core, &
+                            IREGION_INNER_CORE,.true.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE)
+      endif
+      call sync_all()
+    enddo
+
+!    ! adds both together
+!    test_flag(:) = test_flag(:) + test_flag_cc(:)
+!
+!    ! debug: saves array
+!    write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_C_proc',myrank
+!    call write_VTK_glob_points(NGLOB_INNER_CORE, &
+!                              xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+!                              test_flag,filename)
+
+    deallocate(test_flag_cc)
+
+  endif
+
+!  ! in sequential order, for testing purpose
+!  do i=0,NPROCTOT_VAL - 1  
+!    if( myrank == i ) then
+!      ! gets new interfaces for inner_core without central cube yet
+!      ! determines neighbor rank for shared faces
+!      call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
 !                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
 !                            num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
 !                            max_nibool,MAX_NEIGHBOURS, &
 !                            ibool_inner_core,&
 !                            is_on_a_slice_edge_inner_core, &
-!                            IREGION_INNER_CORE,.true.,idoubling_inner_core)
-
-    ! adds both together
-    test_flag(:) = test_flag(:) + test_flag_cc(:)
-
-    deallocate(test_flag_cc)
-
-    ! debug: saves array
-    write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_C_proc',myrank
-    call write_VTK_glob_points(NGLOB_INNER_CORE, &
-                              xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                              test_flag,filename)
-
-  endif
-
-  ! gets new interfaces for inner_core without central cube yet
-  ! determines neighbor rank for shared faces
-  call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
-                            num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
-                            max_nibool,MAX_NEIGHBOURS, &
-                            ibool_inner_core,&
-                            is_on_a_slice_edge_inner_core, &
-                            IREGION_INNER_CORE,.false.,idoubling_inner_core)
-
+!                            IREGION_INNER_CORE,.false.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE)
+!
+!    endif
+!    call sync_all()
+!  enddo
+  
   deallocate(test_flag)
+  call sync_all()
 
   ! stores MPI interfaces informations
   allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
           nibool_interfaces_inner_core(num_interfaces_inner_core), &
           stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating array my_neighbours_inner_core etc.')
-
+  my_neighbours_inner_core = -1
+  nibool_interfaces_inner_core = 0
+  
   ! copies interfaces arrays
   if( num_interfaces_inner_core > 0 ) then
     allocate(ibool_interfaces_inner_core(max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
            stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_inner_core')
+    ibool_interfaces_inner_core = 0
 
     ! ranks of neighbour processes
     my_neighbours_inner_core(:) = my_neighbours(1:num_interfaces_inner_core)
@@ -1135,55 +1247,23 @@
   endif
 
   ! debug: saves 1. MPI interface
-  if( myrank == 0 .and. num_interfaces_inner_core >= 1 ) then
-    write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_1_points_inner_core_proc',myrank
-    call write_VTK_data_points(NGLOB_INNER_CORE, &
+  !if( myrank == 4 .or. myrank == 13 ) then
+    do i=1,num_interfaces_inner_core
+      write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_inner_core_proc',myrank, &
+                      '_',my_neighbours_inner_core(i)
+      call write_VTK_data_points(NGLOB_INNER_CORE, &
                         xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                        ibool_interfaces_inner_core(1:nibool_interfaces_inner_core(1),1), &
-                        nibool_interfaces_inner_core(1),filename)
-    !print*,'saved: ',trim(filename)//'.vtk'
-  endif
-
-  ! synchronizes MPI processes
+                        ibool_interfaces_inner_core(1:nibool_interfaces_inner_core(i),i), &
+                        nibool_interfaces_inner_core(i),filename)
+      !print*,'saved: ',trim(filename)//'.vtk'
+    enddo
+  !endif
   call sync_all()
-
-  ! frees temporary array
-  deallocate(ibool_neighbours)
-
+  
+  ! checks addressing
+  call rmd_test_MPI_neighbours(num_interfaces_inner_core,my_neighbours_inner_core,nibool_interfaces_inner_core)
 
   ! allocates MPI buffers
-  ! crust mantle
-  allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-          buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-          request_send_vector_crust_mantle(num_interfaces_crust_mantle), &
-          request_recv_vector_crust_mantle(num_interfaces_crust_mantle), &
-          stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_crust_mantle etc.')
-  if( SIMULATION_TYPE == 3 ) then
-    allocate(b_buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-            b_buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_crust_mantle,num_interfaces_crust_mantle), &
-            b_request_send_vector_crust_mantle(num_interfaces_crust_mantle), &
-            b_request_recv_vector_crust_mantle(num_interfaces_crust_mantle), &
-            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_crust_mantle etc.')
-  endif
-
-  ! outer core
-  allocate(buffer_send_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-          buffer_recv_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-          request_send_scalar_outer_core(num_interfaces_outer_core), &
-          request_recv_scalar_outer_core(num_interfaces_outer_core), &
-          stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array buffer_send_vector_outer_core etc.')
-  if( SIMULATION_TYPE == 3 ) then
-    allocate(b_buffer_send_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-            b_buffer_recv_scalar_outer_core(max_nibool_interfaces_outer_core,num_interfaces_outer_core), &
-            b_request_send_scalar_outer_core(num_interfaces_outer_core), &
-            b_request_recv_scalar_outer_core(num_interfaces_outer_core), &
-            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_outer_core etc.')
-  endif
-
   ! inner core
   allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
           buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_inner_core,num_interfaces_inner_core), &
@@ -1200,6 +1280,15 @@
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating array b_buffer_send_vector_inner_core etc.')
   endif
 
+  ! checks with assembly of test fields  
+  call rmd_test_MPI_ic()
+
+  ! synchronizes MPI processes
+  call sync_all()
+
+  ! frees temporary array
+  deallocate(ibool_neighbours)
+
   end subroutine read_mesh_databases_MPIinter
 
 
@@ -1213,7 +1302,7 @@
                                     max_nibool,MAX_NEIGHBOURS, &
                                     ibool,&
                                     is_on_a_slice_edge, &
-                                    IREGION,add_central_cube,idoubling)
+                                    IREGION,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE)
 
   use constants
 
@@ -1238,8 +1327,10 @@
 
   integer,intent(in) :: IREGION
   logical,intent(in) :: add_central_cube
-  integer,dimension(NSPEC),optional:: idoubling
+  integer,dimension(NSPEC),intent(in) :: idoubling
 
+  logical,intent(in) :: INCLUDE_CENTRAL_CUBE
+  
   ! local parameters
   integer :: ispec,iglob,j,k
   integer :: iface,iedge,icorner
@@ -1249,6 +1340,8 @@
   integer,dimension(NGLOB) :: work_test_flag
   logical,dimension(NSPEC) :: work_ispec_is_outer
 
+  integer,parameter :: MID = (NGLLX+1)/2
+  
   ! initializes
   if( add_central_cube) then
     ! adds points to existing inner_core interfaces
@@ -1292,22 +1385,22 @@
       select case( iface )
       case( 1 )
         ! face I == 1
-        iglob = ibool(1,2,2,ispec)
+        iglob = ibool(1,MID,MID,ispec)
       case( 2 )
         ! face I == NGLLX
-        iglob = ibool(NGLLX,2,2,ispec)
+        iglob = ibool(NGLLX,MID,MID,ispec)
       case( 3 )
         ! face J == 1
-        iglob = ibool(2,1,2,ispec)
+        iglob = ibool(MID,1,MID,ispec)
       case( 4 )
         ! face J == NGLLY
-        iglob = ibool(2,NGLLY,2,ispec)
+        iglob = ibool(MID,NGLLY,MID,ispec)
       case( 5 )
         ! face K == 1
-        iglob = ibool(2,2,1,ispec)
+        iglob = ibool(MID,MID,1,ispec)
       case( 6 )
         ! face K == NGLLZ
-        iglob = ibool(2,2,NGLLZ,ispec)
+        iglob = ibool(MID,MID,NGLLZ,ispec)
       end select
 
       ! checks assembled flag on global point
@@ -1374,24 +1467,25 @@
             end select
 
             ! checks that we take each global point (on edges and corners) only once
-            if( work_test_flag(iglob) <= 0 ) cycle ! continues to next point
-
-            ! increases number of total points on this interface
-            nibool_neighbours(icurrent) = nibool_neighbours(icurrent) + 1
-            if( nibool_neighbours(icurrent) > max_nibool) &
-              call exit_mpi(myrank,'interface face exceeds max_nibool range')
-
-            ! stores interface iglob index
-            ibool_neighbours( nibool_neighbours(icurrent),icurrent ) = iglob
-
-            ! re-sets flag
-            work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )
+            call rmd_add_interface_point(iglob,rank,icurrent, &
+                                        nibool_neighbours,MAX_NEIGHBOURS, &
+                                        ibool_neighbours,max_nibool, &
+                                        work_test_flag,NGLOB,myrank, &
+                                        .true.,add_central_cube)
             ! debug
             if( work_test_flag(iglob) < 0 ) then
-              print*,'error face flag:',myrank,'ispec=',ispec,'rank=',rank
-              print*,'  flag=',work_test_flag(iglob),'iface jk=',iface,j,k
-              call exit_mpi(myrank,'error face flag')
+              if( IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE ) then              
+                ! we might have missed an interface point on an edge, just re-set to missing value
+                print*,'warning face flag:',myrank,'ispec=',ispec,'rank=',rank
+                print*,'  flag=',work_test_flag(iglob),'iface jk=',iface,j,k,'missed iglob=',iglob                
+                !work_test_flag(iglob) = 0
+              else
+                print*,'error face flag:',myrank,'ispec=',ispec,'rank=',rank
+                print*,'  flag=',work_test_flag(iglob),'iface jk=',iface,j,k,'iglob=',iglob
+                call exit_mpi(myrank,'error face flag')
+              endif
             endif
+            
           enddo
         enddo
       endif
@@ -1407,40 +1501,40 @@
       select case( iedge )
       case( 1 )
         ! face I == 1, J == 1
-        iglob = ibool(1,1,2,ispec)
+        iglob = ibool(1,1,MID,ispec)
       case( 2 )
         ! face I == 1, J == NGLLY
-        iglob = ibool(1,NGLLY,2,ispec)
+        iglob = ibool(1,NGLLY,MID,ispec)
       case( 3 )
         ! face I == 1, K == 1
-        iglob = ibool(1,2,1,ispec)
+        iglob = ibool(1,MID,1,ispec)
       case( 4 )
         ! face I == 1, K == NGLLZ
-        iglob = ibool(1,2,NGLLZ,ispec)
+        iglob = ibool(1,MID,NGLLZ,ispec)
       case( 5 )
         ! face I == NGLLX, J == 1
-        iglob = ibool(NGLLX,1,2,ispec)
+        iglob = ibool(NGLLX,1,MID,ispec)
       case( 6 )
         ! face I == NGLLX, J == NGLLY
-        iglob = ibool(NGLLX,NGLLY,2,ispec)
+        iglob = ibool(NGLLX,NGLLY,MID,ispec)
       case( 7 )
         ! face I == NGLLX, K == 1
-        iglob = ibool(NGLLX,2,1,ispec)
+        iglob = ibool(NGLLX,MID,1,ispec)
       case( 8 )
         ! face I == NGLLX, K == NGLLZ
-        iglob = ibool(NGLLX,2,NGLLZ,ispec)
+        iglob = ibool(NGLLX,MID,NGLLZ,ispec)
       case( 9 )
         ! face J == 1, K == 1
-        iglob = ibool(2,1,1,ispec)
+        iglob = ibool(MID,1,1,ispec)
       case( 10 )
         ! face J == 1, K == NGLLZ
-        iglob = ibool(2,1,NGLLZ,ispec)
+        iglob = ibool(MID,1,NGLLZ,ispec)
       case( 11 )
         ! face J == NGLLY, K == 1
-        iglob = ibool(2,NGLLY,1,ispec)
+        iglob = ibool(MID,NGLLY,1,ispec)
       case( 12 )
         ! face J == NGLLY, K == NGLLZ
-        iglob = ibool(2,NGLLY,NGLLZ,ispec)
+        iglob = ibool(MID,NGLLY,NGLLZ,ispec)
       end select
 
       ! checks assembled flag on global point
@@ -1524,21 +1618,25 @@
           end select
 
           ! checks that we take each global point (on edges and corners) only once
-          if( work_test_flag(iglob) <= 0 ) cycle ! continues to next point
-
-          ! increases number of total points on this interface
-          nibool_neighbours(icurrent) = nibool_neighbours(icurrent) + 1
-          if( nibool_neighbours(icurrent) > max_nibool) &
-            call exit_mpi(myrank,'interface edge exceeds max_nibool range')
-
-          ! stores interface iglob index
-          ibool_neighbours( nibool_neighbours(icurrent),icurrent ) = iglob
-
-          ! re-sets flag
-          work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )
+          call rmd_add_interface_point(iglob,rank,icurrent, &
+                                        nibool_neighbours,MAX_NEIGHBOURS, &
+                                        ibool_neighbours,max_nibool, &
+                                        work_test_flag,NGLOB,myrank, &
+                                        .true.,add_central_cube)
 
           ! debug
-          if( work_test_flag(iglob) < 0 ) call exit_mpi(myrank,'error edge flag')
+          if( work_test_flag(iglob) < 0 ) then
+            if( IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE ) then              
+              ! we might have missed an interface point on an edge, just re-set to missing value
+              print*,'warning edge flag:',myrank,'ispec=',ispec,'rank=',rank
+              print*,'  flag=',work_test_flag(iglob),'iedge jk=',iedge,k,'missed iglob=',iglob                
+              !work_test_flag(iglob) = 0
+            else
+              print*,'error edge flag:',myrank,'ispec=',ispec,'rank=',rank
+              print*,'  flag=',work_test_flag(iglob),'iedge jk=',iedge,k,'iglob=',iglob
+              call exit_mpi(myrank,'error edge flag')
+            endif
+          endif
 
         enddo
       endif
@@ -1628,17 +1726,13 @@
         if( icurrent == 0 ) &
           call exit_mpi(myrank,'could not find current interface for this neighbor, please check my_neighbours')
 
-        ! adds this corner as interface point and removes neighbor flag from face
-        ! increases number of total points on this interface
-        nibool_neighbours(icurrent) = nibool_neighbours(icurrent) + 1
-        if( nibool_neighbours(icurrent) > max_nibool) &
-          call exit_mpi(myrank,'interface corner exceeds max_nibool range')
-
-        ! stores interface iglob index
-        ibool_neighbours( nibool_neighbours(icurrent),icurrent ) = iglob
-
-        ! re-sets flag
-        work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )
+        ! adds this corner as interface point and removes neighbor flag from face,
+        ! checks that we take each global point (on edges and corners) only once
+        call rmd_add_interface_point(iglob,rank,icurrent, &
+                                    nibool_neighbours,MAX_NEIGHBOURS, &
+                                    ibool_neighbours,max_nibool, &
+                                    work_test_flag,NGLOB,myrank, &
+                                    .false.,add_central_cube)
 
         ! debug
         if( work_test_flag(iglob) < 0 ) call exit_mpi(myrank,'error corner flag')
@@ -1659,28 +1753,21 @@
   npoin = count( work_ispec_is_outer )
 
   ! debug: user output
-  if( myrank == 0 ) then
-    write(IMAIN,*) '  interfaces : ',iinterface
-    write(IMAIN,*) '  my_neighbours: ',my_neighbours(1:iinterface)
-    write(IMAIN,*) '  nibool_neighbours: ',nibool_neighbours(1:iinterface)
-    write(IMAIN,*) '  test flag min/max: ',minval(work_test_flag),maxval(work_test_flag)
-    write(IMAIN,*) '  outer elements: ',npoin
-    write(IMAIN,*)
+  if( add_central_cube ) then
+    print*, 'rank',myrank,'interfaces : ',iinterface
+    do j=1,iinterface
+      print*, '  my_neighbours: ',my_neighbours(j),nibool_neighbours(j)
+    enddo
+    print*, '  test flag min/max: ',minval(work_test_flag),maxval(work_test_flag)
+    print*, '  outer elements: ',npoin
+    print*
   endif
-  call sync_all()
-
+  
   ! checks if all points were recognized
-  if( maxval(work_test_flag) > 0 ) then
+  if( minval(work_test_flag) < 0 .or. maxval(work_test_flag) > 0 ) then
     print*,'error mpi interface rank: ',myrank
     print*,'  work_test_flag min/max :',minval(work_test_flag),maxval(work_test_flag)
     call exit_mpi(myrank,'error: mpi points remain unrecognized, please check mesh interfaces')
-  endif
-
-  ! checks if all points were taken only once
-  if( minval(work_test_flag) < 0 ) then
-    print*,'error mpi interface rank: ',myrank
-    print*,'  work_test_flag min/max :',minval(work_test_flag),maxval(work_test_flag)
-    call exit_mpi(myrank,'error: mpi points counted more than once, please check mesh interfaces')
   endif
 
   ! sets interfaces infos
@@ -1698,18 +1785,521 @@
     ! debug: checks if unique set of iglob values
     do j=1,npoin-1
       if( ibool_neighbours(j,iinterface) == ibool_neighbours(j+1,iinterface) ) then
-        print*,'error mpi interface rank:',myrank
-        print*,'  interface: ',my_neighbours(iinterface),'point: ',j,'of',npoin
-        call exit_mpi(myrank,'error: mpi points not unique on interface')
+        if( IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE ) then
+          ! missing points might have been counted more than once  
+          if( ibool_neighbours(j,iinterface) > 0 ) then
+            print*,'warning mpi interface rank:',myrank
+            print*,'  interface: ',my_neighbours(iinterface),'point: ',j,'of',npoin,'iglob=',ibool_neighbours(j,iinterface)
+            ! decrease number of points          
+            nibool_neighbours(iinterface) = nibool_neighbours(iinterface) - 1
+            if( nibool_neighbours(iinterface) <= 0 ) then
+              print*,'error zero mpi interface rank:',myrank,'interface=',my_neighbours(iinterface)
+              call exit_mpi(myrank,'error: zero mpi points on interface')
+            endif
+            ! shift values
+            do k = j+1,npoin-1
+              ii = ibool_neighbours(k+1,iinterface)
+              ibool_neighbours(k,iinterface) = ii
+            enddo
+            ! re-sets values  
+            ibool_neighbours(npoin,iinterface) = 0
+            npoin = nibool_neighbours(iinterface)
+            max_nibool_interfaces = maxval( nibool_neighbours(1:num_interfaces) )
+          endif
+        else
+          print*,'error mpi interface rank:',myrank
+          print*,'  interface: ',my_neighbours(iinterface),'point: ',j,'of',npoin,'iglob=',ibool_neighbours(j,iinterface)
+          call exit_mpi(myrank,'error: mpi points not unique on interface')
+        endif
       endif
     enddo
   enddo
-
 
   ! re-sets flags for outer elements
   is_on_a_slice_edge(:) = work_ispec_is_outer(:)
 
   end subroutine rmd_get_MPI_interfaces
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine rmd_add_interface_point(iglob,rank,icurrent, &
+                                    nibool_neighbours,MAX_NEIGHBOURS, &
+                                    ibool_neighbours,max_nibool, &
+                                    work_test_flag,NGLOB,myrank, &
+                                    is_face_edge,add_central_cube)
+
+  use constants
+
+  implicit none
+
+  integer,intent(in) :: iglob,rank,icurrent
+  integer,intent(in) :: myrank
+  
+  integer,intent(in) :: MAX_NEIGHBOURS,max_nibool
+  integer, dimension(MAX_NEIGHBOURS),intent(inout) :: nibool_neighbours
+  integer, dimension(max_nibool,MAX_NEIGHBOURS),intent(inout) :: ibool_neighbours
+
+  integer,intent(in) :: NGLOB
+  integer,dimension(NGLOB) :: work_test_flag
+  
+  logical,intent(in) :: is_face_edge,add_central_cube
+  
+  ! local parameters
+  integer :: i
+  logical :: is_done
+
+  ! let's check and be sure for central cube
+  !if( work_test_flag(iglob) <= 0 ) cycle ! continues to next point
+
+  ! checks that we take each global point (on edges and corners) only once
+  is_done = .false.
+  do i=1,nibool_neighbours(icurrent)
+    if( ibool_neighbours(i,icurrent) == iglob ) then
+      is_done = .true.
+      exit
+    endif
+  enddo
+  
+  ! checks if anything to do  
+  if( is_done ) then
+    ! special handling for central cube: removes rank if already added in inner core
+    if( add_central_cube ) then
+      if( is_face_edge .and. work_test_flag(iglob) < (rank + 1) ) then
+        ! re-sets if we missed this rank number
+        work_test_flag(iglob) = work_test_flag(iglob) + (rank + 1)
+      endif
+      ! re-sets flag
+      work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )      
+      if( is_face_edge .and. work_test_flag(iglob) < 0 ) then
+        ! re-sets to zero if we missed this rank number
+        if( work_test_flag(iglob) == - (rank + 1 ) ) work_test_flag(iglob) = 0
+      endif      
+    endif
+    return
+  endif
+
+  ! checks if flag was set correctly
+  if( work_test_flag(iglob) <= 0 ) then
+    ! we might have missed an interface point on an edge, just re-set to missing value
+    print*,'warning flag:',myrank,'rank=',rank,'interface=',icurrent
+    print*,'  flag=',work_test_flag(iglob),'missed iglob=',iglob                
+  endif
+  ! we might have missed an interface point on an edge, just re-set to missing value
+  if( is_face_edge ) then
+    if( work_test_flag(iglob) < (rank + 1) ) then
+      ! re-sets if we missed this rank number
+      work_test_flag(iglob) = work_test_flag(iglob) + (rank + 1)
+    endif
+  endif
+  
+  ! adds point
+  ! increases number of total points on this interface
+  nibool_neighbours(icurrent) = nibool_neighbours(icurrent) + 1
+  if( nibool_neighbours(icurrent) > max_nibool) &
+      call exit_mpi(myrank,'interface face exceeds max_nibool range')
+
+  ! stores interface iglob index
+  ibool_neighbours( nibool_neighbours(icurrent),icurrent ) = iglob
+
+  ! re-sets flag
+  work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )
+
+  ! checks
+  if( is_face_edge .and. work_test_flag(iglob) < 0 ) then
+    ! re-sets to zero if we missed this rank number
+    if( work_test_flag(iglob) == - (rank + 1 ) ) work_test_flag(iglob) = 0
+  endif
+
+  end subroutine rmd_add_interface_point
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine rmd_test_MPI_neighbours(num_interfaces,my_neighbours,nibool_interfaces)
+
+  use specfem_par
+  implicit none
+
+  include 'mpif.h'
+  
+  integer,intent(in) :: num_interfaces
+  integer,dimension(num_interfaces),intent(in) :: my_neighbours,nibool_interfaces
+  
+  ! local parameters
+  integer,dimension(:),allocatable :: dummy_i
+  integer,dimension(:,:),allocatable :: test_interfaces
+  integer,dimension(:,:),allocatable :: test_interfaces_nibool
+  integer :: msg_status(MPI_STATUS_SIZE)
+  integer :: ineighbour,iproc,inum,i,j,ier,ipoints,max_num
+  logical :: is_okay
+  
+  ! checks neighbors
+  ! gets maximum interfaces from all processes
+  call MPI_REDUCE(num_interfaces,max_num,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
+  
+  ! master gathers infos
+  if( myrank == 0 ) then
+    ! array for gathering infos
+    allocate(test_interfaces(max_num,0:NPROCTOT_VAL),stat=ier)  
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_interfaces')
+    test_interfaces = -1
+  
+    allocate(test_interfaces_nibool(max_num,0:NPROCTOT_VAL),stat=ier)  
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_interfaces_nibool')
+    test_interfaces_nibool = 0
+
+    ! used to store number of interfaces per proc
+    allocate(dummy_i(0:NPROCTOT_VAL),stat=ier)  
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i for test interfaces')
+    dummy_i = 0
+    
+    ! sets infos for master process
+    test_interfaces(1:num_interfaces,0) = my_neighbours(1:num_interfaces)
+    test_interfaces_nibool(1:num_interfaces,0) = nibool_interfaces(1:num_interfaces)
+    dummy_i(0) = num_interfaces
+    
+    ! collects from other processes
+    do iproc=1,NPROCTOT_VAL-1
+      ! gets number of interfaces
+      call MPI_RECV(inum,1,MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
+      dummy_i(iproc) = inum
+      if( inum > 0 ) then
+        call MPI_RECV(test_interfaces(1:inum,iproc),inum, &
+                      MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
+        call MPI_RECV(test_interfaces_nibool(1:inum,iproc),inum, &
+                      MPI_INTEGER,iproc,itag,MPI_COMM_WORLD,msg_status,ier)
+      endif  
+    enddo
+  else
+    ! sends infos to master process
+    call MPI_SEND(num_interfaces,1,MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
+    if( num_interfaces > 0 ) then
+      call MPI_SEND(my_neighbours(1:num_interfaces),num_interfaces, &
+                    MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
+      call MPI_SEND(nibool_interfaces(1:num_interfaces),num_interfaces, &
+                    MPI_INTEGER,0,itag,MPI_COMM_WORLD,ier)
+    endif
+  endif
+  call sync_all()
+  
+  ! checks if addressing is okay
+  if( myrank == 0 ) then
+    do iproc=0,NPROCTOT_VAL-1
+      do i=1,dummy_i(iproc)
+        ineighbour = test_interfaces(i,iproc)
+        if( ineighbour < 0 .or. ineighbour > NPROCTOT_VAL-1 ) then
+          print*,'error neighbour:',iproc,ineighbour
+          call exit_mpi(myrank,'error ineighbour')
+        endif
+        ipoints = test_interfaces_nibool(i,iproc)
+        if( ipoints <= 0 ) then
+          print*,'error neighbour points:',iproc,ipoints
+          call exit_mpi(myrank,'error ineighbour points')        
+        endif
+        ! looks up corresponding entry in neighbour array
+        is_okay = .false.
+        do j=1,dummy_i(ineighbour)
+          if( test_interfaces(j,ineighbour) == iproc ) then
+            ! checks if same number of interface points with this neighbour
+            if( test_interfaces_nibool(j,ineighbour) == ipoints ) then
+              is_okay = .true.
+            else
+              print*,'error neighbour points:',iproc,ipoints,'ineighbour found points: ', &
+                ineighbour,test_interfaces_nibool(j,ineighbour)
+              call exit_mpi(myrank,'error ineighbour points differ')
+            endif
+            exit
+          endif
+        enddo
+        if( .not. is_okay ) then
+          print*,'error neighbour:',iproc,'ineighbour not found: ',ineighbour
+          print*,'iproc ',iproc,' interfaces:'
+          print*,test_interfaces(1:dummy_i(iproc),iproc)
+          print*,'ineighbour ',ineighbour,' interfaces:'
+          print*,test_interfaces(1:dummy_i(ineighbour),ineighbour)
+          call exit_mpi(myrank,'error ineighbour not found')
+        endif
+      enddo
+    enddo
+
+    ! user output
+    write(IMAIN,*) '  mpi addressing maximum interfaces:',maxval(dummy_i)
+    write(IMAIN,*) '  mpi addressing : all interfaces okay'
+    write(IMAIN,*)
+    
+    deallocate(dummy_i)
+    deallocate(test_interfaces)
+  endif
+  call sync_all()
+
+  end subroutine rmd_test_MPI_neighbours
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine rmd_test_MPI_cm()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_outercore
+  use specfem_par_innercore
+  implicit none
+
+  include 'mpif.h'
+  
+  ! local parameters
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: test_flag_vector  
+  integer :: i,j,iglob,ier
+  integer :: inum,icount
+
+  ! crust mantle
+  allocate(test_flag_vector(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+  if( ier /= 0 ) stop 'error allocating array test_flag etc.'
+  
+  ! points defined by interfaces
+  test_flag_vector = 0.0
+  do i=1,num_interfaces_crust_mantle
+    do j=1,nibool_interfaces_crust_mantle(i)
+      iglob = ibool_interfaces_crust_mantle(j,i)
+      test_flag_vector(1,iglob) = 1.0_CUSTOM_REAL
+    enddo
+  enddo
+  i = sum(nibool_interfaces_crust_mantle)
+  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)      
+  i = nint( sum(test_flag_vector) )
+  call MPI_REDUCE(i,icount,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)      
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  total MPI interface points : ',inum
+    write(IMAIN,*) '  unique MPI interface points: ',icount    
+  endif  
+  
+  ! initializes for assembly
+  test_flag_vector = myrank + 1.0_CUSTOM_REAL
+  call sync_all()
+
+  ! adds contributions from different partitions to flag arrays
+  ! custom_real arrays
+  ! send
+  call assemble_MPI_vector_ext_mesh_s(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                      test_flag_vector, &
+                      buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
+                      num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                      nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                      my_neighbours_crust_mantle, &
+                      request_send_vector_crust_mantle,request_recv_vector_crust_mantle)
+  ! receive
+  call assemble_MPI_vector_ext_mesh_w(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                              test_flag_vector, &
+                              buffer_recv_vector_crust_mantle,num_interfaces_crust_mantle,&
+                              max_nibool_interfaces_crust_mantle, &
+                              nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
+                              request_send_vector_crust_mantle,request_recv_vector_crust_mantle)
+  call sync_all()
+  
+  ! checks number of interface points
+  i = 0
+  do iglob=1,NGLOB_CRUST_MANTLE
+    ! only counts flags with MPI contributions
+    if( test_flag_vector(1,iglob) > myrank+1.0+0.5 ) i = i + 1
+  enddo
+  deallocate(test_flag_vector)
+  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)    
+
+  ! points defined by interfaces
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  total assembled MPI interface points:',inum
+    write(IMAIN,*)
+
+    ! checks  
+    if( inum /= icount ) then
+      print*,'error crust mantle : total mpi points:',myrank,'total: ',inum,icount
+      call exit_mpi(myrank,'error MPI assembly crust mantle')
+    endif
+  endif
+
+  call sync_all()  
+
+  end subroutine rmd_test_MPI_cm
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine rmd_test_MPI_oc()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_outercore
+  use specfem_par_innercore
+  implicit none
+
+  include 'mpif.h'
+  
+  ! local parameters
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
+  integer :: i,j,iglob,ier
+  integer :: inum,icount
+
+  ! outer core
+  allocate(test_flag(NGLOB_OUTER_CORE),stat=ier)
+  if( ier /= 0 ) stop 'error allocating array test_flag etc.'
+  
+  ! points defined by interfaces
+  test_flag = 0.0
+  do i=1,num_interfaces_outer_core
+    do j=1,nibool_interfaces_outer_core(i)
+      iglob = ibool_interfaces_outer_core(j,i)
+      test_flag(iglob) = 1.0_CUSTOM_REAL
+    enddo
+  enddo
+  i = sum(nibool_interfaces_outer_core)
+  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)      
+  i = nint( sum(test_flag) )
+  call MPI_REDUCE(i,icount,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)      
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  total MPI interface points : ',inum
+    write(IMAIN,*) '  unique MPI interface points: ',icount
+  endif  
+  
+  ! initialized for assembly
+  test_flag = myrank + 1.0_CUSTOM_REAL
+  call sync_all()
+
+  ! adds contributions from different partitions to flag arrays
+  ! custom_real arrays
+  ! send
+  call assemble_MPI_scalar_ext_mesh_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+                                test_flag, &
+                                buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
+                                num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                                nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
+                                my_neighbours_outer_core, &
+                                request_send_scalar_outer_core,request_recv_scalar_outer_core)
+  ! receive
+  call assemble_MPI_scalar_ext_mesh_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+                                test_flag, &
+                                buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
+                                max_nibool_interfaces_outer_core, &
+                                nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                request_send_scalar_outer_core,request_recv_scalar_outer_core)
+  call sync_all()
+  
+  ! checks number of interface points
+  i = 0
+  do iglob=1,NGLOB_OUTER_CORE
+    ! only counts flags with MPI contributions
+    if( test_flag(iglob) > myrank+1.0+0.5 ) i = i + 1
+  enddo
+  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)    
+  deallocate(test_flag)
+
+  ! output  
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  total assembled MPI interface points:',inum
+    write(IMAIN,*)
+
+    ! checks
+    if( inum /= icount ) then
+      print*,'error outer core : total mpi points:',myrank,'total: ',inum,icount
+      call exit_mpi(myrank,'error MPI assembly outer_core')
+    endif
+  endif
+  
+  call sync_all()  
+
+  end subroutine rmd_test_MPI_oc
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine rmd_test_MPI_ic()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_outercore
+  use specfem_par_innercore
+  implicit none
+
+  include 'mpif.h'
+  
+  ! local parameters
+  real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: test_flag_vector  
+  integer :: i,j,iglob,ier
+  integer :: inum,icount
+
+  ! inner core
+  allocate(test_flag_vector(NDIM,NGLOB_INNER_CORE),stat=ier)
+  if( ier /= 0 ) stop 'error allocating array test_flag etc.'
+
+  ! points defined by interfaces
+  test_flag_vector = 0.0
+  do i=1,num_interfaces_inner_core
+    do j=1,nibool_interfaces_inner_core(i)
+      iglob = ibool_interfaces_inner_core(j,i)
+      test_flag_vector(1,iglob) = 1.0_CUSTOM_REAL
+    enddo
+  enddo
+  i = sum(nibool_interfaces_inner_core)
+  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)      
+  i = nint( sum(test_flag_vector) )
+  call MPI_REDUCE(i,icount,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)      
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  total MPI interface points : ',inum
+    write(IMAIN,*) '  unique MPI interface points: ',icount    
+  endif  
+  
+  ! initializes for assembly
+  test_flag_vector = myrank + 1.0_CUSTOM_REAL
+  call sync_all()
+
+  ! adds contributions from different partitions to flag arrays
+  ! custom_real arrays
+  ! send
+  call assemble_MPI_vector_ext_mesh_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                      test_flag_vector, &
+                      buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
+                      num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                      nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                      my_neighbours_inner_core, &
+                      request_send_vector_inner_core,request_recv_vector_inner_core)
+  ! receive
+  call assemble_MPI_vector_ext_mesh_w(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                              test_flag_vector, &
+                              buffer_recv_vector_inner_core,num_interfaces_inner_core,&
+                              max_nibool_interfaces_inner_core, &
+                              nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
+                              request_send_vector_inner_core,request_recv_vector_inner_core)
+  call sync_all()
+  
+  ! checks number of interface points
+  i = 0
+  do iglob=1,NGLOB_INNER_CORE
+    ! only counts flags with MPI contributions
+    if( test_flag_vector(1,iglob) > myrank+1.0+0.5 ) i = i + 1
+  enddo
+  deallocate(test_flag_vector)
+  call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)    
+
+  if( myrank == 0 ) then
+    write(IMAIN,*) '  total assembled MPI interface points:',inum
+    write(IMAIN,*)
+
+    ! checks
+    if( inum /= icount ) then
+      print*,'error inner core : total mpi points:',myrank,'total: ',inum,icount
+      call exit_mpi(myrank,'error MPI assembly inner core')
+    endif
+  endif
+  
+  call sync_all()  
+
+  end subroutine rmd_test_MPI_ic
 
 !
 !-------------------------------------------------------------------------------------------------

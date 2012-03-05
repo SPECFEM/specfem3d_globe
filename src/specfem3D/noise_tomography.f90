@@ -516,13 +516,15 @@
 ! by this modification, the efficiency is greatly improved
 ! and now, it should be OK to run NOISE_TOMOGRAPHY on a cluster with global storage
 
-  subroutine noise_read_add_surface_movie(accel,it_index)
+  subroutine noise_read_add_surface_movie(NGLOB,accel,it_index)
 
   use specfem_par
   use specfem_par_crustmantle
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE),intent(inout) :: accel
+  integer :: NGLOB
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: accel
+
   integer,intent(in) :: it_index
 
   ! local parameters

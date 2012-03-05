@@ -359,6 +359,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* NOISE_TOMOGRAPHY,
                                         int* SAVE_FORWARD_f,
                                         int* ABSORBING_CONDITIONS_f,
+          int* OCEANS_f,
                                         int* GRAVITY_f,
                                         int* ROTATION_f,
                                         int* ATTENUATION_f,
@@ -576,6 +577,10 @@ void FC_FUNC_(prepare_inner_core_device,
            int* nspec_inner,
            int* NSPEC2D_TOP_IC) {} 
 
+void FC_FUNC_(prepare_oceans_device,
+              PREPARE_OCEANS_DEVICE)(long* Mesh_pointer_f,
+             realw* h_rmass_ocean_load) {} 
+
 void FC_FUNC_(prepare_fields_elastic_device,
               PREPARE_FIELDS_ELASTIC_DEVICE)(long* Mesh_pointer_f,
                                              int* size,
@@ -648,15 +653,6 @@ void FC_FUNC_(transfer_fields_ic_to_device,
 void FC_FUNC_(transfer_fields_oc_to_device,
               TRANSFER_FIELDS_OC_TO_DEVICE)(int* size, realw* displ, realw* veloc, realw* accel,long* Mesh_pointer_f) {} 
 
-void FC_FUNC_(transfer_coupling_fields_fluid_cmb_icb_to_device,
-              TRANSFER_COUPLING_FIELDS_FLUID_CMB_ICB_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* displ_cm, realw* displ_ic, realw* accel, long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_fields_cmb_icb_fluid_to_device,
-              TRANSFER_COUPLING_FIELDS_CMB_ICB_FLUID_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* displ_cm, realw* displ_ic, realw* accel_cm, realw* accel_ic, realw* accel_oc, long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_fields_cmb_ocean_to_device,
-        TRANSFER_COUPLING_FIELDS_CMB_OCEAN_TO_DEVICE)(int* size, realw* accel, long* Mesh_pointer_f) {} 
-
 void FC_FUNC_(transfer_b_fields_cm_to_device,
               TRANSFER_FIELDS_B_CM_TO_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                               long* Mesh_pointer_f) {} 
@@ -669,15 +665,6 @@ void FC_FUNC_(transfer_b_fields_oc_to_device,
               TRANSFER_FIELDS_B_OC_TO_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                               long* Mesh_pointer_f) {} 
 
-void FC_FUNC_(transfer_coupling_b_fields_fluid_cmb_icb_to_device,
-              TRANSFER_COUPLING_B_FIELDS_FLUID_CMB_ICB_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* b_displ_cm, realw* b_displ_ic, realw* b_accel, long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_b_fields_cmb_icb_fluid_to_device,
-              TRANSFER_COUPLING_B_FIELDS_CMB_ICB_FLUID_TO_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* b_displ_cm, realw* b_displ_ic, realw* b_accel_cm, realw* b_accel_ic, realw* b_accel_oc, long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_b_fields_cmb_ocean_to_device,
-        TRANSFER_COUPLING_B_FIELDS_CMB_OCEAN_TO_DEVICE)(int* size, realw* b_accel, long* Mesh_pointer_f) {} 
-
 void FC_FUNC_(transfer_fields_cm_from_device,
               TRANSFER_FIELDS_CM_FROM_DEVICE)(int* size, realw* displ, realw* veloc, realw* accel,long* Mesh_pointer_f) {} 
 
@@ -686,15 +673,6 @@ void FC_FUNC_(transfer_fields_ic_from_device,
 
 void FC_FUNC_(transfer_fields_oc_from_device,
               TRANSFER_FIELDS_OC_FROM_DEVICE)(int* size, realw* displ, realw* veloc, realw* accel,long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_fields_fluid_cmb_icb_from_device,
-              TRANSFER_COUPLING_FIELDS_FLUID_CMB_ICB_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* displ_cm, realw* displ_ic, realw* accel, long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_fields_cmb_icb_fluid_from_device,
-              TRANSFER_COUPLING_FIELDS_CMB_ICB_FLUID_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* displ_cm, realw* displ_ic, realw* accel_cm, realw* accel_ic, realw* accel_oc, long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_fields_cmb_ocean_from_device,
-        TRANSFER_COUPLING_FIELDS_CMB_OCEAN_FROM_DEVICE)(int* size, realw* accel, long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_b_fields_cm_from_device,
               TRANSFER_B_FIELDS_CM_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
@@ -707,15 +685,6 @@ void FC_FUNC_(transfer_b_fields_ic_from_device,
 void FC_FUNC_(transfer_b_fields_oc_from_device,
               TRANSFER_B_FIELDS_OC_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                                 long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_b_fields_fluid_cmb_icb_from_device,
-              TRANSFER_COUPLING_B_FIELDS_FLUID_CMB_icb_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* b_displ_cm, realw* b_displ_ic, realw* b_accel, long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_b_fields_cmb_icb_fluid_from_device,
-              TRANSFER_COUPLING_B_FIELDS_CMB_ICB_FLUID_FROM_DEVICE)(int* size_oc, int* size_cm, int* size_ic, realw* b_displ_cm, realw* b_displ_ic, realw* b_accel_cm, realw* b_accel_ic, realw* b_accel_oc, long* Mesh_pointer_f) {} 
-
-void FC_FUNC_(transfer_coupling_b_fields_cmb_ocean_from_device,
-        TRANSFER_COUPLING_B_FIELDS_CMB_OCEAN_FROM_DEVICE)(int* size, realw* b_accel, long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_accel_cm_to_device,
               TRANSFER_ACCEL_CM_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
@@ -745,7 +714,7 @@ void FC_FUNC_(transfer_accel_cm_from_device,
               TRANSFER_ACCEL_CM_FROM_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_b_accel_cm_from_device,
-              TRNASFER_B_ACCEL_CM_FROM_DEVICE)(int* size, realw* b_accel,long* Mesh_pointer_f) {} 
+              TRANSFER_B_ACCEL_CM_FROM_DEVICE)(int* size, realw* b_accel,long* Mesh_pointer_f) {} 
 
 void FC_FUNC_(transfer_accel_ic_from_device,
               TRANSFER_ACCEL_IC_FROM_DEVICE)(int* size, realw* accel,long* Mesh_pointer_f) {} 

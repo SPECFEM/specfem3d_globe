@@ -25,9 +25,10 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_crust_mantle(displ_crust_mantle,accel_crust_mantle, &
+  subroutine compute_forces_crust_mantle(NSPEC,NGLOB,NSPEC_ATT, &
+                                        displ_crust_mantle,accel_crust_mantle, &
                                         phase_is_inner, &
-                                        R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                        R_xx,R_yy,R_xy,R_xz,R_yz, &                                        
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                         epsilondev_xz,epsilondev_yz, &
                                         epsilon_trace_over_3, &
@@ -70,36 +71,37 @@
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
 
-  use specfem_par_innercore,only: &
-    ibool_inner_core,idoubling_inner_core, &
-    iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-    npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-    iboolfaces_inner_core,iboolcorner_inner_core, &
-    nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-    npoin2D_cube_from_slices, &
-    ibool_central_cube, &
-    receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC
+!  use specfem_par_innercore,only: &
+!    ibool_inner_core,idoubling_inner_core, &
+!    iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+!    npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+!    iboolfaces_inner_core,iboolcorner_inner_core, &
+!    nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
+!    npoin2D_cube_from_slices, &
+!    ibool_central_cube, &
+!    receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC
 
   implicit none
 
+  integer :: NSPEC,NGLOB,NSPEC_ATT
+
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle,accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_crust_mantle,accel_crust_mantle
 
 
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
 !  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-
+  
 !  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
-
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
 
   ! variable sized array variables for one_minus_sum_beta and factor_common
   integer vx, vy, vz, vnspec

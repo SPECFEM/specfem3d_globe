@@ -34,9 +34,10 @@
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
 !          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
 
-  subroutine compute_forces_inner_core_Dev( displ_inner_core,accel_inner_core, &
+  subroutine compute_forces_inner_core_Dev( NSPEC,NGLOB,NSPEC_ATT, &
+                                            displ_inner_core,accel_inner_core, &
                                             phase_is_inner, &
-                                            R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                            R_xx,R_yy,R_xy,R_xz,R_yz, &                                            
                                             epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                             epsilondev_xz,epsilondev_yz, &
                                             epsilon_trace_over_3,&
@@ -79,15 +80,17 @@
     nspec_inner => nspec_inner_inner_core
 
 
-  use specfem_par_crustmantle,only: &
-    iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-    npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-    iboolfaces_crust_mantle,iboolcorner_crust_mantle
+!  use specfem_par_crustmantle,only: &
+!    iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+!    npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+!    iboolfaces_crust_mantle,iboolcorner_crust_mantle
 
   implicit none
 
+  integer :: NSPEC,NGLOB,NSPEC_ATT
+
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core,accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_inner_core,accel_inner_core
 
   ! for attenuation
   ! memory variables R_ij are stored at the local rather than global level
@@ -98,14 +101,14 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
 
 !  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
-  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
-
+  
 !  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
 
   ! inner/outer element run flag
   logical :: phase_is_inner
