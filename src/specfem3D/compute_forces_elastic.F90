@@ -76,10 +76,12 @@
       if( USE_DEVILLE_PRODUCTS_VAL ) then
         ! uses Deville (2002) optimizations
         ! crust/mantle region
-        call compute_forces_crust_mantle_Dev( displ_crust_mantle,accel_crust_mantle, &
+        call compute_forces_crust_mantle_Dev( NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
+                                      NSPEC_CRUST_MANTLE_ATTENUAT, &      
+                                      displ_crust_mantle,accel_crust_mantle, &
                                       phase_is_inner, &
                                       R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
-                                      R_xz_crust_mantle,R_yz_crust_mantle, &
+                                      R_xz_crust_mantle,R_yz_crust_mantle, &                                      
                                       epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                       epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                       eps_trace_over_3_crust_mantle, &
@@ -87,7 +89,9 @@
                                       size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
                                       size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
         ! inner core region
-        call compute_forces_inner_core_Dev( displ_inner_core,accel_inner_core, &
+        call compute_forces_inner_core_Dev( NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
+                                      NSPEC_INNER_CORE_ATTENUATION, &
+                                      displ_inner_core,accel_inner_core, &
                                       phase_is_inner, &
                                       R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core, &
                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
@@ -101,7 +105,9 @@
       else
         ! no Deville optimization
         ! crust/mantle region
-        call compute_forces_crust_mantle( displ_crust_mantle,accel_crust_mantle, &
+        call compute_forces_crust_mantle(  NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
+                                      NSPEC_CRUST_MANTLE_ATTENUAT, &              
+                                      displ_crust_mantle,accel_crust_mantle, &
                                       phase_is_inner, &
                                       R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
                                       R_xz_crust_mantle,R_yz_crust_mantle, &
@@ -112,7 +118,9 @@
                                       size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
                                       size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
         ! inner core region
-        call compute_forces_inner_core( displ_inner_core,accel_inner_core, &
+        call compute_forces_inner_core( NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
+                                      NSPEC_INNER_CORE_ATTENUATION, &
+                                      displ_inner_core,accel_inner_core, &
                                       phase_is_inner, &
                                       R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core, &
                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
@@ -130,7 +138,9 @@
         if( USE_DEVILLE_PRODUCTS_VAL ) then
           ! uses Deville (2002) optimizations
           ! crust/mantle region
-          call compute_forces_crust_mantle_Dev( b_displ_crust_mantle,b_accel_crust_mantle, &
+          call compute_forces_crust_mantle_Dev( NSPEC_CRUST_MANTLE_ADJOINT,NGLOB_CRUST_MANTLE_ADJOINT, &
+                                      NSPEC_CRUST_MANTLE_STR_AND_ATT, &
+                                      b_displ_crust_mantle,b_accel_crust_mantle, &
                                       phase_is_inner, &
                                       b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
                                       b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
@@ -142,7 +152,9 @@
                                       size(factor_common_crust_mantle,2), size(factor_common_crust_mantle,3), &
                                       size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
           ! inner core region
-          call compute_forces_inner_core_Dev( b_displ_inner_core,b_accel_inner_core, &
+          call compute_forces_inner_core_Dev( NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
+                                        NSPEC_INNER_CORE_STR_AND_ATT, &
+                                        b_displ_inner_core,b_accel_inner_core, &
                                         phase_is_inner, &
                                         b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
                                         b_R_xz_inner_core,b_R_yz_inner_core, &
@@ -157,7 +169,9 @@
         else
           ! no Deville optimization
           ! crust/mantle region
-          call compute_forces_crust_mantle( b_displ_crust_mantle,b_accel_crust_mantle, &
+          call compute_forces_crust_mantle( NSPEC_CRUST_MANTLE_ADJOINT,NGLOB_CRUST_MANTLE_ADJOINT, &
+                                        NSPEC_CRUST_MANTLE_STR_AND_ATT, &
+                                        b_displ_crust_mantle,b_accel_crust_mantle, &
                                         phase_is_inner, &
                                         b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
                                         b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
@@ -170,7 +184,9 @@
                                         size(factor_common_crust_mantle,4), size(factor_common_crust_mantle,5) )
 
           ! inner core region
-          call compute_forces_inner_core( b_displ_inner_core,b_accel_inner_core, &
+          call compute_forces_inner_core( NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
+                                        NSPEC_INNER_CORE_STR_AND_ATT, &
+                                        b_displ_inner_core,b_accel_inner_core, &
                                         phase_is_inner, &
                                         b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
                                         b_R_xz_inner_core,b_R_yz_inner_core, &
@@ -225,7 +241,7 @@
        case( 2 )
           ! second step of noise tomography, i.e., read the surface movie saved at every timestep
           ! use the movie to drive the ensemble forward wavefield
-          call noise_read_add_surface_movie(accel_crust_mantle,NSTEP-it+1)
+          call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE,accel_crust_mantle,NSTEP-it+1)
           ! be careful, since ensemble forward sources are reversals of generating wavefield "eta"
           ! hence the "NSTEP-it+1", i.e., start reading from the last timestep
           ! note the ensemble forward sources are generally distributed on the surface of the earth
@@ -236,7 +252,7 @@
           ! use the movie to reconstruct the ensemble forward wavefield
           ! the ensemble adjoint wavefield is done as usual
           ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
-          call noise_read_add_surface_movie(b_accel_crust_mantle,it)
+          call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,it)
        end select
 
 
@@ -464,12 +480,12 @@
   ! updates (only) acceleration w/ rotation in the crust/mantle region (touches oceans)
   if(.NOT. GPU_MODE) then
     ! on CPU
-    call compute_forces_el_update_accel(veloc_crust_mantle,accel_crust_mantle, &
-                                      two_omega_earth,rmass_crust_mantle)
+    call compute_forces_el_update_accel(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
+                                       two_omega_earth,rmass_crust_mantle)
     ! adjoint / kernel runs
     if (SIMULATION_TYPE == 3) &
-      call compute_forces_el_update_accel(b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                      b_two_omega_earth,rmass_crust_mantle)
+      call compute_forces_el_update_accel(NGLOB_CRUST_MANTLE_ADJOINT,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                         b_two_omega_earth,rmass_crust_mantle)
   else
     ! on GPU
     call kernel_3_a_cuda(Mesh_pointer, &
@@ -501,14 +517,14 @@
   ! (updates velocity)
   if(.NOT. GPU_MODE ) then
     ! on CPU
-    call compute_forces_el_update_veloc(veloc_crust_mantle,accel_crust_mantle, &
-                                      veloc_inner_core,accel_inner_core, &
-                                      deltatover2,two_omega_earth,rmass_inner_core)
+    call compute_forces_el_update_veloc(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
+                                       NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
+                                       deltatover2,two_omega_earth,rmass_inner_core)
     ! adjoint / kernel runs
     if (SIMULATION_TYPE == 3) &
-      call compute_forces_el_update_veloc(b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                        b_veloc_inner_core,b_accel_inner_core, &
-                                        b_deltatover2,b_two_omega_earth,rmass_inner_core)
+      call compute_forces_el_update_veloc(NGLOB_CRUST_MANTLE_ADJOINT,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                         NGLOB_INNER_CORE_ADJOINT,b_veloc_inner_core,b_accel_inner_core, &
+                                         b_deltatover2,b_two_omega_earth,rmass_inner_core)
   else
     ! on GPU
     call kernel_3_b_cuda(Mesh_pointer, &
@@ -520,10 +536,10 @@
 
 !=====================================================================
 
-  subroutine compute_forces_el_update_accel(veloc_crust_mantle,accel_crust_mantle, &
+  subroutine compute_forces_el_update_accel(NGLOB,veloc_crust_mantle,accel_crust_mantle, &
                                            two_omega_earth,rmass_crust_mantle)
 
-  use specfem_par,only: CUSTOM_REAL,NGLOB_CRUST_MANTLE,NDIM
+  use constants,only: CUSTOM_REAL,NDIM
 
 #ifdef _HANDOPT
   use specfem_par,only: imodulo_NGLOB_CRUST_MANTLE4
@@ -531,12 +547,14 @@
 
   implicit none
 
+  integer :: NGLOB
+  
   ! velocity & acceleration
   ! crust/mantle region
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: veloc_crust_mantle,accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_crust_mantle,accel_crust_mantle
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: rmass_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass_crust_mantle
 
   real(kind=CUSTOM_REAL) :: two_omega_earth
 
@@ -556,7 +574,7 @@
       accel_crust_mantle(3,i) = accel_crust_mantle(3,i)*rmass_crust_mantle(i)
     enddo
   endif
-  do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
+  do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB,4
     accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
              + two_omega_earth*veloc_crust_mantle(2,i)
     accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
@@ -583,7 +601,7 @@
   enddo
 #else
 ! way 1:
-  do i=1,NGLOB_CRUST_MANTLE
+  do i=1,NGLOB
     accel_crust_mantle(1,i) = accel_crust_mantle(1,i)*rmass_crust_mantle(i) &
              + two_omega_earth*veloc_crust_mantle(2,i)
     accel_crust_mantle(2,i) = accel_crust_mantle(2,i)*rmass_crust_mantle(i) &
@@ -597,11 +615,11 @@
 
 !=====================================================================
 
-  subroutine compute_forces_el_update_veloc(veloc_crust_mantle,accel_crust_mantle, &
-                                            veloc_inner_core,accel_inner_core, &
+  subroutine compute_forces_el_update_veloc(NGLOB_CM,veloc_crust_mantle,accel_crust_mantle, &
+                                            NGLOB_IC,veloc_inner_core,accel_inner_core, &
                                             deltatover2,two_omega_earth,rmass_inner_core)
 
-  use specfem_par,only: CUSTOM_REAL,NGLOB_CRUST_MANTLE,NGLOB_INNER_CORE,NDIM
+  use constants,only: CUSTOM_REAL,NDIM
 
 #ifdef _HANDOPT
   use specfem_par,only: imodulo_NGLOB_CRUST_MANTLE4,imodulo_NGLOB_INNER_CORE
@@ -609,14 +627,16 @@
 
   implicit none
 
+  integer :: NGLOB_CM,NGLOB_IC
+  
   ! acceleration & velocity
   ! crust/mantle region
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: veloc_crust_mantle,accel_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM) :: veloc_crust_mantle,accel_crust_mantle
   ! inner core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: veloc_inner_core,accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC) :: veloc_inner_core,accel_inner_core
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
+  real(kind=CUSTOM_REAL), dimension(NGLOB_IC) :: rmass_inner_core
 
   real(kind=CUSTOM_REAL) :: deltatover2,two_omega_earth
 
@@ -640,7 +660,7 @@
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
     enddo
   endif
-  do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CRUST_MANTLE,4
+  do i=imodulo_NGLOB_CRUST_MANTLE4+1,NGLOB_CM,4
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
     veloc_crust_mantle(:,i+1) = veloc_crust_mantle(:,i+1) + deltatover2*accel_crust_mantle(:,i+1)
     veloc_crust_mantle(:,i+2) = veloc_crust_mantle(:,i+2) + deltatover2*accel_crust_mantle(:,i+2)
@@ -659,7 +679,7 @@
       veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
     enddo
   endif
-  do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_INNER_CORE,3
+  do i=imodulo_NGLOB_INNER_CORE+1,NGLOB_IC,3
     accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
            + two_omega_earth*veloc_inner_core(2,i)
     accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &
@@ -687,11 +707,11 @@
 #else
 ! way 1:
   ! mantle
-  do i=1,NGLOB_CRUST_MANTLE
+  do i=1,NGLOB_CM
     veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
   enddo
   ! inner core
-  do i=1,NGLOB_INNER_CORE
+  do i=1,NGLOB_IC
     accel_inner_core(1,i) = accel_inner_core(1,i)*rmass_inner_core(i) &
            + two_omega_earth*veloc_inner_core(2,i)
     accel_inner_core(2,i) = accel_inner_core(2,i)*rmass_inner_core(i) &

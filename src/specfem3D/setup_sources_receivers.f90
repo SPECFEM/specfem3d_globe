@@ -456,14 +456,16 @@
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating sourcearrays')
 
     ! stores source arrays
-    call setup_sources_receivers_srcarr(NSOURCES,myrank, &
-                      ispec_selected_source,islice_selected_source, &
-                      xi_source,eta_source,gamma_source, &
-                      Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                      xigll,yigll,zigll,sourcearrays)
+    call setup_sources_receivers_srcarr()
+!                      NSOURCES,myrank, &
+!                      ispec_selected_source,islice_selected_source, &
+!                      xi_source,eta_source,gamma_source, &
+!                      Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+!                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+!                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+!                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+!                      xigll,yigll,zigll,sourcearrays)
+
   endif
 
   ! adjoint source arrays

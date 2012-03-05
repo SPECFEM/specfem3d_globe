@@ -431,15 +431,15 @@
     endif
 
     ! updates integral values
-    Iepsilondev_crust_mantle(1,:,:,:,:) = Iepsilondev_crust_mantle(1,:,:,:,:)  &
+    Iepsilondev_xx_crust_mantle(:,:,:,:) = Iepsilondev_xx_crust_mantle(:,:,:,:)  &
                                               + deltat*epsilondev_xx_crust_mantle(:,:,:,:)
-    Iepsilondev_crust_mantle(2,:,:,:,:) = Iepsilondev_crust_mantle(2,:,:,:,:)  &
+    Iepsilondev_yy_crust_mantle(:,:,:,:) = Iepsilondev_yy_crust_mantle(:,:,:,:)  &
                                               + deltat*epsilondev_yy_crust_mantle(:,:,:,:)
-    Iepsilondev_crust_mantle(3,:,:,:,:) = Iepsilondev_crust_mantle(3,:,:,:,:)  &
+    Iepsilondev_xy_crust_mantle(:,:,:,:) = Iepsilondev_xy_crust_mantle(:,:,:,:)  &
                                               + deltat*epsilondev_xy_crust_mantle(:,:,:,:)
-    Iepsilondev_crust_mantle(4,:,:,:,:) = Iepsilondev_crust_mantle(4,:,:,:,:)  &
+    Iepsilondev_xz_crust_mantle(:,:,:,:) = Iepsilondev_xz_crust_mantle(:,:,:,:)  &
                                               + deltat*epsilondev_xz_crust_mantle(:,:,:,:)
-    Iepsilondev_crust_mantle(5,:,:,:,:) = Iepsilondev_crust_mantle(5,:,:,:,:)  &
+    Iepsilondev_yz_crust_mantle(:,:,:,:) = Iepsilondev_yz_crust_mantle(:,:,:,:)  &
                                               + deltat*epsilondev_yz_crust_mantle(:,:,:,:)
 
     Ieps_trace_over_3_crust_mantle(:,:,:,:) = Ieps_trace_over_3_crust_mantle(:,:,:,:) &

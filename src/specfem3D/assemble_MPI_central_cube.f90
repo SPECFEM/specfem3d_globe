@@ -52,9 +52,10 @@
   integer, intent(inout) :: iphase_comm_CC
   integer, dimension(nb_msgs_theor_in_cube), intent(in) :: sender_from_slices_to_cube
 
-  double precision, dimension(npoin2D_cube_from_slices,ndim_assemble), intent(inout) :: buffer_slices
+  double precision, dimension(npoin2D_cube_from_slices,ndim_assemble), intent(inout) :: &
+    buffer_slices
   double precision, dimension(npoin2D_cube_from_slices,ndim_assemble,nb_msgs_theor_in_cube), intent(inout) :: &
-                                                                                      buffer_all_cube_from_slices
+    buffer_all_cube_from_slices
 
   ! note: these parameters are "saved" now as global parameters
   ! MPI status of messages to be received
