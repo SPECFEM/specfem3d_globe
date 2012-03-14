@@ -385,7 +385,7 @@
       write(IMAIN,'(20x)',advance='no')
       do iproc_eta = NPROC_ETA_VAL -1, 0, -1
         ichunk = CHUNK_AB
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        write(IMAIN,'(i10)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
@@ -394,17 +394,17 @@
       write(IMAIN,'(1x)',advance='no')
       do iproc_eta = NPROC_ETA_VAL -1, 0, -1
         ichunk = CHUNK_BC
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        write(IMAIN,'(i10)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(3x)',advance='no')
       do iproc_eta = NPROC_ETA_VAL -1, 0, -1
         ichunk = CHUNK_AC
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        write(IMAIN,'(i10)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(3x)',advance='no')
       do iproc_eta = NPROC_ETA_VAL -1, 0, -1
         ichunk = CHUNK_BC_ANTIPODE
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        write(IMAIN,'(i10)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
@@ -413,7 +413,7 @@
       write(IMAIN,'(20x)',advance='no')
       do iproc_eta = NPROC_ETA_VAL -1, 0, -1
         ichunk = CHUNK_AB_ANTIPODE
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        write(IMAIN,'(i10)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
@@ -422,7 +422,7 @@
       write(IMAIN,'(20x)',advance='no')
       do iproc_eta = NPROC_ETA_VAL -1, 0, -1
         ichunk = CHUNK_AC_ANTIPODE
-        write(IMAIN,'(i5)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
+        write(IMAIN,'(i10)',advance='no') addressing(ichunk,iproc_xi,iproc_eta)
       enddo
       write(IMAIN,'(1x)',advance='yes')
     enddo
