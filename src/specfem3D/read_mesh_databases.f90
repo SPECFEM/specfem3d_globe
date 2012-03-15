@@ -378,8 +378,11 @@
   call MPI_BCAST(iproc_xi_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(iproc_eta_slice,NPROCTOT_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
-  ! output a topology map of slices - fix 20x by nproc
-  if (myrank == 0 .and. NCHUNKS_VAL == 6) then
+  ! output a topology map of slices
+!!!!!!!  if (myrank == 0 .and. NCHUNKS_VAL == 6) then
+!!!!!!! commented out because crashes when run on a very large machine
+!!!!!!! because the records become too long
+  if (.false.) then
     write(IMAIN,*) 'Spatial distribution of the slices'
     do iproc_xi = NPROC_XI_VAL-1, 0, -1
       write(IMAIN,'(20x)',advance='no')
