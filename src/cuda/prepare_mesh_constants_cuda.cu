@@ -195,15 +195,16 @@ void FC_FUNC_(prepare_constants_device,
                                         int* h_number_receiver_global,
                                         int* h_islice_selected_rec,int* h_ispec_selected_rec,
                                         int* nrec,int* nrec_local, int* nadj_rec_local,
-                                        int* NSPEC_CRUST_MANTLE, int* NGLOB_CRUST_MANTLE, 
-					int* NGLOB_CRUST_MANTLE_OCEANS,
+                                        int* NSPEC_CRUST_MANTLE, int* NGLOB_CRUST_MANTLE,
+                                        int* NSPEC_CRUST_MANTLE_STRAIN_ONLY,
+                                        int* NGLOB_CRUST_MANTLE_OCEANS,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
                                         int* SIMULATION_TYPE,
                                         int* NOISE_TOMOGRAPHY,
                                         int* SAVE_FORWARD_f,
                                         int* ABSORBING_CONDITIONS_f,
-					int* OCEANS_f,
+                                        int* OCEANS_f,
                                         int* GRAVITY_f,
                                         int* ROTATION_f,
                                         int* ATTENUATION_f,
@@ -242,6 +243,7 @@ TRACE("prepare_constants_device");
   // sets global parameters
   mp->NSPEC_CRUST_MANTLE = *NSPEC_CRUST_MANTLE;
   mp->NGLOB_CRUST_MANTLE = *NGLOB_CRUST_MANTLE;
+  mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY = *NSPEC_CRUST_MANTLE_STRAIN_ONLY;
   mp->NGLOB_CRUST_MANTLE_OCEANS = *NGLOB_CRUST_MANTLE_OCEANS;
   mp->NSPEC_OUTER_CORE = *NSPEC_OUTER_CORE;
   mp->NGLOB_OUTER_CORE = *NGLOB_OUTER_CORE;
@@ -677,7 +679,7 @@ void FC_FUNC_(prepare_fields_strain_device,
                                             ) {
 
   TRACE("prepare_fields_strain_device");
-  int R_size;
+  int R_size,size_strain_only;
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f);
 
@@ -708,10 +710,13 @@ void FC_FUNC_(prepare_fields_strain_device,
   print_CUDA_error_if_any(cudaMemcpy(mp->d_epsilondev_yz_crust_mantle,epsilondev_yz_crust_mantle,
                                      R_size*sizeof(realw),cudaMemcpyHostToDevice),4433);
 
+  // strain
+  size_strain_only = NGLL3*(mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
   print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_eps_trace_over_3_crust_mantle,
-                                       R_size*sizeof(realw)),4401);
+                                      size_strain_only*sizeof(realw)),4401);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_eps_trace_over_3_crust_mantle,eps_trace_over_3_crust_mantle,
-                                       R_size*sizeof(realw),cudaMemcpyHostToDevice),4402);
+                                      size_strain_only*sizeof(realw),cudaMemcpyHostToDevice),4402);
+
   // backward/reconstructed fields
   if( mp->simulation_type == 3 ){
     print_CUDA_error_if_any(cudaMalloc((void**) &mp->d_b_epsilondev_xx_crust_mantle,
@@ -1339,34 +1344,34 @@ void FC_FUNC_(prepare_fields_noise_device,
 extern "C"
 void FC_FUNC_(prepare_crust_mantle_device,
               PREPARE_CRUST_MANTLE_DEVICE)(long* Mesh_pointer_f,
-					   realw* h_xix, realw* h_xiy, realw* h_xiz,
-					   realw* h_etax, realw* h_etay, realw* h_etaz,
-					   realw* h_gammax, realw* h_gammay, realw* h_gammaz,
-					   realw* h_rho,
-					   realw* h_kappav, realw* h_muv,
-					   realw* h_kappah, realw* h_muh,
-					   realw* h_eta_aniso,
-					   realw* h_rmass,
-					   realw* h_normal_top_crust_mantle,
-					   int* h_ibelm_top_crust_mantle,
-					   int* h_ibelm_bottom_crust_mantle,
-					   int* h_ibool,
-					   realw* h_xstore, realw* h_ystore, realw* h_zstore,
-					   int* h_ispec_is_tiso,
-					   realw *c11store,realw *c12store,realw *c13store,
-					   realw *c14store,realw *c15store,realw *c16store,
-					   realw *c22store,realw *c23store,realw *c24store,
-					   realw *c25store,realw *c26store,realw *c33store,
-					   realw *c34store,realw *c35store,realw *c36store,
-					   realw *c44store,realw *c45store,realw *c46store,
-					   realw *c55store,realw *c56store,realw *c66store,
-					   int* num_phase_ispec,
-					   int* phase_ispec_inner,
-					   int* nspec_outer,
-					   int* nspec_inner,
-					   int* NSPEC2D_TOP_CM,
-					   int* NSPEC2D_BOTTOM_CM
-					   ) {
+             realw* h_xix, realw* h_xiy, realw* h_xiz,
+             realw* h_etax, realw* h_etay, realw* h_etaz,
+             realw* h_gammax, realw* h_gammay, realw* h_gammaz,
+             realw* h_rho,
+             realw* h_kappav, realw* h_muv,
+             realw* h_kappah, realw* h_muh,
+             realw* h_eta_aniso,
+             realw* h_rmass,
+             realw* h_normal_top_crust_mantle,
+             int* h_ibelm_top_crust_mantle,
+             int* h_ibelm_bottom_crust_mantle,
+             int* h_ibool,
+             realw* h_xstore, realw* h_ystore, realw* h_zstore,
+             int* h_ispec_is_tiso,
+             realw *c11store,realw *c12store,realw *c13store,
+             realw *c14store,realw *c15store,realw *c16store,
+             realw *c22store,realw *c23store,realw *c24store,
+             realw *c25store,realw *c26store,realw *c33store,
+             realw *c34store,realw *c35store,realw *c36store,
+             realw *c44store,realw *c45store,realw *c46store,
+             realw *c55store,realw *c56store,realw *c66store,
+             int* num_phase_ispec,
+             int* phase_ispec_inner,
+             int* nspec_outer,
+             int* nspec_inner,
+             int* NSPEC2D_TOP_CM,
+             int* NSPEC2D_BOTTOM_CM
+             ) {
 
   TRACE("prepare_crust_mantle_device");
 
@@ -1580,7 +1585,7 @@ void FC_FUNC_(prepare_crust_mantle_device,
   // CMB/ocean coupling
   mp->nspec2D_top_crust_mantle = *NSPEC2D_TOP_CM;
   mp->nspec2D_bottom_crust_mantle = *NSPEC2D_BOTTOM_CM;
-  int size_tcm = NGLL2*(mp->nspec2D_top_crust_mantle); 
+  int size_tcm = NGLL2*(mp->nspec2D_top_crust_mantle);
 
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_normal_top_crust_mantle),sizeof(realw)*NDIM*size_tcm),40020);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_normal_top_crust_mantle,h_normal_top_crust_mantle,sizeof(realw)*NDIM*size_tcm,cudaMemcpyHostToDevice),40030);
@@ -1662,20 +1667,20 @@ void FC_FUNC_(prepare_outer_core_device,
                                          realw* h_gammax, realw* h_gammay, realw* h_gammaz,
                                          realw* h_rho, realw* h_kappav,
                                          realw* h_rmass,
-					 realw* h_normal_top_outer_core,
-					 realw* h_normal_bottom_outer_core,
-					 realw* h_jacobian2D_top_outer_core,
-					 realw* h_jacobian2D_bottom_outer_core,
-					 int* h_ibelm_top_outer_core,
-					 int* h_ibelm_bottom_outer_core,
+           realw* h_normal_top_outer_core,
+           realw* h_normal_bottom_outer_core,
+           realw* h_jacobian2D_top_outer_core,
+           realw* h_jacobian2D_bottom_outer_core,
+           int* h_ibelm_top_outer_core,
+           int* h_ibelm_bottom_outer_core,
                                          int* h_ibool,
                                          realw* h_xstore, realw* h_ystore, realw* h_zstore,
                                          int* num_phase_ispec,
                                          int* phase_ispec_inner,
                                          int* nspec_outer,
                                          int* nspec_inner,
-					 int* NSPEC2D_TOP_OC, 
-					 int* NSPEC2D_BOTTOM_OC
+           int* NSPEC2D_TOP_OC,
+           int* NSPEC2D_BOTTOM_OC
                                          ) {
 
   TRACE("prepare_outer_core_device");
@@ -1829,22 +1834,22 @@ void FC_FUNC_(prepare_outer_core_device,
 extern "C"
 void FC_FUNC_(prepare_inner_core_device,
               PREPARE_INNER_CORE_DEVICE)(long* Mesh_pointer_f,
-					 realw* h_xix, realw* h_xiy, realw* h_xiz,
-					 realw* h_etax, realw* h_etay, realw* h_etaz,
-					 realw* h_gammax, realw* h_gammay, realw* h_gammaz,
-					 realw* h_rho, realw* h_kappav, realw* h_muv,
-					 realw* h_rmass,
-					 int* h_ibelm_top_inner_core,
-					 int* h_ibool,
-					 realw* h_xstore, realw* h_ystore, realw* h_zstore,
-					 realw *c11store,realw *c12store,realw *c13store,
-					 realw *c33store,realw *c44store,
-					 int* h_idoubling_inner_core,
-					 int* num_phase_ispec,
-					 int* phase_ispec_inner,
-					 int* nspec_outer,
-					 int* nspec_inner,
-					 int* NSPEC2D_TOP_IC) {
+           realw* h_xix, realw* h_xiy, realw* h_xiz,
+           realw* h_etax, realw* h_etay, realw* h_etaz,
+           realw* h_gammax, realw* h_gammay, realw* h_gammaz,
+           realw* h_rho, realw* h_kappav, realw* h_muv,
+           realw* h_rmass,
+           int* h_ibelm_top_inner_core,
+           int* h_ibool,
+           realw* h_xstore, realw* h_ystore, realw* h_zstore,
+           realw *c11store,realw *c12store,realw *c13store,
+           realw *c33store,realw *c44store,
+           int* h_idoubling_inner_core,
+           int* num_phase_ispec,
+           int* phase_ispec_inner,
+           int* nspec_outer,
+           int* nspec_inner,
+           int* NSPEC2D_TOP_IC) {
 
   TRACE("prepare_inner_core_device");
 
@@ -1976,7 +1981,7 @@ void FC_FUNC_(prepare_inner_core_device,
 
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_ibelm_top_inner_core),sizeof(int)*(mp->nspec2D_top_inner_core)),40021);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_ibelm_top_inner_core,h_ibelm_top_inner_core,sizeof(int)*(mp->nspec2D_top_inner_core),cudaMemcpyHostToDevice),40031);
- 
+
   // wavefield
   int size = NDIM * mp->NGLOB_INNER_CORE;
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_displ_inner_core),sizeof(realw)*size),4001);
@@ -2028,7 +2033,7 @@ void FC_FUNC_(prepare_inner_core_device,
 extern "C"
 void FC_FUNC_(prepare_oceans_device,
               PREPARE_OCEANS_DEVICE)(long* Mesh_pointer_f,
-				     realw* h_rmass_ocean_load) {
+             realw* h_rmass_ocean_load) {
 
   TRACE("prepare_oceans_device");
 
@@ -2036,14 +2041,14 @@ void FC_FUNC_(prepare_oceans_device,
 
   // mass matrix
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rmass_ocean_load),
-				     sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS),4501);
+             sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS),4501);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_rmass_ocean_load,h_rmass_ocean_load,
-				     sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS,cudaMemcpyHostToDevice),4502);
+             sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS,cudaMemcpyHostToDevice),4502);
 
   // temporary global array: used to synchronize updates on global accel array
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_updated_dof_ocean_load),
-				     sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),4502);
-  
+             sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),4502);
+
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_oceans_device");

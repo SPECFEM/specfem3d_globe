@@ -928,7 +928,8 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                           realw* d_minus_gravity_table,
                                           realw* d_minus_deriv_gravity_table,
                                           realw* d_density_table,
-                                          realw* wgll_cube){
+                                          realw* wgll_cube,
+                                          int NSPEC_CRUST_MANTLE_STRAIN_ONLY){
 
   /* int bx = blockIdx.y*blockDim.x+blockIdx.x; //possible bug in original code*/
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
@@ -1165,7 +1166,9 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
         epsilondev_xz_loc = 0.5f * duzdxl_plus_duxdzl;
         epsilondev_yz_loc = 0.5f * duzdyl_plus_duydzl;
 
-        if(SIMULATION_TYPE == 3) {
+        if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+          epsilon_trace_over_3[tx] = templ;
+        }else{
           epsilon_trace_over_3[tx + working_element*NGLL3] = templ;
         }
       }
@@ -1563,7 +1566,8 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                   mp->d_minus_gravity_table,
                                   mp->d_minus_deriv_gravity_table,
                                   mp->d_density_table,
-                                  mp->d_wgll_cube);
+                                  mp->d_wgll_cube,
+                                  mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
 
 
   if(mp->simulation_type == 3) {
@@ -1606,7 +1610,8 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                      mp->d_minus_gravity_table,
                                      mp->d_minus_deriv_gravity_table,
                                      mp->d_density_table,
-                                     mp->d_wgll_cube);
+                                     mp->d_wgll_cube,
+                                     mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
   }
 
   // cudaEventRecord( stop, 0 );

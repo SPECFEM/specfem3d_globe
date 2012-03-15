@@ -107,7 +107,7 @@
       if( nrec_local > 0 ) &
         call write_adj_seismograms(seismograms,number_receiver_global, &
                                   nrec_local,it,nit_written,DT, &
-                                  NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_PATH)
+                                  NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,t0,LOCAL_TMP_PATH)
         nit_written = it
     endif
     seismo_offset = seismo_offset + seismo_current
@@ -498,7 +498,7 @@
 
   subroutine write_adj_seismograms(seismograms,number_receiver_global, &
               nrec_local,it,nit_written,DT,NSTEP, &
-              NTSTEP_BETWEEN_OUTPUT_SEISMOS,hdur,LOCAL_PATH)
+              NTSTEP_BETWEEN_OUTPUT_SEISMOS,hdur,LOCAL_TMP_PATH)
 
   implicit none
 
@@ -508,7 +508,7 @@
   integer, dimension(nrec_local) :: number_receiver_global
   real(kind=CUSTOM_REAL), dimension(9,nrec_local,NSTEP) :: seismograms
   double precision :: hdur,DT
-  character(len=150) :: LOCAL_PATH
+  character(len=150) :: LOCAL_TMP_PATH
 
   integer :: irec,irec_local
   integer :: iorientation,isample
@@ -553,7 +553,7 @@
       write(sisname,"(a,i6.6,'.',a,'.',a3,'.sem')") 'S',irec,'NT',chn
 
       ! suppress white spaces if any
-      clean_LOCAL_PATH = adjustl(LOCAL_PATH)
+      clean_LOCAL_PATH = adjustl(LOCAL_TMP_PATH)
 
       ! create full final local path
       final_LOCAL_PATH = clean_LOCAL_PATH(1:len_trim(clean_LOCAL_PATH)) // '/'

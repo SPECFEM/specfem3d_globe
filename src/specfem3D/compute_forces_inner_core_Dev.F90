@@ -37,7 +37,7 @@
   subroutine compute_forces_inner_core_Dev( NSPEC,NGLOB,NSPEC_ATT, &
                                             displ_inner_core,accel_inner_core, &
                                             phase_is_inner, &
-                                            R_xx,R_yy,R_xy,R_xz,R_yz, &                                            
+                                            R_xx,R_yy,R_xy,R_xz,R_yz, &
                                             epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                             epsilondev_xz,epsilondev_yz, &
                                             epsilon_trace_over_3,&
@@ -103,7 +103,7 @@
 !  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: R_memory
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
-  
+
 !  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz

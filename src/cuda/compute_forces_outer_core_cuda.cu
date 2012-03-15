@@ -605,9 +605,9 @@ void FC_FUNC_(compute_forces_outer_core_cuda,
       nb_colors = mp->num_colors_outer_outer_core;
       istart = 0;
 
-      // array offsets (acoustic elements start after elastic ones)
-      color_offset = mp->nspec_elastic * NGLL3_PADDED;
-      color_offset_nonpadded = mp->nspec_elastic * NGLL3;
+      // array offsets
+      color_offset = 0;
+      color_offset_nonpadded = 0;
     }else{
       // inner element colors (start after outer elements)
       nb_colors = mp->num_colors_outer_outer_core + mp->num_colors_inner_outer_core;

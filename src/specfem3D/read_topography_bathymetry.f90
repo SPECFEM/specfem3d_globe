@@ -42,19 +42,23 @@
   time_start = MPI_WTIME()
 
   ! make ellipticity
-  if(ELLIPTICITY_VAL) then
+  if( ELLIPTICITY_VAL ) then
     call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
   endif
 
   ! read topography and bathymetry file
-  if(myrank == 0 .and. (TOPOGRAPHY .or. OCEANS_VAL)) then
-    call read_topo_bathy_file(ibathy_topo)
+  if( TOPOGRAPHY ) then
+    ! master reads file
+    if(myrank == 0 ) then
+      call read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+    endif
+
+    ! broadcast the information read on the master to the nodes
+    call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   endif
 
-  ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
   ! user output
+  call sync_all()
   if( myrank == 0 .and. (TOPOGRAPHY .or. OCEANS_VAL)) then
     ! elapsed time since beginning of mesh generation
     tCPU = MPI_WTIME() - time_start

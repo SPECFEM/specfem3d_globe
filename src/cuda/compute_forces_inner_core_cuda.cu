@@ -940,7 +940,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
   // cudaEventRecord( start, 0 );
 
   Kernel_2_inner_core_impl<<<grid,threads>>>(nb_blocks_to_compute,
-                                  mp->NGLOB_AB,
+                                  mp->NGLOB_INNER_CORE,
                                   d_ibool,
                                   d_idoubling,
                                   mp->d_phase_ispec_inner_inner_core,
@@ -983,7 +983,7 @@ void Kernel_2_inner_core(int nb_blocks_to_compute,Mesh* mp,
 
   if(mp->simulation_type == 3) {
     Kernel_2_inner_core_impl<<< grid,threads>>>(nb_blocks_to_compute,
-                                     mp->NGLOB_AB,
+                                     mp->NGLOB_INNER_CORE,
                                      d_ibool,
                                      d_idoubling,
                                      mp->d_phase_ispec_inner_inner_core,

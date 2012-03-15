@@ -228,7 +228,7 @@ void FC_FUNC_(transfer_b_fields_ic_from_device,
               TRANSFER_B_FIELDS_IC_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                                 long* Mesh_pointer_f) {
   TRACE("transfer_fields_b_ic_from_device");
-  
+
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
   print_CUDA_error_if_any(cudaMemcpy(b_displ,mp->d_b_displ_inner_core,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
@@ -244,9 +244,9 @@ extern "C"
 void FC_FUNC_(transfer_b_fields_oc_from_device,
               TRANSFER_B_FIELDS_OC_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,
                                                 long* Mesh_pointer_f) {
-  
+
   TRACE("transfer_b_fields_oc_from_device");
-  
+
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); //get mesh pointer out of fortran integer container
 
   print_CUDA_error_if_any(cudaMemcpy(b_displ,mp->d_b_displ_outer_core,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
