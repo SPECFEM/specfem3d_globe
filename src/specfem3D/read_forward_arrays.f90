@@ -72,7 +72,7 @@
   ! read files back from local disk or MT tape system if restart file
   if(NUMBER_OF_THIS_RUN > 1) then
     write(outputname,"('dump_all_arrays',i6.6)") myrank
-    open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
+    open(unit=55,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='old',action='read',form='unformatted')
 
     read(55) displ_crust_mantle
     read(55) veloc_crust_mantle
@@ -179,11 +179,11 @@
   character(len=150) outputname
 
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-  open(unit=55,file=trim(LOCAL_PATH)//'/'//outputname, &
+  open(unit=55,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
         status='old',action='read',form='unformatted',iostat=ier)
   if( ier /= 0 ) then
     print*,'error: opening proc_****_save_forward_arrays.bin'
-    print*,'path: ',trim(LOCAL_PATH)//'/'//outputname
+    print*,'path: ',trim(LOCAL_TMP_PATH)//'/'//outputname
     call exit_mpi(myrank,'error open file save_forward_arrays.bin')
   endif
 

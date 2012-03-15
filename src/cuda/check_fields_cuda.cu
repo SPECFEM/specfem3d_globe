@@ -669,7 +669,7 @@ __global__ void get_maximum_scalar_kernel(realw* array, int size, realw* d_max){
 
   // load shared mem
   unsigned int tid = threadIdx.x;
-  unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned int i = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
 
   // loads absolute values into shared memory
   sdata[tid] = (i < size) ? fabs(array[i]) : 0.0 ;
@@ -747,11 +747,19 @@ TRACE("check_norm_acoustic_from_device");
 
   // outer core
   int size = mp->NGLOB_OUTER_CORE;
-  int num_blocks_x = (int) ceil(size/blocksize);
 
-  h_max = (realw*) calloc(num_blocks_x,sizeof(realw));
-  cudaMalloc((void**)&d_max,num_blocks_x*sizeof(realw));
-  dim3 grid(num_blocks_x,1);
+  int size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
+  int num_blocks_x = size_padded/blocksize;
+  int num_blocks_y = 1;
+  while(num_blocks_x > 65535) {
+    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
+    num_blocks_y = num_blocks_y*2;
+  }
+
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+
+  dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
   if(*SIMULATION_TYPE == 1 ){
@@ -760,11 +768,12 @@ TRACE("check_norm_acoustic_from_device");
     get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_b_displ_outer_core,size,d_max);
   }
 
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),222);
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),222);
 
   // determines max for all blocks
   max = h_max[0];
-  for(int i=1;i<num_blocks_x;i++) {
+  for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
 
@@ -830,7 +839,7 @@ __global__ void get_maximum_vector_kernel(realw* array, int size, realw* d_max){
 
   // load shared mem
   unsigned int tid = threadIdx.x;
-  unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+  unsigned int i = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
 
   // loads values into shared memory: assume array is a vector array
   sdata[tid] = (i < size) ? sqrt(array[i*3]*array[i*3]
@@ -871,8 +880,9 @@ void FC_FUNC_(check_norm_elastic_from_device,
 
   realw max,max_crust_mantle,max_inner_core;
   realw *d_max;
-  int num_blocks_x,size;
-
+  int num_blocks_x,num_blocks_y;
+  int size,size_padded;
+  dim3 grid,threads;
 
   // launch simple reduction kernel
   realw* h_max;
@@ -882,24 +892,33 @@ void FC_FUNC_(check_norm_elastic_from_device,
   max = 0;
   size = mp->NGLOB_CRUST_MANTLE;
 
-  num_blocks_x = (int) ceil(size/blocksize);
-  h_max = (realw*) calloc(num_blocks_x,sizeof(realw));
-  cudaMalloc((void**)&d_max,num_blocks_x*sizeof(realw));
+  size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
+  num_blocks_x = size_padded/blocksize;
+  num_blocks_y = 1;
+  while(num_blocks_x > 65535) {
+    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
+    num_blocks_y = num_blocks_y*2;
+  }
 
-  dim3 grid1(num_blocks_x,1);
-  dim3 threads1(blocksize,1,1);
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+
+  grid = dim3(num_blocks_x,num_blocks_y);
+  threads = dim3(blocksize,1,1);
+
   if(*SIMULATION_TYPE == 1 ){
-    get_maximum_vector_kernel<<<grid1,threads1>>>(mp->d_displ_crust_mantle,size,d_max);
+    get_maximum_vector_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,size,d_max);
   }else if(*SIMULATION_TYPE == 3 ){
-    get_maximum_vector_kernel<<<grid1,threads1>>>(mp->d_b_displ_crust_mantle,size,d_max);
+    get_maximum_vector_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,size,d_max);
   }
 
   // copies to CPU
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),222);
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),222);
 
   // determines max for all blocks
   max = h_max[0];
-  for(int i=1;i<num_blocks_x;i++) {
+  for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
   max_crust_mantle = max;
@@ -911,24 +930,33 @@ void FC_FUNC_(check_norm_elastic_from_device,
   max = 0;
   size = mp->NGLOB_INNER_CORE;
 
-  num_blocks_x = (int) ceil(size/blocksize);
-  h_max = (realw*) calloc(num_blocks_x,sizeof(realw));
-  cudaMalloc((void**)&d_max,num_blocks_x*sizeof(realw));
+  size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
+  num_blocks_x = size_padded/blocksize;
+  num_blocks_y = 1;
+  while(num_blocks_x > 65535) {
+    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
+    num_blocks_y = num_blocks_y*2;
+  }
 
-  dim3 grid2(num_blocks_x,1);
-  dim3 threads2(blocksize,1,1);
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+
+  grid = dim3(num_blocks_x,num_blocks_y);
+  threads = dim3(blocksize,1,1);
+
   if(*SIMULATION_TYPE == 1 ){
-    get_maximum_vector_kernel<<<grid2,threads2>>>(mp->d_displ_inner_core,size,d_max);
+    get_maximum_vector_kernel<<<grid,threads>>>(mp->d_displ_inner_core,size,d_max);
   }else if(*SIMULATION_TYPE == 3 ){
-    get_maximum_vector_kernel<<<grid2,threads2>>>(mp->d_b_displ_inner_core,size,d_max);
+    get_maximum_vector_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,size,d_max);
   }
 
   // copies to CPU
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),222);
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),222);
 
   // determines max for all blocks
   max = h_max[0];
-  for(int i=1;i<num_blocks_x;i++) {
+  for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
   max_inner_core = max;
@@ -951,8 +979,8 @@ void FC_FUNC_(check_norm_elastic_from_device,
 
 extern "C"
 void FC_FUNC_(check_norm_strain_from_device,
-              CHECK_NORM_STRAIN_FROM_DEVICE)(realw* norm_strain,
-                                             realw* norm_strain2,
+              CHECK_NORM_STRAIN_FROM_DEVICE)(realw* strain_norm,
+                                             realw* strain_norm2,
                                              long* Mesh_pointer_f) {
 
   TRACE("check_norm_strain_from_device");
@@ -962,83 +990,127 @@ void FC_FUNC_(check_norm_strain_from_device,
 
   realw max,max_eps;
   realw *d_max;
-  int num_blocks_x,size;
-
+  int num_blocks_x,num_blocks_y;
+  int size,size_padded;
+  dim3 grid;
+  dim3 threads;
 
   // launch simple reduction kernel
   realw* h_max;
   int blocksize = 256;
 
   // crust_mantle strain arrays
-  size = NGLL3*(mp->NSPEC_CRUST_MANTLE);
+  size = NGLL3*(mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
 
-  num_blocks_x = (int) ceil(size/blocksize);
-  h_max = (realw*) calloc(num_blocks_x,sizeof(realw));
-  cudaMalloc((void**)&d_max,num_blocks_x*sizeof(realw));
+  size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
+  num_blocks_x = size_padded/blocksize;
+  num_blocks_y = 1;
+  while(num_blocks_x > 65535) {
+    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
+    num_blocks_y = num_blocks_y*2;
+  }
 
-  dim3 grid(num_blocks_x,1);
-  dim3 threads(blocksize,1,1);
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+
+  grid = dim3(num_blocks_x,num_blocks_y);
+  threads = dim3(blocksize,1,1);
+
+  max = 0.0f;
 
   // determines max for: eps_trace_over_3_crust_mantle
   get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_eps_trace_over_3_crust_mantle,size,d_max);
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),221);
+
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),221);
   max = h_max[0];
-  for(int i=1;i<num_blocks_x;i++) {
+  for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
   // strain trace maximum
-  *norm_strain = max;
+  *strain_norm = max;
+
+  // frees arrays
+  cudaFree(d_max);
+  free(h_max);
 
   // initializes
+  // crust_mantle arrays
+  size = NGLL3*(mp->NSPEC_CRUST_MANTLE);
+
+  size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
+  num_blocks_x = size_padded/blocksize;
+  num_blocks_y = 1;
+  while(num_blocks_x > 65535) {
+    num_blocks_x = (int) ceil(num_blocks_x*0.5f);
+    num_blocks_y = num_blocks_y*2;
+  }
+
+  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw));
+
+  grid = dim3(num_blocks_x,num_blocks_y);
+  threads = dim3(blocksize,1,1);
+
   max_eps = 0.0f;
 
   // determines max for: epsilondev_xx_crust_mantle
   get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_xx_crust_mantle,size,d_max);
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),222);
+
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),222);
   max = h_max[0];
-  for(int i=1;i<num_blocks_x;i++) {
+  for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
   max_eps = MAX(max_eps,max);
 
   // determines max for: epsilondev_yy_crust_mantle
   get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_yy_crust_mantle,size,d_max);
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),223);
+
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),223);
   max = h_max[0];
-  for(int i=1;i<num_blocks_x;i++) {
+  for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
   max_eps = MAX(max_eps,max);
 
   // determines max for: epsilondev_xy_crust_mantle
   get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_xy_crust_mantle,size,d_max);
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),224);
+
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),224);
   max = h_max[0];
-  for(int i=1;i<num_blocks_x;i++) {
+  for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
   max_eps = MAX(max_eps,max);
 
   // determines max for: epsilondev_xz_crust_mantle
   get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_xz_crust_mantle,size,d_max);
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),225);
+
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),225);
   max = h_max[0];
-  for(int i=1;i<num_blocks_x;i++) {
+  for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
   max_eps = MAX(max_eps,max);
 
   // determines max for: epsilondev_yz_crust_mantle
   get_maximum_scalar_kernel<<<grid,threads>>>(mp->d_epsilondev_yz_crust_mantle,size,d_max);
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*sizeof(realw),cudaMemcpyDeviceToHost),226);
+
+  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),226);
   max = h_max[0];
-  for(int i=1;i<num_blocks_x;i++) {
+  for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if( max < h_max[i]) max = h_max[i];
   }
   max_eps = MAX(max_eps,max);
 
   // strain maximum
-  *norm_strain2 = max_eps;
+  *strain_norm2 = max_eps;
 
   // frees arrays
   cudaFree(d_max);

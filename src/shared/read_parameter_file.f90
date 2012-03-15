@@ -25,7 +25,8 @@
 !
 !=====================================================================
 
-  subroutine read_parameter_file(OUTPUT_FILES,LOCAL_PATH,MODEL, &
+  subroutine read_parameter_file(OUTPUT_FILES, &
+                                LOCAL_PATH,LOCAL_TMP_PATH,MODEL, &
                                 NTSTEP_BETWEEN_OUTPUT_SEISMOS,NTSTEP_BETWEEN_READ_ADJSRC,NTSTEP_BETWEEN_FRAMES, &
                                 NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, &
                                 NUMBER_OF_THIS_RUN,NCHUNKS,SIMULATION_TYPE, &
@@ -68,7 +69,7 @@
          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
          SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
+  character(len=150) OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
 
 ! local variables
   integer, external :: err_occurred
@@ -162,6 +163,8 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: NUMBER_OF_THIS_RUN'
   call read_value_string(LOCAL_PATH, 'LOCAL_PATH')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: LOCAL_PATH'
+  call read_value_string(LOCAL_TMP_PATH, 'LOCAL_TMP_PATH')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: LOCAL_TMP_PATH'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: NTSTEP_BETWEEN_OUTPUT_INFO'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NTSTEP_BETWEEN_OUTPUT_SEISMOS')

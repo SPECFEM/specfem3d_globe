@@ -442,7 +442,8 @@
 
   subroutine meshfem3D_models_broadcast(myrank,NSPEC, &
                         MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
-                        R80,R220,R670,RCMB,RICB)
+                        R80,R220,R670,RCMB,RICB, &
+                        LOCAL_PATH)
 
 ! preparing model parameter coefficients on all processes
 
@@ -459,6 +460,8 @@
   integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
   double precision R80,R220,R670,RCMB,RICB
+
+  character(len=150) :: LOCAL_PATH
 
 !---
 !
@@ -563,7 +566,7 @@
 
   ! read topography and bathymetry file
   if(TOPOGRAPHY .or. OCEANS) &
-    call model_topo_bathy_broadcast(myrank,ibathy_topo)
+    call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
 
   ! re-defines/initializes models 1066a and ak135 and ref
   ! ( with possible external crustal model: if CRUSTAL is set to true

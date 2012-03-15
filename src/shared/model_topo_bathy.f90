@@ -34,7 +34,7 @@
 !--------------------------------------------------------------------------------------------------
 
 
-  subroutine model_topo_bathy_broadcast(myrank,ibathy_topo)
+  subroutine model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
 
 ! standard routine to setup model
 
@@ -44,13 +44,20 @@
   ! standard include of the MPI library
   include 'mpif.h'
 
+  integer :: myrank
+
   ! bathymetry and topography: use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-  integer :: myrank
+  character(len=150) :: LOCAL_PATH
+
+  ! local parameters
   integer :: ier
 
-  if(myrank == 0) call read_topo_bathy_file(ibathy_topo)
+  if(myrank == 0) then
+    call read_topo_bathy_file(ibathy_topo)
+    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+  endif
 
   ! broadcast the information read on the master to the nodes
   call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -69,12 +76,13 @@
 
   include "constants.h"
 
-  character(len=150) topo_bathy_file
-
 ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-  integer itopo_x,itopo_y,ier
+  ! local parameters
+  real :: val
+  integer :: itopo_x,itopo_y,ier
+  character(len=150) :: topo_bathy_file
 
   call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
@@ -84,14 +92,25 @@
     print*,'error opening:',trim(topo_bathy_file)
     call exit_mpi(0,'error opening topography data file')
   endif
+
   ! reads in topography array
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
-      read(13,*) ibathy_topo(itopo_x,itopo_y)
+      read(13,*,iostat=ier) val
+
+      ! checks
+      if( ier /= 0 ) then
+        print*,'error read topo_bathy: ix,iy = ',itopo_x,itopo_y,val
+        print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+        call exit_mpi(0,'error reading topo_bathy file')
+      endif
+
+      ! converts to integer
+      ibathy_topo(itopo_x,itopo_y) = val
+
     enddo
   enddo
   close(13)
-
 
   ! note: we check the limits after reading in the data. this seems to perform sligthly faster
   !          however, reading ETOPO1.xyz will take ~ 2m 1.2s for a single process
@@ -114,8 +133,88 @@
 
   endif
 
+  ! user output
+  write(IMAIN,*) "topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
+
   end subroutine read_topo_bathy_file
 
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+
+  implicit none
+
+  include "constants.h"
+
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  character(len=150) :: LOCAL_PATH
+
+  ! local parameters
+  character(len=150) :: prname
+  integer :: ier
+
+  ! create the name for the database of the current slide and region
+  ! only master needs to save this
+  call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
+
+  ! saves topography and bathymetry file for solver
+
+  open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) then
+    print*,'TOPOGRAPHY problem:'
+    print*,'error creating file: ',prname(1:len_trim(prname))//'topo.bin'
+    print*,'please check if path exists and rerun mesher'
+    call exit_mpi(0,'error opening file for database topo')
+  endif
+
+  write(27) ibathy_topo
+
+  close(27)
+
+  end subroutine save_topo_bathy_database
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+
+  implicit none
+
+  include "constants.h"
+
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  character(len=150) :: LOCAL_PATH
+
+  ! local parameters
+  character(len=150) :: prname
+  integer :: ier
+
+  ! create the name for the database of the current slide and region
+  ! only master needs to save this
+  call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
+
+  ! reads topography and bathymetry file from saved database file
+  open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
+        status='unknown',form='unformatted',action='read',iostat=ier)
+  if( ier /= 0 ) then
+    print*,'TOPOGRAPHY problem:'
+    print*,'error opening file: ',prname(1:len_trim(prname))//'topo.bin'
+    print*,'please check if file exists and rerun solver'
+    call exit_mpi(0,'error opening file for database topo')
+  endif
+
+  read(27) ibathy_topo
+
+  close(27)
+
+  end subroutine read_topo_bathy_database
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -189,7 +288,3 @@
   endif
 
   end subroutine get_topo_bathy
-
-! -------------------------------------------
-
-

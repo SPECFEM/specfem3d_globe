@@ -84,7 +84,7 @@
         endif
 
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
-                    LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
+                    LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                     it,eps_trace_over_3_crust_mantle, &
                     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
@@ -94,7 +94,7 @@
       case( 2, 3 )
         ! output the Time Integral of Strain, or \mu*TIS
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
-                    LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
+                    LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                     it,Ieps_trace_over_3_crust_mantle, &
                     Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle,Iepsilondev_xy_crust_mantle, &
                     Iepsilondev_xz_crust_mantle,Iepsilondev_yz_crust_mantle, &
@@ -134,7 +134,7 @@
                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                         epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                         epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
-                        LOCAL_PATH, &
+                        LOCAL_TMP_PATH, &
                         displ_crust_mantle,displ_inner_core,displ_outer_core, &
                         veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
                         accel_crust_mantle,accel_inner_core, &
@@ -148,7 +148,7 @@
 
         scalingval = scale_displ
         call write_movie_volume_vector(myrank,it,npoints_3dmovie, &
-                    LOCAL_PATH,MOVIE_VOLUME_TYPE, &
+                    LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
                     MOVIE_COARSE,ibool_crust_mantle,displ_crust_mantle, &
                     scalingval,mask_3dmovie,nu_3dmovie)
 
@@ -160,7 +160,7 @@
 
         scalingval = scale_veloc
         call write_movie_volume_vector(myrank,it,npoints_3dmovie, &
-                    LOCAL_PATH,MOVIE_VOLUME_TYPE, &
+                    LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
                     MOVIE_COARSE,ibool_crust_mantle,veloc_crust_mantle, &
                     scalingval,mask_3dmovie,nu_3dmovie)
 
@@ -176,7 +176,7 @@
 !      .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 !    ! VTK file output
 !    ! displacement values
-!    !write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
+!    !write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
 !    !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
 !    !call write_VTK_data_cr(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
 !    !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &

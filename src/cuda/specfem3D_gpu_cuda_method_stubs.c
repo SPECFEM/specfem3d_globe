@@ -121,8 +121,8 @@ void FC_FUNC_(check_norm_elastic_from_device,
                                               int* SIMULATION_TYPE) {} 
 
 void FC_FUNC_(check_norm_strain_from_device,
-              CHECK_NORM_STRAIN_FROM_DEVICE)(realw* norm_strain,
-                                             realw* norm_strain2,
+              CHECK_NORM_STRAIN_FROM_DEVICE)(realw* strain_norm,
+                                             realw* strain_norm2,
                                              long* Mesh_pointer_f) {} 
 
 
@@ -352,14 +352,15 @@ void FC_FUNC_(prepare_constants_device,
                                         int* h_islice_selected_rec,int* h_ispec_selected_rec,
                                         int* nrec,int* nrec_local, int* nadj_rec_local,
                                         int* NSPEC_CRUST_MANTLE, int* NGLOB_CRUST_MANTLE,
-          int* NGLOB_CRUST_MANTLE_OCEANS,
+                                        int* NSPEC_CRUST_MANTLE_STRAIN_ONLY,
+                                        int* NGLOB_CRUST_MANTLE_OCEANS,
                                         int* NSPEC_OUTER_CORE, int* NGLOB_OUTER_CORE,
                                         int* NSPEC_INNER_CORE, int* NGLOB_INNER_CORE,
                                         int* SIMULATION_TYPE,
                                         int* NOISE_TOMOGRAPHY,
                                         int* SAVE_FORWARD_f,
                                         int* ABSORBING_CONDITIONS_f,
-          int* OCEANS_f,
+                                        int* OCEANS_f,
                                         int* GRAVITY_f,
                                         int* ROTATION_f,
                                         int* ATTENUATION_f,

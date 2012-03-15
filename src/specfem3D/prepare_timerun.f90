@@ -79,6 +79,7 @@
   if(GPU_MODE) call prepare_timerun_GPU()
 
   ! user output
+  call sync_all()
   if( myrank == 0 ) then
     ! elapsed time since beginning of mesh generation
     tCPU = MPI_WTIME() - time_start
@@ -426,17 +427,18 @@
   if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) &
     stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE'
 
-  write(prname,'(a,i6.6,a)') trim(LOCAL_PATH)//'/'//'proc',myrank,'_'
-  call count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
-              zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-              MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool,mask_3dmovie)
+  call count_points_movie_volume()
+!              LOCAL_TMP_PATH,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
+!              zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
+!              MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool,mask_3dmovie)
 
   allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating nu for 3d movie')
 
-  call write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
-                         ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
-                         mask_3dmovie,mask_ibool,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
+  call write_movie_volume_mesh()
+!                         npoints_3dmovie,LOCAL_TMP_PATH,ibool_crust_mantle,xstore_crust_mantle, &
+!                         ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
+!                         mask_3dmovie,mask_ibool,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -993,14 +995,14 @@
 
   ! NOISE TOMOGRAPHY
   if ( NOISE_TOMOGRAPHY /= 0 ) then
-    nspec_top = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    NSPEC_TOP = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
 
     allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
             normal_x_noise(nmovie_points), &
             normal_y_noise(nmovie_points), &
             normal_z_noise(nmovie_points), &
             mask_noise(nmovie_points), &
-            noise_surface_movie(NDIM,NGLLX,NGLLY,nspec_top),stat=ier)
+            noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise arrays')
 
     noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
@@ -1010,17 +1012,10 @@
     mask_noise(:)                = 0._CUSTOM_REAL
     noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
 
-    call read_parameters_noise(myrank,nrec,NSTEP,nmovie_points, &
-                              islice_selected_rec,xi_receiver,eta_receiver,gamma_receiver,nu, &
-                              noise_sourcearray,xigll,yigll,zigll,nspec_top, &
-                              NIT, ibool_crust_mantle, ibelm_top_crust_mantle, &
-                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                              irec_master_noise,normal_x_noise,normal_y_noise,normal_z_noise,mask_noise)
+    call read_parameters_noise()
 
-    call check_parameters_noise(myrank,NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
-                              NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,ROTATE_SEISMOGRAMS_RT, &
-                              SAVE_ALL_SEISMOS_IN_ONE_FILE, USE_BINARY_FOR_LARGE_FILE, &
-                              MOVIE_COARSE,LOCAL_PATH,nspec_top,NSTEP)
+    call check_parameters_noise()
+
   endif
 
   end subroutine prepare_timerun_noise
@@ -1074,7 +1069,7 @@
                                   number_receiver_global,islice_selected_rec,ispec_selected_rec, &
                                   nrec, nrec_local, nadj_rec_local, &
                                   NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                                  NGLOB_CRUST_MANTLE_OCEANS, &
+                                  NSPEC_CRUST_MANTLE_STRAIN_ONLY,NGLOB_CRUST_MANTLE_OCEANS, &
                                   NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                   SIMULATION_TYPE,NOISE_TOMOGRAPHY, &

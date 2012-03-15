@@ -44,18 +44,18 @@
 /* ----------------------------------------------------------------------------------------------- */
 
 __global__ void compute_coupling_fluid_CMB_kernel(realw* displ_crust_mantle,
-						  realw* accel_outer_core,
-						  int* ibool_crust_mantle,
-						  int* ibelm_bottom_crust_mantle,
-						  realw* normal_top_outer_core,
-						  realw* jacobian2D_top_outer_core,
-						  realw* wgllwgll_xy,
-						  int* ibool_outer_core,
-						  int* ibelm_top_outer_core,
-						  int NSPEC2D_TOP_OC) {
+              realw* accel_outer_core,
+              int* ibool_crust_mantle,
+              int* ibelm_bottom_crust_mantle,
+              realw* normal_top_outer_core,
+              realw* jacobian2D_top_outer_core,
+              realw* wgllwgll_xy,
+              int* ibool_outer_core,
+              int* ibelm_top_outer_core,
+              int NSPEC2D_TOP_OC) {
 
   int i = threadIdx.x;
-  int j = threadIdx.y;    
+  int j = threadIdx.y;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
 
   int k,k_corresp,iglob_cm,iglob_oc,ispec,ispec_selected;
@@ -74,8 +74,8 @@ __global__ void compute_coupling_fluid_CMB_kernel(realw* displ_crust_mantle,
 
     // get displacement on the solid side using pointwise matching
     ispec_selected = ibelm_bottom_crust_mantle[iface] - 1;
-	
-    // get global point number 
+
+    // get global point number
     // corresponding points are located at the bottom of the mantle
     k_corresp = 0;
     iglob_cm = ibool_crust_mantle[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
@@ -102,24 +102,24 @@ __global__ void compute_coupling_fluid_CMB_kernel(realw* displ_crust_mantle,
 
     // update fluid acceleration/pressure
     atomicAdd(&accel_outer_core[iglob_oc],+weight*displ_n);
-    
+
   // }
   }
 }
 
 __global__ void compute_coupling_fluid_ICB_kernel(realw* displ_inner_core,
-						  realw* accel_outer_core,
-						  int* ibool_inner_core,
-						  int* ibelm_top_inner_core,
-						  realw* normal_bottom_outer_core,
-						  realw* jacobian2D_bottom_outer_core,
-						  realw* wgllwgll_xy,
-						  int* ibool_outer_core,
-						  int* ibelm_bottom_outer_core,
-						  int NSPEC2D_BOTTOM_OC) {
+              realw* accel_outer_core,
+              int* ibool_inner_core,
+              int* ibelm_top_inner_core,
+              realw* normal_bottom_outer_core,
+              realw* jacobian2D_bottom_outer_core,
+              realw* wgllwgll_xy,
+              int* ibool_outer_core,
+              int* ibelm_bottom_outer_core,
+              int NSPEC2D_BOTTOM_OC) {
 
   int i = threadIdx.x;
-  int j = threadIdx.y;    
+  int j = threadIdx.y;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
 
   int k,k_corresp,iglob_ic,iglob_oc,ispec,ispec_selected;
@@ -138,8 +138,8 @@ __global__ void compute_coupling_fluid_ICB_kernel(realw* displ_inner_core,
 
     // get displacement on the solid side using pointwise matching
     ispec_selected = ibelm_top_inner_core[iface] - 1;
-	
-    // get global point number 			       
+
+    // get global point number
     // corresponding points are located at the bottom of the mantle
     k_corresp = NGLLX - 1;
     iglob_ic = ibool_inner_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
@@ -194,28 +194,28 @@ void FC_FUNC_(compute_coupling_fluid_cmb_cuda,
 
   // launches GPU kernel
   compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
-						      mp->d_accel_outer_core,
-						      mp->d_ibool_crust_mantle,
-						      mp->d_ibelm_bottom_crust_mantle,
-						      mp->d_normal_top_outer_core,
-						      mp->d_jacobian2D_top_outer_core,
-						      mp->d_wgllwgll_xy,
-						      mp->d_ibool_outer_core,
-						      mp->d_ibelm_top_outer_core,
-						      mp->nspec2D_top_outer_core);
+                  mp->d_accel_outer_core,
+                  mp->d_ibool_crust_mantle,
+                  mp->d_ibelm_bottom_crust_mantle,
+                  mp->d_normal_top_outer_core,
+                  mp->d_jacobian2D_top_outer_core,
+                  mp->d_wgllwgll_xy,
+                  mp->d_ibool_outer_core,
+                  mp->d_ibelm_top_outer_core,
+                  mp->nspec2D_top_outer_core);
 
   // adjoint simulations
   if ( mp->simulation_type == 3 ){
     compute_coupling_fluid_CMB_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
-							mp->d_b_accel_outer_core,
-							mp->d_ibool_crust_mantle,
-							mp->d_ibelm_bottom_crust_mantle,
-							mp->d_normal_top_outer_core,
-							mp->d_jacobian2D_top_outer_core,
-							mp->d_wgllwgll_xy,
-							mp->d_ibool_outer_core,
-							mp->d_ibelm_top_outer_core,
-							mp->nspec2D_top_outer_core);
+              mp->d_b_accel_outer_core,
+              mp->d_ibool_crust_mantle,
+              mp->d_ibelm_bottom_crust_mantle,
+              mp->d_normal_top_outer_core,
+              mp->d_jacobian2D_top_outer_core,
+              mp->d_wgllwgll_xy,
+              mp->d_ibool_outer_core,
+              mp->d_ibelm_top_outer_core,
+              mp->nspec2D_top_outer_core);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -248,28 +248,28 @@ void FC_FUNC_(compute_coupling_fluid_icb_cuda,
 
   // launches GPU kernel
   compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
-						      mp->d_accel_outer_core,
-						      mp->d_ibool_inner_core,
-						      mp->d_ibelm_top_inner_core,
-						      mp->d_normal_bottom_outer_core,
-						      mp->d_jacobian2D_bottom_outer_core,
-						      mp->d_wgllwgll_xy,
-						      mp->d_ibool_outer_core,
-						      mp->d_ibelm_bottom_outer_core,
-						      mp->nspec2D_bottom_outer_core);
+                  mp->d_accel_outer_core,
+                  mp->d_ibool_inner_core,
+                  mp->d_ibelm_top_inner_core,
+                  mp->d_normal_bottom_outer_core,
+                  mp->d_jacobian2D_bottom_outer_core,
+                  mp->d_wgllwgll_xy,
+                  mp->d_ibool_outer_core,
+                  mp->d_ibelm_bottom_outer_core,
+                  mp->nspec2D_bottom_outer_core);
 
   // adjoint simulations
   if ( mp->simulation_type == 3 ){
     compute_coupling_fluid_ICB_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
-							mp->d_b_accel_outer_core,
-							mp->d_ibool_inner_core,
-							mp->d_ibelm_top_inner_core,
-							mp->d_normal_bottom_outer_core,
-							mp->d_jacobian2D_bottom_outer_core,
-							mp->d_wgllwgll_xy,
-							mp->d_ibool_outer_core,
-							mp->d_ibelm_bottom_outer_core,
-							mp->nspec2D_bottom_outer_core);
+              mp->d_b_accel_outer_core,
+              mp->d_ibool_inner_core,
+              mp->d_ibelm_top_inner_core,
+              mp->d_normal_bottom_outer_core,
+              mp->d_jacobian2D_bottom_outer_core,
+              mp->d_wgllwgll_xy,
+              mp->d_ibool_outer_core,
+              mp->d_ibelm_bottom_outer_core,
+              mp->nspec2D_bottom_outer_core);
   }
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
@@ -285,22 +285,22 @@ void FC_FUNC_(compute_coupling_fluid_icb_cuda,
 /* ----------------------------------------------------------------------------------------------- */
 
 __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
-						  realw* accel_crust_mantle,
-						  realw* accel_outer_core,
-						  int* ibool_crust_mantle,
-						  int* ibelm_bottom_crust_mantle,
-						  realw* normal_top_outer_core,
-						  realw* jacobian2D_top_outer_core,
-						  realw* wgllwgll_xy,
-						  int* ibool_outer_core,
-						  int* ibelm_top_outer_core,
-						  double RHO_TOP_OC,
-						  realw minus_g_cmb,
-						  int GRAVITY_VAL,
-						  int NSPEC_BOTTOM_CM) {
+              realw* accel_crust_mantle,
+              realw* accel_outer_core,
+              int* ibool_crust_mantle,
+              int* ibelm_bottom_crust_mantle,
+              realw* normal_top_outer_core,
+              realw* jacobian2D_top_outer_core,
+              realw* wgllwgll_xy,
+              int* ibool_outer_core,
+              int* ibelm_top_outer_core,
+              double RHO_TOP_OC,
+              realw minus_g_cmb,
+              int GRAVITY_VAL,
+              int NSPEC_BOTTOM_CM) {
 
   int i = threadIdx.x;
-  int j = threadIdx.y;    
+  int j = threadIdx.y;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
 
   int k,k_corresp,iglob_cm,iglob_oc,ispec,ispec_selected;
@@ -325,7 +325,7 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
     ny = normal_top_outer_core[INDEX4(NDIM,NGLLX,NGLLX,1,i,j,iface)]; // (2,i,j,iface)
     nz = normal_top_outer_core[INDEX4(NDIM,NGLLX,NGLLX,2,i,j,iface)]; // (3,i,j,iface)
 
-    // get global point number 
+    // get global point number
     // corresponding points are located at the top of the outer core
     k_corresp = NGLLX - 1;
     iglob_oc = ibool_outer_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
@@ -333,14 +333,14 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
 
     // compute pressure, taking gravity into account
     if( GRAVITY_VAL ){
-      pressure = RHO_TOP_OC * ( - accel_outer_core[iglob_oc] + minus_g_cmb 
-				 * (displ_crust_mantle[iglob_cm*3]*nx 
-				    + displ_crust_mantle[iglob_cm*3+1]*ny
-				    + displ_crust_mantle[iglob_cm*3+2]*nz) );
+      pressure = RHO_TOP_OC * ( - accel_outer_core[iglob_oc] + minus_g_cmb
+         * (displ_crust_mantle[iglob_cm*3]*nx
+            + displ_crust_mantle[iglob_cm*3+1]*ny
+            + displ_crust_mantle[iglob_cm*3+2]*nz) );
     }else{
       pressure = - RHO_TOP_OC * accel_outer_core[iglob_oc];
     }
-      
+
     // formulation with generalized potential: gets associated, weighted jacobian
     weight = jacobian2D_top_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
@@ -354,22 +354,22 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
 }
 
 __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
-						  realw* accel_inner_core,
-						  realw* accel_outer_core,
-						  int* ibool_inner_core,
-						  int* ibelm_top_inner_core,
-						  realw* normal_bottom_outer_core,
-						  realw* jacobian2D_bottom_outer_core,
-						  realw* wgllwgll_xy,
-						  int* ibool_outer_core,
-						  int* ibelm_bottom_outer_core,
-						  double RHO_BOTTOM_OC,
-						  realw minus_g_icb,
-						  int GRAVITY_VAL,
-						  int NSPEC_TOP_IC) {
+              realw* accel_inner_core,
+              realw* accel_outer_core,
+              int* ibool_inner_core,
+              int* ibelm_top_inner_core,
+              realw* normal_bottom_outer_core,
+              realw* jacobian2D_bottom_outer_core,
+              realw* wgllwgll_xy,
+              int* ibool_outer_core,
+              int* ibelm_bottom_outer_core,
+              double RHO_BOTTOM_OC,
+              realw minus_g_icb,
+              int GRAVITY_VAL,
+              int NSPEC_TOP_IC) {
 
   int i = threadIdx.x;
-  int j = threadIdx.y;    
+  int j = threadIdx.y;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
 
   int k,k_corresp,iglob_ic,iglob_oc,ispec,ispec_selected;
@@ -394,7 +394,7 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
     ny = normal_bottom_outer_core[INDEX4(NDIM,NGLLX,NGLLX,1,i,j,iface)]; // (2,i,j,iface)
     nz = normal_bottom_outer_core[INDEX4(NDIM,NGLLX,NGLLX,2,i,j,iface)]; // (3,i,j,iface)
 
-    // get global point number 
+    // get global point number
     // corresponding points are located at the bottom of the outer core
     k_corresp = 0;
     iglob_oc = ibool_outer_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k_corresp,ispec_selected)] - 1;
@@ -403,13 +403,13 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
     // compute pressure, taking gravity into account
     if( GRAVITY_VAL ){
       pressure = RHO_BOTTOM_OC * ( - accel_outer_core[iglob_oc] + minus_g_icb
-				 * (displ_inner_core[iglob_ic*3]*nx 
-				    + displ_inner_core[iglob_ic*3+1]*ny
-				    + displ_inner_core[iglob_ic*3+2]*nz) );
+         * (displ_inner_core[iglob_ic*3]*nx
+            + displ_inner_core[iglob_ic*3+1]*ny
+            + displ_inner_core[iglob_ic*3+2]*nz) );
     }else{
       pressure = - RHO_BOTTOM_OC * accel_outer_core[iglob_oc];
     }
-      
+
     // formulation with generalized potential: gets associated, weighted jacobian
     weight = jacobian2D_bottom_outer_core[INDEX3(NGLLX,NGLLX,i,j,iface)]*wgllwgll_xy[INDEX2(NGLLX,i,j)];
 
@@ -427,9 +427,9 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
 extern "C"
 void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
               COMPUTE_COUPLING_CMB_FLUID_CUDA)(long* Mesh_pointer_f,
-					       double RHO_TOP_OC,
-					       realw minus_g_cmb,
-					       int GRAVITY_VAL) {
+                 double RHO_TOP_OC,
+                 realw minus_g_cmb,
+                 int GRAVITY_VAL) {
 
   TRACE("compute_coupling_cmb_fluid_cuda");
   //double start_time = get_time();
@@ -448,36 +448,36 @@ void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
 
   // launches GPU kernel
   compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_displ_crust_mantle,
-						      mp->d_accel_crust_mantle,
-						      mp->d_accel_outer_core,
-						      mp->d_ibool_crust_mantle,
-						      mp->d_ibelm_bottom_crust_mantle,
-						      mp->d_normal_top_outer_core,
-						      mp->d_jacobian2D_top_outer_core,
-						      mp->d_wgllwgll_xy,
-						      mp->d_ibool_outer_core,
-						      mp->d_ibelm_top_outer_core,
-						      RHO_TOP_OC,
-						      minus_g_cmb,
-						      GRAVITY_VAL,
-						      mp->nspec2D_bottom_crust_mantle);
+                  mp->d_accel_crust_mantle,
+                  mp->d_accel_outer_core,
+                  mp->d_ibool_crust_mantle,
+                  mp->d_ibelm_bottom_crust_mantle,
+                  mp->d_normal_top_outer_core,
+                  mp->d_jacobian2D_top_outer_core,
+                  mp->d_wgllwgll_xy,
+                  mp->d_ibool_outer_core,
+                  mp->d_ibelm_top_outer_core,
+                  RHO_TOP_OC,
+                  minus_g_cmb,
+                  GRAVITY_VAL,
+                  mp->nspec2D_bottom_crust_mantle);
 
   //  adjoint simulations
   if ( mp->simulation_type == 3 ){
     compute_coupling_CMB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_crust_mantle,
-							mp->d_b_accel_crust_mantle,
-							mp->d_b_accel_outer_core,
-							mp->d_ibool_crust_mantle,
-							mp->d_ibelm_bottom_crust_mantle,
-							mp->d_normal_top_outer_core,
-							mp->d_jacobian2D_top_outer_core,
-							mp->d_wgllwgll_xy,
-							mp->d_ibool_outer_core,
-							mp->d_ibelm_top_outer_core,
-							RHO_TOP_OC,
-							minus_g_cmb,
-							GRAVITY_VAL,
-							mp->nspec2D_bottom_crust_mantle);
+              mp->d_b_accel_crust_mantle,
+              mp->d_b_accel_outer_core,
+              mp->d_ibool_crust_mantle,
+              mp->d_ibelm_bottom_crust_mantle,
+              mp->d_normal_top_outer_core,
+              mp->d_jacobian2D_top_outer_core,
+              mp->d_wgllwgll_xy,
+              mp->d_ibool_outer_core,
+              mp->d_ibelm_top_outer_core,
+              RHO_TOP_OC,
+              minus_g_cmb,
+              GRAVITY_VAL,
+              mp->nspec2D_bottom_crust_mantle);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -492,9 +492,9 @@ void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
 extern "C"
 void FC_FUNC_(compute_coupling_icb_fluid_cuda,
               COMPUTE_COUPLING_ICB_FLUID_CUDA)(long* Mesh_pointer_f,
-					       double RHO_BOTTOM_OC,
-					       realw minus_g_icb,
-					       int GRAVITY_VAL) {
+                 double RHO_BOTTOM_OC,
+                 realw minus_g_icb,
+                 int GRAVITY_VAL) {
 
   TRACE("compute_coupling_icb_fluid_cuda");
   //double start_time = get_time();
@@ -513,36 +513,36 @@ void FC_FUNC_(compute_coupling_icb_fluid_cuda,
 
   // launches GPU kernel
   compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_displ_inner_core,
-						      mp->d_accel_inner_core,
-						      mp->d_accel_outer_core,
-						      mp->d_ibool_inner_core,
-						      mp->d_ibelm_top_inner_core,
-						      mp->d_normal_bottom_outer_core,
-						      mp->d_jacobian2D_bottom_outer_core,
-						      mp->d_wgllwgll_xy,
-						      mp->d_ibool_outer_core,
-						      mp->d_ibelm_bottom_outer_core,
-						      RHO_BOTTOM_OC,
-						      minus_g_icb,
-						      GRAVITY_VAL,
-						      mp->nspec2D_top_inner_core);
+                  mp->d_accel_inner_core,
+                  mp->d_accel_outer_core,
+                  mp->d_ibool_inner_core,
+                  mp->d_ibelm_top_inner_core,
+                  mp->d_normal_bottom_outer_core,
+                  mp->d_jacobian2D_bottom_outer_core,
+                  mp->d_wgllwgll_xy,
+                  mp->d_ibool_outer_core,
+                  mp->d_ibelm_bottom_outer_core,
+                  RHO_BOTTOM_OC,
+                  minus_g_icb,
+                  GRAVITY_VAL,
+                  mp->nspec2D_top_inner_core);
 
   //  adjoint simulations
   if ( mp->simulation_type == 3 ){
     compute_coupling_ICB_fluid_kernel<<<grid,threads>>>(mp->d_b_displ_inner_core,
-							mp->d_b_accel_inner_core,
-							mp->d_b_accel_outer_core,
-							mp->d_ibool_inner_core,
-							mp->d_ibelm_top_inner_core,
-							mp->d_normal_bottom_outer_core,
-							mp->d_jacobian2D_bottom_outer_core,
-							mp->d_wgllwgll_xy,
-							mp->d_ibool_outer_core,
-							mp->d_ibelm_bottom_outer_core,
-							RHO_BOTTOM_OC,
-							minus_g_icb,
-							GRAVITY_VAL,
-							mp->nspec2D_top_inner_core);
+              mp->d_b_accel_inner_core,
+              mp->d_b_accel_outer_core,
+              mp->d_ibool_inner_core,
+              mp->d_ibelm_top_inner_core,
+              mp->d_normal_bottom_outer_core,
+              mp->d_jacobian2D_bottom_outer_core,
+              mp->d_wgllwgll_xy,
+              mp->d_ibool_outer_core,
+              mp->d_ibelm_bottom_outer_core,
+              RHO_BOTTOM_OC,
+              minus_g_icb,
+              GRAVITY_VAL,
+              mp->nspec2D_top_inner_core);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -560,13 +560,13 @@ void FC_FUNC_(compute_coupling_icb_fluid_cuda,
 
 
 __global__ void compute_coupling_ocean_cuda_kernel(realw* accel_crust_mantle,
-						   realw* rmass_crust_mantle,
-						   realw* rmass_ocean_load,
-						   realw* normal_top_crust_mantle,
-						   int* ibool_crust_mantle,
-						   int* ibelm_top_crust_mantle,
-						   int* updated_dof_ocean_load,
-						   int NSPEC2D_TOP_CM) {
+               realw* rmass_crust_mantle,
+               realw* rmass_ocean_load,
+               realw* normal_top_crust_mantle,
+               int* ibool_crust_mantle,
+               int* ibelm_top_crust_mantle,
+               int* updated_dof_ocean_load,
+               int NSPEC2D_TOP_CM) {
 
   int i = threadIdx.x;
   int j = threadIdx.y;
@@ -592,13 +592,13 @@ __global__ void compute_coupling_ocean_cuda_kernel(realw* accel_crust_mantle,
 
     // daniel: TODO - there might be better ways to implement a mutex like below,
     //            and find a workaround to not use the temporary update array.
-    //            As a reminder, atomicExch atomically sets the value of the memory 
+    //            As a reminder, atomicExch atomically sets the value of the memory
     //            location stored in address to val and returns the old value.
     //            0 indicates that we still have to do this point
 
     if( atomicExch(&updated_dof_ocean_load[iglob],1) == 0){
 
-      // get normal on the CMB 
+      // get normal on the CMB
       nx = normal_top_crust_mantle[INDEX4(NDIM,NGLLX,NGLLX,0,i,j,iface)]; // (1,i,j,iface)
       ny = normal_top_crust_mantle[INDEX4(NDIM,NGLLX,NGLLX,1,i,j,iface)]; // (2,i,j,iface)
       nz = normal_top_crust_mantle[INDEX4(NDIM,NGLLX,NGLLX,2,i,j,iface)]; // (3,i,j,iface)
@@ -637,7 +637,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(5,5,1);
-               
+
   // initializes temporary array to zero
   print_CUDA_error_if_any(cudaMemset(mp->d_updated_dof_ocean_load,0,sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88501);
 
@@ -648,11 +648,11 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
   compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_accel_crust_mantle,
                                                        mp->d_rmass_crust_mantle,
                                                        mp->d_rmass_ocean_load,
-						       mp->d_normal_top_crust_mantle,
-						       mp->d_ibool_crust_mantle,
-						       mp->d_ibelm_top_crust_mantle,
-						       mp->d_updated_dof_ocean_load,
-						       mp->nspec2D_top_crust_mantle);
+                   mp->d_normal_top_crust_mantle,
+                   mp->d_ibool_crust_mantle,
+                   mp->d_ibelm_top_crust_mantle,
+                   mp->d_updated_dof_ocean_load,
+                   mp->nspec2D_top_crust_mantle);
 
   // for backward/reconstructed potentials
   if( mp->simulation_type == 3 ) {
@@ -661,13 +661,13 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
                                        sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),88502);
 
     compute_coupling_ocean_cuda_kernel<<<grid,threads>>>(mp->d_b_accel_crust_mantle,
-							 mp->d_rmass_crust_mantle,
-							 mp->d_rmass_ocean_load,
-							 mp->d_normal_top_crust_mantle,
-							 mp->d_ibool_crust_mantle,
-							 mp->d_ibelm_top_crust_mantle,
-							 mp->d_updated_dof_ocean_load,
-							 mp->nspec2D_top_crust_mantle);
+               mp->d_rmass_crust_mantle,
+               mp->d_rmass_ocean_load,
+               mp->d_normal_top_crust_mantle,
+               mp->d_ibool_crust_mantle,
+               mp->d_ibelm_top_crust_mantle,
+               mp->d_updated_dof_ocean_load,
+               mp->nspec2D_top_crust_mantle);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

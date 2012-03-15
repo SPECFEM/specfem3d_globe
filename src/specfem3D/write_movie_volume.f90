@@ -32,44 +32,31 @@
 ! this subroutine counts the number of points and elements within the movie volume
 ! in this processor slice, and returns arrays that keep track of them, both in global and local indexing schemes
 
-  subroutine count_points_movie_volume(prname,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
-                      zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-                      MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie, &
-                      mask_ibool_3dmovie,mask_3dmovie)
+  subroutine count_points_movie_volume()
 
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_movie
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-! input
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-  double precision :: MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH
-  logical :: MOVIE_COARSE
-  character(len=150) :: prname
-
-! output
-  integer :: npoints_3dmovie,nspecel_3dmovie
-  integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
-  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool_3dmovie
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
-
-! variables
-  integer :: ipoints_3dmovie,ispecel_3dmovie,ispec,iglob,i,j,k,NIT
+  ! local parameters
+  integer :: ipoints_3dmovie,ispecel_3dmovie,ispec,iglob,i,j,k,iNIT
   real(kind=custom_real) :: rval,thetaval,phival
 
   if(MOVIE_COARSE) then
-    NIT = NGLLX-1
+    iNIT = NGLLX-1
   else
-    NIT = 1
+    iNIT = 1
   endif
   ipoints_3dmovie=0
   num_ibool_3dmovie(:) = -99
   ispecel_3dmovie = 0
-  mask_ibool_3dmovie(:)=.false.
+  mask_ibool(:)=.false.
   mask_3dmovie(:,:,:,:)=.false.
+
   ! create name of database
+  write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
+
   open(unit=IOUT,file=trim(prname)//'movie3D_info.txt',status='unknown')
 
   !find and count points within given region for storing movie
@@ -85,13 +72,13 @@
             ( (phival < MOVIE_EAST .and. phival > MOVIE_WEST) .or. &
               ( (MOVIE_EAST < MOVIE_WEST) .and. (phival >MOVIE_EAST .or. phival < MOVIE_WEST) ) ) ) then
             ispecel_3dmovie=ispecel_3dmovie+1
-              do k=1,NGLLZ,NIT
-               do j=1,NGLLY,NIT
-                do i=1,NGLLX,NIT
+              do k=1,NGLLZ,iNIT
+               do j=1,NGLLY,iNIT
+                do i=1,NGLLX,iNIT
                  iglob    = ibool_crust_mantle(i,j,k,ispec)
-                 if(.not. mask_ibool_3dmovie(iglob)) then
+                 if(.not. mask_ibool(iglob)) then
                   ipoints_3dmovie = ipoints_3dmovie + 1
-                  mask_ibool_3dmovie(iglob)=.true.
+                  mask_ibool(iglob)=.true.
                   mask_3dmovie(i,j,k,ispec)=.true.
                   num_ibool_3dmovie(iglob)= ipoints_3dmovie
                  endif
@@ -112,49 +99,36 @@
 ! writes meshfiles to merge with solver snapshots for 3D volume movies.  Also computes and outputs
 ! the rotation matrix nu_3dmovie required to transfer to a geographic coordinate system
 
-  subroutine write_movie_volume_mesh(npoints_3dmovie,prname,ibool_crust_mantle,xstore_crust_mantle, &
-                         ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
-                         mask_3dmovie,mask_ibool_3dmovie,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
+  subroutine write_movie_volume_mesh()
 
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_movie
   implicit none
 
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  !input
-  integer :: npoints_3dmovie
-  integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: muvstore_crust_mantle_3dmovie
-  character(len=150) :: prname
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
-  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool_3dmovie
-  logical :: MOVIE_COARSE
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-
-  !output
-  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
-  real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_mu
-
-  !variables
-  integer :: ipoints_3dmovie,ispecele,ispec,i,j,k,iglob,iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
-  integer :: n1,n2,n3,n4,n5,n6,n7,n8,NIT
+  ! local parametes
+  integer :: ipoints_3dmovie,ispecele,ispec,i,j,k
+  integer :: iglob,iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
+  integer :: n1,n2,n3,n4,n5,n6,n7,n8,iNIT
   real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval,st,ct,sp,cp
   real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_x,store_val3D_y, store_val3D_z
+  real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_mu
+
+!  character(len=150) :: prname
 
   if(NDIM /= 3) stop 'movie volume output requires NDIM = 3'
 
   if(MOVIE_COARSE) then
-    NIT = NGLLX-1
+    iNIT = NGLLX-1
   else
-    NIT = 1
+    iNIT = 1
   endif
 
   ipoints_3dmovie=0
   do ispec=1,NSPEC_CRUST_MANTLE
-    do k=1,NGLLZ,NIT
-      do j=1,NGLLY,NIT
-        do i=1,NGLLX,NIT
+    do k=1,NGLLZ,iNIT
+      do j=1,NGLLY,iNIT
+        do i=1,NGLLX,iNIT
           if(mask_3dmovie(i,j,k,ispec)) then
             ipoints_3dmovie=ipoints_3dmovie+1
             iglob= ibool_crust_mantle(i,j,k,ispec)
@@ -185,6 +159,9 @@
       enddo  !j
     enddo  !k
   enddo !ispec
+
+  write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
+
   open(unit=IOUT,file=trim(prname)//'movie3D_x.bin',status='unknown',form='unformatted')
   if(npoints_3dmovie>0) then
     write(IOUT) store_val3D_x(1:npoints_3dmovie)
@@ -218,20 +195,20 @@
     else
       iglob=ibool_crust_mantle(3,3,3,ispec)
     endif
-    if(mask_ibool_3dmovie(iglob)) then  !this element is in the region
+    if(mask_ibool(iglob)) then  !this element is in the region
       ispecele  = ispecele+1
-      do k=1,NGLLZ-1,NIT
-        do j=1,NGLLY-1,NIT
-          do i=1,NGLLX-1,NIT
+      do k=1,NGLLZ-1,iNIT
+        do j=1,NGLLY-1,iNIT
+          do i=1,NGLLX-1,iNIT
             ! if(mask_3dmovie(i,j,k,ispec)) then
             iglob1 = ibool_crust_mantle(i,j,k,ispec)
-            iglob2 = ibool_crust_mantle(i+NIT,j,k,ispec)
-            iglob3 = ibool_crust_mantle(i+NIT,j+NIT,k,ispec)
-            iglob4 = ibool_crust_mantle(i,j+NIT,k,ispec)
-            iglob5 = ibool_crust_mantle(i,j,k+NIT,ispec)
-            iglob6 = ibool_crust_mantle(i+NIT,j,k+NIT,ispec)
-            iglob7 = ibool_crust_mantle(i+NIT,j+NIT,k+NIT,ispec)
-            iglob8 = ibool_crust_mantle(i,j+NIT,k+NIT,ispec)
+            iglob2 = ibool_crust_mantle(i+iNIT,j,k,ispec)
+            iglob3 = ibool_crust_mantle(i+iNIT,j+iNIT,k,ispec)
+            iglob4 = ibool_crust_mantle(i,j+iNIT,k,ispec)
+            iglob5 = ibool_crust_mantle(i,j,k+iNIT,ispec)
+            iglob6 = ibool_crust_mantle(i+iNIT,j,k+iNIT,ispec)
+            iglob7 = ibool_crust_mantle(i+iNIT,j+iNIT,k+iNIT,ispec)
+            iglob8 = ibool_crust_mantle(i,j+iNIT,k+iNIT,ispec)
             n1 = num_ibool_3dmovie(iglob1)-1
             n2 = num_ibool_3dmovie(iglob2)-1
             n3 = num_ibool_3dmovie(iglob3)-1
@@ -256,7 +233,7 @@
 ! ---------------------------------------------
 
   subroutine write_movie_volume_strains(myrank,npoints_3dmovie, &
-                                        LOCAL_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
+                                        LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                                         it,eps_trace_over_3_crust_mantle, &
                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
@@ -282,11 +259,11 @@
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
   logical :: MOVIE_COARSE
   real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
-  character(len=150) LOCAL_PATH,outputname
+  character(len=150) LOCAL_TMP_PATH,outputname
 
   ! variables
-  character(len=150) prname
-  integer :: ipoints_3dmovie,i,j,k,ispec,NIT
+  !character(len=150) prname
+  integer :: ipoints_3dmovie,i,j,k,ispec,iNIT
   real(kind=CUSTOM_REAL) :: muv_3dmovie
   real(kind=CUSTOM_REAL),dimension(3,3) :: eps_loc,eps_loc_new
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ,&
@@ -311,17 +288,18 @@
       movie_prefix='P' ! potency, or integral of strain x \mu
   endif
   if(MOVIE_COARSE) then
-   NIT = NGLLX-1
+   iNIT = NGLLX-1
   else
-   NIT = 1
+   iNIT = 1
   endif
 
-  write(prname,"('proc',i6.6)") myrank
+  !write(prname,"('proc',i6.6)") myrank
+
   ipoints_3dmovie=0
   do ispec=1,NSPEC_CRUST_MANTLE
-   do k=1,NGLLZ,NIT
-    do j=1,NGLLY,NIT
-     do i=1,NGLLX,NIT
+   do k=1,NGLLZ,iNIT
+    do j=1,NGLLY,iNIT
+     do i=1,NGLLX,iNIT
       if(mask_3dmovie(i,j,k,ispec)) then
        ipoints_3dmovie=ipoints_3dmovie+1
        muv_3dmovie=muvstore_crust_mantle_3dmovie(i,j,k,ispec)
@@ -353,40 +331,40 @@
   if(ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'NN',i6.6,'.bin')") myrank,movie_prefix,it
-  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
   write(27) store_val3d_NN(1:npoints_3dmovie)
   close(27)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'EE',i6.6,'.bin')") myrank,movie_prefix,it
-  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
   write(27) store_val3d_EE(1:npoints_3dmovie)
   close(27)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'ZZ',i6.6,'.bin')") myrank,movie_prefix,it
-  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
   write(27) store_val3d_ZZ(1:npoints_3dmovie)
   close(27)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'NE',i6.6,'.bin')") myrank,movie_prefix,it
-  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
   write(27) store_val3d_NE(1:npoints_3dmovie)
   close(27)
 
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'NZ',i6.6,'.bin')") myrank,movie_prefix,it
-  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
   write(27) store_val3d_NZ(1:npoints_3dmovie)
   close(27)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'EZ',i6.6,'.bin')") myrank,movie_prefix,it
-  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
   write(27) store_val3d_EZ(1:npoints_3dmovie)
   close(27)
 
   end subroutine write_movie_volume_strains
 
 ! ---------------------------------------------
-  subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_PATH,MOVIE_VOLUME_TYPE, &
+  subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
                                       MOVIE_COARSE,ibool_crust_mantle,vector_crust_mantle, &
                                       scalingval,mask_3dmovie,nu_3dmovie)
   implicit none
@@ -403,10 +381,10 @@
   real(kind=CUSTOM_REAL), dimension(3) :: vector_local,vector_local_new
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
   logical :: MOVIE_COARSE
-  character(len=150) LOCAL_PATH
+  character(len=150) LOCAL_TMP_PATH
 
   ! variables
-  integer :: ipoints_3dmovie,i,j,k,ispec,NIT,iglob
+  integer :: ipoints_3dmovie,i,j,k,ispec,iNIT,iglob
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_N,store_val3d_E,store_val3d_Z
   character(len=150) outputname
   character(len=2) movie_prefix
@@ -423,9 +401,9 @@
       movie_prefix='VE' ! velocity
   endif
   if(MOVIE_COARSE) then
-   NIT = NGLLX-1
+   iNIT = NGLLX-1
   else
-   NIT = 1
+   iNIT = 1
   endif
 
   if(CUSTOM_REAL == SIZE_REAL) then
@@ -436,9 +414,9 @@
 
   ipoints_3dmovie=0
   do ispec=1,NSPEC_CRUST_MANTLE
-   do k=1,NGLLZ,NIT
-    do j=1,NGLLY,NIT
-     do i=1,NGLLX,NIT
+   do k=1,NGLLZ,iNIT
+    do j=1,NGLLY,iNIT
+     do i=1,NGLLX,iNIT
       if(mask_3dmovie(i,j,k,ispec)) then
        ipoints_3dmovie=ipoints_3dmovie+1
        iglob = ibool_crust_mantle(i,j,k,ispec)
@@ -458,17 +436,17 @@
   if(ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'N',i6.6,'.bin')") myrank,movie_prefix,it
-  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
   write(27) store_val3d_N(1:npoints_3dmovie)
   close(27)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'E',i6.6,'.bin')") myrank,movie_prefix,it
-  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
   write(27) store_val3d_E(1:npoints_3dmovie)
   close(27)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'Z',i6.6,'.bin')") myrank,movie_prefix,it
-  open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
+  open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted')
   write(27) store_val3d_Z(1:npoints_3dmovie)
   close(27)
 
@@ -485,7 +463,7 @@
                                       epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
                                       epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
-                                      LOCAL_PATH, &
+                                      LOCAL_TMP_PATH, &
                                       displ_crust_mantle,displ_inner_core,displ_outer_core, &
                                       veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
                                       accel_crust_mantle,accel_inner_core, &
@@ -516,7 +494,7 @@
     epsilondev_xz_inner_core,epsilondev_yz_inner_core
 
 
-  character(len=150) LOCAL_PATH
+  character(len=150) LOCAL_TMP_PATH
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: veloc_crust_mantle
@@ -552,7 +530,7 @@
     ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     ! old name format:     write(outputname,"('proc',i6.6,'_crust_mantle_div_displ_it',i6.6,'.bin')") myrank,it
     write(outputname,"('proc',i6.6,'_reg1_div_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) eps_trace_over_3_crust_mantle
     close(27)
@@ -560,7 +538,7 @@
     ! outer core
     if (NSPEC_OUTER_CORE_ADJOINT /= 1 ) then
       write(outputname,"('proc',i6.6,'_reg2_div_displ_it',i6.6,'.bin')") myrank,it
-      open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+      open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
       write(27)  ONE_THIRD * div_displ_outer_core
       close(27)
@@ -582,7 +560,7 @@
 
       ! old name format: write(outputname,"('proc',i6.6,'_outer_core_div_displ_it',i6.6,'.bin')") myrank,it
       write(outputname,"('proc',i6.6,'_reg2_div_displ_it',i6.6,'.bin')") myrank,it
-      open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+      open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
       if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
       write(27)  div_s_outer_core
       close(27)
@@ -593,7 +571,7 @@
     ! inner core
     ! old name format: write(outputname,"('proc',i6.6,'_inner_core_div_displ_proc_it',i6.6,'.bin')") myrank,it
     write(outputname,"('proc',i6.6,'_reg3_div_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) eps_trace_over_3_inner_core
     close(27)
@@ -606,7 +584,7 @@
     ! these binary files must be handled by the user, no further utilities available for this format
     ! crust mantle
     write(outputname,"('proc',i6.6,'_crust_mantle_epsdev_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) epsilondev_xx_crust_mantle
     write(27) epsilondev_yy_crust_mantle
     write(27) epsilondev_xy_crust_mantle
@@ -615,7 +593,7 @@
     close(27)
     ! inner core
     write(outputname,"('proc',i6.6,'inner_core_epsdev_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//trim(outputname),status='unknown',form='unformatted')
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//trim(outputname),status='unknown',form='unformatted')
     write(27) epsilondev_xx_inner_core
     write(27) epsilondev_yy_inner_core
     write(27) epsilondev_xy_inner_core
@@ -629,7 +607,7 @@
     ! these binary arrays can be converted into mesh format using the utilitiy ./bin/xcombine_vol_data
     ! crust_mantle region
     write(outputname,"('proc',i6.6,'_reg1_epsdev_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     ! frobenius norm
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
@@ -656,7 +634,7 @@
 
     ! inner core
     write(outputname,"('proc',i6.6,'_reg3_epsdev_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     ! frobenius norm
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE))
@@ -706,7 +684,7 @@
       enddo
     enddo
     write(outputname,"('proc',i6.6,'_reg1_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) tmp_data
     close(27)
@@ -728,7 +706,7 @@
       enddo
     enddo
     write(outputname,"('proc',i6.6,'_reg2_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) tmp_data
     close(27)
@@ -750,7 +728,7 @@
       enddo
     enddo
     write(outputname,"('proc',i6.6,'_reg3_displ_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) tmp_data
     close(27)
@@ -777,7 +755,7 @@
       enddo
     enddo
     write(outputname,"('proc',i6.6,'_reg1_veloc_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) tmp_data
     close(27)
@@ -799,7 +777,7 @@
       enddo
     enddo
     write(outputname,"('proc',i6.6,'_reg2_veloc_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) tmp_data
     close(27)
@@ -821,7 +799,7 @@
       enddo
     enddo
     write(outputname,"('proc',i6.6,'_reg3_veloc_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) tmp_data
     close(27)
@@ -847,7 +825,7 @@
       enddo
     enddo
     write(outputname,"('proc',i6.6,'_reg1_accel_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) tmp_data
     close(27)
@@ -869,7 +847,7 @@
       enddo
     enddo
     write(outputname,"('proc',i6.6,'_reg2_accel_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) tmp_data
     close(27)
@@ -891,7 +869,7 @@
       enddo
     enddo
     write(outputname,"('proc',i6.6,'_reg3_accel_it',i6.6,'.bin')") myrank,it
-    open(unit=27,file=trim(LOCAL_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=27,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
     write(27) tmp_data
     close(27)

@@ -77,11 +77,11 @@
         ! uses Deville (2002) optimizations
         ! crust/mantle region
         call compute_forces_crust_mantle_Dev( NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-                                      NSPEC_CRUST_MANTLE_ATTENUAT, &      
+                                      NSPEC_CRUST_MANTLE_ATTENUAT, &
                                       displ_crust_mantle,accel_crust_mantle, &
                                       phase_is_inner, &
                                       R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
-                                      R_xz_crust_mantle,R_yz_crust_mantle, &                                      
+                                      R_xz_crust_mantle,R_yz_crust_mantle, &
                                       epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                       epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                       eps_trace_over_3_crust_mantle, &
@@ -106,7 +106,7 @@
         ! no Deville optimization
         ! crust/mantle region
         call compute_forces_crust_mantle(  NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-                                      NSPEC_CRUST_MANTLE_ATTENUAT, &              
+                                      NSPEC_CRUST_MANTLE_ATTENUAT, &
                                       displ_crust_mantle,accel_crust_mantle, &
                                       phase_is_inner, &
                                       R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
@@ -261,7 +261,7 @@
        ! ****************************************************
        ! only for elements in first matching layer in the solid
        if( .not. GPU_MODE ) then
-          ! on CPU   
+          ! on CPU
           !---
           !--- couple with outer core at the bottom of the mantle
           !---
@@ -548,7 +548,7 @@
   implicit none
 
   integer :: NGLOB
-  
+
   ! velocity & acceleration
   ! crust/mantle region
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_crust_mantle,accel_crust_mantle
@@ -628,7 +628,7 @@
   implicit none
 
   integer :: NGLOB_CM,NGLOB_IC
-  
+
   ! acceleration & velocity
   ! crust/mantle region
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM) :: veloc_crust_mantle,accel_crust_mantle

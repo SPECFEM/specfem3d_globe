@@ -36,7 +36,7 @@
 
   module gapp2_mantle_model_constants
     ! data file resolution
-    integer, parameter :: ma=228,mo=576,mr=32,mr1=64
+    integer, parameter :: ma=288,mo=576,mr=32,mr1=64
     integer no,na,nnr,nr1
     real dela,delo
     ! allocatable model arrays
@@ -95,7 +95,7 @@
 
   implicit none
   include "constants.h"
-  integer i,ir,ia,io
+  integer i,ir,ia,io,ier
   character(len=150) GAPP2
 
 !...........................................input data
@@ -104,20 +104,64 @@
   call get_value_string(GAPP2, 'model.GAPP2', 'DATA/3dvpGAP_P2')
 
   ! reads in GAP-P2 model from Obayashi
-  open(unit=10,file=GAPP2,status='old',action='read')
+  open(unit=10,file=GAPP2,status='old',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(0,'error opening file for GAPP2 model')
 
-  read(10,'(3i4,2f10.6)') no,na,nnr,dela,delo
-  read(10,'(34f8.2)') (dep(i),i=0,nnr)
+  read(10,*) no,na,nnr,dela,delo
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) "model GAPP2: "
+  write(IMAIN,*) "  dimensions no = ",no
+  write(IMAIN,*) "             na,nnr = ",na,nnr
+  write(IMAIN,*) "             dela,delon = ",dela,delo
+
+  ! checks bounds
+  if( nnr /= mr .or. no /= mo .or. na /= ma ) then
+    print*,'error GAPP2 model bounds: '
+    print*,'  file dimensions: nnr,no,na = ',nnr,no,na
+    print*,'  module dimensions: mr,mo,ma = ',mr,mo,ma
+    close(10)
+    call exit_MPI(0,'please check GAPP2 model dimensions, and update model_gapp2.f90')
+  endif
+
+  read(10,*) (dep(i),i=0,nnr)
   read(10,*) nr1
-  read(10,'(67f8.2)') (dep1(i),i=0,nr1)
-  read(10,'(67f8.3)') (vp1(i),i=0,nr1)
+
+  ! checks bounds
+  write(IMAIN,*) "             nr1 = ",nr1
+  if( nr1 /= mr1 ) then
+    print*,'error GAPP2 model bounds: '
+    print*,'  file dimensions: nr1 = ',nr1
+    print*,'  module dimensions: mr1 = ',mr1
+    close(10)
+    call exit_MPI(0,'please check GAPP2 model dimensions, and update model_gapp2.f90')
+  endif
+
+  read(10,*) (dep1(i),i=0,nr1)
+  read(10,*) (vp1(i),i=0,nr1)
+
+  ! reads vp
   do ir=1,nnr
     do ia=1,na
-      read(10,'(256f7.3)') (vp3(ia,io,ir),io=1,no)
+      ! reads file 2 lines for all no values
+      read(10,'(288f7.3)') (vp3(ia,io,ir),io=1,no)
+
+      !read(10,*,iostat=ier) (vp3(ia,io,ir),io=1,no/2)
+      !read(10,*,iostat=ier) (vp3(ia,io,ir),io=no/2,no)
+
+      if( ier /= 0 ) then
+        print*,'error GAPP2 read: ia,ir = ',ia,ir
+        call exit_MPI(0,'error GAPP2 read')
+      endif
     enddo
   enddo
-  write(6,*) vp3(1,1,1),vp3(na,no,nnr)
   close(10)
+
+  ! user output
+  write(IMAIN,*) '  check vp3: ',vp3(1,1,1),vp3(na,no,nnr)
+  write(IMAIN,*) '  check vp3: min/max = ',minval(vp3),maxval(vp3)
+  write(IMAIN,*)
 
   end subroutine read_mantle_gapmodel
 

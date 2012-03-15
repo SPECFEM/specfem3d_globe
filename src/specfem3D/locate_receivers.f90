@@ -34,19 +34,19 @@
                              nrec,islice_selected_rec,ispec_selected_rec, &
                              xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
                              stlat,stlon,stele,stbur,nu, &
-                             yr,jda,ho,mi,sec,NPROCTOT,ELLIPTICITY,TOPOGRAPHY, &
+                             yr,jda,ho,mi,sec,&
+                             ELLIPTICITY,TOPOGRAPHY, &
                              theta_source,phi_source,rspl,espl,espl2,nspl, &
                              ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS)
 
+  use constants
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
-
-  include "constants.h"
   include "precision.h"
 
-  integer NPROCTOT,NCHUNKS
+  integer NCHUNKS
 
   logical ELLIPTICITY,TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
@@ -144,17 +144,19 @@
   double precision, dimension(nrec) :: stlat,stlon,stele,stbur
   double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
 
+  double precision typical_size
+  logical located_target
+
   character(len=150) OUTPUT_FILES
   character(len=2) bic
 
-! **************
-
-! make sure we clean the array before the gather
-  ispec_selected_rec(:) = 0
-
-! get MPI starting time
+  ! get MPI starting time
   time_start = MPI_WTIME()
 
+  ! make sure we clean the array before the gather
+  ispec_selected_rec(:) = 0
+
+  ! user output
   if(myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '********************'
@@ -163,8 +165,14 @@
     write(IMAIN,*)
   endif
 
-! define topology of the control element
+  ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
+
+  ! compute typical size of elements at the surface
+  typical_size = TWO_PI * R_UNIT_SPHERE / (4.*NEX_XI_VAL)
+
+  ! use 10 times the distance as a criterion for source detection
+  typical_size = 10. * typical_size
 
   if(myrank == 0) then
     write(IMAIN,*)
@@ -174,7 +182,7 @@
     write(IMAIN,*)
   endif
 
-! allocate memory for arrays using number of stations
+  ! allocate memory for arrays using number of stations
   allocate(epidist(nrec), &
           ix_initial_guess(nrec), &
           iy_initial_guess(nrec), &
@@ -186,14 +194,14 @@
           y_found(nrec), &
           z_found(nrec), &
           final_distance(nrec), &
-          ispec_selected_rec_all(nrec,0:NPROCTOT-1), &
-          xi_receiver_all(nrec,0:NPROCTOT-1), &
-          eta_receiver_all(nrec,0:NPROCTOT-1), &
-          gamma_receiver_all(nrec,0:NPROCTOT-1), &
-          x_found_all(nrec,0:NPROCTOT-1), &
-          y_found_all(nrec,0:NPROCTOT-1), &
-          z_found_all(nrec,0:NPROCTOT-1), &
-          final_distance_all(nrec,0:NPROCTOT-1),stat=ier)
+          ispec_selected_rec_all(nrec,0:NPROCTOT_VAL-1), &
+          xi_receiver_all(nrec,0:NPROCTOT_VAL-1), &
+          eta_receiver_all(nrec,0:NPROCTOT_VAL-1), &
+          gamma_receiver_all(nrec,0:NPROCTOT_VAL-1), &
+          x_found_all(nrec,0:NPROCTOT_VAL-1), &
+          y_found_all(nrec,0:NPROCTOT_VAL-1), &
+          z_found_all(nrec,0:NPROCTOT_VAL-1), &
+          final_distance_all(nrec,0:NPROCTOT_VAL-1),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary receiver arrays')
 
   ! read that STATIONS file on the master
@@ -218,9 +226,7 @@
 
   endif
 
-
-
-! broadcast the information read on the master to the nodes
+  ! broadcast the information read on the master to the nodes
   call MPI_BCAST(station_name,nrec*MAX_LENGTH_STATION_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(network_name,nrec*MAX_LENGTH_NETWORK_NAME,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
 
@@ -229,13 +235,13 @@
   call MPI_BCAST(stele,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(stbur,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-! loop on all the stations to locate them in the mesh
+  ! loop on all the stations to locate them in the mesh
   do irec=1,nrec
 
-! set distance to huge initial value
+    ! set distance to huge initial value
     distmin = HUGEVAL
 
-! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
+    ! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
     if(ASSUME_PERFECT_SPHERE) then
       theta = PI/2.0d0 - stlat(irec)*PI/180.0d0
     else
@@ -245,28 +251,28 @@
     phi = stlon(irec)*PI/180.0d0
     call reduce(theta,phi)
 
-! compute epicentral distance
+    ! compute epicentral distance
     epidist(irec) = acos(cos(theta)*cos(theta_source) + &
               sin(theta)*sin(theta_source)*cos(phi-phi_source))*180.0d0/PI
 
-! print some information about stations
+    ! print some information about stations
     if(myrank == 0) &
       write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
                        '.',network_name(irec)(1:len_trim(network_name(irec))), &
                        '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
 
-! record three components for each station
+    ! record three components for each station
     do iorientation = 1,3
 
-!     North
+      !     North
       if(iorientation == 1) then
         stazi = 0.d0
         stdip = 0.d0
-!     East
+      !     East
       else if(iorientation == 2) then
         stazi = 90.d0
         stdip = 0.d0
-!     Vertical
+      !     Vertical
       else if(iorientation == 3) then
         stazi = 0.d0
         stdip = - 90.d0
@@ -274,20 +280,20 @@
         call exit_MPI(myrank,'incorrect orientation')
       endif
 
-!     get the orientation of the seismometer
+      !     get the orientation of the seismometer
       thetan=(90.0d0+stdip)*PI/180.0d0
       phin=stazi*PI/180.0d0
 
-! we use the same convention as in Harvard normal modes for the orientation
+      ! we use the same convention as in Harvard normal modes for the orientation
 
-!     vertical component
+      !     vertical component
       n(1) = cos(thetan)
-!     N-S component
+      !     N-S component
       n(2) = - sin(thetan)*cos(phin)
-!     E-W component
+      !     E-W component
       n(3) = sin(thetan)*sin(phin)
 
-!     get the Cartesian components of n in the model: nu
+      !     get the Cartesian components of n in the model: nu
       sint = sin(theta)
       cost = cos(theta)
       sinp = sin(phi)
@@ -298,23 +304,27 @@
 
     enddo
 
-!     ellipticity
-    r0=1.0d0
+    ! normalized receiver radius
+    r0 = R_UNIT_SPHERE
+
+    ! finds elevation of receiver
+    if(TOPOGRAPHY) then
+       call get_topo_bathy(stlat(irec),stlon(irec),elevation,ibathy_topo)
+       r0 = r0 + elevation/R_EARTH
+    endif
+
+    !     ellipticity
     if(ELLIPTICITY) then
-      if(TOPOGRAPHY) then
-         call get_topo_bathy(stlat(irec),stlon(irec),elevation,ibathy_topo)
-         r0 = r0 + elevation/R_EARTH
-      endif
       cost=cos(theta)
       p20=0.5d0*(3.0d0*cost*cost-1.0d0)
       call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
       r0=r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
     endif
 
-! subtract station burial depth (in meters)
+    ! subtract station burial depth (in meters)
     r0 = r0 - stbur(irec)/R_EARTH
 
-! compute the Cartesian position of the receiver
+    ! compute the Cartesian position of the receiver
     x_target(irec) = r0*sin(theta)*cos(phi)
     y_target(irec) = r0*sin(theta)*sin(phi)
     z_target(irec) = r0*cos(theta)
@@ -322,13 +332,20 @@
     ! would write out desired target locations of receivers
     !if (myrank == 0) write(IOVTK,*) sngl(x_target(irec)), sngl(y_target(irec)), sngl(z_target(irec))
 
-! examine top of the elements only (receivers always at the surface)
-!      k = NGLLZ
+    ! flag to check that we located at least one target element
+    located_target = .false.
 
     do ispec=1,nspec
 
-! loop only on points inside the element
-! exclude edges to ensure this point is not shared with other elements
+      ! exclude elements that are too far from target
+      iglob = ibool(1,1,1,ispec)
+      dist = dsqrt((x_target(irec) - dble(xstore(iglob)))**2 &
+                 + (y_target(irec) - dble(ystore(iglob)))**2 &
+                 + (z_target(irec) - dble(zstore(iglob)))**2)
+      if(USE_DISTANCE_CRITERION .and. dist > typical_size) cycle
+
+      ! loop only on points inside the element
+      ! exclude edges to ensure this point is not shared with other elements
       do k=2,NGLLZ-1
         do j=2,NGLLY-1
           do i=2,NGLLX-1
@@ -338,26 +355,36 @@
                         +(y_target(irec)-dble(ystore(iglob)))**2 &
                         +(z_target(irec)-dble(zstore(iglob)))**2)
 
-!           keep this point if it is closer to the receiver
+            !  keep this point if it is closer to the receiver
             if(dist < distmin) then
               distmin = dist
               ispec_selected_rec(irec) = ispec
               ix_initial_guess(irec) = i
               iy_initial_guess(irec) = j
               iz_initial_guess(irec) = k
+              located_target = .true.
             endif
 
           enddo
         enddo
       enddo
 
-! end of loop on all the spectral elements in current slice
+    ! end of loop on all the spectral elements in current slice
     enddo
 
-! end of loop on all the stations
+    ! if we have not located a target element, the receiver is not in this slice
+    ! therefore use first element only for fictitious iterative search
+    if(.not. located_target) then
+      ispec_selected_rec(irec)=1
+      ix_initial_guess(irec) = 2
+      iy_initial_guess(irec) = 2
+      iz_initial_guess(irec) = 2
+    endif
+
+  ! end of loop on all the stations
   enddo
 
-! create RECORDHEADER file with usual format for normal-mode codes
+  ! create RECORDHEADER file with usual format for normal-mode codes
   if(myrank == 0) then
 
     ! get the base pathname for output files
@@ -430,12 +457,12 @@
 
     ispec_iterate = ispec_selected_rec(irec)
 
-! use initial guess in xi and eta
+    ! use initial guess in xi and eta
     xi = xigll(ix_initial_guess(irec))
     eta = yigll(iy_initial_guess(irec))
     gamma = zigll(iz_initial_guess(irec))
 
-! define coordinates of the control points of the element
+    ! define coordinates of the control points of the element
 
     do ia=1,NGNOD
 
@@ -476,37 +503,37 @@
 
     enddo
 
-! iterate to solve the non linear system
+    ! iterate to solve the non linear system
     do iter_loop = 1,NUM_ITER
 
-! impose receiver exactly at the surface
+      ! impose receiver exactly at the surface
       if(.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
-! recompute jacobian for the new point
+      ! recompute jacobian for the new point
       call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
-! compute distance to target location
+      ! compute distance to target location
       dx = - (x - x_target(irec))
       dy = - (y - y_target(irec))
       dz = - (z - z_target(irec))
 
-! compute increments
-! gamma does not change since we know the receiver is exactly on the surface
+      ! compute increments
+      ! gamma does not change since we know the receiver is exactly on the surface
       dxi  = xix*dx + xiy*dy + xiz*dz
       deta = etax*dx + etay*dy + etaz*dz
       if(RECEIVERS_CAN_BE_BURIED) dgamma = gammax*dx + gammay*dy + gammaz*dz
 
-! update values
+      ! update values
       xi = xi + dxi
       eta = eta + deta
       if(RECEIVERS_CAN_BE_BURIED) gamma = gamma + dgamma
 
-! impose that we stay in that element
-! (useful if user gives a receiver outside the mesh for instance)
-! we can go slightly outside the [1,1] segment since with finite elements
-! the polynomial solution is defined everywhere
-! can be useful for convergence of iterative scheme with distorted elements
+      ! impose that we stay in that element
+      ! (useful if user gives a receiver outside the mesh for instance)
+      ! we can go slightly outside the [1,1] segment since with finite elements
+      ! the polynomial solution is defined everywhere
+      ! can be useful for convergence of iterative scheme with distorted elements
       if (xi > 1.10d0) xi = 1.10d0
       if (xi < -1.10d0) xi = -1.10d0
       if (eta > 1.10d0) eta = 1.10d0
@@ -514,17 +541,17 @@
       if (gamma > 1.10d0) gamma = 1.10d0
       if (gamma < -1.10d0) gamma = -1.10d0
 
-! end of non linear iterations
+    ! end of non linear iterations
     enddo
 
-! impose receiver exactly at the surface after final iteration
+    ! impose receiver exactly at the surface after final iteration
     if(.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
-! compute final coordinates of point found
+    ! compute final coordinates of point found
     call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
          xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
-! store xi,eta and x,y,z of point found
+    ! store xi,eta and x,y,z of point found
     xi_receiver(irec) = xi
     eta_receiver(irec) = eta
     gamma_receiver(irec) = gamma
@@ -567,7 +594,7 @@
     islice_selected_rec(:) = -1
     do irec = 1,nrec
       distmin = HUGEVAL
-      do iprocloop = 0,NPROCTOT-1
+      do iprocloop = 0,NPROCTOT_VAL-1
         if(final_distance_all(irec,iprocloop) < distmin) then
           distmin = final_distance_all(irec,iprocloop)
           islice_selected_rec(irec) = iprocloop
@@ -588,7 +615,7 @@
 
       if(final_distance(irec) == HUGEVAL) call exit_MPI(myrank,'error locating receiver')
 
-      if(DISPLAY_DETAILS_STATIONS) then
+      if(DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0 ) then
         write(IMAIN,*)
         write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
         write(IMAIN,*) '     original latitude: ',sngl(stlat(irec))

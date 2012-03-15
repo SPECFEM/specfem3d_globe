@@ -232,7 +232,7 @@ module specfem_par
           ROTATE_SEISMOGRAMS_RT,HONOR_1D_SPHERICAL_MOHO,WRITE_SEISMOGRAMS_BY_MASTER,&
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
 
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,MODEL
+  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
   ! process/partition name
   character(len=150) :: prname
 
@@ -547,7 +547,7 @@ module specfem_par_crustmantle
     normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
   integer :: irec_master_noise
-  integer :: nspec_top
+  integer :: NSPEC_TOP
 
   ! inner / outer elements crust/mantle region
   integer :: num_phase_ispec_crust_mantle

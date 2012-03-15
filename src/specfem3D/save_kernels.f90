@@ -26,45 +26,11 @@
 !=====================================================================
 
 
-  subroutine save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
-                  cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
-                  alpha_kl_crust_mantle,beta_kl_crust_mantle, &
-                  ystore_crust_mantle,zstore_crust_mantle, &
-                  rhostore_crust_mantle,muvstore_crust_mantle, &
-                  kappavstore_crust_mantle,ibool_crust_mantle, &
-                  kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
-                  LOCAL_PATH)
+  subroutine save_kernels_crust_mantle()
 
+  use specfem_par
+  use specfem_par_crustmantle
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  double precision :: scale_t,scale_displ
-
-  real(kind=CUSTOM_REAL), dimension(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    cijkl_kl_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    rho_kl_crust_mantle, beta_kl_crust_mantle, alpha_kl_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
-        ystore_crust_mantle,zstore_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
-        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
-        kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
-
-  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-
-  character(len=150) LOCAL_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
@@ -73,7 +39,6 @@
   real(kind=CUSTOM_REAL) :: scale_kl,scale_kl_ani,scale_kl_rho
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k,iglob
-  character(len=150) prname
 
   ! transverse isotropic parameters
   real(kind=CUSTOM_REAL), dimension(21) :: an_kl
@@ -352,7 +317,7 @@
     enddo
   enddo
 
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
   ! For anisotropic kernels
   if (ANISOTROPIC_KL) then
@@ -473,39 +438,16 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_kernels_outer_core(myrank,scale_t,scale_displ, &
-                        rho_kl_outer_core,alpha_kl_outer_core, &
-                        rhostore_outer_core,kappavstore_outer_core, &
-                        deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
-                        LOCAL_PATH)
+  subroutine save_kernels_outer_core()
 
+  use specfem_par
+  use specfem_par_outercore
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  double precision :: scale_t,scale_displ
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: &
-    rho_kl_outer_core,alpha_kl_outer_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
-        rhostore_outer_core,kappavstore_outer_core
-
-  integer nspec_beta_kl_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core) :: &
-    beta_kl_outer_core
-  logical deviatoric_outercore
-
-  character(len=150) LOCAL_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
   real(kind=CUSTOM_REAL) :: rhol,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k
-  character(len=150) prname
 
   scale_kl = scale_t/scale_displ * 1.d9
 
@@ -534,7 +476,8 @@
     enddo
   enddo
 
-  call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+  call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_TMP_PATH)
+
   open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) rho_kl_outer_core
   close(27)
@@ -555,33 +498,16 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_kernels_inner_core(myrank,scale_t,scale_displ, &
-                          rho_kl_inner_core,beta_kl_inner_core,alpha_kl_inner_core, &
-                          rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
-                          LOCAL_PATH)
+  subroutine save_kernels_inner_core()
+
+  use specfem_par
+  use specfem_par_innercore
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  double precision :: scale_t,scale_displ
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
-    rho_kl_inner_core, beta_kl_inner_core, alpha_kl_inner_core
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
-        rhostore_inner_core, kappavstore_inner_core,muvstore_inner_core
-
-  character(len=150) LOCAL_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k
-  character(len=150) prname
-
 
   scale_kl = scale_t/scale_displ * 1.d9
 
@@ -606,7 +532,8 @@
     enddo
   enddo
 
-  call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
+  call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_TMP_PATH)
+
   open(unit=27,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) rho_kl_inner_core
   close(27)
@@ -623,33 +550,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_kernels_boundary_kl(myrank,scale_t,scale_displ, &
-                                  moho_kl,d400_kl,d670_kl,cmb_kl,icb_kl, &
-                                  LOCAL_PATH,HONOR_1D_SPHERICAL_MOHO)
+  subroutine save_kernels_boundary_kl()
 
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  double precision :: scale_t,scale_displ
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_MOHO) :: moho_kl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_400) :: d400_kl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_670) :: d670_kl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_CMB) :: cmb_kl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_ICB) :: icb_kl
-
-  character(len=150) LOCAL_PATH
-
-  logical HONOR_1D_SPHERICAL_MOHO
 
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
-  character(len=150) prname
-
 
   scale_kl = scale_t/scale_displ * 1.d9
 
@@ -661,7 +570,7 @@
   cmb_kl = cmb_kl * scale_kl * 1.d3
   icb_kl = icb_kl * scale_kl * 1.d3
 
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
     open(unit=27,file=trim(prname)//'moho_kernel.bin',status='unknown',form='unformatted',action='write')
@@ -695,22 +604,10 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
-                                nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
+  subroutine save_kernels_source_derivatives()
 
+  use specfem_par
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer nrec_local,NSOURCES
-  double precision :: scale_displ,scale_t
-
-  double precision :: nu_source(NDIM,NDIM,NSOURCES)
-  real(kind=CUSTOM_REAL) :: moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
-                            stshift_der(nrec_local),shdur_der(nrec_local)
-
-  integer, dimension(nrec_local) :: number_receiver_global
 
   ! local parameters
   real(kind=CUSTOM_REAL),parameter :: scale_mass = RHOAV * (R_EARTH**3)
@@ -766,26 +663,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_kernels_hessian(myrank,scale_t,scale_displ, &
-                  hess_kl_crust_mantle,LOCAL_PATH)
+  subroutine save_kernels_hessian()
 
+  use specfem_par
+  use specfem_par_crustmantle
   implicit none
-
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank
-
-  double precision :: scale_t,scale_displ
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-    hess_kl_crust_mantle
-
-  character(len=150) LOCAL_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: scale_kl
-  character(len=150) prname
 
   ! scaling factors
   scale_kl = scale_t/scale_displ * 1.d9
@@ -794,7 +679,8 @@
   hess_kl_crust_mantle(:,:,:,:) = 2._CUSTOM_REAL * hess_kl_crust_mantle(:,:,:,:) * scale_kl
 
   ! stores into file
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
+
   open(unit=27,file=trim(prname)//'hess_kernel.bin',status='unknown',form='unformatted',action='write')
   write(27) hess_kl_crust_mantle
   close(27)

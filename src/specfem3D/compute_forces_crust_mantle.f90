@@ -28,7 +28,7 @@
   subroutine compute_forces_crust_mantle(NSPEC,NGLOB,NSPEC_ATT, &
                                         displ_crust_mantle,accel_crust_mantle, &
                                         phase_is_inner, &
-                                        R_xx,R_yy,R_xy,R_xz,R_yz, &                                        
+                                        R_xx,R_yy,R_xy,R_xz,R_yz, &
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                         epsilondev_xz,epsilondev_yz, &
                                         epsilon_trace_over_3, &
@@ -96,7 +96,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_ATT) :: &
     R_xx,R_yy,R_xy,R_xz,R_yz
 
-  
+
 !  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: epsilondev
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz

@@ -45,9 +45,7 @@
 
   implicit none
 
-  !include "constants.h"
-
-! correct number of spectral elements in each block depending on chunk type
+  ! correct number of spectral elements in each block depending on chunk type
   integer ispec,nspec,nspec_stacey
 
   logical ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS

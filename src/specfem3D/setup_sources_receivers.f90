@@ -85,16 +85,24 @@
           Mzz(NSOURCES), &
           Mxy(NSOURCES), &
           Mxz(NSOURCES), &
-          Myz(NSOURCES), &
-          xi_source(NSOURCES), &
+          Myz(NSOURCES),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+
+  allocate(xi_source(NSOURCES), &
           eta_source(NSOURCES), &
-          gamma_source(NSOURCES), &
-          tshift_cmt(NSOURCES), &
+          gamma_source(NSOURCES),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+
+  allocate(tshift_cmt(NSOURCES), &
           hdur(NSOURCES), &
-          hdur_gaussian(NSOURCES), &
-          theta_source(NSOURCES), &
-          phi_source(NSOURCES), &
-          nu_source(NDIM,NDIM,NSOURCES),stat=ier)
+          hdur_gaussian(NSOURCES),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+
+  allocate(theta_source(NSOURCES), &
+          phi_source(NSOURCES),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+
+  allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
 
   ! sources
@@ -115,13 +123,14 @@
   ! locate sources in the mesh
   call locate_sources(NSOURCES,myrank,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-            xigll,yigll,zigll,NPROCTOT_VAL,ELLIPTICITY_VAL,TOPOGRAPHY, &
+            xigll,yigll,zigll, &
+            ELLIPTICITY_VAL,TOPOGRAPHY, &
             sec,tshift_cmt,min_tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
             NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
             islice_selected_source,ispec_selected_source, &
             xi_source,eta_source,gamma_source, nu_source, &
-            rspl,espl,espl2,nspl,ibathy_topo,NEX_XI,PRINT_SOURCE_TIME_FUNCTION, &
-            LOCAL_PATH,SIMULATION_TYPE)
+            rspl,espl,espl2,nspl,ibathy_topo,PRINT_SOURCE_TIME_FUNCTION, &
+            LOCAL_TMP_PATH,SIMULATION_TYPE)
 
   if(abs(minval(tshift_cmt)) > TINYVAL) call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
 
@@ -258,14 +267,18 @@
           ispec_selected_rec(nrec), &
           xi_receiver(nrec), &
           eta_receiver(nrec), &
-          gamma_receiver(nrec), &
-          station_name(nrec), &
+          gamma_receiver(nrec),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
+
+  allocate(station_name(nrec), &
           network_name(nrec), &
           stlat(nrec), &
           stlon(nrec), &
           stele(nrec), &
-          stbur(nrec), &
-          nu(NDIM,NDIM,nrec),stat=ier)
+          stbur(nrec),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
+
+  allocate(nu(NDIM,NDIM,nrec),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
 
   !  receivers
@@ -286,7 +299,8 @@
                       nrec,islice_selected_rec,ispec_selected_rec, &
                       xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
                       stlat,stlon,stele,stbur,nu, &
-                      yr,jda,ho,mi,sec,NPROCTOT_VAL,ELLIPTICITY_VAL,TOPOGRAPHY, &
+                      yr,jda,ho,mi,sec, &
+                      ELLIPTICITY_VAL,TOPOGRAPHY, &
                       theta_source(1),phi_source(1),rspl,espl,espl2,nspl, &
                       ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS_VAL)
 
@@ -387,6 +401,9 @@
       call exit_MPI(myrank,'total number of receivers is incorrect')
   endif
 
+  ! frees arrays
+  deallocate(theta_source,phi_source)
+
   end subroutine setup_receivers
 
 
@@ -457,14 +474,6 @@
 
     ! stores source arrays
     call setup_sources_receivers_srcarr()
-!                      NSOURCES,myrank, &
-!                      ispec_selected_source,islice_selected_source, &
-!                      xi_source,eta_source,gamma_source, &
-!                      Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-!                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-!                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-!                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!                      xigll,yigll,zigll,sourcearrays)
 
   endif
 
@@ -504,40 +513,11 @@
 !
 
   subroutine setup_sources_receivers_srcarr()
-!                      NSOURCES,myrank, &
-!                      ispec_selected_source,islice_selected_source, &
-!                      xi_source,eta_source,gamma_source, &
-!                      Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-!                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-!                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-!                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-!                      xigll,yigll,zigll,sourcearrays)
 
   use specfem_par
   use specfem_par_crustmantle
 
   implicit none
-
-!  include "constants.h"
-!  include "OUTPUT_FILES/values_from_mesher.h"
-!
-!  integer NSOURCES,myrank
-!
-!  integer, dimension(NSOURCES) :: islice_selected_source,ispec_selected_source
-!  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
-!  double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
-!
-!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-!        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
-!        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-!        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
-!
-!  double precision, dimension(NGLLX) :: xigll
-!  double precision, dimension(NGLLY) :: yigll
-!  double precision, dimension(NGLLZ) :: zigll
-!
-!  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES) :: sourcearrays
-
 
   ! local parameters
   integer :: isource,iglob,ispec,i,j,k

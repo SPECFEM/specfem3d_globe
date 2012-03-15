@@ -103,72 +103,46 @@
     call close_file_abs(9)
   endif
 
-  ! synchronize all processes
-  call sync_all()
-
   ! save files to local disk or tape system if restart file
   call save_forward_arrays()
-
-  ! synchronize all processes
-  call sync_all()
 
   ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
     ! crust mantle
-    call save_kernels_crust_mantle(myrank,scale_t,scale_displ, &
-                  cijkl_kl_crust_mantle,rho_kl_crust_mantle, &
-                  alpha_kl_crust_mantle,beta_kl_crust_mantle, &
-                  ystore_crust_mantle,zstore_crust_mantle, &
-                  rhostore_crust_mantle,muvstore_crust_mantle, &
-                  kappavstore_crust_mantle,ibool_crust_mantle, &
-                  kappahstore_crust_mantle,muhstore_crust_mantle, &
-                  eta_anisostore_crust_mantle,ispec_is_tiso_crust_mantle, &
-              ! --idoubling_crust_mantle, &
-                  LOCAL_PATH)
+    call save_kernels_crust_mantle()
 
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
-       call save_kernels_strength_noise(myrank,LOCAL_PATH,Sigma_kl_crust_mantle)
+       call save_kernels_strength_noise()
     endif
 
     ! outer core
-    call save_kernels_outer_core(myrank,scale_t,scale_displ, &
-                        rho_kl_outer_core,alpha_kl_outer_core, &
-                        rhostore_outer_core,kappavstore_outer_core, &
-                        deviatoric_outercore,nspec_beta_kl_outer_core,beta_kl_outer_core, &
-                        LOCAL_PATH)
+    call save_kernels_outer_core()
 
     ! inner core
-    call save_kernels_inner_core(myrank,scale_t,scale_displ, &
-                          rho_kl_inner_core,beta_kl_inner_core,alpha_kl_inner_core, &
-                          rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
-                          LOCAL_PATH)
+    call save_kernels_inner_core()
 
     ! boundary kernel
     if (SAVE_BOUNDARY_MESH) then
-      call save_kernels_boundary_kl(myrank,scale_t,scale_displ, &
-                                   moho_kl,d400_kl,d670_kl,cmb_kl,icb_kl, &
-                                   LOCAL_PATH,HONOR_1D_SPHERICAL_MOHO)
+      call save_kernels_boundary_kl()
     endif
 
     ! approximate hessian
     if( APPROXIMATE_HESS_KL ) then
-      call save_kernels_hessian(myrank,scale_t,scale_displ, &
-                               hess_kl_crust_mantle,LOCAL_PATH)
+      call save_kernels_hessian()
     endif
   endif
 
   ! save source derivatives for adjoint simulations
   if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
-    call save_kernels_source_derivatives(nrec_local,NSOURCES,scale_displ,scale_t, &
-                                nu_source,moment_der,sloc_der,stshift_der,shdur_der,number_receiver_global)
+    call save_kernels_source_derivatives()
   endif
 
   ! frees dynamically allocated memory
   ! mpi buffers
   deallocate(buffer_send_faces, &
-            buffer_received_faces, &
-            b_buffer_send_faces, &
+            buffer_received_faces)
+  deallocate(b_buffer_send_faces, &
             b_buffer_received_faces)
 
   ! central cube buffers
@@ -182,22 +156,11 @@
 
   ! sources
   deallocate(islice_selected_source, &
-          ispec_selected_source, &
-          Mxx, &
-          Myy, &
-          Mzz, &
-          Mxy, &
-          Mxz, &
-          Myz, &
-          xi_source, &
-          eta_source, &
-          gamma_source, &
-          tshift_cmt, &
-          hdur, &
-          hdur_gaussian, &
-          theta_source, &
-          phi_source, &
-          nu_source)
+            ispec_selected_source, &
+            Mxx,Myy,Mzz,Mxy,Mxz,Myz)
+  deallocate(tshift_cmt,hdur,hdur_gaussian)
+  deallocate(nu_source)
+
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     deallocate(iadj_vec)
@@ -208,19 +171,12 @@
   endif
 
   ! receivers
-  deallocate(islice_selected_rec, &
-          ispec_selected_rec, &
-          xi_receiver, &
-          eta_receiver, &
-          gamma_receiver, &
-          station_name, &
-          network_name, &
-          stlat, &
-          stlon, &
-          stele, &
-          stbur, &
-          nu, &
-          number_receiver_global)
+  deallocate(islice_selected_rec,ispec_selected_rec, &
+            xi_receiver,eta_receiver,gamma_receiver)
+  deallocate(station_name,network_name, &
+            stlat,stlon,stele,stbur)
+  deallocate(nu,number_receiver_global)
+
   if( nrec_local > 0 ) then
     deallocate(hxir_store, &
               hetar_store, &
@@ -240,19 +196,11 @@
 
   ! movies
   if(MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0 ) then
-    deallocate(store_val_x, &
-              store_val_y, &
-              store_val_z, &
-              store_val_ux, &
-              store_val_uy, &
-              store_val_uz)
+    deallocate(store_val_x,store_val_y,store_val_z, &
+              store_val_ux,store_val_uy,store_val_uz)
     if (MOVIE_SURFACE) then
-      deallocate(store_val_x_all, &
-            store_val_y_all, &
-            store_val_z_all, &
-            store_val_ux_all, &
-            store_val_uy_all, &
-            store_val_uz_all)
+      deallocate(store_val_x_all,store_val_y_all,store_val_z_all, &
+            store_val_ux_all,store_val_uy_all,store_val_uz_all)
     endif
   endif
   if(MOVIE_VOLUME) then
@@ -262,11 +210,8 @@
   ! noise simulations
   if ( NOISE_TOMOGRAPHY /= 0 ) then
     deallocate(noise_sourcearray, &
-            normal_x_noise, &
-            normal_y_noise, &
-            normal_z_noise, &
-            mask_noise, &
-            noise_surface_movie)
+              normal_x_noise,normal_y_noise,normal_z_noise, &
+              mask_noise,noise_surface_movie)
   endif
 
   ! close the main output file
