@@ -173,13 +173,16 @@
 
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
+          templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
             ispec_strain = 1
+!$OMP CRITICAL
+            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+!$OMP END CRITICAL
           else
             ispec_strain = ispec
+            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
           endif
-          templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-          epsilon_trace_over_3(i,j,k,ispec_strain) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
@@ -514,13 +517,16 @@
 
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
+          templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
             ispec_strain = 1
+!$OMP CRITICAL
+            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+!$OMP END CRITICAL
           else
             ispec_strain = ispec
+            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
           endif
-          templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-          epsilon_trace_over_3(i,j,k,ispec_strain) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
@@ -1034,13 +1040,16 @@
 
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
+          templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
           if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
             ispec_strain = 1
+!$OMP CRITICAL
+            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+!$OMP END CRITICAL
           else
             ispec_strain = ispec
+            epsilon_trace_over_3(i,j,k,ispec_strain) = templ
           endif
-          templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-          epsilon_trace_over_3(i,j,k,ispec_strain) = templ
           epsilondev_loc(1,i,j,k) = duxdxl - templ
           epsilondev_loc(2,i,j,k) = duydyl - templ
           epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
