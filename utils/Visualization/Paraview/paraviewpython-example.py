@@ -10,6 +10,9 @@ from paraview import servermanager
 if len(sys.argv) == 3:
   filename = str(sys.argv[1])  
   icounter = str(sys.argv[2])
+else:
+  print "usage: ./paraviewpython-example.py state-file counter[e.g.=0]"
+  sys.exit()
   
 outfile = "paraview_movie."
 print "file root: ",outfile

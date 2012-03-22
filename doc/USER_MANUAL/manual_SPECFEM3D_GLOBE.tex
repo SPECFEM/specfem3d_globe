@@ -1622,7 +1622,9 @@ number of elements is greater than 1248), the radial distribution
 of elements needs to be adjusted as well to maintain spectral elements
 that are as cube-like as possible. The code attempts to do this, but
 be sure to view the mesh with your favorite graphics package to make
-sure that the element are well behaved. Remember: a high-quality mesh is paramount for accurate simulations. In addition to a reorganization of the radial distribution of elements,
+sure that the element are well behaved. 
+Remember: a high-quality mesh is paramount for accurate simulations. 
+In addition to a reorganization of the radial distribution of elements,
 the time stepping and period range in which the attenuation is applied
 is automatically determined. The minimum and maximum periods for attenuation
 are:
@@ -1800,9 +1802,11 @@ files, set the parameters \texttt{\small SIMULATION\_TYPE}{\small{}
 -F}), and run the solver.
 
 \begin{itemize}
-\item Notice that attenuation is not implemented yet for the computation
-of finite-frequency kernels; therefore set \texttt{ATTENUATION = .false.}
-in the \texttt{Par\_file}.
+\item Notice that attenuation is not fully implemented yet for the computation
+of finite-frequency kernels; if \texttt{ATTENUATION = .true.} is set
+in the \texttt{Par\_file}, only effects on phase shift are accounted for
+but not on amplitude of the signals. However, we suggest you use the same
+setting for \texttt{ATTENUATION} as for your forward simulations.
 \item We also suggest you modify the half duration of the \texttt{CMTSOLUTION}
 to be similar to the accuracy of the simulation (see Equation \ref{eq:shortest_period}
 or \ref{eq:shortest_period_regional}) to avoid too much high-frequency
@@ -1878,6 +1882,11 @@ where \texttt{proc??????} represents the processor number, and \texttt{reg\_?}
 denotes the region these kernels are for, including mantle (\texttt{reg\_1}),
 outer core (\texttt{reg\_2}), and inner core (\texttt{reg\_3}). The
 output kernels are in the unit of $s/km^{3}$.
+\item Note that if you set the flag \texttt{APPROXIMATE\_HESS\_KL = .true.} in
+the \texttt{constants.h} file and recompile the solver, the adjoint simulation
+also saves files \texttt{proc??????\_reg\_1\_hess\_kernel.bin} which can
+be used as preconditioners in the crust-mantle region for iterative inverse
+optimization schemes.
 \end{itemize}
 \item \textbf{Run the boundary kernel simulation}
 
