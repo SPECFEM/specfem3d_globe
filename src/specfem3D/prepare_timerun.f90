@@ -560,10 +560,6 @@
   character(len=150) LOCAL_PATH
 
   ! local parameters
-  double precision, dimension(ATT1,ATT2,ATT3,ATT4) :: omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
-  double precision, dimension(ATT1,ATT2,ATT3,ATT5) :: omsb_inner_core_dble, factor_scale_inner_core_dble
-  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle_dble
-  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core_dble
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
   double precision, dimension(N_SLS) :: tau_sigma_dble
 
@@ -576,31 +572,13 @@
 
   ! CRUST_MANTLE ATTENUATION
   call create_name_database(prname, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
-  call get_attenuation_model_3D(myrank, prname, omsb_crust_mantle_dble, &
-           factor_common_crust_mantle_dble,factor_scale_crust_mantle_dble,tau_sigma_dble,NSPEC_CRUST_MANTLE)
+  call get_attenuation_model_3D(myrank, prname, one_minus_sum_beta_crust_mantle, &
+           factor_common_crust_mantle,factor_scale_crust_mantle,tau_sigma_dble,NSPEC_CRUST_MANTLE)
 
   ! INNER_CORE ATTENUATION
   call create_name_database(prname, myrank, IREGION_INNER_CORE, LOCAL_PATH)
-  call get_attenuation_model_3D(myrank, prname, omsb_inner_core_dble, &
-           factor_common_inner_core_dble,factor_scale_inner_core_dble,tau_sigma_dble,NSPEC_INNER_CORE)
-
-  if(CUSTOM_REAL == SIZE_REAL) then
-    factor_scale_crust_mantle       = sngl(factor_scale_crust_mantle_dble)
-    one_minus_sum_beta_crust_mantle = sngl(omsb_crust_mantle_dble)
-    factor_common_crust_mantle      = sngl(factor_common_crust_mantle_dble)
-
-    factor_scale_inner_core         = sngl(factor_scale_inner_core_dble)
-    one_minus_sum_beta_inner_core   = sngl(omsb_inner_core_dble)
-    factor_common_inner_core        = sngl(factor_common_inner_core_dble)
-  else
-    factor_scale_crust_mantle       = factor_scale_crust_mantle_dble
-    one_minus_sum_beta_crust_mantle = omsb_crust_mantle_dble
-    factor_common_crust_mantle      = factor_common_crust_mantle_dble
-
-    factor_scale_inner_core         = factor_scale_inner_core_dble
-    one_minus_sum_beta_inner_core   = omsb_inner_core_dble
-    factor_common_inner_core        = factor_common_inner_core_dble
-  endif
+  call get_attenuation_model_3D(myrank, prname, one_minus_sum_beta_inner_core, &
+           factor_common_inner_core,factor_scale_inner_core,tau_sigma_dble,NSPEC_INNER_CORE)
 
   ! if attenuation is on, shift PREM to right frequency
   ! rescale mu in PREM to average frequency for attenuation

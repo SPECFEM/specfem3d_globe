@@ -220,8 +220,24 @@
   static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)* &
     dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
 
+! one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
+  static_memory_size = static_memory_size + 2.d0*dble(NGLLX)* &
+    dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+
+! factor_common_crust_mantle
+  static_memory_size = static_memory_size + dble(N_SLS)*dble(NGLLX)* &
+    dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ATTENUAT*dble(CUSTOM_REAL)
+
 ! R_memory_inner_core
   static_memory_size = static_memory_size + 5.d0*dble(N_SLS)*dble(NGLLX)* &
+    dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+
+! one_minus_sum_beta_inner_core, factor_scale_inner_core
+  static_memory_size = static_memory_size + 2.d0*dble(NGLLX)* &
+    dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
+
+! factor_common_inner_core
+  static_memory_size = static_memory_size + dble(N_SLS)*dble(NGLLX)* &
     dble(NGLLY)*dble(NGLLZ)*NSPEC_INNER_CORE_ATTENUATION*dble(CUSTOM_REAL)
 
 ! xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle
@@ -301,23 +317,19 @@
   static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_OUTER_CORE_ROTATION*2.d0*dble(CUSTOM_REAL)
 
   if(ABSORBING_CONDITIONS) then
-
 ! rho_vp_crust_mantle,rho_vs_crust_mantle
     static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*2.d0*dble(CUSTOM_REAL)
 
 ! vp_outer_core
     static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
-
   endif
 
   if(OCEANS) then
-
 ! rmass_ocean_load
     static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
 
 ! updated_dof_ocean_load
     static_memory_size = static_memory_size + NGLOB(IREGION_CRUST_MANTLE)*dble(SIZE_LOGICAL)
-
   endif
 
 ! add arrays used to save strain for attenuation or for adjoint runs

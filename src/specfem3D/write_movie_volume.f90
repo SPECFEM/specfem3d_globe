@@ -388,9 +388,10 @@
   ! input
   integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: vector_crust_mantle,vector_scaled
+  real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: vector_crust_mantle
   real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
   double precision :: scalingval
+  real(kind=CUSTOM_REAL) :: scalingval_to_use
   real(kind=CUSTOM_REAL), dimension(3) :: vector_local,vector_local_new
   logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: mask_3dmovie
   logical :: MOVIE_COARSE
@@ -420,12 +421,13 @@
   endif
 
   if(CUSTOM_REAL == SIZE_REAL) then
-    vector_scaled = vector_crust_mantle*sngl(scalingval)
+    scalingval_to_use = sngl(scalingval)
   else
-    vector_scaled = vector_crust_mantle*scalingval
+    scalingval_to_use = scalingval
   endif
 
-  ipoints_3dmovie=0
+  ipoints_3dmovie = 0
+
   do ispec=1,NSPEC_CRUST_MANTLE
    do k=1,NGLLZ,NIT
     do j=1,NGLLY,NIT
@@ -433,7 +435,7 @@
       if(mask_3dmovie(i,j,k,ispec)) then
        ipoints_3dmovie=ipoints_3dmovie+1
        iglob = ibool_crust_mantle(i,j,k,ispec)
-       vector_local(:) = vector_scaled(:,iglob)
+       vector_local(:) = vector_crust_mantle(:,iglob) * scalingval_to_use
 
   ! rotate eps_loc to spherical coordinates
        vector_local_new(:) = matmul(nu_3dmovie(:,:,ipoints_3dmovie), vector_local(:))

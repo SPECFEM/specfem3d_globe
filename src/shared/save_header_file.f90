@@ -29,7 +29,7 @@
 
   subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
                         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-                        ELLIPTICITY,GRAVITY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_3D, &
+                        ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,ATTENUATION,ATTENUATION_3D, &
                         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
                         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
                         CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
@@ -60,7 +60,7 @@
   integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ELLIPTICITY,GRAVITY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
+          ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
@@ -259,19 +259,29 @@
   write(IOUT,*) '! approximate static memory needed by the solver:'
   write(IOUT,*) '! ----------------------------------------------'
   write(IOUT,*) '!'
-  write(IOUT,*) '! size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
+  write(IOUT,*) '! (lower bound, usually the real amount used is 5% to 10% higher)'
   write(IOUT,*) '!'
-  ! note: using less memory becomes only an issue if the code scaling is bad.
-  !          most users will run simulations with an executable using far less than 80% RAM per core
-  !          since they prefer having a faster computational time (and use a higher number of cores).
-  !write(IOUT,*) '!   (should be below and typically equal to 80% or 90%'
-  !write(IOUT,*) '!    of the memory installed per core)'
-  write(IOUT,*) '!   (should be below to 80% or 90% of the memory installed per core)'
-  write(IOUT,*) '!   (if significantly more, the job will not run by lack of memory )'
-  !write(IOUT,*) '!   (if significantly less, you waste a significant amount of memory)'
+  write(IOUT,*) '! size of static arrays per slice = ',static_memory_size/1.d6,' MB'
+  write(IOUT,*) '!                                 = ',static_memory_size/1048576.d0,' MiB'
+  write(IOUT,*) '!                                 = ',static_memory_size/1.d9,' GB'
+  write(IOUT,*) '!                                 = ',static_memory_size/1073741824.d0,' GiB'
   write(IOUT,*) '!'
-  write(IOUT,*) '! size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
-  write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
+
+  ! note: using less memory becomes an issue only if the strong scaling of the code is poor.
+  !          Some users will run simulations with an executable using far less than 80% RAM per core
+  !          if they prefer having a faster computational time (and use a higher number of cores).
+
+  write(IOUT,*) '! (should be below to 80% or 90% of the memory installed per core)'
+  write(IOUT,*) '! (if significantly more, the job will not run by lack of memory )'
+  write(IOUT,*) '! (note that if significantly less, you waste a significant amount'
+  write(IOUT,*) '!  of memory per processor core)'
+  write(IOUT,*) '! (but that can be perfectly acceptable if you can afford it and'
+  write(IOUT,*) '!  want faster results by using more cores)'
+  write(IOUT,*) '!'
+  write(IOUT,*) '! size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GiB'
+  write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1.d12,' TB'
+  write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
   write(IOUT,*) '!'
 
   write(IOUT,*)
@@ -384,6 +394,15 @@
     write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .false.'
+  endif
+  write(IOUT,*)
+
+  if(TOPOGRAPHY .or. OCEANS) then
+    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = NX_BATHY'
+    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = NY_BATHY'
+  else
+    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = 1'
+    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = 1'
   endif
   write(IOUT,*)
 
@@ -525,7 +544,13 @@
     write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .false.'
   endif
 
-
+  if (MOVIE_VOLUME) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = NSPEC_CRUST_MANTLE'
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = NGLOB_CRUST_MANTLE'
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 1'
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1'
+  endif
 
   close(IOUT)
 

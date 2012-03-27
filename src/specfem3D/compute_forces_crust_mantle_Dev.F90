@@ -189,8 +189,6 @@
 ! this for non blocking MPI
   integer :: iphase,icall
 
-  integer :: computed_elements
-
   logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: accel_inner_core
@@ -264,9 +262,12 @@
 !$OMP displ_crust_mantle,wgll_cube,accel_inner_core,hprime_xxt,hprime_xx,idoubling_inner_core, &
 !$OMP addressing,iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,vx,vy,vz,vnspec, &
 !$OMP iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle,npoin2D_faces_crust_mantle, &
-!$OMP npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle,iboolfaces_crust_mantle,iboolcorner_crust_mantle,iboolleft_xi_inner_core,iboolright_xi_inner_core,ibool_inner_core, &
-!$OMP iboolleft_eta_inner_core,iboolright_eta_inner_core,npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core,iboolfaces_inner_core,accel_crust_mantle, &
-!$OMP iboolcorner_inner_core,iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners,buffer_send_faces,buffer_received_faces, &
+!$OMP npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle,iboolfaces_crust_mantle,iboolcorner_crust_mantle,iboolleft_xi_inner_core, &
+!$OMP iboolright_xi_inner_core,ibool_inner_core, &
+!$OMP iboolleft_eta_inner_core,iboolright_eta_inner_core,npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+!$OMP iboolfaces_inner_core,accel_crust_mantle, &
+!$OMP iboolcorner_inner_core,iprocfrom_faces,iprocto_faces,iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+!$OMP buffer_send_faces,buffer_received_faces, &
 !$OMP buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
 !$OMP sender_from_slices_to_cube,buffer_all_cube_from_slices,buffer_slices,ibool_central_cube, &
 !$OMP ibelm_bottom_inner_core,hprimewgll_xx,hprimewgll_xxt,wgllwgll_xy,wgllwgll_xz, &
@@ -276,9 +277,12 @@
 !$OMP npoin2D_max_all_CM_IC ) &
 !$OMP PRIVATE(k,j,ispec,fac1,fac2,fac3,sum_terms,iend,ispec_glob, &
 !$OMP C1_mxm_m2_m1_5points,A1_mxm_m2_m1_5points,B2_m1_m2_5points,C3_m1_m2_5points, &
-!$OMP B3_m1_m2_5points,C2_mxm_m2_m1_5points,E1_m1_m2_5points,E2_m1_m2_5points,A2_mxm_m2_m1_5points,C3_mxm_m2_m1_5points,A3_mxm_m2_m1_5points,B1_m1_m2_5points, &
-!$OMP C2_m1_m2_5points,C1_m1_m2_5points,E3_m1_m2_5points,E1_mxm_m2_m1_5points,E2_mxm_m2_m1_5points,E3_mxm_m2_m1_5points,tempx1,tempx2,tempx3, &
-!$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3,dummyx_loc,dummyy_loc,dummyz_loc,rho_s_H,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+!$OMP B3_m1_m2_5points,C2_mxm_m2_m1_5points,E1_m1_m2_5points,E2_m1_m2_5points,A2_mxm_m2_m1_5points,C3_mxm_m2_m1_5points, &
+!$OMP A3_mxm_m2_m1_5points,B1_m1_m2_5points, &
+!$OMP C2_m1_m2_5points,C1_m1_m2_5points,E3_m1_m2_5points,E1_mxm_m2_m1_5points,E2_mxm_m2_m1_5points,E3_mxm_m2_m1_5points, &
+!$OMP tempx1,tempx2,tempx3, &
+!$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
+!$OMP dummyx_loc,dummyy_loc,dummyz_loc,rho_s_H,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
 !$OMP iglobv5,iglob1,epsilondev_loc)
 
   do ispec_glob = 1,NSPEC_CRUST_MANTLE,ELEMENTS_NONBLOCKING_CM_IC

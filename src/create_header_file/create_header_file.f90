@@ -177,7 +177,7 @@
 ! create include file for the solver
   call save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
                   TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-                  ELLIPTICITY,GRAVITY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_3D, &
+                  ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,ATTENUATION,ATTENUATION_3D, &
                   ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
                   INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
                   CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
@@ -228,21 +228,29 @@
   print *,'approximate static memory needed by the solver:'
   print *,'----------------------------------------------'
   print *
-  print *,'size of static arrays per slice = ',static_memory_size/1073741824.d0,' GB'
+  print *,'(lower bound, usually the real amount used is 5% to 10% higher)'
   print *
-! note: using less memory becomes only an issue if the code scaling is bad.
-!          most users will run simulations with an executable using far less than 80% RAM per core
-!          since they prefer having a faster computational time (and use a higher number of cores).
-!! DK DK reply to note: yes, but that is not "green computing" at all!
-!! DK DK Thus one day people will probably need to worry about not wasting resources...
-! print *,'   (should be below and typically equal to 80% or 90% of the memory installed per core)'
+  print *,'size of static arrays per slice = ',static_memory_size/1.d6,' MB'
+  print *,'                                = ',static_memory_size/1048576.d0,' MiB'
+  print *,'                                = ',static_memory_size/1.d9,' GB'
+  print *,'                                = ',static_memory_size/1073741824.d0,' GiB'
+  print *
+
+! note: using less memory becomes an issue only if the strong scaling of the code is poor.
+!          Some users will run simulations with an executable using far less than 80% RAM per core
+!          if they prefer having a faster computational time (and use a higher number of cores).
+
   print *,'   (should be below 80% or 90% of the memory installed per core)'
   print *,'   (if significantly more, the job will not run by lack of memory)'
-  print *,'   (note that if significantly less, you waste a significant amount of memory per processor core)'
-  print *,'   (but that can be perfectly acceptable if you can afford it and want faster results by using more cores)'
+  print *,'   (note that if significantly less, you waste a significant amount'
+  print *,'    of memory per processor core)'
+  print *,'   (but that can be perfectly acceptable if you can afford it and'
+  print *,'    want faster results by using more cores)'
   print *
-  print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GB'
-  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TB'
+  print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GiB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d12,' TB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
   print *
 
   end program xcreate_header_file
