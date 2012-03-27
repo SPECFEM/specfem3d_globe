@@ -738,13 +738,13 @@
       ! take the central cube into account
       ! it is counted 6 times because of the fictitious elements
       if(INCLUDE_CENTRAL_CUBE) then
-        write(IMAIN,*) '     similar volume: ', &
+        write(IMAIN,*) '  similar volume: ', &
           dble(NCHUNKS)*((4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)+5.*(2.*(R_CENTRAL_CUBE/R_EARTH)/sqrt(3.))**3)/6.d0
       else
-        write(IMAIN,*) '     similar volume: ', &
+        write(IMAIN,*) '  similar volume: ', &
           dble(NCHUNKS)*((4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)-(2.*(R_CENTRAL_CUBE/R_EARTH)/sqrt(3.))**3)/6.d0
       endif
-      write(IMAIN,*) '     (but not exact because the central cube is purposely inflated)'
+      write(IMAIN,*) '  (but not exact because the central cube is purposely inflated)'
     endif
   endif
 
