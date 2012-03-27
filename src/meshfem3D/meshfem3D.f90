@@ -1213,7 +1213,8 @@
     write(IMAIN,*) '   calculated top area: ',area_total_top
 
     ! compare to exact theoretical value
-    if(NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
+    if((NCHUNKS == 6 .or. (abs(ANGULAR_WIDTH_XI_IN_DEGREES - 90.d0) < TINYVAL .and. &
+                           abs(ANGULAR_WIDTH_ETA_IN_DEGREES - 90.d0) < TINYVAL)) .and. .not. TOPOGRAPHY) then
       select case(iregion_code)
         case(IREGION_CRUST_MANTLE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
