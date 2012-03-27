@@ -470,7 +470,7 @@
   ! read topography and bathymetry file
   if(myrank == 0 .and. (TOPOGRAPHY .or. OCEANS_VAL)) call read_topo_bathy_file(ibathy_topo)
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(ibathy_topo,NX_BATHY_VAL*NY_BATHY_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   ! set up GLL points, weights and derivation matrices
   call define_derivation_matrices(xigll,yigll,zigll,wxgll,wygll,wzgll, &
