@@ -423,18 +423,17 @@
       store_val_ux_all,store_val_uy_all,store_val_uz_all
 
 ! to save movie volume
-  integer :: npoints_3dmovie,nspecel_3dmovie
-  integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
+  integer :: npoints_3dmovie,nspecel_3dmovie,ispec
   double precision :: scalingval
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: muvstore_crust_mantle_3dmovie
+  integer, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: num_ibool_3dmovie
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
-
-  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: Iepsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: Ieps_trace_over_3_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: Iepsilondev_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: Ieps_trace_over_3_crust_mantle
 
 ! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  integer, dimension(NX_BATHY_VAL,NY_BATHY_VAL) :: ibathy_topo
 
 ! for crust/oceans coupling
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
@@ -500,43 +499,6 @@
 
 ! for conversion from x y z to r theta phi
   real(kind=CUSTOM_REAL) rval,thetaval,phival
-
-! ---- arrays to assemble between chunks
-
-! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
-
-! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
-
-! indirect addressing for each message for faces and corners of the chunks
-! a given slice can belong to at most one corner and at most two faces
-  integer NGLOB2DMAX_XY
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle, &
-      iboolfaces_outer_core,iboolfaces_inner_core
-
-! this for non blocking MPI
-
-! buffers for send and receive between faces of the slices and the chunks
-! we use the same buffers to assemble scalars and vectors because vectors are
-! always three times bigger and therefore scalars can use the first part
-! of the vector buffer in memory even if it has an additional index here
-  integer :: npoin2D_max_all_CM_IC
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_faces,buffer_received_faces, &
-                                                           b_buffer_send_faces,b_buffer_received_faces
-
-! for non blocking communications
-  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
-  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
-  logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
-  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
-  real :: percentage_edge
-
-! assembling phase number for non blocking MPI
-! iphase is for the crust_mantle, outer_core and inner_core regions
-! iphase_CC is for the central cube
-  integer :: iphase,iphase_CC,icall
-  integer :: b_iphase,b_iphase_CC,b_icall
 
 ! -------- arrays specific to each region here -----------
 
@@ -682,15 +644,54 @@
   integer nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc,nabs_zmin_oc
 
   integer reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, reclen_ymin_crust_mantle, &
-     reclen_ymax_crust_mantle, reclen_xmin_outer_core, reclen_xmax_outer_core,&
+     reclen_ymax_crust_mantle, reclen_xmin_outer_core, reclen_xmax_outer_core, &
      reclen_ymin_outer_core, reclen_ymax_outer_core, reclen_zmin
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE) :: vector_accel_outer_core,&
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE_ADJOINT) :: vector_accel_outer_core, &
              vector_displ_outer_core, b_vector_displ_outer_core
 
   integer npoin2D_faces_crust_mantle(NUMFACES_SHARED)
   integer npoin2D_faces_outer_core(NUMFACES_SHARED)
   integer npoin2D_faces_inner_core(NUMFACES_SHARED)
+
+! ---- arrays to assemble between chunks
+
+! communication pattern for faces between chunks
+  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
+
+! communication pattern for corners between chunks
+  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+! indirect addressing for each message for faces and corners of the chunks
+! a given slice can belong to at most one corner and at most two faces
+  integer NGLOB2DMAX_XY
+  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle, &
+      iboolfaces_outer_core,iboolfaces_inner_core
+
+! this for non blocking MPI
+
+! buffers for send and receive between faces of the slices and the chunks
+! we use the same buffers to assemble scalars and vectors because vectors are
+! always three times bigger and therefore scalars can use the first part
+! of the vector buffer in memory even if it has an additional index here
+  integer :: npoin2D_max_all_CM_IC
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_faces,buffer_received_faces, &
+                                                           b_buffer_send_faces,b_buffer_received_faces
+
+! for non blocking communications
+  logical, dimension(NSPEC_CRUST_MANTLE) :: is_on_a_slice_edge_crust_mantle
+  logical, dimension(NSPEC_OUTER_CORE) :: is_on_a_slice_edge_outer_core
+  logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
+  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
+! added this to save memory, since this logical mask is not used inside the time loop
+  equivalence(mask_ibool,accel_crust_mantle)
+  real :: percentage_edge
+
+! assembling phase number for non blocking MPI
+! iphase is for the crust_mantle, outer_core and inner_core regions
+! iphase_CC is for the central cube
+  integer :: iphase,iphase_CC,icall
+  integer :: b_iphase,b_iphase_CC,b_icall
 
 ! parameters for the source
   integer it
@@ -970,7 +971,7 @@
 !! DK DK when turning OpenMP on, use this instead:
 !! DK DK from http://mpi.deino.net/mpi_functions/MPI_Init_thread.html
 !! DK DK MPI_THREAD_FUNNELED: the process may be multi-threaded, but only the main thread will make MPI calls
-!! DK DK (all MPI calls are funneled to the main thread). 
+!! DK DK (all MPI calls are funneled to the main thread).
 #ifdef USE_OPENMP
   integer :: iprovided
   call MPI_INIT_THREAD(MPI_THREAD_FUNNELED,iprovided,ier)
@@ -2209,31 +2210,15 @@
 
     ! integral of strain for adjoint movie volume
     if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
-      Iepsilondev_crust_mantle(:,:,:,:,:) = Iepsilondev_crust_mantle(:,:,:,:,:)  &
-                                              + deltat*epsilondev_crust_mantle(:,:,:,:,:)
-      Ieps_trace_over_3_crust_mantle(:,:,:,:) = Ieps_trace_over_3_crust_mantle(:,:,:,:) &
-                                              + deltat*eps_trace_over_3_crust_mantle(:,:,:,:)
+! do *NOT* use array syntax for that loop, otherwise you will get a compiler error when MOVIE_VOLUME is off
+! because the shape of the arrays will not match (due to some arrays purposely declared with a dummy size of 1)
+      do ispec = 1,NSPEC_CRUST_MANTLE
+        Iepsilondev_crust_mantle(:,:,:,:,ispec) = Iepsilondev_crust_mantle(:,:,:,:,ispec)  &
+                                              + deltat*epsilondev_crust_mantle(:,:,:,:,ispec)
+        Ieps_trace_over_3_crust_mantle(:,:,:,ispec) = Ieps_trace_over_3_crust_mantle(:,:,:,ispec) &
+                                              + deltat*eps_trace_over_3_crust_mantle(:,:,:,ispec)
+      enddo
     endif
-
-    ! daniel: debugging
-    !if( maxval(displ_crust_mantle(1,:)**2 + &
-    !                displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2) > 1.e4 ) then
-    !  print*,'slice',myrank
-    !  print*,'  crust_mantle displ:', maxval(displ_crust_mantle(1,:)), &
-    !           maxval(displ_crust_mantle(2,:)),maxval(displ_crust_mantle(3,:))
-    !  print*,'  indxs: ',maxloc( displ_crust_mantle(1,:)),maxloc( displ_crust_mantle(2,:)),maxloc( displ_crust_mantle(3,:))
-    !  indx = maxloc( displ_crust_mantle(3,:) )
-    !  rval = xstore_crust_mantle(indx(1))
-    !  thetaval = ystore_crust_mantle(indx(1))
-    !  phival = zstore_crust_mantle(indx(1))
-    !  !thetaval = PI/2.0d0-datan(1.006760466d0*dcos(dble(thetaval))/dmax1(TINYVAL,dsin(dble(thetaval))))
-    !  print*,'r/lat/lon:',rval*R_EARTH_KM,90.0-thetaval*180./PI,phival*180./PI
-    !  call rthetaphi_2_xyz(rval,thetaval,phival,xstore_crust_mantle(indx(1)),&
-    !                     ystore_crust_mantle(indx(1)),zstore_crust_mantle(indx(1)))
-    !  print*,'x/y/z:',rval,thetaval,phival
-    !  call exit_MPI(myrank,'error stability')
-    !endif
-
 
     ! compute the maximum of the norm of the displacement
     ! in all the slices using an MPI reduction
@@ -4450,7 +4435,7 @@
               absorb_xmax_outer_core, &
               absorb_ymin_outer_core, &
               absorb_ymax_outer_core, &
-              absorb_zmin_outer_core)    
+              absorb_zmin_outer_core)
   endif
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
@@ -4574,7 +4559,7 @@
       deallocate(iadjsrc,iadjsrc_len)
     endif
   endif
-  
+
   ! receivers
   deallocate(islice_selected_rec, &
           ispec_selected_rec, &
@@ -4605,7 +4590,7 @@
     endif
     deallocate(beta_kl_outer_core)
   endif
-  
+
   ! movies
   if(MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0 ) then
     deallocate(store_val_x, &
@@ -4626,7 +4611,7 @@
   if(MOVIE_VOLUME) then
     deallocate(nu_3dmovie)
   endif
-  
+
   ! noise simulations
   if ( NOISE_TOMOGRAPHY /= 0 ) then
     deallocate(noise_sourcearray, &
