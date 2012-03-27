@@ -70,8 +70,8 @@
   ! attenuation values
   integer vx,vy,vz,vnspec
   double precision, dimension(N_SLS)                     :: tau_s
-  double precision, dimension(vx, vy, vz, vnspec)        :: Qmu_store
-  double precision, dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
+  real(kind=CUSTOM_REAL), dimension(vx, vy, vz, vnspec)        :: Qmu_store
+  real(kind=CUSTOM_REAL), dimension(N_SLS, vx, vy, vz, vnspec) :: tau_e_store
   double precision  T_c_source
 
   logical ABSORBING_CONDITIONS
