@@ -230,6 +230,9 @@
   print *
   print *,'(lower bound, usually the real amount used is 5% to 10% higher)'
   print *
+  print *,'(you can get a more precise estimate by typing "size -d bin/xspecfem3D"'
+  print *,' after compiling the code with the DATA/Par_file you plan to use)'
+  print *
   print *,'size of static arrays per slice = ',static_memory_size/1.d6,' MB'
   print *,'                                = ',static_memory_size/1048576.d0,' MiB'
   print *,'                                = ',static_memory_size/1.d9,' GB'
