@@ -250,7 +250,13 @@
   print *,'   (but that can be perfectly acceptable if you can afford it and'
   print *,'    want faster results by using more cores)'
   print *
-  print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  if(static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
+    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  else
+    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  endif
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GiB'
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d12,' TB'
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'

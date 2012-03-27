@@ -125,8 +125,8 @@
 
 ! attenuation
   integer nspec_att
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec_att) :: Qmu_store
-  double precision, dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att) :: tau_e_store
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_att) :: Qmu_store
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att) :: tau_e_store
   double precision, dimension(N_SLS)                  :: tau_s
   double precision  T_c_source
 

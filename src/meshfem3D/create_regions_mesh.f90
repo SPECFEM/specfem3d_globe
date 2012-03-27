@@ -206,8 +206,8 @@
   double precision, dimension(NDIM,NDIM) :: rotation_matrix
 
   ! attenuation
-  double precision, dimension(:,:,:,:),   allocatable :: Qmu_store
-  double precision, dimension(:,:,:,:,:), allocatable :: tau_e_store
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),   allocatable :: Qmu_store
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tau_e_store
   double precision, dimension(N_SLS)                  :: tau_s
   double precision  T_c_source
 

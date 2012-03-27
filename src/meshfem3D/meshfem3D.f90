@@ -693,7 +693,7 @@
     call meshfem3D_compute_area(myrank,NCHUNKS,iregion_code, &
                               area_local_bottom,area_local_top,&
                               volume_local,volume_total, &
-                              RCMB,RICB,R_CENTRAL_CUBE)
+                              RCMB,RICB,R_CENTRAL_CUBE,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES)
 
     ! create chunk buffers if more than one chunk
     if(NCHUNKS > 1) then
@@ -738,12 +738,13 @@
       ! take the central cube into account
       ! it is counted 6 times because of the fictitious elements
       if(INCLUDE_CENTRAL_CUBE) then
-        write(IMAIN,*) '     exact volume: ', &
+        write(IMAIN,*) '     similar volume: ', &
           dble(NCHUNKS)*((4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)+5.*(2.*(R_CENTRAL_CUBE/R_EARTH)/sqrt(3.))**3)/6.d0
       else
-        write(IMAIN,*) '     exact volume: ', &
+        write(IMAIN,*) '     similar volume: ', &
           dble(NCHUNKS)*((4.0d0/3.0d0)*PI*(R_UNIT_SPHERE**3)-(2.*(R_CENTRAL_CUBE/R_EARTH)/sqrt(3.))**3)/6.d0
       endif
+      write(IMAIN,*) '     (but not exact because the central cube is purposely inflated)'
     endif
   endif
 
@@ -1174,7 +1175,7 @@
   subroutine meshfem3D_compute_area(myrank,NCHUNKS,iregion_code, &
                                     area_local_bottom,area_local_top,&
                                     volume_local,volume_total, &
-                                    RCMB,RICB,R_CENTRAL_CUBE)
+                                    RCMB,RICB,R_CENTRAL_CUBE,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES)
 
   use meshfem3D_models_par
 
@@ -1184,7 +1185,7 @@
 
   integer :: myrank,NCHUNKS,iregion_code
 
-  double precision :: area_local_bottom,area_local_top,volume_local
+  double precision :: area_local_bottom,area_local_top,volume_local,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES
   double precision :: volume_total
   double precision :: RCMB,RICB,R_CENTRAL_CUBE
 
@@ -1229,14 +1230,16 @@
     write(IMAIN,*) 'calculated bottom area: ',area_total_bottom
 
     ! compare to exact theoretical value
-    if(NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
+    if((NCHUNKS == 6 .or. (abs(ANGULAR_WIDTH_XI_IN_DEGREES - 90.d0) < TINYVAL .and. &
+                           abs(ANGULAR_WIDTH_ETA_IN_DEGREES - 90.d0) < TINYVAL)) .and. .not. TOPOGRAPHY) then
       select case(iregion_code)
         case(IREGION_CRUST_MANTLE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
         case(IREGION_OUTER_CORE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
         case(IREGION_INNER_CORE)
-          write(IMAIN,*) '            similar area (central cube): ',dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
+          write(IMAIN,*) '            similar (but not exact) area (central cube): ', &
+                                                    dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
         case default
           call exit_MPI(myrank,'incorrect region code')
       end select
@@ -1244,7 +1247,5 @@
 
   endif
 
-
   end subroutine meshfem3D_compute_area
-
 
