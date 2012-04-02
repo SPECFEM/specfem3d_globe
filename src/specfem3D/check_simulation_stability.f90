@@ -118,6 +118,14 @@
     call check_norm_acoustic_from_device(Ufluidnorm,Mesh_pointer,1)
   endif
 
+  ! check stability of the code, exit if unstable
+  ! negative values can occur with some compilers when the unstable value is greater
+  ! than the greatest possible floating-point number of the machine
+  if(Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) &
+    call exit_MPI(myrank,'forward simulation became unstable in solid and blew up')
+  if(Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0) &
+    call exit_MPI(myrank,'forward simulation became unstable in fluid and blew up')
+
   ! compute the maximum of the maxima for all the slices using an MPI reduction
   call MPI_REDUCE(Usolidnorm,Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &
                       MPI_COMM_WORLD,ier)
@@ -140,6 +148,11 @@
       call check_norm_elastic_from_device(b_Usolidnorm,Mesh_pointer,3)
       call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
     endif
+
+    if(b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0) &
+      call exit_MPI(myrank,'backward simulation became unstable and blew up  in the solid')
+    if(b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0) &
+      call exit_MPI(myrank,'backward simulation became unstable and blew up  in the fluid')
 
     ! compute the maximum of the maxima for all the slices using an MPI reduction
     call MPI_REDUCE(b_Usolidnorm,b_Usolidnorm_all,1,CUSTOM_MPI_TYPE,MPI_MAX,0, &

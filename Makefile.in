@@ -65,6 +65,7 @@ meshfem3D: xmeshfem3D
 
 create_header_file: xcreate_header_file
 combine_vol_data: xcombine_vol_data
+combine_vol_data_vtk: xcombine_vol_data_vtk
 combine_surf_data: xcombine_surf_data
 convolve_source_timefunction: xconvolve_source_timefunction
 create_movie_AVS_DX: xcreate_movie_AVS_DX
@@ -104,6 +105,9 @@ xcombine_AVS_DX: required
 xcombine_vol_data: required
 	(cd src/auxiliaries ; make xcombine_vol_data)
 
+xcombine_vol_data_vtk: required
+	(cd src/auxiliaries ; make xcombine_vol_data_vtk)
+
 xcombine_surf_data: required
 	(cd src/auxiliaries ; make xcombine_surf_data)
 
@@ -133,6 +137,7 @@ help:
 	@echo "    xcheck_buffers_corners_chunks"
 	@echo "    xcheck_buffers_faces_chunks"
 	@echo "    xcombine_vol_data"
+	@echo "    xcombine_vol_data_vtk"
 	@echo "    xcombine_surf_data"
 	@echo "    xconvolve_source_timefunction"
 	@echo "    xcreate_movie_AVS_DX"

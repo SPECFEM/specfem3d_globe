@@ -103,13 +103,15 @@
   subroutine fix_non_blocking_central_cube(is_on_a_slice_edge, &
          ibool,nspec,nglob,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
          idoubling_inner_core,npoin2D_cube_from_slices, &
-         ibool_central_cube,NSPEC2D_BOTTOM_INNER_CORE,ichunk)
+         ibool_central_cube,NSPEC2D_BOTTOM_INNER_CORE, &
+         ichunk,NPROC_XI)
 
   implicit none
 
   include "constants.h"
 
-  integer :: nspec,nglob,nb_msgs_theor_in_cube,NSPEC2D_BOTTOM_INNER_CORE,ichunk,npoin2D_cube_from_slices
+  integer :: nspec,nglob,nb_msgs_theor_in_cube,NSPEC2D_BOTTOM_INNER_CORE
+  integer :: ichunk,npoin2D_cube_from_slices,NPROC_XI
 
   logical, dimension(nspec) :: is_on_a_slice_edge
 
@@ -150,7 +152,13 @@
 
     do imsg = 1,nb_msgs_theor_in_cube
       do ipoin = 1,npoin2D_cube_from_slices
-        mask_ibool(ibool_central_cube(imsg,ipoin)) = .true.
+        if(NPROC_XI==1) then
+          if(ibool_central_cube(imsg,ipoin) > 0 ) then
+            mask_ibool(ibool_central_cube(imsg,ipoin)) = .true.
+          endif
+        else
+          mask_ibool(ibool_central_cube(imsg,ipoin)) = .true.
+        endif
       enddo
     enddo
 

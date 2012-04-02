@@ -39,9 +39,6 @@
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_rho_g_over_kappa_fluid,d_ln_density_dr_table, &
     MOVIE_VOLUME, &
-    myrank,iproc_xi,iproc_eta,ichunk,addressing, &
-    iprocfrom_faces,iprocto_faces, &
-    iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
     npoin2D_max_all_CM_IC
 
   use specfem_par_outercore,only: &

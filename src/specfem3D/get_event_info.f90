@@ -33,9 +33,6 @@
 ! Also, t_shift is added as a new parameter to be written on sac headers!
 ! by Ebru Bozdag
 
-  !subroutine get_event_info_parallel(myrank,yr,jda,ho,mi,sec,tshift_cmt, &
-  !               elat,elon,depth,mb,ename,cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
-
   subroutine get_event_info_parallel(myrank,yr,jda,ho,mi,sec,&
                                     event_name,tshift_cmt,t_shift, &
                                     elat,elon,depth,mb,cmt_lat, &
@@ -77,9 +74,6 @@
     call get_event_info_serial(yr,jda,ho,mi,sec,event_name,tshift_cmt,t_shift, &
                         elat,elon,depth,mb, &
                         cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
-
-    !call get_event_info_serial(yr,jda,ho,mi,sec,tshift_cmt,elat,elon,depth,mb,region, &
-    !                    cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
 
     ! create the event name
     !write(ename(1:12),'(a12)') region(1:12)
@@ -133,10 +127,6 @@
                             elat_pde,elon_pde,depth_pde,mb,&
                             cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
-
-  !subroutine get_event_info_serial(yr,jda,ho,mi,sec,tshift_cmt,elat,elon,depth,mb,region,&
-  !                          cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,LENGTH_REGION_NAME)
-
   implicit none
 
   include "constants.h"
@@ -169,7 +159,6 @@
 
   character(len=5) datasource
   character(len=150) string,CMTSOLUTION
-  !character(len=150) string,dummystring,CMTSOLUTION
 
 
 !
@@ -179,18 +168,6 @@
 
   open(unit=821,file=CMTSOLUTION,iostat=ios,status='old',action='read')
   if(ios /= 0) stop 'error opening CMTSOLUTION file (in get_event_info_serial)'
-
-  !icounter = 0
-  !do while(ios == 0)
-  !  read(821,"(a)",iostat=ios) dummystring
-  !  if(ios == 0) icounter = icounter + 1
-  !enddo
-  !close(821)
-  !if(mod(icounter,NLINES_PER_CMTSOLUTION_SOURCE) /= 0) &
-  !  stop 'total number of lines in CMTSOLUTION file should be a multiple of NLINES_PER_CMTSOLUTION_SOURCE'
-  !NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
-  !if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
-  !open(unit=821,file=CMTSOLUTION,status='old',action='read')
 
   ! example header line of CMTSOLUTION file
   !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan

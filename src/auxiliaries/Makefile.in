@@ -70,34 +70,38 @@ OUTPUT = ../../OUTPUT_FILES
 #######################################
 
 libspecfem_a_OBJECTS_COMMON = \
-	$O/auto_ner.o \
-	$O/broadcast_compute_parameters.o \
-	$O/calendar.o \
-	$O/count_number_of_sources.o \
-	$O/create_name_database.o \
-	$O/force_ftz.o \
-	$O/get_model_parameters.o \
-	$O/get_value_parameters.o \
-	$O/gll_library.o \
-	$O/hex_nodes.o \
-	$O/intgrl.o \
-	$O/lagrange_poly.o \
-	$O/make_ellipticity.o \
-	$O/make_gravity.o \
-	$O/param_reader.o \
-	$O/read_compute_parameters.o \
-	$O/read_parameter_file.o \
-	$O/read_value_parameters.o \
-	$O/reduce.o \
-	$O/rthetaphi_xyz.o \
-	$O/spline_routines.o \
+	$O/auto_ner.shared.o \
+	$O/broadcast_compute_parameters.sharedmpi.o \
+	$O/calendar.shared.o \
+	$O/count_points.shared.o \
+	$O/count_number_of_sources.shared.o \
+	$O/count_elements.shared.o \
+	$O/create_name_database.shared.o \
+	$O/define_all_layers.shared.o \
+	$O/force_ftz.cc.o \
+	$O/get_model_parameters.shared.o \
+	$O/get_timestep_and_layers.shared.o \
+	$O/get_value_parameters.shared.o \
+	$O/gll_library.shared.o \
+	$O/hex_nodes.shared.o \
+	$O/intgrl.shared.o \
+	$O/lagrange_poly.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/make_gravity.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_compute_parameters.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/spline_routines.shared.o \
 	$(EMPTY_MACRO)
 
 libspecfem_a_OBJECTS_AUX = \
-	$O/calendar.o \
+	$O/calendar.shared.o \
 	$O/create_movie_AVS_DX.o \
-	$O/create_serial_name_database.o \
-	$O/get_cmt.o \
+	$O/create_serial_name_database.shared.o \
+	$O/get_cmt.specfem.o \
 	$(EMPTY_MACRO)
 
 
@@ -118,6 +122,7 @@ DEFAULT = \
 	xcombine_AVS_DX \
 	xcombine_paraview_strain_data \
 	xcombine_vol_data \
+	xcombine_vol_data_vtk \
 	xcombine_surf_data \
 	xconvolve_source_timefunction \
 	xcreate_movie_AVS_DX \
@@ -158,14 +163,17 @@ xconvolve_source_timefunction: $O/convolve_source_timefunction.o
 xcombine_AVS_DX: $O/combine_AVS_DX.o $(LIBSPECFEM_AUX)
 	${FCCOMPILE_CHECK} -o ${E}/xcombine_AVS_DX $O/combine_AVS_DX.o $(LIBSPECFEM_AUX)
 
-xcombine_paraview_strain_data: $O/combine_paraview_strain_data.o $O/write_c_binary.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_paraview_strain_data  $O/combine_paraview_strain_data.o $O/write_c_binary.o
+xcombine_paraview_strain_data: $O/combine_paraview_strain_data.solver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_paraview_strain_data  $O/combine_paraview_strain_data.solver.o $O/write_c_binary.cc.o
 
-xcombine_vol_data: $O/combine_vol_data.o $O/write_c_binary.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data  $O/combine_vol_data.o $O/write_c_binary.o
+xcombine_vol_data: $O/combine_vol_data.solver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data  $O/combine_vol_data.solver.o $O/write_c_binary.cc.o
 
-xcombine_surf_data: $O/combine_surf_data.o $O/write_c_binary.o
-	${FCCOMPILE_CHECK} -o ${E}/xcombine_surf_data  $O/combine_surf_data.o $O/write_c_binary.o
+xcombine_vol_data_vtk: $O/combine_vol_data_vtk.solver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_vol_data_vtk  $O/combine_vol_data_vtk.solver.o $O/write_c_binary.cc.o
+
+xcombine_surf_data: $O/combine_surf_data.solver.o $O/write_c_binary.cc.o
+	${FCCOMPILE_CHECK} -o ${E}/xcombine_surf_data  $O/combine_surf_data.solver.o $O/write_c_binary.cc.o
 
 xcreate_movie_AVS_DX: $O/create_movie_AVS_DX.o $(LIBSPECFEM_AUX)
 	${FCCOMPILE_CHECK} -o ${E}/xcreate_movie_AVS_DX $O/create_movie_AVS_DX.o $(LIBSPECFEM_AUX)
@@ -183,7 +191,8 @@ clean:
 	rm -f $O/* *.o work.pc* *.mod  ${E}/xcombine_AVS_DX \
       ${E}/xcheck_buffers_1D ${E}/xcheck_buffers_2D ${E}/xcheck_buffers_corners_chunks \
       ${E}/xcheck_buffers_faces_chunks ${E}/xconvolve_source_timefunction \
-      ${E}/xcreate_movie_AVS_DX ${E}/xcreate_movie_GMT_global ${E}/xcombine_vol_data \
+      ${E}/xcreate_movie_AVS_DX ${E}/xcreate_movie_GMT_global \
+      ${E}/xcombine_vol_data ${E}/xcombine_vol_data_vtk \
       ${E}/xcombine_surf_data ${E}/xextract_database PI*
 
 #######################################
@@ -207,120 +216,26 @@ $O/libspecfem_aux.a: $(libspecfem_a_OBJECTS_COMMON) $(libspecfem_a_OBJECTS_AUX)
 ##
 ## shared
 ##
-$O/auto_ner.o: ${SETUP}/constants.h ${SHARED}/auto_ner.f90
-	${FCCOMPILE_CHECK} -c -o $O/auto_ner.o ${FCFLAGS_f90} ${SHARED}/auto_ner.f90
+$O/%.shared.o: ${SHARED}/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/broadcast_compute_parameters.o: ${SETUP}/constants.h ${SHARED}/broadcast_compute_parameters.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/broadcast_compute_parameters.o ${FCFLAGS_f90} ${SHARED}/broadcast_compute_parameters.f90
+$O/%.sharedmpi.o: ${SHARED}/%.f90 ${SETUP}/constants.h
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/calendar.o: ${SHARED}/calendar.f90
-	${FCCOMPILE_CHECK} -c -o $O/calendar.o ${FCFLAGS_f90} ${SHARED}/calendar.f90
-
-$O/count_number_of_sources.o: ${SETUP}/constants.h ${SHARED}/count_number_of_sources.f90
-	${FCCOMPILE_CHECK} -c -o $O/count_number_of_sources.o ${FCFLAGS_f90} ${SHARED}/count_number_of_sources.f90
-
-$O/create_name_database.o: ${SETUP}/constants.h ${SHARED}/create_name_database.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} ${SHARED}/create_name_database.f90
-
-$O/create_serial_name_database.o: ${SETUP}/constants.h ${SHARED}/create_serial_name_database.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_serial_name_database.o ${FCFLAGS_f90} ${SHARED}/create_serial_name_database.f90
-
-$O/get_model_parameters.o: ${SETUP}/constants.h ${SHARED}/get_model_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_model_parameters.o ${FCFLAGS_f90} ${SHARED}/get_model_parameters.f90
-
-$O/get_value_parameters.o: ${SETUP}/constants.h ${SHARED}/get_value_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_value_parameters.o ${FCFLAGS_f90} ${SHARED}/get_value_parameters.f90
-
-$O/gll_library.o: ${SETUP}/constants.h ${SHARED}/gll_library.f90
-	${FCCOMPILE_CHECK} -c -o $O/gll_library.o ${FCFLAGS_f90} ${SHARED}/gll_library.f90
-
-$O/hex_nodes.o: ${SETUP}/constants.h ${SHARED}/hex_nodes.f90
-	${FCCOMPILE_CHECK} -c -o $O/hex_nodes.o ${FCFLAGS_f90} ${SHARED}/hex_nodes.f90
-
-$O/intgrl.o: ${SETUP}/constants.h ${SHARED}/intgrl.f90
-	${FCCOMPILE_CHECK} -c -o $O/intgrl.o ${FCFLAGS_f90} ${SHARED}/intgrl.f90
-
-$O/lagrange_poly.o: ${SETUP}/constants.h ${SHARED}/lagrange_poly.f90
-	${FCCOMPILE_CHECK} -c -o $O/lagrange_poly.o ${FCFLAGS_f90} ${SHARED}/lagrange_poly.f90
-
-$O/make_ellipticity.o: ${SETUP}/constants.h ${SHARED}/make_ellipticity.f90
-	${FCCOMPILE_CHECK} -c -o $O/make_ellipticity.o ${FCFLAGS_f90} ${SHARED}/make_ellipticity.f90
-
-$O/make_gravity.o: ${SETUP}/constants.h ${SHARED}/make_gravity.f90
-	${FCCOMPILE_CHECK} -c -o $O/make_gravity.o ${FCFLAGS_f90} ${SHARED}/make_gravity.f90
-
-### C compilation
-$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
-
-$O/param_reader.o: ${SHARED}/param_reader.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
-
-$O/read_compute_parameters.o: ${SETUP}/constants.h ${SHARED}/read_compute_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} ${SHARED}/read_compute_parameters.f90
-
-$O/read_parameter_file.o: ${SETUP}/constants.h ${SHARED}/read_parameter_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_parameter_file.o ${FCFLAGS_f90} ${SHARED}/read_parameter_file.f90
-
-$O/read_value_parameters.o: ${SETUP}/constants.h ${SHARED}/read_value_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_value_parameters.o ${FCFLAGS_f90} ${SHARED}/read_value_parameters.f90
-
-$O/reduce.o: ${SETUP}/constants.h ${SHARED}/reduce.f90
-	${FCCOMPILE_CHECK} -c -o $O/reduce.o ${FCFLAGS_f90} ${SHARED}/reduce.f90
-
-$O/rthetaphi_xyz.o: ${SETUP}/constants.h ${SHARED}/rthetaphi_xyz.f90
-	${FCCOMPILE_CHECK} -c -o $O/rthetaphi_xyz.o ${FCFLAGS_f90} ${SHARED}/rthetaphi_xyz.f90
-
-$O/spline_routines.o: ${SETUP}/constants.h ${SHARED}/spline_routines.f90
-	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} ${SHARED}/spline_routines.f90
-
-### C compilation
-$O/write_c_binary.o: ${SHARED}/write_c_binary.c ${SETUP}/config.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $O/write_c_binary.o ${SHARED}/write_c_binary.c
-
-##
-## object from solver
-##
-$O/get_cmt.o: ${SETUP}/constants.h ../specfem3D/get_cmt.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_cmt.o ${FCFLAGS_f90} ../specfem3D/get_cmt.f90
-
+$O/%.cc.o: ${SHARED}/%.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $< 
 
 ##
 ## auxiliaries
 ##
-$O/check_buffers_1D.o: ${SETUP}/constants.h $S/check_buffers_1D.f90
-	${FCCOMPILE_CHECK} -c -o $O/check_buffers_1D.o ${FCFLAGS_f90} $S/check_buffers_1D.f90
+$O/%.o: $S/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/check_buffers_2D.o: ${SETUP}/constants.h $S/check_buffers_2D.f90
-	${FCCOMPILE_CHECK} -c -o $O/check_buffers_2D.o ${FCFLAGS_f90} $S/check_buffers_2D.f90
+$O/%.solver.o: $S/%.f90 ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/check_buffers_corners_chunks.o: ${SETUP}/constants.h $S/check_buffers_corners_chunks.f90
-	${FCCOMPILE_CHECK} -c -o $O/check_buffers_corners_chunks.o ${FCFLAGS_f90} $S/check_buffers_corners_chunks.f90
-
-$O/check_buffers_faces_chunks.o: ${SETUP}/constants.h $S/check_buffers_faces_chunks.f90
-	${FCCOMPILE_CHECK} -c -o $O/check_buffers_faces_chunks.o ${FCFLAGS_f90} $S/check_buffers_faces_chunks.f90
-
-$O/combine_AVS_DX.o: ${SETUP}/constants.h $S/combine_AVS_DX.f90
-	${FCCOMPILE_CHECK} -c -o $O/combine_AVS_DX.o ${FCFLAGS_f90} $S/combine_AVS_DX.f90
-
-$O/combine_paraview_strain_data.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/combine_paraview_strain_data.f90
-	${FCCOMPILE_CHECK} -c -o $O/combine_paraview_strain_data.o ${FCFLAGS_f90} $S/combine_paraview_strain_data.f90
-
-$O/combine_surf_data.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/combine_surf_data.f90
-	${FCCOMPILE_CHECK} -c -o $O/combine_surf_data.o ${FCFLAGS_f90} $S/combine_surf_data.f90
-
-$O/combine_vol_data.o: ${SETUP}/constants.h ${OUTPUT}/values_from_mesher.h $S/combine_vol_data.f90
-	${FCCOMPILE_CHECK} -c -o $O/combine_vol_data.o ${FCFLAGS_f90} $S/combine_vol_data.f90
-
-$O/convolve_source_timefunction.o: $S/convolve_source_timefunction.f90
-	${FCCOMPILE_CHECK} -c -o $O/convolve_source_timefunction.o ${FCFLAGS_f90} $S/convolve_source_timefunction.f90
-
-$O/create_movie_AVS_DX.o: ${SETUP}/constants.h $S/create_movie_AVS_DX.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_movie_AVS_DX.o ${FCFLAGS_f90} $S/create_movie_AVS_DX.f90
-
-$O/create_movie_GMT_global.o: ${SETUP}/constants.h $S/create_movie_GMT_global.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_movie_GMT_global.o ${FCFLAGS_f90} $S/create_movie_GMT_global.f90
-
+$O/%.specfem.o: ../specfem3D/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 
 ###

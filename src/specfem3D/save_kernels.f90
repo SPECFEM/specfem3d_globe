@@ -119,9 +119,6 @@
 
               ! Get A,C,F,L,N,eta from kappa,mu
               ! element can have transverse isotropy if between d220 and Moho
-              !if( .not. (TRANSVERSE_ISOTROPY_VAL .and. &
-              !    (idoubling_crust_mantle(ispec) == IFLAG_80_MOHO .or. &
-              !     idoubling_crust_mantle(ispec) == IFLAG_220_80))) then
               if( .not. ispec_is_tiso_crust_mantle(ispec) ) then
 
                 ! layer with no transverse isotropy

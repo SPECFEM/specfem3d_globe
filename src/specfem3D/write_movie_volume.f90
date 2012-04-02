@@ -25,14 +25,11 @@
 !
 !=====================================================================
 
-! create file OUTPUT_FILES/values_from_mesher.h based upon DATA/Par_file
-! in order to compile the solver with the right array sizes
-
-!---------------------------------------------------------------------------------
-! this subroutine counts the number of points and elements within the movie volume
-! in this processor slice, and returns arrays that keep track of them, both in global and local indexing schemes
 
   subroutine count_points_movie_volume()
+
+! this subroutine counts the number of points and elements within the movie volume
+! in this processor slice, and returns arrays that keep track of them, both in global and local indexing schemes
 
   use specfem_par
   use specfem_par_crustmantle
@@ -95,11 +92,14 @@
 
   end subroutine count_points_movie_volume
 
-! -----------------------------------------------------------------
-! writes meshfiles to merge with solver snapshots for 3D volume movies.  Also computes and outputs
-! the rotation matrix nu_3dmovie required to transfer to a geographic coordinate system
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine write_movie_volume_mesh()
+
+! writes meshfiles to merge with solver snapshots for 3D volume movies.  Also computes and outputs
+! the rotation matrix nu_3dmovie required to transfer to a geographic coordinate system
 
   use specfem_par
   use specfem_par_crustmantle
@@ -230,7 +230,10 @@
 
  end subroutine write_movie_volume_mesh
 
-! ---------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
   subroutine write_movie_volume_strains(myrank,npoints_3dmovie, &
                                         LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
@@ -363,7 +366,10 @@
 
   end subroutine write_movie_volume_strains
 
-! ---------------------------------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
                                       MOVIE_COARSE,ibool_crust_mantle,vector_crust_mantle, &
                                       scalingval,mask_3dmovie,nu_3dmovie)
@@ -453,7 +459,9 @@
 
   end subroutine write_movie_volume_vector
 
-!--------------------
+!
+!-------------------------------------------------------------------------------------------------
+!
 
  subroutine write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
                                       div_displ_outer_core, &
@@ -879,7 +887,9 @@
   end subroutine write_movie_volume_divcurl
 
 
+!
 !-------------------------------------------------------------------------------------------------
+!
 
 ! external mesh routine for saving vtk files for custom_real values on global points
 
@@ -1003,7 +1013,9 @@
 
   end subroutine write_VTK_data_cr
 
+!
 !-------------------------------------------------------------------------------------------------
+!
 
 ! external mesh routine for saving vtk files for custom_real values on global points
 
@@ -1048,14 +1060,25 @@
   ! master collect arrays
   if( myrank == 0 ) then
     allocate(store_val_x_all(nglob,0:NPROCTOT_VAL-1), &
-          store_val_y_all(nglob,0:NPROCTOT_VAL-1), &
-          store_val_z_all(nglob,0:NPROCTOT_VAL-1), &
-          store_val_ux_all(nglob,0:NPROCTOT_VAL-1), &
-          store_val_uy_all(nglob,0:NPROCTOT_VAL-1), &
-          store_val_uz_all(nglob,0:NPROCTOT_VAL-1), &
-          idoubling_all(nspec,0:NPROCTOT_VAL-1), &
-          ibool_all(NGLLX,NGLLY,NGLLZ,nspec,0:NPROCTOT_VAL-1),stat=ier)
+            store_val_y_all(nglob,0:NPROCTOT_VAL-1), &
+            store_val_z_all(nglob,0:NPROCTOT_VAL-1), &
+            store_val_ux_all(nglob,0:NPROCTOT_VAL-1), &
+            store_val_uy_all(nglob,0:NPROCTOT_VAL-1), &
+            store_val_uz_all(nglob,0:NPROCTOT_VAL-1), &
+            idoubling_all(nspec,0:NPROCTOT_VAL-1), &
+            ibool_all(NGLLX,NGLLY,NGLLZ,nspec,0:NPROCTOT_VAL-1),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating stores')
+  else
+    ! dummy arrays
+    allocate(store_val_x_all(1,1), &
+            store_val_y_all(1,1), &
+            store_val_z_all(1,1), &
+            store_val_ux_all(1,1), &
+            store_val_uy_all(1,1), &
+            store_val_uz_all(1,1), &
+            idoubling_all(1,1), &
+            ibool_all(1,1,1,1,1),stat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy stores')
   endif
 
   ! gather info on master proc
@@ -1181,10 +1204,8 @@
 
   endif
 
-  if( myrank == 0 ) then
-    deallocate(store_val_x_all,store_val_y_all,store_val_z_all, &
+  deallocate(store_val_x_all,store_val_y_all,store_val_z_all, &
             store_val_ux_all,store_val_uy_all,store_val_uz_all, &
             ibool_all)
-  endif
 
   end subroutine write_VTK_data_cr_all

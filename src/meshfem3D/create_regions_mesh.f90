@@ -41,8 +41,10 @@
                           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
                           RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
                           ner,ratio_sampling_array,doubling_index,r_bottom,r_top, &
-                          this_region_has_a_doubling,ipass,ratio_divide_central_cube, &
-                          CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta)
+                          this_region_has_a_doubling,ratio_divide_central_cube, &
+                          CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
+                          offset_proc_xi,offset_proc_eta, &
+                          ipass)
 
 ! creates the different regions of the mesh
 
@@ -263,6 +265,12 @@
   ! flags for transverse isotropic elements
   logical, dimension(:), allocatable :: ispec_is_tiso
 
+  ! user output
+  if(myrank == 0 ) then
+    if(ipass == 1 ) write(IMAIN,*) 'first pass'
+    if(ipass == 2 ) write(IMAIN,*) 'second pass'
+  endif
+
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
@@ -450,7 +458,7 @@
   if(ier /= 0) stop 'error in allocate 17'
 
   ! initialize number of layers
-  call crm_initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
+  call initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
                         shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
                         dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
                         iaddx,iaddy,iaddz,nspec,xstore,ystore,zstore,ibool,idoubling, &
@@ -517,6 +525,10 @@
   do ilayer_loop = ifirst_region,ilast_region
 
     ilayer = perm_layer(ilayer_loop)
+
+    ! user output
+    if(myrank == 0 ) write(IMAIN,*) '  creating layer ',ilayer_loop-ifirst_region+1, &
+                                   'out of ',ilast_region-ifirst_region+1
 
     ! determine the radii that define the shell
     rmin = rmins(ilayer)
@@ -611,7 +623,10 @@
   enddo !ilayer_loop
 
   ! define central cube in inner core
-  if(INCLUDE_CENTRAL_CUBE .and. iregion_code == IREGION_INNER_CORE) &
+  if(INCLUDE_CENTRAL_CUBE .and. iregion_code == IREGION_INNER_CORE) then
+    ! user output
+    if(myrank == 0 ) write(IMAIN,*) '  creating central cube'
+
     call create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz, &
                         nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
@@ -629,7 +644,7 @@
                         nspec_ani,nspec_stacey,nspec_att,Qmu_store,tau_e_store,tau_s,T_c_source,&
                         rho_vp,rho_vs,ABSORBING_CONDITIONS,ACTUALLY_STORE_ARRAYS,xigll,yigll,zigll, &
                         ispec_is_tiso)
-
+  endif
 
   ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
@@ -649,7 +664,10 @@
   where(idoubling == IFLAG_IN_FICTITIOUS_CUBE) is_on_a_slice_edge = .false.
 
   ! only create global addressing and the MPI buffers in the first pass
-  if(ipass == 1) then
+  select case(ipass)
+  case( 1 )
+    ! user output
+    if(myrank == 0 ) write(IMAIN,*) '  creating global addressing'
 
     !uncomment: adds model smoothing for point profile models
     !    if( THREE_D_MODEL == THREE_D_MODEL_PPM ) then
@@ -769,8 +787,10 @@
     deallocate(locval,stat=ier); if(ier /= 0) stop 'error in deallocate'
     deallocate(ifseg,stat=ier); if(ier /= 0) stop 'error in deallocate'
 
-! only create mass matrix and save all the final arrays in the second pass
-  else if(ipass == 2) then
+  ! only create mass matrix and save all the final arrays in the second pass
+  case( 2 )
+    ! user output
+    if(myrank == 0 ) write(IMAIN,*) '  creating mass matrix'
 
     ! copy the theoretical number of points for the second pass
     nglob = nglob_theor
@@ -781,201 +801,204 @@
     !nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
     nspec_tiso = count(ispec_is_tiso(:))
 
-!****************************************************************************************************
-! Mila
+    !****************************************************************************************************
+    ! Mila
 
-  if(SORT_MESH_INNER_OUTER) then
+    if(SORT_MESH_INNER_OUTER) then
 
-!!!! David Michea: detection of the edges, coloring and permutation separately
-  allocate(perm(nspec))
+      !!!! David Michea: detection of the edges, coloring and permutation separately
+      allocate(perm(nspec))
 
-! implement mesh coloring for GPUs if needed, to create subsets of disconnected elements
-! to remove dependencies and the need for atomic operations in the sum of elemental contributions in the solver
-  if(USE_MESH_COLORING_GPU) then
+      ! implement mesh coloring for GPUs if needed, to create subsets of disconnected elements
+      ! to remove dependencies and the need for atomic operations in the sum of elemental contributions in the solver
+      if(USE_MESH_COLORING_GPU) then
 
-    allocate(first_elem_number_in_this_color(MAX_NUMBER_OF_COLORS + 1))
+        ! user output
+        if(myrank == 0 ) write(IMAIN,*) '  creating mesh coloring'
 
-    call get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
-      nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer,first_elem_number_in_this_color,myrank)
+        allocate(first_elem_number_in_this_color(MAX_NUMBER_OF_COLORS + 1))
 
-! for the last color, the next color is fictitious and its first (fictitious) element number is nspec + 1
-    first_elem_number_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements + 1) = nspec + 1
+        call get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
+          nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer,first_elem_number_in_this_color,myrank)
 
-    allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements))
+        ! for the last color, the next color is fictitious and its first (fictitious) element number is nspec + 1
+        first_elem_number_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements + 1) = nspec + 1
 
-! save mesh coloring
-    open(unit=99,file=prname(1:len_trim(prname))//'num_of_elems_in_this_color.dat',status='unknown')
+        allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements))
 
-! number of colors for outer elements
-    write(99,*) nb_colors_outer_elements
+        ! save mesh coloring
+        open(unit=99,file=prname(1:len_trim(prname))//'num_of_elems_in_this_color.dat',status='unknown')
 
-! number of colors for inner elements
-    write(99,*) nb_colors_inner_elements
+        ! number of colors for outer elements
+        write(99,*) nb_colors_outer_elements
 
-! number of elements in each color
-    do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
-      num_of_elems_in_this_color(icolor) = first_elem_number_in_this_color(icolor+1) - first_elem_number_in_this_color(icolor)
-      write(99,*) num_of_elems_in_this_color(icolor)
-    enddo
-    close(99)
+        ! number of colors for inner elements
+        write(99,*) nb_colors_inner_elements
 
-! check that the sum of all the numbers of elements found in each color is equal
-! to the total number of elements in the mesh
-    if(sum(num_of_elems_in_this_color) /= nspec) then
-      print *,'nspec = ',nspec
-      print *,'total number of elements in all the colors of the mesh = ',sum(num_of_elems_in_this_color)
-      stop 'incorrect total number of elements in all the colors of the mesh'
-    endif
+        ! number of elements in each color
+        do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
+          num_of_elems_in_this_color(icolor) = first_elem_number_in_this_color(icolor+1) &
+                                              - first_elem_number_in_this_color(icolor)
+          write(99,*) num_of_elems_in_this_color(icolor)
+        enddo
+        close(99)
 
-! check that the sum of all the numbers of elements found in each color for the outer elements is equal
-! to the total number of outer elements found in the mesh
-    if(sum(num_of_elems_in_this_color(1:nb_colors_outer_elements)) /= nspec_outer) then
-      print *,'nspec_outer = ',nspec_outer
-      print *,'total number of elements in all the colors of the mesh for outer elements = ',sum(num_of_elems_in_this_color)
-      stop 'incorrect total number of elements in all the colors of the mesh for outer elements'
-    endif
+        ! check that the sum of all the numbers of elements found in each color is equal
+        ! to the total number of elements in the mesh
+        if(sum(num_of_elems_in_this_color) /= nspec) then
+          print *,'nspec = ',nspec
+          print *,'total number of elements in all the colors of the mesh = ',sum(num_of_elems_in_this_color)
+          stop 'incorrect total number of elements in all the colors of the mesh'
+        endif
 
-    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
-    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+        ! check that the sum of all the numbers of elements found in each color for the outer elements is equal
+        ! to the total number of outer elements found in the mesh
+        if(sum(num_of_elems_in_this_color(1:nb_colors_outer_elements)) /= nspec_outer) then
+          print *,'nspec_outer = ',nspec_outer
+          print *,'total number of elements in all the colors of the mesh for outer elements = ', &
+            sum(num_of_elems_in_this_color)
+          stop 'incorrect total number of elements in all the colors of the mesh for outer elements'
+        endif
 
-    deallocate(first_elem_number_in_this_color)
-    deallocate(num_of_elems_in_this_color)
+        call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
+        call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
 
-  else
+        deallocate(first_elem_number_in_this_color)
+        deallocate(num_of_elems_in_this_color)
 
-!! DK DK for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
-!! DK DK first in order to be able to overlap non-blocking MPI communications with calculations
+      else
 
-!! DK DK nov 2010, for Rosa Badia / StarSs:
-!! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
-    ispec_counter = 0
-    perm(:) = 0
+        !! DK DK for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
+        !! DK DK first in order to be able to overlap non-blocking MPI communications with calculations
 
-! first generate all the outer elements
-    do ispec = 1,nspec
-      if(is_on_a_slice_edge(ispec)) then
-        ispec_counter = ispec_counter + 1
-        perm(ispec) = ispec_counter
+        !! DK DK nov 2010, for Rosa Badia / StarSs:
+        !! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
+        ispec_counter = 0
+        perm(:) = 0
+
+        ! first generate all the outer elements
+        do ispec = 1,nspec
+          if(is_on_a_slice_edge(ispec)) then
+            ispec_counter = ispec_counter + 1
+            perm(ispec) = ispec_counter
+          endif
+        enddo
+
+        ! make sure we have detected some outer elements
+        if(ispec_counter <= 0) stop 'fatal error: no outer elements detected!'
+
+        ! store total number of outer elements
+        nspec_outer = ispec_counter
+
+        ! then generate all the inner elements
+        do ispec = 1,nspec
+          if(.not. is_on_a_slice_edge(ispec)) then
+            ispec_counter = ispec_counter + 1
+            perm(ispec) = ispec_counter
+          endif
+        enddo
+
+        ! test that all the elements have been used once and only once
+        if(ispec_counter /= nspec) stop 'fatal error: ispec_counter not equal to nspec'
+
+        ! do basic checks
+        if(minval(perm) /= 1) stop 'minval(perm) should be 1'
+        if(maxval(perm) /= nspec) stop 'maxval(perm) should be nspec'
+
+        call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
+        call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+      endif ! USE_MESH_COLORING_GPU
+
+      !! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
+
+      if (myrank == 0 .and. iregion_code == IREGION_CRUST_MANTLE) then
+        ! write a header file for the Fortran version of the solver
+        open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h',status='unknown')
+        write(99,*) 'integer, parameter :: NSPEC = ',nspec
+        write(99,*) 'integer, parameter :: NGLOB = ',nglob
+        !!! DK DK use 1000 time steps only for the scaling tests
+        write(99,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
+        write(99,*) 'real(kind=4), parameter :: deltat = ',DT
+        write(99,*)
+        write(99,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',npoin2D_xi
+        write(99,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',npoin2D_eta
+        write(99,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(npoin2D_xi,npoin2D_eta)
+        write(99,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
+        write(99,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
+        write(99,*)
+        write(99,*) '! element number of the source and of the station'
+        write(99,*) '! after permutation of the elements by mesh coloring'
+        write(99,*) '! and inner/outer set splitting in the mesher'
+        write(99,*) 'integer, parameter :: NSPEC_SOURCE = ',perm(NSPEC/3)
+        write(99,*) 'integer, parameter :: RANK_SOURCE = 0'
+        write(99,*)
+        write(99,*) 'integer, parameter :: RANK_STATION = (NPROC_XI*NPROC_ETA - 1)'
+        write(99,*) 'integer, parameter :: NSPEC_STATION = ',perm(2*NSPEC/3)
+
+        ! save coordinates of the seismic source
+        !   write(99,*) xstore(2,2,2,10);
+        !   write(99,*) ystore(2,2,2,10);
+        !   write(99,*) zstore(2,2,2,10);
+
+        ! save coordinates of the seismic station
+        !   write(99,*) xstore(2,2,2,nspec-10);
+        !   write(99,*) ystore(2,2,2,nspec-10);
+        !   write(99,*) zstore(2,2,2,nspec-10);
+        close(99)
+
+        !! write a header file for the C version of the solver
+        open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_C.h',status='unknown')
+        write(99,*) '#define NSPEC ',nspec
+        write(99,*) '#define NGLOB ',nglob
+        !!    write(99,*) '#define NSTEP ',nstep
+        !!! DK DK use 1000 time steps only for the scaling tests
+        write(99,*) '// #define NSTEP ',nstep
+        write(99,*) '#define NSTEP 1000'
+        ! put an "f" at the end to force single precision
+        write(99,"('#define deltat ',e18.10,'f')") DT
+        write(99,*) '#define NGLOB2DMAX_XMIN_XMAX ',npoin2D_xi
+        write(99,*) '#define NGLOB2DMAX_YMIN_YMAX ',npoin2D_eta
+        write(99,*) '#define NGLOB2DMAX_ALL ',max(npoin2D_xi,npoin2D_eta)
+        write(99,*) '#define NPROC_XI ',NPROC_XI
+        write(99,*) '#define NPROC_ETA ',NPROC_ETA
+        write(99,*)
+        write(99,*) '// element and MPI slice number of the source and the station'
+        write(99,*) '// after permutation of the elements by mesh coloring'
+        write(99,*) '// and inner/outer set splitting in the mesher'
+        write(99,*) '#define RANK_SOURCE 0'
+        write(99,*) '#define NSPEC_SOURCE ',perm(NSPEC/3)
+        write(99,*)
+        write(99,*) '#define RANK_STATION (NPROC_XI*NPROC_ETA - 1)'
+        write(99,*) '#define NSPEC_STATION ',perm(2*NSPEC/3)
+        close(99)
+
+        open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h',status='unknown')
+        write(99,*) '#define NSPEC_OUTER ',nspec_outer_max_global
+        write(99,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
+        write(99,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global
+        close(99)
+
       endif
-    enddo
 
-! make sure we have detected some outer elements
-    if(ispec_counter <= 0) stop 'fatal error: no outer elements detected!'
+      !! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
 
-! store total number of outer elements
-    nspec_outer = ispec_counter
+      deallocate(perm)
 
-! then generate all the inner elements
-    do ispec = 1,nspec
-      if(.not. is_on_a_slice_edge(ispec)) then
-        ispec_counter = ispec_counter + 1
-        perm(ispec) = ispec_counter
-      endif
-    enddo
+    else
+      print *,'SORT_MESH_INNER_OUTER must always been set to .true. even for the regular C version for CPUs'
+      print *,'in order to be able to use non blocking MPI to overlap communications'
+      !   print *,'generating identity permutation'
+      !   do ispec = 1,nspec
+      !     perm(ispec) = ispec
+      !   enddo
+      stop 'please set SORT_MESH_INNER_OUTER to .true. and recompile the whole code'
 
-! test that all the elements have been used once and only once
-  if(ispec_counter /= nspec) stop 'fatal error: ispec_counter not equal to nspec'
+    endif ! SORT_MESH_INNER_OUTER
 
-! do basic checks
-  if(minval(perm) /= 1) stop 'minval(perm) should be 1'
-  if(maxval(perm) /= nspec) stop 'maxval(perm) should be nspec'
+    !!!! David Michea: end of mesh coloring
 
-    call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
-    call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
-  endif
-
-!! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
-
-  if (myrank == 0 .and. iregion_code == IREGION_CRUST_MANTLE) then
-
-! write a header file for the Fortran version of the solver
-    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h',status='unknown')
-    write(99,*) 'integer, parameter :: NSPEC = ',nspec
-    write(99,*) 'integer, parameter :: NGLOB = ',nglob
-!!! DK DK use 1000 time steps only for the scaling tests
-    write(99,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
-    write(99,*) 'real(kind=4), parameter :: deltat = ',DT
-    write(99,*)
-    write(99,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',npoin2D_xi
-    write(99,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',npoin2D_eta
-    write(99,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(npoin2D_xi,npoin2D_eta)
-    write(99,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
-    write(99,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
-    write(99,*)
-    write(99,*) '! element number of the source and of the station'
-    write(99,*) '! after permutation of the elements by mesh coloring'
-    write(99,*) '! and inner/outer set splitting in the mesher'
-    write(99,*) 'integer, parameter :: NSPEC_SOURCE = ',perm(NSPEC/3)
-    write(99,*) 'integer, parameter :: RANK_SOURCE = 0'
-    write(99,*)
-    write(99,*) 'integer, parameter :: RANK_STATION = (NPROC_XI*NPROC_ETA - 1)'
-    write(99,*) 'integer, parameter :: NSPEC_STATION = ',perm(2*NSPEC/3)
-
-! save coordinates of the seismic source
-!   write(99,*) xstore(2,2,2,10);
-!   write(99,*) ystore(2,2,2,10);
-!   write(99,*) zstore(2,2,2,10);
-
-! save coordinates of the seismic station
-!   write(99,*) xstore(2,2,2,nspec-10);
-!   write(99,*) ystore(2,2,2,nspec-10);
-!   write(99,*) zstore(2,2,2,nspec-10);
-    close(99)
-
-!! write a header file for the C version of the solver
-    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_C.h',status='unknown')
-    write(99,*) '#define NSPEC ',nspec
-    write(99,*) '#define NGLOB ',nglob
-!!    write(99,*) '#define NSTEP ',nstep
-!!! DK DK use 1000 time steps only for the scaling tests
-    write(99,*) '// #define NSTEP ',nstep
-    write(99,*) '#define NSTEP 1000'
-! put an "f" at the end to force single precision
-    write(99,"('#define deltat ',e18.10,'f')") DT
-    write(99,*) '#define NGLOB2DMAX_XMIN_XMAX ',npoin2D_xi
-    write(99,*) '#define NGLOB2DMAX_YMIN_YMAX ',npoin2D_eta
-    write(99,*) '#define NGLOB2DMAX_ALL ',max(npoin2D_xi,npoin2D_eta)
-    write(99,*) '#define NPROC_XI ',NPROC_XI
-    write(99,*) '#define NPROC_ETA ',NPROC_ETA
-    write(99,*)
-    write(99,*) '// element and MPI slice number of the source and the station'
-    write(99,*) '// after permutation of the elements by mesh coloring'
-    write(99,*) '// and inner/outer set splitting in the mesher'
-    write(99,*) '#define RANK_SOURCE 0'
-    write(99,*) '#define NSPEC_SOURCE ',perm(NSPEC/3)
-    write(99,*)
-    write(99,*) '#define RANK_STATION (NPROC_XI*NPROC_ETA - 1)'
-    write(99,*) '#define NSPEC_STATION ',perm(2*NSPEC/3)
-    close(99)
-
-    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h',status='unknown')
-    write(99,*) '#define NSPEC_OUTER ',nspec_outer_max_global
-    write(99,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
-    write(99,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global
-    close(99)
-
-  endif
-
-!! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
-
-  deallocate(perm)
-
-  else
-!
-    print *,'SORT_MESH_INNER_OUTER must always been set to .true. even for the regular C version for CPUs'
-    print *,'in order to be able to use non blocking MPI to overlap communications'
-!   print *,'generating identity permutation'
-!   do ispec = 1,nspec
-!     perm(ispec) = ispec
-!   enddo
-    stop 'please set SORT_MESH_INNER_OUTER to .true. and recompile the whole code'
-
-  endif
-
-!!!! David Michea: end of mesh coloring
-
-!****************************************************************************************************
+    !****************************************************************************************************
 
     ! precomputes jacobian for 2d absorbing boundary surfaces
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
@@ -1014,8 +1037,11 @@
                           nglob_oceans,rmass_ocean_load,NSPEC2D_TOP,ibelm_top,jacobian2D_top, &
                           xstore,ystore,zstore,RHO_OCEANS)
 
+    ! user output
+    if(myrank == 0 ) write(IMAIN,*) '  saving binary files'
+
     ! save the binary files
-    call save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
+    call save_arrays_solver(myrank,rho_vp,rho_vs,nspec_stacey, &
                   prname,iregion_code,xixstore,xiystore,xizstore, &
                   etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                   xstore,ystore,zstore,rhostore,dvpstore, &
@@ -1052,7 +1078,10 @@
                call exit_mpi(myrank,'Not the same number of 670 surface elements')
 
       ! writing surface topology databases
-      open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin',status='unknown',form='unformatted')
+      open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
+           status='unknown',form='unformatted',iostat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
+
       write(27) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
       write(27) ibelm_moho_top
       write(27) ibelm_moho_bot
@@ -1067,16 +1096,16 @@
     endif
 
     ! compute volume, bottom and top area of that part of the slice
-    call crm_compute_volumes(volume_local,area_local_bottom,area_local_top, &
+    call compute_volumes(volume_local,area_local_bottom,area_local_top, &
                             nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                             NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
 
 
-  else
+  case default
     stop 'there cannot be more than two passes in mesh creation'
 
-  endif  ! end of test if first or second pass
+  end select  ! end of test if first or second pass
 
   deallocate(stretch_tab)
   deallocate(perm_layer)
@@ -1136,244 +1165,4 @@
   deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
 
   end subroutine create_regions_mesh
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-
-  subroutine crm_initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
-                        shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
-                        dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
-                        iaddx,iaddy,iaddz,nspec,xstore,ystore,zstore,ibool,idoubling, &
-                        iboun,iMPIcut_xi,iMPIcut_eta,ispec2D_moho_top,ispec2D_moho_bot, &
-                        ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
-                        NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
-                        ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
-                        iregion_code,ifirst_region,ilast_region, &
-                        first_layer_aniso,last_layer_aniso,nb_layer_above_aniso,is_on_a_slice_edge)
-
-! create the different regions of the mesh
-
-  implicit none
-
-  include "constants.h"
-
-  integer :: myrank,ipass
-
-  double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
-  double precision wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
-
-  double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ),dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ)
-
-  double precision shape2D_x(NGNOD2D,NGLLY,NGLLZ),shape2D_y(NGNOD2D,NGLLX,NGLLZ)
-  double precision shape2D_bottom(NGNOD2D,NGLLX,NGLLY),shape2D_top(NGNOD2D,NGLLX,NGLLY)
-  double precision dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ),dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ)
-  double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY),dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY)
-
-  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
-
-  integer nspec
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
-  integer idoubling(nspec)
-
-  logical iboun(6,nspec)
-  logical iMPIcut_xi(2,nspec),iMPIcut_eta(2,nspec)
-
-  integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
-    ispec2D_670_top,ispec2D_670_bot
-  integer NEX_PER_PROC_ETA,nex_eta_moho
-  double precision RMOHO,R400,R670
-  double precision r_moho,r_400,r_670
-
-  logical ONE_CRUST
-  integer NUMBER_OF_MESH_LAYERS,layer_shift
-
-  ! code for the four regions of the mesh
-  integer iregion_code,ifirst_region,ilast_region
-  integer first_layer_aniso,last_layer_aniso,nb_layer_above_aniso
-
-! this for non blocking MPI
-  logical, dimension(nspec) :: is_on_a_slice_edge
-
-! set up coordinates of the Gauss-Lobatto-Legendre points
-  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-
-! if number of points is odd, the middle abscissa is exactly zero
-  if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
-  if(mod(NGLLY,2) /= 0) yigll((NGLLY-1)/2+1) = ZERO
-  if(mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = ZERO
-
-! get the 3-D shape functions
-  call get_shape3D(myrank,shape3D,dershape3D,xigll,yigll,zigll)
-
-! get the 2-D shape functions
-  call get_shape2D(myrank,shape2D_x,dershape2D_x,yigll,zigll,NGLLY,NGLLZ)
-  call get_shape2D(myrank,shape2D_y,dershape2D_y,xigll,zigll,NGLLX,NGLLZ)
-  call get_shape2D(myrank,shape2D_bottom,dershape2D_bottom,xigll,yigll,NGLLX,NGLLY)
-  call get_shape2D(myrank,shape2D_top,dershape2D_top,xigll,yigll,NGLLX,NGLLY)
-
-! create the shape of the corner nodes of a regular mesh element
-  call hex_nodes(iaddx,iaddy,iaddz)
-
-! reference element has size one here, not two
-  iaddx(:) = iaddx(:) / 2
-  iaddy(:) = iaddy(:) / 2
-  iaddz(:) = iaddz(:) / 2
-
-! sets number of layers
-  if (ONE_CRUST) then
-    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
-    layer_shift = 0
-  else
-    NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
-    layer_shift = 1
-  endif
-
-  if (.not. ADD_4TH_DOUBLING) NUMBER_OF_MESH_LAYERS = NUMBER_OF_MESH_LAYERS - 1
-
-! define the first and last layers that define this region
-  if(iregion_code == IREGION_CRUST_MANTLE) then
-    ifirst_region = 1
-    ilast_region = 10 + layer_shift
-
-  else if(iregion_code == IREGION_OUTER_CORE) then
-    ifirst_region = 11 + layer_shift
-    ilast_region = NUMBER_OF_MESH_LAYERS - 1
-
-  else if(iregion_code == IREGION_INNER_CORE) then
-    ifirst_region = NUMBER_OF_MESH_LAYERS
-    ilast_region = NUMBER_OF_MESH_LAYERS
-
-  else
-    call exit_MPI(myrank,'incorrect region code detected')
-  endif
-
-! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
-  if (ONE_CRUST) then
-    first_layer_aniso=2
-    last_layer_aniso=3
-    nb_layer_above_aniso = 1
-  else
-    first_layer_aniso=3
-    last_layer_aniso=4
-    nb_layer_above_aniso = 2
-  endif
-
-! initialize mesh arrays
-  idoubling(:) = 0
-
-  xstore(:,:,:,:) = 0.d0
-  ystore(:,:,:,:) = 0.d0
-  zstore(:,:,:,:) = 0.d0
-
-  if(ipass == 1) ibool(:,:,:,:) = 0
-
-  ! initialize boundary arrays
-  iboun(:,:) = .false.
-  iMPIcut_xi(:,:) = .false.
-  iMPIcut_eta(:,:) = .false.
-  is_on_a_slice_edge(:) = .false.
-
-  ! boundary mesh
-  ispec2D_moho_top = 0; ispec2D_moho_bot = 0
-  ispec2D_400_top = 0; ispec2D_400_bot = 0
-  ispec2D_670_top = 0; ispec2D_670_bot = 0
-
-  nex_eta_moho = NEX_PER_PROC_ETA
-
-  r_moho = RMOHO/R_EARTH; r_400 = R400 / R_EARTH; r_670 = R670/R_EARTH
-
-  end subroutine crm_initialize_layers
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine crm_compute_volumes(volume_local,area_local_bottom,area_local_top, &
-                            nspec,wxgll,wygll,wzgll,xixstore,xiystore,xizstore, &
-                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top)
-
-  implicit none
-
-  include "constants.h"
-
-  double precision :: volume_local,area_local_bottom,area_local_top
-
-  integer :: nspec
-  double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-  integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM) :: jacobian2D_bottom
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP) :: jacobian2D_top
-
-  ! local parameters
-  double precision :: weight
-  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
-  integer :: i,j,k,ispec
-
-  ! initializes
-  volume_local = ZERO
-  area_local_bottom = ZERO
-  area_local_top = ZERO
-
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-
-          weight = wxgll(i)*wygll(j)*wzgll(k)
-
-          ! compute the jacobian
-          xixl = xixstore(i,j,k,ispec)
-          xiyl = xiystore(i,j,k,ispec)
-          xizl = xizstore(i,j,k,ispec)
-          etaxl = etaxstore(i,j,k,ispec)
-          etayl = etaystore(i,j,k,ispec)
-          etazl = etazstore(i,j,k,ispec)
-          gammaxl = gammaxstore(i,j,k,ispec)
-          gammayl = gammaystore(i,j,k,ispec)
-          gammazl = gammazstore(i,j,k,ispec)
-
-          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                        + xizl*(etaxl*gammayl-etayl*gammaxl))
-
-          volume_local = volume_local + dble(jacobianl)*weight
-
-        enddo
-      enddo
-    enddo
-  enddo
-
-  do ispec = 1,NSPEC2D_BOTTOM
-    do i=1,NGLLX
-      do j=1,NGLLY
-        weight=wxgll(i)*wygll(j)
-        area_local_bottom = area_local_bottom + dble(jacobian2D_bottom(i,j,ispec))*weight
-      enddo
-    enddo
-  enddo
-
-  do ispec = 1,NSPEC2D_TOP
-    do i=1,NGLLX
-      do j=1,NGLLY
-        weight=wxgll(i)*wygll(j)
-        area_local_top = area_local_top + dble(jacobian2D_top(i,j,ispec))*weight
-      enddo
-    enddo
-  enddo
-
-
-  end subroutine crm_compute_volumes
 

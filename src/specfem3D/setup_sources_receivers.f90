@@ -68,8 +68,6 @@
 
   ! local parameters
   double precision :: min_tshift_cmt_original
-  double precision :: sec
-  integer :: yr,jda,ho,mi
   integer :: isource
   character(len=256) :: filename
   integer :: ier
@@ -121,16 +119,9 @@
   endif
 
   ! locate sources in the mesh
-  call locate_sources(NSOURCES,myrank,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
-            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-            xigll,yigll,zigll, &
-            ELLIPTICITY_VAL,TOPOGRAPHY, &
-            sec,tshift_cmt,min_tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
-            NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-            islice_selected_source,ispec_selected_source, &
-            xi_source,eta_source,gamma_source, nu_source, &
-            rspl,espl,espl2,nspl,ibathy_topo,PRINT_SOURCE_TIME_FUNCTION, &
-            LOCAL_TMP_PATH,SIMULATION_TYPE)
+  call locate_sources(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
+                     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                     ELLIPTICITY_VAL,min_tshift_cmt_original)
 
   if(abs(minval(tshift_cmt)) > TINYVAL) call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
 
@@ -226,7 +217,8 @@
     call exit_mpi(myrank,'error negative USER_T0 parameter in constants.h')
   endif
 
-  ! get information about event name and location for SAC seismograms
+  ! get information about event name and location
+  ! (e.g. needed for SAC seismograms)
 
   ! The following line is added for get_event_info subroutine.
   ! Because the way NSOURCES_SAC was declared has been changed.
@@ -252,9 +244,7 @@
   include 'mpif.h'
 
   ! local parameters
-  double precision :: sec
   double precision :: junk
-  integer :: yr,jda,ho,mi
   integer :: irec,isource,nrec_tot_found
   integer :: icomp,itime,nadj_files_found,nadj_files_found_tot
   character(len=3),dimension(NDIM) :: comp
@@ -293,16 +283,10 @@
   endif
 
   ! locate receivers in the crust in the mesh
-  call locate_receivers(myrank,DT,NSTEP,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
+  call locate_receivers(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
                       xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                      xigll,yigll,zigll,trim(rec_filename), &
-                      nrec,islice_selected_rec,ispec_selected_rec, &
-                      xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
-                      stlat,stlon,stele,stbur,nu, &
-                      yr,jda,ho,mi,sec, &
-                      ELLIPTICITY_VAL,TOPOGRAPHY, &
-                      theta_source(1),phi_source(1),rspl,espl,espl2,nspl, &
-                      ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS_VAL)
+                      yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
+                      theta_source(1),phi_source(1),NCHUNKS_VAL,ELLIPTICITY_VAL)
 
 
   ! count number of receivers located in this slice

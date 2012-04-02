@@ -26,9 +26,9 @@
 !=====================================================================
 
   subroutine get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
-    dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
-    ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
-    nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+              dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
+              ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+              nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
               jacobian2D_xmin,jacobian2D_xmax, &
               jacobian2D_ymin,jacobian2D_ymax, &
               jacobian2D_bottom,jacobian2D_top, &

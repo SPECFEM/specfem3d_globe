@@ -32,7 +32,8 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
                                           receiver_cube_from_slices, ibool_inner_core, &
                                           idoubling_inner_core, NSPEC_INNER_CORE, &
                                           ibelm_bottom_inner_core, NSPEC2D_BOTTOM_INNER_CORE,NGLOB_INNER_CORE, &
-                                          vector_assemble,ndim_assemble)
+                                          vector_assemble,ndim_assemble, &
+                                          iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
 
 ! this version of the routine is based on blocking MPI calls
 
@@ -61,6 +62,11 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 ! vector
   integer ndim_assemble
   real(kind=CUSTOM_REAL), dimension(ndim_assemble,NGLOB_INNER_CORE) :: vector_assemble
+
+!daniel: for addressing of the slices
+  integer, intent(in) :: NCHUNKS,NPROC_XI,NPROC_ETA
+  integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1), intent(in) :: addressing
+  integer, intent(in) :: iproc_eta
 
   integer ipoin,idimension, ispec2D, ispec
   integer i,j,k
@@ -117,7 +123,17 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 ! send buffer to central cube
     receiver = receiver_cube_from_slices
     call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
-              MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
+                 MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
+
+    ! daniel: in case NPROC_XI == 1, the other chunks exchange all bottom points with
+    ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
+    if(NPROC_XI==1) then
+      call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
+                   MPI_DOUBLE_PRECISION, &
+                   addressing(CHUNK_AB_ANTIPODE,0,iproc_eta), &
+                   itag,MPI_COMM_WORLD,ier)
+    endif
+
 
  endif  ! end sending info to central cube
 
@@ -160,10 +176,17 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 ! distinguish between single and double precision for reals
       do imsg = 1,nb_msgs_theor_in_cube-1
         do ipoin = 1,npoin2D_cube_from_slices
-          if(CUSTOM_REAL == SIZE_REAL) then
-            array_central_cube(ibool_central_cube(imsg,ipoin)) = sngl(buffer_all_cube_from_slices(imsg,ipoin,idimension))
+!daniel: debug
+          if(NPROC_XI==1) then
+            if(ibool_central_cube(imsg,ipoin) > 0 ) then
+              array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(imsg,ipoin,idimension)
+            endif
           else
-            array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(imsg,ipoin,idimension)
+            if(CUSTOM_REAL == SIZE_REAL) then
+              array_central_cube(ibool_central_cube(imsg,ipoin)) = sngl(buffer_all_cube_from_slices(imsg,ipoin,idimension))
+            else
+              array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(imsg,ipoin,idimension)
+            endif
           endif
         enddo
       enddo
@@ -171,15 +194,27 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 ! use a mask to avoid taking the same point into account several times.
       mask(:) = .false.
       do ipoin = 1,npoin2D_cube_from_slices
-        if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
-          if(CUSTOM_REAL == SIZE_REAL) then
-            array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-            array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-            sngl(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension))
-          else
-            array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
-            array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
-            buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
+!daniel:debug
+        if(NPROC_XI==1) then
+          if( ibool_central_cube(nb_msgs_theor_in_cube,ipoin) > 0 ) then
+            if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+              buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
+            endif
+            mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = .true.
+          endif
+        else
+          if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
+            if(CUSTOM_REAL == SIZE_REAL) then
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+              sngl(buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension))
+            else
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
+              array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
+              buffer_all_cube_from_slices(nb_msgs_theor_in_cube,ipoin,idimension)
+            endif
           endif
           mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = .true.
         endif
@@ -203,7 +238,18 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 ! copy sum back
       do imsg = 1,nb_msgs_theor_in_cube-1
         do ipoin = 1,npoin2D_cube_from_slices
-          buffer_all_cube_from_slices(imsg,ipoin,idimension) = vector_assemble(idimension,ibool_central_cube(imsg,ipoin))
+!daniel:debug
+          if(NPROC_XI==1) then
+            if( ibool_central_cube(imsg,ipoin) > 0 ) then
+              buffer_all_cube_from_slices(imsg,ipoin,idimension) = &
+                      vector_assemble(idimension,ibool_central_cube(imsg,ipoin))
+            else
+              buffer_all_cube_from_slices(imsg,ipoin,idimension) = 0._CUSTOM_REAL
+            endif
+          else
+            buffer_all_cube_from_slices(imsg,ipoin,idimension) = &
+                    vector_assemble(idimension,ibool_central_cube(imsg,ipoin))
+          endif
         enddo
       enddo
 
@@ -217,10 +263,22 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
 
 ! receive buffers from slices
-  sender = receiver_cube_from_slices
-  call MPI_RECV(buffer_slices, &
-              ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
-              itag,MPI_COMM_WORLD,msg_status,ier)
+    sender = receiver_cube_from_slices
+    call MPI_RECV(buffer_slices, &
+                ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
+                itag,MPI_COMM_WORLD,msg_status,ier)
+
+    ! daniel: in case NPROC_XI == 1, the other chunks exchange all bottom points with
+    ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
+    if(NPROC_XI==1) then
+      call MPI_RECV(buffer_slices2, &
+                  ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION, &
+                  addressing(CHUNK_AB_ANTIPODE,0,iproc_eta), &
+                  itag,MPI_COMM_WORLD,msg_status,ier)
+
+      buffer_slices = buffer_slices + buffer_slices2
+    endif
+
 
 ! for bottom elements in contact with central cube from the slices side
     ipoin = 0

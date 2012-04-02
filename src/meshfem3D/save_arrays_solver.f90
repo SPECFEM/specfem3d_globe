@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
+  subroutine save_arrays_solver(myrank,rho_vp,rho_vs,nspec_stacey, &
                     prname,iregion_code,xixstore,xiystore,xizstore, &
                     etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                     xstore,ystore,zstore,rhostore,dvpstore, &
@@ -50,27 +50,7 @@
 
   include "constants.h"
 
-! model_attenuation_variables
-!  type model_attenuation_variables
-!    sequence
-!    double precision min_period, max_period
-!    double precision                          :: QT_c_source        ! Source Frequency
-!    double precision, dimension(:), pointer   :: Qtau_s             ! tau_sigma
-!    double precision, dimension(:), pointer   :: QrDisc             ! Discontinutitues Defined
-!    double precision, dimension(:), pointer   :: Qr                 ! Radius
-!    double precision, dimension(:), pointer   :: Qmu                ! Shear Attenuation
-!    double precision, dimension(:,:), pointer :: Qtau_e             ! tau_epsilon
-!    double precision, dimension(:), pointer   :: Qomsb, Qomsb2      ! one_minus_sum_beta
-!    double precision, dimension(:,:), pointer :: Qfc, Qfc2          ! factor_common
-!    double precision, dimension(:), pointer   :: Qsf, Qsf2          ! scale_factor
-!    integer, dimension(:), pointer            :: Qrmin              ! Max and Mins of idoubling
-!    integer, dimension(:), pointer            :: Qrmax              ! Max and Mins of idoubling
-!    integer, dimension(:), pointer            :: interval_Q                 ! Steps
-!    integer                                   :: Qn                 ! Number of points
-!    integer dummy_pad ! padding 4 bytes to align the structure
-!  end type model_attenuation_variables
-
-  logical ATTENUATION
+  integer :: myrank
 
   character(len=150) prname
   integer iregion_code
@@ -78,22 +58,23 @@
   integer nspec,nglob,nspec_stacey
   integer npointot_oceans
 
-! Stacey
+  ! Stacey
   real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec_stacey)
   real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec_stacey)
 
-  logical TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
+  logical :: TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS
+  logical :: ATTENUATION
 
-! arrays with jacobian matrix
+  ! arrays with jacobian matrix
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
-! arrays with mesh parameters
+  ! arrays with mesh parameters
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
-! for anisotropy
+  ! for anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
@@ -105,26 +86,26 @@
 
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-! doubling mesh flag
+  ! doubling mesh flag
   integer, dimension(nspec) :: idoubling
 
-! this for non blocking MPI
+  ! this for non blocking MPI
   logical, dimension(nspec) :: is_on_a_slice_edge
 
-! mass matrix
+  ! mass matrix
   real(kind=CUSTOM_REAL) rmass(nglob)
 
-! additional ocean load mass matrix
+  ! additional ocean load mass matrix
   real(kind=CUSTOM_REAL) rmass_ocean_load(npointot_oceans)
 
-! boundary parameters locator
+  ! boundary parameters locator
   integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
 
   integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
   integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
   integer ibelm_bottom(NSPEC2D_BOTTOM),ibelm_top(NSPEC2D_TOP)
 
-! normals
+  ! normals
   real(kind=CUSTOM_REAL) normal_xmin(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
   real(kind=CUSTOM_REAL) normal_xmax(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
   real(kind=CUSTOM_REAL) normal_ymin(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
@@ -132,7 +113,7 @@
   real(kind=CUSTOM_REAL) normal_bottom(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM)
   real(kind=CUSTOM_REAL) normal_top(NDIM,NGLLX,NGLLY,NSPEC2D_TOP)
 
-! jacobian on 2D edges
+  ! jacobian on 2D edges
   real(kind=CUSTOM_REAL) jacobian2D_xmin(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
   real(kind=CUSTOM_REAL) jacobian2D_xmax(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
   real(kind=CUSTOM_REAL) jacobian2D_ymin(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
@@ -140,10 +121,10 @@
   real(kind=CUSTOM_REAL) jacobian2D_bottom(NGLLX,NGLLY,NSPEC2D_BOTTOM)
   real(kind=CUSTOM_REAL) jacobian2D_top(NGLLX,NGLLY,NSPEC2D_TOP)
 
-! number of elements on the boundaries
+  ! number of elements on the boundaries
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
 
-! attenuation
+  ! attenuation
   integer vx, vy, vz, vnspec
   double precision  T_c_source
   double precision, dimension(N_SLS)                     :: tau_s
@@ -155,32 +136,24 @@
   logical, dimension(nspec) :: ispec_is_tiso
 
   ! local parameters
-  integer i,j,k,ispec,iglob,nspec1, nglob1
+  integer i,j,k,ispec,iglob,nspec1,nglob1,ier
   real(kind=CUSTOM_REAL) scaleval1,scaleval2
 
-! save nspec and nglob, to be used in combine_paraview_data
-  open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt',status='unknown',action='write')
+  ! save nspec and nglob, to be used in combine_paraview_data
+  open(unit=27,file=prname(1:len_trim(prname))//'array_dims.txt', &
+       status='unknown',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening array_dims file')
 
   nspec1 = nspec
   nglob1 = nglob
-
-  ! might be wrong, check...
-  !if (NCHUNKS == 6 .and. ichunk /= CHUNK_AB .and. iregion_code == IREGION_INNER_CORE) then
-  !  ! only chunk_AB contains inner core?
-  !  ratio_divide_central_cube = 16
-  !  ! corrects nspec/nglob
-  !  nspec1 = nspec1 - (NEX_PER_PROC_XI/ratio_divide_central_cube) &
-  !            * (NEX_PER_PROC_ETA/ratio_divide_central_cube) * (NEX_XI/ratio_divide_central_cube)
-  !  nglob1 = nglob1 -   ((NEX_PER_PROC_XI/ratio_divide_central_cube)*(NGLLX-1)+1) &
-  !            * ((NEX_PER_PROC_ETA/ratio_divide_central_cube)*(NGLLY-1)+1) &
-  !            * (NEX_XI/ratio_divide_central_cube)*(NGLLZ-1)
-  !endif
 
   write(27,*) nspec1
   write(27,*) nglob1
   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_1.bin',status='unknown',form='unformatted',action='write')
+  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_1.bin', &
+       status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_1.bin file')
 
   write(27) xixstore
   write(27) xiystore
@@ -196,17 +169,20 @@
   write(27) kappavstore
 
   if(HETEROGEN_3D_MANTLE) then
-     open(unit=29,file=prname(1:len_trim(prname))//'dvp.bin',status='unknown',form='unformatted',action='write')
+     open(unit=29,file=prname(1:len_trim(prname))//'dvp.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+     if( ier /= 0 ) call exit_mpi(myrank,'error opening dvp.bin file')
+
      write(29) dvpstore
      close(29)
   endif
 
-! other terms needed in the solid regions only
+  ! other terms needed in the solid regions only
   if(iregion_code /= IREGION_OUTER_CORE) then
 
     if(.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) write(27) muvstore
 
-!   save anisotropy in the mantle only
+    !   save anisotropy in the mantle only
     if(TRANSVERSE_ISOTROPY) then
       if(iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
         write(27) kappahstore
@@ -215,7 +191,7 @@
       endif
     endif
 
-!   save anisotropy in the inner core only
+    !   save anisotropy in the inner core only
     if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
       write(27) c11store
       write(27) c33store
@@ -223,8 +199,6 @@
       write(27) c13store
       write(27) c44store
     endif
-
-
 
     if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
         write(27) c11store
@@ -252,7 +226,7 @@
 
   endif
 
-! Stacey
+  ! Stacey
   if(ABSORBING_CONDITIONS) then
 
     if(iregion_code == IREGION_CRUST_MANTLE) then
@@ -264,27 +238,30 @@
 
   endif
 
-! mass matrix
+  ! mass matrix
   write(27) rmass
 
-! additional ocean load mass matrix if oceans and if we are in the crust
+  ! additional ocean load mass matrix if oceans and if we are in the crust
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(27) rmass_ocean_load
 
   close(27)
 
-  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin',status='unknown',form='unformatted',action='write')
+  open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_2.bin file')
+
 ! mesh arrays used in the solver to locate source and receivers
 ! and for anisotropy and gravity, save in single precision
 ! use rmass for temporary storage to perform conversion, since already saved
 
-!--- x coordinate
+  !--- x coordinate
   rmass(:) = 0._CUSTOM_REAL
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
-! distinguish between single and double precision for reals
+          ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
             rmass(iglob) = sngl(xstore(i,j,k,ispec))
           else
@@ -296,14 +273,14 @@
   enddo
   write(27) rmass
 
-!--- y coordinate
+  !--- y coordinate
   rmass(:) = 0._CUSTOM_REAL
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
-! distinguish between single and double precision for reals
+          ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
             rmass(iglob) = sngl(ystore(i,j,k,ispec))
           else
@@ -315,14 +292,14 @@
   enddo
   write(27) rmass
 
-!--- z coordinate
+  !--- z coordinate
   rmass(:) = 0._CUSTOM_REAL
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
-! distinguish between single and double precision for reals
+          ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
             rmass(iglob) = sngl(zstore(i,j,k,ispec))
           else
@@ -344,8 +321,10 @@
 
   close(27)
 
-! absorbing boundary parameters
-  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin',status='unknown',form='unformatted',action='write')
+  ! absorbing boundary parameters
+  open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary.bin file')
 
   write(27) nspec2D_xmin
   write(27) nspec2D_xmax
@@ -377,10 +356,12 @@
 
   close(27)
 
-!> Hejun
-! No matter 1D or 3D Attenuation, we save value for gll points
+  ! No matter 1D or 3D Attenuation, we save value for gll points
   if(ATTENUATION) then
-     open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', status='unknown', form='unformatted',action='write')
+     open(unit=27, file=prname(1:len_trim(prname))//'attenuation.bin', &
+          status='unknown', form='unformatted',action='write',iostat=ier)
+     if( ier /= 0 ) call exit_mpi(myrank,'error opening attenuation.bin file')
+
      write(27) tau_s
      write(27) tau_e_store
      write(27) Qmu_store
@@ -395,47 +376,73 @@
 
     ! isotropic model
     ! vp
-    open(unit=27,file=prname(1:len_trim(prname))//'vp.bin',status='unknown',form='unformatted',action='write')
+    open(unit=27,file=prname(1:len_trim(prname))//'vp.bin', &
+         status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening vp.bin file')
+
     write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
     close(27)
     ! vs
-    open(unit=27,file=prname(1:len_trim(prname))//'vs.bin',status='unknown',form='unformatted',action='write')
+    open(unit=27,file=prname(1:len_trim(prname))//'vs.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening vs.bin file')
+
     write(27) sqrt( muvstore/rhostore )*scaleval1
     close(27)
     ! rho
-    open(unit=27,file=prname(1:len_trim(prname))//'rho.bin',status='unknown',form='unformatted',action='write')
+    open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
+
     write(27) rhostore*scaleval2
     close(27)
 
     ! transverse isotropic model
     if( TRANSVERSE_ISOTROPY ) then
       ! vpv
-      open(unit=27,file=prname(1:len_trim(prname))//'vpv.bin',status='unknown',form='unformatted',action='write')
+      open(unit=27,file=prname(1:len_trim(prname))//'vpv.bin', &
+            status='unknown',form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error opening vpv.bin file')
+
       write(27) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
       close(27)
       ! vph
-      open(unit=27,file=prname(1:len_trim(prname))//'vph.bin',status='unknown',form='unformatted',action='write')
+      open(unit=27,file=prname(1:len_trim(prname))//'vph.bin', &
+            status='unknown',form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error opening vph.bin file')
+
       write(27) sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1
       close(27)
       ! vsv
-      open(unit=27,file=prname(1:len_trim(prname))//'vsv.bin',status='unknown',form='unformatted',action='write')
+      open(unit=27,file=prname(1:len_trim(prname))//'vsv.bin', &
+            status='unknown',form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error opening vsv.bin file')
+
       write(27) sqrt( muvstore/rhostore )*scaleval1
       close(27)
       ! vsh
-      open(unit=27,file=prname(1:len_trim(prname))//'vsh.bin',status='unknown',form='unformatted',action='write')
+      open(unit=27,file=prname(1:len_trim(prname))//'vsh.bin', &
+            status='unknown',form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error opening vsh.bin file')
+
       write(27) sqrt( muhstore/rhostore )*scaleval1
       close(27)
       ! rho
-      open(unit=27,file=prname(1:len_trim(prname))//'rho.bin',status='unknown',form='unformatted',action='write')
+      open(unit=27,file=prname(1:len_trim(prname))//'rho.bin', &
+            status='unknown',form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
+
       write(27) rhostore*scaleval2
       close(27)
       ! eta
-      open(unit=27,file=prname(1:len_trim(prname))//'eta.bin',status='unknown',form='unformatted',action='write')
+      open(unit=27,file=prname(1:len_trim(prname))//'eta.bin', &
+            status='unknown',form='unformatted',action='write',iostat=ier)
+      if( ier /= 0 ) call exit_mpi(myrank,'error opening eta.bin file')
+
       write(27) eta_anisostore
       close(27)
     endif
-
-  endif
+  endif ! SAVE_MESH_FILES
 
   end subroutine save_arrays_solver
 

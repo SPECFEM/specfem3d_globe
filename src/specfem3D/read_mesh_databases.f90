@@ -136,6 +136,10 @@
     READ_TISO = .true.
   endif
 
+  ! sets number of top elements for surface movies & noise tomography
+  NSPEC_TOP = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+
+  ! reads databases file
   call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
             rho_vp_crust_mantle,rho_vs_crust_mantle, &
             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -601,7 +605,7 @@
 
   ! local parameters
   integer :: ier
-  character(len=150) :: filename
+  !character(len=150) :: filename
 
   ! read 2-D addressing for summation between slices with MPI
 
@@ -746,8 +750,9 @@
     ! updates flags for elements on slice boundaries
     call fix_non_blocking_central_cube(is_on_a_slice_edge_inner_core, &
          ibool_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
-         idoubling_inner_core,npoin2D_cube_from_slices,ibool_central_cube, &
-         NSPEC2D_BOTTOM(IREGION_INNER_CORE),ichunk)
+         idoubling_inner_core,npoin2D_cube_from_slices, &
+         ibool_central_cube,NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
+         ichunk,NPROC_XI_VAL)
   endif
 
   ! debug: saves element flags
@@ -763,13 +768,12 @@
   !                          xstore_outer_core,ystore_outer_core,zstore_outer_core, &
   !                          ibool_outer_core, &
   !                          is_on_a_slice_edge_outer_core,filename)
-!daniel
   ! inner core
-  write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_inner_core_proc',myrank
-  call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                            xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                            ibool_inner_core, &
-                            is_on_a_slice_edge_inner_core,filename)
+  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_inner_core_proc',myrank
+  !call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+  !                          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+  !                          ibool_inner_core, &
+  !                          is_on_a_slice_edge_inner_core,filename)
 
   end subroutine read_mesh_databases_MPIbuffers
 
@@ -792,7 +796,6 @@
 
   ! local parameters
   integer :: ier,ndim_assemble
-  character(len=150) :: filename
 
   ! temporary buffers for send and receive between faces of the slices and the chunks
   real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
@@ -805,9 +808,10 @@
   integer, dimension(:,:),allocatable :: ibool_neighbours
   integer :: max_nibool
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag_cc
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,j,k,ispec,iglob
+  !daniel: debug
+  !character(len=150) :: filename
 
   ! estimates initial maximum ibool array
   max_nibool = npoin2D_max_all_CM_IC * NUMFACES_SHARED &
@@ -1049,13 +1053,6 @@
     ! suppress fictitious elements in central cube
     if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
-    ! suppress central cube, will be handled afterwards
-    if( INCLUDE_CENTRAL_CUBE ) then
-      if(idoubling_inner_core(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
-        idoubling_inner_core(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
-        idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) cycle
-    endif
-
     ! sets flags
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -1082,23 +1079,56 @@
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)
 
+  ! debug: saves array
+  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_A_proc',myrank
+  !call write_VTK_glob_points(NGLOB_INNER_CORE, &
+  !                      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+  !                      test_flag,filename)
+  ! debug: idoubling inner core
+  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
+  !call write_VTK_data_elem_i(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+  !                          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+  !                          ibool_inner_core, &
+  !                          idoubling_inner_core,filename)
+  !call sync_all()
+
+  ! including central cube
+  if(INCLUDE_CENTRAL_CUBE) then
+
+    if( myrank == 0 ) write(IMAIN,*) 'inner core with central cube mpi:'
+
+    ! test_flag is a scalar, not a vector
+    ndim_assemble = 1
+
+    ! use central cube buffers to assemble the inner core mass matrix with the central cube
+    call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
+                 npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
+                 buffer_slices, buffer_slices2, ibool_central_cube, &
+                 receiver_cube_from_slices, ibool_inner_core, &
+                 idoubling_inner_core, NSPEC_INNER_CORE, &
+                 ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
+                 NGLOB_INNER_CORE, &
+                 test_flag,ndim_assemble, &
+                 iproc_eta,addressing,NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL)
+  endif
+
   ! removes own myrank id (+1)
-  test_flag(:) = test_flag(:) - ( myrank + 1.0)
-  where( test_flag(:) < 0.0 ) test_flag(:) = 0.0
+  test_flag = test_flag - ( myrank + 1.0)
+  where( test_flag < 0.0 ) test_flag = 0.0
 
   ! debug: saves array
-  write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_A_proc',myrank
-  call write_VTK_glob_points(NGLOB_INNER_CORE, &
-                        xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                        test_flag,filename)
+  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_B_proc',myrank
+  !call write_VTK_glob_points(NGLOB_INNER_CORE, &
+  !                    xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+  !                    test_flag,filename)
+  !call sync_all()
 
   ! in sequential order, for testing purpose
   do i=0,NPROCTOT_VAL - 1
     if( myrank == i ) then
-
-    ! gets new interfaces for inner_core without central cube yet
-    ! determines neighbor rank for shared faces
-    call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+      ! gets new interfaces for inner_core without central cube yet
+      ! determines neighbor rank for shared faces
+      call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
                             test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
                             num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
                             max_nibool,MAX_NEIGHBOURS, &
@@ -1110,110 +1140,6 @@
     call sync_all()
   enddo
 
-  ! intermediate check
-  call rmd_test_MPI_neighbours(num_interfaces_inner_core, &
-                              my_neighbours(1:num_interfaces_inner_core), &
-                              nibool_neighbours(1:num_interfaces_inner_core))
-
-
-  ! including central cube
-  if(INCLUDE_CENTRAL_CUBE) then
-    if( myrank == 0 ) write(IMAIN,*) 'inner core with central cube mpi:'
-
-    ! test_flag is a scalar, not a vector
-    ndim_assemble = 1
-
-    allocate(test_flag_cc(NGLOB_INNER_CORE), &
-            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag_cc inner core')
-
-    ! re-sets flag to rank id (+1 to avoid problems with zero rank)
-    test_flag_cc = 0.0
-    do ispec=1,NSPEC_INNER_CORE
-      ! suppress fictitious elements in central cube
-      if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-
-      ! only takes central cube
-      if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-
-      ! sets flags
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-            iglob = ibool_inner_core(i,j,k,ispec)
-            test_flag_cc(iglob) = myrank + 1.0
-          enddo
-        enddo
-      enddo
-    enddo
-
-    ! use central cube buffers to assemble the inner core mass matrix with the central cube
-    call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-                 npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
-                 buffer_slices, buffer_slices2, ibool_central_cube, &
-                 receiver_cube_from_slices, ibool_inner_core, &
-                 idoubling_inner_core, NSPEC_INNER_CORE, &
-                 ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-                 NGLOB_INNER_CORE, &
-                 test_flag_cc,ndim_assemble)
-
-
-    ! removes own myrank id (+1)
-    test_flag_cc = test_flag_cc - ( myrank + 1.0)
-    where( test_flag_cc < 0.0 ) test_flag_cc = 0.0
-
-    ! debug: saves array
-    write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_B_proc',myrank
-    call write_VTK_glob_points(NGLOB_INNER_CORE, &
-                        xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                        test_flag_cc,filename)
-
-    ! in sequential order, for testing purpose
-    do i=0,NPROCTOT_VAL - 1
-      if( myrank == i ) then
-        ! adds additional inner core points
-        call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                            test_flag_cc,my_neighbours,nibool_neighbours,ibool_neighbours, &
-                            num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
-                            max_nibool,MAX_NEIGHBOURS, &
-                            ibool_inner_core,&
-                            is_on_a_slice_edge_inner_core, &
-                            IREGION_INNER_CORE,.true.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE)
-      endif
-      call sync_all()
-    enddo
-
-!    ! adds both together
-!    test_flag(:) = test_flag(:) + test_flag_cc(:)
-!
-!    ! debug: saves array
-!    write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_test_flag_inner_core_C_proc',myrank
-!    call write_VTK_glob_points(NGLOB_INNER_CORE, &
-!                              xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-!                              test_flag,filename)
-
-    deallocate(test_flag_cc)
-
-  endif
-
-!  ! in sequential order, for testing purpose
-!  do i=0,NPROCTOT_VAL - 1
-!    if( myrank == i ) then
-!      ! gets new interfaces for inner_core without central cube yet
-!      ! determines neighbor rank for shared faces
-!      call rmd_get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-!                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
-!                            num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
-!                            max_nibool,MAX_NEIGHBOURS, &
-!                            ibool_inner_core,&
-!                            is_on_a_slice_edge_inner_core, &
-!                            IREGION_INNER_CORE,.false.,idoubling_inner_core,INCLUDE_CENTRAL_CUBE)
-!
-!    endif
-!    call sync_all()
-!  enddo
 
   deallocate(test_flag)
   call sync_all()
@@ -1245,19 +1171,16 @@
     allocate(ibool_interfaces_inner_core(0,0),stat=ier)
   endif
 
-  ! debug: saves 1. MPI interface
-  !if( myrank == 4 .or. myrank == 13 ) then
-    do i=1,num_interfaces_inner_core
-      write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_inner_core_proc',myrank, &
-                      '_',my_neighbours_inner_core(i)
-      call write_VTK_data_points(NGLOB_INNER_CORE, &
-                        xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                        ibool_interfaces_inner_core(1:nibool_interfaces_inner_core(i),i), &
-                        nibool_interfaces_inner_core(i),filename)
-      !print*,'saved: ',trim(filename)//'.vtk'
-    enddo
-  !endif
-  call sync_all()
+  ! debug: saves MPI interfaces
+  !do i=1,num_interfaces_inner_core
+  !  write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_inner_core_proc',myrank, &
+  !                  '_',my_neighbours_inner_core(i)
+  !  call write_VTK_data_points(NGLOB_INNER_CORE, &
+  !                    xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+  !                    ibool_interfaces_inner_core(1:nibool_interfaces_inner_core(i),i), &
+  !                    nibool_interfaces_inner_core(i),filename)
+  !enddo
+  !call sync_all()
 
   ! checks addressing
   call rmd_test_MPI_neighbours(num_interfaces_inner_core,my_neighbours_inner_core,nibool_interfaces_inner_core)
@@ -1882,8 +1805,9 @@
   ! checks if flag was set correctly
   if( work_test_flag(iglob) <= 0 ) then
     ! we might have missed an interface point on an edge, just re-set to missing value
-    print*,'warning flag:',myrank,'rank=',rank,'interface=',icurrent
-    print*,'  flag=',work_test_flag(iglob),'missed iglob=',iglob
+    print*,'warning ',myrank,' flag: missed rank=',rank
+    print*,'  flag=',work_test_flag(iglob),'missed iglob=',iglob,'interface=',icurrent
+    print*
   endif
   ! we might have missed an interface point on an edge, just re-set to missing value
   if( is_face_edge ) then
@@ -1986,18 +1910,24 @@
 
   ! checks if addressing is okay
   if( myrank == 0 ) then
+    ! for each process
     do iproc=0,NPROCTOT_VAL-1
+      ! loops over all neighbors
       do i=1,dummy_i(iproc)
+        ! gets neighbour rank and number of points on interface with it
         ineighbour = test_interfaces(i,iproc)
+        ipoints = test_interfaces_nibool(i,iproc)
+
+        ! checks values
         if( ineighbour < 0 .or. ineighbour > NPROCTOT_VAL-1 ) then
           print*,'error neighbour:',iproc,ineighbour
           call exit_mpi(myrank,'error ineighbour')
         endif
-        ipoints = test_interfaces_nibool(i,iproc)
         if( ipoints <= 0 ) then
           print*,'error neighbour points:',iproc,ipoints
           call exit_mpi(myrank,'error ineighbour points')
         endif
+
         ! looks up corresponding entry in neighbour array
         is_okay = .false.
         do j=1,dummy_i(ineighbour)
@@ -2006,19 +1936,21 @@
             if( test_interfaces_nibool(j,ineighbour) == ipoints ) then
               is_okay = .true.
             else
-              print*,'error neighbour points:',iproc,ipoints,'ineighbour found points: ', &
-                ineighbour,test_interfaces_nibool(j,ineighbour)
+              print*,'error ',iproc,'neighbour ',ineighbour,' points =',ipoints
+              print*,'  ineighbour has points = ',test_interfaces_nibool(j,ineighbour)
+              print*
               call exit_mpi(myrank,'error ineighbour points differ')
             endif
             exit
           endif
         enddo
         if( .not. is_okay ) then
-          print*,'error neighbour:',iproc,'ineighbour not found: ',ineighbour
+          print*,'error ',iproc,' neighbour not found: ',ineighbour
           print*,'iproc ',iproc,' interfaces:'
           print*,test_interfaces(1:dummy_i(iproc),iproc)
           print*,'ineighbour ',ineighbour,' interfaces:'
           print*,test_interfaces(1:dummy_i(ineighbour),ineighbour)
+          print*
           call exit_mpi(myrank,'error ineighbour not found')
         endif
       enddo
@@ -2317,7 +2249,7 @@
   ! local parameters
   real :: percentage_edge
   integer :: ier,ispec,iinner,iouter
-  character(len=150) :: filename
+  !character(len=150) :: filename
 
   ! stores inner / outer elements
   !
@@ -2433,11 +2365,11 @@
   !                          ibool_outer_core, &
   !                          is_on_a_slice_edge_outer_core,filename)
   ! inner core
-  write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_inner_core_proc',myrank
-  call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                            xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                            ibool_inner_core, &
-                            is_on_a_slice_edge_inner_core,filename)
+  !write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_inner_core_proc',myrank
+  !call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+  !                          xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+  !                          ibool_inner_core, &
+  !                          is_on_a_slice_edge_inner_core,filename)
 
   end subroutine read_mesh_databases_InnerOuter
 
@@ -3106,4 +3038,74 @@
 
 
   end subroutine write_VTK_data_elem_l
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! routine for saving vtk file holding integer value on each spectral element
+
+  subroutine write_VTK_data_elem_i(nspec,nglob, &
+                        xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
+                        elem_flag,prname_file)
+
+
+  implicit none
+
+  include "constants.h"
+
+  integer :: nspec,nglob
+
+! global coordinates
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
+
+! element flag array
+  integer, dimension(nspec) :: elem_flag
+  integer :: ispec,i
+
+! file name
+  character(len=150) prname_file
+
+! write source and receiver VTK files for Paraview
+  !debug
+  !write(IMAIN,*) '  vtk file: '
+  !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
+
+  open(IOVTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown')
+  write(IOVTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOVTK,'(a)') 'material model VTK file'
+  write(IOVTK,'(a)') 'ASCII'
+  write(IOVTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+  write(IOVTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
+  do i=1,nglob
+    write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+  enddo
+  write(IOVTK,*) ""
+
+  ! note: indices for vtk start at 0
+  write(IOVTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
+  do ispec=1,nspec
+    write(IOVTK,'(9i12)') 8,ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+          ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
+  enddo
+  write(IOVTK,*) ""
+
+  ! type: hexahedrons
+  write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec
+  write(IOVTK,*) (12,ispec=1,nspec)
+  write(IOVTK,*) ""
+
+  write(IOVTK,'(a,i12)') "CELL_DATA ",nspec
+  write(IOVTK,'(a)') "SCALARS elem_val integer"
+  write(IOVTK,'(a)') "LOOKUP_TABLE default"
+  do ispec = 1,nspec
+    write(IOVTK,*) elem_flag(ispec)
+  enddo
+  write(IOVTK,*) ""
+  close(IOVTK)
+
+
+  end subroutine write_VTK_data_elem_i
 
