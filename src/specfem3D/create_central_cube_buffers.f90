@@ -89,17 +89,27 @@
 ! MPI status of messages to be received
   integer msg_status(MPI_STATUS_SIZE)
 
+  integer :: nproc_xi_half_floor,nproc_xi_half_ceil
+
+  if( mod(NPROC_XI,2) /= 0 ) then
+    nproc_xi_half_floor = floor(NPROC_XI/2.d0)
+    nproc_xi_half_ceil = ceiling(NPROC_XI/2.d0)
+  else
+    nproc_xi_half_floor = NPROC_XI/2
+    nproc_xi_half_ceil = NPROC_XI/2
+  endif
+
 !--- processor to send information to in cube from slices
 
 ! four vertical sides first
   if(ichunk == CHUNK_AC) then
-    if (iproc_xi < floor(NPROC_XI/2.d0)) then
+    if (iproc_xi < nproc_xi_half_floor) then
       receiver_cube_from_slices = addressing(CHUNK_AB_ANTIPODE,NPROC_XI-1,iproc_eta)
     else
       receiver_cube_from_slices = addressing(CHUNK_AB,0,iproc_eta)
     endif
   else if(ichunk == CHUNK_BC) then
-    if (iproc_xi < floor(NPROC_XI/2.d0)) then
+    if (iproc_xi < nproc_xi_half_floor) then
       receiver_cube_from_slices = addressing(CHUNK_AB_ANTIPODE,NPROC_XI-1-iproc_eta,NPROC_ETA-1)
     else
       receiver_cube_from_slices = addressing(CHUNK_AB,iproc_eta,NPROC_ETA-1)
@@ -111,7 +121,7 @@
       receiver_cube_from_slices = addressing(CHUNK_AB_ANTIPODE,0,iproc_eta)
     endif
   else if(ichunk == CHUNK_BC_ANTIPODE) then
-    if (iproc_xi < floor(NPROC_XI/2.d0)) then
+    if (iproc_xi < nproc_xi_half_floor) then
       receiver_cube_from_slices = addressing(CHUNK_AB_ANTIPODE,iproc_eta,0)
     else
       receiver_cube_from_slices = addressing(CHUNK_AB,NPROC_XI-1-iproc_eta,0)
@@ -134,7 +144,7 @@
 
 ! define sender for xi = xi_min edge
     if(iproc_xi == 0) then
-      do iproc_xi_loop = floor(NPROC_XI/2.d0),NPROC_XI-1
+      do iproc_xi_loop = nproc_xi_half_floor,NPROC_XI-1
         imsg = imsg + 1
         sender_from_slices_to_cube(imsg) = addressing(CHUNK_AC,iproc_xi_loop,iproc_eta)
       enddo
@@ -150,7 +160,7 @@
 
 ! define sender for eta = eta_min edge
     if(iproc_eta == 0) then
-      do iproc_xi_loop = floor(NPROC_XI/2.d0),NPROC_XI-1
+      do iproc_xi_loop = nproc_xi_half_floor,NPROC_XI-1
         imsg = imsg + 1
         sender_from_slices_to_cube(imsg) = addressing(CHUNK_BC_ANTIPODE,iproc_xi_loop,NPROC_ETA-1-iproc_xi)
       enddo
@@ -158,7 +168,7 @@
 
 ! define sender for eta = eta_max edge
     if(iproc_eta == NPROC_ETA-1) then
-      do iproc_xi_loop = floor(NPROC_XI/2.d0),NPROC_XI-1
+      do iproc_xi_loop = nproc_xi_half_floor,NPROC_XI-1
         imsg = imsg + 1
         sender_from_slices_to_cube(imsg) = addressing(CHUNK_BC,iproc_xi_loop,iproc_xi)
       enddo
@@ -170,7 +180,10 @@
     sender_from_slices_to_cube(imsg) = addressing(CHUNK_AB_ANTIPODE,NPROC_XI-1-iproc_xi,iproc_eta)
 
 ! check that total number of faces found is correct
-   if(imsg /= nb_msgs_theor_in_cube) call exit_MPI(myrank,'wrong number of faces found for central cube')
+    if(imsg /= nb_msgs_theor_in_cube) then
+      print*,'error ',myrank,'nb_msgs_theor_in_cube:',nb_msgs_theor_in_cube,imsg
+      call exit_MPI(myrank,'wrong number of faces found for central cube')
+    endif
 
   else if(ichunk == CHUNK_AB_ANTIPODE) then
 
@@ -179,7 +192,7 @@
 
 ! define sender for xi = xi_min edge
     if(iproc_xi == 0) then
-      do iproc_xi_loop = ceiling(NPROC_XI/2.d0),NPROC_XI-1
+      do iproc_xi_loop = nproc_xi_half_ceil,NPROC_XI-1
         imsg = imsg + 1
         sender_from_slices_to_cube(imsg) = addressing(CHUNK_AC_ANTIPODE,iproc_xi_loop,iproc_eta)
       enddo
@@ -209,13 +222,44 @@
       enddo
     endif
 
+    ! daniel: in case NPROC_XI == 1, the other chunks exchange all bottom points with
+    ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
+    if(NPROC_XI==1) then
+      ! define sender for xi = xi_min edge
+      if(iproc_xi == 0) then
+        imsg = imsg + 1
+        sender_from_slices_to_cube(imsg) = addressing(CHUNK_AC_ANTIPODE,0,iproc_eta)
+      endif
+
+      ! define sender for xi = xi_max edge
+      if(iproc_xi == NPROC_XI-1) then
+        imsg = imsg + 1
+        sender_from_slices_to_cube(imsg) = addressing(CHUNK_AC,0,iproc_eta)
+      endif
+
+      ! define sender for eta = eta_min edge
+      if(iproc_eta == 0) then
+        imsg = imsg + 1
+        sender_from_slices_to_cube(imsg) = addressing(CHUNK_BC_ANTIPODE,0,iproc_xi)
+      endif
+
+      ! define sender for eta = eta_max edge
+      if(iproc_eta == NPROC_ETA-1) then
+        imsg = imsg + 1
+        sender_from_slices_to_cube(imsg) = addressing(CHUNK_BC,0,NPROC_ETA-1-iproc_xi)
+      endif
+    endif
+
 ! define sender for bottom edge
 ! bottom of cube, direct correspondence but with inverted xi axis
     imsg = imsg + 1
     sender_from_slices_to_cube(imsg) = addressing(CHUNK_AB,NPROC_XI-1-iproc_xi,iproc_eta)
 
 ! check that total number of faces found is correct
-   if(imsg /= nb_msgs_theor_in_cube) call exit_MPI(myrank,'wrong number of faces found for central cube')
+    if(imsg /= nb_msgs_theor_in_cube) then
+      print*,'error ',myrank,'nb_msgs_theor_in_cube:',nb_msgs_theor_in_cube,imsg
+      call exit_MPI(myrank,'wrong number of faces found for central cube')
+    endif
 
   else
 
@@ -227,31 +271,30 @@
 
 ! on chunk AB & AB ANTIPODE, receive all (except bottom) the messages from slices
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-
     do imsg = 1,nb_msgs_theor_in_cube-1
 
-! receive buffers from slices
+    ! receive buffers from slices
     sender = sender_from_slices_to_cube(imsg)
     call MPI_RECV(buffer_slices, &
               NDIM*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
               itag,MPI_COMM_WORLD,msg_status,ier)
 
-! copy buffer in 2D array for each slice
+    ! copy buffer in 2D array for each slice
     buffer_all_cube_from_slices(imsg,:,:) = buffer_slices(:,:)
 
     enddo
   endif
 
-! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
+  ! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE ) then
 
-! for bottom elements in contact with central cube from the slices side
+    ! for bottom elements in contact with central cube from the slices side
     ipoin = 0
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
 
       ispec = ibelm_bottom_inner_core(ispec2D)
 
-! only for DOFs exactly on surface of central cube (bottom of these elements)
+      ! only for DOFs exactly on surface of central cube (bottom of these elements)
       k = 1
       do j = 1,NGLLY
         do i = 1,NGLLX
@@ -264,15 +307,24 @@
       enddo
     enddo
 
-! send buffer to central cube
+    ! send buffer to central cube
     receiver = receiver_cube_from_slices
     call MPI_SEND(buffer_slices,NDIM*npoin2D_cube_from_slices, &
               MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
 
- endif  ! end sending info to central cube
+    ! daniel: in case NPROC_XI == 1, the other chunks exchange all bottom points with
+    ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
+    if(NPROC_XI==1) then
+      call MPI_SEND(buffer_slices,NDIM*npoin2D_cube_from_slices, &
+                   MPI_DOUBLE_PRECISION, &
+                   addressing(CHUNK_AB_ANTIPODE,0,iproc_eta), &
+                   itag,MPI_COMM_WORLD,ier)
+    endif
+
+  endif  ! end sending info to central cube
 
 
-! exchange of their bottom faces between chunks AB and AB_ANTIPODE
+  ! exchange of their bottom faces between chunks AB and AB_ANTIPODE
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
     ipoin = 0
     do ispec = NSPEC_INNER_CORE, 1, -1
@@ -289,7 +341,10 @@
         enddo
       endif
     enddo
-    if (ipoin /= npoin2D_cube_from_slices) call exit_MPI(myrank,'wrong number of points found for bottom CC AB or !AB')
+    if (ipoin /= npoin2D_cube_from_slices) then
+      print*,'error',myrank,'bottom points:',npoin2D_cube_from_slices,ipoin
+      call exit_MPI(myrank,'wrong number of points found for bottom CC AB or !AB')
+    endif
 
     sender = sender_from_slices_to_cube(nb_msgs_theor_in_cube)
 
@@ -301,172 +356,193 @@
 
   endif
 
-!--- now we need to find the points received and create indirect addressing
+  !--- now we need to find the points received and create indirect addressing
+  ibool_central_cube(:,:) = -1
 
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
    do imsg = 1,nb_msgs_theor_in_cube
 
-   do ipoin = 1,npoin2D_cube_from_slices
+    do ipoin = 1,npoin2D_cube_from_slices
 
-     x_target = buffer_all_cube_from_slices(imsg,ipoin,1)
-     y_target = buffer_all_cube_from_slices(imsg,ipoin,2)
-     z_target = buffer_all_cube_from_slices(imsg,ipoin,3)
+      x_target = buffer_all_cube_from_slices(imsg,ipoin,1)
+      y_target = buffer_all_cube_from_slices(imsg,ipoin,2)
+      z_target = buffer_all_cube_from_slices(imsg,ipoin,3)
 
-! x = x_min
-  do ispec2D = 1,nspec2D_xmin_inner_core
+      ! x = x_min
+      do ispec2D = 1,nspec2D_xmin_inner_core
+        ispec = ibelm_xmin_inner_core(ispec2D)
+        ! do not loop on elements outside of the central cube
+        if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+          idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+          idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
+        !daniel: debug
+        if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) stop 'error xmin ibelm'
+        i = 1
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+           iglob = ibool_inner_core(i,j,k,ispec)
+           x_current = dble(xstore_inner_core(iglob))
+           y_current = dble(ystore_inner_core(iglob))
+           z_current = dble(zstore_inner_core(iglob))
+           ! look for matching point
+           if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
+             ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
+             goto 100
+           endif
+          enddo
+        enddo
+      enddo
 
-      ispec = ibelm_xmin_inner_core(ispec2D)
+      ! x = x_max
+      do ispec2D = 1,nspec2D_xmax_inner_core
+        ispec = ibelm_xmax_inner_core(ispec2D)
+        ! do not loop on elements outside of the central cube
+        if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+            idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+            idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
+        !daniel: debug
+        if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) stop 'error xmax ibelm'
+        i = NGLLX
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            iglob = ibool_inner_core(i,j,k,ispec)
+            x_current = dble(xstore_inner_core(iglob))
+            y_current = dble(ystore_inner_core(iglob))
+            z_current = dble(zstore_inner_core(iglob))
+            ! look for matching point
+            if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
+              ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
+              goto 100
+            endif
+          enddo
+        enddo
+      enddo
 
-! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
+      ! y = y_min
+      do ispec2D = 1,nspec2D_ymin_inner_core
+        ispec = ibelm_ymin_inner_core(ispec2D)
+        ! do not loop on elements outside of the central cube
+        if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+            idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+            idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
+        !daniel: debug
+        if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) stop 'error ymin ibelm'
+        j = 1
+        do k = 1,NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool_inner_core(i,j,k,ispec)
+            x_current = dble(xstore_inner_core(iglob))
+            y_current = dble(ystore_inner_core(iglob))
+            z_current = dble(zstore_inner_core(iglob))
+            ! look for matching point
+            if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
+              ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
+              goto 100
+            endif
+          enddo
+        enddo
+      enddo
 
-     i = 1
-     do k = 1,NGLLZ
-       do j = 1,NGLLY
+      ! y = y_max
+      do ispec2D = 1,nspec2D_ymax_inner_core
+        ispec = ibelm_ymax_inner_core(ispec2D)
+        ! do not loop on elements outside of the central cube
+        if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
+            idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
+            idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
+        !daniel: debug
+        if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) stop 'error ymax ibelm'
+        j = NGLLY
+        do k = 1,NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool_inner_core(i,j,k,ispec)
+            x_current = dble(xstore_inner_core(iglob))
+            y_current = dble(ystore_inner_core(iglob))
+            z_current = dble(zstore_inner_core(iglob))
+            ! look for matching point
+            if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
+              ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
+              goto 100
+            endif
+          enddo
+        enddo
+      enddo
 
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
+      ! bottom of cube
+      do ispec = 1,NSPEC_INNER_CORE
+        ! loop on elements at the bottom of the cube only
+        if(idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE) cycle
+        k = 1
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob = ibool_inner_core(i,j,k,ispec)
+            x_current = dble(xstore_inner_core(iglob))
+            y_current = dble(ystore_inner_core(iglob))
+            z_current = dble(zstore_inner_core(iglob))
+            ! look for matching point
+            if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
+              ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
+              goto 100
+            endif
+          enddo
+        enddo
+      enddo
 
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
+      ! point not found so far
+      if(NPROC_XI==1) then
+        ! ignores point
+        ibool_central_cube(imsg,ipoin) = 0
+      else
+        ! check that a matching point is found in all cases
+        call exit_MPI(myrank,'point never found in central cube')
+      endif
 
-       enddo
-     enddo
+ 100  continue
 
-   enddo
+    enddo ! ipoin
 
-! x = x_max
-  do ispec2D = 1,nspec2D_xmax_inner_core
+    ! daniel: check ibool array
+    if(NPROC_XI==1) then
+      if( minval(ibool_central_cube(imsg,:)) < 0 ) call exit_mpi(myrank,'error ibool_central_cube point not found')
 
-      ispec = ibelm_xmax_inner_core(ispec2D)
+      ! removes points on bottom surface in antipode chunk for other chunks than its AB sharing chunk
+      ! (to avoid adding the same point twice from other chunks)
+      if( ichunk == CHUNK_AB_ANTIPODE .and. imsg < nb_msgs_theor_in_cube ) then
+        do ipoin = 1,npoin2D_cube_from_slices
+          x_target = buffer_all_cube_from_slices(imsg,ipoin,1)
+          y_target = buffer_all_cube_from_slices(imsg,ipoin,2)
+          z_target = buffer_all_cube_from_slices(imsg,ipoin,3)
 
-! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
+          ! bottom of cube
+          do ispec = 1,NSPEC_INNER_CORE
+            ! loop on elements at the bottom of the cube only
+            if(idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE) cycle
+            k = 1
+            do j = 1,NGLLY
+              do i = 1,NGLLX
+                iglob = ibool_inner_core(i,j,k,ispec)
+                x_current = dble(xstore_inner_core(iglob))
+                y_current = dble(ystore_inner_core(iglob))
+                z_current = dble(zstore_inner_core(iglob))
+                ! look for matching point
+                if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
+                  ibool_central_cube(imsg,ipoin) = 0
+                  goto 200
+                endif
+              enddo
+            enddo
+          enddo
 
-     i = NGLLX
-     do k = 1,NGLLZ
-       do j = 1,NGLLY
+ 200      continue
 
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
+        enddo ! ipoin
+      endif
 
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
+    endif ! NPROC_XI==1
 
-       enddo
-     enddo
-
-   enddo
-
-! y = y_min
-  do ispec2D = 1,nspec2D_ymin_inner_core
-
-      ispec = ibelm_ymin_inner_core(ispec2D)
-
-! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-
-     j = 1
-     do k = 1,NGLLZ
-       do i = 1,NGLLX
-
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
-
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
-
-       enddo
-     enddo
-
-   enddo
-
-! y = y_max
-  do ispec2D = 1,nspec2D_ymax_inner_core
-
-      ispec = ibelm_ymax_inner_core(ispec2D)
-
-! do not loop on elements outside of the central cube
-     if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
-        idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-
-     j = NGLLY
-     do k = 1,NGLLZ
-       do i = 1,NGLLX
-
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
-
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
-
-       enddo
-     enddo
-
-   enddo
-
-! bottom of cube
-  do ispec = 1,NSPEC_INNER_CORE
-
-! loop on elements at the bottom of the cube only
-     if(idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE) cycle
-
-     k = 1
-     do j = 1,NGLLY
-       do i = 1,NGLLX
-
-         iglob = ibool_inner_core(i,j,k,ispec)
-         x_current = dble(xstore_inner_core(iglob))
-         y_current = dble(ystore_inner_core(iglob))
-         z_current = dble(zstore_inner_core(iglob))
-
-! look for matching point
-         if(dsqrt((x_current-x_target)**2 + (y_current-y_target)**2 + (z_current-z_target)**2) < SMALLVALTOL) then
-           ibool_central_cube(imsg,ipoin) = ibool_inner_core(i,j,k,ispec)
-           goto 100
-         endif
-
-       enddo
-     enddo
-
-   enddo
-
-! check that a matching point is found in all cases
-  call exit_MPI(myrank,'point never found in central cube')
-
- 100 continue
-
-   enddo
-   enddo
-   endif
+   enddo ! imsg
+  endif
 
   end subroutine create_central_cube_buffers
 
@@ -488,53 +564,64 @@
 
   integer, intent(out) :: nb_msgs_theor_in_cube,npoin2D_cube_from_slices
 
+!daniel: debug
+  integer :: nproc_xi_half_floor,nproc_xi_half_ceil
+
+  if( mod(NPROC_XI,2) /= 0 ) then
+    nproc_xi_half_floor = floor(NPROC_XI/2.d0)
+    nproc_xi_half_ceil = ceiling(NPROC_XI/2.d0)
+  else
+    nproc_xi_half_floor = NPROC_XI/2
+    nproc_xi_half_ceil = NPROC_XI/2
+  endif
+
 ! only for slices in central cube
   if(ichunk == CHUNK_AB) then
     if(NPROC_XI == 1) then
-! five sides if only one processor in cube
+      ! five sides if only one processor in cube
       nb_msgs_theor_in_cube = 5
     else
-! case of a corner
+      ! case of a corner
       if((iproc_xi == 0 .or. iproc_xi == NPROC_XI-1).and. &
          (iproc_eta == 0 .or. iproc_eta == NPROC_ETA-1)) then
-! slices on both "vertical" faces plus one slice at the bottom
-        nb_msgs_theor_in_cube = 2*(ceiling(NPROC_XI/2.d0)) + 1
-! case of an edge
+        ! slices on both "vertical" faces plus one slice at the bottom
+        nb_msgs_theor_in_cube = 2*(nproc_xi_half_ceil) + 1
+      ! case of an edge
       else if(iproc_xi == 0 .or. iproc_xi == NPROC_XI-1 .or. &
               iproc_eta == 0 .or. iproc_eta == NPROC_ETA-1) then
-! slices on the "vertical" face plus one slice at the bottom
-        nb_msgs_theor_in_cube = ceiling(NPROC_XI/2.d0) + 1
+        ! slices on the "vertical" face plus one slice at the bottom
+        nb_msgs_theor_in_cube = nproc_xi_half_ceil + 1
       else
-! bottom element only
+        ! bottom element only
         nb_msgs_theor_in_cube = 1
       endif
     endif
   else if(ichunk == CHUNK_AB_ANTIPODE) then
     if(NPROC_XI == 1) then
-! five sides if only one processor in cube
+      ! five sides if only one processor in cube
       nb_msgs_theor_in_cube = 5
     else
-! case of a corner
+      ! case of a corner
       if((iproc_xi == 0 .or. iproc_xi == NPROC_XI-1).and. &
          (iproc_eta == 0 .or. iproc_eta == NPROC_ETA-1)) then
-! slices on both "vertical" faces plus one slice at the bottom
-        nb_msgs_theor_in_cube = 2*(floor(NPROC_XI/2.d0)) + 1
-! case of an edge
+        ! slices on both "vertical" faces plus one slice at the bottom
+        nb_msgs_theor_in_cube = 2*(nproc_xi_half_floor) + 1
+      ! case of an edge
       else if(iproc_xi == 0 .or. iproc_xi == NPROC_XI-1 .or. &
               iproc_eta == 0 .or. iproc_eta == NPROC_ETA-1) then
-! slices on the "vertical" face plus one slice at the bottom
-        nb_msgs_theor_in_cube = floor(NPROC_XI/2.d0) + 1
+        ! slices on the "vertical" face plus one slice at the bottom
+        nb_msgs_theor_in_cube = nproc_xi_half_floor + 1
       else
-! bottom element only
+        ! bottom element only
         nb_msgs_theor_in_cube = 1
       endif
     endif
   else
-! not in chunk AB
+    ! not in chunk AB
     nb_msgs_theor_in_cube = 0
   endif
 
-! number of points to send or receive (bottom of slices)
+  ! number of points to send or receive (bottom of slices)
   npoin2D_cube_from_slices = NSPEC2D_BOTTOM_INNER_CORE * NGLLX * NGLLY
 
   end subroutine comp_central_cube_buffer_size

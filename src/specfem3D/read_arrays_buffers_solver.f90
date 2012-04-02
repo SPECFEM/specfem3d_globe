@@ -83,7 +83,10 @@
 ! read 2-D addressing for summation between slices along xi with MPI
 
 ! read iboolleft_xi of this slice
-  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_xi.txt',status='old',action='read')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_xi.txt', &
+        status='old',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error opening iboolleft_xi file')
+
   npoin2D_xi(1) = 1
  350  continue
   read(IIN,*) iboolleft_xi(npoin2D_xi(1)),xdummy,ydummy,zdummy
@@ -100,7 +103,10 @@
   close(IIN)
 
 ! read iboolright_xi of this slice
-  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='old',action='read')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_xi.txt', &
+        status='old',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error opening iboolright_xi file')
+
   npoin2D_xi(2) = 1
  360  continue
   read(IIN,*) iboolright_xi(npoin2D_xi(2)),xdummy,ydummy,zdummy
@@ -129,7 +135,10 @@
 ! read 2-D addressing for summation between slices along eta with MPI
 
 ! read iboolleft_eta of this slice
-  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_eta.txt',status='old',action='read')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_eta.txt', &
+        status='old',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error opening iboolleft_eta file')
+
   npoin2D_eta(1) = 1
  370  continue
   read(IIN,*) iboolleft_eta(npoin2D_eta(1)),xdummy,ydummy,zdummy
@@ -146,7 +155,10 @@
   close(IIN)
 
 ! read iboolright_eta of this slice
-  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='old',action='read')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_eta.txt', &
+        status='old',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error opening iboolright_eta file')
+
   npoin2D_eta(2) = 1
  380  continue
   read(IIN,*) iboolright_eta(npoin2D_eta(2)),xdummy,ydummy,zdummy
@@ -181,7 +193,10 @@
   if(myrank == 0) then
 
     ! file with the list of processors for each message for faces
-    open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old',action='read')
+    open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt', &
+          status='old',action='read',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening list_messages_faces file')
+
     do imsg = 1,NUMMSGS_FACES
       read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
       if      (iprocfrom_faces(imsg) < 0 &
@@ -195,7 +210,10 @@
     close(IIN)
 
     ! file with the list of processors for each message for corners
-    open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
+    open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt', &
+          status='old',action='read',iostat=ier)
+    if( ier /= 0 ) call exit_MPI(myrank,'error opening list_messages_corners file')
+
     do imsg = 1,NCORNERSCHUNKS
       read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
                             iproc_worker2_corners(imsg)
@@ -219,32 +237,50 @@
   call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(iproc_worker1_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(iproc_worker2_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error mpi broadcast')
+
 
 !---- read indirect addressing for each message for faces of the chunks
 !---- a given slice can belong to at most two faces
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank == iprocfrom_faces(imsg) .or. myrank == iprocto_faces(imsg)) then
-    icount_faces = icount_faces + 1
-    if(icount_faces>NUMFACES_SHARED) call exit_MPI(myrank,'more than NUMFACES_SHARED faces for this slice')
-    if(icount_faces>2 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) call exit_MPI(myrank,'more than two faces for this slice')
+    if(myrank == iprocfrom_faces(imsg) .or. myrank == iprocto_faces(imsg)) then
+      icount_faces = icount_faces + 1
 
-! read file with 2D buffer for faces
-    if(myrank == iprocfrom_faces(imsg)) then
-      write(filename,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
-    else if(myrank == iprocto_faces(imsg)) then
-      write(filename,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
+      if(icount_faces > NUMFACES_SHARED) then
+        print*,'error ',myrank,' icount_faces: ',icount_faces,'NUMFACES_SHARED:',NUMFACES_SHARED
+        print*,'iregion_code:',iregion_code
+        call exit_MPI(myrank,'more than NUMFACES_SHARED faces for this slice')
+      endif
+      if(icount_faces > 2 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) then
+        print*,'error ',myrank,' icount_faces: ',icount_faces,'NPROC_XI:',NPROC_XI,'NPROC_ETA:',NPROC_ETA
+        print*,'iregion_code:',iregion_code
+        call exit_MPI(myrank,'more than two faces for this slice')
+      endif
+
+      ! read file with 2D buffer for faces
+      if(myrank == iprocfrom_faces(imsg)) then
+        write(filename,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
+      else if(myrank == iprocto_faces(imsg)) then
+        write(filename,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
+      endif
+
+      open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read',iostat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error opening buffer_faces file')
+
+      read(IIN,*) npoin2D_faces(icount_faces)
+      if(npoin2D_faces(icount_faces) > NGLOB2DMAX_XY) then
+        print*,'error ',myrank,' npoin2D_faces: ',npoin2D_faces(icount_faces),icount_faces
+        print*,'iregion_code:',iregion_code
+        call exit_MPI(myrank,'incorrect nb of points in face buffer')
+      endif
+
+      do ipoin2D = 1,npoin2D_faces(icount_faces)
+        read(IIN,*) iboolfaces(ipoin2D,icount_faces),xdummy,ydummy,zdummy
+      enddo
+      close(IIN)
+
     endif
-
-    open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
-    read(IIN,*) npoin2D_faces(icount_faces)
-    if(npoin2D_faces(icount_faces) > NGLOB2DMAX_XY) &
-      call exit_MPI(myrank,'incorrect nb of points in face buffer')
-    do ipoin2D = 1,npoin2D_faces(icount_faces)
-      read(IIN,*) iboolfaces(ipoin2D,icount_faces),xdummy,ydummy,zdummy
-    enddo
-    close(IIN)
-  endif
   enddo
 
 
@@ -256,8 +292,11 @@
          myrank == iproc_worker1_corners(imsg) .or. &
          myrank == iproc_worker2_corners(imsg)) then
       icount_corners = icount_corners + 1
-      if(icount_corners>1 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) &
+      if(icount_corners>1 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) then
+        print*,'error ',myrank,'icount_corners:',icount_corners
+        print*,'iregion_code:',iregion_code
         call exit_MPI(myrank,'more than one corner for this slice')
+      endif
       if(icount_corners>4) call exit_MPI(myrank,'more than four corners for this slice')
 
       ! read file with 1D buffer for corner
@@ -270,7 +309,10 @@
       endif
 
       ! matching codes
-      open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
+      open(unit=IIN,file=prname(1:len_trim(prname))//filename, &
+            status='old',action='read',iostat=ier)
+      if( ier /= 0 ) call exit_MPI(myrank,'error opening buffer_corners_chunks file')
+
       read(IIN,*) npoin1D_corner
       if(npoin1D_corner /= NGLOB1D_RADIAL) &
         call exit_MPI(myrank,'incorrect nb of points in corner buffer')

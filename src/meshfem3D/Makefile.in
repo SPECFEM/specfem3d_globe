@@ -70,27 +70,36 @@ OUTPUT = ../../OUTPUT_FILES
 #######################################
 
 libspecfem_a_OBJECTS_COMMON = \
-	$O/auto_ner.o \
-	$O/broadcast_compute_parameters.o \
-	$O/calendar.o \
-	$O/count_number_of_sources.o \
-	$O/create_name_database.o \
-	$O/force_ftz.o \
-	$O/get_model_parameters.o \
-	$O/get_value_parameters.o \
-	$O/gll_library.o \
-	$O/hex_nodes.o \
-	$O/intgrl.o \
-	$O/lagrange_poly.o \
-	$O/make_ellipticity.o \
-	$O/make_gravity.o \
-	$O/param_reader.o \
-	$O/read_compute_parameters.o \
-	$O/read_parameter_file.o \
-	$O/read_value_parameters.o \
-	$O/reduce.o \
-	$O/rthetaphi_xyz.o \
-	$O/spline_routines.o \
+	$O/auto_ner.shared.o \
+	$O/broadcast_compute_parameters.sharedmpi.o \
+	$O/calendar.shared.o \
+	$O/count_elements.shared.o \
+	$O/count_number_of_sources.shared.o \
+	$O/count_points.shared.o \
+	$O/create_name_database.shared.o \
+	$O/define_all_layers.shared.o \
+	$O/euler_angles.shared.o \
+	$O/force_ftz.cc.o \
+	$O/get_model_parameters.shared.o \
+	$O/get_timestep_and_layers.shared.o \
+	$O/get_value_parameters.shared.o \
+	$O/gll_library.shared.o \
+	$O/hex_nodes.shared.o \
+	$O/intgrl.shared.o \
+	$O/lagrange_poly.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/make_gravity.shared.o \
+	$O/memory_eval.shared.o \
+	$O/model_prem.shared.o \
+	$O/model_topo_bathy.sharedmpi.o \
+	$O/param_reader.cc.o \
+	$O/read_compute_parameters.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/save_header_file.shared.o \
+	$O/spline_routines.shared.o \
 	$(EMPTY_MACRO)
 
 
@@ -103,15 +112,14 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/calc_jacobian.o \
 	$O/compute_coordinates_grid.o \
 	$O/compute_element_properties.o \
+	$O/compute_volumes.o \
 	$O/create_central_cube.o \
-	$O/create_chunk_buffers.o \
+	$O/create_chunk_buffers.mpi.o \
 	$O/create_doubling_elements.o \
 	$O/create_mass_matrices.o \
-	$O/create_regions_mesh.o \
-	$O/get_perm_color.o \
+	$O/create_regions_mesh.mpi.o \
 	$O/create_regular_elements.o \
 	$O/define_superbrick.o \
-	$O/euler_angles.o \
 	$O/get_absorb.o \
 	$O/get_ellipticity.o \
 	$O/get_global.o \
@@ -121,38 +129,36 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/get_MPI_1D_buffers.o \
 	$O/get_MPI_cutplanes_eta.o \
 	$O/get_MPI_cutplanes_xi.o \
+	$O/get_perm_color.o \
 	$O/get_shape2D.o \
 	$O/get_shape3D.o \
+	$O/initialize_layers.o \
 	$O/lgndr.o \
-	$O/memory_eval.o \
-	$O/model_sea99_s.o \
+	$O/model_1dref.o \
 	$O/model_1066a.o \
 	$O/model_ak135.o \
 	$O/model_aniso_inner_core.o \
-	$O/model_aniso_mantle.o \
-	$O/model_atten3D_QRFSI12.o \
-	$O/model_attenuation.o \
-	$O/model_crust.o \
-	$O/model_eucrust.o \
-	$O/model_epcrust.o \
-	$O/model_crustmaps.o \
-	$O/model_gll.o \
-	$O/model_heterogen_mantle.o \
+	$O/model_aniso_mantle.mpi.o \
+	$O/model_atten3D_QRFSI12.mpi.o \
+	$O/model_attenuation.mpi.o \
+	$O/model_crust.mpi.o \
+	$O/model_crustmaps.mpi.o \
+	$O/model_eucrust.mpi.o \
+	$O/model_epcrust.mpi.o \
+	$O/model_gapp2.mpi.o \
+	$O/model_gll.mpi.o \
+	$O/model_heterogen_mantle.mpi.o \
 	$O/model_iasp91.o \
 	$O/model_jp1d.o \
-	$O/model_jp3d.o \
-	$O/model_ppm.o \
-	$O/model_gapp2.o \
-	$O/model_prem.o \
-	$O/model_1dref.o \
-	$O/model_s20rts.o \
-	$O/model_s40rts.o \
-	$O/model_s362ani.o \
+	$O/model_jp3d.mpi.o \
+	$O/model_ppm.mpi.o \
+	$O/model_s20rts.mpi.o \
+	$O/model_s40rts.mpi.o \
+	$O/model_s362ani.mpi.o \
 	$O/model_sea1d.o \
-	$O/model_topo_bathy.o \
+	$O/model_sea99_s.mpi.o \
 	$O/moho_stretching.o \
 	$O/save_arrays_solver.o \
-	$O/save_header_file.o \
 	$O/sort_array_coordinates.o \
 	$O/stretching_function.o \
 	$O/write_AVS_DX_global_chunks_data.o \
@@ -161,6 +167,18 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/write_AVS_DX_surface_data.o \
 	$(EMPTY_MACRO)
 
+MESHER_ARRAY_OBJECTS = \
+	$O/meshfem3D_models.mpi.o \
+	$O/meshfem3D_par.o \
+	$O/compute_area.mpi.o \
+	$O/create_addressing.o \
+	$O/create_meshes.mpi.o \
+	$O/finalize_mesher.mpi.o \
+	$O/initialize_mesher.mpi.o \
+	$O/meshfem3D.mpi.o \
+	$O/setup_counters.o \
+	$O/setup_model.o \
+	$(EMPTY_MACRO)
 
 LIBSPECFEM_MESHER = $O/libspecfem_mesher.a
 
@@ -192,7 +210,7 @@ bak: backup
 ####
 
 # rules for the main programs
-XMESHFEM_OBJECTS = $O/meshfem3D_models.o $O/meshfem3D.o $O/exit_mpi.o $(LIBSPECFEM_MESHER)
+XMESHFEM_OBJECTS = $(MESHER_ARRAY_OBJECTS) $O/exit_mpi.sharedmpi.o $(LIBSPECFEM_MESHER)
 
 xmeshfem3D: $(XMESHFEM_OBJECTS)
 ## use MPI here
@@ -224,288 +242,25 @@ $O/libspecfem_mesher.a: $(libspecfem_a_OBJECTS_MESHER) $(libspecfem_a_OBJECTS_CO
 ##
 ## shared
 ##
-$O/auto_ner.o: ${SETUP}/constants.h ${SHARED}/auto_ner.f90
-	${FCCOMPILE_CHECK} -c -o $O/auto_ner.o ${FCFLAGS_f90} ${SHARED}/auto_ner.f90
+$O/%.shared.o: ${SHARED}/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/broadcast_compute_parameters.o: ${SETUP}/constants.h ${SHARED}/broadcast_compute_parameters.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/broadcast_compute_parameters.o ${FCFLAGS_f90} ${SHARED}/broadcast_compute_parameters.f90
+$O/%.sharedmpi.o: ${SHARED}/%.f90 ${SETUP}/constants.h
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/calendar.o: ${SHARED}/calendar.f90
-	${FCCOMPILE_CHECK} -c -o $O/calendar.o ${FCFLAGS_f90} ${SHARED}/calendar.f90
-
-$O/count_number_of_sources.o: ${SETUP}/constants.h ${SHARED}/count_number_of_sources.f90
-	${FCCOMPILE_CHECK} -c -o $O/count_number_of_sources.o ${FCFLAGS_f90} ${SHARED}/count_number_of_sources.f90
-
-$O/create_name_database.o: ${SETUP}/constants.h ${SHARED}/create_name_database.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_name_database.o ${FCFLAGS_f90} ${SHARED}/create_name_database.f90
-
-$O/create_serial_name_database.o: ${SETUP}/constants.h ${SHARED}/create_serial_name_database.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_serial_name_database.o ${FCFLAGS_f90} ${SHARED}/create_serial_name_database.f90
-
-$O/euler_angles.o: ${SETUP}/constants.h ${SHARED}/euler_angles.f90
-	${FCCOMPILE_CHECK} -c -o $O/euler_angles.o ${FCFLAGS_f90} ${SHARED}/euler_angles.f90
-
-$O/exit_mpi.o: ${SETUP}/constants.h ${SHARED}/exit_mpi.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/exit_mpi.o ${FCFLAGS_f90} ${SHARED}/exit_mpi.f90
-
-$O/get_model_parameters.o: ${SETUP}/constants.h ${SHARED}/get_model_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_model_parameters.o ${FCFLAGS_f90} ${SHARED}/get_model_parameters.f90
-
-$O/get_value_parameters.o: ${SETUP}/constants.h ${SHARED}/get_value_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_value_parameters.o ${FCFLAGS_f90} ${SHARED}/get_value_parameters.f90
-
-$O/gll_library.o: ${SETUP}/constants.h ${SHARED}/gll_library.f90
-	${FCCOMPILE_CHECK} -c -o $O/gll_library.o ${FCFLAGS_f90} ${SHARED}/gll_library.f90
-
-$O/hex_nodes.o: ${SETUP}/constants.h ${SHARED}/hex_nodes.f90
-	${FCCOMPILE_CHECK} -c -o $O/hex_nodes.o ${FCFLAGS_f90} ${SHARED}/hex_nodes.f90
-
-$O/intgrl.o: ${SETUP}/constants.h ${SHARED}/intgrl.f90
-	${FCCOMPILE_CHECK} -c -o $O/intgrl.o ${FCFLAGS_f90} ${SHARED}/intgrl.f90
-
-$O/lagrange_poly.o: ${SETUP}/constants.h ${SHARED}/lagrange_poly.f90
-	${FCCOMPILE_CHECK} -c -o $O/lagrange_poly.o ${FCFLAGS_f90} ${SHARED}/lagrange_poly.f90
-
-$O/make_ellipticity.o: ${SETUP}/constants.h ${SHARED}/make_ellipticity.f90
-	${FCCOMPILE_CHECK} -c -o $O/make_ellipticity.o ${FCFLAGS_f90} ${SHARED}/make_ellipticity.f90
-
-$O/make_gravity.o: ${SETUP}/constants.h ${SHARED}/make_gravity.f90
-	${FCCOMPILE_CHECK} -c -o $O/make_gravity.o ${FCFLAGS_f90} ${SHARED}/make_gravity.f90
-
-$O/memory_eval.o: ${SETUP}/constants.h ${SHARED}/memory_eval.f90
-	${FCCOMPILE_CHECK} -c -o $O/memory_eval.o ${FCFLAGS_f90} ${SHARED}/memory_eval.f90
-
-$O/model_prem.o: ${SETUP}/constants.h ${SHARED}/model_prem.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_prem.o ${FCFLAGS_f90} ${SHARED}/model_prem.f90
-
-$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
-
-$O/param_reader.o: ${SHARED}/param_reader.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
-
-$O/read_compute_parameters.o: ${SETUP}/constants.h ${SHARED}/read_compute_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_compute_parameters.o ${FCFLAGS_f90} ${SHARED}/read_compute_parameters.f90
-
-$O/read_parameter_file.o: ${SETUP}/constants.h ${SHARED}/read_parameter_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_parameter_file.o ${FCFLAGS_f90} ${SHARED}/read_parameter_file.f90
-
-$O/read_value_parameters.o: ${SETUP}/constants.h ${SHARED}/read_value_parameters.f90
-	${FCCOMPILE_CHECK} -c -o $O/read_value_parameters.o ${FCFLAGS_f90} ${SHARED}/read_value_parameters.f90
-
-$O/reduce.o: ${SETUP}/constants.h ${SHARED}/reduce.f90
-	${FCCOMPILE_CHECK} -c -o $O/reduce.o ${FCFLAGS_f90} ${SHARED}/reduce.f90
-
-$O/rthetaphi_xyz.o: ${SETUP}/constants.h ${SHARED}/rthetaphi_xyz.f90
-	${FCCOMPILE_CHECK} -c -o $O/rthetaphi_xyz.o ${FCFLAGS_f90} ${SHARED}/rthetaphi_xyz.f90
-
-$O/save_header_file.o: ${SETUP}/constants.h ${SHARED}/save_header_file.f90
-	${FCCOMPILE_CHECK} -c -o $O/save_header_file.o ${FCFLAGS_f90} ${SHARED}/save_header_file.f90
-
-$O/spline_routines.o: ${SETUP}/constants.h ${SHARED}/spline_routines.f90
-	${FCCOMPILE_CHECK} -c -o $O/spline_routines.o ${FCFLAGS_f90} ${SHARED}/spline_routines.f90
+$O/%.cc.o: ${SHARED}/%.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $< 
 
 
-##
-## shared objects with mpi compilation
-##
-$O/model_topo_bathy.o: ${SETUP}/constants.h ${SHARED}/model_topo_bathy.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_topo_bathy.o ${FCFLAGS_f90} ${SHARED}/model_topo_bathy.f90
+#######################################
 
 ###
 ### meshfem3D objects
 ###
 
-$O/add_missing_nodes.o: ${SETUP}/constants.h $S/add_missing_nodes.f90
-	${FCCOMPILE_CHECK} -c -o $O/add_missing_nodes.o ${FCFLAGS_f90} $S/add_missing_nodes.f90
+$O/%.o: $S/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/add_topography.o: ${SETUP}/constants.h $S/add_topography.f90
-	${FCCOMPILE_CHECK} -c -o $O/add_topography.o ${FCFLAGS_f90} $S/add_topography.f90
-
-$O/add_topography_410_650.o: ${SETUP}/constants.h $S/add_topography_410_650.f90
-	${FCCOMPILE_CHECK} -c -o $O/add_topography_410_650.o ${FCFLAGS_f90} $S/add_topography_410_650.f90
-
-$O/add_topography_cmb.o: ${SETUP}/constants.h $S/add_topography_cmb.f90
-	${FCCOMPILE_CHECK} -c -o $O/add_topography_cmb.o ${FCFLAGS_f90} $S/add_topography_cmb.f90
-
-$O/add_topography_icb.o: ${SETUP}/constants.h $S/add_topography_icb.f90
-	${FCCOMPILE_CHECK} -c -o $O/add_topography_icb.o ${FCFLAGS_f90} $S/add_topography_icb.f90
-
-$O/calc_jacobian.o: ${SETUP}/constants.h $S/calc_jacobian.f90
-	${FCCOMPILE_CHECK} -c -o $O/calc_jacobian.o ${FCFLAGS_f90} $S/calc_jacobian.f90
-
-$O/compute_coordinates_grid.o: ${SETUP}/constants.h $S/compute_coordinates_grid.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_coordinates_grid.o ${FCFLAGS_f90} $S/compute_coordinates_grid.f90
-
-$O/compute_element_properties.o: ${SETUP}/constants.h $S/compute_element_properties.f90
-	${FCCOMPILE_CHECK} -c -o $O/compute_element_properties.o ${FCFLAGS_f90} $S/compute_element_properties.f90
-
-$O/create_central_cube.o: ${SETUP}/constants.h $S/create_central_cube.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_central_cube.o ${FCFLAGS_f90} $S/create_central_cube.f90
-
-$O/create_doubling_elements.o: ${SETUP}/constants.h $S/create_doubling_elements.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_doubling_elements.o ${FCFLAGS_f90} $S/create_doubling_elements.f90
-
-$O/create_mass_matrices.o: ${SETUP}/constants.h $S/create_mass_matrices.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_mass_matrices.o ${FCFLAGS_f90} $S/create_mass_matrices.f90
-
-$O/create_regions_mesh.o: ${SETUP}/constants.h $S/create_regions_mesh.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/create_regions_mesh.o ${FCFLAGS_f90} $S/create_regions_mesh.f90
-
-$O/get_perm_color.o: ${SETUP}/constants.h $S/get_perm_color.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_perm_color.o ${FCFLAGS_f90} $S/get_perm_color.f90
-
-$O/create_regular_elements.o: ${SETUP}/constants.h $S/create_regular_elements.f90
-	${FCCOMPILE_CHECK} -c -o $O/create_regular_elements.o ${FCFLAGS_f90} $S/create_regular_elements.f90
-
-$O/define_superbrick.o: ${SETUP}/constants.h $S/define_superbrick.f90
-	${FCCOMPILE_CHECK} -c -o $O/define_superbrick.o ${FCFLAGS_f90} $S/define_superbrick.f90
-
-$O/get_absorb.o: ${SETUP}/constants.h $S/get_absorb.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_absorb.o ${FCFLAGS_f90} $S/get_absorb.f90
-
-$O/get_ellipticity.o: ${SETUP}/constants.h $S/get_ellipticity.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_ellipticity.o ${FCFLAGS_f90} $S/get_ellipticity.f90
-
-$O/get_global.o: ${SETUP}/constants.h $S/get_global.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_global.o ${FCFLAGS_f90} $S/get_global.f90
-
-$O/get_jacobian_boundaries.o: ${SETUP}/constants.h $S/get_jacobian_boundaries.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_jacobian_boundaries.o ${FCFLAGS_f90} $S/get_jacobian_boundaries.f90
-
-$O/get_jacobian_discontinuities.o: ${SETUP}/constants.h $S/get_jacobian_discontinuities.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_jacobian_discontinuities.o ${FCFLAGS_f90} $S/get_jacobian_discontinuities.f90
-
-$O/get_model.o: ${SETUP}/constants.h $S/get_model.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_model.o ${FCFLAGS_f90} $S/get_model.f90
-
-$O/get_MPI_1D_buffers.o: ${SETUP}/constants.h $S/get_MPI_1D_buffers.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_MPI_1D_buffers.o ${FCFLAGS_f90} $S/get_MPI_1D_buffers.f90
-
-$O/get_MPI_cutplanes_xi.o: ${SETUP}/constants.h $S/get_MPI_cutplanes_xi.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_MPI_cutplanes_xi.o ${FCFLAGS_f90} $S/get_MPI_cutplanes_xi.f90
-
-$O/get_MPI_cutplanes_eta.o: ${SETUP}/constants.h $S/get_MPI_cutplanes_eta.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_MPI_cutplanes_eta.o ${FCFLAGS_f90} $S/get_MPI_cutplanes_eta.f90
-
-$O/get_shape2D.o: ${SETUP}/constants.h $S/get_shape2D.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_shape2D.o ${FCFLAGS_f90} $S/get_shape2D.f90
-
-$O/get_shape3D.o: ${SETUP}/constants.h $S/get_shape3D.f90
-	${FCCOMPILE_CHECK} -c -o $O/get_shape3D.o ${FCFLAGS_f90} $S/get_shape3D.f90
-
-$O/lgndr.o: ${SETUP}/constants.h $S/lgndr.f90
-	${FCCOMPILE_CHECK} -c -o $O/lgndr.o ${FCFLAGS_f90} $S/lgndr.f90
-
-$O/model_iasp91.o: ${SETUP}/constants.h $S/model_iasp91.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_iasp91.o ${FCFLAGS_f90} $S/model_iasp91.f90
-
-$O/model_1066a.o: ${SETUP}/constants.h $S/model_1066a.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_1066a.o ${FCFLAGS_f90} $S/model_1066a.f90
-
-$O/model_ak135.o: ${SETUP}/constants.h $S/model_ak135.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_ak135.o ${FCFLAGS_f90} $S/model_ak135.f90
-
-$O/model_aniso_inner_core.o: ${SETUP}/constants.h $S/model_aniso_inner_core.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_aniso_inner_core.o ${FCFLAGS_f90} $S/model_aniso_inner_core.f90
-
-$O/model_1dref.o: ${SETUP}/constants.h $S/model_1dref.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_1dref.o ${FCFLAGS_f90} $S/model_1dref.f90
-
-$O/model_jp1d.o: ${SETUP}/constants.h $S/model_jp1d.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_jp1d.o ${FCFLAGS_f90} $S/model_jp1d.f90
-
-$O/model_sea1d.o: ${SETUP}/constants.h $S/model_sea1d.f90
-	${FCCOMPILE_CHECK} -c -o $O/model_sea1d.o ${FCFLAGS_f90} $S/model_sea1d.f90
-
-$O/moho_stretching.o: ${SETUP}/constants.h $S/moho_stretching.f90
-	${FCCOMPILE_CHECK} -c -o $O/moho_stretching.o ${FCFLAGS_f90} $S/moho_stretching.f90
-
-$O/netlib_specfun_erf.o: $S/netlib_specfun_erf.f90
-	${FCCOMPILE_CHECK} -c -o $O/netlib_specfun_erf.o ${FCFLAGS_f90} $S/netlib_specfun_erf.f90
-
-$O/recompute_jacobian.o: ${SETUP}/constants.h $S/recompute_jacobian.f90
-	${FCCOMPILE_CHECK} -c -o $O/recompute_jacobian.o ${FCFLAGS_f90} $S/recompute_jacobian.f90
-
-$O/save_arrays_solver.o: ${SETUP}/constants.h $S/save_arrays_solver.f90
-	${FCCOMPILE_CHECK} -c -o $O/save_arrays_solver.o ${FCFLAGS_f90} $S/save_arrays_solver.f90
-
-$O/sort_array_coordinates.o: ${SETUP}/constants.h $S/sort_array_coordinates.f90
-	${FCCOMPILE_CHECK} -c -o $O/sort_array_coordinates.o ${FCFLAGS_f90} $S/sort_array_coordinates.f90
-
-$O/stretching_function.o: ${SETUP}/constants.h $S/stretching_function.f90
-	${FCCOMPILE_CHECK} -c -o $O/stretching_function.o ${FCFLAGS_f90} $S/stretching_function.f90
-
-$O/write_AVS_DX_global_faces_data.o: ${SETUP}/constants.h $S/write_AVS_DX_global_faces_data.f90
-	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_global_faces_data.o ${FCFLAGS_f90} $S/write_AVS_DX_global_faces_data.f90
-
-$O/write_AVS_DX_global_chunks_data.o: ${SETUP}/constants.h $S/write_AVS_DX_global_chunks_data.f90
-	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_global_chunks_data.o ${FCFLAGS_f90} $S/write_AVS_DX_global_chunks_data.f90
-
-$O/write_AVS_DX_surface_data.o: ${SETUP}/constants.h $S/write_AVS_DX_surface_data.f90
-	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_surface_data.o ${FCFLAGS_f90} $S/write_AVS_DX_surface_data.f90
-
-$O/write_AVS_DX_global_data.o: ${SETUP}/constants.h $S/write_AVS_DX_global_data.f90
-	${FCCOMPILE_CHECK} -c -o $O/write_AVS_DX_global_data.o ${FCFLAGS_f90} $S/write_AVS_DX_global_data.f90
-
-##
-## meshfem3D objects with mpi compilation
-##
-$O/create_chunk_buffers.o: ${SETUP}/constants.h $S/create_chunk_buffers.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/create_chunk_buffers.o ${FCFLAGS_f90} $S/create_chunk_buffers.f90
-
-$O/meshfem3D.o: ${SETUP}/constants.h $S/meshfem3D.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/meshfem3D.o ${FCFLAGS_f90} $S/meshfem3D.f90
-
-$O/meshfem3D_models.o: ${SETUP}/constants.h $S/meshfem3D_models.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/meshfem3D_models.o ${FCFLAGS_f90} $S/meshfem3D_models.f90
-
-$O/model_aniso_mantle.o: ${SETUP}/constants.h $S/model_aniso_mantle.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_aniso_mantle.o ${FCFLAGS_f90} $S/model_aniso_mantle.f90
-
-$O/model_atten3D_QRFSI12.o: ${SETUP}/constants.h $S/model_atten3D_QRFSI12.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_atten3D_QRFSI12.o ${FCFLAGS_f90} $S/model_atten3D_QRFSI12.f90
-
-$O/model_attenuation.o: ${SETUP}/constants.h $S/model_attenuation.f90 $O/model_ak135.o $O/model_1066a.o $O/model_1dref.o
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_attenuation.o ${FCFLAGS_f90} $S/model_attenuation.f90
-
-$O/model_crust.o: ${SETUP}/constants.h $S/model_crust.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_crust.o ${FCFLAGS_f90} $S/model_crust.f90
-
-$O/model_eucrust.o: ${SETUP}/constants.h $S/model_eucrust.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_eucrust.o ${FCFLAGS_f90} $S/model_eucrust.f90
-
-$O/model_epcrust.o: ${SETUP}/constants.h $S/model_epcrust.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_epcrust.o ${FCFLAGS_f90} $S/model_epcrust.f90
-
-$O/model_crustmaps.o: ${SETUP}/constants.h $S/model_crustmaps.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_crustmaps.o ${FCFLAGS_f90} $S/model_crustmaps.f90
-
-$O/model_gll.o: ${SETUP}/constants.h $S/model_gll.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_gll.o ${FCFLAGS_f90} $S/model_gll.f90
-
-$O/model_heterogen_mantle.o: ${SETUP}/constants.h $S/model_heterogen_mantle.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_heterogen_mantle.o ${FCFLAGS_f90} $S/model_heterogen_mantle.f90
-
-$O/model_jp3d.o: ${SETUP}/constants.h $S/model_jp3d.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_jp3d.o ${FCFLAGS_f90} $S/model_jp3d.f90
-
-$O/model_ppm.o: ${SETUP}/constants.h $S/model_ppm.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_ppm.o ${FCFLAGS_f90} $S/model_ppm.f90
-
-$O/model_gapp2.o: ${SETUP}/constants.h $S/model_gapp2.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_gapp2.o ${FCFLAGS_f90} $S/model_gapp2.f90
-
-$O/model_s20rts.o: ${SETUP}/constants.h $S/model_s20rts.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_s20rts.o ${FCFLAGS_f90} $S/model_s20rts.f90
-
-$O/model_s40rts.o: ${SETUP}/constants.h $S/model_s40rts.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_s40rts.o ${FCFLAGS_f90} $S/model_s40rts.f90
-
-$O/model_s362ani.o: ${SETUP}/constants.h $S/model_s362ani.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_s362ani.o ${FCFLAGS_f90} $S/model_s362ani.f90
-
-$O/model_sea99_s.o: ${SETUP}/constants.h $S/model_sea99_s.f90
-	${MPIFCCOMPILE_CHECK} -c -o $O/model_sea99_s.o ${FCFLAGS_f90} $S/model_sea99_s.f90
-
+$O/%.mpi.o: $S/%.f90 ${SETUP}/constants.h
+	${MPIFCCOMPILE_NO_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 

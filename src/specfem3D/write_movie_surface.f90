@@ -25,47 +25,15 @@
 !
 !=====================================================================
 
-  subroutine write_movie_surface(myrank,nmovie_points,scale_veloc,veloc_crust_mantle, &
-                    scale_displ,displ_crust_mantle, &
-                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                    store_val_x,store_val_y,store_val_z, &
-                    store_val_x_all,store_val_y_all,store_val_z_all, &
-                    store_val_ux,store_val_uy,store_val_uz, &
-                    store_val_ux_all,store_val_uy_all,store_val_uz_all, &
-                    ibelm_top_crust_mantle,ibool_crust_mantle,nspec_top, &
-                    NIT,it,OUTPUT_FILES,MOVIE_VOLUME_TYPE)
+  subroutine write_movie_surface()
 
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_movie
   implicit none
 
   include 'mpif.h'
   include "precision.h"
-  include "constants.h"
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-  integer myrank,nmovie_points
-  double precision :: scale_veloc,scale_displ
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
-     veloc_crust_mantle,displ_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
-        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: &
-      store_val_x,store_val_y,store_val_z, &
-      store_val_ux,store_val_uy,store_val_uz
-
-  real(kind=CUSTOM_REAL), dimension(nmovie_points,0:NPROCTOT_VAL-1) :: &
-      store_val_x_all,store_val_y_all,store_val_z_all, &
-      store_val_ux_all,store_val_uy_all,store_val_uz_all
-
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
-
-  integer nspec_top,NIT,it
-  character(len=150) OUTPUT_FILES
-
-  integer MOVIE_VOLUME_TYPE
 
   ! local parameters
   character(len=150) :: outputname
@@ -75,7 +43,7 @@
 
   ! get coordinates of surface mesh and surface displacement
   ipoin = 0
-  do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+  do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
 
     ! in case of global, NCHUNKS_VAL == 6 simulations, be aware that for
@@ -121,7 +89,10 @@
   ! save movie data to disk in home directory
   if(myrank == 0) then
     write(outputname,"('/moviedata',i6.6)") it
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',action='write')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname, &
+         status='unknown',form='unformatted',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error opening moviedata file')
+
     write(IOUT) store_val_x_all
     write(IOUT) store_val_y_all
     write(IOUT) store_val_z_all

@@ -29,65 +29,38 @@
 !----  locate_sources finds the correct position of the sources
 !----
 
-  subroutine locate_sources(NSOURCES,myrank,nspec,nglob,ibool,&
-                 xstore,ystore,zstore,xigll,yigll,zigll, &
-                 ELLIPTICITY,TOPOGRAPHY, &
-                 sec,tshift_cmt,min_tshift_cmt_original,yr,jda,ho,mi,theta_source,phi_source, &
-                 NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                 islice_selected_source,ispec_selected_source, &
-                 xi_source,eta_source,gamma_source, nu_source, &
-                 rspl,espl,espl2,nspl,ibathy_topo,PRINT_SOURCE_TIME_FUNCTION, &
-                 LOCAL_TMP_PATH,SIMULATION_TYPE)
+  subroutine locate_sources(nspec,nglob,ibool, &
+                            xstore,ystore,zstore, &
+                            ELLIPTICITY,min_tshift_cmt_original)
 
   use constants
+  use specfem_par,only: &
+    NSOURCES,myrank, &
+    tshift_cmt,theta_source,phi_source, &
+    NSTEP,DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+    rspl,espl,espl2,nspl,ibathy_topo, &
+    PRINT_SOURCE_TIME_FUNCTION,LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
+    xigll,yigll,zigll, &
+    xi_source,eta_source,gamma_source,nu_source, &
+    islice_selected_source,ispec_selected_source
+
   implicit none
 
   ! standard include of the MPI library
   include 'mpif.h'
   include "precision.h"
 
-  integer NSTEP,NSOURCES
-
-  logical ELLIPTICITY,TOPOGRAPHY,PRINT_SOURCE_TIME_FUNCTION
-
-  double precision DT
-
-  integer nspec,nglob,myrank
-
+  integer nspec,nglob
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   ! arrays containing coordinates of the points
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
 
-  ! Gauss-Lobatto-Legendre points of integration
-  double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
+  logical ELLIPTICITY
 
-  ! moment-tensor source parameters
-  double precision sec,min_tshift_cmt_original
-  double precision tshift_cmt(NSOURCES)
-  integer yr,jda,ho,mi
-  double precision, dimension(NSOURCES) :: theta_source,phi_source
-  double precision hdur(NSOURCES)
-  double precision, dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+  double precision min_tshift_cmt_original
 
-  ! source locations
-  integer ispec_selected_source(NSOURCES)
-  integer islice_selected_source(NSOURCES)
-
-  double precision, dimension(NSOURCES) :: xi_source,eta_source,gamma_source
-  double precision nu_source(NDIM,NDIM,NSOURCES)
-
-  ! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-  ! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-
-  character(len=150) :: LOCAL_TMP_PATH
-  integer :: SIMULATION_TYPE
-
-! local parameters
+  ! local parameters
   integer isource
   integer iprocloop
   integer i,j,k,ispec,iglob
@@ -172,6 +145,10 @@
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: mask_source
 
+  ! event time
+  integer :: yr,jda,ho,mi
+  double precision :: sec
+
   ! get MPI starting time for all sources
   time_start = MPI_WTIME()
 
@@ -186,13 +163,6 @@
                               DT,NSOURCES,min_tshift_cmt_original)
 
   ! broadcast the information read on the master to the nodes
-  call MPI_BCAST(yr,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(jda,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(ho,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(mi,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-  call MPI_BCAST(sec,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-
   call MPI_BCAST(tshift_cmt,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(hdur,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(lat,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -517,7 +487,8 @@
         do iter_loop = 1,NUM_ITER
 
           ! recompute jacobian for the new point
-          call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+          call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
+                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
           ! compute distance to target location
           dx = - (x - x_target_source)
@@ -536,12 +507,15 @@
 
           ! impose that we stay in that element
           ! (useful if user gives a source outside the mesh for instance)
-          if (xi > 1.d0) xi = 1.d0
-          if (xi < -1.d0) xi = -1.d0
-          if (eta > 1.d0) eta = 1.d0
-          if (eta < -1.d0) eta = -1.d0
-          if (gamma > 1.d0) gamma = 1.d0
-          if (gamma < -1.d0) gamma = -1.d0
+          ! we can go slightly outside the [1,1] segment since with finite elements
+          ! the polynomial solution is defined everywhere
+          ! can be useful for convergence of iterative scheme with distorted elements
+          if (xi > 1.10d0) xi = 1.10d0
+          if (xi < -1.10d0) xi = -1.10d0
+          if (eta > 1.10d0) eta = 1.10d0
+          if (eta < -1.10d0) eta = -1.10d0
+          if (gamma > 1.10d0) gamma = 1.10d0
+          if (gamma < -1.10d0) gamma = -1.10d0
 
         enddo
 

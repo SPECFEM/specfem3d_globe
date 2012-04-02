@@ -29,50 +29,43 @@
 !---- locate_receivers finds the correct position of the receivers
 !----
 
-  subroutine locate_receivers(myrank,DT,NSTEP,nspec,nglob,ibool, &
-                             xstore,ystore,zstore,xigll,yigll,zigll,rec_filename, &
-                             nrec,islice_selected_rec,ispec_selected_rec, &
-                             xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
-                             stlat,stlon,stele,stbur,nu, &
-                             yr,jda,ho,mi,sec,&
-                             ELLIPTICITY,TOPOGRAPHY, &
-                             theta_source,phi_source,rspl,espl,espl2,nspl, &
-                             ibathy_topo,RECEIVERS_CAN_BE_BURIED,NCHUNKS)
+  subroutine locate_receivers(nspec,nglob,ibool, &
+                             xstore,ystore,zstore,  &
+                             yr,jda,ho,mi,sec, &
+                             theta_source,phi_source,NCHUNKS,ELLIPTICITY)
 
   use constants
+  use specfem_par,only: &
+    myrank,DT,NSTEP, &
+    xigll,yigll,zigll, &
+    rec_filename,nrec,islice_selected_rec,ispec_selected_rec, &
+    xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
+    stlat,stlon,stele,stbur,nu, &
+    rspl,espl,espl2,nspl,ibathy_topo, &
+    TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
+
   implicit none
 
   ! standard include of the MPI library
   include 'mpif.h'
   include "precision.h"
 
-  integer NCHUNKS
+  integer nspec,nglob
 
-  logical ELLIPTICITY,TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
+  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-  integer nspec,nglob,nrec,myrank,nrec_found
+  ! arrays containing coordinates of the points
+  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
 
   integer yr,jda,ho,mi
   double precision sec
+  double precision theta_source,phi_source
 
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
-  integer NSTEP
-  double precision DT
+  integer NCHUNKS
+  logical ELLIPTICITY
 
-! arrays containing coordinates of the points
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
-
-! Gauss-Lobatto-Legendre points of integration
-  double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
-
-  character(len=*)  rec_filename
-
-! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-
+  ! local parameters
+  integer :: nrec_found
   integer, allocatable, dimension(:) :: ix_initial_guess,iy_initial_guess,iz_initial_guess
 
   integer iorientation
@@ -95,7 +88,6 @@
   double precision sint,cost,sinp,cosp
   double precision r0,p20
   double precision theta,phi
-  double precision theta_source,phi_source
   double precision dist
   double precision xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
 
@@ -126,11 +118,6 @@
 ! timing information for the stations
 ! station information for writing the seismograms
   integer nsamp
-  integer, dimension(nrec) :: islice_selected_rec,ispec_selected_rec
-  double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
-  double precision, dimension(3,3,nrec) :: nu
-  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
-  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
   integer, dimension(nrec) :: islice_selected_rec_found,ispec_selected_rec_found
   double precision, dimension(nrec) :: xi_receiver_found,eta_receiver_found,gamma_receiver_found
@@ -141,7 +128,6 @@
   character(len=150) STATIONS
 
   integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
-  double precision, dimension(nrec) :: stlat,stlon,stele,stbur
   double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
 
   double precision typical_size
@@ -206,7 +192,7 @@
 
   ! read that STATIONS file on the master
   if(myrank == 0) then
-    call get_value_string(STATIONS, 'solver.STATIONS', rec_filename)
+    call get_value_string(STATIONS, 'solver.STATIONS', trim(rec_filename))
     open(unit=1,file=STATIONS,status='old',action='read',iostat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error opening STATIONS file')
 
@@ -396,57 +382,43 @@
     ! therefore only the station name is included below
     ! compute total number of samples for normal modes with 1 sample per second
     open(unit=1,file=trim(OUTPUT_FILES)//'/RECORDHEADERS',status='unknown')
+
     nsamp = nint(dble(NSTEP-1)*DT)
+
     do irec = 1,nrec
 
       if(stele(irec) >= -999.9999) then
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHN',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-!          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHE',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-!          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHZ',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-!          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'N',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'E',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'Z',stlat(irec),stlon(irec),stele(irec),stbur(irec), &
-          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
-
+        write(1,500) station_name(irec),bic(1:2)//'N', &
+                     stlat(irec),stlon(irec),stele(irec),stbur(irec), &
+                     0.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,500) station_name(irec),bic(1:2)//'E', &
+                     stlat(irec),stlon(irec),stele(irec),stbur(irec), &
+                     90.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,500) station_name(irec),bic(1:2)//'Z', &
+                     stlat(irec),stlon(irec),stele(irec),stbur(irec), &
+                     0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
       else
         ! very deep ocean-bottom stations such as H2O are not compatible
         ! with the standard RECORDHEADERS format because of the f6.1 format
         ! therefore suppress decimals for depth in that case
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHN',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-!          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHE',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-!          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-!        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-!          station_name(irec),'LHZ',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-!          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'N',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-          0.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'E',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-          90.,0.,1.,nsamp,yr,jda,ho,mi,sec
-        write(1,"(a8,1x,a3,6x,f8.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4,1x,i3,1x,i2,1x,i2,1x,f6.3)") &
-          station_name(irec),bic(1:2)//'Z',stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
-          0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
-
+        write(1,600) station_name(irec),bic(1:2)//'N', &
+                     stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
+                     0.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,600) station_name(irec),bic(1:2)//'E', &
+                     stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
+                     90.,0.,1.,nsamp,yr,jda,ho,mi,sec
+        write(1,600) station_name(irec),bic(1:2)//'Z', &
+                     stlat(irec),stlon(irec),nint(stele(irec)),stbur(irec), &
+                     0.,-90.,1.,nsamp,yr,jda,ho,mi,sec
       endif
     enddo
     close(1)
 
   endif
+
+500 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,f6.1,1x,f6.1,1x,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
+600 format(a8,1x,a3,6x,f9.4,1x,f9.4,1x,i6,1x,f6.1,f6.1,1x,f6.1,1x,f12.4,1x,i7,1x,i4.4,1x,i3.3,1x,i2.2,1x,i2.2,1x,f6.3)
+
 
 ! ****************************************
 ! find the best (xi,eta) for each receiver

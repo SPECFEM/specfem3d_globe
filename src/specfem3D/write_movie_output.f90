@@ -36,8 +36,9 @@
 
   ! local parameters
 !daniel: debugging
-!  character(len=256) :: filename
-!  logical, parameter :: SNAPSHOT_INNER_CORE = .true.
+  character(len=256) :: filename
+  !integer,dimension(:),allocatable :: dummy_i
+  logical, parameter :: SNAPSHOT_INNER_CORE = .true.
 
   ! save movie on surface
   if( MOVIE_SURFACE ) then
@@ -51,16 +52,8 @@
       endif
 
       ! save velocity here to avoid static offset on displacement for movies
-      call write_movie_surface(myrank,nmovie_points,scale_veloc,veloc_crust_mantle, &
-                    scale_displ,displ_crust_mantle, &
-                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                    store_val_x,store_val_y,store_val_z, &
-                    store_val_x_all,store_val_y_all,store_val_z_all, &
-                    store_val_ux,store_val_uy,store_val_uz, &
-                    store_val_ux_all,store_val_uy_all,store_val_uz_all, &
-                    ibelm_top_crust_mantle,ibool_crust_mantle, &
-                    NSPEC2D_TOP(IREGION_CRUST_MANTLE), &
-                    NIT,it,OUTPUT_FILES,MOVIE_VOLUME_TYPE)
+      call write_movie_surface()
+
     endif
   endif
 
@@ -172,24 +165,44 @@
   endif ! MOVIE_VOLUME
 
 !daniel: debugging
-!  if( SNAPSHOT_INNER_CORE .and. mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0  &
-!      .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
-!    ! VTK file output
-!    ! displacement values
-!    !write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
-!    !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
-!    !call write_VTK_data_cr(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-!    !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
-!    !                    displ_inner_core,filename)
-!
-!    write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
-!    write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
-!    call write_VTK_data_cr_all(myrank,idoubling_inner_core, &
-!                        NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-!                        xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
-!                        displ_inner_core,filename)
-!
-!  endif
+  if( SNAPSHOT_INNER_CORE ) then
+    if( mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0  &
+      .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 
+      !output displacement
+      if( GPU_MODE ) then
+        call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
+        call transfer_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,Mesh_pointer)
+      endif
+
+      ! VTK file output
+      ! displacement values
+      ! one file per process
+      !write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
+      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
+      !call write_VTK_data_cr(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+      !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
+      !                    displ_inner_core,filename)
+      ! single file for all processes
+      ! crust mantle
+      !allocate(dummy_i(NSPEC_CRUST_MANTLE))
+      !dummy_i(:) = IFLAG_CRUST
+      !write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
+      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_displ_',it
+      !call write_VTK_data_cr_all(myrank,dummy_i, &
+      !                    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+      !                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
+      !                    displ_crust_mantle,filename)
+      !deallocate(dummy_i)
+
+      ! inner core
+      write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
+      write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
+      call write_VTK_data_cr_all(myrank,idoubling_inner_core, &
+                          NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                          xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
+                          displ_inner_core,filename)
+    endif
+  endif
 
   end subroutine write_movie_output

@@ -51,9 +51,6 @@
   use specfem_par,only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
-    myrank,iproc_xi,iproc_eta,ichunk,addressing, &
-    iprocfrom_faces,iprocto_faces, &
-    iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
     npoin2D_max_all_CM_IC,INCLUDE_CENTRAL_CUBE
 
   use specfem_par_innercore,only: &
@@ -67,7 +64,7 @@
     c33store => c33store_inner_core,c44store => c44store_inner_core, &
     ibool => ibool_inner_core,idoubling => idoubling_inner_core, &
     one_minus_sum_beta => one_minus_sum_beta_inner_core, &
-    ibool_inner_core,idoubling_inner_core, &
+    ibool_inner_core, &
     iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
     npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
     iboolfaces_inner_core,iboolcorner_inner_core, &

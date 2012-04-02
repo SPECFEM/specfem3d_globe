@@ -503,12 +503,12 @@
 ! number of faces a given slice can share with other slices
 ! this is at most 2, except when there is only once slice per chunk
 ! in which case it is 4
-  integer, parameter :: NUMFACES_SHARED = 2 !!!!!  DK DK removed support for one slice only, was 4
+  integer, parameter :: NUMFACES_SHARED = 4
 
 ! number of corners a given slice can share with other slices
 ! this is at most 1, except when there is only once slice per chunk
 ! in which case it is 4
-  integer, parameter :: NUMCORNERS_SHARED = 1 !!!!!!  DK DK removed support for one slice only, was 4
+  integer, parameter :: NUMCORNERS_SHARED = 4
 
 ! number of slaves per corner
   integer, parameter :: NUMSLAVES = 2

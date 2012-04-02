@@ -41,9 +41,6 @@
     hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
     wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
-    myrank,iproc_xi,iproc_eta,ichunk,addressing, &
-    iprocfrom_faces,iprocto_faces, &
-    iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
     npoin2D_max_all_CM_IC,INCLUDE_CENTRAL_CUBE
 
   use specfem_par_crustmantle,only: &
@@ -70,16 +67,6 @@
     phase_ispec_inner => phase_ispec_inner_crust_mantle, &
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
-
-!  use specfem_par_innercore,only: &
-!    ibool_inner_core,idoubling_inner_core, &
-!    iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-!    npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-!    iboolfaces_inner_core,iboolcorner_inner_core, &
-!    nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-!    npoin2D_cube_from_slices, &
-!    ibool_central_cube, &
-!    receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC
 
   implicit none
 

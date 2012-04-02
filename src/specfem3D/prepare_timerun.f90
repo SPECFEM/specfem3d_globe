@@ -79,14 +79,22 @@
   if(GPU_MODE) call prepare_timerun_GPU()
 
   ! user output
-  call sync_all()
   if( myrank == 0 ) then
     ! elapsed time since beginning of mesh generation
     tCPU = MPI_WTIME() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for preparing timerun in seconds = ',sngl(tCPU)
     write(IMAIN,*)
+    write(IMAIN,*) 'time loop:'
+    write(IMAIN,*)
+    write(IMAIN,*) '           time step: ',sngl(DT),' s'
+    write(IMAIN,*) 'number of time steps: ',NSTEP
+    write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
+    write(IMAIN,*) 'start time          :',sngl(-t0),' seconds'
+    write(IMAIN,*)
   endif
+
+  call sync_all()
 
   end subroutine prepare_timerun
 
@@ -171,6 +179,11 @@
   use specfem_par_innercore
   use specfem_par_outercore
   implicit none
+
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing mass matrices."
+    write(IMAIN,*)
+  endif
 
   ! mass matrices need to be assembled with MPI here once and for all
   call prepare_timerun_rmass_assembly()
@@ -289,14 +302,15 @@
                  idoubling_inner_core, NSPEC_INNER_CORE, &
                  ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
                  NGLOB_INNER_CORE, &
-                 rmass_inner_core,ndim_assemble)
+                 rmass_inner_core,ndim_assemble, &
+                 iproc_eta,addressing,NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL)
 
     ! suppress fictitious mass matrix elements in central cube
     ! because the slices do not compute all their spectral elements in the cube
     where(rmass_inner_core(:) <= 0.) rmass_inner_core = 1.
   endif
 
-  if(myrank == 0) write(IMAIN,*) 'end assembling MPI mass matrix'
+  call sync_all()
 
   end subroutine prepare_timerun_rmass_assembly
 
@@ -366,6 +380,12 @@
   ! local parameters
   integer :: ier
 
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing movie surface."
+    write(IMAIN,*)
+  endif
+
+
   if(MOVIE_COARSE .and. NOISE_TOMOGRAPHY ==0) then  ! only output corners !for noise tomography, must NOT be coarse
      nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
      if(NGLLX /= NGLLY) &
@@ -404,6 +424,8 @@
     write(IMAIN,*) '  time steps every: ',NTSTEP_BETWEEN_FRAMES
   endif
 
+  call sync_all()
+
   end subroutine prepare_timerun_movie_surface
 
 !
@@ -419,6 +441,12 @@
 
   ! local parameters
   integer :: ier
+
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing movie volume."
+    write(IMAIN,*)
+  endif
+
 
   ! the following has to be true for the the array dimensions of eps to match with those of xstore etc..
   ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
@@ -466,6 +494,8 @@
   if( MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 6) &
       call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be 1,2,3,4,5 or 6')
 
+  call sync_all()
+
   end subroutine prepare_timerun_movie_volume
 
 !
@@ -479,12 +509,8 @@
   use specfem_par
   implicit none
 
-  if(myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) '           time step: ',sngl(DT),' s'
-    write(IMAIN,*) 'number of time steps: ',NSTEP
-    write(IMAIN,*) 'total simulated time: ',sngl(((NSTEP-1)*DT-t0)/60.d0),' minutes'
-    write(IMAIN,*) 'start time:',sngl(-t0),' seconds'
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing constants."
     write(IMAIN,*)
   endif
 
@@ -548,6 +574,7 @@
     if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
   endif
 
+  call sync_all()
 
   end subroutine prepare_timerun_constants
 
@@ -569,12 +596,19 @@
   double precision :: rho,drhodr,vp,vs,Qkappa,Qmu
   integer :: int_radius,idoubling,nspl_gravity
 
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing gravity arrays."
+    write(IMAIN,*)
+  endif
+
+
   ! store g, rho and dg/dr=dg using normalized radius in lookup table every 100 m
   ! get density and velocity from PREM model using dummy doubling flag
   ! this assumes that the gravity perturbations are small and smooth
   ! and that we can neglect the 3D model and use PREM every 100 m in all cases
   ! this is probably a rather reasonable assumption
   if(GRAVITY_VAL) then
+
     call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST)
     do int_radius = 1,NRAD_GRAVITY
       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
@@ -636,6 +670,8 @@
 
   endif
 
+  call sync_all()
+
   end subroutine prepare_timerun_gravity
 
 
@@ -654,19 +690,41 @@
   implicit none
 
   ! local parameters
-  double precision, dimension(ATT1,ATT2,ATT3,ATT4) :: omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
-  double precision, dimension(ATT1,ATT2,ATT3,ATT5) :: omsb_inner_core_dble, factor_scale_inner_core_dble
-  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: factor_common_crust_mantle_dble
-  double precision, dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: factor_common_inner_core_dble
+  double precision, dimension(:,:,:,:), allocatable :: &
+    omsb_crust_mantle_dble, factor_scale_crust_mantle_dble
+  double precision, dimension(:,:,:,:), allocatable :: &
+    omsb_inner_core_dble, factor_scale_inner_core_dble
+  double precision, dimension(:,:,:,:,:), allocatable :: factor_common_crust_mantle_dble
+  double precision, dimension(:,:,:,:,:), allocatable :: factor_common_inner_core_dble
+
   double precision, dimension(N_SLS) :: alphaval_dble, betaval_dble, gammaval_dble
   double precision, dimension(N_SLS) :: tau_sigma_dble
-
   double precision :: scale_factor,scale_factor_minus_one
+
   real(kind=CUSTOM_REAL) :: mul
-  integer :: ispec,i,j,k
+  integer :: ispec,i,j,k,ier
   character(len=150) :: prnamel
 
   ! get and store PREM attenuation model
+  if(myrank == 0 ) then
+    write(IMAIN,*) "preparing attenuation."
+    write(IMAIN,*)
+  endif
+
+  ! allocates temporary arrays
+  allocate(omsb_crust_mantle_dble(ATT1,ATT2,ATT3,ATT4), &
+          factor_scale_crust_mantle_dble(ATT1,ATT2,ATT3,ATT4),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating omsb crust_mantle arrays')
+
+  allocate(omsb_inner_core_dble(ATT1,ATT2,ATT3,ATT5), &
+          factor_scale_inner_core_dble(ATT1,ATT2,ATT3,ATT5),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating omsb inner_core arrays')
+
+  allocate(factor_common_crust_mantle_dble(N_SLS,ATT1,ATT2,ATT3,ATT4),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common crust_mantle array')
+
+  allocate(factor_common_inner_core_dble(N_SLS,ATT1,ATT2,ATT3,ATT5),stat=ier)
+  if( ier /= 0 ) call exit_MPI(myrank,'error allocating factor_common inner_core array')
 
   ! CRUST_MANTLE ATTENUATION
   call create_name_database(prnamel, myrank, IREGION_CRUST_MANTLE, LOCAL_PATH)
@@ -695,6 +753,11 @@
     one_minus_sum_beta_inner_core   = omsb_inner_core_dble
     factor_common_inner_core        = factor_common_inner_core_dble
   endif
+
+  deallocate(omsb_crust_mantle_dble,factor_scale_crust_mantle_dble)
+  deallocate(omsb_inner_core_dble,factor_scale_inner_core_dble)
+  deallocate(factor_common_crust_mantle_dble)
+  deallocate(factor_common_inner_core_dble)
 
   ! if attenuation is on, shift PREM to right frequency
   ! rescale mu in PREM to average frequency for attenuation
@@ -742,8 +805,6 @@
             muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
 
             ! scales transverse isotropic values for mu_h
-            !if(TRANSVERSE_ISOTROPY_VAL .and. (idoubling_crust_mantle(ispec) == IFLAG_220_80 &
-            !    .or. idoubling_crust_mantle(ispec) == IFLAG_80_MOHO)) &
             if( ispec_is_tiso_crust_mantle(ispec) ) then
               muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
             endif
@@ -808,6 +869,8 @@
    endif
   endif
 
+  call sync_all()
+
   end subroutine prepare_timerun_attenuation
 
 !
@@ -827,6 +890,12 @@
 
   ! local parameters
   integer :: ier
+
+  if(myrank == 0 ) then
+    write(IMAIN,*) "initializing wavefields."
+    write(IMAIN,*)
+  endif
+
 
   ! initialize arrays to zero
   displ_crust_mantle(:,:) = 0._CUSTOM_REAL
@@ -977,6 +1046,8 @@
     endif
   endif
 
+  call sync_all()
+
   end subroutine prepare_timerun_init_wavefield
 
 
@@ -995,7 +1066,11 @@
 
   ! NOISE TOMOGRAPHY
   if ( NOISE_TOMOGRAPHY /= 0 ) then
-    NSPEC_TOP = NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+
+    if(myrank == 0 ) then
+      write(IMAIN,*) "preparing noise arrays."
+      write(IMAIN,*)
+    endif
 
     allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
             normal_x_noise(nmovie_points), &
@@ -1015,6 +1090,8 @@
     call read_parameters_noise()
 
     call check_parameters_noise()
+
+    call sync_all()
 
   endif
 
@@ -1047,8 +1124,9 @@
 
   ! GPU_MODE now defined in Par_file
   if(myrank == 0 ) then
+    write(IMAIN,*) "GPU_MODE Active."
     write(IMAIN,*)
-    write(IMAIN,*) "GPU_MODE Active. Preparing Fields and Constants on Device."
+    write(IMAIN,*) "preparing Fields and Constants on GPU Device."
     write(IMAIN,*)
   endif
 
@@ -1355,5 +1433,7 @@
     write(IMAIN,*)"             total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
     write(IMAIN,*)
   endif
+
+  call sync_all()
 
   end subroutine prepare_timerun_GPU

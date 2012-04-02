@@ -241,10 +241,6 @@
 ! ibool_outer_core
   static_memory_size = static_memory_size + dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
 
-! idoubling_crust_mantle (not needed anymore..)
-!  static_memory_size = static_memory_size + NSPEC(IREGION_CRUST_MANTLE)*dble(SIZE_INTEGER)
-! idoubling_outer_core
-!  static_memory_size = static_memory_size + NSPEC(IREGION_OUTER_CORE)*dble(SIZE_INTEGER)
 ! idoubling_inner_core
   static_memory_size = static_memory_size + NSPEC(IREGION_INNER_CORE)*dble(SIZE_INTEGER)
 
