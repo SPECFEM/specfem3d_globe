@@ -734,7 +734,8 @@
     ! check volume of chunk
     write(IMAIN,*)
     write(IMAIN,*) 'calculated volume: ',volume_total
-    if(.not. TOPOGRAPHY) then
+    if((NCHUNKS == 6 .or. (abs(ANGULAR_WIDTH_XI_IN_DEGREES - 90.d0) < TINYVAL .and. &
+                           abs(ANGULAR_WIDTH_ETA_IN_DEGREES - 90.d0) < TINYVAL)) .and. .not. TOPOGRAPHY) then
       ! take the central cube into account
       ! it is counted 6 times because of the fictitious elements
       if(INCLUDE_CENTRAL_CUBE) then
