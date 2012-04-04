@@ -7,6 +7,7 @@ Things that could be done in a future version:
 - fix the 3D attenuation memory size problem by making it optional and off by default.
 To do that, the following command will be very useful:
 nm --print-size --size-sort --reverse-sort --radix=d ./bin/xspecfem3D | cut -f 2- -d ' ' | less 
+I think switching from (NGLLX,NGLLY,NGLLZ) to (1,1,1) i.e. using the lower left corner of each element in the case of 1D attenuation would be easy to implement and sufficient to fix the problem (since array sizes would decrease by a factor of 125).
 
 - check if sigma_xz is inverted with sigma_zx and so on in compute_forces; usually this does not matter because the stress tensor is symmetric, but for Cosser
 at or for some C-PML formulations this could matter
