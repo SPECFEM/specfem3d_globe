@@ -204,7 +204,7 @@
       ! on GPU
       ! contains both forward SIM_TYPE==1 and backward SIM_TYPE==3 simulations
       ! for crust/mantle
-      call compute_forces_crust_mantle_cuda(Mesh_pointer,iphase)
+      call compute_forces_crust_mantle_cuda(Mesh_pointer,deltat,iphase)
       ! for inner core
       call compute_forces_inner_core_cuda(Mesh_pointer,iphase)
     endif ! GPU_MODE

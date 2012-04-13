@@ -57,6 +57,7 @@ void setConst_wgll_cube(realw* array, Mesh* mp);
 #ifdef USE_TEXTURES
   // declaration of textures
   texture<realw, 1, cudaReadModeElementType> tex_displ;
+  texture<realw, 1, cudaReadModeElementType> tex_veloc;
   texture<realw, 1, cudaReadModeElementType> tex_accel;
 
   texture<realw, 1, cudaReadModeElementType> tex_potential;
@@ -74,6 +75,20 @@ void setConst_wgll_cube(realw* array, Mesh* mp);
     if (err != cudaSuccess)
     {
       fprintf(stderr, "Error in bindTexturesDispl for displ: %s\n", cudaGetErrorString(err));
+      exit(1);
+    }
+  }
+
+  void bindTexturesVeloc(realw* d_veloc)
+  {
+    cudaError_t err;
+
+    cudaChannelFormatDesc channelDescFloat = cudaCreateChannelDesc<realw>();
+
+    err = cudaBindTexture(NULL,tex_veloc, d_veloc, channelDescFloat, NDIM*NGLOB*sizeof(realw));
+    if (err != cudaSuccess)
+    {
+      fprintf(stderr, "Error in bindTexturesVeloc for veloc: %s\n", cudaGetErrorString(err));
       exit(1);
     }
   }
