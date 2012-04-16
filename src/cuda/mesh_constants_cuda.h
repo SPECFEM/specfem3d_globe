@@ -482,8 +482,8 @@ typedef struct mesh_ {
   realw* d_density_table;
 
   //daniel: TODO old...
-  realw* d_minus_g;
-  realw* d_minus_deriv_gravity;
+  //realw* d_minus_g;
+  //realw* d_minus_deriv_gravity;
 
   // ------------------------------------------------------------------ //
   // rotation

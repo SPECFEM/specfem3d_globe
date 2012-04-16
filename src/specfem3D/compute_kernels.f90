@@ -63,7 +63,7 @@
 
   subroutine compute_kernels_crust_mantle()
 
-  use constants
+  use constants_solver
   use specfem_par,only: deltat
   use specfem_par,only: GPU_MODE,Mesh_pointer
   use specfem_par_crustmantle
@@ -193,7 +193,7 @@
 
   subroutine compute_kernels_outer_core()
 
-  use constants
+  use constants_solver
   use specfem_par,only: deltat,hprime_xx,hprime_yy,hprime_zz,myrank
   use specfem_par,only: GPU_MODE,Mesh_pointer
   use specfem_par_outercore
@@ -443,7 +443,7 @@
 
   subroutine compute_kernels_inner_core()
 
-  use constants
+  use constants_solver
   use specfem_par,only: deltat
   use specfem_par,only: GPU_MODE,Mesh_pointer
   use specfem_par_innercore
@@ -575,7 +575,7 @@
 
   subroutine compute_kernels_hessian()
 
-  use constants
+  use constants_solver
   use specfem_par,only: deltat
   use specfem_par,only: GPU_MODE,Mesh_pointer
   use specfem_par_crustmantle

@@ -25,11 +25,21 @@
 !
 !=====================================================================
 
+
   subroutine create_meshes()
 
   use meshfem3D_par
   implicit none
-
+  
+  ! local parameters
+  ! parameters needed to store the radii of the grid points
+  ! in the spherically symmetric Earth
+  integer, dimension(:), allocatable :: idoubling
+  integer, dimension(:,:,:,:), allocatable :: ibool
+  ! arrays with the mesh in double precision
+  double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
+  integer :: ier
+    
   ! get addressing for this process
   ichunk = ichunk_slice(myrank)
   iproc_xi = iproc_xi_slice(myrank)
@@ -70,14 +80,19 @@
     npointot = NSPEC(iregion_code) * NGLLX * NGLLY * NGLLZ
 
     ! use dynamic allocation to allocate memory for arrays
-    allocate(idoubling(NSPEC(iregion_code)))
-    allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
-    allocate(xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
-    allocate(ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
-    allocate(zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)))
-
-  ! this for non blocking MPI
-    allocate(is_on_a_slice_edge(NSPEC(iregion_code)))
+    allocate(idoubling(NSPEC(iregion_code)), &
+            ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+            xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+            ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+            zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+            stat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating memory for arrays')
+    
+    ! this for non blocking MPI
+    allocate(is_on_a_slice_edge(NSPEC(iregion_code)), &
+            stat=ier)
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating is_on_a_slice_edge array')
+    
 
     ! create all the regions of the mesh
     ! perform two passes in this part to be able to save memory
@@ -86,13 +101,12 @@
                           xstore,ystore,zstore,rmins,rmaxs, &
                           iproc_xi,iproc_eta,ichunk,NSPEC(iregion_code),nspec_tiso, &
                           volume_local,area_local_bottom,area_local_top, &
-                          nglob(iregion_code),npointot, &
-                          NSTEP,DT, &
+                          NGLOB(iregion_code),npointot, &
                           NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                           NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
                           NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
-                          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE, &
-                          NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+                          NPROC_XI,NPROC_ETA, &
+                          NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
                           myrank,LOCAL_PATH,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD, &
                           SAVE_MESH_FILES,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
                           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
@@ -123,7 +137,7 @@
     if(NCHUNKS > 1) then
       call create_chunk_buffers(iregion_code,NSPEC(iregion_code),ibool,idoubling, &
                               xstore,ystore,zstore, &
-                              nglob(iregion_code), &
+                              NGLOB(iregion_code), &
                               NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
                               NPROC_XI,NPROC_ETA,NPROC,NPROCTOT, &
                               NGLOB1D_RADIAL_CORNER,maxval(NGLOB1D_RADIAL_CORNER(iregion_code,:)), &
@@ -145,7 +159,7 @@
     deallocate(ystore)
     deallocate(zstore)
 
-  ! this for non blocking MPI
+    ! this for non blocking MPI
     deallocate(is_on_a_slice_edge)
 
     ! make sure everybody is synchronized

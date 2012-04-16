@@ -55,6 +55,11 @@
   integer :: ier
 
   if(myrank == 0) then
+    ! user output
+    write(IMAIN,*)
+    write(IMAIN,*) 'incorporating topography'
+    
+    ! read/save topo file on master
     call read_topo_bathy_file(ibathy_topo)
     call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
   endif
@@ -76,14 +81,17 @@
 
   include "constants.h"
 
-! use integer array to store values
+  ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters
   real :: val
+  integer :: ival
   integer :: itopo_x,itopo_y,ier
   character(len=150) :: topo_bathy_file
-
+  integer,parameter :: TOPO_MINIMUM = - 10000 ! (depth in m )
+  integer,parameter :: TOPO_MAXIMUM = + 10000 ! (height in m )
+  
   call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
   ! reads in topography values from file
@@ -97,7 +105,7 @@
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
       read(13,*,iostat=ier) val
-
+      
       ! checks
       if( ier /= 0 ) then
         print*,'error read topo_bathy: ix,iy = ',itopo_x,itopo_y,val
@@ -106,7 +114,17 @@
       endif
 
       ! converts to integer
-      ibathy_topo(itopo_x,itopo_y) = val
+      ival = nint(val)
+
+      ! checks values
+      if( ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM ) then
+        print*,'error read topo_bathy: ival = ',ival,val,'ix,iy = ',itopo_x,itopo_y
+        print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+        call exit_mpi(0,'error reading topo_bathy file')
+      endif
+
+      ! stores in array
+      ibathy_topo(itopo_x,itopo_y) = ival
 
     enddo
   enddo
@@ -134,7 +152,7 @@
   endif
 
   ! user output
-  write(IMAIN,*) "topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
+  write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
 
   end subroutine read_topo_bathy_file
 
@@ -161,20 +179,19 @@
   ! only master needs to save this
   call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-  ! saves topography and bathymetry file for solver
-
+  ! saves topography and bathymetry file for solver  
   open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) then
+    ! inform about missing database topo file
     print*,'TOPOGRAPHY problem:'
-    print*,'error creating file: ',prname(1:len_trim(prname))//'topo.bin'
+    print*,'error opening file: ',prname(1:len_trim(prname))//'topo.bin'
     print*,'please check if path exists and rerun mesher'
     call exit_mpi(0,'error opening file for database topo')
   endif
-
+ 
   write(27) ibathy_topo
-
-  close(27)
+  close(27)      
 
   end subroutine save_topo_bathy_database
 
@@ -204,15 +221,26 @@
   open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
         status='unknown',form='unformatted',action='read',iostat=ier)
   if( ier /= 0 ) then
+    ! inform user
     print*,'TOPOGRAPHY problem:'
     print*,'error opening file: ',prname(1:len_trim(prname))//'topo.bin'
-    print*,'please check if file exists and rerun solver'
-    call exit_mpi(0,'error opening file for database topo')
+    !print*,'please check if file exists and rerun solver'
+    !call exit_mpi(0,'error opening file for database topo')
+        
+    ! read by original file
+    print*,'trying original topography file...'
+    call read_topo_bathy_file(ibathy_topo)
+
+    ! saves database topo file for next time
+    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)    
+  else
+    ! database topo file exists
+    read(27) ibathy_topo
+    close(27)  
+
+    ! user output
+    write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
   endif
-
-  read(27) ibathy_topo
-
-  close(27)
 
   end subroutine read_topo_bathy_database
 
@@ -230,23 +258,30 @@
 
   include "constants.h"
 
-! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY),intent(in) :: ibathy_topo
 
-  double precision xlat,xlon,value
+  ! location latitude/longitude (in degree)
+  double precision,intent(in):: xlat,xlon
+  
+  ! returns elevation (in meters)
+  double precision,intent(out):: value
 
-  integer iadd1,iel1
-  double precision samples_per_degree_topo
-  double precision xlo
+  ! local parameters
+  integer:: iadd1,iel1
+  double precision:: samples_per_degree_topo
+  double precision:: xlo
   double precision:: lon_corner,lat_corner,ratio_lon,ratio_lat
 
+  ! longitude within range [0,360] degrees
   xlo = xlon
-  if(xlon < 0.d0) xlo = xlo + 360.d0
+  if(xlo < 0.d0) xlo = xlo + 360.d0
+  if(xlo > 360.d0) xlo = xlo - 360.d0
 
-! compute number of samples per degree
+  ! compute number of samples per degree
   samples_per_degree_topo = dble(RESOLUTION_TOPO_FILE) / 60.d0
 
-! compute offset in data file and avoid edge effects
+  ! compute offset in data file and avoid edge effects
   iadd1 = 1 + int((90.d0-xlat)/samples_per_degree_topo)
   if(iadd1 < 1) iadd1 = 1
   if(iadd1 > NY_BATHY) iadd1 = NY_BATHY
@@ -255,7 +290,8 @@
   if(iel1 <= 0 .or. iel1 > NX_BATHY) iel1 = NX_BATHY
 
 ! Use bilinear interpolation rather nearest point interpolation
-! convert integer value to double precision
+
+  ! convert integer value to double precision
   !  value = dble(ibathy_topo(iel1,iadd1))
 
   lon_corner=iel1*samples_per_degree_topo
@@ -269,7 +305,7 @@
   if(ratio_lat<0.0) ratio_lat=0.0
   if(ratio_lat>1.0) ratio_lat=1.0
 
-! convert integer value to double precision
+  ! convert integer value to double precision
   if( iadd1 <= NY_BATHY-1 .and. iel1 <= NX_BATHY-1 ) then
     ! interpolates for points within boundaries
     value = dble(ibathy_topo(iel1,iadd1))*(1-ratio_lon)*(1.-ratio_lat) &

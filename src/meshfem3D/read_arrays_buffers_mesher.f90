@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine read_arrays_buffers_solver(iregion_code,myrank, &
+  subroutine read_arrays_buffers_mesher(iregion_code,myrank, &
                                iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
                                npoin2D_xi,npoin2D_eta, &
                                iprocfrom_faces,iprocto_faces,imsg_type, &
@@ -333,5 +333,5 @@
 
   endif
 
-  end subroutine read_arrays_buffers_solver
+  end subroutine read_arrays_buffers_mesher
 

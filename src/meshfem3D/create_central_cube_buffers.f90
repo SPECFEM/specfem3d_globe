@@ -30,19 +30,23 @@
 !
 
   subroutine create_central_cube_buffers(myrank,iproc_xi,iproc_eta,ichunk, &
-       NPROC_XI,NPROC_ETA,NCHUNKS,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-       NSPEC2DMAX_XMIN_XMAX_INNER_CORE,NSPEC2DMAX_YMIN_YMAX_INNER_CORE,NSPEC2D_BOTTOM_INNER_CORE, &
-       addressing,ibool_inner_core,idoubling_inner_core, &
-       xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-       nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
-       ibelm_xmin_inner_core,ibelm_xmax_inner_core,ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
-       nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
-       receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
-       buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
+                   NPROC_XI,NPROC_ETA,NCHUNKS, &
+                   NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                   NSPEC2DMAX_XMIN_XMAX_INNER_CORE,NSPEC2DMAX_YMIN_YMAX_INNER_CORE, &
+                   NSPEC2D_BOTTOM_INNER_CORE, &
+                   addressing,ibool_inner_core,idoubling_inner_core, &
+                   xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                   nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
+                   nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
+                   ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
+                   ibelm_ymin_inner_core,ibelm_ymax_inner_core,ibelm_bottom_inner_core, &
+                   nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices, &
+                   receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
+                   buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
 
   include "constants.h"
@@ -51,18 +55,18 @@
        NPROC_XI,NPROC_ETA,NCHUNKS,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
        NSPEC2DMAX_XMIN_XMAX_INNER_CORE,NSPEC2DMAX_YMIN_YMAX_INNER_CORE,NSPEC2D_BOTTOM_INNER_CORE
 
-! for addressing of the slices
+  ! for addressing of the slices
   integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1), intent(in) :: addressing
 
-! mesh parameters
+  ! mesh parameters
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), intent(in) :: ibool_inner_core
 
-! local to global mapping
+  ! local to global mapping
   integer, dimension(NSPEC_INNER_CORE), intent(in) :: idoubling_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE), intent(in) :: xstore_inner_core,ystore_inner_core,zstore_inner_core
 
-! boundary parameters locator
+  ! boundary parameters locator
   integer, intent(in) :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core,nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_INNER_CORE), intent(in) :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
   integer, dimension(NSPEC2DMAX_YMIN_YMAX_INNER_CORE), intent(in) :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
@@ -70,7 +74,7 @@
 
   integer, intent(in) :: nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices
 
-! for matching with central cube in inner core
+  ! for matching with central cube in inner core
   integer, intent(out) :: receiver_cube_from_slices
 
   integer, dimension(non_zero_nb_msgs_theor_in_cube), intent(out) :: sender_from_slices_to_cube
@@ -79,14 +83,14 @@
   double precision, dimension(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), intent(out) :: &
         buffer_all_cube_from_slices
 
-! local variables below
+  ! local variables below
   integer i,j,k,ispec,ispec2D,iglob,ier
   integer sender,receiver,imsg,ipoin,iproc_xi_loop
 
   double precision x_target,y_target,z_target
   double precision x_current,y_current,z_current
 
-! MPI status of messages to be received
+  ! MPI status of messages to be received
   integer msg_status(MPI_STATUS_SIZE)
 
   integer :: nproc_xi_half_floor,nproc_xi_half_ceil
@@ -98,6 +102,11 @@
     nproc_xi_half_floor = NPROC_XI/2
     nproc_xi_half_ceil = NPROC_XI/2
   endif
+
+  ! check that the number of points in this slice is correct
+  if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
+    call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
+  
 
 !--- processor to send information to in cube from slices
 
@@ -376,7 +385,7 @@
         if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
           idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
           idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-        !daniel: debug
+        ! check
         if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) stop 'error xmin ibelm'
         i = 1
         do k = 1,NGLLZ
@@ -401,7 +410,7 @@
         if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
             idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
             idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-        !daniel: debug
+        !check
         if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) stop 'error xmax ibelm'
         i = NGLLX
         do k = 1,NGLLZ
@@ -426,7 +435,7 @@
         if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
             idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
             idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-        !daniel: debug
+        !check
         if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) stop 'error ymin ibelm'
         j = 1
         do k = 1,NGLLZ
@@ -451,7 +460,7 @@
         if(idoubling_inner_core(ispec) /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
             idoubling_inner_core(ispec) /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
             idoubling_inner_core(ispec) /= IFLAG_TOP_CENTRAL_CUBE) cycle
-        !daniel: debug
+        !check
         if(idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) stop 'error ymax ibelm'
         j = NGLLY
         do k = 1,NGLLZ
@@ -502,7 +511,7 @@
 
     enddo ! ipoin
 
-    ! daniel: check ibool array
+    ! checks ibool array
     if(NPROC_XI==1) then
       if( minval(ibool_central_cube(imsg,:)) < 0 ) call exit_mpi(myrank,'error ibool_central_cube point not found')
 
@@ -564,7 +573,6 @@
 
   integer, intent(out) :: nb_msgs_theor_in_cube,npoin2D_cube_from_slices
 
-!daniel: debug
   integer :: nproc_xi_half_floor,nproc_xi_half_ceil
 
   if( mod(NPROC_XI,2) /= 0 ) then

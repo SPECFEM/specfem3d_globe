@@ -102,8 +102,7 @@
       call exit_MPI(myrank,'an error occurred while reading the parameter file')
     endif
 
-    ! GPU_MODE is in par_file
-    ! parameter is optional, may not be in the Par_file
+    ! GPU_MODE: parameter is optional, may not be in the Par_file
     call read_gpu_mode(GPU_MODE)
 
   endif

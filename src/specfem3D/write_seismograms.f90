@@ -123,7 +123,7 @@
 ! write seismograms to files
   subroutine write_seismograms_to_file()
 
-  use constants
+  use constants_solver
   use specfem_par,only: &
           NPROCTOT_VAL,myrank,nrec,nrec_local, &
           number_receiver_global,seismograms, &
@@ -335,7 +335,7 @@
 
   subroutine write_one_seismogram(one_seismogram,irec)
 
-  use constants
+  use constants_solver
   use specfem_par,only: &
           ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI, &
           myrank,nrec, &

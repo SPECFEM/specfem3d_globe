@@ -38,14 +38,6 @@ module meshfem3D_par
   ! correct number of spectral elements in each block depending on chunk type
   integer nspec_tiso,npointot
 
-  ! parameters needed to store the radii of the grid points
-  ! in the spherically symmetric Earth
-  integer, dimension(:), allocatable :: idoubling
-  integer, dimension(:,:,:,:), allocatable :: ibool
-
-  ! arrays with the mesh in double precision
-  double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
-
   ! proc numbers for MPI
   integer myrank,sizeprocs
 
@@ -53,8 +45,6 @@ module meshfem3D_par
   double precision area_local_bottom
   double precision area_local_top
   double precision volume_local,volume_total
-
-  !integer iprocnum
 
   ! for loop on all the slices
   integer iregion_code

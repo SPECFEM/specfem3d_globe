@@ -445,15 +445,15 @@ void FC_FUNC_(kernel_3_b_cuda,
 
     // updates only veloc at this point
     kernel_3_veloc_cuda_device<<< grid1, threads1>>>(mp->d_veloc_crust_mantle,
-                                                   mp->d_accel_crust_mantle,
-                                                   mp->NGLOB_CRUST_MANTLE,
-                                                   deltatover2);
+                                                     mp->d_accel_crust_mantle,
+                                                     mp->NGLOB_CRUST_MANTLE,
+                                                     deltatover2);
 
     if(SIMULATION_TYPE == 3) {
       kernel_3_veloc_cuda_device<<< grid1, threads1>>>(mp->d_b_veloc_crust_mantle,
-                                                     mp->d_b_accel_crust_mantle,
-                                                     mp->NGLOB_CRUST_MANTLE,
-                                                     b_deltatover2);
+                                                       mp->d_b_accel_crust_mantle,
+                                                       mp->NGLOB_CRUST_MANTLE,
+                                                       b_deltatover2);
     }
   }
 

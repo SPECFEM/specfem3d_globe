@@ -32,7 +32,8 @@
                         NER_TOP_CENTRAL_CUBE_ICB,&
                         RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
                         R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER,&
-                        ONE_CRUST,ner,ratio_sampling_array,&
+                        ONE_CRUST, &
+                        ner,ratio_sampling_array,&
                         NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer, &
                         r_bottom,r_top,this_region_has_a_doubling,&
                         ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,&
@@ -51,29 +52,31 @@
 
   include "constants.h"
 
-! parameters read from parameter file
+  ! parameters read from parameter file
   integer NER_CRUST,NER_80_MOHO,NER_220_80,NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
           NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
           NER_TOP_CENTRAL_CUBE_ICB
-  integer NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer
-
+  
+  ! radii
   double precision RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
           R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
 
   logical ONE_CRUST
 
+  ! layers
+  integer :: NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
 
+  ! doubling elements
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
   double precision :: DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
                           DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval
 
-
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
-
 
 
 ! find element below top of which we should implement the second doubling in the mantle

@@ -28,7 +28,7 @@
 ! recompute 3D jacobian at a given point for 27-node elements
 
   subroutine recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-                   xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                                xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
   implicit none
 

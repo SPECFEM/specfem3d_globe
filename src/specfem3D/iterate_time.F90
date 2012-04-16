@@ -110,10 +110,7 @@
     endif
 
     ! outputs movie files
-!daniel: debug
-!    if( MOVIE_SURFACE .or. MOVIE_VOLUME ) then
-      call write_movie_output()
-!    endif
+    call write_movie_output()
 
     ! first step of noise tomography, i.e., save a surface movie at every time step
     ! modified from the subroutine 'write_movie_surface'

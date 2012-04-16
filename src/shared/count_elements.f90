@@ -48,7 +48,7 @@
   include "constants.h"
 
 
-! parameters to be computed based upon parameters above read from file
+  ! parameters to be computed based upon parameters above read from file
   integer NPROC,NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
@@ -66,7 +66,7 @@
               nb_lay_sb, nspec_sb, nglob_surf
 
 
-! for the cut doublingbrick improvement
+  ! for the cut doublingbrick improvement
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
   logical :: INCLUDE_CENTRAL_CUBE
   integer :: last_doubling_layer

@@ -52,6 +52,7 @@
     write(IMAIN,*)
     if(NSOURCES > 1) write(IMAIN,*) 'Using ',NSOURCES,' point sources'
   endif
+  call sync_all()
 
   end subroutine setup_sources_receivers
 
@@ -73,7 +74,7 @@
   integer :: ier
 
   ! makes smaller hdur for movies
-  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .false.
+  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .true.
 
   ! allocate arrays for source
   allocate(islice_selected_source(NSOURCES), &
@@ -102,6 +103,8 @@
 
   allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+
+  call sync_all()
 
   ! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the
@@ -229,6 +232,8 @@
                               elat_SAC,elon_SAC,depth_SAC,mb_SAC,cmt_lat_SAC,&
                               cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES)
 
+  call sync_all()
+
   end subroutine setup_sources
 
 !
@@ -281,7 +286,8 @@
     endif
     write(IMAIN,*)
   endif
-
+  call sync_all()
+  
   ! locate receivers in the crust in the mesh
   call locate_receivers(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
                       xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -388,6 +394,8 @@
   ! frees arrays
   deallocate(theta_source,phi_source)
 
+  call sync_all()
+  
   end subroutine setup_receivers
 
 

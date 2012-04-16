@@ -100,6 +100,7 @@ libspecfem_a_OBJECTS_COMMON = \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
 	$O/spline_routines.shared.o \
+	$O/write_VTK_file.sharedmpi.o \
 	$(EMPTY_MACRO)
 
 
@@ -109,17 +110,22 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/add_topography_410_650.o \
 	$O/add_topography_cmb.o \
 	$O/add_topography_icb.o \
+	$O/assemble_MPI_central_cube_mesh.mpi.o \
+	$O/assemble_MPI_scalar_mesh.mpi.o \
+	$O/assemble_MPI_vector_mesh.o \
 	$O/calc_jacobian.o \
 	$O/compute_coordinates_grid.o \
 	$O/compute_element_properties.o \
 	$O/compute_volumes.o \
 	$O/create_central_cube.o \
+	$O/create_central_cube_buffers.mpi.o \
 	$O/create_chunk_buffers.mpi.o \
 	$O/create_doubling_elements.o \
 	$O/create_mass_matrices.o \
-	$O/create_regions_mesh.mpi.o \
+	$O/create_regions_mesh.o \
 	$O/create_regular_elements.o \
 	$O/define_superbrick.o \
+	$O/fix_non_blocking_flags.o \
 	$O/get_absorb.o \
 	$O/get_ellipticity.o \
 	$O/get_global.o \
@@ -129,9 +135,11 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/get_MPI_1D_buffers.o \
 	$O/get_MPI_cutplanes_eta.o \
 	$O/get_MPI_cutplanes_xi.o \
+	$O/get_MPI_interfaces.mpi.o \
 	$O/get_perm_color.o \
 	$O/get_shape2D.o \
 	$O/get_shape3D.o \
+	$O/heap_sort.o \
 	$O/initialize_layers.o \
 	$O/lgndr.o \
 	$O/model_1dref.o \
@@ -158,9 +166,12 @@ libspecfem_a_OBJECTS_MESHER = \
 	$O/model_sea1d.o \
 	$O/model_sea99_s.mpi.o \
 	$O/moho_stretching.o \
+	$O/read_arrays_buffers_mesher.mpi.o \
 	$O/save_arrays_solver.o \
+	$O/setup_color_perm.mpi.o \
 	$O/sort_array_coordinates.o \
 	$O/stretching_function.o \
+	$O/test_MPI_interfaces.mpi.o \
 	$O/write_AVS_DX_global_chunks_data.o \
 	$O/write_AVS_DX_global_data.o \
 	$O/write_AVS_DX_global_faces_data.o \
@@ -173,6 +184,7 @@ MESHER_ARRAY_OBJECTS = \
 	$O/compute_area.mpi.o \
 	$O/create_addressing.o \
 	$O/create_meshes.mpi.o \
+	$O/create_MPI_interfaces.mpi.o \
 	$O/finalize_mesher.mpi.o \
 	$O/initialize_mesher.mpi.o \
 	$O/meshfem3D.mpi.o \

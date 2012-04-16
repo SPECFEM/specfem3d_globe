@@ -36,7 +36,7 @@
               c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
               c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
               ibool,idoubling,ispec_is_tiso, &
-              is_on_a_slice_edge,rmass,rmass_ocean_load,nspec,nglob, &
+              rmass,rmass_ocean_load,nspec,nglob, &
               READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY, &
               ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,OCEANS,LOCAL_PATH,ABSORBING_CONDITIONS)
 
@@ -48,7 +48,7 @@
 
   integer iregion_code,myrank
 
-! flags to know if we should read Vs and anisotropy arrays
+  ! flags to know if we should read Vs and anisotropy arrays
   logical READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE, &
     ANISOTROPIC_INNER_CORE,OCEANS,ABSORBING_CONDITIONS
 
@@ -63,47 +63,48 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-! material properties
+  ! material properties
   real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec_iso)
   real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec_iso)
   real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec_iso)
 
-! additional arrays for anisotropy stored only where needed to save memory
+  ! additional arrays for anisotropy stored only where needed to save memory
   real(kind=CUSTOM_REAL) kappahstore(NGLLX,NGLLY,NGLLZ,nspec_tiso)
   real(kind=CUSTOM_REAL) muhstore(NGLLX,NGLLY,NGLLZ,nspec_tiso)
   real(kind=CUSTOM_REAL) eta_anisostore(NGLLX,NGLLY,NGLLZ,nspec_tiso)
 
-! additional arrays for full anisotropy
+  ! additional arrays for full anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
     c11store,c12store,c13store,c14store,c15store,c16store, &
     c22store,c23store,c24store,c25store,c26store,c33store,c34store, &
     c35store,c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
-! Stacey
+  ! Stacey
   real(kind=CUSTOM_REAL) rho_vp(NGLLX,NGLLY,NGLLZ,nspec)
   real(kind=CUSTOM_REAL) rho_vs(NGLLX,NGLLY,NGLLZ,nspec)
 
-! mass matrix and additional ocean load mass matrix
+  ! mass matrix and additional ocean load mass matrix
   real(kind=CUSTOM_REAL), dimension(nglob) :: rmass,rmass_ocean_load
 
-! global addressing
+  ! global addressing
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer, dimension(nspec) :: idoubling
 
-! this for non blocking MPI
-  logical, dimension(nspec) :: is_on_a_slice_edge
-
   logical, dimension(nspec) :: ispec_is_tiso
 
-! processor identification
+  ! local parameters
+  integer :: ier
+  logical,dimension(nspec) :: dummy_l
+  ! processor identification
   character(len=150) prname
-
-! create the name for the database of the current slide and region
+  
+  ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_1.bin', &
-        status='old',action='read',form='unformatted')
+        status='old',action='read',form='unformatted',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_1.bin')
 
   read(IIN) xix
   read(IIN) xiy
@@ -115,14 +116,13 @@
   read(IIN) gammay
   read(IIN) gammaz
 
-! model arrays
+  ! model arrays
   read(IIN) rhostore
   read(IIN) kappavstore
 
   if(READ_KAPPA_MU) read(IIN) muvstore
 
-! for anisotropy, gravity and rotation
-
+  ! for anisotropy, gravity and rotation
   if(TRANSVERSE_ISOTROPY .and. READ_TISO) then
     read(IIN) kappahstore
     read(IIN) muhstore
@@ -161,7 +161,7 @@
     read(IIN) c66store
   endif
 
-! Stacey
+  ! Stacey
   if(ABSORBING_CONDITIONS) then
 
     if(iregion_code == IREGION_CRUST_MANTLE) then
@@ -173,18 +173,19 @@
 
   endif
 
-! mass matrix
+  ! mass matrix
   read(IIN) rmass
 
-! read additional ocean load mass matrix
+  ! read additional ocean load mass matrix
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
 
   close(IIN)
 
-! read coordinates of the mesh
-
+  ! read coordinates of the mesh
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
-       status='old',action='read',form='unformatted')
+       status='old',action='read',form='unformatted',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening file solver_data_2.bin')
+  
   read(IIN) xstore
   read(IIN) ystore
   read(IIN) zstore
@@ -193,8 +194,8 @@
 
   read(IIN) idoubling
 
-  read(IIN) is_on_a_slice_edge
-
+  read(IIN) dummy_l ! is_on_a_slice_edge
+  
   read(IIN) ispec_is_tiso
 
   close(IIN)

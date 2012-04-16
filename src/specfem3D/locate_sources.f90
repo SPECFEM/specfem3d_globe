@@ -33,7 +33,7 @@
                             xstore,ystore,zstore, &
                             ELLIPTICITY,min_tshift_cmt_original)
 
-  use constants
+  use constants_solver
   use specfem_par,only: &
     NSOURCES,myrank, &
     tshift_cmt,theta_source,phi_source, &
@@ -149,6 +149,10 @@
   integer :: yr,jda,ho,mi
   double precision :: sec
 
+  integer,parameter :: MIDX = (NGLLX+1)/2
+  integer,parameter :: MIDY = (NGLLY+1)/2
+  integer,parameter :: MIDZ = (NGLLZ+1)/2
+
   ! get MPI starting time for all sources
   time_start = MPI_WTIME()
 
@@ -183,7 +187,8 @@
 
   ! initializes source mask
   if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
-    allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC) )
+    allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier )
+    if( ier /= 0 ) call exit_mpi(myrank,'error allocating mask source array')
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
 
@@ -337,13 +342,11 @@
       do ispec = 1,nspec
 
         ! exclude elements that are too far from target
-        iglob = ibool(1,1,1,ispec)
+        iglob = ibool(MIDX,MIDY,MIDZ,ispec)
         dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
                    + (y_target_source - dble(ystore(iglob)))**2 &
                    + (z_target_source - dble(zstore(iglob)))**2)
         if(USE_DISTANCE_CRITERION .and. dist > typical_size) cycle
-
-        located_target = .true.
 
         ! define the interval in which we look for points
         if(USE_FORCE_POINT_SOURCE) then
@@ -370,6 +373,7 @@
           kmin = 2
           kmax = NGLLZ - 1
         endif
+        
         do k = kmin,kmax
           do j = jmin,jmax
             do i = imin,imax
@@ -385,6 +389,8 @@
                 ix_initial_guess_source = i
                 iy_initial_guess_source = j
                 iz_initial_guess_source = k
+                located_target = .true.
+                !print*,myrank,'dist:',distmin*R_EARTH/1000.d0,i,j,k,ispec
               endif
 
             enddo
@@ -409,9 +415,9 @@
       ! therefore use first element only for fictitious iterative search
       if(.not. located_target) then
         ispec_selected_source_subset(isource_in_this_subset)=1
-        ix_initial_guess_source = 2
-        iy_initial_guess_source = 2
-        iz_initial_guess_source = 2
+        ix_initial_guess_source = MIDX
+        iy_initial_guess_source = MIDY
+        iz_initial_guess_source = MIDZ
       endif
 
       ! for point sources, the location will be exactly at a GLL point
@@ -438,18 +444,13 @@
 
       else
 
-        ! use initial guess in xi, eta and gamma
-        xi = xigll(ix_initial_guess_source)
-        eta = yigll(iy_initial_guess_source)
-        gamma = zigll(iz_initial_guess_source)
-
         ! define coordinates of the control points of the element
         do ia=1,NGNOD
 
           if(iaddx(ia) == 0) then
             iax = 1
           else if(iaddx(ia) == 1) then
-            iax = (NGLLX+1)/2
+            iax = MIDX
           else if(iaddx(ia) == 2) then
             iax = NGLLX
           else
@@ -459,7 +460,7 @@
           if(iaddy(ia) == 0) then
             iay = 1
           else if(iaddy(ia) == 1) then
-            iay = (NGLLY+1)/2
+            iay = MIDY
           else if(iaddy(ia) == 2) then
             iay = NGLLY
           else
@@ -469,7 +470,7 @@
           if(iaddr(ia) == 0) then
             iaz = 1
           else if(iaddr(ia) == 1) then
-            iaz = (NGLLZ+1)/2
+            iaz = MIDZ
           else if(iaddr(ia) == 2) then
             iaz = NGLLZ
           else
@@ -483,6 +484,11 @@
 
         enddo
 
+        ! use initial guess in xi, eta and gamma
+        xi = xigll(ix_initial_guess_source)
+        eta = yigll(iy_initial_guess_source)
+        gamma = zigll(iz_initial_guess_source)
+
         ! iterate to solve the non linear system
         do iter_loop = 1,NUM_ITER
 
@@ -494,11 +500,16 @@
           dx = - (x - x_target_source)
           dy = - (y - y_target_source)
           dz = - (z - z_target_source)
-
+          
           ! compute increments
           dxi  = xix*dx + xiy*dy + xiz*dz
           deta = etax*dx + etay*dy + etaz*dz
-          dgamma = gammax*dx + gammay*dy + gammaz*dz
+          dgamma =  gammax*dx + gammay*dy + gammaz*dz
+
+          ! impose limit on increments
+          if( abs(dxi) > 0.3d0 ) dxi = sign(1.0d0,dxi)*0.3d0
+          if( abs(deta) > 0.3d0 ) deta = sign(1.0d0,deta)*0.3d0
+          if( abs(dgamma) > 0.3d0 ) dgamma = sign(1.0d0,dgamma)*0.3d0
 
           ! update values
           xi = xi + dxi
@@ -520,8 +531,8 @@
         enddo
 
         ! compute final coordinates of point found
-        call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma, &
-                               x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+        call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
+                               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
         ! store xi,eta,gamma and x,y,z of point found
         xi_source_subset(isource_in_this_subset) = xi
@@ -533,9 +544,9 @@
 
         ! compute final distance between asked and found (converted to km)
         final_distance_source_subset(isource_in_this_subset) = &
-          dsqrt((x_target_source-x_found_source(isource_in_this_subset))**2 + &
-            (y_target_source-y_found_source(isource_in_this_subset))**2 + &
-            (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
+          dsqrt((x_target_source-x)**2 + &
+                (y_target_source-y)**2 + &
+                (z_target_source-z)**2)*R_EARTH/1000.d0
 
       endif ! USE_FORCE_POINT_SOURCE
 
@@ -800,6 +811,12 @@
   call MPI_BCAST(eta_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(gamma_source,NSOURCES,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
+  ! stores source mask
+  if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
+    call save_mask_source(myrank,mask_source,NSPEC,LOCAL_TMP_PATH)
+    deallocate( mask_source )
+  endif
+
   ! elapsed time since beginning of source detection
   if(myrank == 0) then
     tCPU = MPI_WTIME() - time_start
@@ -809,13 +826,8 @@
     write(IMAIN,*) 'End of source detection - done'
     write(IMAIN,*)
   endif
-
-  ! stores source mask
-  if( SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3 ) then
-    call save_mask_source(myrank,mask_source,NSPEC,LOCAL_TMP_PATH)
-    deallocate( mask_source )
-  endif
-
+  call sync_all()
+  
   end subroutine locate_sources
 
 !
@@ -892,12 +904,16 @@
   character(len=150) :: LOCAL_TMP_PATH
 
   ! local parameters
+  integer :: ier
   character(len=150) :: prname
 
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
-  open(unit=27,file=trim(prname)//'mask_source.bin',status='unknown',form='unformatted',action='write')
+  open(unit=27,file=trim(prname)//'mask_source.bin', &
+        status='unknown',form='unformatted',action='write',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening mask_source.bin file')
+  
   write(27) mask_source
   close(27)
 

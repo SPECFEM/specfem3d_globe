@@ -46,12 +46,11 @@
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
-  use constants
+  use constants_solver
 
   use specfem_par,only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-    npoin2D_max_all_CM_IC,INCLUDE_CENTRAL_CUBE
+    minus_gravity_table,density_table,minus_deriv_gravity_table
 
   use specfem_par_crustmantle,only: &
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle, &
@@ -71,13 +70,10 @@
     ibool => ibool_crust_mantle, &
     ispec_is_tiso => ispec_is_tiso_crust_mantle, &
     one_minus_sum_beta => one_minus_sum_beta_crust_mantle, &
-    iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-    npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-    iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
     phase_ispec_inner => phase_ispec_inner_crust_mantle, &
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
-
+    
   implicit none
 
   integer :: NSPEC,NGLOB,NSPEC_ATT

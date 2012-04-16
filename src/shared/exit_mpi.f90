@@ -32,12 +32,12 @@
 
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
 
   include "constants.h"
 
-! identifier for error message file
+  ! identifier for error message file
   integer, parameter :: IERROR = 30
 
   integer :: myrank
@@ -47,11 +47,11 @@
   character(len=80) outputname
   character(len=150) OUTPUT_FILES
 
-! write error message to screen
+  ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
   write(*,*) 'Error detected, aborting MPI... proc ',myrank
 
-! write error message to file
+  ! write error message to file
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
   write(outputname,"('/error_message',i6.6,'.txt')") myrank
   open(unit=IERROR,file=trim(OUTPUT_FILES)//outputname,status='unknown')
@@ -59,17 +59,17 @@
   write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
   close(IERROR)
 
-! close output file
+  ! close output file
   if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
-! stop all the MPI processes, and exit
-! note: MPI_ABORT does not return, and does exit the
-!          program with an error code of 30
+  ! stop all the MPI processes, and exit
+  ! note: MPI_ABORT does not return, and does exit the
+  !          program with an error code of 30
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
 
-! otherwise: there is no standard behaviour to exit with an error code in fortran,
-! however most compilers do recognize this as an error code stop statement;
-! to check stop code in terminal: > echo $?
+  ! otherwise: there is no standard behaviour to exit with an error code in fortran,
+  ! however most compilers do recognize this as an error code stop statement;
+  ! to check stop code in terminal: > echo $?
   stop 30
 
   ! or just exit with message:
@@ -78,7 +78,7 @@
   end subroutine exit_MPI
 
 !
-!----
+!-------------------------------------------------------------------------------------------------
 !
 
 ! version without rank number printed in the error message
@@ -86,7 +86,7 @@
 
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
 
   include "constants.h"
@@ -95,25 +95,25 @@
 
   integer :: ier
 
-! write error message to screen
+  ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
   write(*,*) 'Error detected, aborting MPI...'
 
-! stop all the MPI processes, and exit
+  ! stop all the MPI processes, and exit
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
   stop 'error, program ended in exit_MPI'
 
   end subroutine exit_MPI_without_rank
 
 !
-!----
+!-------------------------------------------------------------------------------------------------
 !
 
   subroutine sync_all()
 
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
 
   integer :: ier,rank
@@ -126,3 +126,73 @@
   if( ier /= 0 ) call exit_mpi(rank,'error synchronize MPI processes')
 
   end subroutine sync_all
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
+
+  implicit none
+
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+  include "constants.h"
+  include "precision.h"
+
+  integer recvcount, dest, recvtag, req
+  real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
+
+  integer ier
+
+  call MPI_IRECV(recvbuf(1),recvcount,CUSTOM_MPI_TYPE,dest,recvtag, &
+                  MPI_COMM_WORLD,req,ier)
+
+  end subroutine irecv_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
+
+  implicit none
+
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+  include "constants.h"
+  include "precision.h"
+
+  integer sendcount, dest, sendtag, req
+  real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
+
+  integer ier
+
+  call MPI_ISEND(sendbuf(1),sendcount,CUSTOM_MPI_TYPE,dest,sendtag, &
+                  MPI_COMM_WORLD,req,ier)
+
+  end subroutine isend_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine wait_req(req)
+
+  implicit none
+
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+  integer :: req
+
+  integer, dimension(MPI_STATUS_SIZE) :: req_mpi_status
+
+  integer :: ier
+
+  call mpi_wait(req,req_mpi_status,ier)
+
+  end subroutine wait_req
+

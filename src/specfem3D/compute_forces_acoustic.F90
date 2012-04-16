@@ -290,7 +290,7 @@
   subroutine compute_forces_ac_update_veloc(NGLOB,veloc_outer_core,accel_outer_core, &
                                           deltatover2,rmass_outer_core)
 
-  use constants,only: CUSTOM_REAL
+  use constants_solver,only: CUSTOM_REAL
 
 #ifdef _HANDOPT
   use specfem_par,only: imodulo_NGLOB_OUTER_CORE

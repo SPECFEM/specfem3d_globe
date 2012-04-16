@@ -1,0 +1,125 @@
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
+!          --------------------------------------------------
+!
+!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!             and University of Pau / CNRS / INRIA, France
+! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
+!                            April 2011
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+
+
+  subroutine assemble_MPI_vector_ext_mesh(NPROC,NGLOB_AB,array_val, &
+                        num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
+                        nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
+                        my_neighbours_ext_mesh)
+
+  implicit none
+
+  include "constants.h"
+
+  integer :: NPROC
+  integer :: NGLOB_AB
+
+! array to assemble
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_AB) :: array_val
+
+  integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh
+  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbours_ext_mesh
+  integer, dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: ibool_interfaces_ext_mesh
+
+  ! local parameters
+
+  ! send/receive temporary buffers
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_recv_vector_ext_mesh
+
+  ! requests
+  integer, dimension(:), allocatable :: request_send_vector_ext_mesh
+  integer, dimension(:), allocatable :: request_recv_vector_ext_mesh
+
+  integer ipoin,iinterface,ier
+
+
+! here we have to assemble all the contributions between partitions using MPI
+
+  ! assemble only if more than one partition
+  if(NPROC > 1) then
+
+    allocate(buffer_send_vector_ext_mesh(NDIM,max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh),stat=ier)
+    if( ier /= 0 ) stop 'error allocating array buffer_send_vector_ext_mesh'
+    allocate(buffer_recv_vector_ext_mesh(NDIM,max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh),stat=ier)
+    if( ier /= 0 ) stop 'error allocating array buffer_recv_vector_ext_mesh'
+    allocate(request_send_vector_ext_mesh(num_interfaces_ext_mesh),stat=ier)
+    if( ier /= 0 ) stop 'error allocating array request_send_vector_ext_mesh'
+    allocate(request_recv_vector_ext_mesh(num_interfaces_ext_mesh),stat=ier)
+    if( ier /= 0 ) stop 'error allocating array request_recv_vector_ext_mesh'
+
+    ! partition border copy into the buffer
+    do iinterface = 1, num_interfaces_ext_mesh
+      do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
+        buffer_send_vector_ext_mesh(:,ipoin,iinterface) = &
+          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface))
+      enddo
+    enddo
+
+    ! send messages
+    do iinterface = 1, num_interfaces_ext_mesh
+      call isend_cr(buffer_send_vector_ext_mesh(1,1,iinterface), &
+           NDIM*nibool_interfaces_ext_mesh(iinterface), &
+           my_neighbours_ext_mesh(iinterface), &
+           itag, &
+           request_send_vector_ext_mesh(iinterface) &
+           )
+      call irecv_cr(buffer_recv_vector_ext_mesh(1,1,iinterface), &
+           NDIM*nibool_interfaces_ext_mesh(iinterface), &
+           my_neighbours_ext_mesh(iinterface), &
+           itag, &
+           request_recv_vector_ext_mesh(iinterface) &
+           )
+    enddo
+
+    ! wait for communications completion (recv)
+    do iinterface = 1, num_interfaces_ext_mesh
+      call wait_req(request_recv_vector_ext_mesh(iinterface))
+    enddo
+
+    ! adding contributions of neighbours
+    do iinterface = 1, num_interfaces_ext_mesh
+      do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
+        array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
+             array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) &
+             + buffer_recv_vector_ext_mesh(:,ipoin,iinterface)
+      enddo
+    enddo
+
+    ! wait for communications completion (send)
+    do iinterface = 1, num_interfaces_ext_mesh
+      call wait_req(request_send_vector_ext_mesh(iinterface))
+    enddo
+
+    deallocate(buffer_send_vector_ext_mesh)
+    deallocate(buffer_recv_vector_ext_mesh)
+    deallocate(request_send_vector_ext_mesh)
+    deallocate(request_recv_vector_ext_mesh)
+
+  endif
+
+  end subroutine assemble_MPI_vector_ext_mesh

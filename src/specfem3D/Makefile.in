@@ -91,7 +91,6 @@ CUDAD = ../cuda
 libspecfem_a_OBJECTS_SOLVER = \
 	$O/assemble_MPI_scalar.mpicheckno.o \
 	$O/assemble_MPI_vector.mpicheckno.o \
-	$O/assemble_MPI_scalar_block.mpicheckno.o \
 	$O/auto_ner.shared.o \
 	$O/broadcast_compute_parameters.sharedmpi.o \
 	$O/calendar.shared.o \
@@ -100,7 +99,6 @@ libspecfem_a_OBJECTS_SOLVER = \
 	$O/compute_adj_source_frechet.check.o \
 	$O/compute_arrays_source.check.o \
 	$O/convert_time.check.o \
-	$O/create_central_cube_buffers.mpicheck.o \
 	$O/create_name_database.shared.o \
 	$O/count_elements.shared.o \
 	$O/count_number_of_sources.shared.o \
@@ -141,6 +139,7 @@ libspecfem_a_OBJECTS_SOLVER = \
 	$O/write_seismograms.mpicheck.o \
 	$O/write_output_ASCII.mpicheck.o \
 	$O/write_output_SAC.mpicheck.o \
+	$O/write_VTK_file.sharedmpi.o \
 	$(EMPTY_MACRO)
 
 # solver objects with statically allocated arrays; dependent upon
@@ -148,8 +147,6 @@ libspecfem_a_OBJECTS_SOLVER = \
 
 SOLVER_ARRAY_OBJECTS = \
 	$O/specfem3D_par.solver.o \
-	$O/assemble_MPI_central_cube_block.mpisolver.o \
-	$O/assemble_MPI_central_cube.mpisolver.o \
 	$O/check_simulation_stability.mpisolver.o \
 	$O/compute_add_sources.solver.o \
 	$O/compute_boundary_kernel.solvercheck.o \
@@ -167,7 +164,6 @@ SOLVER_ARRAY_OBJECTS = \
 	$O/compute_seismograms.solver.o \
 	$O/compute_stacey_crust_mantle.solver.o \
 	$O/compute_stacey_outer_core.solver.o \
-	$O/fix_non_blocking_flags.mpisolvercheck.o \
 	$O/finalize_simulation.mpisolver.o \
 	$O/initialize_simulation.mpisolver.o \
 	$O/iterate_time.mpisolver.o \
