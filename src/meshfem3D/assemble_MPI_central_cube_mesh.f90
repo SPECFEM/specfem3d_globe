@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
+  subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
                                           npoin2D_cube_from_slices, &
                                           buffer_all_cube_from_slices, buffer_slices, buffer_slices2, &
                                           ibool_central_cube, &
@@ -35,15 +35,15 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
                                           vector_assemble,ndim_assemble, &
                                           iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
 
-! this version of the routine is based on blocking MPI calls
+  ! this version of the routine is based on blocking MPI calls
 
   implicit none
 
-! standard include of the MPI library
+  ! standard include of the MPI library
   include 'mpif.h'
   include 'constants.h'
 
-! for matching with central cube in inner core
+  ! for matching with central cube in inner core
   integer ichunk, nb_msgs_theor_in_cube, npoin2D_cube_from_slices
   integer, dimension(nb_msgs_theor_in_cube) :: sender_from_slices_to_cube
   double precision, dimension(npoin2D_cube_from_slices,NDIM) :: &
@@ -53,17 +53,17 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
   integer, dimension(nb_msgs_theor_in_cube,npoin2D_cube_from_slices):: ibool_central_cube
   integer receiver_cube_from_slices
 
-! local to global mapping
+  ! local to global mapping
   integer NSPEC_INNER_CORE,NSPEC2D_BOTTOM_INNER_CORE, NGLOB_INNER_CORE
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
   integer, dimension(NSPEC2D_BOTTOM_INNER_CORE) :: ibelm_bottom_inner_core
 
-! vector
+  ! vector
   integer ndim_assemble
   real(kind=CUSTOM_REAL), dimension(ndim_assemble,NGLOB_INNER_CORE) :: vector_assemble
 
-!daniel: for addressing of the slices
+  !for addressing of the slices
   integer, intent(in) :: NCHUNKS,NPROC_XI,NPROC_ETA
   integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1), intent(in) :: addressing
   integer, intent(in) :: iproc_eta
@@ -74,43 +74,43 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: array_central_cube
 
-! MPI status of messages to be received
+  ! MPI status of messages to be received
   integer msg_status(MPI_STATUS_SIZE), ier
 
-! mask
+  ! mask
   logical, dimension(NGLOB_INNER_CORE) :: mask
 
-!---
-!---  now use buffers to assemble mass matrix with central cube once and for all
-!---
+  !---
+  !---  now use buffers to assemble mass matrix with central cube once and for all
+  !---
 
-! on chunks AB and AB_ANTIPODE, receive all the messages from slices
+  ! on chunks AB and AB_ANTIPODE, receive all the messages from slices
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     do imsg = 1,nb_msgs_theor_in_cube-1
 
-! receive buffers from slices
+  ! receive buffers from slices
     sender = sender_from_slices_to_cube(imsg)
     call MPI_RECV(buffer_slices, &
                 ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
                 itag,MPI_COMM_WORLD,msg_status,ier)
 
-! copy buffer in 2D array for each slice
+  ! copy buffer in 2D array for each slice
     buffer_all_cube_from_slices(imsg,:,1:ndim_assemble) = buffer_slices(:,1:ndim_assemble)
 
     enddo
   endif
 
-! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
+  ! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
 
-! for bottom elements in contact with central cube from the slices side
+  ! for bottom elements in contact with central cube from the slices side
     ipoin = 0
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
 
       ispec = ibelm_bottom_inner_core(ispec2D)
 
-! only for DOFs exactly on surface of central cube (bottom of these elements)
+  ! only for DOFs exactly on surface of central cube (bottom of these elements)
       k = 1
       do j = 1,NGLLY
         do i = 1,NGLLX
@@ -120,7 +120,7 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
       enddo
     enddo
 
-! send buffer to central cube
+  ! send buffer to central cube
     receiver = receiver_cube_from_slices
     call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
                  MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
@@ -135,10 +135,10 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
     endif
 
 
- endif  ! end sending info to central cube
+  endif  ! end sending info to central cube
 
 
-! exchange of their bottom faces between chunks AB and AB_ANTIPODE
+  ! exchange of their bottom faces between chunks AB and AB_ANTIPODE
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     ipoin = 0
@@ -164,19 +164,18 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 
   endif
 
-!--- now we need to assemble the contributions
+  !--- now we need to assemble the contributions
 
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     do idimension = 1,ndim_assemble
-! erase contributions to central cube array
+  ! erase contributions to central cube array
       array_central_cube(:) = 0._CUSTOM_REAL
 
-! use indirect addressing to store contributions only once
-! distinguish between single and double precision for reals
+  ! use indirect addressing to store contributions only once
+  ! distinguish between single and double precision for reals
       do imsg = 1,nb_msgs_theor_in_cube-1
         do ipoin = 1,npoin2D_cube_from_slices
-!daniel: debug
           if(NPROC_XI==1) then
             if(ibool_central_cube(imsg,ipoin) > 0 ) then
               array_central_cube(ibool_central_cube(imsg,ipoin)) = buffer_all_cube_from_slices(imsg,ipoin,idimension)
@@ -190,11 +189,10 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
           endif
         enddo
       enddo
-! add the constribution of AB or AB_ANTIPODE to sum with the external slices on the edges
-! use a mask to avoid taking the same point into account several times.
+  ! add the constribution of AB or AB_ANTIPODE to sum with the external slices on the edges
+  ! use a mask to avoid taking the same point into account several times.
       mask(:) = .false.
       do ipoin = 1,npoin2D_cube_from_slices
-!daniel:debug
         if(NPROC_XI==1) then
           if( ibool_central_cube(nb_msgs_theor_in_cube,ipoin) > 0 ) then
             if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
@@ -220,7 +218,7 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
         endif
       enddo
 
-! suppress degrees of freedom already assembled at top of cube on edges
+  ! suppress degrees of freedom already assembled at top of cube on edges
       do ispec = 1,NSPEC_INNER_CORE
         if(idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) then
           k = NGLLZ
@@ -232,13 +230,12 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
         endif
       enddo
 
-! assemble contributions
+  ! assemble contributions
       vector_assemble(idimension,:) = vector_assemble(idimension,:) + array_central_cube(:)
 
-! copy sum back
+  ! copy sum back
       do imsg = 1,nb_msgs_theor_in_cube-1
         do ipoin = 1,npoin2D_cube_from_slices
-!daniel:debug
           if(NPROC_XI==1) then
             if( ibool_central_cube(imsg,ipoin) > 0 ) then
               buffer_all_cube_from_slices(imsg,ipoin,idimension) = &
@@ -257,12 +254,12 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
 
   endif
 
-!----------
+  !----------
 
-! receive info from central cube on all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
+  ! receive info from central cube on all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
   if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
 
-! receive buffers from slices
+  ! receive buffers from slices
     sender = receiver_cube_from_slices
     call MPI_RECV(buffer_slices, &
                 ndim_assemble*npoin2D_cube_from_slices,MPI_DOUBLE_PRECISION,sender, &
@@ -280,19 +277,19 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
     endif
 
 
-! for bottom elements in contact with central cube from the slices side
+  ! for bottom elements in contact with central cube from the slices side
     ipoin = 0
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
 
       ispec = ibelm_bottom_inner_core(ispec2D)
 
-! only for DOFs exactly on surface of central cube (bottom of these elements)
+  ! only for DOFs exactly on surface of central cube (bottom of these elements)
       k = 1
       do j = 1,NGLLY
         do i = 1,NGLLX
           ipoin = ipoin + 1
 
-! distinguish between single and double precision for reals
+  ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
             vector_assemble(1:ndim_assemble,ibool_inner_core(i,j,k,ispec)) = sngl(buffer_slices(ipoin,1:ndim_assemble))
           else
@@ -303,19 +300,19 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
       enddo
     enddo
 
- endif  ! end receiving info from central cube
+  endif  ! end receiving info from central cube
 
-!------- send info back from central cube to slices
+  !------- send info back from central cube to slices
 
-! on chunk AB & CHUNK_AB_ANTIPODE, send all the messages to slices
+  ! on chunk AB & CHUNK_AB_ANTIPODE, send all the messages to slices
   if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
    do imsg = 1,nb_msgs_theor_in_cube-1
 
-! copy buffer in 2D array for each slice
+  ! copy buffer in 2D array for each slice
    buffer_slices(:,1:ndim_assemble) = buffer_all_cube_from_slices(imsg,:,1:ndim_assemble)
 
-! send buffers to slices
+  ! send buffers to slices
     receiver = sender_from_slices_to_cube(imsg)
     call MPI_SEND(buffer_slices,ndim_assemble*npoin2D_cube_from_slices, &
               MPI_DOUBLE_PRECISION,receiver,itag,MPI_COMM_WORLD,ier)
@@ -323,5 +320,5 @@ subroutine assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_
    enddo
    endif
 
-end subroutine assemble_MPI_central_cube_block
+  end subroutine assemble_MPI_central_cube_block
 

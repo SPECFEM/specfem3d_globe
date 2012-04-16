@@ -1331,29 +1331,29 @@
     do i_SLS = imodulo_N_SLS+1,N_SLS,3
       R_xx_val1 = R_xx_loc(i_SLS)
       R_yy_val1 = R_yy_loc(i_SLS)
-      sigma_xx = sigma_xx - R_xx_val1
-      sigma_yy = sigma_yy - R_yy_val1
-      sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1
+      
+      i_SLS1=i_SLS+1
+      R_xx_val2 = R_xx_loc(i_SLS1)
+      R_yy_val2 = R_yy_loc(i_SLS1)
+      
+      i_SLS2 =i_SLS+2
+      R_xx_val3 = R_xx_loc(i_SLS2)
+      R_yy_val3 = R_yy_loc(i_SLS2)
+
+      sigma_xx = sigma_xx - R_xx_val1 - R_xx_val2 - R_xx_val3
+      sigma_yy = sigma_yy - R_yy_val1 - R_yy_val2 - R_yy_val3
+      sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1 &
+                          + R_xx_val2 + R_yy_val2 &
+                          + R_xx_val3 + R_yy_val3
+                          
       sigma_xy = sigma_xy - R_xy_loc(i_SLS)
       sigma_xz = sigma_xz - R_xz_loc(i_SLS)
       sigma_yz = sigma_yz - R_yz_loc(i_SLS)
 
-      i_SLS1=i_SLS+1
-      R_xx_val2 = R_xx_loc(i_SLS1)
-      R_yy_val2 = R_yy_loc(i_SLS1)
-      sigma_xx = sigma_xx - R_xx_val2
-      sigma_yy = sigma_yy - R_yy_val2
-      sigma_zz = sigma_zz + R_xx_val2 + R_yy_val2
       sigma_xy = sigma_xy - R_xy_loc(i_SLS1)
       sigma_xz = sigma_xz - R_xz_loc(i_SLS1)
       sigma_yz = sigma_yz - R_yz_loc(i_SLS1)
 
-      i_SLS2 =i_SLS+2
-      R_xx_val3 = R_xx_loc(i_SLS2)
-      R_yy_val3 = R_yy_loc(i_SLS2)
-      sigma_xx = sigma_xx - R_xx_val3
-      sigma_yy = sigma_yy - R_yy_val3
-      sigma_zz = sigma_zz + R_xx_val3 + R_yy_val3
       sigma_xy = sigma_xy - R_xy_loc(i_SLS2)
       sigma_xz = sigma_xz - R_xz_loc(i_SLS2)
       sigma_yz = sigma_yz - R_yz_loc(i_SLS2)

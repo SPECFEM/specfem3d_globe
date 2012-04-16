@@ -132,6 +132,17 @@
 
 !--------------------
 
+  subroutine read_value_clear_err()
+
+  integer ierr
+  common /param_err_common/ ierr
+
+  ierr = 0
+
+  end subroutine read_value_clear_err
+
+!--------------------
+
 !
 ! unused routines:
 !

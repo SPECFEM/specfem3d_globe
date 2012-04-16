@@ -163,8 +163,6 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: NUMBER_OF_THIS_RUN'
   call read_value_string(LOCAL_PATH, 'LOCAL_PATH')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: LOCAL_PATH'
-  call read_value_string(LOCAL_TMP_PATH, 'LOCAL_TMP_PATH')
-  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: LOCAL_TMP_PATH'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: NTSTEP_BETWEEN_OUTPUT_INFO'
   call read_value_integer(NTSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NTSTEP_BETWEEN_OUTPUT_SEISMOS')
@@ -192,6 +190,20 @@
 
   ! closes parameter file
   call close_parameter_file()
+
+  ! optional parameters:
+
+  ! initializes
+  LOCAL_TMP_PATH = LOCAL_PATH
+  
+  ! opens file Par_file
+  call open_parameter_file()
+
+  call read_value_string(LOCAL_TMP_PATH, 'LOCAL_TMP_PATH')
+  call read_value_clear_err()
+  
+  ! close parameter file
+  call close_parameter_file()  
 
   end subroutine read_parameter_file
 

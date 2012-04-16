@@ -218,26 +218,30 @@
        if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_crust_mantle()
 
        ! add the sources
-       if (SIMULATION_TYPE == 1 .and. NOISE_TOMOGRAPHY == 0 .and. nsources_local > 0) &
-            call compute_add_sources()
 
        ! add adjoint sources
        if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
           if( nadj_rec_local > 0 ) call compute_add_sources_adjoint()
        endif
 
-       ! add sources for backward/reconstructed wavefield
-       if (SIMULATION_TYPE == 3 .and. NOISE_TOMOGRAPHY == 0 .and. nsources_local > 0) &
-            call compute_add_sources_backward()
-
-       ! NOISE_TOMOGRAPHY
+       ! add the sources
        select case( NOISE_TOMOGRAPHY )
+       case( 0 )
+          ! regular forward or backward simulation, no noise tomography simulation
+          ! adds sources for forward simulation
+          if (SIMULATION_TYPE == 1 .and. nsources_local > 0) &
+            call compute_add_sources()
+          ! add sources for backward/reconstructed wavefield
+          if (SIMULATION_TYPE == 3 .and. nsources_local > 0) &
+            call compute_add_sources_backward()
+                   
        case( 1 )
           ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
           ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
           ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
           ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
           call noise_add_source_master_rec()
+          
        case( 2 )
           ! second step of noise tomography, i.e., read the surface movie saved at every timestep
           ! use the movie to drive the ensemble forward wavefield
@@ -247,12 +251,14 @@
           ! note the ensemble forward sources are generally distributed on the surface of the earth
           ! that's to say, the ensemble forward source is kind of a surface force density, not a body force density
           ! therefore, we must add it here, before applying the inverse of mass matrix
+          
        case( 3 )
           ! third step of noise tomography, i.e., read the surface movie saved at every timestep
           ! use the movie to reconstruct the ensemble forward wavefield
           ! the ensemble adjoint wavefield is done as usual
           ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
           call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,it)
+          
        end select
 
 
@@ -495,21 +501,18 @@
   ! couples ocean with crust mantle
   ! (updates acceleration with ocean load approximation)
   if(OCEANS_VAL) then
-     if(.NOT. GPU_MODE) then
-        ! on CPU
-
-        call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
+    if(.NOT. GPU_MODE) then
+      ! on CPU
+      call compute_coupling_ocean(accel_crust_mantle,b_accel_crust_mantle, &
              rmass_crust_mantle,rmass_ocean_load,normal_top_crust_mantle, &
              ibool_crust_mantle,ibelm_top_crust_mantle, &
              updated_dof_ocean_load, &
              SIMULATION_TYPE,NSPEC2D_TOP(IREGION_CRUST_MANTLE))
 
-     else
-        ! on GPU
-
-        call compute_coupling_ocean_cuda(Mesh_pointer)
-
-     endif
+    else
+      ! on GPU
+      call compute_coupling_ocean_cuda(Mesh_pointer)
+    endif
   endif
 
   ! Newmark time scheme:
@@ -539,7 +542,7 @@
   subroutine compute_forces_el_update_accel(NGLOB,veloc_crust_mantle,accel_crust_mantle, &
                                            two_omega_earth,rmass_crust_mantle)
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants_solver,only: CUSTOM_REAL,NDIM
 
 #ifdef _HANDOPT
   use specfem_par,only: imodulo_NGLOB_CRUST_MANTLE4
@@ -619,7 +622,7 @@
                                             NGLOB_IC,veloc_inner_core,accel_inner_core, &
                                             deltatover2,two_omega_earth,rmass_inner_core)
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants_solver,only: CUSTOM_REAL,NDIM
 
 #ifdef _HANDOPT
   use specfem_par,only: imodulo_NGLOB_CRUST_MANTLE4,imodulo_NGLOB_INNER_CORE

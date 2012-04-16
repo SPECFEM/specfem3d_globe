@@ -68,7 +68,8 @@
     write(IMAIN,*) 'model setup successfully read in'
     write(IMAIN,*)
   endif
-
+  call sync_all()
+  
   end subroutine setup_model
 
 !

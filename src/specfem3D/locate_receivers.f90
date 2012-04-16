@@ -34,7 +34,7 @@
                              yr,jda,ho,mi,sec, &
                              theta_source,phi_source,NCHUNKS,ELLIPTICITY)
 
-  use constants
+  use constants_solver
   use specfem_par,only: &
     myrank,DT,NSTEP, &
     xigll,yigll,zigll, &
@@ -106,14 +106,15 @@
   double precision etax,etay,etaz
   double precision gammax,gammay,gammaz
 
-! timer MPI
+  ! timer MPI
   double precision time_start,tCPU
 
-! use dynamic allocation
+  ! use dynamic allocation
   double precision, dimension(:), allocatable :: final_distance
   double precision, dimension(:,:), allocatable :: final_distance_all
-  double precision distmin,final_distance_max
 
+  double precision distmin,final_distance_max
+  
 ! receiver information
 ! timing information for the stations
 ! station information for writing the seismograms
@@ -130,11 +131,18 @@
   integer, allocatable, dimension(:,:) :: ispec_selected_rec_all
   double precision, allocatable, dimension(:,:) :: xi_receiver_all,eta_receiver_all,gamma_receiver_all
 
+  double precision x_target_rec,y_target_rec,z_target_rec
+
   double precision typical_size
   logical located_target
 
   character(len=150) OUTPUT_FILES
   character(len=2) bic
+
+  integer,parameter :: MIDX = (NGLLX+1)/2
+  integer,parameter :: MIDY = (NGLLY+1)/2
+  integer,parameter :: MIDZ = (NGLLZ+1)/2
+
 
   ! get MPI starting time
   time_start = MPI_WTIME()
@@ -311,9 +319,13 @@
     r0 = r0 - stbur(irec)/R_EARTH
 
     ! compute the Cartesian position of the receiver
-    x_target(irec) = r0*sin(theta)*cos(phi)
-    y_target(irec) = r0*sin(theta)*sin(phi)
-    z_target(irec) = r0*cos(theta)
+    x_target_rec = r0*sin(theta)*cos(phi)
+    y_target_rec = r0*sin(theta)*sin(phi)
+    z_target_rec = r0*cos(theta)
+
+    x_target(irec) = x_target_rec
+    y_target(irec) = y_target_rec
+    z_target(irec) = z_target_rec
 
     ! would write out desired target locations of receivers
     !if (myrank == 0) write(IOVTK,*) sngl(x_target(irec)), sngl(y_target(irec)), sngl(z_target(irec))
@@ -324,10 +336,10 @@
     do ispec=1,nspec
 
       ! exclude elements that are too far from target
-      iglob = ibool(1,1,1,ispec)
-      dist = dsqrt((x_target(irec) - dble(xstore(iglob)))**2 &
-                 + (y_target(irec) - dble(ystore(iglob)))**2 &
-                 + (z_target(irec) - dble(zstore(iglob)))**2)
+      iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+      dist = dsqrt((x_target_rec - dble(xstore(iglob)))**2 &
+                 + (y_target_rec - dble(ystore(iglob)))**2 &
+                 + (z_target_rec - dble(zstore(iglob)))**2)
       if(USE_DISTANCE_CRITERION .and. dist > typical_size) cycle
 
       ! loop only on points inside the element
@@ -337,9 +349,9 @@
           do i=2,NGLLX-1
 
             iglob = ibool(i,j,k,ispec)
-            dist = dsqrt((x_target(irec)-dble(xstore(iglob)))**2 &
-                        +(y_target(irec)-dble(ystore(iglob)))**2 &
-                        +(z_target(irec)-dble(zstore(iglob)))**2)
+            dist = dsqrt((x_target_rec - dble(xstore(iglob)))**2 &
+                        +(y_target_rec - dble(ystore(iglob)))**2 &
+                        +(z_target_rec - dble(zstore(iglob)))**2)
 
             !  keep this point if it is closer to the receiver
             if(dist < distmin) then
@@ -362,9 +374,9 @@
     ! therefore use first element only for fictitious iterative search
     if(.not. located_target) then
       ispec_selected_rec(irec)=1
-      ix_initial_guess(irec) = 2
-      iy_initial_guess(irec) = 2
-      iz_initial_guess(irec) = 2
+      ix_initial_guess(irec) = MIDX
+      iy_initial_guess(irec) = MIDY
+      iz_initial_guess(irec) = MIDZ
     endif
 
   ! end of loop on all the stations
@@ -424,24 +436,18 @@
 ! find the best (xi,eta) for each receiver
 ! ****************************************
 
-! loop on all the receivers to iterate in that slice
+  ! loop on all the receivers to iterate in that slice
   do irec = 1,nrec
 
     ispec_iterate = ispec_selected_rec(irec)
 
-    ! use initial guess in xi and eta
-    xi = xigll(ix_initial_guess(irec))
-    eta = yigll(iy_initial_guess(irec))
-    gamma = zigll(iz_initial_guess(irec))
-
     ! define coordinates of the control points of the element
-
     do ia=1,NGNOD
 
       if(iaddx(ia) == 0) then
         iax = 1
       else if(iaddx(ia) == 1) then
-        iax = (NGLLX+1)/2
+        iax = MIDX
       else if(iaddx(ia) == 2) then
         iax = NGLLX
       else
@@ -451,7 +457,7 @@
       if(iaddy(ia) == 0) then
         iay = 1
       else if(iaddy(ia) == 1) then
-        iay = (NGLLY+1)/2
+        iay = MIDY
       else if(iaddy(ia) == 2) then
         iay = NGLLY
       else
@@ -461,7 +467,7 @@
       if(iaddr(ia) == 0) then
         iaz = 1
       else if(iaddr(ia) == 1) then
-        iaz = (NGLLZ+1)/2
+        iaz = MIDZ
       else if(iaddr(ia) == 2) then
         iaz = NGLLZ
       else
@@ -475,6 +481,15 @@
 
     enddo
 
+    ! use initial guess in xi and eta
+    xi = xigll(ix_initial_guess(irec))
+    eta = yigll(iy_initial_guess(irec))
+    gamma = zigll(iz_initial_guess(irec))
+
+    x_target_rec = x_target(irec)
+    y_target_rec = y_target(irec)
+    z_target_rec = z_target(irec)
+
     ! iterate to solve the non linear system
     do iter_loop = 1,NUM_ITER
 
@@ -483,12 +498,12 @@
 
       ! recompute jacobian for the new point
       call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                             xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
       ! compute distance to target location
-      dx = - (x - x_target(irec))
-      dy = - (y - y_target(irec))
-      dz = - (z - z_target(irec))
+      dx = - (x - x_target_rec)
+      dy = - (y - y_target_rec)
+      dz = - (z - z_target_rec)
 
       ! compute increments
       ! gamma does not change since we know the receiver is exactly on the surface
@@ -521,7 +536,7 @@
 
     ! compute final coordinates of point found
     call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
     ! store xi,eta and x,y,z of point found
     xi_receiver(irec) = xi
@@ -531,13 +546,14 @@
     y_found(irec) = y
     z_found(irec) = z
 
-! compute final distance between asked and found (converted to km)
-    final_distance(irec) = dsqrt((x_target(irec)-x_found(irec))**2 + &
-        (y_target(irec)-y_found(irec))**2 + (z_target(irec)-z_found(irec))**2)*R_EARTH/1000.d0
+    ! compute final distance between asked and found (converted to km)
+    final_distance(irec) = dsqrt((x_target_rec-x)**2 + &
+                                 (y_target_rec-y)**2 + &
+                                 (z_target_rec-z)**2)*R_EARTH/1000.d0
 
   enddo
 
-! for MPI version, gather information from all the nodes
+  ! for MPI version, gather information from all the nodes
   ispec_selected_rec_all(:,:) = -1
   call MPI_GATHER(ispec_selected_rec,nrec,MPI_INTEGER,ispec_selected_rec_all,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
@@ -556,7 +572,7 @@
   call MPI_GATHER(z_found,nrec,MPI_DOUBLE_PRECISION,z_found_all,nrec, &
                   MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-! this is executed by main process only
+  ! this is executed by main process only
   if(myrank == 0) then
 
     ! check that the gather operation went well
@@ -690,17 +706,20 @@
       close(27)
     endif
 
-    ! elapsed time since beginning of mesh generation
-    tCPU = MPI_WTIME() - time_start
-    write(IMAIN,*)
-    write(IMAIN,*) 'Elapsed time for receiver detection in seconds = ',tCPU
-    write(IMAIN,*)
-    write(IMAIN,*) 'End of receiver detection - done'
-    write(IMAIN,*)
-
   endif    ! end of section executed by main process only
 
-! main process broadcasts the results to all the slices
+  ! deallocate arrays
+  deallocate(epidist)
+  deallocate(ix_initial_guess,iy_initial_guess,iz_initial_guess)
+  deallocate(x_target,y_target,z_target)
+  deallocate(x_found,y_found,z_found)
+  deallocate(final_distance)
+  deallocate(ispec_selected_rec_all)
+  deallocate(xi_receiver_all,eta_receiver_all,gamma_receiver_all)
+  deallocate(x_found_all,y_found_all,z_found_all)
+  deallocate(final_distance_all)
+
+  ! main process broadcasts the results to all the slices
   call MPI_BCAST(nrec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   call MPI_BCAST(islice_selected_rec,nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -718,26 +737,16 @@
   call MPI_BCAST(stbur,nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(nu,nrec*3*3,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
 
-  ! deallocate arrays
-  deallocate(epidist)
-  deallocate(ix_initial_guess)
-  deallocate(iy_initial_guess)
-  deallocate(iz_initial_guess)
-  deallocate(x_target)
-  deallocate(y_target)
-  deallocate(z_target)
-  deallocate(x_found)
-  deallocate(y_found)
-  deallocate(z_found)
-  deallocate(final_distance)
-  deallocate(ispec_selected_rec_all)
-  deallocate(xi_receiver_all)
-  deallocate(eta_receiver_all)
-  deallocate(gamma_receiver_all)
-  deallocate(x_found_all)
-  deallocate(y_found_all)
-  deallocate(z_found_all)
-  deallocate(final_distance_all)
+  ! elapsed time since beginning of mesh generation
+  if( myrank == 0 ) then
+    tCPU = MPI_WTIME() - time_start
+    write(IMAIN,*)
+    write(IMAIN,*) 'Elapsed time for receiver detection in seconds = ',tCPU
+    write(IMAIN,*)
+    write(IMAIN,*) 'End of receiver detection - done'
+    write(IMAIN,*)
+  endif
+  call sync_all()
 
   end subroutine locate_receivers
 

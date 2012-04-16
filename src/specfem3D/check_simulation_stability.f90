@@ -33,7 +33,7 @@
                           SIMULATION_TYPE,OUTPUT_FILES,time_start,DT,t0,NSTEP, &
                           myrank)
 
-  use constants
+  use constants_solver
   use specfem_par,only: GPU_MODE,Mesh_pointer
 
   implicit none

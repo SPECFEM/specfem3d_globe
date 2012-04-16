@@ -2041,13 +2041,13 @@ void FC_FUNC_(prepare_oceans_device,
 
   // mass matrix
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rmass_ocean_load),
-             sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS),4501);
+                                     sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS),4501);
   print_CUDA_error_if_any(cudaMemcpy(mp->d_rmass_ocean_load,h_rmass_ocean_load,
-             sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS,cudaMemcpyHostToDevice),4502);
+                                     sizeof(realw)*mp->NGLOB_CRUST_MANTLE_OCEANS,cudaMemcpyHostToDevice),4502);
 
   // temporary global array: used to synchronize updates on global accel array
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_updated_dof_ocean_load),
-             sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),4502);
+                                     sizeof(int)*mp->NGLOB_CRUST_MANTLE_OCEANS),4502);
 
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

@@ -1839,7 +1839,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
       //}
 
       Kernel_2_crust_mantle(nb_blocks_to_compute,mp,
-			    *deltat,
+                            *deltat,
                             *iphase,
                             mp->d_ibool_crust_mantle + color_offset_nonpadded,
                             mp->d_ispec_is_tiso_crust_mantle + color_offset_ispec,
@@ -1919,7 +1919,7 @@ void FC_FUNC_(compute_forces_crust_mantle_cuda,
     // no mesh coloring: uses atomic updates
 
     Kernel_2_crust_mantle(num_elements,mp,
-			  *deltat,
+                          *deltat,
                           *iphase,
                           mp->d_ibool_crust_mantle,
                           mp->d_ispec_is_tiso_crust_mantle,

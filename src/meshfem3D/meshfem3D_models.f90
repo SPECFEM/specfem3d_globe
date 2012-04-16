@@ -25,8 +25,17 @@
 !
 !=====================================================================
 
+module constants
 
-  module meshfem3D_models_par
+  include "constants.h"
+
+end module constants
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+module meshfem3D_models_par
 
 !---
 !
@@ -34,9 +43,10 @@
 !
 !---
 
+  use constants
+  
   implicit none
 
-  include "constants.h"
 
 ! model_aniso_mantle_variables
   type model_aniso_mantle_variables
@@ -432,7 +442,7 @@
 ! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
   logical,parameter :: USE_1D_REFERENCE = .false.
 
-  end module meshfem3D_models_par
+end module meshfem3D_models_par
 
 
 !

@@ -33,13 +33,12 @@
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
-  use constants
+  use constants_solver
 
   use specfem_par,only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT,wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_rho_g_over_kappa_fluid,d_ln_density_dr_table, &
-    MOVIE_VOLUME, &
-    npoin2D_max_all_CM_IC
+    MOVIE_VOLUME
 
   use specfem_par_outercore,only: &
     xstore => xstore_outer_core,ystore => ystore_outer_core,zstore => zstore_outer_core, &
@@ -47,14 +46,10 @@
     etax => etax_outer_core,etay => etay_outer_core,etaz => etaz_outer_core, &
     gammax => gammax_outer_core,gammay => gammay_outer_core,gammaz => gammaz_outer_core, &
     ibool => ibool_outer_core, &
-    iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-    npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-    iboolfaces_outer_core,iboolcorner_outer_core, &
     phase_ispec_inner => phase_ispec_inner_outer_core, &
     nspec_outer => nspec_outer_outer_core, &
     nspec_inner => nspec_inner_outer_core
-
-
+    
   implicit none
 
   integer :: NSPEC,NGLOB

@@ -433,11 +433,13 @@
     stop 'need six chunks to include central cube'
 
   ! check that sphere can be cut into slices without getting negative Jacobian
-  if(NEX_XI < 48) &
-    stop 'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian'
-  if(NEX_ETA < 48) &
-    stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
-
+  if(NCHUNKS == 6 ) then
+    if(NEX_XI < 48) &
+      stop 'NEX_XI must be greater than 48 to cut the sphere into slices with positive Jacobian'
+    if(NEX_ETA < 48) &
+      stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
+  endif
+  
   ! check that topology is correct if more than two chunks
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) &
     stop 'must have NEX_XI = NEX_ETA for more than two chunks'

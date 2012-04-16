@@ -27,7 +27,7 @@
 !
 ! United States and French Government Sponsorship Acknowledged.
 
-module constants
+module constants_solver
 
   include "constants.h"
 
@@ -35,7 +35,7 @@ module constants
   ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
 
-end module constants
+end module constants_solver
 
 !=====================================================================
 
@@ -43,7 +43,7 @@ module specfem_par
 
 ! main parameter module for specfem simulations
 
-  use constants
+  use constants_solver
 
   implicit none
 
@@ -254,10 +254,6 @@ module specfem_par
   logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
   double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
-  ! temporary arrays for elements on slices or edges
-  logical, dimension(:),allocatable :: is_on_a_slice_edge_crust_mantle, &
-    is_on_a_slice_edge_inner_core,is_on_a_slice_edge_outer_core
-
   !-----------------------------------------------------------------
   ! MPI partitions
   !-----------------------------------------------------------------
@@ -276,60 +272,6 @@ module specfem_par
   !-----------------------------------------------------------------
   ! assembly
   !-----------------------------------------------------------------
-
-  ! ---- arrays to assemble between chunks
-  ! communication pattern for faces between chunks
-  integer, dimension(NUMMSGS_FACES_VAL) :: iprocfrom_faces,iprocto_faces,imsg_type
-  ! communication pattern for corners between chunks
-  integer, dimension(NCORNERSCHUNKS_VAL) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
-
-  ! indirect addressing for each message for faces and corners of the chunks
-  ! a given slice can belong to at most one corner and at most two faces
-  integer :: NGLOB2DMAX_XY
-
-  ! this for non blocking MPI
-
-  ! buffers for send and receive between faces of the slices and the chunks
-  ! we use the same buffers to assemble scalars and vectors because vectors are
-  ! always three times bigger and therefore scalars can use the first part
-  ! of the vector buffer in memory even if it has an additional index here
-  integer :: npoin2D_max_all_CM_IC
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_faces,buffer_received_faces, &
-                                                           b_buffer_send_faces,b_buffer_received_faces
-
-  ! buffers for send and receive between corners of the chunks
-  real(kind=CUSTOM_REAL), dimension(NGLOB1D_RADIAL_CM) :: &
-    buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-    b_buffer_send_chunkcorn_scalar,b_buffer_recv_chunkcorn_scalar
-
-  ! size of buffers is the sum of two sizes because we handle two regions in the same MPI call
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC) :: &
-     buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
-     b_buffer_send_chunkcorn_vector,b_buffer_recv_chunkcorn_vector
-
-  ! request ids for non-blocking MPI
-  integer :: request_send,request_receive
-  integer, dimension(NUMFACES_SHARED) :: request_send_array,request_receive_array
-  integer :: request_send_cc,request_receive_cc
-  integer, dimension(NPROC_XI_VAL+4) :: request_send_array_cc,request_receive_array_cc
-
-  integer :: b_request_send,b_request_receive
-  integer, dimension(NUMFACES_SHARED) :: b_request_send_array,b_request_receive_array
-  integer :: b_request_send_cc,b_request_receive_cc
-  integer, dimension(NPROC_XI_VAL+4) :: b_request_send_array_cc,b_request_receive_array_cc
-
-
-  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
-
-  ! number of faces between chunks
-  integer :: NUMMSGS_FACES
-
-  ! number of corners between chunks
-  integer :: NCORNERSCHUNKS
-
-  ! number of message types
-  integer :: NUM_MSG_TYPES
-
 
   ! collected MPI interfaces
   ! MPI crust/mantle mesh
@@ -368,6 +310,10 @@ module specfem_par
   integer, dimension(:), allocatable :: request_send_scalar_outer_core,request_recv_scalar_outer_core
   integer, dimension(:), allocatable :: b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core
 
+
+  ! temporary array
+  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
+
   !-----------------------------------------------------------------
   ! gpu
   !-----------------------------------------------------------------
@@ -385,7 +331,7 @@ module specfem_par_crustmantle
 
 ! parameter module for elastic solver in crust/mantle region
 
-  use constants
+  use constants_solver
   implicit none
 
   ! ----------------- crust, mantle and oceans ---------------------
@@ -436,13 +382,9 @@ module specfem_par_crustmantle
     one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT4) :: &
     factor_common_crust_mantle
-!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
-!    R_memory_crust_mantle
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ATTENUAT) :: &
     R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle,R_xz_crust_mantle,R_yz_crust_mantle
 
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
-!    epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
@@ -451,13 +393,9 @@ module specfem_par_crustmantle
     eps_trace_over_3_crust_mantle
 
   ! ADJOINT
-!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
-!    b_R_memory_crust_mantle
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
     b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle,b_R_xz_crust_mantle,b_R_yz_crust_mantle
 
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
-!    b_epsilondev_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
     b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle
@@ -496,27 +434,11 @@ module specfem_par_crustmantle
   integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_CM) :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
   integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_CM) :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
 
-  ! daniel: not sure why name ...5 and dimensions with one additional?
-  !real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: absorb_xmin_crust_mantle5, &
-  !  absorb_xmax_crust_mantle5, absorb_ymin_crust_mantle5, absorb_ymax_crust_mantle5
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
     absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle
 
   integer :: reclen_xmin_crust_mantle, reclen_xmax_crust_mantle, &
             reclen_ymin_crust_mantle,reclen_ymax_crust_mantle
-
-  ! assembly
-  integer :: npoin2D_faces_crust_mantle(NUMFACES_SHARED)
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
-
-  ! indirect addressing for each corner of the chunks
-  integer, dimension(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED) :: iboolcorner_crust_mantle
-
-  ! 2-D addressing and buffers for summation between slices
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_CM) :: iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_CM) :: iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle
-
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
 
   ! kernels
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
@@ -553,6 +475,10 @@ module specfem_par_crustmantle
   integer :: nspec_inner_crust_mantle,nspec_outer_crust_mantle
   integer, dimension(:,:), allocatable :: phase_ispec_inner_crust_mantle
 
+  ! mesh coloring
+  integer :: num_colors_outer_crust_mantle,num_colors_inner_crust_mantle
+  integer,dimension(:),allocatable :: num_elem_colors_crust_mantle
+
 end module specfem_par_crustmantle
 
 !=====================================================================
@@ -561,7 +487,7 @@ module specfem_par_innercore
 
 ! parameter module for elastic solver in inner core region
 
-  use constants
+  use constants_solver
   implicit none
 
   ! ----------------- inner core ---------------------
@@ -584,8 +510,6 @@ module specfem_par_innercore
 
   ! local to global mapping
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
-  ! only needed for compute_boundary_kernel() routine
-  !logical, dimension(NSPEC_INNER_CORE) :: ispec_is_tiso_inner_core
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: rmass_inner_core
@@ -602,13 +526,9 @@ module specfem_par_innercore
     one_minus_sum_beta_inner_core, factor_scale_inner_core
   real(kind=CUSTOM_REAL), dimension(N_SLS,ATT1,ATT2,ATT3,ATT5) :: &
     factor_common_inner_core
-!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
-!    R_memory_inner_core
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ATTENUATION) :: &
     R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core
 
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: &
-!    epsilondev_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT) :: &
     epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
     epsilondev_xz_inner_core,epsilondev_yz_inner_core
@@ -616,14 +536,9 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: &
     eps_trace_over_3_inner_core
   ! ADJOINT
-!  real(kind=CUSTOM_REAL), dimension(5,N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: &
-!    b_R_memory_inner_core
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: &
     b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
 
-
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
-!    b_epsilondev_inner_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
     b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
     b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core
@@ -632,33 +547,13 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
     b_eps_trace_over_3_inner_core
 
-  ! assembly
-  ! for matching with central cube in inner core
-  integer, dimension(:), allocatable :: sender_from_slices_to_cube
-  integer, dimension(:,:), allocatable :: ibool_central_cube
-  double precision, dimension(:,:), allocatable :: buffer_slices,b_buffer_slices,buffer_slices2
-  double precision, dimension(:,:,:), allocatable :: buffer_all_cube_from_slices,b_buffer_all_cube_from_slices
-  integer nb_msgs_theor_in_cube,non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,receiver_cube_from_slices
-
+  ! coupling/boundary surfaces
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
             nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
-
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_IC) :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
   integer, dimension(NSPEC2DMAX_YMIN_YMAX_IC) :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
   integer, dimension(NSPEC2D_BOTTOM_IC) :: ibelm_bottom_inner_core
   integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
-
-  integer :: npoin2D_faces_inner_core(NUMFACES_SHARED)
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
-
-  ! indirect addressing for each corner of the chunks
-  integer, dimension(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED) :: iboolcorner_inner_core
-
-  ! 2-D addressing and buffers for summation between slices
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_IC) :: iboolleft_xi_inner_core,iboolright_xi_inner_core
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_IC) :: iboolleft_eta_inner_core,iboolright_eta_inner_core
-
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
 
   ! adjoint kernels
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
@@ -673,6 +568,9 @@ module specfem_par_innercore
   integer :: nspec_inner_inner_core,nspec_outer_inner_core
   integer, dimension(:,:), allocatable :: phase_ispec_inner_inner_core
 
+  ! mesh coloring
+  integer :: num_colors_outer_inner_core,num_colors_inner_inner_core
+  integer,dimension(:),allocatable :: num_elem_colors_inner_core
 
 end module specfem_par_innercore
 
@@ -682,7 +580,7 @@ module specfem_par_outercore
 
 ! parameter module for acoustic solver in outer core region
 
-  use constants
+  use constants_solver
   implicit none
 
   ! ----------------- outer core ---------------------
@@ -699,11 +597,6 @@ module specfem_par_outercore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
     rhostore_outer_core,kappavstore_outer_core
-
-  ! local to global mapping
-  !integer, dimension(NSPEC_OUTER_CORE) :: idoubling_outer_core
-  ! only needed for compute_boundary_kernel()
-  !logical, dimension(NSPEC_OUTER_CORE) :: ispec_is_tiso_outer_core
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: rmass_outer_core
@@ -751,19 +644,6 @@ module specfem_par_outercore
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
 
-  ! assembly
-  integer :: npoin2D_faces_outer_core(NUMFACES_SHARED)
-  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
-
-  ! indirect addressing for each corner of the chunks
-  integer, dimension(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED) :: iboolcorner_outer_core
-
-  ! 2-D addressing and buffers for summation between slices
-  integer, dimension(NGLOB2DMAX_XMIN_XMAX_OC) :: iboolleft_xi_outer_core,iboolright_xi_outer_core
-  integer, dimension(NGLOB2DMAX_YMIN_YMAX_OC) :: iboolleft_eta_outer_core,iboolright_eta_outer_core
-
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_outer_core
-
   ! adjoint kernels
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: &
     rho_kl_outer_core,alpha_kl_outer_core
@@ -784,6 +664,9 @@ module specfem_par_outercore
   integer :: nspec_inner_outer_core,nspec_outer_outer_core
   integer, dimension(:,:), allocatable :: phase_ispec_inner_outer_core
 
+  ! mesh coloring
+  integer :: num_colors_outer_outer_core,num_colors_inner_outer_core
+  integer,dimension(:),allocatable :: num_elem_colors_outer_core
 
 end module specfem_par_outercore
 
@@ -794,7 +677,7 @@ module specfem_par_movie
 
 ! parameter module for movies/shakemovies
 
-  use constants
+  use constants_solver
 
   implicit none
 

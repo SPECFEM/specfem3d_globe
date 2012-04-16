@@ -25,17 +25,48 @@
 !
 !=====================================================================
 
+  module create_regions_mesh_par
+  
+  use constants,only: NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,NDIM,NDIM2D
+  
+  ! topology of the elements
+  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
+
+  ! Gauss-Lobatto-Legendre points and weights of integration
+  double precision, dimension(NGLLX) :: xigll,wxgll
+  double precision, dimension(NGLLY) :: yigll,wygll
+  double precision, dimension(NGLLZ) :: zigll,wzgll
+
+  ! 3D shape functions and their derivatives
+  double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
+  double precision, dimension(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ) :: dershape3D
+
+  ! 2D shape functions and their derivatives
+  double precision, dimension(NGNOD2D,NGLLY,NGLLZ) :: shape2D_x
+  double precision, dimension(NGNOD2D,NGLLX,NGLLZ) :: shape2D_y
+  double precision, dimension(NGNOD2D,NGLLX,NGLLY) :: shape2D_bottom,shape2D_top
+  double precision, dimension(NDIM2D,NGNOD2D,NGLLY,NGLLZ) :: dershape2D_x
+  double precision, dimension(NDIM2D,NGNOD2D,NGLLX,NGLLZ) :: dershape2D_y
+  double precision, dimension(NDIM2D,NGNOD2D,NGLLX,NGLLY) :: dershape2D_bottom,dershape2D_top  
+  
+  end module create_regions_mesh_par
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine create_regions_mesh(iregion_code,ibool,idoubling,is_on_a_slice_edge, &
                           xstore,ystore,zstore,rmins,rmaxs, &
-                          iproc_xi,iproc_eta,ichunk,nspec,nspec_tiso, &
+                          iproc_xi,iproc_eta,ichunk, &
+                          nspec,nspec_tiso, &
                           volume_local,area_local_bottom,area_local_top, &
                           nglob_theor,npointot, &
-                          NSTEP,DT, &
                           NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                           NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                          NPROC_XI,NPROC_ETA,NSPEC2D_XI_FACE, &
-                          NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
+                          NPROC_XI,NPROC_ETA, &
+                          NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE,NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
                           myrank,LOCAL_PATH,rotation_matrix,ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,&
                           SAVE_MESH_FILES,NCHUNKS,INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS, &
                           R_CENTRAL_CUBE,RICB,RHO_OCEANS,RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER,&
@@ -49,54 +80,21 @@
 ! creates the different regions of the mesh
 
   use meshfem3D_models_par
-
+  use create_regions_mesh_par  
   implicit none
 
-!****************************************************************************************************
-! Mila
-
-!  include "constants.h"
-! standard include of the MPI library
-  include 'mpif.h'
-
-!****************************************************************************************************
-
-  ! this to cut the doubling brick
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
-  integer :: offset_proc_xi,offset_proc_eta
-
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
-  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
-
-  integer :: ner_without_doubling,ilayer,ilayer_loop, &
-               ifirst_region,ilast_region,ratio_divide_central_cube
-  integer, dimension(:), allocatable :: perm_layer
+  ! code for the four regions of the mesh
+  integer :: iregion_code
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,nspec_tiso,nspec_stacey,nspec_actually,nspec_att
+  integer :: nspec,nspec_tiso
+  integer :: nspec_stacey,nspec_actually,nspec_att
 
-  integer NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,NCHUNKS
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, dimension(nspec) :: idoubling
 
-  integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
-
-  integer NPROC_XI,NPROC_ETA
-
-  integer npointot
-
-  logical SAVE_MESH_FILES
-
-  logical INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS
-
-  double precision R_CENTRAL_CUBE,RICB,RCMB,R670,RMOHO, &
-          RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN, &
-          RMOHO_FICTITIOUS_IN_MESHER
-
-  double precision RHO_OCEANS
-
-  character(len=150) LOCAL_PATH,errmsg
+  ! this for non blocking MPI
+  logical, dimension(nspec) :: is_on_a_slice_edge
 
   ! arrays with the mesh in double precision
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
@@ -104,33 +102,64 @@
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
   ! meshing parameters
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs  
 
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  integer :: iproc_xi,iproc_eta,ichunk
 
-  ! topology of the elements
-  integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
+  ! check area and volume of the final mesh
+  double precision :: area_local_bottom,area_local_top
+  double precision :: volume_local
 
-  ! code for the four regions of the mesh
-  integer iregion_code
+  integer :: nglob_theor,npointot
 
-  ! Gauss-Lobatto-Legendre points and weights of integration
-  double precision, dimension(:), allocatable :: xigll,yigll,zigll,wxgll,wygll,wzgll
+  integer :: NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
+  integer :: NPROC_XI,NPROC_ETA
+  
+  ! this to cut the doubling brick
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
 
-  ! 3D shape functions and their derivatives
-  double precision, dimension(:,:,:,:), allocatable :: shape3D
-  double precision, dimension(:,:,:,:,:), allocatable :: dershape3D
+  ! proc numbers for MPI
+  integer myrank
 
-  ! 2D shape functions and their derivatives
-  double precision, dimension(:,:,:), allocatable :: shape2D_x,shape2D_y, &
-    shape2D_bottom,shape2D_top
-  double precision, dimension(:,:,:,:), allocatable :: dershape2D_x,dershape2D_y, &
-    dershape2D_bottom,dershape2D_top
+  character(len=150) :: LOCAL_PATH
 
-  integer, dimension(nspec) :: idoubling
+  ! rotation matrix from Euler angles
+  double precision, dimension(NDIM,NDIM) :: rotation_matrix
 
-! this for non blocking MPI
-  logical, dimension(nspec) :: is_on_a_slice_edge
+  double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+
+  logical :: SAVE_MESH_FILES
+  
+  integer :: NCHUNKS
+
+  logical :: INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS
+
+  double precision :: R_CENTRAL_CUBE,RICB
+  double precision :: RHO_OCEANS  
+  double precision :: RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER, &
+    RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
+    
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
+
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
+  logical, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: this_region_has_a_doubling
+
+  integer :: ratio_divide_central_cube
+
+  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  integer :: offset_proc_xi,offset_proc_eta
+
+  ! now perform two passes in this part to be able to save memory
+  integer :: ipass
+
+  ! local parameters
+
+  integer :: ner_without_doubling,ilayer,ilayer_loop, &
+               ifirst_region,ilast_region
+  integer, dimension(:), allocatable :: perm_layer
 
   ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
   double precision rmin,rmax
@@ -153,19 +182,12 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: xixstore,xiystore,xizstore, &
     etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
-  ! proc numbers for MPI
-  integer myrank
-
-  ! check area and volume of the final mesh
-  double precision area_local_bottom,area_local_top
-  double precision volume_local
-
   ! variables for creating array ibool (some arrays also used for AVS or DX files)
   integer, dimension(:), allocatable :: locval
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: xp,yp,zp
-
-  integer nglob,nglob_theor,ieoff,ilocnum,ier
+  integer :: nglob
+  integer :: ieoff,ilocnum,ier
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass
@@ -193,19 +215,9 @@
   integer, dimension(:,:), allocatable :: nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_vp,rho_vs
 
-  ! name of the database file
-  character(len=150) prname
 
   ! number of elements on the boundaries
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
-
-  integer i,j,k,ispec
-  integer iproc_xi,iproc_eta,ichunk
-
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
-
-  ! rotation matrix from Euler angles
-  double precision, dimension(NDIM,NDIM) :: rotation_matrix
 
   ! attenuation
   double precision, dimension(:,:,:,:),   allocatable :: Qmu_store
@@ -213,7 +225,6 @@
   double precision, dimension(N_SLS)                  :: tau_s
   double precision  T_c_source
 
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
   logical :: USE_ONE_LAYER_SB
 
   integer NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
@@ -223,34 +234,9 @@
 
   integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
-  ! now perform two passes in this part to be able to save memory
-  integer :: ipass
-
   logical :: ACTUALLY_STORE_ARRAYS
 
-!****************************************************************************************************
-! Mila
-
-! added for color permutation
-  integer :: nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer
-  integer, dimension(:), allocatable :: perm
-  integer, dimension(:), allocatable :: first_elem_number_in_this_color
-  integer, dimension(:), allocatable :: num_of_elems_in_this_color
-
-  integer :: icolor,ispec_counter
-  integer :: nspec_outer_min_global,nspec_outer_max_global
-
-!****************************************************************************************************
-
-!///////////////////////////////////////////////////////////////////////////////
-!   Manh Ha - 18-11-2011
-!   Adding new variables
-
-  integer :: NSTEP
   integer, save :: npoin2D_xi,npoin2D_eta
-  double precision :: DT
-
-!///////////////////////////////////////////////////////////////////////////////
 
   ! Boundary Mesh
   integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
@@ -265,6 +251,12 @@
   ! flags for transverse isotropic elements
   logical, dimension(:), allocatable :: ispec_is_tiso
 
+  integer i,j,k,ispec
+  
+  ! name of the database file
+  character(len=150) :: prname
+  character(len=150) :: errmsg
+
   ! user output
   if(myrank == 0 ) then
     if(ipass == 1 ) write(IMAIN,*) 'first pass'
@@ -273,6 +265,13 @@
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
+
+! initializes arrays
+  call sync_all()
+  if( myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) '  ...allocating arrays '
+  endif
 
   ! New Attenuation definition on all GLL points
   ! Attenuation
@@ -286,34 +285,6 @@
   allocate(Qmu_store(NGLLX,NGLLY,NGLLZ,nspec_att), &
           tau_e_store(N_SLS,NGLLX,NGLLY,NGLLZ,nspec_att),stat=ier)
   if(ier /= 0) stop 'error in allocate 1'
-
-  ! Gauss-Lobatto-Legendre points of integration
-  allocate(xigll(NGLLX), &
-          yigll(NGLLY), &
-          zigll(NGLLZ),stat=ier)
-  if(ier /= 0) stop 'error in allocate 2'
-
-  ! Gauss-Lobatto-Legendre weights of integration
-  allocate(wxgll(NGLLX), &
-          wygll(NGLLY), &
-          wzgll(NGLLZ),stat=ier)
-  if(ier /= 0) stop 'error in allocate 3'
-
-  ! 3D shape functions and their derivatives
-  allocate(shape3D(NGNOD,NGLLX,NGLLY,NGLLZ), &
-          dershape3D(NDIM,NGNOD,NGLLX,NGLLY,NGLLZ),stat=ier)
-  if(ier /= 0) stop 'error in allocat 4'
-
-  ! 2D shape functions and their derivatives
-  allocate(shape2D_x(NGNOD2D,NGLLY,NGLLZ), &
-          shape2D_y(NGNOD2D,NGLLX,NGLLZ), &
-          shape2D_bottom(NGNOD2D,NGLLX,NGLLY), &
-          shape2D_top(NGNOD2D,NGLLX,NGLLY), &
-          dershape2D_x(NDIM2D,NGNOD2D,NGLLY,NGLLZ), &
-          dershape2D_y(NDIM2D,NGNOD2D,NGLLX,NGLLZ), &
-          dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY), &
-          dershape2D_top(NDIM2D,NGNOD2D,NGLLX,NGLLY),stat=ier)
-  if(ier /= 0) stop 'error in allocate 5'
 
   ! array with model density
   allocate(rhostore(NGLLX,NGLLY,NGLLZ,nspec), &
@@ -649,9 +620,9 @@
   ! check total number of spectral elements created
   if(ispec /= nspec) call exit_MPI(myrank,'ispec should equal nspec')
 
-! if any of these flags is true, the element is on a communication edge
-! this is not enough because it can also be in contact by an edge or a corner but not a full face
-! therefore we will have to fix array "is_on_a_slice_edge" later in the solver to take this into account
+  ! if any of these flags is true, the element is on a communication edge
+  ! this is not enough because it can also be in contact by an edge or a corner but not a full face
+  ! therefore we will have to fix array "is_on_a_slice_edge" later in the solver to take this into account
   is_on_a_slice_edge(:) = &
       iMPIcut_xi(1,:) .or. iMPIcut_xi(2,:) .or. &
       iMPIcut_eta(1,:) .or. iMPIcut_eta(2,:) .or. &
@@ -659,8 +630,8 @@
       iboun(3,:) .or. iboun(4,:) .or. &
       iboun(5,:) .or. iboun(6,:)
 
-! no need to count fictitious elements on the edges
-! for which communications cannot be overlapped with calculations
+  ! no need to count fictitious elements on the edges
+  ! for which communications cannot be overlapped with calculations
   where(idoubling == IFLAG_IN_FICTITIOUS_CUBE) is_on_a_slice_edge = .false.
 
   ! only create global addressing and the MPI buffers in the first pass
@@ -801,204 +772,10 @@
     !nspec_tiso = count(idoubling(1:nspec) == IFLAG_220_80) + count(idoubling(1:nspec) == IFLAG_80_MOHO)
     nspec_tiso = count(ispec_is_tiso(:))
 
-    !****************************************************************************************************
-    ! Mila
-
-    if(SORT_MESH_INNER_OUTER) then
-
-      !!!! David Michea: detection of the edges, coloring and permutation separately
-      allocate(perm(nspec))
-
-      ! implement mesh coloring for GPUs if needed, to create subsets of disconnected elements
-      ! to remove dependencies and the need for atomic operations in the sum of elemental contributions in the solver
-      if(USE_MESH_COLORING_GPU) then
-
-        ! user output
-        if(myrank == 0 ) write(IMAIN,*) '  creating mesh coloring'
-
-        allocate(first_elem_number_in_this_color(MAX_NUMBER_OF_COLORS + 1))
-
-        call get_perm_color_faster(is_on_a_slice_edge,ibool,perm,nspec,nglob, &
-          nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer,first_elem_number_in_this_color,myrank)
-
-        ! for the last color, the next color is fictitious and its first (fictitious) element number is nspec + 1
-        first_elem_number_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements + 1) = nspec + 1
-
-        allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements))
-
-        ! save mesh coloring
-        open(unit=99,file=prname(1:len_trim(prname))//'num_of_elems_in_this_color.dat',status='unknown')
-
-        ! number of colors for outer elements
-        write(99,*) nb_colors_outer_elements
-
-        ! number of colors for inner elements
-        write(99,*) nb_colors_inner_elements
-
-        ! number of elements in each color
-        do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
-          num_of_elems_in_this_color(icolor) = first_elem_number_in_this_color(icolor+1) &
-                                              - first_elem_number_in_this_color(icolor)
-          write(99,*) num_of_elems_in_this_color(icolor)
-        enddo
-        close(99)
-
-        ! check that the sum of all the numbers of elements found in each color is equal
-        ! to the total number of elements in the mesh
-        if(sum(num_of_elems_in_this_color) /= nspec) then
-          print *,'nspec = ',nspec
-          print *,'total number of elements in all the colors of the mesh = ',sum(num_of_elems_in_this_color)
-          stop 'incorrect total number of elements in all the colors of the mesh'
-        endif
-
-        ! check that the sum of all the numbers of elements found in each color for the outer elements is equal
-        ! to the total number of outer elements found in the mesh
-        if(sum(num_of_elems_in_this_color(1:nb_colors_outer_elements)) /= nspec_outer) then
-          print *,'nspec_outer = ',nspec_outer
-          print *,'total number of elements in all the colors of the mesh for outer elements = ', &
-            sum(num_of_elems_in_this_color)
-          stop 'incorrect total number of elements in all the colors of the mesh for outer elements'
-        endif
-
-        call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
-        call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
-        deallocate(first_elem_number_in_this_color)
-        deallocate(num_of_elems_in_this_color)
-
-      else
-
-        !! DK DK for regular C + MPI version for CPUs: do not use colors but nonetheless put all the outer elements
-        !! DK DK first in order to be able to overlap non-blocking MPI communications with calculations
-
-        !! DK DK nov 2010, for Rosa Badia / StarSs:
-        !! no need for mesh coloring, but need to implement inner/outer subsets for non blocking MPI for StarSs
-        ispec_counter = 0
-        perm(:) = 0
-
-        ! first generate all the outer elements
-        do ispec = 1,nspec
-          if(is_on_a_slice_edge(ispec)) then
-            ispec_counter = ispec_counter + 1
-            perm(ispec) = ispec_counter
-          endif
-        enddo
-
-        ! make sure we have detected some outer elements
-        if(ispec_counter <= 0) stop 'fatal error: no outer elements detected!'
-
-        ! store total number of outer elements
-        nspec_outer = ispec_counter
-
-        ! then generate all the inner elements
-        do ispec = 1,nspec
-          if(.not. is_on_a_slice_edge(ispec)) then
-            ispec_counter = ispec_counter + 1
-            perm(ispec) = ispec_counter
-          endif
-        enddo
-
-        ! test that all the elements have been used once and only once
-        if(ispec_counter /= nspec) stop 'fatal error: ispec_counter not equal to nspec'
-
-        ! do basic checks
-        if(minval(perm) /= 1) stop 'minval(perm) should be 1'
-        if(maxval(perm) /= nspec) stop 'maxval(perm) should be nspec'
-
-        call MPI_ALLREDUCE(nspec_outer,nspec_outer_min_global,1,MPI_INTEGER,MPI_MIN,MPI_COMM_WORLD,ier)
-        call MPI_ALLREDUCE(nspec_outer,nspec_outer_max_global,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
-      endif ! USE_MESH_COLORING_GPU
-
-      !! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
-
-      if (myrank == 0 .and. iregion_code == IREGION_CRUST_MANTLE) then
-        ! write a header file for the Fortran version of the solver
-        open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h',status='unknown')
-        write(99,*) 'integer, parameter :: NSPEC = ',nspec
-        write(99,*) 'integer, parameter :: NGLOB = ',nglob
-        !!! DK DK use 1000 time steps only for the scaling tests
-        write(99,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
-        write(99,*) 'real(kind=4), parameter :: deltat = ',DT
-        write(99,*)
-        write(99,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',npoin2D_xi
-        write(99,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',npoin2D_eta
-        write(99,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(npoin2D_xi,npoin2D_eta)
-        write(99,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
-        write(99,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
-        write(99,*)
-        write(99,*) '! element number of the source and of the station'
-        write(99,*) '! after permutation of the elements by mesh coloring'
-        write(99,*) '! and inner/outer set splitting in the mesher'
-        write(99,*) 'integer, parameter :: NSPEC_SOURCE = ',perm(NSPEC/3)
-        write(99,*) 'integer, parameter :: RANK_SOURCE = 0'
-        write(99,*)
-        write(99,*) 'integer, parameter :: RANK_STATION = (NPROC_XI*NPROC_ETA - 1)'
-        write(99,*) 'integer, parameter :: NSPEC_STATION = ',perm(2*NSPEC/3)
-
-        ! save coordinates of the seismic source
-        !   write(99,*) xstore(2,2,2,10);
-        !   write(99,*) ystore(2,2,2,10);
-        !   write(99,*) zstore(2,2,2,10);
-
-        ! save coordinates of the seismic station
-        !   write(99,*) xstore(2,2,2,nspec-10);
-        !   write(99,*) ystore(2,2,2,nspec-10);
-        !   write(99,*) zstore(2,2,2,nspec-10);
-        close(99)
-
-        !! write a header file for the C version of the solver
-        open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_C.h',status='unknown')
-        write(99,*) '#define NSPEC ',nspec
-        write(99,*) '#define NGLOB ',nglob
-        !!    write(99,*) '#define NSTEP ',nstep
-        !!! DK DK use 1000 time steps only for the scaling tests
-        write(99,*) '// #define NSTEP ',nstep
-        write(99,*) '#define NSTEP 1000'
-        ! put an "f" at the end to force single precision
-        write(99,"('#define deltat ',e18.10,'f')") DT
-        write(99,*) '#define NGLOB2DMAX_XMIN_XMAX ',npoin2D_xi
-        write(99,*) '#define NGLOB2DMAX_YMIN_YMAX ',npoin2D_eta
-        write(99,*) '#define NGLOB2DMAX_ALL ',max(npoin2D_xi,npoin2D_eta)
-        write(99,*) '#define NPROC_XI ',NPROC_XI
-        write(99,*) '#define NPROC_ETA ',NPROC_ETA
-        write(99,*)
-        write(99,*) '// element and MPI slice number of the source and the station'
-        write(99,*) '// after permutation of the elements by mesh coloring'
-        write(99,*) '// and inner/outer set splitting in the mesher'
-        write(99,*) '#define RANK_SOURCE 0'
-        write(99,*) '#define NSPEC_SOURCE ',perm(NSPEC/3)
-        write(99,*)
-        write(99,*) '#define RANK_STATION (NPROC_XI*NPROC_ETA - 1)'
-        write(99,*) '#define NSPEC_STATION ',perm(2*NSPEC/3)
-        close(99)
-
-        open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h',status='unknown')
-        write(99,*) '#define NSPEC_OUTER ',nspec_outer_max_global
-        write(99,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
-        write(99,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global
-        close(99)
-
-      endif
-
-      !! DK DK and Manh Ha, Nov 2011: added this to use the new mesher in the CUDA or C / StarSs test codes
-
-      deallocate(perm)
-
-    else
-      print *,'SORT_MESH_INNER_OUTER must always been set to .true. even for the regular C version for CPUs'
-      print *,'in order to be able to use non blocking MPI to overlap communications'
-      !   print *,'generating identity permutation'
-      !   do ispec = 1,nspec
-      !     perm(ispec) = ispec
-      !   enddo
-      stop 'please set SORT_MESH_INNER_OUTER to .true. and recompile the whole code'
-
-    endif ! SORT_MESH_INNER_OUTER
-
-    !!!! David Michea: end of mesh coloring
-
-    !****************************************************************************************************
+    ! mesh sorting and coloring
+    call setup_color_perm(myrank,iregion_code,nspec,nglob, &
+                              ibool,is_on_a_slice_edge,prname, &
+                              npoin2D_xi,npoin2D_eta)
 
     ! precomputes jacobian for 2d absorbing boundary surfaces
     call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
@@ -1120,33 +897,10 @@
   deallocate(muvstore,muhstore)
   deallocate(eta_anisostore)
   deallocate(ispec_is_tiso)
-  deallocate(c11store)
-  deallocate(c12store)
-  deallocate(c13store)
-  deallocate(c14store)
-  deallocate(c15store)
-  deallocate(c16store)
-  deallocate(c22store)
-  deallocate(c23store)
-  deallocate(c24store)
-  deallocate(c25store)
-  deallocate(c26store)
-  deallocate(c33store)
-  deallocate(c34store)
-  deallocate(c35store)
-  deallocate(c36store)
-  deallocate(c44store)
-  deallocate(c45store)
-  deallocate(c46store)
-  deallocate(c55store)
-  deallocate(c56store)
-  deallocate(c66store)
+  deallocate(c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+            c36store,c44store,c45store,c46store,c55store,c56store,c66store)
   deallocate(iboun)
-  deallocate(xigll,yigll,zigll)
-  deallocate(wxgll,wygll,wzgll)
-  deallocate(shape3D,dershape3D)
-  deallocate(shape2D_x,shape2D_y,shape2D_bottom,shape2D_top)
-  deallocate(dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top)
   deallocate(ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax)
   deallocate(ibelm_bottom,ibelm_top)
   deallocate(jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax)

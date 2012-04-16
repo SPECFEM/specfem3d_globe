@@ -35,10 +35,10 @@
   implicit none
 
   ! local parameters
-!daniel: debugging
+  ! debugging
   character(len=256) :: filename
-  !integer,dimension(:),allocatable :: dummy_i
-  logical, parameter :: SNAPSHOT_INNER_CORE = .true.
+  integer,dimension(:),allocatable :: dummy_i
+  logical, parameter :: DEBUG_SNAPSHOT = .false.
 
   ! save movie on surface
   if( MOVIE_SURFACE ) then
@@ -164,8 +164,8 @@
     endif
   endif ! MOVIE_VOLUME
 
-!daniel: debugging
-  if( SNAPSHOT_INNER_CORE ) then
+  ! debugging
+  if( DEBUG_SNAPSHOT ) then
     if( mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0  &
       .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 
@@ -177,31 +177,39 @@
 
       ! VTK file output
       ! displacement values
+
+      ! crust mantle
+      allocate(dummy_i(NSPEC_CRUST_MANTLE))
+      dummy_i(:) = IFLAG_CRUST
+      ! one file per process
+      write(prname,'(a,i6.6,a)') 'OUTPUT_FILES/snapshot_proc',myrank,'_'
+      write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_displ_',it
+      call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+                          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
+                          displ_crust_mantle,filename)
+      ! single file for all
+      !write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
+      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_displ_',it
+      !call write_VTK_data_cr_all(myrank,NPROCTOT_VAL,dummy_i, &
+      !                    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+      !                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
+      !                    displ_crust_mantle,filename)
+      deallocate(dummy_i)
+
+      ! inner core
       ! one file per process
       !write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
       !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
       !call write_VTK_data_cr(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
       !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
       !                    displ_inner_core,filename)
-      ! single file for all processes
-      ! crust mantle
-      !allocate(dummy_i(NSPEC_CRUST_MANTLE))
-      !dummy_i(:) = IFLAG_CRUST
+      ! single file for all
       !write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
-      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_displ_',it
-      !call write_VTK_data_cr_all(myrank,dummy_i, &
-      !                    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-      !                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
-      !                    displ_crust_mantle,filename)
-      !deallocate(dummy_i)
-
-      ! inner core
-      write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
-      write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
-      call write_VTK_data_cr_all(myrank,idoubling_inner_core, &
-                          NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                          xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
-                          displ_inner_core,filename)
+      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
+      !call write_VTK_data_cr_all(myrank,NPROCTOT_VAL,idoubling_inner_core, &
+      !                    NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+      !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
+      !                    displ_inner_core,filename)
     endif
   endif
 

@@ -35,13 +35,12 @@
                                         alphaval,betaval,gammaval,factor_common, &
                                         vx,vy,vz,vnspec)
 
-  use constants
+  use constants_solver
 
   use specfem_par,only: &
     hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
     wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-    npoin2D_max_all_CM_IC,INCLUDE_CENTRAL_CUBE
+    minus_gravity_table,density_table,minus_deriv_gravity_table
 
   use specfem_par_innercore,only: &
     xstore => xstore_inner_core,ystore => ystore_inner_core,zstore => zstore_inner_core, &
@@ -54,23 +53,10 @@
     c33store => c33store_inner_core,c44store => c44store_inner_core, &
     ibool => ibool_inner_core,idoubling => idoubling_inner_core, &
     one_minus_sum_beta => one_minus_sum_beta_inner_core, &
-    ibool_inner_core, &
-    iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-    npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-    iboolfaces_inner_core,iboolcorner_inner_core, &
-    nb_msgs_theor_in_cube,sender_from_slices_to_cube, &
-    npoin2D_cube_from_slices, &
-    ibool_central_cube, &
-    receiver_cube_from_slices,ibelm_bottom_inner_core,NSPEC2D_BOTTOM_IC, &
     phase_ispec_inner => phase_ispec_inner_inner_core, &
     nspec_outer => nspec_outer_inner_core, &
     nspec_inner => nspec_inner_inner_core
-
-!  use specfem_par_crustmantle,only: &
-!    iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-!    npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-!    iboolfaces_crust_mantle,iboolcorner_crust_mantle
-
+    
   implicit none
 
   integer :: NSPEC,NGLOB,NSPEC_ATT

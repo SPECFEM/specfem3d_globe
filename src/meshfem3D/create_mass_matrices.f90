@@ -116,8 +116,9 @@
                           + xizl*(etaxl*gammayl-etayl*gammaxl))
 
           ! definition depends if region is fluid or solid
-          if(iregion_code == IREGION_CRUST_MANTLE .or. iregion_code == IREGION_INNER_CORE) then
+          select case( iregion_code)
 
+          case( IREGION_CRUST_MANTLE, IREGION_INNER_CORE )
             ! distinguish between single and double precision for reals
             if(CUSTOM_REAL == SIZE_REAL) then
               rmass(iglobnum) = rmass(iglobnum) + &
@@ -127,8 +128,8 @@
             endif
 
           ! fluid in outer core
-          else if(iregion_code == IREGION_OUTER_CORE) then
-
+          case( IREGION_OUTER_CORE )
+          
             ! no anisotropy in the fluid, use kappav
 
             ! distinguish between single and double precision for reals
@@ -140,10 +141,11 @@
                      jacobianl * weight * rhostore(i,j,k,ispec) / kappavstore(i,j,k,ispec)
             endif
 
-          else
+          case default
             call exit_MPI(myrank,'wrong region code')
-          endif
 
+          end select
+          
         enddo
       enddo
     enddo
@@ -205,8 +207,9 @@
           endif
 
           ! take into account inertia of water column
-          weight = wxgll(ix_oceans)*wygll(iy_oceans)*dble(jacobian2D_top(ix_oceans,iy_oceans,ispec2D_top_crust)) &
-                 * dble(RHO_OCEANS) * height_oceans
+          weight = wxgll(ix_oceans) * wygll(iy_oceans) &
+                    * dble(jacobian2D_top(ix_oceans,iy_oceans,ispec2D_top_crust)) &
+                    * dble(RHO_OCEANS) * height_oceans
 
           ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then

@@ -39,52 +39,71 @@
 
   implicit none
 
-! standard include of the MPI library
-  include 'mpif.h'
-
   include "constants.h"
+
+  ! standard include of the MPI library
+  include 'mpif.h'
   include "precision.h"
 
-  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
-
-  integer nglob,nglob_ori
-  integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
-  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_MAX,NGLOB1D_RADIAL
-  integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+  integer iregion_code
   integer nspec
-  integer myrank,NCHUNKS
 
-! arrays with the mesh
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-  character(len=150) OUTPUT_FILES,LOCAL_PATH,ERR_MSG
-
-! array with the local to global mapping per slice
+  ! array with the local to global mapping per slice
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer idoubling(nspec)
 
-! mask for ibool to mark points already found
+  ! arrays with the mesh
+  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+
+  integer nglob_ori
+
+  integer NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
+  integer NPROC,NPROC_XI,NPROC_ETA,NPROCTOT,NGLOB1D_RADIAL_MAX
+  integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+
+  integer myrank
+  character(len=150) LOCAL_PATH
+
+  integer addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1)
+
+  integer ichunk_slice(0:NPROCTOT-1)
+  integer iproc_xi_slice(0:NPROCTOT-1)
+  integer iproc_eta_slice(0:NPROCTOT-1)
+
+  integer NCHUNKS
+  
+  ! local parameters
+  integer NGLOB1D_RADIAL
+
+  integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
+
+  integer nglob
+
+
+  character(len=150) OUTPUT_FILES,ERR_MSG
+
+  ! mask for ibool to mark points already found
   logical, dimension(:), allocatable ::  mask_ibool
 
-! array to store points selected for the chunk face buffer
+  ! array to store points selected for the chunk face buffer
   integer NGLOB2DMAX_XY
   integer, dimension(:), allocatable :: ibool_selected
 
   double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
 
-! arrays for sorting routine
+  ! arrays for sorting routine
   integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: work
 
-! pairs generated theoretically
-! four sides for each of the three types of messages
+  ! pairs generated theoretically
+  ! four sides for each of the three types of messages
   integer, dimension(:), allocatable :: iproc_sender,iproc_receiver,npoin2D_send,npoin2D_receive
 
-! 1D buffers to remove points belonging to corners
+  ! 1D buffers to remove points belonging to corners
   integer ibool1D_leftxi_lefteta(NGLOB1D_RADIAL_MAX)
   integer ibool1D_rightxi_lefteta(NGLOB1D_RADIAL_MAX)
   integer ibool1D_leftxi_righteta(NGLOB1D_RADIAL_MAX)
@@ -96,7 +115,7 @@
   double precision xdummy,ydummy,zdummy
   integer ipoin1D
 
-! arrays to assemble the corners (3 processors for each corner)
+  ! arrays to assemble the corners (3 processors for each corner)
   integer, dimension(:,:), allocatable :: iprocscorners,itypecorner
 
   integer ichunk_send,iproc_xi_send,iproc_eta_send
@@ -105,12 +124,11 @@
   integer iproc_xi_loop_inv,iproc_eta_loop_inv
   integer imember_corner
 
-  integer iregion_code
 
   integer iproc_edge_send,iproc_edge_receive
   integer imsg_type,iside,imode_comm,iedge
 
-! boundary parameters per slice
+  ! boundary parameters per slice
   integer nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, njunk
   integer ibelm_xmin(NSPEC2DMAX_XMIN_XMAX),ibelm_xmax(NSPEC2DMAX_XMIN_XMAX)
   integer ibelm_ymin(NSPEC2DMAX_YMIN_YMAX),ibelm_ymax(NSPEC2DMAX_YMIN_YMAX)
@@ -119,30 +137,25 @@
 
   integer i,j,k,ispec,ispec2D,ipoin2D,ier
 
-! current message number
+  ! current message number
   integer imsg
 
-! names of the data files for all the processors in MPI
+  ! names of the data files for all the processors in MPI
   character(len=150) prname,filename_in,filename_out
 
-! for addressing of the slices
+  ! for addressing of the slices
   integer ichunk,iproc_xi,iproc_eta,iproc
-  integer addressing(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1)
-  integer ichunk_slice(0:NPROCTOT-1)
-  integer iproc_xi_slice(0:NPROCTOT-1)
 
-  integer iproc_eta_slice(0:NPROCTOT-1)
-
-! this to avoid problem at compile time if less than six chunks
+  ! this to avoid problem at compile time if less than six chunks
   integer addressing_big(NCHUNKS_MAX,0:NPROC_XI-1,0:NPROC_ETA-1)
 
-! number of faces between chunks
+  ! number of faces between chunks
   integer NUM_FACES,NUMMSGS_FACES
 
-! number of corners between chunks
+  ! number of corners between chunks
   integer NCORNERSCHUNKS
 
-! number of message types
+  ! number of message types
   integer NUM_MSG_TYPES
 
   integer NPROC_ONE_DIRECTION

@@ -393,7 +393,6 @@
 
   ! following models need special attention, at least for global simulations:
   if( NCHUNKS == 6 ) then
-
     ! makes time step smaller for this ref model, otherwise becomes unstable in fluid
     if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) &
       DT = DT*(1.d0 - 0.3d0)
@@ -403,13 +402,6 @@
       ! DT = DT*(1.d0 - 0.1d0) not working yet...
       stop 'anisotropic inner core - unstable feature, uncomment this line in get_timestep_and_layers.f90'
     endif
-
-!daniel: debug
-    ! makes time step smaller for this ref model
-    if( NEX_MAX*multiplication_factor <= 98 ) then
-      if( THREE_D_MODEL == THREE_D_MODEL_S362ANI ) DT = DT*(1.d0 - 0.95d0)
-    endif
-
   endif
 
   ! following models need special attention, regardless of number of chunks:
@@ -422,9 +414,10 @@
     DT = DT*(1.d0 - 0.3d0)
 
   !  decreases time step as otherwise the solution might become unstable for rougher/unsmoothed models
-  !  if( THREE_D_MODEL == THREE_D_MODEL_PPM ) &
-  !    DT = DT * (1.d0 - 0.2d0)
-
+  if( .false. ) then
+    if( THREE_D_MODEL == THREE_D_MODEL_PPM ) DT = DT * (1.d0 - 0.2d0)
+  endif
+  
   ! takes a 5% safety margin on the maximum stable time step
   ! which was obtained by trial and error
   DT = DT * (1.d0 - 0.05d0)

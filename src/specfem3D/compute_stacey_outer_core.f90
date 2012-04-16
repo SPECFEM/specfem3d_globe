@@ -28,7 +28,7 @@
 
   subroutine compute_stacey_outer_core()
 
-  use constants
+  use constants_solver
 
   use specfem_par,only: &
     ichunk,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &

@@ -139,21 +139,41 @@
   endif
 
   ! frees dynamically allocated memory
+
   ! mpi buffers
-  deallocate(buffer_send_faces, &
-            buffer_received_faces)
-  deallocate(b_buffer_send_faces, &
-            b_buffer_received_faces)
+  deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
+            request_send_vector_crust_mantle,request_recv_vector_crust_mantle)
+  deallocate(buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
+            request_send_scalar_outer_core,request_recv_scalar_outer_core)
+  deallocate(buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
+            request_send_vector_inner_core,request_recv_vector_inner_core)
+                    
+  if( SIMULATION_TYPE == 3 ) then
+    deallocate(b_buffer_send_vector_crust_mantle,b_buffer_recv_vector_crust_mantle, &
+              b_request_send_vector_crust_mantle,b_request_recv_vector_crust_mantle)
+    deallocate(b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
+              b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core)
+    deallocate(b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
+              b_request_send_vector_inner_core,b_request_recv_vector_inner_core)
+  endif
 
-  ! central cube buffers
-  deallocate(sender_from_slices_to_cube, &
-            buffer_all_cube_from_slices, &
-            b_buffer_all_cube_from_slices, &
-            buffer_slices, &
-            b_buffer_slices, &
-            buffer_slices2, &
-            ibool_central_cube)
+  deallocate(my_neighbours_crust_mantle,nibool_interfaces_crust_mantle)
+  deallocate(ibool_interfaces_crust_mantle)
+  deallocate(my_neighbours_outer_core,nibool_interfaces_outer_core)
+  deallocate(ibool_interfaces_outer_core)
+  deallocate(my_neighbours_inner_core,nibool_interfaces_inner_core)
+  deallocate(ibool_interfaces_inner_core)
 
+  ! inner/outer elements
+  deallocate(phase_ispec_inner_crust_mantle)
+  deallocate(phase_ispec_inner_outer_core)
+  deallocate(phase_ispec_inner_inner_core)
+
+  ! coloring
+  deallocate(num_elem_colors_crust_mantle)
+  deallocate(num_elem_colors_outer_core)
+  deallocate(num_elem_colors_inner_core)
+  
   ! sources
   deallocate(islice_selected_source, &
             ispec_selected_source, &

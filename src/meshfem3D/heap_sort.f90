@@ -25,53 +25,74 @@
 !
 !=====================================================================
 
-  subroutine read_topography_bathymetry()
 
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-  use specfem_par_outercore
+  subroutine heap_sort( N, array )
+
+! heap sort algorithm
+! sorts integer array (in increasing order, like 1 - 5 - 6 - 9 - 12 - 13 - 14 -...)
+
   implicit none
-
-  include 'mpif.h'
+  integer,intent(in) :: N
+  integer,dimension(N),intent(inout) :: array
 
   ! local parameters
-  integer :: ier
+  integer :: tmp
+  integer :: i
 
-  ! get MPI starting time
-  time_start = MPI_WTIME()
+  ! checks if anything to do
+  if( N < 2 ) return
 
-  ! make ellipticity
-  if( ELLIPTICITY_VAL ) then
-    call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
-  endif
+  ! builds heap
+  do i = N/2, 1, -1
+    call heap_sort_siftdown(N,array,i,N)
+  enddo
 
-  ! read topography and bathymetry file
-  if( TOPOGRAPHY ) then
-    ! initializes
-    ibathy_topo(:,:) = 0
+  ! sorts array
+  do i = N, 2, -1
+    ! swaps last and first entry in this section
+    tmp = array(1)
+    array(1) = array(i)
+    array(i) = tmp
+    call heap_sort_siftdown(N,array,1,i-1)
+  enddo
 
-    ! master reads file
-    if(myrank == 0 ) then
-      ! user output
-      write(IMAIN,*) 'topography:'    
+  end subroutine heap_sort
 
-      ! reads topo file
-      call read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+!
+!----
+!
+
+  subroutine heap_sort_siftdown(N,array,start,bottom)
+
+  implicit none
+
+  integer,intent(in):: N
+  integer,dimension(N),intent(inout) :: array
+  integer :: start,bottom
+
+  ! local parameters
+  integer :: i,j
+  integer :: tmp
+
+  i = start
+  tmp = array(i)
+  j = 2*i
+  do while( j <= bottom )
+    ! chooses larger value first in this section
+    if( j < bottom ) then
+      if( array(j) <= array(j+1) ) j = j + 1
     endif
-    
-    ! broadcast the information read on the master to the nodes
-    call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  endif
 
-  ! user output
-  call sync_all()
-  if( myrank == 0 .and. (TOPOGRAPHY .or. OCEANS_VAL .or. ELLIPTICITY_VAL)) then
-    ! elapsed time since beginning of mesh generation
-    tCPU = MPI_WTIME() - time_start
-    write(IMAIN,*)
-    write(IMAIN,*) 'Elapsed time for reading topo/bathy in seconds = ',sngl(tCPU)
-    write(IMAIN,*)
-  endif
+    ! checks if section already smaller than inital value
+    if( array(j) < tmp ) exit
 
-  end subroutine read_topography_bathymetry
+    array(i) = array(j)
+    i = j
+    j = 2*i
+  enddo
+
+  array(i) = tmp
+  return
+
+  end subroutine heap_sort_siftdown
+

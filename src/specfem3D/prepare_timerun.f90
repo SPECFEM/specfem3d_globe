@@ -190,11 +190,15 @@
 
   ! check that all the mass matrices are positive
   if(OCEANS_VAL) then
-    if(minval(rmass_ocean_load) <= 0.) call exit_MPI(myrank,'negative mass matrix term for the oceans')
+    if(minval(rmass_ocean_load) <= 0._CUSTOM_REAL) &
+      call exit_MPI(myrank,'negative mass matrix term for the oceans')
   endif
-  if(minval(rmass_crust_mantle) <= 0.) call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
-  if(minval(rmass_inner_core) <= 0.) call exit_MPI(myrank,'negative mass matrix term for the inner core')
-  if(minval(rmass_outer_core) <= 0.) call exit_MPI(myrank,'negative mass matrix term for the outer core')
+  if(minval(rmass_crust_mantle) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the crust_mantle')
+  if(minval(rmass_inner_core) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the inner core')
+  if(minval(rmass_outer_core) <= 0._CUSTOM_REAL) &
+    call exit_MPI(myrank,'negative mass matrix term for the outer core')
 
   ! for efficiency, invert final mass matrix once and for all on each slice
   if(OCEANS_VAL) rmass_ocean_load = 1._CUSTOM_REAL / rmass_ocean_load
@@ -217,97 +221,43 @@
   use specfem_par_outercore
   implicit none
 
-  ! local parameters
-  integer :: ndim_assemble
-
-  ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
-    buffer_send_faces_scalar,buffer_received_faces_scalar
-
-  ! synchronize all the processes before assembling the mass matrix
-  ! to make sure all the nodes have finished to read their databases
-  call sync_all()
-
   ! the mass matrix needs to be assembled with MPI here once and for all
 
   ! ocean load
   if (OCEANS_VAL) then
-    call assemble_MPI_scalar_block(myrank,rmass_ocean_load,NGLOB_CRUST_MANTLE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
+    call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                        rmass_ocean_load, &
+                        num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                        my_neighbours_crust_mantle)
   endif
 
   ! crust and mantle
-  call assemble_MPI_scalar_block(myrank,rmass_crust_mantle,NGLOB_CRUST_MANTLE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NCHUNKS_VAL)
+  call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
+                        rmass_crust_mantle, &
+                        num_interfaces_crust_mantle,max_nibool_interfaces_crust_mantle, &
+                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                        my_neighbours_crust_mantle)
 
   ! outer core
-  call assemble_MPI_scalar_block(myrank,rmass_outer_core,NGLOB_OUTER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-            iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)
+  call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
+                        rmass_outer_core, &
+                        num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
+                        nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
+                        my_neighbours_outer_core)
 
   ! inner core
-  call assemble_MPI_scalar_block(myrank,rmass_inner_core,NGLOB_INNER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NCHUNKS_VAL)
-
+  call assemble_MPI_scalar_ext_mesh(NPROCTOT_VAL,NGLOB_INNER_CORE, &
+                        rmass_inner_core, &
+                        num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
+                        nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                        my_neighbours_inner_core)
 
   ! mass matrix including central cube
   if(INCLUDE_CENTRAL_CUBE) then
-    ! the mass matrix to assemble is a scalar, not a vector
-    ndim_assemble = 1
-
-    ! use central cube buffers to assemble the inner core mass matrix with the central cube
-    call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-                 npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
-                 buffer_slices, buffer_slices2, ibool_central_cube, &
-                 receiver_cube_from_slices, ibool_inner_core, &
-                 idoubling_inner_core, NSPEC_INNER_CORE, &
-                 ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-                 NGLOB_INNER_CORE, &
-                 rmass_inner_core,ndim_assemble, &
-                 iproc_eta,addressing,NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL)
-
     ! suppress fictitious mass matrix elements in central cube
     ! because the slices do not compute all their spectral elements in the cube
-    where(rmass_inner_core(:) <= 0.) rmass_inner_core = 1.
+    where(rmass_inner_core(:) <= 0.0_CUSTOM_REAL) rmass_inner_core = 1.0_CUSTOM_REAL
   endif
 
   call sync_all()
