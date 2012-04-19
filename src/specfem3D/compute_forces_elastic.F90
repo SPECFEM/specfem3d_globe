@@ -78,7 +78,8 @@
         ! crust/mantle region
         call compute_forces_crust_mantle_Dev( NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
                                       NSPEC_CRUST_MANTLE_ATTENUAT, &
-                                      displ_crust_mantle,accel_crust_mantle, &
+                                      deltat, &
+                                      displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                                       phase_is_inner, &
                                       R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
                                       R_xz_crust_mantle,R_yz_crust_mantle, &
@@ -91,7 +92,8 @@
         ! inner core region
         call compute_forces_inner_core_Dev( NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
                                       NSPEC_INNER_CORE_ATTENUATION, &
-                                      displ_inner_core,accel_inner_core, &
+                                      deltat, &
+                                      displ_inner_core,veloc_inner_core,accel_inner_core, &
                                       phase_is_inner, &
                                       R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core, &
                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
@@ -107,7 +109,8 @@
         ! crust/mantle region
         call compute_forces_crust_mantle(  NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
                                       NSPEC_CRUST_MANTLE_ATTENUAT, &
-                                      displ_crust_mantle,accel_crust_mantle, &
+                                      deltat, &
+                                      displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                                       phase_is_inner, &
                                       R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
                                       R_xz_crust_mantle,R_yz_crust_mantle, &
@@ -120,7 +123,8 @@
         ! inner core region
         call compute_forces_inner_core( NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
                                       NSPEC_INNER_CORE_ATTENUATION, &
-                                      displ_inner_core,accel_inner_core, &
+                                      deltat, &
+                                      displ_inner_core,veloc_inner_core,accel_inner_core, &
                                       phase_is_inner, &
                                       R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core, &
                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
@@ -140,7 +144,8 @@
           ! crust/mantle region
           call compute_forces_crust_mantle_Dev( NSPEC_CRUST_MANTLE_ADJOINT,NGLOB_CRUST_MANTLE_ADJOINT, &
                                       NSPEC_CRUST_MANTLE_STR_AND_ATT, &
-                                      b_displ_crust_mantle,b_accel_crust_mantle, &
+                                      deltat, &
+                                      b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
                                       phase_is_inner, &
                                       b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
                                       b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
@@ -154,7 +159,8 @@
           ! inner core region
           call compute_forces_inner_core_Dev( NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                                         NSPEC_INNER_CORE_STR_AND_ATT, &
-                                        b_displ_inner_core,b_accel_inner_core, &
+                                        deltat, &
+                                        b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
                                         phase_is_inner, &
                                         b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
                                         b_R_xz_inner_core,b_R_yz_inner_core, &
@@ -171,7 +177,8 @@
           ! crust/mantle region
           call compute_forces_crust_mantle( NSPEC_CRUST_MANTLE_ADJOINT,NGLOB_CRUST_MANTLE_ADJOINT, &
                                         NSPEC_CRUST_MANTLE_STR_AND_ATT, &
-                                        b_displ_crust_mantle,b_accel_crust_mantle, &
+                                        deltat, &
+                                        b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
                                         phase_is_inner, &
                                         b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
                                         b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
@@ -186,7 +193,8 @@
           ! inner core region
           call compute_forces_inner_core( NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
                                         NSPEC_INNER_CORE_STR_AND_ATT, &
-                                        b_displ_inner_core,b_accel_inner_core, &
+                                        deltat, &
+                                        b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
                                         phase_is_inner, &
                                         b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
                                         b_R_xz_inner_core,b_R_yz_inner_core, &
@@ -206,7 +214,7 @@
       ! for crust/mantle
       call compute_forces_crust_mantle_cuda(Mesh_pointer,deltat,iphase)
       ! for inner core
-      call compute_forces_inner_core_cuda(Mesh_pointer,iphase)
+      call compute_forces_inner_core_cuda(Mesh_pointer,deltat,iphase)
     endif ! GPU_MODE
 
 

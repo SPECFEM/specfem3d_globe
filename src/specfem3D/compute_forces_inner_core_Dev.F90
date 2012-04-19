@@ -35,7 +35,10 @@
 !          the original routines are commented with "! way 1", the hand-optimized routines with  "! way 2"
 
   subroutine compute_forces_inner_core_Dev( NSPEC,NGLOB,NSPEC_ATT, &
-                                            displ_inner_core,accel_inner_core, &
+                                            deltat, &
+                                            displ_inner_core, &
+                                            veloc_inner_core, &
+                                            accel_inner_core, &
                                             phase_is_inner, &
                                             R_xx,R_yy,R_xy,R_xz,R_yz, &
                                             epsilondev_xx,epsilondev_yy,epsilondev_xy, &
@@ -71,8 +74,13 @@
 
   integer :: NSPEC,NGLOB,NSPEC_ATT
 
+  ! time step
+  real(kind=CUSTOM_REAL) deltat
+
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_inner_core,accel_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_inner_core
 
   ! for attenuation
   ! memory variables R_ij are stored at the local rather than global level
@@ -117,6 +125,19 @@
   equivalence(newtempy1,E2_m1_m2_5points)
   equivalence(newtempz1,E3_m1_m2_5points)
 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
+    tempx1_att,tempx2_att,tempx3_att,tempy1_att,tempy2_att,tempy3_att,tempz1_att,tempz2_att,tempz3_att
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc_att,dummyy_loc_att,dummyz_loc_att
+  real(kind=CUSTOM_REAL), dimension(NGLLX,m2) :: B1_m1_m2_5points_att,B2_m1_m2_5points_att,B3_m1_m2_5points_att
+  real(kind=CUSTOM_REAL), dimension(m1,m2) :: C1_m1_m2_5points_att,C2_m1_m2_5points_att,C3_m1_m2_5points_att
+
+  equivalence(dummyx_loc_att,B1_m1_m2_5points_att)
+  equivalence(dummyy_loc_att,B2_m1_m2_5points_att)
+  equivalence(dummyz_loc_att,B3_m1_m2_5points_att)
+  equivalence(tempx1_att,C1_m1_m2_5points_att)
+  equivalence(tempy1_att,C2_m1_m2_5points_att)
+  equivalence(tempz1_att,C3_m1_m2_5points_att)
+
   real(kind=CUSTOM_REAL), dimension(m2,NGLLX) :: &
     A1_mxm_m2_m1_5points,A2_mxm_m2_m1_5points,A3_mxm_m2_m1_5points
   real(kind=CUSTOM_REAL), dimension(m2,m1) :: &
@@ -134,6 +155,18 @@
   equivalence(newtempy3,E2_mxm_m2_m1_5points)
   equivalence(newtempz3,E3_mxm_m2_m1_5points)
 
+  real(kind=CUSTOM_REAL), dimension(m2,NGLLX) :: &
+    A1_mxm_m2_m1_5points_att,A2_mxm_m2_m1_5points_att,A3_mxm_m2_m1_5points_att
+  real(kind=CUSTOM_REAL), dimension(m2,m1) :: &
+    C1_mxm_m2_m1_5points_att,C2_mxm_m2_m1_5points_att,C3_mxm_m2_m1_5points_att
+
+  equivalence(dummyx_loc_att,A1_mxm_m2_m1_5points_att)
+  equivalence(dummyy_loc_att,A2_mxm_m2_m1_5points_att)
+  equivalence(dummyz_loc_att,A3_mxm_m2_m1_5points_att)
+  equivalence(tempx3_att,C1_mxm_m2_m1_5points_att)
+  equivalence(tempy3_att,C2_mxm_m2_m1_5points_att)
+  equivalence(tempz3_att,C3_mxm_m2_m1_5points_att)
+
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
   real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ) :: epsilondev_loc
 
@@ -142,6 +175,9 @@
 
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+
+  real(kind=CUSTOM_REAL) duxdxl_att,duxdyl_att,duxdzl_att,duydxl_att,duydyl_att,duydzl_att,duzdxl_att,duzdyl_att,duzdzl_att
+  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl_att,duzdxl_plus_duxdzl_att,duzdyl_plus_duydzl_att
 
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
@@ -202,6 +238,7 @@
 
       do k=1,NGLLZ
         do j=1,NGLLY
+
 #ifdef _HANDOPT
 ! way 2:
         ! since we know that NGLLX = 5, this should help pipelining
@@ -238,73 +275,199 @@
 #endif
         enddo
       enddo
+      
+      if( ATTENUATION_VAL ) then
+         ! use first order Taylor expansion of displacement for local storage of stresses 
+         ! at this current time step, to fix attenuation in a consistent way
+
+         do k=1,NGLLZ
+            do j=1,NGLLY
+
+#ifdef _HANDOPT
+               ! way 2:
+               ! since we know that NGLLX = 5, this should help pipelining
+               iglobv5(:) = ibool(:,j,k,ispec)
+
+               dummyx_loc_att(1,j,k) = displ_inner_core(1,iglobv5(1)) + deltat*veloc_inner_core(1,iglobv5(1))
+               dummyy_loc_att(1,j,k) = displ_inner_core(2,iglobv5(1)) + deltat*veloc_inner_core(2,iglobv5(1))
+               dummyz_loc_att(1,j,k) = displ_inner_core(3,iglobv5(1)) + deltat*veloc_inner_core(3,iglobv5(1))
+
+               dummyx_loc_att(2,j,k) = displ_inner_core(1,iglobv5(2)) + deltat*veloc_inner_core(1,iglobv5(2))
+               dummyy_loc_att(2,j,k) = displ_inner_core(2,iglobv5(2)) + deltat*veloc_inner_core(2,iglobv5(2))
+               dummyz_loc_att(2,j,k) = displ_inner_core(3,iglobv5(2)) + deltat*veloc_inner_core(3,iglobv5(2))
+
+               dummyx_loc_att(3,j,k) = displ_inner_core(1,iglobv5(3)) + deltat*veloc_inner_core(1,iglobv5(3))
+               dummyy_loc_att(3,j,k) = displ_inner_core(2,iglobv5(3)) + deltat*veloc_inner_core(2,iglobv5(3))
+               dummyz_loc_att(3,j,k) = displ_inner_core(3,iglobv5(3)) + deltat*veloc_inner_core(3,iglobv5(3))
+
+               dummyx_loc_att(4,j,k) = displ_inner_core(1,iglobv5(4)) + deltat*veloc_inner_core(1,iglobv5(4))
+               dummyy_loc_att(4,j,k) = displ_inner_core(2,iglobv5(4)) + deltat*veloc_inner_core(2,iglobv5(4))
+               dummyz_loc_att(4,j,k) = displ_inner_core(3,iglobv5(4)) + deltat*veloc_inner_core(3,iglobv5(4))
+
+               dummyx_loc_att(5,j,k) = displ_inner_core(1,iglobv5(5)) + deltat*veloc_inner_core(1,iglobv5(5))
+               dummyy_loc_att(5,j,k) = displ_inner_core(2,iglobv5(5)) + deltat*veloc_inner_core(2,iglobv5(5))
+               dummyz_loc_att(5,j,k) = displ_inner_core(3,iglobv5(5)) + deltat*veloc_inner_core(3,iglobv5(5))
+
+#else
+               ! way 1:
+               do i=1,NGLLX
+                  iglob1 = ibool(i,j,k,ispec)
+                  dummyx_loc_att(i,j,k) = displ_inner_core(1,iglob1) + deltat*veloc_inner_core(1,iglob1)
+                  dummyy_loc_att(i,j,k) = displ_inner_core(2,iglob1) + deltat*veloc_inner_core(2,iglob1)
+                  dummyz_loc_att(i,j,k) = displ_inner_core(3,iglob1) + deltat*veloc_inner_core(3,iglob1)
+               enddo
+
+#endif
+            enddo
+         enddo
+      endif
 
       do j=1,m2
-        do i=1,m1
-          C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
-                                hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
-                                hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
-                                hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
-                                hprime_xx(i,5)*B1_m1_m2_5points(5,j)
+         do i=1,m1
+            C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
+                 hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
+                 hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
+                 hprime_xx(i,4)*B1_m1_m2_5points(4,j) + &
+                 hprime_xx(i,5)*B1_m1_m2_5points(5,j)
 
-          C2_m1_m2_5points(i,j) = hprime_xx(i,1)*B2_m1_m2_5points(1,j) + &
-                                hprime_xx(i,2)*B2_m1_m2_5points(2,j) + &
-                                hprime_xx(i,3)*B2_m1_m2_5points(3,j) + &
-                                hprime_xx(i,4)*B2_m1_m2_5points(4,j) + &
-                                hprime_xx(i,5)*B2_m1_m2_5points(5,j)
+            C2_m1_m2_5points(i,j) = hprime_xx(i,1)*B2_m1_m2_5points(1,j) + &
+                 hprime_xx(i,2)*B2_m1_m2_5points(2,j) + &
+                 hprime_xx(i,3)*B2_m1_m2_5points(3,j) + &
+                 hprime_xx(i,4)*B2_m1_m2_5points(4,j) + &
+                 hprime_xx(i,5)*B2_m1_m2_5points(5,j)
 
-          C3_m1_m2_5points(i,j) = hprime_xx(i,1)*B3_m1_m2_5points(1,j) + &
-                                hprime_xx(i,2)*B3_m1_m2_5points(2,j) + &
-                                hprime_xx(i,3)*B3_m1_m2_5points(3,j) + &
-                                hprime_xx(i,4)*B3_m1_m2_5points(4,j) + &
-                                hprime_xx(i,5)*B3_m1_m2_5points(5,j)
-        enddo
+            C3_m1_m2_5points(i,j) = hprime_xx(i,1)*B3_m1_m2_5points(1,j) + &
+                 hprime_xx(i,2)*B3_m1_m2_5points(2,j) + &
+                 hprime_xx(i,3)*B3_m1_m2_5points(3,j) + &
+                 hprime_xx(i,4)*B3_m1_m2_5points(4,j) + &
+                 hprime_xx(i,5)*B3_m1_m2_5points(5,j)
+         enddo
       enddo
+
+      if( ATTENUATION_VAL ) then
+         ! temporary variables used for fixing attenuation in a consistent way
+         do j=1,m2
+            do i=1,m1
+               C1_m1_m2_5points_att(i,j) = hprime_xx(i,1)*B1_m1_m2_5points_att(1,j) + &
+                    hprime_xx(i,2)*B1_m1_m2_5points_att(2,j) + &
+                    hprime_xx(i,3)*B1_m1_m2_5points_att(3,j) + &
+                    hprime_xx(i,4)*B1_m1_m2_5points_att(4,j) + &
+                    hprime_xx(i,5)*B1_m1_m2_5points_att(5,j)
+
+               C2_m1_m2_5points_att(i,j) = hprime_xx(i,1)*B2_m1_m2_5points_att(1,j) + &
+                    hprime_xx(i,2)*B2_m1_m2_5points_att(2,j) + &
+                    hprime_xx(i,3)*B2_m1_m2_5points_att(3,j) + &
+                    hprime_xx(i,4)*B2_m1_m2_5points_att(4,j) + &
+                    hprime_xx(i,5)*B2_m1_m2_5points_att(5,j)
+
+               C3_m1_m2_5points_att(i,j) = hprime_xx(i,1)*B3_m1_m2_5points_att(1,j) + &
+                    hprime_xx(i,2)*B3_m1_m2_5points_att(2,j) + &
+                    hprime_xx(i,3)*B3_m1_m2_5points_att(3,j) + &
+                    hprime_xx(i,4)*B3_m1_m2_5points_att(4,j) + &
+                    hprime_xx(i,5)*B3_m1_m2_5points_att(5,j)
+            enddo
+         enddo
+      endif
+
       do j=1,m1
-        do i=1,m1
-          ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-          do k = 1,NGLLX
-            tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
-                          dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
-                          dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
-                          dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
-                          dummyx_loc(i,5,k)*hprime_xxT(5,j)
+         do i=1,m1
+            ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
+            do k = 1,NGLLX
+               tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
+                    dummyx_loc(i,2,k)*hprime_xxT(2,j) + &
+                    dummyx_loc(i,3,k)*hprime_xxT(3,j) + &
+                    dummyx_loc(i,4,k)*hprime_xxT(4,j) + &
+                    dummyx_loc(i,5,k)*hprime_xxT(5,j)
 
-            tempy2(i,j,k) = dummyy_loc(i,1,k)*hprime_xxT(1,j) + &
-                          dummyy_loc(i,2,k)*hprime_xxT(2,j) + &
-                          dummyy_loc(i,3,k)*hprime_xxT(3,j) + &
-                          dummyy_loc(i,4,k)*hprime_xxT(4,j) + &
-                          dummyy_loc(i,5,k)*hprime_xxT(5,j)
+               tempy2(i,j,k) = dummyy_loc(i,1,k)*hprime_xxT(1,j) + &
+                    dummyy_loc(i,2,k)*hprime_xxT(2,j) + &
+                    dummyy_loc(i,3,k)*hprime_xxT(3,j) + &
+                    dummyy_loc(i,4,k)*hprime_xxT(4,j) + &
+                    dummyy_loc(i,5,k)*hprime_xxT(5,j)
 
-            tempz2(i,j,k) = dummyz_loc(i,1,k)*hprime_xxT(1,j) + &
-                          dummyz_loc(i,2,k)*hprime_xxT(2,j) + &
-                          dummyz_loc(i,3,k)*hprime_xxT(3,j) + &
-                          dummyz_loc(i,4,k)*hprime_xxT(4,j) + &
-                          dummyz_loc(i,5,k)*hprime_xxT(5,j)
-          enddo
-        enddo
+               tempz2(i,j,k) = dummyz_loc(i,1,k)*hprime_xxT(1,j) + &
+                    dummyz_loc(i,2,k)*hprime_xxT(2,j) + &
+                    dummyz_loc(i,3,k)*hprime_xxT(3,j) + &
+                    dummyz_loc(i,4,k)*hprime_xxT(4,j) + &
+                    dummyz_loc(i,5,k)*hprime_xxT(5,j)
+            enddo
+         enddo
       enddo
+
+      if( ATTENUATION_VAL ) then
+         ! temporary variables used for fixing attenuation in a consistent way
+         do j=1,m1
+            do i=1,m1
+               ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
+               do k = 1,NGLLX
+                  tempx2_att(i,j,k) = dummyx_loc_att(i,1,k)*hprime_xxT(1,j) + &
+                       dummyx_loc_att(i,2,k)*hprime_xxT(2,j) + &
+                       dummyx_loc_att(i,3,k)*hprime_xxT(3,j) + &
+                       dummyx_loc_att(i,4,k)*hprime_xxT(4,j) + &
+                       dummyx_loc_att(i,5,k)*hprime_xxT(5,j)
+
+                  tempy2_att(i,j,k) = dummyy_loc_att(i,1,k)*hprime_xxT(1,j) + &
+                       dummyy_loc_att(i,2,k)*hprime_xxT(2,j) + &
+                       dummyy_loc_att(i,3,k)*hprime_xxT(3,j) + &
+                       dummyy_loc_att(i,4,k)*hprime_xxT(4,j) + &
+                       dummyy_loc_att(i,5,k)*hprime_xxT(5,j)
+
+                  tempz2_att(i,j,k) = dummyz_loc_att(i,1,k)*hprime_xxT(1,j) + &
+                       dummyz_loc_att(i,2,k)*hprime_xxT(2,j) + &
+                       dummyz_loc_att(i,3,k)*hprime_xxT(3,j) + &
+                       dummyz_loc_att(i,4,k)*hprime_xxT(4,j) + &
+                       dummyz_loc_att(i,5,k)*hprime_xxT(5,j)
+               enddo
+            enddo
+         enddo
+      endif
+
       do j=1,m1
-        do i=1,m2
-          C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                    A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                    A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                    A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                    A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+         do i=1,m2
+            C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
+                 A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                 A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                 A1_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                 A1_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
 
-          C2_mxm_m2_m1_5points(i,j) = A2_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                    A2_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                    A2_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                    A2_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                    A2_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+            C2_mxm_m2_m1_5points(i,j) = A2_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
+                 A2_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                 A2_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                 A2_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                 A2_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
 
-          C3_mxm_m2_m1_5points(i,j) = A3_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
-                                    A3_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
-                                    A3_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
-                                    A3_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
-                                    A3_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
-        enddo
+            C3_mxm_m2_m1_5points(i,j) = A3_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
+                 A3_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
+                 A3_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
+                 A3_mxm_m2_m1_5points(i,4)*hprime_xxT(4,j) + &
+                 A3_mxm_m2_m1_5points(i,5)*hprime_xxT(5,j)
+         enddo
       enddo
+
+      if( ATTENUATION_VAL ) then
+         ! temporary variables used for fixing attenuation in a consistent way
+         do j=1,m1
+            do i=1,m2
+               C1_mxm_m2_m1_5points_att(i,j) = A1_mxm_m2_m1_5points_att(i,1)*hprime_xxT(1,j) + &
+                    A1_mxm_m2_m1_5points_att(i,2)*hprime_xxT(2,j) + &
+                    A1_mxm_m2_m1_5points_att(i,3)*hprime_xxT(3,j) + &
+                    A1_mxm_m2_m1_5points_att(i,4)*hprime_xxT(4,j) + &
+                    A1_mxm_m2_m1_5points_att(i,5)*hprime_xxT(5,j)
+
+               C2_mxm_m2_m1_5points_att(i,j) = A2_mxm_m2_m1_5points_att(i,1)*hprime_xxT(1,j) + &
+                    A2_mxm_m2_m1_5points_att(i,2)*hprime_xxT(2,j) + &
+                    A2_mxm_m2_m1_5points_att(i,3)*hprime_xxT(3,j) + &
+                    A2_mxm_m2_m1_5points_att(i,4)*hprime_xxT(4,j) + &
+                    A2_mxm_m2_m1_5points_att(i,5)*hprime_xxT(5,j)
+
+               C3_mxm_m2_m1_5points_att(i,j) = A3_mxm_m2_m1_5points_att(i,1)*hprime_xxT(1,j) + &
+                    A3_mxm_m2_m1_5points_att(i,2)*hprime_xxT(2,j) + &
+                    A3_mxm_m2_m1_5points_att(i,3)*hprime_xxT(3,j) + &
+                    A3_mxm_m2_m1_5points_att(i,4)*hprime_xxT(4,j) + &
+                    A3_mxm_m2_m1_5points_att(i,5)*hprime_xxT(5,j)
+            enddo
+         enddo
+      endif
 
       do k=1,NGLLZ
         do j=1,NGLLY
@@ -346,20 +509,56 @@
             duzdxl_plus_duxdzl = duzdxl + duxdzl
             duzdyl_plus_duydzl = duzdyl + duydzl
 
-            ! compute deviatoric strain
-            if (COMPUTE_AND_STORE_STRAIN) then
-              if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
-                ispec_strain = 1
-              else
-                ispec_strain = ispec
-              endif
-              templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-              epsilon_trace_over_3(i,j,k,ispec_strain) = templ
-              epsilondev_loc(1,i,j,k) = duxdxl - templ
-              epsilondev_loc(2,i,j,k) = duydyl - templ
-              epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-              epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-              epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+            if( ATTENUATION_VAL ) then
+               ! temporary variables used for fixing attenuation in a consistent way
+               duxdxl_att = xixl*tempx1_att(i,j,k) + etaxl*tempx2_att(i,j,k) + gammaxl*tempx3_att(i,j,k)
+               duxdyl_att = xiyl*tempx1_att(i,j,k) + etayl*tempx2_att(i,j,k) + gammayl*tempx3_att(i,j,k)
+               duxdzl_att = xizl*tempx1_att(i,j,k) + etazl*tempx2_att(i,j,k) + gammazl*tempx3_att(i,j,k)
+
+               duydxl_att = xixl*tempy1_att(i,j,k) + etaxl*tempy2_att(i,j,k) + gammaxl*tempy3_att(i,j,k)
+               duydyl_att = xiyl*tempy1_att(i,j,k) + etayl*tempy2_att(i,j,k) + gammayl*tempy3_att(i,j,k)
+               duydzl_att = xizl*tempy1_att(i,j,k) + etazl*tempy2_att(i,j,k) + gammazl*tempy3_att(i,j,k)
+
+               duzdxl_att = xixl*tempz1_att(i,j,k) + etaxl*tempz2_att(i,j,k) + gammaxl*tempz3_att(i,j,k)
+               duzdyl_att = xiyl*tempz1_att(i,j,k) + etayl*tempz2_att(i,j,k) + gammayl*tempz3_att(i,j,k)
+               duzdzl_att = xizl*tempz1_att(i,j,k) + etazl*tempz2_att(i,j,k) + gammazl*tempz3_att(i,j,k)
+
+               ! precompute some sums to save CPU time
+               duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att
+               duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att
+               duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att
+
+               ! compute deviatoric strain
+               if (COMPUTE_AND_STORE_STRAIN) then
+                  if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+                     ispec_strain = 1
+                  else
+                     ispec_strain = ispec
+                  endif
+                  templ = ONE_THIRD * (duxdxl_att + duydyl_att + duzdzl_att)
+                  epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+                  epsilondev_loc(1,i,j,k) = duxdxl_att - templ
+                  epsilondev_loc(2,i,j,k) = duydyl_att - templ
+                  epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl_att
+                  epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl_att
+                  epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
+               endif
+            else
+               ! compute deviatoric strain
+               if (COMPUTE_AND_STORE_STRAIN) then
+                  if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+                     ispec_strain = 1
+                  else
+                     ispec_strain = ispec
+                  endif
+                  templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+                  epsilon_trace_over_3(i,j,k,ispec_strain) = templ
+                  epsilondev_loc(1,i,j,k) = duxdxl - templ
+                  epsilondev_loc(2,i,j,k) = duydyl - templ
+                  epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+                  epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+                  epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+               endif
             endif
 
             if(ATTENUATION_VAL) then

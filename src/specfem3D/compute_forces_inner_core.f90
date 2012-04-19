@@ -26,7 +26,10 @@
 !=====================================================================
 
   subroutine compute_forces_inner_core( NSPEC,NGLOB,NSPEC_ATT, &
-                                        displ_inner_core,accel_inner_core, &
+                                        deltat, &
+                                        displ_inner_core, &
+                                        veloc_inner_core, &
+                                        accel_inner_core, &
                                         phase_is_inner, &
                                         R_xx,R_yy,R_xy,R_xz,R_yz, &
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
@@ -61,8 +64,13 @@
 
   integer :: NSPEC,NGLOB,NSPEC_ATT
 
-  ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_inner_core,accel_inner_core
+  ! time step
+  real(kind=CUSTOM_REAL) deltat
+
+  ! displacement, velocity and acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: accel_inner_core
 
   ! for attenuation
   ! memory variables R_ij are stored at the local rather than global level
@@ -118,6 +126,14 @@
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
   real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
   real(kind=CUSTOM_REAL) tempz1l,tempz2l,tempz3l
+
+  real(kind=CUSTOM_REAL) tempx1l_att,tempx2l_att,tempx3l_att
+  real(kind=CUSTOM_REAL) tempy1l_att,tempy2l_att,tempy3l_att
+  real(kind=CUSTOM_REAL) tempz1l_att,tempz2l_att,tempz3l_att
+
+  real(kind=CUSTOM_REAL) duxdxl_att,duxdyl_att,duxdzl_att,duydxl_att
+  real(kind=CUSTOM_REAL) duydyl_att,duydzl_att,duzdxl_att,duzdyl_att,duzdzl_att;
+  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl_att,duzdxl_plus_duxdzl_att,duzdyl_plus_duydzl_att;
 
   ! for gravity
   double precision radius,rho,minus_g,minus_dg
@@ -196,6 +212,57 @@
             tempz3l = tempz3l + displ_inner_core(3,iglob)*hp3
           enddo
 
+          if( ATTENUATION_VAL ) then
+             ! temporary variables used for fixing attenuation in a consistent way
+
+             tempx1l_att = 0._CUSTOM_REAL
+             tempx2l_att = 0._CUSTOM_REAL
+             tempx3l_att = 0._CUSTOM_REAL
+
+             tempy1l_att = 0._CUSTOM_REAL
+             tempy2l_att = 0._CUSTOM_REAL
+             tempy3l_att = 0._CUSTOM_REAL
+
+             tempz1l_att = 0._CUSTOM_REAL
+             tempz2l_att = 0._CUSTOM_REAL
+             tempz3l_att = 0._CUSTOM_REAL
+
+             ! use first order Taylor expansion of displacement for local storage of stresses 
+             ! at this current time step, to fix attenuation in a consistent way
+             do l=1,NGLLX
+                hp1 = hprime_xx(i,l)
+                iglob = ibool(l,j,k,ispec)
+                tempx1l_att = tempx1l_att + &
+                     (displ_inner_core(1,iglob) + deltat*veloc_inner_core(1,iglob))*hp1
+                tempy1l_att = tempy1l_att + &
+                     (displ_inner_core(2,iglob) + deltat*veloc_inner_core(2,iglob))*hp1
+                tempz1l_att = tempz1l_att + &
+                     (displ_inner_core(3,iglob) + deltat*veloc_inner_core(3,iglob))*hp1
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
+                hp2 = hprime_yy(j,l)
+                iglob = ibool(i,l,k,ispec)
+                tempx2l_att = tempx2l_att + &
+                     (displ_inner_core(1,iglob) + deltat*veloc_inner_core(1,iglob))*hp2
+                tempy2l_att = tempy2l_att + &
+                     (displ_inner_core(2,iglob) + deltat*veloc_inner_core(2,iglob))*hp2
+                tempz2l_att = tempz2l_att + &
+                     (displ_inner_core(3,iglob) + deltat*veloc_inner_core(3,iglob))*hp2
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
+
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
+                hp3 = hprime_zz(k,l)
+                iglob = ibool(i,j,l,ispec)
+                tempx3l_att = tempx3l_att + &
+                     (displ_inner_core(1,iglob) + deltat*veloc_inner_core(1,iglob))*hp3
+                tempy3l_att = tempy3l_att + &
+                     (displ_inner_core(2,iglob) + deltat*veloc_inner_core(2,iglob))*hp3
+                tempz3l_att = tempz3l_att + &
+                     (displ_inner_core(3,iglob) + deltat*veloc_inner_core(3,iglob))*hp3
+             enddo
+          endif
+
 !         get derivatives of ux, uy and uz with respect to x, y and z
 
           xixl = xix(i,j,k,ispec)
@@ -233,19 +300,54 @@
           duzdxl_plus_duxdzl = duzdxl + duxdzl
           duzdyl_plus_duydzl = duzdyl + duydzl
 
-! compute deviatoric strain
-          if (COMPUTE_AND_STORE_STRAIN) then
-            if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
-              ispec_strain = 1
-            else
-              ispec_strain = ispec
-            endif
-            epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-            epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
-            epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
-            epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
-            epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
-            epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+          if( ATTENUATION_VAL ) then
+             ! temporary variables used for fixing attenuation in a consistent way
+             duxdxl_att = xixl*tempx1l_att + etaxl*tempx2l_att + gammaxl*tempx3l_att
+             duxdyl_att = xiyl*tempx1l_att + etayl*tempx2l_att + gammayl*tempx3l_att
+             duxdzl_att = xizl*tempx1l_att + etazl*tempx2l_att + gammazl*tempx3l_att
+
+             duydxl_att = xixl*tempy1l_att + etaxl*tempy2l_att + gammaxl*tempy3l_att
+             duydyl_att = xiyl*tempy1l_att + etayl*tempy2l_att + gammayl*tempy3l_att
+             duydzl_att = xizl*tempy1l_att + etazl*tempy2l_att + gammazl*tempy3l_att
+
+             duzdxl_att = xixl*tempz1l_att + etaxl*tempz2l_att + gammaxl*tempz3l_att
+             duzdyl_att = xiyl*tempz1l_att + etayl*tempz2l_att + gammayl*tempz3l_att
+             duzdzl_att = xizl*tempz1l_att + etazl*tempz2l_att + gammazl*tempz3l_att
+
+             ! precompute some sums to save CPU time
+             duxdyl_plus_duydxl_att = duxdyl_att + duydxl_att
+             duzdxl_plus_duxdzl_att = duzdxl_att + duxdzl_att
+             duzdyl_plus_duydzl_att = duzdyl_att + duydzl_att
+
+             ! compute deviatoric strain
+             if (COMPUTE_AND_STORE_STRAIN) then
+                if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+                   ispec_strain = 1
+                else
+                   ispec_strain = ispec
+                endif
+                epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl_att + duydyl_att + duzdzl_att)
+                epsilondev_loc(1,i,j,k) = duxdxl_att - epsilon_trace_over_3(i,j,k,ispec_strain)
+                epsilondev_loc(2,i,j,k) = duydyl_att - epsilon_trace_over_3(i,j,k,ispec_strain)
+                epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl_att
+                epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl_att
+                epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
+             endif
+          else
+             ! compute deviatoric strain
+             if (COMPUTE_AND_STORE_STRAIN) then
+                if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+                   ispec_strain = 1
+                else
+                   ispec_strain = ispec
+                endif
+                epsilon_trace_over_3(i,j,k,ispec_strain) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
+                epsilondev_loc(1,i,j,k) = duxdxl - epsilon_trace_over_3(i,j,k,ispec_strain)
+                epsilondev_loc(2,i,j,k) = duydyl - epsilon_trace_over_3(i,j,k,ispec_strain)
+                epsilondev_loc(3,i,j,k) = 0.5 * duxdyl_plus_duydxl
+                epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl
+                epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl
+             endif
           endif
 
           if(ATTENUATION_VAL) then
