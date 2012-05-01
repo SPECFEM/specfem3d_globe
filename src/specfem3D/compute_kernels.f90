@@ -207,6 +207,7 @@
   real(kind=CUSTOM_REAL) :: tempz1l,tempz2l,tempz3l
   real(kind=CUSTOM_REAL), dimension(5) :: b_epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(5) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(3) :: vector_accel
 
   integer :: i,j,k,l,ispec,iglob
 
@@ -260,13 +261,13 @@
             do l=1,NGLLZ
               tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
             enddo
-            vector_accel_outer_core(1,iglob) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
-            vector_accel_outer_core(2,iglob) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
-            vector_accel_outer_core(3,iglob) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
+            vector_accel(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
+            vector_accel(2) = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l
+            vector_accel(3) = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l
 
             ! density kernel
             rho_kl_outer_core(i,j,k,ispec) = rho_kl_outer_core(i,j,k,ispec) &
-               + deltat * dot_product(vector_accel_outer_core(:,iglob), b_vector_displ_outer_core(:,iglob))
+               + deltat * dot_product(vector_accel(:), b_vector_displ_outer_core(:,iglob))
 
             ! bulk modulus kernel
             kappal = rhostore_outer_core(i,j,k,ispec)/kappavstore_outer_core(i,j,k,ispec)

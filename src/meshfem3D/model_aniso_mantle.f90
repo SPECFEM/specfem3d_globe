@@ -368,7 +368,7 @@
 
   include "constants.h"
 
-! model_aniso_mantle_variables
+  ! model_aniso_mantle_variables
   type model_aniso_mantle_variables
     sequence
     double precision beta(14,34,37,73)
@@ -378,14 +378,20 @@
   end type model_aniso_mantle_variables
 
   type (model_aniso_mantle_variables) AMM_V
-! model_aniso_mantle_variables
+  ! model_aniso_mantle_variables
 
-  integer nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
-  double precision xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
-  double precision ra(47),pari(14,47)
-  double precision bet2(14,34,37,73)
-  double precision alph(73,37),ph(73,37)
-  character(len=150) glob_prem3sm01, globpreman3sm01
+  ! local parameters
+  integer :: nx,ny,np1,np2,ipar,ipa1,ipa,ilat,ilon,il,idep,nfin,nfi0,nf,nri
+  double precision :: xinf,yinf,pxy,ppp,angle,A,A2L,AL,af
+  double precision :: ra(47),pari(14,47)
+  double precision,dimension(:,:,:,:),allocatable :: bet2 ! bet2(14,34,37,73)
+  double precision :: alph(73,37),ph(73,37)
+  integer :: ier
+  character(len=150) :: glob_prem3sm01, globpreman3sm01
+
+  ! dynamic allocation
+  allocate(bet2(14,34,37,73),stat=ier)
+  if( ier /= 0 ) stop 'error allocating bet2 array'
 
   np1 = 1
   np2 = 34
@@ -395,7 +401,8 @@
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
 !
   call get_value_string(glob_prem3sm01, 'model.glob_prem3sm01', 'DATA/Montagner_model/glob-prem3sm01')
-  open(19,file=glob_prem3sm01,status='old',action='read')
+  open(19,file=glob_prem3sm01,status='old',action='read',iostat=ier)
+  if( ier /= 0 ) stop 'error opening file DATA/Montagner_model/glob-prem3sm01'
 
 !
 ! read the models
@@ -456,7 +463,8 @@
 ! normalized, in percents: 100 G/L
 !
   call get_value_string(globpreman3sm01, 'model.globpreman3sm01', 'DATA/Montagner_model/globpreman3sm01')
-  open(unit=15,file=globpreman3sm01,status='old',action='read')
+  open(unit=15,file=globpreman3sm01,status='old',action='read',iostat=ier)
+  if( ier /= 0 ) stop 'error opening file DATA/Montagner_model/globpreman3sm01'
 
   do nf = 7,nfin,2
     ipa = nf
@@ -528,7 +536,9 @@
     enddo
   enddo
 
- end subroutine read_aniso_mantle_model
+  deallocate(bet2)
+
+  end subroutine read_aniso_mantle_model
 
 !--------------------------------------------------------------------
 

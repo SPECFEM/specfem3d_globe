@@ -30,7 +30,7 @@
 
   use meshfem3D_par
   implicit none
-  
+
   ! local parameters
   ! parameters needed to store the radii of the grid points
   ! in the spherically symmetric Earth
@@ -39,7 +39,7 @@
   ! arrays with the mesh in double precision
   double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
   integer :: ier
-    
+
   ! get addressing for this process
   ichunk = ichunk_slice(myrank)
   iproc_xi = iproc_xi_slice(myrank)
@@ -87,12 +87,12 @@
             zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating memory for arrays')
-    
+
     ! this for non blocking MPI
     allocate(is_on_a_slice_edge(NSPEC(iregion_code)), &
             stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating is_on_a_slice_edge array')
-    
+
 
     ! create all the regions of the mesh
     ! perform two passes in this part to be able to save memory

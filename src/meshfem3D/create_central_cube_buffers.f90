@@ -106,7 +106,7 @@
   ! check that the number of points in this slice is correct
   if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
-  
+
 
 !--- processor to send information to in cube from slices
 

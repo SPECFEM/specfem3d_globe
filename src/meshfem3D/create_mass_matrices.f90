@@ -129,7 +129,7 @@
 
           ! fluid in outer core
           case( IREGION_OUTER_CORE )
-          
+
             ! no anisotropy in the fluid, use kappav
 
             ! distinguish between single and double precision for reals
@@ -145,7 +145,7 @@
             call exit_MPI(myrank,'wrong region code')
 
           end select
-          
+
         enddo
       enddo
     enddo

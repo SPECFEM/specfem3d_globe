@@ -246,7 +246,7 @@
              tempz2l_att = 0._CUSTOM_REAL
              tempz3l_att = 0._CUSTOM_REAL
 
-             ! use first order Taylor expansion of displacement for local storage of stresses 
+             ! use first order Taylor expansion of displacement for local storage of stresses
              ! at this current time step, to fix attenuation in a consistent way
              do l=1,NGLLX
                 hp1 = hprime_xx(i,l)
@@ -352,7 +352,7 @@
                 epsilondev_loc(4,i,j,k) = 0.5 * duzdxl_plus_duxdzl_att
                 epsilondev_loc(5,i,j,k) = 0.5 * duzdyl_plus_duydzl_att
              endif
-          else 
+          else
              ! compute deviatoric strain
              if (COMPUTE_AND_STORE_STRAIN) then
                 if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then

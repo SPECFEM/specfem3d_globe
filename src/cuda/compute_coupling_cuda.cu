@@ -606,8 +606,8 @@ __global__ void compute_coupling_ocean_cuda_kernel(realw* accel_crust_mantle,
       // make updated component of right-hand side
       // we divide by rmass() which is 1 / M
       // we use the total force which includes the Coriolis term above
-      force_normal_comp = (  accel_crust_mantle[iglob*3]*nx 
-                           + accel_crust_mantle[iglob*3+1]*ny 
+      force_normal_comp = (  accel_crust_mantle[iglob*3]*nx
+                           + accel_crust_mantle[iglob*3+1]*ny
                            + accel_crust_mantle[iglob*3+2]*nz ) / rmass_crust_mantle[iglob];
 
       additional_term = (rmass_ocean_load[iglob] - rmass_crust_mantle[iglob]) * force_normal_comp;

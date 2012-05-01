@@ -147,7 +147,7 @@
             request_send_scalar_outer_core,request_recv_scalar_outer_core)
   deallocate(buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
             request_send_vector_inner_core,request_recv_vector_inner_core)
-                    
+
   if( SIMULATION_TYPE == 3 ) then
     deallocate(b_buffer_send_vector_crust_mantle,b_buffer_recv_vector_crust_mantle, &
               b_request_send_vector_crust_mantle,b_request_recv_vector_crust_mantle)
@@ -173,7 +173,7 @@
   deallocate(num_elem_colors_crust_mantle)
   deallocate(num_elem_colors_outer_core)
   deallocate(num_elem_colors_inner_core)
-  
+
   ! sources
   deallocate(islice_selected_source, &
             ispec_selected_source, &

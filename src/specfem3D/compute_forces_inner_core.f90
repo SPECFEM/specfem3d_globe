@@ -59,7 +59,7 @@
     phase_ispec_inner => phase_ispec_inner_inner_core, &
     nspec_outer => nspec_outer_inner_core, &
     nspec_inner => nspec_inner_inner_core
-    
+
   implicit none
 
   integer :: NSPEC,NGLOB,NSPEC_ATT
@@ -227,7 +227,7 @@
              tempz2l_att = 0._CUSTOM_REAL
              tempz3l_att = 0._CUSTOM_REAL
 
-             ! use first order Taylor expansion of displacement for local storage of stresses 
+             ! use first order Taylor expansion of displacement for local storage of stresses
              ! at this current time step, to fix attenuation in a consistent way
              do l=1,NGLLX
                 hp1 = hprime_xx(i,l)

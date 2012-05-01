@@ -431,7 +431,7 @@
   integer :: myrank,NPROCTOT
 
   integer ::nspec,nglob
-  
+
   integer, dimension(nspec):: idoubling
 
   ! global coordinates

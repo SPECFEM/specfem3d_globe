@@ -98,7 +98,7 @@
   logical,dimension(nspec) :: dummy_l
   ! processor identification
   character(len=150) prname
-  
+
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
@@ -185,7 +185,7 @@
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening file solver_data_2.bin')
-  
+
   read(IIN) xstore
   read(IIN) ystore
   read(IIN) zstore
@@ -195,7 +195,7 @@
   read(IIN) idoubling
 
   read(IIN) dummy_l ! is_on_a_slice_edge
-  
+
   read(IIN) ispec_is_tiso
 
   close(IIN)

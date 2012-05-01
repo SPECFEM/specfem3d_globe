@@ -417,7 +417,7 @@
   if( .false. ) then
     if( THREE_D_MODEL == THREE_D_MODEL_PPM ) DT = DT * (1.d0 - 0.2d0)
   endif
-  
+
   ! takes a 5% safety margin on the maximum stable time step
   ! which was obtained by trial and error
   DT = DT * (1.d0 - 0.05d0)

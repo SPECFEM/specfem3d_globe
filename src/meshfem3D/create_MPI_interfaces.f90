@@ -28,7 +28,7 @@
 module create_MPI_interfaces_par
 
   use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR,NDIM,IMAIN
-  
+
   ! indirect addressing for each message for faces and corners of the chunks
   ! a given slice can belong to at most one corner and at most two faces
   integer :: NGLOB2DMAX_XY
@@ -42,7 +42,7 @@ module create_MPI_interfaces_par
   ! number of message types
   integer :: NUM_MSG_TYPES
 
-  integer :: NGLOB1D_RADIAL_CM 
+  integer :: NGLOB1D_RADIAL_CM
   integer :: NGLOB1D_RADIAL_OC
   integer :: NGLOB1D_RADIAL_IC
 
@@ -76,7 +76,7 @@ module create_MPI_interfaces_par
   integer :: NGLOB_CRUST_MANTLE
   integer :: NGLOB_INNER_CORE
   integer :: NGLOB_OUTER_CORE
-  
+
   !-----------------------------------------------------------------
   ! assembly
   !-----------------------------------------------------------------
@@ -179,7 +179,7 @@ module create_MPI_interfaces_par
     xstore_outer_core,ystore_outer_core,zstore_outer_core
   integer, dimension(:),allocatable :: idoubling_outer_core
   integer, dimension(:,:,:,:),allocatable :: ibool_outer_core
-  
+
   ! assembly
   integer :: npoin2D_faces_outer_core(NUMFACES_SHARED)
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_outer_core,npoin2D_eta_outer_core
@@ -248,7 +248,7 @@ module create_MPI_interfaces_par
   ! mesh coloring
   integer :: num_colors_outer_inner_core,num_colors_inner_inner_core
   integer,dimension(:),allocatable :: num_elem_colors_inner_core
-  
+
 end module create_MPI_interfaces_par
 
 !
@@ -260,7 +260,7 @@ end module create_MPI_interfaces_par
   use meshfem3D_par
   use create_MPI_interfaces_par
   implicit none
-  
+
   ! sets up arrays
   call cmi_read_addressing()
 
@@ -275,15 +275,15 @@ end module create_MPI_interfaces_par
 
   ! sets up mesh coloring
   call cmi_setup_color_perm()
-  
+
   ! saves interface infos
   call cmi_save_interfaces()
-    
+
   ! frees memory
   call cmi_free_arrays()
 
   end subroutine create_MPI_interfaces
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -297,7 +297,7 @@ end module create_MPI_interfaces_par
   ! local parameters
   integer :: NUM_FACES,NPROC_ONE_DIRECTION
   integer :: ier
-  
+
   ! define maximum size for message buffers
   ! use number of elements found in the mantle since it is the largest region
   NGLOB2DMAX_XY = max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
@@ -328,13 +328,13 @@ end module create_MPI_interfaces_par
           iprocto_faces(NUMMSGS_FACES), &
           imsg_type(NUMMSGS_FACES),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating iproc faces arrays')
-  
+
   ! communication pattern for corners between chunks
   allocate(iproc_master_corners(NCORNERSCHUNKS), &
           iproc_worker1_corners(NCORNERSCHUNKS), &
           iproc_worker2_corners(NCORNERSCHUNKS),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating iproc corner arrays')
-  
+
 
   ! parameters from header file
   NGLOB1D_RADIAL_CM = NGLOB1D_RADIAL(IREGION_CRUST_MANTLE)
@@ -383,7 +383,7 @@ end module create_MPI_interfaces_par
   ! crust mantle
   allocate(iboolcorner_crust_mantle(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED))
   allocate(iboolleft_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM), &
-          iboolright_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM))          
+          iboolright_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM))
   allocate(iboolleft_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX_CM), &
           iboolright_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX_CM))
   allocate(iboolfaces_crust_mantle(NGLOB2DMAX_XY,NUMFACES_SHARED))
@@ -447,8 +447,8 @@ end module create_MPI_interfaces_par
            is_on_a_slice_edge_outer_core(NSPEC_OUTER_CORE), &
            stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary is_on_a_slice_edge arrays')
-          
-  
+
+
   ! read coordinates of the mesh
   ! crust mantle
   ibool_crust_mantle(:,:,:,:) = -1
@@ -465,7 +465,7 @@ end module create_MPI_interfaces_par
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
 
   ! outer core
-  ibool_outer_core(:,:,:,:) = -1  
+  ibool_outer_core(:,:,:,:) = -1
   call cmi_read_solver_data(myrank,IREGION_OUTER_CORE, &
                            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                            xstore_outer_core,ystore_outer_core,zstore_outer_core,&
@@ -479,7 +479,7 @@ end module create_MPI_interfaces_par
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
 
   ! inner core
-  ibool_inner_core(:,:,:,:) = -1  
+  ibool_inner_core(:,:,:,:) = -1
   call cmi_read_solver_data(myrank,IREGION_INNER_CORE, &
                            NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                            xstore_inner_core,ystore_inner_core,zstore_inner_core,&
@@ -493,8 +493,8 @@ end module create_MPI_interfaces_par
 
   ! synchronize processes
   call sync_all()
-  
-  end subroutine cmi_read_addressing  
+
+  end subroutine cmi_read_addressing
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -518,7 +518,7 @@ end module create_MPI_interfaces_par
 
   ! mantle and crust
   if(myrank == 0) then
-    write(IMAIN,*) 
+    write(IMAIN,*)
     write(IMAIN,*) 'crust/mantle region:'
   endif
 
@@ -572,7 +572,7 @@ end module create_MPI_interfaces_par
   open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
         status='old',form='unformatted',action='read',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary.bin file')
-  
+
   read(IIN) nspec2D_xmin_inner_core
   read(IIN) nspec2D_xmax_inner_core
   read(IIN) nspec2D_ymin_inner_core
@@ -607,7 +607,7 @@ end module create_MPI_interfaces_par
       write(IMAIN,*) 'including central cube'
     endif
     call sync_all()
-    
+
     ! compute number of messages to expect in cube as well as their size
     call comp_central_cube_buffer_size(iproc_xi,iproc_eta,ichunk, &
                 NPROC_XI,NPROC_ETA,NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
@@ -748,11 +748,13 @@ end module create_MPI_interfaces_par
   logical,parameter :: DEBUG_INTERFACES = .false.
 
   ! estimates a maximum size of needed arrays
-  MAX_NEIGHBOURS = 8 + NCORNERSCHUNKS  
+  MAX_NEIGHBOURS = 8 + NCORNERSCHUNKS
+  if( INCLUDE_CENTRAL_CUBE ) MAX_NEIGHBOURS = MAX_NEIGHBOURS + NUMMSGS_FACES
+
   allocate(my_neighbours(MAX_NEIGHBOURS), &
           nibool_neighbours(MAX_NEIGHBOURS),stat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error allocating my_neighbours array')
-  
+
   ! estimates initial maximum ibool array
   max_nibool = npoin2D_max_all_CM_IC * NUMFACES_SHARED &
                + non_zero_nb_msgs_theor_in_cube*npoin2D_cube_from_slices
@@ -960,7 +962,7 @@ end module create_MPI_interfaces_par
   enddo
   call sync_all()
   endif
-  
+
   ! checks addressing
   call test_MPI_neighbours(IREGION_OUTER_CORE, &
                               num_interfaces_outer_core,max_nibool_interfaces_outer_core, &
@@ -1023,7 +1025,7 @@ end module create_MPI_interfaces_par
   !call write_VTK_glob_points(NGLOB_INNER_CORE, &
   !                      xstore_inner_core,ystore_inner_core,zstore_inner_core, &
   !                      test_flag,filename)
-  
+
   ! debug: idoubling inner core
   if( DEBUG_INTERFACES ) then
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
@@ -1033,7 +1035,7 @@ end module create_MPI_interfaces_par
                             idoubling_inner_core,filename)
     call sync_all()
   endif
-  
+
   ! including central cube
   if(INCLUDE_CENTRAL_CUBE) then
     ! user output
@@ -1126,7 +1128,7 @@ end module create_MPI_interfaces_par
   enddo
   call sync_all()
   endif
-  
+
   ! checks addressing
   call test_MPI_neighbours(IREGION_INNER_CORE, &
                               num_interfaces_inner_core,max_nibool_interfaces_inner_core, &
@@ -1159,7 +1161,7 @@ end module create_MPI_interfaces_par
 !
 
   subroutine cmi_setup_InnerOuter()
-  
+
   use meshfem3D_par
   use create_MPI_interfaces_par
   implicit none
@@ -1167,10 +1169,10 @@ end module create_MPI_interfaces_par
   ! local parameters
   real :: percentage_edge
   integer :: ier,ispec,iinner,iouter
-  ! debug  
+  ! debug
   character(len=150) :: filename
   logical,parameter :: DEBUG_INTERFACES = .false.
-  
+
   ! stores inner / outer elements
   !
   ! note: arrays is_on_a_slice_edge_.. have flags set for elements which need to
@@ -1293,7 +1295,7 @@ end module create_MPI_interfaces_par
                               ibool_inner_core, &
                               is_on_a_slice_edge_inner_core,filename)
   endif
-  
+
   end subroutine cmi_setup_InnerOuter
 
 
@@ -1302,7 +1304,7 @@ end module create_MPI_interfaces_par
 !
 
   subroutine cmi_setup_color_perm()
-  
+
   use meshfem3D_par
   use create_MPI_interfaces_par
   implicit none
@@ -1363,11 +1365,11 @@ end module create_MPI_interfaces_par
 
     deallocate(perm)
   else
-    ! dummy array 
+    ! dummy array
     allocate(num_elem_colors_outer_core(num_colors_outer_outer_core+num_colors_inner_outer_core),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_outer_core array')
   endif
-  
+
   ! inner core
   ! initializes
   num_colors_outer_inner_core = 0
@@ -1393,15 +1395,15 @@ end module create_MPI_interfaces_par
     allocate(num_elem_colors_inner_core(num_colors_outer_inner_core+num_colors_inner_inner_core),stat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error allocating num_elem_colors_inner_core array')
   endif
-  
+
   end subroutine cmi_setup_color_perm
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
 
   subroutine cmi_save_interfaces()
-  
+
   use meshfem3D_par
   use create_MPI_interfaces_par
   implicit none
@@ -1441,8 +1443,8 @@ end module create_MPI_interfaces_par
 
   end subroutine cmi_save_interfaces
 
-  
-  
+
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -1464,14 +1466,14 @@ end module create_MPI_interfaces_par
   ! crust mantle
   deallocate(iboolcorner_crust_mantle)
   deallocate(iboolleft_xi_crust_mantle, &
-          iboolright_xi_crust_mantle)          
+          iboolright_xi_crust_mantle)
   deallocate(iboolleft_eta_crust_mantle, &
           iboolright_eta_crust_mantle)
   deallocate(iboolfaces_crust_mantle)
 
   deallocate(phase_ispec_inner_crust_mantle)
   deallocate(num_elem_colors_crust_mantle)
-  
+
   ! outer core
   deallocate(iboolcorner_outer_core)
   deallocate(iboolleft_xi_outer_core, &
@@ -1511,7 +1513,7 @@ end module create_MPI_interfaces_par
   deallocate(num_elem_colors_inner_core)
 
   deallocate(mask_ibool)
-  
+
   ! frees temporary allocated arrays
   deallocate(is_on_a_slice_edge_crust_mantle, &
             is_on_a_slice_edge_outer_core, &
@@ -1535,25 +1537,25 @@ end module create_MPI_interfaces_par
   integer :: iregion_code,myrank
 
   integer :: nspec,nglob
-  
+
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore,ystore,zstore
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: idoubling
   logical, dimension(nspec) :: is_on_a_slice_edge
 
   character(len=150) :: LOCAL_PATH
-  
+
   ! local parameters
   character(len=150) prname
   integer :: ier
-  
+
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
-  
+
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_2.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_2.bin')
-  
+
   read(IIN) xstore
   read(IIN) ystore
   read(IIN) zstore
@@ -1562,7 +1564,7 @@ end module create_MPI_interfaces_par
   read(IIN) is_on_a_slice_edge
 
   close(IIN)
-  
+
   end subroutine cmi_read_solver_data
 
 !
@@ -1601,18 +1603,18 @@ end module create_MPI_interfaces_par
   integer :: num_colors_outer,num_colors_inner
   integer, dimension(num_colors_outer + num_colors_inner) :: &
     num_elem_colors
-  
+
   ! local parameters
   character(len=150) prname
   integer :: ier
-  
+
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
-  
+
   open(unit=IOUT,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
        status='unknown',action='write',form='unformatted',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
-  
+
   ! MPI interfaces
   write(IOUT) num_interfaces
   if( num_interfaces > 0 ) then
@@ -1636,5 +1638,5 @@ end module create_MPI_interfaces_par
   close(IOUT)
 
   end subroutine cmi_save_solver_data
-  
-  
+
+

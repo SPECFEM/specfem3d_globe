@@ -350,7 +350,7 @@
 
   ! setup mpi communication interfaces
   call create_MPI_interfaces()
-  
+
   ! outputs mesh infos and saves new header file
   call finalize_mesher()
 

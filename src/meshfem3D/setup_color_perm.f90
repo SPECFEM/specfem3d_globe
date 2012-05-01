@@ -28,7 +28,7 @@
   subroutine setup_color_perm(myrank,iregion_code,nspec,nglob, &
                               ibool,is_on_a_slice_edge,prname, &
                               npoin2D_xi,npoin2D_eta)
-  
+
   use constants
   use meshfem3D_par,only: NSTEP,DT,NPROC_XI,NPROC_ETA
   implicit none
@@ -49,7 +49,7 @@
   character(len=150) :: prname
 
   integer :: npoin2D_xi,npoin2D_eta
-  
+
   ! local parameters
   integer :: nb_colors_outer_elements,nb_colors_inner_elements,nspec_outer
   integer, dimension(:), allocatable :: perm
@@ -174,7 +174,7 @@
     open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h', &
           status='unknown',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening file values_from_mesher_f90.h')
-    
+
     write(99,*) 'integer, parameter :: NSPEC = ',nspec
     write(99,*) 'integer, parameter :: NGLOB = ',nglob
     !!! DK DK use 1000 time steps only for the scaling tests
@@ -211,7 +211,7 @@
     open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_C.h', &
           status='unknown',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening file values_from_mesher_C.h')
-    
+
     write(99,*) '#define NSPEC ',nspec
     write(99,*) '#define NGLOB ',nglob
     !!    write(99,*) '#define NSTEP ',nstep
@@ -239,7 +239,7 @@
     open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h', &
           status='unknown',iostat=ier)
     if( ier /= 0 ) call exit_mpi(myrank,'error opening values_from_mesher_nspec_outer.h file')
-    
+
     write(99,*) '#define NSPEC_OUTER ',nspec_outer_max_global
     write(99,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
     write(99,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global

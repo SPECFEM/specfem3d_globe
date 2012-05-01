@@ -60,6 +60,30 @@
 
   ! save movie in full 3D mesh
   if(MOVIE_VOLUME ) then
+
+    ! updates integral of strain for adjoint movie volume
+    if( MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3 ) then
+      ! transfers strain arrays onto CPU
+      if( GPU_MODE ) then
+        call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
+                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                         epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                         epsilondev_yz_crust_mantle)
+      endif
+
+      ! integrates strain
+      call movie_volume_integrate_strain(deltat,size(Ieps_trace_over_3_crust_mantle,4), &
+                                        eps_trace_over_3_crust_mantle, &
+                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
+                                        epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+                                        epsilondev_yz_crust_mantle, &
+                                        Ieps_trace_over_3_crust_mantle, &
+                                        Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle, &
+                                        Iepsilondev_xy_crust_mantle,Iepsilondev_xz_crust_mantle, &
+                                        Iepsilondev_yz_crust_mantle)
+    endif
+
+    ! file output
     if( mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0  &
       .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 

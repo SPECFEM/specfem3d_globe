@@ -76,7 +76,7 @@
     phase_ispec_inner => phase_ispec_inner_crust_mantle, &
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
-    
+
   implicit none
 
   integer :: NSPEC,NGLOB,NSPEC_ATT
@@ -247,9 +247,9 @@
 ! way 1:
         do i=1,NGLLX
             iglob1 = ibool(i,j,k,ispec)
-            dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob1) 
-            dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob1) 
-            dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob1) 
+            dummyx_loc(i,j,k) = displ_crust_mantle(1,iglob1)
+            dummyy_loc(i,j,k) = displ_crust_mantle(2,iglob1)
+            dummyz_loc(i,j,k) = displ_crust_mantle(3,iglob1)
         enddo
 
 #endif
@@ -257,7 +257,7 @@
     enddo
 
     if( ATTENUATION_VAL ) then
-       ! use first order Taylor expansion of displacement for local storage of stresses 
+       ! use first order Taylor expansion of displacement for local storage of stresses
        ! at this current time step, to fix attenuation in a consistent way
 
        do k=1,NGLLZ

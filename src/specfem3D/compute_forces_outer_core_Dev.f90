@@ -49,7 +49,7 @@
     phase_ispec_inner => phase_ispec_inner_outer_core, &
     nspec_outer => nspec_outer_outer_core, &
     nspec_inner => nspec_inner_outer_core
-    
+
   implicit none
 
   integer :: NSPEC,NGLOB

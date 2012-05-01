@@ -37,7 +37,7 @@
     hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
     wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_rho_g_over_kappa_fluid,d_ln_density_dr_table, &
-    MOVIE_VOLUME    
+    MOVIE_VOLUME
 
   use specfem_par_outercore,only: &
     xstore => xstore_outer_core,ystore => ystore_outer_core,zstore => zstore_outer_core, &
@@ -48,7 +48,7 @@
     phase_ispec_inner => phase_ispec_inner_outer_core, &
     nspec_outer => nspec_outer_outer_core, &
     nspec_inner => nspec_inner_outer_core
-    
+
   implicit none
 
   integer :: NSPEC,NGLOB

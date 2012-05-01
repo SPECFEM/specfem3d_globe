@@ -122,7 +122,12 @@ xcreate_movie_GMT_global: required
 
 
 clean: required
-	(rm -rf bin lib obj src/meshfem3D/*.mod src/specfem3D/*.mod)
+	(rm -rf bin lib obj )
+	(cd src/meshfem3D; make clean)
+	(cd src/specfem3D; make clean)
+	(cd src/create_header_file; make clean)
+	(cd src/auxiliaries; make clean)
+	(rm -rf src/meshfem3D/*.mod src/specfem3D/*.mod src/auxiliaries/*.mod)
 
 
 help:

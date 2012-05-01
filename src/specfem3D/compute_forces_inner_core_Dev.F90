@@ -275,9 +275,9 @@
 #endif
         enddo
       enddo
-      
+
       if( ATTENUATION_VAL ) then
-         ! use first order Taylor expansion of displacement for local storage of stresses 
+         ! use first order Taylor expansion of displacement for local storage of stresses
          ! at this current time step, to fix attenuation in a consistent way
 
          do k=1,NGLLZ

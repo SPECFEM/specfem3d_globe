@@ -61,7 +61,7 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  integer, dimension(NX_BATHY_VAL,NY_BATHY_VAL) :: ibathy_topo
 
   ! additional mass matrix for ocean load
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
@@ -75,7 +75,7 @@ module specfem_par
 
   ! for ellipticity
   integer :: nspl
-  double precision :: rspl(NR),espl(NR),espl2(NR)
+  double precision,dimension(NR) :: rspl,espl,espl2
 
   !-----------------------------------------------------------------
   ! rotation
@@ -310,10 +310,6 @@ module specfem_par
   integer, dimension(:), allocatable :: request_send_scalar_outer_core,request_recv_scalar_outer_core
   integer, dimension(:), allocatable :: b_request_send_scalar_outer_core,b_request_recv_scalar_outer_core
 
-
-  ! temporary array
-  logical, dimension(NGLOB_CRUST_MANTLE) :: mask_ibool
-
   !-----------------------------------------------------------------
   ! gpu
   !-----------------------------------------------------------------
@@ -373,6 +369,7 @@ module specfem_par_crustmantle
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
      displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
+
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
@@ -535,6 +532,7 @@ module specfem_par_innercore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: &
     eps_trace_over_3_inner_core
+
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_AND_ATT) :: &
     b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
@@ -604,10 +602,10 @@ module specfem_par_outercore
   ! velocity potential
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
     displ_outer_core,veloc_outer_core,accel_outer_core
+
   ! ADJOINT
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
-
 
   ! Stacey
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY) :: vp_outer_core
@@ -625,8 +623,8 @@ module specfem_par_outercore
             reclen_ymin_outer_core, reclen_ymax_outer_core
   integer :: reclen_zmin
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE) :: vector_accel_outer_core,&
-             vector_displ_outer_core, b_vector_displ_outer_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE_ADJOINT) :: &
+    vector_accel_outer_core,vector_displ_outer_core,b_vector_displ_outer_core
 
   ! arrays to couple with the fluid regions by pointwise matching
   integer, dimension(NSPEC2DMAX_XMIN_XMAX_OC) :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
@@ -683,30 +681,34 @@ module specfem_par_movie
 
   ! to save movie frames
   integer :: nmovie_points,NIT
+
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
       store_val_x,store_val_y,store_val_z, &
       store_val_ux,store_val_uy,store_val_uz
+
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
       store_val_x_all,store_val_y_all,store_val_z_all, &
       store_val_ux_all,store_val_uy_all,store_val_uz_all
 
   ! to save movie volume
-  integer :: npoints_3dmovie,nspecel_3dmovie
-  integer, dimension(NGLOB_CRUST_MANTLE) :: num_ibool_3dmovie
   double precision :: scalingval
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
-    muvstore_crust_mantle_3dmovie
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: mask_3dmovie
 
-!  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
-!    Iepsilondev_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
+    muvstore_crust_mantle_3dmovie
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
     Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle,Iepsilondev_xy_crust_mantle, &
     Iepsilondev_xz_crust_mantle,Iepsilondev_yz_crust_mantle
 
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
     Ieps_trace_over_3_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
+
+  integer :: npoints_3dmovie,nspecel_3dmovie
+  integer, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: num_ibool_3dmovie
+
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
+  logical, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: mask_ibool
 
 end module specfem_par_movie

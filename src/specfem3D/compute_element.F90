@@ -1307,7 +1307,7 @@
   integer :: i_SLS1,i_SLS2
 #endif
 
-#ifdef __HANDOPT_ATT
+#ifdef _HANDOPT_ATT
 ! way 2:
 ! note: this should help compilers to pipeline the code and make better use of the cache;
 !          depending on compilers, it can further decrease the computation time by ~ 30%.
@@ -1332,11 +1332,11 @@
     do i_SLS = imodulo_N_SLS+1,N_SLS,3
       R_xx_val1 = R_xx_loc(i_SLS)
       R_yy_val1 = R_yy_loc(i_SLS)
-      
+
       i_SLS1=i_SLS+1
       R_xx_val2 = R_xx_loc(i_SLS1)
       R_yy_val2 = R_yy_loc(i_SLS1)
-      
+
       i_SLS2 =i_SLS+2
       R_xx_val3 = R_xx_loc(i_SLS2)
       R_yy_val3 = R_yy_loc(i_SLS2)
@@ -1346,7 +1346,7 @@
       sigma_zz = sigma_zz + R_xx_val1 + R_yy_val1 &
                           + R_xx_val2 + R_yy_val2 &
                           + R_xx_val3 + R_yy_val3
-                          
+
       sigma_xy = sigma_xy - R_xy_loc(i_SLS)
       sigma_xz = sigma_xz - R_xz_loc(i_SLS)
       sigma_yz = sigma_yz - R_yz_loc(i_SLS)
@@ -1437,7 +1437,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX, NGLLY, NGLLZ) :: factor_common_c44_muv
   integer :: i_SLS
 
-#ifdef __HANDOPT_ATT
+#ifdef _HANDOPT_ATT
   real(kind=CUSTOM_REAL) :: alphal,betal,gammal
   integer :: i,j,k
 #endif
@@ -1448,7 +1448,7 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-#ifdef __HANDOPT_ATT
+#ifdef _HANDOPT_ATT
 ! way 2:
   do i_SLS = 1,N_SLS
 
@@ -1604,7 +1604,7 @@
 
   integer :: i_SLS
 
-#ifdef __HANDOPT_ATT
+#ifdef _HANDOPT_ATT
   real(kind=CUSTOM_REAL) :: alphal,betal,gammal
   integer :: i,j,k
 #endif
@@ -1615,7 +1615,7 @@
   ! IMPROVE we use mu_v here even if there is some anisotropy
   ! IMPROVE we should probably use an average value instead
 
-#ifdef __HANDOPT_ATT
+#ifdef _HANDOPT_ATT
 ! way 2:
   do i_SLS = 1,N_SLS
 
