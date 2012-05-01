@@ -114,7 +114,7 @@
   double precision, dimension(:,:), allocatable :: final_distance_all
 
   double precision distmin,final_distance_max
-  
+
 ! receiver information
 ! timing information for the stations
 ! station information for writing the seismograms

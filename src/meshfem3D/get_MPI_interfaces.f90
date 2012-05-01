@@ -62,7 +62,7 @@
   real(kind=CUSTOM_REAL),dimension(NGLOB),intent(in) :: xstore,ystore,zstore
 
   integer :: NPROCTOT
-  
+
   ! local parameters
   integer :: ispec,iglob,j,k
   integer :: iface,iedge,icorner
@@ -164,8 +164,10 @@
         ! updates interfaces array
         if( .not. is_done ) then
           iinterface = iinterface + 1
-          if( iinterface > MAX_NEIGHBOURS ) &
+          if( iinterface > MAX_NEIGHBOURS ) then
+            print*,'error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBOURS
             call exit_mpi(myrank,'interface face exceeds MAX_NEIGHBOURS range')
+          endif
           ! adds as neighbor new interface
           my_neighbours(iinterface) = rank
           icurrent = iinterface
@@ -298,8 +300,10 @@
         ! updates interfaces array
         if( .not. is_done ) then
           iinterface = iinterface + 1
-          if( iinterface > MAX_NEIGHBOURS ) &
+          if( iinterface > MAX_NEIGHBOURS ) then
+            print*,'error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBOURS
             call exit_mpi(myrank,'interface edge exceeds MAX_NEIGHBOURS range')
+          endif
           ! adds as neighbor new interface
           my_neighbours(iinterface) = rank
           icurrent = iinterface
@@ -449,8 +453,10 @@
         ! updates interfaces array
         if( .not. is_done ) then
           iinterface = iinterface + 1
-          if( iinterface > MAX_NEIGHBOURS ) &
+          if( iinterface > MAX_NEIGHBOURS ) then
+            print*,'error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBOURS
             call exit_mpi(myrank,'interface corner exceed MAX_NEIGHBOURS range')
+          endif
           ! adds as neighbor new interface
           my_neighbours(iinterface) = rank
           icurrent = iinterface
@@ -567,33 +573,33 @@
   is_on_a_slice_edge(:) = work_ispec_is_outer(:)
 
   end subroutine get_MPI_interfaces
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
   subroutine sort_MPI_interface(myrank,npoin,ibool_n, &
                                     NGLOB,xstore,ystore,zstore)
 
   use constants,only: CUSTOM_REAL
-  
+
   implicit none
-  
+
   integer,intent(in) :: myrank,npoin
   integer,dimension(npoin),intent(inout) :: ibool_n
 
   integer,intent(in) :: NGLOB
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: xstore,ystore,zstore  
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: xstore,ystore,zstore
 
   ! local parameters
   ! arrays for sorting routine
   double precision, dimension(:), allocatable :: work
   double precision, dimension(:), allocatable :: xstore_selected,ystore_selected,zstore_selected
-  integer, dimension(:), allocatable :: ibool_selected  
+  integer, dimension(:), allocatable :: ibool_selected
   integer, dimension(:), allocatable :: ind,ninseg,iglob,locval,iwork
   logical, dimension(:), allocatable :: ifseg
   integer :: nglob_selected,i,ipoin,ier
-  
+
   ! allocate arrays for buffers with maximum size
   allocate(ibool_selected(npoin), &
           xstore_selected(npoin), &
@@ -607,17 +613,17 @@
           iwork(npoin), &
           work(npoin),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error sort MPI interface: allocating temporary sorting arrays')
-  
+
   ! sets up working arrays
   do i=1,npoin
     ipoin = ibool_n(i)
-    
+
     ibool_selected(i) = ipoin
     xstore_selected(i) = xstore(ipoin)
     ystore_selected(i) = ystore(ipoin)
     zstore_selected(i) = zstore(ipoin)
   enddo
-  
+
   ! sort buffer obtained to be conforming with neighbor in other chunk
   ! sort on x, y and z, the other arrays will be swapped as well
   call sort_array_coordinates(npoin,xstore_selected,ystore_selected,zstore_selected, &
@@ -634,7 +640,7 @@
   deallocate(ibool_selected,xstore_selected,ystore_selected,zstore_selected, &
             ind,ninseg,iglob,locval,ifseg,iwork,work)
 
-              
+
   end subroutine sort_MPI_interface
 
 !

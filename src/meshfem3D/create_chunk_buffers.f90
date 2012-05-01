@@ -74,7 +74,7 @@
   integer iproc_eta_slice(0:NPROCTOT-1)
 
   integer NCHUNKS
-  
+
   ! local parameters
   integer NGLOB1D_RADIAL
 

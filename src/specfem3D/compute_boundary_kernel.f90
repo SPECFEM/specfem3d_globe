@@ -381,7 +381,7 @@
   real(kind=CUSTOM_REAL) :: b_kl(NGLLX,NGLLY,NSPEC2D_DISC)
   logical :: fluid_solid_boundary
 
-! --- local variables ---
+  ! --- local variables ---
   integer ispec2D,i,j,k,iglob,ispec
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: displl, accell, b_displl, Kdvect
   real(kind=CUSTOM_REAL), dimension(NDIM) :: normal, temp1, temp2, temp3

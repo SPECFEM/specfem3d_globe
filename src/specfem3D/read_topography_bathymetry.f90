@@ -43,25 +43,27 @@
 
   ! make ellipticity
   if( ELLIPTICITY_VAL ) then
+    ! splines used for locating exact source/receivers positions
+    ! in locate_sources() and locate_receivers() routines
     call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
   endif
 
   ! read topography and bathymetry file
-  if( TOPOGRAPHY ) then
+  if( TOPOGRAPHY .or. OCEANS_VAL ) then
     ! initializes
     ibathy_topo(:,:) = 0
 
     ! master reads file
     if(myrank == 0 ) then
       ! user output
-      write(IMAIN,*) 'topography:'    
+      write(IMAIN,*) 'topography:'
 
       ! reads topo file
       call read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
     endif
-    
+
     ! broadcast the information read on the master to the nodes
-    call MPI_BCAST(ibathy_topo,NX_BATHY*NY_BATHY,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(ibathy_topo,NX_BATHY_VAL*NY_BATHY_VAL,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
   endif
 
   ! user output

@@ -195,15 +195,15 @@
 
   ! initializes
   LOCAL_TMP_PATH = LOCAL_PATH
-  
+
   ! opens file Par_file
   call open_parameter_file()
 
   call read_value_string(LOCAL_TMP_PATH, 'LOCAL_TMP_PATH')
   call read_value_clear_err()
-  
+
   ! close parameter file
-  call close_parameter_file()  
+  call close_parameter_file()
 
   end subroutine read_parameter_file
 

@@ -26,9 +26,9 @@
 !=====================================================================
 
   module create_regions_mesh_par
-  
+
   use constants,only: NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,NDIM,NDIM2D
-  
+
   ! topology of the elements
   integer, dimension(NGNOD) :: iaddx,iaddy,iaddz
 
@@ -47,8 +47,8 @@
   double precision, dimension(NGNOD2D,NGLLX,NGLLY) :: shape2D_bottom,shape2D_top
   double precision, dimension(NDIM2D,NGNOD2D,NGLLY,NGLLZ) :: dershape2D_x
   double precision, dimension(NDIM2D,NGNOD2D,NGLLX,NGLLZ) :: dershape2D_y
-  double precision, dimension(NDIM2D,NGNOD2D,NGLLX,NGLLY) :: dershape2D_bottom,dershape2D_top  
-  
+  double precision, dimension(NDIM2D,NGNOD2D,NGLLX,NGLLY) :: dershape2D_bottom,dershape2D_top
+
   end module create_regions_mesh_par
 
 
@@ -80,7 +80,7 @@
 ! creates the different regions of the mesh
 
   use meshfem3D_models_par
-  use create_regions_mesh_par  
+  use create_regions_mesh_par
   implicit none
 
   ! code for the four regions of the mesh
@@ -102,7 +102,7 @@
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
   ! meshing parameters
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs  
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: rmins,rmaxs
 
   integer :: iproc_xi,iproc_eta,ichunk
 
@@ -115,7 +115,7 @@
   integer :: NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
   integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP
   integer :: NPROC_XI,NPROC_ETA
-  
+
   ! this to cut the doubling brick
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_EDGES_ONEDIR) :: NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER
@@ -131,16 +131,16 @@
   double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
   logical :: SAVE_MESH_FILES
-  
+
   integer :: NCHUNKS
 
   logical :: INCLUDE_CENTRAL_CUBE,ABSORBING_CONDITIONS
 
   double precision :: R_CENTRAL_CUBE,RICB
-  double precision :: RHO_OCEANS  
+  double precision :: RHO_OCEANS
   double precision :: RCMB,R670,RMOHO,RMOHO_FICTITIOUS_IN_MESHER, &
     RTOPDDOUBLEPRIME,R600,R220,R771,R400,R120,R80,RMIDDLE_CRUST,ROCEAN
-    
+
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
   integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
 
@@ -252,7 +252,7 @@
   logical, dimension(:), allocatable :: ispec_is_tiso
 
   integer i,j,k,ispec
-  
+
   ! name of the database file
   character(len=150) :: prname
   character(len=150) :: errmsg
@@ -685,9 +685,7 @@
 
     call get_global(nspec,xp,yp,zp,ibool,locval,ifseg,nglob,npointot)
 
-    deallocate(xp,stat=ier); if(ier /= 0) stop 'error in deallocate'
-    deallocate(yp,stat=ier); if(ier /= 0) stop 'error in deallocate'
-    deallocate(zp,stat=ier); if(ier /= 0) stop 'error in deallocate'
+    deallocate(xp,yp,zp)
 
     ! check that number of points found equals theoretical value
     if(nglob /= nglob_theor) then
@@ -755,8 +753,7 @@
       !                rhostore,kappavstore,muvstore,Qmu_store,ATTENUATION)
     endif
 
-    deallocate(locval,stat=ier); if(ier /= 0) stop 'error in deallocate'
-    deallocate(ifseg,stat=ier); if(ier /= 0) stop 'error in deallocate'
+    deallocate(locval,ifseg)
 
   ! only create mass matrix and save all the final arrays in the second pass
   case( 2 )
@@ -839,8 +836,7 @@
                   size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
                   ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
 
-    deallocate(rmass,stat=ier); if(ier /= 0) stop 'error in deallocate'
-    deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate'
+    deallocate(rmass,rmass_ocean_load)
 
     ! boundary mesh
     if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -887,10 +883,11 @@
   deallocate(stretch_tab)
   deallocate(perm_layer)
 
-  ! deallocate these arrays after each pass because they have a different size in each pass to save memory
-  deallocate(xixstore,xiystore,xizstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
-  deallocate(etaxstore,etaystore,etazstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
-  deallocate(gammaxstore,gammaystore,gammazstore,stat=ier); if(ier /= 0) stop 'error in deallocate'
+  ! deallocate these arrays after each pass
+  ! because they have a different size in each pass to save memory
+  deallocate(xixstore,xiystore,xizstore)
+  deallocate(etaxstore,etaystore,etazstore)
+  deallocate(gammaxstore,gammaystore,gammazstore)
 
   ! deallocate arrays
   deallocate(rhostore,dvpstore,kappavstore,kappahstore)
@@ -917,6 +914,9 @@
   deallocate(ibelm_670_top,ibelm_670_bot)
   deallocate(normal_moho,normal_400,normal_670)
   deallocate(jacobian2D_moho,jacobian2D_400,jacobian2D_670)
+
+  ! synchronizes processes
+  call sync_all()
 
   end subroutine create_regions_mesh
 

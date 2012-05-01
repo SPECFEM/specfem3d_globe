@@ -58,7 +58,7 @@
     ! user output
     write(IMAIN,*)
     write(IMAIN,*) 'incorporating topography'
-    
+
     ! read/save topo file on master
     call read_topo_bathy_file(ibathy_topo)
     call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
@@ -91,7 +91,7 @@
   character(len=150) :: topo_bathy_file
   integer,parameter :: TOPO_MINIMUM = - 10000 ! (depth in m )
   integer,parameter :: TOPO_MAXIMUM = + 10000 ! (height in m )
-  
+
   call get_value_string(topo_bathy_file, 'model.topoBathy.PATHNAME_TOPO_FILE', PATHNAME_TOPO_FILE)
 
   ! reads in topography values from file
@@ -105,7 +105,7 @@
   do itopo_y=1,NY_BATHY
     do itopo_x=1,NX_BATHY
       read(13,*,iostat=ier) val
-      
+
       ! checks
       if( ier /= 0 ) then
         print*,'error read topo_bathy: ix,iy = ',itopo_x,itopo_y,val
@@ -179,7 +179,7 @@
   ! only master needs to save this
   call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-  ! saves topography and bathymetry file for solver  
+  ! saves topography and bathymetry file for solver
   open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) then
@@ -189,9 +189,9 @@
     print*,'please check if path exists and rerun mesher'
     call exit_mpi(0,'error opening file for database topo')
   endif
- 
+
   write(27) ibathy_topo
-  close(27)      
+  close(27)
 
   end subroutine save_topo_bathy_database
 
@@ -226,17 +226,17 @@
     print*,'error opening file: ',prname(1:len_trim(prname))//'topo.bin'
     !print*,'please check if file exists and rerun solver'
     !call exit_mpi(0,'error opening file for database topo')
-        
+
     ! read by original file
     print*,'trying original topography file...'
     call read_topo_bathy_file(ibathy_topo)
 
     ! saves database topo file for next time
-    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)    
+    call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
   else
     ! database topo file exists
     read(27) ibathy_topo
-    close(27)  
+    close(27)
 
     ! user output
     write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
@@ -263,7 +263,7 @@
 
   ! location latitude/longitude (in degree)
   double precision,intent(in):: xlat,xlon
-  
+
   ! returns elevation (in meters)
   double precision,intent(out):: value
 

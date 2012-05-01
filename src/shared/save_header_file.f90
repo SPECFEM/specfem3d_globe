@@ -29,7 +29,8 @@
 
   subroutine save_header_file(NSPEC,nglob,NEX_XI,NEX_ETA,NPROC,NPROCTOT, &
                         TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-                        ELLIPTICITY,GRAVITY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_3D, &
+                        ELLIPTICITY,GRAVITY,ROTATION, &
+                        TOPOGRAPHY,OCEANS,ATTENUATION,ATTENUATION_3D, &
                         ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
                         INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
                         CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH,NSOURCES,NSTEP,&
@@ -60,30 +61,14 @@
   integer NEX_XI,NEX_ETA,NPROC,NPROCTOT,NCHUNKS,NSOURCES,NSTEP
 
   logical TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
-          ELLIPTICITY,GRAVITY,ROTATION,OCEANS,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
+          ELLIPTICITY,GRAVITY,ROTATION, &
+          TOPOGRAPHY,OCEANS,ATTENUATION,ATTENUATION_3D,INCLUDE_CENTRAL_CUBE
 
   double precision ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
           CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
 
-  double precision :: subtract_central_cube_elems,subtract_central_cube_points
-
-  character(len=150) HEADER_FILE
-
-! for regional code
-  double precision x,y,gamma,rgt,xi,eta
-  double precision x_top,y_top,z_top
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
-
-! rotation matrix from Euler angles
-  integer i,j,ix,iy,icorner
-  double precision rotation_matrix(3,3)
-  double precision vector_ori(3),vector_rotated(3)
-  double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
-
-! static memory size needed by the solver
+  ! static memory size needed by the solver
   double precision :: static_memory_size
-
-  integer :: att1,att2,att3,att4,att5,NCORNERSCHUNKS,NUM_FACES,NUM_MSG_TYPES
 
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                                     NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX
@@ -106,10 +91,26 @@
   integer :: SIMULATION_TYPE
   logical :: SAVE_FORWARD,MOVIE_VOLUME
 
+  ! local parameters
+  double precision :: subtract_central_cube_elems,subtract_central_cube_points
+  ! for regional code
+  double precision x,y,gamma,rgt,xi,eta
+  double precision x_top,y_top,z_top
+  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  ! rotation matrix from Euler angles
+  integer i,j,ix,iy,icorner
+  double precision rotation_matrix(3,3)
+  double precision vector_ori(3),vector_rotated(3)
+  double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
+  integer :: att1,att2,att3,att4,att5,NCORNERSCHUNKS,NUM_FACES,NUM_MSG_TYPES
+  integer :: ier
+  character(len=150) HEADER_FILE
 
-! copy number of elements and points in an include file for the solver
+  ! copy number of elements and points in an include file for the solver
   call get_value_string(HEADER_FILE, 'solver.HEADER_FILE', 'OUTPUT_FILES/values_from_mesher.h')
-  open(unit=IOUT,file=HEADER_FILE,status='unknown')
+  open(unit=IOUT,file=HEADER_FILE,status='unknown',iostat=ier)
+  if( ier /= 0 ) stop 'error opening OUTPUT_FILES/values_from_mesher.h'
+
   write(IOUT,*)
 
   write(IOUT,*) '!'
@@ -387,6 +388,15 @@
   endif
   write(IOUT,*)
 
+  if(TOPOGRAPHY .or. OCEANS) then
+    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = NX_BATHY'
+    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = NY_BATHY'
+  else
+    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = 1'
+    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = 1'
+  endif
+  write(IOUT,*)
+
   if(ROTATION) then
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .true.'
   else
@@ -525,7 +535,13 @@
     write(IOUT,*) 'logical, parameter :: COMPUTE_AND_STORE_STRAIN = .false.'
   endif
 
-
+  if (MOVIE_VOLUME) then
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = NSPEC_CRUST_MANTLE'
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = NGLOB_CRUST_MANTLE'
+  else
+    write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 1'
+    write(IOUT,*) 'integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1'
+  endif
 
   close(IOUT)
 

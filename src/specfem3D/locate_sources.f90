@@ -66,7 +66,6 @@
   integer i,j,k,ispec,iglob
   integer ier
 
-  double precision t0, hdur_gaussian(NSOURCES)
 
   double precision ell
   double precision elevation
@@ -109,11 +108,10 @@
   double precision, dimension(:), allocatable :: xi_source_subset,eta_source_subset,gamma_source_subset
 
   double precision, dimension(NSOURCES) :: lat,long,depth
-  double precision scalar_moment
   double precision moment_tensor(6,NSOURCES)
   double precision radius
 
-  character(len=150) OUTPUT_FILES,plot_file
+  character(len=150) OUTPUT_FILES
 
   double precision, dimension(:), allocatable :: x_found_source,y_found_source,z_found_source
   double precision r_found_source
@@ -127,20 +125,10 @@
 
   logical located_target
 
-  ! for calculation of source time function and spectrum
-  integer it,iom
-  double precision time_source,om
-  double precision, external :: comp_source_time_function,comp_source_spectrum
-  double precision, external :: comp_source_time_function_rickr
-
-  ! number of points to plot the source time function and spectrum
-  integer, parameter :: NSAMP_PLOT_SOURCE = 1000
-
   integer iorientation
   double precision stazi,stdip,thetan,phin,n(3)
   integer imin,imax,jmin,jmax,kmin,kmax
   double precision :: f0,t0_ricker
-  double precision t_cmt_used(NSOURCES)
 
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
   real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: mask_source
@@ -373,7 +361,7 @@
           kmin = 2
           kmax = NGLLZ - 1
         endif
-        
+
         do k = kmin,kmax
           do j = jmin,jmax
             do i = imin,imax
@@ -500,7 +488,7 @@
           dx = - (x - x_target_source)
           dy = - (y - y_target_source)
           dz = - (z - z_target_source)
-          
+
           ! compute increments
           dxi  = xix*dx + xiy*dy + xiz*dz
           deta = etax*dx + etay*dy + etaz*dz
@@ -577,7 +565,8 @@
     if(myrank == 0) then
 
       ! check that the gather operation went well
-      if(minval(ispec_selected_source_all) <= 0) call exit_MPI(myrank,'gather operation failed for source')
+      if(minval(ispec_selected_source_all) <= 0) &
+        call exit_MPI(myrank,'gather operation failed for source')
 
       ! loop on all the sources within subsets
       do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
@@ -663,7 +652,7 @@
 
         ! convert geocentric to geographic colatitude
         colat_source = PI/2.0d0 &
-        - datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
+          - datan(1.006760466d0*dcos(theta_source(isource))/dmax1(TINYVAL,dsin(theta_source(isource))))
         if(phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
         write(IMAIN,*)
@@ -697,89 +686,8 @@
         endif
 
         ! print source time function and spectrum
-        if(PRINT_SOURCE_TIME_FUNCTION) then
-
-          write(IMAIN,*)
-          write(IMAIN,*) 'printing the source-time function'
-
-          ! print the source-time function
-          if(NSOURCES == 1) then
-            plot_file = '/plot_source_time_function.txt'
-          else
-           if(isource < 10) then
-              write(plot_file,"('/plot_source_time_function',i1,'.txt')") isource
-            elseif(isource < 100) then
-              write(plot_file,"('/plot_source_time_function',i2,'.txt')") isource
-            else
-              write(plot_file,"('/plot_source_time_function',i3,'.txt')") isource
-            endif
-          endif
-          open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown')
-
-          scalar_moment = 0.
-          do i = 1,6
-            scalar_moment = scalar_moment + moment_tensor(i,isource)**2
-          enddo
-          scalar_moment = dsqrt(scalar_moment/2.)
-
-          ! define t0 as the earliest start time
-          ! note: this calculation here is only used for outputting the plot_source_time_function file
-          !          (see setup_sources_receivers.f90)
-          t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
-          if( USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
-          t_cmt_used(:) = t_cmt_used(:)
-          if( USER_T0 > 0.d0 ) then
-            if( t0 <= USER_T0 + min_tshift_cmt_original ) then
-              t_cmt_used(:) = tshift_cmt(:) + min_tshift_cmt_original
-              t0 = USER_T0
-            endif
-          endif
-          ! convert the half duration for triangle STF to the one for gaussian STF
-          ! note: this calculation here is only used for outputting the plot_source_time_function file
-          !          (see setup_sources_receivers.f90)
-          hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
-
-          ! writes out source time function to file
-          do it=1,NSTEP
-            time_source = dble(it-1)*DT-t0-t_cmt_used(isource)
-            if( USE_FORCE_POINT_SOURCE ) then
-              ! Ricker source time function
-              f0 = hdur(isource)
-              write(27,*) sngl(dble(it-1)*DT-t0), &
-                sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
-            else
-              ! Gaussian source time function
-              write(27,*) sngl(dble(it-1)*DT-t0), &
-                sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
-            endif
-          enddo
-          close(27)
-
-          write(IMAIN,*)
-          write(IMAIN,*) 'printing the source spectrum'
-
-          ! print the spectrum of the derivative of the source from 0 to 1/8 Hz
-          if(NSOURCES == 1) then
-            plot_file = '/plot_source_spectrum.txt'
-          else
-           if(isource < 10) then
-              write(plot_file,"('/plot_source_spectrum',i1,'.txt')") isource
-            elseif(isource < 100) then
-              write(plot_file,"('/plot_source_spectrum',i2,'.txt')") isource
-            else
-              write(plot_file,"('/plot_source_spectrum',i3,'.txt')") isource
-            endif
-          endif
-          open(unit=27,file=trim(OUTPUT_FILES)//plot_file,status='unknown')
-
-          do iom=1,NSAMP_PLOT_SOURCE
-            om=TWO_PI*(1.0d0/8.0d0)*(iom-1)/dble(NSAMP_PLOT_SOURCE-1)
-            write(27,*) sngl(om/TWO_PI), &
-              sngl(scalar_moment*om*comp_source_spectrum(om,hdur(isource)))
-          enddo
-          close(27)
-
-        endif !PRINT_SOURCE_TIME_FUNCTION
+        if(PRINT_SOURCE_TIME_FUNCTION) call print_stf(NSOURCES,isource,moment_tensor,tshift_cmt,hdur, &
+                                                    min_tshift_cmt_original,NSTEP,DT,OUTPUT_FILES)
 
       enddo ! end of loop on all the sources within current source subset
 
@@ -802,7 +710,6 @@
     write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance_source)),' km'
     write(IMAIN,*)
   endif
-
 
   ! main process broadcasts the results to all the slices
   call MPI_BCAST(islice_selected_source,NSOURCES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
@@ -827,7 +734,7 @@
     write(IMAIN,*)
   endif
   call sync_all()
-  
+
   end subroutine locate_sources
 
 !
@@ -913,8 +820,139 @@
   open(unit=27,file=trim(prname)//'mask_source.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if( ier /= 0 ) call exit_mpi(myrank,'error opening mask_source.bin file')
-  
+
   write(27) mask_source
   close(27)
 
   end subroutine save_mask_source
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine print_stf(NSOURCES,isource,moment_tensor,tshift_cmt,hdur, &
+                      min_tshift_cmt_original,NSTEP,DT,OUTPUT_FILES)
+
+! prints source time function
+
+  implicit none
+
+  include "constants.h"
+
+  integer :: NSOURCES,isource
+
+  double precision :: moment_tensor(6,NSOURCES)
+  double precision :: tshift_cmt(NSOURCES)
+  double precision :: hdur(NSOURCES)
+
+  double precision :: min_tshift_cmt_original
+  integer :: NSTEP
+  double precision :: DT
+
+  character(len=150) OUTPUT_FILES
+
+  ! local parameters
+  integer :: i,it,iom,ier
+  double precision :: scalar_moment
+  double precision :: t0, hdur_gaussian(NSOURCES)
+  double precision :: t_cmt_used(NSOURCES)
+  double precision time_source,om
+  double precision :: f0
+
+  double precision, external :: comp_source_time_function,comp_source_spectrum
+  double precision, external :: comp_source_time_function_rickr
+
+  character(len=150) plot_file
+
+  ! number of points to plot the source time function and spectrum
+  integer, parameter :: NSAMP_PLOT_SOURCE = 1000
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'printing the source-time function'
+
+  ! print the source-time function
+  if(NSOURCES == 1) then
+    plot_file = '/plot_source_time_function.txt'
+  else
+   if(isource < 10) then
+      write(plot_file,"('/plot_source_time_function',i1,'.txt')") isource
+    elseif(isource < 100) then
+      write(plot_file,"('/plot_source_time_function',i2,'.txt')") isource
+    else
+      write(plot_file,"('/plot_source_time_function',i3,'.txt')") isource
+    endif
+  endif
+
+  open(unit=27,file=trim(OUTPUT_FILES)//plot_file, &
+        status='unknown',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_time_function file')
+
+  scalar_moment = 0.
+  do i = 1,6
+    scalar_moment = scalar_moment + moment_tensor(i,isource)**2
+  enddo
+  scalar_moment = dsqrt(scalar_moment/2.0d0)
+
+  ! define t0 as the earliest start time
+  ! note: this calculation here is only used for outputting the plot_source_time_function file
+  !          (see setup_sources_receivers.f90)
+  t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
+  if( USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
+  t_cmt_used(:) = t_cmt_used(:)
+  if( USER_T0 > 0.d0 ) then
+    if( t0 <= USER_T0 + min_tshift_cmt_original ) then
+      t_cmt_used(:) = tshift_cmt(:) + min_tshift_cmt_original
+      t0 = USER_T0
+    endif
+  endif
+  ! convert the half duration for triangle STF to the one for gaussian STF
+  ! note: this calculation here is only used for outputting the plot_source_time_function file
+  !          (see setup_sources_receivers.f90)
+  hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
+
+  ! writes out source time function to file
+  do it=1,NSTEP
+    time_source = dble(it-1)*DT-t0-t_cmt_used(isource)
+    if( USE_FORCE_POINT_SOURCE ) then
+      ! Ricker source time function
+      f0 = hdur(isource)
+      write(27,*) sngl(dble(it-1)*DT-t0), &
+        sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
+    else
+      ! Gaussian source time function
+      write(27,*) sngl(dble(it-1)*DT-t0), &
+        sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
+    endif
+  enddo
+  close(27)
+
+  write(IMAIN,*)
+  write(IMAIN,*) 'printing the source spectrum'
+
+  ! print the spectrum of the derivative of the source from 0 to 1/8 Hz
+  if(NSOURCES == 1) then
+    plot_file = '/plot_source_spectrum.txt'
+  else
+   if(isource < 10) then
+      write(plot_file,"('/plot_source_spectrum',i1,'.txt')") isource
+    elseif(isource < 100) then
+      write(plot_file,"('/plot_source_spectrum',i2,'.txt')") isource
+    else
+      write(plot_file,"('/plot_source_spectrum',i3,'.txt')") isource
+    endif
+  endif
+
+  open(unit=27,file=trim(OUTPUT_FILES)//plot_file, &
+        status='unknown',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(0,'error opening plot_source_spectrum file')
+
+  do iom=1,NSAMP_PLOT_SOURCE
+    om=TWO_PI*(1.0d0/8.0d0)*(iom-1)/dble(NSAMP_PLOT_SOURCE-1)
+    write(27,*) sngl(om/TWO_PI), &
+      sngl(scalar_moment*om*comp_source_spectrum(om,hdur(isource)))
+  enddo
+  close(27)
+
+  end subroutine print_stf

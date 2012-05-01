@@ -405,18 +405,12 @@
   if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) &
     stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE'
 
-  call count_points_movie_volume()
-!              LOCAL_TMP_PATH,ibool_crust_mantle, xstore_crust_mantle,ystore_crust_mantle, &
-!              zstore_crust_mantle,MOVIE_TOP,MOVIE_BOTTOM,MOVIE_WEST,MOVIE_EAST,MOVIE_NORTH,MOVIE_SOUTH, &
-!              MOVIE_COARSE,npoints_3dmovie,nspecel_3dmovie,num_ibool_3dmovie,mask_ibool,mask_3dmovie)
+  call movie_volume_count_points()
 
   allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating nu for 3d movie')
 
   call write_movie_volume_mesh()
-!                         npoints_3dmovie,LOCAL_TMP_PATH,ibool_crust_mantle,xstore_crust_mantle, &
-!                         ystore_crust_mantle,zstore_crust_mantle, muvstore_crust_mantle_3dmovie, &
-!                         mask_3dmovie,mask_ibool,num_ibool_3dmovie,nu_3dmovie,MOVIE_COARSE)
 
   if(myrank == 0) then
     write(IMAIN,*)

@@ -287,7 +287,7 @@
     write(IMAIN,*)
   endif
   call sync_all()
-  
+
   ! locate receivers in the crust in the mesh
   call locate_receivers(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
                       xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -395,7 +395,7 @@
   deallocate(theta_source,phi_source)
 
   call sync_all()
-  
+
   end subroutine setup_receivers
 
 

@@ -33,7 +33,7 @@
 
   use constants
   use meshfem3D_par,only: NPROCTOT,myrank
-  use create_MPI_interfaces_par,only: NGLOB_CRUST_MANTLE,NGLOB_OUTER_CORE,NGLOB_INNER_CORE  
+  use create_MPI_interfaces_par,only: NGLOB_CRUST_MANTLE,NGLOB_OUTER_CORE,NGLOB_INNER_CORE
   implicit none
 
   include 'mpif.h'
@@ -42,7 +42,7 @@
   integer,intent(in) :: num_interfaces,max_nibool_interfaces
   integer,dimension(num_interfaces),intent(in) :: my_neighbours,nibool_interfaces
   integer,dimension(max_nibool_interfaces,num_interfaces),intent(in):: ibool_interfaces
-  
+
   ! local parameters
   integer,dimension(:),allocatable :: dummy_i
   integer,dimension(:,:),allocatable :: test_interfaces
@@ -51,10 +51,10 @@
   integer :: ineighbour,iproc,inum,i,j,ier,ipoints,max_num,iglob
   logical :: is_okay
   logical,dimension(:),allocatable :: mask
-  
+
   ! daniel: debug output
   !do iproc=0,NPROCTOT-1
-  !  if( myrank == iproc ) then    
+  !  if( myrank == iproc ) then
   !    print*, 'mpi rank',myrank,'interfaces : ',num_interfaces,'region',iregion_code
   !    do j=1,num_interfaces
   !      print*, '  my_neighbours: ',my_neighbours(j),nibool_interfaces(j)
@@ -63,13 +63,13 @@
   !  endif
   !  call sync_all()
   !enddo
-  
+
   ! checks maximum number of interface points
   if( max_nibool_interfaces == 0 .and. NPROCTOT > 1 ) then
     print*,'test MPI: rank ',myrank,'max_nibool_interfaces is zero'
     call exit_mpi(myrank,'error test max_nibool_interfaces zero')
   endif
-  
+
   ! allocates global mask
   select case(iregion_code)
   case( IREGION_CRUST_MANTLE )
@@ -81,7 +81,7 @@
   case default
     call exit_mpi(myrank,'error test MPI: iregion_code not recognized')
   end select
-  
+
   ! test ibool entries
   ! (must be non-zero and unique)
   do i = 1,num_interfaces
@@ -90,19 +90,19 @@
       print*,'error test MPI: rank',myrank,'nibool values:',nibool_interfaces(i),max_nibool_interfaces
       call exit_mpi(myrank,'error test MPI: nibool exceeds max_nibool_interfaces')
     endif
-    
+
     mask(:) = .false.
-    
-    ! ibool entries  
+
+    ! ibool entries
     do j = 1,nibool_interfaces(i)
       iglob = ibool_interfaces(j,i)
-      
+
       ! checks zero entry
       if( iglob <= 0 ) then
         print*,'error test MPI: rank ',myrank,'ibool value:',iglob,'interface:',i,'point:',j
         call exit_mpi(myrank,'error test MPI: ibool values invalid')
       endif
-      
+
       ! checks duplicate
       if( j < nibool_interfaces(i) ) then
         if( iglob == ibool_interfaces(j+1,i) ) then
@@ -110,18 +110,18 @@
           call exit_mpi(myrank,'error test MPI: ibool duplicates')
         endif
       endif
-      
+
       ! checks if unique global value
       if( .not. mask(iglob) ) then
         mask(iglob) = .true.
       else
         print*,'error test MPI: rank',myrank,'ibool masked:',iglob,'interface:',i,'point:',j
         call exit_mpi(myrank,'error test MPI: ibool masked already')
-      endif      
+      endif
     enddo
   enddo
   deallocate(mask)
-  
+
   ! checks neighbors
   ! gets maximum interfaces from all processes
   call MPI_REDUCE(num_interfaces,max_num,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
@@ -249,7 +249,7 @@
   integer :: inum,icount,ival
   integer :: num_unique,num_max_valence
   integer,dimension(:),allocatable :: valence
-  
+
   ! crust mantle
   allocate(test_flag_vector(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
   if( ier /= 0 ) stop 'error allocating array test_flag etc.'
@@ -258,10 +258,10 @@
 
   ! points defined by interfaces
   valence(:) = 0
-  test_flag_vector(:,:) = 0.0  
+  test_flag_vector(:,:) = 0.0
   do i=1,num_interfaces_crust_mantle
     do j=1,nibool_interfaces_crust_mantle(i)
-      iglob = ibool_interfaces_crust_mantle(j,i)      
+      iglob = ibool_interfaces_crust_mantle(j,i)
       ! sets flag on
       test_flag_vector(1,iglob) = 1.0_CUSTOM_REAL
       ! counts valence (occurrences)
@@ -269,19 +269,19 @@
     enddo
   enddo
   ! total number of  interface points
-  i = sum(nibool_interfaces_crust_mantle)  
+  i = sum(nibool_interfaces_crust_mantle)
   call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
-  
+
   ! total number of unique points (some could be shared between different processes)
   i = nint( sum(test_flag_vector) )
   num_unique= i
   call MPI_REDUCE(i,icount,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
-  
+
   ! maximum valence
   i = maxval( valence(:) )
   num_max_valence = i
   call MPI_REDUCE(i,ival,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
-    
+
   ! user output
   if( myrank == 0 ) then
     write(IMAIN,*) '  total MPI interface points : ',inum
@@ -307,7 +307,7 @@
   do iglob=1,NGLOB_CRUST_MANTLE
     ! only counts flags with MPI contributions
     if( test_flag_vector(1,iglob) > 0.0 ) i = i + 1
-    
+
     ! checks valence
     if( valence(iglob) /= nint(test_flag_vector(1,iglob)) .or. &
        valence(iglob) /= nint(test_flag_vector(2,iglob)) .or. &
@@ -320,9 +320,9 @@
   ! checks within slice
   if( i /= num_unique ) then
     print*,'error test crust mantle : rank',myrank,'unique mpi points:',i,num_unique
-    call exit_mpi(myrank,'error MPI assembly crust mantle')  
+    call exit_mpi(myrank,'error MPI assembly crust mantle')
   endif
-    
+
   ! total number of assembly points
   call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
 
@@ -333,10 +333,10 @@
       print*,'error crust mantle : total mpi points:',myrank,'total: ',inum,icount
       call exit_mpi(myrank,'error MPI assembly crust mantle')
     endif
-    
+
     ! user output
     write(IMAIN,*) '  total unique MPI interface points:',inum
-    write(IMAIN,*)    
+    write(IMAIN,*)
   endif
 
   deallocate(test_flag_vector)
@@ -384,20 +384,20 @@
   enddo
   i = sum(nibool_interfaces_outer_core)
   call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
-  
+
   i = nint( sum(test_flag) )
   num_unique = i
   call MPI_REDUCE(i,icount,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
-  
+
   ! maximum valence
   i = maxval( valence(:) )
   num_max_valence = i
   call MPI_REDUCE(i,ival,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
-  
+
   if( myrank == 0 ) then
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
-    write(IMAIN,*) '  maximum valence            : ',ival    
+    write(IMAIN,*) '  maximum valence            : ',ival
   endif
 
   ! initialized for assembly
@@ -424,15 +424,15 @@
     if( valence(iglob) /= nint(test_flag(iglob)) ) then
       print*,'error test MPI: rank',myrank,'valence:',valence(iglob),'flag:',test_flag(iglob)
       call exit_mpi(myrank,'error test outer core valence')
-    endif    
+    endif
   enddo
 
   ! checks within slice
   if( i /= num_unique ) then
     print*,'error test outer core : rank',myrank,'unique mpi points:',i,num_unique
-    call exit_mpi(myrank,'error MPI assembly outer core')  
+    call exit_mpi(myrank,'error MPI assembly outer core')
   endif
-  
+
   call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
 
   ! output
@@ -445,7 +445,7 @@
 
     ! user output
     write(IMAIN,*) '  total assembled MPI interface points:',inum
-    write(IMAIN,*)    
+    write(IMAIN,*)
   endif
 
   deallocate(test_flag)
@@ -472,7 +472,7 @@
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: test_flag_vector
   integer :: i,j,iglob,ier
   integer :: inum,icount,ival
-  integer :: num_unique,num_max_valence  
+  integer :: num_unique,num_max_valence
   integer,dimension(:),allocatable :: valence
 
   ! inner core
@@ -482,7 +482,7 @@
   if( ier /= 0 ) stop 'error allocating array valence'
 
   ! points defined by interfaces
-  valence(:) = 0  
+  valence(:) = 0
   test_flag_vector(:,:) = 0.0
   do i=1,num_interfaces_inner_core
     do j=1,nibool_interfaces_inner_core(i)
@@ -495,20 +495,20 @@
   enddo
   i = sum(nibool_interfaces_inner_core)
   call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
-  
+
   i = nint( sum(test_flag_vector) )
-  num_unique= i  
+  num_unique= i
   call MPI_REDUCE(i,icount,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
-  
+
   ! maximum valence
   i = maxval( valence(:) )
   num_max_valence = i
   call MPI_REDUCE(i,ival,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
-  
+
   if( myrank == 0 ) then
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
-    write(IMAIN,*) '  maximum valence            : ',ival    
+    write(IMAIN,*) '  maximum valence            : ',ival
   endif
 
   ! initializes for assembly
@@ -537,15 +537,15 @@
       print*,'error test MPI: rank',myrank,'valence:',valence(iglob),'flag:',test_flag_vector(:,:)
       call exit_mpi(myrank,'error test MPI inner core valence')
     endif
-    
+
   enddo
 
   ! checks within slice
   if( i /= num_unique ) then
     print*,'error test inner core : rank',myrank,'unique mpi points:',i,num_unique
-    call exit_mpi(myrank,'error MPI assembly inner core')  
+    call exit_mpi(myrank,'error MPI assembly inner core')
   endif
-  
+
   call MPI_REDUCE(i,inum,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
 
   if( myrank == 0 ) then
@@ -557,7 +557,7 @@
 
     ! user output
     write(IMAIN,*) '  total assembled MPI interface points:',inum
-    write(IMAIN,*)    
+    write(IMAIN,*)
   endif
 
   deallocate(test_flag_vector)

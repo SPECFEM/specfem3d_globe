@@ -161,15 +161,15 @@ void FC_FUNC_(compute_coupling_fluid_icb_cuda,
 
 void FC_FUNC_(compute_coupling_cmb_fluid_cuda,
               COMPUTE_COUPLING_CMB_FLUID_CUDA)(long* Mesh_pointer_f,
-                 double RHO_TOP_OC,
-                 realw minus_g_cmb,
-                 int GRAVITY_VAL) {}
+                                               double RHO_TOP_OC,
+                                               realw minus_g_cmb,
+                                               int GRAVITY_VAL) {}
 
 void FC_FUNC_(compute_coupling_icb_fluid_cuda,
               COMPUTE_COUPLING_ICB_FLUID_CUDA)(long* Mesh_pointer_f,
-                 double RHO_BOTTOM_OC,
-                 realw minus_g_icb,
-                 int GRAVITY_VAL) {}
+                                               double RHO_BOTTOM_OC,
+                                               realw minus_g_icb,
+                                               int GRAVITY_VAL) {}
 
 void FC_FUNC_(compute_coupling_ocean_cuda,
               COMPUTE_COUPLING_OCEAN_CUDA)(long* Mesh_pointer_f) {}
@@ -181,6 +181,7 @@ void FC_FUNC_(compute_coupling_ocean_cuda,
 
 void FC_FUNC_(compute_forces_crust_mantle_cuda,
               COMPUTE_FORCES_CRUST_MANTLE_CUDA)(long* Mesh_pointer_f,
+                                                realw* deltat,
                                                 int* iphase) {}
 
 

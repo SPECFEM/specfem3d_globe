@@ -69,7 +69,7 @@
     write(IMAIN,*)
   endif
   call sync_all()
-  
+
   end subroutine setup_model
 
 !

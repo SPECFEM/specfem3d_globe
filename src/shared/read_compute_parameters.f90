@@ -439,7 +439,7 @@
     if(NEX_ETA < 48) &
       stop 'NEX_ETA must be greater than 48 to cut the sphere into slices with positive Jacobian'
   endif
-  
+
   ! check that topology is correct if more than two chunks
   if(NCHUNKS > 2 .and. NEX_XI /= NEX_ETA) &
     stop 'must have NEX_XI = NEX_ETA for more than two chunks'

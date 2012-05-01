@@ -67,12 +67,12 @@
   imodulo_NGLOB_OUTER_CORE = mod(NGLOB_OUTER_CORE,3)
 #endif
 
-! get MPI starting time
+  ! get MPI starting time
   time_start = MPI_WTIME()
 
-! *********************************************************
-! ************* MAIN LOOP OVER THE TIME STEPS *************
-! *********************************************************
+  ! *********************************************************
+  ! ************* MAIN LOOP OVER THE TIME STEPS *************
+  ! *********************************************************
 
   do it = it_begin,it_end
 
@@ -120,9 +120,9 @@
 
   enddo   ! end of main time loop
 
-!
-!---- end of time iteration loop
-!
+  !
+  !---- end of time iteration loop
+  !
 
   call it_print_elapsed_time()
 
@@ -131,7 +131,9 @@
 
   end subroutine iterate_time
 
-!=====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine it_update_displacement_scheme()
 
@@ -168,7 +170,6 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
-  use specfem_par_movie
   implicit none
 
   ! local parameters
@@ -418,61 +419,38 @@
                                        b_deltat, b_deltatsqover2, b_deltatover2)
   endif
 
-  ! integral of strain for adjoint movie volume
-  if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) ) then
-    if( GPU_MODE ) then
-      ! transfers strain arrays onto CPU
-      call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
-                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
-                                         epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
-                                         epsilondev_yz_crust_mantle)
-    endif
-
-    ! updates integral values
-    Iepsilondev_xx_crust_mantle(:,:,:,:) = Iepsilondev_xx_crust_mantle(:,:,:,:)  &
-                                              + deltat*epsilondev_xx_crust_mantle(:,:,:,:)
-    Iepsilondev_yy_crust_mantle(:,:,:,:) = Iepsilondev_yy_crust_mantle(:,:,:,:)  &
-                                              + deltat*epsilondev_yy_crust_mantle(:,:,:,:)
-    Iepsilondev_xy_crust_mantle(:,:,:,:) = Iepsilondev_xy_crust_mantle(:,:,:,:)  &
-                                              + deltat*epsilondev_xy_crust_mantle(:,:,:,:)
-    Iepsilondev_xz_crust_mantle(:,:,:,:) = Iepsilondev_xz_crust_mantle(:,:,:,:)  &
-                                              + deltat*epsilondev_xz_crust_mantle(:,:,:,:)
-    Iepsilondev_yz_crust_mantle(:,:,:,:) = Iepsilondev_yz_crust_mantle(:,:,:,:)  &
-                                              + deltat*epsilondev_yz_crust_mantle(:,:,:,:)
-
-    Ieps_trace_over_3_crust_mantle(:,:,:,:) = Ieps_trace_over_3_crust_mantle(:,:,:,:) &
-                                              + deltat*eps_trace_over_3_crust_mantle(:,:,:,:)
-  endif
-
-
-
   end subroutine it_update_displacement_scheme
 
-!=====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine it_print_elapsed_time()
-    use specfem_par
-    implicit none
 
-    include 'mpif.h'
+  use specfem_par
+  implicit none
 
-    ! local parameters
-    integer :: ihours,iminutes,iseconds,int_tCPU
+  include 'mpif.h'
 
-    if(myrank == 0) then
-       ! elapsed time since beginning of the simulation
-       tCPU = MPI_WTIME() - time_start
-       int_tCPU = int(tCPU)
-       ihours = int_tCPU / 3600
-       iminutes = (int_tCPU - 3600*ihours) / 60
-       iseconds = int_tCPU - 3600*ihours - 60*iminutes
-       write(IMAIN,*) 'Time-Loop Complete. Timing info:'
-       write(IMAIN,*) 'Total elapsed time in seconds = ',tCPU
-       write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-    endif
+  ! local parameters
+  integer :: ihours,iminutes,iseconds,int_tCPU
+
+  if(myrank == 0) then
+     ! elapsed time since beginning of the simulation
+     tCPU = MPI_WTIME() - time_start
+     int_tCPU = int(tCPU)
+     ihours = int_tCPU / 3600
+     iminutes = (int_tCPU - 3600*ihours) / 60
+     iseconds = int_tCPU - 3600*ihours - 60*iminutes
+     write(IMAIN,*) 'Time-Loop Complete. Timing info:'
+     write(IMAIN,*) 'Total elapsed time in seconds = ',tCPU
+     write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+  endif
   end subroutine it_print_elapsed_time
 
-!=====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine it_check_stability()
 
@@ -519,7 +497,9 @@
 
   end subroutine it_check_stability
 
-!=====================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine it_transfer_from_GPU()
 
