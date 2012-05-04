@@ -460,6 +460,7 @@ typedef struct mesh_ {
   int save_forward;
   int absorbing_conditions;
   int attenuation;
+  int attenuation_new;
   int use_attenuation_mimic;
   int compute_and_store_strain;
   int anisotropic_3D_mantle;

@@ -208,6 +208,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* GRAVITY_f,
                                         int* ROTATION_f,
                                         int* ATTENUATION_f,
+                                        int* ATTENUATION_NEW_f,
                                         int* USE_ATTENUATION_MIMIC_f,
                                         int* COMPUTE_AND_STORE_STRAIN_f,
                                         int* ANISOTROPIC_3D_MANTLE_f,
@@ -261,6 +262,7 @@ TRACE("prepare_constants_device");
   mp->gravity = *GRAVITY_f;
   mp->rotation = *ROTATION_f;
   mp->attenuation = *ATTENUATION_f;
+  mp->attenuation_new = *ATTENUATION_NEW_f;
   mp->use_attenuation_mimic = *USE_ATTENUATION_MIMIC_f;
   mp->compute_and_store_strain = *COMPUTE_AND_STORE_STRAIN_f;
   mp->anisotropic_3D_mantle = *ANISOTROPIC_3D_MANTLE_f;

@@ -256,48 +256,84 @@
       enddo
     enddo
 
-    if( ATTENUATION_VAL ) then
-       ! use first order Taylor expansion of displacement for local storage of stresses
-       ! at this current time step, to fix attenuation in a consistent way
+    if(ATTENUATION_VAL) then
+       if(ATTENUATION_NEW_VAL) then
+          ! takes new routines
+          ! use first order Taylor expansion of displacement for local storage of stresses 
+          ! at this current time step, to fix attenuation in a consistent way
 
-       do k=1,NGLLZ
-          do j=1,NGLLY
+          do k=1,NGLLZ
+             do j=1,NGLLY
 
 #ifdef _HANDOPT
-             ! way 2:
-             ! since we know that NGLLX = 5, this should help pipelining
-             iglobv5(:) = ibool(:,j,k,ispec)
+                ! way 2:
+                ! since we know that NGLLX = 5, this should help pipelining
+                iglobv5(:) = ibool(:,j,k,ispec)
 
-             dummyx_loc_att(1,j,k) = displ_crust_mantle(1,iglobv5(1)) + deltat*veloc_crust_mantle(1,iglobv5(1))
-             dummyy_loc_att(1,j,k) = displ_crust_mantle(2,iglobv5(1)) + deltat*veloc_crust_mantle(2,iglobv5(1))
-             dummyz_loc_att(1,j,k) = displ_crust_mantle(3,iglobv5(1)) + deltat*veloc_crust_mantle(3,iglobv5(1))
+                dummyx_loc_att(1,j,k) = displ_crust_mantle(1,iglobv5(1)) + deltat*veloc_crust_mantle(1,iglobv5(1))
+                dummyy_loc_att(1,j,k) = displ_crust_mantle(2,iglobv5(1)) + deltat*veloc_crust_mantle(2,iglobv5(1))
+                dummyz_loc_att(1,j,k) = displ_crust_mantle(3,iglobv5(1)) + deltat*veloc_crust_mantle(3,iglobv5(1))
 
-             dummyx_loc_att(2,j,k) = displ_crust_mantle(1,iglobv5(2)) + deltat*veloc_crust_mantle(1,iglobv5(2))
-             dummyy_loc_att(2,j,k) = displ_crust_mantle(2,iglobv5(2)) + deltat*veloc_crust_mantle(2,iglobv5(2))
-             dummyz_loc_att(2,j,k) = displ_crust_mantle(3,iglobv5(2)) + deltat*veloc_crust_mantle(3,iglobv5(2))
+                dummyx_loc_att(2,j,k) = displ_crust_mantle(1,iglobv5(2)) + deltat*veloc_crust_mantle(1,iglobv5(2))
+                dummyy_loc_att(2,j,k) = displ_crust_mantle(2,iglobv5(2)) + deltat*veloc_crust_mantle(2,iglobv5(2))
+                dummyz_loc_att(2,j,k) = displ_crust_mantle(3,iglobv5(2)) + deltat*veloc_crust_mantle(3,iglobv5(2))
 
-             dummyx_loc_att(3,j,k) = displ_crust_mantle(1,iglobv5(3)) + deltat*veloc_crust_mantle(1,iglobv5(3))
-             dummyy_loc_att(3,j,k) = displ_crust_mantle(2,iglobv5(3)) + deltat*veloc_crust_mantle(2,iglobv5(3))
-             dummyz_loc_att(3,j,k) = displ_crust_mantle(3,iglobv5(3)) + deltat*veloc_crust_mantle(3,iglobv5(3))
+                dummyx_loc_att(3,j,k) = displ_crust_mantle(1,iglobv5(3)) + deltat*veloc_crust_mantle(1,iglobv5(3))
+                dummyy_loc_att(3,j,k) = displ_crust_mantle(2,iglobv5(3)) + deltat*veloc_crust_mantle(2,iglobv5(3))
+                dummyz_loc_att(3,j,k) = displ_crust_mantle(3,iglobv5(3)) + deltat*veloc_crust_mantle(3,iglobv5(3))
 
-             dummyx_loc_att(4,j,k) = displ_crust_mantle(1,iglobv5(4)) + deltat*veloc_crust_mantle(1,iglobv5(4))
-             dummyy_loc_att(4,j,k) = displ_crust_mantle(2,iglobv5(4)) + deltat*veloc_crust_mantle(2,iglobv5(4))
-             dummyz_loc_att(4,j,k) = displ_crust_mantle(3,iglobv5(4)) + deltat*veloc_crust_mantle(3,iglobv5(4))
+                dummyx_loc_att(4,j,k) = displ_crust_mantle(1,iglobv5(4)) + deltat*veloc_crust_mantle(1,iglobv5(4))
+                dummyy_loc_att(4,j,k) = displ_crust_mantle(2,iglobv5(4)) + deltat*veloc_crust_mantle(2,iglobv5(4))
+                dummyz_loc_att(4,j,k) = displ_crust_mantle(3,iglobv5(4)) + deltat*veloc_crust_mantle(3,iglobv5(4))
 
-             dummyx_loc_att(5,j,k) = displ_crust_mantle(1,iglobv5(5)) + deltat*veloc_crust_mantle(1,iglobv5(5))
-             dummyy_loc_att(5,j,k) = displ_crust_mantle(2,iglobv5(5)) + deltat*veloc_crust_mantle(2,iglobv5(5))
-             dummyz_loc_att(5,j,k) = displ_crust_mantle(3,iglobv5(5)) + deltat*veloc_crust_mantle(3,iglobv5(5))
+                dummyx_loc_att(5,j,k) = displ_crust_mantle(1,iglobv5(5)) + deltat*veloc_crust_mantle(1,iglobv5(5))
+                dummyy_loc_att(5,j,k) = displ_crust_mantle(2,iglobv5(5)) + deltat*veloc_crust_mantle(2,iglobv5(5))
+                dummyz_loc_att(5,j,k) = displ_crust_mantle(3,iglobv5(5)) + deltat*veloc_crust_mantle(3,iglobv5(5))
 
 #else
-             ! way 1:
-             do i=1,NGLLX
-                iglob1 = ibool(i,j,k,ispec)
-                dummyx_loc_att(i,j,k) = displ_crust_mantle(1,iglob1) + deltat*veloc_crust_mantle(1,iglob1)
-                dummyy_loc_att(i,j,k) = displ_crust_mantle(2,iglob1) + deltat*veloc_crust_mantle(2,iglob1)
-                dummyz_loc_att(i,j,k) = displ_crust_mantle(3,iglob1) + deltat*veloc_crust_mantle(3,iglob1)
-             enddo
+                ! way 1:
+                do i=1,NGLLX
+                   iglob1 = ibool(i,j,k,ispec)
+                   dummyx_loc_att(i,j,k) = displ_crust_mantle(1,iglob1) + deltat*veloc_crust_mantle(1,iglob1)
+                   dummyy_loc_att(i,j,k) = displ_crust_mantle(2,iglob1) + deltat*veloc_crust_mantle(2,iglob1)
+                   dummyz_loc_att(i,j,k) = displ_crust_mantle(3,iglob1) + deltat*veloc_crust_mantle(3,iglob1)
+                enddo
 
 #endif
+             enddo
+          enddo
+       endif
+    else 
+       ! takes old routines
+       do k=1,NGLLZ
+          do j=1,NGLLY
+#ifdef _HANDOPT
+             dummyx_loc_att(1,j,k) = dummyx_loc(1,j,k)
+             dummyy_loc_att(1,j,k) = dummyx_loc(1,j,k)
+             dummyz_loc_att(1,j,k) = dummyx_loc(1,j,k)
+
+             dummyx_loc_att(2,j,k) = dummyx_loc(2,j,k)
+             dummyy_loc_att(2,j,k) = dummyx_loc(2,j,k)
+             dummyz_loc_att(2,j,k) = dummyx_loc(2,j,k)
+
+             dummyx_loc_att(3,j,k) = dummyx_loc(3,j,k)
+             dummyy_loc_att(3,j,k) = dummyx_loc(3,j,k)
+             dummyz_loc_att(3,j,k) = dummyx_loc(3,j,k)
+
+             dummyx_loc_att(4,j,k) = dummyx_loc(4,j,k)
+             dummyy_loc_att(4,j,k) = dummyx_loc(4,j,k)
+             dummyz_loc_att(4,j,k) = dummyx_loc(4,j,k)
+
+             dummyx_loc_att(5,j,k) = dummyx_loc(5,j,k)
+             dummyy_loc_att(5,j,k) = dummyx_loc(5,j,k)
+             dummyz_loc_att(5,j,k) = dummyx_loc(5,j,k)
+#else  
+             do i=1,NGLLX
+                dummyx_loc_att(i,j,k) = dummyx_loc(i,j,k)
+                dummyy_loc_att(i,j,k) = dummyy_loc(i,j,k)
+                dummyz_loc_att(i,j,k) = dummyz_loc(i,j,k)
+             enddo
+#endif    
           enddo
        enddo
     endif
@@ -324,7 +360,7 @@
        enddo
     enddo
 
-    if( ATTENUATION_VAL ) then
+    if(ATTENUATION_VAL) then
        ! temporary variables used for fixing attenuation in a consistent way
        do j=1,m2
           do i=1,m1
@@ -374,7 +410,7 @@
        enddo
     enddo
 
-    if( ATTENUATION_VAL ) then
+    if(ATTENUATION_VAL) then
        ! temporary variables used for fixing attenuation in a consistent way
        do j=1,m1
           do i=1,m1
@@ -424,7 +460,7 @@
        enddo
     enddo
 
-    if( ATTENUATION_VAL ) then
+    if(ATTENUATION_VAL) then
        ! temporary variables used for fixing attenuation in a consistent way
        do j=1,m1
           do i=1,m2
@@ -455,7 +491,7 @@
     if(ANISOTROPIC_3D_MANTLE_VAL) then
       ! anisotropic element
 
-       if( ATTENUATION_VAL ) then
+       if(ATTENUATION_VAL) then
           call compute_element_aniso(ispec, &
                minus_gravity_table,density_table,minus_deriv_gravity_table, &
                xstore,ystore,zstore, &
@@ -492,7 +528,7 @@
       if( .not. ispec_is_tiso(ispec) ) then
         ! isotropic element
 
-         if( ATTENUATION_VAL ) then
+         if(ATTENUATION_VAL) then
             call compute_element_iso(ispec, &
                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
                  xstore,ystore,zstore, &
@@ -525,7 +561,7 @@
       else
         ! transverse isotropic element
 
-         if( ATTENUATION_VAL ) then
+         if(ATTENUATION_VAL) then
             call compute_element_tiso(ispec, &
                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
                  xstore,ystore,zstore, &

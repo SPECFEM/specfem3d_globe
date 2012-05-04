@@ -39,7 +39,7 @@
                                 ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
                                 MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
                                 RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-                                SAVE_MESH_FILES,ATTENUATION,ABSORBING_CONDITIONS,SAVE_FORWARD, &
+                                SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW,ABSORBING_CONDITIONS,SAVE_FORWARD, &
                                 OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
                                 ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
                                 SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,NOISE_TOMOGRAPHY)
@@ -63,7 +63,7 @@
   logical ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,&
          MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE, &
          RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION, &
-         SAVE_MESH_FILES,ATTENUATION, &
+         SAVE_MESH_FILES,ATTENUATION,ATTENUATION_NEW, &
          ABSORBING_CONDITIONS,SAVE_FORWARD, &
          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
          ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
@@ -120,6 +120,8 @@
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: ROTATION'
   call read_value_logical(ATTENUATION, 'model.ATTENUATION')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: ATTENUATION'
+  call read_value_logical(ATTENUATION_NEW, 'model.ATTENUATION_NEW')
+  if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: ATTENUATION_NEW'
   call read_value_logical(ABSORBING_CONDITIONS, 'solver.ABSORBING_CONDITIONS')
   if(err_occurred() /= 0) stop 'an error occurred while reading the parameter file: ABSORBING_CONDITIONS'
   ! define the velocity model
