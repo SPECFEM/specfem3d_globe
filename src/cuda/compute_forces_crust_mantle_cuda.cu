@@ -913,6 +913,7 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
                                           realw* epsilon_trace_over_3,
                                           int SIMULATION_TYPE,
                                           int ATTENUATION,
+                                          int ATTENUATION_NEW,
                                           int USE_ATTENUATION_MIMIC,
                                           realw* one_minus_sum_beta,realw* factor_common,
                                           realw* R_xx, realw* R_yy, realw* R_xy, realw* R_xz, realw* R_yz,
@@ -1030,20 +1031,28 @@ __global__ void Kernel_2_crust_mantle_impl(int nb_blocks_to_compute,
       s_dummyz_loc[tx] = d_displ[iglob*3 + 2];
 #endif
 
-      if( ATTENUATION){
-  // use first order Taylor expansion of displacement for local storage of stresses
-  // at this current time step, to fix attenuation in a consistent way
+      if(ATTENUATION){
+	if(ATTENUATION_NEW){
+	  // takes new routines
+	  // use first order Taylor expansion of displacement for local storage of stresses 
+	  // at this current time step, to fix attenuation in a consistent way
 #ifdef USE_TEXTURES
-  s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob);
-  s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + NGLOB);
-  s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + 2*NGLOB);
+	  s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob);
+	  s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + NGLOB);
+	  s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * tex1Dfetch(tex_veloc, iglob + 2*NGLOB);
 #else
-  s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
-  s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
-  s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
+	  s_dummyx_loc_att[tx] = s_dummyx_loc[tx] + d_deltat * d_veloc[iglob*3];
+	  s_dummyy_loc_att[tx] = s_dummyy_loc[tx] + d_deltat * d_veloc[iglob*3 + 1];
+	  s_dummyz_loc_att[tx] = s_dummyz_loc[tx] + d_deltat * d_veloc[iglob*3 + 2];
 #endif
+	}
+	else{
+	  // takes old routines
+	  s_dummyx_loc_att[tx] = s_dummyx_loc[tx];
+	  s_dummyy_loc_att[tx] = s_dummyy_loc[tx];
+	  s_dummyz_loc_att[tx] = s_dummyz_loc[tx];
+	}
       }
-
     }
 
 // synchronize all the threads (one thread for each of the NGLL grid points of the
@@ -1712,6 +1721,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                   d_epsilon_trace_over_3,
                                   mp->simulation_type,
                                   mp->attenuation,
+                                  mp->attenuation_new,
                                   mp->use_attenuation_mimic,
                                   d_one_minus_sum_beta,d_factor_common,
                                   d_R_xx,d_R_yy,d_R_xy,d_R_xz,d_R_yz,
@@ -1758,6 +1768,7 @@ void Kernel_2_crust_mantle(int nb_blocks_to_compute,Mesh* mp,
                                      d_b_epsilon_trace_over_3,
                                      mp->simulation_type,
                                      mp->attenuation,
+                                     mp->attenuation_new,
                                      mp->use_attenuation_mimic,
                                      d_one_minus_sum_beta,d_factor_common,
                                      d_b_R_xx,d_b_R_yy,d_b_R_xy,d_b_R_xz,d_b_R_yz,

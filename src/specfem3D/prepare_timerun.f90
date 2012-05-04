@@ -1097,7 +1097,7 @@
                                   SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
                                   SAVE_FORWARD,ABSORBING_CONDITIONS, &
                                   OCEANS_VAL,GRAVITY_VAL,ROTATION_VAL, &
-                                  ATTENUATION_VAL,USE_ATTENUATION_MIMIC, &
+                                  ATTENUATION_VAL,ATTENUATION_NEW_VAL,USE_ATTENUATION_MIMIC, &
                                   COMPUTE_AND_STORE_STRAIN, &
                                   ANISOTROPIC_3D_MANTLE_VAL,ANISOTROPIC_INNER_CORE_VAL, &
                                   SAVE_BOUNDARY_MESH, &
