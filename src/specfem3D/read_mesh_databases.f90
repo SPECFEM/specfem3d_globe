@@ -153,7 +153,13 @@
   logical, dimension(NSPEC_INNER_CORE) :: is_on_a_slice_edge_inner_core
 
   ! start reading the databases
+
   ! read arrays created by the mesher
+  ! user output
+  if( myrank == 0 ) write(IMAIN,*) 'reading mesh databases...'
+  
+  ! synchronizes processes
+  call sync_all()
 
   ! crust and mantle
   if(ANISOTROPIC_3D_MANTLE_VAL) then
@@ -197,6 +203,9 @@
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
             ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
 
+  ! synchronizes processes
+  call sync_all()
+
   ! outer core (no anisotropy nor S velocity)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the outer core
   READ_KAPPA_MU = .false.
@@ -226,6 +235,9 @@
             NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
             READ_KAPPA_MU,READ_TISO,TRANSVERSE_ISOTROPY_VAL,ANISOTROPIC_3D_MANTLE_VAL, &
             ANISOTROPIC_INNER_CORE_VAL,OCEANS_VAL,LOCAL_PATH,ABSORBING_CONDITIONS)
+
+  ! synchronizes processes
+  call sync_all()
 
   ! inner core (no anisotropy)
   ! rmass_ocean_load is not used in this routine because it is meaningless in the inner core
@@ -272,6 +284,9 @@
 
   if(minval(ibool_inner_core(:,:,:,:)) /= 1 .or. maxval(ibool_inner_core(:,:,:,:)) /= NGLOB_INNER_CORE) &
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
+
+  ! synchronizes processes
+  call sync_all()
 
   end subroutine read_mesh_databases
 
@@ -357,6 +372,12 @@
   integer :: ier,iproc,iproc_read
   integer :: NUM_FACES,NPROC_ONE_DIRECTION
 
+  ! user output
+  if( myrank == 0 ) write(IMAIN,*) 'reading MPI addressing...'
+  
+  ! synchronizes processes
+  call sync_all()
+
   ! open file with global slice number addressing
   if(myrank == 0) then
     open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read',iostat=ier)
@@ -382,7 +403,8 @@
 !!!!!!!  if (myrank == 0 .and. NCHUNKS_VAL == 6) then
 !!!!!!! commented out because crashes when run on a very large machine
 !!!!!!! because the records become too long
-  if (.false.) then
+  if ( myrank == 0 .and. NCHUNKS_VAL == 6 .and. NPROCTOT_VAL < 500 ) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Spatial distribution of the slices'
     do iproc_xi = NPROC_XI_VAL-1, 0, -1
       write(IMAIN,'(20x)',advance='no')
@@ -431,7 +453,10 @@
     enddo
     write(IMAIN, *) ' '
   endif
-
+  
+  ! synchronizes processes
+  call sync_all()
+  
   ! determine chunk number and local slice coordinates using addressing
   ichunk = ichunk_slice(myrank)
   iproc_xi = iproc_xi_slice(myrank)
@@ -482,6 +507,9 @@
      NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,LOCAL_PATH,NCHUNKS_VAL)
 
+  ! synchronizes processes
+  call sync_all()
+
   ! outer core
   call read_arrays_buffers_solver(IREGION_OUTER_CORE,myrank, &
      iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
@@ -493,6 +521,9 @@
      NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE), &
      NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,LOCAL_PATH,NCHUNKS_VAL)
+
+  ! synchronizes processes
+  call sync_all()
 
   ! inner core
   call read_arrays_buffers_solver(IREGION_INNER_CORE,myrank, &
@@ -506,7 +537,9 @@
      NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE),NGLOB2DMAX_XY,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
      NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,LOCAL_PATH,NCHUNKS_VAL)
 
-
+  ! synchronizes processes
+  call sync_all()
+  
   end subroutine read_mesh_databases_addressing
 
 
@@ -620,6 +653,11 @@
   integer njunk1,njunk2,njunk3
   character(len=150) prname
 
+  ! user output
+  if( myrank == 0 ) write(IMAIN,*) 'reading coupling surfaces...'
+  
+  ! synchronizes processes
+  call sync_all()
 
   ! crust and mantle
   ! create name of database
@@ -657,6 +695,9 @@
   read(27) jacobian2D_bottom_crust_mantle
   read(27) jacobian2D_top_crust_mantle
   close(27)
+
+  ! synchronizes processes
+  call sync_all()
 
 
   ! read parameters to couple fluid and solid regions
@@ -700,6 +741,8 @@
   read(27) jacobian2D_top_outer_core
   close(27)
 
+  ! synchronizes processes
+  call sync_all()
 
   !
   ! inner core
@@ -727,6 +770,8 @@
   read(27) ibelm_top_inner_core
   close(27)
 
+  ! synchronizes processes
+  call sync_all()
 
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
@@ -756,6 +801,9 @@
     moho_kl = 0.; d400_kl = 0.; d670_kl = 0.; cmb_kl = 0.; icb_kl = 0.
   endif
 
+  ! synchronizes processes
+  call sync_all()
+  
   end subroutine read_mesh_databases_coupling
 
 
@@ -819,6 +867,12 @@
   ! local parameters
   integer(kind=8) :: filesize
   character(len=150) prname
+
+  ! user output
+  if( myrank == 0 ) write(IMAIN,*) 'reading Stacey boundaries...'
+  
+  ! synchronizes processes
+  call sync_all()
 
 
   ! crust and mantle
@@ -945,8 +999,12 @@
     endif
   endif
 
+  ! synchronizes processes
+  call sync_all()
+
 
   ! outer core
+
   ! create name of database
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
@@ -1099,4 +1157,7 @@
     endif
   endif
 
+  ! synchronizes processes
+  call sync_all()
+  
   end subroutine read_mesh_databases_stacey

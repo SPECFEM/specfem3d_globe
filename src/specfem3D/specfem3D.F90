@@ -1057,7 +1057,7 @@
               ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
               is_on_a_slice_edge_inner_core,rmass_inner_core, &
               ABSORBING_CONDITIONS,LOCAL_PATH)
-
+  
   ! read 2-D addressing for summation between slices with MPI
   call read_mesh_databases_addressing(myrank, &
               iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &

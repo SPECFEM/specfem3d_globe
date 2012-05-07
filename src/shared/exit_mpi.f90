@@ -105,3 +105,25 @@
 
   end subroutine exit_MPI_without_rank
 
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sync_all()
+
+  implicit none
+
+  ! standard include of the MPI library
+  include 'mpif.h'
+
+  integer :: ier,rank
+
+  ! gets callers rank
+  call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ier)
+
+  ! synchronizes MPI processes
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  if( ier /= 0 ) call exit_mpi(rank,'error synchronize MPI processes')
+
+  end subroutine sync_all

@@ -32,7 +32,8 @@
      iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
      iboolfaces,npoin2D_faces,iboolcorner, &
      NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
-     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA,LOCAL_PATH,NCHUNKS)
+     NUMMSGS_FACES,NCORNERSCHUNKS,NPROCTOT,NPROC_XI,NPROC_ETA, &
+     LOCAL_PATH,NCHUNKS)
 
   implicit none
 
@@ -41,7 +42,7 @@
 
   include "constants.h"
 
-  integer iregion_code,myrank,NCHUNKS,ier
+  integer iregion_code,myrank,NCHUNKS
 
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi,npoin2D_eta
   integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB2DMAX_XY,NGLOB1D_RADIAL
@@ -61,18 +62,125 @@
 ! allocate array for messages for corners
   integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
-  integer npoin2D_xi_mesher,npoin2D_eta_mesher
-  integer npoin1D_corner
+  ! local parameters
+  integer ier
+  integer imsg
 
-  integer imsg,icount_faces,icount_corners
-  integer ipoin1D,ipoin2D
+
+! processor identification
+  character(len=150) OUTPUT_FILES
+
+! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+! read 2-D addressing for summation between slices along xi with MPI
+  call read_arrays_buffers_1(iregion_code,myrank, &
+     iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
+     npoin2D_xi,npoin2D_eta, &
+     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,LOCAL_PATH)
+
+
+! read chunk messages only if more than one chunk
+  if(NCHUNKS /= 1) then
+
+    ! read messages to assemble between chunks with MPI
+    if(myrank == 0) then
+
+      ! get the base pathname for output files
+      call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
+      ! file with the list of processors for each message for faces
+      open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old',action='read')
+      do imsg = 1,NUMMSGS_FACES
+      read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
+      if      (iprocfrom_faces(imsg) < 0 &
+          .or. iprocto_faces(imsg) < 0 &
+          .or. iprocfrom_faces(imsg) > NPROCTOT-1 &
+          .or. iprocto_faces(imsg) > NPROCTOT-1) &
+        call exit_MPI(myrank,'incorrect chunk faces numbering')
+      if (imsg_type(imsg) < 1 .or. imsg_type(imsg) > 3) &
+        call exit_MPI(myrank,'incorrect message type labeling')
+      enddo
+      close(IIN)
+
+
+      ! file with the list of processors for each message for corners
+      open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
+      do imsg = 1,NCORNERSCHUNKS
+      read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
+                              iproc_worker2_corners(imsg)
+      if    (iproc_master_corners(imsg) < 0 &
+        .or. iproc_worker1_corners(imsg) < 0 &
+        .or. iproc_worker2_corners(imsg) < 0 &
+        .or. iproc_master_corners(imsg) > NPROCTOT-1 &
+        .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
+        .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
+          call exit_MPI(myrank,'incorrect chunk corner numbering')
+      enddo
+      close(IIN)
+
+    endif
+
+    ! broadcast the information read on the master to the nodes
+    call MPI_BCAST(imsg_type,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iprocfrom_faces,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iprocto_faces,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+    call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iproc_worker1_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+    call MPI_BCAST(iproc_worker2_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+
+    ! synchronizes processes
+    call sync_all()
+
+    call read_arrays_buffers_2(iregion_code,myrank, &
+     iprocfrom_faces,iprocto_faces, &
+     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+     iboolfaces,npoin2D_faces,iboolcorner, &
+     NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
+     NUMMSGS_FACES,NCORNERSCHUNKS,NPROC_XI,NPROC_ETA,LOCAL_PATH)
+
+  
+  endif
+  
+
+  end subroutine read_arrays_buffers_solver
+
+!
+!------------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine read_arrays_buffers_1(iregion_code,myrank, &
+     iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
+     npoin2D_xi,npoin2D_eta, &
+     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,LOCAL_PATH)
+
+  implicit none
+
+! standard include of the MPI library
+  include 'mpif.h'
+
+  include "constants.h"
+
+  integer iregion_code,myrank
+
+  integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi,npoin2D_eta
+  integer NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
+
+  character(len=150) LOCAL_PATH
+
+  integer, dimension(NGLOB2DMAX_XMIN_XMAX) :: iboolleft_xi,iboolright_xi
+  integer, dimension(NGLOB2DMAX_YMIN_YMAX) :: iboolleft_eta,iboolright_eta
+
+  ! local parameters
+  integer ier
+  integer npoin2D_xi_mesher,npoin2D_eta_mesher
 
   double precision xdummy,ydummy,zdummy
 
 ! processor identification
-  character(len=150) OUTPUT_FILES,prname,filename
-
-! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+  character(len=150) OUTPUT_FILES,prname
 
 ! get the base pathname for output files
   call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
@@ -80,10 +188,11 @@
 ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
-! read 2-D addressing for summation between slices along xi with MPI
-
 ! read iboolleft_xi of this slice
-  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_xi.txt',status='old',action='read')
+  open(unit=IIN,file=prname(1:len_trim(prname))//'iboolleft_xi.txt', &
+        status='old',action='read',iostat=ier)
+  if( ier /= 0 ) call exit_mpi(myrank,'error opening iboolleft_xi file')
+  
   npoin2D_xi(1) = 1
  350  continue
   read(IIN,*) iboolleft_xi(npoin2D_xi(1)),xdummy,ydummy,zdummy
@@ -98,6 +207,9 @@
   if(npoin2D_xi(1) > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi(1) /= npoin2D_xi_mesher) &
       call exit_MPI(myrank,'incorrect iboolleft_xi read')
   close(IIN)
+
+  ! synchronizes processes
+  call sync_all()
 
 ! read iboolright_xi of this slice
   open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_xi.txt',status='old',action='read')
@@ -125,6 +237,10 @@
     write(IMAIN,*)
   endif
 
+  ! synchronizes processes
+  call sync_all()
+
+  
 ! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 ! read 2-D addressing for summation between slices along eta with MPI
@@ -146,6 +262,9 @@
       call exit_MPI(myrank,'incorrect iboolleft_eta read')
   close(IIN)
 
+  ! synchronizes processes
+  call sync_all()
+  
 ! read iboolright_eta of this slice
   open(unit=IIN,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='old',action='read')
   npoin2D_eta(2) = 1
@@ -172,81 +291,94 @@
     write(IMAIN,*)
   endif
 
-
+  ! synchronizes processes
+  call sync_all()
+  
 !! $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-! read chunk messages only if more than one chunk
-  if(NCHUNKS /= 1) then
+  end subroutine read_arrays_buffers_1
 
-! read messages to assemble between chunks with MPI
 
-  if(myrank == 0) then
+!
+!-----------------------------------------------------------------------------------------------
+!
 
-! file with the list of processors for each message for faces
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old',action='read')
-  do imsg = 1,NUMMSGS_FACES
-  read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
-  if      (iprocfrom_faces(imsg) < 0 &
-      .or. iprocto_faces(imsg) < 0 &
-      .or. iprocfrom_faces(imsg) > NPROCTOT-1 &
-      .or. iprocto_faces(imsg) > NPROCTOT-1) &
-    call exit_MPI(myrank,'incorrect chunk faces numbering')
-  if (imsg_type(imsg) < 1 .or. imsg_type(imsg) > 3) &
-    call exit_MPI(myrank,'incorrect message type labeling')
-  enddo
-  close(IIN)
 
-! file with the list of processors for each message for corners
-  open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_corners.txt',status='old',action='read')
-  do imsg = 1,NCORNERSCHUNKS
-  read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
-                          iproc_worker2_corners(imsg)
-  if    (iproc_master_corners(imsg) < 0 &
-    .or. iproc_worker1_corners(imsg) < 0 &
-    .or. iproc_worker2_corners(imsg) < 0 &
-    .or. iproc_master_corners(imsg) > NPROCTOT-1 &
-    .or. iproc_worker1_corners(imsg) > NPROCTOT-1 &
-    .or. iproc_worker2_corners(imsg) > NPROCTOT-1) &
-      call exit_MPI(myrank,'incorrect chunk corner numbering')
-  enddo
-  close(IIN)
+  subroutine read_arrays_buffers_2(iregion_code,myrank, &
+     iprocfrom_faces,iprocto_faces, &
+     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+     iboolfaces,npoin2D_faces,iboolcorner, &
+     NGLOB2DMAX_XY,NGLOB1D_RADIAL, &
+     NUMMSGS_FACES,NCORNERSCHUNKS,NPROC_XI,NPROC_ETA,LOCAL_PATH)
 
-  endif
+  implicit none
 
-! broadcast the information read on the master to the nodes
-  call MPI_BCAST(imsg_type,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iprocfrom_faces,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iprocto_faces,NUMMSGS_FACES,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+! standard include of the MPI library
+  include 'mpif.h'
 
-  call MPI_BCAST(iproc_master_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_worker1_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(iproc_worker2_corners,NCORNERSCHUNKS,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  include "constants.h"
+
+  integer iregion_code,myrank
+
+  integer NGLOB2DMAX_XY,NGLOB1D_RADIAL
+  integer NUMMSGS_FACES,NCORNERSCHUNKS,NPROC_XI,NPROC_ETA
+
+  integer npoin2D_faces(NUMFACES_SHARED)
+
+  character(len=150) LOCAL_PATH
+
+  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces
+  integer, dimension(NGLOB1D_RADIAL,NUMCORNERS_SHARED) :: iboolcorner
+
+  integer, dimension(NUMMSGS_FACES) :: iprocfrom_faces,iprocto_faces
+
+! allocate array for messages for corners
+  integer, dimension(NCORNERSCHUNKS) :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
+
+  ! local parameters
+  double precision xdummy,ydummy,zdummy
+  integer imsg
+  integer npoin1D_corner
+
+  integer icount_faces,icount_corners
+  integer ipoin1D,ipoin2D
+
+! processor identification
+  character(len=150) OUTPUT_FILES,prname,filename
+
+! get the base pathname for output files
+  call get_value_string(OUTPUT_FILES, 'OUTPUT_FILES', 'OUTPUT_FILES')
+
+! create the name for the database of the current slide and region
+  call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
 !---- read indirect addressing for each message for faces of the chunks
 !---- a given slice can belong to at most two faces
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-  if(myrank == iprocfrom_faces(imsg) .or. myrank == iprocto_faces(imsg)) then
-    icount_faces = icount_faces + 1
-    if(icount_faces>NUMFACES_SHARED) call exit_MPI(myrank,'more than NUMFACES_SHARED faces for this slice')
-    if(icount_faces>2 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) call exit_MPI(myrank,'more than two faces for this slice')
+    if(myrank == iprocfrom_faces(imsg) .or. myrank == iprocto_faces(imsg)) then
+      icount_faces = icount_faces + 1
+      if(icount_faces>NUMFACES_SHARED) &
+        call exit_MPI(myrank,'more than NUMFACES_SHARED faces for this slice')
+      if(icount_faces>2 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) &
+        call exit_MPI(myrank,'more than two faces for this slice')
 
-! read file with 2D buffer for faces
-    if(myrank == iprocfrom_faces(imsg)) then
-      write(filename,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
-    else if(myrank == iprocto_faces(imsg)) then
-      write(filename,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
+      ! read file with 2D buffer for faces
+      if(myrank == iprocfrom_faces(imsg)) then
+        write(filename,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
+      else if(myrank == iprocto_faces(imsg)) then
+        write(filename,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg
+      endif
+
+      open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
+      read(IIN,*) npoin2D_faces(icount_faces)
+      if(npoin2D_faces(icount_faces) > NGLOB2DMAX_XY) &
+        call exit_MPI(myrank,'incorrect nb of points in face buffer')
+      do ipoin2D = 1,npoin2D_faces(icount_faces)
+        read(IIN,*) iboolfaces(ipoin2D,icount_faces),xdummy,ydummy,zdummy
+      enddo
+      close(IIN)
     endif
-
-    open(unit=IIN,file=prname(1:len_trim(prname))//filename,status='old',action='read')
-    read(IIN,*) npoin2D_faces(icount_faces)
-    if(npoin2D_faces(icount_faces) > NGLOB2DMAX_XY) &
-      call exit_MPI(myrank,'incorrect nb of points in face buffer')
-    do ipoin2D = 1,npoin2D_faces(icount_faces)
-      read(IIN,*) iboolfaces(ipoin2D,icount_faces),xdummy,ydummy,zdummy
-    enddo
-    close(IIN)
-  endif
   enddo
 
 
@@ -283,7 +415,5 @@
   endif
   enddo
 
-  endif
-
-  end subroutine read_arrays_buffers_solver
+  end subroutine read_arrays_buffers_2
 
