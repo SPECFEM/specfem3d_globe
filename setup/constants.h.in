@@ -88,6 +88,9 @@
   integer, parameter :: IOVTK = 98
 
 
+! I/O Bluegene serial access
+  logical, parameter :: IO_BLUEGENE_SERIAL = .false.
+
 ! R_EARTH is the radius of the bottom of the oceans (radius of Earth in m)
   double precision, parameter :: R_EARTH = 6371000.d0
 ! uncomment line below for PREM with oceans
