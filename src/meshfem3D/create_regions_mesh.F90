@@ -730,10 +730,9 @@
                     xstore,ystore,zstore,ifseg,npointot, &
                     NSPEC2D_XI_FACE,iregion_code,npoin2D_eta)
 
-!! DK DK suppressed useless small files for ARM version for Tibidabo filesystem because we use a single chunk
-!   call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
-!                   xstore,ystore,zstore,ifseg,npointot, &
-!                   NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code)
+    call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
+                    xstore,ystore,zstore,ifseg,npointot, &
+                    NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code)
 
     ! Stacey
     if(NCHUNKS /= 6) &
