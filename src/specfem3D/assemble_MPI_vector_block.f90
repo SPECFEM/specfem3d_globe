@@ -32,8 +32,7 @@
 !----
 
   subroutine assemble_MPI_vector_block(myrank, &
-            accel_crust_mantle,NGLOB_CRUST_MANTLE, &
-            accel_inner_core,NGLOB_INNER_CORE, &
+            accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
             npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
@@ -47,10 +46,7 @@
             buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI,NPROC_ETA, &
-            NGLOB1D_RADIAL_crust_mantle, &
-            NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM, &
-            NGLOB1D_RADIAL_inner_core, &
-            NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC, &
+            NGLOB1D_RADIAL_crust_mantle,NGLOB1D_RADIAL_inner_core, &
             NGLOB2DMAX_XY,NCHUNKS)
 
 ! this version of the routine is based on blocking MPI calls
@@ -63,7 +59,10 @@
   include "constants.h"
   include "precision.h"
 
-  integer myrank,NGLOB_CRUST_MANTLE,NGLOB_INNER_CORE,NCHUNKS
+! include values created by the mesher
+  include "OUTPUT_FILES/values_from_mesher.h"
+
+  integer myrank,NCHUNKS
 
 ! the two arrays to assemble
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
@@ -75,8 +74,7 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_inner_core,npoin2D_eta_inner_core
   integer npoin2D_faces_inner_core(NUMFACES_SHARED)
 
-  integer NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM,NGLOB1D_RADIAL_crust_mantle
-  integer NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC,NGLOB1D_RADIAL_inner_core
+  integer NGLOB1D_RADIAL_crust_mantle,NGLOB1D_RADIAL_inner_core
   integer NPROC_XI,NPROC_ETA,NGLOB2DMAX_XY
   integer NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS
 
@@ -94,7 +92,8 @@
   integer, dimension(NGLOB1D_RADIAL_inner_core,NUMCORNERS_SHARED) :: iboolcorner_inner_core
   integer icount_corners
 
-  integer, dimension(NGLOB2DMAX_XY,NUMFACES_SHARED) :: iboolfaces_crust_mantle,iboolfaces_inner_core
+  integer, dimension(NGLOB2DMAX_XY_CM_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_IC_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
 ! size of buffers is multiplied by 2 because we handle two regions in the same MPI call
   real(kind=CUSTOM_REAL), dimension(NDIM,2*NGLOB2DMAX_XY) :: buffer_send_faces_vector,buffer_received_faces_vector
 

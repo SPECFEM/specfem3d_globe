@@ -89,8 +89,8 @@
   integer icount_corners
 
   integer, intent(in) :: npoin2D_max_all_CM_IC
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED), intent(in) :: iboolfaces_crust_mantle
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED), intent(in) :: iboolfaces_inner_core
+  integer, dimension(NGLOB2DMAX_XY_CM_VAL,NUMFACES_SHARED), intent(in) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_IC_VAL,NUMFACES_SHARED), intent(in) :: iboolfaces_inner_core
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), intent(inout) :: &
       buffer_send_faces_vector,buffer_received_faces_vector
 

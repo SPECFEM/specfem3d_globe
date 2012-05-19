@@ -2,6 +2,9 @@
 
 # Attempt to guess suitable flags for the Fortran compiler.
 
+# can add -DUSE_SERIAL_CASCADE_FOR_IOs to the compiler options to make the mesher output mesh data
+# to the disk for one MPI slice after the other, and to make the solver do the same thing when reading the files back from disk.
+
 # Use AC_CANONICAL_BUILD (and package config.guess, etc.) in the future?
 if test x"$UNAME_MS" = x; then
     UNAME_MACHINE=`(uname -m) 2>/dev/null` || UNAME_MACHINE=unknown

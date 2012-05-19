@@ -440,8 +440,12 @@
   write(IOUT,*) 'integer, parameter :: NCHUNKS_VAL = ',NCHUNKS
   write(IOUT,*) 'integer, parameter :: NPROCTOT_VAL = ',NPROCTOT
 
-  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_VAL = ', &
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_CM_VAL = ', &
             max(NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE))
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_OC_VAL = ', &
+            max(NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE))
+  write(IOUT,*) 'integer, parameter :: NGLOB2DMAX_XY_IC_VAL = ', &
+            max(NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE))
 
   if(NCHUNKS == 1 .or. NCHUNKS == 2) then
     NCORNERSCHUNKS = 1

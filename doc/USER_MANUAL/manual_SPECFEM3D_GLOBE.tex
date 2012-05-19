@@ -369,6 +369,13 @@ from your system administrator. Selecting the right compiler and compiler
 flags can make a tremendous difference in terms of performance. We
 welcome feedback on your experience with various compilers and flags.\\
 
+When using a slow or not too powerful shared disk system or when running extremely large simulations
+(on tens of thousands of processor cores), one can add \texttt{-DUSE\_SERIAL\_CASCADE\_FOR\_IOs} to the compiler flags
+in file \texttt{flags.guess} before running \texttt{configure} to make the mesher output mesh data
+to the disk for one MPI slice after the other, and to make the solver do the same thing when reading the files back from disk.
+Do not use this option if you do not need it because it will slow down the mesher and the beginning of the solver if your
+shared file system is fast and reliable.
+
 If you run scaling benchmarks of the code, for instance to measure its performance on a new machine, and are not interested in the physical results
 (the seismograms) for these runs, you can set \texttt{DO\_BENCHMARK\_RUN\_ONLY} to \texttt{.true.} in file \texttt{setup/constants.h.in} before running the \texttt{configure} script.
 

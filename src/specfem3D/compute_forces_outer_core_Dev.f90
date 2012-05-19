@@ -147,13 +147,12 @@
 
 ! indirect addressing for each message for faces and corners of the chunks
 ! a given slice can belong to at most one corner and at most two faces
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_outer_core
+  integer, dimension(NGLOB2DMAX_XY_OC_VAL,NUMFACES_SHARED) :: iboolfaces_outer_core
 
 ! buffers for send and receive between faces of the slices and the chunks
 ! we use the same buffers to assemble scalars and vectors because vectors are
 ! always three times bigger and therefore scalars can use the first part
 ! of the vector buffer in memory even if it has an additional index here
-! allocate these automatic arrays in the memory stack to avoid memory fragmentation with "allocate()"
   integer :: npoin2D_max_all_CM_IC
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED) :: buffer_send_faces,buffer_received_faces
 
@@ -195,7 +194,7 @@
             buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
             NUMMSGS_FACES_VAL,NCORNERSCHUNKS_VAL, &
             NPROC_XI_VAL,NPROC_ETA_VAL,NGLOB1D_RADIAL_OC, &
-            NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,NGLOB2DMAX_XY_VAL,NCHUNKS_VAL,iphase)
+            NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC,NGLOB2DMAX_XY_OC_VAL,NCHUNKS_VAL,iphase)
 
     do k=1,NGLLZ
       do j=1,NGLLY
