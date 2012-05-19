@@ -263,6 +263,11 @@
   ! flags for transverse isotropic elements
   logical, dimension(:), allocatable :: ispec_is_tiso
 
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+  logical :: you_can_start_doing_IOs
+  integer msg_status(MPI_STATUS_SIZE)
+#endif
+
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
 
@@ -725,9 +730,10 @@
                     xstore,ystore,zstore,ifseg,npointot, &
                     NSPEC2D_XI_FACE,iregion_code,npoin2D_eta)
 
-    call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
-                    xstore,ystore,zstore,ifseg,npointot, &
-                    NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code)
+!! DK DK suppressed useless small files for ARM version for Tibidabo filesystem because we use a single chunk
+!   call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta,ibool,idoubling, &
+!                   xstore,ystore,zstore,ifseg,npointot, &
+!                   NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code)
 
     ! Stacey
     if(NCHUNKS /= 6) &
@@ -1015,6 +1021,12 @@
                           xstore,ystore,zstore,RHO_OCEANS)
 
     ! save the binary files
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+    you_can_start_doing_IOs = .false.
+    if (myrank > 0) call MPI_RECV(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank-1, itag, MPI_COMM_WORLD, msg_status,ier)
+!!!!    print *,'starting doing serialized I/Os on rank ',myrank
+    print *,'starting doing serialized I/Os on rank ',myrank
+#endif
     call save_arrays_solver(rho_vp,rho_vs,nspec_stacey, &
                   prname,iregion_code,xixstore,xiystore,xizstore, &
                   etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
@@ -1035,6 +1047,10 @@
                   tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION, &
                   size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
                   ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+    you_can_start_doing_IOs = .true.
+    if (myrank < NPROC_XI*NPROC_ETA-1) call MPI_SEND(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank+1, itag, MPI_COMM_WORLD, ier)
+#endif
 
     deallocate(rmass,stat=ier); if(ier /= 0) stop 'error in deallocate'
     deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate'

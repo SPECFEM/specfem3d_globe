@@ -665,8 +665,9 @@
 ! indirect addressing for each message for faces and corners of the chunks
 ! a given slice can belong to at most one corner and at most two faces
   integer NGLOB2DMAX_XY
-  integer, dimension(NGLOB2DMAX_XY_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle, &
-      iboolfaces_outer_core,iboolfaces_inner_core
+  integer, dimension(NGLOB2DMAX_XY_CM_VAL,NUMFACES_SHARED) :: iboolfaces_crust_mantle
+  integer, dimension(NGLOB2DMAX_XY_OC_VAL,NUMFACES_SHARED) :: iboolfaces_outer_core
+  integer, dimension(NGLOB2DMAX_XY_IC_VAL,NUMFACES_SHARED) :: iboolfaces_inner_core
 
 ! this for non blocking MPI
 
@@ -903,6 +904,11 @@
             imodulo_NGLOB_INNER_CORE
 #endif
 
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+  logical :: you_can_start_doing_IOs
+  integer msg_status(MPI_STATUS_SIZE)
+#endif
+
 ! ************** PROGRAM STARTS HERE **************
 !
 !-------------------------------------------------------------------------------------------------
@@ -1022,6 +1028,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 ! starts reading the databases
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+    you_can_start_doing_IOs = .false.
+    if (myrank > 0) call MPI_RECV(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank-1, itag, MPI_COMM_WORLD, msg_status,ier)
+!!!!!!!    print *,'starting doing serialized I/Os on rank ',myrank
+#endif
+
   call read_mesh_databases(myrank,rho_vp_crust_mantle,rho_vs_crust_mantle, &
               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
               xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
@@ -1057,7 +1069,7 @@
               ibool_inner_core,idoubling_inner_core,ispec_is_tiso_inner_core, &
               is_on_a_slice_edge_inner_core,rmass_inner_core, &
               ABSORBING_CONDITIONS,LOCAL_PATH)
-  
+
   ! read 2-D addressing for summation between slices with MPI
   call read_mesh_databases_addressing(myrank, &
               iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
@@ -1116,11 +1128,17 @@
                         maxval(npoin2D_eta_crust_mantle(:) + npoin2D_eta_inner_core(:)))
 
   allocate(buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
-          buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
+           buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi buffer')
 
-  allocate(b_buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
-          b_buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
+  if(SIMULATION_TYPE > 1) then
+    allocate(b_buffer_send_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED), &
+             b_buffer_received_faces(NDIM,npoin2D_max_all_CM_IC,NUMFACES_SHARED),stat=ier)
+  else
+! dummy allocation of unusued arrays
+    allocate(b_buffer_send_faces(1,1,1), &
+             b_buffer_received_faces(1,1,1),stat=ier)
+  endif
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating mpi b_buffer')
 
   call fix_non_blocking_slices(is_on_a_slice_edge_crust_mantle,iboolright_xi_crust_mantle, &
@@ -1241,6 +1259,12 @@
                       SIMULATION_TYPE,SAVE_FORWARD,LOCAL_PATH,NSTEP)
 
   endif
+
+#ifdef USE_SERIAL_CASCADE_FOR_IOs
+    you_can_start_doing_IOs = .true.
+    if (myrank < NPROC_XI_VAL*NPROC_ETA_VAL-1) &
+      call MPI_SEND(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank+1, itag, MPI_COMM_WORLD, ier)
+#endif
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1531,12 +1555,20 @@
     ! allocate buffers for cube and slices
     allocate(sender_from_slices_to_cube(non_zero_nb_msgs_theor_in_cube), &
             buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
-            b_buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
             buffer_slices(npoin2D_cube_from_slices,NDIM), &
-            b_buffer_slices(npoin2D_cube_from_slices,NDIM), &
             buffer_slices2(npoin2D_cube_from_slices,NDIM), &
             ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices),stat=ier)
     if( ier /= 0 ) call exit_MPI(myrank,'error allocating cube buffers')
+
+    if(SIMULATION_TYPE > 1) then
+      allocate(b_buffer_all_cube_from_slices(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices,NDIM), &
+               b_buffer_slices(npoin2D_cube_from_slices,NDIM))
+    else
+! dummy allocation of unusued arrays
+      allocate(b_buffer_all_cube_from_slices(1,1,1), &
+               b_buffer_slices(1,1))
+    endif
+    if( ier /= 0 ) call exit_MPI(myrank,'error allocating backward cube buffers')
 
     ! handles the communications with the central cube if it was included in the mesh
     call prepare_timerun_centralcube(myrank,rmass_inner_core, &
@@ -3328,8 +3360,7 @@
       ! crust/mantle and inner core handled in the same call
       ! in order to reduce the number of MPI messages by 2
       call assemble_MPI_vector_block(myrank, &
-            accel_crust_mantle,NGLOB_CRUST_MANTLE, &
-            accel_inner_core,NGLOB_INNER_CORE, &
+            accel_crust_mantle,accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
             iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
@@ -3345,10 +3376,7 @@
             buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL, &
-            NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+            NGLOB1D_RADIAL(IREGION_CRUST_MANTLE),NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL)
     endif
 
@@ -3645,8 +3673,7 @@
         ! crust/mantle and inner core handled in the same call
         ! in order to reduce the number of MPI messages by 2
         call assemble_MPI_vector_block(myrank, &
-            b_accel_crust_mantle,NGLOB_CRUST_MANTLE, &
-            b_accel_inner_core,NGLOB_INNER_CORE, &
+            b_accel_crust_mantle,b_accel_inner_core, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle, &
             iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
@@ -3662,10 +3689,7 @@
             b_buffer_send_chunkcorn_vector,b_buffer_recv_chunkcorn_vector, &
             NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
             NPROC_XI_VAL,NPROC_ETA_VAL, &
-            NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+            NGLOB1D_RADIAL(IREGION_CRUST_MANTLE),NGLOB1D_RADIAL(IREGION_INNER_CORE), &
             NGLOB2DMAX_XY,NCHUNKS_VAL)
       endif
 
