@@ -284,7 +284,7 @@ You can do this for instance with the example given in EXAMPLES/small\_benchmark
 If you run very large meshes on a relatively small number
 of processors, the memory size needed on each processor might become
 greater than 2 gigabytes, which is the upper limit for 32-bit addressing.
-In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}''
+In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}'' or \texttt{``-mcmodel=medium -shared-intel}''
 to the compiler options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
 on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.\\
@@ -392,9 +392,10 @@ To compile the code on an IBM BlueGene, Laurent L\'eger from IDRIS, France, sugg
 \texttt{   FLAGS\_NO\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \\}
 \texttt{   -qfree=f90 -qsuffix=f=f90 -g -qlanglvl=95pure -qhalt=w -Q -Q+rank,swap\_all -Wl,-relax"}
 
-Option "-Wl,-relax" must be added to be able to link the binaries \texttt{xmeshfem3D}
-and \texttt{xspecfem3D} because on BlueGene the final link step is done by the \texttt{gcc} compiler even if
+Option "-Wl,-relax" must be added on many (but not all) BlueGene systems to be able to link the binaries \texttt{xmeshfem3D}
+and \texttt{xspecfem3D} because the final link step is done by the GNU \texttt{ld} linker even if
 one uses \texttt{FC=bgxlf90\_r, MPIFC=mpixlf90\_r} and \texttt{CC=bgxlc\_r} to create all the object files.
+On the contrary, on some BlueGene systems that use the native AIX linker option "-Wl,-relax" can lead to problems and must be suppressed from \texttt{flags.guess}.
 
 Also, \texttt{AR=ar, ARFLAGS=cru} and \texttt{RANLIB=ranlib} are hardwired in all \texttt{Makefile.in} files by default, but to cross-compile on BlueGene/P one needs to change
 these values to \texttt{AR=bgar, ARFLAGS=cru} and \texttt{RANLIB=bgranlib}. Thus the easiest thing to do is to modify
@@ -493,6 +494,10 @@ OpenMP threads (thus chunk size = 8 for 4 OpenMP threads etc).
 If OMP\_SCHEDULE is not set or is empty, the DO-loop will assume generic
 scheduling policy, which will slow down the job quite a bit. 
 
+\section{Visualizing the subroutine calling tree of the source code}
+
+Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.
+\texttt{Doxywizard} is a GUI front-end for configuring and running \texttt{doxygen}.
 
 \chapter{\label{cha:Running-the-Mesher}Running the Mesher \texttt{xmeshfem3D}}
 
