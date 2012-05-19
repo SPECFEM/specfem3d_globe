@@ -479,7 +479,7 @@ should work.
 
 OpenMP support can be enabled in addition to MPI. However, in many cases performance will not improve
 because our pure MPI implementation is already heavily optimized and thus the resulting code will in fact 
-be slightly slower. A possible expection could be IBM BlueGene-type architectures.
+be slightly slower. A possible exception could be IBM BlueGene-type architectures.
 
 To enable OpenMP, uncomment the OpenMP compiler option in two lines in file \texttt{src/specfem3D/Makefile.in}
 (before running \texttt{configure}) and also uncomment the \texttt{\#define USE\_OPENMP} statement in file\\
