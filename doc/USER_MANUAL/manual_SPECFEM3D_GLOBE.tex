@@ -166,13 +166,13 @@ This is particularly true at the scale of the full Earth.\\
 For a detailed introduction to the SEM as applied to
 global and regional seismic wave propagation, please consult \citet{KoVi98,KoTr99,Ch00,KoTr02a,KoTr02b,KoRiTr02,ChCaVi03,CaChViMo03,ChVa04,ChKoViCaVaFe07,TrKoLi08}.
 A detailed theoretical analysis of the dispersion
-and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07} and \citet{SeOl07}.\\
+and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07}, \citet{SeOl07} and \citet{SeOl08}.\\
 
 Effects due to lateral variations in compressional-wave
 speed, shear-wave speed, density, a 3D crustal model, ellipticity,
 topography and bathymetry, the oceans, rotation, and self-gravitation are included.
 The package can accommodate full 21-parameter anisotropy \citep{ChTr07}
-as well as lateral variations in attenuation \citep{SavWiTr05}. Adjoint
+as well as lateral variations in attenuation \citep{SaKoTr10}. Adjoint
 capabilities and finite-frequency kernel simulations are also included
 \citep{LiTr06,TrKoLi08,LiTr08,FiIgBuKe09,ViOp09}.\\
 
@@ -311,7 +311,7 @@ MPI compiler command for your system:
 \item [{\texttt{FLAGS\_CHECK}}] Compiler flags for non-critical subroutines.
 \item [{\texttt{FLAGS\_NO\_CHECK}}] Compiler flags for creating fast, production-run
 code for critical subroutines.
-\item [{\texttt{LOCAL\_PATH\_IS\_ALSO\_GLOBAL}}] 
+\item [{\texttt{LOCAL\_PATH\_IS\_ALSO\_GLOBAL}}]
 If you want the parallel mesher to write a parallel (i.e., split) database for the solver on the
 local disks of each of the compute nodes, set this flag to \texttt{.false.}.
 Some systems have no local disks
@@ -480,7 +480,7 @@ should work.
 \section{Adding OpenMP support in addition to MPI}
 
 OpenMP support can be enabled in addition to MPI. However, in many cases performance will not improve
-because our pure MPI implementation is already heavily optimized and thus the resulting code will in fact 
+because our pure MPI implementation is already heavily optimized and thus the resulting code will in fact
 be slightly slower. A possible exception could be IBM BlueGene-type architectures.
 
 To enable OpenMP, uncomment the OpenMP compiler option in two lines in file \texttt{src/specfem3D/Makefile.in}
@@ -494,7 +494,7 @@ the best scheduling policy is DYNAMIC with the size of the chunk equal to the nu
 OpenMP threads, but most preferably being twice as the number of
 OpenMP threads (thus chunk size = 8 for 4 OpenMP threads etc).
 If OMP\_SCHEDULE is not set or is empty, the DO-loop will assume generic
-scheduling policy, which will slow down the job quite a bit. 
+scheduling policy, which will slow down the job quite a bit.
 
 \section{Visualizing the subroutine calling tree of the source code}
 
@@ -1635,8 +1635,8 @@ number of elements is greater than 1248), the radial distribution
 of elements needs to be adjusted as well to maintain spectral elements
 that are as cube-like as possible. The code attempts to do this, but
 be sure to view the mesh with your favorite graphics package to make
-sure that the element are well behaved. 
-Remember: a high-quality mesh is paramount for accurate simulations. 
+sure that the element are well behaved.
+Remember: a high-quality mesh is paramount for accurate simulations.
 In addition to a reorganization of the radial distribution of elements,
 the time stepping and period range in which the attenuation is applied
 is automatically determined. The minimum and maximum periods for attenuation
