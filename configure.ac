@@ -64,6 +64,7 @@ AC_FC_SRCEXT(f90)
 AC_FC_FREEFORM()
 
 AC_PROG_CC
+AC_PROG_RANLIB
 
 AC_LANG_PUSH(C)
 AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.h]))
@@ -76,6 +77,8 @@ AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
 AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
+AC_ARG_VAR(AR, [The ar archiver])
+AC_ARG_VAR(ARFLAGS, [Flags to the ar archiver])
 if test x"$MPIFC" = x; then
     MPIFC=mpif90
 fi
