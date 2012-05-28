@@ -2,15 +2,13 @@ dnl                                               -*- Autoconf -*-
 dnl
 dnl Process this file with autoconf to produce the 'configure' script:
 dnl
-dnl ACLOCAL="aclocal -I m4" autoreconf
+dnl autoreconf -I m4
 dnl
 dnl You must have recent versions of Autoconf and Automake installed.
 
-# $Id: configure.ac,v 1.1 2005/08/24 22:45:51 leif Exp $
-
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D Globe], [5], [jtromp AT princeton.edu], [Specfem3DGlobe])
+AC_INIT([Specfem3D Globe], [5.1.4], [jtromp AT princeton.edu], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
