@@ -102,7 +102,39 @@ CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
 # Checks for library functions.
 
 
-AC_CONFIG_FILES([Makefile src/auxiliaries/Makefile src/meshfem3D/Makefile src/specfem3D/Makefile src/create_header_file/Makefile setup/constants.h setup/precision.h])
+AC_CONFIG_FILES([
+    Makefile
+    src/auxiliaries/Makefile
+    src/meshfem3D/Makefile
+    src/specfem3D/Makefile
+    src/create_header_file/Makefile
+    setup/constants.h
+    setup/precision.h
+])
+AC_CONFIG_FILES([
+    DATA/Par_file:DATA/Par_file
+    DATA/CMTSOLUTION:DATA/CMTSOLUTION
+    DATA/STATIONS:DATA/STATIONS
+])
+AC_CONFIG_LINKS([
+    DATA/crust2.0:DATA/crust2.0
+    DATA/crustmap:DATA/crustmap
+    DATA/epcrust:DATA/epcrust
+    DATA/eucrust-07:DATA/eucrust-07
+    DATA/heterogen:DATA/heterogen
+    DATA/Lebedev_sea99:DATA/Lebedev_sea99
+    DATA/Montagner_model:DATA/Montagner_model
+    DATA/old:DATA/old
+    DATA/PPM:DATA/PPM
+    DATA/QRFSI12:DATA/QRFSI12
+    DATA/s20rts:DATA/s20rts
+    DATA/s362ani:DATA/s362ani
+    DATA/s40rts:DATA/s40rts
+    DATA/Simons_model:DATA/Simons_model
+    DATA/topo_bathy:DATA/topo_bathy
+    DATA/Zhao_JP_model:DATA/Zhao_JP_model
+])
+
 AC_OUTPUT
 
 
