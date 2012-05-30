@@ -33,7 +33,7 @@ MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
 FLAGS_CHECK = @FLAGS_CHECK@
 FLAGS_NO_CHECK = @FLAGS_NO_CHECK@
-FCFLAGS_f90 = @FCFLAGS_f90@ -I../../setup
+FCFLAGS_f90 = @FCFLAGS_f90@ -I${SETUP}
 
 FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
 FCCOMPILE_NO_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_NO_CHECK)
@@ -42,7 +42,7 @@ MPIFCCOMPILE_NO_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_NO_CHECK)
 
 CC = @CC@
 CFLAGS = @CFLAGS@
-CPPFLAGS = -I../../setup @CPPFLAGS@
+CPPFLAGS = -I${SETUP} @CPPFLAGS@
 
 #AR = ar
 #ARFLAGS = cru
@@ -52,20 +52,22 @@ ARFLAGS = @ARFLAGS@
 RANLIB = @RANLIB@
 
 ## compilation directories
+# B : build directory
+B = @top_builddir@
 # E : executables directory
-E = ../../bin
+E = ${B}/bin
 # O : objects directory
-O = ../../obj
-# SHARED : shared directoy
-SHARED = ../shared
+O = ${B}/obj
 # S : source file directory
-S = .
-# root directory
-S_TOP = ../..
+S = @srcdir@
+# S_TOP : source file root directory
+S_TOP = @top_srcdir@
+# SHARED : shared directory
+SHARED = ${S_TOP}/src/shared
 ## setup file directory
-SETUP = ../../setup
+SETUP = ${B}/setup
 ## output file directory
-OUTPUT = ../../OUTPUT_FILES
+OUTPUT = ${B}/OUTPUT_FILES
 
 #######################################
 
