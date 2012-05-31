@@ -339,7 +339,7 @@
   if(myrank == 0) then
 
     ! finishes vtk file
-    write(IOVTK,*) ""
+    write(IOVTK,*) ! blank line
     close(IOVTK)
 
     !  we should know NSOURCES+nrec at this point...
