@@ -925,7 +925,7 @@
     !write(IOVTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
     write(IOVTK,'(3e18.6)') xval,yval,zval
   enddo
-  write(IOVTK,*) ""
+  write(IOVTK,*) ! blank line
 
   ! defines cell on coarse corner points
   ! note: indices for vtk start at 0
@@ -958,12 +958,12 @@
     endif
 
   enddo
-  write(IOVTK,*) ""
+  write(IOVTK,*) ! blank line
 
   ! type: hexahedrons
   write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec
   write(IOVTK,*) (12,ispec=1,nspec)
-  write(IOVTK,*) ""
+  write(IOVTK,*) ! blank line
 
   ! x components
   write(IOVTK,'(a,i12)') "POINT_DATA ",nglob
@@ -992,7 +992,7 @@
                         + glob_data(2,i)*glob_data(2,i) &
                         + glob_data(3,i)*glob_data(3,i))
   enddo
-  write(IOVTK,*) ""
+  write(IOVTK,*) ! blank line
 
   close(IOVTK)
 
@@ -1090,7 +1090,7 @@
         write(IOVTK,'(3e18.6)') xval,yval,zval
       enddo
     enddo
-    write(IOVTK,*) ""
+    write(IOVTK,*) ! blank line
 
     ! defines cell on coarse corner points
     ! note: indices for vtk start at 0
@@ -1129,12 +1129,12 @@
 
       enddo
     enddo
-    write(IOVTK,*) ""
+    write(IOVTK,*) ! blank line
 
     ! type: hexahedrons
     write(IOVTK,'(a,i12)') "CELL_TYPES ",nspec*NPROCTOT_VAL
     write(IOVTK,*) (12,ispec=1,nspec*NPROCTOT_VAL)
-    write(IOVTK,*) ""
+    write(IOVTK,*) ! blank line
 
     ! x components
     write(IOVTK,'(a,i12)') "POINT_DATA ",nglob*NPROCTOT_VAL
@@ -1171,7 +1171,7 @@
                           + store_val_uz_all(i,iproc)**2 )
       enddo
     enddo
-    write(IOVTK,*) ""
+    write(IOVTK,*) ! blank line
 
     close(IOVTK)
 
