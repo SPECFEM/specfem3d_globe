@@ -283,7 +283,10 @@
 !$OMP tempx1,tempx2,tempx3, &
 !$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
 !$OMP dummyx_loc,dummyy_loc,dummyz_loc,rho_s_H,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-!$OMP iglobv5,iglob1,epsilondev_loc)
+#ifdef _HANDOPT
+!$OMP iglobv5, &
+#endif
+!$OMP iglob1,epsilondev_loc)
 
   do ispec_glob = 1,NSPEC_CRUST_MANTLE,ELEMENTS_NONBLOCKING_CM_IC
 
