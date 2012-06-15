@@ -165,8 +165,9 @@
 
   integer nglob,nglob_theor,ieoff,ilocnum,ier
 
-  ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass
+  ! mass matrices
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassy,rmassz 
+  integer :: nglob_xy
 
   ! mass matrix and bathymetry for ocean load
   integer nglob_oceans
@@ -997,9 +998,33 @@
               NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
               xigll,yigll,zigll)
 
-    ! allocates mass matrix in this slice (will be fully assembled in the solver)
-    allocate(rmass(nglob),stat=ier)
+    ! allocates mass matrices in this slice (will be fully assembled in the solver) 
+    !
+    ! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix 
+    ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+    ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+    ! 
+    ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+    ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+    
+    if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
+       select case(iregion_code)
+       case( IREGION_CRUST_MANTLE )
+          nglob_xy = nglob
+       case( IREGION_INNER_CORE, IREGION_OUTER_CORE )
+          nglob_xy = 1
+       endselect
+    else
+       nglob_xy = 1
+    endif
+
+    allocate(rmassx(nglob_xy),stat=ier)
     if(ier /= 0) stop 'error in allocate 21'
+    allocate(rmassy(nglob_xy),stat=ier)
+    if(ier /= 0) stop 'error in allocate 21'
+    allocate(rmassz(nglob),stat=ier)
+    if(ier /= 0) stop 'error in allocate 21'
+
     ! allocates ocean load mass matrix as well if oceans
     if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
       nglob_oceans = nglob
@@ -1010,14 +1035,23 @@
     allocate(rmass_ocean_load(nglob_oceans),stat=ier)
     if(ier /= 0) stop 'error in allocate 22'
 
-    ! creating mass matrix in this slice (will be fully assembled in the solver)
+    ! creating mass matrices in this slice (will be fully assembled in the solver)
     call create_mass_matrices(myrank,nspec,idoubling,wxgll,wygll,wzgll,ibool, &
                           nspec_actually,xixstore,xiystore,xizstore, &
                           etaxstore,etaystore,etazstore, &
                           gammaxstore,gammaystore,gammazstore, &
-                          iregion_code,nglob,rmass,rhostore,kappavstore, &
-                          nglob_oceans,rmass_ocean_load,NSPEC2D_TOP,ibelm_top,jacobian2D_top, &
-                          xstore,ystore,zstore,RHO_OCEANS)
+                          iregion_code,rhostore,kappavstore, &
+                          nglob_xy,nglob,prname, &
+                          rmassx,rmassy,rmassz,DT,ichunk,NCHUNKS,ABSORBING_CONDITIONS, &
+                          nglob_oceans,rmass_ocean_load, &
+                          xstore,ystore,zstore,RHO_OCEANS, &
+                          NSPEC2D_TOP,NSPEC2D_BOTTOM,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
+                          ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
+                          nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
+                          normal_xmin,normal_xmax,normal_ymin,normal_ymax, &
+                          rho_vp,rho_vs,nspec_stacey, &
+                          jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
+                          jacobian2D_bottom,jacobian2D_top)
 
     ! save the binary files
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
@@ -1034,25 +1068,28 @@
                   nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                   c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                   c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                  ibool,idoubling,is_on_a_slice_edge,rmass,rmass_ocean_load,nglob_oceans, &
+                  ibool,idoubling,is_on_a_slice_edge,nglob_xy,nglob, &
+                  rmassx,rmassy,rmassz,rmass_ocean_load,nglob_oceans, &
                   ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
                   nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
                   normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
                   jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-                  jacobian2D_bottom,jacobian2D_top,nspec,nglob, &
+                  jacobian2D_bottom,jacobian2D_top,nspec, &
                   NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                   TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
                   ANISOTROPIC_INNER_CORE,OCEANS, &
                   tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION, &
                   size(tau_e_store,2),size(tau_e_store,3),size(tau_e_store,4),size(tau_e_store,5),&
-                  ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
+                  NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
     you_can_start_doing_IOs = .true.
     if (myrank < NPROC_XI*NPROC_ETA-1) call MPI_SEND(you_can_start_doing_IOs, 1, MPI_LOGICAL, myrank+1, itag, MPI_COMM_WORLD, ier)
 #endif
 
-    deallocate(rmass,stat=ier); if(ier /= 0) stop 'error in deallocate'
-    deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate'
+    deallocate(rmassx,stat=ier); if(ier /= 0) stop 'error in deallocate rmassx'
+    deallocate(rmassy,stat=ier); if(ier /= 0) stop 'error in deallocate rmassy'
+    deallocate(rmassz,stat=ier); if(ier /= 0) stop 'error in deallocate rmassz'
+    deallocate(rmass_ocean_load,stat=ier); if(ier /= 0) stop 'error in deallocate rmass_ocean_load'
 
     ! boundary mesh
     if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then

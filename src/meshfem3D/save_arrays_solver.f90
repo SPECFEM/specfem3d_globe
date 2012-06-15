@@ -33,18 +33,18 @@
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    ibool,idoubling,is_on_a_slice_edge,rmass_and_also_temporary_array,rmass_ocean_load,npointot_oceans, &
+                    ibool,idoubling,is_on_a_slice_edge,nglob_xy,nglob, &
+                    rmassx,rmassy,rmassz,rmass_ocean_load,npointot_oceans, &
                     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
                     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
                     normal_xmin,normal_xmax,normal_ymin,normal_ymax,normal_bottom,normal_top, &
                     jacobian2D_xmin,jacobian2D_xmax,jacobian2D_ymin,jacobian2D_ymax, &
-                    jacobian2D_bottom,jacobian2D_top,nspec,nglob, &
+                    jacobian2D_bottom,jacobian2D_top,nspec, &
                     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
                     ANISOTROPIC_INNER_CORE,OCEANS, &
                     tau_s,tau_e_store,Qmu_store,T_c_source,ATTENUATION,vx,vy,vz,vnspec, &
-                    ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
-
+                    NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES,ispec_is_tiso)
 
   implicit none
 
@@ -53,9 +53,9 @@
   logical ATTENUATION
 
   character(len=150) prname
-  integer iregion_code
+  integer iregion_code,NCHUNKS
 
-  integer nspec,nglob,nspec_stacey
+  integer nspec,nglob_xy,nglob,nspec_stacey
   integer npointot_oceans
 
 ! Stacey
@@ -91,11 +91,11 @@
 ! this for non blocking MPI
   logical, dimension(nspec) :: is_on_a_slice_edge
 
-! mass matrix
-! use rmass_and_also_temporary_array as temporary storage for the rest of this routine
-! once it is written to disk and thus not needed any more;
-! thus use a variable name that underlines this
-  real(kind=CUSTOM_REAL) rmass_and_also_temporary_array(nglob)
+! mass matrices
+! use rmassz as temporary storage for the rest of this routine
+! once it is written to disk and thus not needed any more
+  real(kind=CUSTOM_REAL), dimension(nglob_xy) :: rmassx,rmassy
+  real(kind=CUSTOM_REAL), dimension(nglob)    :: rmassz
 
 ! additional ocean load mass matrix
   real(kind=CUSTOM_REAL) rmass_ocean_load(npointot_oceans)
@@ -247,8 +247,20 @@
 
   endif
 
-! mass matrix
-  write(27) rmass_and_also_temporary_array
+! mass matrices
+!
+! in the case of stacey boundary conditions, add C*delta/2 contribution to the mass matrix 
+! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
+! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
+! 
+! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
+! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
+  if(NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) then
+     write(27) rmassx
+     write(27) rmassy
+  endif
+     
+  write(27) rmassz
 
 ! additional ocean load mass matrix if oceans and if we are in the crust
   if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(27) rmass_ocean_load
@@ -256,12 +268,13 @@
   close(27)
 
   open(unit=27,file=prname(1:len_trim(prname))//'solver_data_2.bin',status='unknown',form='unformatted',action='write')
+
 ! mesh arrays used in the solver to locate source and receivers
 ! and for anisotropy and gravity, save in single precision
-! use rmass_and_also_temporary_array for temporary storage to perform conversion, since already saved
+! use rmassz for temporary storage to perform conversion, since already saved
 
 !--- x coordinate
-  rmass_and_also_temporary_array(:) = 0._CUSTOM_REAL
+  rmassz(:) = 0._CUSTOM_REAL
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -269,18 +282,18 @@
           iglob = ibool(i,j,k,ispec)
 ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
-            rmass_and_also_temporary_array(iglob) = sngl(xstore(i,j,k,ispec))
+            rmassz(iglob) = sngl(xstore(i,j,k,ispec))
           else
-            rmass_and_also_temporary_array(iglob) = xstore(i,j,k,ispec)
+            rmassz(iglob) = xstore(i,j,k,ispec)
           endif
         enddo
       enddo
     enddo
   enddo
-  write(27) rmass_and_also_temporary_array
+  write(27) rmassz
 
 !--- y coordinate
-  rmass_and_also_temporary_array(:) = 0._CUSTOM_REAL
+  rmassz(:) = 0._CUSTOM_REAL
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -288,18 +301,18 @@
           iglob = ibool(i,j,k,ispec)
 ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
-            rmass_and_also_temporary_array(iglob) = sngl(ystore(i,j,k,ispec))
+            rmassz(iglob) = sngl(ystore(i,j,k,ispec))
           else
-            rmass_and_also_temporary_array(iglob) = ystore(i,j,k,ispec)
+            rmassz(iglob) = ystore(i,j,k,ispec)
           endif
         enddo
       enddo
     enddo
   enddo
-  write(27) rmass_and_also_temporary_array
+  write(27) rmassz
 
 !--- z coordinate
-  rmass_and_also_temporary_array(:) = 0._CUSTOM_REAL
+  rmassz(:) = 0._CUSTOM_REAL
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -307,15 +320,15 @@
           iglob = ibool(i,j,k,ispec)
 ! distinguish between single and double precision for reals
           if(CUSTOM_REAL == SIZE_REAL) then
-            rmass_and_also_temporary_array(iglob) = sngl(zstore(i,j,k,ispec))
+            rmassz(iglob) = sngl(zstore(i,j,k,ispec))
           else
-            rmass_and_also_temporary_array(iglob) = zstore(i,j,k,ispec)
+            rmassz(iglob) = zstore(i,j,k,ispec)
           endif
         enddo
       enddo
     enddo
   enddo
-  write(27) rmass_and_also_temporary_array
+  write(27) rmassz
 
   write(27) ibool
 
